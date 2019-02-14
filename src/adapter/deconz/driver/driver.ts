@@ -522,13 +522,11 @@ class Driver extends events.EventEmitter {
      *  generalArrayToString result is not reversed!
      */
     public generalArrayToString(key: Array<number>, length: number) : string{
-console.log(key);
         let result: string = "0x";
         let char = '';
         let i = 0;
         while (i < length) {
             char = key[i].toString(16);
-console.log(char);
             if (char.length < 2) {
                 char = "0" + char;
             }
