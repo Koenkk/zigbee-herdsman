@@ -1073,6 +1073,36 @@ class DeconzAdapter extends Adapter {
             buf.writeUInt8(payload['saturation'], 2);
             buf.writeUInt16LE(payload['transtime'], 3);
             offset = 5;
+        } else if ('attrId' in payload && 'attrData' in payload && 'dataType' in payload) {
+            // Report attributes command
+            buf.writeUInt16LE(payload['attrId'], 0);
+            buf.writeUInt8(payload['dataType'], 2);
+            offset += 3;
+            if (payload['dataType'] === 0x42) {
+                //string
+                const string = payload['attrData'];
+                const l = Buffer.byteLength(string);
+                for (let i = 0; i < l; i++) {
+                    buf.writeUInt8(string[i], offset);
+                    offset++;
+                }
+            } else if (payload['dataType'] === 0x19) {
+                //16bitmap
+                buf.writeUInt16LE(payload['attrData'], offset);
+                offset += 2;
+            } else {
+                //number
+                if (payload['attrData'] <= 0xFF) {
+                    buf.writeUInt8(payload['attrData'], offset);
+                    offset++;
+                } else if (payload['attrData'] <= 0xFFFF) {
+                    buf.writeUInt16LE(payload['attrData'], offset);
+                    offset += 2;
+                }  else if (payload['attrData'] <= 0xFFFFFF) {
+                    buf.writeUInt32LE(payload['attrData'], offset);
+                    offset += 4;
+                }
+            }
         } else {
             for (let [key, value] of Object.entries(payload)) {
                 debug(`${key}: ${value}`);
@@ -1084,7 +1114,7 @@ class DeconzAdapter extends Adapter {
                         offset++;
                         break;
                     case "transtime": case "colortemp": case "manufacturerCode": case "imageType": case "attrId":
-                    case "minRepIntval": case "maxRepIntval":
+                    case "minRepIntval": case "maxRepIntval": case "timeout": case "groupid":
                         buf.writeUInt16LE(value, offset);
                         offset += 2;
                         break;
@@ -1092,17 +1122,16 @@ class DeconzAdapter extends Adapter {
                         buf.writeUInt32LE(value, offset);
                         offset += 4;
                         break;
-                    case "data":
+                    case "data": case "groupname":
                     const l = Buffer.byteLength(value);
                         for (let i = 0; i < l; i++) {
                             buf.writeUInt8(value[i], offset);
                             offset++;
                         }
                         break;
-                    case "repChange":
-                        if (value === 0) {
-                            break;
-                        } else if (value <= 0xFF) {
+                    case "repChange": // todo extra if for this case with offset length determined by datatype
+                                     // see configure reporting
+                        if (value <= 0xFF) {
                             buf.writeUInt8(value, offset);
                             offset++;
                             break;
