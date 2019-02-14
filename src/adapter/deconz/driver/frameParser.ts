@@ -192,7 +192,7 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
 
         return response;
     } catch (error) {
-        debug("DATA_CONFIRM RESPONSE ERROR: " + error);
+        debug("DATA_CONFIRM RESPONSE - " + error);
         return null;
     }
 }
@@ -282,7 +282,7 @@ function parseReadReceivedDataResponse(view : DataView) : object {
         frameParserEvents.emit('receivedDataNotification', response.deviceState);
         return response;
     } catch (error) {
-        debug("DATA_INDICATION RESPONSE ERROR: " + error);
+        debug("DATA_INDICATION RESPONSE - " + error);
         return null;
     }
 }
@@ -455,20 +455,15 @@ function parseFrame(frame: Uint8Array) : [number, number, Command, number] {
         throw new Error("received frame size to small");
     }
 
-    try {
-        const view = new DataView(frame.buffer);
-        const commandId = view.getUint8(0);
-        const seqNumber = view.getUint8(1);
-        const status = view.getUint8(2);
-        //const frameLength = view.getUint16(3, littleEndian);
-        //const payloadLength = view.getUint16(5, littleEndian);
-        const parser = getParserForCommandId(commandId);
+	const view = new DataView(frame.buffer);
+	const commandId = view.getUint8(0);
+	const seqNumber = view.getUint8(1);
+	const status = view.getUint8(2);
+	//const frameLength = view.getUint16(3, littleEndian);
+	//const payloadLength = view.getUint16(5, littleEndian);
+	const parser = getParserForCommandId(commandId);
 
-        return [seqNumber, status, parser(view), commandId];
-    } catch (error) {
-        debug("PARSE FRAME ERROR: " + error);
-        return null;
-    }
+	return [seqNumber, status, parser(view), commandId];
 }
 
 export default processFrame;
