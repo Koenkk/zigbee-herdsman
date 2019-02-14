@@ -518,53 +518,12 @@ class DeconzAdapter extends Adapter {
     ): Promise<Events.ZclDataPayload> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
-        let frameControl: string = "";
-        frameControl += (0);
-        frameControl += (0);
-        frameControl += (0);
-        frameControl += ((zclFrame.Header.frameControl.disableDefaultResponse) ? 1 : 0);
-        frameControl += (zclFrame.Header.frameControl.direction);
-        frameControl += ((zclFrame.Header.frameControl.manufacturerSpecific) ? 1 : 0);
-        frameControl += (0);
-        frameControl += (zclFrame.Header.frameControl.frameType);
-        let payload = [];
-        if (zclFrame.Header.frameControl.manufacturerSpecific === true) {
-            const manf1 = zclFrame.Header.manufacturerCode & 0xff;
-            const manf2 = (zclFrame.Header.manufacturerCode >> 8) & 0xff;
-            payload = [parseInt(frameControl,2), manf1, manf2, zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
-        } else {
-            payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
-        }
-        //console.log("send zclframe to endpoint: zclFrame");
-        //console.log(zclFrame);
-        //console.log("zclFrame.payload:");
-        //console.log(zclFrame.Payload);
-        let pay: number[] = [];
-        let isRawData = false;
+        let pay = zclFrame.toBuffer();
 
-        if ((typeof zclFrame.Payload) === 'object') {
-            if (Array.isArray(zclFrame.Payload)) {
-                for (let i in zclFrame.Payload) {
-                    let entry = zclFrame.Payload[i];
-                    if ((typeof entry) === 'object') {
-                        // payload is array of objects
-                        pay = pay.concat(this.zclPayloadToArray(entry));
-                    } else {
-                        // payload is array of raw data
-                        isRawData = true;
-                        payload.push(entry);
-                    }
-                }
-                if (isRawData) {
-                    pay = payload;
-                } else {
-                    pay = payload.concat(pay);
-                }
-            } else {
-                // payload is object
-                pay = payload.concat(this.zclPayloadToArray(zclFrame.Payload));
-            }
-        }
+        debug("zclFrame.payload:");
+        debug(zclFrame.Payload);
+        //console.log("zclFramte.toBuffer:");
+        //console.log(pay);
 
         request.requestId = transactionID;
         request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
@@ -574,7 +533,7 @@ class DeconzAdapter extends Adapter {
         request.clusterId = zclFrame.Cluster.ID;
         request.srcEndpoint = 1;
         request.asduLength = pay.length;
-        request.asduPayload = pay;
+        request.asduPayload = [... pay];
         request.txOptions = 0;
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = timeout;
@@ -628,50 +587,12 @@ class DeconzAdapter extends Adapter {
     public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
-        let frameControl: string = "";
-        frameControl += (0);
-        frameControl += (0);
-        frameControl += (0);
-        frameControl += ((zclFrame.Header.frameControl.disableDefaultResponse) ? 1 : 0);
-        frameControl += (zclFrame.Header.frameControl.direction);
-        frameControl += ((zclFrame.Header.frameControl.manufacturerSpecific) ? 1 : 0);
-        frameControl += (0);
-        frameControl += (zclFrame.Header.frameControl.frameType);
-        let payload = [];
-        if (zclFrame.Header.frameControl.manufacturerSpecific === true) {
-            const manf1 = zclFrame.Header.manufacturerCode & 0xff;
-            const manf2 = (zclFrame.Header.manufacturerCode >> 8) & 0xff;
-            payload = [parseInt(frameControl,2), manf1, manf2, zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
-        } else {
-            payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
-        }
+        let pay = zclFrame.toBuffer();
 
-        let pay: number[] = [];
-        let isRawData = false;
-        if ((typeof zclFrame.Payload) === 'object') {
-            if (Array.isArray(zclFrame.Payload)) {
-                for (let i in zclFrame.Payload) {
-                    let entry = zclFrame.Payload[i];
-                    if ((typeof entry) === 'object') {
-                        // payload is array of objects
-                        pay = pay.concat(this.zclPayloadToArray(entry));
-                    } else {
-                        // payload is array of raw data
-                        isRawData = true;
-                        payload.push(entry);
-                    }
-                }
-                if (isRawData) {
-
-                    pay = payload;
-                } else {
-                    pay = payload.concat(pay);
-                }
-            } else {
-                // payload is object
-                pay = payload.concat(this.zclPayloadToArray(zclFrame.Payload));
-            }
-        }
+        debug("zclFrame to group - zclFrame.payload:");
+        debug(zclFrame.Payload);
+        //console.log("zclFramte.toBuffer:");
+        //console.log(pay);
 
         request.requestId = transactionID;
         request.destAddrMode = PARAM.PARAM.addressMode.GROUP_ADDR;
@@ -680,11 +601,12 @@ class DeconzAdapter extends Adapter {
         request.clusterId = zclFrame.Cluster.ID;
         request.srcEndpoint = 1;
         request.asduLength = pay.length;
-        request.asduPayload = pay;
+        request.asduPayload = [... pay];
         request.txOptions = 0;
         request.radius = PARAM.PARAM.txRadius.UNLIMITED;
 
         try {
+            debug(`sendZclFrameToGroup - message send`);
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
             debug(`sendZclFrameToGroup ERROR: ${error}`);
@@ -693,7 +615,36 @@ class DeconzAdapter extends Adapter {
     }
 
     public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
-        // TODO: not implemented yet
+        return;
+        //TODO: does not work yet (e.g. after permit join)
+        const transactionID = this.nextTransactionID();
+        const request: ApsDataRequest = {};
+        let pay = zclFrame.toBuffer();
+
+        debug("zclFrame to all - zclFrame.payload:");
+        debug(zclFrame.Payload);
+        //console.log("zclFramte.toBuffer:");
+        //console.log(pay);
+
+        request.requestId = transactionID;
+        request.destAddrMode = PARAM.PARAM.addressMode.GROUP_ADDR;
+        request.destAddr16 = 0xFFFD;
+        request.destEndpoint = endpoint;
+        request.profileId = 0x104;
+        request.clusterId = zclFrame.Cluster.ID;
+        request.srcEndpoint = sourceEndpoint;
+        request.asduLength = pay.length;
+        request.asduPayload = [... pay];
+        request.txOptions = 0;
+        request.radius = PARAM.PARAM.txRadius.UNLIMITED;
+
+        try {
+            debug(`sendZclFrameToAll - message send`);
+            return this.driver.enqueueSendDataRequest(request) as Promise<void>;
+        } catch (error) {
+            debug(`sendZclFrameToAll ERROR: ${error}`);
+            return Promise.reject();
+        }
     }
 
     public async bind(
@@ -1060,103 +1011,6 @@ class DeconzAdapter extends Adapter {
                 this.emit(Events.Events.rawData, payload);
             }
         }
-    }
-
-    private zclPayloadToArray(payload: Object): Array<number> {
-        let buf = Buffer.alloc(100); // zclPayload could be bigger ?
-        let offset = 0;
-        if ('colorx' in payload) {
-            // move to color
-            buf.writeUInt16LE(payload['colorx'], 0);
-            buf.writeUInt16LE(payload['colory'], 2);
-            buf.writeUInt16LE(payload['transtime'], 4);
-            offset = 6;
-        } else if ('enhancehue' in payload) {
-            // move to ext hue and saturation
-            buf.writeUInt16LE(payload['enhancehue'], 0);
-            buf.writeUInt8(payload['saturation'], 2);
-            buf.writeUInt16LE(payload['transtime'], 3);
-            offset = 5;
-        } else if ('attrId' in payload && 'attrData' in payload && 'dataType' in payload) {
-            // Report attributes command
-            buf.writeUInt16LE(payload['attrId'], 0);
-            buf.writeUInt8(payload['dataType'], 2);
-            offset += 3;
-            if (payload['dataType'] === 0x42) {
-                //string
-                const string = payload['attrData'];
-                const l = Buffer.byteLength(string);
-                for (let i = 0; i < l; i++) {
-                    buf.writeUInt8(string[i], offset);
-                    offset++;
-                }
-            } else if (payload['dataType'] === 0x19) {
-                //16bitmap
-                buf.writeUInt16LE(payload['attrData'], offset);
-                offset += 2;
-            } else {
-                //number
-                if (payload['attrData'] <= 0xFF) {
-                    buf.writeUInt8(payload['attrData'], offset);
-                    offset++;
-                } else if (payload['attrData'] <= 0xFFFF) {
-                    buf.writeUInt16LE(payload['attrData'], offset);
-                    offset += 2;
-                }  else if (payload['attrData'] <= 0xFFFFFF) {
-                    buf.writeUInt32LE(payload['attrData'], offset);
-                    offset += 4;
-                }
-            }
-        } else {
-            for (let [key, value] of Object.entries(payload)) {
-                debug(`${key}: ${value}`);
-                switch (key) {
-                    case "level": case "cmdId": case "statusCode": case "effectid": case "effectvariant":
-                    case "saturation": case "direction": case "payloadType": case "queryJitter": case "status":
-                    case "dataSize": case "dataType":
-                        buf.writeUInt8(value, offset);
-                        offset++;
-                        break;
-                    case "transtime": case "colortemp": case "manufacturerCode": case "imageType": case "attrId":
-                    case "minRepIntval": case "maxRepIntval": case "timeout": case "groupid":
-                        buf.writeUInt16LE(value, offset);
-                        offset += 2;
-                        break;
-                    case "fileVersion": case "imageSize": case "fileOffset":
-                        buf.writeUInt32LE(value, offset);
-                        offset += 4;
-                        break;
-                    case "data": case "groupname":
-                    const l = Buffer.byteLength(value);
-                        for (let i = 0; i < l; i++) {
-                            buf.writeUInt8(value[i], offset);
-                            offset++;
-                        }
-                        break;
-                    case "repChange": // todo extra if for this case with offset length determined by datatype
-                                     // see configure reporting
-                        if (value <= 0xFF) {
-                            buf.writeUInt8(value, offset);
-                            offset++;
-                            break;
-                        } else if (value <= 0xFFFF) {
-                            buf.writeUInt16LE(value, offset);
-                            offset += 2;
-                            break;
-                        }  else if (value <= 0xFFFFFF) {
-                            buf.writeUInt32LE(value, offset);
-                            offset += 4;
-                            break;
-                        }
-                    default:
-                        debug("zclPayloadToArray not implemented for key: " + key);
-                        break;
-                }
-            }
-        }
-
-        let ret = [...buf].splice(0, offset);
-        return ret;
     }
 
     private nextTransactionID(): number {
