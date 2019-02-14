@@ -46,10 +46,10 @@ class Driver extends events.EventEmitter {
         this.seqNumber = 0;
 
         const that = this;
-        setInterval(() => { that.processQueue(); }, 300);
-        setInterval(() => { that.processBusyQueue(); }, 200);
-        setInterval(() => { that.processApsQueue(); }, 300);
-        setInterval(() => { that.processApsBusyQueue(); }, 200);
+        setInterval(() => { that.processQueue(); }, 50);  //300
+        setInterval(() => { that.processBusyQueue(); }, 10);  //200
+        setInterval(() => { that.processApsQueue(); }, 50);  //300
+        setInterval(() => { that.processApsBusyQueue(); }, 10);  //200
         setInterval(() => { that.deviceStateRequest()
                             .then(result => {})
                             .catch(error => {}); }, 10000);
