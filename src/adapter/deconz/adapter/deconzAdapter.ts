@@ -127,7 +127,9 @@ class DeconzAdapter extends Adapter {
             debug("PERMIT_JOIN - " + seconds + " seconds");
         } catch (error) {
             debug("PERMIT_JOIN FAILED - " + error);
-            return Promise.reject();
+            // try again
+            this.permitJoin(seconds, networkAddress);
+            //return Promise.reject(); // do not reject
         }
     }
 
