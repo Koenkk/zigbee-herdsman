@@ -198,6 +198,7 @@ function parseReadReceivedDataResponse(view : DataView) : object {
     const response: ReceivedDataResponse = {};
     let buf2, buf3;
 
+
     response.commandId = view.getUint8(0);
     response.seqNr = view.getUint8(1);
     response.status = view.getUint8(2);
@@ -206,6 +207,10 @@ function parseReadReceivedDataResponse(view : DataView) : object {
         if (response.status !== 5) {
             debug("DATA_INDICATION RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
         }
+        return null;
+    }
+    if (view.byteLength < 10) {
+        debug("DATA_INDICATION RESPONSE - invalid length");
         return null;
     }
 
