@@ -4,7 +4,7 @@ const MIN_BUFFER_SIZE = 3;
 const littleEndian = true;
 import PARAM from './constants';
 import { busyQueue, apsBusyQueue } from './driver';
-import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin } from './constants';
+import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin, ParamNetworkKey } from './constants';
 import * as Events from '../../events';
 import {ZclFrame} from '../../../zcl';
 import Debug from 'debug';
@@ -44,6 +44,28 @@ function parseReadParameterResponse(view: DataView) : Command {
             res = "0x" + res;
             debug(`EXT_PANID: ${res}`);
             return res;
+        case PARAM.PARAM.Network.APS_EXT_PAN_ID:
+            const apsExtPanId: ParamExtPanId = view.getBigUint64(8, littleEndian).toString(16);
+            let resAEPID = apsExtPanId;
+            while (resAEPID.length < 16) {
+                resAEPID = "0" + resAEPID;
+            }
+            resAEPID = "0x" + resAEPID;
+            debug(`APS_EXT_PANID: ${resAEPID}`);
+            return resAEPID;
+        case PARAM.PARAM.Network.NETWORK_KEY:
+            const networkKey1 = view.getBigUint64(9).toString(16);
+            let res1 = networkKey1;
+            while (res1.length < 16) {
+                res1 = "0" + res1;
+            }
+            const networkKey2 = view.getBigUint64(17).toString(16);
+            let res2 = networkKey2;
+            while (res2.length < 16) {
+                res2 = "0" + res2;
+            }
+            debug('NETWORK_KEY: hidden');
+            return "0x"+res1+res2;
         case PARAM.PARAM.Network.CHANNEL:
             const channel: ParamChannel = view.getUint8(8);
             debug('CHANNEL: ' + channel);
@@ -267,7 +289,7 @@ function parseEnqueueSendDataResponse(view : DataView) : number {
 
 function parseWriteParameterResponse(view : DataView) : number {
     const parameterId = view.getUint8(7);
-    debug(`write parameter response - parameter id: ${parameterId}`);
+    debug(`write parameter response - parameter id: ${parameterId} - status: ${view.getUint8(2)}`);
     return parameterId;
 }
 
