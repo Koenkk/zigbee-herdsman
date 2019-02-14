@@ -450,9 +450,9 @@ async function processFrame(frame: Uint8Array) : Promise<void> {
 }
 
 function parseFrame(frame: Uint8Array) : [number, number, Command, number] {
-
     if (frame.length < MIN_BUFFER_SIZE) {
-        throw new Error("received frame size to small");
+        debug("received frame size to small - discard frame");
+        return [null, null, null, null];
     }
 
 	const view = new DataView(frame.buffer);
