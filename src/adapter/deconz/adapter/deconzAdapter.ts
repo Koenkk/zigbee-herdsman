@@ -527,10 +527,21 @@ class DeconzAdapter extends Adapter {
         frameControl += ((zclFrame.Header.frameControl.manufacturerSpecific) ? 1 : 0);
         frameControl += (0);
         frameControl += (zclFrame.Header.frameControl.frameType);
-        let payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
-
+        let payload = [];
+        if (zclFrame.Header.frameControl.manufacturerSpecific === true) {
+            const manf1 = zclFrame.Header.manufacturerCode & 0xff;
+            const manf2 = (zclFrame.Header.manufacturerCode >> 8) & 0xff;
+            payload = [parseInt(frameControl,2), manf1, manf2, zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
+        } else {
+            payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
+        }
+        //console.log("send zclframe to endpoint: zclFrame");
+        //console.log(zclFrame);
+        //console.log("zclFrame.payload:");
+        //console.log(zclFrame.Payload);
         let pay: number[] = [];
         let isRawData = false;
+
         if ((typeof zclFrame.Payload) === 'object') {
             if (Array.isArray(zclFrame.Payload)) {
                 for (let i in zclFrame.Payload) {
@@ -626,14 +637,17 @@ class DeconzAdapter extends Adapter {
         frameControl += ((zclFrame.Header.frameControl.manufacturerSpecific) ? 1 : 0);
         frameControl += (0);
         frameControl += (zclFrame.Header.frameControl.frameType);
-        let payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
-        //console.log("zclFrame");
-        //console.log(zclFrame);
-        //console.log("zclFrame.payload:");
-        //console.log(zclFrame.Payload);
+        let payload = [];
+        if (zclFrame.Header.frameControl.manufacturerSpecific === true) {
+            const manf1 = zclFrame.Header.manufacturerCode & 0xff;
+            const manf2 = (zclFrame.Header.manufacturerCode >> 8) & 0xff;
+            payload = [parseInt(frameControl,2), manf1, manf2, zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
+        } else {
+            payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
+        }
+
         let pay: number[] = [];
         let isRawData = false;
-
         if ((typeof zclFrame.Payload) === 'object') {
             if (Array.isArray(zclFrame.Payload)) {
                 for (let i in zclFrame.Payload) {
@@ -648,6 +662,7 @@ class DeconzAdapter extends Adapter {
                     }
                 }
                 if (isRawData) {
+
                     pay = payload;
                 } else {
                     pay = payload.concat(pay);
