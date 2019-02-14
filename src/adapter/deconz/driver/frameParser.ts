@@ -107,7 +107,11 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
 
     let destAddr = "";
     if (response.destAddrMode === 0x03) {
-        response.destAddr64 = view.getBigUint64(10, littleEndian).toString(16);
+        let res = view.getBigUint64(10, littleEndian).toString(16);
+        while (res.length < 16) {
+            res = "0" + res;
+        }
+        response.destAddr64 = res;
         buf2 = view.buffer.slice(18, view.buffer.byteLength);
         destAddr = response.destAddr64;
     } else {
@@ -189,7 +193,11 @@ function parseReadReceivedDataResponse(view : DataView) : object {
 
     let destAddr = "";
     if (response.destAddrMode === 0x03) {
-        response.destAddr64 = view.getBigUint64(9, littleEndian).toString(16);
+        let res = view.getBigUint64(9, littleEndian).toString(16);
+        while (res.length < 16) {
+            res = "0" + res;
+        }
+        response.destAddr64 = res;
         buf2 = view.buffer.slice(17, view.buffer.byteLength);
         destAddr = response.destAddr64;
     } else {
@@ -210,8 +218,12 @@ function parseReadReceivedDataResponse(view : DataView) : object {
     }
 
     if (response.srcAddrMode === 0x03 || response.srcAddrMode === 0x04) {
-        response.srcAddr64 = view.getBigUint64(2, littleEndian).toString(16);
-        buf3 = view.buffer.slice(18, view.buffer.byteLength);
+        let res = view.getBigUint64(2, littleEndian).toString(16);
+        while (res.length < 16) {
+            res = "0" + res;
+        }
+        response.srcAddr64 = res;
+        buf3 = view.buffer.slice(10, view.buffer.byteLength);
         srcAddr = response.srcAddr64;
     }
 
