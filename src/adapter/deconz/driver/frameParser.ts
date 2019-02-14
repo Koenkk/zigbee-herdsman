@@ -83,7 +83,9 @@ function parseReadParameterResponse(view: DataView) : Command {
             debug('WATCHDOG_TTL: ' + ttl);
             return ttl;
         default:
-            throw new Error("unknown parameter id");
+            //throw new Error(`unknown parameter id ${parameterId}`);
+            debug(`unknown parameter id ${parameterId}`);
+            return null;
     }
 }
 
