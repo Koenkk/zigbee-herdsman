@@ -530,23 +530,25 @@ class DeconzAdapter extends Adapter {
         let payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
 
         let pay: number[] = [];
+        let isRawData = false;
         if ((typeof zclFrame.Payload) === 'object') {
             if (Array.isArray(zclFrame.Payload)) {
                 for (let i in zclFrame.Payload) {
                     let entry = zclFrame.Payload[i];
                     if ((typeof entry) === 'object') {
                         // payload is array of objects
-                        const array: number[] = Object.values(entry);
-                        for (let val in array) {
-                            payload.push(array[val] & 0xff);
-                            payload.push((array[val] >> 8) & 0xff);
-                        }
+                        pay = pay.concat(this.zclPayloadToArray(entry));
                     } else {
                         // payload is array of raw data
+                        isRawData = true;
                         payload.push(entry);
                     }
                 }
-                pay = payload;
+                if (isRawData) {
+                    pay = payload;
+                } else {
+                    pay = payload.concat(pay);
+                }
             } else {
                 // payload is object
                 pay = payload.concat(this.zclPayloadToArray(zclFrame.Payload));
@@ -625,25 +627,31 @@ class DeconzAdapter extends Adapter {
         frameControl += (0);
         frameControl += (zclFrame.Header.frameControl.frameType);
         let payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
-
+        //console.log("zclFrame");
+        //console.log(zclFrame);
+        //console.log("zclFrame.payload:");
+        //console.log(zclFrame.Payload);
         let pay: number[] = [];
+        let isRawData = false;
+
         if ((typeof zclFrame.Payload) === 'object') {
             if (Array.isArray(zclFrame.Payload)) {
                 for (let i in zclFrame.Payload) {
                     let entry = zclFrame.Payload[i];
                     if ((typeof entry) === 'object') {
                         // payload is array of objects
-                        const array: number[] = Object.values(entry);
-                        for (let val in array) {
-                            payload.push(array[val] & 0xff);
-                            payload.push((array[val] >> 8) & 0xff);
-                        }
+                        pay = pay.concat(this.zclPayloadToArray(entry));
                     } else {
                         // payload is array of raw data
+                        isRawData = true;
                         payload.push(entry);
                     }
                 }
-                pay = payload;
+                if (isRawData) {
+                    pay = payload;
+                } else {
+                    pay = payload.concat(pay);
+                }
             } else {
                 // payload is object
                 pay = payload.concat(this.zclPayloadToArray(zclFrame.Payload));
@@ -1056,11 +1064,12 @@ class DeconzAdapter extends Adapter {
                 switch (key) {
                     case "level": case "cmdId": case "statusCode": case "effectid": case "effectvariant":
                     case "saturation": case "direction": case "payloadType": case "queryJitter": case "status":
-                    case "dataSize":
+                    case "dataSize": case "dataType":
                         buf.writeUInt8(value, offset);
                         offset++;
                         break;
-                    case "transtime": case "colortemp": case "manufacturerCode": case "imageType":
+                    case "transtime": case "colortemp": case "manufacturerCode": case "imageType": case "attrId":
+                    case "minRepIntval": case "maxRepIntval":
                         buf.writeUInt16LE(value, offset);
                         offset += 2;
                         break;
@@ -1075,6 +1084,22 @@ class DeconzAdapter extends Adapter {
                             offset++;
                         }
                         break;
+                    case "repChange":
+                        if (value === 0) {
+                            break;
+                        } else if (value <= 0xFF) {
+                            buf.writeUInt8(value, offset);
+                            offset++;
+                            break;
+                        } else if (value <= 0xFFFF) {
+                            buf.writeUInt16LE(value, offset);
+                            offset += 2;
+                            break;
+                        }  else if (value <= 0xFFFFFF) {
+                            buf.writeUInt32LE(value, offset);
+                            offset += 4;
+                            break;
+                        }
                     default:
                         debug("zclPayloadToArray not implemented for key: " + key);
                         break;
