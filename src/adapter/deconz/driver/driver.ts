@@ -57,7 +57,13 @@ class Driver extends events.EventEmitter {
         setInterval(() => {
             that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
                 .then(result => {})
-                .catch(error => {});
+                .catch(error => {
+                    //try again
+                    debug("try again to reset watchdog");
+                    that.writeParameterRequest(0x26, 600)
+                    .then(result => {})
+                    .catch(error => {debug("warning watchdog was not reset");});
+                });
              }, (1000 * 60 * 8)); // 8 minutes
 
         this.onParsed = this.onParsed.bind(this);
