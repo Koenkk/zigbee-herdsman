@@ -396,7 +396,7 @@ class Driver extends events.EventEmitter {
     private sendReadReceivedDataRequest(seqNumber: number) {
         debug(`DATA_INDICATION - sending read data request - SeqNr. ${seqNumber}`);
         // payloadlength = 0, flag = none
-        const requestFrame = [PARAM.PARAM.APS.DATA_INDICATION, seqNumber, 0x00, 0x07, 0x00, 0x00, 0x00];
+        const requestFrame = [PARAM.PARAM.APS.DATA_INDICATION, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, 0x01];
         this.sendRequest(requestFrame);
     }
 
