@@ -569,8 +569,6 @@ class DeconzAdapter extends Adapter {
         const payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
         for (let i in zclFrame.Payload) {
             let entry = zclFrame.Payload[i];
-            console.log(entry);
-            console.log(typeof entry);
             if ((typeof entry) === 'object') {
                 const array: number[] = Object.values(entry);
                 for (let val in array) {
