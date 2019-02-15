@@ -18,4 +18,4 @@
 
 • **neighbors**: *object[]*
 
-*Defined in [src/controller/model/device.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/device.ts#L12)*
+*Defined in [src/controller/model/device.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/device.ts#L12)*

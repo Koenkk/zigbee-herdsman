@@ -20,7 +20,7 @@
 
 • **destinationAddress**: *number*
 
-*Defined in [src/adapter/tstype.ts:47](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/adapter/tstype.ts#L47)*
+*Defined in [src/adapter/tstype.ts:48](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L48)*
 
 ___
 
@@ -28,7 +28,7 @@ ___
 
 • **nextHop**: *number*
 
-*Defined in [src/adapter/tstype.ts:49](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/adapter/tstype.ts#L49)*
+*Defined in [src/adapter/tstype.ts:50](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L50)*
 
 ___
 
@@ -36,4 +36,4 @@ ___
 
 • **status**: *string*
 
-*Defined in [src/adapter/tstype.ts:48](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/adapter/tstype.ts#L48)*
+*Defined in [src/adapter/tstype.ts:49](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L49)*

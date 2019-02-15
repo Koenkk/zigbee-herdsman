@@ -26,16 +26,16 @@
 
 ### ▪ **debug**: *object*
 
-*Defined in [src/controller/model/endpoint.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/endpoint.ts#L10)*
+*Defined in [src/controller/model/endpoint.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L10)*
 
 ###  error
 
 • **error**: *Debugger* = Debug('zigbee-herdsman:controller:endpoint')
 
-*Defined in [src/controller/model/endpoint.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/endpoint.ts#L12)*
+*Defined in [src/controller/model/endpoint.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L12)*
 
 ###  info
 
 • **info**: *Debugger* = Debug('zigbee-herdsman:controller:endpoint')
 
-*Defined in [src/controller/model/endpoint.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/endpoint.ts#L11)*
+*Defined in [src/controller/model/endpoint.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L11)*

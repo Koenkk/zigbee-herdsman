@@ -11,6 +11,7 @@ interface SerialPortOptions {
     baudRate: number;
     rtscts: boolean;
     path: string;
+    adapter: 'zstack' | 'deconz';
 };
 
 interface CoordinatorVersion {

@@ -40,6 +40,7 @@ const DefaultOptions: Options = {
         baudRate: 115200,
         rtscts: true,
         path: null,
+        adapter: null,
     },
     databasePath: null,
     databaseBackupPath: null,
@@ -55,7 +56,7 @@ const debug = {
 /**
  * @ignore
  */
-const OneJanuary2000 = new Date('January 01, 2000 00:00:00').getTime();
+const OneJanuary2000 = new Date('January 01, 2000 00:00:00 UTC+00:00').getTime();
 
 /**
  * @noInheritDoc
@@ -529,7 +530,7 @@ class Controller extends events.EventEmitter {
                 const values: KeyValue = {
                     timeStatus: 3, // Time-master + synchronised
                     time: time,
-                    localTime: time + (new Date()).getTimezoneOffset() * 60
+                    localTime: time - (new Date()).getTimezoneOffset() * 60
                 };
 
                 const cluster = ZclUtils.getCluster('genTime');
