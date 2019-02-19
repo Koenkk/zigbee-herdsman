@@ -264,15 +264,14 @@ function parseReadReceivedDataResponse(view : DataView) : object {
     }
 
     response.asduPayload = payload;
-    response.lqi = view.getUint8(view.byteLength - 6);
-    response.rssi = view.getInt8(view.byteLength - 1);
+    response.lqi = view.getUint8(view.byteLength - 8);
+    response.rssi = view.getInt8(view.byteLength - 3)
 
     let newStatus = response.deviceState.toString(2);
     for (let l = 0; l <= (8 - newStatus.length); l++) {
         newStatus = "0" + newStatus;
     }
-
-    debug("DATA_INDICATION RESPONSE - seqNr. " + response.seqNr + " srcAddr: 0x" + srcAddr + " destAddr: 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16));
+    debug("DATA_INDICATION RESPONSE - seqNr. " + response.seqNr + " srcAddr: 0x" + srcAddr + " destAddr: 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16) + " lqi: " + response.lqi);
     debug("response payload: " + payload);
     frameParserEvents.emit('receivedDataPayload', response);
     frameParserEvents.emit('receivedDataNotification', response.deviceState);
