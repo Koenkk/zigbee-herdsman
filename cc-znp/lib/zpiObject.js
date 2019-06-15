@@ -2,7 +2,7 @@
 'use strict';
 
 var zmeta = require('./zmeta'),
-    Unpi = require('unpi'),
+    Unpi = require('../../unpi'),
     Concentrate = Unpi.Concentrate,
     DChunks = Unpi.DChunks,
     ru = DChunks().Rule();

@@ -40,11 +40,15 @@
     }
   ],
   "dependencies": {
+    "concentrate": "^0.2.3",
+    "enum": "^2.3.0",
+    "dissolve": "0.3.3",
     "busyman": "^0.3.0",
     "debug": "^3.2.6",
     "objectbox": "^0.3.0",
     "proving": "^0.1.0",
-    "q": "^1.5.1"
+    "q": "^1.5.1",
+    "serialport": "^7.1.4"
   },
   "description": "An open source ZigBee gateway solution with node.js.",
   "devDependencies": {

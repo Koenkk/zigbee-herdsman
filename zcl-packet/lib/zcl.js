@@ -2,7 +2,7 @@
 'use strict';
 
 var Concentrate = require('concentrate'),
-    DChunks = require('dissolve-chunks'),
+    DChunks = require('../../dissolve-chunks'),
     ru = DChunks().Rule();
 
 var FoundPayload = require('./foundation'),
@@ -68,7 +68,7 @@ zcl.frame = function (frameCntl, manufCode, seqNum, cmd, zclPayload, clusterId) 
 
 zcl.header = function (buf) {
     if (!Buffer.isBuffer(buf)) throw new TypeError('header should be a buffer.');
-    
+
     // Check if package is damged
     // https://github.com/Koenkk/zigbee2mqtt/issues/42
     if(buf.length < 3) {
@@ -148,7 +148,7 @@ ru.clause('zclFrame', function (bufLen) {
 
     this.uint8('frameCntl').tap(function () {
         var filedValue = this.vars.frameCntl;
-        
+
         this.vars.frameCntl = {
             frameType: (filedValue & 0x03),
             manufSpec: (filedValue & 0x04) >> 2,

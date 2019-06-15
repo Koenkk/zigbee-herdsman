@@ -2,7 +2,7 @@
 'use strict';
 
 var Concentrate = require('concentrate'),
-    DChunks = require('dissolve-chunks'),
+    DChunks = require('../../dissolve-chunks'),
     ru = DChunks().Rule(),
     zclId = require('../../zcl-id');
 

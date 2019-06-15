@@ -3,7 +3,7 @@
 var util = require('util'),
     EventEmitter = require('events').EventEmitter;
 
-var Unpi = require('unpi'),
+var Unpi = require('../../unpi'),
     Serialport = require('serialport'),
     debug = require('debug')('cc-znp'),
     logSreq = require('debug')('cc-znp:SREQ'),
