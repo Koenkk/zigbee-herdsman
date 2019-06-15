@@ -50,7 +50,8 @@
     "q": "^1.5.1",
     "tslint": "^5.9.1",
     "typescript": "^3.4.5",
-    "serialport": "^7.1.4"
+    "serialport": "^7.1.4",
+    "@types/node": "*"
   },
   "description": "An open source ZigBee gateway solution with node.js.",
   "devDependencies": {
@@ -73,7 +74,8 @@
     "url": "git+https://github.com/zigbeer/zigbee-shepherd.git"
   },
   "scripts": {
-    "test": "make test-all"
+    "test": "make test-all",
+    "build": "./node_modules/.bin/tsc"
   },
   "version": "0.3.0"
 }
