@@ -52,14 +52,6 @@ var subSys = {
     "RPC_SYS_SRV_CTR": 31
 };
 
-// polyfill for ES5
-if (!String.prototype.startsWith) {
-    String.prototype.startsWith = function(searchString, position){
-      position = position || 0;
-      return this.substr(position, searchString.length) === searchString;
-  };
-}
-
 /*************************************************************************************************/
 /*** TI Unified NPI Packet Format                                                              ***/
 /***     SOF(1) + Length(2/1) + Type/Sub(1) + Cmd(1) + Payload(N) + FCS(1)                     ***/
