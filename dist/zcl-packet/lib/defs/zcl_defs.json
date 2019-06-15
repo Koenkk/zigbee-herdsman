@@ -1,0 +1,6 @@
+{
+    "Direction": {
+        "clientToServer": 0,
+        "serverToClient": 1
+    }
+}

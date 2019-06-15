@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./lib/shepherd.js');
+module.exports = require('./dist/lib/shepherd.js');

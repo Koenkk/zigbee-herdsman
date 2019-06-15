@@ -48,6 +48,8 @@
     "objectbox": "^0.3.0",
     "proving": "^0.1.0",
     "q": "^1.5.1",
+    "tslint": "^5.9.1",
+    "typescript": "^3.4.5",
     "serialport": "^7.1.4"
   },
   "description": "An open source ZigBee gateway solution with node.js.",
