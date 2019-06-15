@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 var util = require('util'), EventEmitter = require('events').EventEmitter;
 var Unpi = require('../unpi'), Serialport = require('serialport'), debug = require('debug')('cc-znp'), logSreq = require('debug')('cc-znp:SREQ'), logSrsp = require('debug')('cc-znp:SRSP'), logAreq = require('debug')('cc-znp:AREQ');
 var zmeta = require('./zmeta'), ZpiObject = require('./zpiObject');

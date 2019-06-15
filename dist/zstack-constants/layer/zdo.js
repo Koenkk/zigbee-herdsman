@@ -1,3 +1,4 @@
+"use strict";
 var COMMON = require('./common'), ZDO = require('./defs/zdo.json');
 ZDO = Object.assign(ZDO, {
     cmdStatus: COMMON.cmdStatus,

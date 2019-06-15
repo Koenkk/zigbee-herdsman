@@ -1,3 +1,4 @@
+"use strict";
 var EventEmitter = require('events');
 function Areq(emitter, areqTimeout) {
     if (!(emitter instanceof EventEmitter))

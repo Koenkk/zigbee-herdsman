@@ -1,3 +1,4 @@
+"use strict";
 // polyfill for ES5
 if (typeof Object.assign != 'function') {
     Object.assign = function (target) {

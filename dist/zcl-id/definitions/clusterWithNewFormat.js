@@ -1,3 +1,4 @@
+"use strict";
 var _ = require('busyman'), Enum = require('enum');
 function clusterWithNewFormat(cluster) {
     var cObj = {

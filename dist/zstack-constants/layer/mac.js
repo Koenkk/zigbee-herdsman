@@ -1,3 +1,4 @@
+"use strict";
 var COMMON = require('./common'), MAC = require('./defs/mac.json');
 MAC = Object.assign(MAC, {
     cmdStatus: COMMON.cmdStatus,

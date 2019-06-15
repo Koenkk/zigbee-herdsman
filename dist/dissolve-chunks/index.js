@@ -1,3 +1,4 @@
+"use strict";
 'strict';
 var Dissolve = require('dissolve');
 module.exports = function () {

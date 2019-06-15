@@ -1,3 +1,4 @@
+"use strict";
 var _ = require('busyman'), zclId = require('zcl-id');
 var utils = {};
 utils.isValidArgType = function (param) {

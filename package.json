@@ -81,7 +81,7 @@
     "url": "git+https://github.com/zigbeer/zigbee-shepherd.git"
   },
   "scripts": {
-    "build": "./node_modules/.bin/tsc",
+    "build": "./node_modules/.bin/tsc --alwaysStrict",
     "start": "npm run build -- -w",
     "test": "make test-all"
   },

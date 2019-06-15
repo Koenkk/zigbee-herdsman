@@ -1,3 +1,4 @@
+"use strict";
 var _ = require('busyman'), Enum = require('enum');
 var _common = require('./definitions/common.json'), _clusterDefs = require('./definitions/cluster_defs.json'), clusterWithNewFormat = require('./definitions/clusterWithNewFormat');
 var propUnwritable = { writable: false, enumerable: false, configurable: true };

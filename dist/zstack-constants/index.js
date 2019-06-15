@@ -1,3 +1,4 @@
+"use strict";
 var COMMON = require('./layer/common.js');
 var BEACON_MAX_DEPTH = 0x0F, DEF_NWK_RADIUS = (2 * BEACON_MAX_DEPTH), AF_DEFAULT_RADIUS = DEF_NWK_RADIUS, NWK_MAX_DEVICE_LIST = 20;
 var ZDEFS = {

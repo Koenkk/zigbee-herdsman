@@ -1,5 +1,3 @@
-'use strict';
-
 var util = require('util'),
     EventEmitter = require('events').EventEmitter;
 
