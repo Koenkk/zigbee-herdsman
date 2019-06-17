@@ -1,6 +1,8 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var util = require('util'), EventEmitter = require('events').EventEmitter;
-var Unpi = require('../unpi'), Serialport = require('serialport'), debug = require('debug')('cc-znp'), logSreq = require('debug')('cc-znp:SREQ'), logSrsp = require('debug')('cc-znp:SRSP'), logAreq = require('debug')('cc-znp:AREQ');
+const unpi_1 = require("../unpi");
+var Serialport = require('serialport'), debug = require('debug')('cc-znp'), logSreq = require('debug')('cc-znp:SREQ'), logSrsp = require('debug')('cc-znp:SRSP'), logAreq = require('debug')('cc-znp:AREQ');
 var zmeta = require('./zmeta'), ZpiObject = require('./zpiObject');
 var MT = {
     CMDTYPE: zmeta.CmdType,
@@ -20,12 +22,13 @@ var MT = {
 /*************************************************************************************************/
 function CcZnp() {
     EventEmitter.call(this);
+    this.unpiWriter = null;
+    this.UnpiParser = null;
     var self = this;
     this.MT = MT; // export constant
     this._init = false;
     this._resetting = false;
     this._sp = null;
-    this._unpi = null;
     this._spinLock = false;
     this._txQueue = [];
     this.on('_ready', function () {
@@ -52,7 +55,6 @@ function CcZnp() {
             self._txQueue = null;
             self._txQueue = [];
             self._sp = null;
-            self._unpi = null;
             self._init = false;
             self.emit('close');
         },
@@ -74,20 +76,30 @@ CcZnp.prototype.init = function (spCfg, callback) {
     else
         spCfg.options.autoOpen = false;
     callback = callback || function () { };
-    var self = this, sp = this._sp = (this._sp instanceof Serialport) ? this._sp : new Serialport(spCfg.path, spCfg.options), unpi = this._unpi = (this._unpi instanceof Unpi) ? this._unpi : new Unpi({ lenBytes: 1, phy: sp });
+    var self = this, sp = this._sp = (this._sp instanceof Serialport) ? this._sp : new Serialport(spCfg.path, spCfg.options);
     // Listeners for inner use
     var parseMtIncomingData = this._innerListeners.parseMtIncomingData, spOpenLsn = this._innerListeners.spOpen, spErrLsn = this._innerListeners.spErr, spCloseLsn = this._innerListeners.spClose;
     if (!sp)
         throw new Error('Cannot initialize serial port.');
-    if (!unpi)
-        throw new Error('Cannot initialize unpi.');
+    if (!this.unpiWriter) {
+        this.unpiWriter = new unpi_1.Writer();
+        this.unpiWriter.pipe(sp);
+    }
+    if (!this.unpiParser) {
+        this.unpiParser = new unpi_1.Parser();
+        sp.pipe(this.unpiParser);
+        this.unpiParser.on('parsed', function (result) {
+            parseMtIncomingData(result);
+        });
+        this.unpiParser.on('error', function (error) {
+            parseMtIncomingData(result);
+        });
+    }
     // remove all inner listeners were attached on last init
-    unpi.removeListener('data', parseMtIncomingData);
     sp.removeListener('open', spOpenLsn);
     sp.removeListener('error', spErrLsn);
     sp.removeListener('close', spCloseLsn);
     // re-attach inner listeners
-    unpi.on('data', parseMtIncomingData);
     sp.once('open', spOpenLsn);
     if (sp && sp instanceof Serialport && sp.isOpen) {
         debug('Initialize, serial port was already open');
@@ -145,7 +157,14 @@ CcZnp.prototype.request = function (subsys, cmd, valObj, callback) {
     }
 };
 CcZnp.prototype.sendCmd = function (type, subsys, cmdId, payload) {
-    return this._unpi.send(type, subsys, cmdId, payload);
+    return this._unpiSend(type, subsys, cmdId, payload);
+};
+CcZnp.prototype._unpiSend = function (type, subsys, cmdId, payload) {
+    type = unpi_1.Constants.Type[type];
+    subsys = unpi_1.Constants.Subsystem[subsys];
+    var frame = new unpi_1.Frame(type, subsys, cmdId, Array.from(payload));
+    this.unpiWriter.write(frame);
+    return frame.toBuffer();
 };
 /*********************************/
 /*** Create Request Shorthands ***/
@@ -194,7 +213,7 @@ CcZnp.prototype._sendSREQ = function (argObj, callback) {
             callback(null, result);
         }
     });
-    this._unpi.send('SREQ', argObj.subsys, argObj.cmdId, payload);
+    this._unpiSend('SREQ', argObj.subsys, argObj.cmdId, payload);
 };
 CcZnp.prototype._sendAREQ = function (argObj, callback) {
     // subsys: String, cmd: String
@@ -226,7 +245,7 @@ CcZnp.prototype._sendAREQ = function (argObj, callback) {
         this._scheduleNextSend();
         callback(null);
     }
-    this._unpi.send('AREQ', argObj.subsys, argObj.cmdId, payload);
+    this._unpiSend('AREQ', argObj.subsys, argObj.cmdId, payload);
 };
 CcZnp.prototype._scheduleNextSend = function () {
     var txQueue = this._txQueue;

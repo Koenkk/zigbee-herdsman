@@ -50,7 +50,7 @@ module.exports = function () {
                 _rules.forEach(function (rule) {
                     dChunks = rule(dChunks);
                 });
-            }); 
+            });
 
             dChunks.once("readable", function() {
                 var parsed;
@@ -64,7 +64,7 @@ module.exports = function () {
                     _rules.forEach(function (rule) {
                         dChunks = rule(dChunks);
                     });
-                }); 
+                });
             });
 
             dChunks.on("readable", function() {

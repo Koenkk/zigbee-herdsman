@@ -2,9 +2,8 @@
 'use strict';
 
 var zmeta = require('./zmeta'),
-    Unpi = require('../unpi'),
-    Concentrate = Unpi.Concentrate,
-    DChunks = Unpi.DChunks,
+    Concentrate = require('concentrate'),
+    DChunks = require('../dissolve-chunks'),
     ru = DChunks().Rule();
 
 /*************************************************************************************************/

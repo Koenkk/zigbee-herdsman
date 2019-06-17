@@ -1,6 +1,6 @@
 /* jshint node: true */
 'use strict';
-var zmeta = require('./zmeta'), Unpi = require('../unpi'), Concentrate = Unpi.Concentrate, DChunks = Unpi.DChunks, ru = DChunks().Rule();
+var zmeta = require('./zmeta'), Concentrate = require('concentrate'), DChunks = require('../dissolve-chunks'), ru = DChunks().Rule();
 /*************************************************************************************************/
 /*** ZpiObject Class                                                                           ***/
 /***   1. Provides command framer (SREQ)                                                       ***/
