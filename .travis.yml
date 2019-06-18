@@ -9,7 +9,7 @@ install:
 script:
   - npm test
   - npm run eslint
-  - npm build
+  - npm run build
 
 deploy:
   provider: npm
