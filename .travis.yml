@@ -1,8 +1,5 @@
 language: node_js
 
-deploy:
-  skip_cleanup: true
-
 node_js:
   - '10'
 
@@ -15,6 +12,7 @@ script:
   - npm run build
 
 deploy:
+  skip_cleanup: true
   provider: npm
   email: koenkanters94@gmail.com
   api_key:
