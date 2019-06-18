@@ -3,20 +3,20 @@ import {DataStart, SOF, MinimalMessageLength, PositionLength} from './constants'
 import Frame from './frame';
 
 class Parser extends stream.Transform {
-    private buffer: Array<number>;
+    private buffer: number[];
 
-    constructor() {
-      super();
-      this.buffer = [];
+    public constructor() {
+        super();
+        this.buffer = [];
     }
 
-    public _transform(chunk: Buffer, _: String, cb: Function) {
-        Array.from(chunk).map(byte => this.buffer.push(byte));
+    public _transform(chunk: Buffer, _: string, cb: Function): void {
+        Array.from(chunk).map((byte): number => this.buffer.push(byte));
         this.parseNext();
         cb();
     }
 
-    private parseNext() {
+    private parseNext(): void {
         if (this.buffer[0] == SOF && this.buffer.length >= MinimalMessageLength) {
             const length = this.buffer[PositionLength];
             const fcsPosition = DataStart + length;

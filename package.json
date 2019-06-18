@@ -1,41 +1,16 @@
 {
-  "_args": [
-    [
-      "git+https://github.com/Koenkk/zigbee-shepherd.git#f6dc5b4469a87c90007dfc9f0d329cdb01d35072",
-      "/Users/Koenkk/Git/zigbee2mqtt"
-    ]
-  ],
-  "_from": "git+https://github.com/Koenkk/zigbee-herdsman.git#823797bbfdda9cf30faa17882062910fbd7d9209",
-  "_id": "zigbee-shepherd@0.3.0",
-  "_inBundle": false,
-  "_integrity": "",
-  "_location": "/zigbee-herdsman",
-  "_phantomChildren": {},
-  "_requested": {
-    "type": "git",
-    "raw": "zigbee-herdsman@git+https://github.com/Koenkk/zigbee-herdsman.git#823797bbfdda9cf30faa17882062910fbd7d9209",
-    "name": "zigbee-herdsman",
-    "escapedName": "zigbee-herdsman",
-    "rawSpec": "git+https://github.com/Koenkk/zigbee-herdsman.git#823797bbfdda9cf30faa17882062910fbd7d9209",
-    "saveSpec": "git+https://github.com/Koenkk/zigbee-herdsman.git#823797bbfdda9cf30faa17882062910fbd7d9209",
-    "fetchSpec": "https://github.com/Koenkk/zigbee-herdsman.git",
-    "gitCommittish": "823797bbfdda9cf30faa17882062910fbd7d9209"
-  },
-  "_requiredBy": [
-    "/"
-  ],
-  "_resolved": "git+https://github.com/Koenkk/zigbee-herdsman.git#823797bbfdda9cf30faa17882062910fbd7d9209",
-  "_spec": "zigbee-herdsman@git+https://github.com/Koenkk/zigbee-herdsman.git#823797bbfdda9cf30faa17882062910fbd7d9209",
-  "_where": "/Users/Koenkk/Git/zigbee2mqtt",
   "author": {
-    "name": "Jack Wu",
-    "email": "jackchased@gmail.com"
+    "name": "Koen Kanters",
+    "email": "koenkanters94@gmail.com"
   },
   "bugs": {
-    "url": "https://github.com/zigbeer/zigbee-shepherd/issues"
+    "url": "https://github.com/koenkk/zigbee-herdsman/issues"
   },
-  "bundleDependencies": false,
   "contributors": [
+    {
+      "name": "Koen Kanters",
+      "email": "koenkanters94@gmail.com"
+    },
     {
       "name": "Hedy Wang",
       "email": "hedywings@gmail.com"
@@ -43,10 +18,13 @@
     {
       "name": "Simen Li",
       "email": "simenkid@gmail.com"
+    },
+    {
+      "name": "Jack Wu",
+      "email": "jackchased@gmail.com"
     }
   ],
   "dependencies": {
-    "@types/node": "*",
     "busyman": "^0.3.0",
     "concentrate": "^0.2.3",
     "debug": "^3.2.6",
@@ -55,35 +33,42 @@
     "objectbox": "^0.3.0",
     "proving": "^0.1.0",
     "q": "^1.5.1",
-    "serialport": "^7.1.4",
-    "tslint": "^5.9.1",
-    "typescript": "^3.4.5"
+    "serialport": "7.1.5"
   },
   "deprecated": false,
   "description": "An open source ZigBee gateway solution with node.js.",
   "devDependencies": {
-    "chai": "^3.5.0",
-    "mocha": "^3.2.0",
-    "sinon": "^1.17.4",
-    "sinon-chai": "^2.8.0",
-    "zive": "^0.2.2"
+    "@babel/core": "*",
+    "@babel/preset-env": "*",
+    "@babel/preset-react": "*",
+    "@babel/preset-typescript": "*",
+    "@types/jest": "*",
+    "@types/node": "*",
+    "@typescript-eslint/eslint-plugin": "*",
+    "@typescript-eslint/parser": "*",
+    "babel-jest": "*",
+    "eslint": "*",
+    "jest": "*",
+    "typescript": "*"
   },
-  "homepage": "https://github.com/zigbeer/zigbee-shepherd#readme",
+  "homepage": "https://github.com/Koenkk/zigbee-herdsman",
   "keywords": [
     "zigbee",
     "cc253x"
   ],
   "license": "MIT",
   "main": "index.js",
-  "name": "zigbee-shepherd",
+  "name": "zigbee-herdsman",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zigbeer/zigbee-shepherd.git"
+    "url": "git+https://github.com/Koenkk/zigbee-herdsman.git"
   },
   "scripts": {
     "build": "./node_modules/.bin/tsc --alwaysStrict",
     "start": "npm run build -- -w",
-    "test": "make test-all"
+    "test": "jest test",
+    "coverage": "jest test --coverage",
+    "eslint": "node_modules/.bin/eslint src/**/*.ts"
   },
-  "version": "0.3.0"
+  "version": "0.1.0"
 }

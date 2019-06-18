@@ -1,24 +1,24 @@
 import {Type, Subsystem, DataStart, SOF, PositionCmd0, PositionCmd1} from './constants';
 
 class Frame {
-    readonly type: Type;
-    readonly subsystem: Subsystem;
-    readonly commandID: number;
-    readonly data: Array<number>;
+    public readonly type: Type;
+    public readonly subsystem: Subsystem;
+    public readonly commandID: number;
+    public readonly data: number[];
 
-    readonly length: number;
-    readonly fcs: number;
-    readonly sof: number;
-    readonly len: number;
+    public readonly length: number;
+    public readonly fcs: number;
 
     // TO_BE_REMOVED
-    subsys: number;
-    csum: number;
-    cmd: number;
-    payload: Buffer;
+    public readonly sof: number;
+    public readonly len: number;
+    public readonly subsys: number;
+    public readonly csum: number;
+    public readonly cmd: number;
+    public readonly payload: Buffer;
 
-    constructor(
-        type: Type, subsystem: Subsystem, commandID: number, data: Array<number>,
+    public constructor(
+        type: Type, subsystem: Subsystem, commandID: number, data: number[],
         length: number = null, fcs: number = null,
     ) {
         this.type = type;
@@ -37,7 +37,7 @@ class Frame {
         this.payload = Buffer.from(data);
     }
 
-    public toBuffer() {
+    public toBuffer(): Buffer {
         const length = this.data.length;
         const cmd0 = ((this.type << 5) & 0xE0) | (this.subsystem & 0x1F);
 
@@ -48,7 +48,7 @@ class Frame {
         return Buffer.from(payload)
     }
 
-    public static fromBuffer(length: number, fcsPosition: number, buffer: Array<number>): Frame {
+    public static fromBuffer(length: number, fcsPosition: number, buffer: number[]): Frame {
         const subsystem: Subsystem = buffer[PositionCmd0] & 0x1F;
         const type: Type = (buffer[PositionCmd0] & 0xE0) >> 5;
         const commandID = buffer[PositionCmd1];
@@ -65,7 +65,7 @@ class Frame {
         }
     }
 
-    private static calculateChecksum(values: Array<number>) {
+    private static calculateChecksum(values: number[]): number {
         let checksum = 0;
 
         for (let value of values) {
