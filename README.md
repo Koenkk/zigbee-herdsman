@@ -5,7 +5,7 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 
 ### Todo
 - [x] Setup Typescript environment
-- [ ] Refactor unpi (almost done, only write tests)
+- [x] Refactor unpi
 - [ ] Refactor cc-znp
 - [ ] Remove areq
 - [ ] Remove dissolve-chunks
