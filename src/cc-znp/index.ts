@@ -128,7 +128,7 @@ CcZnp.prototype.init = function (spCfg, callback) {
         });
 
         this.unpiParser.on('error', function (error) {
-            parseMtIncomingData(result);
+            parseMtIncomingData(error);
         });
     }
 
@@ -213,7 +213,7 @@ CcZnp.prototype._unpiSend = function (type, subsys, cmdId, payload) {
     type = UnpiConstants.Type[type];
     subsys = UnpiConstants.Subsystem[subsys];
     var frame = new UnpiFrame(type, subsys, cmdId, Array.from(payload));
-    this.unpiWriter.write(frame);
+    this.unpiWriter.writeFrame(frame);
     return frame.toBuffer();
 };
 

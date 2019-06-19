@@ -89,9 +89,17 @@ describe('Writer', () => {
     it('Write frame', () => {
         const frame = new Frame(Constants.Type.SRSP, Constants.Subsystem.SYS, 3, [0x06, 0x01])
         const push = jest.spyOn(writer, 'push').mockReturnValue(undefined);
-        writer.write(frame);
+        writer.writeFrame(frame);
         expect(push).toHaveBeenCalledTimes(1);
         expect(push.mock.calls[0][0]).toStrictEqual(frame.toBuffer());
+    });
+
+    it('Write buffer', () => {
+        const buffer = [0x01, 0x02];
+        const push = jest.spyOn(writer, 'push').mockReturnValue(undefined);
+        writer.writeBuffer(buffer);
+        expect(push).toHaveBeenCalledTimes(1);
+        expect(push.mock.calls[0][0]).toStrictEqual(buffer);
     });
 
     it('Read should do nothing (satisfy coverage)', () => {

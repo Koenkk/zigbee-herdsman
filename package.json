@@ -67,8 +67,18 @@
     "build": "./node_modules/.bin/tsc --alwaysStrict || exit 0",
     "start": "npm run build -- -w",
     "test": "jest test",
-    "coverage": "jest test --coverage",
+    "test-with-coverage": "jest test --coverage",
     "eslint": "node_modules/.bin/eslint src/**/*.ts"
   },
-  "version": "0.1.9"
+  "version": "0.1.9",
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "branches": 100,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
+      }
+    }
+  }
 }
