@@ -1,7 +1,7 @@
 'use strict';
 
 var _ = require('busyman'),
-    zclId = require('zcl-id'),
+    zclId = require('../../zcl-id'),
     utils = require('./utils'),
     Spec = require('./spec');
 
