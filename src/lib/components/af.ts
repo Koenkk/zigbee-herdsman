@@ -283,7 +283,7 @@ af.zclFoundation = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
         });
     }
 
-    af.send(srcEp, dstEp, cId, zclBuffer).fail(function (err) {
+    af.send(srcEp, dstEp, cId, zclBuffer, cfg.options).fail(function (err) {
         if (mandatoryEvent && areq.isEventPending(mandatoryEvent))
             areq.reject(mandatoryEvent, err);
         else
@@ -381,7 +381,7 @@ af.zclFunctional = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
                 deferred.resolve(rsp);
         }).done();
     } else {
-        af.send(srcEp, dstEp, cId, zclBuffer).fail(function (err) {
+        af.send(srcEp, dstEp, cId, zclBuffer, cfg.options).fail(function (err) {
             if (mandatoryEvent && areq.isEventPending(mandatoryEvent))
                 areq.reject(mandatoryEvent, err);
             else
