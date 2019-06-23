@@ -227,6 +227,7 @@ af.zclFoundation = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
     // callback(err[, rsp])
     var deferred = Q.defer(),
         areq = af.areq,
+        disFeedbackRsp = false,
         dir = (srcEp === dstEp) ? 0 : 1,    // 0: client-to-server, 1: server-to-client
         manufCode = 0,
         frameCntl,
@@ -253,6 +254,10 @@ af.zclFoundation = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
         disDefaultRsp: cfg.hasOwnProperty('disDefaultRsp') ? cfg.disDefaultRsp : 0  // enable deafult response command
     };
 
+    if (cfg.hasOwnProperty('disFeedbackRsp')) {
+        disFeedbackRsp = cfg.disFeedbackRsp;
+    }
+
     if (frameCntl.manufSpec === 1)
         manufCode = cfg.hasOwnProperty('manufCode') ? cfg.manufCode : dstEp.getManufId();
 
@@ -270,7 +275,9 @@ af.zclFoundation = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
         }
     }
 
-    if (frameCntl.direction === 0) {    // client-to-server, thus require getting the feedback response
+    console.log('disfeedbackrsp', disFeedbackRsp);
+
+    if (frameCntl.direction === 0 && !disFeedbackRsp) {    // client-to-server, thus require getting the feedback response
 
         if (srcEp === dstEp)    // from remote to remote itself
             mandatoryEvent = 'ZCL:incomingMsg:' + dstEp.getNwkAddr() + ':' + dstEp.getEpId() + ':' + seqNum;
@@ -283,7 +290,7 @@ af.zclFoundation = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
         });
     }
 
-    af.send(srcEp, dstEp, cId, zclBuffer, cfg.options).fail(function (err) {
+    af.send(srcEp, dstEp, cId, zclBuffer).fail(function (err) {
         if (mandatoryEvent && areq.isEventPending(mandatoryEvent))
             areq.reject(mandatoryEvent, err);
         else
@@ -300,6 +307,7 @@ af.zclFunctional = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
     // callback(err[, rsp])
     var deferred = Q.defer(),
         areq = af.areq,
+        disFeedbackRsp = false,
         dir = (srcEp === dstEp) ? 0 : 1,    // 0: client-to-server, 1: server-to-client
         manufCode = 0,
         seqNum,
@@ -336,6 +344,10 @@ af.zclFunctional = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
         disDefaultRsp: cfg.hasOwnProperty('disDefaultRsp') ? cfg.disDefaultRsp : 0  // enable deafult response command
     };
 
+    if (cfg.hasOwnProperty('disFeedbackRsp')) {
+        disFeedbackRsp = cfg.disFeedbackRsp;
+    }
+
     if (frameCntl.manufSpec === 1)
         manufCode = cfg.hasOwnProperty('manufCode') ? cfg.manufCode : dstEp.getManufId();
 
@@ -356,7 +368,8 @@ af.zclFunctional = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
 
     // client-to-server, thus require getting the feedback response
     // NOTE: groups don't respond
-    if (frameCntl.direction === 0 && !(srcEp instanceof Group)) {
+    console.log('disfeedbackrsp', disFeedbackRsp);
+    if (frameCntl.direction === 0 && !(srcEp instanceof Group) && !disFeedbackRsp) {
 
         if (srcEp === dstEp)    // from remote to remote itself
             mandatoryEvent = 'ZCL:incomingMsg:' + dstEp.getNwkAddr() + ':' + dstEp.getEpId() + ':' + seqNum;
@@ -381,7 +394,7 @@ af.zclFunctional = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
                 deferred.resolve(rsp);
         }).done();
     } else {
-        af.send(srcEp, dstEp, cId, zclBuffer, cfg.options).fail(function (err) {
+        af.send(srcEp, dstEp, cId, zclBuffer).fail(function (err) {
             if (mandatoryEvent && areq.isEventPending(mandatoryEvent))
                 areq.reject(mandatoryEvent, err);
             else
