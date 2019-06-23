@@ -128,7 +128,6 @@ CcZnp.prototype.init = function (spCfg, callback) {
         });
 
         this.unpiParser.on('error', function (error) {
-            parseMtIncomingData(error);
         });
     }
 
