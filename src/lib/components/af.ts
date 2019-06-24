@@ -275,8 +275,6 @@ af.zclFoundation = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
         }
     }
 
-    console.log('disfeedbackrsp', disFeedbackRsp);
-
     if (frameCntl.direction === 0 && !disFeedbackRsp) {    // client-to-server, thus require getting the feedback response
 
         if (srcEp === dstEp)    // from remote to remote itself
@@ -368,7 +366,6 @@ af.zclFunctional = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
 
     // client-to-server, thus require getting the feedback response
     // NOTE: groups don't respond
-    console.log('disfeedbackrsp', disFeedbackRsp);
     if (frameCntl.direction === 0 && !(srcEp instanceof Group) && !disFeedbackRsp) {
 
         if (srcEp === dstEp)    // from remote to remote itself
