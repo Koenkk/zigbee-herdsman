@@ -625,8 +625,9 @@ ru.clause('strPreLenUint8', function (name) {
     parsedBufLen += 1;
     this.uint8('len').tap(function () {
         var attrId = this.vars['attrId'];
-        // special xiaomi struct-string
-        if (attrId === 65281) {
+        var deviceId = zclId.device(260, 10).key;
+        // special xiaomi struct-string, except xiaomi doorlock because it will crash
+        if (attrId === 65281&&deviceId!=='doorLock') {
             ru['xiaoMiStruct'](name)(this);
         } else {
             parsedBufLen += this.vars.len;
