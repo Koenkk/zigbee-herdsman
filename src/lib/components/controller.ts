@@ -1,6 +1,4 @@
-/* jshint node: true */
-'use strict';
-
+import {Znp} from '../../znp';
 const fs = require('fs');
 
 var util = require('util'),
@@ -8,7 +6,7 @@ var util = require('util'),
 
 var Q = require('q'),
     _ = require('busyman'),
-    znp = require('../../cc-znp'),
+    znp = Znp.getInstance(),
     proving = require('proving'),
     ZSC = require('../../zstack-constants'),
     debug = {
@@ -207,8 +205,7 @@ Controller.prototype.start = function (callback) {
     };
 
     this.once('ZNP:INIT', readyLsn);
-
-    Q.ninvoke(znp, 'init', this._cfg).fail(function (err) {
+    Q.ninvoke(znp, 'init', this._cfg.path, this._cfg.options).fail(function (err) {
         self.removeListener('ZNP:INIT', readyLsn);
         deferred.reject(err);
     }).done();
@@ -365,7 +362,7 @@ Controller.prototype.request = function (subsys, cmdId, valObj, callback) {
     if (subsys === 'ZDO' || subsys === 5)
         this._zdo.request(cmdId, valObj, rspHdlr);          // use wrapped zdo as the exported api
     else
-        znp.request(subsys, cmdId, valObj, rspHdlr);  // SREQ has timeout inside znp
+        znp.send(subsys, cmdId, valObj, rspHdlr);  // SREQ has timeout inside znp
 
     return deferred.promise.nodeify(callback);
 };

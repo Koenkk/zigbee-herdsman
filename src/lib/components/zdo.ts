@@ -1,9 +1,8 @@
-/* jshint node: true */
-'use strict';
+import {Znp} from '../../znp';
 
 var Q = require('q'),
     Areq = require('../../areq'),
-    znp = require('../../cc-znp'),
+    znp = Znp,
     ZSC = require('../../zstack-constants');
 
 var zdoHelper = require('./zdo_helper');
