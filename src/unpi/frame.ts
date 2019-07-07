@@ -9,14 +9,6 @@ class Frame {
     public readonly length: number;
     public readonly fcs: number;
 
-    // TO_BE_REMOVED
-    public readonly sof: number;
-    public readonly len: number;
-    public readonly subsys: number;
-    public readonly csum: number;
-    public readonly cmd: number;
-    public readonly payload: Buffer;
-
     public constructor(
         type: Type, subsystem: Subsystem, commandID: number, data: number[],
         length: number = null, fcs: number = null,
@@ -27,14 +19,6 @@ class Frame {
         this.data = data;
         this.length = length;
         this.fcs = fcs;
-
-        // TO_BE_REMOVED
-        this.csum = fcs;
-        this.sof = SOF;
-        this.len = this.length;
-        this.subsys = subsystem;
-        this.cmd = commandID;
-        this.payload = Buffer.from(data);
     }
 
     public toBuffer(): Buffer {

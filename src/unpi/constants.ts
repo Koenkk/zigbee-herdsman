@@ -17,6 +17,7 @@ enum Subsystem {
     DEBUG = 8,
     APP = 9,
     APP_CNF = 15,
+    GREENPOWER = 21,
 }
 
 const DataStart = 4;
