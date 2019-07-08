@@ -20,7 +20,7 @@ describe('Parser', () => {
         expect(parsed[0].type).toBe(Constants.Type.SRSP);
         expect(parsed[0].subsystem).toBe(Constants.Subsystem.SYS);
         expect(parsed[0].commandID).toBe(2);
-        expect(parsed[0].data).toStrictEqual([2, 0, 2, 6, 3, 217, 20, 52, 1, 2, 0, 0, 0, 0]);
+        expect(parsed[0].data).toStrictEqual(Buffer.from([2, 0, 2, 6, 3, 217, 20, 52, 1, 2, 0, 0, 0, 0]));
         expect(parsed[0].length).toBe(14);
         expect(parsed[0].fcs).toBe(0x92);
     });
@@ -32,13 +32,13 @@ describe('Parser', () => {
         expect(parsed[0].type).toBe(Constants.Type.SRSP);
         expect(parsed[0].subsystem).toBe(Constants.Subsystem.SYS);
         expect(parsed[0].commandID).toBe(2);
-        expect(parsed[0].data).toStrictEqual([2, 0, 2, 6, 3, 217, 20, 52, 1, 2, 0, 0, 0, 0]);
+        expect(parsed[0].data).toStrictEqual(Buffer.from([2, 0, 2, 6, 3, 217, 20, 52, 1, 2, 0, 0, 0, 0]));
         expect(parsed[0].length).toBe(14);
         expect(parsed[0].fcs).toBe(0x92);
         expect(parsed[1].type).toBe(Constants.Type.SRSP);
         expect(parsed[1].subsystem).toBe(Constants.Subsystem.SYS);
         expect(parsed[1].commandID).toBe(8);
-        expect(parsed[1].data).toStrictEqual([0, 1, 85]);
+        expect(parsed[1].data).toStrictEqual(Buffer.from([0, 1, 85]));
         expect(parsed[1].length).toBe(3);
         expect(parsed[1].fcs).toBe(0x3e);
     });
@@ -64,7 +64,7 @@ describe('Parser', () => {
         expect(parsed[0].type).toBe(Constants.Type.SRSP);
         expect(parsed[0].subsystem).toBe(Constants.Subsystem.SYS);
         expect(parsed[0].commandID).toBe(8);
-        expect(parsed[0].data).toStrictEqual([0, 1, 85]);
+        expect(parsed[0].data).toStrictEqual(Buffer.from([0, 1, 85]));
         expect(parsed[0].length).toBe(3);
         expect(parsed[0].fcs).toBe(0x3e);
     });
@@ -83,7 +83,7 @@ describe('Parser', () => {
         expect(parsed[0].type).toBe(Constants.Type.SRSP);
         expect(parsed[0].subsystem).toBe(Constants.Subsystem.SYS);
         expect(parsed[0].commandID).toBe(8);
-        expect(parsed[0].data).toStrictEqual([0, 1, 85]);
+        expect(parsed[0].data).toStrictEqual(Buffer.from([0, 1, 85]));
         expect(parsed[0].length).toBe(3);
         expect(parsed[0].fcs).toBe(0x3e);
     });
@@ -91,7 +91,7 @@ describe('Parser', () => {
 
 describe('Frame', () => {
     it('To buffer', () => {
-        const frame = new Frame(Constants.Type.SRSP, Constants.Subsystem.SYS, 3, [0x06, 0x01])
+        const frame = new Frame(Constants.Type.SRSP, Constants.Subsystem.SYS, 3, Buffer.from([0x06, 0x01]))
         const buffer = frame.toBuffer();
         expect(buffer).toStrictEqual(Buffer.from([0xfe, 0x02, 0x61, 0x03, 0x06, 0x01, 0x67]))
     });
@@ -105,7 +105,7 @@ describe('Writer', () => {
     });
 
     it('Write frame', () => {
-        const frame = new Frame(Constants.Type.SRSP, Constants.Subsystem.SYS, 3, [0x06, 0x01])
+        const frame = new Frame(Constants.Type.SRSP, Constants.Subsystem.SYS, 3, Buffer.from([0x06, 0x01]))
         const push = jest.spyOn(writer, 'push').mockReturnValue(undefined);
         writer.writeFrame(frame);
         expect(push).toHaveBeenCalledTimes(1);
@@ -113,7 +113,7 @@ describe('Writer', () => {
     });
 
     it('Write buffer', () => {
-        const buffer = [0x01, 0x02];
+        const buffer = Buffer.from([0x01, 0x02]);
         const push = jest.spyOn(writer, 'push').mockReturnValue(undefined);
         writer.writeBuffer(buffer);
         expect(push).toHaveBeenCalledTimes(1);

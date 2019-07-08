@@ -2,7 +2,6 @@ import {
     Writer as UnpiWriter,
     Parser as UnpiParser,
     Frame as UnpiFrame,
-    Constants as UnpiConstants,
 } from '../unpi';
 
 import {wait} from '../utils';
@@ -14,35 +13,19 @@ import SerialPort from 'serialport';
 import events from 'events';
 import Queue from 'queue';
 
+const timeouts = {
+    SREQ: 6000,
+    reset: 30000,
+};
+
 const debug = {
     error: require('debug')('znp:error'),
+    timeout: require('debug')('znp:timeout'),
     log: require('debug')('znp:log'),
     SREQ: require('debug')('znp:SREQ'),
     AREQ: require('debug')('znp:AREQ'),
     SRSP: require('debug')('znp:SRSP'),
 };
-
-const resetCmds = ['resetReq', 'systemReset'];
-
-
-// const sreqTimeout = 6000;
-
-// var zmeta = require('./zmeta'),
-//     ZpiObject = require('./zpiObject');
-
-// var MT = {
-//     CMDTYPE: zmeta.CmdType,
-//     SUBSYS: zmeta.Subsys,
-//     SYS: zmeta.SYS,
-//     MAC: zmeta.MAC,
-//     AF: zmeta.AF,
-//     ZDO: zmeta.ZDO,
-//     SAPI: zmeta.SAPI,
-//     UTIL: zmeta.UTIL,
-//     DBG: zmeta.DBG,
-//     APP: zmeta.APP,
-//     APP_CNF: zmeta.APP_CNF
-// };
 
 class Znp extends events.EventEmitter {
     private static instance: Znp;
@@ -68,64 +51,29 @@ class Znp extends events.EventEmitter {
         this.onSerialPortError = this.onSerialPortError.bind(this);
     }
 
+    private log(type: Type, message: string): void {
+        if (type === Type.SRSP) {
+            debug.SRSP(message);
+        } else if (type === Type.AREQ) {
+            debug.AREQ(message);
+        } else if (type === Type.SREQ) {
+            debug.SREQ(message);
+        }
+    }
+
     private onUnpiParsed(frame: UnpiFrame): void {
         try {
             const object = ZpiObject.fromUnpiFrame(frame);
-            return;
-
-            const argObj = new ZpiObject(frame.subsystem, frame.commandID, );
-
-            argObj.parse(frame.type, frame.len, frame.payload, (err, result): void => {
-                const message = `<-- ${frame.subsystem} - ${frame.commandID} - ${JSON.stringify(result)}`;
-                debug.log(message);
-                //console.log('weee', result);
-                //frame.payload = result;
-
-                //debug(data);
-
-                setImmediate(function () {
-                    if (err) {
-                        debug(err); // just print out. do nothing if incoming data is invalid
-                        return;
-                    }
-
-                    var rxEvt,
-                        msg,
-                        subsys = frame.subsys,
-                        cmd = frame.cmd,
-                        result = frame.payload;
-
-                    if (frame.type === 'SRSP') {
-                        logSrsp('<-- %s, %o', subsys + ':' + cmd, result);
-                        rxEvt = 'SRSP:' + subsys + ':' + cmd;
-                        this.emit(rxEvt, result);
-                    } else if (frame.type === 'AREQ') {
-                        logAreq('<-- %s, %o', subsys + ':' + cmd, result);
-                        rxEvt = 'AREQ';
-                        msg = {
-                            subsys: subsys,
-                            ind: cmd,
-                            data: result
-                        };
-
-                        this.emit(rxEvt, msg);
-
-                        if (subsys === 'SYS' && cmd === 'resetInd') {
-                            rxEvt = 'AREQ:SYS:RESET';
-                            this.emit(rxEvt, result);
-                        }
-                    }
-                });
-            });
+            const message = `<-- ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(object.payload)}`;
+            this.log(object.type, message);
+            this.emit('received', object);
         } catch (error) {
-            console.log(error);
-            //todo self._mtIncomingDataHdlr(e, data);
+            debug.error(`Error while parsing to ZpiObject '${error}'`);
         }
     }
 
     private onUnpiError(error: Error): void {
         debug.error(`Got unpi error ${error}`);
-        // TODO: close here?
     }
 
     private onSerialPortClose(): void {
@@ -134,7 +82,7 @@ class Znp extends events.EventEmitter {
     }
 
     private onSerialPortError(error: Error): void {
-        debug.log(`Serialport error: ${error}`);
+        debug.error(`Serialport error: ${error}`);
     }
 
     public init(path: string, options: {baudRate: number; rtscts: boolean}): Promise<void> {
@@ -211,126 +159,72 @@ class Znp extends events.EventEmitter {
 
     }
 
-    public send(subsystem: Subsystem, command: string, payload: object): Promise<void> {
+    private waitForWithExecute(type: Type, subsystem: Subsystem, command: string, timeout: number, execute: (() => void)): Promise<ZpiObject> {
+        return new Promise((resolve, reject): void => {
+            let timedOut = false;
+
+            const timer = setTimeout((): void => {
+                const message = `${Type[type]} - ${Subsystem[subsystem]} - ${command} after ${timeout}ms`;
+                timedOut = true;
+                debug.timeout(message);
+                reject('timeout');
+            }, timeout);
+
+            const registerHandler = (): void => {
+                this.once('received', (received: ZpiObject): void => {
+                    if (!timedOut) {
+                        if (subsystem === received.subsystem && type == received.type &&
+                            command === received.command) {
+                            clearTimeout(timer);
+                            resolve(received);
+                        } else {
+                            registerHandler();
+                        }
+                    }
+                });
+            }
+
+            registerHandler();
+
+            execute();
+        });
+    }
+
+    public send(subsystem: Subsystem, command: string, payload: object): Promise<ZpiObject> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
         }
 
-        // TODO: subsystem is still given as string
-        // @ts-ignore
-        subsystem = Subsystem[subsystem];
-
         const object = ZpiObject.createRequest(subsystem, command, payload);
         const message = `--> ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(payload)}`
 
-        return new Promise((resolve): void => {
-            this.queue.push(async (): Promise<void> => {
-                if (object.type === Type.SREQ) {
-                    debug.SREQ(message);
-                    await this.sendSREQ(object);
-                } else if (object.type === Type.AREQ) {
-                    debug.AREQ(message);
-                    await this.sendAREQ(object);
+        return new Promise((resolve, reject): void => {
+            this.queue.push(async (resolveQueue): Promise<void> => {
+                this.log(object.type, message);
+
+                try {
+                    const frame = object.toUnpiFrame();
+                    const execute = (): void => this.unpiWriter.writeFrame(frame);
+
+                    if (object.type === Type.SREQ) {
+                        const result = await this.waitForWithExecute(Type.SRSP, object.subsystem, object.command, timeouts.SREQ, execute);
+                        resolve(result);
+                    } else if (object.type === Type.AREQ && object.isResetCommand()) {
+                        await this.waitForWithExecute(Type.AREQ, Subsystem.SYS, 'resetReq', timeouts.reset, execute);
+                        this.queue.splice(1, this.queue.length);
+                        resolve();
+                    } else if (object.type === Type.AREQ) {
+                        execute();
+                        resolve();
+                    }
+                } catch (error) {
+                    reject(error);
+                } finally {
+                    resolveQueue();
                 }
-
-                resolve();
             });
-        });
-    }
-
-    private unpiSend(type: any, subsys: any, cmdId: any, payload: any): void {
-        type = UnpiConstants.Type[type];
-        subsys = UnpiConstants.Subsystem[subsys];
-        var frame = new UnpiFrame(type, subsys, cmdId, Array.from(payload));
-        this.unpiWriter.writeFrame(frame);
-    };
-
-    private sendSREQ(object: ZpiObject): Promise<void> {
-        const frame = object.toUnpiFrame();
-        const srspEvent = `SRSP:${frame.subsystem}:${frame.commandID}`;
-
-        if (!frame) {
-            throw new Error("Failed to build frame");
-        }
-
-        this.unpiSend('SREQ', object.subsystem, object.commandID, frame);
-
-        return new Promise((resolve): void => {
-            this.once(srspEvent, (result): void => {
-                debug.SRSP(JSON.stringify(result));
-            });
-        });
-    }
-
-    // const timeout = (argObj.cmd === 'bdbStartCommissioning' || argObj.cmd === 'startupFromApp') ? 6000 : 3000;
-    // sreqTimeout = setTimeout(function () {
-    //     if (self.listenerCount(srspEvt))
-    //         self.emit(srspEvt, '__timeout__');
-
-    //     sreqTimeout = null;
-    // }, timeout);
-
-    // // attach response listener
-    // this.once(srspEvt, function (result) {
-    //     self._spinLock = false;
-
-    //     // clear timeout controller if it is there
-    //     if (sreqTimeout) {
-    //         clearTimeout(sreqTimeout);
-    //         sreqTimeout = null;
-    //     }
-
-    //     // schedule next transmission if something in txQueue
-    //     self._scheduleNextSend();
-
-    //     // check if this event is fired by timeout controller
-    //     if (result === '__timeout__') {
-    //         logSrsp('<-- %s, __timeout__', argObj.subsys + ':' + argObj.cmd);
-    //         callback(new Error('request timeout'));
-    //     } else {
-    //         self._resetting = false;
-    //         callback(null, result);
-    //     }
-    // });
-
-    // this._unpiSend('SREQ', argObj.subsys, argObj.cmdId, payload);
-    // }
-
-    private sendAREQ(object: ZpiObject): Promise<void> {
-        const frame = object.frame();
-
-        if (!frame) {
-            throw new Error("Failed to build frame");
-        }
-
-        this.unpiSend('AREQ', object.subsystem, object.command, frame);
-
-        return new Promise((resolve): void => {
-            if (resetCmds.includes((frame.cmd))) {
-                this.queue.splice(1, this.queue.length);
-                this.once('AREQ:SYS:RESET', (): void => resolve());
-            } else {
-                resolve();
-            }
         });
     }
 }
-
-/*********************************/
-/*** Create Request Shorthands ***/
-/*********************************/
-// example: ccznp.sysRequest(), ccznp.zdoRequest()
-// var namespaces = [ 'SYS', 'MAC', 'NWK', 'AF', 'ZDO', 'SAPI', 'UTIL', 'DBG', 'APP', 'APP_CNF' ];
-
-// namespaces.forEach(function (subsys) {
-//     var reqMethod = subsys.toLowerCase() + 'Request';
-//     CcZnp.prototype[reqMethod] = function (cmdId, valObj, callback) {
-//         return this.request(subsys, cmdId, valObj, callback);
-//     };
-// });
-
-/*************************************************************************************************/
-/*** Export as a singleton                                                                     ***/
-/*************************************************************************************************/
 
 export default Znp;

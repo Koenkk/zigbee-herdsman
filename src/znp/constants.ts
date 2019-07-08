@@ -4,17 +4,16 @@ enum ParameterType {
     UINT8  = 0,
     UINT16  = 1,
     UINT32  = 2,
-    LONGADDR  = 3,
+    BUFFER  = 13,
+    IEEEADDR  = 3,
+    UINT16_LIST = 11,
+
     ZDOMSGCB  = 4,
     DEVLISTBUFFER  = 5,
     NWKLISTBUFFER  = 6,
-    _PRELENUINT8  = 7,
-    _PRELENUINT16  = 8,
     PRELENLIST  = 9,
     PRELENBEACONLIST  = 10,
-    DYNBUFFER  = 11,
     LISTBUFFER  = 12,
-    BUFFER  = 13,
     BUFFER8  = 14,
     BUFFER16  = 15,
     BUFFER18  = 16,
@@ -81,7 +80,7 @@ const MtCmds: {
             ID: 3,
             type: Type.SREQ,
             request: [
-                {name: 'extaddress', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddress', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -94,7 +93,7 @@ const MtCmds: {
             request: [
             ],
             response: [
-                {name: 'extaddress', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddress', parameterType: ParameterType.IEEEADDR},
             ],
         },
         {
@@ -107,8 +106,8 @@ const MtCmds: {
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'len', parameterType: ParameterType._PRELENUINT8},
-                {name: 'value', parameterType: ParameterType.DYNBUFFER},
+                {name: 'len', parameterType: ParameterType.UINT8},
+                {name: 'value', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -118,7 +117,7 @@ const MtCmds: {
             request: [
                 {name: 'address', parameterType: ParameterType.UINT16},
                 {name: 'len', parameterType: ParameterType.UINT8},
-                {name: 'value', parameterType: ParameterType.DYNBUFFER},
+                {name: 'value', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -132,7 +131,7 @@ const MtCmds: {
                 {name: 'id', parameterType: ParameterType.UINT16},
                 {name: 'len', parameterType: ParameterType.UINT16},
                 {name: 'initlen', parameterType: ParameterType.UINT8},
-                {name: 'initvalue', parameterType: ParameterType.DYNBUFFER},
+                {name: 'initvalue', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -148,8 +147,8 @@ const MtCmds: {
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'len', parameterType: ParameterType._PRELENUINT8},
-                {name: 'value', parameterType: ParameterType.DYNBUFFER},
+                {name: 'len', parameterType: ParameterType.UINT8},
+                {name: 'value', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -160,7 +159,7 @@ const MtCmds: {
                 {name: 'id', parameterType: ParameterType.UINT16},
                 {name: 'offset', parameterType: ParameterType.UINT8},
                 {name: 'len', parameterType: ParameterType.UINT8},
-                {name: 'value', parameterType: ParameterType.DYNBUFFER},
+                {name: 'value', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -388,8 +387,8 @@ const MtCmds: {
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'len', parameterType: ParameterType._PRELENUINT8},
-                {name: 'value', parameterType: ParameterType.DYNBUFFER},
+                {name: 'len', parameterType: ParameterType.UINT8},
+                {name: 'value', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -400,7 +399,7 @@ const MtCmds: {
                 {name: 'id', parameterType: ParameterType.UINT16},
                 {name: 'offset', parameterType: ParameterType.UINT16},
                 {name: 'len', parameterType: ParameterType.UINT16},
-                {name: 'value', parameterType: ParameterType.DYNBUFFER},
+                {name: 'value', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -459,8 +458,8 @@ const MtCmds: {
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'len', parameterType: ParameterType._PRELENUINT8},
-                {name: 'value', parameterType: ParameterType.DYNBUFFER},
+                {name: 'len', parameterType: ParameterType.UINT8},
+                {name: 'value', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -603,7 +602,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'destaddressmode', parameterType: ParameterType.UINT8},
-                {name: 'destaddress', parameterType: ParameterType.LONGADDR},
+                {name: 'destaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'destpanid', parameterType: ParameterType.UINT16},
                 {name: 'srcaddressmode', parameterType: ParameterType.UINT8},
                 {name: 'handle', parameterType: ParameterType.UINT8},
@@ -615,7 +614,7 @@ const MtCmds: {
                 {name: 'keyidmode', parameterType: ParameterType.UINT8},
                 {name: 'keyindex', parameterType: ParameterType.UINT8},
                 {name: 'msdulength', parameterType: ParameterType.UINT8},
-                {name: 'msdu', parameterType: ParameterType.DYNBUFFER},
+                {name: 'msdu', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -629,7 +628,7 @@ const MtCmds: {
                 {name: 'logicalchannel', parameterType: ParameterType.UINT8},
                 {name: 'channelpage', parameterType: ParameterType.UINT8},
                 {name: 'coordaddressmode', parameterType: ParameterType.UINT8},
-                {name: 'coordaddress', parameterType: ParameterType.LONGADDR},
+                {name: 'coordaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'coordpanid', parameterType: ParameterType.UINT16},
                 {name: 'capabilityinformation', parameterType: ParameterType.UINT8},
                 {name: 'keysource', parameterType: ParameterType.BUFFER},
@@ -647,7 +646,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'deviceaddressmode', parameterType: ParameterType.UINT8},
-                {name: 'deviceaddress', parameterType: ParameterType.LONGADDR},
+                {name: 'deviceaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'devicepanid', parameterType: ParameterType.UINT16},
                 {name: 'disassociatereason', parameterType: ParameterType.UINT8},
                 {name: 'txindirect', parameterType: ParameterType.UINT8},
@@ -709,7 +708,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'coordaddressmode', parameterType: ParameterType.UINT8},
-                {name: 'coordaddress', parameterType: ParameterType.LONGADDR},
+                {name: 'coordaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'coordpanid', parameterType: ParameterType.UINT16},
                 {name: 'keysource', parameterType: ParameterType.BUFFER},
                 {name: 'securitylevel', parameterType: ParameterType.UINT8},
@@ -772,7 +771,7 @@ const MtCmds: {
             ID: 80,
             type: Type.SREQ,
             request: [
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'assocshortaddress', parameterType: ParameterType.UINT16},
                 {name: 'assocstatus', parameterType: ParameterType.UINT8},
             ],
@@ -785,7 +784,7 @@ const MtCmds: {
             ID: 81,
             type: Type.SREQ,
             request: [
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'assocshortaddress', parameterType: ParameterType.UINT16},
                 {name: 'associatedmember', parameterType: ParameterType.UINT8},
             ],
@@ -813,7 +812,7 @@ const MtCmds: {
             ID: 129,
             type: Type.AREQ,
             request: [
-                {name: 'deviceextendedaddress', parameterType: ParameterType.LONGADDR},
+                {name: 'deviceextendedaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'capabilities', parameterType: ParameterType.UINT8},
                 {name: 'keysource', parameterType: ParameterType.BUFFER8},
                 {name: 'securitylevel', parameterType: ParameterType.UINT8},
@@ -842,7 +841,7 @@ const MtCmds: {
                 {name: 'bsn', parameterType: ParameterType.UINT8},
                 {name: 'timestamp', parameterType: ParameterType.UINT32},
                 {name: 'coordinatoraddressmode', parameterType: ParameterType.UINT8},
-                {name: 'coordinatorextendedaddress', parameterType: ParameterType.LONGADDR},
+                {name: 'coordinatorextendedaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'panid', parameterType: ParameterType.UINT16},
                 {name: 'superframespec', parameterType: ParameterType.UINT16},
                 {name: 'logicalchannel', parameterType: ParameterType.UINT8},
@@ -855,8 +854,8 @@ const MtCmds: {
                 {name: 'keyindex', parameterType: ParameterType.UINT8},
                 {name: 'pendingaddrspec', parameterType: ParameterType.UINT8},
                 {name: 'addresslist', parameterType: ParameterType.BUFFER32},
-                {name: 'sdulength', parameterType: ParameterType._PRELENUINT8},
-                {name: 'nsdu', parameterType: ParameterType.DYNBUFFER},
+                {name: 'sdulength', parameterType: ParameterType.UINT8},
+                {name: 'nsdu', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -876,9 +875,9 @@ const MtCmds: {
             type: Type.AREQ,
             request: [
                 {name: 'srcaddrmode', parameterType: ParameterType.UINT8},
-                {name: 'srcaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'srcaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'dstaddrmode', parameterType: ParameterType.UINT8},
-                {name: 'dstaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'dstaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'timestamp', parameterType: ParameterType.UINT32},
                 {name: 'timestamp2', parameterType: ParameterType.UINT16},
                 {name: 'srcpanid', parameterType: ParameterType.UINT16},
@@ -891,8 +890,8 @@ const MtCmds: {
                 {name: 'securitylevel', parameterType: ParameterType.UINT8},
                 {name: 'keyidmode', parameterType: ParameterType.UINT8},
                 {name: 'keyindex', parameterType: ParameterType.UINT8},
-                {name: 'length', parameterType: ParameterType._PRELENUINT8},
-                {name: 'data', parameterType: ParameterType.DYNBUFFER},
+                {name: 'length', parameterType: ParameterType.UINT8},
+                {name: 'data', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -900,7 +899,7 @@ const MtCmds: {
             ID: 134,
             type: Type.AREQ,
             request: [
-                {name: 'extendedaddress', parameterType: ParameterType.LONGADDR},
+                {name: 'extendedaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'disassociatereason', parameterType: ParameterType.UINT8},
                 {name: 'keysource', parameterType: ParameterType.BUFFER8},
                 {name: 'securitylevel', parameterType: ParameterType.UINT8},
@@ -915,7 +914,7 @@ const MtCmds: {
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'deviceaddrmode', parameterType: ParameterType.UINT8},
-                {name: 'deviceaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'deviceaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'devicepanid', parameterType: ParameterType.UINT16},
             ],
         },
@@ -924,7 +923,7 @@ const MtCmds: {
             ID: 138,
             type: Type.AREQ,
             request: [
-                {name: 'extendedaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extendedaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'keysource', parameterType: ParameterType.BUFFER8},
                 {name: 'securitylevel', parameterType: ParameterType.UINT8},
                 {name: 'keyidmode', parameterType: ParameterType.UINT8},
@@ -950,8 +949,8 @@ const MtCmds: {
                 {name: 'channelpage', parameterType: ParameterType.UINT8},
                 {name: 'unscannedchannellist', parameterType: ParameterType.UINT32},
                 {name: 'resultlistcount', parameterType: ParameterType.UINT8},
-                {name: 'resultlistmaxlength', parameterType: ParameterType._PRELENUINT8},
-                {name: 'resultlist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'resultlistmaxlength', parameterType: ParameterType.UINT8},
+                {name: 'resultlist', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -961,9 +960,9 @@ const MtCmds: {
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'srcaddrmode', parameterType: ParameterType.UINT8},
-                {name: 'srcaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'srcaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'dstaddrmode', parameterType: ParameterType.UINT8},
-                {name: 'dstaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'dstaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'devicepanid', parameterType: ParameterType.UINT16},
                 {name: 'reason', parameterType: ParameterType.UINT8},
                 {name: 'keysource', parameterType: ParameterType.BUFFER8},
@@ -1031,7 +1030,7 @@ const MtCmds: {
                 {name: 'options', parameterType: ParameterType.UINT8},
                 {name: 'radius', parameterType: ParameterType.UINT8},
                 {name: 'len', parameterType: ParameterType.UINT8},
-                {name: 'data', parameterType: ParameterType.DYNBUFFER},
+                {name: 'data', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1043,7 +1042,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'dstaddrmode', parameterType: ParameterType.UINT8},
-                {name: 'dstaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'dstaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'destendpoint', parameterType: ParameterType.UINT8},
                 {name: 'dstpanid', parameterType: ParameterType.UINT16},
                 {name: 'srcendpoint', parameterType: ParameterType.UINT8},
@@ -1052,7 +1051,7 @@ const MtCmds: {
                 {name: 'options', parameterType: ParameterType.UINT8},
                 {name: 'radius', parameterType: ParameterType.UINT8},
                 {name: 'len', parameterType: ParameterType.UINT16},
-                {name: 'data', parameterType: ParameterType.DYNBUFFER},
+                {name: 'data', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1073,7 +1072,7 @@ const MtCmds: {
                 {name: 'relaycount', parameterType: ParameterType.UINT8},
                 {name: 'relaylist', parameterType: ParameterType.LISTBUFFER},
                 {name: 'len', parameterType: ParameterType.UINT8},
-                {name: 'data', parameterType: ParameterType.DYNBUFFER},
+                {name: 'data', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1109,7 +1108,7 @@ const MtCmds: {
             request: [
                 {name: 'index', parameterType: ParameterType.UINT16},
                 {name: 'length', parameterType: ParameterType.UINT8},
-                {name: 'data', parameterType: ParameterType.DYNBUFFER},
+                {name: 'data', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1126,8 +1125,8 @@ const MtCmds: {
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'length', parameterType: ParameterType._PRELENUINT8},
-                {name: 'data', parameterType: ParameterType.DYNBUFFER},
+                {name: 'length', parameterType: ParameterType.UINT8},
+                {name: 'data', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -1181,8 +1180,8 @@ const MtCmds: {
                 {name: 'securityuse', parameterType: ParameterType.UINT8},
                 {name: 'timestamp', parameterType: ParameterType.UINT32},
                 {name: 'transseqnumber', parameterType: ParameterType.UINT8},
-                {name: 'len', parameterType: ParameterType._PRELENUINT8},
-                {name: 'data', parameterType: ParameterType.DYNBUFFER},
+                {name: 'len', parameterType: ParameterType.UINT8},
+                {name: 'data', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -1193,7 +1192,7 @@ const MtCmds: {
                 {name: 'groupid', parameterType: ParameterType.UINT16},
                 {name: 'clusterid', parameterType: ParameterType.UINT16},
                 {name: 'srcaddrmode', parameterType: ParameterType.UINT8},
-                {name: 'srcaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'srcaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'srcendpoint', parameterType: ParameterType.UINT8},
                 {name: 'srcpanid', parameterType: ParameterType.UINT16},
                 {name: 'dstendpoint', parameterType: ParameterType.UINT8},
@@ -1202,8 +1201,8 @@ const MtCmds: {
                 {name: 'securityuse', parameterType: ParameterType.UINT8},
                 {name: 'timestamp', parameterType: ParameterType.UINT32},
                 {name: 'transseqnumber', parameterType: ParameterType.UINT8},
-                {name: 'len', parameterType: ParameterType._PRELENUINT8},
-                {name: 'data', parameterType: ParameterType.DYNBUFFER},
+                {name: 'len', parameterType: ParameterType.UINT8},
+                {name: 'data', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -1225,7 +1224,7 @@ const MtCmds: {
             ID: 0,
             type: Type.SREQ,
             request: [
-                {name: 'ieeeaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'reqtype', parameterType: ParameterType.UINT8},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
             ],
@@ -1342,7 +1341,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'ieeeaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'capability', parameterType: ParameterType.UINT8},
             ],
             response: [
@@ -1357,7 +1356,7 @@ const MtCmds: {
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddrofinterest', parameterType: ParameterType.UINT16},
                 {name: 'descriptor_len', parameterType: ParameterType.UINT8},
-                {name: 'userdescriptor', parameterType: ParameterType.DYNBUFFER},
+                {name: 'userdescriptor', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1381,7 +1380,7 @@ const MtCmds: {
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'localcoord', parameterType: ParameterType.UINT16},
-                {name: 'localieee', parameterType: ParameterType.LONGADDR},
+                {name: 'localieee', parameterType: ParameterType.IEEEADDR},
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
                 {name: 'profileid', parameterType: ParameterType.UINT16},
                 {name: 'numinclusters', parameterType: ParameterType.UINT8},
@@ -1399,11 +1398,11 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
-                {name: 'srcaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'srcaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'srcendpoint', parameterType: ParameterType.UINT8},
                 {name: 'clusterid', parameterType: ParameterType.UINT16},
                 {name: 'dstaddrmode', parameterType: ParameterType.UINT8},
-                {name: 'addr_short_long', parameterType: ParameterType.LONGADDR},
+                {name: 'addr_short_long', parameterType: ParameterType.IEEEADDR},
                 {name: 'dstendpoint', parameterType: ParameterType.UINT8},
             ],
             response: [
@@ -1416,11 +1415,11 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
-                {name: 'srcaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'srcaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'srcendpoint', parameterType: ParameterType.UINT8},
                 {name: 'clusterid', parameterType: ParameterType.UINT16},
                 {name: 'dstaddrmode', parameterType: ParameterType.UINT8},
-                {name: 'addr_short_long', parameterType: ParameterType.LONGADDR},
+                {name: 'addr_short_long', parameterType: ParameterType.IEEEADDR},
                 {name: 'dstendpoint', parameterType: ParameterType.UINT8},
             ],
             response: [
@@ -1433,7 +1432,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'shortaddr', parameterType: ParameterType.UINT16},
-                {name: 'ieeeaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'linkkey', parameterType: ParameterType.BUFFER},
             ],
             response: [
@@ -1445,7 +1444,7 @@ const MtCmds: {
             ID: 36,
             type: Type.SREQ,
             request: [
-                {name: 'ieeeaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1456,11 +1455,11 @@ const MtCmds: {
             ID: 37,
             type: Type.SREQ,
             request: [
-                {name: 'ieeeaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'ieeeaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'linkkeydata', parameterType: ParameterType.BUFFER16},
             ],
         },
@@ -1483,7 +1482,7 @@ const MtCmds: {
             request: [
                 {name: 'logicalchannel', parameterType: ParameterType.UINT8},
                 {name: 'panid', parameterType: ParameterType.UINT16},
-                {name: 'extendedpanid', parameterType: ParameterType.LONGADDR},
+                {name: 'extendedpanid', parameterType: ParameterType.IEEEADDR},
                 {name: 'chosenparent', parameterType: ParameterType.UINT16},
                 {name: 'parentdepth', parameterType: ParameterType.UINT8},
                 {name: 'stackprofile', parameterType: ParameterType.UINT8},
@@ -1548,7 +1547,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
-                {name: 'deviceaddress', parameterType: ParameterType.LONGADDR},
+                {name: 'deviceaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'removechildren_rejoin', parameterType: ParameterType.UINT8},
             ],
             response: [
@@ -1561,7 +1560,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
-                {name: 'deviceaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'deviceaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'capinfo', parameterType: ParameterType.UINT8},
             ],
             response: [
@@ -1645,7 +1644,7 @@ const MtCmds: {
             type: Type.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'ieeeaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
                 {name: 'numassocdev', parameterType: ParameterType.UINT8},
@@ -1658,7 +1657,7 @@ const MtCmds: {
             type: Type.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'ieeeaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
                 {name: 'numassocdev', parameterType: ParameterType.UINT8},
@@ -1710,9 +1709,9 @@ const MtCmds: {
                 {name: 'deviceid', parameterType: ParameterType.UINT16},
                 {name: 'deviceversion', parameterType: ParameterType.UINT8},
                 {name: 'numinclusters', parameterType: ParameterType.PRELENLIST},
-                {name: 'inclusterlist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'inclusterlist', parameterType: ParameterType.BUFFER},
                 {name: 'numoutclusters', parameterType: ParameterType.PRELENLIST},
-                {name: 'outclusterlist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'outclusterlist', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -1723,8 +1722,8 @@ const MtCmds: {
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'activeepcount', parameterType: ParameterType._PRELENUINT8},
-                {name: 'activeeplist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'activeepcount', parameterType: ParameterType.UINT8},
+                {name: 'activeeplist', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -1735,8 +1734,8 @@ const MtCmds: {
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'matchlength', parameterType: ParameterType._PRELENUINT8},
-                {name: 'matchlist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'matchlength', parameterType: ParameterType.UINT8},
+                {name: 'matchlist', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -1747,8 +1746,8 @@ const MtCmds: {
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'complexlength', parameterType: ParameterType._PRELENUINT8},
-                {name: 'complexdesclist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'complexlength', parameterType: ParameterType.UINT8},
+                {name: 'complexdesclist', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -1759,8 +1758,8 @@ const MtCmds: {
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'userlength', parameterType: ParameterType._PRELENUINT8},
-                {name: 'userdescriptor', parameterType: ParameterType.DYNBUFFER},
+                {name: 'userlength', parameterType: ParameterType.UINT8},
+                {name: 'userdescriptor', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -1904,7 +1903,7 @@ const MtCmds: {
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'ieeeaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'capabilities', parameterType: ParameterType.UINT8},
             ],
         },
@@ -1915,9 +1914,9 @@ const MtCmds: {
             request: [
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
                 {name: 'numinclusters', parameterType: ParameterType.PRELENLIST},
-                {name: 'inclusterlist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'inclusterlist', parameterType: ParameterType.BUFFER},
                 {name: 'numoutclusters', parameterType: ParameterType.PRELENLIST},
-                {name: 'outclusterlist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'outclusterlist', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -1936,7 +1935,7 @@ const MtCmds: {
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'relaycount', parameterType: ParameterType.PRELENLIST},
-                {name: 'relaylist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'relaylist', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -1945,7 +1944,7 @@ const MtCmds: {
             type: Type.AREQ,
             request: [
                 {name: 'beaconcount', parameterType: ParameterType.PRELENBEACONLIST},
-                {name: 'beaconlist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'beaconlist', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -1972,7 +1971,7 @@ const MtCmds: {
             type: Type.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'request', parameterType: ParameterType.UINT8},
                 {name: 'removechildren', parameterType: ParameterType.UINT8},
                 {name: 'rejoin', parameterType: ParameterType.UINT8},
@@ -2025,7 +2024,7 @@ const MtCmds: {
                 {name: 'transseq', parameterType: ParameterType.UINT8},
                 {name: 'cmd', parameterType: ParameterType.UINT16},
                 {name: 'len', parameterType: ParameterType.UINT8},
-                {name: 'buf', parameterType: ParameterType.DYNBUFFER},
+                {name: 'buf', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2050,7 +2049,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'shortaddr', parameterType: ParameterType.UINT16},
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'linkkey', parameterType: ParameterType.BUFFER},
             ],
             response: [
@@ -2062,7 +2061,7 @@ const MtCmds: {
             ID: 67,
             type: Type.SREQ,
             request: [
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2076,7 +2075,7 @@ const MtCmds: {
             ID: 68,
             type: Type.SREQ,
             request: [
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2140,7 +2139,7 @@ const MtCmds: {
             ],
             response: [
                 {name: 'groups', parameterType: ParameterType.PRELENLIST},
-                {name: 'grouplist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'grouplist', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -2154,8 +2153,8 @@ const MtCmds: {
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'groupid', parameterType: ParameterType.UINT16},
-                {name: 'namelen', parameterType: ParameterType._PRELENUINT8},
-                {name: 'groupname', parameterType: ParameterType.DYNBUFFER},
+                {name: 'namelen', parameterType: ParameterType.UINT8},
+                {name: 'groupname', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -2166,7 +2165,7 @@ const MtCmds: {
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
                 {name: 'groupid', parameterType: ParameterType.UINT16},
                 {name: 'namelen', parameterType: ParameterType.UINT8},
-                {name: 'groupname', parameterType: ParameterType.DYNBUFFER},
+                {name: 'groupname', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2230,8 +2229,8 @@ const MtCmds: {
                 {name: 'devstate', parameterType: ParameterType.UINT8},
                 {name: 'panid', parameterType: ParameterType.UINT16},
                 {name: 'parentaddr', parameterType: ParameterType.UINT16},
-                {name: 'extendedpanid', parameterType: ParameterType.LONGADDR},
-                {name: 'parentextaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extendedpanid', parameterType: ParameterType.IEEEADDR},
+                {name: 'parentextaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'channel', parameterType: ParameterType.UINT8},
             ],
         },
@@ -2242,7 +2241,7 @@ const MtCmds: {
             request: [
                 {name: 'parentaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2274,7 +2273,7 @@ const MtCmds: {
             type: Type.AREQ,
             request: [
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'parentaddr', parameterType: ParameterType.UINT16},
             ],
         },
@@ -2311,7 +2310,7 @@ const MtCmds: {
             request: [
                 {name: 'action', parameterType: ParameterType.UINT8},
                 {name: 'commandid', parameterType: ParameterType.UINT16},
-                {name: 'destination', parameterType: ParameterType.LONGADDR},
+                {name: 'destination', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
             ],
@@ -2337,7 +2336,7 @@ const MtCmds: {
                 {name: 'txoptions', parameterType: ParameterType.UINT8},
                 {name: 'radius', parameterType: ParameterType.UINT8},
                 {name: 'payloadlen', parameterType: ParameterType.UINT8},
-                {name: 'payloadvalue', parameterType: ParameterType.DYNBUFFER},
+                {name: 'payloadvalue', parameterType: ParameterType.BUFFER},
             ],
             response: [
             ],
@@ -2352,8 +2351,8 @@ const MtCmds: {
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'configid', parameterType: ParameterType.UINT8},
-                {name: 'len', parameterType: ParameterType._PRELENUINT8},
-                {name: 'value', parameterType: ParameterType.DYNBUFFER},
+                {name: 'len', parameterType: ParameterType.UINT8},
+                {name: 'value', parameterType: ParameterType.BUFFER},
             ],
         },
         {
@@ -2363,7 +2362,7 @@ const MtCmds: {
             request: [
                 {name: 'configid', parameterType: ParameterType.UINT8},
                 {name: 'len', parameterType: ParameterType.UINT8},
-                {name: 'value', parameterType: ParameterType.DYNBUFFER},
+                {name: 'value', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2386,7 +2385,7 @@ const MtCmds: {
             ID: 7,
             type: Type.SREQ,
             request: [
-                {name: 'searchKey', parameterType: ParameterType.LONGADDR},
+                {name: 'searchKey', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
             ],
@@ -2444,7 +2443,7 @@ const MtCmds: {
             request: [
                 {name: 'searchtype', parameterType: ParameterType.UINT8},
                 {name: 'searchkey', parameterType: ParameterType.UINT16},
-                {name: 'result', parameterType: ParameterType.LONGADDR},
+                {name: 'result', parameterType: ParameterType.IEEEADDR},
             ],
         },
         {
@@ -2454,8 +2453,8 @@ const MtCmds: {
             request: [
                 {name: 'source', parameterType: ParameterType.UINT16},
                 {name: 'command', parameterType: ParameterType.UINT16},
-                {name: 'len', parameterType: ParameterType._PRELENUINT16},
-                {name: 'data', parameterType: ParameterType.DYNBUFFER},
+                {name: 'len', parameterType: ParameterType.UINT16},
+                {name: 'data', parameterType: ParameterType.BUFFER},
             ],
         },
     ],
@@ -2468,12 +2467,12 @@ const MtCmds: {
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'ieeeaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'shortaddr', parameterType: ParameterType.UINT16},
                 {name: 'devicetype', parameterType: ParameterType.UINT8},
                 {name: 'devicestate', parameterType: ParameterType.UINT8},
-                {name: 'numassocdevices', parameterType: ParameterType.PRELENLIST},
-                {name: 'assocdeviceslist', parameterType: ParameterType.DYNBUFFER},
+                {name: 'numassocdevices', parameterType: ParameterType.UINT8},
+                {name: 'assocdeviceslist', parameterType: ParameterType.UINT16_LIST},
             ],
         },
         {
@@ -2484,7 +2483,7 @@ const MtCmds: {
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'ieeeaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'scanchannels', parameterType: ParameterType.UINT32BE},
                 {name: 'panid', parameterType: ParameterType.UINT16},
                 {name: 'securitylevel', parameterType: ParameterType.UINT8},
@@ -2619,7 +2618,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'addressmode', parameterType: ParameterType.UINT8},
-                {name: 'address', parameterType: ParameterType.LONGADDR},
+                {name: 'address', parameterType: ParameterType.IEEEADDR},
                 {name: 'panid', parameterType: ParameterType.UINT16},
             ],
             response: [
@@ -2632,7 +2631,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'addressmode', parameterType: ParameterType.UINT8},
-                {name: 'address', parameterType: ParameterType.LONGADDR},
+                {name: 'address', parameterType: ParameterType.IEEEADDR},
                 {name: 'panid', parameterType: ParameterType.UINT16},
             ],
             response: [
@@ -2645,7 +2644,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'addressmode', parameterType: ParameterType.UINT8},
-                {name: 'address', parameterType: ParameterType.LONGADDR},
+                {name: 'address', parameterType: ParameterType.IEEEADDR},
                 {name: 'panid', parameterType: ParameterType.UINT16},
             ],
             response: [
@@ -2679,7 +2678,7 @@ const MtCmds: {
             ID: 64,
             type: Type.SREQ,
             request: [
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
@@ -2693,7 +2692,7 @@ const MtCmds: {
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
             ],
             response: [
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
         },
         {
@@ -2701,7 +2700,7 @@ const MtCmds: {
             ID: 68,
             type: Type.SREQ,
             request: [
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2715,7 +2714,7 @@ const MtCmds: {
             ID: 69,
             type: Type.SREQ,
             request: [
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2750,7 +2749,7 @@ const MtCmds: {
             ID: 74,
             type: Type.SREQ,
             request: [
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
             ],
             response: [
@@ -2762,7 +2761,7 @@ const MtCmds: {
             ID: 75,
             type: Type.SREQ,
             request: [
-                {name: 'partneraddr', parameterType: ParameterType.LONGADDR},
+                {name: 'partneraddr', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2777,7 +2776,7 @@ const MtCmds: {
                 {name: 'seqnum', parameterType: ParameterType.UINT8},
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
                 {name: 'addrmode', parameterType: ParameterType.UINT8},
-                {name: 'extaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2789,7 +2788,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'inputlen', parameterType: ParameterType.UINT8},
-                {name: 'input', parameterType: ParameterType.DYNBUFFER},
+                {name: 'input', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2885,7 +2884,7 @@ const MtCmds: {
             type: Type.SREQ,
             request: [
                 {name: 'addrmode', parameterType: ParameterType.UINT8},
-                {name: 'dstaddr', parameterType: ParameterType.LONGADDR},
+                {name: 'dstaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'dstendpoint', parameterType: ParameterType.UINT8},
                 {name: 'numclusterids', parameterType: ParameterType.UINT8},
                 {name: 'clusterids', parameterType: ParameterType.LISTBUFFER},
@@ -2919,7 +2918,7 @@ const MtCmds: {
             type: Type.AREQ,
             request: [
                 {name: 'length', parameterType: ParameterType.UINT8},
-                {name: 'string', parameterType: ParameterType.DYNBUFFER},
+                {name: 'string', parameterType: ParameterType.BUFFER},
             ],
         },
     ],
@@ -2934,7 +2933,7 @@ const MtCmds: {
                 {name: 'destendpoint', parameterType: ParameterType.UINT8},
                 {name: 'clusterid', parameterType: ParameterType.UINT16},
                 {name: 'msglen', parameterType: ParameterType.UINT8},
-                {name: 'message', parameterType: ParameterType.DYNBUFFER},
+                {name: 'message', parameterType: ParameterType.BUFFER},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -3011,7 +3010,7 @@ const MtCmds: {
             request: [
                 {name: 'applicationID', parameterType: ParameterType.UINT8},
                 {name: 'srcID', parameterType: ParameterType.UINT32},
-                {name: 'gdpIeeeAddr', parameterType: ParameterType.LONGADDR},
+                {name: 'gdpIeeeAddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
                 {name: 'gpdfSecurityLevel', parameterType: ParameterType.UINT8},
                 {name: 'gpdfSecurityFrameCounter', parameterType: ParameterType.UINT8},

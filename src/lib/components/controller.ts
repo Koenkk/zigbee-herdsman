@@ -1,4 +1,6 @@
 import {Znp} from '../../znp';
+import {Subsystem, Type} from '../../unpi/constants';
+
 const fs = require('fs');
 
 var util = require('util'),
@@ -351,7 +353,7 @@ Controller.prototype.request = function (subsys, cmdId, valObj, callback) {
         else if ((subsys !== 'ZDO' && subsys !== 5) && rsp && rsp.hasOwnProperty('status') && rsp.status !== 0)  // unsuccessful
             deferred.reject(new Error('rsp error: ' + rsp.status));
         else
-            deferred.resolve(rsp);
+            deferred.resolve(rsp.payload);
     };
 
     if ((subsys === 'AF' || subsys === 4) && valObj.hasOwnProperty('transid'))
@@ -359,10 +361,14 @@ Controller.prototype.request = function (subsys, cmdId, valObj, callback) {
     else
         debug.request('REQ --> %s', subsys + ':' + cmdId);
 
-    if (subsys === 'ZDO' || subsys === 5)
+    if (subsys === 'ZDO' || subsys === 5) {
         this._zdo.request(cmdId, valObj, rspHdlr);          // use wrapped zdo as the exported api
-    else
-        znp.send(subsys, cmdId, valObj, rspHdlr);  // SREQ has timeout inside znp
+        throw new Error('what is happening here?');
+    } else {
+        const promise = znp.send(Subsystem[subsys], cmdId, valObj);  // SREQ has timeout inside znp
+        promise.then((object) => rspHdlr(null, object)).catch((error) => rspHdlr(error, null));
+    }
+
 
     return deferred.promise.nodeify(callback);
 };
