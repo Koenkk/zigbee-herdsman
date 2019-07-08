@@ -198,6 +198,15 @@ function ZShepherd(path, opts) {
             attrIdString = attrIdString ? attrIdString.key : rec.attrId;
 
             notifData.data[attrIdString] = rec.attrData;
+
+            if (attrIdString === 'modelId' && !ep.device.modelId) {
+                /**
+                 * Konke devices report it's modelId through a readRsp message.
+                 * Set this as the modelId when the device doesn't have one yet.
+                 */
+                ep.device.update({modelId: rec.attrData});
+                Q.ninvoke(self._devbox, 'sync', ep.device._getId());
+            }
         });
 
         self.emit('ind', { type: 'readRsp', endpoints: [ ep ], data: notifData, linkquality: msg.linkquality });
