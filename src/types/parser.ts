@@ -1,11 +1,5 @@
 import Type from './type';
-import {ParserOptions, Parser, ReadResult} from './types';
-
-function checkOptionProperty(parser: string, property: 'length', options: ParserOptions): void {
-    if (options === undefined || options[property] === undefined) {
-        throw new Error(`${parser} parser read requires '${property}' as argument`);
-    }
-}
+import {Parser, ReadResult} from './types';
 
 function addressBufferToString(buffer: Buffer): string {
     let address = '0x';
@@ -61,7 +55,6 @@ const Parsers: {
             return values.length;
         },
         read: (buffer, offset, options): ReadResult => {
-            checkOptionProperty('BUFFER read', 'length', options);
             return {value: buffer.slice(offset, offset + options.length), length: options.length};
         },
     },
@@ -87,8 +80,6 @@ const Parsers: {
             return values.length * 2;
         },
         read: (buffer, offset, options): ReadResult => {
-            checkOptionProperty('UINT16_LIST read', 'length', options);
-
             const value = [];
             for (let i = 0; i < (options.length * 2); i += 2) {
                 value.push(buffer.readUInt16LE(offset + i));
