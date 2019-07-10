@@ -1,19 +1,21 @@
 import {Subsystem, Type, MaxDataSize} from '../unpi/constants';
 import {Frame as UnpiFrame} from '../unpi';
-import {MtCmds, MtCmd, MtParameter, ParameterType} from './constants';
-import Parsers from './parsers';
+import Definition from './definition';
+import Parsers from '../types/parser';
+import {Type as ParameterType, Types as TypesTypes} from '../types';
+import {MtParameter, MtCmd, ZpiObjectPayload, MtType} from './types';
 
 class ZpiObject {
     public readonly subsystem: Subsystem;
     public readonly command: string;
     public readonly commandID: number;
-    public readonly payload: any;
+    public readonly payload: ZpiObjectPayload;
     public readonly type: Type;
 
     private readonly parameters: MtParameter[];
 
     private constructor(
-        type: Type, subsystem: Subsystem, command: string, commandID: number, payload: object,
+        type: Type, subsystem: Subsystem, command: string, commandID: number, payload: ZpiObjectPayload,
         parameters: MtParameter[],
     ) {
         this.subsystem = subsystem;
@@ -24,8 +26,8 @@ class ZpiObject {
         this.parameters = parameters;
     }
 
-    public static createRequest(subsystem: Subsystem, command: string, payload: object): ZpiObject {
-        const cmd = MtCmds[subsystem].find((c: MtCmd): boolean => c.name === command);
+    public static createRequest(subsystem: Subsystem, command: string, payload: ZpiObjectPayload): ZpiObject {
+        const cmd = Definition[subsystem].find((c: MtCmd): boolean => c.name === command);
 
         if (!cmd) {
             throw new Error(`Command '${command}' from subsystem '${subsystem}' not found`);
@@ -44,7 +46,7 @@ class ZpiObject {
     }
 
     public static fromUnpiFrame(frame: UnpiFrame): ZpiObject {
-        const cmd = MtCmds[frame.subsystem].find((c: MtCmd): boolean => c.ID === frame.commandID);
+        const cmd = Definition[frame.subsystem].find((c: MtCmd): boolean => c.ID === frame.commandID);
 
         if (!cmd) {
             throw new Error(`CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' not found`);
@@ -63,13 +65,13 @@ class ZpiObject {
         return new ZpiObject(frame.type, frame.subsystem, cmd.name, cmd.ID, payload, parameters);
     }
 
-    private static readParameters(buffer: Buffer, parameters: MtParameter[]): object {
+    private static readParameters(buffer: Buffer, parameters: MtParameter[]): ZpiObjectPayload {
         let offset = 0;
-        let result: any = {};
+        let result: ZpiObjectPayload = {};
 
         for (let parameter of parameters) {
             const parser = Parsers[parameter.parameterType];
-            const options: any = {};
+            const options: TypesTypes.ParserOptions = {};
 
             if (parser === undefined) {
                 throw new Error(`Missing read parser for ${ParameterType[parameter.parameterType]} - ${parameter.name}`);
@@ -79,7 +81,10 @@ class ZpiObject {
                 // When reading a buffer, assume that the previous parsed parameter contains
                 // the length of the buffer
                 const previousParameter = parameters[parameters.indexOf(parameter) - 1];
-                options.length = result[previousParameter.name];
+                const value: MtType = result[previousParameter.name];
+                if (typeof value === 'number') {
+                    options.length = value;
+                }
             }
 
             const parsed = parser.read(buffer, offset, options);

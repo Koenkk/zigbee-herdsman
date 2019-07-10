@@ -1,43 +1,8 @@
-import {Subsystem, Type} from '../unpi/constants';
+import {Subsystem, Type as CommandType} from '../unpi/constants';
+import {Type as ParameterType} from '../types';
+import {MtCmd} from './types';
 
-enum ParameterType {
-    UINT8  = 0,
-    UINT16  = 1,
-    UINT32  = 2,
-    BUFFER  = 13,
-    IEEEADDR  = 3,
-    UINT16_LIST = 11,
-
-    ZDOMSGCB  = 4,
-    DEVLISTBUFFER  = 5,
-    NWKLISTBUFFER  = 6,
-    PRELENLIST  = 9,
-    PRELENBEACONLIST  = 10,
-    LISTBUFFER  = 12,
-    BUFFER8  = 14,
-    BUFFER16  = 15,
-    BUFFER18  = 16,
-    BUFFER32  = 17,
-    BUFFER42  = 18,
-    BUFFER100  = 19,
-    UINT8ZDOIND  = 20,
-    UINT32BE = 21,
-}
-
-interface MtParameter {
-    name: string;
-    parameterType: number;
-};
-
-interface MtCmd {
-    name: string;
-    ID: number;
-    type: number;
-    request?: MtParameter[];
-    response?: MtParameter[];
-};
-
-const MtCmds: {
+const Definition: {
     [s: number]: MtCmd[];
 }
 = {
@@ -45,7 +10,7 @@ const MtCmds: {
         {
             name: 'resetReq',
             ID: 0,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'type', parameterType: ParameterType.UINT8},
             ],
@@ -53,7 +18,7 @@ const MtCmds: {
         {
             name: 'ping',
             ID: 1,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -63,7 +28,7 @@ const MtCmds: {
         {
             name: 'version',
             ID: 2,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -78,7 +43,7 @@ const MtCmds: {
         {
             name: 'setExtAddr',
             ID: 3,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'extaddress', parameterType: ParameterType.IEEEADDR},
             ],
@@ -89,7 +54,7 @@ const MtCmds: {
         {
             name: 'getExtAddr',
             ID: 4,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -99,7 +64,7 @@ const MtCmds: {
         {
             name: 'ramRead',
             ID: 5,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'address', parameterType: ParameterType.UINT16},
                 {name: 'len', parameterType: ParameterType.UINT8},
@@ -113,7 +78,7 @@ const MtCmds: {
         {
             name: 'ramWrite',
             ID: 6,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'address', parameterType: ParameterType.UINT16},
                 {name: 'len', parameterType: ParameterType.UINT8},
@@ -126,7 +91,7 @@ const MtCmds: {
         {
             name: 'osalNvItemInit',
             ID: 7,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'id', parameterType: ParameterType.UINT16},
                 {name: 'len', parameterType: ParameterType.UINT16},
@@ -140,7 +105,7 @@ const MtCmds: {
         {
             name: 'osalNvRead',
             ID: 8,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'id', parameterType: ParameterType.UINT16},
                 {name: 'offset', parameterType: ParameterType.UINT8},
@@ -154,7 +119,7 @@ const MtCmds: {
         {
             name: 'osalNvWrite',
             ID: 9,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'id', parameterType: ParameterType.UINT16},
                 {name: 'offset', parameterType: ParameterType.UINT8},
@@ -168,7 +133,7 @@ const MtCmds: {
         {
             name: 'osalStartTimer',
             ID: 10,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'id', parameterType: ParameterType.UINT8},
                 {name: 'timeout', parameterType: ParameterType.UINT16},
@@ -180,7 +145,7 @@ const MtCmds: {
         {
             name: 'osalStopTimer',
             ID: 11,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'id', parameterType: ParameterType.UINT8},
             ],
@@ -191,7 +156,7 @@ const MtCmds: {
         {
             name: 'random',
             ID: 12,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -201,7 +166,7 @@ const MtCmds: {
         {
             name: 'adcRead',
             ID: 13,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'channel', parameterType: ParameterType.UINT8},
                 {name: 'resolution', parameterType: ParameterType.UINT8},
@@ -213,7 +178,7 @@ const MtCmds: {
         {
             name: 'gpio',
             ID: 14,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'operation', parameterType: ParameterType.UINT8},
                 {name: 'value', parameterType: ParameterType.UINT8},
@@ -225,7 +190,7 @@ const MtCmds: {
         {
             name: 'stackTune',
             ID: 15,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'operation', parameterType: ParameterType.UINT8},
                 {name: 'value', parameterType: ParameterType.UINT8},
@@ -237,7 +202,7 @@ const MtCmds: {
         {
             name: 'setTime',
             ID: 16,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'utc', parameterType: ParameterType.UINT32},
                 {name: 'hour', parameterType: ParameterType.UINT8},
@@ -254,7 +219,7 @@ const MtCmds: {
         {
             name: 'getTime',
             ID: 17,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -270,7 +235,7 @@ const MtCmds: {
         {
             name: 'osalNvDelete',
             ID: 18,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'id', parameterType: ParameterType.UINT16},
                 {name: 'len', parameterType: ParameterType.UINT16},
@@ -282,7 +247,7 @@ const MtCmds: {
         {
             name: 'osalNvLength',
             ID: 19,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'id', parameterType: ParameterType.UINT16},
             ],
@@ -293,7 +258,7 @@ const MtCmds: {
         {
             name: 'setTxPower',
             ID: 20,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'level', parameterType: ParameterType.UINT8},
             ],
@@ -304,7 +269,7 @@ const MtCmds: {
         {
             name: 'jammerParameters',
             ID: 21,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'jmrcntievents', parameterType: ParameterType.UINT16},
                 {name: 'jmrhinoiselvl', parameterType: ParameterType.UINT8},
@@ -317,7 +282,7 @@ const MtCmds: {
         {
             name: 'snifferParameters',
             ID: 22,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'param', parameterType: ParameterType.UINT8},
             ],
@@ -328,7 +293,7 @@ const MtCmds: {
         {
             name: 'zdiagsInitStats',
             ID: 23,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -338,7 +303,7 @@ const MtCmds: {
         {
             name: 'zdiagsClearStats',
             ID: 24,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'clearnv', parameterType: ParameterType.UINT8},
             ],
@@ -349,7 +314,7 @@ const MtCmds: {
         {
             name: 'zdiagsGetStats',
             ID: 25,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'attributeid', parameterType: ParameterType.UINT16},
             ],
@@ -360,7 +325,7 @@ const MtCmds: {
         {
             name: 'zdiagsRestoreStatsNv',
             ID: 26,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -370,7 +335,7 @@ const MtCmds: {
         {
             name: 'zdiagsSaveStatsToNv',
             ID: 27,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -380,7 +345,7 @@ const MtCmds: {
         {
             name: 'osalNvReadExt',
             ID: 28,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'id', parameterType: ParameterType.UINT16},
                 {name: 'offset', parameterType: ParameterType.UINT16},
@@ -394,7 +359,7 @@ const MtCmds: {
         {
             name: 'osalNvWriteExt',
             ID: 29,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'id', parameterType: ParameterType.UINT16},
                 {name: 'offset', parameterType: ParameterType.UINT16},
@@ -408,7 +373,7 @@ const MtCmds: {
         {
             name: 'nvCreate',
             ID: 48,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'sysid', parameterType: ParameterType.UINT8},
                 {name: 'itemid', parameterType: ParameterType.UINT16},
@@ -422,7 +387,7 @@ const MtCmds: {
         {
             name: 'nvDelete',
             ID: 49,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'sysid', parameterType: ParameterType.UINT8},
                 {name: 'itemid', parameterType: ParameterType.UINT16},
@@ -435,7 +400,7 @@ const MtCmds: {
         {
             name: 'nvLength',
             ID: 50,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'sysid', parameterType: ParameterType.UINT8},
                 {name: 'itemid', parameterType: ParameterType.UINT16},
@@ -448,7 +413,7 @@ const MtCmds: {
         {
             name: 'nvRead',
             ID: 51,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'sysid', parameterType: ParameterType.UINT8},
                 {name: 'itemid', parameterType: ParameterType.UINT16},
@@ -465,7 +430,7 @@ const MtCmds: {
         {
             name: 'nvWrite',
             ID: 52,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'sysid', parameterType: ParameterType.UINT8},
                 {name: 'itemid', parameterType: ParameterType.UINT16},
@@ -481,7 +446,7 @@ const MtCmds: {
         {
             name: 'nvUpdate',
             ID: 53,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'sysid', parameterType: ParameterType.UINT8},
                 {name: 'itemid', parameterType: ParameterType.UINT16},
@@ -496,7 +461,7 @@ const MtCmds: {
         {
             name: 'nvCompact',
             ID: 54,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'threshold', parameterType: ParameterType.UINT16},
             ],
@@ -507,7 +472,7 @@ const MtCmds: {
         {
             name: 'resetInd',
             ID: 128,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'reason', parameterType: ParameterType.UINT8},
                 {name: 'transportrev', parameterType: ParameterType.UINT8},
@@ -520,7 +485,7 @@ const MtCmds: {
         {
             name: 'osalTimerExpired',
             ID: 129,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'id', parameterType: ParameterType.UINT8},
             ],
@@ -528,7 +493,7 @@ const MtCmds: {
         {
             name: 'jammerInd',
             ID: 130,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'jammerind', parameterType: ParameterType.UINT8},
             ],
@@ -538,7 +503,7 @@ const MtCmds: {
         {
             name: 'resetReq',
             ID: 1,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'setdefault', parameterType: ParameterType.UINT8},
             ],
@@ -549,7 +514,7 @@ const MtCmds: {
         {
             name: 'init',
             ID: 2,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -559,7 +524,7 @@ const MtCmds: {
         {
             name: 'startReq',
             ID: 3,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'starttime', parameterType: ParameterType.UINT32},
                 {name: 'panid', parameterType: ParameterType.UINT16},
@@ -586,7 +551,7 @@ const MtCmds: {
         {
             name: 'syncReq',
             ID: 4,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'logicalchannel', parameterType: ParameterType.UINT8},
                 {name: 'channelpage', parameterType: ParameterType.UINT8},
@@ -599,7 +564,7 @@ const MtCmds: {
         {
             name: 'dataReq',
             ID: 5,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'destaddressmode', parameterType: ParameterType.UINT8},
                 {name: 'destaddress', parameterType: ParameterType.IEEEADDR},
@@ -623,7 +588,7 @@ const MtCmds: {
         {
             name: 'associateReq',
             ID: 6,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'logicalchannel', parameterType: ParameterType.UINT8},
                 {name: 'channelpage', parameterType: ParameterType.UINT8},
@@ -643,7 +608,7 @@ const MtCmds: {
         {
             name: 'disassociateReq',
             ID: 7,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'deviceaddressmode', parameterType: ParameterType.UINT8},
                 {name: 'deviceaddress', parameterType: ParameterType.IEEEADDR},
@@ -662,7 +627,7 @@ const MtCmds: {
         {
             name: 'getReq',
             ID: 8,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'attribute', parameterType: ParameterType.UINT8},
             ],
@@ -674,7 +639,7 @@ const MtCmds: {
         {
             name: 'setReq',
             ID: 9,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'attribute', parameterType: ParameterType.UINT8},
                 {name: 'attributevalue', parameterType: ParameterType.BUFFER},
@@ -686,7 +651,7 @@ const MtCmds: {
         {
             name: 'scanReq',
             ID: 12,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'scanchannels', parameterType: ParameterType.UINT32},
                 {name: 'scantype', parameterType: ParameterType.UINT8},
@@ -705,7 +670,7 @@ const MtCmds: {
         {
             name: 'pollReq',
             ID: 13,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'coordaddressmode', parameterType: ParameterType.UINT8},
                 {name: 'coordaddress', parameterType: ParameterType.IEEEADDR},
@@ -722,7 +687,7 @@ const MtCmds: {
         {
             name: 'purgeReq',
             ID: 14,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'msduhandle', parameterType: ParameterType.UINT8},
             ],
@@ -733,7 +698,7 @@ const MtCmds: {
         {
             name: 'setRxGainReq',
             ID: 15,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'mode', parameterType: ParameterType.UINT8},
             ],
@@ -744,7 +709,7 @@ const MtCmds: {
         {
             name: 'securityGetReq',
             ID: 48,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'attribute', parameterType: ParameterType.UINT8},
                 {name: 'index1', parameterType: ParameterType.UINT8},
@@ -757,7 +722,7 @@ const MtCmds: {
         {
             name: 'securitySetReq',
             ID: 49,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'attribute', parameterType: ParameterType.UINT8},
                 {name: 'attributevalue', parameterType: ParameterType.BUFFER},
@@ -769,7 +734,7 @@ const MtCmds: {
         {
             name: 'associateRsp',
             ID: 80,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'assocshortaddress', parameterType: ParameterType.UINT16},
@@ -782,7 +747,7 @@ const MtCmds: {
         {
             name: 'orphanRsp',
             ID: 81,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'assocshortaddress', parameterType: ParameterType.UINT16},
@@ -795,7 +760,7 @@ const MtCmds: {
         {
             name: 'syncLossInd',
             ID: 128,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'panid', parameterType: ParameterType.UINT16},
@@ -810,7 +775,7 @@ const MtCmds: {
         {
             name: 'associateInd',
             ID: 129,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'deviceextendedaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'capabilities', parameterType: ParameterType.UINT8},
@@ -823,7 +788,7 @@ const MtCmds: {
         {
             name: 'associateCnf',
             ID: 130,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'deviceshortaddress', parameterType: ParameterType.UINT16},
@@ -836,7 +801,7 @@ const MtCmds: {
         {
             name: 'beaconNotifyInd',
             ID: 131,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'bsn', parameterType: ParameterType.UINT8},
                 {name: 'timestamp', parameterType: ParameterType.UINT32},
@@ -861,7 +826,7 @@ const MtCmds: {
         {
             name: 'dataCnf',
             ID: 132,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'handle', parameterType: ParameterType.UINT8},
@@ -872,7 +837,7 @@ const MtCmds: {
         {
             name: 'dataInd',
             ID: 133,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddrmode', parameterType: ParameterType.UINT8},
                 {name: 'srcaddr', parameterType: ParameterType.IEEEADDR},
@@ -897,7 +862,7 @@ const MtCmds: {
         {
             name: 'disassociateInd',
             ID: 134,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'extendedaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'disassociatereason', parameterType: ParameterType.UINT8},
@@ -910,7 +875,7 @@ const MtCmds: {
         {
             name: 'disassociateCnf',
             ID: 135,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'deviceaddrmode', parameterType: ParameterType.UINT8},
@@ -921,7 +886,7 @@ const MtCmds: {
         {
             name: 'orphanInd',
             ID: 138,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'extendedaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'keysource', parameterType: ParameterType.BUFFER8},
@@ -933,7 +898,7 @@ const MtCmds: {
         {
             name: 'pollCnf',
             ID: 139,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
             ],
@@ -941,7 +906,7 @@ const MtCmds: {
         {
             name: 'scanCnf',
             ID: 140,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'ed', parameterType: ParameterType.UINT8},
@@ -956,7 +921,7 @@ const MtCmds: {
         {
             name: 'commStatusInd',
             ID: 141,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'srcaddrmode', parameterType: ParameterType.UINT8},
@@ -974,7 +939,7 @@ const MtCmds: {
         {
             name: 'startCnf',
             ID: 142,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
             ],
@@ -982,7 +947,7 @@ const MtCmds: {
         {
             name: 'rxEnableCnf',
             ID: 143,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
             ],
@@ -990,7 +955,7 @@ const MtCmds: {
         {
             name: 'purgeCnf',
             ID: 144,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'handle', parameterType: ParameterType.UINT8},
@@ -1001,7 +966,7 @@ const MtCmds: {
         {
             name: 'register',
             ID: 0,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
                 {name: 'appprofid', parameterType: ParameterType.UINT16},
@@ -1020,7 +985,7 @@ const MtCmds: {
         {
             name: 'dataRequest',
             ID: 1,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'destendpoint', parameterType: ParameterType.UINT8},
@@ -1039,7 +1004,7 @@ const MtCmds: {
         {
             name: 'dataRequestExt',
             ID: 2,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddrmode', parameterType: ParameterType.UINT8},
                 {name: 'dstaddr', parameterType: ParameterType.IEEEADDR},
@@ -1060,7 +1025,7 @@ const MtCmds: {
         {
             name: 'dataRequestSrcRtg',
             ID: 3,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'destendpoint', parameterType: ParameterType.UINT8},
@@ -1081,7 +1046,7 @@ const MtCmds: {
         {
             name: 'delete',
             ID: 4,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
             ],
@@ -1092,7 +1057,7 @@ const MtCmds: {
         {
             name: 'interPanCtl',
             ID: 16,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'cmd', parameterType: ParameterType.UINT8},
                 {name: 'data', parameterType: ParameterType.BUFFER},
@@ -1104,7 +1069,7 @@ const MtCmds: {
         {
             name: 'dataStore',
             ID: 17,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'index', parameterType: ParameterType.UINT16},
                 {name: 'length', parameterType: ParameterType.UINT8},
@@ -1117,7 +1082,7 @@ const MtCmds: {
         {
             name: 'dataRetrieve',
             ID: 18,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'timestamp', parameterType: ParameterType.UINT32},
                 {name: 'index', parameterType: ParameterType.UINT16},
@@ -1132,7 +1097,7 @@ const MtCmds: {
         {
             name: 'apsfConfigSet',
             ID: 19,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
                 {name: 'framedelay', parameterType: ParameterType.UINT8},
@@ -1145,7 +1110,7 @@ const MtCmds: {
         {
             name: 'apsfConfigGet',
             ID: 20,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
             ],
@@ -1158,7 +1123,7 @@ const MtCmds: {
         {
             name: 'dataConfirm',
             ID: 128,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
@@ -1168,7 +1133,7 @@ const MtCmds: {
         {
             name: 'incomingMsg',
             ID: 129,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'groupid', parameterType: ParameterType.UINT16},
                 {name: 'clusterid', parameterType: ParameterType.UINT16},
@@ -1187,7 +1152,7 @@ const MtCmds: {
         {
             name: 'incomingMsgExt',
             ID: 130,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'groupid', parameterType: ParameterType.UINT16},
                 {name: 'clusterid', parameterType: ParameterType.UINT16},
@@ -1208,7 +1173,7 @@ const MtCmds: {
         {
             name: 'reflectError',
             ID: 131,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
@@ -1222,7 +1187,7 @@ const MtCmds: {
         {
             name: 'nwkAddrReq',
             ID: 0,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'reqtype', parameterType: ParameterType.UINT8},
@@ -1235,7 +1200,7 @@ const MtCmds: {
         {
             name: 'ieeeAddrReq',
             ID: 1,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'shortaddr', parameterType: ParameterType.UINT16},
                 {name: 'reqtype', parameterType: ParameterType.UINT8},
@@ -1248,7 +1213,7 @@ const MtCmds: {
         {
             name: 'nodeDescReq',
             ID: 2,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddrofinterest', parameterType: ParameterType.UINT16},
@@ -1260,7 +1225,7 @@ const MtCmds: {
         {
             name: 'powerDescReq',
             ID: 3,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddrofinterest', parameterType: ParameterType.UINT16},
@@ -1272,7 +1237,7 @@ const MtCmds: {
         {
             name: 'simpleDescReq',
             ID: 4,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddrofinterest', parameterType: ParameterType.UINT16},
@@ -1285,7 +1250,7 @@ const MtCmds: {
         {
             name: 'activeEpReq',
             ID: 5,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddrofinterest', parameterType: ParameterType.UINT16},
@@ -1297,7 +1262,7 @@ const MtCmds: {
         {
             name: 'matchDescReq',
             ID: 6,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddrofinterest', parameterType: ParameterType.UINT16},
@@ -1314,7 +1279,7 @@ const MtCmds: {
         {
             name: 'complexDescReq',
             ID: 7,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddrofinterest', parameterType: ParameterType.UINT16},
@@ -1326,7 +1291,7 @@ const MtCmds: {
         {
             name: 'userDescReq',
             ID: 8,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddrofinterest', parameterType: ParameterType.UINT16},
@@ -1338,7 +1303,7 @@ const MtCmds: {
         {
             name: 'endDeviceAnnce',
             ID: 10,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
                 {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
@@ -1351,7 +1316,7 @@ const MtCmds: {
         {
             name: 'userDescSet',
             ID: 11,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddrofinterest', parameterType: ParameterType.UINT16},
@@ -1365,7 +1330,7 @@ const MtCmds: {
         {
             name: 'serverDiscReq',
             ID: 12,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'servermask', parameterType: ParameterType.UINT16},
             ],
@@ -1376,7 +1341,7 @@ const MtCmds: {
         {
             name: 'endDeviceBindReq',
             ID: 32,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'localcoord', parameterType: ParameterType.UINT16},
@@ -1395,7 +1360,7 @@ const MtCmds: {
         {
             name: 'bindReq',
             ID: 33,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'srcaddr', parameterType: ParameterType.IEEEADDR},
@@ -1412,7 +1377,7 @@ const MtCmds: {
         {
             name: 'unbindReq',
             ID: 34,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'srcaddr', parameterType: ParameterType.IEEEADDR},
@@ -1429,7 +1394,7 @@ const MtCmds: {
         {
             name: 'setLinkKey',
             ID: 35,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'shortaddr', parameterType: ParameterType.UINT16},
                 {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
@@ -1442,7 +1407,7 @@ const MtCmds: {
         {
             name: 'removeLinkKey',
             ID: 36,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
             ],
@@ -1453,7 +1418,7 @@ const MtCmds: {
         {
             name: 'getLinkKey',
             ID: 37,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
             ],
@@ -1466,7 +1431,7 @@ const MtCmds: {
         {
             name: 'nwkDiscoveryReq',
             ID: 38,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'scanchannels', parameterType: ParameterType.UINT32},
                 {name: 'scanduration', parameterType: ParameterType.UINT8},
@@ -1478,7 +1443,7 @@ const MtCmds: {
         {
             name: 'joinReq',
             ID: 39,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'logicalchannel', parameterType: ParameterType.UINT8},
                 {name: 'panid', parameterType: ParameterType.UINT16},
@@ -1494,7 +1459,7 @@ const MtCmds: {
         {
             name: 'mgmtNwkDiscReq',
             ID: 48,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'scanchannels', parameterType: ParameterType.UINT32},
@@ -1508,7 +1473,7 @@ const MtCmds: {
         {
             name: 'mgmtLqiReq',
             ID: 49,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
@@ -1520,7 +1485,7 @@ const MtCmds: {
         {
             name: 'mgmtRtgReq',
             ID: 50,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
@@ -1532,7 +1497,7 @@ const MtCmds: {
         {
             name: 'mgmtBindReq',
             ID: 51,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
@@ -1544,7 +1509,7 @@ const MtCmds: {
         {
             name: 'mgmtLeaveReq',
             ID: 52,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'deviceaddress', parameterType: ParameterType.IEEEADDR},
@@ -1557,7 +1522,7 @@ const MtCmds: {
         {
             name: 'mgmtDirectJoinReq',
             ID: 53,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'deviceaddr', parameterType: ParameterType.IEEEADDR},
@@ -1570,7 +1535,7 @@ const MtCmds: {
         {
             name: 'mgmtPermitJoinReq',
             ID: 54,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'addrmode', parameterType: ParameterType.UINT8},
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
@@ -1584,7 +1549,7 @@ const MtCmds: {
         {
             name: 'mgmtNwkUpdateReq',
             ID: 55,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'dstaddrmode', parameterType: ParameterType.UINT8},
@@ -1600,7 +1565,7 @@ const MtCmds: {
         {
             name: 'msgCbRegister',
             ID: 62,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'clusterid', parameterType: ParameterType.UINT16},
             ],
@@ -1611,7 +1576,7 @@ const MtCmds: {
         {
             name: 'msgCbRemove',
             ID: 63,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'clusterid', parameterType: ParameterType.UINT16},
             ],
@@ -1622,7 +1587,7 @@ const MtCmds: {
         {
             name: 'startupFromApp',
             ID: 64,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'startdelay', parameterType: ParameterType.UINT16},
             ],
@@ -1633,7 +1598,7 @@ const MtCmds: {
         {
             name: 'autoFindDestination',
             ID: 65,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
             ],
@@ -1641,7 +1606,7 @@ const MtCmds: {
         {
             name: 'nwkAddrRsp',
             ID: 128,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
@@ -1654,7 +1619,7 @@ const MtCmds: {
         {
             name: 'ieeeAddrRsp',
             ID: 129,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
@@ -1667,7 +1632,7 @@ const MtCmds: {
         {
             name: 'nodeDescRsp',
             ID: 130,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1686,7 +1651,7 @@ const MtCmds: {
         {
             name: 'powerDescRsp',
             ID: 131,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1698,7 +1663,7 @@ const MtCmds: {
         {
             name: 'simpleDescRsp',
             ID: 132,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1717,7 +1682,7 @@ const MtCmds: {
         {
             name: 'activeEpRsp',
             ID: 133,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1729,7 +1694,7 @@ const MtCmds: {
         {
             name: 'matchDescRsp',
             ID: 134,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1741,7 +1706,7 @@ const MtCmds: {
         {
             name: 'complexDescRsp',
             ID: 135,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1753,7 +1718,7 @@ const MtCmds: {
         {
             name: 'userDescRsp',
             ID: 136,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1765,7 +1730,7 @@ const MtCmds: {
         {
             name: 'userDescConf',
             ID: 137,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1775,7 +1740,7 @@ const MtCmds: {
         {
             name: 'serverDiscRsp',
             ID: 138,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1785,7 +1750,7 @@ const MtCmds: {
         {
             name: 'endDeviceBindRsp',
             ID: 160,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1794,7 +1759,7 @@ const MtCmds: {
         {
             name: 'bindRsp',
             ID: 161,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1803,7 +1768,7 @@ const MtCmds: {
         {
             name: 'unbindRsp',
             ID: 162,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1812,7 +1777,7 @@ const MtCmds: {
         {
             name: 'mgmtNwkDiscRsp',
             ID: 176,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1825,7 +1790,7 @@ const MtCmds: {
         {
             name: 'mgmtLqiRsp',
             ID: 177,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1838,7 +1803,7 @@ const MtCmds: {
         {
             name: 'mgmtRtgRsp',
             ID: 178,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1851,7 +1816,7 @@ const MtCmds: {
         {
             name: 'mgmtBindRsp',
             ID: 179,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1864,7 +1829,7 @@ const MtCmds: {
         {
             name: 'mgmtLeaveRsp',
             ID: 180,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1873,7 +1838,7 @@ const MtCmds: {
         {
             name: 'mgmtDirectJoinRsp',
             ID: 181,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1882,7 +1847,7 @@ const MtCmds: {
         {
             name: 'mgmtPermitJoinRsp',
             ID: 182,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1891,15 +1856,15 @@ const MtCmds: {
         {
             name: 'stateChangeInd',
             ID: 192,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
-                {name: 'state', parameterType: ParameterType.UINT8ZDOIND},
+                {name: 'state', parameterType: ParameterType.UINT8},
             ],
         },
         {
             name: 'endDeviceAnnceInd',
             ID: 193,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
@@ -1910,7 +1875,7 @@ const MtCmds: {
         {
             name: 'matchDescRspSent',
             ID: 194,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
                 {name: 'numinclusters', parameterType: ParameterType.PRELENLIST},
@@ -1922,7 +1887,7 @@ const MtCmds: {
         {
             name: 'statusErrorRsp',
             ID: 195,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1931,7 +1896,7 @@ const MtCmds: {
         {
             name: 'srcRtgInd',
             ID: 196,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'relaycount', parameterType: ParameterType.PRELENLIST},
@@ -1941,7 +1906,7 @@ const MtCmds: {
         {
             name: 'beacon_notify_ind',
             ID: 197,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'beaconcount', parameterType: ParameterType.PRELENBEACONLIST},
                 {name: 'beaconlist', parameterType: ParameterType.BUFFER},
@@ -1950,7 +1915,7 @@ const MtCmds: {
         {
             name: 'joinCnf',
             ID: 198,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'deviceaddress', parameterType: ParameterType.UINT16},
@@ -1960,7 +1925,7 @@ const MtCmds: {
         {
             name: 'nwkDiscoveryCnf',
             ID: 199,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
             ],
@@ -1968,7 +1933,7 @@ const MtCmds: {
         {
             name: 'leaveInd',
             ID: 201,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
@@ -1980,7 +1945,7 @@ const MtCmds: {
         {
             name: 'setRejoinParametersReq',
             ID: 204,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'backoffduration', parameterType: ParameterType.UINT32},
                 {name: 'scanduration', parameterType: ParameterType.UINT32},
@@ -1992,7 +1957,7 @@ const MtCmds: {
         {
             name: 'msgCbIncoming',
             ID: 255,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'wasbroadcast', parameterType: ParameterType.UINT8},
@@ -2006,7 +1971,7 @@ const MtCmds: {
         {
             name: 'endDeviceTimeoutReq',
             ID: 13,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'parentaddr', parameterType: ParameterType.UINT16},
                 {name: 'reqrimeout', parameterType: ParameterType.UINT16},
@@ -2018,7 +1983,7 @@ const MtCmds: {
         {
             name: 'sendData',
             ID: 40,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'shortaddr', parameterType: ParameterType.UINT16},
                 {name: 'transseq', parameterType: ParameterType.UINT8},
@@ -2033,7 +1998,7 @@ const MtCmds: {
         {
             name: 'nwkAddrOfInterestReq',
             ID: 41,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'shortaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
@@ -2046,7 +2011,7 @@ const MtCmds: {
         {
             name: 'secAddLinkKey',
             ID: 66,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'shortaddr', parameterType: ParameterType.UINT16},
                 {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
@@ -2059,7 +2024,7 @@ const MtCmds: {
         {
             name: 'secEntryLookupExt',
             ID: 67,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
@@ -2073,7 +2038,7 @@ const MtCmds: {
         {
             name: 'secDeviceRemove',
             ID: 68,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
@@ -2084,7 +2049,7 @@ const MtCmds: {
         {
             name: 'extRouteDisc',
             ID: 69,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstAddr', parameterType: ParameterType.UINT16},
                 {name: 'options', parameterType: ParameterType.UINT8},
@@ -2097,7 +2062,7 @@ const MtCmds: {
         {
             name: 'extRouteCheck',
             ID: 70,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'rtstatus', parameterType: ParameterType.UINT8},
@@ -2110,7 +2075,7 @@ const MtCmds: {
         {
             name: 'extRemoveGroup',
             ID: 71,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
                 {name: 'groupid', parameterType: ParameterType.UINT16},
@@ -2122,7 +2087,7 @@ const MtCmds: {
         {
             name: 'extRemoveAllGroup',
             ID: 72,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
             ],
@@ -2133,7 +2098,7 @@ const MtCmds: {
         {
             name: 'extFindAllGroupsEndpoint',
             ID: 73,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
             ],
@@ -2145,7 +2110,7 @@ const MtCmds: {
         {
             name: 'extFindGroup',
             ID: 74,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
                 {name: 'groupid', parameterType: ParameterType.UINT16},
@@ -2160,7 +2125,7 @@ const MtCmds: {
         {
             name: 'extAddGroup',
             ID: 75,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
                 {name: 'groupid', parameterType: ParameterType.UINT16},
@@ -2174,7 +2139,7 @@ const MtCmds: {
         {
             name: 'extCountAllGroups',
             ID: 76,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -2184,7 +2149,7 @@ const MtCmds: {
         {
             name: 'extRxIdle',
             ID: 77,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'setflag', parameterType: ParameterType.UINT8},
                 {name: 'setvalue', parameterType: ParameterType.UINT8},
@@ -2196,7 +2161,7 @@ const MtCmds: {
         {
             name: 'extUpdateNwkKey',
             ID: 78,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'keyseqnum', parameterType: ParameterType.UINT8},
@@ -2209,7 +2174,7 @@ const MtCmds: {
         {
             name: 'extSwitchNwkKey',
             ID: 79,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'keyseqnum', parameterType: ParameterType.UINT8},
@@ -2221,7 +2186,7 @@ const MtCmds: {
         {
             name: 'extNwkInfo',
             ID: 80,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -2237,7 +2202,7 @@ const MtCmds: {
         {
             name: 'extSecApsRemoveReq',
             ID: 81,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'parentaddr', parameterType: ParameterType.UINT16},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
@@ -2250,7 +2215,7 @@ const MtCmds: {
         {
             name: 'forceConcentratorChange',
             ID: 82,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -2259,7 +2224,7 @@ const MtCmds: {
         {
             name: 'extSetParams',
             ID: 83,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'usemulticast', parameterType: ParameterType.UINT8},
             ],
@@ -2270,7 +2235,7 @@ const MtCmds: {
         {
             name: 'tcDeviceInd',
             ID: 202,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
                 {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
@@ -2280,7 +2245,7 @@ const MtCmds: {
         {
             name: 'permitJoinInd',
             ID: 203,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'duration', parameterType: ParameterType.UINT8},
             ],
@@ -2290,14 +2255,14 @@ const MtCmds: {
         {
             name: 'systemReset',
             ID: 9,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
             ],
         },
         {
             name: 'startRequest',
             ID: 0,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -2306,7 +2271,7 @@ const MtCmds: {
         {
             name: 'bindDevice',
             ID: 1,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'action', parameterType: ParameterType.UINT8},
                 {name: 'commandid', parameterType: ParameterType.UINT16},
@@ -2318,7 +2283,7 @@ const MtCmds: {
         {
             name: 'allowBind',
             ID: 2,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'timeout', parameterType: ParameterType.UINT8},
             ],
@@ -2328,7 +2293,7 @@ const MtCmds: {
         {
             name: 'sendDataRequest',
             ID: 3,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'destination', parameterType: ParameterType.UINT16},
                 {name: 'commandid', parameterType: ParameterType.UINT16},
@@ -2344,7 +2309,7 @@ const MtCmds: {
         {
             name: 'readConfiguration',
             ID: 4,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'configid', parameterType: ParameterType.UINT8},
             ],
@@ -2358,7 +2323,7 @@ const MtCmds: {
         {
             name: 'writeConfiguration',
             ID: 5,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'configid', parameterType: ParameterType.UINT8},
                 {name: 'len', parameterType: ParameterType.UINT8},
@@ -2371,7 +2336,7 @@ const MtCmds: {
         {
             name: 'getDeviceInfo',
             ID: 6,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'param', parameterType: ParameterType.UINT8},
             ],
@@ -2383,7 +2348,7 @@ const MtCmds: {
         {
             name: 'findDeviceRequest',
             ID: 7,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'searchKey', parameterType: ParameterType.IEEEADDR},
             ],
@@ -2393,7 +2358,7 @@ const MtCmds: {
         {
             name: 'permitJoiningRequest',
             ID: 8,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'destination', parameterType: ParameterType.UINT16},
                 {name: 'timeout', parameterType: ParameterType.UINT8},
@@ -2405,7 +2370,7 @@ const MtCmds: {
         {
             name: 'startConfirm',
             ID: 128,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
             ],
@@ -2413,7 +2378,7 @@ const MtCmds: {
         {
             name: 'bindConfirm',
             ID: 129,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'commandid', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2422,7 +2387,7 @@ const MtCmds: {
         {
             name: 'allowBindConfirm',
             ID: 130,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'source', parameterType: ParameterType.UINT16},
             ],
@@ -2430,7 +2395,7 @@ const MtCmds: {
         {
             name: 'sendDataConfirm',
             ID: 131,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'handle', parameterType: ParameterType.UINT8},
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -2439,7 +2404,7 @@ const MtCmds: {
         {
             name: 'findDeviceConfirm',
             ID: 133,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'searchtype', parameterType: ParameterType.UINT8},
                 {name: 'searchkey', parameterType: ParameterType.UINT16},
@@ -2449,7 +2414,7 @@ const MtCmds: {
         {
             name: 'receiveDataIndication',
             ID: 135,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'source', parameterType: ParameterType.UINT16},
                 {name: 'command', parameterType: ParameterType.UINT16},
@@ -2462,7 +2427,7 @@ const MtCmds: {
         {
             name: 'getDeviceInfo',
             ID: 0,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -2478,7 +2443,7 @@ const MtCmds: {
         {
             name: 'getNvInfo',
             ID: 1,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -2493,7 +2458,7 @@ const MtCmds: {
         {
             name: 'setPanid',
             ID: 2,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'panid', parameterType: ParameterType.UINT16},
             ],
@@ -2504,7 +2469,7 @@ const MtCmds: {
         {
             name: 'setChannels',
             ID: 3,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'channels', parameterType: ParameterType.UINT32},
             ],
@@ -2515,7 +2480,7 @@ const MtCmds: {
         {
             name: 'setSeclevel',
             ID: 4,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'securitylevel', parameterType: ParameterType.UINT8},
             ],
@@ -2526,7 +2491,7 @@ const MtCmds: {
         {
             name: 'setPrecfgkey',
             ID: 5,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'preconfigkey', parameterType: ParameterType.BUFFER},
             ],
@@ -2537,7 +2502,7 @@ const MtCmds: {
         {
             name: 'callbackSubCmd',
             ID: 6,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'subsystemid', parameterType: ParameterType.UINT16},
                 {name: 'action', parameterType: ParameterType.UINT8},
@@ -2549,7 +2514,7 @@ const MtCmds: {
         {
             name: 'keyEvent',
             ID: 7,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'keys', parameterType: ParameterType.UINT8},
                 {name: 'shift', parameterType: ParameterType.UINT8},
@@ -2561,7 +2526,7 @@ const MtCmds: {
         {
             name: 'timeAlive',
             ID: 9,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -2571,7 +2536,7 @@ const MtCmds: {
         {
             name: 'ledControl',
             ID: 10,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'ledid', parameterType: ParameterType.UINT8},
                 {name: 'mode', parameterType: ParameterType.UINT8},
@@ -2583,7 +2548,7 @@ const MtCmds: {
         {
             name: 'testLoopback',
             ID: 16,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'data', parameterType: ParameterType.BUFFER},
             ],
@@ -2594,7 +2559,7 @@ const MtCmds: {
         {
             name: 'dataReq',
             ID: 17,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'securityuse', parameterType: ParameterType.UINT8},
             ],
@@ -2605,7 +2570,7 @@ const MtCmds: {
         {
             name: 'srcMatchEnable',
             ID: 32,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -2615,7 +2580,7 @@ const MtCmds: {
         {
             name: 'srcMatchAddEntry',
             ID: 33,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'addressmode', parameterType: ParameterType.UINT8},
                 {name: 'address', parameterType: ParameterType.IEEEADDR},
@@ -2628,7 +2593,7 @@ const MtCmds: {
         {
             name: 'srcMatchDelEntry',
             ID: 34,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'addressmode', parameterType: ParameterType.UINT8},
                 {name: 'address', parameterType: ParameterType.IEEEADDR},
@@ -2641,7 +2606,7 @@ const MtCmds: {
         {
             name: 'srcMatchCheckSrcAddr',
             ID: 35,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'addressmode', parameterType: ParameterType.UINT8},
                 {name: 'address', parameterType: ParameterType.IEEEADDR},
@@ -2654,7 +2619,7 @@ const MtCmds: {
         {
             name: 'srcMatchAckAllPending',
             ID: 36,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'option', parameterType: ParameterType.UINT8},
             ],
@@ -2665,7 +2630,7 @@ const MtCmds: {
         {
             name: 'srcMatchCheckAllPending',
             ID: 37,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -2676,7 +2641,7 @@ const MtCmds: {
         {
             name: 'addrmgrExtAddrLookup',
             ID: 64,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
@@ -2687,7 +2652,7 @@ const MtCmds: {
         {
             name: 'addrmgrNwkAddrLookup',
             ID: 65,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
             ],
@@ -2698,7 +2663,7 @@ const MtCmds: {
         {
             name: 'apsmeLinkKeyDataGet',
             ID: 68,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
@@ -2712,7 +2677,7 @@ const MtCmds: {
         {
             name: 'apsmeLinkKeyNvIdGet',
             ID: 69,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
             ],
@@ -2724,7 +2689,7 @@ const MtCmds: {
         {
             name: 'assocCount',
             ID: 72,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'startrelation', parameterType: ParameterType.UINT8},
                 {name: 'endrelation', parameterType: ParameterType.UINT8},
@@ -2736,7 +2701,7 @@ const MtCmds: {
         {
             name: 'assocFindDevice',
             ID: 73,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'number', parameterType: ParameterType.UINT8},
             ],
@@ -2747,7 +2712,7 @@ const MtCmds: {
         {
             name: 'assocGetWithAddress',
             ID: 74,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
@@ -2759,7 +2724,7 @@ const MtCmds: {
         {
             name: 'apsmeRequestKeyCmd',
             ID: 75,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'partneraddr', parameterType: ParameterType.IEEEADDR},
             ],
@@ -2770,7 +2735,7 @@ const MtCmds: {
         {
             name: 'zclKeyEstInitEst',
             ID: 128,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'taskid', parameterType: ParameterType.UINT8},
                 {name: 'seqnum', parameterType: ParameterType.UINT8},
@@ -2785,7 +2750,7 @@ const MtCmds: {
         {
             name: 'zclKeyEstSign',
             ID: 129,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'inputlen', parameterType: ParameterType.UINT8},
                 {name: 'input', parameterType: ParameterType.BUFFER},
@@ -2798,14 +2763,14 @@ const MtCmds: {
         {
             name: 'syncReq',
             ID: 224,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
             ],
         },
         {
             name: 'zclKeyEstablishInd',
             ID: 225,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'taskid', parameterType: ParameterType.UINT8},
                 {name: 'event', parameterType: ParameterType.UINT8},
@@ -2817,7 +2782,7 @@ const MtCmds: {
         {
             name: 'gpioSetDirection',
             ID: 20,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'port', parameterType: ParameterType.UINT8},
                 {name: 'bit', parameterType: ParameterType.UINT8},
@@ -2835,7 +2800,7 @@ const MtCmds: {
         {
             name: 'gpioRead',
             ID: 21,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -2850,7 +2815,7 @@ const MtCmds: {
         {
             name: 'gpioWrite',
             ID: 22,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'port', parameterType: ParameterType.UINT8},
                 {name: 'bit', parameterType: ParameterType.UINT8},
@@ -2871,7 +2836,7 @@ const MtCmds: {
         {
             name: 'srngGen',
             ID: 76,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
             ],
             response: [
@@ -2881,7 +2846,7 @@ const MtCmds: {
         {
             name: 'bindAddEntry',
             ID: 77,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'addrmode', parameterType: ParameterType.UINT8},
                 {name: 'dstaddr', parameterType: ParameterType.IEEEADDR},
@@ -2903,7 +2868,7 @@ const MtCmds: {
         {
             name: 'setThreshold',
             ID: 0,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'componentid', parameterType: ParameterType.UINT8},
                 {name: 'threshold', parameterType: ParameterType.UINT8},
@@ -2915,7 +2880,7 @@ const MtCmds: {
         {
             name: 'msg',
             ID: 128,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'length', parameterType: ParameterType.UINT8},
                 {name: 'string', parameterType: ParameterType.BUFFER},
@@ -2926,7 +2891,7 @@ const MtCmds: {
         {
             name: 'msg',
             ID: 0,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'appendpoint', parameterType: ParameterType.UINT8},
                 {name: 'destaddress', parameterType: ParameterType.UINT16},
@@ -2942,7 +2907,7 @@ const MtCmds: {
         {
             name: 'userTest',
             ID: 1,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'srcep', parameterType: ParameterType.UINT8},
                 {name: 'commandid', parameterType: ParameterType.UINT16},
@@ -2956,7 +2921,7 @@ const MtCmds: {
         {
             name: 'zllTlInd',
             ID: 129,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
@@ -2970,7 +2935,7 @@ const MtCmds: {
         {
             name: 'bdbStartCommissioning',
             ID: 5,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'mode', parameterType: ParameterType.UINT8},
             ],
@@ -2981,7 +2946,7 @@ const MtCmds: {
         {
             name: 'bdbSetChannel',
             ID: 8,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'isPrimary', parameterType: ParameterType.UINT8},
                 {name: 'channel', parameterType: ParameterType.UINT32},
@@ -2993,7 +2958,7 @@ const MtCmds: {
         {
             name: 'bdbComissioningNotifcation',
             ID: 128,
-            type: Type.AREQ,
+            type: CommandType.AREQ,
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
             ],
@@ -3006,7 +2971,7 @@ const MtCmds: {
         {
             name: 'secReq',
             ID: 3,
-            type: Type.SREQ,
+            type: CommandType.SREQ,
             request: [
                 {name: 'applicationID', parameterType: ParameterType.UINT8},
                 {name: 'srcID', parameterType: ParameterType.UINT32},
@@ -3024,9 +2989,4 @@ const MtCmds: {
 };
 
 
-export {
-    ParameterType,
-    MtCmd,
-    MtParameter,
-    MtCmds,
-}
+export default Definition;

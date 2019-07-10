@@ -7,6 +7,7 @@ import {
 import {wait} from '../utils';
 
 import ZpiObject from './zpiObject';
+import {ZpiObjectPayload} from './types';
 import {Subsystem, Type} from '../unpi/constants';
 
 import SerialPort from 'serialport';
@@ -190,7 +191,7 @@ class Znp extends events.EventEmitter {
         });
     }
 
-    public request(subsystem: Subsystem, command: string, payload: object): Promise<ZpiObject> {
+    public request(subsystem: Subsystem, command: string, payload: ZpiObjectPayload): Promise<ZpiObject> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
         }
@@ -210,9 +211,9 @@ class Znp extends events.EventEmitter {
                         const result = await this.waitForWithExecute(Type.SRSP, object.subsystem, object.command, timeouts.SREQ, execute);
                         resolve(result);
                     } else if (object.type === Type.AREQ && object.isResetCommand()) {
-                        await this.waitForWithExecute(Type.AREQ, Subsystem.SYS, 'resetReq', timeouts.reset, execute);
+                        const result = await this.waitForWithExecute(Type.AREQ, Subsystem.SYS, 'resetInd', timeouts.reset, execute);
                         this.queue.splice(1, this.queue.length);
-                        resolve();
+                        resolve(result);
                     } else if (object.type === Type.AREQ) {
                         execute();
                         resolve();

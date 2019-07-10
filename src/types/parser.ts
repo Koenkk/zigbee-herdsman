@@ -1,16 +1,7 @@
-import {ParameterType} from './constants';
+import Type from './type';
+import {ParserOptions, Parser, ReadResult} from './types';
 
-interface ReadResult {
-    value: any;
-    length: number;
-};
-
-interface Parser {
-    write(buffer: Buffer, offset: number, value: any): number;
-    read(buffer: Buffer, offset: number, options: any): ReadResult;
-};
-
-function checkOptionProperty(parser: string, property: string, options: any): void {
+function checkOptionProperty(parser: string, property: 'length', options: ParserOptions): void {
     if (options === undefined || options[property] === undefined) {
         throw new Error(`${parser} parser read requires '${property}' as argument`);
     }
@@ -30,11 +21,11 @@ function addressBufferToString(buffer: Buffer): string {
     return address;
 }
 
-const parsers: {
+const Parsers: {
     [s: number]: Parser;
 } = {
-    [ParameterType.UINT8]: {
-        write: (buffer, offset, value): number => {
+    [Type.UINT8]: {
+        write: (buffer, offset, value: number): number => {
             buffer.writeUInt8(value, offset);
             return 1;
         },
@@ -42,8 +33,8 @@ const parsers: {
             return {value: buffer.readUInt8(offset), length: 1};
         },
     },
-    [ParameterType.UINT16]: {
-        write: (buffer, offset, value): number => {
+    [Type.UINT16]: {
+        write: (buffer, offset, value: number): number => {
             buffer.writeUInt16LE(value, offset);
             return 2;
         },
@@ -51,8 +42,8 @@ const parsers: {
             return {value: buffer.readUInt16LE(offset), length: 2};
         },
     },
-    [ParameterType.UINT32]: {
-        write: (buffer, offset, value): number => {
+    [Type.UINT32]: {
+        write: (buffer, offset, value: number): number => {
             buffer.writeUInt32LE(value, offset);
             return 4;
         },
@@ -60,17 +51,22 @@ const parsers: {
             return {value: buffer.readUInt32LE(offset), length: 4};
         },
     },
-    [ParameterType.BUFFER]: {
-        write: (buffer, offset, value): number => {
-            throw new Error('Not implemented!');
+    [Type.BUFFER]: {
+        write: (buffer, offset, values: number[]): number => {
+            for (let value of values) {
+                buffer.writeUInt8(value, offset);
+                offset += 1;
+            }
+
+            return values.length;
         },
         read: (buffer, offset, options): ReadResult => {
             checkOptionProperty('BUFFER read', 'length', options);
             return {value: buffer.slice(offset, offset + options.length), length: options.length};
         },
     },
-    [ParameterType.IEEEADDR]: {
-        write: (buffer, offset, value): number => {
+    [Type.IEEEADDR]: {
+        write: (buffer, offset, value: string): number => {
             buffer.writeUInt32LE(parseInt(value.slice(2, 10), 16), offset);
             buffer.writeUInt32LE(parseInt(value.slice(10), 16), offset + 4);
             return 8;
@@ -81,8 +77,8 @@ const parsers: {
             return {value: addressBufferToString(value), length};
         },
     },
-    [ParameterType.UINT16_LIST]: {
-        write: (buffer, offset, values): number => {
+    [Type.UINT16_LIST]: {
+        write: (buffer, offset, values: number[]): number => {
             for (let value of values) {
                 buffer.writeUInt16LE(value, offset);
                 offset += 2
@@ -103,4 +99,4 @@ const parsers: {
     },
 }
 
-export default parsers;
+export default Parsers;
