@@ -1,5 +1,6 @@
 import {Znp} from '../../znp';
 import {Subsystem, Type} from '../../unpi/constants';
+import ZpiObject from 'src/znp/zpiObject';
 
 const fs = require('fs');
 
@@ -117,8 +118,10 @@ function Controller(shepherd, cfg) {
         self.emit('ZNP:CLOSE');
     });
 
-    znp.on('AREQ', function (msg) {
-        bridge._areqEventBridge(self, msg);
+    znp.on('received', function (msg: ZpiObject) {
+        if (msg.type === Type.AREQ) {
+            bridge._areqEventBridge(self, msg);
+        }
     });
 
     this.on('ZDO:tcDeviceInd', function (tcData) {
@@ -353,7 +356,7 @@ Controller.prototype.request = function (subsys, cmdId, valObj, callback) {
         else if ((subsys !== 'ZDO' && subsys !== 5) && rsp && rsp.hasOwnProperty('status') && rsp.status !== 0)  // unsuccessful
             deferred.reject(new Error('rsp error: ' + rsp.status));
         else
-            deferred.resolve(rsp.payload);
+            deferred.resolve(rsp);
     };
 
     if ((subsys === 'AF' || subsys === 4) && valObj.hasOwnProperty('transid'))
@@ -363,10 +366,9 @@ Controller.prototype.request = function (subsys, cmdId, valObj, callback) {
 
     if (subsys === 'ZDO' || subsys === 5) {
         this._zdo.request(cmdId, valObj, rspHdlr);          // use wrapped zdo as the exported api
-        throw new Error('what is happening here?');
     } else {
-        const promise = znp.send(Subsystem[subsys], cmdId, valObj);  // SREQ has timeout inside znp
-        promise.then((object) => rspHdlr(null, object)).catch((error) => rspHdlr(error, null));
+        const promise = znp.request(Subsystem[subsys], cmdId, valObj);  // SREQ has timeout inside znp
+        promise.then((object) => rspHdlr(null, object.payload)).catch((error) => rspHdlr(error, null));
     }
 
 

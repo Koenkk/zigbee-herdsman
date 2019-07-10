@@ -190,7 +190,7 @@ class Znp extends events.EventEmitter {
         });
     }
 
-    public send(subsystem: Subsystem, command: string, payload: object): Promise<ZpiObject> {
+    public request(subsystem: Subsystem, command: string, payload: object): Promise<ZpiObject> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
         }

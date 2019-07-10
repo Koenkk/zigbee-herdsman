@@ -35,7 +35,7 @@ const parsers: {
 } = {
     [ParameterType.UINT8]: {
         write: (buffer, offset, value): number => {
-            buffer.writeInt8(value, offset);
+            buffer.writeUInt8(value, offset);
             return 1;
         },
         read: (buffer, offset): ReadResult => {
@@ -71,7 +71,9 @@ const parsers: {
     },
     [ParameterType.IEEEADDR]: {
         write: (buffer, offset, value): number => {
-            throw new Error('Not implemented!');
+            buffer.writeUInt32LE(parseInt(value.slice(2, 10), 16), offset);
+            buffer.writeUInt32LE(parseInt(value.slice(10), 16), offset + 4);
+            return 8;
         },
         read: (buffer, offset): ReadResult => {
             const length = 8;
@@ -80,8 +82,13 @@ const parsers: {
         },
     },
     [ParameterType.UINT16_LIST]: {
-        write: (buffer, offset, value): number => {
-            throw new Error('Not implemented!');
+        write: (buffer, offset, values): number => {
+            for (let value of values) {
+                buffer.writeUInt16LE(value, offset);
+                offset += 2
+            }
+
+            return values.length * 2;
         },
         read: (buffer, offset, options): ReadResult => {
             checkOptionProperty('UINT16_LIST read', 'length', options);

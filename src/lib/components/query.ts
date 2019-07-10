@@ -87,8 +87,8 @@ query.endpoint = function (nwkAddr, epId, callback) {
             profId: rsp.profileid || 0,
             epId: rsp.endpoint,
             devId: rsp.deviceid || 0,
-            inClusterList: bufToArray(rsp.inclusterlist, 'uint16'),
-            outClusterList: bufToArray(rsp.outclusterlist, 'uint16')
+            inClusterList: rsp.inclusterlist,
+            outClusterList: rsp.outclusterlist,
         };
     }).nodeify(callback);
 };

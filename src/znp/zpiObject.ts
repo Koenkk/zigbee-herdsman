@@ -72,7 +72,7 @@ class ZpiObject {
             const options: any = {};
 
             if (parser === undefined) {
-                throw new Error(`Missing parser for ${ParameterType[parameter.parameterType]}`);
+                throw new Error(`Missing read parser for ${ParameterType[parameter.parameterType]} - ${parameter.name}`);
             }
 
             if ([ParameterType.BUFFER, ParameterType.UINT16_LIST].includes(parameter.parameterType)) {
@@ -99,7 +99,7 @@ class ZpiObject {
             const parser = Parsers[parameter.parameterType];
 
             if (parser === undefined) {
-                throw new Error(`Missing parser for ${ParameterType[parameter.parameterType]}`);
+                throw new Error(`Missing write parser for ${ParameterType[parameter.parameterType]} - ${this.command}`);
             }
 
             const value: any = this.payload[parameter.name];
