@@ -624,14 +624,8 @@ ru.clause('uint64', function (name) {
 ru.clause('strPreLenUint8', function (name) {
     parsedBufLen += 1;
     this.uint8('len').tap(function () {
-        var attrId = this.vars['attrId'];
-        // special xiaomi struct-string
-        if (attrId === 65281) {
-            ru['xiaoMiStruct'](name)(this);
-        } else {
-            parsedBufLen += this.vars.len;
-            this.string(name, this.vars.len);
-        }
+        parsedBufLen += this.vars.len;
+        this.string(name, this.vars.len);
         delete this.vars.len;
     });
 });
@@ -642,35 +636,6 @@ ru.clause('buffer', function (name) {
         parsedBufLen += this.vars.len;
         this.buffer(name, this.vars.len);
         delete this.vars.len;
-    });
-});
-
-ru.clause('xiaoMiStruct', function (name) {
-    var stopLen = parsedBufLen+this.vars.len-2;
-    // this.vars.len - may be larger than buffer.length
-    if (stopLen > this._buffer.length-1) {
-        stopLen = this._buffer.length-1;
-    }
-    this.tap(function(){
-        this.loop('attrData', function (end) {
-            if (stopLen <= parsedBufLen) {
-                end();
-            } else {
-                parsedBufLen += 2;
-                this.uint8('index').uint8('dT').tap(function () {
-                    ru.variable('data', 'dT')(this);
-                });
-                if (stopLen <= parsedBufLen) end();
-            }
-        }).tap(function () {
-            var res = {};
-            this.vars.attrData.forEach(function (element) {
-                if (element.index != undefined) {
-                    res[element.index.toString()] = element.data;
-                }
-            });
-            this.vars.attrData = res;
-        });
     });
 });
 
