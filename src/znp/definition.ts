@@ -974,9 +974,9 @@ const Definition: {
                 {name: 'appdevver', parameterType: ParameterType.UINT8},
                 {name: 'latencyreq', parameterType: ParameterType.UINT8},
                 {name: 'appnuminclusters', parameterType: ParameterType.UINT8},
-                {name: 'appinclusterlist', parameterType: ParameterType.UINT16_LIST},
+                {name: 'appinclusterlist', parameterType: ParameterType.LIST_UINT16},
                 {name: 'appnumoutclusters', parameterType: ParameterType.UINT8},
-                {name: 'appoutclusterlist', parameterType: ParameterType.UINT16_LIST},
+                {name: 'appoutclusterlist', parameterType: ParameterType.LIST_UINT16},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1035,7 +1035,7 @@ const Definition: {
                 {name: 'options', parameterType: ParameterType.UINT8},
                 {name: 'radius', parameterType: ParameterType.UINT8},
                 {name: 'relaycount', parameterType: ParameterType.UINT8},
-                {name: 'relaylist', parameterType: ParameterType.LISTBUFFER},
+                {name: 'relaylist', parameterType: ParameterType.LIST_UINT16},
                 {name: 'len', parameterType: ParameterType.UINT8},
                 {name: 'data', parameterType: ParameterType.BUFFER},
             ],
@@ -1268,9 +1268,9 @@ const Definition: {
                 {name: 'nwkaddrofinterest', parameterType: ParameterType.UINT16},
                 {name: 'profileid', parameterType: ParameterType.UINT16},
                 {name: 'numinclusters', parameterType: ParameterType.UINT8},
-                {name: 'inclusterlist', parameterType: ParameterType.LISTBUFFER},
+                {name: 'inclusterlist', parameterType: ParameterType.LIST_UINT16},
                 {name: 'numoutclusters', parameterType: ParameterType.UINT8},
-                {name: 'outclusterlist', parameterType: ParameterType.LISTBUFFER},
+                {name: 'outclusterlist', parameterType: ParameterType.LIST_UINT16},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1349,9 +1349,9 @@ const Definition: {
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
                 {name: 'profileid', parameterType: ParameterType.UINT16},
                 {name: 'numinclusters', parameterType: ParameterType.UINT8},
-                {name: 'inclusterlist', parameterType: ParameterType.LISTBUFFER},
+                {name: 'inclusterlist', parameterType: ParameterType.LIST_UINT16},
                 {name: 'numoutclusters', parameterType: ParameterType.UINT8},
-                {name: 'outclusterlist', parameterType: ParameterType.LISTBUFFER},
+                {name: 'outclusterlist', parameterType: ParameterType.LIST_UINT16},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
@@ -1613,7 +1613,7 @@ const Definition: {
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
                 {name: 'numassocdev', parameterType: ParameterType.UINT8},
-                {name: 'assocdevlist', parameterType: ParameterType.DEVLISTBUFFER},
+                {name: 'assocdevlist', parameterType: ParameterType.LIST_ASSOC_DEV},
             ],
         },
         {
@@ -1626,7 +1626,7 @@ const Definition: {
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
                 {name: 'numassocdev', parameterType: ParameterType.UINT8},
-                {name: 'assocdevlist', parameterType: ParameterType.DEVLISTBUFFER},
+                {name: 'assocdevlist', parameterType: ParameterType.LIST_ASSOC_DEV},
             ],
         },
         {
@@ -1674,9 +1674,9 @@ const Definition: {
                 {name: 'deviceid', parameterType: ParameterType.UINT16},
                 {name: 'deviceversion', parameterType: ParameterType.UINT8},
                 {name: 'numinclusters', parameterType: ParameterType.UINT8},
-                {name: 'inclusterlist', parameterType: ParameterType.UINT16_LIST},
+                {name: 'inclusterlist', parameterType: ParameterType.LIST_UINT16},
                 {name: 'numoutclusters', parameterType: ParameterType.UINT8},
-                {name: 'outclusterlist', parameterType: ParameterType.UINT16_LIST},
+                {name: 'outclusterlist', parameterType: ParameterType.LIST_UINT16},
             ],
         },
         {
@@ -1784,7 +1784,7 @@ const Definition: {
                 {name: 'networkcount', parameterType: ParameterType.UINT8},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
                 {name: 'networklistcount', parameterType: ParameterType.UINT8},
-                {name: 'networklist', parameterType: ParameterType.NWKLISTBUFFER},
+                {name: 'networklist', parameterType: ParameterType.LIST_NETWORK},
             ],
         },
         {
@@ -1797,7 +1797,7 @@ const Definition: {
                 {name: 'neighbortableentries', parameterType: ParameterType.UINT8},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
                 {name: 'neighborlqilistcount', parameterType: ParameterType.UINT8},
-                {name: 'neighborlqilist', parameterType: ParameterType.NWKLISTBUFFER},
+                {name: 'neighborlqilist', parameterType: ParameterType.LIST_NEIGHBOR_LQI},
             ],
         },
         {
@@ -1810,7 +1810,7 @@ const Definition: {
                 {name: 'routingtableentries', parameterType: ParameterType.UINT8},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
                 {name: 'routingtablelistcount', parameterType: ParameterType.UINT8},
-                {name: 'routingtablelist', parameterType: ParameterType.NWKLISTBUFFER},
+                {name: 'routingtablelist', parameterType: ParameterType.LIST_ROUTING_TABLE},
             ],
         },
         {
@@ -1823,7 +1823,7 @@ const Definition: {
                 {name: 'bindingtableentries', parameterType: ParameterType.UINT8},
                 {name: 'startindex', parameterType: ParameterType.UINT8},
                 {name: 'bindingtablelistcount', parameterType: ParameterType.UINT8},
-                {name: 'bindingtablelist', parameterType: ParameterType.NWKLISTBUFFER},
+                {name: 'bindingtablelist', parameterType: ParameterType.LIST_BIND_TABLE},
             ],
         },
         {
@@ -1878,10 +1878,10 @@ const Definition: {
             type: CommandType.AREQ,
             request: [
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'numinclusters', parameterType: ParameterType.PRELENLIST},
-                {name: 'inclusterlist', parameterType: ParameterType.BUFFER},
-                {name: 'numoutclusters', parameterType: ParameterType.PRELENLIST},
-                {name: 'outclusterlist', parameterType: ParameterType.BUFFER},
+                {name: 'numinclusters', parameterType: ParameterType.UINT8},
+                {name: 'inclusterlist', parameterType: ParameterType.LIST_UINT16},
+                {name: 'numoutclusters', parameterType: ParameterType.UINT8},
+                {name: 'outclusterlist', parameterType: ParameterType.LIST_UINT16},
             ],
         },
         {
@@ -1899,8 +1899,8 @@ const Definition: {
             type: CommandType.AREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
-                {name: 'relaycount', parameterType: ParameterType.PRELENLIST},
-                {name: 'relaylist', parameterType: ParameterType.BUFFER},
+                {name: 'relaycount', parameterType: ParameterType.UINT8},
+                {name: 'relaylist', parameterType: ParameterType.LIST_UINT16},
             ],
         },
         {
@@ -1908,8 +1908,8 @@ const Definition: {
             ID: 197,
             type: CommandType.AREQ,
             request: [
-                {name: 'beaconcount', parameterType: ParameterType.PRELENBEACONLIST},
-                {name: 'beaconlist', parameterType: ParameterType.BUFFER},
+                {name: 'beaconcount', parameterType: ParameterType.UINT8},
+                {name: 'beaconlist', parameterType: ParameterType.BUFFER}, // FIXME
             ],
         },
         {
@@ -1965,7 +1965,7 @@ const Definition: {
                 {name: 'securityuse', parameterType: ParameterType.UINT8},
                 {name: 'seqnum', parameterType: ParameterType.UINT8},
                 {name: 'macdstaddr', parameterType: ParameterType.UINT16},
-                {name: 'msgdata', parameterType: ParameterType.ZDOMSGCB},
+                {name: 'msgdata', parameterType: ParameterType.BUFFER}, // FIXME
             ],
         },
         {
@@ -2103,8 +2103,8 @@ const Definition: {
                 {name: 'endpoint', parameterType: ParameterType.UINT8},
             ],
             response: [
-                {name: 'groups', parameterType: ParameterType.PRELENLIST},
-                {name: 'grouplist', parameterType: ParameterType.BUFFER},
+                {name: 'groups', parameterType: ParameterType.UINT8},
+                {name: 'grouplist', parameterType: ParameterType.LIST_UINT16},
             ],
         },
         {
@@ -2437,7 +2437,7 @@ const Definition: {
                 {name: 'devicetype', parameterType: ParameterType.UINT8},
                 {name: 'devicestate', parameterType: ParameterType.UINT8},
                 {name: 'numassocdevices', parameterType: ParameterType.UINT8},
-                {name: 'assocdeviceslist', parameterType: ParameterType.UINT16_LIST},
+                {name: 'assocdeviceslist', parameterType: ParameterType.LIST_UINT16},
             ],
         },
         {
@@ -2449,7 +2449,7 @@ const Definition: {
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
-                {name: 'scanchannels', parameterType: ParameterType.UINT32BE},
+                {name: 'scanchannels', parameterType: ParameterType.UINT32},
                 {name: 'panid', parameterType: ParameterType.UINT16},
                 {name: 'securitylevel', parameterType: ParameterType.UINT8},
                 {name: 'preconfigkey', parameterType: ParameterType.BUFFER16},
@@ -2852,7 +2852,7 @@ const Definition: {
                 {name: 'dstaddr', parameterType: ParameterType.IEEEADDR},
                 {name: 'dstendpoint', parameterType: ParameterType.UINT8},
                 {name: 'numclusterids', parameterType: ParameterType.UINT8},
-                {name: 'clusterids', parameterType: ParameterType.LISTBUFFER},
+                {name: 'clusterids', parameterType: ParameterType.LIST_UINT16},
             ],
             response: [
                 {name: 'srcep', parameterType: ParameterType.UINT8},

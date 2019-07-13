@@ -1,4 +1,4 @@
-type MtType = string|number|Buffer|number[];
+type MtType = number|number[]|string|Buffer|{[s: string]: number|string}[];
 
 interface MtParameter {
     name: string;

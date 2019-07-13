@@ -5,6 +5,14 @@ import Parsers from '../types/parser';
 import {Type as ParameterType, Types as TypesTypes} from '../types';
 import {MtParameter, MtCmd, ZpiObjectPayload, MtType} from './types';
 
+const BufferAndListTypes = [
+    ParameterType.BUFFER, ParameterType.BUFFER8, ParameterType.BUFFER16,
+    ParameterType.BUFFER18, ParameterType.BUFFER32, ParameterType.BUFFER42,
+    ParameterType.BUFFER100, ParameterType.LIST_UINT16, ParameterType.LIST_ROUTING_TABLE,
+    ParameterType.LIST_BIND_TABLE, ParameterType.LIST_NEIGHBOR_LQI, ParameterType.LIST_NETWORK,
+    ParameterType.LIST_ASSOC_DEV,
+];
+
 class ZpiObject {
     public readonly subsystem: Subsystem;
     public readonly command: string;
@@ -77,13 +85,22 @@ class ZpiObject {
                 throw new Error(`Missing read parser for ${ParameterType[parameter.parameterType]} - ${parameter.name}`);
             }
 
-            if ([ParameterType.BUFFER, ParameterType.UINT16_LIST].includes(parameter.parameterType)) {
+            if (BufferAndListTypes.includes(parameter.parameterType)) {
                 // When reading a buffer, assume that the previous parsed parameter contains
                 // the length of the buffer
-                const previousParameter = parameters[parameters.indexOf(parameter) - 1];
-                const value: MtType = result[previousParameter.name];
-                if (typeof value === 'number') {
-                    options.length = value;
+                const lengthParameter = parameters[parameters.indexOf(parameter) - 1];
+                const length: MtType = result[lengthParameter.name];
+                if (typeof length === 'number') {
+                    options.length = length;
+                }
+
+                if (parameter.parameterType === ParameterType.LIST_ASSOC_DEV) {
+                    // For LIST_ASSOC_DEV, we also need to grab the startindex which is right before the length
+                    const startIndexParameter = parameters[parameters.indexOf(parameter) - 2];
+                    const startIndex: MtType = result[startIndexParameter.name];
+                    if (typeof startIndex === 'number') {
+                        options.startIndex = startIndex;
+                    }
                 }
             }
 
@@ -107,7 +124,7 @@ class ZpiObject {
                 throw new Error(`Missing write parser for ${ParameterType[parameter.parameterType]} - ${this.command}`);
             }
 
-            const value: any = this.payload[parameter.name];
+            const value = this.payload[parameter.name];
             const length = parser.write(buffer, offset, value);
             offset += length;
         }

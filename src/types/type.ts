@@ -2,24 +2,22 @@ enum Type {
     UINT8  = 0,
     UINT16  = 1,
     UINT32  = 2,
-    BUFFER  = 13,
     IEEEADDR  = 3,
-    UINT16_LIST = 11,
 
-    // Below should be checked
-    ZDOMSGCB  = 4,
-    DEVLISTBUFFER  = 5,
-    NWKLISTBUFFER  = 6,
-    PRELENLIST  = 9,
-    PRELENBEACONLIST  = 10,
-    LISTBUFFER  = 12,
-    BUFFER8  = 14,
-    BUFFER16  = 15,
-    BUFFER18  = 16,
-    BUFFER32  = 17,
-    BUFFER42  = 18,
-    BUFFER100  = 19,
-    UINT32BE = 21,
+    BUFFER  = 4,
+    BUFFER8 = 5,
+    BUFFER16 = 6,
+    BUFFER18 = 7,
+    BUFFER32 = 8,
+    BUFFER42 = 9,
+    BUFFER100 = 10,
+
+    LIST_UINT16 = 11,
+    LIST_ROUTING_TABLE = 12,
+    LIST_BIND_TABLE = 13,
+    LIST_NEIGHBOR_LQI = 14,
+    LIST_NETWORK = 15,
+    LIST_ASSOC_DEV = 16,
 }
 
 export default Type;
