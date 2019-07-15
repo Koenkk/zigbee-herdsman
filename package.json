@@ -70,7 +70,7 @@
     "test-with-coverage": "jest test --coverage",
     "eslint": "node_modules/.bin/eslint src/**/*.ts"
   },
-  "version": "0.1.16",
+  "version": "0.1.17",
   "jest": {
     "coverageThreshold": {
       "global": {
