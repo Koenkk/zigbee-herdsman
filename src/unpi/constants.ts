@@ -22,12 +22,12 @@ enum Subsystem {
 const DataStart = 4;
 const SOF = 0xFE;
 
-const PositionLength = 1;
+const PositionDataLength = 1;
 const PositionCmd0 = 2;
 const PositionCmd1 = 3;
 
 const MinimalMessageLength = 5;
 
 export {
-    Type, Subsystem, DataStart, SOF, PositionLength, MinimalMessageLength, PositionCmd0, PositionCmd1,
+    Type, Subsystem, DataStart, SOF, PositionDataLength, MinimalMessageLength, PositionCmd0, PositionCmd1,
 };

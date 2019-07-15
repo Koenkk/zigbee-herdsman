@@ -51,13 +51,31 @@ describe('Parser', () => {
     });
 
     it('Message in two buffer steps', () => {
-        //
         let buffer = Buffer.from([0xfe, 0x03, 0x61, 0x08, 0x00, 0x01]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(0);
         expect(error.length).toBe(0);
 
         buffer = Buffer.from([0x55, 0x3e]);
+        parser._transform(buffer, '', () => {});
+        expect(parsed.length).toBe(1);
+        expect(error.length).toBe(0);
+
+        expect(parsed[0].type).toBe(Constants.Type.SRSP);
+        expect(parsed[0].subsystem).toBe(Constants.Subsystem.SYS);
+        expect(parsed[0].commandID).toBe(8);
+        expect(parsed[0].data).toStrictEqual([0, 1, 85]);
+        expect(parsed[0].length).toBe(3);
+        expect(parsed[0].fcs).toBe(0x3e);
+    });
+
+    it('Message in two buffer steps, fcs as separate', () => {
+        let buffer = Buffer.from([0xfe, 0x03, 0x61, 0x08, 0x00, 0x01, 0x55]);
+        parser._transform(buffer, '', () => {});
+        expect(parsed.length).toBe(0);
+        expect(error.length).toBe(0);
+
+        buffer = Buffer.from([0x3e]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(1);
         expect(error.length).toBe(0);

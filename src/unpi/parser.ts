@@ -1,5 +1,5 @@
 import * as stream from 'stream';
-import {DataStart, SOF, MinimalMessageLength, PositionLength} from './constants';
+import {DataStart, SOF, MinimalMessageLength, PositionDataLength} from './constants';
 import Frame from './frame';
 
 const debug = require('debug')('unpi:parser');
@@ -23,14 +23,15 @@ class Parser extends stream.Transform {
     private parseNext(): void {
         debug(`--- parseNext [${this.buffer}]`);
         if (this.buffer[0] == SOF && this.buffer.length >= MinimalMessageLength) {
-            const length = this.buffer[PositionLength];
-            const fcsPosition = DataStart + length;
+            const dataLength = this.buffer[PositionDataLength];
+            const fcsPosition = DataStart + dataLength;
+            const frameLength = fcsPosition + 1;
 
-            if (this.buffer.length >= fcsPosition) {
-                const frameBuffer = this.buffer.slice(0, fcsPosition + 1);
+            if (this.buffer.length >= frameLength) {
+                const frameBuffer = this.buffer.slice(0, frameLength);
 
                 try {
-                    const frame = Frame.fromBuffer(length, fcsPosition, frameBuffer);
+                    const frame = Frame.fromBuffer(dataLength, fcsPosition, frameBuffer);
                     debug(`--> parsed ${frame}`);
                     this.emit('parsed', frame);
                 } catch (error) {
@@ -38,7 +39,7 @@ class Parser extends stream.Transform {
                     this.emit('error', error);
                 }
 
-                this.buffer.splice(0, fcsPosition + 1);
+                this.buffer.splice(0, frameLength);
                 this.parseNext();
             }
         }
