@@ -1,5 +1,5 @@
 import Type from './type';
-import Parser from './parser';
-import * as Types from './types';
+import Parsers from './parsers';
+import * as TsType from './tstype';
 
-export { Type, Parser, Types };
+export { Type, Parsers, TsType };

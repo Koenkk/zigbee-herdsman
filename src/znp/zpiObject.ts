@@ -1,9 +1,9 @@
 import {Subsystem, Type, MaxDataSize} from '../unpi/constants';
 import {Frame as UnpiFrame} from '../unpi';
 import Definition from './definition';
-import Parsers from '../types/parser';
-import {Type as ParameterType, Types as TypesTypes} from '../types';
-import {MtParameter, MtCmd, ZpiObjectPayload, MtType} from './types';
+import Parsers from '../types/parsers';
+import {Type as ParameterType, TsType as TypeTsTypes} from '../types';
+import {MtParameter, MtCmd, ZpiObjectPayload, MtType} from './tstype';
 
 const BufferAndListTypes = [
     ParameterType.BUFFER, ParameterType.BUFFER8, ParameterType.BUFFER16,
@@ -79,7 +79,7 @@ class ZpiObject {
 
         for (let parameter of parameters) {
             const parser = Parsers[parameter.parameterType];
-            const options: TypesTypes.ParserOptions = {};
+            const options: TypeTsTypes.ParserOptions = {};
 
             if (parser === undefined) {
                 throw new Error(`Missing read parser for ${ParameterType[parameter.parameterType]} - ${parameter.name}`);

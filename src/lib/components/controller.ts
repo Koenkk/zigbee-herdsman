@@ -105,7 +105,7 @@ function Controller(shepherd, cfg) {
     /***************************************************/
     /*** Event Handlers                              ***/
     /***************************************************/
-    znp.on('ready', function () {
+    this.on('ZNP:READY', function () {
         init.setupCoord(self).then(function () {
             self.emit('ZNP:INIT');
         }).fail(function (err) {
@@ -202,18 +202,22 @@ Controller.prototype.setNetInfo = function (netInfo) {
 /*************************************************************************************************/
 Controller.prototype.start = function (callback) {
     var self = this,
-        deferred = Q.defer(),
-        readyLsn;
+        deferred = Q.defer();
 
-    readyLsn = function (err) {
+    var readyLsn = function (err) {
         return err ? deferred.reject(err) : deferred.resolve();
     };
 
     this.once('ZNP:INIT', readyLsn);
-    Q.ninvoke(znp, 'init', this._cfg.path, this._cfg.options).fail(function (err) {
-        self.removeListener('ZNP:INIT', readyLsn);
-        deferred.reject(err);
-    }).done();
+
+    znp.open(this._cfg.path, this._cfg.options)
+        .then(() => {
+            this.emit("ZNP:READY");
+        })
+        .catch((error) => {
+            self.removeListener('ZNP:INIT', readyLsn);
+            deferred.reject(error);
+        });
 
     return deferred.promise.nodeify(callback);
 };

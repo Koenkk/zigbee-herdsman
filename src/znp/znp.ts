@@ -7,7 +7,7 @@ import {
 import {wait} from '../utils';
 
 import ZpiObject from './zpiObject';
-import {ZpiObjectPayload} from './types';
+import {ZpiObjectPayload} from './tstype';
 import {Subsystem, Type} from '../unpi/constants';
 
 import SerialPort from 'serialport';
@@ -86,8 +86,8 @@ class Znp extends events.EventEmitter {
         debug.error(`Serialport error: ${error}`);
     }
 
-    public init(path: string, options: {baudRate: number; rtscts: boolean}): Promise<void> {
-        debug.log(`Initializing with ${path} and ${JSON.stringify(options)}`);
+    public open(path: string, options: {baudRate: number; rtscts: boolean}): Promise<void> {
+        debug.log(`Opening with ${path} and ${JSON.stringify(options)}`);
         this.serialPort = new SerialPort(path, {...options, autoOpen: false});
 
         this.unpiWriter = new UnpiWriter();
@@ -102,15 +102,14 @@ class Znp extends events.EventEmitter {
         return new Promise((resolve, reject): void => {
             this.serialPort.open(async (error: object): Promise<void> => {
                 if (error) {
-                    reject(`Error while initializing serialport '${error}'`);
-                    // TODO this.serialPort.close();
+                    reject(`Error while opening serialport '${error}'`);
+                    this.serialPort.close();
                 } else {
                     debug.log('Serialport opened');
                     await this.skipBootloader();
                     this.serialPort.once('close', this.onSerialPortClose);
                     this.serialPort.once('error', this.onSerialPortError);
                     this.initialized = true;
-                    this.emit('ready'); // TODO: should be removed
                     resolve();
                 }
             });

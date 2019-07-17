@@ -1,6 +1,6 @@
 import {Subsystem, Type as CommandType} from '../unpi/constants';
 import {Type as ParameterType} from '../types';
-import {MtCmd} from './types';
+import {MtCmd} from './tstype';
 
 const Definition: {
     [s: number]: MtCmd[];
