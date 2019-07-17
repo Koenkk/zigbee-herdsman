@@ -1,5 +1,5 @@
 import Type from './type';
-import {Parser, ReadResult} from './tstype';
+import {Parser as ParserType, ReadResult} from './tstype';
 
 function addressBufferToString(buffer: Buffer): string {
     let address = '0x';
@@ -33,7 +33,7 @@ function writeBuffer(buffer: Buffer, offset: number, values: number[], length: n
 }
 
 const Parser: {
-    [s: number]: Parser;
+    [s: number]: ParserType;
 } = {
     [Type.UINT8]: {
         write: (buffer, offset, value: number): number => {
