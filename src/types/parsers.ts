@@ -64,8 +64,8 @@ const Parser: {
     },
     [Type.IEEEADDR]: {
         write: (buffer, offset, value: string): number => {
-            buffer.writeUInt32LE(parseInt(value.slice(2, 10), 16), offset);
-            buffer.writeUInt32LE(parseInt(value.slice(10), 16), offset + 4);
+            buffer.writeUInt32LE(parseInt(value.slice(10), 16), offset);
+            buffer.writeUInt32LE(parseInt(value.slice(2, 10), 16), offset + 4);
             return 8;
         },
         read: (buffer, offset): ReadResult => {
@@ -97,10 +97,6 @@ const Parser: {
     [Type.BUFFER42]: {
         write: (buffer, offset, values: number[]): number => writeBuffer(buffer, offset, values, 42),
         read: (buffer, offset): ReadResult => readBuffer(buffer, offset, 42),
-    },
-    [Type.BUFFER100]: {
-        write: (buffer, offset, values: number[]): number => writeBuffer(buffer, offset, values, 100),
-        read: (buffer, offset): ReadResult => readBuffer(buffer, offset, 100),
     },
     [Type.BUFFER100]: {
         write: (buffer, offset, values: number[]): number => writeBuffer(buffer, offset, values, 100),
@@ -190,7 +186,7 @@ const Parser: {
                 item['extAddr'] = addressBufferToString(buffer.slice(offset, offset + 8));
                 offset += 8;
 
-                item['nwkAddr'] = buffer.readUInt16LE(offset); offset += 1;
+                item['nwkAddr'] = buffer.readUInt16LE(offset); offset += 2;
 
                 item['deviceType'] = buffer.readUInt8(offset) & 0x03;
                 item['rxOnWhenIdle'] = (buffer.readUInt8(offset) & 0x0C) >> 2;
