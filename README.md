@@ -6,9 +6,9 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 ### Todo
 - [x] Setup Typescript environment
 - [x] Refactor unpi
-- [ ] Refactor cc-znp
+- [x] dissolve-chunks/concentrate -> types (+ refactor)
+- [ ] cc-znp -> znp (+ refactor)
 - [ ] Remove areq
-- [ ] Remove dissolve-chunks
 - [ ] Refactor zcl-id
 - [ ] Refactor zcl-packet
 - [ ] Refactor lib (original source of zigbee-shepherd)

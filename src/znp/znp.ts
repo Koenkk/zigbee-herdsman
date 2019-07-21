@@ -102,7 +102,7 @@ class Znp extends events.EventEmitter {
         return new Promise((resolve, reject): void => {
             this.serialPort.open(async (error: object): Promise<void> => {
                 if (error) {
-                    reject(`Error while opening serialport '${error}'`);
+                    reject(new Error(`Error while opening serialport '${error}'`));
                     this.serialPort.close();
                 } else {
                     debug.log('Serialport opened');
@@ -125,7 +125,7 @@ class Znp extends events.EventEmitter {
             debug.log('Writing skip bootloader payload');
             this.serialPort.write(buffer, async (error): Promise<void> => {
                 if (error) {
-                    reject(`Error while sending skip bootloader payload '${error}'`);
+                    reject(new Error(`Error while sending skip bootloader payload '${error}'`));
                 } else {
                     await wait(1000);
                     resolve();
@@ -149,7 +149,7 @@ class Znp extends events.EventEmitter {
                     this.serialPort.close((error): void => {
                         error == null ?
                             resolve() :
-                            reject(`Error while closing serialport '${error}'`);
+                            reject(new Error(`Error while closing serialport '${error}'`));
                     });
                 });
             } else {
@@ -167,7 +167,7 @@ class Znp extends events.EventEmitter {
                 const message = `${Type[type]} - ${Subsystem[subsystem]} - ${command} after ${timeout}ms`;
                 timedOut = true;
                 debug.timeout(message);
-                reject('timeout');
+                reject(new Error('timeout'));
             }, timeout);
 
             const registerHandler = (): void => {

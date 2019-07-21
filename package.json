@@ -51,6 +51,7 @@
     "babel-jest": "*",
     "eslint": "*",
     "jest": "*",
+    "regenerator-runtime": "*",
     "typescript": "*"
   },
   "homepage": "https://github.com/Koenkk/zigbee-herdsman",
