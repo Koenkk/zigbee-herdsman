@@ -210,14 +210,18 @@ Controller.prototype.start = function (callback) {
 
     this.once('ZNP:INIT', readyLsn);
 
-    znp.open(this._cfg.path, this._cfg.options)
-        .then(() => {
-            this.emit("ZNP:READY");
-        })
-        .catch((error) => {
-            self.removeListener('ZNP:INIT', readyLsn);
-            deferred.reject(error);
-        });
+    if (!znp.isInitialized()) {
+        znp.open(this._cfg.path, this._cfg.options)
+            .then(() => {
+                this.emit("ZNP:READY");
+            })
+            .catch((error) => {
+                self.removeListener('ZNP:INIT', readyLsn);
+                deferred.reject(error);
+            });
+    } else {
+        this.emit("ZNP:READY");
+    }
 
     return deferred.promise.nodeify(callback);
 };

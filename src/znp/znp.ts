@@ -76,12 +76,17 @@ class Znp extends events.EventEmitter {
         }
     }
 
+    public isInitialized(): boolean {
+        return this.initialized;
+    }
+
     private onUnpiParsedError(error: Error): void {
         debug.error(`Got unpi error ${error}`);
     }
 
     private onSerialPortClose(): void {
         debug.log('Serialport closed');
+        this.initialized = false;
         this.emit('close');
     }
 
@@ -106,6 +111,7 @@ class Znp extends events.EventEmitter {
             this.serialPort.open(async (error: object): Promise<void> => {
                 if (error) {
                     reject(new Error(`Error while opening serialport '${error}'`));
+                    this.initialized = false;
                     this.serialPort.close();
                 } else {
                     debug.log('Serialport opened');
@@ -141,6 +147,7 @@ class Znp extends events.EventEmitter {
             if (this.initialized) {
                 this.serialPort.flush((): void => {
                     this.serialPort.close((error): void => {
+                        this.initialized = false;
                         error == null ?
                             resolve() :
                             reject(new Error(`Error while closing serialport '${error}'`));

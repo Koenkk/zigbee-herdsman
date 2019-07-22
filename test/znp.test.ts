@@ -117,8 +117,11 @@ describe('ZNP', () => {
     it('Open and close', async () => {
         const close = jest.fn();
         znp.on('close', close);
+        expect(znp.isInitialized()).toBeFalsy();
         await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        expect(znp.isInitialized()).toBeTruthy();
         await znp.close();
+        expect(znp.isInitialized()).toBeFalsy();
 
         expect(mockSerialPortFlush).toHaveBeenCalledTimes(1);
         expect(mockSerialPortClose).toHaveBeenCalledTimes(1);
