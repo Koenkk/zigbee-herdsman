@@ -2,6 +2,8 @@ import {Znp} from '../../znp';
 import {Subsystem, Type} from '../../unpi/constants';
 import ZpiObject from 'src/znp/zpiObject';
 
+import * as ZSC from '../../zstack-constants';
+
 const fs = require('fs');
 
 var util = require('util'),
@@ -11,7 +13,6 @@ var Q = require('q'),
     _ = require('busyman'),
     znp = Znp.getInstance(),
     proving = require('proving'),
-    ZSC = require('../../zstack-constants'),
     debug = {
         shepherd: require('debug')('zigbee-shepherd'),
         init: require('debug')('zigbee-shepherd:init'),
@@ -180,7 +181,7 @@ Controller.prototype.getFirmwareInfo = function () {
 Controller.prototype.getNetInfo = function () {
     var net = _.cloneDeep(this._net);
 
-    if (net.state === ZSC.ZDO.devStates.ZB_COORD)
+    if (net.state === ZSC.COMMON.devStates.ZB_COORD)
         net.state = 'Coordinator';
 
     net.joinTimeLeft = this._permitJoinTime;
@@ -549,7 +550,7 @@ Controller.prototype.setNvParams = function (net) {
 
                 _.forEach(val, function (ch) {
                     if (ch >= 11 && ch <= 26)
-                        chList = chList | ZSC.ZDO.channelMask['CH' + ch];
+                        chList = chList | ZSC.COMMON.channelMask['CH' + ch];
                 });
 
                 nvParams.channelList.value = [ chList & 0xFF, (chList >> 8) & 0xFF, (chList >> 16) & 0xFF, (chList >> 24) & 0xFF ];

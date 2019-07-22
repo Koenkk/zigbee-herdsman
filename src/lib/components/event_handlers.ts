@@ -1,11 +1,12 @@
 /* jshint node: true */
 'use strict';
 
+import * as ZSC from '../../zstack-constants';
+
 var Q = require('q'),
     EventEmitter = require('events'),
     _ = require('busyman'),
     Ziee = require('../../ziee'),
-    ZSC = require('../../zstack-constants'),
     debug = {
         shepherd: require('debug')('zigbee-shepherd'),
         init: require('debug')('zigbee-shepherd:init'),
@@ -361,8 +362,7 @@ handlers.stateChangeInd = function (msg) {
         return;
 
     var devStates = msg.state;
-
-    _.forEach(ZSC.ZDO.devStates, function (statesCode, states) {
+    _.forEach(ZSC.COMMON.devStates, function (statesCode, states) {
         if (msg.state === statesCode)
             devStates = states;
     });

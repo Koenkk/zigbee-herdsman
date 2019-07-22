@@ -1,8 +1,9 @@
 /* jshint node: true */
 'use strict';
 
-var ZSC = require('../../zstack-constants'),
-    NVID8 = ZSC.SAPI.nvItemIdsUint8;
+import * as ZSC from '../../zstack-constants';
+
+const NVID8 = ZSC.SAPI.nvItemIdsUint8;
 
 var nvParams = {
     ZCD_NV_EXTADDR: {

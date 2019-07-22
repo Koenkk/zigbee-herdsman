@@ -3,12 +3,13 @@
 
 var EventEmitter = require('events');
 
+import * as ZSC from '../../zstack-constants';
+
 var Q = require('q'),
     _ = require('busyman'),
     Areq = require('../../areq'),
     zclId = require('../../zcl-id'),
-    proving = require('proving'),
-    ZSC = require('../../zstack-constants');
+    proving = require('proving');
 
 var zcl = require('./zcl'),
     zutils = require('./zutils'),
@@ -131,9 +132,9 @@ af.sendExt = function (srcEp, addrMode, dstAddrOrGrpId, cId, rawPayload, opt, ca
 
     proving.number(addrMode, 'Af addrMode should be a number.');
 
-    if (addrMode === ZSC.AF.addressMode.ADDR_16BIT || addrMode === ZSC.AF.addressMode.ADDR_GROUP)
+    if (addrMode === ZSC.COMMON.addressMode.ADDR_16BIT || addrMode === ZSC.COMMON.addressMode.ADDR_GROUP)
         proving.number(dstAddrOrGrpId, 'Af dstAddrOrGrpId should be a number for network address or group id.');
-    else if (addrMode === ZSC.AF.addressMode.ADDR_64BIT)
+    else if (addrMode === ZSC.COMMON.addressMode.ADDR_64BIT)
         proving.string(dstAddrOrGrpId, 'Af dstAddrOrGrpId should be a string for long address.');
 
     if (_.isString(cId)) {
@@ -173,7 +174,7 @@ af.sendExt = function (srcEp, addrMode, dstAddrOrGrpId, cId, rawPayload, opt, ca
         return deferred.promise.nodeify(callback);
     }
 
-    if (addrMode === ZSC.AF.addressMode.ADDR_GROUP || addrMode === ZSC.AF.addressMode.ADDR_BROADCAST) {
+    if (addrMode === ZSC.COMMON.addressMode.ADDR_GROUP || addrMode === ZSC.COMMON.addressMode.ADDR_BROADCAST) {
         // no ack
         controller.request('AF', 'dataRequestExt', afParamsExt).then(function (rsp) {
             if (rsp.status !== 0 && rsp.status !== 'SUCCESS')   // unsuccessful
@@ -381,7 +382,7 @@ af.zclFunctional = function (srcEp, dstEp, cId, cmd, zclData, cfg, callback) {
 
     // af.send(srcEp, dstEp, cId, rawPayload, opt, callback)
     if (srcEp instanceof Group) {
-        af.sendExt(srcEp, ZSC.AF.addressMode.ADDR_GROUP, srcEp.groupID, cId, zclBuffer).fail(function (err) {
+        af.sendExt(srcEp, ZSC.COMMON.addressMode.ADDR_GROUP, srcEp.groupID, cId, zclBuffer).fail(function (err) {
             if (mandatoryEvent && areq.isEventPending(mandatoryEvent))
                 areq.reject(mandatoryEvent, err);
             else
@@ -802,7 +803,7 @@ function makeAfParams(loEp, dstEp, cId, rawPayload, opt) {
             clusterid: cId,
             transid: af.controller ? af.controller.nextTransId() : null,
             options: opt.hasOwnProperty('options') ? opt.options : afOptions,
-            radius: opt.hasOwnProperty('radius') ? opt.radius : ZSC.AF_DEFAULT_RADIUS,
+            radius: opt.hasOwnProperty('radius') ? opt.radius : ZSC.AF.DEFAULT_RADIUS,
             len: rawPayload.length,
             data: rawPayload
         };
@@ -833,23 +834,23 @@ function makeAfParamsExt(loEp, addrMode, dstAddrOrGrpId, cId, rawPayload, opt) {
             clusterid: cId,
             transid: af.controller ? af.controller.nextTransId() : null,
             options: opt.hasOwnProperty('options') ? opt.options : afOptions,
-            radius: opt.hasOwnProperty('radius') ? opt.radius : ZSC.AF_DEFAULT_RADIUS,
+            radius: opt.hasOwnProperty('radius') ? opt.radius : ZSC.AF.DEFAULT_RADIUS,
             len: rawPayload.length,
             data: rawPayload
         };
 
     switch (addrMode) {
-        case ZSC.AF.addressMode.ADDR_NOT_PRESENT:
+        case ZSC.COMMON.addressMode.ADDR_NOT_PRESENT:
             break;
-        case ZSC.AF.addressMode.ADDR_GROUP:
+        case ZSC.COMMON.addressMode.ADDR_GROUP:
             afParamsExt.destendpoint = 0xFF;
             break;
-        case ZSC.AF.addressMode.ADDR_16BIT:
-        case ZSC.AF.addressMode.ADDR_64BIT:
+        case ZSC.COMMON.addressMode.ADDR_16BIT:
+        case ZSC.COMMON.addressMode.ADDR_64BIT:
             afParamsExt.destendpoint = opt.hasOwnProperty('dstEpId') ? opt.dstEpId : 0xFF;
             afParamsExt.options = opt.hasOwnProperty('options') ? opt.options : afOptions | ZSC.AF.options.ACK_REQUEST;
             break;
-        case ZSC.AF.addressMode.ADDR_BROADCAST:
+        case ZSC.COMMON.addressMode.ADDR_BROADCAST:
             afParamsExt.destendpoint = 0xFF;
             afParamsExt.dstaddr = zutils.toLongAddrString(0xFFFF);
             break;

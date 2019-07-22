@@ -1,10 +1,11 @@
 import {Znp} from '../../znp';
 import {Subsystem} from '../../unpi/constants';
 
+import * as ZSC from '../../zstack-constants';
+
 var Q = require('q'),
     Areq = require('../../areq'),
-    znp = Znp,
-    ZSC = require('../../zstack-constants');
+    znp = Znp;
 
 var zdoHelper = require('./zdo_helper');
 
@@ -78,7 +79,7 @@ Zdo.prototype._specialRequest = function (apiName, valObj, callback) {
         // listener at controller.on('ZDO:serverDiscRsp')
         return this._rsplessRequest('serverDiscReq', valObj, callback);
     } else if (apiName === 'bindReq') {
-        if (valObj.dstaddrmode === ZSC.AF.addressMode.ADDR_16BIT)
+        if (valObj.dstaddrmode === ZSC.COMMON.addressMode.ADDR_16BIT)
             callback(new Error('TI not support address 16bit mode.'));
         else
             return this._genericRequest('bindReq', valObj, callback);

@@ -8,8 +8,9 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 - [x] Refactor unpi
 - [x] dissolve-chunks/concentrate -> types (+ refactor)
 - [x] cc-znp -> znp (+ refactor)
-- [ ] Refactor zstack-constants
+- [x] Refactor zstack-constants
 - [ ] zcl-id + zcl-packet -> zcl (+ refactor)
+- [ ] Remove dissolve-chunks
 - [ ] Refactor lib (original source of zigbee-shepherd)
 - [ ] What to do with ziee (remove?)
 - [ ] What to do with zive (remove?)
@@ -33,10 +34,10 @@ SUM:                            66           1546            430          17231
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-TypeScript                      60           1487            373          10437
-JSON                            12              0              0           4084
+TypeScript                      60           1481            371          11186
+JSON                             4              0              0           3232
 YAML                             2              0              0             10
 -------------------------------------------------------------------------------
-SUM:                            74           1487            373          14531
+SUM:                            66           1481            371          14428
 -------------------------------------------------------------------------------
 ```

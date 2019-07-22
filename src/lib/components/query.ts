@@ -1,11 +1,12 @@
 /* jshint node: true */
 'use strict';
 
+import * as ZSC from '../../zstack-constants';
+
 var Q = require('q'),
     _ = require('busyman'),
     zclId = require('../../zcl-id'),
-    proving = require('proving'),
-    ZSC = require('../../zstack-constants');
+    proving = require('proving');
 
 var Endpoint  = require('../model/endpoint'),
     Coordpoint  = require('../model/coordpoint'),
@@ -149,7 +150,7 @@ query.setBindingEntry = function (bindMode, srcEp, cId, dstEpOrGrpId, callback) 
         srcaddr: srcEp.getIeeeAddr(),
         srcendpoint: srcEp.getEpId(),
         clusterid: cIdItem.value,
-        dstaddrmode: dstEp ? ZSC.AF.addressMode.ADDR_64BIT : ZSC.AF.addressMode.ADDR_GROUP,
+        dstaddrmode: dstEp ? ZSC.COMMON.addressMode.ADDR_64BIT : ZSC.COMMON.addressMode.ADDR_GROUP,
         addr_short_long: dstEp ? dstEp.getIeeeAddr() : zutils.toLongAddrString(grpId),
         dstendpoint: dstEp ? dstEp.getEpId() : 0xFF
     };

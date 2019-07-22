@@ -1,1 +1,0 @@
-module.exports  = require('./defs/dbg.json');
