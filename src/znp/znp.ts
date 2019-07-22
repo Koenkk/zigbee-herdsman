@@ -4,7 +4,7 @@ import {
     Frame as UnpiFrame,
 } from '../unpi';
 
-import {wait} from '../utils';
+import {Wait} from '../utils';
 
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
@@ -131,7 +131,7 @@ class Znp extends events.EventEmitter {
         const buffer = Buffer.from([0xef]);
         debug.log('Writing skip bootloader payload');
         this.unpiWriter.writeBuffer(buffer);
-        await wait(1000);
+        await Wait(1000);
     }
 
     public static getInstance(): Znp {

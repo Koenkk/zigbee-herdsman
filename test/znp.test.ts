@@ -11,10 +11,8 @@ const mockSerialPortConstructor = jest.fn();
 const mockSerialPortOnce = jest.fn();
 const mockSerialPortWrite = jest.fn((buffer, cb) => cb());
 
-jest.mock('../src/utils', () => {
-    return {
-        wait: jest.fn(),
-    };
+jest.mock('../src/utils/wait', () => {
+    return jest.fn();
 });
 
 jest.mock('serialport', () => {

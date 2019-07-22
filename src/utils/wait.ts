@@ -4,6 +4,4 @@ function wait(milliseconds: number): Promise<void> {
     });
 }
 
-export {
-    wait,
-}
+export default wait;
