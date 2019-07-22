@@ -35,14 +35,14 @@ class ZpiObject {
     }
 
     public static createRequest(subsystem: Subsystem, command: string, payload: ZpiObjectPayload): ZpiObject {
+        if (!Definition[subsystem]) {
+            throw new Error(`Subsystem '${subsystem}' does not exist`);
+        }
+
         const cmd = Definition[subsystem].find((c: MtCmd): boolean => c.name === command);
 
         if (!cmd) {
             throw new Error(`Command '${command}' from subsystem '${subsystem}' not found`);
-        }
-
-        if (cmd.request === undefined) {
-            throw new Error(`Command '${command}' from subsystem '${subsystem}' cannot be a request`);
         }
 
         return new ZpiObject(cmd.type, subsystem, command, cmd.ID, payload, cmd.request);
@@ -63,6 +63,7 @@ class ZpiObject {
         const parameters = frame.type === Type.SRSP ? cmd.response : cmd.request;
 
         if (parameters === undefined) {
+            /* istanbul ignore next */
             throw new Error(
                 `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
                 `${frame.type === Type.SRSP ? 'response' : 'request'}`
@@ -81,6 +82,7 @@ class ZpiObject {
             const parser = Parsers[parameter.parameterType];
             const options: TypeTsTypes.ParserOptions = {};
 
+            /* istanbul ignore next */
             if (parser === undefined) {
                 throw new Error(`Missing read parser for ${ParameterType[parameter.parameterType]} - ${parameter.name}`);
             }
@@ -90,6 +92,8 @@ class ZpiObject {
                 // the length of the buffer
                 const lengthParameter = parameters[parameters.indexOf(parameter) - 1];
                 const length: MtType = result[lengthParameter.name];
+
+                /* istanbul ignore else */
                 if (typeof length === 'number') {
                     options.length = length;
                 }
@@ -98,6 +102,8 @@ class ZpiObject {
                     // For LIST_ASSOC_DEV, we also need to grab the startindex which is right before the length
                     const startIndexParameter = parameters[parameters.indexOf(parameter) - 2];
                     const startIndex: MtType = result[startIndexParameter.name];
+
+                    /* istanbul ignore else */
                     if (typeof startIndex === 'number') {
                         options.startIndex = startIndex;
                     }
@@ -119,7 +125,6 @@ class ZpiObject {
 
         for (let parameter of this.parameters) {
             const parser = Parsers[parameter.parameterType];
-
             if (parser === undefined) {
                 throw new Error(`Missing write parser for ${ParameterType[parameter.parameterType]} - ${this.command}`);
             }

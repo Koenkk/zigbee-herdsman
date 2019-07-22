@@ -47,18 +47,21 @@ class Znp extends events.EventEmitter {
         this.queue.autostart = true;
 
         this.onUnpiParsed = this.onUnpiParsed.bind(this);
-        this.onUnpiError = this.onUnpiError.bind(this);
+        this.onUnpiParsedError = this.onUnpiParsedError.bind(this);
         this.onSerialPortClose = this.onSerialPortClose.bind(this);
         this.onSerialPortError = this.onSerialPortError.bind(this);
     }
 
     private log(type: Type, message: string): void {
+        /* istanbul ignore else */
         if (type === Type.SRSP) {
             debug.SRSP(message);
         } else if (type === Type.AREQ) {
             debug.AREQ(message);
         } else if (type === Type.SREQ) {
             debug.SREQ(message);
+        } else {
+            throw new Error(`Unknown type '${type}'`);
         }
     }
 
@@ -73,7 +76,7 @@ class Znp extends events.EventEmitter {
         }
     }
 
-    private onUnpiError(error: Error): void {
+    private onUnpiParsedError(error: Error): void {
         debug.error(`Got unpi error ${error}`);
     }
 
@@ -97,7 +100,7 @@ class Znp extends events.EventEmitter {
         this.unpiParser = new UnpiParser();
         this.serialPort.pipe(this.unpiParser);
         this.unpiParser.on('parsed', this.onUnpiParsed);
-        this.unpiParser.on('error', this.onUnpiError);
+        this.unpiParser.on('error', this.onUnpiParsedError);
 
         return new Promise((resolve, reject): void => {
             this.serialPort.open(async (error: object): Promise<void> => {
@@ -120,18 +123,9 @@ class Znp extends events.EventEmitter {
         // Send magic byte: https://github.com/Koenkk/zigbee2mqtt/issues/1343 to bootloader
         // and give ZNP 1 second to start.
         const buffer = Buffer.from([0xef]);
-
-        return new Promise((resolve, reject): void => {
-            debug.log('Writing skip bootloader payload');
-            this.serialPort.write(buffer, async (error): Promise<void> => {
-                if (error) {
-                    reject(new Error(`Error while sending skip bootloader payload '${error}'`));
-                } else {
-                    await wait(1000);
-                    resolve();
-                }
-            });
-        });
+        debug.log('Writing skip bootloader payload');
+        this.unpiWriter.writeBuffer(buffer);
+        await wait(1000);
     }
 
     public static getInstance(): Znp {
@@ -150,10 +144,12 @@ class Znp extends events.EventEmitter {
                         error == null ?
                             resolve() :
                             reject(new Error(`Error while closing serialport '${error}'`));
+                        this.emit('close');
                     });
                 });
             } else {
                 resolve();
+                this.emit('close');
             }
         });
 
@@ -206,6 +202,7 @@ class Znp extends events.EventEmitter {
                     const frame = object.toUnpiFrame();
                     const execute = (): void => this.unpiWriter.writeFrame(frame);
 
+                    /* istanbul ignore else */
                     if (object.type === Type.SREQ) {
                         const result = await this.waitForWithExecute(Type.SRSP, object.subsystem, object.command, timeouts.SREQ, execute);
                         resolve(result);
@@ -216,6 +213,8 @@ class Znp extends events.EventEmitter {
                     } else if (object.type === Type.AREQ) {
                         execute();
                         resolve();
+                    } else {
+                        throw new Error(`Unknown type '${object.type}'`);
                     }
                 } catch (error) {
                     reject(error);
