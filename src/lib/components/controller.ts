@@ -1,5 +1,6 @@
-/* jshint node: true */
-'use strict';
+import {Znp} from '../../znp';
+import {Subsystem, Type} from '../../unpi/constants';
+import ZpiObject from 'src/znp/zpiObject';
 
 const fs = require('fs');
 
@@ -8,7 +9,7 @@ var util = require('util'),
 
 var Q = require('q'),
     _ = require('busyman'),
-    znp = require('../../cc-znp'),
+    znp = Znp.getInstance(),
     proving = require('proving'),
     ZSC = require('../../zstack-constants'),
     debug = {
@@ -104,7 +105,7 @@ function Controller(shepherd, cfg) {
     /***************************************************/
     /*** Event Handlers                              ***/
     /***************************************************/
-    znp.on('ready', function () {
+    this.on('ZNP:READY', function () {
         init.setupCoord(self).then(function () {
             self.emit('ZNP:INIT');
         }).fail(function (err) {
@@ -117,8 +118,10 @@ function Controller(shepherd, cfg) {
         self.emit('ZNP:CLOSE');
     });
 
-    znp.on('AREQ', function (msg) {
-        bridge._areqEventBridge(self, msg);
+    znp.on('received', function (msg: ZpiObject) {
+        if (msg.type === Type.AREQ) {
+            bridge._areqEventBridge(self, msg);
+        }
     });
 
     this.on('ZDO:tcDeviceInd', function (tcData) {
@@ -199,19 +202,26 @@ Controller.prototype.setNetInfo = function (netInfo) {
 /*************************************************************************************************/
 Controller.prototype.start = function (callback) {
     var self = this,
-        deferred = Q.defer(),
-        readyLsn;
+        deferred = Q.defer();
 
-    readyLsn = function (err) {
+    var readyLsn = function (err) {
         return err ? deferred.reject(err) : deferred.resolve();
     };
 
     this.once('ZNP:INIT', readyLsn);
 
-    Q.ninvoke(znp, 'init', this._cfg).fail(function (err) {
-        self.removeListener('ZNP:INIT', readyLsn);
-        deferred.reject(err);
-    }).done();
+    if (!znp.isInitialized()) {
+        znp.open(this._cfg.path, this._cfg.options)
+            .then(() => {
+                this.emit("ZNP:READY");
+            })
+            .catch((error) => {
+                self.removeListener('ZNP:INIT', readyLsn);
+                deferred.reject(error);
+            });
+    } else {
+        this.emit("ZNP:READY");
+    }
 
     return deferred.promise.nodeify(callback);
 };
@@ -362,10 +372,13 @@ Controller.prototype.request = function (subsys, cmdId, valObj, callback) {
     else
         debug.request('REQ --> %s', subsys + ':' + cmdId);
 
-    if (subsys === 'ZDO' || subsys === 5)
+    if (subsys === 'ZDO' || subsys === 5) {
         this._zdo.request(cmdId, valObj, rspHdlr);          // use wrapped zdo as the exported api
-    else
-        znp.request(subsys, cmdId, valObj, rspHdlr);  // SREQ has timeout inside znp
+    } else {
+        const promise = znp.request(Subsystem[subsys], cmdId, valObj);  // SREQ has timeout inside znp
+        promise.then((object) => rspHdlr(null, object.payload)).catch((error) => rspHdlr(error, null));
+    }
+
 
     return deferred.promise.nodeify(callback);
 };

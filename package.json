@@ -33,6 +33,7 @@
     "objectbox": "^0.3.0",
     "proving": "^0.1.0",
     "q": "^1.5.1",
+    "queue": "^6.0.1",
     "serialport": "7.1.5"
   },
   "deprecated": false,
@@ -44,11 +45,13 @@
     "@babel/preset-typescript": "*",
     "@types/jest": "*",
     "@types/node": "*",
+    "@types/serialport": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
     "babel-jest": "*",
     "eslint": "*",
     "jest": "*",
+    "regenerator-runtime": "*",
     "typescript": "*"
   },
   "homepage": "https://github.com/Koenkk/zigbee-herdsman",

@@ -4,21 +4,13 @@ class Frame {
     public readonly type: Type;
     public readonly subsystem: Subsystem;
     public readonly commandID: number;
-    public readonly data: number[];
+    public readonly data: Buffer;
 
     public readonly length: number;
     public readonly fcs: number;
 
-    // TO_BE_REMOVED
-    public readonly sof: number;
-    public readonly len: number;
-    public readonly subsys: number;
-    public readonly csum: number;
-    public readonly cmd: number;
-    public readonly payload: Buffer;
-
     public constructor(
-        type: Type, subsystem: Subsystem, commandID: number, data: number[],
+        type: Type, subsystem: Subsystem, commandID: number, data: Buffer,
         length: number = null, fcs: number = null,
     ) {
         this.type = type;
@@ -27,33 +19,25 @@ class Frame {
         this.data = data;
         this.length = length;
         this.fcs = fcs;
-
-        // TO_BE_REMOVED
-        this.csum = fcs;
-        this.sof = SOF;
-        this.len = this.length;
-        this.subsys = subsystem;
-        this.cmd = commandID;
-        this.payload = Buffer.from(data);
     }
 
     public toBuffer(): Buffer {
         const length = this.data.length;
         const cmd0 = ((this.type << 5) & 0xE0) | (this.subsystem & 0x1F);
 
-        const payload = [SOF, length, cmd0, this.commandID, ...this.data];
+        let payload = Buffer.from([SOF, length, cmd0, this.commandID]);
+        payload = Buffer.concat([payload, this.data]);
         const fcs = Frame.calculateChecksum(payload.slice(1, payload.length));
-        payload.push(fcs);
 
-        return Buffer.from(payload)
+        return Buffer.concat([payload, Buffer.from([fcs])]);
     }
 
-    public static fromBuffer(length: number, fcsPosition: number, buffer: number[]): Frame {
-        const subsystem: Subsystem = buffer[PositionCmd0] & 0x1F;
-        const type: Type = (buffer[PositionCmd0] & 0xE0) >> 5;
-        const commandID = buffer[PositionCmd1];
+    public static fromBuffer(length: number, fcsPosition: number, buffer: Buffer): Frame {
+        const subsystem: Subsystem = buffer.readUInt8(PositionCmd0) & 0x1F;
+        const type: Type = (buffer.readUInt8(PositionCmd0) & 0xE0) >> 5;
+        const commandID = buffer.readUInt8(PositionCmd1);
         const data = buffer.slice(DataStart, fcsPosition);
-        const fcs = buffer[fcsPosition];
+        const fcs = buffer.readUInt8(fcsPosition);
 
         // Validate the checksum to see if we fully received the message
         const checksum = this.calculateChecksum(buffer.slice(1, fcsPosition));
@@ -65,7 +49,7 @@ class Frame {
         }
     }
 
-    private static calculateChecksum(values: number[]): number {
+    private static calculateChecksum(values: Buffer): number {
         let checksum = 0;
 
         for (let value of values) {
