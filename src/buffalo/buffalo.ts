@@ -1,99 +1,43 @@
-import {Options} from './tstype';
+import {Options, ReadResult, Value} from './tstype';
 
 class Buffalo {
-    private static write_UINT8(buffer: Buffer, offset: number, value: number) {
+    private static writeUINT8(buffer: Buffer, offset: number, value: number): number {
         buffer.writeUInt8(value, offset);
         return 1;
     }
 
-    private static read_UINT8(buffer: Buffer, offset: number) {
+    private static readUINT8(buffer: Buffer, offset: number): ReadResult {
         return {value: buffer.readUInt8(offset), length: 1};
     }
 
-    private static write_UINT16(buffer: Buffer, offset: number, value: number) {
+    private static writeUINT16(buffer: Buffer, offset: number, value: number): number {
         buffer.writeUInt16LE(value, offset);
         return 2;
     }
 
-    private static read_UINT16(buffer: Buffer, offset: number) {
+    private static readUINT16(buffer: Buffer, offset: number): ReadResult {
         return {value: buffer.readUInt16LE(offset), length: 2};
     }
 
-    private static write_UINT32(buffer: Buffer, offset: number, value: number) {
+    private static writeUINT32(buffer: Buffer, offset: number, value: number): number {
         buffer.writeUInt32LE(value, offset);
         return 4;
     }
 
-    private static read_UINT32(buffer: Buffer, offset: number) {
+    private static readUINT32(buffer: Buffer, offset: number): ReadResult {
         return {value: buffer.readUInt32LE(offset), length: 4};
     }
 
-    private static write_IEEEADDR(buffer: Buffer, offset: number, value: string) {
+    private static writeIEEEADDR(buffer: Buffer, offset: number, value: string): number {
         buffer.writeUInt32LE(parseInt(value.slice(10), 16), offset);
         buffer.writeUInt32LE(parseInt(value.slice(2, 10), 16), offset + 4);
         return 8;
     }
 
-    private static read_IEEEADDR(buffer: Buffer, offset: number) {
+    private static readIEEEADDR(buffer: Buffer, offset: number): ReadResult {
         const length = 8;
         const value = buffer.slice(offset, offset + length)
         return {value: Buffalo.addressBufferToString(value), length};
-    }
-
-    private static write_BUFFER(buffer: Buffer, offset: number, values: number[]) {
-        return Buffalo.writeBuffer(buffer, offset, values, values.length);
-    }
-
-    private static read_BUFFER(buffer: Buffer, offset: number, options: {length: number}) {
-        return Buffalo.readBuffer(buffer, offset, options.length);
-    }
-
-    private static write_BUFFER8(buffer: Buffer, offset: number, values: number[]) {
-        return Buffalo.writeBuffer(buffer, offset, values, 8);
-    }
-
-    private static read_BUFFER8(buffer: Buffer, offset: number) {
-        return Buffalo.readBuffer(buffer, offset, 8);
-    }
-
-    private static write_BUFFER16(buffer: Buffer, offset: number, values: number[]) {
-        return Buffalo.writeBuffer(buffer, offset, values, 16);
-    }
-
-    private static read_BUFFER16(buffer: Buffer, offset: number) {
-        return Buffalo.readBuffer(buffer, offset, 16);
-    }
-
-    private static write_BUFFER18(buffer: Buffer, offset: number, values: number[]) {
-        return Buffalo.writeBuffer(buffer, offset, values, 18);
-    }
-
-    private static read_BUFFER18(buffer: Buffer, offset: number) {
-        return Buffalo.readBuffer(buffer, offset, 18);
-    }
-
-    private static write_BUFFER32(buffer: Buffer, offset: number, values: number[]) {
-        return Buffalo.writeBuffer(buffer, offset, values, 32);
-    }
-
-    private static read_BUFFER32(buffer: Buffer, offset: number) {
-        return Buffalo.readBuffer(buffer, offset, 32);
-    }
-
-    private static write_BUFFER42(buffer: Buffer, offset: number, values: number[]) {
-        return Buffalo.writeBuffer(buffer, offset, values, 42);
-    }
-
-    private static read_BUFFER42(buffer: Buffer, offset: number) {
-        return Buffalo.readBuffer(buffer, offset, 42);
-    }
-
-    private static write_BUFFER100(buffer: Buffer, offset: number, values: number[]) {
-        return Buffalo.writeBuffer(buffer, offset, values, 100);
-    }
-
-    private static read_BUFFER100(buffer: Buffer, offset: number) {
-        return Buffalo.readBuffer(buffer, offset, 100);
     }
 
     protected static addressBufferToString(buffer: Buffer): string {
@@ -110,7 +54,7 @@ class Buffalo {
         return address;
     }
 
-    protected static readBuffer(buffer: Buffer, offset: number, length: number) {
+    protected static readBuffer(buffer: Buffer, offset: number, length: number): ReadResult {
         return {value: buffer.slice(offset, offset + length), length};
     }
 
@@ -127,28 +71,41 @@ class Buffalo {
         return values.length;
     }
 
-    public static write(type: string, buffer: Buffer, offset: number, value: number|number[]|string|Buffer|{[s: string]: number|string}[]) {
-        const key = `write_${type}`;
-
-        //@ts-ignore
-        if (!this[key]) {
-            throw new Error(`Write for '${type}' not available`);
+    public static write(type: string, buffer: Buffer, offset: number, value: Value): number {
+        console.log(type, type.startsWith('BUFFER'), value instanceof Array)
+        if (type === 'UINT8' && typeof value === 'number') {
+            return this.writeUINT8(buffer, offset, value);
+        } else if (type === 'UINT16' && typeof value === 'number') {
+            return this.writeUINT16(buffer, offset, value);
+        } else if (type === 'UINT32' && typeof value === 'number') {
+            return this.writeUINT32(buffer, offset, value);
+        }  else if (type === 'IEEEADDR' && typeof value === 'string') {
+            return this.writeIEEEADDR(buffer, offset, value);
+        } else if (type.startsWith('BUFFER') && value instanceof Array) {
+            let length = Number(type.replace('BUFFER', ''));
+            length = length != 0 ? length : value.length;
+            Buffalo.writeBuffer(buffer, offset, value, length);
+        } else {
+            throw new Error(`Write for '${type}' not available`)
         }
-
-        //@ts-ignore
-        return this[key](buffer, offset, value);
     }
 
-    public static read(type: string, buffer: Buffer, offset: number, options: Options) {
-        const key = `read_${type}`;
-
-        //@ts-ignore
-        if (!this[key]) {
-            throw new Error(`Read for '${type}' not available`);
+    public static read(type: string, buffer: Buffer, offset: number, options: Options): ReadResult {
+        if (type === 'UINT8') {
+            return this.readUINT8(buffer, offset);
+        } else if (type === 'UINT16') {
+            return this.readUINT16(buffer, offset);
+        } else if (type === 'UINT32') {
+            return this.readUINT32(buffer, offset);
+        }  else if (type === 'IEEEADDR') {
+            return this.readIEEEADDR(buffer, offset);
+        } else if (type.startsWith('BUFFER')) {
+            let length = Number(type.replace('BUFFER', ''));
+            length = length != 0 ? length : options.length;
+            return this.readBuffer(buffer, offset, length);
+        } else {
+            throw new Error(`Read for '${type}' not available`)
         }
-
-        //@ts-ignore
-        return this[key](buffer, offset, options);
     }
 }
 

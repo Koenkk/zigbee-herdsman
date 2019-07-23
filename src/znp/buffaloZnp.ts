@@ -1,8 +1,8 @@
 
-import {Buffalo} from '../buffalo';
+import {Buffalo, TsType} from '../buffalo';
 
 class BuffaloZnp extends Buffalo {
-    private static write_LIST_UINT16(buffer: Buffer, offset: number, values: number[]) {
+    private static writeLISTUINT16(buffer: Buffer, offset: number, values: number[]): number {
         for (let value of values) {
             buffer.writeUInt16LE(value, offset);
             offset += 2
@@ -11,7 +11,7 @@ class BuffaloZnp extends Buffalo {
         return values.length * 2;
     }
 
-    private static read_LIST_UINT16(buffer: Buffer, offset: number, options: {length: number}) {
+    private static readLISTUINT16(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const value = [];
         for (let i = 0; i < (options.length * 2); i += 2) {
             value.push(buffer.readUInt16LE(offset + i));
@@ -20,11 +20,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length: 2 * options.length};
     }
 
-    private static write_LIST_ROUTING_TABLE(buffer: Buffer, offset: number, values: number[]) {
-        throw new Error("Not implemented")
-    }
-
-    private static read_LIST_ROUTING_TABLE(buffer: Buffer, offset: number, options: {length: number}) {
+    private static readLISTROUTINGTABLE(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const statusLookup: {[n: number]: string} = {
             0: 'ACTIVE',
             1: 'DISCOVERY_UNDERWAY',
@@ -45,11 +41,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length: value.length * itemLength};
     }
 
-    private static write_LIST_BIND_TABLE(buffer: Buffer, offset: number, values: number[]) {
-        throw new Error("Not implemented")
-    }
-
-    private static read_LIST_BIND_TABLE(buffer: Buffer, offset: number, options: {length: number}) {
+    private static readLISTBINDTABLE(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const value = [];
         let length = 0
 
@@ -76,11 +68,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length};
     }
 
-    private static write_LIST_NEIGHBOR_LQI(buffer: Buffer, offset: number, values: number[]) {
-        throw new Error("Not implemented")
-    }
-
-    private static read_LIST_NEIGHBOR_LQI(buffer: Buffer, offset: number, options: {length: number}) {
+    private static readLISTNEIGHBORLQI(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const itemLength = 22;
         const value = [];
         for (let i = 0; i < (options.length * itemLength); i += itemLength) {
@@ -109,11 +97,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length: value.length * itemLength};
     }
 
-    private static write_LIST_NETWORK(buffer: Buffer, offset: number, values: number[]) {
-        throw new Error("Not implemented")
-    }
-
-    private static read_LIST_NETWORK(buffer: Buffer, offset: number, options: {length: number}) {
+    private static readLISTNETWORK(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const itemLength = 6;
         const value = [];
         for (let i = 0; i < (options.length * itemLength); i += itemLength) {
@@ -138,11 +122,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length: value.length * itemLength};
     }
 
-    private static write_LIST_ASSOC_DEV(buffer: Buffer, offset: number, values: number[]) {
-        throw new Error("Not implemented")
-    }
-
-    private static read_LIST_ASSOC_DEV(buffer: Buffer, offset: number, options: {startIndex: number, length: number}) {
+    private static readLISTASSOCDEV(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const value = [];
         const listLength = options.length - options.startIndex;
         let length = 0;
@@ -158,6 +138,32 @@ class BuffaloZnp extends Buffalo {
         }
 
         return {value, length};
+    }
+
+    public static write(type: string, buffer: Buffer, offset: number, value: TsType.Value): number {
+        if (type === 'LIST_UINT16' && value instanceof Array) {
+            return this.writeLISTUINT16(buffer, offset, value);
+        } else {
+            super.write(type, buffer, offset, value);
+        }
+    }
+
+    public static read(type: string, buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+        if (type === 'LIST_UINT16' && options.length !== undefined) {
+            return this.readLISTUINT16(buffer, offset, options);
+        } else if (type === 'LIST_ROUTING_TABLE') {
+            return this.readLISTROUTINGTABLE(buffer, offset, options);
+        } else if (type === 'LIST_BIND_TABLE') {
+            return this.readLISTBINDTABLE(buffer, offset, options);
+        }  else if (type === 'LIST_NEIGHBOR_LQI') {
+            return this.readLISTNEIGHBORLQI(buffer, offset, options);
+        } else if (type === 'LIST_NETWORK') {
+            return this.readLISTNETWORK(buffer, offset, options);
+        } else if (type === 'LIST_ASSOC_DEV') {
+            return this.readLISTASSOCDEV(buffer, offset, options);
+        } else {
+            super.read(type, buffer, offset, options);
+        }
     }
 }
 

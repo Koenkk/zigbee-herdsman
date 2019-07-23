@@ -175,7 +175,8 @@ describe('Buffalo', () => {
 
     it('Non existing type read', () => {
         expect(() => {
-            Buffalo.read('BUFFER89', Buffer.alloc(0), 1, {});
-        }).toThrow(new Error("Read for 'BUFFER89' not available"));
+            // @ts-ignore
+            Buffalo.read('NONEXISTING', Buffer.alloc(0), 1, {});
+        }).toThrow(new Error("Read for 'NONEXISTING' not available"));
     });
 });
