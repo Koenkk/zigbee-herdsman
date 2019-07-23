@@ -2,6 +2,9 @@ import "regenerator-runtime/runtime";
 import {Znp, ZpiObject} from '../src/znp';
 import SerialPort from 'serialport';
 import {Frame as UnpiFrame, Constants as UnpiConstants} from '../src/unpi';
+import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from './utils';
+import BuffaloZnp from '../src/znp/buffaloZnp';
+import ParameterType from '../src/znp/parameterType';
 
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
@@ -524,5 +527,198 @@ describe('ZNP', () => {
             status: 0,
 
         });
+    });
+
+    it('LIST_UINT16 write', () => {
+        const buffer = Buffer.alloc(5);
+        const payload = [1024, 2048];
+        const length = BuffaloZnp.write('LIST_UINT16', buffer, 1, payload);
+        expect(length).toStrictEqual(4);
+        expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0x04, 0x00, 0x08]));
+    });
+
+    it('LIST_UINT16 read', () => {
+        const result = BuffaloZnp.read('LIST_UINT16', Buffer.from([0x00, 0x00, 0x04, 0x00, 0x08]), 1, {length: 2});
+        expect(result.length).toStrictEqual(4);
+        expect(result.value).toStrictEqual([1024, 2048]);
+    });
+
+    it('LIST_ROUTING_TABLE write', () => {
+        expect(() => {
+            BuffaloZnp.write('LIST_ROUTING_TABLE', Buffer.alloc(10), 1, [])
+        }).toThrow();
+    });
+
+    it('LIST_ROUTING_TABLE read', () => {
+        const buffer = Buffer.from([
+            0x00,
+            0x10, 0x27, 0x00, 0x11, 0x27,
+            0x10, 0x29, 0x01, 0x11, 0x23,
+        ]);
+
+        const result = BuffaloZnp.read('LIST_ROUTING_TABLE', buffer, 1, {length: 2});
+        expect(result.length).toStrictEqual(10);
+        expect(result.value).toStrictEqual([
+            {
+                "destNwkAddr": 10000,
+                "nextHopNwkAddr": 10001,
+                "routeStatus": "ACTIVE",
+            },
+            {
+                "destNwkAddr": 10512,
+                "nextHopNwkAddr": 8977,
+                "routeStatus": "DISCOVERY_UNDERWAY",
+            },
+        ]);
+    });
+
+    it('LIST_BIND_TABLE write', () => {
+        expect(() => {
+            BuffaloZnp.write('LIST_BIND_TABLE', Buffer.alloc(10), 1, [])
+        }).toThrow();
+    });
+
+    it('LIST_BIND_TABLE read', () => {
+        const buffer = Buffer.from([
+            0x00,
+            ...ieeeaAddr1.hex, 0x02, 0x01, 0x00, 0x02, ...ieeeaAddr2.hex,
+            ...ieeeaAddr2.hex, 0x02, 0x01, 0x00, 0x03, ...ieeeaAddr1.hex, 0x04,
+            0x01,
+        ]);
+
+        const result = BuffaloZnp.read('LIST_BIND_TABLE', buffer, 1, {length: 2});
+        expect(result.length).toStrictEqual(41);
+        expect(result.value).toStrictEqual([
+           {
+                "clusterId": 1,
+                "dstAddr": ieeeaAddr2.string,
+                "dstAddrMode": 2,
+                "srcAddr": ieeeaAddr1.string,
+                "srcEp": 2,
+            },
+               {
+                "clusterId": 1,
+                "dstAddr": ieeeaAddr1.string,
+                "dstAddrMode": 3,
+                "dstEp": 4,
+                "srcAddr": ieeeaAddr2.string,
+                "srcEp": 2,
+            },
+        ]);
+    });
+
+    it('LIST_NEIGHBOR_LQI write', () => {
+        expect(() => {
+            BuffaloZnp.write('LIST_NEIGHBOR_LQI', Buffer.alloc(10), 1, [])
+        }).toThrow();
+    });
+
+    it('LIST_NEIGHBOR_LQI read', () => {
+        const buffer = Buffer.from([
+            0x00,
+            ...ieeeaAddr1.hex, ...ieeeaAddr2.hex, 0x10, 0x10, 0x44, 0x01, 0x02, 0x09,
+            ...ieeeaAddr2.hex, ...ieeeaAddr1.hex, 0x10, 0x10, 0x44, 0x00, 0x10, 0x08,
+            0x01,
+        ]);
+
+        const result = BuffaloZnp.read('LIST_NEIGHBOR_LQI', buffer, 1, {length: 2});
+        expect(result.length).toStrictEqual(44);
+        expect(result.value).toStrictEqual([
+            {
+                "depth": 2,
+                "deviceType": 0,
+                "extAddr": "0xaf440112005b1200",
+                "extPandId": "0xae440112004b1200",
+                "lqi": 9,
+                "nwkAddr": 4112,
+                "permitJoin": 1,
+                "relationship": 4,
+                "rxOnWhenIdle": 1,
+            },
+            {
+                "depth": 16,
+                "deviceType": 0,
+                "extAddr": "0xae440112004b1200",
+                "extPandId": "0xaf440112005b1200",
+                "lqi": 8,
+                "nwkAddr": 4112,
+                "permitJoin": 0,
+                "relationship": 4,
+                "rxOnWhenIdle": 1,
+            },
+        ]);
+    });
+
+    it('LIST_NETWORK write', () => {
+        expect(() => {
+            BuffaloZnp.write('LIST_NETWORK', Buffer.alloc(10), 1, [])
+        }).toThrow();
+    });
+
+    it('LIST_NETWORK read', () => {
+        const buffer = Buffer.from([
+            0x05,
+            0x10, 0x10, 0x09, 0x31, 0x13, 0x01,
+            0x10, 0x10, 0x09, 0x31, 0x13, 0x00,
+            0x01,
+        ]);
+
+        const result = BuffaloZnp.read('LIST_NETWORK', buffer, 1, {length: 2});
+        expect(result.length).toStrictEqual(12);
+        expect(result.value).toStrictEqual([
+            {
+                "beaconOrder": 3,
+                "logicalChannel": 9,
+                "neightborPanId": 4112,
+                "permitJoin": 1,
+                "stackProfile": 1,
+                "superFrameOrder": 1,
+                "zigbeeVersion": 3,
+            },
+            {
+                "beaconOrder": 3,
+                "logicalChannel": 9,
+                "neightborPanId": 4112,
+                "permitJoin": 0,
+                "stackProfile": 1,
+                "superFrameOrder": 1,
+                "zigbeeVersion": 3,
+            },
+        ]);
+    });
+
+    it('LIST_ASSOC_DEV write', () => {
+        expect(() => {
+            BuffaloZnp.write('LIST_ASSOC_DEV', Buffer.alloc(10), 1, [])
+        }).toThrow();
+    });
+
+    it('LIST_ASSOC_DEV read 3', () => {
+        const buffer = Buffer.from([
+            0x05, 0x10,
+            0x10, 0x09,
+            0x31, 0x13,
+        ]);
+
+        const result = BuffaloZnp.read('LIST_ASSOC_DEV', buffer, 0, {length: 3, startIndex: 0});
+        expect(result.length).toStrictEqual(6);
+        expect(result.value).toStrictEqual([
+            4101,
+            2320,
+            4913,
+        ]);
+    });
+
+    it('LIST_ASSOC_DEV read 75', () => {
+        const payload35 = duplicateArray(35, [0x10, 0x10]);
+        const payload5 = duplicateArray(5, [0x10, 0x10]);
+
+        const result1 = BuffaloZnp.read('LIST_ASSOC_DEV', Buffer.from(payload35), 0, {length: 40, startIndex: 0});
+        expect(result1.length).toStrictEqual(70);
+        expect(result1.value).toStrictEqual(duplicateArray(35, [4112]));
+
+        const result2 = BuffaloZnp.read('LIST_ASSOC_DEV', Buffer.from(payload5), 0, {length: 40, startIndex: 35});
+        expect(result2.length).toStrictEqual(10);
+        expect(result2.value).toStrictEqual(duplicateArray(5, [4112]));
     });
 });

@@ -1,4 +1,4 @@
-enum Type {
+enum ParameterType {
     UINT8  = 0,
     UINT16  = 1,
     UINT32  = 2,
@@ -20,4 +20,4 @@ enum Type {
     LIST_ASSOC_DEV = 16,
 }
 
-export default Type;
+export default ParameterType;

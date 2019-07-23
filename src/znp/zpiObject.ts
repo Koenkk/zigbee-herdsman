@@ -1,8 +1,9 @@
 import {Subsystem, Type, MaxDataSize} from '../unpi/constants';
 import {Frame as UnpiFrame} from '../unpi';
 import Definition from './definition';
-import Parsers from '../types/parsers';
-import {Type as ParameterType, TsType as TypeTsTypes} from '../types';
+import BuffaloZnp from './buffaloZnp';
+import {TsType as BuffaloTsType} from '../buffalo';
+import ParameterType from './parameterType';
 import {MtParameter, MtCmd, ZpiObjectPayload, MtType} from './tstype';
 
 const BufferAndListTypes = [
@@ -79,13 +80,7 @@ class ZpiObject {
         let result: ZpiObjectPayload = {};
 
         for (let parameter of parameters) {
-            const parser = Parsers[parameter.parameterType];
-            const options: TypeTsTypes.ParserOptions = {};
-
-            /* istanbul ignore next */
-            if (parser === undefined) {
-                throw new Error(`Missing read parser for ${ParameterType[parameter.parameterType]} - ${parameter.name}`);
-            }
+            const options: BuffaloTsType.Options = {};
 
             if (BufferAndListTypes.includes(parameter.parameterType)) {
                 // When reading a buffer, assume that the previous parsed parameter contains
@@ -110,7 +105,7 @@ class ZpiObject {
                 }
             }
 
-            const parsed = parser.read(buffer, offset, options);
+            const parsed = BuffaloZnp.read(ParameterType[parameter.parameterType], buffer, offset, options);
             result[parameter.name] = parsed.value
 
             offset += parsed.length;
@@ -124,13 +119,8 @@ class ZpiObject {
         let offset = 0;
 
         for (let parameter of this.parameters) {
-            const parser = Parsers[parameter.parameterType];
-            if (parser === undefined) {
-                throw new Error(`Missing write parser for ${ParameterType[parameter.parameterType]} - ${this.command}`);
-            }
-
             const value = this.payload[parameter.name];
-            const length = parser.write(buffer, offset, value);
+            const length = BuffaloZnp.write(ParameterType[parameter.parameterType], buffer, offset, value);
             offset += length;
         }
 
