@@ -697,6 +697,11 @@ function dispatchIncomingMsg(type, msg) {
             if (frameType === 0 && msg.zclMsg.cmdId === 'report' || msg.zclMsg.cmdId === 'readRsp') {
                 const type = msg.zclMsg.cmdId === 'report' ? 'ind:reported' : 'ind:readRsp';
                 af.controller._shepherd.emit(type, targetEp, msg.clusterid, msg.zclMsg.payload, msg);
+                if (msg.zclMsg.cmdId === 'report' && msg.zclMsg.frameCntl.disDefaultRsp === 0) {
+                   const cmdId = zclId.foundation('report').value;
+                   af.zclFoundation(targetEp, remoteEp, msg.clusterid, 'defaultRsp',
+                       {cmdId: cmdId, statusCode: 0}, {disDefaultRsp: 1, seqNum: msg.zclMsg.seqNum}, null);
+                }
             }
 
             const cmdIDs = [
