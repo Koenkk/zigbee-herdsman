@@ -1,8 +1,9 @@
 
 import {Buffalo, TsType} from '../buffalo';
+import {IsNumberArray} from '../utils';
 
 class BuffaloZnp extends Buffalo {
-    private static writeLISTUINT16(buffer: Buffer, offset: number, values: number[]): number {
+    private static writeListUInt16(buffer: Buffer, offset: number, values: number[]): number {
         for (let value of values) {
             buffer.writeUInt16LE(value, offset);
             offset += 2
@@ -11,7 +12,7 @@ class BuffaloZnp extends Buffalo {
         return values.length * 2;
     }
 
-    private static readLISTUINT16(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    private static readListUInt16(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const value = [];
         for (let i = 0; i < (options.length * 2); i += 2) {
             value.push(buffer.readUInt16LE(offset + i));
@@ -20,7 +21,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length: 2 * options.length};
     }
 
-    private static readLISTROUTINGTABLE(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    private static readListRoutingTable(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const statusLookup: {[n: number]: string} = {
             0: 'ACTIVE',
             1: 'DISCOVERY_UNDERWAY',
@@ -41,7 +42,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length: value.length * itemLength};
     }
 
-    private static readLISTBINDTABLE(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    private static readListBindTable(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const value = [];
         let length = 0
 
@@ -68,7 +69,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length};
     }
 
-    private static readLISTNEIGHBORLQI(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    private static readListNeighborLqi(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const itemLength = 22;
         const value = [];
         for (let i = 0; i < (options.length * itemLength); i += itemLength) {
@@ -97,7 +98,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length: value.length * itemLength};
     }
 
-    private static readLISTNETWORK(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    private static readListNetwork(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const itemLength = 6;
         const value = [];
         for (let i = 0; i < (options.length * itemLength); i += itemLength) {
@@ -122,7 +123,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length: value.length * itemLength};
     }
 
-    private static readLISTASSOCDEV(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    private static readListAssocDev(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const value = [];
         const listLength = options.length - options.startIndex;
         let length = 0;
@@ -141,28 +142,28 @@ class BuffaloZnp extends Buffalo {
     }
 
     public static write(type: string, buffer: Buffer, offset: number, value: TsType.Value): number {
-        if (type === 'LIST_UINT16' && value instanceof Array) {
-            return this.writeLISTUINT16(buffer, offset, value);
+        if (type === 'LIST_UINT16' && IsNumberArray(value)) {
+            return this.writeListUInt16(buffer, offset, value);
         } else {
-            super.write(type, buffer, offset, value);
+            return super.write(type, buffer, offset, value);
         }
     }
 
     public static read(type: string, buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
-        if (type === 'LIST_UINT16' && options.length !== undefined) {
-            return this.readLISTUINT16(buffer, offset, options);
+        if (type === 'LIST_UINT16') {
+            return this.readListUInt16(buffer, offset, options);
         } else if (type === 'LIST_ROUTING_TABLE') {
-            return this.readLISTROUTINGTABLE(buffer, offset, options);
+            return this.readListRoutingTable(buffer, offset, options);
         } else if (type === 'LIST_BIND_TABLE') {
-            return this.readLISTBINDTABLE(buffer, offset, options);
+            return this.readListBindTable(buffer, offset, options);
         }  else if (type === 'LIST_NEIGHBOR_LQI') {
-            return this.readLISTNEIGHBORLQI(buffer, offset, options);
+            return this.readListNeighborLqi(buffer, offset, options);
         } else if (type === 'LIST_NETWORK') {
-            return this.readLISTNETWORK(buffer, offset, options);
+            return this.readListNetwork(buffer, offset, options);
         } else if (type === 'LIST_ASSOC_DEV') {
-            return this.readLISTASSOCDEV(buffer, offset, options);
+            return this.readListAssocDev(buffer, offset, options);
         } else {
-            super.read(type, buffer, offset, options);
+            return super.read(type, buffer, offset, options);
         }
     }
 }

@@ -1,5 +1,5 @@
 import {Buffalo} from '../src/buffalo';
-import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from './utils';
+import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from './testUtils';
 
 describe('Buffalo', () => {
     it('UINT8 write', () => {

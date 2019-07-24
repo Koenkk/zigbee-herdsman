@@ -2,9 +2,8 @@ import "regenerator-runtime/runtime";
 import {Znp, ZpiObject} from '../src/znp';
 import SerialPort from 'serialport';
 import {Frame as UnpiFrame, Constants as UnpiConstants} from '../src/unpi';
-import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from './utils';
+import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from './testUtils';
 import BuffaloZnp from '../src/znp/buffaloZnp';
-import ParameterType from '../src/znp/parameterType';
 
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());

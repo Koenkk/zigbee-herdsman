@@ -2,11 +2,12 @@ interface Options {
     [s: string]: number;
 }
 
+type Value = number|number[]|string|Buffer|{[s: string]: number|string}[];
+
 interface ReadResult {
-    value: number|number[]|string|Buffer|{[s: string]: number|string}[];
+    value: Value;
     length: number;
 };
 
-type Value = number|number[]|string|Buffer;
 
 export {Options, ReadResult, Value};

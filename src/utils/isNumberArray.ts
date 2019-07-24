@@ -1,0 +1,16 @@
+// eslint-disable-next-line
+function isNumberArray(value: any): value is number[] {
+    if (value instanceof Array) {
+        for (let item of value) {
+            if (typeof item !== 'number') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+export default isNumberArray;
