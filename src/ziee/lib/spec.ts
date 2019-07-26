@@ -1,6 +1,6 @@
 'use strict';
 
-import * as ZCL from '../../zcl';
+import * as Zcl from '../../zcl';
 
 var _ = require('busyman');
 
@@ -147,7 +147,7 @@ Spec.prototype.init = function (resrcs, zcl) {
             break;
         case 'attrs':
             _.forEach(resrcs, function (attrVal, attrId) {
-                if (zcl && !ZCL.getAttributeLegacy(self.cid, attrId))
+                if (zcl && !Zcl.getAttributeLegacy(self.cid, attrId))
                     throw new TypeError('Attr id: ' + attrId + ' is not an ZCL-defined attribute.');
 
                 if (_.isObject(attrVal))
@@ -158,7 +158,7 @@ Spec.prototype.init = function (resrcs, zcl) {
             break;
         case 'acls':
             _.forEach(resrcs, function (flag, attrId) {
-                if (zcl && !ZCL.getAttributeLegacy(self.cid, attrId))
+                if (zcl && !Zcl.getAttributeLegacy(self.cid, attrId))
                     throw new TypeError('Attr id: ' + attrId + ' is not an ZCL-defined attribute.');
 
                 self.set(attrId, flag);   // set will turn attrId to string
@@ -170,9 +170,9 @@ Spec.prototype.init = function (resrcs, zcl) {
                 var cmdExec;
 
                 if (zcl) {
-                    if (self.sid === 'cmds' && !ZCL.getFunctionalLegacy(self.cid, cmdId))
+                    if (self.sid === 'cmds' && !Zcl.getFunctionalLegacy(self.cid, cmdId))
                         throw new TypeError('Command id: ' + cmdId + ' is not an ZCL-defined functional command.');
-                    else if (self.sid === 'cmdRsps' && !ZCL.getCommandResponseLegacy(self.cid, cmdId))
+                    else if (self.sid === 'cmdRsps' && !Zcl.getCommandResponseLegacy(self.cid, cmdId))
                         throw new TypeError('Command id: ' + cmdId + ' is not an ZCL-defined functional command response.');
                 }
 

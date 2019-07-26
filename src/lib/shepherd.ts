@@ -1,7 +1,7 @@
 /* jshint node: true */
 'use strict';
 
-import * as ZCL from '../zcl';
+import * as Zcl from '../zcl';
 
 var fs = require('fs'),
     util = require('util'),
@@ -127,7 +127,7 @@ function ZShepherd(path, opts) {
     });
 
     this.on('ind:cmd', function (ep, cId, payload, cmdId, msg) {
-        const cIdString = ZCL.getClusterLegacy(cId);
+        const cIdString = Zcl.getClusterLegacy(cId);
         const type = `cmd${cmdId.charAt(0).toUpperCase() + cmdId.substr(1)}`;
         const notifData = {};
 
@@ -138,7 +138,7 @@ function ZShepherd(path, opts) {
     });
 
     this.on('ind:statusChange', function (ep, cId, payload, msg) {
-        var cIdString = ZCL.getClusterLegacy(cId),
+        var cIdString = Zcl.getClusterLegacy(cId),
             notifData = {
                 cid: '',
                 zoneStatus: null
@@ -152,7 +152,7 @@ function ZShepherd(path, opts) {
     });
 
     this.on('ind:reported', function (ep, cId, attrs, msg) {
-        var cIdString = ZCL.getClusterLegacy(cId),
+        var cIdString = Zcl.getClusterLegacy(cId),
             notifData = {
                 cid: '',
                 data: {}
@@ -164,7 +164,7 @@ function ZShepherd(path, opts) {
         notifData.cid = cIdString;
 
         _.forEach(attrs, function (rec) {  // { attrId, dataType, attrData }
-            var attrIdString = ZCL.getAttributeLegacy(cIdString, rec.attrId);
+            var attrIdString = Zcl.getAttributeLegacy(cIdString, rec.attrId);
             attrIdString = attrIdString ? attrIdString.key : rec.attrId;
 
             notifData.data[attrIdString] = rec.attrData;
@@ -183,7 +183,7 @@ function ZShepherd(path, opts) {
     });
 
     this.on('ind:readRsp', function (ep, cId, attrs, msg) {
-        var cIdString = ZCL.getClusterLegacy(cId),
+        var cIdString = Zcl.getClusterLegacy(cId),
             notifData = {
                 cid: '',
                 data: {}
@@ -195,7 +195,7 @@ function ZShepherd(path, opts) {
         notifData.cid = cIdString;
 
         _.forEach(attrs, function (rec) {  // { attrId, dataType, attrData }
-            var attrIdString = ZCL.getAttributeLegacy(cIdString, rec.attrId);
+            var attrIdString = Zcl.getAttributeLegacy(cIdString, rec.attrId);
             attrIdString = attrIdString ? attrIdString.key : rec.attrId;
 
             notifData.data[attrIdString] = rec.attrData;
@@ -631,7 +631,7 @@ ZShepherd.prototype._attachZclMethods = function (ep) {
         };
         ep.read = function (cId, attrId, callback) {
             var deferred = Q.defer(),
-                attr = ZCL.getAttributeLegacy(cId, attrId);
+                attr = Zcl.getAttributeLegacy(cId, attrId);
 
             attr = attr ? attr.value : attrId;
 
@@ -650,8 +650,8 @@ ZShepherd.prototype._attachZclMethods = function (ep) {
         };
         ep.write = function (cId, attrId, data, callback) {
             var deferred = Q.defer(),
-                attr = ZCL.getAttributeLegacy(cId, attrId),
-                attrType = ZCL.getAttributeTypeLegacy(cId, attrId).value;
+                attr = Zcl.getAttributeLegacy(cId, attrId),
+                attrType = Zcl.getAttributeTypeLegacy(cId, attrId).value;
 
             self._foundation(ep, ep, cId, 'write', [{ attrId: attr.value, dataType: attrType, attrData: data }]).then(function (writeStatusRecsRsp) {
                 var rec = writeStatusRecsRsp[0];
@@ -685,11 +685,11 @@ ZShepherd.prototype._attachZclMethods = function (ep) {
             }
 
             if (cfgRpt) {
-                attrIdVal = ZCL.getAttributeLegacy(cId, attrId);
+                attrIdVal = Zcl.getAttributeLegacy(cId, attrId);
                 cfgRptRec = {
                     direction : 0,
                     attrId: attrIdVal ? attrIdVal.value : attrId,
-                    dataType : ZCL.getAttributeTypeLegacy(cId, attrId).value,
+                    dataType : Zcl.getAttributeTypeLegacy(cId, attrId).value,
                     minRepIntval : minInt,
                     maxRepIntval : maxInt,
                     repChange: repChange
@@ -703,7 +703,7 @@ ZShepherd.prototype._attachZclMethods = function (ep) {
                             return ep.foundation(cId, 'configReport', [ cfgRptRec ]).then(function (rsp) {
                                 var status = rsp[0].status;
                                 if (status !== 0)
-                                    deferred.reject(ZCL.Status[status]);
+                                    deferred.reject(Zcl.Status[status]);
                             });
                     });
                 } else {
@@ -731,7 +731,7 @@ ZShepherd.prototype._foundation = function (srcEp, dstEp, cId, cmd, zclData, cfg
     }
 
     return this.af.zclFoundation(srcEp, dstEp, cId, cmd, zclData, cfg).then(function (msg) {
-        var cmdString = ZCL.getFoundationLegacy(cmd);
+        var cmdString = Zcl.getFoundationLegacy(cmd);
         cmdString = cmdString ? cmdString.key : cmd;
 
         if (cmdString === 'read')
@@ -766,7 +766,7 @@ ZShepherd.prototype._updateFinalizer = function (ep, cId, attrs, reported) {
     }
 
     var self = this,
-        cIdString = ZCL.getClusterLegacy(cId),
+        cIdString = Zcl.getClusterLegacy(cId),
         clusters = ep.getClusters().dumpSync();
 
     cIdString = cIdString ? cIdString.key : cId;
@@ -776,7 +776,7 @@ ZShepherd.prototype._updateFinalizer = function (ep, cId, attrs, reported) {
             var newAttrs = {};
 
             _.forEach(attrs, function (rec) {  // { attrId, status, dataType, attrData }
-                var attrIdString = ZCL.getAttributeLegacy(cId, rec.attrId);
+                var attrIdString = Zcl.getAttributeLegacy(cId, rec.attrId);
                 attrIdString = attrIdString ? attrIdString.key : rec.attrId;
 
                 if (reported)

@@ -1,7 +1,7 @@
 /* jshint node: true */
 'use strict';
 
-import * as ZCL from '../../zcl';
+import * as Zcl from '../../zcl';
 
 var Concentrate = require('concentrate'),
     DChunks = require('../../dissolve-chunks'),
@@ -15,7 +15,7 @@ var parsedBufLen = 0;
 /*** FuncPayload Class                                                                         ***/
 /*************************************************************************************************/
 function FuncPayload(clusterId, direction, cmd) {
-    var cluster = ZCL.getClusterLegacy(clusterId),
+    var cluster = Zcl.getClusterLegacy(clusterId),
         command,
         params;
 

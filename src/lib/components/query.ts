@@ -1,6 +1,6 @@
 /* jshint node: true */
 'use strict';
-import * as ZCL from '../../zcl';
+import * as Zcl from '../../zcl';
 import * as ZSC from '../../zstack-constants';
 
 var Q = require('q'),
@@ -126,7 +126,7 @@ query.deviceWithEndpoints = function (nwkAddr, ieeeAddr, callback) {
 
 query.setBindingEntry = function (bindMode, srcEp, cId, dstEpOrGrpId, callback) {
     var deferred = Q.defer(),
-        cIdItem = ZCL.getClusterLegacy(cId),
+        cIdItem = Zcl.getClusterLegacy(cId),
         bindParams,
         dstEp,
         grpId,

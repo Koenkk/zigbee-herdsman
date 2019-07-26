@@ -1,5 +1,5 @@
 import * as ZSC from '../../zstack-constants';
-import * as ZCL from '../../zcl';
+import * as Zcl from '../../zcl';
 
 var EventEmitter = require('events');
 
@@ -40,7 +40,7 @@ af.send = function (srcEp, dstEp, cId, rawPayload, opt, callback) {
         throw new TypeError('srcEp should be an instance of Endpoint class.');
 
     if (_.isString(cId)) {
-        var cIdItem = ZCL.getClusterLegacy(cId);
+        var cIdItem = Zcl.getClusterLegacy(cId);
         if (_.isUndefined(cIdItem)) {
             deferred.reject(new Error('Invalid cluster id: ' + cId + '.'));
             return deferred.promise.nodeify(callback);
@@ -135,7 +135,7 @@ af.sendExt = function (srcEp, addrMode, dstAddrOrGrpId, cId, rawPayload, opt, ca
         proving.string(dstAddrOrGrpId, 'Af dstAddrOrGrpId should be a string for long address.');
 
     if (_.isString(cId)) {
-        var cIdItem = ZCL.getClusterLegacy(cId);
+        var cIdItem = Zcl.getClusterLegacy(cId);
         if (_.isUndefined(cIdItem)) {
             deferred.reject(new Error('Invalid cluster id: ' + cId + '.'));
             return deferred.promise.nodeify(callback);
@@ -434,7 +434,7 @@ af.zclClustersReq = function (dstEp, eventEmitter, callback) {    // callback(er
     var i = 0;
     // each request
     _.forEach(clusterList, function (cId) {
-        var cIdString = ZCL.getClusterLegacy(cId);
+        var cIdString = Zcl.getClusterLegacy(cId);
         cIdString = cIdString ? cIdString.key : cId;
 
         clusterAttrsReqs.push(function (clusters) {
@@ -523,7 +523,7 @@ af.zclClusterAttrsReq = function (dstEp, cId, callback) {
     }).then(function (attributes) {
         var attrs = {};
         _.forEach(attributes, function (rec) {  // { attrId, status, dataType, attrData }
-            var attrIdString = ZCL.getAttributeLegacy(cId, rec.attrId);
+            var attrIdString = Zcl.getAttributeLegacy(cId, rec.attrId);
 
             attrIdString = attrIdString ? attrIdString.key : rec.attrId;
 
@@ -594,6 +594,8 @@ function dispatchIncomingMsg(type, msg) {
         frameType,      // check whether the msg is foundation(0) or functional(1)
         mandatoryEvent; // bridged event
     var coord = af.controller._coord;
+
+    console.log('=====', type, msg);
 
     debug(`dispatchIncomingMsg(): type: ${type}, msg: ${JSON.stringify(msg)}`);
 
@@ -697,7 +699,7 @@ function dispatchIncomingMsg(type, msg) {
 
                 // https://github.com/Koenkk/zigbee2mqtt/issues/1722
                 if (msg.zclMsg.cmdId === 'report' && msg.zclMsg.frameCntl.disDefaultRsp === 0) {
-                   const cmdId = ZCL.Foundation.report.ID;
+                   const cmdId = Zcl.Foundation.report.ID;
                    af.zclFoundation(targetEp, remoteEp, msg.clusterid, 'defaultRsp',
                        {cmdId: cmdId, statusCode: 0}, {disDefaultRsp: 1, seqNum: msg.zclMsg.seqNum}, null);
                 }
