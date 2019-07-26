@@ -1,7 +1,7 @@
 /* jshint node: true */
 'use strict';
 
-import * as ZSC from '../../zstack-constants';
+import * as Zsc from '../../zstack-constants';
 
 var Q = require('q'),
     EventEmitter = require('events'),
@@ -362,7 +362,7 @@ handlers.stateChangeInd = function (msg) {
         return;
 
     var devStates = msg.state;
-    _.forEach(ZSC.COMMON.devStates, function (statesCode, states) {
+    _.forEach(Zsc.COMMON.devStates, function (statesCode, states) {
         if (msg.state === statesCode)
             devStates = states;
     });

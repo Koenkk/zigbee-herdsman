@@ -2,7 +2,7 @@ import {Znp} from '../../znp';
 import {Subsystem, Type} from '../../unpi/constants';
 import ZpiObject from 'src/znp/zpiObject';
 
-import * as ZSC from '../../zstack-constants';
+import * as Zsc from '../../zstack-constants';
 
 const fs = require('fs');
 
@@ -181,7 +181,7 @@ Controller.prototype.getFirmwareInfo = function () {
 Controller.prototype.getNetInfo = function () {
     var net = _.cloneDeep(this._net);
 
-    if (net.state === ZSC.COMMON.devStates.ZB_COORD)
+    if (net.state === Zsc.COMMON.devStates.ZB_COORD)
         net.state = 'Coordinator';
 
     net.joinTimeLeft = this._permitJoinTime;
@@ -550,7 +550,7 @@ Controller.prototype.setNvParams = function (net) {
 
                 _.forEach(val, function (ch) {
                     if (ch >= 11 && ch <= 26)
-                        chList = chList | ZSC.COMMON.channelMask['CH' + ch];
+                        chList = chList | Zsc.COMMON.channelMask['CH' + ch];
                 });
 
                 nvParams.channelList.value = [ chList & 0xFF, (chList >> 8) & 0xFF, (chList >> 16) & 0xFF, (chList >> 24) & 0xFF ];
@@ -898,7 +898,7 @@ function makeRegParams(loEp) {
         appprofid: loEp.getProfId(),
         appdeviceid: loEp.getDevId(),
         appdevver: 0,
-        latencyreq: ZSC.AF.networkLatencyReq.NO_LATENCY_REQS,
+        latencyreq: Zsc.AF.networkLatencyReq.NO_LATENCY_REQS,
         appnuminclusters: loEp.inClusterList.length,
         appinclusterlist: loEp.inClusterList,
         appnumoutclusters: loEp.outClusterList.length,

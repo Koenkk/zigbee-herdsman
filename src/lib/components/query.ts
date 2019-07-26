@@ -1,7 +1,7 @@
 /* jshint node: true */
 'use strict';
 import * as Zcl from '../../zcl';
-import * as ZSC from '../../zstack-constants';
+import * as Zsc from '../../zstack-constants';
 
 var Q = require('q'),
     _ = require('busyman'),
@@ -149,7 +149,7 @@ query.setBindingEntry = function (bindMode, srcEp, cId, dstEpOrGrpId, callback) 
         srcaddr: srcEp.getIeeeAddr(),
         srcendpoint: srcEp.getEpId(),
         clusterid: cIdItem.value,
-        dstaddrmode: dstEp ? ZSC.COMMON.addressMode.ADDR_64BIT : ZSC.COMMON.addressMode.ADDR_GROUP,
+        dstaddrmode: dstEp ? Zsc.COMMON.addressMode.ADDR_64BIT : Zsc.COMMON.addressMode.ADDR_GROUP,
         addr_short_long: dstEp ? dstEp.getIeeeAddr() : zutils.toLongAddrString(grpId),
         dstendpoint: dstEp ? dstEp.getEpId() : 0xFF
     };
@@ -177,7 +177,7 @@ query.setBindingEntry = function (bindMode, srcEp, cId, dstEpOrGrpId, callback) 
 /*** Protected Methods                                                                         ***/
 /*************************************************************************************************/
 query._network = function (param, callback) {
-    var prop = ZSC.SAPI.zbDeviceInfo[param];
+    var prop = Zsc.SAPI.zbDeviceInfo[param];
 
     return Q.fcall(function () {
         if (_.isNil(prop))
@@ -265,7 +265,7 @@ query._networkAll = function (callback) {
 };
 
 function devType(type) {
-    var DEVTYPE = ZSC.ZDO.deviceLogicalType;
+    var DEVTYPE = Zsc.ZDO.deviceLogicalType;
 
     switch (type) {
         case DEVTYPE.COORDINATOR:
