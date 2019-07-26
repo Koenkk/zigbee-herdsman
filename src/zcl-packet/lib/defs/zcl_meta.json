@@ -110,7 +110,7 @@
             ],
             "knownBufLen": 2
         },
-        "writeStrcut": {
+        "writeStruct": {
             "params":[
                 {"attrId":"uint16"},
                 {"selector":"selector"},
@@ -119,7 +119,7 @@
             ],
             "knownBufLen": 3
         },
-        "writeStrcutRsp": {
+        "writeStructRsp": {
             "params":[
                 {"status":"uint8"},
                 {"attrId":"uint16"},

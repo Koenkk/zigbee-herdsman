@@ -63,7 +63,7 @@ Zive.prototype.foundationHandler = function (msg) {
             this._foundApis.write(clusters, cId, data.payload, msg, function () {});
             break;
         case 'readStruct':
-        case 'writeStrcut':
+        case 'writeStruct':
             // not support now
             break;
         default:
