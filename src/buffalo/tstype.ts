@@ -1,8 +1,9 @@
 interface Options {
-    [s: string]: number;
+    [s: string]: number | string;
 }
 
-type Value = number|number[]|string|Buffer|{[s: string]: number|string}[];
+// eslint-disable-next-line
+type Value = any;
 
 interface ReadResult {
     value: Value;

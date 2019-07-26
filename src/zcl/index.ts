@@ -3,6 +3,7 @@ import Status from './status';
 import DataType from './dataType';
 import * as TsType from './tstype';
 import Foundation from './foundation';
+import ZclFrame from './zclFrame';
 
 interface KeyValue {
     key: string;
@@ -151,6 +152,7 @@ export {
     Status,
     DataType,
     Foundation,
+    ZclFrame,
 
     getClusterLegacy,
     getAttributeLegacy,

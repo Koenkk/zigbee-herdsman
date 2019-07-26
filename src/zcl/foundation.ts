@@ -3,7 +3,10 @@ import * as TsType from './tstype';
 
 interface FoundationDefinition {
     ID: number;
-    knownBufLen: number;
+    meta: {
+        type: 'repetitive' | 'flat' | 'oneof';
+        statusBehaviour?: 'SkipIfSucess' | 'SkipIfFailure';
+    }
     parameters: TsType.Parameter[];
 };
 
@@ -13,73 +16,77 @@ const Foundation: {
 = {
     read: {
         ID: 0,
-        knownBufLen: 2,
+        meta: {type: 'repetitive'},
         parameters: [
             {name: 'attrId', type: DataType.uint16},
         ],
     },
     readRsp: {
         ID: 1,
-        knownBufLen: 3,
+        meta: {type: 'repetitive', statusBehaviour: 'SkipIfFailure'},
         parameters: [
             {name: 'attrId', type: DataType.uint16},
             {name: 'status', type: DataType.uint8},
-            {name: 'extra', type: DataType.readRsp},
+            {name: 'dataType', type: DataType.uint8},
+            {name: 'attrData', type: DataType.attrData},
         ],
     },
     write: {
         ID: 2,
-        knownBufLen: 3,
+        meta: {type: 'repetitive'},
         parameters: [
             {name: 'attrId', type: DataType.uint16},
             {name: 'dataType', type: DataType.uint8},
-            {name: 'attrData', type: DataType.variable},
+            {name: 'attrData', type: DataType.attrData},
         ],
     },
     writeUndiv: {
         ID: 3,
-        knownBufLen: 3,
+        meta: {type: 'repetitive'},
         parameters: [
             {name: 'attrId', type: DataType.uint16},
             {name: 'dataType', type: DataType.uint8},
-            {name: 'attrData', type: DataType.variable},
+            {name: 'attrData', type: DataType.attrData},
         ],
     },
     writeRsp: {
         ID: 4,
-        knownBufLen: 0,
+        meta: {type: 'repetitive', statusBehaviour: 'SkipIfSucess'},
         parameters: [
-            {name: 'extra', type: DataType.writeRsp},
+            {name: 'status', type: DataType.uint8},
+            {name: 'attrId', type: DataType.uint16},
         ],
     },
     writeNoRsp: {
         ID: 5,
-        knownBufLen: 3,
+        meta: {type: 'repetitive'},
         parameters: [
             {name: 'attrId', type: DataType.uint16},
             {name: 'dataType', type: DataType.uint8},
-            {name: 'attrData', type: DataType.variable},
+            {name: 'attrData', type: DataType.attrData},
         ],
     },
     configReport: {
         ID: 6,
-        knownBufLen: 3,
+        meta: {type: 'repetitive'},
         parameters: [
             {name: 'direction', type: DataType.uint8},
             {name: 'attrId', type: DataType.uint16},
-            {name: 'extra', type: DataType.configReport},
+            {name: 'extra', type: DataType.configReport}, // TODO
         ],
     },
     configReportRsp: {
         ID: 7,
-        knownBufLen: 0,
+        meta: {type: 'repetitive', statusBehaviour: 'SkipIfSucess'},
         parameters: [
-            {name: 'extra', type: DataType.configReportRsp},
+            {name: 'status', type: DataType.uint8},
+            {name: 'direction', type: DataType.uint8},
+            {name: 'attrId', type: DataType.uint16},
         ],
     },
     readReportConfig: {
         ID: 8,
-        knownBufLen: 3,
+        meta: {type: 'repetitive'},
         parameters: [
             {name: 'direction', type: DataType.uint8},
             {name: 'attrId', type: DataType.uint16},
@@ -87,26 +94,26 @@ const Foundation: {
     },
     readReportConfigRsp: {
         ID: 9,
-        knownBufLen: 4,
+        meta: {type: 'repetitive'},
         parameters: [
             {name: 'status', type: DataType.uint8},
             {name: 'direction', type: DataType.uint8},
             {name: 'attrId', type: DataType.uint16},
-            {name: 'extra', type: DataType.readReportConfigRsp},
+            {name: 'extra', type: DataType.readReportConfigRsp}, // TODO same as configReport?
         ],
     },
     report: {
         ID: 10,
-        knownBufLen: 3,
+        meta: {type: 'repetitive'},
         parameters: [
             {name: 'attrId', type: DataType.uint16},
             {name: 'dataType', type: DataType.uint8},
-            {name: 'attrData', type: DataType.variable},
+            {name: 'attrData', type: DataType.attrData},
         ],
     },
     defaultRsp: {
         ID: 11,
-        knownBufLen: 2,
+        meta: {type: 'flat'},
         parameters: [
             {name: 'cmdId', type: DataType.uint8},
             {name: 'statusCode', type: DataType.uint8},
@@ -114,7 +121,7 @@ const Foundation: {
     },
     discover: {
         ID: 12,
-        knownBufLen: 3,
+        meta: {type: 'flat'},
         parameters: [
             {name: 'startAttrId', type: DataType.uint16},
             {name: 'maxAttrIds', type: DataType.uint8},
@@ -122,39 +129,25 @@ const Foundation: {
     },
     discoverRsp: {
         ID: 13,
-        knownBufLen: 3,
+        meta: {type: 'oneof'},
         parameters: [
             {name: 'attrId', type: DataType.uint16},
             {name: 'dataType', type: DataType.uint8},
         ],
     },
-    readStruct: {
-        ID: 14,
-        knownBufLen: 2,
-        parameters: [
-            {name: 'attrId', type: DataType.uint16},
-            {name: 'selector', type: DataType.selector},
-        ],
-    },
-    writeStrcut: {
-        ID: 15,
-        knownBufLen: 3,
-        parameters: [
-            {name: 'attrId', type: DataType.uint16},
-            {name: 'selector', type: DataType.selector},
-            {name: 'dataType', type: DataType.uint8},
-            {name: 'attrData', type: DataType.multi},
-        ],
-    },
-    writeStrcutRsp: {
-        ID: 16,
-        knownBufLen: 3,
-        parameters: [
-            {name: 'status', type: DataType.uint8},
-            {name: 'attrId', type: DataType.uint16},
-            {name: 'selector', type: DataType.selector},
-        ],
-    },
+
+    /**
+     * TODO: not all commands are supported yet, missing:
+     * - 14: readStruct
+     * - 15: writeStruct
+     * - 16: writeStructRsp
+     * - 17: discoverCommandsReceived
+     * - 18: discoverCommandsReceivedResponse
+     * - 19: discoverCommandsGenerated
+     * - 20: discoverCommandsGeneratedResponse
+     * - 21: discoverAttributesExtended
+     * - 22: discoverAttributesExtendedResponse
+     */
 }
 
 export default Foundation;

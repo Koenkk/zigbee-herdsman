@@ -1,4 +1,12 @@
 enum DataType {
+    uint8 = 32,
+    uint16 = 33,
+
+    // Below are not defined by ZCL but are used for parsing in BuffaloZcl
+    attrData = 1000,
+
+
+    // TODO: All below is not implemented yet
     // TODO: refactor to snake casing
     noData = 0,
     data8 = 8,
@@ -18,8 +26,6 @@ enum DataType {
     bitmap48 = 29,
     bitmap56 = 30,
     bitmap64 = 31,
-    uint8 = 32,
-    uint16 = 33,
     uint24 = 34,
     uint32 = 35,
     uint40 = 36,
@@ -56,26 +62,6 @@ enum DataType {
     ieeeAddr = 240,
     secKey = 241,
     unknown = 255,
-
-    // TODO: Below should be removed
-    stringPreLen = 300,
-    extfieldsets = 301,
-    preLenUint8 = 302,
-    dynUint8 = 303,
-    dynUint16 = 304,
-    longaddr = 305,
-    dynUint24 = 306,
-    preLenUint32 = 307,
-    dynUint32 = 308,
-    zonebuffer = 309,
-    readRsp = 310,
-    variable = 311,
-    writeRsp = 312,
-    configReport = 313,
-    configReportRsp = 314,
-    readReportConfigRsp = 315,
-    selector = 316,
-    multi = 317,
 };
 
 export default DataType;
