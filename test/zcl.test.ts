@@ -1,47 +1,47 @@
-import * as ZCL from '../src/zcl';
-//const zclId = require('../src/zcl-id');
+import * as Zcl from '../src/zcl';
+// const zclId = require('../src/zcl-id');
 
-describe('ZCL', () => {
+describe('Zcl', () => {
 
     beforeEach(() => {
     });
 
     it('Get cluster by name', () => {
-        const cluster = ZCL.getClusterByName('genPowerCfg');
+        const cluster = Zcl.getClusterByName('genPowerCfg');
         expect(cluster.ID).toBe(1);
     });
 
     it('Get cluster by name non-existing', () => {
         expect(() => {
-            ZCL.getClusterByName('notExisting');
+            Zcl.getClusterByName('notExisting');
         }).toThrowError("Cluster with name 'notExisting' does not exist")
     });
 
     it('Get cluster by ID', () => {
-        const cluster = ZCL.getClusterByID(1);
+        const cluster = Zcl.getClusterByID(1);
         expect(cluster.ID).toBe(1);
     });
 
     it('Get cluster by ID non-existing', () => {
         expect(() => {
-            ZCL.getClusterByID(99999);
+            Zcl.getClusterByID(99999);
         }).toThrowError("Cluster with ID '99999' does not exist")
     });
 
     it('Get cluster legacy by number', () => {
-        const cluster = ZCL.getClusterLegacy(1);
+        const cluster = Zcl.getClusterLegacy(1);
         expect(cluster).toStrictEqual({key: 'genPowerCfg', value: 1});
     });
 
     it('Get cluster legacy by string', () => {
-        const cluster = ZCL.getClusterLegacy('genPowerCfg');
+        const cluster = Zcl.getClusterLegacy('genPowerCfg');
         expect(cluster).toStrictEqual({key: 'genPowerCfg', value: 1});
     });
 
     it('Get cluster legacy by array fails', () => {
         expect(() => {
             // @ts-ignore
-            ZCL.getClusterLegacy({ID: 1});
+            Zcl.getClusterLegacy({ID: 1});
         }).toThrowError("Get cluster with type 'object' is not supported");
     });
 
@@ -55,27 +55,36 @@ describe('ZCL', () => {
 
     //     expect(zclId.cluster('genBasic')).toStrictEqual(ZCL.getClusterLegacy('genBasic'));
     //     expect(zclId.cluster(0)).toStrictEqual(ZCL.getClusterLegacy(0));
+    // it('LEGACY', () => {
+    //     expect(zclId.status('unsupAttribute').value).toBe(Zcl.Status.UNSUP_ATTRIBUTE);
+    //     expect(zclId.status(0).key).toBe(Zcl.Status[Zcl.Status.SUCCESS].toLocaleLowerCase());
 
-    //     expect(zclId.attr(0, 0)).toStrictEqual(ZCL.getAttributeLegacy(0, 0));
-    //     expect(zclId.attr('genBasic', 'modelId')).toStrictEqual(ZCL.getAttributeLegacy('genBasic', 'modelId'));
-    //     expect(zclId.attr('genBasic', 5)).toStrictEqual(ZCL.getAttributeLegacy(0, 'modelId'));
+    //     expect(zclId.cluster('genBasic')).toStrictEqual(Zcl.getClusterLegacy('genBasic'));
+    //     expect(zclId.cluster(0)).toStrictEqual(Zcl.getClusterLegacy(0));
 
-    //     expect(zclId.attrType(0, 0)).toStrictEqual(ZCL.getAttributeTypeLegacy(0, 0));
-    //     expect(zclId.attrType('genBasic', 'modelId')).toStrictEqual(ZCL.getAttributeTypeLegacy('genBasic', 'modelId'));
-    //     expect(zclId.attrType('genBasic', 5)).toStrictEqual(ZCL.getAttributeTypeLegacy(0, 'modelId'));
+    //     expect(zclId.attr(0, 0)).toStrictEqual(Zcl.getAttributeLegacy(0, 0));
+    //     expect(zclId.attr('genBasic', 'modelId')).toStrictEqual(Zcl.getAttributeLegacy('genBasic', 'modelId'));
+    //     expect(zclId.attr('genBasic', 5)).toStrictEqual(Zcl.getAttributeLegacy(0, 'modelId'));
 
-    //     expect(zclId.foundation('report').value).toBe(ZCL.Foundation.report.ID);
+    //     expect(zclId.attrType(0, 0)).toStrictEqual(Zcl.getAttributeTypeLegacy(0, 0));
+    //     expect(zclId.attrType('genBasic', 'modelId')).toStrictEqual(Zcl.getAttributeTypeLegacy('genBasic', 'modelId'));
+    //     expect(zclId.attrType('genBasic', 5)).toStrictEqual(Zcl.getAttributeTypeLegacy(0, 'modelId'));
 
-    //     expect(zclId.foundation(1)).toStrictEqual(ZCL.getFoundationLegacy('readRsp'))
-    //     expect(zclId.foundation('readRsp')).toStrictEqual(ZCL.getFoundationLegacy(1))
+    //     expect(zclId.foundation('report').value).toBe(Zcl.Foundation.report.ID);
 
-    //     expect(zclId.functional('genIdentify', 1)).toStrictEqual(ZCL.getFunctionalLegacy(3, 'identifyQuery'));
-    //     expect(zclId.functional(3, 'identifyQuery')).toStrictEqual(ZCL.getFunctionalLegacy('genIdentify', 1));
+    //     expect(zclId.foundation(1)).toStrictEqual(Zcl.getFoundationLegacy('readRsp'))
+    //     expect(zclId.foundation('readRsp')).toStrictEqual(Zcl.getFoundationLegacy(1))
 
-    //     expect(zclId.getCmdRsp('genIdentify', 0)).toStrictEqual(ZCL.getCommandResponseLegacy(3, 'identifyQueryRsp'));
-    //     expect(zclId.getCmdRsp(3, 'identifyQueryRsp')).toStrictEqual(ZCL.getCommandResponseLegacy('genIdentify', 0));
+    //     expect(zclId.functional('genIdentify', 1)).toStrictEqual(Zcl.getFunctionalLegacy(3, 'identifyQuery'));
+    //     expect(zclId.functional(3, 'identifyQuery')).toStrictEqual(Zcl.getFunctionalLegacy('genIdentify', 1));
+
+    //     expect(zclId.getCmdRsp('genIdentify', 0)).toStrictEqual(Zcl.getCommandResponseLegacy(3, 'identifyQueryRsp'));
+    //     expect(zclId.getCmdRsp(3, 'identifyQueryRsp')).toStrictEqual(Zcl.getCommandResponseLegacy('genIdentify', 0));
 
     //     expect(zclId.dataType(32)).toStrictEqual(ZCL.getDataTypeLegacy('uint8'));
     //     expect(zclId.dataType('uint8')).toStrictEqual(ZCL.getDataTypeLegacy(32));
     //})
+    //     expect(zclId.dataType(32)).toStrictEqual(Zcl.getDataTypeLegacy('uint8'));
+    //     expect(zclId.dataType('uint8')).toStrictEqual(Zcl.getDataTypeLegacy(32));
+    // })
 });
