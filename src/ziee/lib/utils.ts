@@ -1,5 +1,8 @@
-var _ = require('busyman'),
-    zclId = require('../../zcl-id');
+'use strict';
+
+import * as ZCL from '../../zcl';
+
+var _ = require('busyman');
 
 var utils = {};
 
@@ -15,32 +18,32 @@ utils.isValidArgType = function (param) {
 };
 
 utils.isCid = function (cid) {
-    var cidItem = zclId.cluster(cid);
+    var cidItem = ZCL.getClusterLegacy(cid);
     return cidItem ? true : false;
 };
 
 utils.getCidKey = function (cid) {
-    var cidItem = zclId.cluster(cid);
+    var cidItem = ZCL.getClusterLegacy(cid);
     return cidItem ? cidItem.key : cid;
 };
 
 utils.getCidNum = function (cid) {
-    var cidItem = zclId.cluster(cid);
+    var cidItem = ZCL.getClusterLegacy(cid);
     return cidItem ? cidItem.value : cid;
 };
 
 utils.getAidKey = function (cid, aid) {
-    var aidItem = zclId.attr(cid, aid);
+    var aidItem = ZCL.getAttributeLegacy(cid, aid);
     return aidItem ? aidItem.key : aid;
 };
 
 utils.getCmdKey = function (cid, cmdId) {
-    var cmdItem = zclId.functional(cid, cmdId);
+    var cmdItem = ZCL.getFunctionalLegacy(cid, cmdId);
     return cmdItem ? cmdItem.key : cmdId;
 };
 
 utils.getCmdRspKey = function (cid, cmdId) {
-    var cmdItem = zclId.getCmdRsp(cid, cmdId);
+    var cmdItem = ZCL.getCommandResponseLegacy(cid, cmdId);
     return cmdItem ? cmdItem.key : cmdId;
 };
 

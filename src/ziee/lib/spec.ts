@@ -1,7 +1,8 @@
 'use strict';
 
-var _ = require('busyman'),
-    zclId = require('../../zcl-id');
+import * as ZCL from '../../zcl';
+
+var _ = require('busyman');
 
 var utils = require('./utils');
 // sid: [ 'dir', 'attrs', 'acls', 'cmds', 'cmdRsps' ]
@@ -22,7 +23,7 @@ function Spec(cidKey, sidKey) {
 Spec.prototype.has = function (rid) {
     var ridkey;
 
-    if (!utils.isValidArgType(rid)) 
+    if (!utils.isValidArgType(rid))
         throw new TypeError('aid should be given with a number or a string.');
 
     if (this.sid === 'attrs' || this.sid === 'acls')
@@ -40,7 +41,7 @@ Spec.prototype.has = function (rid) {
 Spec.prototype.get = function (rid) {
     var ridkey;
 
-    if (!utils.isValidArgType(rid)) 
+    if (!utils.isValidArgType(rid))
         throw new TypeError('rid should be given with a number or a string.');
 
     if (this.sid === 'attrs' || this.sid === 'acls')
@@ -58,7 +59,7 @@ Spec.prototype.get = function (rid) {
 Spec.prototype.set = function (rid, value) {
     var ridkey;
 
-    if (!utils.isValidArgType(rid)) 
+    if (!utils.isValidArgType(rid))
         throw new TypeError('rid should be given with a number or a string.');
 
     if (this.sid !== 'cmds' && this.sid !== 'cmdRsps') {
@@ -146,7 +147,7 @@ Spec.prototype.init = function (resrcs, zcl) {
             break;
         case 'attrs':
             _.forEach(resrcs, function (attrVal, attrId) {
-                if (zcl && !zclId.attr(self.cid, attrId))
+                if (zcl && !ZCL.getAttributeLegacy(self.cid, attrId))
                     throw new TypeError('Attr id: ' + attrId + ' is not an ZCL-defined attribute.');
 
                 if (_.isObject(attrVal))
@@ -157,7 +158,7 @@ Spec.prototype.init = function (resrcs, zcl) {
             break;
         case 'acls':
             _.forEach(resrcs, function (flag, attrId) {
-                if (zcl && !zclId.attr(self.cid, attrId))
+                if (zcl && !ZCL.getAttributeLegacy(self.cid, attrId))
                     throw new TypeError('Attr id: ' + attrId + ' is not an ZCL-defined attribute.');
 
                 self.set(attrId, flag);   // set will turn attrId to string
@@ -169,9 +170,9 @@ Spec.prototype.init = function (resrcs, zcl) {
                 var cmdExec;
 
                 if (zcl) {
-                    if (self.sid === 'cmds' && !zclId.functional(self.cid, cmdId))
+                    if (self.sid === 'cmds' && !ZCL.getFunctionalLegacy(self.cid, cmdId))
                         throw new TypeError('Command id: ' + cmdId + ' is not an ZCL-defined functional command.');
-                    else if (self.sid === 'cmdRsps' && !zclId.getCmdRsp(self.cid, cmdId))
+                    else if (self.sid === 'cmdRsps' && !ZCL.getCommandResponseLegacy(self.cid, cmdId))
                         throw new TypeError('Command id: ' + cmdId + ' is not an ZCL-defined functional command response.');
                 }
 
@@ -201,7 +202,7 @@ Spec.prototype.dump = function (callback) {
     _.forEach(this, function (val, ridKey) {
         if (ridKey === 'cid' || ridKey === 'sid') {
             resrcNum -= 1;
-            
+
             if (resrcNum === 0)
                 callback(null, dumped);
         } else {

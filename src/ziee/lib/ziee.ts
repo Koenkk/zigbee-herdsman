@@ -1,7 +1,6 @@
 'use strict';
 
 var _ = require('busyman'),
-    zclId = require('../../zcl-id'),
     utils = require('./utils'),
     Spec = require('./spec');
 
@@ -87,7 +86,7 @@ Ziee.prototype.has = function (cid, sid, rid) {
         resrc,
         has = !!cluster;
 
-    if (!_.isUndefined(sid) && !utils.isValidArgType(sid)) 
+    if (!_.isUndefined(sid) && !utils.isValidArgType(sid))
         throw new TypeError('sid should be given with a number or a string.');
 
     if (has) {
@@ -100,7 +99,7 @@ Ziee.prototype.has = function (cid, sid, rid) {
             }
         }
     }
-    
+
     return has;
 };
 
@@ -110,10 +109,10 @@ Ziee.prototype.findCluster = function (cid) {
 };
 
 Ziee.prototype.findSpec = function (cid, sid) {
-    var cidkey = utils.getCidKey(cid), 
+    var cidkey = utils.getCidKey(cid),
         target = this[cidkey];
 
-    if (!utils.isValidArgType(sid)) 
+    if (!utils.isValidArgType(sid))
         throw new TypeError('sid should be given with a number or a string.');
 
     if (target)

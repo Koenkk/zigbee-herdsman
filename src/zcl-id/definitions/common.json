@@ -38,13 +38,7 @@
         "discoverRsp": 13,
         "readStruct": 14,
         "writeStrcut": 15,
-        "writeStrcutRsp": 16,
-        "discoverCmdsRec": 17,
-        "discoverCmdsRecRsp": 18,
-        "discoverCmdsGen": 19,
-        "discoverCmdsGenRsp": 20,
-        "discoverAttrsExt": 21,
-        "discoverAttrsExtRsp": 22
+        "writeStrcutRsp": 16
     },
     "cmdDirection": {
         "SERVER_GENERATED": 1,

@@ -1,8 +1,9 @@
 /* jshint node: true */
 'use strict';
 
-var Enum = require('enum'),
-    zclId = require('../../zcl-id');
+import * as ZCL from '../../zcl';
+
+var Enum = require('enum');
 
 var zclMeta = require('./defs/zcl_meta.json'),
     zclDefs = require('./defs/zcl_defs.json');
@@ -42,9 +43,9 @@ zclmeta.functional.get = function (cluster, cmd) {
 
 zclmeta.functional.getCommand = function (cluster, dir, cmd) {
     if (dir === 0)         // client to server, cmd
-        return zclId.functional(cluster, cmd);
+        return ZCL.getFunctionalLegacy(cluster, cmd);
     else if (dir === 1)    // server to client, cmdRsp
-        return zclId.getCmdRsp(cluster, cmd);
+        return ZCL.getCommandResponseLegacy(cluster, cmd);
 };
 
 zclmeta.functional.getDirection = function (cluster, cmd) {

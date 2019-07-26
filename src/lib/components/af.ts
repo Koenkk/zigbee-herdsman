@@ -1,14 +1,11 @@
-/* jshint node: true */
-'use strict';
+import * as ZSC from '../../zstack-constants';
+import * as ZCL from '../../zcl';
 
 var EventEmitter = require('events');
-
-import * as ZSC from '../../zstack-constants';
 
 var Q = require('q'),
     _ = require('busyman'),
     Areq = require('../../areq'),
-    zclId = require('../../zcl-id'),
     proving = require('proving');
 
 var zcl = require('./zcl'),
@@ -43,7 +40,7 @@ af.send = function (srcEp, dstEp, cId, rawPayload, opt, callback) {
         throw new TypeError('srcEp should be an instance of Endpoint class.');
 
     if (_.isString(cId)) {
-        var cIdItem = zclId.cluster(cId);
+        var cIdItem = ZCL.getClusterLegacy(cId);
         if (_.isUndefined(cIdItem)) {
             deferred.reject(new Error('Invalid cluster id: ' + cId + '.'));
             return deferred.promise.nodeify(callback);
@@ -138,7 +135,7 @@ af.sendExt = function (srcEp, addrMode, dstAddrOrGrpId, cId, rawPayload, opt, ca
         proving.string(dstAddrOrGrpId, 'Af dstAddrOrGrpId should be a string for long address.');
 
     if (_.isString(cId)) {
-        var cIdItem = zclId.cluster(cId);
+        var cIdItem = ZCL.getClusterLegacy(cId);
         if (_.isUndefined(cIdItem)) {
             deferred.reject(new Error('Invalid cluster id: ' + cId + '.'));
             return deferred.promise.nodeify(callback);
@@ -437,7 +434,7 @@ af.zclClustersReq = function (dstEp, eventEmitter, callback) {    // callback(er
     var i = 0;
     // each request
     _.forEach(clusterList, function (cId) {
-        var cIdString = zclId.cluster(cId);
+        var cIdString = ZCL.getClusterLegacy(cId);
         cIdString = cIdString ? cIdString.key : cId;
 
         clusterAttrsReqs.push(function (clusters) {
@@ -526,7 +523,7 @@ af.zclClusterAttrsReq = function (dstEp, cId, callback) {
     }).then(function (attributes) {
         var attrs = {};
         _.forEach(attributes, function (rec) {  // { attrId, status, dataType, attrData }
-            var attrIdString = zclId.attr(cId, rec.attrId);
+            var attrIdString = ZCL.getAttributeLegacy(cId, rec.attrId);
 
             attrIdString = attrIdString ? attrIdString.key : rec.attrId;
 
@@ -697,10 +694,10 @@ function dispatchIncomingMsg(type, msg) {
             if (frameType === 0 && msg.zclMsg.cmdId === 'report' || msg.zclMsg.cmdId === 'readRsp') {
                 const type = msg.zclMsg.cmdId === 'report' ? 'ind:reported' : 'ind:readRsp';
                 af.controller._shepherd.emit(type, targetEp, msg.clusterid, msg.zclMsg.payload, msg);
-                
+
                 // https://github.com/Koenkk/zigbee2mqtt/issues/1722
                 if (msg.zclMsg.cmdId === 'report' && msg.zclMsg.frameCntl.disDefaultRsp === 0) {
-                   const cmdId = zclId.foundation('report').value;
+                   const cmdId = ZCL.Foundation.report.ID;
                    af.zclFoundation(targetEp, remoteEp, msg.clusterid, 'defaultRsp',
                        {cmdId: cmdId, statusCode: 0}, {disDefaultRsp: 1, seqNum: msg.zclMsg.seqNum}, null);
                 }

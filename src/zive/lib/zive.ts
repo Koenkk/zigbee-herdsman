@@ -1,8 +1,9 @@
 /* jshint node: true */
 'use strict';
 
+import * as ZCL from '../../zcl';
+
 var _ = require('busyman'),
-    zclId = require('../../zcl-id'),
     foundApis = require('./foundation_apis');
 
 /*************************************************************************************************/
@@ -28,9 +29,9 @@ function Zive(infos, clusters) {
 
     _.forEach(clusters.dumpSync(), function (cInfo, cId) {
         if (cInfo.dir.value & 1)
-            self._simpleDesc.inClusterList.push(zclId.cluster(cId).value);
+            self._simpleDesc.inClusterList.push(ZCL.getClusterLegacy(cId).value);
         if (cInfo.dir.value & 2)
-            self._simpleDesc.outClusterList.push(zclId.cluster(cId).value);
+            self._simpleDesc.outClusterList.push(ZCL.getClusterLegacy(cId).value);
     });
 }
 
@@ -39,7 +40,7 @@ Zive.prototype.foundationHandler = function (msg) {
         clusters = this.clusters,
         data = msg.zclMsg,
         cId = msg.clusterid,
-        cmdName = zclId.foundation(data.cmdId).key,
+        cmdName = ZCL.getFoundationLegacy(data.cmdId).key,
         cfg = {
             manufSpec: data.frameCntl.manufSpec,
             direction: 1,
@@ -98,8 +99,15 @@ Zive.prototype.functionalHandler = function (msg, remoteEp) {
         cmdRspName;
 
     cmdType = cmdDir ? 'cmdRsp' : 'cmd';    // 0: client-to-server('cmd'), 1: server-to-client('cmdRsp')
-    cmdName = zclId[cmdDir ? 'getCmdRsp' : 'functional'](cId, cmdId).key;
-    cmdRspId = zclId[cmdDir ? 'functional' : 'getCmdRsp'](cId, cmdName + 'Rsp');
+
+    if (cmdDir) {
+        cmdName = ZCL.getCommandResponseLegacy(cId, cmdId).key;
+        cmdRspId = ZCL.getFunctionalLegacy(cId, cmdName + 'Rsp');
+    } else {
+        cmdName = ZCL.getFunctionalLegacy(cId, cmdId).key;
+        cmdRspId = ZCL.getCommandResponseLegacy(cId, cmdName + 'Rsp');
+    }
+
     cmdRspName = cmdRspId ? cmdRspId.key : null;
 
     if (cmdType === 'cmdRsp' && _.isObject(data.payload)) {
@@ -123,15 +131,15 @@ Zive.prototype.functionalHandler = function (msg, remoteEp) {
 
         if (err) {
             if (rspData === '_notfound_')
-                payload.statusCode = zclId.status('unsupClusterCmd').value;
+                payload.statusCode = ZCL.Status.UNSUP_CLUSTER_CMD;
             else
-                payload.statusCode = zclId.status('failure').value;
+                payload.statusCode = ZCL.Status.FAILURE;
 
             self.foundation(msg.srcaddr, msg.srcendpoint, cId, 'defaultRsp', payload, cfg);
         } else if (cmdRspName) {
             if (!rspData) {
                 if (defaultRsp === 0) {
-                    payload.statusCode = zclId.status('success').value;
+                    payload.statusCode = ZCL.Status.SUCCESS;
                     self.foundation(msg.srcaddr, msg.srcendpoint, cId, 'defaultRsp', payload, cfg);
                 }
             } else {
@@ -140,7 +148,7 @@ Zive.prototype.functionalHandler = function (msg, remoteEp) {
                 // [TODO] if payload format error, throw error?
             }
         } else if (defaultRsp === 0) {
-            payload.statusCode = zclId.status('success').value;
+            payload.statusCode = ZCL.Status.SUCCESS;
             self.foundation(msg.srcaddr, msg.srcendpoint, cId, 'defaultRsp', payload, cfg);
         }
     });
@@ -154,7 +162,7 @@ Zive.prototype._report = function (cId, attrId, data, afMsg) {
         },
         attrReport = {
             attrId: attrId,
-            dataType: zclId.attrType(cId, attrId).value,
+            dataType: ZCL.getAttributeTypeLegacy(cId, attrId).value,
             attrData: null
         };
 

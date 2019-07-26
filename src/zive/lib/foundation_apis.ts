@@ -1,8 +1,9 @@
 /* jshint node: true */
 'use strict';
 
-var _ = require('busyman'),
-    zclId = require('../../zcl-id');
+import * as ZCL from '../../zcl';
+
+var _ = require('busyman');
 
 var zApp,
     foundApis = {};
@@ -12,9 +13,9 @@ foundApis.read = function (clusters, cId, payload, afMsg, callback) {
 
     _.forEach(payload, function (readRec) {
         var attrId = readRec.attrId,
-            attrType = zclId.attrType(cId, attrId).key,
+            attrType = ZCL.getAttributeTypeLegacy(cId, attrId).value,
             rptCfg;
-        
+
         readFuncs.push(function (cb) {
             var readStatusRec = {
                     attrId: attrId,
@@ -26,14 +27,14 @@ foundApis.read = function (clusters, cId, payload, afMsg, callback) {
 
                 if (err) {
                     if (data === '_notfound_')
-                        readStatusRec.status = zclId.status('unsupAttribute').value;
+                        readStatusRec.status = ZCL.Status.UNSUP_ATTRIBUTE;
                     else if (data === '_unreadable_' || data === '_exec_')
-                        readStatusRec.status = zclId.status('notAuthorized').value;
+                        readStatusRec.status = ZCL.Status.NOT_AUTHORIZED;
                     else
-                        readStatusRec.status = zclId.status('failure').value;
+                        readStatusRec.status = ZCL.Status.FAILURE;
                 } else {
-                    readStatusRec.status = zclId.status('success').value;
-                    readStatusRec.dataType = zclId.attrType(cId, attrId).value;
+                    readStatusRec.status = ZCL.Status.SUCCESS;
+                    readStatusRec.dataType = ZCL.getAttributeTypeLegacy(cId, attrId).value;
                     readStatusRec.attrData = data;
 
                     if (isAnalog(attrType) && clusters.has(cId, 'rptCfgs', attrId)) {
@@ -64,7 +65,7 @@ foundApis.write = function (clusters, cId, payload, afMsg, callback) {
 
     _.forEach(payload, function (writeRec) {
         var attrId = writeRec.attrId,
-            attrType = zclId.attrType(cId, attrId).key,
+            attrType = ZCL.getAttributeTypeLegacy(cId, attrId).value,
             rptCfg;
 
         writeFuncs.push(function (cb) {
@@ -75,10 +76,10 @@ foundApis.write = function (clusters, cId, payload, afMsg, callback) {
                 };
 
             if (acl === 'R') {
-                writeStatusRec.status = zclId.status('readOnly').value;
+                writeStatusRec.status = ZCL.Status.READ_ONLY;
                 cb(null, writeStatusRec);
-            } else if (writeRec.dataType !== zclId.attrType(cId, attrId).value) {
-                writeStatusRec.status = zclId.status('invalidValue').value;
+            } else if (writeRec.dataType !== ZCL.getAttributeTypeLegacy(cId, attrId).value) {
+                writeStatusRec.status = ZCL.Status.INVALID_VALUE;
                 cb(null, writeStatusRec);
             } else {
                 clusters.write(cId, attrId, writeRec.attrData, function (err, data) {
@@ -86,13 +87,13 @@ foundApis.write = function (clusters, cId, payload, afMsg, callback) {
 
                     if (err) {
                         if (data === '_notfound_')
-                            writeStatusRec.status = zclId.status('unsupAttribute').value;
+                            writeStatusRec.status = ZCL.Status.UNSUP_ATTRIBUTE;
                         else if (data === '_unwritable_' || data === '_exec_')
-                            writeStatusRec.status = zclId.status('notAuthorized').value;
+                            writeStatusRec.status = ZCL.Status.NOT_AUTHORIZED;
                         else
-                            writeStatusRec.status = zclId.status('failure').value;
+                            writeStatusRec.status = ZCL.Status.FAILURE;
                     } else {
-                        writeStatusRec.status = zclId.status('success').value;
+                        writeStatusRec.status = ZCL.Status.SUCCESS;
 
                         if (clusters.has(cId, 'rptCfgs', attrId) && isAnalog(attrType)) {
                             rptCfg = clusters.get(cId, 'rptCfgs', attrId);
@@ -129,7 +130,7 @@ foundApis.configReport = function (clusters, cId, payload, afMsg, callback) {
 
     _.forEach(payload, function (attrRptCfgRec) {
         var attrId = attrRptCfgRec.attrId,
-            attrType = zclId.attrType(cId, attrId).key,
+            attrType = ZCL.getAttributeTypeLegacy(cId, attrId).value,
             cfg = clusters.get(cId, 'rptCfgs', attrId),
             attrStatusRec = {
                 attrId: attrId,
@@ -138,18 +139,18 @@ foundApis.configReport = function (clusters, cId, payload, afMsg, callback) {
             };
 
         if (!clusters.has(cId, 'attrs', attrId))
-            attrStatusRec.status = zclId.status('unsupAttribute').value;
-        else if (attrType === 'array' || attrType === 'struct' || attrType === 'bag')
-            attrStatusRec.status = zclId.status('unsupAttribute').value;
+            attrStatusRec.status = ZCL.Status.UNSUP_ATTRIBUTE;
+        else if (attrType === ZCL.DataType.array || attrType === ZCL.DataType.struct  || attrType === ZCL.DataType.bag )
+            attrStatusRec.status = ZCL.Status.UNSUP_ATTRIBUTE;
         else if (attrStatusRec.direction === 1) {
             if (!cfg) cfg = {};
 
             cfg.timeout = attrRptCfgRec.timeout;
             clusters.set(cId, 'rptCfgs', attrId, cfg);
-            attrStatusRec.status = zclId.status('success').value;
+            attrStatusRec.status = ZCL.Status.SUCCESS;
         } else {
-            if (attrRptCfgRec.dataType !== zclId.attrType(cId, attrId).value)
-                attrStatusRec.status = zclId.status('invalidDataType').value;
+            if (attrRptCfgRec.dataType !== ZCL.getAttributeTypeLegacy(cId, attrId).value)
+                attrStatusRec.status = ZCL.Status.INVALID_DATA_TYPE;
             else {
                 if (!cfg) cfg = {};
                 if (!cfg.rRpt) cfg.rRpt = {};
@@ -209,9 +210,9 @@ foundApis.configReport = function (clusters, cId, payload, afMsg, callback) {
                 }
 
                 clusters.set(cId, 'rptCfgs', attrId, cfg);
-                attrStatusRec.status = zclId.status('success').value;
+                attrStatusRec.status = ZCL.Status.SUCCESS;
             }
-        } 
+        }
         cfgRptRsps.push(attrStatusRec);
     });
     invokeCbNextTick(cfgRptRsps, callback);
@@ -222,7 +223,7 @@ foundApis.readReportConfig = function (clusters, cId, payload, afMsg, callback) 
 
     _.forEach(payload, function (attrRec) {
         var attrId = attrRec.attrId,
-            attrType = zclId.attrType(cId, attrId).value,
+            attrType = ZCL.getAttributeTypeLegacy(cId, attrId).value,
             direction = attrRec.direction,
             cfg = clusters.get(cId, 'rptCfgs', attrId),
             attrRptCfgRec = {
@@ -232,14 +233,14 @@ foundApis.readReportConfig = function (clusters, cId, payload, afMsg, callback) 
             };
 
         if (!clusters.has(cId, 'attrs', attrId))
-            attrRptCfgRec.status = zclId.status('unsupAttribute').value;
+            attrRptCfgRec.status = ZCL.Status.UNSUP_ATTRIBUTE;
         else if (!cfg)
-            attrRptCfgRec.status = zclId.status('unreportableAttribute').value;
+            attrRptCfgRec.status = ZCL.Status.UNREPORTABLE_ATTRIBUTE;
         else if (direction === 1) {
-            attrRptCfgRec.status = zclId.status('success').value;
+            attrRptCfgRec.status = ZCL.Status.SUCCESS;
             attrRptCfgRec.timeout = cfg.timeout ? cfg.timeout : 0xffff;
         } else {
-            attrRptCfgRec.status = zclId.status('success').value;
+            attrRptCfgRec.status = ZCL.Status.SUCCESS;
             attrRptCfgRec.dataType = attrType;
             attrRptCfgRec.minRepIntval = cfg.pmin ? cfg.pmin : 0xffff;
             attrRptCfgRec.maxRepIntval = cfg.pmax ? cfg.pmax : 0xffff;
@@ -261,7 +262,7 @@ foundApis.discover = function (clusters, cId, payload, afMsg, callback) {
         };
 
     _.forEach(attrs, function (info, id) {
-        var attrId = zclId.attr(cId, id).value,
+        var attrId = ZCL.getAttributeLegacy(cId, id).value,
             attrInfo = {
                 attrId: attrId,
                 dataType: null
@@ -271,7 +272,7 @@ foundApis.discover = function (clusters, cId, payload, afMsg, callback) {
             return false;
 
         if (attrId >= startId) {
-            attrInfo.dataType = zclId.attrType(cId, attrId).value;
+            attrInfo.dataType = ZCL.getAttributeTypeLegacy(cId, attrId).value;
             discRsp.attrInfos.push(attrInfo);
         }
     });
@@ -311,9 +312,8 @@ function invokeCbNextTick (val, cb) {
     }
 }
 
-function isAnalog(dataType) {
-    var type = zclId.dataType(dataType).value,
-        analogDigital;
+function isAnalog(type) {
+    var analogDigital;
 
     if ((type > 0x07 && type < 0x20) ||  //GENERAL_DATA, LOGICAL, BITMAP
         (type > 0x2f && type < 0x38) ||  //ENUM

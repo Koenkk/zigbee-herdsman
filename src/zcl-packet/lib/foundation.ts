@@ -1,10 +1,11 @@
 /* jshint node: true */
 'use strict';
 
+import * as ZCL from '../../zcl';
+
 var Concentrate = require('concentrate'),
     DChunks = require('../../dissolve-chunks'),
-    ru = DChunks().Rule(),
-    zclId = require('../../zcl-id');
+    ru = DChunks().Rule();
 
 var zclmeta = require('./zclmeta');
 
@@ -14,7 +15,7 @@ var parsedBufLen = 0;
 /*** FoundPayload Class                                                                        ***/
 /*************************************************************************************************/
 function FoundPayload(cmd) {
-    var command = zclId.foundation(cmd);
+    var command = ZCL.getFoundationLegacy(cmd);
 
     this.cmd = undefined;          // string after assigned
     this.cmdId = undefined;        // number after assigned
@@ -256,10 +257,10 @@ function getChunkBuf (rule, arg) {
 
     switch (rule) {
         case 'multi':
-            type = zclId.dataType(arg.dataType).key;
-            if (type === 'array' || type === 'set' || type === 'bag') {
+            type = ZCL.getDataTypeLegacy(arg.dataType).value;
+            if (type === ZCL.DataType.array || type === ZCL.DataType.set || type === ZCL.DataType.bag) {
                 dataBuf = dataBuf.buffer(getChunkBuf('attrVal', arg.attrData));
-            } else if (type === 'struct') {
+            } else if (type === ZCL.DataType.struct) {
                 dataBuf = dataBuf.buffer(getChunkBuf('attrValStruct', arg.attrData));
             } else {
                 dataBuf = dataBuf.buffer(getDataTypeBuf(getDataType(arg.dataType), arg.attrData));
@@ -298,7 +299,7 @@ function ensureDataTypeString(dataType) {
     var dataTypeStr;
 
     if (typeof dataType === 'number') {
-        dataTypeStr = zclId.dataType(dataType).key;
+        dataTypeStr = ZCL.getDataTypeLegacy(dataType).key;
     } else if (typeof dataType === 'object' && dataType.hasOwnProperty('key')) {
         dataTypeStr = dataType.key;
     } else if (typeof dataType === 'string') {
@@ -528,9 +529,9 @@ function getDataTypeBuf (type, value) {
     }
 }
 
-function isDataAnalogDigital(dataType) {
-    var type = zclId.dataType(ensureDataTypeString(dataType)).value,
-        analogDigital;
+function isDataAnalogDigital(dataType: number | string) {
+    var type = ZCL.getDataTypeLegacy(ensureDataTypeString(dataType)).value;
+    var analogDigital;
 
     if ((type > 0x07 && type < 0x20) ||  //GENERAL_DATA, LOGICAL, BITMAP
         (type > 0x2f && type < 0x38) ||  //ENUM
@@ -784,12 +785,11 @@ ru.clause('multi', function (name) {
     var flag = 0;
 
     this.tap(name, function () {
-        var type = zclId.dataType(this.vars.dataType).key,
-            dataType;
+        var type = ZCL.getDataTypeLegacy(this.vars.dataType).value;
 
-        if (type === 'array' || type === 'set' || type === 'bag') {
+        if (type === ZCL.DataType.array || type === ZCL.DataType.set || type === ZCL.DataType.bag) {
             ru.attrVal()(this);
-        } else if (type === 'struct') {
+        } else if (type === ZCL.DataType.struct) {
             ru.attrValStruct()(this);
         } else {
             flag = 1;

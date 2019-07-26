@@ -367,17 +367,17 @@
                 "params":[
                     {"value":"uint16"}
                 ],
-                "dir":1},
+                "dir":0},
             "tradfriArrowHold":{
                 "params":[
                     {"value":"uint16"}
                 ],
-                "dir":1},
+                "dir":0},
             "tradfriArrowRelease":{
                 "params":[
                     {"value":"uint16"}
                 ],
-                "dir":1}
+                "dir":0}
         },
         "genOnOff": {
             "off":{
@@ -1571,11 +1571,11 @@
                 ],
                 "dir":1}
         },
-        "manuSpecificClusterAduroSmart": {   
-            "cmd0": {                
-                "params":[],            
+        "manuSpecificClusterAduroSmart": {
+            "cmd0": {
+                "params":[],
                 "dir":0
-            }               
+            }
         },
         "manuSpecificOsram": {
             "resetStartupParams": {
@@ -1585,6 +1585,11 @@
             "saveStartupParams": {
                 "params":[],
                 "dir":0
+            },
+            "saveStartupParamsRsp":{
+                "params":[
+                ],
+                "dir":1
             }
         },
         "manuSpecificPhilips": {
