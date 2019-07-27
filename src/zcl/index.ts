@@ -1,8 +1,8 @@
-import Cluster from './cluster';
-import Status from './status';
-import DataType from './dataType';
+import Cluster from './definition/cluster';
+import Status from './definition/status';
+import DataType from './definition/dataType';
 import * as TsType from './tstype';
-import Foundation from './foundation';
+import Foundation from './definition/foundation';
 import ZclFrame from './zclFrame';
 
 interface KeyValue {

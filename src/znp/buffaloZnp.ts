@@ -3,24 +3,6 @@ import {Buffalo, TsType} from '../buffalo';
 import {IsNumberArray} from '../utils';
 
 class BuffaloZnp extends Buffalo {
-    private static writeListUInt16(buffer: Buffer, offset: number, values: number[]): number {
-        for (let value of values) {
-            buffer.writeUInt16LE(value, offset);
-            offset += 2
-        }
-
-        return values.length * 2;
-    }
-
-    private static readListUInt16(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
-        const value = [];
-        for (let i = 0; i < (options.length * 2); i += 2) {
-            value.push(buffer.readUInt16LE(offset + i));
-        }
-
-        return {value, length: 2 * options.length};
-    }
-
     private static readListRoutingTable(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
         const statusLookup: {[n: number]: string} = {
             0: 'ACTIVE',
@@ -141,18 +123,8 @@ class BuffaloZnp extends Buffalo {
         return {value, length};
     }
 
-    public static write(type: string, buffer: Buffer, offset: number, value: TsType.Value): number {
-        if (type === 'LIST_UINT16' && IsNumberArray(value)) {
-            return this.writeListUInt16(buffer, offset, value);
-        } else {
-            return super.write(type, buffer, offset, value);
-        }
-    }
-
     public static read(type: string, buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
-        if (type === 'LIST_UINT16') {
-            return this.readListUInt16(buffer, offset, options);
-        } else if (type === 'LIST_ROUTING_TABLE') {
+        if (type === 'LIST_ROUTING_TABLE') {
             return this.readListRoutingTable(buffer, offset, options);
         } else if (type === 'LIST_BIND_TABLE') {
             return this.readListBindTable(buffer, offset, options);

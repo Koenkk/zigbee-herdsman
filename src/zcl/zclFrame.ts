@@ -1,9 +1,7 @@
-import Direction from './direction';
-import Foundation from './foundation';
+import {Direction, Foundation, DataType, BuffaloZclDataType} from './definition';
 import BuffaloZcl from './buffaloZcl';
-import DataType from './dataType';
 import {TsType as BuffaloTsType} from '../buffalo';
-import Status from './status'
+import * as Utils from './definition/utils';
 
 const MINIMAL_FRAME_LENGTH = 3;
 
@@ -88,6 +86,10 @@ class ZclFrame {
         }
     }
 
+    private parsePayloadCluster(header: ZclHeader, buffer: Buffer): any {
+        // TODO: pass length (preivous parameter) for uint16 and uint8 list
+    }
+
     private parsePayloadGlobal(header: ZclHeader, buffer: Buffer): any {
         if (header.frameControl.manufacturerSpecific) {
             throw new Error(`Global commands are not supported for manufacturer specific commands`);
@@ -95,7 +97,7 @@ class ZclFrame {
 
         const command = Object.values(Foundation).find((c): boolean => c.ID === header.commandIdentifier);
 
-        if (command.meta.type === 'repetitive') {
+        if (command.parseStrategy === 'repetitive') {
             const payload = [];
 
             for (let position = 0; position < buffer.length; position) {
@@ -104,30 +106,38 @@ class ZclFrame {
                 for (let parameter of command.parameters) {
                     const options: BuffaloTsType.Options = {};
 
-                    if (parameter.name === 'attrData' && typeof entry.dataType === 'number') {
-                        // We need to grab the dataType to parse attrData
+                    const failedCondition = parameter.conditions.map((condition): boolean => {
+                        if (condition.type === 'statusEquals') {
+                            return entry.status !== condition.value;
+                        } else if (condition.type == 'statusNotEquals') {
+                            return entry.status === condition.value;
+                        } else if (condition.type == 'directionEquals') {
+                            return entry.direction !== condition.value;
+                        } else if (condition.type == 'dataTypeValueTypeEquals') {
+                            return Utils.IsDataTypeAnalogOrDiscrete(entry.dataType) !== condition.value;
+                        }
+                    }).find((condition): boolean => condition === false);
+
+                    if (failedCondition) {
+                        continue;
+                    }
+
+                    if (parameter.type === BuffaloZclDataType.useDataType && typeof entry.dataType === 'number') {
+                        // We need to grab the dataType to parse useDataType
                         options.dataType = DataType[entry.dataType];
                     }
 
-                    const result = BuffaloZcl.read(DataType[parameter.type], buffer, position, options);
+                    const typeStr = DataType[parameter.type] != null ? DataType[parameter.type] : BuffaloZclDataType[parameter.type];
+                    const result = BuffaloZcl.read(typeStr, buffer, position, options);
                     entry[parameter.name] = result.value;
                     position += result.length;
-
-                    // If we see a status paramater we need to stop parsing in some cases
-                    if (parameter.name === 'status' && command.meta.statusBehaviour) {
-                        if (command.meta.statusBehaviour === 'SkipIfFailure' && result.value !== Status.SUCCESS) {
-                            break;
-                        } else if (command.meta.statusBehaviour === 'SkipIfSucess' && result.value === Status.SUCCESS) {
-                            break;
-                        }
-                    }
                 }
 
                 payload.push(entry);
             }
 
             return payload;
-        } else if (command.meta.type === 'flat') {
+        } else if (command.parseStrategy === 'flat') {
             const payload: {[s: string]: BuffaloTsType.Value} = {};
             let position = 0;
 
@@ -136,7 +146,7 @@ class ZclFrame {
                 payload[parameter.name] = result.value;
                 position += result.length;
             }
-        } else if (command.meta.type === 'oneof') {
+        } else if (command.parseStrategy === 'oneof') {
             if (command === Foundation.discoverRsp) {
                 const payload: {[s: string]: BuffaloTsType.Value} = {};
                 payload.discComplete = buffer.readUInt8(0);
