@@ -1,12 +1,4 @@
 enum DataType {
-    uint8 = 32,
-    uint16 = 33,
-
-    // Below are not defined by ZCL but are used for parsing in BuffaloZcl
-    attrData = 1000,
-
-
-    // TODO: All below is not implemented yet
     // TODO: refactor to snake casing
     noData = 0,
     data8 = 8,
@@ -32,17 +24,14 @@ enum DataType {
     uint48 = 37,
     uint56 = 38,
     uint64 = 39,
+    uint8 = 32,
+    uint16 = 33,
     int8 = 40,
     int16 = 41,
     int24 = 42,
     int32 = 43,
-    int40 = 44,
-    int48 = 45,
-    int56 = 46,
-    int64 = 47,
     enum8 = 48,
     enum16 = 49,
-    semiPrec = 56,
     singlePrec = 57,
     doublePrec = 58,
     octetStr = 65,
@@ -62,6 +51,13 @@ enum DataType {
     ieeeAddr = 240,
     secKey = 241,
     unknown = 255,
+
+    // TODO: ones below are not in BuffaloZcl and thus cannot be parsed/written
+    int40 = 44,
+    int48 = 45,
+    int56 = 46,
+    int64 = 47,
+    semiPrec = 56,
 };
 
 export default DataType;

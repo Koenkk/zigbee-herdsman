@@ -1,5 +1,6 @@
 import DataType from './dataType';
-import * as TsType from './tstype';
+import * as TsType from '../tstype';
+import BuffaloZclDataType from './buffaloZclDataType';
 
 interface ClusterDefinition {
     ID: number;
@@ -153,7 +154,7 @@ const Cluster: {
                 ID: 0,
                 parameters: [
                     {name: 'groupid', type: DataType.uint16},
-                    {name: 'groupname', type: DataType.stringPreLen},
+                    {name: 'groupname', type: DataType.charStr},
                 ],
             },
             view: {
@@ -165,8 +166,8 @@ const Cluster: {
             getMembership: {
                 ID: 2,
                 parameters: [
-                    {name: 'groupcount', type: DataType.preLenUint8},
-                    {name: 'grouplist', type: DataType.dynUint16},
+                    {name: 'groupcount', type: DataType.uint8},
+                    {name: 'grouplist', type: BuffaloZclDataType.LIST_UINT16},
                 ],
             },
             remove: {
@@ -184,7 +185,7 @@ const Cluster: {
                 ID: 5,
                 parameters: [
                     {name: 'groupid', type: DataType.uint16},
-                    {name: 'groupname', type: DataType.stringPreLen},
+                    {name: 'groupname', type: DataType.charStr},
                 ],
             },
         },
@@ -201,15 +202,15 @@ const Cluster: {
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                     {name: 'groupid', type: DataType.uint16},
-                    {name: 'groupname', type: DataType.stringPreLen},
+                    {name: 'groupname', type: DataType.charStr},
                 ],
             },
             getMembershipRsp: {
                 ID: 2,
                 parameters: [
                     {name: 'capacity', type: DataType.uint8},
-                    {name: 'groupcount', type: DataType.preLenUint8},
-                    {name: 'grouplist', type: DataType.dynUint16},
+                    {name: 'groupcount', type: DataType.uint8},
+                    {name: 'grouplist', type: BuffaloZclDataType.LIST_UINT16},
                 ],
             },
             removeRsp: {
@@ -238,7 +239,7 @@ const Cluster: {
                     {name: 'groupid', type: DataType.uint16},
                     {name: 'sceneid', type: DataType.uint8},
                     {name: 'transtime', type: DataType.uint16},
-                    {name: 'scenename', type: DataType.stringPreLen},
+                    {name: 'scenename', type: DataType.charStr},
                     {name: 'extensionfieldsets', type: DataType.extfieldsets},
                 ],
             },
@@ -288,7 +289,7 @@ const Cluster: {
                     {name: 'groupid', type: DataType.uint16},
                     {name: 'sceneid', type: DataType.uint8},
                     {name: 'transtime', type: DataType.uint16},
-                    {name: 'scenename', type: DataType.stringPreLen},
+                    {name: 'scenename', type: DataType.charStr},
                     {name: 'extensionfieldsets', type: DataType.extfieldsets},
                 ],
             },
@@ -344,7 +345,7 @@ const Cluster: {
                     {name: 'groupid', type: DataType.uint16},
                     {name: 'sceneid', type: DataType.uint8},
                     {name: 'transtime', type: DataType.uint16},
-                    {name: 'scenename', type: DataType.stringPreLen},
+                    {name: 'scenename', type: DataType.charStr},
                     {name: 'extensionfieldsets', type: DataType.extfieldsets},
                 ],
             },
@@ -377,8 +378,8 @@ const Cluster: {
                     {name: 'status', type: DataType.uint8},
                     {name: 'capacity', type: DataType.uint8},
                     {name: 'groupid', type: DataType.uint16},
-                    {name: 'scenecount', type: DataType.preLenUint8},
-                    {name: 'scenelist', type: DataType.dynUint8},
+                    {name: 'scenecount', type: DataType.uint8},
+                    {name: 'scenelist', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
             enhancedAddRsp: {
@@ -393,7 +394,7 @@ const Cluster: {
                     {name: 'groupid', type: DataType.uint16},
                     {name: 'sceneid', type: DataType.uint8},
                     {name: 'transtime', type: DataType.uint16},
-                    {name: 'scenename', type: DataType.stringPreLen},
+                    {name: 'scenename', type: DataType.charStr},
                     {name: 'extensionfieldsets', type: DataType.extfieldsets},
                 ],
             },
@@ -655,7 +656,7 @@ const Cluster: {
             getDevCfg: {
                 ID: 2,
                 parameters: [
-                    {name: 'targetaddr', type: DataType.longaddr},
+                    {name: 'targetaddr', type: DataType.ieeeAddr},
                 ],
             },
             getData: {
@@ -663,7 +664,7 @@ const Cluster: {
                 parameters: [
                     {name: 'getdatainfo', type: DataType.uint8},
                     {name: 'numrsp', type: DataType.uint8},
-                    {name: 'targetaddr', type: DataType.longaddr},
+                    {name: 'targetaddr', type: DataType.ieeeAddr},
                 ],
             },
         },
@@ -1149,26 +1150,26 @@ const Cluster: {
             lockDoor: {
                 ID: 0,
                 parameters: [
-                    {name: 'pincodevalue', type: DataType.stringPreLen},
+                    {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             unlockDoor: {
                 ID: 1,
                 parameters: [
-                    {name: 'pincodevalue', type: DataType.stringPreLen},
+                    {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             toggleDoor: {
                 ID: 2,
                 parameters: [
-                    {name: 'pincodevalue', type: DataType.stringPreLen},
+                    {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             unlockWithTimeout: {
                 ID: 3,
                 parameters: [
                     {name: 'timeout', type: DataType.uint16},
-                    {name: 'pincodevalue', type: DataType.stringPreLen},
+                    {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             getLogRecord: {
@@ -1183,7 +1184,7 @@ const Cluster: {
                     {name: 'userid', type: DataType.uint16},
                     {name: 'userstatus', type: DataType.uint8},
                     {name: 'usertype', type: DataType.uint8},
-                    {name: 'pincodevalue', type: DataType.stringPreLen},
+                    {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             getPinCode: {
@@ -1305,7 +1306,7 @@ const Cluster: {
                     {name: 'userid', type: DataType.uint16},
                     {name: 'userstatus', type: DataType.uint8},
                     {name: 'usertype', type: DataType.uint8},
-                    {name: 'pincodevalue', type: DataType.stringPreLen},
+                    {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             getRfidCode: {
@@ -1360,7 +1361,7 @@ const Cluster: {
                     {name: 'source', type: DataType.uint8},
                     {name: 'eventidalarmcode', type: DataType.uint8},
                     {name: 'userid', type: DataType.uint16},
-                    {name: 'pincodevalue', type: DataType.stringPreLen},
+                    {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             setPinCodeRsp: {
@@ -1375,7 +1376,7 @@ const Cluster: {
                     {name: 'userid', type: DataType.uint16},
                     {name: 'userstatus', type: DataType.uint8},
                     {name: 'usertype', type: DataType.uint8},
-                    {name: 'pincodevalue', type: DataType.stringPreLen},
+                    {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             clearPinCodeRsp: {
@@ -1497,7 +1498,7 @@ const Cluster: {
                     {name: 'userid', type: DataType.uint16},
                     {name: 'userstatus', type: DataType.uint8},
                     {name: 'usertype', type: DataType.uint8},
-                    {name: 'pincodevalue', type: DataType.stringPreLen},
+                    {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             clearRfidCodeRsp: {
@@ -1700,8 +1701,8 @@ const Cluster: {
                 parameters: [
                     {name: 'numoftrans', type: DataType.uint8},
                     {name: 'dayofweek', type: DataType.uint8},
-                    {name: 'mode', type: DataType.preLenUint8},
-                    {name: 'thermoseqmode', type: DataType.dynUint16},
+                    {name: 'mode', type: DataType.uint8},
+                    {name: 'thermoseqmode', type: BuffaloZclDataType.LIST_UINT16},
                 ],
             },
             getWeeklySchedule: {
@@ -1728,8 +1729,8 @@ const Cluster: {
                 parameters: [
                     {name: 'numoftrans', type: DataType.uint8},
                     {name: 'dayofweek', type: DataType.uint8},
-                    {name: 'mode', type: DataType.preLenUint8},
-                    {name: 'thermoseqmode', type: DataType.dynUint16},
+                    {name: 'mode', type: DataType.uint8},
+                    {name: 'thermoseqmode', type: BuffaloZclDataType.LIST_UINT16},
                 ],
             },
             getRelayStatusLogRsp: {
@@ -2162,8 +2163,8 @@ const Cluster: {
             bypass: {
                 ID: 1,
                 parameters: [
-                    {name: 'numofzones', type: DataType.preLenUint8},
-                    {name: 'zoneidlist', type: DataType.dynUint8},
+                    {name: 'numofzones', type: DataType.uint8},
+                    {name: 'zoneidlist', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
             emergency: {
@@ -2245,7 +2246,7 @@ const Cluster: {
                 parameters: [
                     {name: 'zoneid', type: DataType.uint8},
                     {name: 'zonetype', type: DataType.uint16},
-                    {name: 'ieeeaddr', type: DataType.longaddr},
+                    {name: 'ieeeaddr', type: DataType.ieeeAddr},
                 ],
             },
             zoneStatusChanged: {
@@ -2255,7 +2256,7 @@ const Cluster: {
                     {name: 'zonestatus', type: DataType.uint16},
                     {name: 'audiblenotif', type: DataType.uint8},
                     {name: 'strlen', type: DataType.uint8},
-                    {name: 'string', type: DataType.stringPreLen},
+                    {name: 'string', type: DataType.charStr},
                 ],
             },
             panelStatusChanged: {
@@ -2279,22 +2280,22 @@ const Cluster: {
             setBypassedZoneList: {
                 ID: 6,
                 parameters: [
-                    {name: 'numofzones', type: DataType.preLenUint8},
-                    {name: 'zoneid', type: DataType.dynUint8},
+                    {name: 'numofzones', type: DataType.uint8},
+                    {name: 'zoneid', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
             bypassRsp: {
                 ID: 7,
                 parameters: [
-                    {name: 'numofzones', type: DataType.preLenUint8},
-                    {name: 'bypassresult', type: DataType.dynUint8},
+                    {name: 'numofzones', type: DataType.uint8},
+                    {name: 'bypassresult', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
             getZoneStatusRsp: {
                 ID: 8,
                 parameters: [
                     {name: 'zonestatuscomplete', type: DataType.uint8},
-                    {name: 'numofzones', type: DataType.preLenUint8},
+                    {name: 'numofzones', type: DataType.uint8},
                     {name: 'zoneinfo', type: DataType.zonebuffer},
                 ],
             },
@@ -2334,7 +2335,7 @@ const Cluster: {
             matchProtocolAddr: {
                 ID: 0,
                 parameters: [
-                    {name: 'protocoladdr', type: DataType.stringPreLen},
+                    {name: 'protocoladdr', type: DataType.charStr},
                 ],
             },
         },
@@ -2342,14 +2343,14 @@ const Cluster: {
             matchProtocolAddrRsp: {
                 ID: 0,
                 parameters: [
-                    {name: 'devieeeaddr', type: DataType.longaddr},
-                    {name: 'protocoladdr', type: DataType.stringPreLen},
+                    {name: 'devieeeaddr', type: DataType.ieeeAddr},
+                    {name: 'protocoladdr', type: DataType.charStr},
                 ],
             },
             advertiseProtocolAddr: {
                 ID: 1,
                 parameters: [
-                    {name: 'protocoladdr', type: DataType.stringPreLen},
+                    {name: 'protocoladdr', type: DataType.charStr},
                 ],
             },
         },
@@ -3056,14 +3057,14 @@ const Cluster: {
             getAlertsRsp: {
                 ID: 0,
                 parameters: [
-                    {name: 'alertscount', type: DataType.preLenUint8},
+                    {name: 'alertscount', type: DataType.uint8},
                     {name: 'aalert', type: DataType.dynUint24},
                 ],
             },
             alertsNotification: {
                 ID: 1,
                 parameters: [
-                    {name: 'alertscount', type: DataType.preLenUint8},
+                    {name: 'alertscount', type: DataType.uint8},
                     {name: 'aalert', type: DataType.dynUint24},
                 ],
             },
@@ -3101,8 +3102,8 @@ const Cluster: {
                 parameters: [
                     {name: 'timestamp', type: DataType.uint32},
                     {name: 'logid', type: DataType.uint32},
-                    {name: 'loglength', type: DataType.preLenUint32},
-                    {name: 'logpayload', type: DataType.dynUint8},
+                    {name: 'loglength', type: DataType.uint32},
+                    {name: 'logpayload', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
             logRsp: {
@@ -3110,21 +3111,21 @@ const Cluster: {
                 parameters: [
                     {name: 'timestamp', type: DataType.uint32},
                     {name: 'logid', type: DataType.uint32},
-                    {name: 'loglength', type: DataType.preLenUint32},
-                    {name: 'logpayload', type: DataType.dynUint8},
+                    {name: 'loglength', type: DataType.uint32},
+                    {name: 'logpayload', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
             logQueueRsp: {
                 ID: 2,
                 parameters: [
-                    {name: 'logqueuesize', type: DataType.preLenUint8},
+                    {name: 'logqueuesize', type: DataType.uint8},
                     {name: 'logid', type: DataType.dynUint32},
                 ],
             },
             statisticsAvailable: {
                 ID: 3,
                 parameters: [
-                    {name: 'logqueuesize', type: DataType.preLenUint8},
+                    {name: 'logqueuesize', type: DataType.uint8},
                     {name: 'logid', type: DataType.dynUint32},
                 ],
             },
@@ -3285,8 +3286,8 @@ const Cluster: {
                     {name: 'profilecount', type: DataType.uint8},
                     {name: 'profileintervalperiod', type: DataType.uint8},
                     {name: 'maxnumofintervals', type: DataType.uint8},
-                    {name: 'numofattrs', type: DataType.preLenUint8},
-                    {name: 'listofattr', type: DataType.dynUint16},
+                    {name: 'numofattrs', type: DataType.uint8},
+                    {name: 'listofattr', type: BuffaloZclDataType.LIST_UINT16},
                 ],
             },
             getMeasurementProfileRsp: {
@@ -3295,9 +3296,9 @@ const Cluster: {
                     {name: 'starttime', type: DataType.uint32},
                     {name: 'status', type: DataType.uint8},
                     {name: 'profileintervalperiod', type: DataType.uint8},
-                    {name: 'numofintervalsdeliv', type: DataType.preLenUint8},
+                    {name: 'numofintervalsdeliv', type: DataType.uint8},
                     {name: 'attrId', type: DataType.uint16},
-                    {name: 'intervals', type: DataType.dynUint8},
+                    {name: 'intervals', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
         },

@@ -1,4 +1,5 @@
-import DataType from './dataType';
+import DataType from './definition/dataType';
+import BuffaloZclDataType from './definition/buffaloZclDataType';
 
 interface Attribute {
     ID: number;
@@ -7,7 +8,7 @@ interface Attribute {
 
 interface Parameter {
     name: string;
-    type: DataType;
+    type: DataType | BuffaloZclDataType;
 }
 
 interface Command {
@@ -27,6 +28,8 @@ interface Cluster {
     };
 };
 
+type DataTypeValueType = 'ANALOG' | 'DISCRETE'
+
 export {
-    Cluster, Attribute, Command, Parameter,
+    Cluster, Attribute, Command, Parameter, DataTypeValueType,
 }

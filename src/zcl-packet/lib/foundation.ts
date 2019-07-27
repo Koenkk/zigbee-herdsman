@@ -624,6 +624,7 @@ ru.clause('uint64', function (name) {
 
 ru.clause('strPreLenUint8', function (name) {
     parsedBufLen += 1;
+
     this.uint8('len').tap(function () {
         var attrId = this.vars['attrId'];
         // special xiaomi struct-string
