@@ -1,4 +1,4 @@
-import {Direction, Foundation, DataType, BuffaloZclDataType} from './definition';
+import {Direction, Foundation, DataType, BuffaloZclDataType, Cluster} from './definition';
 import BuffaloZcl from './buffaloZcl';
 import {TsType as BuffaloTsType} from '../buffalo';
 import * as Utils from './definition/utils';
@@ -17,7 +17,7 @@ interface FrameControl {
     disableDefaultResponse: boolean;
 }
 
-type ZclPayload = number[];
+type ZclPayload = number[] | {[s: string]: number | string};
 
 interface ZclHeader {
     frameControl: FrameControl;
@@ -25,6 +25,14 @@ interface ZclHeader {
     transactionSequenceNumber: number;
     commandIdentifier: number;
 }
+
+const ListTypes: number[] = [
+    BuffaloZclDataType.LIST_UINT8,
+    BuffaloZclDataType.LIST_UINT16,
+    BuffaloZclDataType.LIST_UINT24,
+    BuffaloZclDataType.LIST_UINT32,
+    BuffaloZclDataType.LIST_ZONEINFO,
+];
 
 class ZclFrame {
     public readonly Header: ZclHeader;
@@ -35,7 +43,7 @@ class ZclFrame {
         this.Payload = payload;
     }
 
-    public fromBuffer(buffer: Buffer): ZclFrame {
+    public static fromBuffer(clusterID: number, buffer: Buffer): ZclFrame {
         if (buffer.length < MINIMAL_FRAME_LENGTH) {
             throw new Error("ZclFrame length is lower than minimal length");
         }
@@ -43,12 +51,12 @@ class ZclFrame {
         const {position, header} = this.parseHeader(buffer);
 
         const payloadBuffer = buffer.slice(position, buffer.length);
-        const payload = this.parsePayload(header, payloadBuffer);
+        const payload = this.parsePayload(header, clusterID, payloadBuffer);
 
         return new ZclFrame(header, payload);
     }
 
-    private parseHeader(buffer: Buffer): {position: number; header: ZclHeader} {
+    private static parseHeader(buffer: Buffer): {position: number; header: ZclHeader} {
         let position = 0;
 
         const frameControlValue = buffer.readUInt8(position);
@@ -76,21 +84,41 @@ class ZclFrame {
         return {position, header};
     }
 
-    private parsePayload(header: ZclHeader, buffer: Buffer): ZclPayload {
+    private static parsePayload(header: ZclHeader, clusterID: number, buffer: Buffer): ZclPayload {
         if (header.frameControl.frameType === FrameType.GLOBAL) {
             return this.parsePayloadGlobal(header, buffer);
         } else if (header.frameControl.frameType === FrameType.SPECIFIC) {
-            return this.parsePayloadCluster(header, buffer);
+            return this.parsePayloadCluster(header, clusterID, buffer);
         } else {
             throw new Error(`Unsupported frameType '${header.frameControl.frameType}'`);
         }
     }
 
-    private parsePayloadCluster(header: ZclHeader, buffer: Buffer): any {
-        // TODO: pass length (preivous parameter) for uint16 and uint8 list
-    }
+    private static parsePayloadCluster(header: ZclHeader, clusterID: number, buffer: Buffer): ZclPayload {
+        const cluster = Object.values(Cluster).find((c): boolean => c.ID === clusterID);
+        const commands = header.frameControl.direction === Direction.CLIENT_TO_SERVER ? cluster.commands : cluster.commandsResponse;
+        const command = Object.values(commands).find((c): boolean => c.ID === header.commandIdentifier);
+        const payload: ZclPayload = {};
 
-    private parsePayloadGlobal(header: ZclHeader, buffer: Buffer): any {
+        let position = 0;
+        for (let parameter of command.parameters) {
+            const options: BuffaloTsType.Options = {};
+
+            if (ListTypes.includes(parameter.type)) {
+                const lengthParameter = command.parameters[command.parameters.indexOf(parameter) - 1];
+                options.length = payload[lengthParameter.name];
+            }
+
+            const typeStr = DataType[parameter.type] != null ? DataType[parameter.type] : BuffaloZclDataType[parameter.type];
+            const result = BuffaloZcl.read(typeStr, buffer, position, options);
+            payload[parameter.name] = result.value;
+            position += result.length;
+        }
+
+        return payload;
+    };
+
+    private static parsePayloadGlobal(header: ZclHeader, buffer: Buffer): any {
         if (header.frameControl.manufacturerSpecific) {
             throw new Error(`Global commands are not supported for manufacturer specific commands`);
         }
@@ -106,23 +134,25 @@ class ZclFrame {
                 for (let parameter of command.parameters) {
                     const options: BuffaloTsType.Options = {};
 
-                    const failedCondition = parameter.conditions.map((condition): boolean => {
-                        if (condition.type === 'statusEquals') {
-                            return entry.status !== condition.value;
-                        } else if (condition.type == 'statusNotEquals') {
-                            return entry.status === condition.value;
-                        } else if (condition.type == 'directionEquals') {
-                            return entry.direction !== condition.value;
-                        } else if (condition.type == 'dataTypeValueTypeEquals') {
-                            return Utils.IsDataTypeAnalogOrDiscrete(entry.dataType) !== condition.value;
-                        }
-                    }).find((condition): boolean => condition === false);
+                    if (parameter.conditions) {
+                        const failedCondition = parameter.conditions.map((condition): boolean => {
+                            if (condition.type === 'statusEquals') {
+                                return entry.status !== condition.value;
+                            } else if (condition.type == 'statusNotEquals') {
+                                return entry.status === condition.value;
+                            } else if (condition.type == 'directionEquals') {
+                                return entry.direction !== condition.value;
+                            } else if (condition.type == 'dataTypeValueTypeEquals') {
+                                return Utils.IsDataTypeAnalogOrDiscrete(entry.dataType) !== condition.value;
+                            }
+                        }).find((condition): boolean => condition === false);
 
-                    if (failedCondition) {
-                        continue;
+                        if (failedCondition) {
+                            continue;
+                        }
                     }
 
-                    if (parameter.type === BuffaloZclDataType.useDataType && typeof entry.dataType === 'number') {
+                    if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && typeof entry.dataType === 'number') {
                         // We need to grab the dataType to parse useDataType
                         options.dataType = DataType[entry.dataType];
                     }

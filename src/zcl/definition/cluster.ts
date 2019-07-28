@@ -240,7 +240,7 @@ const Cluster: {
                     {name: 'sceneid', type: DataType.uint8},
                     {name: 'transtime', type: DataType.uint16},
                     {name: 'scenename', type: DataType.charStr},
-                    {name: 'extensionfieldsets', type: DataType.extfieldsets},
+                    {name: 'extensionfieldsets', type: BuffaloZclDataType.EXTENSION_FIELD_SETS},
                 ],
             },
             view: {
@@ -290,7 +290,7 @@ const Cluster: {
                     {name: 'sceneid', type: DataType.uint8},
                     {name: 'transtime', type: DataType.uint16},
                     {name: 'scenename', type: DataType.charStr},
-                    {name: 'extensionfieldsets', type: DataType.extfieldsets},
+                    {name: 'extensionfieldsets', type: BuffaloZclDataType.EXTENSION_FIELD_SETS},
                 ],
             },
             enhancedView: {
@@ -346,7 +346,7 @@ const Cluster: {
                     {name: 'sceneid', type: DataType.uint8},
                     {name: 'transtime', type: DataType.uint16},
                     {name: 'scenename', type: DataType.charStr},
-                    {name: 'extensionfieldsets', type: DataType.extfieldsets},
+                    {name: 'extensionfieldsets', type: BuffaloZclDataType.EXTENSION_FIELD_SETS},
                 ],
             },
             removeRsp: {
@@ -395,7 +395,7 @@ const Cluster: {
                     {name: 'sceneid', type: DataType.uint8},
                     {name: 'transtime', type: DataType.uint16},
                     {name: 'scenename', type: DataType.charStr},
-                    {name: 'extensionfieldsets', type: DataType.extfieldsets},
+                    {name: 'extensionfieldsets', type: BuffaloZclDataType.EXTENSION_FIELD_SETS},
                 ],
             },
             copyRsp: {
@@ -2296,7 +2296,7 @@ const Cluster: {
                 parameters: [
                     {name: 'zonestatuscomplete', type: DataType.uint8},
                     {name: 'numofzones', type: DataType.uint8},
-                    {name: 'zoneinfo', type: DataType.zonebuffer},
+                    {name: 'zoneinfo', type: BuffaloZclDataType.LIST_ZONEINFO},
                 ],
             },
         },
@@ -3058,14 +3058,14 @@ const Cluster: {
                 ID: 0,
                 parameters: [
                     {name: 'alertscount', type: DataType.uint8},
-                    {name: 'aalert', type: DataType.dynUint24},
+                    {name: 'aalert', type: BuffaloZclDataType.LIST_UINT24},
                 ],
             },
             alertsNotification: {
                 ID: 1,
                 parameters: [
                     {name: 'alertscount', type: DataType.uint8},
-                    {name: 'aalert', type: DataType.dynUint24},
+                    {name: 'aalert', type: BuffaloZclDataType.LIST_UINT24},
                 ],
             },
             eventNotification: {
@@ -3119,14 +3119,14 @@ const Cluster: {
                 ID: 2,
                 parameters: [
                     {name: 'logqueuesize', type: DataType.uint8},
-                    {name: 'logid', type: DataType.dynUint32},
+                    {name: 'logid', type: BuffaloZclDataType.LIST_UINT32},
                 ],
             },
             statisticsAvailable: {
                 ID: 3,
                 parameters: [
                     {name: 'logqueuesize', type: DataType.uint8},
-                    {name: 'logid', type: DataType.dynUint32},
+                    {name: 'logid', type: BuffaloZclDataType.LIST_UINT32},
                 ],
             },
         },
