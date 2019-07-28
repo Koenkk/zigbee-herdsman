@@ -118,6 +118,71 @@ class BuffaloZcl extends Buffalo {
         return bytes + 2;
     }
 
+    private static readExtensionFielSets(buffer: Buffer, offset: number): TsType.ReadResult {
+        const value = [];
+
+        let position = 0;
+        for (position; position < buffer.length; position) {
+            const clstId = buffer.readUInt16LE(offset + position);
+            const len = buffer.readUInt8(offset + 2);
+            position += 3;
+
+            const extField = [];
+            for (let i = 0; i < len; i++) {
+                extField.push(buffer.readUInt8(offset + position));
+                position++;
+            }
+
+            value.push({extField, clstId, len});
+        }
+
+        return {value, length: position};
+    }
+
+    private static writeExtensionFieldSets(buffer: Buffer, offset: number, values: {clstId: number; len: number; extField: number[]}[]): number {
+        let position = 0;
+        for (let value of values) {
+            buffer.writeUInt16LE(value.clstId, offset + position);
+            position += 2;
+
+            buffer.writeUInt8(value.len, offset + position);
+            position++;
+
+            for (let entry of value.extField) {
+                buffer.writeUInt8(entry, offset + position);
+                position++;
+            }
+        }
+
+        return position;
+    }
+
+    private static writeListZoneInfo(buffer: Buffer, offset: number, values: {zoneID: number; zoneStatus: number}[]): number {
+        let position = 0;
+        for (let value of values) {
+            buffer.writeUInt8(value.zoneID, offset + position);
+            buffer.writeUInt16LE(value.zoneStatus, offset + position + 1);
+            position += 3;
+        }
+
+        return position;
+    }
+
+    private static readListZoneInfo(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+        const value = [];
+        let position = 0;
+        for (let i = 0; i < options.length; i++) {
+            value.push({
+                zoneID: buffer.readUInt8(offset + position),
+                zoneStatus: buffer.readUInt16LE(offset + position + 1),
+            });
+
+            position += 3;
+        }
+
+        return {value, length: position};
+    }
+
     private static readUInt40(buffer: Buffer, offset: number): TsType.ReadResult {
         const lsb = buffer.readUInt32LE(offset);
         const msb = buffer.readUInt8(offset + 4);
@@ -172,6 +237,10 @@ class BuffaloZcl extends Buffalo {
         // TODO: write for the following is missing: USE_DATA_TYPE, octetStr, struct, array (+ bag/set)
         if (type === 'uint40') {
             return this.writeUInt40(buffer, offset, value);
+        } else if (type === 'EXTENSION_FIELD_SETS') {
+            return this.writeExtensionFieldSets(buffer, offset, value);
+        } else if (type === 'LIST_ZONEINFO') {
+            return this.writeListZoneInfo(buffer, offset, value);
         } else if (type === 'uint48') {
             return this.writeUInt48(buffer, offset, value);
         } else if (type === 'uint56') {
@@ -193,6 +262,10 @@ class BuffaloZcl extends Buffalo {
 
         if (aliasType === 'USE_DATA_TYPE') {
             return this.readUseDataType(buffer, offset, options);
+        } else if (type === 'EXTENSION_FIELD_SETS') {
+            return this.readExtensionFielSets(buffer, offset);
+        } else if (type === 'LIST_ZONEINFO') {
+            return this.readListZoneInfo(buffer, offset, options);
         } else if (type === 'uint40') {
             return this.readUInt40(buffer, offset);
         } else if (type === 'uint48') {

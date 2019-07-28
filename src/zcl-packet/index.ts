@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./lib/zcl.js');
+module.exports = require('./lib/zcl');

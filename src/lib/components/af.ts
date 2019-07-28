@@ -595,8 +595,6 @@ function dispatchIncomingMsg(type, msg) {
         mandatoryEvent; // bridged event
     var coord = af.controller._coord;
 
-    console.log('=====', type, msg);
-
     debug(`dispatchIncomingMsg(): type: ${type}, msg: ${JSON.stringify(msg)}`);
 
     if (msg.hasOwnProperty('endpoint')) {                                               // dataConfirm, reflectError
@@ -742,7 +740,7 @@ function dispatchIncomingMsg(type, msg) {
     // further parse for ZCL packet from incomingMsg and incomingMsgExt
     if (zclHeader) {  // if (zclHeader && targetEp.isZclSupported()) {
         if (zclHeader.frameCntl.frameType === 0) {          // foundation
-            zcl.parse(msg.data, function (err, zclData) {
+            zcl.parse(msg.data, msg.clusterid, function (err, zclData) {
                 if (!err)
                     zclIncomingParsedMsgEmitter(msg, zclData);
             });

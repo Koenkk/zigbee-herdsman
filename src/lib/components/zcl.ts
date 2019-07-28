@@ -1,11 +1,21 @@
-/* jshint node: true */
-'use strict';
-
+import {ZclFrame} from '../../zcl';
 var zclPacket = require('../../zcl-packet');
 
 module.exports = {
     frame: zclPacket.frame,
-    parse: zclPacket.parse,
+    parse: function (buf: Buffer, clusterID: number, callback) {
+        const cb = (error, result) => {
+            console.log('\n\n\n', result, '\n\n\n');
+
+            const frame = ZclFrame.fromBuffer(clusterID, buf);
+
+            console.log(frame, "\n\n\n\n");
+
+            callback(error, result);
+        };
+
+        return zclPacket.parse(buf, cb);
+    },
     header: function (rawBuf) {
         var header = zclPacket.header(rawBuf);
 

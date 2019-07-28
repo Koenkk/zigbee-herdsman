@@ -203,6 +203,42 @@ class Buffalo {
         return {value, length: 2 * options.length};
     }
 
+    private static writeListUInt24(buffer: Buffer, offset: number, values: number[]): number {
+        for (let value of values) {
+            offset += this.writeInt24(buffer, offset, value);
+        }
+
+        return values.length * 3;
+    }
+
+    private static readListUInt24(buffer: Buffer, offset: number, options: Options): ReadResult {
+        const value = [];
+
+        for (let i = 0; i < (options.length * 3); i += 3) {
+            value.push(this.readUInt24(buffer, offset + i));
+        }
+
+        return {value, length: 3 * options.length};
+    }
+
+    private static writeListUInt32(buffer: Buffer, offset: number, values: number[]): number {
+        for (let value of values) {
+            offset += this.writeInt32(buffer, offset, value);
+        }
+
+        return values.length * 4;
+    }
+
+    private static readListUInt32(buffer: Buffer, offset: number, options: Options): ReadResult {
+        const value = [];
+
+        for (let i = 0; i < (options.length * 4); i += 4) {
+            value.push(this.readUInt32(buffer, offset + i));
+        }
+
+        return {value, length: 4 * options.length};
+    }
+
     public static write(type: string, buffer: Buffer, offset: number, value: Value): number {
         if (type === 'UINT8') {
             return this.writeUInt8(buffer, offset, value);
@@ -238,6 +274,10 @@ class Buffalo {
             return this.writeListUInt8(buffer, offset, value);
         } else if (type === 'LIST_UINT16') {
             return this.writeListUInt16(buffer, offset, value);
+        } else if (type === 'LIST_UINT24') {
+            return this.writeListUInt24(buffer, offset, value);
+        } else if (type === 'LIST_UINT32') {
+            return this.writeListUInt32(buffer, offset, value);
         } else {
             throw new Error(`Write for '${type}' not available`)
         }
@@ -278,6 +318,10 @@ class Buffalo {
             return this.readListUInt8(buffer, offset, options);
         } else if (type === 'LIST_UINT16') {
             return this.readListUInt16(buffer, offset, options);
+        } else if (type === 'LIST_UINT24') {
+            return this.readListUInt24(buffer, offset, options);
+        } else if (type === 'LIST_UINT32') {
+            return this.readListUInt32(buffer, offset, options);
         } else {
             throw new Error(`Read for '${type}' not available`)
         }
