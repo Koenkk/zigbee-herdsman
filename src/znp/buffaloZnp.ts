@@ -1,6 +1,6 @@
 
 import {Buffalo, TsType} from '../buffalo';
-import {IsNumberArray} from '../utils';
+import {BuffaloZnpOptions} from './tstype';
 
 class BuffaloZnp extends Buffalo {
     private static readListRoutingTable(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
@@ -105,7 +105,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length: value.length * itemLength};
     }
 
-    private static readListAssocDev(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    private static readListAssocDev(buffer: Buffer, offset: number, options: BuffaloZnpOptions): TsType.ReadResult {
         const value = [];
         const listLength = options.length - options.startIndex;
         let length = 0;
@@ -123,7 +123,7 @@ class BuffaloZnp extends Buffalo {
         return {value, length};
     }
 
-    public static read(type: string, buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    public static read(type: string, buffer: Buffer, offset: number, options: BuffaloZnpOptions): TsType.ReadResult {
         if (type === 'LIST_ROUTING_TABLE') {
             return this.readListRoutingTable(buffer, offset, options);
         } else if (type === 'LIST_BIND_TABLE') {

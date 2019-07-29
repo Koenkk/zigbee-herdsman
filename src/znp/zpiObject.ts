@@ -2,9 +2,8 @@ import {Subsystem, Type, MaxDataSize} from '../unpi/constants';
 import {Frame as UnpiFrame} from '../unpi';
 import Definition from './definition';
 import BuffaloZnp from './buffaloZnp';
-import {TsType as BuffaloTsType} from '../buffalo';
 import ParameterType from './parameterType';
-import {MtParameter, MtCmd, ZpiObjectPayload, MtType} from './tstype';
+import {MtParameter, MtCmd, ZpiObjectPayload, MtType, BuffaloZnpOptions} from './tstype';
 
 const BufferAndListTypes = [
     ParameterType.BUFFER, ParameterType.BUFFER8, ParameterType.BUFFER16,
@@ -80,7 +79,7 @@ class ZpiObject {
         let result: ZpiObjectPayload = {};
 
         for (let parameter of parameters) {
-            const options: BuffaloTsType.Options = {};
+            const options: BuffaloZnpOptions = {};
 
             if (BufferAndListTypes.includes(parameter.parameterType)) {
                 // When reading a buffer, assume that the previous parsed parameter contains

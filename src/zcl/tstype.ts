@@ -1,5 +1,6 @@
 import DataType from './definition/dataType';
 import BuffaloZclDataType from './definition/buffaloZclDataType';
+import {TsType as BuffaloTsType} from '../buffalo';
 
 interface Attribute {
     ID: number;
@@ -28,8 +29,12 @@ interface Cluster {
     };
 };
 
+interface BuffaloZclOptions extends BuffaloTsType.Options {
+    dataType?: string;
+}
+
 type DataTypeValueType = 'ANALOG' | 'DISCRETE'
 
 export {
-    Cluster, Attribute, Command, Parameter, DataTypeValueType,
+    Cluster, Attribute, Command, Parameter, DataTypeValueType, BuffaloZclOptions,
 }

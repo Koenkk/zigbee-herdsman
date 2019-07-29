@@ -1,5 +1,5 @@
 interface Options {
-    [s: string]: number | string;
+    length?: number;
 }
 
 // eslint-disable-next-line

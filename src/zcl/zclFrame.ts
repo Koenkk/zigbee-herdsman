@@ -2,6 +2,7 @@ import {Direction, Foundation, DataType, BuffaloZclDataType, Cluster} from './de
 import BuffaloZcl from './buffaloZcl';
 import {TsType as BuffaloTsType} from '../buffalo';
 import * as Utils from './definition/utils';
+import {BuffaloZclOptions} from './tstype';
 
 const MINIMAL_FRAME_LENGTH = 3;
 
@@ -17,7 +18,8 @@ interface FrameControl {
     disableDefaultResponse: boolean;
 }
 
-type ZclPayload = number[] | {[s: string]: number | string};
+// eslint-disable-next-line
+type ZclPayload = any;
 
 interface ZclHeader {
     frameControl: FrameControl;
@@ -106,7 +108,13 @@ class ZclFrame {
 
             if (ListTypes.includes(parameter.type)) {
                 const lengthParameter = command.parameters[command.parameters.indexOf(parameter) - 1];
-                options.length = payload[lengthParameter.name];
+                const length = payload[lengthParameter.name];
+
+                if (typeof length !== 'number') {
+                    throw Error("Options length must be a number");
+                }
+
+                options.length = length;
             }
 
             const typeStr = DataType[parameter.type] != null ? DataType[parameter.type] : BuffaloZclDataType[parameter.type];
@@ -118,7 +126,7 @@ class ZclFrame {
         return payload;
     };
 
-    private static parsePayloadGlobal(header: ZclHeader, buffer: Buffer): any {
+    private static parsePayloadGlobal(header: ZclHeader, buffer: Buffer): ZclPayload {
         if (header.frameControl.manufacturerSpecific) {
             throw new Error(`Global commands are not supported for manufacturer specific commands`);
         }
@@ -132,7 +140,7 @@ class ZclFrame {
                 const entry: {[s: string]: BuffaloTsType.Value} = {};
 
                 for (let parameter of command.parameters) {
-                    const options: BuffaloTsType.Options = {};
+                    const options: BuffaloZclOptions = {};
 
                     if (parameter.conditions) {
                         const failedCondition = parameter.conditions.map((condition): boolean => {
