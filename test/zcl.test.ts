@@ -1,5 +1,4 @@
 import * as Zcl from '../src/zcl';
-// const zclId = require('../src/zcl-id');
 
 describe('Zcl', () => {
 
@@ -43,6 +42,31 @@ describe('Zcl', () => {
             // @ts-ignore
             Zcl.getClusterLegacy({ID: 1});
         }).toThrowError("Get cluster with type 'object' is not supported");
+    });
+
+    it('ZclFrame report', () => {
+        const buffer = [0x18, 0x4a, 0x0a, 0x55, 0x00, 0x39, 0x00, 0x00, 0x00, 0x00];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genAnalogInput").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 10,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: true,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 74,
+        };
+
+        const payload = [{
+            attrData: 0,
+            attrId: 85,
+            dataType: 57,
+        }];
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
     });
 
     //it('LEGACY', () => {
