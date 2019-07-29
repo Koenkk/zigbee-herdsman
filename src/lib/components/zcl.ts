@@ -6,27 +6,26 @@ module.exports = {
     frame: zclPacket.frame,
     parse: function (buf: Buffer, clusterID: number, callback) {
         const cb = (error, result) => {
-            const frame = ZclFrame.fromBuffer(clusterID, buf);
-            const converted = {
-                frameCntl: {
-                    frameType: frame.Header.frameControl.frameType,
-                    manufSpec: frame.Header.frameControl.manufacturerSpecific === true ? 1 : 0,
-                    direction: frame.Header.frameControl.direction,
-                    disDefaultRsp: frame.Header.frameControl.disableDefaultResponse === true ? 1 : 0,
-                },
-                manufCode: frame.Header.manufacturerCode == null ? 0 : frame.Header.manufacturerCode,
-                seqNum: frame.Header.transactionSequenceNumber,
-                cmdId: result.cmdId,
-                payload: frame.Payload,
-            };
-            console.log('assert');
             try {
+                const frame = ZclFrame.fromBuffer(clusterID, buf);
+                const converted = {
+                    frameCntl: {
+                        frameType: frame.Header.frameControl.frameType,
+                        manufSpec: frame.Header.frameControl.manufacturerSpecific === true ? 1 : 0,
+                        direction: frame.Header.frameControl.direction,
+                        disDefaultRsp: frame.Header.frameControl.disableDefaultResponse === true ? 1 : 0,
+                    },
+                    manufCode: frame.Header.manufacturerCode == null ? 0 : frame.Header.manufacturerCode,
+                    seqNum: frame.Header.transactionSequenceNumber,
+                    cmdId: result.cmdId,
+                    payload: frame.Payload,
+                };
                 assert.deepEqual(result, converted, "FAILD");
                 console.log('SUCCESSS==========')
                 console.log(buf);
                 console.log('ENDDD========');
             } catch (e) {
-                console.log('======')
+                console.log('======', clusterID, buf)
                 console.log(result);
                 console.log('======')
                 console.log(converted);
@@ -38,7 +37,7 @@ module.exports = {
             callback(error, result);
         };
 
-        return zclPacket.parse(buf, cb);
+        return zclPacket.parse(buf, clusterID, cb);
     },
     header: function (rawBuf) {
         var header = zclPacket.header(rawBuf);
