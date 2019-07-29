@@ -66,6 +66,14 @@ describe('Buffalo', () => {
         expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, 0x00]))
     });
 
+    it('BUFFER write as array', () => {
+        const buffer = Buffer.alloc(5);
+        const payload = [0x00, 0x01, 0x02];
+        const length = Buffalo.write('BUFFER', buffer, 1, payload);
+        expect(length).toStrictEqual(3);
+        expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, 0x00]))
+    });
+
     it('BUFFER read', () => {
         const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09]);
         const result = Buffalo.read('BUFFER', payload, 2, {length: 5});

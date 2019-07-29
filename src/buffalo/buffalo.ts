@@ -1,4 +1,5 @@
 import {Options, ReadResult, Value} from './tstype';
+import {IsNumberArray} from '../utils';
 
 class Buffalo {
     private static writeUInt8(buffer: Buffer, offset: number, value: number): number {
@@ -58,7 +59,7 @@ class Buffalo {
         return {value: buffer.slice(offset, offset + length), length};
     }
 
-    protected static writeBuffer(buffer: Buffer, offset: number, values: Buffer, length: number): number {
+    protected static writeBuffer(buffer: Buffer, offset: number, values: Buffer | number[], length: number): number {
         if (values.length !== length) {
             throw new Error(`Length of values: '${values}' is not consitent with expected length '${length}'`);
         }
@@ -80,7 +81,7 @@ class Buffalo {
             return this.writeUInt32(buffer, offset, value);
         }  else if (type === 'IEEEADDR' && typeof value === 'string') {
             return this.writeIeeeAddr(buffer, offset, value);
-        } else if (type.startsWith('BUFFER') && Buffer.isBuffer(value)) {
+        } else if (type.startsWith('BUFFER') && (Buffer.isBuffer(value) || IsNumberArray(value))) {
             let length = Number(type.replace('BUFFER', ''));
             length = length != 0 ? length : value.length;
             return Buffalo.writeBuffer(buffer, offset, value, length);
