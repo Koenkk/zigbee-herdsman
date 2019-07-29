@@ -34,7 +34,7 @@ class Parser extends stream.Transform {
                     debug(`--> parsed ${frame}`);
                     this.emit('parsed', frame);
                 } catch (error) {
-                    debug(`--> error ${error}`);
+                    debug(`--> error ${error.stack}`);
                     this.emit('error', error);
                 }
 

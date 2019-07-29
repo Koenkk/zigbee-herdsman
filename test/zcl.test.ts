@@ -69,6 +69,62 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
+    it('ZclFrame tradfriArrowSingle', () => {
+        const buffer = [0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genScenes").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 7,
+            frameControl: {
+                direction: 0,
+                disableDefaultResponse: false,
+                frameType: 1,
+                manufacturerSpecific: true,
+            },
+            manufacturerCode: 4476,
+            transactionSequenceNumber: 29,
+        };
+
+        const payload = {value: 256};
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame configReportRsp', () => {
+        const buffer = [0x08, 0x01, 0x07, 0x00];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genPowerCfg").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 7,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 1,
+        };
+
+        const payload = [{status: 0}];
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame error on malformed', () => {
+        const buffer = [0x08, 0x01];
+        expect(() => {
+            Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genPowerCfg").ID, Buffer.from(buffer));
+        }).toThrowError("ZclFrame length is lower than minimal length");
+    });
+
+    it('ZclFrame error on manufacturer specific global command', () => {
+        const buffer = [0x1C, 0x4a, 0x0a, 0x55, 0x00, 0x39, 0x00, 0x00, 0x00, 0x00];
+        expect(() => {
+            Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genPowerCfg").ID, Buffer.from(buffer));
+        }).toThrowError("Global commands are not supported for manufacturer specific commands");
+    });
+
     //it('LEGACY', () => {
     //     expect(zclId.status('unsupAttribute').value).toBe(ZCL.Status.UNSUP_ATTRIBUTE);
     //     expect(zclId.status(0).key).toBe(ZCL.Status[ZCL.Status.SUCCESS].toLocaleLowerCase());

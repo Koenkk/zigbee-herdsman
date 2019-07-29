@@ -72,7 +72,7 @@ class Znp extends events.EventEmitter {
             this.log(object.type, message);
             this.emit('received', object);
         } catch (error) {
-            debug.error(`Error while parsing to ZpiObject '${error}'`);
+            debug.error(`Error while parsing to ZpiObject '${error.stack}'`);
         }
     }
 

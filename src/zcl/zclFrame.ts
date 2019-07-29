@@ -87,6 +87,7 @@ class ZclFrame {
     }
 
     private static parsePayload(header: ZclHeader, clusterID: number, buffer: Buffer): ZclPayload {
+        /* istanbul ignore else */
         if (header.frameControl.frameType === FrameType.GLOBAL) {
             return this.parsePayloadGlobal(header, buffer);
         } else if (header.frameControl.frameType === FrameType.SPECIFIC) {
@@ -110,6 +111,7 @@ class ZclFrame {
                 const lengthParameter = command.parameters[command.parameters.indexOf(parameter) - 1];
                 const length = payload[lengthParameter.name];
 
+                /* istanbul ignore else */
                 if (typeof length !== 'number') {
                     throw Error("Options length must be a number");
                 }
@@ -153,7 +155,7 @@ class ZclFrame {
                             } else if (condition.type == 'dataTypeValueTypeEquals') {
                                 return Utils.IsDataTypeAnalogOrDiscrete(entry.dataType) !== condition.value;
                             }
-                        }).find((condition): boolean => condition === false);
+                        }).find((condition): boolean => condition === true);
 
                         if (failedCondition) {
                             continue;
