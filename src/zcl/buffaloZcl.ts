@@ -1,6 +1,7 @@
 
 import {Buffalo, TsType} from '../buffalo';
 import {DataType} from './definition';
+import {BuffaloZclOptions} from './tstype';
 
 const aliases: {[s: string]: string} = {
     'boolean': 'uint8',
@@ -42,11 +43,7 @@ const aliases: {[s: string]: string} = {
 };
 
 class BuffaloZcl extends Buffalo {
-    private static readUseDataType(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
-        if (typeof options.dataType !== 'string') {
-            throw new Error(`Data type should be a string`);
-        }
-
+    private static readUseDataType(buffer: Buffer, offset: number, options: BuffaloZclOptions): TsType.ReadResult {
         return this.read(options.dataType, buffer, offset, options);
     }
 
@@ -257,7 +254,7 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
-    public static read(type: string, buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    public static read(type: string, buffer: Buffer, offset: number, options: BuffaloZclOptions): TsType.ReadResult {
         const aliasType = aliases[type] || type;
 
         if (aliasType === 'USE_DATA_TYPE') {

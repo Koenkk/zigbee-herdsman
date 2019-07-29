@@ -79,15 +79,6 @@ class Buffalo {
         return {value: buffer.readInt16LE(offset), length: 2};
     }
 
-    private static writeInt64(buffer: Buffer, offset: number, value: bigint): number {
-        buffer.writeBigInt64LE(value, offset);
-        return 8;
-    }
-
-    private static readInt64(buffer: Buffer, offset: number): ReadResult {
-        return {value: buffer.readBigInt64LE(offset), length: 8};
-    }
-
     private static writeUInt32(buffer: Buffer, offset: number, value: number): number {
         buffer.writeUInt32LE(value, offset);
         return 4;
@@ -112,7 +103,7 @@ class Buffalo {
     }
 
     private static readFloatLE(buffer: Buffer, offset: number): ReadResult {
-        return {value: buffer.readFloatLE(offset), length: 8};
+        return {value: buffer.readFloatLE(offset), length: 4};
     }
 
     private static writeDoubleLE(buffer: Buffer, offset: number, value: number): number {
@@ -205,7 +196,7 @@ class Buffalo {
 
     private static writeListUInt24(buffer: Buffer, offset: number, values: number[]): number {
         for (let value of values) {
-            offset += this.writeInt24(buffer, offset, value);
+            offset += this.writeUInt24(buffer, offset, value);
         }
 
         return values.length * 3;
@@ -215,7 +206,7 @@ class Buffalo {
         const value = [];
 
         for (let i = 0; i < (options.length * 3); i += 3) {
-            value.push(this.readUInt24(buffer, offset + i));
+            value.push(this.readUInt24(buffer, offset + i).value);
         }
 
         return {value, length: 3 * options.length};
@@ -223,7 +214,7 @@ class Buffalo {
 
     private static writeListUInt32(buffer: Buffer, offset: number, values: number[]): number {
         for (let value of values) {
-            offset += this.writeInt32(buffer, offset, value);
+            offset += this.writeUInt32(buffer, offset, value);
         }
 
         return values.length * 4;
@@ -233,7 +224,7 @@ class Buffalo {
         const value = [];
 
         for (let i = 0; i < (options.length * 4); i += 4) {
-            value.push(this.readUInt32(buffer, offset + i));
+            value.push(this.readUInt32(buffer, offset + i).value);
         }
 
         return {value, length: 4 * options.length};
@@ -266,8 +257,6 @@ class Buffalo {
             return this.writeFloatLE(buffer, offset, value);
         } else if (type === 'DOUBLELE') {
             return this.writeDoubleLE(buffer, offset, value);
-        } else if (type === 'INT64') {
-            return this.writeInt64(buffer, offset, value);
         } else if (type === 'EMPTY') {
             return this.writeEmpty();
         } else if (type === 'LIST_UINT8') {
@@ -310,8 +299,6 @@ class Buffalo {
             return this.readFloatLE(buffer, offset);
         } else if (type === 'DOUBLELE') {
             return this.readDoubleLE(buffer, offset);
-        } else if (type === 'INT64') {
-            return this.readInt64(buffer, offset);
         } else if (type === 'EMPTY') {
             return this.readEmpty();
         } else if (type === 'LIST_UINT8') {

@@ -528,20 +528,6 @@ describe('ZNP', () => {
         });
     });
 
-    it('LIST_UINT16 write', () => {
-        const buffer = Buffer.alloc(5);
-        const payload = [1024, 2048];
-        const length = BuffaloZnp.write('LIST_UINT16', buffer, 1, payload);
-        expect(length).toStrictEqual(4);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0x04, 0x00, 0x08]));
-    });
-
-    it('LIST_UINT16 read', () => {
-        const result = BuffaloZnp.read('LIST_UINT16', Buffer.from([0x00, 0x00, 0x04, 0x00, 0x08]), 1, {length: 2});
-        expect(result.length).toStrictEqual(4);
-        expect(result.value).toStrictEqual([1024, 2048]);
-    });
-
     it('LIST_ROUTING_TABLE write', () => {
         expect(() => {
             BuffaloZnp.write('LIST_ROUTING_TABLE', Buffer.alloc(10), 1, [])

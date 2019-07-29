@@ -1,3 +1,5 @@
+import {TsType as BuffaloTsType} from '../buffalo';
+
 type MtType = number|number[]|string|Buffer|{[s: string]: number|string}[];
 
 interface MtParameter {
@@ -17,4 +19,8 @@ interface ZpiObjectPayload {
     [s: string]: MtType;
 };
 
-export {ZpiObjectPayload, MtParameter, MtCmd, MtType};
+interface BuffaloZnpOptions extends BuffaloTsType.Options {
+    startIndex?: number;
+}
+
+export {ZpiObjectPayload, MtParameter, MtCmd, MtType, BuffaloZnpOptions};
