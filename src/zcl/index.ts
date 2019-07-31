@@ -41,7 +41,6 @@ function getClusterByID(ID: number): TsType.Cluster {
 function getClusterLegacy(ID: string | number): KeyValue  {
     let cluster;
 
-    try {
     if (typeof ID === 'number') {
         try {
             cluster = getClusterByID(ID);
