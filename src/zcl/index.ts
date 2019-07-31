@@ -42,17 +42,22 @@ function getClusterLegacy(ID: string | number): KeyValue  {
     let cluster;
 
     try {
-        if (typeof ID === 'number') {
+    if (typeof ID === 'number') {
+        try {
             cluster = getClusterByID(ID);
-        } else if (typeof ID === 'string') {
-            cluster = getClusterByName(ID);
-        } else {
-            throw new Error(`Get cluster with type '${typeof ID}' is not supported`);
+        } catch {
+            return undefined;
         }
-    } catch (e) {
-        return undefined;
-    }
+    } else if (typeof ID === 'string') {
+        try {
+            cluster = getClusterByName(ID);
+        } catch {
+            return undefined;
+        }
 
+    } else {
+        throw new Error(`Get cluster with type '${typeof ID}' is not supported`);
+    }
 
     return {key: cluster.name, value: cluster.ID};
 }
