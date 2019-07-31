@@ -3411,6 +3411,15 @@ const Cluster: {
             },
         },
     },
+    manuSpecificCluster: {
+        ID: 65535,
+        attributes: {
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
+    },
 }
 
 export default Cluster;

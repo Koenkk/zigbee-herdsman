@@ -1,5 +1,5 @@
 import * as ZCL from '../src/zcl';
-// const zclId = require('../src/zcl-id');
+//const zclId = require('../src/zcl-id');
 
 describe('ZCL', () => {
 
@@ -45,9 +45,13 @@ describe('ZCL', () => {
         }).toThrowError("Get cluster with type 'object' is not supported");
     });
 
-    // it('LEGACY', () => {
+    //it('LEGACY', () => {
     //     expect(zclId.status('unsupAttribute').value).toBe(ZCL.Status.UNSUP_ATTRIBUTE);
     //     expect(zclId.status(0).key).toBe(ZCL.Status[ZCL.Status.SUCCESS].toLocaleLowerCase());
+
+            // expect(zclId.cluster('manuSpecificCluster')).toStrictEqual(ZCL.getClusterLegacy('manuSpecificCluster'));
+            // expect(zclId.cluster('64768')).toStrictEqual(ZCL.getClusterLegacy('64768'));
+
 
     //     expect(zclId.cluster('genBasic')).toStrictEqual(ZCL.getClusterLegacy('genBasic'));
     //     expect(zclId.cluster(0)).toStrictEqual(ZCL.getClusterLegacy(0));
@@ -73,5 +77,5 @@ describe('ZCL', () => {
 
     //     expect(zclId.dataType(32)).toStrictEqual(ZCL.getDataTypeLegacy('uint8'));
     //     expect(zclId.dataType('uint8')).toStrictEqual(ZCL.getDataTypeLegacy(32));
-    // })
+    //})
 });

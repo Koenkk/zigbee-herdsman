@@ -44,7 +44,11 @@ function getClusterLegacy(ID: string | number): KeyValue  {
     if (typeof ID === 'number') {
         cluster = getClusterByID(ID);
     } else if (typeof ID === 'string') {
-        cluster = getClusterByName(ID);
+        try {
+            cluster = getClusterByName(ID);
+        } catch (e) {
+            return undefined;
+        }
     } else {
         throw new Error(`Get cluster with type '${typeof ID}' is not supported`);
     }
