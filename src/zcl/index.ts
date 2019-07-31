@@ -41,17 +41,18 @@ function getClusterByID(ID: number): TsType.Cluster {
 function getClusterLegacy(ID: string | number): KeyValue  {
     let cluster;
 
-    if (typeof ID === 'number') {
-        cluster = getClusterByID(ID);
-    } else if (typeof ID === 'string') {
-        try {
+    try {
+        if (typeof ID === 'number') {
+            cluster = getClusterByID(ID);
+        } else if (typeof ID === 'string') {
             cluster = getClusterByName(ID);
-        } catch (e) {
-            return undefined;
+        } else {
+            throw new Error(`Get cluster with type '${typeof ID}' is not supported`);
         }
-    } else {
-        throw new Error(`Get cluster with type '${typeof ID}' is not supported`);
+    } catch (e) {
+        return undefined;
     }
+
 
     return {key: cluster.name, value: cluster.ID};
 }
