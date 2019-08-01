@@ -31,6 +31,7 @@ interface Cluster {
 
 interface BuffaloZclOptions extends BuffaloTsType.Options {
     dataType?: string;
+    attrId?: number;
 }
 
 type DataTypeValueType = 'ANALOG' | 'DISCRETE'

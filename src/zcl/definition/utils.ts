@@ -22,7 +22,7 @@ const DataTypeValueType = {
 function IsDataTypeAnalogOrDiscrete(dataType: DataType): 'ANALOG' | 'DISCRETE' {
     if (DataTypeValueType.discrete.includes(dataType)) {
         return 'DISCRETE';
-    } else if (DataTypeValueType.discrete.includes(dataType)) {
+    } else if (DataTypeValueType.analog.includes(dataType)) {
         return 'ANALOG';
     } else {
         throw new Error(`Don't know value type for '${DataType[dataType]}'`)

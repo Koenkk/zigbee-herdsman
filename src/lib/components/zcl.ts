@@ -6,9 +6,10 @@ module.exports = {
     frame: zclPacket.frame,
     parse: function (buf: Buffer, clusterID: number, callback) {
         const cb = (error, result) => {
+            let converted;
             try {
                 const frame = ZclFrame.fromBuffer(clusterID, buf);
-                const converted = {
+                converted = {
                     frameCntl: {
                         frameType: frame.Header.frameControl.frameType,
                         manufSpec: frame.Header.frameControl.manufacturerSpecific === true ? 1 : 0,
@@ -21,17 +22,17 @@ module.exports = {
                     payload: frame.Payload,
                 };
                 assert.deepEqual(result, converted, "FAILD");
-                console.log('SUCCESSS==========')
-                console.log(buf);
-                console.log('ENDDD========');
+                console.log('========= SUCCESSS ==========')
             } catch (e) {
-                console.log('======', clusterID, buf)
-                console.log(result);
+                console.log("\n\n\n\n\nFAILED");
+                console.log('======', clusterID, JSON.stringify(buf))
+                console.log(JSON.stringify(result));
                 console.log('======')
                 console.log(converted);
                 console.log('+++++++++++++')
                 console.log(e);
                 console.log('0000000000');
+                console.log("\n\n\n\n\n");
             }
 
             callback(error, result);

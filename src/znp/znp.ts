@@ -53,15 +53,17 @@ class Znp extends events.EventEmitter {
     }
 
     private log(type: Type, message: string): void {
-        /* istanbul ignore else */
         if (type === Type.SRSP) {
             debug.SRSP(message);
         } else if (type === Type.AREQ) {
             debug.AREQ(message);
-        } else if (type === Type.SREQ) {
-            debug.SREQ(message);
         } else {
-            throw new Error(`Unknown type '${type}'`);
+            /* istanbul ignore else */
+            if (type === Type.SREQ) {
+                debug.SREQ(message);
+            } else {
+                throw new Error(`Unknown type '${type}'`);
+            }
         }
     }
 
@@ -209,7 +211,6 @@ class Znp extends events.EventEmitter {
                     const frame = object.toUnpiFrame();
                     const execute = (): void => this.unpiWriter.writeFrame(frame);
 
-                    /* istanbul ignore else */
                     if (object.type === Type.SREQ) {
                         const result = await this.waitForWithExecute(Type.SRSP, object.subsystem, object.command, timeouts.SREQ, execute);
                         resolve(result);
@@ -217,11 +218,14 @@ class Znp extends events.EventEmitter {
                         const result = await this.waitForWithExecute(Type.AREQ, Subsystem.SYS, 'resetInd', timeouts.reset, execute);
                         this.queue.splice(1, this.queue.length);
                         resolve(result);
-                    } else if (object.type === Type.AREQ) {
-                        execute();
-                        resolve();
                     } else {
-                        throw new Error(`Unknown type '${object.type}'`);
+                        /* istanbul ignore else */
+                        if (object.type === Type.AREQ) {
+                            execute();
+                            resolve();
+                        } else {
+                            throw new Error(`Unknown type '${object.type}'`);
+                        }
                     }
                 } catch (error) {
                     reject(error);

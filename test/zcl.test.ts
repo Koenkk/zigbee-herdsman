@@ -1,4 +1,5 @@
 import * as Zcl from '../src/zcl';
+import {Utils} from '../src/zcl/definition';
 
 describe('Zcl', () => {
 
@@ -14,6 +15,19 @@ describe('Zcl', () => {
         expect(() => {
             Zcl.getClusterByName('notExisting');
         }).toThrowError("Cluster with name 'notExisting' does not exist")
+    });
+
+    it('Get discrete or analog of unkown type', () => {
+        expect(() => {
+            Utils.IsDataTypeAnalogOrDiscrete(99999);
+        }).toThrowError("Don't know value type for 'undefined'")
+    });
+
+    it('ZclFrame parse payload with unknown frame type', () => {
+        expect(() => {
+            // @ts-ignore
+            Zcl.ZclFrame.parsePayload({frameControl: {frameType: 9}}, null);
+        }).toThrowError("Unsupported frameType '9'")
     });
 
     it('Get cluster by ID', () => {
@@ -90,6 +104,48 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
+    // it('ZclFrame tradfriArrowSingle', () => {
+    //     const buffer = [0x05, 0x7c, 0x02, 2, 10, 0, 20, 0];
+    //     const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genGroups").ID, Buffer.from(buffer));
+    //     const header = {
+    //         commandIdentifier: 2,
+    //         frameControl: {
+    //             direction: 0,
+    //             disableDefaultResponse: false,
+    //             frameType: 1,
+    //             manufacturerSpecific: true,
+    //         },
+    //         manufacturerCode: 4476,
+    //         transactionSequenceNumber: 29,
+    //     };
+
+    //     const payload = {value: 256};
+
+    //     expect(frame.Header).toStrictEqual(header);
+    //     expect(frame.Payload).toStrictEqual(payload);
+    // });
+
+    it('ZclFrame occupancy report', () => {
+        const buffer = [24,169,10,0,0,24,1];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("msOccupancySensing").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 10,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: true,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 169,
+        };
+
+        const payload = [{ attrId: 0, dataType: 24, attrData: 1 }];
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
     it('ZclFrame configReportRsp', () => {
         const buffer = [0x08, 0x01, 0x07, 0x00];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genPowerCfg").ID, Buffer.from(buffer));
@@ -111,6 +167,90 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
+    it('ZclFrame configReportRsp failed', () => {
+        const buffer = [0x08, 0x01, 0x07, 0x02, 0x01, 0x01, 0x01];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genPowerCfg").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 7,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 1,
+        };
+
+        const payload = [{status: 2, direction: 1, attrId: 257}];
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame defaultRsp', () => {
+        const buffer = [0x18, 0x04, 0x0b, 0x0c, 0x82];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genBasic").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 11,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: true,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 4,
+        };
+
+        const payload = {cmdId: 12, statusCode: 130};
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame xiaomiStruct', () => {
+        const buffer = [28,95,17,3,10,5,0,66,21,108,117,109,105,46,115,101,110,115,111,114,95,119,108,101,97,107,46,97,113,49,1,255,66,34,1,33,213,12,3,40,33,4,33,168,19,5,33,43,0,6,36,0,0,5,0,0,8,33,4,2,10,33,0,0,100,16,0];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genBasic").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 10,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: true,
+                frameType: 0,
+                manufacturerSpecific: true,
+            },
+            manufacturerCode: 4447,
+            transactionSequenceNumber: 3,
+        };
+
+        const payload = [{"attrId":5,"dataType":66,"attrData":"lumi.sensor_wleak.aq1"},{"attrId":65281,"dataType":66,"attrData":{"1":3285,"3":33,"4":5032,"5":43,"6":[0,327680],"8":516,"10":0,"100":0}}];
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame discoverRsp', () => {
+        const buffer = [24,23,13,0,32,0,32,33,0,32,49,0,48,51,0,32,53,0,24];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genPowerCfg").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 13,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: true,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 23,
+        };
+
+        const payload = {"discComplete":0,"attrInfos":[{"attrId":32,"dataType":32},{"attrId":33,"dataType":32},{"attrId":49,"dataType":48},{"attrId":51,"dataType":32},{"attrId":53,"dataType":24}]};
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
     it('ZclFrame error on malformed', () => {
         const buffer = [0x08, 0x01];
         expect(() => {
@@ -118,53 +258,108 @@ describe('Zcl', () => {
         }).toThrowError("ZclFrame length is lower than minimal length");
     });
 
-    it('ZclFrame error on manufacturer specific global command', () => {
-        const buffer = [0x1C, 0x4a, 0x0a, 0x55, 0x00, 0x39, 0x00, 0x00, 0x00, 0x00];
-        expect(() => {
-            Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genPowerCfg").ID, Buffer.from(buffer));
-        }).toThrowError("Global commands are not supported for manufacturer specific commands");
+    it('ZclFrame readRsp failed', () => {
+        const buffer = [8, 1, 1, 1, 0, 2];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genBasic").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 1,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 1,
+        };
+
+        const payload = [{status: 2, attrId: 1}];
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
     });
 
-    //it('LEGACY', () => {
-    //     expect(zclId.status('unsupAttribute').value).toBe(ZCL.Status.UNSUP_ATTRIBUTE);
-    //     expect(zclId.status(0).key).toBe(ZCL.Status[ZCL.Status.SUCCESS].toLocaleLowerCase());
+    it('ZclFrame readRsp success', () => {
+        const buffer = [8, 1, 1, 1, 0, 0, 32, 3];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genBasic").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 1,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 1,
+        };
 
-            // expect(zclId.cluster('manuSpecificCluster')).toStrictEqual(ZCL.getClusterLegacy('manuSpecificCluster'));
-            // expect(zclId.cluster('64768')).toStrictEqual(ZCL.getClusterLegacy('64768'));
+        const payload = [{status: Zcl.Status.SUCCESS, attrId: 1, dataType: Zcl.DataType.uint8, attrData: 3}];
 
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
 
-    //     expect(zclId.cluster('genBasic')).toStrictEqual(ZCL.getClusterLegacy('genBasic'));
-    //     expect(zclId.cluster(0)).toStrictEqual(ZCL.getClusterLegacy(0));
-    // it('LEGACY', () => {
-    //     expect(zclId.status('unsupAttribute').value).toBe(Zcl.Status.UNSUP_ATTRIBUTE);
-    //     expect(zclId.status(0).key).toBe(Zcl.Status[Zcl.Status.SUCCESS].toLocaleLowerCase());
+    it('ZclFrame configReportRsp server to client', () => {
+        const buffer = [8, 1, 6, 1, 1, 0, 10, 10];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genBasic").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 6,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 1,
+        };
 
-    //     expect(zclId.cluster('genBasic')).toStrictEqual(Zcl.getClusterLegacy('genBasic'));
-    //     expect(zclId.cluster(0)).toStrictEqual(Zcl.getClusterLegacy(0));
+        const payload = [{attrId: 1, direction: 1, timeout: 2570}];
 
-    //     expect(zclId.attr(0, 0)).toStrictEqual(Zcl.getAttributeLegacy(0, 0));
-    //     expect(zclId.attr('genBasic', 'modelId')).toStrictEqual(Zcl.getAttributeLegacy('genBasic', 'modelId'));
-    //     expect(zclId.attr('genBasic', 5)).toStrictEqual(Zcl.getAttributeLegacy(0, 'modelId'));
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
 
-    //     expect(zclId.attrType(0, 0)).toStrictEqual(Zcl.getAttributeTypeLegacy(0, 0));
-    //     expect(zclId.attrType('genBasic', 'modelId')).toStrictEqual(Zcl.getAttributeTypeLegacy('genBasic', 'modelId'));
-    //     expect(zclId.attrType('genBasic', 5)).toStrictEqual(Zcl.getAttributeTypeLegacy(0, 'modelId'));
+    it('ZclFrame configReportRsp client to server analog', () => {
+        const buffer = [8, 1, 6, 0, 0, 1, 32, 1, 0, 10, 0, 20];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genBasic").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 6,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 1,
+        };
 
-    //     expect(zclId.foundation('report').value).toBe(Zcl.Foundation.report.ID);
+        const payload = [{attrId: 256, dataType: 32, direction: 0, maxRepIntval: 10, minRepIntval: 1, repChange: 20,}];
 
-    //     expect(zclId.foundation(1)).toStrictEqual(Zcl.getFoundationLegacy('readRsp'))
-    //     expect(zclId.foundation('readRsp')).toStrictEqual(Zcl.getFoundationLegacy(1))
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
 
-    //     expect(zclId.functional('genIdentify', 1)).toStrictEqual(Zcl.getFunctionalLegacy(3, 'identifyQuery'));
-    //     expect(zclId.functional(3, 'identifyQuery')).toStrictEqual(Zcl.getFunctionalLegacy('genIdentify', 1));
+    it('ZclFrame configReportRsp client to server analog', () => {
+        const buffer = [8, 1, 6, 0, 0, 1, 8, 1, 0, 10, 0];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genBasic").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 6,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 1,
+        };
 
-    //     expect(zclId.getCmdRsp('genIdentify', 0)).toStrictEqual(Zcl.getCommandResponseLegacy(3, 'identifyQueryRsp'));
-    //     expect(zclId.getCmdRsp(3, 'identifyQueryRsp')).toStrictEqual(Zcl.getCommandResponseLegacy('genIdentify', 0));
+        const payload = [{attrId: 256, dataType: 8, direction: 0, maxRepIntval: 10, minRepIntval: 1}];
 
-    //     expect(zclId.dataType(32)).toStrictEqual(ZCL.getDataTypeLegacy('uint8'));
-    //     expect(zclId.dataType('uint8')).toStrictEqual(ZCL.getDataTypeLegacy(32));
-    //})
-    //     expect(zclId.dataType(32)).toStrictEqual(Zcl.getDataTypeLegacy('uint8'));
-    //     expect(zclId.dataType('uint8')).toStrictEqual(Zcl.getDataTypeLegacy(32));
-    // })
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
 });

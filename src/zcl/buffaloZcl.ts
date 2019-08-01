@@ -90,11 +90,34 @@ class BuffaloZcl extends Buffalo {
         return this.readBuffer(buffer, offset + 1, length)
     }
 
-    private static readCharStr(buffer: Buffer, offset: number): TsType.ReadResult {
-        // TODO: add special xiaomi struct-string
+    private static readCharStr(buffer: Buffer, offset: number, options: BuffaloZclOptions): TsType.ReadResult {
         const length = buffer.readUInt8(offset);
-        const value = buffer.toString('utf8', offset + 1, offset + 1 + length);
-        return {value, length: length + 1};
+
+        if (options.attrId === 65281) {
+            const value: {[i: number]: number|number[]} = {};
+
+            // Xiaomi struct parsing
+            let position = 1;
+            for (let i = 0; i < length; i++) {
+                const index = buffer.readUInt8(offset + position);
+                position++;
+                const dataType = DataType[buffer.readUInt8(offset + position)];
+                position++;
+
+                const result = this.read(dataType, buffer, offset + position, {});
+                value[index] = result.value;
+                position += result.length;
+
+                if (position + offset === buffer.length) {
+                    break;
+                }
+            }
+
+            return {value, length: position};
+        } else {
+            const value = buffer.toString('utf8', offset + 1, offset + 1 + length);
+            return {value, length: length + 1};
+        }
     }
 
     private static writeCharStr(buffer: Buffer, offset: number, value: string): number {
@@ -274,7 +297,7 @@ class BuffaloZcl extends Buffalo {
         } else if (type === 'octetStr') {
             return this.readOctetStr(buffer, offset);
         } else if (type === 'charStr') {
-            return this.readCharStr(buffer, offset);
+            return this.readCharStr(buffer, offset, options);
         } else if (type === 'longCharStr') {
             return this.readLongCharStr(buffer, offset);
         } else if (type === 'array') {
