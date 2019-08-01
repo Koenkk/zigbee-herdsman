@@ -1,7 +1,6 @@
-import {Direction, Foundation, DataType, BuffaloZclDataType, Cluster} from './definition';
+import {Direction, Foundation, DataType, BuffaloZclDataType, Cluster, Utils} from './definition';
 import BuffaloZcl from './buffaloZcl';
 import {TsType as BuffaloTsType} from '../buffalo';
-import * as Utils from './definition/utils';
 import {BuffaloZclOptions} from './tstype';
 
 const MINIMAL_FRAME_LENGTH = 3;
@@ -87,7 +86,6 @@ class ZclFrame {
     }
 
     private static parsePayload(header: ZclHeader, clusterID: number, buffer: Buffer): ZclPayload {
-        /* istanbul ignore else */
         if (header.frameControl.frameType === FrameType.GLOBAL) {
             return this.parsePayloadGlobal(header, buffer);
         } else if (header.frameControl.frameType === FrameType.SPECIFIC) {
@@ -129,10 +127,6 @@ class ZclFrame {
     };
 
     private static parsePayloadGlobal(header: ZclHeader, buffer: Buffer): ZclPayload {
-        if (header.frameControl.manufacturerSpecific) {
-            throw new Error(`Global commands are not supported for manufacturer specific commands`);
-        }
-
         const command = Object.values(Foundation).find((c): boolean => c.ID === header.commandIdentifier);
 
         if (command.parseStrategy === 'repetitive') {
@@ -145,17 +139,20 @@ class ZclFrame {
                     const options: BuffaloZclOptions = {};
 
                     if (parameter.conditions) {
-                        const failedCondition = parameter.conditions.map((condition): boolean => {
+                        const failedCondition = parameter.conditions.find((condition): boolean => {
                             if (condition.type === 'statusEquals') {
                                 return entry.status !== condition.value;
                             } else if (condition.type == 'statusNotEquals') {
                                 return entry.status === condition.value;
                             } else if (condition.type == 'directionEquals') {
                                 return entry.direction !== condition.value;
-                            } else if (condition.type == 'dataTypeValueTypeEquals') {
-                                return Utils.IsDataTypeAnalogOrDiscrete(entry.dataType) !== condition.value;
+                            } else  {
+                                /* istanbul ignore else */
+                                if (condition.type == 'dataTypeValueTypeEquals') {
+                                    return Utils.IsDataTypeAnalogOrDiscrete(entry.dataType) !== condition.value;
+                                }
                             }
-                        }).find((condition): boolean => condition === true);
+                        });
 
                         if (failedCondition) {
                             continue;
@@ -165,6 +162,11 @@ class ZclFrame {
                     if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && typeof entry.dataType === 'number') {
                         // We need to grab the dataType to parse useDataType
                         options.dataType = DataType[entry.dataType];
+
+                        if (entry.dataType === DataType.charStr && entry.hasOwnProperty('attrId')) {
+                            // For Xiaomi struct parsing we need to pass the attributeID.
+                            options.attrId = entry.attrId;
+                        }
                     }
 
                     const typeStr = DataType[parameter.type] != null ? DataType[parameter.type] : BuffaloZclDataType[parameter.type];
@@ -186,25 +188,31 @@ class ZclFrame {
                 payload[parameter.name] = result.value;
                 position += result.length;
             }
-        } else if (command.parseStrategy === 'oneof') {
-            if (command === Foundation.discoverRsp) {
-                const payload: {[s: string]: BuffaloTsType.Value} = {};
-                payload.discComplete = buffer.readUInt8(0);
-                payload.attrInfos = [];
 
-                for (let position = 1; position < buffer.length; position) {
-                    const entry: {[s: string]: BuffaloTsType.Value} = {};
+            return payload;
+        } else {
+            /* istanbul ignore else */
+            if (command.parseStrategy === 'oneof') {
+                /* istanbul ignore else */
+                if (command === Foundation.discoverRsp) {
+                    const payload: {[s: string]: BuffaloTsType.Value} = {};
+                    payload.discComplete = buffer.readUInt8(0);
+                    payload.attrInfos = [];
 
-                    for (let parameter of command.parameters) {
-                        const result = BuffaloZcl.read(DataType[parameter.type], buffer, position, {});
-                        entry[parameter.name] = result.value;
-                        position += result.length;
+                    for (let position = 1; position < buffer.length; position) {
+                        const entry: {[s: string]: BuffaloTsType.Value} = {};
+
+                        for (let parameter of command.parameters) {
+                            const result = BuffaloZcl.read(DataType[parameter.type], buffer, position, {});
+                            entry[parameter.name] = result.value;
+                            position += result.length;
+                        }
+
+                        payload.attrInfos.push(entry);
                     }
 
-                    payload.attrInfos.push(entry);
+                    return payload;
                 }
-
-                return payload;
             }
         }
     }
