@@ -104,26 +104,47 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
-    // it('ZclFrame tradfriArrowSingle', () => {
-    //     const buffer = [0x05, 0x7c, 0x02, 2, 10, 0, 20, 0];
-    //     const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genGroups").ID, Buffer.from(buffer));
-    //     const header = {
-    //         commandIdentifier: 2,
-    //         frameControl: {
-    //             direction: 0,
-    //             disableDefaultResponse: false,
-    //             frameType: 1,
-    //             manufacturerSpecific: true,
-    //         },
-    //         manufacturerCode: 4476,
-    //         transactionSequenceNumber: 29,
-    //     };
+    it('ZclFrame genGroups getMembership', () => {
+        const buffer = [0x11, 0x7c, 0x02, 2, 10, 0, 20, 0];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genGroups").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 2,
+            frameControl: {
+                direction: 0,
+                disableDefaultResponse: true,
+                frameType: 1,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 124,
+        };
 
-    //     const payload = {value: 256};
+        const payload = {groupcount: 2, grouplist: [10, 20]};
 
-    //     expect(frame.Header).toStrictEqual(header);
-    //     expect(frame.Payload).toStrictEqual(payload);
-    // });
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame genGroups getMembership', () => {
+        const buffer = [0x19, 0x7c, 0x03, 0, 10, 0];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.getClusterByName("genGroups").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 3,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: true,
+                frameType: 1,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 124,
+        };
+
+        const payload = {groupid: 10, status: 0};
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
 
     it('ZclFrame occupancy report', () => {
         const buffer = [24,169,10,0,0,24,1];

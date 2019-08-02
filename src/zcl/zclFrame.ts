@@ -44,6 +44,33 @@ class ZclFrame {
         this.Payload = payload;
     }
 
+    /**
+     * Creating
+     */
+    public static create(
+        frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number, transactionSequenceNumber: number,
+        commandIdentifier: number, clusterID: number, payload: ZclPayload
+    ) {
+        const header: ZclHeader = {
+            frameControl: {
+                frameType, direction, disableDefaultResponse,
+                manufacturerSpecific: manufacturerCode !== null,
+            },
+            transactionSequenceNumber,
+            manufacturerCode,
+            commandIdentifier,
+        }
+
+        return new ZclFrame(header, payload);
+    }
+
+    public toBuffer(): Buffer {
+        return Buffer.alloc(0);
+    }
+
+    /**
+     * Parsing
+     */
     public static fromBuffer(clusterID: number, buffer: Buffer): ZclFrame {
         if (buffer.length < MINIMAL_FRAME_LENGTH) {
             throw new Error("ZclFrame length is lower than minimal length");
@@ -110,11 +137,9 @@ class ZclFrame {
                 const length = payload[lengthParameter.name];
 
                 /* istanbul ignore else */
-                if (typeof length !== 'number') {
-                    throw Error("Options length must be a number");
+                if (typeof length === 'number') {
+                    options.length = length;
                 }
-
-                options.length = length;
             }
 
             const typeStr = DataType[parameter.type] != null ? DataType[parameter.type] : BuffaloZclDataType[parameter.type];
