@@ -9,8 +9,8 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 - [x] dissolve-chunks/concentrate -> types (+ refactor)
 - [x] cc-znp -> znp (+ refactor)
 - [x] Refactor zstack-constants
-- [ ] zcl-id + zcl-packet -> zcl (+ refactor)
-- [ ] Remove dissolve-chunks
+- [x] zcl-id + zcl-packet -> zcl (+ refactor)
+- [ ] Cleanup zcl-packet (remove dissolve-chunks, concentrator depedency, deprecated/zcl-packet)
 - [ ] Refactor lib (original source of zigbee-shepherd)
 - [ ] What to do with ziee (remove?)
 - [ ] What to do with zive (remove?)
