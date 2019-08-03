@@ -5,7 +5,7 @@ var EventEmitter = require('events');
 
 var Q = require('q'),
     _ = require('busyman'),
-    Areq = require('../../areq'),
+    Areq = require('../../deprecated/areq'),
     proving = require('proving');
 
 var zcl = require('./zcl'),

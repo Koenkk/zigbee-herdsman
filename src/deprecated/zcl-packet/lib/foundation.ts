@@ -1,7 +1,7 @@
 /* jshint node: true */
 'use strict';
 
-import * as Zcl from '../../zcl';
+import * as Zcl from '../../../zcl';
 
 var Concentrate = require('concentrate'),
     DChunks = require('../../dissolve-chunks'),

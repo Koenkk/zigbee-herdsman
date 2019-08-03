@@ -1,5 +1,5 @@
 import {ZclFrame, getCommandResponseLegacy, getFunctionalLegacy, getFoundationLegacy} from '../../zcl';
-var zclPacket = require('../../zcl-packet');
+var zclPacket = require('../../deprecated/zcl-packet');
 const assert = require('assert');
 
 function toLegacyFormat(frame: ZclFrame, convertID: boolean, convertManufcode: boolean): any {

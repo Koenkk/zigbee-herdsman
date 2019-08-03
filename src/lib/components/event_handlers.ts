@@ -6,7 +6,7 @@ import * as Zsc from '../../zstack-constants';
 var Q = require('q'),
     EventEmitter = require('events'),
     _ = require('busyman'),
-    Ziee = require('../../ziee'),
+    Ziee = require('../../deprecated/ziee'),
     debug = {
         shepherd: require('debug')('zigbee-shepherd'),
         init: require('debug')('zigbee-shepherd:init'),

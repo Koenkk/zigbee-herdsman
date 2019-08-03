@@ -3,7 +3,7 @@
 
 var Q = require('q'),
     _ = require('busyman'),
-    Ziee = require('../../ziee');
+    Ziee = require('../../deprecated/ziee');
 
 var Device = require('../model/device'),
     Endpoint = require('../model/endpoint');
