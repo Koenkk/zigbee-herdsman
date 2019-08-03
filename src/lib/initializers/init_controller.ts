@@ -3,7 +3,7 @@
 
 var Q = require('q'),
     _ = require('busyman'),
-    Ziee = require('../../ziee'),
+    Ziee = require('../../deprecated/ziee'),
     debug = require('debug')('zigbee-shepherd:init');
 
 var Coordinator = require('../model/coord'),

@@ -4,7 +4,7 @@ import {Subsystem} from '../../unpi/constants';
 import * as Zsc from '../../zstack-constants';
 
 var Q = require('q'),
-    Areq = require('../../areq'),
+    Areq = require('../../deprecated/areq'),
     znp = Znp;
 
 var zdoHelper = require('./zdo_helper');
