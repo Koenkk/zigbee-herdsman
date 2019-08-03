@@ -2,51 +2,51 @@ import {Options, ReadResult, Value} from './tstype';
 import {IsNumberArray} from '../utils';
 
 class Buffalo {
-    private static readEmpty(): ReadResult {
+    public static readEmpty(): ReadResult {
         return {value: null, length: 0};
     }
 
-    private static writeEmpty(): number {
+    public static writeEmpty(): number {
         return 0;
     }
 
-    private static writeInt8(buffer: Buffer, offset: number, value: number): number {
+    public static writeInt8(buffer: Buffer, offset: number, value: number): number {
         buffer.writeInt8(value, offset);
         return 1;
     }
 
-    private static readInt8(buffer: Buffer, offset: number): ReadResult {
+    public static readInt8(buffer: Buffer, offset: number): ReadResult {
         return {value: buffer.readInt8(offset), length: 1};
     }
 
-    private static writeUInt8(buffer: Buffer, offset: number, value: number): number {
+    public static writeUInt8(buffer: Buffer, offset: number, value: number): number {
         buffer.writeUInt8(value, offset);
         return 1;
     }
 
-    private static readUInt8(buffer: Buffer, offset: number): ReadResult {
+    public static readUInt8(buffer: Buffer, offset: number): ReadResult {
         return {value: buffer.readUInt8(offset), length: 1};
     }
 
-    private static writeUInt16(buffer: Buffer, offset: number, value: number): number {
+    public static writeUInt16(buffer: Buffer, offset: number, value: number): number {
         buffer.writeUInt16LE(value, offset);
         return 2;
     }
 
-    private static readUInt24(buffer: Buffer, offset: number): ReadResult {
+    public static readUInt24(buffer: Buffer, offset: number): ReadResult {
         const lsb = buffer.readUInt16LE(offset);
         const msb = buffer.readUInt8(offset + 2);
         return {value: (msb * 65536) + lsb, length: 3};
     }
 
-    private static writeUInt24(buffer: Buffer, offset: number, value: number): number {
+    public static writeUInt24(buffer: Buffer, offset: number, value: number): number {
         let temp = Buffer.alloc(4);
         temp.writeUInt32LE(value, 0);
         temp = temp.slice(0, 3);
         return this.writeBuffer(buffer, offset, temp, 3);
     }
 
-    private static readInt24(buffer: Buffer, offset: number): ReadResult {
+    public static readInt24(buffer: Buffer, offset: number): ReadResult {
         const lsb = buffer.readUInt16LE(offset);
         const msb = buffer.readUInt8(offset + 2);
         const sign = (msb & 0x80) >> 7;
@@ -59,69 +59,69 @@ class Buffalo {
         return {value, length: 3};
     }
 
-    private static writeInt24(buffer: Buffer, offset: number, value: number): number {
+    public static writeInt24(buffer: Buffer, offset: number, value: number): number {
         let temp = Buffer.alloc(4);
         temp.writeInt32LE(value, 0);
         temp = temp.slice(0, 3);
         return this.writeBuffer(buffer, offset, temp, 3);
     }
 
-    private static readUInt16(buffer: Buffer, offset: number): ReadResult {
+    public static readUInt16(buffer: Buffer, offset: number): ReadResult {
         return {value: buffer.readUInt16LE(offset), length: 2};
     }
 
-    private static writeInt16(buffer: Buffer, offset: number, value: number): number {
+    public static writeInt16(buffer: Buffer, offset: number, value: number): number {
         buffer.writeInt16LE(value, offset);
         return 2;
     }
 
-    private static readInt16(buffer: Buffer, offset: number): ReadResult {
+    public static readInt16(buffer: Buffer, offset: number): ReadResult {
         return {value: buffer.readInt16LE(offset), length: 2};
     }
 
-    private static writeUInt32(buffer: Buffer, offset: number, value: number): number {
+    public static writeUInt32(buffer: Buffer, offset: number, value: number): number {
         buffer.writeUInt32LE(value, offset);
         return 4;
     }
 
-    private static readUInt32(buffer: Buffer, offset: number): ReadResult {
+    public static readUInt32(buffer: Buffer, offset: number): ReadResult {
         return {value: buffer.readUInt32LE(offset), length: 4};
     }
 
-    private static writeInt32(buffer: Buffer, offset: number, value: number): number {
+    public static writeInt32(buffer: Buffer, offset: number, value: number): number {
         buffer.writeInt32LE(value, offset);
         return 4;
     }
 
-    private static readInt32(buffer: Buffer, offset: number): ReadResult {
+    public static readInt32(buffer: Buffer, offset: number): ReadResult {
         return {value: buffer.readInt32LE(offset), length: 4};
     }
 
-    private static writeFloatLE(buffer: Buffer, offset: number, value: number): number {
+    public static writeFloatLE(buffer: Buffer, offset: number, value: number): number {
         buffer.writeFloatLE(value, offset);
         return 4;
     }
 
-    private static readFloatLE(buffer: Buffer, offset: number): ReadResult {
+    public static readFloatLE(buffer: Buffer, offset: number): ReadResult {
         return {value: buffer.readFloatLE(offset), length: 4};
     }
 
-    private static writeDoubleLE(buffer: Buffer, offset: number, value: number): number {
+    public static writeDoubleLE(buffer: Buffer, offset: number, value: number): number {
         buffer.writeDoubleLE(value, offset);
         return 8;
     }
 
-    private static readDoubleLE(buffer: Buffer, offset: number): ReadResult {
+    public static readDoubleLE(buffer: Buffer, offset: number): ReadResult {
         return {value: buffer.readDoubleLE(offset), length: 8};
     }
 
-    private static writeIeeeAddr(buffer: Buffer, offset: number, value: string): number {
+    public static writeIeeeAddr(buffer: Buffer, offset: number, value: string): number {
         buffer.writeUInt32LE(parseInt(value.slice(10), 16), offset);
         buffer.writeUInt32LE(parseInt(value.slice(2, 10), 16), offset + 4);
         return 8;
     }
 
-    private static readIeeeAddr(buffer: Buffer, offset: number): ReadResult {
+    public static readIeeeAddr(buffer: Buffer, offset: number): ReadResult {
         const length = 8;
         const value = buffer.slice(offset, offset + length)
         return {value: Buffalo.addressBufferToString(value), length};
@@ -158,7 +158,7 @@ class Buffalo {
         return values.length;
     }
 
-    private static writeListUInt8(buffer: Buffer, offset: number, values: number[]): number {
+    public static writeListUInt8(buffer: Buffer, offset: number, values: number[]): number {
         for (let value of values) {
             buffer.writeUInt8(value, offset);
             offset += 1
@@ -167,7 +167,7 @@ class Buffalo {
         return values.length;
     }
 
-    private static readListUInt8(buffer: Buffer, offset: number, options: Options): ReadResult {
+    public static readListUInt8(buffer: Buffer, offset: number, options: Options): ReadResult {
         const value = [];
         for (let i = 0; i < options.length; i++) {
             value.push(buffer.readUInt8(offset + i));
@@ -176,7 +176,7 @@ class Buffalo {
         return {value, length: options.length};
     }
 
-    private static writeListUInt16(buffer: Buffer, offset: number, values: number[]): number {
+    public static writeListUInt16(buffer: Buffer, offset: number, values: number[]): number {
         for (let value of values) {
             buffer.writeUInt16LE(value, offset);
             offset += 2
@@ -185,7 +185,7 @@ class Buffalo {
         return values.length * 2;
     }
 
-    private static readListUInt16(buffer: Buffer, offset: number, options: Options): ReadResult {
+    public static readListUInt16(buffer: Buffer, offset: number, options: Options): ReadResult {
         const value = [];
         for (let i = 0; i < (options.length * 2); i += 2) {
             value.push(buffer.readUInt16LE(offset + i));
@@ -194,7 +194,7 @@ class Buffalo {
         return {value, length: 2 * options.length};
     }
 
-    private static writeListUInt24(buffer: Buffer, offset: number, values: number[]): number {
+    public static writeListUInt24(buffer: Buffer, offset: number, values: number[]): number {
         for (let value of values) {
             offset += this.writeUInt24(buffer, offset, value);
         }
@@ -202,7 +202,7 @@ class Buffalo {
         return values.length * 3;
     }
 
-    private static readListUInt24(buffer: Buffer, offset: number, options: Options): ReadResult {
+    public static readListUInt24(buffer: Buffer, offset: number, options: Options): ReadResult {
         const value = [];
 
         for (let i = 0; i < (options.length * 3); i += 3) {
@@ -212,7 +212,7 @@ class Buffalo {
         return {value, length: 3 * options.length};
     }
 
-    private static writeListUInt32(buffer: Buffer, offset: number, values: number[]): number {
+    public static writeListUInt32(buffer: Buffer, offset: number, values: number[]): number {
         for (let value of values) {
             offset += this.writeUInt32(buffer, offset, value);
         }
@@ -220,7 +220,7 @@ class Buffalo {
         return values.length * 4;
     }
 
-    private static readListUInt32(buffer: Buffer, offset: number, options: Options): ReadResult {
+    public static readListUInt32(buffer: Buffer, offset: number, options: Options): ReadResult {
         const value = [];
 
         for (let i = 0; i < (options.length * 4); i += 4) {
@@ -230,7 +230,9 @@ class Buffalo {
         return {value, length: 4 * options.length};
     }
 
-    public static write(type: string, buffer: Buffer, offset: number, value: Value): number {
+    public static write(type: string, buffer: Buffer, offset: number, value: Value, options: Options): number {
+        options; // prevent not used eslint warning
+
         if (type === 'UINT8') {
             return this.writeUInt8(buffer, offset, value);
         } else if (type === 'UINT16') {

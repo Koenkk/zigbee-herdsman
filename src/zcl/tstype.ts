@@ -14,6 +14,7 @@ interface Parameter {
 
 interface Command {
     ID: number;
+    name: string;
     parameters: Parameter[];
 }
 

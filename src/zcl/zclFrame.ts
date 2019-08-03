@@ -1,14 +1,11 @@
-import {Direction, Foundation, DataType, BuffaloZclDataType, Cluster, Utils} from './definition';
+import {Direction, Foundation, DataType, BuffaloZclDataType, Cluster} from './definition';
+import * as Utils from './utils';
 import BuffaloZcl from './buffaloZcl';
 import {TsType as BuffaloTsType} from '../buffalo';
-import {BuffaloZclOptions} from './tstype';
+import * as TsType from './tstype';
+import {TsType as DefinitionTsType, FrameType} from './definition';
 
 const MINIMAL_FRAME_LENGTH = 3;
-
-enum FrameType {
-    GLOBAL = 0,
-    SPECIFIC = 1,
-}
 
 interface FrameControl {
     frameType: FrameType;
@@ -38,10 +35,12 @@ const ListTypes: number[] = [
 class ZclFrame {
     public readonly Header: ZclHeader;
     public readonly Payload: ZclPayload;
+    public readonly ClusterID: number;
 
-    private constructor(header: ZclHeader, payload: ZclPayload) {
+    private constructor(header: ZclHeader, payload: ZclPayload, clusterID: number) {
         this.Header = header;
         this.Payload = payload;
+        this.ClusterID = clusterID;
     }
 
     /**
@@ -49,8 +48,12 @@ class ZclFrame {
      */
     public static create(
         frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number, transactionSequenceNumber: number,
-        commandIdentifier: number, clusterID: number, payload: ZclPayload
-    ) {
+        commandKey: number | string, clusterID: number, payload: ZclPayload
+    ): ZclFrame {
+        const command = frameType === FrameType.GLOBAL ?
+            Utils.getGlobalCommand(commandKey) :
+            Utils.getSpecificCommand(clusterID, direction, commandKey);
+
         const header: ZclHeader = {
             frameControl: {
                 frameType, direction, disableDefaultResponse,
@@ -58,14 +61,105 @@ class ZclFrame {
             },
             transactionSequenceNumber,
             manufacturerCode,
-            commandIdentifier,
+            commandIdentifier: command.ID,
         }
 
-        return new ZclFrame(header, payload);
+        return new ZclFrame(header, payload, clusterID);
     }
 
     public toBuffer(): Buffer {
-        return Buffer.alloc(0);
+        const buffer = Buffer.alloc(250);
+        let position = this.writeHeader(buffer);
+
+        if (this.Header.frameControl.frameType === FrameType.GLOBAL) {
+            position = this.writePayloadGlobal(buffer, position);
+        } else if (this.Header.frameControl.frameType === FrameType.SPECIFIC) {
+            position = this.writePayloadCluster(buffer, position);
+        } else {
+            throw new Error(`Frametype '${this.Header.frameControl.frameType}' not valid`)
+        }
+
+        return buffer.slice(0, position);
+    }
+
+    private writeHeader(buffer: Buffer): number {
+        let position = 0;
+
+        const frameControl = (
+            (this.Header.frameControl.frameType & 0x03) |
+            (((this.Header.frameControl.manufacturerSpecific ? 1 : 0) << 2) & 0x04) |
+            ((this.Header.frameControl.direction << 3) & 0x08) |
+            (((this.Header.frameControl.disableDefaultResponse ? 1 : 0) << 4) & 0x10)
+        )
+
+        buffer.writeUInt8(frameControl, position);
+        position++;
+
+        if (this.Header.frameControl.manufacturerSpecific) {
+            buffer.writeUInt16LE(this.Header.manufacturerCode, position);
+            position += 2;
+        }
+
+        buffer.writeUInt8(this.Header.transactionSequenceNumber, position);
+        position++;
+        buffer.writeUInt8(this.Header.commandIdentifier, position);
+        position++;
+
+        return position;
+    }
+
+    private writePayloadGlobal(buffer: Buffer, position: number): number {
+        const command = Object.values(Foundation).find((c): boolean => c.ID === this.Header.commandIdentifier);
+
+        if (command.parseStrategy === 'repetitive') {
+            for (let entry of this.Payload) {
+                for (let parameter of command.parameters) {
+                    const options: TsType.BuffaloZclOptions = {};
+
+                    if (!ZclFrame.conditionsValid(parameter, entry)) {
+                        continue;
+                    }
+
+                    if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && typeof entry.dataType === 'number') {
+                        // We need to grab the dataType to parse useDataType
+                        options.dataType = DataType[entry.dataType];
+                    }
+
+                    const typeStr = ZclFrame.getDataTypeString(parameter.type);
+                    position += BuffaloZcl.write(typeStr, buffer, position, entry[parameter.name], options);
+                }
+            }
+        } else if (command.parseStrategy === 'flat') {
+            for (let parameter of command.parameters) {
+                position += BuffaloZcl.write(DataType[parameter.type], buffer, position, this.Payload[parameter.name], {});
+            }
+        } else {
+            /* istanbul ignore else */
+            if (command.parseStrategy === 'oneof') {
+                /* istanbul ignore else */
+                if (command === Foundation.discoverRsp) {
+                    position += BuffaloZcl.writeUInt8(buffer, position, this.Payload.discComplete);
+
+                    for (let entry of this.Payload.attrInfos) {
+                        for (let parameter of command.parameters) {
+                            position += BuffaloZcl.write(DataType[parameter.type], buffer, position, entry[parameter.name], {});
+                        }
+                    }
+                }
+            }
+        }
+
+        return position;
+    }
+
+    private writePayloadCluster(buffer: Buffer, position: number): number {
+        const command = Utils.getSpecificCommand(this.ClusterID, this.Header.frameControl.direction, this.Header.commandIdentifier);
+        for (let parameter of command.parameters) {
+            const typeStr = ZclFrame.getDataTypeString(parameter.type);
+            position += BuffaloZcl.write(typeStr, buffer, position, this.Payload[parameter.name], {});
+        }
+
+        return position;
     }
 
     /**
@@ -81,7 +175,7 @@ class ZclFrame {
         const payloadBuffer = buffer.slice(position, buffer.length);
         const payload = this.parsePayload(header, clusterID, payloadBuffer);
 
-        return new ZclFrame(header, payload);
+        return new ZclFrame(header, payload, clusterID);
     }
 
     private static parseHeader(buffer: Buffer): {position: number; header: ZclHeader} {
@@ -123,9 +217,7 @@ class ZclFrame {
     }
 
     private static parsePayloadCluster(header: ZclHeader, clusterID: number, buffer: Buffer): ZclPayload {
-        const cluster = Object.values(Cluster).find((c): boolean => c.ID === clusterID);
-        const commands = header.frameControl.direction === Direction.CLIENT_TO_SERVER ? cluster.commands : cluster.commandsResponse;
-        const command = Object.values(commands).find((c): boolean => c.ID === header.commandIdentifier);
+        const command = Utils.getSpecificCommand(clusterID, header.frameControl.direction, header.commandIdentifier)
         const payload: ZclPayload = {};
 
         let position = 0;
@@ -142,7 +234,7 @@ class ZclFrame {
                 }
             }
 
-            const typeStr = DataType[parameter.type] != null ? DataType[parameter.type] : BuffaloZclDataType[parameter.type];
+            const typeStr = ZclFrame.getDataTypeString(parameter.type);
             const result = BuffaloZcl.read(typeStr, buffer, position, options);
             payload[parameter.name] = result.value;
             position += result.length;
@@ -161,27 +253,10 @@ class ZclFrame {
                 const entry: {[s: string]: BuffaloTsType.Value} = {};
 
                 for (let parameter of command.parameters) {
-                    const options: BuffaloZclOptions = {};
+                    const options: TsType.BuffaloZclOptions = {};
 
-                    if (parameter.conditions) {
-                        const failedCondition = parameter.conditions.find((condition): boolean => {
-                            if (condition.type === 'statusEquals') {
-                                return entry.status !== condition.value;
-                            } else if (condition.type == 'statusNotEquals') {
-                                return entry.status === condition.value;
-                            } else if (condition.type == 'directionEquals') {
-                                return entry.direction !== condition.value;
-                            } else  {
-                                /* istanbul ignore else */
-                                if (condition.type == 'dataTypeValueTypeEquals') {
-                                    return Utils.IsDataTypeAnalogOrDiscrete(entry.dataType) !== condition.value;
-                                }
-                            }
-                        });
-
-                        if (failedCondition) {
-                            continue;
-                        }
+                    if (!this.conditionsValid(parameter, entry)) {
+                        continue;
                     }
 
                     if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && typeof entry.dataType === 'number') {
@@ -240,6 +315,48 @@ class ZclFrame {
                 }
             }
         }
+    }
+
+    /**
+     * Utils
+     */
+    private static getDataTypeString(dataType: DataType | BuffaloZclDataType): string {
+        return DataType[dataType] != null ? DataType[dataType] : BuffaloZclDataType[dataType];
+    }
+
+    private static conditionsValid(parameter: DefinitionTsType.FoundationParameterDefinition, entry: ZclPayload): boolean {
+        if (parameter.conditions) {
+            const failedCondition = parameter.conditions.find((condition): boolean => {
+                if (condition.type === 'statusEquals') {
+                    return entry.status !== condition.value;
+                } else if (condition.type == 'statusNotEquals') {
+                    return entry.status === condition.value;
+                } else if (condition.type == 'directionEquals') {
+                    return entry.direction !== condition.value;
+                } else  {
+                    /* istanbul ignore else */
+                    if (condition.type == 'dataTypeValueTypeEquals') {
+                        return Utils.IsDataTypeAnalogOrDiscrete(entry.dataType) !== condition.value;
+                    }
+                }
+            });
+
+            if (failedCondition) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public getCluster(): TsType.Cluster {
+        return Utils.getCluster(this.ClusterID);
+    }
+
+    public getCommand(): TsType.Command {
+        return this.Header.frameControl.frameType === FrameType.GLOBAL ?
+            Utils.getGlobalCommand(this.Header.commandIdentifier) :
+            Utils.getSpecificCommand(this.ClusterID, this.Header.frameControl.direction, this.Header.commandIdentifier);
     }
 }
 

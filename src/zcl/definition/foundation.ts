@@ -2,14 +2,7 @@ import DataType from './dataType';
 import BuffaloZclDataType from './buffaloZclDataType';
 import Status from './status';
 import Direction from './direction';
-import * as TsType from '../tstype';
-
-interface FoundationParameterDefinition extends TsType.Parameter {
-    conditions?: {
-        type: 'statusEquals' | 'statusNotEquals' | 'directionEquals' | 'dataTypeValueTypeEquals';
-        value: number | string;
-    }[];
-}
+import {FoundationParameterDefinition} from './tstype';
 
 interface FoundationDefinition {
     ID: number;

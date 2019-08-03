@@ -1,7 +1,6 @@
-import Cluster from './definition/cluster';
+import * as Utils from './utils';
 import Status from './definition/status';
 import DataType from './definition/dataType';
-import * as TsType from './tstype';
 import Foundation from './definition/foundation';
 import ZclFrame from './zclFrame';
 
@@ -10,53 +9,15 @@ interface KeyValue {
     value: number;
 }
 
-function getClusterByName(name: string): TsType.Cluster {
-    let cluster = Cluster[name];
-
-    if (!cluster) {
-        throw new Error(`Cluster with name '${name}' does not exist`)
-    }
-
-    return {...cluster, name};
-}
-
-function getClusterByID(ID: number): TsType.Cluster {
-    let cluster: TsType.Cluster;
-
-    for (let name in Cluster) {
-        if (Cluster[name].ID === ID) {
-            cluster = getClusterByName(name);
-            break;
-        }
-    }
-
-    if (!cluster) {
-        throw new Error(`Cluster with ID '${ID}' does not exist`)
-    }
-
-    return cluster;
-}
-
 // TODO: remove
 /* istanbul ignore next */
 function getClusterLegacy(ID: string | number): KeyValue  {
     let cluster;
 
-    if (typeof ID === 'number') {
-        try {
-            cluster = getClusterByID(ID);
-        } catch {
-            return undefined;
-        }
-    } else if (typeof ID === 'string') {
-        try {
-            cluster = getClusterByName(ID);
-        } catch {
-            return undefined;
-        }
-
-    } else {
-        throw new Error(`Get cluster with type '${typeof ID}' is not supported`);
+    try {
+        cluster = Utils.getCluster(ID);
+    } catch {
+        return undefined;
     }
 
     return {key: cluster.name, value: cluster.ID};
@@ -65,7 +26,7 @@ function getClusterLegacy(ID: string | number): KeyValue  {
 // TODO: remove
 /* istanbul ignore next */
 function getAttributeLegacy(clusterID: string | number, attributeID: string | number): KeyValue {
-    const cluster = getClusterByName(getClusterLegacy(clusterID).key);
+    const cluster = Utils.getCluster(clusterID);
 
     for (let [key, value] of Object.entries(cluster.attributes)) {
         if ((typeof attributeID === 'string' && key === attributeID) ||
@@ -80,7 +41,7 @@ function getAttributeLegacy(clusterID: string | number, attributeID: string | nu
 // TODO: remove
 /* istanbul ignore next */
 function getAttributeTypeLegacy(clusterID: string | number, attributeID: string | number): KeyValue {
-    const cluster = getClusterByName(getClusterLegacy(clusterID).key);
+    const cluster = Utils.getCluster(clusterID);
 
     for (let [key, value] of Object.entries(cluster.attributes)) {
         if ((typeof attributeID === 'string' && key === attributeID) ||
@@ -108,7 +69,7 @@ function getFoundationLegacy(ID: number | string): KeyValue {
 // TODO: remove
 /* istanbul ignore next */
 function getFunctionalLegacy(clusterID: number | string, commandID: number | string): KeyValue {
-    const cluster = getClusterByName(getClusterLegacy(clusterID).key);
+    const cluster = Utils.getCluster(clusterID);
 
     for (let [key, value] of Object.entries(cluster.commands)) {
         if ((typeof commandID === 'string' && key === commandID) ||
@@ -123,7 +84,7 @@ function getFunctionalLegacy(clusterID: number | string, commandID: number | str
 // TODO: remove
 /* istanbul ignore next */
 function getCommandResponseLegacy(clusterID: number | string, commandID: number | string): KeyValue {
-    const cluster = getClusterByName(getClusterLegacy(clusterID).key);
+    const cluster = Utils.getCluster(clusterID);
 
     for (let [key, value] of Object.entries(cluster.commandsResponse)) {
         if ((typeof commandID === 'string' && key === commandID) ||
@@ -147,12 +108,11 @@ function getDataTypeLegacy(ID: number | string): KeyValue {
 }
 
 export {
-    getClusterByName,
-    getClusterByID,
     Status,
     DataType,
     Foundation,
     ZclFrame,
+    Utils,
 
     getClusterLegacy,
     getAttributeLegacy,
