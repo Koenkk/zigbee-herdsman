@@ -4,6 +4,7 @@ import Direction from './direction';
 import DataType from './dataType';
 import Foundation from './foundation';
 import Status from './status';
-import * as Utils from './utils';
+import * as TsType from './tstype';
+import FrameType from './frameType';
 
-export {BuffaloZclDataType, Cluster, Direction, Foundation, Status, DataType, Utils};
+export {BuffaloZclDataType, Cluster, Direction, Foundation, Status, DataType, TsType, FrameType};

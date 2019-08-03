@@ -4,7 +4,7 @@ import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from './testUtils';
 describe('Buffalo', () => {
     it('UINT8 write', () => {
         const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('UINT8', buffer, 1, 240);
+        const length = Buffalo.write('UINT8', buffer, 1, 240, {});
         expect(length).toStrictEqual(1);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0xF0, 0x00]))
     });
@@ -18,7 +18,7 @@ describe('Buffalo', () => {
 
     it('INT8 write', () => {
         const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('INT8', buffer, 1, 127);
+        const length = Buffalo.write('INT8', buffer, 1, 127, {});
         expect(length).toStrictEqual(1);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0x7F, 0x00]))
     });
@@ -32,7 +32,7 @@ describe('Buffalo', () => {
 
     it('INT16 write', () => {
         const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('INT16', buffer, 1, 256);
+        const length = Buffalo.write('INT16', buffer, 1, 256, {});
         expect(length).toStrictEqual(2);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0x01]))
     });
@@ -46,7 +46,7 @@ describe('Buffalo', () => {
 
     it('UINT16 write', () => {
         const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('UINT16', buffer, 1, 1020);
+        const length = Buffalo.write('UINT16', buffer, 1, 1020, {});
         expect(length).toStrictEqual(2);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0xFC, 0x03]))
     });
@@ -60,7 +60,7 @@ describe('Buffalo', () => {
 
     it('UINT32 write', () => {
         const buffer = Buffer.alloc(6);
-        const length = Buffalo.write('UINT32', buffer, 2, 1065283);
+        const length = Buffalo.write('UINT32', buffer, 2, 1065283, {});
         expect(length).toStrictEqual(4);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0x43, 0x41, 0x10, 0x00]))
     });
@@ -74,7 +74,7 @@ describe('Buffalo', () => {
 
     it('IEEEADDR write', () => {
         const buffer = Buffer.alloc(8);
-        const length = Buffalo.write('IEEEADDR', buffer, 0, ieeeaAddr1.string);
+        const length = Buffalo.write('IEEEADDR', buffer, 0, ieeeaAddr1.string, {});
         expect(length).toStrictEqual(8);
         expect(buffer).toStrictEqual(Buffer.from(ieeeaAddr1.hex))
     });
@@ -89,7 +89,7 @@ describe('Buffalo', () => {
     it('BUFFER write', () => {
         const buffer = Buffer.alloc(5);
         const payload = Buffer.from([0x00, 0x01, 0x02]);
-        const length = Buffalo.write('BUFFER', buffer, 1, payload);
+        const length = Buffalo.write('BUFFER', buffer, 1, payload, {});
         expect(length).toStrictEqual(3);
         expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, 0x00]))
     });
@@ -97,7 +97,7 @@ describe('Buffalo', () => {
     it('BUFFER write as array', () => {
         const buffer = Buffer.alloc(5);
         const payload = [0x00, 0x01, 0x02];
-        const length = Buffalo.write('BUFFER', buffer, 1, payload);
+        const length = Buffalo.write('BUFFER', buffer, 1, payload, {});
         expect(length).toStrictEqual(3);
         expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, 0x00]))
     });
@@ -112,7 +112,7 @@ describe('Buffalo', () => {
     it('BUFFER8 write', () => {
         const buffer = Buffer.alloc(9);
         const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
-        const length = Buffalo.write('BUFFER8', buffer, 1, payload);
+        const length = Buffalo.write('BUFFER8', buffer, 1, payload, {});
         expect(length).toStrictEqual(8);
         expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload]))
     });
@@ -121,7 +121,7 @@ describe('Buffalo', () => {
         const buffer = Buffer.alloc(9);
         const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]);
         expect(() => {
-            Buffalo.write('BUFFER8', buffer, 1, payload);
+            Buffalo.write('BUFFER8', buffer, 1, payload, {});
         }).toThrow();
     });
 
@@ -135,7 +135,7 @@ describe('Buffalo', () => {
     it('BUFFER16 write', () => {
         const buffer = Buffer.alloc(20);
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        const length = Buffalo.write('BUFFER16', buffer, 1, Buffer.from([...payload, ...payload]));
+        const length = Buffalo.write('BUFFER16', buffer, 1, Buffer.from([...payload, ...payload]), {});
         expect(length).toStrictEqual(16);
         expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00, 0x00, 0x00]))
     });
@@ -150,7 +150,7 @@ describe('Buffalo', () => {
     it('BUFFER18 write', () => {
         const buffer = Buffer.alloc(20);
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
-        const length = Buffalo.write('BUFFER18', buffer, 1, Buffer.from([...payload, ...payload]));
+        const length = Buffalo.write('BUFFER18', buffer, 1, Buffer.from([...payload, ...payload]), {});
         expect(length).toStrictEqual(18);
         expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00]))
     });
@@ -165,7 +165,7 @@ describe('Buffalo', () => {
     it('BUFFER32 write', () => {
         const buffer = Buffer.alloc(34);
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        const length = Buffalo.write('BUFFER32', buffer, 1, Buffer.from([...payload, ...payload, ...payload, ...payload]));
+        const length = Buffalo.write('BUFFER32', buffer, 1, Buffer.from([...payload, ...payload, ...payload, ...payload]), {});
         expect(length).toStrictEqual(32);
         expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, 0x00]))
     });
@@ -180,7 +180,7 @@ describe('Buffalo', () => {
     it('BUFFER42 write', () => {
         const buffer = Buffer.alloc(44);
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        const length = Buffalo.write('BUFFER42', buffer, 1, Buffer.from([...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xFF]));
+        const length = Buffalo.write('BUFFER42', buffer, 1, Buffer.from([...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xFF]), {});
         expect(length).toStrictEqual(42);
         expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xFF, 0x00]))
     });
@@ -196,7 +196,7 @@ describe('Buffalo', () => {
         const buffer = Buffer.alloc(100);
         let payload = duplicateArray(20, [0x00, 0x01, 0x02, 0x03, 0x04]);
 
-        const length = Buffalo.write('BUFFER100', buffer, 0, Buffer.from(payload));
+        const length = Buffalo.write('BUFFER100', buffer, 0, Buffer.from(payload), {});
         expect(length).toStrictEqual(100);
         expect(buffer).toStrictEqual(Buffer.from(payload))
     });
@@ -219,7 +219,7 @@ describe('Buffalo', () => {
     it('LIST_UINT8 write', () => {
         const buffer = Buffer.alloc(4);
         const payload = [200, 100];
-        const length = Buffalo.write('LIST_UINT8', buffer, 1, payload);
+        const length = Buffalo.write('LIST_UINT8', buffer, 1, payload, {});
         expect(length).toStrictEqual(2);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0xC8, 0x64, 0x00]));
     });
@@ -233,7 +233,7 @@ describe('Buffalo', () => {
     it('LIST_UINT16 write', () => {
         const buffer = Buffer.alloc(5);
         const payload = [1024, 2048];
-        const length = Buffalo.write('LIST_UINT16', buffer, 1, payload);
+        const length = Buffalo.write('LIST_UINT16', buffer, 1, payload, {});
         expect(length).toStrictEqual(4);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0x04, 0x00, 0x08]));
     });
@@ -247,7 +247,7 @@ describe('Buffalo', () => {
     it('LIST_UINT24 write', () => {
         const buffer = Buffer.alloc(8);
         const payload = [100000, 110110];
-        const length = Buffalo.write('LIST_UINT24', buffer, 1, payload);
+        const length = Buffalo.write('LIST_UINT24', buffer, 1, payload, {});
         expect(length).toStrictEqual(6);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0xA0, 0x86, 0x01, 0x1E, 0xAE, 0x01, 0x00]));
     });
@@ -261,7 +261,7 @@ describe('Buffalo', () => {
     it('LIST_UINT32 write', () => {
         const buffer = Buffer.alloc(8);
         const payload = [4294967295, 10];
-        const length = Buffalo.write('LIST_UINT32', buffer, 0, payload);
+        const length = Buffalo.write('LIST_UINT32', buffer, 0, payload, {});
         expect(length).toStrictEqual(8);
         expect(buffer).toStrictEqual(Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0x0A, 0x00, 0x00, 0x00]));
     });
@@ -275,7 +275,7 @@ describe('Buffalo', () => {
     it('EMPTY write', () => {
         const buffer = Buffer.alloc(2);
         const payload = null;
-        const length = Buffalo.write('EMPTY', buffer, 0, payload);
+        const length = Buffalo.write('EMPTY', buffer, 0, payload, {});
         expect(length).toStrictEqual(0);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00]));
     });
@@ -289,7 +289,7 @@ describe('Buffalo', () => {
     it('UINT24 write', () => {
         const buffer = Buffer.alloc(4);
         const payload = 16777200;
-        const length = Buffalo.write('UINT24', buffer, 1, payload);
+        const length = Buffalo.write('UINT24', buffer, 1, payload, {});
         expect(length).toStrictEqual(3);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0xF0, 0xFF, 0xFF]));
     });
@@ -302,7 +302,7 @@ describe('Buffalo', () => {
 
     it('INT24 write +', () => {
         const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('INT24', buffer, 0, 65536);
+        const length = Buffalo.write('INT24', buffer, 0, 65536, {});
         expect(length).toStrictEqual(3);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0x01]))
     });
@@ -316,7 +316,7 @@ describe('Buffalo', () => {
 
     it('INT24 write -', () => {
         const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('INT24', buffer, 0, -65536);
+        const length = Buffalo.write('INT24', buffer, 0, -65536, {});
         expect(length).toStrictEqual(3);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0xFF]))
     });
@@ -330,7 +330,7 @@ describe('Buffalo', () => {
 
     it('INT32 write', () => {
         const buffer = Buffer.alloc(4);
-        const length = Buffalo.write('INT32', buffer, 0, 2147483647);
+        const length = Buffalo.write('INT32', buffer, 0, 2147483647, {});
         expect(length).toStrictEqual(4);
         expect(buffer).toStrictEqual(Buffer.from([0xFF, 0xFF, 0xFF, 0x7F]))
     });
@@ -344,7 +344,7 @@ describe('Buffalo', () => {
 
     it('FLOATLE write', () => {
         const buffer = Buffer.alloc(4);
-        const length = Buffalo.write('FLOATLE', buffer, 0, 400.50);
+        const length = Buffalo.write('FLOATLE', buffer, 0, 400.50, {});
         expect(length).toStrictEqual(4);
         expect(buffer).toStrictEqual(Buffer.from([0x00, 0x40, 0xC8, 0x43]))
     });
@@ -358,7 +358,7 @@ describe('Buffalo', () => {
 
     it('DOUBLELE write', () => {
         const buffer = Buffer.alloc(8);
-        const length = Buffalo.write('DOUBLELE', buffer, 0, 809880.60);
+        const length = Buffalo.write('DOUBLELE', buffer, 0, 809880.60, {});
         expect(length).toStrictEqual(8);
         expect(buffer).toStrictEqual(Buffer.from([0x33, 0x33, 0x33, 0x33, 0x31, 0xB7, 0x28, 0x41]))
     });

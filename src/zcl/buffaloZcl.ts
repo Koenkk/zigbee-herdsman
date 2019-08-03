@@ -47,6 +47,10 @@ class BuffaloZcl extends Buffalo {
         return this.read(options.dataType, buffer, offset, options);
     }
 
+    private static writeUseDataType(buffer: Buffer, offset: number, value: string, options: BuffaloZclOptions): number {
+        return this.write(options.dataType, buffer, offset, value, options);
+    }
+
     private static readArray(buffer: Buffer, offset: number): TsType.ReadResult {
         const values: TsType.Value = [];
         let position = 0;
@@ -87,7 +91,8 @@ class BuffaloZcl extends Buffalo {
 
     private static readOctetStr(buffer: Buffer, offset: number): TsType.ReadResult {
         const length = buffer.readUInt8(offset);
-        return this.readBuffer(buffer, offset + 1, length)
+        const value = buffer.slice(offset + 1, offset + length + 1);
+        return {value, length: length + 1};
     }
 
     private static readCharStr(buffer: Buffer, offset: number, options: BuffaloZclOptions): TsType.ReadResult {
@@ -238,7 +243,7 @@ class BuffaloZcl extends Buffalo {
         let temp = Buffer.alloc(8);
         temp.writeUInt32LE(value[1], 0);
         temp.writeUInt32LE(value[0], 4);
-        return this.writeBuffer(temp.slice(0, 7), offset, temp, 7);
+        return this.writeBuffer(buffer, offset, temp.slice(0, 7), 7);
     }
 
     private static readUInt64(buffer: Buffer, offset: number): TsType.ReadResult {
@@ -253,8 +258,8 @@ class BuffaloZcl extends Buffalo {
         return 8;
     }
 
-    public static write(type: string, buffer: Buffer, offset: number, value: TsType.Value): number {
-        // TODO: write for the following is missing: USE_DATA_TYPE, octetStr, struct, array (+ bag/set)
+    public static write(type: string, buffer: Buffer, offset: number, value: TsType.Value, options: BuffaloZclOptions): number {
+        // TODO: write for the following is missing: octetStr, struct, array (+ bag/set)
         if (type === 'uint40') {
             return this.writeUInt40(buffer, offset, value);
         } else if (type === 'EXTENSION_FIELD_SETS') {
@@ -271,9 +276,11 @@ class BuffaloZcl extends Buffalo {
             return this.writeCharStr(buffer, offset, value);
         } else if (type === 'longCharStr') {
             return this.writeLongCharStr(buffer, offset, value);
+        } else if (type === 'USE_DATA_TYPE') {
+            return this.writeUseDataType(buffer, offset, value, options);
         } else {
             // TODO: remove uppercase once dataTypes are snake case
-            return super.write(type.toUpperCase(), buffer, offset, value);
+            return super.write(type.toUpperCase(), buffer, offset, value, options);
         }
     }
 

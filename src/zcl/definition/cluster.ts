@@ -6,11 +6,16 @@ interface ClusterDefinition {
     ID: number;
     attributes: {[s: string]: TsType.Attribute};
     commands: {
-        [s: string]: TsType.Command;
+        [s: string]: CommandDefinition;
     };
     commandsResponse: {
-        [s: string]: TsType.Command;
+        [s: string]: CommandDefinition;
     };
+};
+
+interface CommandDefinition {
+    ID: number;
+    parameters: TsType.Parameter[];
 };
 
 const Cluster: {
@@ -314,6 +319,7 @@ const Cluster: {
                 ID: 7,
                 parameters: [
                     {name: 'value', type: DataType.uint16},
+                    {name: 'value2', type: DataType.uint16},
                 ],
             },
             tradfriArrowHold: {

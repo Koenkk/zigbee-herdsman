@@ -119,7 +119,7 @@ class ZpiObject {
 
         for (let parameter of this.parameters) {
             const value = this.payload[parameter.name];
-            const length = BuffaloZnp.write(ParameterType[parameter.parameterType], buffer, offset, value);
+            const length = BuffaloZnp.write(ParameterType[parameter.parameterType], buffer, offset, value, {});
             offset += length;
         }
 

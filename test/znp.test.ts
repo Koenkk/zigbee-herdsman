@@ -530,7 +530,7 @@ describe('ZNP', () => {
 
     it('LIST_ROUTING_TABLE write', () => {
         expect(() => {
-            BuffaloZnp.write('LIST_ROUTING_TABLE', Buffer.alloc(10), 1, [])
+            BuffaloZnp.write('LIST_ROUTING_TABLE', Buffer.alloc(10), 1, [], {})
         }).toThrow();
     });
 
@@ -559,7 +559,7 @@ describe('ZNP', () => {
 
     it('LIST_BIND_TABLE write', () => {
         expect(() => {
-            BuffaloZnp.write('LIST_BIND_TABLE', Buffer.alloc(10), 1, [])
+            BuffaloZnp.write('LIST_BIND_TABLE', Buffer.alloc(10), 1, [], {})
         }).toThrow();
     });
 
@@ -594,7 +594,7 @@ describe('ZNP', () => {
 
     it('LIST_NEIGHBOR_LQI write', () => {
         expect(() => {
-            BuffaloZnp.write('LIST_NEIGHBOR_LQI', Buffer.alloc(10), 1, [])
+            BuffaloZnp.write('LIST_NEIGHBOR_LQI', Buffer.alloc(10), 1, [], {})
         }).toThrow();
     });
 
@@ -636,7 +636,7 @@ describe('ZNP', () => {
 
     it('LIST_NETWORK write', () => {
         expect(() => {
-            BuffaloZnp.write('LIST_NETWORK', Buffer.alloc(10), 1, [])
+            BuffaloZnp.write('LIST_NETWORK', Buffer.alloc(10), 1, [], {})
         }).toThrow();
     });
 
@@ -674,7 +674,7 @@ describe('ZNP', () => {
 
     it('LIST_ASSOC_DEV write', () => {
         expect(() => {
-            BuffaloZnp.write('LIST_ASSOC_DEV', Buffer.alloc(10), 1, [])
+            BuffaloZnp.write('LIST_ASSOC_DEV', Buffer.alloc(10), 1, [], {})
         }).toThrow();
     });
 
