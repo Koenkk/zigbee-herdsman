@@ -27,12 +27,12 @@
   "dependencies": {
     "busyman": "^0.3.0",
     "concentrate": "^0.2.3",
-    "debug": "^3.2.6",
     "dissolve": "0.3.3",
     "enum": "^2.3.0",
     "objectbox": "^0.3.0",
     "proving": "^0.1.0",
     "q": "^1.5.1",
+    "debug": "^4.1.1",
     "queue": "^6.0.1",
     "serialport": "7.1.5"
   },
