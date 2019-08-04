@@ -71,19 +71,20 @@ class BuffaloZcl extends Buffalo {
     }
 
     private static readStruct(buffer: Buffer, offset: number): TsType.ReadResult {
-        const values: TsType.Value = {};
+        const values: TsType.Value = [];
         let position = 0;
 
         const numberOfElements = buffer.readUInt16LE(offset + position);
         position += 2;
 
         for (let i = 0; i < numberOfElements; i++) {
-            const elementType = DataType[buffer.readUInt8(offset + position)];
+            const elementType = buffer.readUInt8(offset + position);
             position++;
 
-            const result = this.read(elementType, buffer, offset + position, {});
+            const result = this.read(DataType[elementType], buffer, offset + position, {});
             position += result.length;
-            values[i] = result.value;
+
+            values.push({elmType: elementType, elmVal: result.value})
         }
 
         return {value: values, length: position};

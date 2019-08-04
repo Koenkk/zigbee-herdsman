@@ -278,6 +278,49 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
+    it('ZclFrame from buffer struct', () => {
+        const buffer = [28,52,18,194,10,2,255,76,6,0,16,1,33,206,11,33,168,67,36,1,0,0,0,0,33,48,2,32,86];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 10,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: true,
+                frameType: 0,
+                manufacturerSpecific: true,
+            },
+            manufacturerCode: 4660,
+            transactionSequenceNumber: 194,
+        };
+
+        const payload = [
+            {
+                "attrId":65282,
+                "dataType":76,
+                "numElms":6,
+                "structElms":[
+                    {"elmType":16,"elmVal":1},
+                    {"elmType":33,"elmVal":3022},
+                    {"elmType":33,"elmVal":17320},
+                    {"elmType":36,"elmVal":[0,1]},
+                    {"elmType":33,"elmVal":560},
+                    {"elmType":32,"elmVal":86},
+                ],
+                "attrData":[
+                    {"elmType":16,"elmVal":1},
+                    {"elmType":33,"elmVal":3022},
+                    {"elmType":33,"elmVal":17320},
+                    {"elmType":36,"elmVal":[0,1]},
+                    {"elmType":33,"elmVal":560},
+                    {"elmType":32,"elmVal":86}
+                ]
+            }
+        ];
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
     it('ZclFrame from buffer discoverRsp', () => {
         const buffer = [24,23,13,0,32,0,32,33,0,32,49,0,48,51,0,32,53,0,24];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
@@ -528,7 +571,7 @@ describe('Zcl', () => {
         const buffer = Buffer.from([0, 2, 0, 32, 8, 33, 4, 0]);
         const result = BuffaloZcl.read(DataType[DataType.struct], buffer, 1, {});
         expect(result.length).toBe(7);
-        expect(result.value).toStrictEqual({'0': 8, '1': 4});
+        expect(result.value).toStrictEqual([{"elmType": 32, "elmVal": 8}, {"elmType": 33, "elmVal": 4}]);
     });
 
     it('BuffaloZcl read longCharStr', () => {

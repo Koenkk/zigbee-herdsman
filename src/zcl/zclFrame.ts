@@ -273,6 +273,12 @@ class ZclFrame {
                     const result = BuffaloZcl.read(typeStr, buffer, position, options);
                     entry[parameter.name] = result.value;
                     position += result.length;
+
+                    // TODO: not needed, but temp workaroudn to make payload equal to that of zcl-packet
+                    if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && entry.dataType === DataType.struct) {
+                        entry['structElms'] = entry.attrData;
+                        entry['numElms'] = entry.attrData.length;
+                    }
                 }
 
                 payload.push(entry);
