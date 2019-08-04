@@ -32,6 +32,9 @@
     "objectbox": "^0.3.0",
     "proving": "^0.1.0",
     "q": "^1.5.1",
+    "fast-deep-equal": "^2.0.1",
+    "nedb": "^1.8.0",
+    "mixin-deep": "^2.0.1",
     "debug": "^4.1.1",
     "queue": "^6.0.1",
     "serialport": "7.1.5"
@@ -45,6 +48,7 @@
     "@babel/preset-typescript": "*",
     "@types/jest": "*",
     "@types/node": "*",
+    "@types/nedb": "*",
     "@types/serialport": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",

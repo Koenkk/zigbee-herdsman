@@ -15,9 +15,8 @@ interface MtCmd {
     response?: MtParameter[];
 };
 
-interface ZpiObjectPayload {
-    [s: string]: MtType;
-};
+// eslint-disable-next-line
+type ZpiObjectPayload = any;
 
 interface BuffaloZnpOptions extends BuffaloTsType.Options {
     startIndex?: number;

@@ -1,3 +1,5 @@
 'use strict';
 
-module.exports = require('./dist/lib/shepherd.js');
+module.exports = {
+    Controller: require('./dist/controller/controller.js').default,
+};

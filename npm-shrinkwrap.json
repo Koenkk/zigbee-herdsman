@@ -1286,6 +1286,15 @@
       "integrity": "sha512-Il2DtDVRGDcqjDtE+rF8iqg1CArehSK84HZJCT7AMITlyXRBpuPhqGLDQMowraqqu1coEaimg4ZOqggt6L6L+A==",
       "dev": true
     },
+    "@types/nedb": {
+      "version": "1.8.8",
+      "resolved": "https://registry.npmjs.org/@types/nedb/-/nedb-1.8.8.tgz",
+      "integrity": "sha512-krZu5LWqkLVlKPlmK/LozSMCZsKrMHIDNnjCctrG61/fnuSWFV2X190ry1xR7++ZUcJSNWOKZMH+Qs75xSNLFw==",
+      "dev": true,
+      "requires": {
+        "@types/node": "*"
+      }
+    },
     "@types/node": {
       "version": "12.6.9",
       "resolved": "https://registry.npmjs.org/@types/node/-/node-12.6.9.tgz",
@@ -1699,6 +1708,25 @@
             "is-accessor-descriptor": "^1.0.0",
             "is-data-descriptor": "^1.0.0",
             "kind-of": "^6.0.2"
+          }
+        },
+        "is-extendable": {
+          "version": "1.0.1",
+          "resolved": "https://registry.npmjs.org/is-extendable/-/is-extendable-1.0.1.tgz",
+          "integrity": "sha512-arnXMxT1hhoKo9k1LZdmlNyJdDDfy2v0fXjFlmok4+i8ul/6WlbVge9bhM74OpNPQPMGUToDtz+KXa1PneJxOA==",
+          "dev": true,
+          "requires": {
+            "is-plain-object": "^2.0.4"
+          }
+        },
+        "mixin-deep": {
+          "version": "1.3.2",
+          "resolved": "https://registry.npmjs.org/mixin-deep/-/mixin-deep-1.3.2.tgz",
+          "integrity": "sha512-WRoDn//mXBiJ1H40rqa3vH0toePwSsGb45iInWlTySa+Uu4k3tYUSxa2v1KqAiLtvlrSzaExqS1gtk96A9zvEA==",
+          "dev": true,
+          "requires": {
+            "for-in": "^1.0.2",
+            "is-extendable": "^1.0.1"
           }
         }
       }
@@ -2356,9 +2384,9 @@
       }
     },
     "electron-to-chromium": {
-      "version": "1.3.212",
-      "resolved": "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.3.212.tgz",
-      "integrity": "sha512-H8z5Smi1s1u1zGegEBfbxUAzrxyk1JoRHHHrlNGfhxv3sTb+p/Jz7JDvrR4196Q/Ip8r4+XwWcLvKrUjFKoJAg==",
+      "version": "1.3.214",
+      "resolved": "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.3.214.tgz",
+      "integrity": "sha512-SU9yyql6uA0Fc8bWR7sCYNGBtxkC+tQb6UaC7ReaadN42Kx7Ka+dzx3lAIm9Ock+ULEawJuTFcVB2x34uOCg0Q==",
       "dev": true
     },
     "emoji-regex": {
@@ -2815,8 +2843,7 @@
     "fast-deep-equal": {
       "version": "2.0.1",
       "resolved": "https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-2.0.1.tgz",
-      "integrity": "sha1-ewUhjd+WZ79/Nwv3/bLLFf3Qqkk=",
-      "dev": true
+      "integrity": "sha1-ewUhjd+WZ79/Nwv3/bLLFf3Qqkk="
     },
     "fast-json-stable-stringify": {
       "version": "2.0.0",
@@ -3606,9 +3633,9 @@
       "dev": true
     },
     "graceful-fs": {
-      "version": "4.2.0",
-      "resolved": "https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.0.tgz",
-      "integrity": "sha512-jpSvDPV4Cq/bgtpndIWbI5hmYxhQGHPC4d4cqBPb4DLniCfhJokdXhwhaDuLBGLQdvvRum/UiX6ECVIPvDXqdg==",
+      "version": "4.2.1",
+      "resolved": "https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.1.tgz",
+      "integrity": "sha512-b9usnbDGnD928gJB3LrCmxoibr3VE4U2SMo5PBuBnokWyDADTqDPXg4YpwKF1trpH+UbGp7QLicO3+aWEy0+mw==",
       "dev": true
     },
     "growly": {
@@ -5038,25 +5065,9 @@
       "integrity": "sha1-hX/Kv8M5fSYluCKCYuhqp6ARsF0="
     },
     "mixin-deep": {
-      "version": "1.3.2",
-      "resolved": "https://registry.npmjs.org/mixin-deep/-/mixin-deep-1.3.2.tgz",
-      "integrity": "sha512-WRoDn//mXBiJ1H40rqa3vH0toePwSsGb45iInWlTySa+Uu4k3tYUSxa2v1KqAiLtvlrSzaExqS1gtk96A9zvEA==",
-      "dev": true,
-      "requires": {
-        "for-in": "^1.0.2",
-        "is-extendable": "^1.0.1"
-      },
-      "dependencies": {
-        "is-extendable": {
-          "version": "1.0.1",
-          "resolved": "https://registry.npmjs.org/is-extendable/-/is-extendable-1.0.1.tgz",
-          "integrity": "sha512-arnXMxT1hhoKo9k1LZdmlNyJdDDfy2v0fXjFlmok4+i8ul/6WlbVge9bhM74OpNPQPMGUToDtz+KXa1PneJxOA==",
-          "dev": true,
-          "requires": {
-            "is-plain-object": "^2.0.4"
-          }
-        }
-      }
+      "version": "2.0.1",
+      "resolved": "https://registry.npmjs.org/mixin-deep/-/mixin-deep-2.0.1.tgz",
+      "integrity": "sha512-imbHQNRglyaplMmjBLL3V5R6Bfq5oM+ivds3SKgc6oRtzErEnBUUc5No11Z2pilkUvl42gJvi285xTNswcKCMA=="
     },
     "mkdirp": {
       "version": "0.5.1",
