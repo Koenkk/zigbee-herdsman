@@ -1,9 +1,4 @@
-src/areq
-src/dissolve-chunks
+src/deprecated
 src/lib
-src/zcl-id
-src/zcl-packet
-src/ziee
-src/zive
 dist/
 test/
