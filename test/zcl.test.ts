@@ -393,6 +393,27 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
+    it('ZclFrame from buffer readRsp alias type', () => {
+        const buffer = [8, 1, 1, 1, 0, 0, 8, 3];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 1,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 1,
+        };
+
+        const payload = [{status: Zcl.Status.SUCCESS, attrId: 1, dataType: Zcl.DataType.data8, attrData: 3}];
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
     it('ZclFrame from buffer configReportRsp server to client', () => {
         const buffer = [8, 1, 6, 1, 1, 0, 10, 10];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
@@ -482,6 +503,16 @@ describe('Zcl', () => {
         const payload = {startAttrId: 0, maxAttrIds: 240};
         const frame = Zcl.ZclFrame.create(
             FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, null, 8, 'discover', 0, payload
+        );
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame to buffer readRsp UTC', () => {
+        const expected = Buffer.from([24,74,1,0,0,0,226,234,83,218,36]);
+        const payload = [{attrId: 0, status: 0, attrData: 618288106, dataType: 226}];
+        const frame = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, null, 74, 'readRsp', 0, payload
         );
 
         expect(frame.toBuffer()).toStrictEqual(expected);

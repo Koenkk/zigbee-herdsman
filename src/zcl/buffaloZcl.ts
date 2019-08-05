@@ -261,6 +261,8 @@ class BuffaloZcl extends Buffalo {
 
     public static write(type: string, buffer: Buffer, offset: number, value: TsType.Value, options: BuffaloZclOptions): number {
         // TODO: write for the following is missing: octetStr, struct, array (+ bag/set)
+        type = aliases[type] || type;
+
         if (type === 'uint40') {
             return this.writeUInt40(buffer, offset, value);
         } else if (type === 'EXTENSION_FIELD_SETS') {
@@ -286,9 +288,9 @@ class BuffaloZcl extends Buffalo {
     }
 
     public static read(type: string, buffer: Buffer, offset: number, options: BuffaloZclOptions): TsType.ReadResult {
-        const aliasType = aliases[type] || type;
+        type = aliases[type] || type;
 
-        if (aliasType === 'USE_DATA_TYPE') {
+        if (type === 'USE_DATA_TYPE') {
             return this.readUseDataType(buffer, offset, options);
         } else if (type === 'EXTENSION_FIELD_SETS') {
             return this.readExtensionFielSets(buffer, offset);
@@ -314,7 +316,7 @@ class BuffaloZcl extends Buffalo {
             return this.readStruct(buffer, offset);
         } else {
             // TODO: remove uppercase once dataTypes are snake case
-            return super.read(aliasType.toUpperCase(), buffer, offset, options);
+            return super.read(type.toUpperCase(), buffer, offset, options);
         }
     }
 }
