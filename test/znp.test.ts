@@ -530,7 +530,8 @@ describe('ZNP', () => {
 
     it('LIST_ROUTING_TABLE write', () => {
         expect(() => {
-            BuffaloZnp.write('LIST_ROUTING_TABLE', Buffer.alloc(10), 1, [], {})
+            const buffalo = new BuffaloZnp(Buffer.alloc(10));
+            buffalo.write('LIST_ROUTING_TABLE', [], {});
         }).toThrow();
     });
 
@@ -541,9 +542,10 @@ describe('ZNP', () => {
             0x10, 0x29, 0x01, 0x11, 0x23,
         ]);
 
-        const result = BuffaloZnp.read('LIST_ROUTING_TABLE', buffer, 1, {length: 2});
-        expect(result.length).toStrictEqual(10);
-        expect(result.value).toStrictEqual([
+        const buffalo = new BuffaloZnp(buffer, 1);
+        const value = buffalo.read('LIST_ROUTING_TABLE', {length: 2});
+        expect(buffalo.getPosition()).toStrictEqual(11);
+        expect(value).toStrictEqual([
             {
                 "destNwkAddr": 10000,
                 "nextHopNwkAddr": 10001,
@@ -559,7 +561,8 @@ describe('ZNP', () => {
 
     it('LIST_BIND_TABLE write', () => {
         expect(() => {
-            BuffaloZnp.write('LIST_BIND_TABLE', Buffer.alloc(10), 1, [], {})
+            const buffalo = new BuffaloZnp(Buffer.alloc(10));
+            buffalo.write('LIST_BIND_TABLE', [], {})
         }).toThrow();
     });
 
@@ -571,9 +574,10 @@ describe('ZNP', () => {
             0x01,
         ]);
 
-        const result = BuffaloZnp.read('LIST_BIND_TABLE', buffer, 1, {length: 2});
-        expect(result.length).toStrictEqual(41);
-        expect(result.value).toStrictEqual([
+        const buffalo = new BuffaloZnp(buffer, 1);
+        const value = buffalo.read('LIST_BIND_TABLE', {length: 2});
+        expect(buffalo.getPosition()).toStrictEqual(42);
+        expect(value).toStrictEqual([
            {
                 "clusterId": 1,
                 "dstAddr": ieeeaAddr2.string,
@@ -594,7 +598,8 @@ describe('ZNP', () => {
 
     it('LIST_NEIGHBOR_LQI write', () => {
         expect(() => {
-            BuffaloZnp.write('LIST_NEIGHBOR_LQI', Buffer.alloc(10), 1, [], {})
+            const buffalo = new BuffaloZnp(Buffer.alloc(10));
+            buffalo.write('LIST_NEIGHBOR_LQI', [], {})
         }).toThrow();
     });
 
@@ -606,9 +611,10 @@ describe('ZNP', () => {
             0x01,
         ]);
 
-        const result = BuffaloZnp.read('LIST_NEIGHBOR_LQI', buffer, 1, {length: 2});
-        expect(result.length).toStrictEqual(44);
-        expect(result.value).toStrictEqual([
+        const buffalo = new BuffaloZnp(buffer, 1);
+        const value = buffalo.read('LIST_NEIGHBOR_LQI', {length: 2});
+        expect(buffalo.getPosition()).toStrictEqual(45);
+        expect(value).toStrictEqual([
             {
                 "depth": 2,
                 "deviceType": 0,
@@ -636,7 +642,8 @@ describe('ZNP', () => {
 
     it('LIST_NETWORK write', () => {
         expect(() => {
-            BuffaloZnp.write('LIST_NETWORK', Buffer.alloc(10), 1, [], {})
+            const buffalo = new BuffaloZnp(Buffer.alloc(10));
+            buffalo.write('LIST_NETWORK', [], {})
         }).toThrow();
     });
 
@@ -648,9 +655,10 @@ describe('ZNP', () => {
             0x01,
         ]);
 
-        const result = BuffaloZnp.read('LIST_NETWORK', buffer, 1, {length: 2});
-        expect(result.length).toStrictEqual(12);
-        expect(result.value).toStrictEqual([
+        const buffalo = new BuffaloZnp(buffer, 1);
+        const value = buffalo.read('LIST_NETWORK', {length: 2});
+        expect(buffalo.getPosition()).toStrictEqual(13);
+        expect(value).toStrictEqual([
             {
                 "beaconOrder": 3,
                 "logicalChannel": 9,
@@ -674,7 +682,8 @@ describe('ZNP', () => {
 
     it('LIST_ASSOC_DEV write', () => {
         expect(() => {
-            BuffaloZnp.write('LIST_ASSOC_DEV', Buffer.alloc(10), 1, [], {})
+            const bufallo = new BuffaloZnp(Buffer.alloc(10), 1);
+            bufallo.write('LIST_ASSOC_DEV', [], {})
         }).toThrow();
     });
 
@@ -685,9 +694,10 @@ describe('ZNP', () => {
             0x31, 0x13,
         ]);
 
-        const result = BuffaloZnp.read('LIST_ASSOC_DEV', buffer, 0, {length: 3, startIndex: 0});
-        expect(result.length).toStrictEqual(6);
-        expect(result.value).toStrictEqual([
+        const buffalo = new BuffaloZnp(buffer);
+        const value = buffalo.read('LIST_ASSOC_DEV', {length: 3, startIndex: 0});
+        expect(buffalo.getPosition()).toStrictEqual(6);
+        expect(value).toStrictEqual([
             4101,
             2320,
             4913,
@@ -698,12 +708,14 @@ describe('ZNP', () => {
         const payload35 = duplicateArray(35, [0x10, 0x10]);
         const payload5 = duplicateArray(5, [0x10, 0x10]);
 
-        const result1 = BuffaloZnp.read('LIST_ASSOC_DEV', Buffer.from(payload35), 0, {length: 40, startIndex: 0});
-        expect(result1.length).toStrictEqual(70);
-        expect(result1.value).toStrictEqual(duplicateArray(35, [4112]));
+        const buffalo1 = new BuffaloZnp(Buffer.from(payload35));
+        const value1 = buffalo1.read('LIST_ASSOC_DEV', {length: 40, startIndex: 0});
+        expect(buffalo1.getPosition()).toStrictEqual(70);
+        expect(value1).toStrictEqual(duplicateArray(35, [4112]));
 
-        const result2 = BuffaloZnp.read('LIST_ASSOC_DEV', Buffer.from(payload5), 0, {length: 40, startIndex: 35});
-        expect(result2.length).toStrictEqual(10);
-        expect(result2.value).toStrictEqual(duplicateArray(5, [4112]));
+        const buffalo2 = new BuffaloZnp(Buffer.from(payload5));
+        const value2 = buffalo2.read('LIST_ASSOC_DEV', {length: 40, startIndex: 35});
+        expect(buffalo2.getPosition()).toStrictEqual(10);
+        expect(value2).toStrictEqual(duplicateArray(5, [4112]));
     });
 });

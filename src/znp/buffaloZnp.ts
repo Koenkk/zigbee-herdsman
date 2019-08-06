@@ -3,7 +3,7 @@ import {Buffalo, TsType} from '../buffalo';
 import {BuffaloZnpOptions} from './tstype';
 
 class BuffaloZnp extends Buffalo {
-    private static readListRoutingTable(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    private readListRoutingTable(options: TsType.Options): TsType.Value {
         const statusLookup: {[n: number]: string} = {
             0: 'ACTIVE',
             1: 'DISCOVERY_UNDERWAY',
@@ -11,131 +11,117 @@ class BuffaloZnp extends Buffalo {
             3: 'INACTIVE',
         };
 
-        const itemLength = 5;
         const value = [];
-        for (let i = 0; i < (options.length * itemLength); i += itemLength) {
+        for (let i = 0; i < options.length; i++) {
             value.push({
-                'destNwkAddr': buffer.readUInt16LE(offset + i),
-                'routeStatus': statusLookup[buffer.readUInt8(offset + i + 2)],
-                'nextHopNwkAddr': buffer.readUInt16LE(offset + i + 3),
+                'destNwkAddr': this.readUInt16(),
+                'routeStatus': statusLookup[this.readUInt8()],
+                'nextHopNwkAddr': this.readUInt16(),
             });
         }
 
-        return {value, length: value.length * itemLength};
+        return value;
     }
 
-    private static readListBindTable(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    private readListBindTable(options: TsType.Options): TsType.Value {
         const value = [];
-        let length = 0
 
-        for (let i = 0; i < options.length; i += 1) {
+        for (let i = 0; i < options.length; i++) {
             const item: {[s: string]: number|string} = {};
 
-            item['srcAddr'] = Buffalo.addressBufferToString(buffer.slice(offset, offset + 8));
-            offset += 8, length += 8;
-
-            item['srcEp'] = buffer.readUInt8(offset); offset += 1; length += 1;
-            item['clusterId'] = buffer.readUInt16LE(offset); offset += 2; length += 2;
-            item['dstAddrMode'] = buffer.readUInt8(offset); offset += 1; length += 1;
-
-            item['dstAddr'] = Buffalo.addressBufferToString(buffer.slice(offset, offset + 8));
-            offset += 8, length += 8;
+            item['srcAddr'] = this.readIeeeAddr();
+            item['srcEp'] = this.readUInt8();
+            item['clusterId'] = this.readUInt16();
+            item['dstAddrMode'] = this.readUInt8();
+            item['dstAddr'] = this.readIeeeAddr();
 
             if (item.dstAddrMode === 3) {
-                item['dstEp'] = buffer.readUInt8(offset); offset += 1; length += 1;
+                item['dstEp'] = this.readUInt8();
             }
 
             value.push(item);
         }
 
-        return {value, length};
+        return value;
     }
 
-    private static readListNeighborLqi(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
-        const itemLength = 22;
+    private readListNeighborLqi(options: TsType.Options): TsType.Value {
         const value = [];
-        for (let i = 0; i < (options.length * itemLength); i += itemLength) {
+        for (let i = 0; i < options.length; i++) {
             const item: {[s: string]: number|string} = {};
 
-            item['extPandId'] = Buffalo.addressBufferToString(buffer.slice(offset, offset + 8));
-            offset += 8;
+            item['extPandId'] = this.readIeeeAddr();
+            item['extAddr'] = this.readIeeeAddr();
+            item['nwkAddr'] = this.readUInt16();
 
-            item['extAddr'] = Buffalo.addressBufferToString(buffer.slice(offset, offset + 8));
-            offset += 8;
+            const value1 = this.readUInt8();
+            item['deviceType'] = value1 & 0x03;
+            item['rxOnWhenIdle'] = (value1 & 0x0C) >> 2;
+            item['relationship'] = (value1 & 0x70) >> 4;
 
-            item['nwkAddr'] = buffer.readUInt16LE(offset); offset += 2;
-
-            item['deviceType'] = buffer.readUInt8(offset) & 0x03;
-            item['rxOnWhenIdle'] = (buffer.readUInt8(offset) & 0x0C) >> 2;
-            item['relationship'] = (buffer.readUInt8(offset) & 0x70) >> 4;
-            offset += 1;
-
-            item['permitJoin'] = buffer.readUInt8(offset) & 0x03; offset += 1;
-            item['depth'] = buffer.readUInt8(offset); offset += 1;
-            item['lqi'] = buffer.readUInt8(offset); offset += 1;
+            item['permitJoin'] = this.readUInt8() & 0x03;
+            item['depth'] = this.readUInt8();
+            item['lqi'] = this.readUInt8();
 
             value.push(item);
         }
 
-        return {value, length: value.length * itemLength};
+        return value;
     }
 
-    private static readListNetwork(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
-        const itemLength = 6;
+    private  readListNetwork(options: TsType.Options): TsType.Value {
         const value = [];
-        for (let i = 0; i < (options.length * itemLength); i += itemLength) {
+        for (let i = 0; i < options.length; i++) {
             const item: {[s: string]: number|string} = {};
 
-            item['neightborPanId'] = buffer.readUInt16LE(offset); offset += 2;
-            item['logicalChannel'] = buffer.readUInt8(offset); offset += 1;
+            item['neightborPanId'] = this.readUInt16();
+            item['logicalChannel'] = this.readUInt8();
 
-            item['stackProfile'] = buffer.readUInt8(offset) & 0x0F;
-            item['zigbeeVersion'] = (buffer.readUInt8(offset) & 0xF0) >> 4;
-            offset += 1;
+            const value1 = this.readUInt8();
+            item['stackProfile'] = value1 & 0x0F;
+            item['zigbeeVersion'] = (value1 & 0xF0) >> 4;
 
-            item['beaconOrder'] = buffer.readUInt8(offset) & 0x0F;
-            item['superFrameOrder'] = (buffer.readUInt8(offset) & 0xF0) >> 4;
-            offset += 1;
+            const value2 = this.readUInt8();
+            item['beaconOrder'] = value2 & 0x0F;
+            item['superFrameOrder'] = (value2 & 0xF0) >> 4;
 
-            item['permitJoin'] = buffer.readUInt8(offset); offset += 1;
+            item['permitJoin'] = this.readUInt8();
 
             value.push(item);
         }
 
-        return {value, length: value.length * itemLength};
+        return value;
     }
 
-    private static readListAssocDev(buffer: Buffer, offset: number, options: BuffaloZnpOptions): TsType.ReadResult {
+    private readListAssocDev(options: BuffaloZnpOptions): TsType.Value {
         const value = [];
         const listLength = options.length - options.startIndex;
-        let length = 0;
 
-        for (let i = 0; i < (listLength * 2); i += 2) {
+        for (let i = 0; i < listLength; i++) {
             // There are max 70 bytes in the list (= 35 uint16)
-            if (i === 70) {
+            if (i === 35) {
                 break;
             }
 
-            value.push(buffer.readUInt16LE(offset + i));
-            length += 2;
+            value.push(this.readUInt16());
         }
 
-        return {value, length};
+        return value;
     }
 
-    public static read(type: string, buffer: Buffer, offset: number, options: BuffaloZnpOptions): TsType.ReadResult {
+    public read(type: string, options: BuffaloZnpOptions): TsType.Value {
         if (type === 'LIST_ROUTING_TABLE') {
-            return this.readListRoutingTable(buffer, offset, options);
+            return this.readListRoutingTable(options);
         } else if (type === 'LIST_BIND_TABLE') {
-            return this.readListBindTable(buffer, offset, options);
+            return this.readListBindTable(options);
         }  else if (type === 'LIST_NEIGHBOR_LQI') {
-            return this.readListNeighborLqi(buffer, offset, options);
+            return this.readListNeighborLqi(options);
         } else if (type === 'LIST_NETWORK') {
-            return this.readListNetwork(buffer, offset, options);
+            return this.readListNetwork(options);
         } else if (type === 'LIST_ASSOC_DEV') {
-            return this.readListAssocDev(buffer, offset, options);
+            return this.readListAssocDev(options);
         } else {
-            return super.read(type, buffer, offset, options);
+            return super.read(type, options);
         }
     }
 }

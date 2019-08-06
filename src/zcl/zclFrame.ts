@@ -68,23 +68,21 @@ class ZclFrame {
     }
 
     public toBuffer(): Buffer {
-        const buffer = Buffer.alloc(250);
-        let position = this.writeHeader(buffer);
+        const buffalo = new BuffaloZcl(Buffer.alloc(250));
+        this.writeHeader(buffalo);
 
         if (this.Header.frameControl.frameType === FrameType.GLOBAL) {
-            position = this.writePayloadGlobal(buffer, position);
+            this.writePayloadGlobal(buffalo);
         } else if (this.Header.frameControl.frameType === FrameType.SPECIFIC) {
-            position = this.writePayloadCluster(buffer, position);
+            this.writePayloadCluster(buffalo);
         } else {
             throw new Error(`Frametype '${this.Header.frameControl.frameType}' not valid`)
         }
 
-        return buffer.slice(0, position);
+        return buffalo.getBuffer().slice(0, buffalo.getPosition());
     }
 
-    private writeHeader(buffer: Buffer): number {
-        let position = 0;
-
+    private writeHeader(buffalo: BuffaloZcl): void {
         const frameControl = (
             (this.Header.frameControl.frameType & 0x03) |
             (((this.Header.frameControl.manufacturerSpecific ? 1 : 0) << 2) & 0x04) |
@@ -92,23 +90,17 @@ class ZclFrame {
             (((this.Header.frameControl.disableDefaultResponse ? 1 : 0) << 4) & 0x10)
         )
 
-        buffer.writeUInt8(frameControl, position);
-        position++;
+        buffalo.writeUInt8(frameControl);
 
         if (this.Header.frameControl.manufacturerSpecific) {
-            buffer.writeUInt16LE(this.Header.manufacturerCode, position);
-            position += 2;
+            buffalo.writeUInt16(this.Header.manufacturerCode);
         }
 
-        buffer.writeUInt8(this.Header.transactionSequenceNumber, position);
-        position++;
-        buffer.writeUInt8(this.Header.commandIdentifier, position);
-        position++;
-
-        return position;
+        buffalo.writeUInt8(this.Header.transactionSequenceNumber);
+        buffalo.writeUInt8(this.Header.commandIdentifier);
     }
 
-    private writePayloadGlobal(buffer: Buffer, position: number): number {
+    private writePayloadGlobal(buffalo: BuffaloZcl): void {
         const command = Object.values(Foundation).find((c): boolean => c.ID === this.Header.commandIdentifier);
 
         if (command.parseStrategy === 'repetitive') {
@@ -126,40 +118,36 @@ class ZclFrame {
                     }
 
                     const typeStr = ZclFrame.getDataTypeString(parameter.type);
-                    position += BuffaloZcl.write(typeStr, buffer, position, entry[parameter.name], options);
+                    buffalo.write(typeStr, entry[parameter.name], options);
                 }
             }
         } else if (command.parseStrategy === 'flat') {
             for (let parameter of command.parameters) {
-                position += BuffaloZcl.write(DataType[parameter.type], buffer, position, this.Payload[parameter.name], {});
+                buffalo.write(DataType[parameter.type], this.Payload[parameter.name], {});
             }
         } else {
             /* istanbul ignore else */
             if (command.parseStrategy === 'oneof') {
                 /* istanbul ignore else */
                 if (command === Foundation.discoverRsp) {
-                    position += BuffaloZcl.writeUInt8(buffer, position, this.Payload.discComplete);
+                    buffalo.writeUInt8(this.Payload.discComplete);
 
                     for (let entry of this.Payload.attrInfos) {
                         for (let parameter of command.parameters) {
-                            position += BuffaloZcl.write(DataType[parameter.type], buffer, position, entry[parameter.name], {});
+                            buffalo.write(DataType[parameter.type], entry[parameter.name], {});
                         }
                     }
                 }
             }
         }
-
-        return position;
     }
 
-    private writePayloadCluster(buffer: Buffer, position: number): number {
+    private writePayloadCluster(buffalo: BuffaloZcl): void {
         const command = Utils.getSpecificCommand(this.ClusterID, this.Header.frameControl.direction, this.Header.commandIdentifier);
         for (let parameter of command.parameters) {
             const typeStr = ZclFrame.getDataTypeString(parameter.type);
-            position += BuffaloZcl.write(typeStr, buffer, position, this.Payload[parameter.name], {});
+            buffalo.write(typeStr, this.Payload[parameter.name], {});
         }
-
-        return position;
     }
 
     /**
@@ -170,19 +158,15 @@ class ZclFrame {
             throw new Error("ZclFrame length is lower than minimal length");
         }
 
-        const {position, header} = this.parseHeader(buffer);
-
-        const payloadBuffer = buffer.slice(position, buffer.length);
-        const payload = this.parsePayload(header, clusterID, payloadBuffer);
+        const buffalo = new BuffaloZcl(buffer);
+        const header = this.parseHeader(buffalo);
+        const payload = this.parsePayload(header, clusterID, buffalo);
 
         return new ZclFrame(header, payload, clusterID);
     }
 
-    private static parseHeader(buffer: Buffer): {position: number; header: ZclHeader} {
-        let position = 0;
-
-        const frameControlValue = buffer.readUInt8(position);
-        position++;
+    private static parseHeader(buffalo: BuffaloZcl): ZclHeader {
+        const frameControlValue = buffalo.readUInt8();
         const frameControl = {
             frameType: frameControlValue & 0x03,
             manufacturerSpecific: ((frameControlValue >> 2) & 0x01) === 1,
@@ -192,35 +176,29 @@ class ZclFrame {
 
         let manufacturerCode = null;
         if (frameControl.manufacturerSpecific) {
-            manufacturerCode = buffer.readUInt16LE(position);
-            position += 2;
+            manufacturerCode = buffalo.readUInt16();
         }
 
-        const transactionSequenceNumber = buffer.readUInt8(position);
-        position++;
+        const transactionSequenceNumber = buffalo.readUInt8();
+        const commandIdentifier = buffalo.readUInt8();
 
-        const commandIdentifier = buffer.readUInt8(position);
-        position++;
-
-        const header = {frameControl, transactionSequenceNumber, manufacturerCode, commandIdentifier};
-        return {position, header};
+        return {frameControl, transactionSequenceNumber, manufacturerCode, commandIdentifier};
     }
 
-    private static parsePayload(header: ZclHeader, clusterID: number, buffer: Buffer): ZclPayload {
+    private static parsePayload(header: ZclHeader, clusterID: number, buffalo: BuffaloZcl): ZclPayload {
         if (header.frameControl.frameType === FrameType.GLOBAL) {
-            return this.parsePayloadGlobal(header, buffer);
+            return this.parsePayloadGlobal(header, buffalo);
         } else if (header.frameControl.frameType === FrameType.SPECIFIC) {
-            return this.parsePayloadCluster(header, clusterID, buffer);
+            return this.parsePayloadCluster(header, clusterID, buffalo);
         } else {
             throw new Error(`Unsupported frameType '${header.frameControl.frameType}'`);
         }
     }
 
-    private static parsePayloadCluster(header: ZclHeader, clusterID: number, buffer: Buffer): ZclPayload {
+    private static parsePayloadCluster(header: ZclHeader, clusterID: number,  buffalo: BuffaloZcl): ZclPayload {
         const command = Utils.getSpecificCommand(clusterID, header.frameControl.direction, header.commandIdentifier)
         const payload: ZclPayload = {};
 
-        let position = 0;
         for (let parameter of command.parameters) {
             const options: BuffaloTsType.Options = {};
 
@@ -235,21 +213,19 @@ class ZclFrame {
             }
 
             const typeStr = ZclFrame.getDataTypeString(parameter.type);
-            const result = BuffaloZcl.read(typeStr, buffer, position, options);
-            payload[parameter.name] = result.value;
-            position += result.length;
+            payload[parameter.name] = buffalo.read(typeStr, options);
         }
 
         return payload;
     };
 
-    private static parsePayloadGlobal(header: ZclHeader, buffer: Buffer): ZclPayload {
+    private static parsePayloadGlobal(header: ZclHeader, buffalo: BuffaloZcl): ZclPayload {
         const command = Object.values(Foundation).find((c): boolean => c.ID === header.commandIdentifier);
 
         if (command.parseStrategy === 'repetitive') {
             const payload = [];
 
-            for (let position = 0; position < buffer.length; position) {
+            while (buffalo.getPosition() < buffalo.getBuffer().length) {
                 const entry: {[s: string]: BuffaloTsType.Value} = {};
 
                 for (let parameter of command.parameters) {
@@ -270,9 +246,7 @@ class ZclFrame {
                     }
 
                     const typeStr = DataType[parameter.type] != null ? DataType[parameter.type] : BuffaloZclDataType[parameter.type];
-                    const result = BuffaloZcl.read(typeStr, buffer, position, options);
-                    entry[parameter.name] = result.value;
-                    position += result.length;
+                    entry[parameter.name] = buffalo.read(typeStr, options);
 
                     // TODO: not needed, but temp workaroudn to make payload equal to that of zcl-packet
                     if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && entry.dataType === DataType.struct) {
@@ -287,12 +261,9 @@ class ZclFrame {
             return payload;
         } else if (command.parseStrategy === 'flat') {
             const payload: {[s: string]: BuffaloTsType.Value} = {};
-            let position = 0;
 
             for (let parameter of command.parameters) {
-                const result = BuffaloZcl.read(DataType[parameter.type], buffer, position, {});
-                payload[parameter.name] = result.value;
-                position += result.length;
+                payload[parameter.name] = buffalo.read(DataType[parameter.type], {});
             }
 
             return payload;
@@ -302,16 +273,14 @@ class ZclFrame {
                 /* istanbul ignore else */
                 if (command === Foundation.discoverRsp) {
                     const payload: {[s: string]: BuffaloTsType.Value} = {};
-                    payload.discComplete = buffer.readUInt8(0);
+                    payload.discComplete = buffalo.readUInt8();
                     payload.attrInfos = [];
 
-                    for (let position = 1; position < buffer.length; position) {
+                    while (buffalo.getPosition() < buffalo.getBuffer().length) {
                         const entry: {[s: string]: BuffaloTsType.Value} = {};
 
                         for (let parameter of command.parameters) {
-                            const result = BuffaloZcl.read(DataType[parameter.type], buffer, position, {});
-                            entry[parameter.name] = result.value;
-                            position += result.length;
+                            entry[parameter.name] = buffalo.read(DataType[parameter.type], {});
                         }
 
                         payload.attrInfos.push(entry);

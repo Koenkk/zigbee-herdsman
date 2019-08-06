@@ -75,7 +75,7 @@ class ZpiObject {
     }
 
     private static readParameters(buffer: Buffer, parameters: MtParameter[]): ZpiObjectPayload {
-        let offset = 0;
+        const buffalo = new BuffaloZnp(buffer);
         let result: ZpiObjectPayload = {};
 
         for (let parameter of parameters) {
@@ -104,26 +104,21 @@ class ZpiObject {
                 }
             }
 
-            const parsed = BuffaloZnp.read(ParameterType[parameter.parameterType], buffer, offset, options);
-            result[parameter.name] = parsed.value
-
-            offset += parsed.length;
+            result[parameter.name] = buffalo.read(ParameterType[parameter.parameterType], options);
         }
 
         return result;
     }
 
     private createPayloadBuffer(): Buffer {
-        const buffer = Buffer.alloc(MaxDataSize);
-        let offset = 0;
+        const buffalo = new BuffaloZnp(Buffer.alloc(MaxDataSize));
 
         for (let parameter of this.parameters) {
             const value = this.payload[parameter.name];
-            const length = BuffaloZnp.write(ParameterType[parameter.parameterType], buffer, offset, value, {});
-            offset += length;
+            buffalo.write(ParameterType[parameter.parameterType], value, {});
         }
 
-        return buffer.slice(0, offset);
+        return buffalo.getBuffer().slice(0, buffalo.getPosition());
     }
 
     public isResetCommand(): boolean {

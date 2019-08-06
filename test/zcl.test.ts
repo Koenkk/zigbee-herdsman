@@ -593,66 +593,75 @@ describe('Zcl', () => {
 
     it('BuffaloZcl read array', () => {
         const buffer = Buffer.from([32, 3, 0, 1, 2, 3]);
-        const result = BuffaloZcl.read(DataType[DataType.array], buffer, 0, {});
-        expect(result.length).toBe(6);
-        expect(result.value).toStrictEqual([1, 2, 3]);
+        const buffalo = new BuffaloZcl(buffer);
+        const value = buffalo.read(DataType[DataType.array], {});
+        expect(buffalo.getPosition()).toBe(6);
+        expect(value).toStrictEqual([1, 2, 3]);
     });
 
     it('BuffaloZcl read struct', () => {
         const buffer = Buffer.from([0, 2, 0, 32, 8, 33, 4, 0]);
-        const result = BuffaloZcl.read(DataType[DataType.struct], buffer, 1, {});
-        expect(result.length).toBe(7);
-        expect(result.value).toStrictEqual([{"elmType": 32, "elmVal": 8}, {"elmType": 33, "elmVal": 4}]);
+        const buffalo = new BuffaloZcl(buffer, 1);
+        const value = buffalo.read(DataType[DataType.struct], {});
+        expect(buffalo.getPosition()).toBe(8);
+        expect(value).toStrictEqual([{"elmType": 32, "elmVal": 8}, {"elmType": 33, "elmVal": 4}]);
     });
 
     it('BuffaloZcl read longCharStr', () => {
         const buffer = Buffer.from([5, 0, 0x68, 0x65, 0x6c, 0x6c, 0x6f]);
-        const result = BuffaloZcl.read(DataType[DataType.longCharStr], buffer, 0, {});
-        expect(result.length).toBe(7);
-        expect(result.value).toStrictEqual('hello');
+        const buffalo = new BuffaloZcl(buffer);
+        const value = buffalo.read(DataType[DataType.longCharStr], {});
+        expect(buffalo.getPosition()).toBe(7);
+        expect(value).toStrictEqual('hello');
     });
 
     it('BuffaloZcl read extensionFieldSets', () => {
         const buffer = Buffer.from([5, 0, 3, 1, 2, 3]);
-        const result = BuffaloZcl.read(BuffaloZclDataType[BuffaloZclDataType.EXTENSION_FIELD_SETS], buffer, 0, {});
-        expect(result.length).toBe(6);
-        expect(result.value).toStrictEqual([{clstId: 5, len: 3, extField: [1, 2, 3]}]);
+        const buffalo = new BuffaloZcl(buffer);
+        const value = buffalo.read(BuffaloZclDataType[BuffaloZclDataType.EXTENSION_FIELD_SETS], {});
+        expect(buffalo.getPosition()).toBe(6);
+        expect(value).toStrictEqual([{clstId: 5, len: 3, extField: [1, 2, 3]}]);
     });
 
     it('BuffaloZcl read list zoneinfo', () => {
         const buffer = Buffer.from([1, 5, 0, 2, 6, 0]);
-        const result = BuffaloZcl.read(BuffaloZclDataType[BuffaloZclDataType.LIST_ZONEINFO], buffer, 0, {length: 2});
-        expect(result.length).toBe(6);
-        expect(result.value).toStrictEqual([{zoneID: 1, zoneStatus: 5}, {zoneID: 2, zoneStatus: 6}]);
+        const buffalo = new BuffaloZcl(buffer);
+        const value = buffalo.read(BuffaloZclDataType[BuffaloZclDataType.LIST_ZONEINFO], {length: 2});
+        expect(buffalo.getPosition()).toBe(6);
+        expect(value).toStrictEqual([{zoneID: 1, zoneStatus: 5}, {zoneID: 2, zoneStatus: 6}]);
     });
 
     it('BuffaloZcl read uint48', () => {
         const buffer = Buffer.from([1, 5, 4, 5, 6, 7]);
-        const result = BuffaloZcl.read(DataType[DataType.uint48], buffer, 0, {});
-        expect(result.length).toBe(6);
-        expect(result.value).toStrictEqual([1798, 84149505]);
+        const buffalo = new BuffaloZcl(buffer);
+        const value = buffalo.read(DataType[DataType.uint48], {});
+        expect(buffalo.getPosition()).toBe(6);
+        expect(value).toStrictEqual([1798, 84149505]);
     });
 
     it('BuffaloZcl read uint56', () => {
         const buffer = Buffer.from([1, 5, 4, 5, 6, 7, 7]);
-        const result = BuffaloZcl.read(DataType[DataType.uint56], buffer, 0, {});
-        expect(result.length).toBe(7);
-        expect(result.value).toStrictEqual([7, 1798, 84149505]);
+        const buffalo = new BuffaloZcl(buffer);
+        const value = buffalo.read(DataType[DataType.uint56], {});
+        expect(buffalo.getPosition()).toBe(7);
+        expect(value).toStrictEqual([7, 1798, 84149505]);
     });
 
     it('BuffaloZcl read uint64', () => {
         const buffer = Buffer.from([1, 5, 4, 5, 6, 7, 7, 9]);
-        const result = BuffaloZcl.read(DataType[DataType.uint64], buffer, 0, {});
-        expect(result.length).toBe(8);
-        expect(result.value).toStrictEqual("0x0907070605040501");
+        const buffalo = new BuffaloZcl(buffer);
+        const value = buffalo.read(DataType[DataType.uint64], {});
+        expect(buffalo.getPosition()).toBe(8);
+        expect(value).toStrictEqual("0x0907070605040501");
     });
 
     it('BuffaloZcl write charStr', () => {
         const payload = 'hello';
         const buffer = Buffer.alloc(7);
         const expected = Buffer.from([5, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0]);
-        const result = BuffaloZcl.write(DataType[DataType.charStr], buffer, 0, payload, {});
-        expect(result).toBe(6);
+        const buffalo = new BuffaloZcl(buffer);
+        buffalo.write(DataType[DataType.charStr], payload, {});
+        expect(buffalo.getPosition()).toBe(6);
         expect(buffer).toStrictEqual(expected);
     });
 
@@ -660,8 +669,9 @@ describe('Zcl', () => {
         const payload = 'hello';
         const buffer = Buffer.alloc(7);
         const expected = Buffer.from([5, 0, 0x68, 0x65, 0x6c, 0x6c, 0x6f]);
-        const result = BuffaloZcl.write(DataType[DataType.longCharStr], buffer, 0, payload, {});
-        expect(result).toBe(7);
+        const buffalo = new BuffaloZcl(buffer);
+        const result = buffalo.write(DataType[DataType.longCharStr], payload, {});
+        expect(buffalo.getPosition()).toBe(7);
         expect(buffer).toStrictEqual(expected);
     });
 
@@ -669,8 +679,9 @@ describe('Zcl', () => {
         const payload = [{clstId: 5, len: 3, extField: [1, 2, 3]}];
         const buffer = Buffer.alloc(6);
         const expected = Buffer.from([5, 0, 3, 1, 2, 3]);
-        const result = BuffaloZcl.write(BuffaloZclDataType[BuffaloZclDataType.EXTENSION_FIELD_SETS], buffer, 0, payload, {});
-        expect(result).toBe(6);
+        const buffalo = new BuffaloZcl(buffer);
+        buffalo.write(BuffaloZclDataType[BuffaloZclDataType.EXTENSION_FIELD_SETS], payload, {});
+        expect(buffalo.getPosition()).toBe(6);
         expect(buffer).toStrictEqual(expected);
     });
 
@@ -678,8 +689,9 @@ describe('Zcl', () => {
         const payload = [{zoneID: 1, zoneStatus: 5}, {zoneID: 2, zoneStatus: 6}];
         const buffer = Buffer.alloc(6);
         const expected = Buffer.from([1, 5, 0, 2, 6, 0]);
-        const result = BuffaloZcl.write(BuffaloZclDataType[BuffaloZclDataType.LIST_ZONEINFO], buffer, 0, payload, {});
-        expect(result).toBe(6);
+        const buffalo = new BuffaloZcl(buffer);
+        buffalo.write(BuffaloZclDataType[BuffaloZclDataType.LIST_ZONEINFO], payload, {});
+        expect(buffalo.getPosition()).toBe(6);
         expect(buffer).toStrictEqual(expected);
     });
 
@@ -687,8 +699,9 @@ describe('Zcl', () => {
         const payload = [30, 40];
         const buffer = Buffer.alloc(5);
         const expected = Buffer.from([40, 0, 0, 0, 30]);
-        const result = BuffaloZcl.write(DataType[DataType.uint40], buffer, 0, payload, {});
-        expect(result).toBe(5);
+        const buffalo = new BuffaloZcl(buffer);
+        buffalo.write(DataType[DataType.uint40], payload, {});
+        expect(buffalo.getPosition()).toBe(5);
         expect(buffer).toStrictEqual(expected);
     });
 
@@ -696,8 +709,9 @@ describe('Zcl', () => {
         const payload = [1798, 84149505];
         const buffer = Buffer.alloc(6);
         const expected = Buffer.from([1, 5, 4, 5, 6, 7]);
-        const result = BuffaloZcl.write(DataType[DataType.uint48], buffer, 0, payload, {});
-        expect(result).toBe(6);
+        const buffalo = new BuffaloZcl(buffer);
+        buffalo.write(DataType[DataType.uint48], payload, {});
+        expect(buffalo.getPosition()).toBe(6);
         expect(buffer).toStrictEqual(expected);
     });
 
@@ -705,8 +719,9 @@ describe('Zcl', () => {
         const payload = [7, 1798, 84149505];
         const buffer = Buffer.alloc(7);
         const expected = Buffer.from([6, 7, 0, 0, 7, 0, 0]);
-        const result = BuffaloZcl.write(DataType[DataType.uint56], buffer, 0, payload, {});
-        expect(result).toBe(7);
+        const buffalo = new BuffaloZcl(buffer);
+        buffalo.write(DataType[DataType.uint56], payload, {});
+        expect(buffalo.getPosition()).toBe(7);
         expect(buffer).toStrictEqual(expected);
     });
 
@@ -714,8 +729,9 @@ describe('Zcl', () => {
         const payload = "0x0907070605040501";
         const buffer = Buffer.alloc(8);
         const expected = Buffer.from([1, 5, 4, 5, 6, 7, 7, 9]);
-        const result = BuffaloZcl.write(DataType[DataType.uint64], buffer, 0, payload, {});
-        expect(result).toBe(8);
+        const buffalo = new BuffaloZcl(buffer);
+        buffalo.write(DataType[DataType.uint64], payload, {});
+        expect(buffalo.getPosition()).toBe(8);
         expect(buffer).toStrictEqual(expected);
     });
 });

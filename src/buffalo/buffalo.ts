@@ -1,54 +1,73 @@
-import {Options, ReadResult, Value} from './tstype';
+import {Options, Value} from './tstype';
 import {IsNumberArray} from '../utils';
 
 class Buffalo {
-    public static readEmpty(): ReadResult {
-        return {value: null, length: 0};
+    protected position: number;
+    protected buffer: Buffer;
+
+    public constructor(buffer: Buffer, position: number = 0) {
+        this.position = position;
+        this.buffer = buffer;
     }
 
-    public static writeEmpty(): number {
-        return 0;
+    public getPosition(): number {
+        return this.position;
     }
 
-    public static writeInt8(buffer: Buffer, offset: number, value: number): number {
-        buffer.writeInt8(value, offset);
-        return 1;
+    public getBuffer(): Buffer {
+        return this.buffer;
     }
 
-    public static readInt8(buffer: Buffer, offset: number): ReadResult {
-        return {value: buffer.readInt8(offset), length: 1};
+    public readEmpty(): Value {
+        return null;
     }
 
-    public static writeUInt8(buffer: Buffer, offset: number, value: number): number {
-        buffer.writeUInt8(value, offset);
-        return 1;
+    public writeEmpty(): void {
     }
 
-    public static readUInt8(buffer: Buffer, offset: number): ReadResult {
-        return {value: buffer.readUInt8(offset), length: 1};
+    public writeInt8(value: number): void {
+        this.buffer.writeInt8(value, this.position);
+        this.position++;
     }
 
-    public static writeUInt16(buffer: Buffer, offset: number, value: number): number {
-        buffer.writeUInt16LE(value, offset);
-        return 2;
+    public readInt8(): Value {
+        const value = this.buffer.readInt8(this.position);
+        this.position++;
+        return value;
     }
 
-    public static readUInt24(buffer: Buffer, offset: number): ReadResult {
-        const lsb = buffer.readUInt16LE(offset);
-        const msb = buffer.readUInt8(offset + 2);
-        return {value: (msb * 65536) + lsb, length: 3};
+    public writeUInt8(value: number): void {
+        this.buffer.writeUInt8(value, this.position);
+        this.position++;
     }
 
-    public static writeUInt24(buffer: Buffer, offset: number, value: number): number {
+    public readUInt8(): Value {
+        const value = this.buffer.readUInt8(this.position);
+        this.position++;
+        return value;
+    }
+
+    public writeUInt16(value: number): void {
+        this.buffer.writeUInt16LE(value, this.position);
+        this.position += 2;
+    }
+
+    public readUInt24(): Value {
+        const lsb = this.readUInt16();
+        const msb = this.readUInt8();
+        return (msb * 65536) + lsb;
+    }
+
+    public writeUInt24(value: number): void {
         let temp = Buffer.alloc(4);
         temp.writeUInt32LE(value, 0);
         temp = temp.slice(0, 3);
-        return this.writeBuffer(buffer, offset, temp, 3);
+        this.writeBuffer(temp, 3);
     }
 
-    public static readInt24(buffer: Buffer, offset: number): ReadResult {
-        const lsb = buffer.readUInt16LE(offset);
-        const msb = buffer.readUInt8(offset + 2);
+    public readInt24(): Value {
+        const lsb = this.readUInt16();
+        const msb = this.readUInt8();
         const sign = (msb & 0x80) >> 7;
         let value = ((msb & 0x7F) * 65536) + lsb;
 
@@ -56,78 +75,90 @@ class Buffalo {
             value = -(0x7FFFFF - value + 1);
         }
 
-        return {value, length: 3};
+        return value;
     }
 
-    public static writeInt24(buffer: Buffer, offset: number, value: number): number {
+    public writeInt24(value: number): void {
         let temp = Buffer.alloc(4);
         temp.writeInt32LE(value, 0);
         temp = temp.slice(0, 3);
-        return this.writeBuffer(buffer, offset, temp, 3);
+        this.writeBuffer(temp, 3);
     }
 
-    public static readUInt16(buffer: Buffer, offset: number): ReadResult {
-        return {value: buffer.readUInt16LE(offset), length: 2};
+    public readUInt16(): Value {
+        const value = this.buffer.readUInt16LE(this.position);
+        this.position += 2;
+        return value;
     }
 
-    public static writeInt16(buffer: Buffer, offset: number, value: number): number {
-        buffer.writeInt16LE(value, offset);
-        return 2;
+    public writeInt16(value: number): void {
+        this.buffer.writeInt16LE(value, this.position);
+        this.position += 2;
     }
 
-    public static readInt16(buffer: Buffer, offset: number): ReadResult {
-        return {value: buffer.readInt16LE(offset), length: 2};
+    public readInt16(): Value {
+        const value = this.buffer.readInt16LE(this.position);
+        this.position += 2;
+        return value;
     }
 
-    public static writeUInt32(buffer: Buffer, offset: number, value: number): number {
-        buffer.writeUInt32LE(value, offset);
-        return 4;
+    public writeUInt32(value: number): void {
+        this.buffer.writeUInt32LE(value, this.position);
+        this.position += 4;
     }
 
-    public static readUInt32(buffer: Buffer, offset: number): ReadResult {
-        return {value: buffer.readUInt32LE(offset), length: 4};
+    public readUInt32(): Value {
+        const value = this.buffer.readUInt32LE(this.position);
+        this.position += 4;
+        return value;
     }
 
-    public static writeInt32(buffer: Buffer, offset: number, value: number): number {
-        buffer.writeInt32LE(value, offset);
-        return 4;
+    public writeInt32(value: number): void {
+        this.buffer.writeInt32LE(value, this.position);
+        this.position += 4;
     }
 
-    public static readInt32(buffer: Buffer, offset: number): ReadResult {
-        return {value: buffer.readInt32LE(offset), length: 4};
+    public readInt32(): Value {
+        const value = this.buffer.readInt32LE(this.position);
+        this.position += 4;
+        return value;
     }
 
-    public static writeFloatLE(buffer: Buffer, offset: number, value: number): number {
-        buffer.writeFloatLE(value, offset);
-        return 4;
+    public writeFloatLE(value: number): void {
+        this.buffer.writeFloatLE(value, this.position);
+        this.position += 4;
     }
 
-    public static readFloatLE(buffer: Buffer, offset: number): ReadResult {
-        return {value: buffer.readFloatLE(offset), length: 4};
+    public readFloatLE(): Value {
+        const value = this.buffer.readFloatLE(this.position);
+        this.position += 4;
+        return value;
     }
 
-    public static writeDoubleLE(buffer: Buffer, offset: number, value: number): number {
-        buffer.writeDoubleLE(value, offset);
-        return 8;
+    public writeDoubleLE(value: number): void {
+        this.buffer.writeDoubleLE(value, this.position);
+        this.position += 8;
     }
 
-    public static readDoubleLE(buffer: Buffer, offset: number): ReadResult {
-        return {value: buffer.readDoubleLE(offset), length: 8};
+    public readDoubleLE(): Value {
+        const value = this.buffer.readDoubleLE(this.position);
+        this.position += 8;
+        return value;
     }
 
-    public static writeIeeeAddr(buffer: Buffer, offset: number, value: string): number {
-        buffer.writeUInt32LE(parseInt(value.slice(10), 16), offset);
-        buffer.writeUInt32LE(parseInt(value.slice(2, 10), 16), offset + 4);
-        return 8;
+    public writeIeeeAddr(value: string): void {
+        this.writeUInt32(parseInt(value.slice(10), 16));
+        this.writeUInt32(parseInt(value.slice(2, 10), 16));
     }
 
-    public static readIeeeAddr(buffer: Buffer, offset: number): ReadResult {
+    public readIeeeAddr(): Value {
         const length = 8;
-        const value = buffer.slice(offset, offset + length)
-        return {value: Buffalo.addressBufferToString(value), length};
+        const value = this.buffer.slice(this.position, this.position + length);
+        this.position += length;
+        return Buffalo.addressBufferToString(value);
     }
 
-    protected static addressBufferToString(buffer: Buffer): string {
+    private static addressBufferToString(buffer: Buffer): string {
         let address = '0x';
         for (let i = 0; i < buffer.length; i++) {
             const value = buffer.readUInt8(buffer.length - i - 1);
@@ -141,176 +172,163 @@ class Buffalo {
         return address;
     }
 
-    protected static readBuffer(buffer: Buffer, offset: number, length: number): ReadResult {
-        return {value: buffer.slice(offset, offset + length), length};
+    protected readBuffer(length: number): Value {
+        const value = this.buffer.slice(this.position, this.position + length);
+        this.position += length;
+        return value;
     }
 
-    protected static writeBuffer(buffer: Buffer, offset: number, values: Buffer | number[], length: number): number {
+    protected writeBuffer(values: Buffer | number[], length: number): void {
         if (values.length !== length) {
             throw new Error(`Length of values: '${values}' is not consitent with expected length '${length}'`);
         }
 
         for (let value of values) {
-            buffer.writeUInt8(value, offset);
-            offset += 1;
+            this.writeUInt8(value);
         }
-
-        return values.length;
     }
 
-    public static writeListUInt8(buffer: Buffer, offset: number, values: number[]): number {
+    public writeListUInt8(values: number[]): void {
         for (let value of values) {
-            buffer.writeUInt8(value, offset);
-            offset += 1
+            this.writeUInt8(value);
         }
-
-        return values.length;
     }
 
-    public static readListUInt8(buffer: Buffer, offset: number, options: Options): ReadResult {
+    public readListUInt8(options: Options): Value {
         const value = [];
         for (let i = 0; i < options.length; i++) {
-            value.push(buffer.readUInt8(offset + i));
+            value.push(this.readUInt8());
         }
 
-        return {value, length: options.length};
+        return value;
     }
 
-    public static writeListUInt16(buffer: Buffer, offset: number, values: number[]): number {
+    public writeListUInt16(values: number[]): void {
         for (let value of values) {
-            buffer.writeUInt16LE(value, offset);
-            offset += 2
+            this.writeUInt16(value);
         }
-
-        return values.length * 2;
     }
 
-    public static readListUInt16(buffer: Buffer, offset: number, options: Options): ReadResult {
+    public readListUInt16(options: Options): Value {
         const value = [];
-        for (let i = 0; i < (options.length * 2); i += 2) {
-            value.push(buffer.readUInt16LE(offset + i));
+        for (let i = 0; i < options.length; i++) {
+            value.push(this.readUInt16());
         }
 
-        return {value, length: 2 * options.length};
+        return value;
     }
 
-    public static writeListUInt24(buffer: Buffer, offset: number, values: number[]): number {
+    public writeListUInt24(values: number[]): void {
         for (let value of values) {
-            offset += this.writeUInt24(buffer, offset, value);
+            this.writeUInt24(value);
         }
-
-        return values.length * 3;
     }
 
-    public static readListUInt24(buffer: Buffer, offset: number, options: Options): ReadResult {
+    public readListUInt24(options: Options): Value {
         const value = [];
-
-        for (let i = 0; i < (options.length * 3); i += 3) {
-            value.push(this.readUInt24(buffer, offset + i).value);
+        for (let i = 0; i < options.length; i++) {
+            value.push(this.readUInt24());
         }
 
-        return {value, length: 3 * options.length};
+        return value;
     }
 
-    public static writeListUInt32(buffer: Buffer, offset: number, values: number[]): number {
+    public writeListUInt32(values: number[]): void {
         for (let value of values) {
-            offset += this.writeUInt32(buffer, offset, value);
+            this.writeUInt32(value);
         }
-
-        return values.length * 4;
     }
 
-    public static readListUInt32(buffer: Buffer, offset: number, options: Options): ReadResult {
+    public readListUInt32(options: Options): Value {
         const value = [];
-
-        for (let i = 0; i < (options.length * 4); i += 4) {
-            value.push(this.readUInt32(buffer, offset + i).value);
+        for (let i = 0; i < options.length; i++) {
+            value.push(this.readUInt32());
         }
 
-        return {value, length: 4 * options.length};
+        return value;
     }
 
-    public static write(type: string, buffer: Buffer, offset: number, value: Value, options: Options): number {
+    public write(type: string, value: Value, options: Options): void {
         options; // prevent not used eslint warning
 
         if (type === 'UINT8') {
-            return this.writeUInt8(buffer, offset, value);
+            this.writeUInt8(value);
         } else if (type === 'UINT16') {
-            return this.writeUInt16(buffer, offset, value);
+            this.writeUInt16(value);
         } else if (type === 'UINT32') {
-            return this.writeUInt32(buffer, offset, value);
+            this.writeUInt32(value);
         }  else if (type === 'IEEEADDR') {
-            return this.writeIeeeAddr(buffer, offset, value);
+            this.writeIeeeAddr(value);
         } else if (type.startsWith('BUFFER') && (Buffer.isBuffer(value) || IsNumberArray(value))) {
             let length = Number(type.replace('BUFFER', ''));
             length = length != 0 ? length : value.length;
-            return Buffalo.writeBuffer(buffer, offset, value, length);
+            this.writeBuffer(value, length);
         } else if (type === 'INT8') {
-            return this.writeInt8(buffer, offset, value);
+            this.writeInt8(value);
         } else if (type === 'INT16') {
-            return this.writeInt16(buffer, offset, value);
+            this.writeInt16(value);
         } else if (type === 'UINT24') {
-            return this.writeUInt24(buffer, offset, value);
+            this.writeUInt24(value);
         } else if (type === 'INT24') {
-            return this.writeInt24(buffer, offset, value);
+            this.writeInt24(value);
         } else if (type === 'INT32') {
-            return this.writeInt32(buffer, offset, value);
+            this.writeInt32(value);
         } else if (type === 'FLOATLE') {
-            return this.writeFloatLE(buffer, offset, value);
+            this.writeFloatLE(value);
         } else if (type === 'DOUBLELE') {
-            return this.writeDoubleLE(buffer, offset, value);
+            this.writeDoubleLE(value);
         } else if (type === 'EMPTY') {
-            return this.writeEmpty();
+            this.writeEmpty();
         } else if (type === 'LIST_UINT8') {
-            return this.writeListUInt8(buffer, offset, value);
+            this.writeListUInt8(value);
         } else if (type === 'LIST_UINT16') {
-            return this.writeListUInt16(buffer, offset, value);
+            this.writeListUInt16(value);
         } else if (type === 'LIST_UINT24') {
-            return this.writeListUInt24(buffer, offset, value);
+            this.writeListUInt24(value);
         } else if (type === 'LIST_UINT32') {
-            return this.writeListUInt32(buffer, offset, value);
+            this.writeListUInt32(value);
         } else {
             throw new Error(`Write for '${type}' not available`)
         }
     }
 
-    public static read(type: string, buffer: Buffer, offset: number, options: Options): ReadResult {
+    public read(type: string, options: Options): Value {
         if (type === 'UINT8') {
-            return this.readUInt8(buffer, offset);
+            return this.readUInt8();
         } else if (type === 'UINT16') {
-            return this.readUInt16(buffer, offset);
+            return this.readUInt16();
         } else if (type === 'UINT32') {
-            return this.readUInt32(buffer, offset);
+            return this.readUInt32();
         }  else if (type === 'IEEEADDR') {
-            return this.readIeeeAddr(buffer, offset);
+            return this.readIeeeAddr();
         } else if (type.startsWith('BUFFER')) {
             let length = Number(type.replace('BUFFER', ''));
             length = length != 0 ? length : options.length;
-            return this.readBuffer(buffer, offset, length);
+            return this.readBuffer(length);
         } else if (type === 'INT8') {
-            return this.readInt8(buffer, offset);
+            return this.readInt8();
         } else if (type === 'INT16') {
-            return this.readInt16(buffer, offset);
+            return this.readInt16();
         } else if (type === 'UINT24') {
-            return this.readUInt24(buffer, offset);
+            return this.readUInt24();
         } else if (type === 'INT24') {
-            return this.readInt24(buffer, offset);
+            return this.readInt24();
         } else if (type === 'INT32') {
-            return this.readInt32(buffer, offset);
+            return this.readInt32();
         } else if (type === 'FLOATLE') {
-            return this.readFloatLE(buffer, offset);
+            return this.readFloatLE();
         } else if (type === 'DOUBLELE') {
-            return this.readDoubleLE(buffer, offset);
+            return this.readDoubleLE();
         } else if (type === 'EMPTY') {
             return this.readEmpty();
         } else if (type === 'LIST_UINT8') {
-            return this.readListUInt8(buffer, offset, options);
+            return this.readListUInt8(options);
         } else if (type === 'LIST_UINT16') {
-            return this.readListUInt16(buffer, offset, options);
+            return this.readListUInt16(options);
         } else if (type === 'LIST_UINT24') {
-            return this.readListUInt24(buffer, offset, options);
+            return this.readListUInt24(options);
         } else if (type === 'LIST_UINT32') {
-            return this.readListUInt32(buffer, offset, options);
+            return this.readListUInt32(options);
         } else {
             throw new Error(`Read for '${type}' not available`)
         }

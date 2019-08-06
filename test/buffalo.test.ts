@@ -1,372 +1,383 @@
 import {Buffalo} from '../src/buffalo';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from './testUtils';
 
-describe('Buffalo', () => {
+describe('helloworld', () => {
     it('UINT8 write', () => {
-        const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('UINT8', buffer, 1, 240, {});
-        expect(length).toStrictEqual(1);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0xF0, 0x00]))
+        const buffalo = new Buffalo(Buffer.alloc(3), 1);
+        buffalo.write('UINT8', 240, {});
+        expect(buffalo.getPosition()).toEqual(2);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xF0, 0x00]))
     });
 
     it('UINT8 read', () => {
-        const buffer = Buffer.from([0x00, 0x03, 0x00, 0x00]);
-        const result = Buffalo.read('UINT8', buffer, 1, {});
-        expect(result.length).toStrictEqual(1);
-        expect(result.value).toStrictEqual(3);
+        const buffalo = new Buffalo(Buffer.from([0x00, 0x03, 0x00, 0x00]), 1);
+        const value = buffalo.read('UINT8', {});
+        expect(buffalo.getPosition()).toEqual(2);
+        expect(value).toStrictEqual(3);
     });
 
     it('INT8 write', () => {
-        const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('INT8', buffer, 1, 127, {});
-        expect(length).toStrictEqual(1);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0x7F, 0x00]))
+        const buffalo = new Buffalo(Buffer.alloc(3), 1);
+        buffalo.write('INT8', 127, {});
+        expect(buffalo.getPosition()).toEqual(2);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x7F, 0x00]))
     });
 
     it('INT8 read', () => {
-        const buffer = Buffer.from([0x00, 0xF0, 0x00, 0x00]);
-        const result = Buffalo.read('INT8', buffer, 1, {});
-        expect(result.length).toStrictEqual(1);
-        expect(result.value).toStrictEqual(-16);
+        const buffalo = new Buffalo(Buffer.from([0x00, 0xF0, 0x00, 0x00]), 1);
+        const value = buffalo.read('INT8', {});
+        expect(buffalo.getPosition()).toEqual(2);
+        expect(value).toStrictEqual(-16);
     });
 
     it('INT16 write', () => {
-        const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('INT16', buffer, 1, 256, {});
-        expect(length).toStrictEqual(2);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0x01]))
+        const buffalo = new Buffalo(Buffer.alloc(3), 1);
+        buffalo.write('INT16', 256, {});
+        expect(buffalo.getPosition()).toEqual(3);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00, 0x01]))
     });
 
     it('INT16 read', () => {
-        const buffer = Buffer.from([0x00, 0xFF, 0xFF, 0x00]);
-        const result = Buffalo.read('INT16', buffer, 1, {});
-        expect(result.length).toStrictEqual(2);
-        expect(result.value).toStrictEqual(-1);
+        const buffalo = new Buffalo(Buffer.from([0x00, 0xFF, 0xFF, 0x00]), 1);
+        const value = buffalo.read('INT16', {});
+        expect(buffalo.getPosition()).toEqual(3);
+        expect(value).toStrictEqual(-1);
     });
 
     it('UINT16 write', () => {
-        const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('UINT16', buffer, 1, 1020, {});
-        expect(length).toStrictEqual(2);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0xFC, 0x03]))
+        const buffalo = new Buffalo(Buffer.alloc(3), 1);
+        buffalo.write('UINT16', 1020, {});
+        expect(buffalo.getPosition()).toEqual(3);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xFC, 0x03]))
     });
 
     it('UINT16 read', () => {
-        const buffer = Buffer.from([0x00, 0x03, 0xFF, 0x00]);
-        const result = Buffalo.read('UINT16', buffer, 1, {});
-        expect(result.length).toStrictEqual(2);
-        expect(result.value).toStrictEqual(65283);
+        const buffalo = new Buffalo(Buffer.from([0x00, 0x03, 0xFF, 0x00]), 1);
+        const value = buffalo.read('UINT16', {});
+        expect(buffalo.getPosition()).toEqual(3);
+        expect(value).toStrictEqual(65283);
     });
 
     it('UINT32 write', () => {
-        const buffer = Buffer.alloc(6);
-        const length = Buffalo.write('UINT32', buffer, 2, 1065283, {});
-        expect(length).toStrictEqual(4);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0x43, 0x41, 0x10, 0x00]))
+        const buffalo = new Buffalo(Buffer.alloc(6), 2);
+        buffalo.write('UINT32', 1065283, {});
+        expect(buffalo.getPosition()).toEqual(6);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00, 0x43, 0x41, 0x10, 0x00]))
     });
 
     it('UINT32 read', () => {
-        const buffer = Buffer.from([0x01, 0x03, 0xFF, 0xFF]);
-        const result = Buffalo.read('UINT32', buffer, 0, {});
-        expect(result.length).toStrictEqual(4);
-        expect(result.value).toStrictEqual(4294902529);
+        const buffalo = new Buffalo(Buffer.from([0x01, 0x03, 0xFF, 0xFF]));
+        const value = buffalo.read('UINT32', {});
+        expect(buffalo.getPosition()).toEqual(4);
+        expect(value).toStrictEqual(4294902529);
     });
 
     it('IEEEADDR write', () => {
-        const buffer = Buffer.alloc(8);
-        const length = Buffalo.write('IEEEADDR', buffer, 0, ieeeaAddr1.string, {});
-        expect(length).toStrictEqual(8);
-        expect(buffer).toStrictEqual(Buffer.from(ieeeaAddr1.hex))
+        const buffalo = new Buffalo(Buffer.alloc(8));
+        buffalo.write('IEEEADDR', ieeeaAddr1.string, {});
+        expect(buffalo.getPosition()).toEqual(8);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from(ieeeaAddr1.hex))
     });
 
     it('IEEEADDR read', () => {
-        const buffer = Buffer.from(ieeeaAddr2.hex);
-        const result = Buffalo.read('IEEEADDR', buffer, 0, {});
-        expect(result.length).toStrictEqual(8);
-        expect(result.value).toStrictEqual(ieeeaAddr2.string);
+        const buffalo = new Buffalo(Buffer.from(ieeeaAddr2.hex));
+        const value = buffalo.read('IEEEADDR', {});
+        expect(buffalo.getPosition()).toEqual(8);
+        expect(value).toStrictEqual(ieeeaAddr2.string);
     });
 
     it('BUFFER write', () => {
-        const buffer = Buffer.alloc(5);
+        const buffalo = new Buffalo(Buffer.alloc(5), 1);
         const payload = Buffer.from([0x00, 0x01, 0x02]);
-        const length = Buffalo.write('BUFFER', buffer, 1, payload, {});
-        expect(length).toStrictEqual(3);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, 0x00]))
+        buffalo.write('BUFFER', payload, {});
+        expect(buffalo.getPosition()).toEqual(4);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, 0x00]))
     });
 
     it('BUFFER write as array', () => {
-        const buffer = Buffer.alloc(5);
+        const buffalo = new Buffalo(Buffer.alloc(5), 1);
         const payload = [0x00, 0x01, 0x02];
-        const length = Buffalo.write('BUFFER', buffer, 1, payload, {});
-        expect(length).toStrictEqual(3);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, 0x00]))
+        buffalo.write('BUFFER', payload, {});
+        expect(buffalo.getPosition()).toEqual(4);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, 0x00]))
     });
 
     it('BUFFER read', () => {
-        const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09]);
-        const result = Buffalo.read('BUFFER', payload, 2, {length: 5});
-        expect(result.length).toStrictEqual(5);
-        expect(result.value).toStrictEqual(Buffer.from([0x02, 0x03, 0x04, 0x05, 0x06]));
+        const buffalo = new Buffalo(Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09]), 2);
+        const value = buffalo.read('BUFFER', {length: 5});
+        expect(buffalo.getPosition()).toEqual(7);
+        expect(value).toStrictEqual(Buffer.from([0x02, 0x03, 0x04, 0x05, 0x06]));
     });
 
     it('BUFFER8 write', () => {
-        const buffer = Buffer.alloc(9);
+        const buffalo = new Buffalo(Buffer.alloc(9), 1);
         const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
-        const length = Buffalo.write('BUFFER8', buffer, 1, payload, {});
-        expect(length).toStrictEqual(8);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload]))
+        buffalo.write('BUFFER8', payload, {});
+        expect(buffalo.getPosition()).toStrictEqual(9);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload]))
     });
 
     it('BUFFER8 write length consistent', () => {
-        const buffer = Buffer.alloc(9);
+        const buffalo = new Buffalo(Buffer.alloc(9));
         const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]);
         expect(() => {
-            Buffalo.write('BUFFER8', buffer, 1, payload, {});
+            buffalo.write('BUFFER8', payload, {});
         }).toThrow();
     });
 
     it('BUFFER8 read', () => {
-        const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09]);
-        const result = Buffalo.read('BUFFER8', payload, 2, {});
-        expect(result.length).toStrictEqual(8);
-        expect(result.value).toStrictEqual(payload.slice(2, 11));
+        const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09]);
+        const buffalo = new Buffalo(buffer, 2);
+        const value = buffalo.read('BUFFER8', {});
+        expect(buffalo.getPosition()).toEqual(10);
+        expect(value).toStrictEqual(buffer.slice(2, 11));
     });
 
     it('BUFFER16 write', () => {
-        const buffer = Buffer.alloc(20);
+        const buffalo = new Buffalo(Buffer.alloc(20), 1);
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        const length = Buffalo.write('BUFFER16', buffer, 1, Buffer.from([...payload, ...payload]), {});
-        expect(length).toStrictEqual(16);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00, 0x00, 0x00]))
+        buffalo.write('BUFFER16', Buffer.from([...payload, ...payload]), {});
+        expect(buffalo.getPosition()).toStrictEqual(17);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00, 0x00, 0x00]))
     });
 
     it('BUFFER16 read', () => {
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        const result = Buffalo.read('BUFFER16', Buffer.from([0x00, ...payload, ...payload]), 1, {});
-        expect(result.length).toStrictEqual(16);
-        expect(result.value).toStrictEqual(Buffer.from([...payload, ...payload]));
+        const buffalo = new Buffalo(Buffer.from([0x00, ...payload, ...payload]), 1);
+        const value = buffalo.read('BUFFER16', {});
+        expect(buffalo.getPosition()).toEqual(17);
+        expect(value).toStrictEqual(Buffer.from([...payload, ...payload]));
     });
 
     it('BUFFER18 write', () => {
-        const buffer = Buffer.alloc(20);
+        const buffalo = new Buffalo(Buffer.alloc(20), 1);
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
-        const length = Buffalo.write('BUFFER18', buffer, 1, Buffer.from([...payload, ...payload]), {});
-        expect(length).toStrictEqual(18);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00]))
+        buffalo.write('BUFFER18', Buffer.from([...payload, ...payload]), {});
+        expect(buffalo.getPosition()).toStrictEqual(19);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00]))
     });
 
     it('BUFFER18 read', () => {
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
-        const result = Buffalo.read('BUFFER18', Buffer.from([0x00, ...payload, ...payload]), 1, {});
-        expect(result.length).toStrictEqual(18);
-        expect(result.value).toStrictEqual(Buffer.from([...payload, ...payload]));
+        const buffalo = new Buffalo(Buffer.from([0x00, ...payload, ...payload]), 1)
+        const value = buffalo.read('BUFFER18', {});
+        expect(buffalo.getPosition()).toStrictEqual(19);
+        expect(value).toStrictEqual(Buffer.from([...payload, ...payload]));
     });
 
     it('BUFFER32 write', () => {
-        const buffer = Buffer.alloc(34);
+        const buffalo = new Buffalo(Buffer.alloc(34), 1);
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        const length = Buffalo.write('BUFFER32', buffer, 1, Buffer.from([...payload, ...payload, ...payload, ...payload]), {});
-        expect(length).toStrictEqual(32);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, 0x00]))
+        buffalo.write('BUFFER32', Buffer.from([...payload, ...payload, ...payload, ...payload]), {});
+        expect(buffalo.getPosition()).toStrictEqual(33);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, 0x00]))
     });
 
     it('BUFFER32 read', () => {
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        const result = Buffalo.read('BUFFER32', Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload]), 1, {});
-        expect(result.length).toStrictEqual(32);
-        expect(result.value).toStrictEqual(Buffer.from([...payload, ...payload, ...payload, ...payload]));
+        const buffalo = new Buffalo(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload]), 1)
+        const value = buffalo.read('BUFFER32', {});
+        expect(buffalo.getPosition()).toStrictEqual(33);
+        expect(value).toStrictEqual(Buffer.from([...payload, ...payload, ...payload, ...payload]));
     });
 
     it('BUFFER42 write', () => {
-        const buffer = Buffer.alloc(44);
+        const buffalo = new Buffalo(Buffer.alloc(44), 1);
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        const length = Buffalo.write('BUFFER42', buffer, 1, Buffer.from([...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xFF]), {});
-        expect(length).toStrictEqual(42);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xFF, 0x00]))
+        buffalo.write('BUFFER42', Buffer.from([...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xFF]), {});
+        expect(buffalo.getPosition()).toStrictEqual(43);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xFF, 0x00]))
     });
 
     it('BUFFER42 read', () => {
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        const result = Buffalo.read('BUFFER42', Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, ...payload, 0x08, 0x09]), 1, {});
-        expect(result.length).toStrictEqual(42);
-        expect(result.value).toStrictEqual(Buffer.from([...payload, ...payload, ...payload, ...payload, ...payload, 0x08, 0x09]));
+        const buffalo = new Buffalo(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, ...payload, 0x08, 0x09]), 1)
+        const value = buffalo.read('BUFFER42', {});
+        expect(buffalo.getPosition()).toStrictEqual(43);
+        expect(value).toStrictEqual(Buffer.from([...payload, ...payload, ...payload, ...payload, ...payload, 0x08, 0x09]));
     });
 
     it('BUFFER100 write', () => {
-        const buffer = Buffer.alloc(100);
+        const buffalo = new Buffalo(Buffer.alloc(100), 0);
         let payload = duplicateArray(20, [0x00, 0x01, 0x02, 0x03, 0x04]);
-
-        const length = Buffalo.write('BUFFER100', buffer, 0, Buffer.from(payload), {});
-        expect(length).toStrictEqual(100);
-        expect(buffer).toStrictEqual(Buffer.from(payload))
+        buffalo.write('BUFFER100', Buffer.from(payload), {});
+        expect(buffalo.getPosition()).toStrictEqual(100);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from(payload))
     });
 
     it('BUFFER100 read', () => {
         let payload = duplicateArray(20, [0x00, 0x01, 0x02, 0x03, 0x04]);
-
-        const result = Buffalo.read('BUFFER100', Buffer.from([0x00, ...payload]), 1, {});
-        expect(result.length).toStrictEqual(100);
-        expect(result.value).toStrictEqual(Buffer.from(payload));
+        const buffalo = new Buffalo(Buffer.from([0x00, ...payload]), 1);
+        const value = buffalo.read('BUFFER100', {});
+        expect(buffalo.getPosition()).toStrictEqual(101);
+        expect(value).toStrictEqual(Buffer.from(payload));
     });
 
     it('Non existing type read', () => {
         expect(() => {
             // @ts-ignore
-            Buffalo.read('NONEXISTING', Buffer.alloc(0), 1, {});
+            const buffalo = new Buffalo(Buffer.alloc(0));
+            buffalo.read('NONEXISTING', {});
         }).toThrow(new Error("Read for 'NONEXISTING' not available"));
     });
 
     it('LIST_UINT8 write', () => {
-        const buffer = Buffer.alloc(4);
+        const buffalo = new Buffalo(Buffer.alloc(4), 1);
         const payload = [200, 100];
-        const length = Buffalo.write('LIST_UINT8', buffer, 1, payload, {});
-        expect(length).toStrictEqual(2);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0xC8, 0x64, 0x00]));
+        buffalo.write('LIST_UINT8', payload, {});
+        expect(buffalo.getPosition()).toStrictEqual(3);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xC8, 0x64, 0x00]));
     });
 
     it('LIST_UINT8 read', () => {
-        const result = Buffalo.read('LIST_UINT8', Buffer.from([0x00, 0xC8, 0x64, 0x00]), 1, {length: 2});
-        expect(result.length).toStrictEqual(2);
-        expect(result.value).toStrictEqual([200, 100]);
+        const buffalo = new Buffalo(Buffer.from([0x00, 0x00, 0x04, 0x08]), 2);
+        const value = buffalo.read('LIST_UINT8', {length: 2});
+        expect(buffalo.getPosition()).toStrictEqual(4);
+        expect(value).toStrictEqual([4, 8]);
     });
 
     it('LIST_UINT16 write', () => {
-        const buffer = Buffer.alloc(5);
+        const buffalo = new Buffalo(Buffer.alloc(5), 1);
         const payload = [1024, 2048];
-        const length = Buffalo.write('LIST_UINT16', buffer, 1, payload, {});
-        expect(length).toStrictEqual(4);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0x04, 0x00, 0x08]));
+        buffalo.write('LIST_UINT16', payload, {});
+        expect(buffalo.getPosition()).toStrictEqual(5);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00, 0x04, 0x00, 0x08]));
     });
 
     it('LIST_UINT16 read', () => {
-        const result = Buffalo.read('LIST_UINT16', Buffer.from([0x00, 0x00, 0x04, 0x00, 0x08]), 1, {length: 2});
-        expect(result.length).toStrictEqual(4);
-        expect(result.value).toStrictEqual([1024, 2048]);
+        const buffalo = new Buffalo(Buffer.from([0x00, 0x00, 0x04, 0x00, 0x08]), 1);
+        const value = buffalo.read('LIST_UINT16', {length: 2});
+        expect(buffalo.getPosition()).toStrictEqual(5);
+        expect(value).toStrictEqual([1024, 2048]);
     });
 
     it('LIST_UINT24 write', () => {
-        const buffer = Buffer.alloc(8);
+        const buffalo = new Buffalo(Buffer.alloc(8), 1);
         const payload = [100000, 110110];
-        const length = Buffalo.write('LIST_UINT24', buffer, 1, payload, {});
-        expect(length).toStrictEqual(6);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0xA0, 0x86, 0x01, 0x1E, 0xAE, 0x01, 0x00]));
+        buffalo.write('LIST_UINT24', payload, {});
+        expect(buffalo.getPosition()).toStrictEqual(7);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xA0, 0x86, 0x01, 0x1E, 0xAE, 0x01, 0x00]));
     });
 
     it('LIST_UINT24 read', () => {
-        const result = Buffalo.read('LIST_UINT24', Buffer.from([0x00, 0xA0, 0x86, 0x01, 0x1E, 0xAE, 0x01, 0x00]), 1, {length: 2});
-        expect(result.length).toStrictEqual(6);
-        expect(result.value).toStrictEqual([100000, 110110]);
+        const buffalo = new Buffalo(Buffer.from([0x00, 0xA0, 0x86, 0x01, 0x1E, 0xAE, 0x01, 0x00]), 1);
+        const value = buffalo.read('LIST_UINT24', {length: 2});
+        expect(buffalo.getPosition()).toStrictEqual(7);
+        expect(value).toStrictEqual([100000, 110110]);
     });
 
     it('LIST_UINT32 write', () => {
-        const buffer = Buffer.alloc(8);
+        const buffalo = new Buffalo(Buffer.alloc(8));
         const payload = [4294967295, 10];
-        const length = Buffalo.write('LIST_UINT32', buffer, 0, payload, {});
-        expect(length).toStrictEqual(8);
-        expect(buffer).toStrictEqual(Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0x0A, 0x00, 0x00, 0x00]));
+        buffalo.write('LIST_UINT32', payload, {});
+        expect(buffalo.getPosition()).toStrictEqual(8);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0x0A, 0x00, 0x00, 0x00]));
     });
 
     it('LIST_UINT32 read', () => {
-        const result = Buffalo.read('LIST_UINT32', Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0x0A, 0x00, 0x00, 0x00]), 0, {length: 2});
-        expect(result.length).toStrictEqual(8);
-        expect(result.value).toStrictEqual([4294967295, 10]);
+        const buffalo = new Buffalo(Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0x0A, 0x00, 0x00, 0x00]));
+        const value = buffalo.read('LIST_UINT32', {length: 2});
+        expect(buffalo.getPosition()).toStrictEqual(8);
+        expect(value).toStrictEqual([4294967295, 10]);
     });
 
     it('EMPTY write', () => {
-        const buffer = Buffer.alloc(2);
+        const buffalo = new Buffalo(Buffer.alloc(2));
         const payload = null;
-        const length = Buffalo.write('EMPTY', buffer, 0, payload, {});
-        expect(length).toStrictEqual(0);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00]));
+        buffalo.write('EMPTY', payload, {});
+        expect(buffalo.getPosition()).toStrictEqual(0);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00]));
     });
 
     it('EMPTY read', () => {
-        const result = Buffalo.read('EMPTY', Buffer.from([0x00, 0x00]), 0, {});
-        expect(result.length).toStrictEqual(0);
-        expect(result.value).toStrictEqual(null);
+        const buffalo = new Buffalo(Buffer.from([0x00, 0x00]), 1);
+        const value = buffalo.read('EMPTY', {});
+        expect(buffalo.getPosition()).toStrictEqual(1);
+        expect(value).toStrictEqual(null);
     });
 
     it('UINT24 write', () => {
-        const buffer = Buffer.alloc(4);
+        const buffalo = new Buffalo(Buffer.alloc(4), 1);
         const payload = 16777200;
-        const length = Buffalo.write('UINT24', buffer, 1, payload, {});
-        expect(length).toStrictEqual(3);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0xF0, 0xFF, 0xFF]));
+        buffalo.write('UINT24', payload, {});
+        expect(buffalo.getPosition()).toStrictEqual(4);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xF0, 0xFF, 0xFF]));
     });
 
     it('UINT24 read', () => {
-        const result = Buffalo.read('UINT24', Buffer.from([0x01, 0xA0, 0x86, 0x01, 0x02]), 1, {});
-        expect(result.length).toStrictEqual(3);
-        expect(result.value).toStrictEqual(100000);
+        const buffalo = new Buffalo(Buffer.from([0x01, 0xA0, 0x86, 0x01, 0x02]), 1);
+        const value = buffalo.read('UINT24', {});
+        expect(buffalo.getPosition()).toStrictEqual(4);
+        expect(value).toStrictEqual(100000);
     });
 
     it('INT24 write +', () => {
-        const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('INT24', buffer, 0, 65536, {});
-        expect(length).toStrictEqual(3);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0x01]))
+        const buffalo = new Buffalo(Buffer.alloc(3));
+        buffalo.write('INT24', 65536, {});
+        expect(buffalo.getPosition()).toStrictEqual(3);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00, 0x01]))
     });
 
     it('INT24 read +', () => {
-        const buffer = Buffer.from([0x7F, 0xFF, 0xFF, 0x7F]);
-        const result = Buffalo.read('INT24', buffer, 1, {});
-        expect(result.length).toStrictEqual(3);
-        expect(result.value).toStrictEqual(8388607);
+        const buffalo = new Buffalo(Buffer.from([0x7F, 0xFF, 0xFF, 0x7F]), 1);
+        const value = buffalo.read('INT24', {});
+        expect(buffalo.getPosition()).toStrictEqual(4);
+        expect(value).toStrictEqual(8388607);
     });
 
     it('INT24 write -', () => {
-        const buffer = Buffer.alloc(3);
-        const length = Buffalo.write('INT24', buffer, 0, -65536, {});
-        expect(length).toStrictEqual(3);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0x00, 0xFF]))
+        const buffalo = new Buffalo(Buffer.alloc(3));
+        buffalo.write('INT24', -65536, {});
+        expect(buffalo.getPosition()).toStrictEqual(3);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00, 0xFF]))
     });
 
     it('INT24 read -', () => {
-        const buffer = Buffer.from([0x00, 0x00, 0xFF]);
-        const result = Buffalo.read('INT24', buffer, 0, {});
-        expect(result.length).toStrictEqual(3);
-        expect(result.value).toStrictEqual(-65536);
+        const buffalo = new Buffalo(Buffer.from([0x00, 0x00, 0xFF]));
+        const value = buffalo.read('INT24', {});
+        expect(buffalo.getPosition()).toStrictEqual(3);
+        expect(value).toStrictEqual(-65536);
     });
 
     it('INT32 write', () => {
-        const buffer = Buffer.alloc(4);
-        const length = Buffalo.write('INT32', buffer, 0, 2147483647, {});
-        expect(length).toStrictEqual(4);
-        expect(buffer).toStrictEqual(Buffer.from([0xFF, 0xFF, 0xFF, 0x7F]))
+        const buffalo = new Buffalo(Buffer.alloc(4));
+        buffalo.write('INT32', 2147483647, {});
+        expect(buffalo.getPosition()).toStrictEqual(4);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0xFF, 0xFF, 0xFF, 0x7F]))
     });
 
     it('INT32 read', () => {
-        const buffer = Buffer.from([0x08, 0xFF, 0x03, 0xFF]);
-        const result = Buffalo.read('INT32', buffer, 0, {});
-        expect(result.length).toStrictEqual(4);
-        expect(result.value).toStrictEqual(-16515320);
+        const buffalo = new Buffalo(Buffer.from([0x08, 0xFF, 0x03, 0xFF]));
+        const value = buffalo.read('INT32', {});
+        expect(buffalo.getPosition()).toStrictEqual(4);
+        expect(value).toStrictEqual(-16515320);
     });
 
     it('FLOATLE write', () => {
-        const buffer = Buffer.alloc(4);
-        const length = Buffalo.write('FLOATLE', buffer, 0, 400.50, {});
-        expect(length).toStrictEqual(4);
-        expect(buffer).toStrictEqual(Buffer.from([0x00, 0x40, 0xC8, 0x43]))
+        const buffalo = new Buffalo(Buffer.alloc(4));
+        buffalo.write('FLOATLE', 400.50, {});
+        expect(buffalo.getPosition()).toStrictEqual(4);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x40, 0xC8, 0x43]))
     });
 
     it('FLOATLE read', () => {
-        const buffer = Buffer.from([0x00, 0x40, 0xC8, 0x43]);
-        const result = Buffalo.read('FLOATLE', buffer, 0, {});
-        expect(result.length).toStrictEqual(4);
-        expect(result.value).toStrictEqual(400.50);
+        const buffalo = new Buffalo(Buffer.from([0x00, 0x40, 0xC8, 0x43]));
+        const value = buffalo.read('FLOATLE', {});
+        expect(buffalo.getPosition()).toStrictEqual(4);
+        expect(value).toStrictEqual(400.50);
     });
 
     it('DOUBLELE write', () => {
-        const buffer = Buffer.alloc(8);
-        const length = Buffalo.write('DOUBLELE', buffer, 0, 809880.60, {});
-        expect(length).toStrictEqual(8);
-        expect(buffer).toStrictEqual(Buffer.from([0x33, 0x33, 0x33, 0x33, 0x31, 0xB7, 0x28, 0x41]))
+        const buffalo = new Buffalo(Buffer.alloc(8));
+        buffalo.write('DOUBLELE', 809880.60, {});
+        expect(buffalo.getPosition()).toStrictEqual(8);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x33, 0x33, 0x33, 0x33, 0x31, 0xB7, 0x28, 0x41]))
     });
 
     it('DOUBLELE read', () => {
-        const buffer = Buffer.from([0x33, 0x33, 0x33, 0x33, 0x31, 0xB7, 0x28, 0x41]);
-        const result = Buffalo.read('DOUBLELE', buffer, 0, {});
-        expect(result.length).toStrictEqual(8);
-        expect(result.value).toStrictEqual(809880.60);
+        const buffalo = new Buffalo(Buffer.from([0x33, 0x33, 0x33, 0x33, 0x31, 0xB7, 0x28, 0x41]), 0);
+        const value = buffalo.read('DOUBLELE', {});
+        expect(buffalo.getPosition()).toStrictEqual(8);
+        expect(value).toStrictEqual(809880.60);
     });
 });

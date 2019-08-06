@@ -5,10 +5,4 @@ interface Options {
 // eslint-disable-next-line
 type Value = any;
 
-interface ReadResult {
-    value: Value;
-    length: number;
-};
-
-
-export {Options, ReadResult, Value};
+export {Options, Value};

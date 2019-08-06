@@ -43,280 +43,244 @@ const aliases: {[s: string]: string} = {
 };
 
 class BuffaloZcl extends Buffalo {
-    private static readUseDataType(buffer: Buffer, offset: number, options: BuffaloZclOptions): TsType.ReadResult {
-        return this.read(options.dataType, buffer, offset, options);
+    private readUseDataType(options: BuffaloZclOptions): TsType.Value {
+        return this.read(options.dataType, options);
     }
 
-    private static writeUseDataType(buffer: Buffer, offset: number, value: string, options: BuffaloZclOptions): number {
-        return this.write(options.dataType, buffer, offset, value, options);
+    private writeUseDataType(value: string, options: BuffaloZclOptions): void {
+        return this.write(options.dataType, value, options);
     }
 
-    private static readArray(buffer: Buffer, offset: number): TsType.ReadResult {
+    private readArray(): TsType.Value {
         const values: TsType.Value = [];
         let position = 0;
 
-        const elementType = DataType[buffer.readUInt8(offset + position)];
-        position++;
-
-        const numberOfElements = buffer.readUInt16LE(offset + position);
-        position += 2;
+        const elementType = DataType[this.readUInt8()];
+        const numberOfElements = this.readUInt16();
 
         for (let i = 0; i < numberOfElements; i++) {
-            const result = this.read(elementType, buffer, offset + position, {});
-            position += result.length;
-            values.push(result.value);
+            const value = this.read(elementType, {});
+            values.push(value);
         }
 
-        return {value: values, length: position};
+        return values;
     }
 
-    private static readStruct(buffer: Buffer, offset: number): TsType.ReadResult {
+    private readStruct(): TsType.Value {
         const values: TsType.Value = [];
-        let position = 0;
-
-        const numberOfElements = buffer.readUInt16LE(offset + position);
-        position += 2;
+        const numberOfElements = this.readUInt16();
 
         for (let i = 0; i < numberOfElements; i++) {
-            const elementType = buffer.readUInt8(offset + position);
-            position++;
-
-            const result = this.read(DataType[elementType], buffer, offset + position, {});
-            position += result.length;
-
-            values.push({elmType: elementType, elmVal: result.value})
+            const elementType = this.readUInt8();
+            const value = this.read(DataType[elementType], {});
+            values.push({elmType: elementType, elmVal: value})
         }
 
-        return {value: values, length: position};
+        return values;
     }
 
-    private static readOctetStr(buffer: Buffer, offset: number): TsType.ReadResult {
-        const length = buffer.readUInt8(offset);
-        const value = buffer.slice(offset + 1, offset + length + 1);
-        return {value, length: length + 1};
+    private readOctetStr(): TsType.Value {
+        const length = this.readUInt8();
+        const value = this.buffer.slice(this.position, this.position + length);
+        this.position += length;
+        return value;
     }
 
-    private static readCharStr(buffer: Buffer, offset: number, options: BuffaloZclOptions): TsType.ReadResult {
-        const length = buffer.readUInt8(offset);
+    private readCharStr(options: BuffaloZclOptions): TsType.Value {
+        const length = this.readUInt8();
 
         if (options.attrId === 65281) {
             const value: {[i: number]: number|number[]} = {};
 
             // Xiaomi struct parsing
-            let position = 1;
             for (let i = 0; i < length; i++) {
-                const index = buffer.readUInt8(offset + position);
-                position++;
-                const dataType = DataType[buffer.readUInt8(offset + position)];
-                position++;
+                const index = this.readUInt8();
+                const dataType = DataType[this.readUInt8()];
+                value[index] = this.read(dataType, {});
 
-                const result = this.read(dataType, buffer, offset + position, {});
-                value[index] = result.value;
-                position += result.length;
-
-                if (position + offset === buffer.length) {
+                if (this.position === this.buffer.length) {
                     break;
                 }
             }
 
-            return {value, length: position};
+            return value;
         } else {
-            const value = buffer.toString('utf8', offset + 1, offset + 1 + length);
-            return {value, length: length + 1};
+            const value = this.buffer.toString('utf8', this.position, this.position + length);
+            this.position += length;
+            return value;
         }
     }
 
-    private static writeCharStr(buffer: Buffer, offset: number, value: string): number {
-        buffer.writeUInt8(value.length, offset);
-        const bytes = buffer.write(value, offset + 1, 'utf8');
-        return bytes + 1;
+    private writeCharStr(value: string): void {
+        this.writeUInt8(value.length);
+        this.position += this.buffer.write(value, this.position, 'utf8');
     }
 
-    private static readLongCharStr(buffer: Buffer, offset: number): TsType.ReadResult {
-        const length = buffer.readUInt16LE(offset);
-        const value = buffer.toString('utf8', offset + 2, offset + 2 + length);
-        return {value, length: length + 2};
+    private readLongCharStr(): TsType.Value {
+        const length = this.readUInt16();
+        const value = this.buffer.toString('utf8', this.position, this.position + length);
+        this.position += length;
+        return value;
     }
 
-    private static writeLongCharStr(buffer: Buffer, offset: number, value: string): number {
-        buffer.writeUInt16LE(value.length, offset);
-        const bytes = buffer.write(value, offset + 2, 'utf8');
-        return bytes + 2;
+    private writeLongCharStr(value: string): void {
+        this.writeUInt16(value.length);
+        this.position += this.buffer.write(value, this.position, 'utf8');
     }
 
-    private static readExtensionFielSets(buffer: Buffer, offset: number): TsType.ReadResult {
+    private readExtensionFielSets(): TsType.Value {
         const value = [];
 
-        let position = 0;
-        for (position; position < buffer.length; position) {
-            const clstId = buffer.readUInt16LE(offset + position);
-            const len = buffer.readUInt8(offset + 2);
-            position += 3;
+        while (this.position < this.buffer.length) {
+            const clstId = this.readUInt16();
+            const len = this.readUInt8();
 
             const extField = [];
-            for (let i = 0; i < len; i++) {
-                extField.push(buffer.readUInt8(offset + position));
-                position++;
+            for (let k = 0; k < len; k++) {
+                extField.push(this.readUInt8());
             }
 
             value.push({extField, clstId, len});
         }
 
-        return {value, length: position};
+        return value;
     }
 
-    private static writeExtensionFieldSets(buffer: Buffer, offset: number, values: {clstId: number; len: number; extField: number[]}[]): number {
-        let position = 0;
+    private writeExtensionFieldSets(values: {clstId: number; len: number; extField: number[]}[]): void {
         for (let value of values) {
-            buffer.writeUInt16LE(value.clstId, offset + position);
-            position += 2;
-
-            buffer.writeUInt8(value.len, offset + position);
-            position++;
+            this.writeUInt16(value.clstId);
+            this.writeUInt8(value.len);
 
             for (let entry of value.extField) {
-                buffer.writeUInt8(entry, offset + position);
-                position++;
+                this.writeUInt8(entry);
             }
         }
-
-        return position;
     }
 
-    private static writeListZoneInfo(buffer: Buffer, offset: number, values: {zoneID: number; zoneStatus: number}[]): number {
-        let position = 0;
+    private writeListZoneInfo(values: {zoneID: number; zoneStatus: number}[]): void {
         for (let value of values) {
-            buffer.writeUInt8(value.zoneID, offset + position);
-            buffer.writeUInt16LE(value.zoneStatus, offset + position + 1);
-            position += 3;
+            this.writeUInt8(value.zoneID);
+            this.writeUInt16(value.zoneStatus);
         }
-
-        return position;
     }
 
-    private static readListZoneInfo(buffer: Buffer, offset: number, options: TsType.Options): TsType.ReadResult {
+    private readListZoneInfo(options: TsType.Options): TsType.Value {
         const value = [];
-        let position = 0;
         for (let i = 0; i < options.length; i++) {
             value.push({
-                zoneID: buffer.readUInt8(offset + position),
-                zoneStatus: buffer.readUInt16LE(offset + position + 1),
+                zoneID: this.readUInt8(),
+                zoneStatus: this.readUInt16(),
             });
-
-            position += 3;
         }
 
-        return {value, length: position};
+        return value;
     }
 
-    private static readUInt40(buffer: Buffer, offset: number): TsType.ReadResult {
-        const lsb = buffer.readUInt32LE(offset);
-        const msb = buffer.readUInt8(offset + 4);
-        return {value: [msb, lsb], length: 5};
+    private readUInt40(): TsType.Value {
+        const lsb = this.readUInt32();
+        const msb = this.readUInt8();
+        return [msb, lsb];
     }
 
-    private static writeUInt40(buffer: Buffer, offset: number, value: number[]): number {
-        buffer.writeUInt32LE(value[1], offset);
-        buffer.writeUInt8(value[0], offset + 4);
-        return 5;
+    private writeUInt40(value: number[]): void {
+        this.writeUInt32(value[1]);
+        this.writeUInt8(value[0]);
     }
 
-    private static readUInt48(buffer: Buffer, offset: number): TsType.ReadResult {
-        const lsb = buffer.readUInt32LE(offset);
-        const msb = buffer.readUInt16LE(offset + 4);
-        return {value: [msb, lsb], length: 6};
+    private readUInt48(): TsType.Value {
+        const lsb = this.readUInt32();
+        const msb = this.readUInt16();
+        return [msb, lsb];
     }
 
-    private static writeUInt48(buffer: Buffer, offset: number, value: number[]): number {
-        buffer.writeUInt32LE(value[1], offset);
-        buffer.writeUInt16LE(value[0], offset + 4);
-        return 6;
+    private writeUInt48(value: number[]): void {
+        this.writeUInt32(value[1]);
+        this.writeUInt16(value[0]);
     }
 
-    private static readUInt56(buffer: Buffer, offset: number): TsType.ReadResult {
-        const lsb = buffer.readUInt32LE(offset);
-        const xsb = buffer.readUInt16LE(offset + 4);
-        const msb = buffer.readUInt8(offset + 6);
-        return {value: [msb, xsb, lsb], length: 7};
+    private readUInt56(): TsType.Value {
+        const lsb = this.readUInt32();
+        const xsb = this.readUInt16();
+        const msb = this.readUInt8();
+        return [msb, xsb, lsb];
     }
 
-    private static writeUInt56(buffer: Buffer, offset: number, value: number[]): number {
+    private writeUInt56(value: number[]): void {
         let temp = Buffer.alloc(8);
         temp.writeUInt32LE(value[1], 0);
         temp.writeUInt32LE(value[0], 4);
-        return this.writeBuffer(buffer, offset, temp.slice(0, 7), 7);
+        this.writeBuffer(temp.slice(0, 7), 7);
     }
 
-    private static readUInt64(buffer: Buffer, offset: number): TsType.ReadResult {
-        return {value: this.addressBufferToString(buffer.slice(offset, offset + 8)), length: 8};
+    private readUInt64(): TsType.Value {
+        return this.readIeeeAddr();
     }
 
-    private static writeUInt64(buffer: Buffer, offset: number, value: string): number {
+    private writeUInt64(value: string): void {
         const msb = parseInt(value.slice(2,10), 16);
         const lsb = parseInt(value.slice(10), 16);
-        buffer.writeUInt32LE(lsb, offset);
-        buffer.writeUInt32LE(msb, offset + 4);
-        return 8;
+        this.writeUInt32(lsb);
+        this.writeUInt32(msb);
     }
 
-    public static write(type: string, buffer: Buffer, offset: number, value: TsType.Value, options: BuffaloZclOptions): number {
+    public write(type: string, value: TsType.Value, options: BuffaloZclOptions): void {
         // TODO: write for the following is missing: octetStr, struct, array (+ bag/set)
         type = aliases[type] || type;
 
         if (type === 'uint40') {
-            return this.writeUInt40(buffer, offset, value);
+            return this.writeUInt40(value);
         } else if (type === 'EXTENSION_FIELD_SETS') {
-            return this.writeExtensionFieldSets(buffer, offset, value);
+            return this.writeExtensionFieldSets(value);
         } else if (type === 'LIST_ZONEINFO') {
-            return this.writeListZoneInfo(buffer, offset, value);
+            return this.writeListZoneInfo(value);
         } else if (type === 'uint48') {
-            return this.writeUInt48(buffer, offset, value);
+            return this.writeUInt48(value);
         } else if (type === 'uint56') {
-            return this.writeUInt56(buffer, offset, value);
+            return this.writeUInt56(value);
         } else if (type === 'uint64') {
-            return this.writeUInt64(buffer, offset, value);
+            return this.writeUInt64(value);
         } else if (type === 'charStr') {
-            return this.writeCharStr(buffer, offset, value);
+            return this.writeCharStr(value);
         } else if (type === 'longCharStr') {
-            return this.writeLongCharStr(buffer, offset, value);
+            return this.writeLongCharStr(value);
         } else if (type === 'USE_DATA_TYPE') {
-            return this.writeUseDataType(buffer, offset, value, options);
+            return this.writeUseDataType(value, options);
         } else {
             // TODO: remove uppercase once dataTypes are snake case
-            return super.write(type.toUpperCase(), buffer, offset, value, options);
+            return super.write(type.toUpperCase(), value, options);
         }
     }
 
-    public static read(type: string, buffer: Buffer, offset: number, options: BuffaloZclOptions): TsType.ReadResult {
+    public read(type: string, options: BuffaloZclOptions): TsType.Value {
         type = aliases[type] || type;
 
         if (type === 'USE_DATA_TYPE') {
-            return this.readUseDataType(buffer, offset, options);
+            return this.readUseDataType(options);
         } else if (type === 'EXTENSION_FIELD_SETS') {
-            return this.readExtensionFielSets(buffer, offset);
+            return this.readExtensionFielSets();
         } else if (type === 'LIST_ZONEINFO') {
-            return this.readListZoneInfo(buffer, offset, options);
+            return this.readListZoneInfo(options);
         } else if (type === 'uint40') {
-            return this.readUInt40(buffer, offset);
+            return this.readUInt40();
         } else if (type === 'uint48') {
-            return this.readUInt48(buffer, offset);
+            return this.readUInt48();
         } else if (type === 'uint56') {
-            return this.readUInt56(buffer, offset);
+            return this.readUInt56();
         } else if (type === 'uint64') {
-            return this.readUInt64(buffer, offset);
+            return this.readUInt64();
         } else if (type === 'octetStr') {
-            return this.readOctetStr(buffer, offset);
+            return this.readOctetStr();
         } else if (type === 'charStr') {
-            return this.readCharStr(buffer, offset, options);
+            return this.readCharStr(options);
         } else if (type === 'longCharStr') {
-            return this.readLongCharStr(buffer, offset);
+            return this.readLongCharStr();
         } else if (type === 'array') {
-            return this.readArray(buffer, offset);
+            return this.readArray();
         } else if (type === 'struct') {
-            return this.readStruct(buffer, offset);
+            return this.readStruct();
         } else {
             // TODO: remove uppercase once dataTypes are snake case
-            return super.read(type.toUpperCase(), buffer, offset, options);
+            return super.read(type.toUpperCase(), options);
         }
     }
 }
