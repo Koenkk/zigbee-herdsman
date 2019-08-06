@@ -6,7 +6,8 @@ import SAPI from './sapi';
 import SYS from './sys';
 import UTIL from './util';
 import ZDO from './zdo';
+import * as Utils from './utils';
 
 export {
-    AF, COMMON, DBG, MAC, SAPI, SYS, UTIL, ZDO,
+    AF, COMMON, DBG, MAC, SAPI, SYS, UTIL, ZDO, Utils,
 }

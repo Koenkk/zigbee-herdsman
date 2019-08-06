@@ -2,8 +2,10 @@ import {Znp} from '../../znp';
 import {Constants as UnpiConstants} from '../../unpi';
 import * as Zsc from '../../zstack-constants';
 import equals from 'fast-deep-equal';
+import * as TsType from '../tstype';
+import fs from 'fs';
 
-const debug = require('debug')('controller:startZnp');
+const debug = require('debug')('zigbee-herdsman:controller:helpers:startZnp');
 const Subsystem = UnpiConstants.Subsystem;
 const NvItemsIds = Zsc.COMMON.nvItemIds;
 
@@ -15,27 +17,10 @@ enum ZnpVersion {
 
 interface NvItem {
     id: number;
+    configid?: number;
     offset: number;
     len: number;
     value: Buffer;
-}
-
-interface NetworkOptions {
-    panID: number;
-    extenedPanID: number[];
-    channelList: number[];
-    networkKey: number[];
-}
-
-const channelListToBuffer = (channelList: number[]): Buffer => {
-    let value = 0;
-
-    for (let channel of channelList) {
-        const key = Object.keys(Zsc.COMMON.logicalChannels).find((k: string): boolean => Zsc.COMMON.logicalChannels[k] === channel);
-        console.log(key);
-        value = value | Zsc.COMMON.channelMask[key];
-    }
-    return Buffer.from([value & 0xFF, (value >> 8) & 0xFF, (value >> 16) & 0xFF, (value >> 24) & 0xFF ]);
 }
 
 const items = {
@@ -69,13 +54,31 @@ const items = {
             id: NvItemsIds.CHANLIST,
             len: 0x04,
             offset: 0x00,
-            value: channelListToBuffer(channelList),
+            value: Buffer.from(Zsc.Utils.getChannelMask(channelList)),
         }
-    }
+    },
+    networkKeyDistribute: (distribute: boolean): NvItem => {
+        return {
+            id: NvItemsIds.PRECFGKEYS_ENABLE,
+            len: 0x01,
+            offset: 0x00,
+            value: Buffer.from([distribute ? 0x01 : 0x00]),
+        }
+    },
+    networkKey: (key: number[]): NvItem => {
+        return {
+            // id/configid is used depending if SAPI or SYS command is executed
+            id: NvItemsIds.PRECFGKEY,
+            configid: NvItemsIds.PRECFGKEY,
+            len: 0x01,
+            offset: 0x00,
+            value: Buffer.from(key),
+        }
+    },
 }
 
-async function validateItem(znp: Znp, item: NvItem, message: string): Promise<void> {
-    const result = await znp.request(Subsystem.SYS, 'osalNvRead', item);
+async function validateItem(znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead'): Promise<void> {
+    const result = await znp.request(subsystem, command, item);
 
     if (!equals(result.payload.value, item.value)) {
         debug(`Item '${message}' is invalid, got '${JSON.stringify(result.payload.value)}', expected '${JSON.stringify(item.value)}'`);
@@ -85,7 +88,12 @@ async function validateItem(znp: Znp, item: NvItem, message: string): Promise<vo
     }
 }
 
-async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: NetworkOptions): Promise<boolean> {
+async function writeItem(znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvWrite'): Promise<void> {
+    debug(`Write '${message}'`);
+    await znp.request(subsystem, command, item);
+}
+
+async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions): Promise<boolean> {
     try {
         // TODO: probably not working for z-stack 3
         validateItem(znp, items.znpHasConfigured(version), 'hasConfigured');
@@ -96,35 +104,14 @@ async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: Netw
             validateItem(znp, items.extendedPanID(options.extenedPanID), 'extendedPanID');
         }
 
-        console.log(options, items.channelList(options.channelList));
         validateItem(znp, items.channelList(options.channelList), 'channelList');
+        validateItem(znp, items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute');
 
-
-
-
-        // steps = steps.concat([
-        //     function () { return self.request('SYS', 'osalNvRead', nvParams.channelList).delay(10).then(function (rsp) {
-        //         if (!_.isEqual(bufToArray(rsp.value), nvParams.channelList.value)) return Q.reject('reset');
-        //     }) },
-        //     function () { return self.request('SYS', 'osalNvRead', nvParams.precfgkeysEnable).delay(10).then(function (rsp) {
-        //         if (!_.isEqual(bufToArray(rsp.value), nvParams.precfgkeysEnable.value)) return Q.reject('reset');
-        //     }); }
-        // ]);
-
-        // if (self._isZstack3x0) {
-        //     steps.push(
-        //         function () { return self.request('SYS', 'osalNvRead', nvParams.precfgkey3).delay(10).then(function (rsp) {
-        //             if (!_.isEqual(bufToArray(rsp.value), nvParams.precfgkey3.value)) return Q.reject('reset');
-        //         }); },
-        //     );
-        // } else {
-        //     steps.push(
-        //         function () { return self.request('SAPI', 'readConfiguration', nvParams.precfgkey).delay(10).then(function (rsp) {
-        //             if (!_.isEqual(bufToArray(rsp.value), nvParams.precfgkey.value)) return Q.reject('reset');
-        //         }); },
-        //     )
-        // }
-
+        if (version === ZnpVersion.zStack3x0) {
+            validateItem(znp, items.networkKey(options.networkKey), 'networkKey');
+        } else {
+            validateItem(znp, items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'readConfiguration');
+        }
 
         return false;
     } catch {
@@ -132,7 +119,29 @@ async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: Netw
     }
 }
 
-export default async (znp: Znp, options: NetworkOptions): Promise<void> => {
+async function boot(znp: Znp): Promise<void> {
+    const result = await znp.request(Subsystem.UTIL, 'getDeviceInfo', {});
+
+    if (result.payload.devicestate !== Zsc.COMMON.devStates.ZB_COORD) {
+        debug('Start ZNP as coordinator...');
+        const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9})
+        znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100});
+        await started;
+        debug('ZNP started as coordinator');
+    } else {
+        debug('ZNP is already a coordinator');
+    }
+}
+
+async function restore(backupPath: string): Promise<void> {
+    // TODO
+}
+
+async function initialise(znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions): Promise<void> {
+    // TODO
+}
+
+export default async (znp: Znp, options: TsType.NetworkOptions, coordinatorBackupPath?: string): Promise<void> => {
     let result;
 
     result = await znp.request(Subsystem.SYS, 'version', {});
@@ -141,76 +150,16 @@ export default async (znp: Znp, options: NetworkOptions): Promise<void> => {
     debug(`Detected znp version '${ZnpVersion[version]}'`);
 
     if (await needsToBeInitialised(znp, version, options)) {
-
-    } else {
-
+        if (coordinatorBackupPath && fs.existsSync(coordinatorBackupPath)) {
+            await restore(coordinatorBackupPath);
+        } else {
+            await initialise(znp, version, options);
+        }
     }
 
-    // TODO add fore restore for znp3 result = znp.request(Subsystem.SYS, 'osalNvRead', nvParams.znpHasConfigured3)
+    await boot(znp);
 
-    // if(self._isZstack3x0 || self._isZstack30x) {
-    //     const cb = function (rsp) {
-    //         if (rsp.message === 'rsp error: 2' || !_.isEqual(bufToArray(rsp.value), nvParams.znpHasConfigured3.value)) {
-    //             if (self._shepherd._coordBackupPath && fs.existsSync(self._shepherd._coordBackupPath)) {
-    //                 // not intialized and backup exists, restore from backup
-    //                 return Q.reject('restore');
-    //             } else {
-    //                 return Q.reject('reset');
-    //             }
-    //         }
-    //     }
-
-    //     steps.push(
-    //         function () { return self.request('SYS', 'osalNvRead', nvParams.znpHasConfigured3).delay(10).fail(cb).then(cb); },
-    //     )
-    // } else {
-    //     steps = steps.concat([
-    //         function () { return self.request('SYS', 'osalNvRead', nvParams.znpHasConfigured).delay(10).then(function (rsp) {
-    //             if (!_.isEqual(bufToArray(rsp.value), nvParams.znpHasConfigured.value)) return Q.reject('reset');
-    //         }); },
-    //         function () { return self.request('SYS', 'osalNvRead', nvParams.panId).delay(10).then(function (rsp) {
-    //             if (!_.isEqual(bufToArray(rsp.value), nvParams.panId.value)) return Q.reject('reset');
-    //         }); },
-    //         function () { return self.request('SYS', 'osalNvRead', nvParams.extPanId).delay(10).then(function (rsp) {
-    //             if (!_.isEqual(bufToArray(rsp.value), nvParams.extPanId.value)) return Q.reject('reset');
-    //         }); },
-    //     ])
-    // }
-
-    // steps = steps.concat([
-    //     function () { return self.request('SYS', 'osalNvRead', nvParams.channelList).delay(10).then(function (rsp) {
-    //         if (!_.isEqual(bufToArray(rsp.value), nvParams.channelList.value)) return Q.reject('reset');
-    //     }) },
-    //     function () { return self.request('SYS', 'osalNvRead', nvParams.precfgkeysEnable).delay(10).then(function (rsp) {
-    //         if (!_.isEqual(bufToArray(rsp.value), nvParams.precfgkeysEnable.value)) return Q.reject('reset');
-    //     }); }
-    // ]);
-
-    // if (self._isZstack3x0) {
-    //     steps.push(
-    //         function () { return self.request('SYS', 'osalNvRead', nvParams.precfgkey3).delay(10).then(function (rsp) {
-    //             if (!_.isEqual(bufToArray(rsp.value), nvParams.precfgkey3.value)) return Q.reject('reset');
-    //         }); },
-    //     );
-    // } else {
-    //     steps.push(
-    //         function () { return self.request('SAPI', 'readConfiguration', nvParams.precfgkey).delay(10).then(function (rsp) {
-    //             if (!_.isEqual(bufToArray(rsp.value), nvParams.precfgkey.value)) return Q.reject('reset');
-    //         }); },
-    //     )
-    // }
-
-    // return steps.reduce(function (soFar, fn) {
-    //     return soFar.then(fn);
-    // }, Q(0)).fail(function (err) {
-    //     if (err === 'restore') {
-    //         return self.restoreCoordinator(self._shepherd._coordBackupPath);
-    //     } else if (err === 'reset' || err.message === 'rsp error: 2') {
-    //         self._nvChanged = true;
-    //         debug.init('Non-Volatile memory is changed.');
-    //         return self.reset('hard');
-    //     } else {
-    //         return Q.reject(err);
-    //     }
-    // }).nodeify(callback);
+    // After startup, write the channel again, otherwise the channel is not always persisted in the NV.
+    // Not sure why this is needed.
+    await writeItem(znp, items.channelList(options.channelList), 'channelList');
 };
