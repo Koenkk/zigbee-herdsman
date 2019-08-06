@@ -73,6 +73,8 @@ describe('ZNP', () => {
 
         // @ts-ignore; make sure we always get a new instance
         znp = new Znp();
+
+        jest.useRealTimers();
     });
 
     it('Open', async () => {
@@ -435,12 +437,12 @@ describe('ZNP', () => {
 
         let error;
         try {
-            result = await result;
+            await result;
         } catch (e) {
             error = e;
         }
 
-        expect(error).toStrictEqual(new Error("timeout"));
+        expect(error).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 6000ms"));
     });
 
     it('znp request, responses comes after timeout', async () => {
@@ -471,7 +473,65 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual(new Error("timeout"));
+        expect(error).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 6000ms"));
+    });
+
+    it('znp request, waitfor with payload', async () => {
+        let parsedCb;
+        mockUnpiParserOn.mockImplementationOnce((event, cb) => {
+            if (event === 'parsed') {
+                parsedCb = cb;
+            }
+        });
+
+        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+
+        const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 0, value: Buffer.from([1, 2])});
+        znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
+
+        parsedCb(new UnpiFrame(
+            UnpiConstants.Type.SRSP,
+            UnpiConstants.Subsystem.SYS,
+            0x08,
+            Buffer.from([0x00, 0x02, 0x01, 0x02])
+        ));
+
+        const object = await waiter;
+        expect(object.payload).toStrictEqual({len: 2, status: 0, value: Buffer.from([1, 2])});
+    });
+
+    it('znp request, waitfor with payload mismatch', async () => {
+        let parsedCb;
+        mockUnpiParserOn.mockImplementationOnce((event, cb) => {
+            if (event === 'parsed') {
+                parsedCb = cb;
+            }
+        });
+
+        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+
+        jest.useFakeTimers();
+        const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 3, value: Buffer.from([1, 3])});
+        znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
+
+        parsedCb(new UnpiFrame(
+            UnpiConstants.Type.SRSP,
+            UnpiConstants.Subsystem.SYS,
+            0x08,
+            Buffer.from([0x00, 0x02, 0x01, 0x02])
+        ));
+
+        jest.runAllTimers();
+
+        let error;
+        try {
+            await waiter;
+        } catch (e) {
+            error = e;
+        }
+
+
+        expect(error).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 10000ms"));
     });
 
     it('ZpiObject throw error on missing write parser', async () => {

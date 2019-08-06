@@ -1,7 +1,7 @@
 import * as stream from 'stream';
 import Frame from './frame';
 
-const debug = require('debug')('unpi:writer');
+const debug = require('debug')('zigbee-herdsman:unpi:writer');
 
 class Writer extends stream.Readable {
     public writeFrame(frame: Frame): void {

@@ -53,7 +53,6 @@ class BuffaloZcl extends Buffalo {
 
     private readArray(): TsType.Value {
         const values: TsType.Value = [];
-        let position = 0;
 
         const elementType = DataType[this.readUInt8()];
         const numberOfElements = this.readUInt16();
