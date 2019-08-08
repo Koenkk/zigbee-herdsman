@@ -32,49 +32,6 @@ init.setupCoord = function (controller, callback) {
 /*************************************************************************************************/
 /*** Private APIs                                                                              ***/
 /*************************************************************************************************/
-init._bootCoordFromApp = function (controller) {
-    return controller.query.coordState().then(function (state) {
-        if (state !== 'ZB_COORD' && state !== 0x09) {
-            debug('Start the ZNP as a coordinator...');
-            return init._startupCoord(controller);
-        }
-    }).then(function () {
-        debug('Now the ZNP is a coordinator.');
-    }).then(function(){
-        return controller.query.firmware()
-            .then(function(firmwareInfo){
-                controller._firmware = firmwareInfo;
-            });
-    }).then(function(){
-        return controller.query.network()
-            .then(function (netInfo) {
-                // netInfo: { state, channel, panId, extPanId, ieeeAddr, nwkAddr }
-                controller.setNetInfo(netInfo);
-                return netInfo;
-            });
-    })
-};
-
-init._startupCoord = function (controller) {
-    var deferred = Q.defer(),
-        stateChangeHdlr;
-
-    stateChangeHdlr = function (data) {
-        if (data.state === 9) {
-            deferred.resolve();
-            controller.removeListener('ZDO:stateChangeInd', stateChangeHdlr);
-
-            // After startup, write the channel again, otherwise the channel is not always persisted in the NV.
-            // Not sure why this is needed.
-            controller.request('SYS', 'osalNvWrite', nvParams.channelList);
-        }
-    };
-
-    controller.on('ZDO:stateChangeInd', stateChangeHdlr);
-    controller.request('ZDO', 'startupFromApp', { startdelay: 100 });
-
-    return deferred.promise;
-};
 
 init._registerDelegators = function (controller, netInfo) {
     var coord = controller._coord,

@@ -254,12 +254,7 @@ Controller.prototype.reset = function (mode, callback) {
     proving.stringOrNumber(mode, 'mode should be a number or a string.');
 
     Q.fcall(function () {
-        if (mode === 'soft' || mode === 1) {
-            debug.shepherd('Starting a software reset...');
-            self._resetting = true;
-
-            return self.request('SYS', 'resetReq', { type: 0x01 });
-        } else if (mode === 'hard' || mode === 0) {
+        if (mode === 'hard' || mode === 0) {
             debug.shepherd('Starting a hardware reset...');
             self._resetting = true;
 

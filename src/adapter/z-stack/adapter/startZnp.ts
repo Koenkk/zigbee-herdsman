@@ -3,9 +3,9 @@ import {Constants as UnpiConstants} from '../unpi';
 import * as Constants from '../constants';
 import equals from 'fast-deep-equal';
 import * as TsType from '../../tstype';
-import fs from 'fs';
+import fs, { write } from 'fs';
 
-const debug = require('debug')('zigbee-herdsman:controller:helpers:startZnp');
+const debug = require('debug')('zigbee-herdsman:controller:zStack:startZnp');
 const Subsystem = UnpiConstants.Subsystem;
 const NvItemsIds = Constants.COMMON.nvItemIds;
 
@@ -75,6 +75,42 @@ const items = {
             value: Buffer.from(key),
         }
     },
+    startupOption: (value: number): NvItem => {
+        return {
+            id: NvItemsIds.STARTUP_OPTION,
+            len: 0x01,
+            offset: 0x00,
+            value: Buffer.from([value]),
+        };
+    },
+    logicalType: (value: number): NvItem => {
+        return {
+            id: NvItemsIds.LOGICAL_TYPE,
+            len: 0x01,
+            offset: 0x00,
+            value: Buffer.from([value]),
+        };
+    },
+    zdoDirectCb: (): NvItem => {
+        return {
+            id: NvItemsIds.ZDO_DIRECT_CB,
+            len: 0x01,
+            offset: 0x00,
+            value: Buffer.from([0x01]),
+        };
+    },
+    tcLinkKey: (): NvItem => {
+        return {
+            id: NvItemsIds.TCLK_TABLE_START,
+            offset: 0x00,
+            len: 0x20,
+            // ZigBee Alliance Pre-configured TC Link Key - 'ZigBeeAlliance09'
+            value: Buffer.from([
+                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c,
+                0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+            ]),
+        }
+    },
 }
 
 async function validateItem(znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead'): Promise<void> {
@@ -96,25 +132,23 @@ async function writeItem(znp: Znp, item: NvItem, message: string, subsystem = Su
 async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions): Promise<boolean> {
     try {
         // TODO: probably not working for z-stack 3
-        validateItem(znp, items.znpHasConfigured(version), 'hasConfigured');
+        await validateItem(znp, items.znpHasConfigured(version), 'hasConfigured');
 
-        // TODO: enable for z-stack 3
-        if (version === ZnpVersion.zStack12) {
-            validateItem(znp, items.panID(options.panID), 'panID');
-            validateItem(znp, items.extendedPanID(options.extenedPanID), 'extendedPanID');
-        }
+        // TODO: check for z-stack 3
+        await validateItem(znp, items.panID(options.panID), 'panID');
+        await validateItem(znp, items.extendedPanID(options.extenedPanID), 'extendedPanID');
 
-        validateItem(znp, items.channelList(options.channelList), 'channelList');
-        validateItem(znp, items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute');
+        await validateItem(znp, items.channelList(options.channelList), 'channelList');
+        await validateItem(znp, items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute');
 
         if (version === ZnpVersion.zStack3x0) {
-            validateItem(znp, items.networkKey(options.networkKey), 'networkKey');
+            await validateItem(znp, items.networkKey(options.networkKey), 'networkKey');
         } else {
-            validateItem(znp, items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'readConfiguration');
+            await validateItem(znp, items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'readConfiguration');
         }
 
         return false;
-    } catch {
+    } catch (e) {
         return true;
     }
 }
@@ -129,7 +163,7 @@ async function boot(znp: Znp): Promise<void> {
         await started;
         debug('ZNP started as coordinator');
     } else {
-        debug('ZNP is already a coordinator');
+        debug('ZNP is already started as coordinator');
     }
 }
 
@@ -138,7 +172,35 @@ async function restore(backupPath: string): Promise<void> {
 }
 
 async function initialise(znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions): Promise<void> {
-    // TODO
+    debug('Executing soft reset');
+    await znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.SOFT});
+
+    await writeItem(znp, items.startupOption(0x02), 'startupOption');
+
+    debug('Executing soft reset');
+    await znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.SOFT});
+
+    await writeItem(znp, items.logicalType(Constants.ZDO.deviceLogicalType.COORDINATOR), 'startupOption');
+    await writeItem(znp, items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute');
+    await writeItem(znp, items.zdoDirectCb(), 'zdoDirectCb');
+    await writeItem(znp, items.channelList(options.channelList), 'channelList');
+
+    if (version === ZnpVersion.zStack30x || version === ZnpVersion.zStack3x0) {
+        await writeItem(znp, items.networkKey(options.networkKey), 'networkKey');
+        // TODO for z-stack 3
+        // Set panid and extended pan id
+        //         function () { return self.request('APP_CNF', 'bdbSetChannel', {isPrimary: 0x1, channel: channel}).delay(10); },
+        //         function () { return self.request('APP_CNF', 'bdbSetChannel', {isPrimary: 0x0, channel: 0x0}).delay(10); },
+        //         function () { return self.request('APP_CNF', 'bdbStartCommissioning', {mode: 0x04}).delay(5000); },
+        //         function () { return self.request('APP_CNF', 'bdbStartCommissioning', {mode: 0x02}).delay(10); },
+    } else {
+        await writeItem(znp, items.panID(options.panID), 'panID');
+        await writeItem(znp, items.extendedPanID(options.extenedPanID), 'extendedPanID');
+        await writeItem(znp, items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'writeConfiguration');
+        await writeItem(znp, items.tcLinkKey(), 'tcLinkKey');
+    }
+
+    await writeItem(znp, items.znpHasConfigured(version), 'hasConfigured');
 }
 
 export default async (znp: Znp, options: TsType.NetworkOptions, backupPath?: string): Promise<void> => {
@@ -150,6 +212,7 @@ export default async (znp: Znp, options: TsType.NetworkOptions, backupPath?: str
     debug(`Detected znp version '${ZnpVersion[version]}'`);
 
     if (await needsToBeInitialised(znp, version, options)) {
+        debug('Reinitialising coordinator');
         if (backupPath && fs.existsSync(backupPath)) {
             await restore(backupPath);
         } else {
