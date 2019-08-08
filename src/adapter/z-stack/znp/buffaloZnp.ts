@@ -1,5 +1,5 @@
 
-import {Buffalo, TsType} from '../buffalo';
+import {Buffalo, TsType} from '../../../buffalo';
 import {BuffaloZnpOptions} from './tstype';
 
 class BuffaloZnp extends Buffalo {

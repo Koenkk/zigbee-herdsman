@@ -4,7 +4,7 @@ import {
     Frame as UnpiFrame,
 } from '../unpi';
 
-import {Wait} from '../utils';
+import {Wait} from '../../../utils';
 
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
@@ -43,7 +43,9 @@ interface Waiter {
 };
 
 class Znp extends events.EventEmitter {
-    private static instance: Znp;
+    private path: string;
+    private baudRate: number;
+    private rtscts: boolean;
 
     private serialPort: SerialPort;
     private unpiWriter: UnpiWriter;
@@ -52,8 +54,12 @@ class Znp extends events.EventEmitter {
     private queue: Queue;
     private waiters: Waiter[]
 
-    private constructor() {
+    public constructor(path: string, baudRate: number, rtscts: boolean) {
         super();
+
+        this.path = path;
+        this.baudRate = baudRate;
+        this.rtscts = rtscts;
 
         this.initialized = false;
         this.waiters = [];
@@ -113,9 +119,10 @@ class Znp extends events.EventEmitter {
         debug.error(`Serialport error: ${error}`);
     }
 
-    public open(path: string, options: {baudRate: number; rtscts: boolean}): Promise<void> {
-        debug.log(`Opening with ${path} and ${JSON.stringify(options)}`);
-        this.serialPort = new SerialPort(path, {...options, autoOpen: false});
+    public open(): Promise<void> {
+        const options = {baudRate: this.baudRate, rtscts: this.rtscts, autoOpen: false};
+        debug.log(`Opening with ${this.path} and ${JSON.stringify(options)}`);
+        this.serialPort = new SerialPort(this.path, options);
 
         this.unpiWriter = new UnpiWriter();
         // @ts-ignore
@@ -151,14 +158,6 @@ class Znp extends events.EventEmitter {
         debug.log('Writing skip bootloader payload');
         this.unpiWriter.writeBuffer(buffer);
         await Wait(1000);
-    }
-
-    public static getInstance(): Znp {
-        if (Znp.instance == null) {
-            Znp.instance = new Znp();
-        }
-
-        return Znp.instance;
     }
 
     public close(): Promise<void> {

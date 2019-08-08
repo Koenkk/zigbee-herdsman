@@ -1,13 +1,13 @@
-import {Znp} from '../../znp';
-import {Constants as UnpiConstants} from '../../unpi';
-import * as Zsc from '../../zstack-constants';
+import {Znp} from '../znp';
+import {Constants as UnpiConstants} from '../unpi';
+import * as Constants from '../constants';
 import equals from 'fast-deep-equal';
-import * as TsType from '../tstype';
+import * as TsType from '../../tstype';
 import fs from 'fs';
 
 const debug = require('debug')('zigbee-herdsman:controller:helpers:startZnp');
 const Subsystem = UnpiConstants.Subsystem;
-const NvItemsIds = Zsc.COMMON.nvItemIds;
+const NvItemsIds = Constants.COMMON.nvItemIds;
 
 enum ZnpVersion {
     zStack12 = 0,
@@ -54,7 +54,7 @@ const items = {
             id: NvItemsIds.CHANLIST,
             len: 0x04,
             offset: 0x00,
-            value: Buffer.from(Zsc.Utils.getChannelMask(channelList)),
+            value: Buffer.from(Constants.Utils.getChannelMask(channelList)),
         }
     },
     networkKeyDistribute: (distribute: boolean): NvItem => {
@@ -122,7 +122,7 @@ async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsTy
 async function boot(znp: Znp): Promise<void> {
     const result = await znp.request(Subsystem.UTIL, 'getDeviceInfo', {});
 
-    if (result.payload.devicestate !== Zsc.COMMON.devStates.ZB_COORD) {
+    if (result.payload.devicestate !== Constants.COMMON.devStates.ZB_COORD) {
         debug('Start ZNP as coordinator...');
         const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9})
         znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100});
@@ -141,7 +141,7 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
     // TODO
 }
 
-export default async (znp: Znp, options: TsType.NetworkOptions, coordinatorBackupPath?: string): Promise<void> => {
+export default async (znp: Znp, options: TsType.NetworkOptions, backupPath?: string): Promise<void> => {
     let result;
 
     result = await znp.request(Subsystem.SYS, 'version', {});
@@ -150,8 +150,8 @@ export default async (znp: Znp, options: TsType.NetworkOptions, coordinatorBacku
     debug(`Detected znp version '${ZnpVersion[version]}'`);
 
     if (await needsToBeInitialised(znp, version, options)) {
-        if (coordinatorBackupPath && fs.existsSync(coordinatorBackupPath)) {
-            await restore(coordinatorBackupPath);
+        if (backupPath && fs.existsSync(backupPath)) {
+            await restore(backupPath);
         } else {
             await initialise(znp, version, options);
         }

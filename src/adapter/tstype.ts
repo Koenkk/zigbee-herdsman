@@ -6,6 +6,13 @@ interface NetworkOptions {
     networkKeyDistribute: boolean;
 }
 
+
+interface SerialPortOptions {
+    baudRate: number;
+    rtscts: boolean;
+    path: string;
+};
+
 export {
-    NetworkOptions
+    SerialPortOptions, NetworkOptions,
 }
