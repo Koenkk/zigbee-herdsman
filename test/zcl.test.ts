@@ -344,6 +344,29 @@ describe('Zcl', () => {
         expect(frame.getCommand().name).toEqual('discoverRsp');
     });
 
+    // it('ZclFrame from buffer header', () => {
+    //     const buffer = [25, 74, 0, 33, 0, 0, 23, 0, 0];
+    //     const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
+    //     const header = {
+    //         commandIdentifier: 13,
+    //         frameControl: {
+    //             direction: 1,
+    //             disableDefaultResponse: true,
+    //             frameType: 1,
+    //             manufacturerSpecific: false,
+    //         },
+    //         manufacturerCode: null,
+    //         transactionSequenceNumber: 74,
+    //     };
+
+    //    // const payload = {"discComplete":0,"attrInfos":[{"attrId":32,"dataType":32},{"attrId":33,"dataType":32},{"attrId":49,"dataType":48},{"attrId":51,"dataType":32},{"attrId":53,"dataType":24}]};
+
+    //     expect(frame.Header).toStrictEqual(header);
+    //     // expect(frame.Payload).toStrictEqual(payload);
+    //     // expect(frame.getCluster().name).toEqual('genPowerCfg');
+    //     // expect(frame.getCommand().name).toEqual('discoverRsp');
+    // });
+
     it('ZclFrame from buffer error on malformed', () => {
         const buffer = [0x08, 0x01];
         expect(() => {

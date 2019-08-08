@@ -108,7 +108,7 @@ function getSpecificCommand(clusterKey: number | string, direction: Direction, k
     const command = commands[name];
 
     if (!command) {
-        throw new Error(`Cluster command with key '${key}' and direction '${Direction[direction]}' does not exist`)
+        throw new Error(`Cluster command with key '${key}' and direction '${Direction[direction]}' does not exist for cluster '${clusterKey}'`)
     }
 
     return command;
