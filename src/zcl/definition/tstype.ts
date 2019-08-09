@@ -11,4 +11,6 @@ interface FoundationParameterDefinition extends TsType.Parameter {
     type: DataType | BuffaloZclDataType;
 }
 
-export {FoundationParameterDefinition};
+export {
+    FoundationParameterDefinition,
+};

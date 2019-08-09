@@ -105,15 +105,6 @@ function Controller(shepherd, cfg) {
     /***************************************************/
     /*** Event Handlers                              ***/
     /***************************************************/
-    this.on('ZNP:READY', function () {
-        // HERE
-        init.setupCoord(self).then(function () {
-            self.emit('ZNP:INIT');
-        }).fail(function (err) {
-            self.emit('ZNP:INIT', err);
-            debug.init('Coordinator initialize had an error:', err);
-        }).done();
-    });
 
     znp.on('close', function () {
         self.emit('ZNP:CLOSE');
@@ -201,31 +192,7 @@ Controller.prototype.setNetInfo = function (netInfo) {
 /*************************************************************************************************/
 /*** Mandatory Public APIs                                                                     ***/
 /*************************************************************************************************/
-Controller.prototype.start = function (callback) {
-    var self = this,
-        deferred = Q.defer();
 
-    var readyLsn = function (err) {
-        return err ? deferred.reject(err) : deferred.resolve();
-    };
-
-    this.once('ZNP:INIT', readyLsn);
-
-    if (!znp.isInitialized()) {
-        znp.open(this._cfg.path, this._cfg.options)
-            .then(() => {
-                this.emit("ZNP:READY");
-            })
-            .catch((error) => {
-                self.removeListener('ZNP:INIT', readyLsn);
-                deferred.reject(error);
-            });
-    } else {
-        this.emit("ZNP:READY");
-    }
-
-    return deferred.promise.nodeify(callback);
-};
 
 Controller.prototype.close = function (callback) {
     var self = this,
@@ -289,51 +256,6 @@ Controller.prototype.request = function (subsys, cmdId, valObj, callback) {
 
 
     return deferred.promise.nodeify(callback);
-};
-
-Controller.prototype.permitJoin = function (time, type, callback) {
-    // time: seconds, 0x00 disable, 0xFF always enable
-    // type: 0 (coord) / 1 (all) / router addr if > 1
-    var self = this,
-        addrmode,
-        dstaddr;
-
-    proving.number(time, 'time should be a number.');
-    proving.stringOrNumber(type, 'type should be a number or a string.');
-
-    return Q.fcall(function () {
-        if (type === 0 || type === 'coord') {
-            addrmode = 0x02;
-            dstaddr = 0x0000;
-        } else if (type === 1 || type === 'all') {
-            addrmode = 0x0F;
-            dstaddr = 0xFFFC;   // all coord and routers
-        } else if (typeof type === "number") {
-            addrmode = 0x02; // address mode
-            dstaddr = type; // router address
-        } else {
-            return Q.reject(new Error('Not a valid type.'));
-        }
-    }).then(function () {
-        if (time > 255 || time < 0)
-            return Q.reject(new Error('Jointime can only range from  0 to 255.'));
-        else
-            self._permitJoinTime = Math.floor(time);
-    }).then(function () {
-        return self.request('ZDO', 'mgmtPermitJoinReq', { addrmode: addrmode, dstaddr: dstaddr , duration: time, tcsignificance: 0 });
-    }).then(function (rsp) {
-        self.emit('permitJoining', self._permitJoinTime, dstaddr);
-
-        if (time !== 0 && time !== 255) {
-            clearInterval(self._permitJoinInterval);
-            self._permitJoinInterval = setInterval(function () {
-                if (self.permitJoinCountdown() === 0)
-                    clearInterval(self._permitJoinInterval);
-                self.emit('permitJoining', self._permitJoinTime, dstaddr);
-            }, 1000);
-        }
-       return rsp;
-    }).nodeify(callback);
 };
 
 Controller.prototype.remove = function (dev, cfg, callback) {

@@ -2,9 +2,14 @@ import DataType from './dataType';
 import * as TsType from '../tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
 
+interface AttributeDefinition {
+    ID: number;
+    type: DataType;
+}
+
 interface ClusterDefinition {
     ID: number;
-    attributes: {[s: string]: TsType.Attribute};
+    attributes: {[s: string]: AttributeDefinition};
     commands: {
         [s: string]: CommandDefinition;
     };

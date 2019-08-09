@@ -15,8 +15,17 @@ describe('Zcl', () => {
     });
 
     it('Get cluster by ID', () => {
+        const cluster1 = Zcl.Utils.getCluster(0);
+        delete cluster1.getAttributeByID;
+        const cluster2 = Zcl.Utils.getCluster('genBasic');
+        delete cluster2.getAttributeByID;
+        expect(cluster1).toStrictEqual(cluster2);
+    });
+
+    it('Get cluster attribute by ID', () => {
         const cluster = Zcl.Utils.getCluster(0);
-        expect(cluster).toStrictEqual(Zcl.Utils.getCluster('genBasic'));
+        const attribute = cluster.getAttributeByID(1)
+        expect(attribute).toStrictEqual({ID: 1, type: DataType.uint8, name: 'appVersion'});
     });
 
     it('Get specific command by name', () => {
@@ -71,16 +80,6 @@ describe('Zcl', () => {
             // @ts-ignore
             Zcl.ZclFrame.parsePayload({frameControl: {frameType: 9}}, null);
         }).toThrowError("Unsupported frameType '9'")
-    });
-
-    it('Get cluster legacy by number', () => {
-        const cluster = Zcl.getClusterLegacy(1);
-        expect(cluster).toStrictEqual({key: 'genPowerCfg', value: 1});
-    });
-
-    it('Get cluster legacy by string', () => {
-        const cluster = Zcl.getClusterLegacy('genPowerCfg');
-        expect(cluster).toStrictEqual({key: 'genPowerCfg', value: 1});
     });
 
     it('ZclFrame from buffer report', () => {

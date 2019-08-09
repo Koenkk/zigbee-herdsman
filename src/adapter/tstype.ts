@@ -13,6 +13,19 @@ interface SerialPortOptions {
     path: string;
 };
 
+interface Coordinator {
+    ieeeAddr: string;
+    networkAddress: number;
+    manufacturerID: number;
+    endpoints: {
+        ID: number;
+        profileID: number;
+        deviceID: number;
+        inputClusters: number[];
+        outputClusters: number[];
+    }[];
+}
+
 export {
-    SerialPortOptions, NetworkOptions,
+    SerialPortOptions, NetworkOptions, Coordinator,
 }

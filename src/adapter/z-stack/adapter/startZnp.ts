@@ -125,7 +125,15 @@ const Items = {
     },
 }
 
-const EndpointDefaults = {
+const EndpointDefaults: {
+    appdeviceid: number;
+    appdevver: number;
+    appnuminclusters: number;
+    appinclusterlist: number[];
+    appnumoutclusters: number;
+    appoutclusterlist: number[];
+    latencyreq: number;
+} = {
     appdeviceid: 0x0005,
     appdevver: 0,
     appnuminclusters: 0,

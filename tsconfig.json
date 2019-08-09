@@ -19,5 +19,8 @@
     "include": [
         "src/**/*",
         "src/**/*.json"
+    ],
+    "exclude": [
+        "src/deprecated"
     ]
 }

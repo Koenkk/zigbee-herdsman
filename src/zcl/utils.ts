@@ -51,14 +51,22 @@ function getCluster(key: string | number): TsType.Cluster {
         throw new Error(`Cluster with key '${key}' does not exist`)
     }
 
+    // eslint-disable-next-line
+    const attributes: {[s: string]: TsType.Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).map(([k, v]): any => ({[k]: {...v, name: k}})));
+
+    const getAttributeByID = (ID: number): TsType.Attribute => {
+        return Object.values(attributes).find((a): boolean => a.ID === ID);
+    }
+
     return {
         ID: cluster.ID,
-        attributes: cluster.attributes,
+        attributes,
         name,
         // eslint-disable-next-line
         commands: Object.assign({}, ...Object.entries(cluster.commands).map(([k, v]): any => ({[k]: {...v, name: k}}))),
         // eslint-disable-next-line
         commandsResponse: Object.assign({}, ...Object.entries(cluster.commandsResponse).map(([k, v]): any => ({[k]: {...v, name: k}}))),
+        getAttributeByID,
     };
 }
 

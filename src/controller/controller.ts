@@ -1,6 +1,10 @@
 import events from 'events';
 import Database from './database';
 import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter';
+import {Entity, Device} from './model';
+import {Events, DeviceJoinedPayload, ZclDataPayload} from '../adapter/events'
+import {ZclFrameToEvent} from './helpers';
+import {FrameType, Foundation, Cluster} from '../zcl';
 
 // @ts-ignore
 import mixin from 'mixin-deep';
@@ -38,21 +42,109 @@ class Controller extends events.EventEmitter {
     private options: Options;
     private database: Database;
     private adapter: Adapter;
+    // eslint-disable-next-line
+    private permitJoinTimer: any;
 
     public constructor(options: Options) {
         super();
         this.options = mixin(DefaultOptions, options);
         this.adapter = new ZStackAdapter(options.network, options.serialPort, options.backupPath);
+
+        this.onDeviceJoined = this.onDeviceJoined.bind(this);
+        this.adapter.on(Events.DeviceJoined, this.onDeviceJoined);
+        this.onZclData = this.onZclData.bind(this);
+        this.adapter.on(Events.ZclData, this.onZclData);
     }
 
     public async start(): Promise<void> {
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
         this.database = await Database.open(this.options.databasePath);
         await this.adapter.start();
+
+        // Inject adapter and database in entity
+        Entity.injectAdapter(this.adapter);
+        Entity.injectDatabse(this.database);
+
+        // Add coordinator to the database if it is not there yet.
+        if ((await Device.findByType('Coordinator')).length === 0) {
+            debug.log('No coordinator in database, querying...');
+            const coordinator = await this.adapter.getCoordinator();
+            Device.create(
+                'Coordinator', coordinator.ieeeAddr, coordinator.networkAddress, coordinator.manufacturerID,
+                undefined, undefined, undefined, coordinator.endpoints
+            );
+        }
+    }
+
+    public async permitJoin(permit: boolean): Promise<void> {
+        if (permit && !this.permitJoinTimer) {
+            debug.log('Permit joining')
+            await this.adapter.permitJoin(254);
+
+            // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
+            this.permitJoinTimer = setInterval(async (): Promise<void> => {
+                debug.log('Permit joining')
+                await this.adapter.permitJoin(254);
+            }, 200 * 1000);
+        } else if (permit && this.permitJoinTimer) {
+            debug.log('Joining already permitted')
+        } else {
+            debug.log('Disable joining');
+            this.adapter.permitJoin(0);
+
+            if (this.permitJoinTimer) {
+                clearInterval(this.permitJoinTimer);
+                this.permitJoinTimer = null;
+            }
+        }
     }
 
     public async stop(): Promise<void> {
+        await this.permitJoin(false);
         await this.adapter.stop();
+    }
+
+    private async onDeviceJoined(payload: DeviceJoinedPayload): Promise<void> {
+        debug.log(`New device '${payload.ieeeAddr}' joined`);
+
+        const device = await Device.findByIeeeAddr(payload.ieeeAddr)
+        if (!device) {
+            debug.log(`Creating device '${payload.ieeeAddr}'`);
+            Device.create(
+                undefined, payload.ieeeAddr, payload.networkAddress, undefined,
+                undefined, undefined, undefined, []
+            );
+        } else {
+            debug.log(`Device '${payload.ieeeAddr}' is already in database, updating networkAddress`);
+            await device.update('networkAddress', payload.networkAddress);
+        }
+    }
+
+    private async onZclData(payload: ZclDataPayload): Promise<void> {
+        debug.log(`Received ZCL data '${JSON.stringify(payload)}'`);
+
+        const device = await Device.findByNetworkAddress(payload.networkAddress);
+
+        if (!device) {
+            debug.log(`ZCL data is from unknown device with network adress '${payload.networkAddress}', skipping...`)
+            return;
+        }
+
+        const frame = payload.frame;
+        const event = ZclFrameToEvent(payload.frame);
+        const command = frame.getCommand();
+        const cluster = frame.getCluster();
+        const frameType = frame.Header.frameControl.frameType;
+
+        if (frameType === FrameType.GLOBAL) {
+            if (cluster.ID === Cluster.genBasic.ID) {
+                if (command.ID === Foundation.report.ID || command.ID === Foundation.readRsp.ID ) {
+                    if (event.data.data.hasOwnProperty('modelId')) {
+                        await device.update('modelID', event.data.data.modelId);
+                    }
+                }
+            }
+        }
     }
 }
 

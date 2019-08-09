@@ -64,7 +64,7 @@
     "url": "git+https://github.com/Koenkk/zigbee-herdsman.git"
   },
   "scripts": {
-    "build": "./node_modules/.bin/tsc --alwaysStrict || exit 0",
+    "build": "./node_modules/.bin/tsc --alwaysStrict",
     "start": "./node_modules/.bin/tsc --alwaysStrict -w",
     "test": "jest test",
     "test-with-coverage": "jest test --coverage",

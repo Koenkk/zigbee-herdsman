@@ -4,6 +4,7 @@ import {TsType as BuffaloTsType} from '../buffalo';
 
 interface Attribute {
     ID: number;
+    name: string;
     type: DataType;
 }
 
@@ -28,6 +29,7 @@ interface Cluster {
     commandsResponse: {
         [s: string]: Command;
     };
+    getAttributeByID: (ID: number) => Attribute;
 };
 
 interface BuffaloZclOptions extends BuffaloTsType.Options {
