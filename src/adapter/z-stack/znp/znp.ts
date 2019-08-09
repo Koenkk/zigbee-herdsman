@@ -9,6 +9,7 @@ import {Wait} from '../../../utils';
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
 import {Subsystem, Type} from '../unpi/constants';
+import {COMMON} from '../constants';
 
 import SerialPort from 'serialport';
 import events from 'events';
@@ -180,7 +181,7 @@ class Znp extends events.EventEmitter {
 
     }
 
-    public request(subsystem: Subsystem, command: string, payload: ZpiObjectPayload): Promise<ZpiObject> {
+    public request(subsystem: Subsystem, command: string, payload: ZpiObjectPayload, expectedStatus: number = 0): Promise<ZpiObject> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
         }
@@ -198,11 +199,16 @@ class Znp extends events.EventEmitter {
                     if (object.type === Type.SREQ) {
                         const waiter = this.waitFor(Type.SRSP, object.subsystem, object.command, null, timeouts.SREQ);
                         this.unpiWriter.writeFrame(frame)
-                        resolve(await waiter);
+                        const result = await waiter;
+                        if (result && result.payload.status !== expectedStatus) {
+                            reject(`SREQ failed with status '${result.payload.status}' (expected '${expectedStatus}')`);
+                        } else {
+                            resolve(result);
+                        }
                     } else if (object.type === Type.AREQ && object.isResetCommand()) {
                         const waiter = this.waitFor(Type.AREQ, Subsystem.SYS, 'resetInd', null, timeouts.reset);
                         this.queue.splice(1, this.queue.length);
-                        this.unpiWriter.writeFrame(frame)
+                        this.unpiWriter.writeFrame(frame);
                         resolve(await waiter);
                     } else {
                         /* istanbul ignore else */

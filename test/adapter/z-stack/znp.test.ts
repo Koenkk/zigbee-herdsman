@@ -1,9 +1,9 @@
 import "regenerator-runtime/runtime";
-import {Znp, ZpiObject} from '../src/znp';
+import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
 import SerialPort from 'serialport';
-import {Frame as UnpiFrame, Constants as UnpiConstants} from '../src/unpi';
-import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from './testUtils';
-import BuffaloZnp from '../src/znp/buffaloZnp';
+import {Frame as UnpiFrame, Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
+import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
+import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
 
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
@@ -13,7 +13,7 @@ const mockSerialPortConstructor = jest.fn();
 const mockSerialPortOnce = jest.fn();
 const mockSerialPortWrite = jest.fn((buffer, cb) => cb());
 
-jest.mock('../src/utils/wait', () => {
+jest.mock('../../../src/utils/wait', () => {
     return jest.fn();
 });
 
@@ -35,7 +35,7 @@ jest.mock('serialport', () => {
 
 const mockUnpiParserOn = jest.fn();
 
-jest.mock('../src/unpi/parser', () => {
+jest.mock('../../../src/adapter/z-stack/unpi/parser', () => {
     return jest.fn().mockImplementation(() => {
         return {
             on: mockUnpiParserOn,
@@ -46,7 +46,7 @@ jest.mock('../src/unpi/parser', () => {
 const mockUnpiWriterWriteFrame = jest.fn();
 const mockUnpiWriterWriteBuffer = jest.fn();
 
-jest.mock('../src/unpi/writer', () => {
+jest.mock('../../../src/adapter/z-stack/unpi/writer', () => {
     return jest.fn().mockImplementation(() => {
         return {
             writeFrame: mockUnpiWriterWriteFrame,
@@ -72,13 +72,13 @@ describe('ZNP', () => {
         }
 
         // @ts-ignore; make sure we always get a new instance
-        znp = new Znp();
+        znp = new Znp("/dev/ttyACM0", 100, true);
 
         jest.useRealTimers();
     });
 
     it('Open', async () => {
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
         expect(SerialPort).toHaveBeenCalledWith(
@@ -98,7 +98,7 @@ describe('ZNP', () => {
         let error = false;
 
         try {
-            await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+            await znp.open();
         } catch (e) {
             error = e;
         }
@@ -120,7 +120,7 @@ describe('ZNP', () => {
         const close = jest.fn();
         znp.on('close', close);
         expect(znp.isInitialized()).toBeFalsy();
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
         expect(znp.isInitialized()).toBeTruthy();
         await znp.close();
         expect(znp.isInitialized()).toBeFalsy();
@@ -134,7 +134,7 @@ describe('ZNP', () => {
         const close = jest.fn();
         znp.on('close', close);
         mockSerialPortClose.mockImplementationOnce((cb) => cb("failed!"));
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
 
         let error;
         try {
@@ -171,7 +171,7 @@ describe('ZNP', () => {
 
         const close = jest.fn();
         znp.on('close', close);
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
         closeCb();
 
         expect(close).toHaveBeenCalledTimes(1);
@@ -186,7 +186,7 @@ describe('ZNP', () => {
             }
         }));
 
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
         errorCb();
     });
 
@@ -199,7 +199,7 @@ describe('ZNP', () => {
             }
         }));
 
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
         errorCb();
     });
 
@@ -215,7 +215,7 @@ describe('ZNP', () => {
             }
         });
 
-        znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        znp.open();
         parsedCb(new UnpiFrame(
             UnpiConstants.Type.SRSP,
             UnpiConstants.Subsystem.SYS,
@@ -245,7 +245,7 @@ describe('ZNP', () => {
             }
         });
 
-        znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        znp.open();
         parsedCb(new UnpiFrame(
             UnpiConstants.Type.SRSP,
             UnpiConstants.Subsystem.SYS,
@@ -273,7 +273,7 @@ describe('ZNP', () => {
             ));
         });
 
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
 
         const result = await znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
 
@@ -290,6 +290,36 @@ describe('ZNP', () => {
         expect(result.subsystem).toBe(UnpiConstants.Subsystem.SYS);
         expect(result.type).toBe(UnpiConstants.Type.SRSP);
     });
+
+    it('znp request SREQ failed', async () => {
+        let parsedCb;
+        mockUnpiParserOn.mockImplementationOnce((event, cb) => {
+            if (event === 'parsed') {
+                parsedCb = cb;
+            }
+        });
+
+        mockUnpiWriterWriteFrame.mockImplementationOnce(() => {
+            parsedCb(new UnpiFrame(
+                UnpiConstants.Type.SRSP,
+                UnpiConstants.Subsystem.SYS,
+                0x08,
+                Buffer.from([0x01, 0x02, 0x01, 0x02])
+            ));
+        });
+
+        await znp.open();
+
+        let error;
+        try {
+            await znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
+        } catch (e) {
+            error = e;
+        }
+
+        expect(error).toStrictEqual("SREQ failed with status '1' (expected '0')");
+    });
+
 
     it('znp request SREQ with parsed in between', async () => {
         let parsedCb;
@@ -315,7 +345,7 @@ describe('ZNP', () => {
             ));
         });
 
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
 
         const result = await znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
 
@@ -350,7 +380,7 @@ describe('ZNP', () => {
             ));
         });
 
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
 
         const result = await znp.request(UnpiConstants.Subsystem.SYS, 'resetReq', {type: 1});
 
@@ -369,7 +399,7 @@ describe('ZNP', () => {
     });
 
     it('znp request AREQ', async () => {
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
 
         const result = await znp.request(UnpiConstants.Subsystem.SAPI, 'startConfirm', {status: 1});
 
@@ -397,7 +427,7 @@ describe('ZNP', () => {
 
 
     it('znp request with non-existing subsystem', async () => {
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
         let error;
 
         try {
@@ -410,7 +440,7 @@ describe('ZNP', () => {
     });
 
     it('znp request with non-existing cmd', async () => {
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
         let error;
 
         try {
@@ -422,14 +452,8 @@ describe('ZNP', () => {
         expect(error).toEqual(new Error("Command 'nonExisting' from subsystem '6' not found"));
     });
 
-    it('return same instance', async () => {
-        const instance1 = Znp.getInstance();
-        const instance2 = Znp.getInstance();
-        expect(instance1).toBe(instance2);
-    });
-
     it('znp request timeout', async () => {
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
 
         jest.useFakeTimers();
         let result = znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
@@ -453,7 +477,7 @@ describe('ZNP', () => {
             }
         });
 
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
 
         jest.useFakeTimers();
         let result = znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
@@ -484,7 +508,7 @@ describe('ZNP', () => {
             }
         });
 
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
 
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 0, value: Buffer.from([1, 2])});
         znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
@@ -508,7 +532,7 @@ describe('ZNP', () => {
             }
         });
 
-        await znp.open("/dev/ttyACM0", {baudRate: 100, rtscts: true});
+        await znp.open();
 
         jest.useFakeTimers();
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 3, value: Buffer.from([1, 3])});

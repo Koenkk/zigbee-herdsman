@@ -1,4 +1,4 @@
-import {Parser, Constants, Frame, Writer} from '../src/unpi';
+import {Parser, Constants, Frame, Writer} from '../../../src/adapter/z-stack/unpi';
 
 describe('Parser', () => {
     let parser;

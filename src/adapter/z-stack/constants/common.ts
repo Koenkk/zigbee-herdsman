@@ -1,4 +1,8 @@
-const COMMON = {
+const COMMON: {
+    [s: string]: {
+        [s: string]: number;
+    };
+} = {
     cmdStatus: {
         SUCCESS: 0,
         FAILURE: 1,
