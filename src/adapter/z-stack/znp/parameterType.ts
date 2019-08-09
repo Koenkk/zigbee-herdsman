@@ -12,12 +12,13 @@ enum ParameterType {
     BUFFER42 = 9,
     BUFFER100 = 10,
 
-    LIST_UINT16 = 11,
-    LIST_ROUTING_TABLE = 12,
-    LIST_BIND_TABLE = 13,
-    LIST_NEIGHBOR_LQI = 14,
-    LIST_NETWORK = 15,
-    LIST_ASSOC_DEV = 16,
+    LIST_UINT8 = 11,
+    LIST_UINT16 = 12,
+    LIST_ROUTING_TABLE = 13,
+    LIST_BIND_TABLE = 14,
+    LIST_NEIGHBOR_LQI = 15,
+    LIST_NETWORK = 16,
+    LIST_ASSOC_DEV = 17,
 }
 
 export default ParameterType;

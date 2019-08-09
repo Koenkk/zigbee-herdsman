@@ -317,7 +317,7 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual("SREQ failed with status '1' (expected '0')");
+        expect(error).toStrictEqual("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '1' (expected '0')");
     });
 
 
@@ -498,6 +498,30 @@ describe('ZNP', () => {
         }
 
         expect(error).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 6000ms"));
+    });
+
+    it('znp request, waitfor', async () => {
+        let parsedCb;
+        mockUnpiParserOn.mockImplementationOnce((event, cb) => {
+            if (event === 'parsed') {
+                parsedCb = cb;
+            }
+        });
+
+        await znp.open();
+
+        const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead');
+        znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
+
+        parsedCb(new UnpiFrame(
+            UnpiConstants.Type.SRSP,
+            UnpiConstants.Subsystem.SYS,
+            0x08,
+            Buffer.from([0x00, 0x02, 0x01, 0x02])
+        ));
+
+        const object = await waiter;
+        expect(object.payload).toStrictEqual({len: 2, status: 0, value: Buffer.from([1, 2])});
     });
 
     it('znp request, waitfor with payload', async () => {

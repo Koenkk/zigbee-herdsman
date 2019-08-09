@@ -1688,7 +1688,7 @@ const Definition: {
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
                 {name: 'activeepcount', parameterType: ParameterType.UINT8},
-                {name: 'activeeplist', parameterType: ParameterType.BUFFER},
+                {name: 'activeeplist', parameterType: ParameterType.LIST_UINT8},
             ],
         },
         {

@@ -12,6 +12,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async start(): Promise<void> {
+        // TODO: gracefully close when on error
         await this.znp.open();
         await StartZnp(this.znp, this.networkOptions, this.backupPath);
     }

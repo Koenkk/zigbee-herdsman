@@ -9,7 +9,6 @@ import {Wait} from '../../../utils';
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
 import {Subsystem, Type} from '../unpi/constants';
-import {COMMON} from '../constants';
 
 import SerialPort from 'serialport';
 import events from 'events';
@@ -181,7 +180,7 @@ class Znp extends events.EventEmitter {
 
     }
 
-    public request(subsystem: Subsystem, command: string, payload: ZpiObjectPayload, expectedStatus: number = 0): Promise<ZpiObject> {
+    public request(subsystem: Subsystem, command: string, payload: ZpiObjectPayload, expectedStatus: number[] = [0]): Promise<ZpiObject> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
         }
@@ -200,8 +199,8 @@ class Znp extends events.EventEmitter {
                         const waiter = this.waitFor(Type.SRSP, object.subsystem, object.command, null, timeouts.SREQ);
                         this.unpiWriter.writeFrame(frame)
                         const result = await waiter;
-                        if (result && result.payload.status !== expectedStatus) {
-                            reject(`SREQ failed with status '${result.payload.status}' (expected '${expectedStatus}')`);
+                        if (result && result.payload.hasOwnProperty('status') && !expectedStatus.includes(result.payload.status)) {
+                            reject(`SREQ '${message}' failed with status '${result.payload.status}' (expected '${expectedStatus}')`);
                         } else {
                             resolve(result);
                         }
@@ -253,7 +252,7 @@ class Znp extends events.EventEmitter {
         }
     }
 
-    public waitFor(type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload, timeout: number = timeouts.default): Promise<ZpiObject> {
+    public waitFor(type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload = {}, timeout: number = timeouts.default): Promise<ZpiObject> {
         return new Promise((resolve, reject): void => {
             const object: Waiter = {type, subsystem, command, payload, resolve, reject, timedout: false};
 

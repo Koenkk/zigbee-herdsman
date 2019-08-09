@@ -10,7 +10,7 @@ const BufferAndListTypes = [
     ParameterType.BUFFER18, ParameterType.BUFFER32, ParameterType.BUFFER42,
     ParameterType.BUFFER100, ParameterType.LIST_UINT16, ParameterType.LIST_ROUTING_TABLE,
     ParameterType.LIST_BIND_TABLE, ParameterType.LIST_NEIGHBOR_LQI, ParameterType.LIST_NETWORK,
-    ParameterType.LIST_ASSOC_DEV,
+    ParameterType.LIST_ASSOC_DEV, ParameterType.LIST_UINT8,
 ];
 
 class ZpiObject {

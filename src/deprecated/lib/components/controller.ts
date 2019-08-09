@@ -23,7 +23,6 @@ var Q = require('q'),
 var Zdo = require('./zdo'),
     query = require('./query'),
     bridge = require('./event_bridge.js'),
-    init = require('../initializers/init_controller'),
     nvParams = require('../config/nv_start_options.js'),
     nvBackup = require('../config/nv_backup.js');
 
@@ -107,6 +106,7 @@ function Controller(shepherd, cfg) {
     /*** Event Handlers                              ***/
     /***************************************************/
     this.on('ZNP:READY', function () {
+        // HERE
         init.setupCoord(self).then(function () {
             self.emit('ZNP:INIT');
         }).fail(function (err) {
@@ -246,94 +246,6 @@ Controller.prototype.close = function (callback) {
     return deferred.promise.nodeify(callback);
 };
 
-Controller.prototype.reset = function (mode, callback) {
-    var self = this,
-        deferred = Q.defer(),
-        startupOption = nvParams.startupOption.value[0];
-
-    proving.stringOrNumber(mode, 'mode should be a number or a string.');
-
-    Q.fcall(function () {
-        if (mode === 'hard' || mode === 0) {
-            debug.shepherd('Starting a hardware reset...');
-            self._resetting = true;
-
-            if (self._nvChanged && startupOption !== 0x02)
-                nvParams.startupOption.value[0] = 0x02;
-
-            var steps = [
-                function () { return self.request('SYS', 'resetReq', { type: 0x01 }).delay(10); },
-                function () { return self.request('SYS', 'osalNvWrite', nvParams.startupOption).delay(10); },
-                function () { return self.request('SYS', 'resetReq', { type: 0x01 }).delay(10); },
-                function () { return self.request('SYS', 'osalNvWrite', nvParams.logicalType).delay(10); },
-                function () { return self.request('SYS', 'osalNvWrite', nvParams.precfgkeysEnable).delay(10); },
-                function () { return self.request('SYS', 'osalNvWrite', nvParams.zdoDirectCb).delay(10); },
-                function () { return self.request('SYS', 'osalNvWrite', nvParams.channelList).delay(10); },
-            ];
-
-            const isZstack3 = self._isZstack3x0 || self._isZstack30x;
-
-            if (isZstack3) {
-                const channel = Buffer.from(nvParams.channelList.value).readUInt32LE();
-
-                steps = steps.concat([
-                    function () { return self.request('SYS', 'osalNvWrite', nvParams.precfgkey3).delay(10); },
-                    // NOTE: linkkey is not written for z-stack 3 as the default one is already OK.
-                    function () { return self.request('APP_CNF', 'bdbSetChannel', {isPrimary: 0x1, channel: channel}).delay(10); },
-                    function () { return self.request('APP_CNF', 'bdbSetChannel', {isPrimary: 0x0, channel: 0x0}).delay(10); },
-                    function () { return self.request('APP_CNF', 'bdbStartCommissioning', {mode: 0x04}).delay(5000); },
-                    function () { return self.request('APP_CNF', 'bdbStartCommissioning', {mode: 0x02}).delay(10); },
-                ]);
-            } else {
-                steps = steps.concat([
-                    function () { return self.request('SYS', 'osalNvWrite', nvParams.panId).delay(10); },
-                    function () { return self.request('SYS', 'osalNvWrite', nvParams.extPanId).delay(10); },
-                    function () { return self.request('SAPI', 'writeConfiguration', nvParams.precfgkey).delay(10); },
-                    function () { return self.request('SYS', 'osalNvWrite', nvParams.securityMode).delay(10); },
-                ]);
-            }
-
-            if(isZstack3) {
-                steps = steps.concat([
-                    function () { return self.request('SYS', 'osalNvItemInit', nvParams.znpCfgItem3).delay(10).fail(function (err) {
-                        return (err.message === 'rsp error: 9') ? null : Q.reject(err);  // Success, item created and initialized
-                    }); },
-                    function () { return self.request('SYS', 'osalNvWrite', nvParams.znpHasConfigured3).delay(10); },
-                ]);
-            } else {
-                steps = steps.concat([
-                    function () { return self.request('SYS', 'osalNvItemInit', nvParams.znpCfgItem).delay(10).fail(function (err) {
-                        return (err.message === 'rsp error: 9') ? null : Q.reject(err);  // Success, item created and initialized
-                    }); },
-                    function () { return self.request('SYS', 'osalNvWrite', nvParams.znpHasConfigured).delay(10); },
-                ]);
-            }
-
-            return steps.reduce(function (soFar, fn) {
-                return soFar.then(fn);
-            }, Q(0));
-        } else {
-            return Q.reject(new Error('Unknown reset mode.'));
-        }
-    }).then(function () {
-        self._resetting = false;
-        if (self._nvChanged) {
-            nvParams.startupOption.value[0] = startupOption;
-            self._nvChanged = false;
-            deferred.resolve();
-        } else {
-            self.once('_reset', function (err) {
-                return err ? deferred.reject(err) : deferred.resolve();
-            });
-            self.emit('SYS:resetInd', '_reset');
-        }
-    }).fail(function (err) {
-        deferred.reject(err);
-    }).done();
-
-    return deferred.promise.nodeify(callback);
-};
-
 Controller.prototype.request = function (subsys, cmdId, valObj, callback) {
     var deferred = Q.defer(),
         rspHdlr;
@@ -453,45 +365,6 @@ Controller.prototype.remove = function (dev, cfg, callback) {
     }).nodeify(callback);
 };
 
-Controller.prototype.registerEp = function (loEp, callback) {
-    var self = this;
-
-    if (!(loEp instanceof Coordpoint))
-        throw new TypeError('loEp should be an instance of Coordpoint class.');
-
-    return this.request('AF', 'register', makeRegParams(loEp)).then(function (rsp) {
-        return rsp;
-    }).fail(function (err) {
-        return (err.message === 'rsp error: 184') ? self.reRegisterEp(loEp) : Q.reject(err);
-    }).nodeify(callback);
-};
-
-Controller.prototype.deregisterEp = function (loEp, callback) {
-    var self = this,
-        coordEps = this._coord.endpoints;
-
-    if (!(loEp instanceof Coordpoint))
-        throw new TypeError('loEp should be an instance of Coordpoint class.');
-
-    return Q.fcall(function () {
-        if (!_.includes(coordEps, loEp))
-            return Q.reject(new Error('Endpoint not maintained by Coordinator, cannot be removed.'));
-        else
-            return self.request('AF', 'delete', { endpoint: loEp.getEpId() });
-    }).then(function (rsp) {
-        delete coordEps[loEp.getEpId()];
-        return rsp;
-    }).nodeify(callback);
-};
-
-Controller.prototype.reRegisterEp = function (loEp, callback) {
-    var self = this;
-
-    return this.deregisterEp(loEp).then(function () {
-        return self.request('AF', 'register', makeRegParams(loEp));
-    }).nodeify(callback);
-};
-
 Controller.prototype.simpleDescReq = function (nwkAddr, ieeeAddr, callback) {
     return this.query.deviceWithEndpoints(nwkAddr, ieeeAddr, callback);
 };
@@ -554,78 +427,6 @@ Controller.prototype.setNvParams = function (net) {
                 throw new TypeError('Unkown argument: ' + param + '.');
         }
     });
-};
-
-Controller.prototype.checkNvParams = function (callback) {
-    var self = this;
-
-    let steps = [];
-
-    if(self._isZstack3x0 || self._isZstack30x) {
-        const cb = function (rsp) {
-            if (rsp.message === 'rsp error: 2' || !_.isEqual(bufToArray(rsp.value), nvParams.znpHasConfigured3.value)) {
-                if (self._shepherd._coordBackupPath && fs.existsSync(self._shepherd._coordBackupPath)) {
-                    // not intialized and backup exists, restore from backup
-                    return Q.reject('restore');
-                } else {
-                    return Q.reject('reset');
-                }
-            }
-        }
-
-        steps.push(
-            function () { return self.request('SYS', 'osalNvRead', nvParams.znpHasConfigured3).delay(10).fail(cb).then(cb); },
-        )
-    } else {
-        steps = steps.concat([
-            function () { return self.request('SYS', 'osalNvRead', nvParams.znpHasConfigured).delay(10).then(function (rsp) {
-                if (!_.isEqual(bufToArray(rsp.value), nvParams.znpHasConfigured.value)) return Q.reject('reset');
-            }); },
-            function () { return self.request('SYS', 'osalNvRead', nvParams.panId).delay(10).then(function (rsp) {
-                if (!_.isEqual(bufToArray(rsp.value), nvParams.panId.value)) return Q.reject('reset');
-            }); },
-            function () { return self.request('SYS', 'osalNvRead', nvParams.extPanId).delay(10).then(function (rsp) {
-                if (!_.isEqual(bufToArray(rsp.value), nvParams.extPanId.value)) return Q.reject('reset');
-            }); },
-        ])
-    }
-
-    steps = steps.concat([
-        function () { return self.request('SYS', 'osalNvRead', nvParams.channelList).delay(10).then(function (rsp) {
-            if (!_.isEqual(bufToArray(rsp.value), nvParams.channelList.value)) return Q.reject('reset');
-        }) },
-        function () { return self.request('SYS', 'osalNvRead', nvParams.precfgkeysEnable).delay(10).then(function (rsp) {
-            if (!_.isEqual(bufToArray(rsp.value), nvParams.precfgkeysEnable.value)) return Q.reject('reset');
-        }); }
-    ]);
-
-    if (self._isZstack3x0) {
-        steps.push(
-            function () { return self.request('SYS', 'osalNvRead', nvParams.precfgkey3).delay(10).then(function (rsp) {
-                if (!_.isEqual(bufToArray(rsp.value), nvParams.precfgkey3.value)) return Q.reject('reset');
-            }); },
-        );
-    } else {
-        steps.push(
-            function () { return self.request('SAPI', 'readConfiguration', nvParams.precfgkey).delay(10).then(function (rsp) {
-                if (!_.isEqual(bufToArray(rsp.value), nvParams.precfgkey.value)) return Q.reject('reset');
-            }); },
-        )
-    }
-
-    return steps.reduce(function (soFar, fn) {
-        return soFar.then(fn);
-    }, Q(0)).fail(function (err) {
-        if (err === 'restore') {
-            return self.restoreCoordinator(self._shepherd._coordBackupPath);
-        } else if (err === 'reset' || err.message === 'rsp error: 2') {
-            self._nvChanged = true;
-            debug.init('Non-Volatile memory is changed.');
-            return self.reset('hard');
-        } else {
-            return Q.reject(err);
-        }
-    }).nodeify(callback);
 };
 
 Controller.prototype.checkOnline = function (dev, callback) {

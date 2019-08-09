@@ -1,6 +1,6 @@
 import events from 'events';
 import Database from './database';
-import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter'
+import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter';
 
 // @ts-ignore
 import mixin from 'mixin-deep';
@@ -52,7 +52,6 @@ class Controller extends events.EventEmitter {
     }
 
     public async stop(): Promise<void> {
-        console.log('stop\n\n')
         await this.adapter.stop();
     }
 }
