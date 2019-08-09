@@ -13,7 +13,7 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 - [ ] Cleanup zcl-packet (remove dissolve-chunks, concentrator depedency, deprecated/zcl-packet)
 - [ ] Refactor lib (original source of zigbee-shepherd)
 - [ ] What to do with ziee (remove?)
-- [ ] What to do with zive (remove?)
+- [x] What to do with zive (remove?)
 - [ ] What to do with areq (remove?)
 
 ### Start

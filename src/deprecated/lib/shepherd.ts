@@ -508,36 +508,7 @@ ZShepherd.prototype._unregisterDev = function (dev, callback) {
 ZShepherd.prototype._attachZclMethods = function (ep) {
     var self = this;
 
-    if (ep.constructor.name === 'Zive') {
-        var zApp = ep;
-        zApp.foundation = function (dstAddr, dstEpId, cId, cmd, zclData, cfg, callback) {
-            var dstEp = self.find(dstAddr, dstEpId);
-
-            if (typeof cfg === 'function') {
-                callback = cfg;
-                cfg = {};
-            }
-
-            if (!dstEp)
-                return Q.reject(new Error('dstEp is not found.')).nodeify(callback);
-            else
-                return self._foundation(zApp._endpoint, dstEp, cId, cmd, zclData, cfg, callback);
-        };
-
-        zApp.functional = function (dstAddr, dstEpId, cId, cmd, zclData, cfg, callback) {
-            var dstEp = self.find(dstAddr, dstEpId);
-
-            if (typeof cfg === 'function') {
-                callback = cfg;
-                cfg = {};
-            }
-
-            if (!dstEp)
-                return Q.reject(new Error('dstEp is not found.')).nodeify(callback);
-            else
-                return self._functional(zApp._endpoint, dstEp, cId, cmd, zclData, cfg, callback);
-        };
-    } else if (ep instanceof Group) {
+    if (ep instanceof Group) {
         ep.functional = function (cId, cmd, zclData, cfg, callback) {
             return self._functional(ep, ep, cId, cmd, zclData, cfg, callback);
         };
