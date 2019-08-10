@@ -1,5 +1,7 @@
 import Entity from './entity';
 import {KeyValue} from '../tstype';
+import {IsNumberArray} from '../../utils';
+import * as Zcl from '../../zcl';
 
 class Endpoint extends Entity {
     public readonly ID: number;
@@ -28,7 +30,7 @@ class Endpoint extends Entity {
     public toDatabaseRecord(): KeyValue {
         return {
             profId: this.profileID, epId: this.ID, devId: this.deviceID,
-            inClusterList: this.inputClusters, outClusterList: this.outputClusters,
+            inClusterList: this.inputClusters, outClusterList: this.outputClusters, clusters: {},
         };
     }
 
@@ -38,7 +40,25 @@ class Endpoint extends Entity {
         return new Endpoint(ID, profileID, deviceID, inputClusters, outputClusters);
     }
 
-    public getID(): number {return this.ID}
+    public async update(key: 'profileID' | 'deviceID' | 'inputClusters' | 'outputClusters', value: number | number[]): Promise<void> {
+        if (typeof value === 'number' && (key === 'profileID' || key === 'deviceID')) {
+            this[key] = value;
+        } else if (IsNumberArray(value) && (key === 'inputClusters' || key === 'outputClusters')) {
+            this[key] = value;
+        }
+    }
+
+    public async read(clusterKey: number | string, attributes: string[] | number []): Promise<void> {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const payload: {attrId: number}[] = [];
+        for (let attribute of attributes) {
+            payload.push({attrId: cluster.getAttribute(attribute).ID})
+        }
+
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 0, 'read', cluster.ID, payload);
+
+
+    }
 }
 
 export default Endpoint;

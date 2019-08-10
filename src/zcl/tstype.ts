@@ -29,7 +29,7 @@ interface Cluster {
     commandsResponse: {
         [s: string]: Command;
     };
-    getAttributeByID: (ID: number) => Attribute;
+    getAttribute: (key: number | string) => Attribute;
 };
 
 interface BuffaloZclOptions extends BuffaloTsType.Options {

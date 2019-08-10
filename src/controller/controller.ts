@@ -2,9 +2,10 @@ import events from 'events';
 import Database from './database';
 import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter';
 import {Entity, Device} from './model';
-import {Events, DeviceJoinedPayload, ZclDataPayload} from '../adapter/events'
+import {Events as AdapterEvents, DeviceJoinedPayload, ZclDataPayload} from '../adapter/events'
 import {ZclFrameToEvent} from './helpers';
 import {FrameType, Foundation, Cluster} from '../zcl';
+import {Events, MessagePayload} from './events';
 
 // @ts-ignore
 import mixin from 'mixin-deep';
@@ -51,9 +52,9 @@ class Controller extends events.EventEmitter {
         this.adapter = new ZStackAdapter(options.network, options.serialPort, options.backupPath);
 
         this.onDeviceJoined = this.onDeviceJoined.bind(this);
-        this.adapter.on(Events.DeviceJoined, this.onDeviceJoined);
+        this.adapter.on(AdapterEvents.DeviceJoined, this.onDeviceJoined);
         this.onZclData = this.onZclData.bind(this);
-        this.adapter.on(Events.ZclData, this.onZclData);
+        this.adapter.on(AdapterEvents.ZclData, this.onZclData);
     }
 
     public async start(): Promise<void> {
@@ -99,42 +100,71 @@ class Controller extends events.EventEmitter {
         }
     }
 
+    public getPermitJoin(): boolean {
+        return this.permitJoin != null;
+    }
+
     public async stop(): Promise<void> {
         await this.permitJoin(false);
         await this.adapter.stop();
     }
 
+    public async softReset(): Promise<void> {
+        await this.adapter.softReset();
+    }
+
+    public async getCoordinatorVersion(): Promise<AdapterTsType.CoordinatorVersion> {
+        return await this.adapter.getCoordinatorVersion();
+    }
+
+    public async getDevices(): Promise<Device[]> {
+        return Device.all();
+    }
+
+    public async getDevice(ieeeAddr: string): Promise<Device> {
+        return Device.findByIeeeAddr(ieeeAddr);
+    }
+
+    public async disableLED(): Promise<void> {
+        await this.adapter.disableLED();
+    }
+
     private async onDeviceJoined(payload: DeviceJoinedPayload): Promise<void> {
         debug.log(`New device '${payload.ieeeAddr}' joined`);
 
-        const device = await Device.findByIeeeAddr(payload.ieeeAddr)
+        let device = await Device.findByIeeeAddr(payload.ieeeAddr)
         if (!device) {
             debug.log(`Creating device '${payload.ieeeAddr}'`);
-            Device.create(
+            device = await Device.create(
                 undefined, payload.ieeeAddr, payload.networkAddress, undefined,
                 undefined, undefined, undefined, []
             );
+
+            await device.interview();
         } else {
             debug.log(`Device '${payload.ieeeAddr}' is already in database, updating networkAddress`);
             await device.update('networkAddress', payload.networkAddress);
         }
     }
 
-    private async onZclData(payload: ZclDataPayload): Promise<void> {
-        debug.log(`Received ZCL data '${JSON.stringify(payload)}'`);
 
-        const device = await Device.findByNetworkAddress(payload.networkAddress);
+    private async onZclData(zclData: ZclDataPayload): Promise<void> {
+        return;
+        debug.log(`Received ZCL data '${JSON.stringify(zclData)}'`);
+
+        const device = await Device.findByNetworkAddress(zclData.networkAddress);
 
         if (!device) {
-            debug.log(`ZCL data is from unknown device with network adress '${payload.networkAddress}', skipping...`)
+            debug.log(`ZCL data is from unknown device with network adress '${zclData.networkAddress}', skipping...`)
             return;
         }
 
-        const frame = payload.frame;
-        const event = ZclFrameToEvent(payload.frame);
+        const frame = zclData.frame;
+        const event = ZclFrameToEvent(zclData.frame);
         const command = frame.getCommand();
         const cluster = frame.getCluster();
         const frameType = frame.Header.frameControl.frameType;
+        const payload: MessagePayload = {data: null};
 
         if (frameType === FrameType.GLOBAL) {
             if (cluster.ID === Cluster.genBasic.ID) {
@@ -145,6 +175,8 @@ class Controller extends events.EventEmitter {
                 }
             }
         }
+
+        this.emit(Events.message, payload);
     }
 }
 

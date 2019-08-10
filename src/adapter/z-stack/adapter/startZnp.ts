@@ -5,16 +5,11 @@ import equals from 'fast-deep-equal';
 import * as TsType from '../../tstype';
 import fs from 'fs';
 import * as Zcl from '../../../zcl';
+import {ZnpVersion} from './tstype';
 
 const debug = require('debug')('zigbee-herdsman:controller:zStack:startZnp');
 const Subsystem = UnpiConstants.Subsystem;
 const NvItemsIds = Constants.COMMON.nvItemIds;
-
-enum ZnpVersion {
-    zStack12 = 0,
-    zStack3x0 = 1,
-    zStack30x = 2,
-}
 
 interface NvItem {
     id: number;
@@ -263,14 +258,7 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(version));
 }
 
-export default async (znp: Znp, options: TsType.NetworkOptions, backupPath?: string): Promise<void> => {
-    let result;
-
-    result = await znp.request(Subsystem.SYS, 'version', {});
-    const version: ZnpVersion = result.payload.product;
-
-    debug(`Detected znp version '${ZnpVersion[version]}'`);
-
+export default async (znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, backupPath?: string): Promise<void> => {
     if (await needsToBeInitialised(znp, version, options)) {
         debug('Coordinator needs to be reinitialised');
         if (backupPath && fs.existsSync(backupPath)) {

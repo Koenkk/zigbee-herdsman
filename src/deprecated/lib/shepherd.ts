@@ -92,16 +92,6 @@ function ZShepherd(path, opts) {
         });
     });
 
-    this.on('ind:incoming', function (dev) {
-        var endpoints = [];
-
-        _.forEach(dev.epList, function (epId) {
-            endpoints.push(dev.getEndpoint(epId));
-        });
-
-        self.emit('ind', { type: 'devIncoming', endpoints: endpoints, data: dev.getIeeeAddr() });
-    });
-
 
     this.on('ind:enddeviceannce', function (dev) {
         var endpoints = [];

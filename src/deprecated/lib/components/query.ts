@@ -40,90 +40,6 @@ query.network = function (param, callback) {
         return query._networkAll(callback);        // return { state, channel, panId, extPanId, ieeeAddr, nwkAddr }
 };
 
-query.firmware = function(){
-    return controller.request('SYS', 'version', {})
-        .then(function(rsp){
-            return {
-                transportrev: rsp.transportrev,
-                product: rsp.product,
-                version: rsp.majorrel + "." + rsp.minorrel + "." + rsp.maintrel,
-                revision: rsp.revision
-            }
-        }).fail(function(){
-            return {error: "Unable to get firmware version"}
-        });
-}
-
-query.device = function (ieeeAddr, nwkAddr, callback) {
-    var devInfo = {
-            type: null,
-            ieeeAddr: ieeeAddr,
-            nwkAddr: nwkAddr,
-            manufId: null,
-            epList: null
-        };
-
-    proving.string(ieeeAddr, 'ieeeAddr should be a string.');
-    proving.number(nwkAddr, 'nwkAddr should be a number.');
-
-    return controller.request('ZDO', 'nodeDescReq', { dstaddr: nwkAddr, nwkaddrofinterest: nwkAddr }).then(function (rsp) {
-        // rsp: { srcaddr, status, nwkaddr, logicaltype_cmplxdescavai_userdescavai, ..., manufacturercode, ... }
-        devInfo.type = devType(rsp.logicaltype_cmplxdescavai_userdescavai & 0x07);  // logical type: bit0-2
-        devInfo.manufId = rsp.manufacturercode;
-        return controller.request('ZDO', 'activeEpReq', { dstaddr: nwkAddr, nwkaddrofinterest: nwkAddr });
-    }).then(function(rsp) {
-        // rsp: { srcaddr, status, nwkaddr, activeepcount, activeeplist }
-        devInfo.epList = bufToArray(rsp.activeeplist, 'uint8');
-        return devInfo;
-    }).nodeify(callback);
-};
-
-query.endpoint = function (nwkAddr, epId, callback) {
-    proving.number(nwkAddr, 'nwkAddr should be a number.');
-
-    return controller.request('ZDO', 'simpleDescReq', { dstaddr: nwkAddr, nwkaddrofinterest: nwkAddr, endpoint: epId }).then(function (rsp) {
-        // rsp: { ..., endpoint, profileid, deviceid, deviceversion, numinclusters, inclusterlist, numoutclusters, outclusterlist }
-        return {
-            profId: rsp.profileid || 0,
-            epId: rsp.endpoint,
-            devId: rsp.deviceid || 0,
-            inClusterList: rsp.inclusterlist,
-            outClusterList: rsp.outclusterlist,
-        };
-    }).nodeify(callback);
-};
-
-query.deviceWithEndpoints = function (nwkAddr, ieeeAddr, callback) {
-    var deferred = Q.defer(),
-        epQueries = [],
-        fullDev;
-
-    query.device(ieeeAddr, nwkAddr).then(function (devInfo) {
-        fullDev = devInfo;
-
-        _.forEach(fullDev.epList, function (epId) {
-            var epQuery = {func: query.endpoint, nwkAddr: nwkAddr, epId: epId};
-            epQueries.push(epQuery);
-        });
-
-        var result = Q();
-        var resultArray = [];
-        epQueries.forEach(function (f) {
-            result = result.then(function(){
-                return f.func(f.nwkAddr, f.epId).then(res => resultArray.push(res));
-            });
-        });
-        return result.then(() => resultArray);
-    }).then(function (epInfos) {
-        fullDev.endpoints = epInfos;
-        deferred.resolve(fullDev);
-    }).fail(function (err) {
-        deferred.reject(err);
-    }).done();
-
-    return deferred.promise.nodeify(callback);
-};
-
 query.setBindingEntry = function (bindMode, srcEp, cId, dstEpOrGrpId, callback) {
     var deferred = Q.defer(),
         cIdItem = Zcl.getClusterLegacy(cId),
@@ -281,23 +197,6 @@ function devType(type) {
         default:
             break;
     }
-}
-
-function addrBuf2Str(buf) {
-    var val,
-        bufLen = buf.length,
-        strChunk = '0x';
-
-    for (var i = 0; i < bufLen; i += 1) {
-        val = buf.readUInt8(bufLen - i - 1);
-
-        if (val <= 15)
-            strChunk += '0' + val.toString(16);
-        else
-            strChunk += val.toString(16);
-    }
-
-    return strChunk;
 }
 
 function bufToArray(buf, nip) {

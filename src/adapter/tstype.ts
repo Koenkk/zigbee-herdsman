@@ -13,6 +13,30 @@ interface SerialPortOptions {
     path: string;
 };
 
+interface CoordinatorVersion {
+    type: string;
+    meta: {[s: string]: number | string};
+}
+
+type DeviceType = 'Coordinator' | 'EndDevice' | 'Router' | 'Unknown';
+
+interface NodeDescriptor {
+    type: DeviceType;
+    manufacturerCode: number;
+}
+
+interface ActiveEndpoints {
+    endpoints: number[];
+}
+
+interface SimpleDescriptor {
+    profileID: number;
+    endpointID: number;
+    deviceID: number;
+    inputerClusters: number[];
+    outputClusters: number[];
+}
+
 interface Coordinator {
     ieeeAddr: string;
     networkAddress: number;
@@ -27,5 +51,5 @@ interface Coordinator {
 }
 
 export {
-    SerialPortOptions, NetworkOptions, Coordinator,
+    SerialPortOptions, NetworkOptions, Coordinator, CoordinatorVersion, NodeDescriptor, DeviceType, ActiveEndpoints, SimpleDescriptor,
 }

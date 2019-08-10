@@ -115,47 +115,6 @@ function Controller(shepherd, cfg) {
             bridge._areqEventBridge(self, msg);
         }
     });
-
-    this.on('ZDO:tcDeviceInd', function (tcData) {
-        if(tcData.parentaddr == 0){
-            return
-        }
-        const data = {srcaddr: tcData.nwkaddr, nwkaddr: tcData.nwkaddr, ieeeaddr: tcData.extaddr, capabilities: {}};
-        if (self._spinLock) {
-            self._joinQueue.push({
-                func: function () {
-                    self.endDeviceAnnceHdlr(data);
-                },
-                ieeeAddr: data.ieeeaddr
-            });
-        } else {
-            self._spinLock = true;
-            self.endDeviceAnnceHdlr(data);
-        }
-    });
-
-    this.on('ZDO:endDeviceAnnceInd', function (data) {
-        debug.shepherd('spinlock:', self._spinLock, self._joinQueue);
-        if (self._spinLock) {
-            // Check if joinQueue already has this device
-            for (var i = 0; i < self._joinQueue.length; i++) {
-                if (self._joinQueue[i].ieeeAddr == data.ieeeaddr) {
-                    debug.shepherd(`Device: ${self._joinQueue[i].ieeeAddr} already in joinqueue`);
-                    return;
-                }
-            }
-
-            self._joinQueue.push({
-                func: function () {
-                    self.endDeviceAnnceHdlr(data);
-                },
-                ieeeAddr: data.ieeeaddr
-            });
-        } else {
-            self._spinLock = true;
-            self.endDeviceAnnceHdlr(data);
-        }
-    });
 }
 
 util.inherits(Controller, EventEmitter);
@@ -287,10 +246,6 @@ Controller.prototype.remove = function (dev, cfg, callback) {
     }).nodeify(callback);
 };
 
-Controller.prototype.simpleDescReq = function (nwkAddr, ieeeAddr, callback) {
-    return this.query.deviceWithEndpoints(nwkAddr, ieeeAddr, callback);
-};
-
 Controller.prototype.bind = function (srcEp, cId, dstEpOrGrpId, callback) {
     return this.query.setBindingEntry('bind', srcEp, cId, dstEpOrGrpId, callback);
 };
@@ -371,90 +326,6 @@ Controller.prototype.checkOnline = function (dev, callback) {
     }).done();
 
     return deferred.promise.nodeify(callback);
-};
-
-Controller.prototype.endDeviceAnnceHdlr = function (data) {
-    var self = this,
-        joinTimeout,
-        joinEvent = 'ind:incoming' + ':' + data.ieeeaddr,
-        dev = this._shepherd._findDevByAddr(data.ieeeaddr);
-
-    if (dev && dev.status === 'online'){  // Device has already joined, do next item in queue
-        debug.shepherd(`Device: ${dev.getIeeeAddr()} already in network`);
-
-        if (self._joinQueue.length) {
-            var next = self._joinQueue.shift();
-
-            if (next) {
-                debug.shepherd('next item in joinqueue');
-                setImmediate(function () {
-                    next.func();
-                });
-            } else {
-                debug.shepherd('no next item in joinqueue');
-                self._spinLock = false;
-            }
-        } else {
-            self._spinLock = false;
-        }
-
-        return;
-    }
-
-    joinTimeout = setTimeout(function () {
-        if (self.listenerCount(joinEvent)) {
-            self.emit(joinEvent, '__timeout__');
-            self._shepherd.emit('joining', { type: 'timeout', ieeeAddr: data.ieeeaddr });
-        }
-
-        joinTimeout = null;
-    }, 30000);
-
-    this.once(joinEvent, function () {
-        if (joinTimeout) {
-            clearTimeout(joinTimeout);
-            joinTimeout = null;
-        }
-
-        if (self._joinQueue.length) {
-            var next = self._joinQueue.shift();
-
-            if (next){
-                setImmediate(function () {
-                    next.func();
-                });
-            } else {
-                self._spinLock = false;
-            }
-        } else {
-            self._spinLock = false;
-        }
-    });
-
-    this._shepherd.emit('joining', { type: 'associating', ieeeAddr: data.ieeeaddr });
-
-    this.simpleDescReq(data.nwkaddr, data.ieeeaddr).then(function (devInfo) {
-        return devInfo;
-    }).fail(function () {
-        return self.simpleDescReq(data.nwkaddr, data.ieeeaddr);
-    }).then(function (devInfo) {
-        // Now that we have the simple description of the device clear joinTimeout
-        if (joinTimeout) {
-            clearTimeout(joinTimeout);
-            joinTimeout = null;
-        }
-
-        // Defer a promise to wait for the controller to complete the ZDO:devIncoming event!
-        var processIncoming = Q.defer();
-        self.emit('ZDO:devIncoming', devInfo, processIncoming.resolve, processIncoming.reject);
-        return processIncoming.promise;
-    }).then(function () {
-        self.emit(joinEvent, '__timeout__');
-    }).fail(function (err) {
-        self._shepherd.emit('error', 'Cannot get the Node Descriptor of the Device: ' + data.ieeeaddr + ' ('+err+')');
-        self._shepherd.emit('joining', { type: 'error', ieeeAddr: data.ieeeaddr });
-        self.emit(joinEvent, '__timeout__');
-    }).done();
 };
 
 Controller.prototype.backupCoordinator = async function (path, callback) {

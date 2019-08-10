@@ -54,8 +54,12 @@ function getCluster(key: string | number): TsType.Cluster {
     // eslint-disable-next-line
     const attributes: {[s: string]: TsType.Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).map(([k, v]): any => ({[k]: {...v, name: k}})));
 
-    const getAttributeByID = (ID: number): TsType.Attribute => {
-        return Object.values(attributes).find((a): boolean => a.ID === ID);
+    const getAttribute = (key: number | string): TsType.Attribute => {
+        if (typeof key === 'number') {
+            return Object.values(attributes).find((a): boolean => a.ID === key);
+        } else if (typeof key === 'string') {
+            return Object.values(attributes).find((a): boolean => a.name === key);
+        }
     }
 
     return {
@@ -66,7 +70,7 @@ function getCluster(key: string | number): TsType.Cluster {
         commands: Object.assign({}, ...Object.entries(cluster.commands).map(([k, v]): any => ({[k]: {...v, name: k}}))),
         // eslint-disable-next-line
         commandsResponse: Object.assign({}, ...Object.entries(cluster.commandsResponse).map(([k, v]): any => ({[k]: {...v, name: k}}))),
-        getAttributeByID,
+        getAttribute,
     };
 }
 

@@ -28,7 +28,6 @@ handlers.attachEventHandlers = function (shepherd) {
     });
 
     controller.removeListener('SYS:resetInd',          hdls.resetInd);
-    controller.removeListener('ZDO:devIncoming',       hdls.devIncoming);
     controller.removeListener('ZDO:endDeviceAnnceInd', hdls.endDeviceAnnceInd);
     controller.removeListener('ZDO:tcDeviceInd',       hdls.tcDeviceInd);
     controller.removeListener('ZDO:stateChangeInd',    hdls.stateChangeInd);
@@ -42,7 +41,6 @@ handlers.attachEventHandlers = function (shepherd) {
     // controller.removeListener('ZDO:permitJoinInd',     hdls.permitJoinInd);
 
     controller.on('SYS:resetInd',          hdls.resetInd);
-    controller.on('ZDO:devIncoming',       hdls.devIncoming);
     controller.on('ZDO:endDeviceAnnceInd', hdls.endDeviceAnnceInd);
     controller.on('ZDO:tcDeviceInd',       hdls.tcDeviceInd);
     controller.on('ZDO:stateChangeInd',    hdls.stateChangeInd);
@@ -84,39 +82,7 @@ handlers.resetInd = function (msg) {
 
 handlers.devIncoming = function (devInfo, resolve) {
     // devInfo: { type, ieeeAddr, nwkAddr, manufId, epList, endpoints: [ simpleDesc, ... ] }
-    var self = this,
-        dev = this._findDevByAddr(devInfo.ieeeAddr),
-        clustersReqs = [];
 
-    function syncEndpoints(dev) {
-        devInfo.endpoints.forEach(function (simpleDesc) {
-            var ep = dev.getEndpoint(simpleDesc.epId);
-
-            if (ep) {
-                ep.update(simpleDesc);
-            } else {
-                ep = new Endpoint(dev, simpleDesc);
-                ep.clusters = new Ziee();
-                self._attachZclMethods(ep);
-                dev.endpoints[ep.getEpId()] = ep;
-            }
-        });
-    }
-
-    var processDev = Q.fcall(function () {
-        if (dev) {
-            dev.update(devInfo);
-            dev.update({ status: 'online', joinTime: Math.floor(Date.now()/1000) });
-            syncEndpoints(dev);
-            return dev;
-        } else {
-            dev = new Device(devInfo);
-            dev.update({ status: 'online', joinTime: Math.floor(Date.now()/1000) });
-            syncEndpoints(dev);
-            return self._registerDev(dev).then(function () {
-                            return dev;
-                });
-        }
     }).then(function(dev) {
         if (!dev || !dev.hasOwnProperty('endpoints')) return dev;
 
