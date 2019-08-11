@@ -3,9 +3,10 @@ import Database from './database';
 import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter';
 import {Entity, Device} from './model';
 import {Events as AdapterEvents, DeviceJoinedPayload, ZclDataPayload} from '../adapter/events'
-import {ZclFrameToEvent} from './helpers';
-import {FrameType, Foundation, Cluster} from '../zcl';
-import {Events, MessagePayload} from './events';
+import {ZclFrameConverter} from './helpers';
+import {FrameType, Foundation, Cluster, ZclFrame} from '../zcl';
+import {Events, MessagePayload, MessagePayloadType} from './events';
+import {KeyValue} from './tstype';
 
 // @ts-ignore
 import mixin from 'mixin-deep';
@@ -139,17 +140,18 @@ class Controller extends events.EventEmitter {
                 undefined, payload.ieeeAddr, payload.networkAddress, undefined,
                 undefined, undefined, undefined, []
             );
-
-            await device.interview();
         } else {
             debug.log(`Device '${payload.ieeeAddr}' is already in database, updating networkAddress`);
             await device.update('networkAddress', payload.networkAddress);
         }
+
+        device.interview();
+
+        const data: MessagePayload = {type: 'deviceJoined', device};
+        this.emit(Events.message, data)
     }
 
-
     private async onZclData(zclData: ZclDataPayload): Promise<void> {
-        return;
         debug.log(`Received ZCL data '${JSON.stringify(zclData)}'`);
 
         const device = await Device.findByNetworkAddress(zclData.networkAddress);
@@ -159,24 +161,30 @@ class Controller extends events.EventEmitter {
             return;
         }
 
-        const frame = zclData.frame;
-        const event = ZclFrameToEvent(zclData.frame);
-        const command = frame.getCommand();
-        const cluster = frame.getCluster();
-        const frameType = frame.Header.frameControl.frameType;
-        const payload: MessagePayload = {data: null};
-
-        if (frameType === FrameType.GLOBAL) {
-            if (cluster.ID === Cluster.genBasic.ID) {
-                if (command.ID === Foundation.report.ID || command.ID === Foundation.readRsp.ID ) {
-                    if (event.data.data.hasOwnProperty('modelId')) {
-                        await device.update('modelID', event.data.data.modelId);
-                    }
-                }
+        const command = zclData.frame.Header.commandIdentifier;
+        let type: MessagePayloadType = undefined;
+        let data: KeyValue;
+        if (zclData.frame.Header.frameControl.frameType === FrameType.GLOBAL) {
+            if (command === Foundation.report.ID) {
+                type = 'attributeReport';
+                data = ZclFrameConverter.attributeList(zclData.frame);
+            } else if (command === Foundation.readRsp.ID) {
+                type = 'readResponse';
+                data = ZclFrameConverter.attributeList(zclData.frame);
             }
         }
 
-        this.emit(Events.message, payload);
+        // Some device report it's modelID through a readResponse or attributeReport
+        if ((type === 'readResponse' || type === 'attributeReport') && data.modelId && !device.get('modelID')) {
+            await device.update('modelID', data.modelId);
+        }
+
+        if (type) {
+            const endpoint = device.getEndpoint(zclData.endpoint);
+            const linkQuality = zclData.linkQuality;
+            const eventData: MessagePayload = {type, device, endpoint, data, linkQuality};
+            this.emit(Events.message, eventData);
+        }
     }
 }
 

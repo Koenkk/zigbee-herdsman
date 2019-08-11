@@ -32,7 +32,7 @@ function IsDataTypeAnalogOrDiscrete(dataType: DataType): 'ANALOG' | 'DISCRETE' {
 }
 
 function getCluster(key: string | number): TsType.Cluster {
-    let name;
+    let name: string;
 
     if (typeof key === 'number') {
         for (let clusterName in Cluster) {
@@ -53,24 +53,50 @@ function getCluster(key: string | number): TsType.Cluster {
 
     // eslint-disable-next-line
     const attributes: {[s: string]: TsType.Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).map(([k, v]): any => ({[k]: {...v, name: k}})));
+    // eslint-disable-next-line
+    const commands: {[s: string]: TsType.Command} = Object.assign({}, ...Object.entries(cluster.commands).map(([k, v]): any => ({[k]: {...v, name: k}})));
 
     const getAttribute = (key: number | string): TsType.Attribute => {
+        let result: TsType.Attribute = null;
+
         if (typeof key === 'number') {
-            return Object.values(attributes).find((a): boolean => a.ID === key);
+            result = Object.values(attributes).find((a): boolean => a.ID === key);
         } else if (typeof key === 'string') {
-            return Object.values(attributes).find((a): boolean => a.name === key);
+            result = Object.values(attributes).find((a): boolean => a.name === key);
         }
+
+        if (!result) {
+            throw new Error(`Cluster '${name}' has no attribute '${key}'`)
+        }
+
+        return result;
+    }
+
+    const getCommand = (key: number | string): TsType.Command => {
+        let result: TsType.Command = null;
+
+        if (typeof key === 'number') {
+            result = Object.values(commands).find((a): boolean => a.ID === key);
+        } else if (typeof key === 'string') {
+            result = Object.values(commands).find((a): boolean => a.name === key);
+        }
+
+        if (!result) {
+            throw new Error(`Cluster '${name}' has no command '${key}'`)
+        }
+
+        return result;
     }
 
     return {
         ID: cluster.ID,
         attributes,
         name,
-        // eslint-disable-next-line
-        commands: Object.assign({}, ...Object.entries(cluster.commands).map(([k, v]): any => ({[k]: {...v, name: k}}))),
+        commands,
         // eslint-disable-next-line
         commandsResponse: Object.assign({}, ...Object.entries(cluster.commandsResponse).map(([k, v]): any => ({[k]: {...v, name: k}}))),
         getAttribute,
+        getCommand,
     };
 }
 

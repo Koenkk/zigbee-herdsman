@@ -1,5 +1,7 @@
 import {NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor, ActiveEndpoints, SimpleDescriptor} from './tstype';
+import {ZclDataPayload} from './events';
 import events from 'events';
+import {ZclFrame} from '../zcl';
 
 abstract class Adapter extends events.EventEmitter {
     protected networkOptions: NetworkOptions;
@@ -33,10 +35,9 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor>;
 
-    public abstract dataRequest(
-        addressMode: number, destinationAddress: string, destinationEndpoint: number, destinationPanID: number, sourceEndpoint: number, clusterID: number, transactionID: number,
-        options: number, radius: number, data: Buffer
-    ): Promise<DataResponse>;
+    public abstract sendZclFrameNetworkAddressWithResponse(networkAddress: number, endpoint: number, clusterID: number, zclFrame: ZclFrame): Promise<ZclDataPayload>;
+
+    public abstract sendZclFrameNetworkAddress(networkAddress: number, endpoint: number, clusterID: number, zclFrame: ZclFrame): Promise<void>;
 }
 
 export default Adapter;

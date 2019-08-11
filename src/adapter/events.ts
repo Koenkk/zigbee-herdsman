@@ -13,6 +13,8 @@ interface DeviceJoinedPayload {
 interface ZclDataPayload {
     networkAddress: number;
     frame: ZclFrame;
+    endpoint: number;
+    linkQuality: number;
 }
 
 export {

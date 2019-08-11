@@ -11,16 +11,36 @@ import * as Constants from '../constants';
 const debug = require('debug')("zigbee-herdsman:controller:zStack");
 const Subsystem = UnpiConstants.Subsystem;
 
+interface IncomingMessageWaiter {
+    networkAddress: number;
+    endpoint: number;
+    transactionSequenceNumber: number;
+    resolve: Function;
+    reject: Function;
+    // eslint-disable-next-line
+    timer?: any;
+    timedout: boolean;
+};
+
+const DataConfirmCodeLookup: {[k: number]: string} = {
+    205: 'No network route',
+    233: 'MAC no ack',
+    183: 'APS no ack',
+    240: 'MAC transaction expired',
+}
+
 class ZStackAdapter extends Adapter {
     private znp: Znp;
     private transactionID: number;
     private version: {product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string};
+    private incomingMessageWaiter: IncomingMessageWaiter[];
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string) {
         super(networkOptions, serialPortOptions, backupPath);
         this.znp = new Znp(this.serialPortOptions.path, this.serialPortOptions.baudRate, this.serialPortOptions.rtscts);
 
         this.transactionID = 0;
+        this.incomingMessageWaiter = [];
 
         this.onZnpRecieved = this.onZnpRecieved.bind(this);
         this.onZnpClose = this.onZnpClose.bind(this);
@@ -29,6 +49,9 @@ class ZStackAdapter extends Adapter {
         this.znp.on('close', this.onZnpClose);
     }
 
+    /**
+     * Adapter methods
+     */
     public async start(): Promise<void> {
         // TODO: gracefully close when on error
         await this.znp.open();
@@ -81,38 +104,8 @@ class ZStackAdapter extends Adapter {
         await this.znp.request(Subsystem.ZDO, 'mgmtPermitJoinReq', payload);
     }
 
-    public onZnpRecieved(object: ZpiObject): void {
-        if (object.type !== UnpiConstants.Type.AREQ) {
-            return;
-        }
-
-        if (object.subsystem === Subsystem.ZDO) {
-            if (object.command === 'tcDeviceInd') {
-                const payload: DeviceJoinedPayload = {
-                    networkAddress: object.payload.nwkaddr,
-                    ieeeAddr: object.payload.extaddr,
-                };
-
-                this.emit(Events.DeviceJoined, payload);
-            }
-        } else if (object.subsystem === Subsystem.AF) {
-            if (object.command === 'incomingMsg') {
-                const payload: ZclDataPayload = {
-                    frame:  ZclFrame.fromBuffer(object.payload.clusterid, object.payload.data),
-                    networkAddress: object.payload.srcaddr,
-                }
-
-                this.emit(Events.ZclData, payload);
-            }
-        }
-    }
-
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
         return {type: ZnpVersion[this.version.product], meta: this.version};
-    }
-
-    public onZnpClose(): void {
-        // TODO
     }
 
     public async softReset(): Promise<void> {
@@ -150,7 +143,7 @@ class ZStackAdapter extends Adapter {
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
         const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'simpleDescRsp');
-        this.znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: networkAddress, nwkaddrofinterest: networkAddress, endpoint: endpointID});
+        this.znp.request(Subsystem.ZDO, 'simpleDescReq', {dstaddr: networkAddress, nwkaddrofinterest: networkAddress, endpoint: endpointID});
         const descriptor = await response;
         return {
             profileID: descriptor.payload.profId,
@@ -161,22 +154,72 @@ class ZStackAdapter extends Adapter {
         }
     }
 
-    public async dataRequestEndpoint(networkAddress: number, endpoint: number, clusterID: number) {
-        return await this.dataRequest(networkAddress, endpoint, 1, clusterID, )
+    public async sendZclFrameNetworkAddressWithResponse(networkAddress: number, endpoint: number, clusterID: number, zclFrame: ZclFrame): Promise<ZclDataPayload> {
+        const response = this.waitForIncomingMessage(networkAddress, endpoint, zclFrame.Header.transactionSequenceNumber);
+        await this.sendZclFrameNetworkAddress(networkAddress, endpoint, clusterID, zclFrame);
+        return await response;
     }
 
-    private async dataRequest(destinationAddress: number, destinationEndpoint: number, sourceEndpoint: number, clusterID: number, radius: number, data: Buffer): Promise<void> {
+    public async sendZclFrameNetworkAddress(networkAddress: number, endpoint: number, clusterID: number, zclFrame: ZclFrame): Promise<void> {
+        await this.dataRequest(networkAddress, endpoint, 1, clusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer());
+    }
+
+    /**
+     * Event handlers
+     */
+    public onZnpClose(): void {
+        // TODO
+    }
+
+    public onZnpRecieved(object: ZpiObject): void {
+        if (object.type !== UnpiConstants.Type.AREQ) {
+            return;
+        }
+
+        if (object.subsystem === Subsystem.ZDO) {
+            if (object.command === 'tcDeviceInd') {
+                const payload: DeviceJoinedPayload = {
+                    networkAddress: object.payload.nwkaddr,
+                    ieeeAddr: object.payload.extaddr,
+                };
+
+                this.emit(Events.DeviceJoined, payload);
+            }
+        } else if (object.subsystem === Subsystem.AF) {
+            if (object.command === 'incomingMsg') {
+                const payload: ZclDataPayload = this.incomingMsgToZclDataPayload(object);
+                this.resolveIncomingMessageWaiters(payload);
+                this.emit(Events.ZclData, payload);
+            }
+        }
+    }
+
+    /**
+     * Private methods
+     */
+    private async dataRequest(destinationAddress: number, destinationEndpoint: number, sourceEndpoint: number, clusterID: number, radius: number, data: Buffer): Promise<ZpiObject> {
+        const transactionID = this.nextTransactionID()
+        const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID});
+
         await this.znp.request(Subsystem.AF, 'dataRequest', {
             dstaddr: destinationAddress,
             destendpoint: destinationEndpoint,
             srcendpoint: sourceEndpoint,
             clusterid: clusterID,
-            transid: this.nextTransactionID(),
-            options: Constants.AF.options.ACK_REQUEST | Constants.AF.options.DISCV_ROUTE,
+            transid: transactionID,
+            options: 0, // TODO: why was this here? Constants.AF.options.ACK_REQUEST | Constants.AF.options.DISCV_ROUTE,
             radius: radius,
             len: data.length,
             data: data,
         });
+
+        const dataConfirm =  await response;
+
+        if (dataConfirm.payload.status !== 0) {
+            throw new Error(`Data request failed with error: '${DataConfirmCodeLookup[dataConfirm.payload.status] || 'unknown'}' (${dataConfirm.payload.status})`)
+        }
+
+        return dataConfirm;
     };
 
     private nextTransactionID(): number {
@@ -187,6 +230,46 @@ class ZStackAdapter extends Adapter {
         }
 
         return this.transactionID;
+    }
+
+    private incomingMsgToZclDataPayload(object: ZpiObject): ZclDataPayload {
+        return {
+            frame: ZclFrame.fromBuffer(object.payload.clusterid, object.payload.data),
+            networkAddress: object.payload.srcaddr,
+            endpoint: object.payload.srcendpoint,
+            linkQuality: object.payload.linkquality,
+        };
+    }
+
+    private resolveIncomingMessageWaiters(payload: ZclDataPayload): void {
+        for (let index = 0; index < this.incomingMessageWaiter.length; index++) {
+            const waiter = this.incomingMessageWaiter[index];
+            const match = payload.networkAddress === waiter.networkAddress && payload.endpoint === waiter.endpoint && payload.frame.Header.transactionSequenceNumber === waiter.transactionSequenceNumber;
+
+            if (waiter.timedout) {
+                this.incomingMessageWaiter.splice(index, 1);
+            } else if (match) {
+                clearTimeout(waiter.timer);
+                waiter.resolve(payload);
+                this.incomingMessageWaiter.splice(index, 1);
+            }
+        }
+    }
+
+    private waitForIncomingMessage(networkAddress: number, endpoint: number, transactionSequenceNumber: number): Promise<ZclDataPayload> {
+        return new Promise((resolve, reject): void => {
+            const object: IncomingMessageWaiter = {networkAddress, endpoint, transactionSequenceNumber, resolve, reject, timedout: false};
+            const timeout = 10;
+
+            object.timer = setTimeout((): void => {
+                const message = `Timeout - ${networkAddress} - ${endpoint} - ${transactionSequenceNumber} after ${timeout}s`;
+                object.timedout = true;
+                debug(message);
+                reject(new Error(message));
+            }, timeout * 1000);
+
+            this.incomingMessageWaiter.push(object);
+        });
     }
 }
 

@@ -1,5 +1,5 @@
-import ZclFrameToEvent from './zclFrameToEvent';
+import * as ZclFrameConverter from './zclFrameConverter';
 
 export {
-    ZclFrameToEvent,
+    ZclFrameConverter,
 }

@@ -6,5 +6,6 @@ import Foundation from './foundation';
 import Status from './status';
 import * as TsType from './tstype';
 import FrameType from './frameType';
+import PowerSource from './powerSource';
 
-export {BuffaloZclDataType, Cluster, Direction, Foundation, Status, DataType, TsType, FrameType};
+export {BuffaloZclDataType, Cluster, Direction, Foundation, Status, DataType, TsType, FrameType, PowerSource};
