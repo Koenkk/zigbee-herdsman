@@ -86,6 +86,11 @@ module.exports = {
             const frame = ZclFrame.fromBuffer(0, rawBuf);
             converted = toLegacyFormat(frame, false, false);
             delete converted.payload;
+        }
+        catch (e) {
+        }
+
+        try {
             assert.deepEqual(header, converted);
         } catch (e) {
             console.log('\n\n\n\n\n');
