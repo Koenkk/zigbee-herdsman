@@ -69,6 +69,17 @@ class Device extends Entity {
         this.softwareBuildID = softwareBuildID;
     }
 
+    public async createEndpoint(ID: number): Promise<Endpoint> {
+        if (this.getEndpoint(ID)) {
+            throw new Error(`Device '${this.ieeeAddr}' already has an endpoint '${ID}'`);
+        }
+
+        const endpoint = Endpoint.create(ID, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
+        this.endpoints.push(endpoint);
+        await this.save();
+        return endpoint;
+    }
+
     public getEndpoints(): Endpoint[] {
         return this.endpoints;
     }
@@ -79,12 +90,13 @@ class Device extends Entity {
 
     private static fromDatabaseRecord(record: KeyValue): Device {
         const networkAddress = record.nwkAddr;
+        const ieeeAddr = record.ieeeAddr;
         const endpoints = Object.values(record.endpoints).map((e): Endpoint => {
-            return Endpoint.fromDatabaseRecord(e, networkAddress)
+            return Endpoint.fromDatabaseRecord(e, networkAddress, ieeeAddr)
         });
 
         return new Device(
-            record.id, record.type, record.ieeeAddr, networkAddress, record.manufId, endpoints,
+            record.id, record.type, ieeeAddr, networkAddress, record.manufId, endpoints,
             record.manufName, record.powerSource, record.modelId, record.appVersion,
             record.stackVersion, record.zclVersion, record.hwVersion, record.dateCode, record.swBuildId,
         );
@@ -105,7 +117,7 @@ class Device extends Entity {
         }
     }
 
-    public get(key: 'modelID'): string | number {
+    public get(key: 'modelID' | 'networkAddress'): string | number {
         return this[key];
     }
 
@@ -162,12 +174,12 @@ class Device extends Entity {
         powerSource: string, modelID: string,
         endpoints: {ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[]}[]
     ): Promise<Device> {
-        if (this.findByIeeeAddr(ieeeAddr)) {
+        if (await this.findByIeeeAddr(ieeeAddr)) {
             throw new Error(`Device with ieeeAddr '${ieeeAddr}' already exists`)
         }
 
         const endpointsMapped = endpoints.map((e): Endpoint => {
-            return Endpoint.create(e.ID, e.profileID, e.deviceID, e.inputClusters, e.outputClusters, networkAddress);
+            return Endpoint.create(e.ID, e.profileID, e.deviceID, e.inputClusters, e.outputClusters, networkAddress, ieeeAddr);
         });
 
         const ID = await this.database.newID();
@@ -196,13 +208,32 @@ class Device extends Entity {
 
         try {
             await nodeDescriptorQuery();
-        } catch (error) {
-            debug(`Interview - failed to get node descriptor for device '${this.ieeeAddr}', retrying...`);
-            await nodeDescriptorQuery();
+        } catch (error1) {
+            try {
+                // The default timeout for the nodeDescriptor query is 10 seconds, most of the times the first one fails
+                // and the second one succeeds.
+                debug(`Interview - failed to get node descriptor for device '${this.ieeeAddr}', retrying...`);
+                await nodeDescriptorQuery();
+            } catch (error2) {
+                // Xiaomi end devices have a different interview procedure, after pairing they report it's
+                // modelID trough a readResponse. The readResponse is received by the controller and set on the device
+                // Check if we have a modelID starting with lumi.* at this point, indicating a Xiaomi end device.
+                if (this.modelID && this.modelID.startsWith('lumi.')) {
+                    debug('Node descriptor request failed for the second time, got modelID starting with lumi, assuming Xiaomi end device');
+                    this.type = 'EndDevice';
+                    this.manufacturerID = 4151;
+                    this.manufacturerName = 'LUMI';
+                    this.powerSource = 'Battery';
+                    await this.save();
+                    return;
+                } else {
+                    throw error2;
+                }
+            }
         }
 
         const activeEndpoints = await Device.adapter.activeEndpoints(this.networkAddress);
-        this.endpoints = activeEndpoints.endpoints.map((e): Endpoint => Endpoint.create(e, undefined, undefined, [], [], this.networkAddress));
+        this.endpoints = activeEndpoints.endpoints.map((e): Endpoint => Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr));
         await this.save();
         debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 

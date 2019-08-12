@@ -1367,7 +1367,7 @@ const Definition: {
                 {name: 'srcendpoint', parameterType: ParameterType.UINT8},
                 {name: 'clusterid', parameterType: ParameterType.UINT16},
                 {name: 'dstaddrmode', parameterType: ParameterType.UINT8},
-                {name: 'addr_short_long', parameterType: ParameterType.IEEEADDR},
+                {name: 'dstaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'dstendpoint', parameterType: ParameterType.UINT8},
             ],
             response: [
@@ -1384,7 +1384,7 @@ const Definition: {
                 {name: 'srcendpoint', parameterType: ParameterType.UINT8},
                 {name: 'clusterid', parameterType: ParameterType.UINT16},
                 {name: 'dstaddrmode', parameterType: ParameterType.UINT8},
-                {name: 'addr_short_long', parameterType: ParameterType.IEEEADDR},
+                {name: 'dstaddress', parameterType: ParameterType.IEEEADDR},
                 {name: 'dstendpoint', parameterType: ParameterType.UINT8},
             ],
             response: [

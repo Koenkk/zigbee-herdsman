@@ -3,6 +3,7 @@ import {ZclFrame} from '../zcl';
 enum Events {
     DeviceJoined = "DeviceJoined",
     ZclData = "ZclData",
+    Disconnected = "Disconnected",
 }
 
 interface DeviceJoinedPayload {

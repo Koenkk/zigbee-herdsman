@@ -4,8 +4,8 @@ import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter';
 import {Entity, Device} from './model';
 import {Events as AdapterEvents, DeviceJoinedPayload, ZclDataPayload} from '../adapter/events'
 import {ZclFrameConverter} from './helpers';
-import {FrameType, Foundation, Cluster, ZclFrame} from '../zcl';
-import {Events, MessagePayload, MessagePayloadType} from './events';
+import {FrameType, Foundation} from '../zcl';
+import {Events, MessagePayload, MessagePayloadType, CommandsLookup} from './events';
 import {KeyValue} from './tstype';
 
 // @ts-ignore
@@ -56,6 +56,8 @@ class Controller extends events.EventEmitter {
         this.adapter.on(AdapterEvents.DeviceJoined, this.onDeviceJoined);
         this.onZclData = this.onZclData.bind(this);
         this.adapter.on(AdapterEvents.ZclData, this.onZclData);
+        this.onAdapterDisconnected = this.onAdapterDisconnected.bind(this);
+        this.adapter.on(AdapterEvents.Disconnected, this.onAdapterDisconnected);
     }
 
     public async start(): Promise<void> {
@@ -76,6 +78,13 @@ class Controller extends events.EventEmitter {
                 undefined, undefined, undefined, coordinator.endpoints
             );
         }
+
+        // setTimeout(async (): Promise<void> => {
+        //     const coordinator = (await Device.findByType('Coordinator'))[0]
+        //     const device = await Device.findByNetworkAddress(60133);
+        //     const endpoint = device.getEndpoint(1);
+        //     endpoint.bind('genOnOff', coordinator.getEndpoint(1));
+        // }, 1000);
     }
 
     public async permitJoin(permit: boolean): Promise<void> {
@@ -130,37 +139,50 @@ class Controller extends events.EventEmitter {
         await this.adapter.disableLED();
     }
 
-    private async onDeviceJoined(payload: DeviceJoinedPayload): Promise<void> {
-        debug.log(`New device '${payload.ieeeAddr}' joined`);
+    private async onAdapterDisconnected(): Promise<void> {
+        try {
+            await this.adapter.stop();
+        } catch (error) {
+        }
 
+        this.emit(Events.adapterDisconnected);
+    }
+
+    private async onDeviceJoined(payload: DeviceJoinedPayload): Promise<void> {
         let device = await Device.findByIeeeAddr(payload.ieeeAddr)
         if (!device) {
+            debug.log(`New device '${payload.ieeeAddr}' joined`);
             debug.log(`Creating device '${payload.ieeeAddr}'`);
             device = await Device.create(
                 undefined, payload.ieeeAddr, payload.networkAddress, undefined,
                 undefined, undefined, undefined, []
             );
-        } else {
-            debug.log(`Device '${payload.ieeeAddr}' is already in database, updating networkAddress`);
+
+            const data: MessagePayload = {type: 'deviceJoined', device};
+            this.emit(Events.message, data);
+            device.interview();
+        } else if (device.get('networkAddress') !== payload.networkAddress) {
+            debug.log(`Device '${payload.ieeeAddr}' is already in database with different networkAddress, updating networkAddress`);
             await device.update('networkAddress', payload.networkAddress);
         }
-
-        device.interview();
-
-        const data: MessagePayload = {type: 'deviceJoined', device};
-        this.emit(Events.message, data)
     }
 
     private async onZclData(zclData: ZclDataPayload): Promise<void> {
         debug.log(`Received ZCL data '${JSON.stringify(zclData)}'`);
 
         const device = await Device.findByNetworkAddress(zclData.networkAddress);
-
         if (!device) {
             debug.log(`ZCL data is from unknown device with network adress '${zclData.networkAddress}', skipping...`)
             return;
         }
 
+        let endpoint = device.getEndpoint(zclData.endpoint);
+        if (!endpoint) {
+            debug.log(`ZCL data is from unknown endpoint '${zclData.endpoint}' from device with network adress '${zclData.networkAddress}', creating it...`)
+            endpoint = await device.createEndpoint(zclData.endpoint);
+        }
+
+        // Parse command for event
         const command = zclData.frame.Header.commandIdentifier;
         let type: MessagePayloadType = undefined;
         let data: KeyValue;
@@ -171,6 +193,14 @@ class Controller extends events.EventEmitter {
             } else if (command === Foundation.readRsp.ID) {
                 type = 'readResponse';
                 data = ZclFrameConverter.attributeList(zclData.frame);
+            }
+        } else if (zclData.frame.Header.frameControl.frameType === FrameType.SPECIFIC) {
+            const command = zclData.frame.getCommand().name;
+            if (CommandsLookup[command]) {
+                type = CommandsLookup[command];
+                data = zclData.frame.Payload;
+            } else {
+                debug.log(`Skipping command '${command}' because it is missing from the lookup`);
             }
         }
 
@@ -184,6 +214,15 @@ class Controller extends events.EventEmitter {
             const linkQuality = zclData.linkQuality;
             const eventData: MessagePayload = {type, device, endpoint, data, linkQuality};
             this.emit(Events.message, eventData);
+        }
+
+        // Send a default response if necessary.
+        if (!zclData.frame.Header.frameControl.disableDefaultResponse) {
+            try {
+                await endpoint.defaultResponse(zclData.frame.getCommand().ID, 0, zclData.frame.ClusterID);
+            } catch (error) {
+                debug.error(`Default response to ${zclData.networkAddress} failed`);
+            }
         }
     }
 }

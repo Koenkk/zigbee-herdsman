@@ -34,6 +34,7 @@ class ZStackAdapter extends Adapter {
     private transactionID: number;
     private version: {product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string};
     private incomingMessageWaiter: IncomingMessageWaiter[];
+    private closing: boolean;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string) {
         super(networkOptions, serialPortOptions, backupPath);
@@ -41,6 +42,7 @@ class ZStackAdapter extends Adapter {
 
         this.transactionID = 0;
         this.incomingMessageWaiter = [];
+        this.closing = false;
 
         this.onZnpRecieved = this.onZnpRecieved.bind(this);
         this.onZnpClose = this.onZnpClose.bind(this);
@@ -63,6 +65,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async stop(): Promise<void> {
+        this.closing = true;
         await this.znp.close();
     }
 
@@ -117,7 +120,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
-        const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'nodeDescRsp');
+        const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'nodeDescRsp', {nwkaddr: networkAddress});
         this.znp.request(Subsystem.ZDO, 'nodeDescReq', {dstaddr: networkAddress, nwkaddrofinterest: networkAddress});
         const descriptor = await response;
 
@@ -135,14 +138,14 @@ class ZStackAdapter extends Adapter {
     }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
-        const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'activeEpRsp');
+        const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'activeEpRsp', {nwkaddr: networkAddress});
         this.znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: networkAddress, nwkaddrofinterest: networkAddress});
         const activeEp = await response;
         return {endpoints: activeEp.payload.activeeplist};
     }
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
-        const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'simpleDescRsp');
+        const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'simpleDescRsp', {nwkaddr: networkAddress, endpoint: endpointID});
         this.znp.request(Subsystem.ZDO, 'simpleDescReq', {dstaddr: networkAddress, nwkaddrofinterest: networkAddress, endpoint: endpointID});
         const descriptor = await response;
         return {
@@ -154,21 +157,55 @@ class ZStackAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameNetworkAddressWithResponse(networkAddress: number, endpoint: number, clusterID: number, zclFrame: ZclFrame): Promise<ZclDataPayload> {
+    public async sendZclFrameNetworkAddressWithResponse(networkAddress: number, endpoint: number, zclFrame: ZclFrame): Promise<ZclDataPayload> {
         const response = this.waitForIncomingMessage(networkAddress, endpoint, zclFrame.Header.transactionSequenceNumber);
-        await this.sendZclFrameNetworkAddress(networkAddress, endpoint, clusterID, zclFrame);
+        await this.sendZclFrameNetworkAddress(networkAddress, endpoint, zclFrame);
         return await response;
     }
 
-    public async sendZclFrameNetworkAddress(networkAddress: number, endpoint: number, clusterID: number, zclFrame: ZclFrame): Promise<void> {
-        await this.dataRequest(networkAddress, endpoint, 1, clusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer());
+    public async sendZclFrameNetworkAddress(networkAddress: number, endpoint: number, zclFrame: ZclFrame): Promise<void> {
+        await this.dataRequest(networkAddress, endpoint, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer());
+    }
+
+    public async bind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number, destinationAddress: string, destinationEndpoint: number): Promise<void> {
+        const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'bindRsp', {srcaddr: destinationNetworkAddress});
+        const payload = {
+            dstaddr: destinationNetworkAddress,
+            srcaddr: sourceIeeeAddress,
+            srcendpoint: sourceEndpoint,
+            clusterid: clusterID,
+            dstaddrmode: Constants.COMMON.addressMode.ADDR_64BIT,
+            dstaddress: destinationAddress,
+            dstendpoint: destinationEndpoint,
+        };
+
+        this.znp.request(Subsystem.ZDO, 'bindReq', payload);
+        await response;
+    }
+
+    public async unbind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number, destinationAddress: string, destinationEndpoint: number): Promise<void> {
+        const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'unbindRsp', {srcaddr: destinationNetworkAddress});
+        const payload = {
+            dstaddr: destinationNetworkAddress,
+            srcaddr: sourceIeeeAddress,
+            srcendpoint: sourceEndpoint,
+            clusterid: clusterID,
+            dstaddrmode: Constants.COMMON.addressMode.ADDR_64BIT,
+            dstaddress: destinationAddress,
+            dstendpoint: destinationEndpoint,
+        };
+
+        this.znp.request(Subsystem.ZDO, 'unbindReq', payload);
+        await response;
     }
 
     /**
      * Event handlers
      */
     public onZnpClose(): void {
-        // TODO
+        if (!this.closing) {
+            this.emit(Events.Disconnected);
+        }
     }
 
     public onZnpRecieved(object: ZpiObject): void {
