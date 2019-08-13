@@ -1,16 +1,3 @@
-/* jshint node: true */
-'use strict';
-import * as Zcl from '../../zcl';
-import * as Zsc from '../../zstack-constants';
-
-var Q = require('q'),
-    _ = require('busyman'),
-    proving = require('proving');
-
-var Endpoint  = require('../model/endpoint'),
-    Coordpoint  = require('../model/coordpoint'),
-    zutils = require('./zutils');
-
 var controller,
     query = {};
 
@@ -22,71 +9,6 @@ var nvParams = require('../config/nv_start_options.js');
 query.coordInfo = function (callback) {
     var info = controller.getNetInfo();
     return query.device(info.ieeeAddr, info.nwkAddr, callback);
-};
-
-query.coordState = function (callback) {
-    return query.network('DEV_STATE', callback);
-};
-
-query.network = function (param, callback) {
-    if (_.isFunction(param)) {
-        callback = param;
-        param = null;
-    }
-
-    if (param)
-        return query._network(param, callback);    // return value
-    else
-        return query._networkAll(callback);        // return { state, channel, panId, extPanId, ieeeAddr, nwkAddr }
-};
-
-query.setBindingEntry = function (bindMode, srcEp, cId, dstEpOrGrpId, callback) {
-    var deferred = Q.defer(),
-        cIdItem = Zcl.getClusterLegacy(cId),
-        bindParams,
-        dstEp,
-        grpId,
-        req;
-
-    if (!((srcEp instanceof Endpoint) || (srcEp instanceof Coordpoint)))
-        throw new TypeError('srcEp should be an instance of Endpoint class.');
-
-    proving.defined(cIdItem, 'Invalid cluster id: ' + cId + '.');
-
-    if (_.isNumber(dstEpOrGrpId) && !_.isNaN(dstEpOrGrpId))
-        grpId = dstEpOrGrpId;
-    else if (dstEpOrGrpId instanceof Endpoint || dstEpOrGrpId instanceof Coordpoint)
-        dstEp = dstEpOrGrpId;
-    else
-        throw new TypeError('dstEpOrGrpId should be an instance of Endpoint class or a number of group id.');
-
-    bindParams = {
-        dstaddr: srcEp.getNwkAddr(),
-        srcaddr: srcEp.getIeeeAddr(),
-        srcendpoint: srcEp.getEpId(),
-        clusterid: cIdItem.value,
-        dstaddrmode: dstEp ? Zsc.COMMON.addressMode.ADDR_64BIT : Zsc.COMMON.addressMode.ADDR_GROUP,
-        addr_short_long: dstEp ? dstEp.getIeeeAddr() : zutils.toLongAddrString(grpId),
-        dstendpoint: dstEp ? dstEp.getEpId() : 0xFF
-    };
-
-    if (bindMode === 0 || bindMode === 'bind') {
-        req = function () { return controller.request('ZDO', 'bindReq', bindParams); };
-    } else if (bindMode === 1 || bindMode === 'unbind') {
-        req = function () { return controller.request('ZDO', 'unbindReq', bindParams); };
-    }
-
-    (function performReq(retryAttempts) {
-        if (typeof retryAttempts === 'undefined') retryAttempts = 0;
-        req().then(function (rsp) {
-            deferred.resolve();
-        }).fail(function (err) {
-            if(retryAttempts >= 4) return deferred.reject(err);
-            else performReq(++retryAttempts);
-        }).done();
-    })();
-
-    return deferred.promise.nodeify(callback);
 };
 
 /*************************************************************************************************/
@@ -180,41 +102,6 @@ query._networkAll = function (callback) {
     }, Q(net)).nodeify(callback);
 };
 
-function devType(type) {
-    var DEVTYPE = Zsc.ZDO.deviceLogicalType;
-
-    switch (type) {
-        case DEVTYPE.COORDINATOR:
-            return 'Coordinator';
-        case DEVTYPE.ROUTER:
-            return 'Router';
-        case DEVTYPE.ENDDEVICE:
-            return 'EndDevice';
-        case DEVTYPE.COMPLEX_DESC_AVAIL:
-            return 'ComplexDescAvail';
-        case DEVTYPE.USER_DESC_AVAIL:
-            return 'UserDescAvail';
-        default:
-            break;
-    }
-}
-
-function bufToArray(buf, nip) {
-    var i,
-        nipArr = [];
-
-    if (nip === 'uint8') {
-        for (i = 0; i < buf.length; i += 1) {
-            nipArr.push(buf.readUInt8(i));
-        }
-    } else if (nip === 'uint16') {
-        for (i = 0; i < buf.length; i += 2) {
-            nipArr.push(buf.readUInt16LE(i));
-        }
-    }
-
-    return nipArr.sort(function (a, b) { return a - b; });
-}
 
 module.exports = function (cntl) {
     controller = cntl;

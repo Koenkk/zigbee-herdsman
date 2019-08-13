@@ -14,12 +14,12 @@ interface ConfigureReportingItem {
 
 class Endpoint extends Entity {
     public readonly ID: number;
-    private profileID: number;
-    private deviceID: number;
     private inputClusters: number[];
     private outputClusters: number[];
     private deviceNetworkAddress: number;
     private deviceIeeeAddress: string;
+    private deviceID?: number;
+    private profileID?: number;
 
     private constructor(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
@@ -34,6 +34,26 @@ class Endpoint extends Entity {
         this.deviceNetworkAddress = deviceNetworkAddress;
         this.deviceIeeeAddress = deviceIeeeAddress;
     }
+
+    /**
+     * Getters/setters
+     */
+
+    public async set(key: 'profileID' | 'deviceID' | 'inputClusters' | 'outputClusters', value: number | number[]): Promise<void> {
+        if (typeof value === 'number' && (key === 'profileID' || key === 'deviceID')) {
+            this[key] = value;
+        } else if (IsNumberArray(value) && (key === 'inputClusters' || key === 'outputClusters')) {
+            this[key] = value;
+        }
+    }
+
+    public get(key: 'ID'): string | number {
+        return this[key];
+    }
+
+    /**
+     * CRUD
+     */
 
     public static fromDatabaseRecord(record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string): Endpoint {
         return new Endpoint(
@@ -55,13 +75,9 @@ class Endpoint extends Entity {
         return new Endpoint(ID, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress, deviceIeeeAddress);
     }
 
-    public async update(key: 'profileID' | 'deviceID' | 'inputClusters' | 'outputClusters', value: number | number[]): Promise<void> {
-        if (typeof value === 'number' && (key === 'profileID' || key === 'deviceID')) {
-            this[key] = value;
-        } else if (IsNumberArray(value) && (key === 'inputClusters' || key === 'outputClusters')) {
-            this[key] = value;
-        }
-    }
+    /**
+     * Zigbee functions
+     */
 
     public async write(clusterKey: number | string, attributes: {[s: string]: number | string}): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
@@ -121,7 +137,7 @@ class Endpoint extends Entity {
         await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
     }
 
-    public async clusterCommand(clusterKey: number | string, commandKey: number | string, payload: KeyValue): Promise<void> {
+    public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
 

@@ -7,39 +7,22 @@ import * as Zcl from '../../zcl';
 
 const debug = require('debug')('zigbee-herdsman:controller:device');
 
-// eslint-disable-next-line
-function isEndpointerArray(value: any): value is Endpoint[] {
-    if (value instanceof Array) {
-        for (let item of value) {
-            if (item instanceof Endpoint) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    return false;
-}
-
 class Device extends Entity {
     private ID: number;
     private ieeeAddr: string;
     private networkAddress: number;
     private endpoints: Endpoint[];
-
-    // Attributes below are not always present.
-    private type: AdapterTsType.DeviceType;
-    private manufacturerID: number;
-    private manufacturerName: string;
-    private powerSource: string;
-    private modelID: string;
-    private applicationVersion: number;
-    private stackVersion: number;
-    private zclVersion: number;
-    private hardwareVersion: number;
-    private dateCode: string;
-    private softwareBuildID: string;
+    private type?: AdapterTsType.DeviceType;
+    private manufacturerID?: number;
+    private manufacturerName?: string;
+    private powerSource?: string;
+    private modelID?: string;
+    private applicationVersion?: number;
+    private stackVersion?: number;
+    private zclVersion?: number;
+    private hardwareVersion?: number;
+    private dateCode?: string;
+    private softwareBuildID?: string;
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
@@ -69,6 +52,10 @@ class Device extends Entity {
         this.softwareBuildID = softwareBuildID;
     }
 
+    /**
+     * Getters, setters and creaters
+     */
+
     public async createEndpoint(ID: number): Promise<Endpoint> {
         if (this.getEndpoint(ID)) {
             throw new Error(`Device '${this.ieeeAddr}' already has an endpoint '${ID}'`);
@@ -87,6 +74,24 @@ class Device extends Entity {
     public getEndpoint(ID: number): Endpoint {
         return this.endpoints.find((e): boolean => e.ID === ID);
     }
+
+    public get(key: 'modelID' | 'networkAddress'): string | number {
+        return this[key];
+    }
+
+    public async set(key: 'modelID' | 'networkAddress', value: string | number): Promise<void> {
+        if (typeof value === 'string' && (key === 'modelID')) {
+            this[key] = value;
+        } else if (typeof value === 'number' && (key === 'networkAddress')) {
+            this[key] = value;
+        }
+
+        await this.save();
+    }
+
+    /**
+     * CRUD
+     */
 
     private static fromDatabaseRecord(record: KeyValue): Device {
         const networkAddress = record.nwkAddr;
@@ -117,20 +122,6 @@ class Device extends Entity {
         }
     }
 
-    public get(key: 'modelID' | 'networkAddress'): string | number {
-        return this[key];
-    }
-
-    public async update(key: 'modelID' | 'networkAddress', value: string | number): Promise<void> {
-        if (typeof value === 'string' && (key === 'modelID')) {
-            this[key] = value;
-        } else if (typeof value === 'number' && (key === 'networkAddress')) {
-            this[key] = value;
-        }
-
-        await this.save();
-    }
-
     private async save(): Promise<void> {
         await Device.database.update(this.ID, this.toDatabaseRecord());
     }
@@ -144,11 +135,11 @@ class Device extends Entity {
     }
 
     public static async findByIeeeAddr(ieeeAddr: string): Promise<Device> {
-        return this.findSingle({ieeeAddr});
+        return Object.values(this.lookup).find((d): boolean => d.ieeeAddr === ieeeAddr) || this.findSingle({ieeeAddr});
     }
 
     public static async findByNetworkAddress(networkAddress: number): Promise<Device>  {
-        return this.findSingle({nwkAddr: networkAddress});
+        return Object.values(this.lookup).find((d): boolean => d.networkAddress === networkAddress) || this.findSingle({nwkAddr: networkAddress});
     }
 
     private static async findSingle(query: {[s: string]: number | string}): Promise<Device> {
@@ -195,6 +186,10 @@ class Device extends Entity {
         return this.lookup[device.ieeeAddr];
     }
 
+    /**
+     * Zigbee functions
+     */
+
     public async interview(): Promise<void> {
         debug(`Interview - start device '${this.ieeeAddr}'`);
 
@@ -239,10 +234,10 @@ class Device extends Entity {
 
         for (let endpoint of this.endpoints) {
             const simpleDescriptor = await Device.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
-            endpoint.update('profileID', simpleDescriptor.profileID);
-            endpoint.update('deviceID', simpleDescriptor.deviceID);
-            endpoint.update('inputClusters', simpleDescriptor.inputerClusters);
-            endpoint.update('outputClusters', simpleDescriptor.outputClusters);
+            endpoint.set('profileID', simpleDescriptor.profileID);
+            endpoint.set('deviceID', simpleDescriptor.deviceID);
+            endpoint.set('inputClusters', simpleDescriptor.inputerClusters);
+            endpoint.set('outputClusters', simpleDescriptor.outputClusters);
             debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`)
             await this.save();
         }

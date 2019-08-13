@@ -29,104 +29,11 @@ var Zdo = require('./zdo'),
 var Device = require('../model/device'),
     Coordpoint = require('../model/coordpoint');
 
-function bufToArray(buf) {
-    var arr = [];
 
-    for (var i = 0; i < buf.length; i += 1) {
-        arr.push(buf.readUInt8(i));
-    }
-
-    return arr;
-}
-
-function Controller(shepherd, cfg) {
-    // cfg is serial port config
-    var self = this,
-        transId = 0;
-
-    EventEmitter.call(this);
-
-    if (!_.isPlainObject(cfg))
-        throw new TypeError('cfg should be an object.');
-
-    /***************************************************/
-    /*** Protected Members                           ***/
-    /***************************************************/
-    this._shepherd = shepherd;
-    this._coord = null;
-    this._znp = znp; // required sometimes
-    this._cfg = cfg;
-    this._zdo = new Zdo(this);
-    this._resetting = false;
-    this._spinLock = false;
-    this._joinQueue = [];
-    this._permitJoinTime = 0;
-    this._permitJoinInterval;
-
-    this._net = {
-        state: null,
-        channel: null,
-        panId: null,
-        extPanId: null,
-        ieeeAddr: null,
-        nwkAddr: null,
-        joinTimeLeft: 0
-    };
-
-    this._firmware = {
-        version: null,
-        revision: null
-    };
-
-    this._isZstack3x0 = false;
-    this._isZstack30x = false;
-
-    this._joinWaitList = {}
-
-    /***************************************************/
-    /*** Public Members                              ***/
-    /***************************************************/
-    this.query = query(this);
-
-    this.nextTransId = function () {  // zigbee transection id
-        if (++transId > 255)
-            transId = 1;
-        return transId;
-    };
-
-    this.permitJoinCountdown = function () {
-        return self._permitJoinTime -= 1;
-    };
-
-    this.isResetting = function () {
-        return self._resetting;
-    };
-
-    /***************************************************/
-    /*** Event Handlers                              ***/
-    /***************************************************/
-
-    znp.on('close', function () {
-        self.emit('ZNP:CLOSE');
-    });
-
-    znp.on('received', function (msg: ZpiObject) {
-        if (msg.type === Type.AREQ) {
-            bridge._areqEventBridge(self, msg);
-        }
-    });
-}
-
-util.inherits(Controller, EventEmitter);
 
 /*************************************************************************************************/
 /*** Public ZigBee Utility APIs                                                                ***/
 /*************************************************************************************************/
-Controller.prototype.getFirmwareInfo = function () {
-    var firmware = _.cloneDeep(this._firmware);
-
-    return firmware;
-};
 
 Controller.prototype.getNetInfo = function () {
     var net = _.cloneDeep(this._net);
@@ -139,83 +46,10 @@ Controller.prototype.getNetInfo = function () {
     return net;
 };
 
-Controller.prototype.setNetInfo = function (netInfo) {
-    var self = this;
-
-    _.forEach(netInfo, function (val, key) {
-        if (_.has(self._net, key))
-            self._net[key] = val;
-    });
-};
 
 /*************************************************************************************************/
 /*** Mandatory Public APIs                                                                     ***/
 /*************************************************************************************************/
-
-
-Controller.prototype.close = function (callback) {
-    var self = this,
-        deferred = Q.defer(),
-        closeLsn;
-
-    closeLsn = function () {
-        deferred.resolve();
-    };
-
-    this.once('ZNP:CLOSE', closeLsn);
-
-    Q.ninvoke(znp, 'close').fail(function (err) {
-        self.removeListener('ZNP:CLOSE', closeLsn);
-        deferred.reject(err);
-    }).done();
-
-    return deferred.promise.nodeify(callback);
-};
-
-Controller.prototype.request = function (subsys, cmdId, valObj, callback) {
-    var deferred = Q.defer(),
-        rspHdlr;
-
-    proving.stringOrNumber(subsys, 'subsys should be a number or a string.');
-    proving.stringOrNumber(cmdId, 'cmdId should be a number or a string.');
-
-    if (!_.isPlainObject(valObj) && !_.isArray(valObj))
-        throw new TypeError('valObj should be an object or an array.');
-
-    if (_.isString(subsys))
-        subsys = subsys.toUpperCase();
-
-    rspHdlr = function (err, rsp) {
-        if (subsys !== 'ZDO' && subsys !== 5) {
-            if (rsp && rsp.hasOwnProperty('status'))
-                debug.request('RSP <-- %s, status: %d', subsys + ':' + cmdId, rsp.status);
-            else
-                debug.request('RSP <-- %s', subsys + ':' + cmdId);
-        }
-
-        if (err)
-            deferred.reject(err);
-        else if ((subsys !== 'ZDO' && subsys !== 5) && rsp && rsp.hasOwnProperty('status') && rsp.status !== 0)  // unsuccessful
-            deferred.reject(new Error('rsp error: ' + rsp.status));
-        else
-            deferred.resolve(rsp);
-    };
-
-    if ((subsys === 'AF' || subsys === 4) && valObj.hasOwnProperty('transid'))
-        debug.request('REQ --> %s, transId: %d', subsys + ':' + cmdId, valObj.transid);
-    else
-        debug.request('REQ --> %s', subsys + ':' + cmdId);
-
-    if (subsys === 'ZDO' || subsys === 5) {
-        this._zdo.request(cmdId, valObj, rspHdlr);          // use wrapped zdo as the exported api
-    } else {
-        const promise = znp.request(Subsystem[subsys], cmdId, valObj);  // SREQ has timeout inside znp
-        promise.then((object) => rspHdlr(null, object.payload)).catch((error) => rspHdlr(error, null));
-    }
-
-
-    return deferred.promise.nodeify(callback);
-};
 
 Controller.prototype.remove = function (dev, cfg, callback) {
     // cfg: { reJoin, rmChildren }
@@ -244,66 +78,6 @@ Controller.prototype.remove = function (dev, cfg, callback) {
         if (rsp.status !== 0 && rsp.status !== 'SUCCESS')
             return Q.reject(rsp.status);
     }).nodeify(callback);
-};
-
-Controller.prototype.bind = function (srcEp, cId, dstEpOrGrpId, callback) {
-    return this.query.setBindingEntry('bind', srcEp, cId, dstEpOrGrpId, callback);
-};
-
-Controller.prototype.unbind = function (srcEp, cId, dstEpOrGrpId, callback) {
-    return this.query.setBindingEntry('unbind', srcEp, cId, dstEpOrGrpId, callback);
-};
-
-Controller.prototype.findEndpoint = function (addr, epId) {
-    return this._shepherd.find(addr, epId);
-};
-
-Controller.prototype.setNvParams = function (net) {
-    // net: { panId, extPanId, channelList, precfgkey, precfgkeysEnable, startoptClearState }
-    net = net || {};
-    proving.object(net, 'opts.net should be an object.');
-
-    _.forEach(net, function (val, param) {
-        switch (param) {
-            case 'panId':
-                proving.number(val, 'net.panId should be a number.');
-                nvParams.panId.value = [ val & 0xFF, (val >> 8) & 0xFF ];
-                break;
-            case 'extPanId':
-                if (val && (!_.isArray(val) || val.length !== 8))
-                    throw new TypeError('net.extPanId should be an array with 8 uint8 integers.');
-                if (val) {
-                    nvParams.extPanId.value = val;
-                }
-                break;
-            case 'precfgkey':
-                if (!_.isArray(val) || val.length !== 16)
-                    throw new TypeError('net.precfgkey should be an array with 16 uint8 integers.');
-                nvParams.precfgkey.value = val;
-                break;
-            case 'precfgkeysEnable':
-                proving.boolean(val, 'net.precfgkeysEnable should be a bool.');
-                nvParams.precfgkeysEnable.value = val ? [ 0x01 ] : [ 0x00 ];
-                break;
-            case 'startoptClearState':
-                proving.boolean(val, 'net.startoptClearState should be a bool.');
-                nvParams.startupOption.value = val ? [ 0x02 ] : [ 0x00 ];
-                break;
-            case 'channelList':
-                proving.array(val, 'net.channelList should be an array.');
-                var chList = 0;
-
-                _.forEach(val, function (ch) {
-                    if (ch >= 11 && ch <= 26)
-                        chList = chList | Zsc.COMMON.channelMask['CH' + ch];
-                });
-
-                nvParams.channelList.value = [ chList & 0xFF, (chList >> 8) & 0xFF, (chList >> 16) & 0xFF, (chList >> 24) & 0xFF ];
-                break;
-            default:
-                throw new TypeError('Unkown argument: ' + param + '.');
-        }
-    });
 };
 
 Controller.prototype.checkOnline = function (dev, callback) {
@@ -477,22 +251,5 @@ Controller.prototype.restoreCoordinator = function (path) {
         return soFar.then(fn);
     }, Q(0));
 };
-
-/*************************************************************************************************/
-/*** Private Functions                                                                         ***/
-/*************************************************************************************************/
-function makeRegParams(loEp) {
-    return {
-        endpoint: loEp.getEpId(),
-        appprofid: loEp.getProfId(),
-        appdeviceid: loEp.getDevId(),
-        appdevver: 0,
-        latencyreq: Zsc.AF.networkLatencyReq.NO_LATENCY_REQS,
-        appnuminclusters: loEp.inClusterList.length,
-        appinclusterlist: loEp.inClusterList,
-        appnumoutclusters: loEp.outClusterList.length,
-        appoutclusterlist: loEp.outClusterList
-    };
-}
 
 module.exports = Controller;
