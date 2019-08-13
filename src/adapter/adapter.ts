@@ -39,6 +39,8 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract sendZclFrameNetworkAddress(networkAddress: number, endpoint: number, zclFrame: ZclFrame): Promise<void>;
 
+    public abstract sendZclFrameGroup(groupID: number, zclFrame: ZclFrame): Promise<void>;
+
     public abstract bind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number, destinationAddress: string, destinationEndpoint: number): Promise<void>;
 
     public abstract unbind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number, destinationAddress: string, destinationEndpoint: number): Promise<void>;

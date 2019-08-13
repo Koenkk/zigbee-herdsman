@@ -1,36 +1,3 @@
-import {Znp} from '../../znp';
-import {Subsystem, Type} from '../../unpi/constants';
-import ZpiObject from 'src/znp/zpiObject';
-
-import * as Zsc from '../../zstack-constants';
-
-const fs = require('fs');
-
-var util = require('util'),
-    EventEmitter = require('events');
-
-var Q = require('q'),
-    _ = require('busyman'),
-    znp = Znp.getInstance(),
-    proving = require('proving'),
-    debug = {
-        shepherd: require('debug')('zigbee-shepherd'),
-        init: require('debug')('zigbee-shepherd:init'),
-        request: require('debug')('zigbee-shepherd:request'),
-        response: require('debug')('zigbee-shepherd:response')
-    };
-
-var Zdo = require('./zdo'),
-    query = require('./query'),
-    bridge = require('./event_bridge.js'),
-    nvParams = require('../config/nv_start_options.js'),
-    nvBackup = require('../config/nv_backup.js');
-
-var Device = require('../model/device'),
-    Coordpoint = require('../model/coordpoint');
-
-
-
 /*************************************************************************************************/
 /*** Public ZigBee Utility APIs                                                                ***/
 /*************************************************************************************************/

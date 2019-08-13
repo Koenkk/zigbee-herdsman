@@ -1,6 +1,25 @@
 import { Device, Endpoint } from "./model";
 import { KeyValue } from "./tstype";
 
+
+
+enum Events {
+    message = "message",
+    adapterDisconnected = "adapterDisconnected",
+    deviceJoined = "deviceJoined",
+    deviceInterview = "deviceInterview",
+    deviceAnnounce = "deviceAnnounce"
+}
+
+interface DeviceInterviewPayload {
+    status: 'started' | 'successful' | 'failed';
+    device: Device;
+}
+
+interface DeviceAnnouncePayload {
+    device: Device;
+}
+
 const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'on': 'commandOn',
     'offWithEffect': 'commandOffWithEffect',
@@ -30,17 +49,10 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'operationEventNotification': 'commandOperationEventNotification',
 };
 
-enum Events {
-    message = "message",
-    adapterDisconnected = "adapterDisconnected",
-}
-
 type MessagePayloadType =
-    // Bridge events
-    'deviceJoined' |
-    // Foundation events
+    // Global
     'attributeReport' | 'readResponse' |
-    // Commands
+    // Specific
     'commandOn' | 'commandOffWithEffect' | 'commandStep' | 'commandStop' | 'commandHueNotification' |
     'commandOff' | 'commandStepColorTemp' | 'commandMoveWithOnOff' | 'commandMove' | 'commandMoveHue' |
     'commandMoveToSaturation' | 'commandStopWithOnOff' | 'commandMoveToLevelWithOnOff' | 'commandToggle' |
@@ -53,11 +65,12 @@ interface MessagePayload {
     type: MessagePayloadType;
     device: Device;
     endpoint?: Endpoint;
-    linkQuality?: number;
+    linkquality?: number;
+    groupID?: number;
     // eslint-disable-next-line
     data?: KeyValue;
 }
 
 export {
-    Events, MessagePayload, MessagePayloadType, CommandsLookup,
+    Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload,
 }

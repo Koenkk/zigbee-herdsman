@@ -10,11 +10,11 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 - [x] cc-znp -> znp (+ refactor)
 - [x] Refactor zstack-constants
 - [x] zcl-id + zcl-packet -> zcl (+ refactor)
-- [ ] Cleanup zcl-packet (remove dissolve-chunks, concentrator depedency, deprecated/zcl-packet)
+- [x] Cleanup zcl-packet (remove dissolve-chunks, concentrator depedency, deprecated/zcl-packet)
+- [x] What to do with ziee (-> removed)
+- [x] What to do with zive (-> removed)
+- [x] What to do with areq (-> removed)
 - [ ] Refactor lib (original source of zigbee-shepherd)
-- [ ] What to do with ziee (remove?)
-- [x] What to do with zive (remove?)
-- [ ] What to do with areq (remove?)
 
 ### Start
 ```
@@ -34,12 +34,8 @@ SUM:                            66           1546            430          17231
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-TypeScript                      75           1646            402          15677
-JSON                             2              0              0           1614
-YAML                             2              0              0             10
+TypeScript                      69            726            159          11119
 -------------------------------------------------------------------------------
-SUM:                            79           1646            402          17301
+SUM:                            69            726            159          11119
 -------------------------------------------------------------------------------
 ```
-
-(number is temporarily up because two ZCL parsers are present to test regression)

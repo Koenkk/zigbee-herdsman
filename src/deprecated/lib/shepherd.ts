@@ -1,28 +1,3 @@
-/* jshint node: true */
-'use strict';
-
-import * as Zcl from '../zcl';
-
-var fs = require('fs'),
-    util = require('util'),
-    EventEmitter = require('events');
-
-var Q = require('q'),
-    _ = require('busyman'),
-    proving = require('proving'),
-    Objectbox = require('objectbox'),
-    debug = { shepherd: require('debug')('zigbee-shepherd') };
-
-var init = require('./initializers/init_shepherd'),
-    zutils = require('./components/zutils'),
-    Controller = require('./components/controller'),
-    eventHandlers = require('./components/event_handlers');
-
-var Device = require('./model/device'),
-    Coordinator = require('./model/coord'),
-    Group = require('./model/group'),
-    Coordpoint = require('./model/coordpoint');
-
 /*************************************************************************************************/
 /*** ZShepherd Class                                                                           ***/
 /*************************************************************************************************/
@@ -34,114 +9,12 @@ function ZShepherd(path, opts) {
             callback(null, accepted);
         });
     };
-
-    /***************************************************/
-    /*** Event Handlers (Ind Event Bridges)          ***/
-    /***************************************************/
-    eventHandlers.attachEventHandlers(this);
-
-
-    this.on('ind:cmd', function (ep, cId, payload, cmdId, msg) {
-        const cIdString = Zcl.getClusterLegacy(cId);
-        const type = `cmd${cmdId.charAt(0).toUpperCase() + cmdId.substr(1)}`;
-        const notifData = {};
-
-        notifData.cid = cIdString ? cIdString.key : cId;
-        notifData.data = payload;
-
-        self.emit('ind', { type: type, endpoints: [ ep ], data: notifData, linkquality: msg.linkquality, groupid: msg.groupid });
-    });
-
-    this.on('ind:statusChange', function (ep, cId, payload, msg) {
-        var cIdString = Zcl.getClusterLegacy(cId),
-            notifData = {
-                cid: '',
-                zoneStatus: null
-            };
-
-        cIdString = cIdString ? cIdString.key : cId;
-        notifData.cid = cIdString;
-        notifData.zoneStatus = payload.zonestatus;
-
-        self.emit('ind', { type: 'statusChange', endpoints: [ ep ], data: notifData, linkquality: msg.linkquality });
-    });
-
-    this.on('ind:reported', function (ep, cId, attrs, msg) {
-        var cIdString = Zcl.getClusterLegacy(cId),
-            notifData = {
-                cid: '',
-                data: {}
-            };
-
-        self._updateFinalizer(ep, cId, attrs, true);
-
-        cIdString = cIdString ? cIdString.key : cId;
-        notifData.cid = cIdString;
-
-        _.forEach(attrs, function (rec) {  // { attrId, dataType, attrData }
-            var attrIdString = Zcl.getAttributeLegacy(cIdString, rec.attrId);
-            attrIdString = attrIdString ? attrIdString.key : rec.attrId;
-
-            notifData.data[attrIdString] = rec.attrData;
-
-            if (attrIdString === 'modelId' && !ep.device.modelId) {
-                /**
-                 * Xiaomi devices report it's modelId through a genBasic message.
-                 * Set this as the modelId when the device doesn't have one yet.
-                 */
-                ep.device.update({modelId: rec.attrData});
-                Q.ninvoke(self._devbox, 'sync', ep.device._getId());
-            }
-        });
-
-        self.emit('ind', { type: 'attReport', endpoints: [ ep ], data: notifData, linkquality: msg.linkquality, groupid: msg.groupid });
-    });
-
-    this.on('ind:readRsp', function (ep, cId, attrs, msg) {
-        var cIdString = Zcl.getClusterLegacy(cId),
-            notifData = {
-                cid: '',
-                data: {}
-            };
-
-        self._updateFinalizer(ep, cId, attrs, true);
-
-        cIdString = cIdString ? cIdString.key : cId;
-        notifData.cid = cIdString;
-
-        _.forEach(attrs, function (rec) {  // { attrId, dataType, attrData }
-            var attrIdString = Zcl.getAttributeLegacy(cIdString, rec.attrId);
-            attrIdString = attrIdString ? attrIdString.key : rec.attrId;
-
-            notifData.data[attrIdString] = rec.attrData;
-
-            if (attrIdString === 'modelId' && !ep.device.modelId) {
-                /**
-                 * Konke devices report it's modelId through a readRsp message.
-                 * Set this as the modelId when the device doesn't have one yet.
-                 */
-                ep.device.update({modelId: rec.attrData});
-                Q.ninvoke(self._devbox, 'sync', ep.device._getId());
-            }
-        });
-
-        self.emit('ind', { type: 'readRsp', endpoints: [ ep ], data: notifData, linkquality: msg.linkquality });
-    });
-
 }
 
-util.inherits(ZShepherd, EventEmitter);
 
 /*************************************************************************************************/
 /*** Public Methods                                                                            ***/
 /*************************************************************************************************/
-
-ZShepherd.prototype.getGroup = function (groupID) {
-    proving.number(groupID, 'groupID should be a number.');
-    const group = new Group(groupID);
-    this._attachZclMethods(group);
-    return group;
-};
 
 
 ZShepherd.prototype.lqi = function (ieeeAddr, callback) {

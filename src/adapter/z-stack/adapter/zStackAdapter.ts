@@ -1,6 +1,6 @@
 import {NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor, DeviceType, ActiveEndpoints, SimpleDescriptor} from '../../tstype';
 import {ZnpVersion} from './tstype';
-import {Events, DeviceJoinedPayload, ZclDataPayload} from '../../events';
+import {Events, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload} from '../../events';
 import Adapter from '../../adapter';
 import {Znp, ZpiObject} from '../znp';
 import StartZnp from './startZnp';
@@ -167,6 +167,10 @@ class ZStackAdapter extends Adapter {
         await this.dataRequest(networkAddress, endpoint, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer());
     }
 
+    public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
+        await this.dataRequestExtended(Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer());
+    }
+
     public async bind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number, destinationAddress: string, destinationEndpoint: number): Promise<void> {
         const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'bindRsp', {srcaddr: destinationNetworkAddress});
         const payload = {
@@ -204,7 +208,7 @@ class ZStackAdapter extends Adapter {
      */
     public onZnpClose(): void {
         if (!this.closing) {
-            this.emit(Events.Disconnected);
+            this.emit(Events.disconnected);
         }
     }
 
@@ -220,13 +224,20 @@ class ZStackAdapter extends Adapter {
                     ieeeAddr: object.payload.extaddr,
                 };
 
-                this.emit(Events.DeviceJoined, payload);
+                this.emit(Events.deviceJoined, payload);
+            } else if (object.command === 'endDeviceAnnceInd') {
+                const payload: DeviceAnnouncePayload = {
+                    networkAddress: object.payload.nwkaddr,
+                    ieeeAddr: object.payload.ieeeaddr,
+                };
+
+                this.emit(Events.deviceAnnounce, payload);
             }
         } else if (object.subsystem === Subsystem.AF) {
-            if (object.command === 'incomingMsg') {
+            if (object.command === 'incomingMsg' || object.command === 'incomingMsgExt') {
                 const payload: ZclDataPayload = this.incomingMsgToZclDataPayload(object);
                 this.resolveIncomingMessageWaiters(payload);
-                this.emit(Events.ZclData, payload);
+                this.emit(Events.zclData, payload);
             }
         }
     }
@@ -259,6 +270,33 @@ class ZStackAdapter extends Adapter {
         return dataConfirm;
     };
 
+    private async dataRequestExtended(addressMode: number, destinationAddressOrGroupID: number | string, destinationEndpoint: number, sourceEndpoint: number, clusterID: number, radius: number, data: Buffer): Promise<ZpiObject> {
+        const transactionID = this.nextTransactionID()
+        const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID});
+
+        await this.znp.request(Subsystem.AF, 'dataRequestExt', {
+            dstaddrmode: addressMode,
+            dstaddr: this.toAddressString(destinationAddressOrGroupID),
+            destendpoint: destinationEndpoint,
+            dstpanid: 0,
+            srcendpoint: sourceEndpoint,
+            clusterid: clusterID,
+            transid: transactionID,
+            options: 0, // TODO: why was this here? Constants.AF.options.DISCV_ROUTE,
+            radius,
+            len: data.length,
+            data: data,
+        });
+
+        const dataConfirm =  await response;
+
+        if (dataConfirm.payload.status !== 0) {
+            throw new Error(`Data request failed with error: '${DataConfirmCodeLookup[dataConfirm.payload.status] || 'unknown'}' (${dataConfirm.payload.status})`)
+        }
+
+        return dataConfirm;
+    };
+
     private nextTransactionID(): number {
         this.transactionID++;
 
@@ -269,12 +307,33 @@ class ZStackAdapter extends Adapter {
         return this.transactionID;
     }
 
+    private toAddressString(address: number | string): string {
+        let addressString;
+
+        if (typeof address === 'string') {
+            if (address.toLowerCase().startsWith('0x')) {
+                addressString = address.slice(2, address.length).toLowerCase();
+            } else {
+                addressString = address.toLowerCase();
+            }
+        } else {
+            addressString = address.toString(16);
+        }
+
+        for (let i = addressString.length; i < 16; i++) {
+            addressString = '0' + addressString;
+        }
+
+        return `0x${addressString}`;
+    }
+
     private incomingMsgToZclDataPayload(object: ZpiObject): ZclDataPayload {
         return {
             frame: ZclFrame.fromBuffer(object.payload.clusterid, object.payload.data),
             networkAddress: object.payload.srcaddr,
             endpoint: object.payload.srcendpoint,
-            linkQuality: object.payload.linkquality,
+            linkquality: object.payload.linkquality,
+            groupID: object.payload.groupid,
         };
     }
 

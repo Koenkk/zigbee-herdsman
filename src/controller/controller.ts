@@ -2,14 +2,15 @@ import events from 'events';
 import Database from './database';
 import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter';
 import {Entity, Device} from './model';
-import {Events as AdapterEvents, DeviceJoinedPayload, ZclDataPayload} from '../adapter/events'
+import {Events as AdapterEvents, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload as AdapterDeviceAnnouncePayload} from '../adapter/events'
 import {ZclFrameConverter} from './helpers';
 import {FrameType, Foundation} from '../zcl';
-import {Events, MessagePayload, MessagePayloadType, CommandsLookup} from './events';
+import {Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload} from './events';
 import {KeyValue} from './tstype';
 
 // @ts-ignore
 import mixin from 'mixin-deep';
+import Group from './model/group';
 
 interface Options {
     network: AdapterTsType.NetworkOptions;
@@ -53,11 +54,13 @@ class Controller extends events.EventEmitter {
         this.adapter = new ZStackAdapter(options.network, options.serialPort, options.backupPath);
 
         this.onDeviceJoined = this.onDeviceJoined.bind(this);
-        this.adapter.on(AdapterEvents.DeviceJoined, this.onDeviceJoined);
+        this.adapter.on(AdapterEvents.deviceJoined, this.onDeviceJoined);
         this.onZclData = this.onZclData.bind(this);
-        this.adapter.on(AdapterEvents.ZclData, this.onZclData);
+        this.adapter.on(AdapterEvents.zclData, this.onZclData);
         this.onAdapterDisconnected = this.onAdapterDisconnected.bind(this);
-        this.adapter.on(AdapterEvents.Disconnected, this.onAdapterDisconnected);
+        this.adapter.on(AdapterEvents.disconnected, this.onAdapterDisconnected);
+        this.onDeviceAnnounce = this.onDeviceAnnounce.bind(this);
+        this.adapter.on(AdapterEvents.deviceAnnounce, this.onDeviceAnnounce);
     }
 
     public async start(): Promise<void> {
@@ -79,12 +82,16 @@ class Controller extends events.EventEmitter {
             );
         }
 
-        // setTimeout(async (): Promise<void> => {
-        //     const coordinator = (await Device.findByType('Coordinator'))[0]
-        //     const device = await Device.findByNetworkAddress(60133);
-        //     const endpoint = device.getEndpoint(1);
-        //     endpoint.bind('genOnOff', coordinator.getEndpoint(1));
-        // }, 1000);
+        setTimeout(async (): Promise<void> => {
+            const device = await Device.findByIeeeAddr('0x000b57fffec6a5b2');
+            const endpoint = device.getEndpoint(1);
+            const group = await this.getOrCreateGroup(1);
+            //group.addEndpoint(endpoint);
+            //await group.addEndpoint(endpoint);
+            //console.log('send on');
+            group.command('genOnOff', 'off', {});
+            //endpoint.bind('genOnOff', coordinator.getEndpoint(1));
+        }, 1000);
     }
 
     public async permitJoin(permit: boolean): Promise<void> {
@@ -135,11 +142,23 @@ class Controller extends events.EventEmitter {
         return Device.findByIeeeAddr(ieeeAddr);
     }
 
+    public async getOrCreateGroup(groupID: number): Promise<Group> {
+        return await Group.findByGroupID(groupID) || await Group.create(groupID);
+    }
+
     public async disableLED(): Promise<void> {
         await this.adapter.disableLED();
     }
 
+    private async onDeviceAnnounce(payload: AdapterDeviceAnnouncePayload): Promise<void> {
+        debug.log(`Device announce '${payload.ieeeAddr}'`);
+        const data: DeviceAnnouncePayload = {device: await Device.findByIeeeAddr(payload.ieeeAddr)};
+        this.emit(Events.deviceAnnounce, data);
+    }
+
     private async onAdapterDisconnected(): Promise<void> {
+        debug.log(`Adapter disconnected'`);
+
         try {
             await this.adapter.stop();
         } catch (error) {
@@ -158,12 +177,24 @@ class Controller extends events.EventEmitter {
                 undefined, undefined, undefined, []
             );
 
-            const data: MessagePayload = {type: 'deviceJoined', device};
-            this.emit(Events.message, data);
-            device.interview();
+            this.emit(Events.deviceJoined, device);
         } else if (device.get('networkAddress') !== payload.networkAddress) {
             debug.log(`Device '${payload.ieeeAddr}' is already in database with different networkAddress, updating networkAddress`);
-            await device.update('networkAddress', payload.networkAddress);
+            await device.set('networkAddress', payload.networkAddress);
+        }
+
+        if (!device.get('interviewed')) {
+            const payloadStart: DeviceInterviewPayload = {status: 'started', device};
+            debug.log(`Interview '${device.get('ieeeAddr')}' start`);
+            this.emit(Events.deviceInterview, payloadStart);
+
+            const status = await device.interview();
+            if (status !== 'alreadyInProgress') {
+                const payloadDone: DeviceInterviewPayload = {status, device};
+                this.emit(Events.deviceInterview, payloadDone);
+                const type = status === 'successful' ? 'log' : 'error';
+                debug[type](`Interview '${device.get('ieeeAddr')}' ${status}`);
+            }
         }
     }
 
@@ -206,13 +237,14 @@ class Controller extends events.EventEmitter {
 
         // Some device report it's modelID through a readResponse or attributeReport
         if ((type === 'readResponse' || type === 'attributeReport') && data.modelId && !device.get('modelID')) {
-            await device.update('modelID', data.modelId);
+            await device.set('modelID', data.modelId);
         }
 
         if (type) {
             const endpoint = device.getEndpoint(zclData.endpoint);
-            const linkQuality = zclData.linkQuality;
-            const eventData: MessagePayload = {type, device, endpoint, data, linkQuality};
+            const linkquality = zclData.linkquality;
+            const groupID = zclData.groupID;
+            const eventData: MessagePayload = {type, device, endpoint, data, linkquality, groupID};
             this.emit(Events.message, eventData);
         }
 
