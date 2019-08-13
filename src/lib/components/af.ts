@@ -654,12 +654,12 @@ function dispatchIncomingMsg(type, msg) {
             break;
         case 'incomingMsg':
             // msg: { groupid, clusterid, srcaddr, srcendpoint, dstendpoint, wasbroadcast, linkquality, securityuse, timestamp, transseqnumber, len, data }
-            zclHeader = zcl.header(msg.data);       // a zcl packet maybe, pre-parse it to get the header
+            zclHeader = zcl.header(msg.data, msg.clusterid);       // a zcl packet maybe, pre-parse it to get the header
             dispatchTo = targetEp.onAfIncomingMsg;
             break;
         case 'incomingMsgExt':
             // msg: { groupid, clusterid, srcaddr, srcendpoint, dstendpoint, wasbroadcast, linkquality, securityuse, timestamp, transseqnumber, len, data }
-            zclHeader = zcl.header(msg.data);       // a zcl packet maybe, pre-parse it to get the header
+            zclHeader = zcl.header(msg.data, msg.clusterid);       // a zcl packet maybe, pre-parse it to get the header
             dispatchTo = targetEp.onAfIncomingMsgExt;
             break;
         case 'zclIncomingMsg':

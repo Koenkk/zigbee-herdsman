@@ -40,7 +40,7 @@ module.exports = {
             console.log(e.stack)
             console.log('===== Arguments =====');
             console.log(frameCntl, manufCode, seqNum, cmd, zclPayload, clusterId);
-            console.log('===== zcl-packet =====');
+            console.log('===== zcl-packet frame =====');
             console.log(JSON.stringify(zclPacketFrame));
             console.log('===== zcl =====');
             console.log(JSON.stringify(converted));
@@ -65,7 +65,9 @@ module.exports = {
                 console.log(e.stack)
                 console.log('===== Buffer =====');
                 console.log(buf.toJSON());
-                console.log('===== zcl-packet =====');
+                console.log('===== Arguments =====');
+                console.log(buf, clusterID);
+                console.log('===== zcl-packet parse =====');
                 console.log(JSON.stringify(result));
                 console.log('===== zcl =====');
                 console.log(JSON.stringify(converted));
@@ -78,12 +80,12 @@ module.exports = {
 
         return zclPacket.parse(buf, clusterID, cb);
     },
-    header: function (rawBuf) {
+    header: function (rawBuf, clusterID) {
         var header = zclPacket.header(rawBuf);
 
         let converted;
         try {
-            const frame = ZclFrame.fromBuffer(0, rawBuf);
+            const frame = ZclFrame.fromBuffer(clusterID, rawBuf);
             converted = toLegacyFormat(frame, false, false);
             delete converted.payload;
         }
@@ -98,6 +100,8 @@ module.exports = {
             console.log("Please create an issue here with the contents of below: https://github.com/koenkk/zigbee2mqtt/issues");
             console.log("===== Stack =====");
             console.log(e.stack)
+            console.log('===== Arguments =====');
+            console.log(rawBuf, clusterID);
             console.log('===== Buffer =====');
             console.log(rawBuf.toJSON());
             console.log('===== zcl-packet header =====');
