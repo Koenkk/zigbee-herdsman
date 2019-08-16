@@ -56,6 +56,11 @@ module.exports = {
             try {
                 const frame = ZclFrame.fromBuffer(clusterID, buf);
                 converted = toLegacyFormat(frame, true, true);
+
+                if (converted.payload && converted.payload.value2) {
+                    delete converted.payload.value2;
+                }
+
                 assert.deepEqual(result, converted);
             } catch (e) {
                 console.log('\n\n\n\n\n');
