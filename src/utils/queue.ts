@@ -35,9 +35,10 @@ class Queue {
                 job.resolve(result);
                 this.executeNext();
             } catch (error) {
+                this.jobs.splice(this.jobs.indexOf(job), 1);
                 job.reject(error);
+                this.executeNext();
             }
-
         }
     }
 
@@ -49,7 +50,7 @@ class Queue {
         for (let i = 0; i < this.jobs.length; i++) {
             const job = this.jobs[i];
 
-            if (!job.running && (!job.key || this.jobs.find((j) => j.key === job.key && j.running))) {
+            if (!job.running && (!job.key || !this.jobs.find((j) => j.key === job.key && j.running))) {
                 return job;
             }
         }

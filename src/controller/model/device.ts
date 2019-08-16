@@ -61,7 +61,6 @@ class Device extends Entity {
     /**
      * Getters, setters and creaters
      */
-
     public async createEndpoint(ID: number): Promise<Endpoint> {
         if (this.getEndpoint(ID)) {
             throw new Error(`Device '${this.ieeeAddr}' already has an endpoint '${ID}'`);
@@ -98,7 +97,6 @@ class Device extends Entity {
     /**
      * CRUD
      */
-
     private static fromDatabaseRecord(record: KeyValue): Device {
         const networkAddress = record.nwkAddr;
         const ieeeAddr = record.ieeeAddr;
@@ -197,7 +195,6 @@ class Device extends Entity {
     /**
      * Zigbee functions
      */
-
     public async interview(): Promise<'failed' | 'successful' | 'alreadyInProgress'> {
         if (this.interviewing) {
             debug(`Interview - interview already in progress for '${this.ieeeAddr}'`);
@@ -215,31 +212,40 @@ class Device extends Entity {
             debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         }
 
+        const isXiaomiAndInterviewed = async (): Promise<boolean> => {
+            // Xiaomi end devices have a different interview procedure, after pairing they report it's
+            // modelID trough a readResponse. The readResponse is received by the controller and set on the device
+            // Check if we have a modelID starting with lumi.* at this point, indicating a Xiaomi end device.
+            if (this.modelID && this.modelID.startsWith('lumi.')) {
+                debug('Node descriptor request failed for the second time, got modelID starting with lumi, assuming Xiaomi end device');
+                this.type = 'EndDevice';
+                this.manufacturerID = 4151;
+                this.manufacturerName = 'LUMI';
+                this.powerSource = 'Battery';
+                this.interviewing = false;
+                this.interviewed = true;
+                await this.save();
+                return true;
+            } else {
+                return false;
+            }
+        }
+
         try {
             try {
                 await nodeDescriptorQuery();
             } catch (error1) {
-                try {
-                    // The default timeout for the nodeDescriptor query is 10 seconds, most of the times the first one fails
-                    // and the second one succeeds.
-                    debug(`Interview - failed to get node descriptor for device '${this.ieeeAddr}', retrying...`);
-                    await nodeDescriptorQuery();
-                } catch (error2) {
-                    // Xiaomi end devices have a different interview procedure, after pairing they report it's
-                    // modelID trough a readResponse. The readResponse is received by the controller and set on the device
-                    // Check if we have a modelID starting with lumi.* at this point, indicating a Xiaomi end device.
-                    if (this.modelID && this.modelID.startsWith('lumi.')) {
-                        debug('Node descriptor request failed for the second time, got modelID starting with lumi, assuming Xiaomi end device');
-                        this.type = 'EndDevice';
-                        this.manufacturerID = 4151;
-                        this.manufacturerName = 'LUMI';
-                        this.powerSource = 'Battery';
-                        this.interviewing = false;
-                        this.interviewed = true;
-                        await this.save();
-                        return 'successful';
-                    } else {
-                        throw error2;
+                if (await isXiaomiAndInterviewed()) {
+                    return 'successful';
+                } else {
+                    try {
+                        await nodeDescriptorQuery();
+                    } catch (error2) {
+                        if (await isXiaomiAndInterviewed()) {
+                            return 'successful';
+                        } else {
+                            throw error2;
+                        }
                     }
                 }
             }
