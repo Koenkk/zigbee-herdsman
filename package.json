@@ -29,7 +29,6 @@
     "fast-deep-equal": "^2.0.1",
     "mixin-deep": "^2.0.1",
     "nedb": "^1.8.0",
-    "queue": "^6.0.1",
     "serialport": "7.1.5"
   },
   "deprecated": false,
@@ -39,6 +38,7 @@
     "@babel/preset-env": "*",
     "@babel/preset-react": "*",
     "@babel/preset-typescript": "*",
+    "@types/debug": "*",
     "@types/jest": "*",
     "@types/nedb": "*",
     "@types/node": "*",

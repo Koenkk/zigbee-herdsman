@@ -1,7 +1,7 @@
 import {KeyValue} from '../tstype';
 import Endpoint from './endpoint';
 import Entity from './entity';
-import ZclTransactionSequenceNumber from './zclTransactionSequenceNumber';
+import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as Zcl from '../../zcl';
 
 class Group extends Entity {

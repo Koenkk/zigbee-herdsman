@@ -4,7 +4,7 @@ import {
     Frame as UnpiFrame,
 } from '../unpi';
 
-import {Wait} from '../../../utils';
+import {Wait, Queue, Waitress} from '../../../utils';
 
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
@@ -12,7 +12,6 @@ import {Subsystem, Type} from '../unpi/constants';
 
 import SerialPort from 'serialport';
 import events from 'events';
-import Queue from 'queue';
 import Equals from 'fast-deep-equal';
 
 const timeouts = {
@@ -30,16 +29,11 @@ const debug = {
     SRSP: require('debug')('zigbee-herdsman:znp:SRSP'),
 };
 
-interface Waiter {
+interface WaitressMatcher {
     type: Type;
     subsystem: Subsystem;
     command: string;
     payload?: ZpiObjectPayload;
-    resolve: Function;
-    reject: Function;
-    // eslint-disable-next-line
-    timer?: any;
-    timedout: boolean;
 };
 
 class Znp extends events.EventEmitter {
@@ -52,7 +46,7 @@ class Znp extends events.EventEmitter {
     private unpiParser: UnpiParser;
     private initialized: boolean;
     private queue: Queue;
-    private waiters: Waiter[]
+    private waitress: Waitress<ZpiObject, WaitressMatcher>;
 
     public constructor(path: string, baudRate: number, rtscts: boolean) {
         super();
@@ -62,11 +56,9 @@ class Znp extends events.EventEmitter {
         this.rtscts = rtscts;
 
         this.initialized = false;
-        this.waiters = [];
 
         this.queue = new Queue();
-        this.queue.concurrency = 1;
-        this.queue.autostart = true;
+        this.waitress = new Waitress<ZpiObject, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
         this.onUnpiParsed = this.onUnpiParsed.bind(this);
         this.onUnpiParsedError = this.onUnpiParsedError.bind(this);
@@ -94,7 +86,7 @@ class Znp extends events.EventEmitter {
             const object = ZpiObject.fromUnpiFrame(frame);
             const message = `<-- ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(object.payload)}`;
             this.log(object.type, message);
-            this.resolveWaiters(object);
+            this.waitress.resolve(object);
             this.emit('received', object);
         } catch (error) {
             debug.error(`Error while parsing to ZpiObject '${error.stack}'`);
@@ -186,85 +178,61 @@ class Znp extends events.EventEmitter {
         }
 
         const object = ZpiObject.createRequest(subsystem, command, payload);
-        const message = `--> ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(payload)}`
+        const message = `--> ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(payload)}`;
 
-        return new Promise((resolve, reject): void => {
-            this.queue.push(async (resolveQueue): Promise<void> => {
-                this.log(object.type, message);
+        return this.queue.execute<ZpiObject>(async (): Promise<ZpiObject> => {
+            this.log(object.type, message);
 
-                try {
-                    const frame = object.toUnpiFrame();
+            const frame = object.toUnpiFrame();
 
-                    if (object.type === Type.SREQ) {
-                        const waiter = this.waitFor(Type.SRSP, object.subsystem, object.command, null, timeouts.SREQ);
-                        this.unpiWriter.writeFrame(frame)
-                        const result = await waiter;
-                        if (result && result.payload.hasOwnProperty('status') && !expectedStatus.includes(result.payload.status)) {
-                            reject(`SREQ '${message}' failed with status '${result.payload.status}' (expected '${expectedStatus}')`);
-                        } else {
-                            resolve(result);
-                        }
-                    } else if (object.type === Type.AREQ && object.isResetCommand()) {
-                        const waiter = this.waitFor(Type.AREQ, Subsystem.SYS, 'resetInd', null, timeouts.reset);
-                        this.queue.splice(1, this.queue.length);
-                        this.unpiWriter.writeFrame(frame);
-                        resolve(await waiter);
-                    } else {
-                        /* istanbul ignore else */
-                        if (object.type === Type.AREQ) {
-                            this.unpiWriter.writeFrame(frame);
-                            resolve();
-                        } else {
-                            throw new Error(`Unknown type '${object.type}'`);
-                        }
-                    }
-                } catch (error) {
-                    reject(error);
-                } finally {
-                    resolveQueue();
+            if (object.type === Type.SREQ) {
+                const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeouts.SREQ);
+                this.unpiWriter.writeFrame(frame)
+                const result = await waiter;
+                if (result && result.payload.hasOwnProperty('status') && !expectedStatus.includes(result.payload.status)) {
+                    throw new Error(`SREQ '${message}' failed with status '${result.payload.status}' (expected '${expectedStatus}')`);
+                } else {
+                    return result;
                 }
-            });
+            } else if (object.type === Type.AREQ && object.isResetCommand()) {
+                const waiter = this.waitress.waitFor({type: Type.AREQ, subsystem: Subsystem.SYS, command: 'resetInd'}, timeouts.reset);
+                this.queue.clear();
+                this.unpiWriter.writeFrame(frame);
+                return await waiter;
+            } else {
+                /* istanbul ignore else */
+                if (object.type === Type.AREQ) {
+                    this.unpiWriter.writeFrame(frame);
+                    return undefined;
+                } else {
+                    throw new Error(`Unknown type '${object.type}'`);
+                }
+            }
         });
     }
 
-    private resolveWaiters(zpiObject: ZpiObject): void {
-        for (let index = 0; index < this.waiters.length; index++) {
-            const waiter = this.waiters[index];
-            const requiredMatch = waiter.type === zpiObject.type && waiter.subsystem == zpiObject.subsystem && waiter.command === zpiObject.command;
-            let payloadMatch = true;
-
-            if (waiter.payload) {
-                for (let [key, value] of Object.entries(waiter.payload)) {
-                    if (!Equals(zpiObject.payload[key], value)) {
-                        payloadMatch = false;
-                        break;
-                    }
-                }
-            }
-
-            if (waiter.timedout) {
-                this.waiters.splice(index, 1);
-            } else if (requiredMatch && payloadMatch) {
-                clearTimeout(waiter.timer);
-                waiter.resolve(zpiObject);
-                this.waiters.splice(index, 1);
-            }
-        }
+    private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
+        return `${Type[matcher.type]} - ${Subsystem[matcher.subsystem]} - ${matcher.command} after ${timeout}ms`;
     }
 
     public waitFor(type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload = {}, timeout: number = timeouts.default): Promise<ZpiObject> {
-        return new Promise((resolve, reject): void => {
-            const object: Waiter = {type, subsystem, command, payload, resolve, reject, timedout: false};
+        return this.waitress.waitFor({type, subsystem, command, payload}, timeout);
+    }
 
-            object.timer = setTimeout((): void => {
-                const message = `${Type[type]} - ${Subsystem[subsystem]} - ${command} after ${timeout}ms`;
-                object.timedout = true;
-                debug.timeout(message);
-                reject(new Error(message));
-            }, timeout);
+    private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {
+        const requiredMatch = matcher.type === zpiObject.type && matcher.subsystem == zpiObject.subsystem && matcher.command === zpiObject.command;
+        let payloadMatch = true;
 
-            this.waiters.push(object);
-        });
+        if (matcher.payload) {
+            for (const [key, value] of Object.entries(matcher.payload)) {
+                if (!Equals(zpiObject.payload[key], value)) {
+                    payloadMatch = false;
+                    break;
+                }
+            }
+        }
+
+        return requiredMatch && payloadMatch;
     }
 }
 

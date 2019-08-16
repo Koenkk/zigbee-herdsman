@@ -1,3 +1,4 @@
+import "regenerator-runtime/runtime";
 import * as Zcl from '../src/zcl';
 import {Direction, FrameType, DataType, BuffaloZclDataType} from '../src/zcl/definition';
 import BuffaloZcl from '../src/zcl/buffaloZcl';
@@ -16,15 +17,17 @@ describe('Zcl', () => {
 
     it('Get cluster by ID', () => {
         const cluster1 = Zcl.Utils.getCluster(0);
-        delete cluster1.getAttributeByID;
+        delete cluster1.getAttribute;
+        delete cluster1.getCommand;
         const cluster2 = Zcl.Utils.getCluster('genBasic');
-        delete cluster2.getAttributeByID;
+        delete cluster2.getAttribute;
+        delete cluster2.getCommand;
         expect(cluster1).toStrictEqual(cluster2);
     });
 
     it('Get cluster attribute by ID', () => {
         const cluster = Zcl.Utils.getCluster(0);
-        const attribute = cluster.getAttributeByID(1)
+        const attribute = cluster.getAttribute(1)
         expect(attribute).toStrictEqual({ID: 1, type: DataType.uint8, name: 'appVersion'});
     });
 

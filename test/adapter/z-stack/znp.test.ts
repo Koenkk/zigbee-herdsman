@@ -317,7 +317,7 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '1' (expected '0')");
+        expect(error).toStrictEqual(new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '1' (expected '0')"));
     });
 
 

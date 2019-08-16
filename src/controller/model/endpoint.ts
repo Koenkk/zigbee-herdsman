@@ -2,7 +2,7 @@ import Entity from './entity';
 import {KeyValue} from '../tstype';
 import {IsNumberArray} from '../../utils';
 import * as Zcl from '../../zcl';
-import ZclTransactionSequenceNumber from './zclTransactionSequenceNumber';
+import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
 
 interface ConfigureReportingItem {
