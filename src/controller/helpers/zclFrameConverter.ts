@@ -5,7 +5,7 @@ interface KeyValue {[s: string]: number | string};
 function attributeList(frame: ZclFrame): KeyValue {
     const payload: KeyValue = {};
 
-    for (let item of frame.Payload) {
+    for (const item of frame.Payload) {
         try {
             const attribute = frame.getCluster().getAttribute(item.attrId);
             payload[attribute.name] = item.attrData;

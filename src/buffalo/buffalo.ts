@@ -5,7 +5,7 @@ class Buffalo {
     protected position: number;
     protected buffer: Buffer;
 
-    public constructor(buffer: Buffer, position: number = 0) {
+    public constructor(buffer: Buffer, position = 0) {
         this.position = position;
         this.buffer = buffer;
     }
@@ -183,13 +183,13 @@ class Buffalo {
             throw new Error(`Length of values: '${values}' is not consitent with expected length '${length}'`);
         }
 
-        for (let value of values) {
+        for (const value of values) {
             this.writeUInt8(value);
         }
     }
 
     public writeListUInt8(values: number[]): void {
-        for (let value of values) {
+        for (const value of values) {
             this.writeUInt8(value);
         }
     }
@@ -204,7 +204,7 @@ class Buffalo {
     }
 
     public writeListUInt16(values: number[]): void {
-        for (let value of values) {
+        for (const value of values) {
             this.writeUInt16(value);
         }
     }
@@ -219,7 +219,7 @@ class Buffalo {
     }
 
     public writeListUInt24(values: number[]): void {
-        for (let value of values) {
+        for (const value of values) {
             this.writeUInt24(value);
         }
     }
@@ -234,7 +234,7 @@ class Buffalo {
     }
 
     public writeListUInt32(values: number[]): void {
-        for (let value of values) {
+        for (const value of values) {
             this.writeUInt32(value);
         }
     }

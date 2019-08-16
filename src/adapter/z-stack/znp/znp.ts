@@ -13,6 +13,7 @@ import {Subsystem, Type} from '../unpi/constants';
 import SerialPort from 'serialport';
 import events from 'events';
 import Equals from 'fast-deep-equal';
+import Debug from "debug";
 
 const timeouts = {
     SREQ: 6000,
@@ -21,12 +22,12 @@ const timeouts = {
 };
 
 const debug = {
-    error: require('debug')('zigbee-herdsman:znp:error'),
-    timeout: require('debug')('zigbee-herdsman:znp:timeout'),
-    log: require('debug')('zigbee-herdsman:znp:log'),
-    SREQ: require('debug')('zigbee-herdsman:znp:SREQ'),
-    AREQ: require('debug')('zigbee-herdsman:znp:AREQ'),
-    SRSP: require('debug')('zigbee-herdsman:znp:SRSP'),
+    error: Debug('zigbee-herdsman:znp:error'),
+    timeout: Debug('zigbee-herdsman:znp:timeout'),
+    log: Debug('zigbee-herdsman:znp:log'),
+    SREQ: Debug('zigbee-herdsman:znp:SREQ'),
+    AREQ: Debug('zigbee-herdsman:znp:AREQ'),
+    SRSP: Debug('zigbee-herdsman:znp:SRSP'),
 };
 
 interface WaitressMatcher {

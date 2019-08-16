@@ -76,9 +76,9 @@ class ZpiObject {
 
     private static readParameters(buffer: Buffer, parameters: MtParameter[]): ZpiObjectPayload {
         const buffalo = new BuffaloZnp(buffer);
-        let result: ZpiObjectPayload = {};
+        const result: ZpiObjectPayload = {};
 
-        for (let parameter of parameters) {
+        for (const parameter of parameters) {
             const options: BuffaloZnpOptions = {};
 
             if (BufferAndListTypes.includes(parameter.parameterType)) {
@@ -113,7 +113,7 @@ class ZpiObject {
     private createPayloadBuffer(): Buffer {
         const buffalo = new BuffaloZnp(Buffer.alloc(MaxDataSize));
 
-        for (let parameter of this.parameters) {
+        for (const parameter of this.parameters) {
             const value = this.payload[parameter.name];
             buffalo.write(ParameterType[parameter.parameterType], value, {});
         }

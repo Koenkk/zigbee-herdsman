@@ -52,7 +52,7 @@ class Frame {
     private static calculateChecksum(values: Buffer): number {
         let checksum = 0;
 
-        for (let value of values) {
+        for (const value of values) {
             checksum ^= value;
         }
 

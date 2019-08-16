@@ -6,8 +6,9 @@ import * as TsType from '../../tstype';
 import fs from 'fs';
 import * as Zcl from '../../../zcl';
 import {ZnpVersion} from './tstype';
+import Debug from "debug";
 
-const debug = require('debug')('zigbee-herdsman:controller:zStack:startZnp');
+const debug = Debug('zigbee-herdsman:controller:zStack:startZnp');
 const Subsystem = UnpiConstants.Subsystem;
 const NvItemsIds = Constants.COMMON.nvItemIds;
 
@@ -215,7 +216,7 @@ async function registerEndpoints(znp: Znp): Promise<void> {
     znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: 0, nwkaddrofinterest: 0});
     const activeEp = await activeEpResponse;
 
-    for (var endpoint of Endpoints) {
+    for (const endpoint of Endpoints) {
         if (activeEp.payload.activeeplist.includes(endpoint.endpoint)) {
             debug(`Endpoint '${endpoint.endpoint}' already registered`);
         } else {

@@ -50,7 +50,7 @@ class Database {
                 }
 
                 let ID = 1;
-                for (let entry of result) {
+                for (const entry of result) {
                     if (entry.id >= ID) {
                         ID = entry.id + 1;
                     }

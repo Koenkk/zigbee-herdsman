@@ -3,8 +3,8 @@ import Common from './common';
 function getChannelMask(channels: number[]): number[] {
     let value = 0;
 
-    for (let channel of channels) {
-        for (let [key, logicalChannel] of Object.entries(Common.logicalChannels)) {
+    for (const channel of channels) {
+        for (const [key, logicalChannel] of Object.entries(Common.logicalChannels)) {
             if (logicalChannel === channel) {
                 value = value | Common.channelMask[key];
             }

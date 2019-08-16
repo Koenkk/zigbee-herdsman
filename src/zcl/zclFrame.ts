@@ -104,8 +104,8 @@ class ZclFrame {
         const command = Object.values(Foundation).find((c): boolean => c.ID === this.Header.commandIdentifier);
 
         if (command.parseStrategy === 'repetitive') {
-            for (let entry of this.Payload) {
-                for (let parameter of command.parameters) {
+            for (const entry of this.Payload) {
+                for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
 
                     if (!ZclFrame.conditionsValid(parameter, entry)) {
@@ -122,7 +122,7 @@ class ZclFrame {
                 }
             }
         } else if (command.parseStrategy === 'flat') {
-            for (let parameter of command.parameters) {
+            for (const parameter of command.parameters) {
                 buffalo.write(DataType[parameter.type], this.Payload[parameter.name], {});
             }
         } else {
@@ -132,8 +132,8 @@ class ZclFrame {
                 if (command === Foundation.discoverRsp) {
                     buffalo.writeUInt8(this.Payload.discComplete);
 
-                    for (let entry of this.Payload.attrInfos) {
-                        for (let parameter of command.parameters) {
+                    for (const entry of this.Payload.attrInfos) {
+                        for (const parameter of command.parameters) {
                             buffalo.write(DataType[parameter.type], entry[parameter.name], {});
                         }
                     }
@@ -144,7 +144,7 @@ class ZclFrame {
 
     private writePayloadCluster(buffalo: BuffaloZcl): void {
         const command = Utils.getSpecificCommand(this.ClusterID, this.Header.frameControl.direction, this.Header.commandIdentifier);
-        for (let parameter of command.parameters) {
+        for (const parameter of command.parameters) {
             const typeStr = ZclFrame.getDataTypeString(parameter.type);
             buffalo.write(typeStr, this.Payload[parameter.name], {});
         }
@@ -199,7 +199,7 @@ class ZclFrame {
         const command = Utils.getSpecificCommand(clusterID, header.frameControl.direction, header.commandIdentifier)
         const payload: ZclPayload = {};
 
-        for (let parameter of command.parameters) {
+        for (const parameter of command.parameters) {
             const options: BuffaloTsType.Options = {};
 
             if (ListTypes.includes(parameter.type)) {
@@ -228,7 +228,7 @@ class ZclFrame {
             while (buffalo.getPosition() < buffalo.getBuffer().length) {
                 const entry: {[s: string]: BuffaloTsType.Value} = {};
 
-                for (let parameter of command.parameters) {
+                for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
 
                     if (!this.conditionsValid(parameter, entry)) {
@@ -262,7 +262,7 @@ class ZclFrame {
         } else if (command.parseStrategy === 'flat') {
             const payload: {[s: string]: BuffaloTsType.Value} = {};
 
-            for (let parameter of command.parameters) {
+            for (const parameter of command.parameters) {
                 payload[parameter.name] = buffalo.read(DataType[parameter.type], {});
             }
 
@@ -279,7 +279,7 @@ class ZclFrame {
                     while (buffalo.getPosition() < buffalo.getBuffer().length) {
                         const entry: {[s: string]: BuffaloTsType.Value} = {};
 
-                        for (let parameter of command.parameters) {
+                        for (const parameter of command.parameters) {
                             entry[parameter.name] = buffalo.read(DataType[parameter.type], {});
                         }
 

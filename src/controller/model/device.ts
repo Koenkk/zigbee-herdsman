@@ -4,8 +4,9 @@ import Endpoint from './endpoint';
 import Entity from './entity';
 import {ArraySplitChunks} from '../../utils';
 import * as Zcl from '../../zcl';
+import Debug from "debug";
 
-const debug = require('debug')('zigbee-herdsman:controller:device');
+const debug = Debug('zigbee-herdsman:controller:device');
 
 class Device extends Entity {
     private ID: number;
@@ -116,7 +117,7 @@ class Device extends Entity {
     private toDatabaseRecord(): KeyValue {
         const epList = this.endpoints.map((e): number => e.ID);
         const endpoints: KeyValue = {};
-        for (let endpoint of this.endpoints) {
+        for (const endpoint of this.endpoints) {
             endpoints[endpoint.ID] = endpoint.toDatabaseRecord();
         }
 
@@ -248,7 +249,7 @@ class Device extends Entity {
             await this.save();
             debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
-            for (let endpoint of this.endpoints) {
+            for (const endpoint of this.endpoints) {
                 const simpleDescriptor = await Device.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
                 endpoint.set('profileID', simpleDescriptor.profileID);
                 endpoint.set('deviceID', simpleDescriptor.deviceID);
@@ -263,9 +264,9 @@ class Device extends Entity {
                 const attributes = ['manufacturerName', 'modelId', 'powerSource', 'zclVersion', 'appVersion', 'stackVersion', 'hwVersion', 'dateCode', 'swBuildId'];
 
                 // Split into chunks of 3, otherwise some devices fail to respond.
-                for (let chunk of ArraySplitChunks(attributes, 3)) {
+                for (const chunk of ArraySplitChunks(attributes, 3)) {
                     const result = await endpoint.read('genBasic', chunk);
-                    for (let [key, value] of Object.entries(result)) {
+                    for (const [key, value] of Object.entries(result)) {
                         if (key === 'manufacturerName') this.manufacturerName = value;
                         else if (key === 'modelId') this.modelID = value;
                         else if (key === 'zclVersion') this.zclVersion = value;

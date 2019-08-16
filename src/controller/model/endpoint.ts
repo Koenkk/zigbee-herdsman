@@ -82,7 +82,7 @@ class Endpoint extends Entity {
     public async write(clusterKey: number | string, attributes: {[s: string]: number | string}): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number; dataType: number; attrData: number| string}[] = [];
-        for (let [name, value] of Object.entries(attributes)) {
+        for (const [name, value] of Object.entries(attributes)) {
             const attribute = cluster.getAttribute(name);
             payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
         }
@@ -94,12 +94,12 @@ class Endpoint extends Entity {
     public async read(clusterKey: number | string, attributes: string[] | number []): Promise<KeyValue> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number}[] = [];
-        for (let attribute of attributes) {
+        for (const attribute of attributes) {
             payload.push({attrId: cluster.getAttribute(attribute).ID})
         }
 
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(), 'read', cluster.ID, payload);
-        let result = await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
+        const result = await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
         return ZclFrameConverter.attributeList(result.frame);
     }
 
@@ -141,7 +141,7 @@ class Endpoint extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
 
-        for (let parameter of command.parameters) {
+        for (const parameter of command.parameters) {
             if (!payload.hasOwnProperty(parameter.name)) {
                 throw new Error(`Parameter '${parameter.name}' is missing`);
             }

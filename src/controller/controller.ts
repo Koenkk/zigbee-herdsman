@@ -7,6 +7,7 @@ import {ZclFrameConverter} from './helpers';
 import {FrameType, Foundation} from '../zcl';
 import {Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload} from './events';
 import {KeyValue} from './tstype';
+import Debug from "debug";
 
 // @ts-ignore
 import mixin from 'mixin-deep';
@@ -37,8 +38,8 @@ const DefaultOptions: Options = {
 }
 
 const debug = {
-    error: require('debug')('zigbee-herdsman:controller:error'),
-    log: require('debug')('zigbee-herdsman:controller:log'),
+    error: Debug('zigbee-herdsman:controller:error'),
+    log: Debug('zigbee-herdsman:controller:log'),
 };
 
 class Controller extends events.EventEmitter {
@@ -82,16 +83,16 @@ class Controller extends events.EventEmitter {
             );
         }
 
-        setTimeout(async (): Promise<void> => {
-            const device = await Device.findByIeeeAddr('0x000b57fffec6a5b2');
-            const endpoint = device.getEndpoint(1);
-            const group = await this.getOrCreateGroup(1);
-            //group.addEndpoint(endpoint);
-            //await group.addEndpoint(endpoint);
-            //console.log('send on');
-            group.command('genOnOff', 'off', {});
-            //endpoint.bind('genOnOff', coordinator.getEndpoint(1));
-        }, 1000);
+        // setTimeout(async (): Promise<void> => {
+        //     const device = await Device.findByIeeeAddr('0x000b57fffec6a5b2');
+        //     const endpoint = device.getEndpoint(1);
+        //     const group = await this.getOrCreateGroup(1);
+        //     //group.addEndpoint(endpoint);
+        //     //await group.addEndpoint(endpoint);
+        //     //console.log('send on');
+        //     group.command('genOnOff', 'off', {});
+        //     //endpoint.bind('genOnOff', coordinator.getEndpoint(1));
+        // }, 1000);
     }
 
     public async permitJoin(permit: boolean): Promise<void> {

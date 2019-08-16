@@ -146,18 +146,18 @@ class BuffaloZcl extends Buffalo {
     }
 
     private writeExtensionFieldSets(values: {clstId: number; len: number; extField: number[]}[]): void {
-        for (let value of values) {
+        for (const value of values) {
             this.writeUInt16(value.clstId);
             this.writeUInt8(value.len);
 
-            for (let entry of value.extField) {
+            for (const entry of value.extField) {
                 this.writeUInt8(entry);
             }
         }
     }
 
     private writeListZoneInfo(values: {zoneID: number; zoneStatus: number}[]): void {
-        for (let value of values) {
+        for (const value of values) {
             this.writeUInt8(value.zoneID);
             this.writeUInt16(value.zoneStatus);
         }
@@ -205,7 +205,7 @@ class BuffaloZcl extends Buffalo {
     }
 
     private writeUInt56(value: number[]): void {
-        let temp = Buffer.alloc(8);
+        const temp = Buffer.alloc(8);
         temp.writeUInt32LE(value[1], 0);
         temp.writeUInt32LE(value[0], 4);
         this.writeBuffer(temp.slice(0, 7), 7);

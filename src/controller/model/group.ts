@@ -85,7 +85,7 @@ class Group extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
 
-        for (let parameter of command.parameters) {
+        for (const parameter of command.parameters) {
             if (!payload.hasOwnProperty(parameter.name)) {
                 throw new Error(`Parameter '${parameter.name}' is missing`);
             }

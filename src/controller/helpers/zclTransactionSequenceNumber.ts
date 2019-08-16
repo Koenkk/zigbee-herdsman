@@ -1,5 +1,5 @@
 class ZclTransactionSequenceNumber {
-    private static number: number = 0;
+    private static number = 0;
 
     public static next(): number {
         this.number++;

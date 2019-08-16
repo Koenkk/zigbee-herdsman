@@ -35,7 +35,7 @@ function getCluster(key: string | number): TsType.Cluster {
     let name: string;
 
     if (typeof key === 'number') {
-        for (let clusterName in Cluster) {
+        for (const clusterName in Cluster) {
             if (Cluster[clusterName].ID === key) {
                 name = clusterName;
                 break;
@@ -104,7 +104,7 @@ function getGlobalCommand(key: number | string): TsType.Command {
     let name;
 
     if (typeof key === 'number') {
-        for (let commandName in Foundation) {
+        for (const commandName in Foundation) {
             if (Foundation[commandName].ID === key) {
                 name = commandName;
                 break;
@@ -133,7 +133,7 @@ function getSpecificCommand(clusterKey: number | string, direction: Direction, k
     let name;
 
     if (typeof key === 'number') {
-        for (let commandName in commands) {
+        for (const commandName in commands) {
             if (commands[commandName].ID === key) {
                 name = commandName;
                 break;
