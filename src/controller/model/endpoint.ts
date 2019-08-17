@@ -81,7 +81,6 @@ class Endpoint extends Entity {
     /**
      * Zigbee functions
      */
-
     public async write(clusterKey: number | string, attributes: {[s: string]: number | string | boolean}): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];

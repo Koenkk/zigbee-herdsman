@@ -1513,7 +1513,7 @@ const Definition: {
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'deviceaddress', parameterType: ParameterType.IEEEADDR},
-                {name: 'removechildren_rejoin', parameterType: ParameterType.UINT8},
+                {name: 'removechildrenRejoin', parameterType: ParameterType.UINT8},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},

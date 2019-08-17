@@ -1,6 +1,10 @@
-import {NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor, DeviceType, ActiveEndpoints, SimpleDescriptor} from '../../tstype';
+import {
+    NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
+    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup, NetworkParameters,
+    StartResult,
+} from '../../tstype';
 import {ZnpVersion} from './tstype';
-import {Events, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload} from '../../events';
+import * as Events from '../../events';
 import Adapter from '../../adapter';
 import {Znp, ZpiObject} from '../znp';
 import StartZnp from './startZnp';
@@ -45,20 +49,18 @@ class ZStackAdapter extends Adapter {
     private znp: Znp;
     private transactionID: number;
     private version: {product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string};
-    private incomingMessageWaiter: IncomingMessageWaiter[];
     private closing: boolean;
     private queue: Queue;
-    private waitress: Waitress<ZclDataPayload, WaitressMatcher>;
+    private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string) {
         super(networkOptions, serialPortOptions, backupPath);
         this.znp = new Znp(this.serialPortOptions.path, this.serialPortOptions.baudRate, this.serialPortOptions.rtscts);
 
         this.transactionID = 0;
-        this.incomingMessageWaiter = [];
         this.closing = false;
-        this.queue = new Queue(3);
-        this.waitress = new Waitress<ZclDataPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
+        this.queue = new Queue(2);
+        this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
         this.znp.on('received', this.onZnpRecieved.bind(this));
         this.znp.on('close', this.onZnpClose.bind(this));
@@ -67,13 +69,13 @@ class ZStackAdapter extends Adapter {
     /**
      * Adapter methods
      */
-    public async start(): Promise<void> {
+    public async start(): Promise<StartResult> {
         await this.znp.open();
 
         this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
 
-        await StartZnp(this.znp, this.version.product, this.networkOptions, this.backupPath);
+        return await StartZnp(this.znp, this.version.product, this.networkOptions, this.backupPath);
     }
 
     public async stop(): Promise<void> {
@@ -180,8 +182,8 @@ class ZStackAdapter extends Adapter {
         }, networkAddress);
     }
 
-    public async sendZclFrameNetworkAddressWithResponse(networkAddress: number, endpoint: number, zclFrame: ZclFrame): Promise<ZclDataPayload> {
-        return this.queue.execute<ZclDataPayload>(async () => {
+    public async sendZclFrameNetworkAddressWithResponse(networkAddress: number, endpoint: number, zclFrame: ZclFrame): Promise<Events.ZclDataPayload> {
+        return this.queue.execute<Events.ZclDataPayload>(async () => {
             const response = this.waitress.waitFor({networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber, clusterID: zclFrame.ClusterID, frameType: zclFrame.Header.frameControl.frameType}, DefaultTimeout);
             await this.dataRequest(networkAddress, endpoint, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer());
             return await response;
@@ -198,6 +200,50 @@ class ZStackAdapter extends Adapter {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer());
         });
+    }
+
+    public async lqi(networkAddress: number): Promise<LQI> {
+        return this.queue.execute<LQI>(async (): Promise<LQI> => {
+            const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'mgmtLqiRsp', {srcaddr: networkAddress});
+            this.znp.request(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: networkAddress, startindex: 0});
+            const result = await response;
+            if (result.payload.status !== 0) {
+                throw new Error(`LQI for '${networkAddress}' failed`);
+            }
+
+            const neighbors: {ieeeAddr: string; networkAddress: number; linkquality: number}[] = [];
+            for (const entry of result.payload.neighborlqilist) {
+                neighbors.push({
+                    linkquality: entry.lqi,
+                    networkAddress: entry.nwkAddr,
+                    ieeeAddr: entry.extAddr,
+                });
+            }
+
+            return {neighbors};
+        }, networkAddress);
+    }
+
+    public async routingTable(networkAddress: number): Promise<RoutingTable> {
+        return this.queue.execute<RoutingTable>(async (): Promise<RoutingTable> => {
+            const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'mgmtRtgRsp', {srcaddr: networkAddress});
+            this.znp.request(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: networkAddress, startindex: 0});
+            const result = await response;
+            if (result.payload.status !== 0) {
+                throw new Error(`Routing table for '${networkAddress}' failed`);
+            }
+
+            const table: {destinationAddress: number; status: string; nextHop: number}[] = [];
+            for (const entry of result.payload.routingtablelist) {
+                table.push({
+                    destinationAddress: entry.destNwkAddr,
+                    status: entry.routeStatus,
+                    nextHop: entry.nextHopNwkAddr,
+                });
+            }
+
+            return {table};
+        }, networkAddress);
     }
 
     public async bind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number, destinationAddress: string, destinationEndpoint: number): Promise<void> {
@@ -236,12 +282,26 @@ class ZStackAdapter extends Adapter {
         }, destinationNetworkAddress);
     }
 
+    public removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'mgmtLeaveRsp', {srcaddr: networkAddress});
+            const payload = {
+                dstaddr: networkAddress,
+                deviceaddress: ieeeAddr,
+                removechildrenRejoin: 0,
+            };
+
+            this.znp.request(Subsystem.ZDO, 'mgmtLeaveReq', payload);
+            await response;
+        }, networkAddress);
+    }
+
     /**
      * Event handlers
      */
     public onZnpClose(): void {
         if (!this.closing) {
-            this.emit(Events.disconnected);
+            this.emit(Events.Events.disconnected);
         }
     }
 
@@ -252,27 +312,46 @@ class ZStackAdapter extends Adapter {
 
         if (object.subsystem === Subsystem.ZDO) {
             if (object.command === 'tcDeviceInd') {
-                const payload: DeviceJoinedPayload = {
+                const payload: Events.DeviceJoinedPayload = {
                     networkAddress: object.payload.nwkaddr,
                     ieeeAddr: object.payload.extaddr,
                 };
 
-                this.emit(Events.deviceJoined, payload);
+                this.emit(Events.Events.deviceJoined, payload);
             } else if (object.command === 'endDeviceAnnceInd') {
-                const payload: DeviceAnnouncePayload = {
+                const payload: Events.DeviceAnnouncePayload = {
                     networkAddress: object.payload.nwkaddr,
                     ieeeAddr: object.payload.ieeeaddr,
                 };
 
-                this.emit(Events.deviceAnnounce, payload);
+                this.emit(Events.Events.deviceAnnounce, payload);
+            } else if (object.command === 'leaveInd') {
+                const payload: Events.DeviceLeavePayload = {
+                    networkAddress: object.payload.srcaddr,
+                    ieeeAddr: object.payload.extaddr,
+                };
+
+                this.emit(Events.Events.deviceLeave, payload);
             }
         } else if (object.subsystem === Subsystem.AF) {
             if (object.command === 'incomingMsg' || object.command === 'incomingMsgExt') {
-                const payload: ZclDataPayload = this.incomingMsgToZclDataPayload(object);
+                const payload: Events.ZclDataPayload = this.incomingMsgToZclDataPayload(object);
                 this.waitress.resolve(payload);
-                this.emit(Events.zclData, payload);
+                this.emit(Events.Events.zclData, payload);
             }
         }
+    }
+
+    public async getNetworkParameters(): Promise<NetworkParameters> {
+        const result = await this.znp.request(Subsystem.ZDO, 'extNwkInfo', {});
+        return {panID: result.payload.panid, extendedPanID: result.payload.extendedpanid, channel: result.payload.channel};
+    }
+
+    public async supportsBackup(): Promise<boolean> {
+        return this.version.product !== ZnpVersion.zStack12;
+    }
+
+    public async backup(): Promise<Backup> {
     }
 
     /**
@@ -360,7 +439,7 @@ class ZStackAdapter extends Adapter {
         return `0x${addressString}`;
     }
 
-    private incomingMsgToZclDataPayload(object: ZpiObject): ZclDataPayload {
+    private incomingMsgToZclDataPayload(object: ZpiObject): Events.ZclDataPayload {
         return {
             frame: ZclFrame.fromBuffer(object.payload.clusterid, object.payload.data),
             networkAddress: object.payload.srcaddr,
@@ -374,7 +453,7 @@ class ZStackAdapter extends Adapter {
         return `Timeout - ${matcher.networkAddress} - ${matcher.endpoint} - ${matcher.transactionSequenceNumber} after ${timeout}ms`;
     }
 
-    private waitressValidator(payload: ZclDataPayload, matcher: WaitressMatcher): boolean {
+    private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
         return payload.networkAddress === matcher.networkAddress && payload.endpoint === matcher.endpoint && payload.frame.Header.transactionSequenceNumber === matcher.transactionSequenceNumber &&
             payload.frame.ClusterID === matcher.clusterID && matcher.frameType === payload.frame.Header.frameControl.frameType;
     }

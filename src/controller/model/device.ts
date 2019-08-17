@@ -8,6 +8,14 @@ import Debug from "debug";
 
 const debug = Debug('zigbee-herdsman:controller:device');
 
+interface LQI {
+    neighbors: {ieeeAddr: string; networkAddress: number; linkquality: number}[];
+}
+
+interface RoutingTable {
+    table: {destinationAddress: number; status: string; nextHop: number}[];
+}
+
 class Device extends Entity {
     private ID: number;
     private ieeeAddr: string;
@@ -206,9 +214,27 @@ class Device extends Entity {
             throw new Error(message);
         }
 
+        let error;
         this.interviewing = true;
         debug(`Interview - start device '${this.ieeeAddr}'`);
 
+        try {
+            await this.interviewInternal();
+            debug(`Interview - completed for device '${this.ieeeAddr}'`);
+            this.interviewCompleted = true;
+        } catch (e) {
+            error = e;
+        } finally {
+            this.interviewing = false;
+            await this.save();
+        }
+
+        if (error) {
+            throw error;
+        }
+    }
+
+    private async interviewInternal(): Promise<void> {
         const nodeDescriptorQuery = async (): Promise<void> => {
             const nodeDescriptor = await Device.adapter.nodeDescriptor(this.networkAddress);
             this.manufacturerID = nodeDescriptor.manufacturerCode;
@@ -309,10 +335,31 @@ class Device extends Entity {
             await endpoint.command('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23});
             debug(`Interview - succesfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
         }
+    }
 
-        debug(`Interview - completed for device '${this.ieeeAddr}'`);
-        this.interviewCompleted = true;
-        await this.save();
+    public async removeFromNetwork(): Promise<void> {
+        await Device.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
+        await this.removeFromDatabase();
+    }
+
+    public async removeFromDatabase(): Promise<void> {
+        await Device.database.remove(this.ID);
+        delete Device.lookup[this.ieeeAddr];
+    }
+
+    public async lqi(): Promise<LQI> {
+        return await Device.adapter.lqi(this.networkAddress);
+    }
+
+    public async routingTable(): Promise<RoutingTable> {
+        return await Device.adapter.routingTable(this.networkAddress);
+    }
+
+    public async ping(): Promise<void> {
+        // Zigbee does not have an official pining mechamism. Use a read request
+        // of a mandatory basic cluster attribute to keep it as lightweight as
+        // possible.
+        await this.endpoints[0].read('genBasic', ['zclVersion']);
     }
 }
 

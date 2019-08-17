@@ -20,6 +20,8 @@ interface CoordinatorVersion {
 
 type DeviceType = 'Coordinator' | 'EndDevice' | 'Router' | 'Unknown';
 
+type StartResult = 'resumed' | 'resetted' | 'restored';
+
 interface NodeDescriptor {
     type: DeviceType;
     manufacturerCode: number;
@@ -27,6 +29,22 @@ interface NodeDescriptor {
 
 interface ActiveEndpoints {
     endpoints: number[];
+}
+
+interface LQI {
+    neighbors: {
+        ieeeAddr: string;
+        networkAddress: number;
+        linkquality: number;
+    }[];
+}
+
+interface RoutingTable {
+    table: {
+        destinationAddress: number;
+        status: string;
+        nextHop: number;
+    }[];
 }
 
 interface SimpleDescriptor {
@@ -50,6 +68,20 @@ interface Coordinator {
     }[];
 }
 
+interface Backup {
+    adapterType: "zStack";
+    meta: {[s: string]: number};
+    data: {[s: string]: number[]};
+}
+
+interface NetworkParameters {
+    panID: number;
+    extendedPanID: number;
+    channel: number;
+}
+
 export {
-    SerialPortOptions, NetworkOptions, Coordinator, CoordinatorVersion, NodeDescriptor, DeviceType, ActiveEndpoints, SimpleDescriptor,
+    SerialPortOptions, NetworkOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
+    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup, NetworkParameters,
+    StartResult,
 }

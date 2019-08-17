@@ -8,7 +8,8 @@ enum Events {
     adapterDisconnected = "adapterDisconnected",
     deviceJoined = "deviceJoined",
     deviceInterview = "deviceInterview",
-    deviceAnnounce = "deviceAnnounce"
+    deviceAnnounce = "deviceAnnounce",
+    deviceLeave = "deviceLeave",
 }
 
 interface DeviceInterviewPayload {
@@ -18,6 +19,10 @@ interface DeviceInterviewPayload {
 
 interface DeviceAnnouncePayload {
     device: Device;
+}
+
+interface DeviceLeavePayload {
+    ieeeAddr: string;
 }
 
 const CommandsLookup: {[s: string]: MessagePayloadType} = {
@@ -74,4 +79,5 @@ interface MessagePayload {
 
 export {
     Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload,
+    DeviceLeavePayload,
 }

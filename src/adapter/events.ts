@@ -4,7 +4,8 @@ enum Events {
     deviceJoined = "deviceJoined",
     zclData = "zclData",
     disconnected = "disconnected",
-    deviceAnnounce = "deviceAnnounce"
+    deviceAnnounce = "deviceAnnounce",
+    deviceLeave = "deviceLeave"
 }
 
 interface DeviceJoinedPayload {
@@ -13,6 +14,11 @@ interface DeviceJoinedPayload {
 }
 
 interface DeviceAnnouncePayload {
+    networkAddress: number;
+    ieeeAddr: string;
+}
+
+interface DeviceLeavePayload {
     networkAddress: number;
     ieeeAddr: string;
 }
@@ -26,5 +32,5 @@ interface ZclDataPayload {
 }
 
 export {
-    Events, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload,
+    Events, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload, DeviceLeavePayload,
 }

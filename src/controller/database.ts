@@ -18,6 +18,14 @@ class Database {
         });
     }
 
+    public clear(): Promise<void> {
+        return new Promise((resolve, reject): void => {
+            this.store.remove({}, (error: Error): void => {
+                error == null ? resolve() : reject(error);
+            })
+        });
+    }
+
     public find(query: KeyValue): Promise<KeyValue[]> {
         return new Promise((resolve, reject): void => {
             this.store.find(query, (error: Error, result: KeyValue[]): void => {
@@ -39,6 +47,14 @@ class Database {
             this.store.update({id: ID}, object, {}, (error: Error): void => {
                 error == null ? resolve() : reject(error);
             });
+        });
+    }
+
+    public async remove(ID: number): Promise<void> {
+        return new Promise((resolve, reject): void => {
+            this.store.remove({id: ID}, (error: Error): void => {
+                error == null ? resolve() : reject(error);
+            })
         });
     }
 

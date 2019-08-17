@@ -2,10 +2,10 @@ import events from 'events';
 import Database from './database';
 import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter';
 import {Entity, Device} from './model';
-import {Events as AdapterEvents, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload as AdapterDeviceAnnouncePayload} from '../adapter/events'
+import * as AdapterEvents from '../adapter/events'
 import {ZclFrameConverter} from './helpers';
 import {FrameType, Foundation} from '../zcl';
-import {Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload} from './events';
+import * as Events from './events';
 import {KeyValue} from './tstype';
 import Debug from "debug";
 
@@ -54,20 +54,23 @@ class Controller extends events.EventEmitter {
         this.options = mixin(DefaultOptions, options);
         this.adapter = new ZStackAdapter(options.network, options.serialPort, options.backupPath);
 
-        this.onDeviceJoined = this.onDeviceJoined.bind(this);
-        this.adapter.on(AdapterEvents.deviceJoined, this.onDeviceJoined);
-        this.onZclData = this.onZclData.bind(this);
-        this.adapter.on(AdapterEvents.zclData, this.onZclData);
-        this.onAdapterDisconnected = this.onAdapterDisconnected.bind(this);
-        this.adapter.on(AdapterEvents.disconnected, this.onAdapterDisconnected);
-        this.onDeviceAnnounce = this.onDeviceAnnounce.bind(this);
-        this.adapter.on(AdapterEvents.deviceAnnounce, this.onDeviceAnnounce);
+        this.adapter.on(AdapterEvents.Events.deviceJoined, this.onDeviceJoined.bind(this));
+        this.adapter.on(AdapterEvents.Events.zclData, this.onZclData.bind(this));
+        this.adapter.on(AdapterEvents.Events.disconnected, this.onAdapterDisconnected.bind(this));
+        this.adapter.on(AdapterEvents.Events.deviceAnnounce, this.onDeviceAnnounce.bind(this));
+        this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
     }
 
     public async start(): Promise<void> {
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
         this.database = await Database.open(this.options.databasePath);
-        await this.adapter.start();
+        const startResult = await this.adapter.start();
+        debug.log(`Started with result '${startResult}'`);
+
+        if (startResult === 'resetted') {
+            debug.log('Clearing database...');
+            await this.database.clear();
+        }
 
         // Inject adapter and database in entity
         Entity.injectAdapter(this.adapter);
@@ -83,16 +86,25 @@ class Controller extends events.EventEmitter {
             );
         }
 
-        // setTimeout(async (): Promise<void> => {
-        //     const device = await Device.findByIeeeAddr('0x000b57fffec6a5b2');
-        //     const endpoint = device.getEndpoint(1);
-        //     const group = await this.getOrCreateGroup(1);
-        //     //group.addEndpoint(endpoint);
-        //     //await group.addEndpoint(endpoint);
-        //     //console.log('send on');
-        //     group.command('genOnOff', 'off', {});
-        //     //endpoint.bind('genOnOff', coordinator.getEndpoint(1));
-        // }, 1000);
+        setTimeout(async (): Promise<void> => {
+            console.log(await this.adapter.getNetworkParameters());
+            //const device = await Device.findByIeeeAddr('0x000b57fffec6a5b2');
+            //console.log(await device.routingTable());
+            // const endpoint = device.getEndpoint(1);
+            // // console.log('removeing it');
+            //await device.removeFromNetwork();
+            //console.log('donee');
+
+            // await Wait(3000);
+            // endpoint.command('genOnOff', 'off', {});
+           // const group = await this.getOrCreateGroup(1);
+            //group.addEndpoint(endpoint);
+            //await group.addEndpoint(endpoint);
+            //console.log('send on');
+            //endpoint.command('genOnOff', 'off', {});
+            //group.command('genOnOff', 'off', {});
+            //endpoint.bind('genOnOff', coordinator.getEndpoint(1));
+        }, 1000);
     }
 
     public async permitJoin(permit: boolean): Promise<void> {
@@ -151,10 +163,23 @@ class Controller extends events.EventEmitter {
         await this.adapter.disableLED();
     }
 
-    private async onDeviceAnnounce(payload: AdapterDeviceAnnouncePayload): Promise<void> {
+    private async onDeviceAnnounce(payload: AdapterEvents.DeviceAnnouncePayload): Promise<void> {
         debug.log(`Device announce '${payload.ieeeAddr}'`);
-        const data: DeviceAnnouncePayload = {device: await Device.findByIeeeAddr(payload.ieeeAddr)};
-        this.emit(Events.deviceAnnounce, data);
+        const data: Events.DeviceAnnouncePayload = {device: await Device.findByIeeeAddr(payload.ieeeAddr)};
+        this.emit(Events.Events.deviceAnnounce, data);
+    }
+
+    private async onDeviceLeave(payload: AdapterEvents.DeviceLeavePayload): Promise<void> {
+        debug.log(`Device leave '${payload.ieeeAddr}'`);
+
+        const device = await Device.findByIeeeAddr(payload.ieeeAddr);
+        if (device) {
+            debug.log(`Removing device from database '${payload.ieeeAddr}'`);
+            device.removeFromDatabase();
+        }
+
+        const data: Events.DeviceLeavePayload = {ieeeAddr: payload.ieeeAddr};
+        this.emit(Events.Events.deviceLeave, data);
     }
 
     private async onAdapterDisconnected(): Promise<void> {
@@ -165,11 +190,13 @@ class Controller extends events.EventEmitter {
         } catch (error) {
         }
 
-        this.emit(Events.adapterDisconnected);
+        this.emit(Events.Events.adapterDisconnected);
     }
 
-    private async onDeviceJoined(payload: DeviceJoinedPayload): Promise<void> {
+    private async onDeviceJoined(payload: AdapterEvents.DeviceJoinedPayload): Promise<void> {
         let device = await Device.findByIeeeAddr(payload.ieeeAddr)
+        debug.log(`Device joined '${payload.ieeeAddr}'`);
+
         if (!device) {
             debug.log(`New device '${payload.ieeeAddr}' joined`);
             debug.log(`Creating device '${payload.ieeeAddr}'`);
@@ -178,31 +205,33 @@ class Controller extends events.EventEmitter {
                 undefined, undefined, undefined, []
             );
 
-            this.emit(Events.deviceJoined, device);
+            this.emit(Events.Events.deviceJoined, device);
         } else if (device.get('networkAddress') !== payload.networkAddress) {
             debug.log(`Device '${payload.ieeeAddr}' is already in database with different networkAddress, updating networkAddress`);
             await device.set('networkAddress', payload.networkAddress);
         }
 
         if (!device.get('interviewCompleted') && !device.get('interviewing')) {
-            const payloadStart: DeviceInterviewPayload = {status: 'started', device};
+            const payloadStart: Events.DeviceInterviewPayload = {status: 'started', device};
             debug.log(`Interview '${device.get('ieeeAddr')}' start`);
-            this.emit(Events.deviceInterview, payloadStart);
+            this.emit(Events.Events.deviceInterview, payloadStart);
 
             try {
                 await device.interview();
                 debug.log(`Succesfully interviewed '${device.get('ieeeAddr')}'`);
-                const event: DeviceInterviewPayload = {status: 'successful', device};
-                this.emit(Events.deviceInterview, event);
+                const event: Events.DeviceInterviewPayload = {status: 'successful', device};
+                this.emit(Events.Events.deviceInterview, event);
             } catch (error) {
                 debug.error(`Interview failed for '${device.get('ieeeAddr')} with error '${error}'`);
-                const event: DeviceInterviewPayload = {status: 'failed', device};
-                this.emit(Events.deviceInterview, event);
+                const event: Events.DeviceInterviewPayload = {status: 'failed', device};
+                this.emit(Events.Events.deviceInterview, event);
             }
+        } else {
+            debug.log(`Not interviewing '${payload.ieeeAddr}', completed '${device.get('interviewCompleted')}', in progress '${device.get('interviewing')}'`)
         }
     }
 
-    private async onZclData(zclData: ZclDataPayload): Promise<void> {
+    private async onZclData(zclData: AdapterEvents.ZclDataPayload): Promise<void> {
         debug.log(`Received ZCL data '${JSON.stringify(zclData)}'`);
 
         const device = await Device.findByNetworkAddress(zclData.networkAddress);
@@ -219,7 +248,7 @@ class Controller extends events.EventEmitter {
 
         // Parse command for event
         const command = zclData.frame.Header.commandIdentifier;
-        let type: MessagePayloadType = undefined;
+        let type: Events.MessagePayloadType = undefined;
         let data: KeyValue;
         if (zclData.frame.Header.frameControl.frameType === FrameType.GLOBAL) {
             if (command === Foundation.report.ID) {
@@ -231,8 +260,8 @@ class Controller extends events.EventEmitter {
             }
         } else if (zclData.frame.Header.frameControl.frameType === FrameType.SPECIFIC) {
             const command = zclData.frame.getCommand().name;
-            if (CommandsLookup[command]) {
-                type = CommandsLookup[command];
+            if (Events.CommandsLookup[command]) {
+                type = Events.CommandsLookup[command];
                 data = zclData.frame.Payload;
             } else {
                 debug.log(`Skipping command '${command}' because it is missing from the lookup`);
@@ -248,8 +277,8 @@ class Controller extends events.EventEmitter {
             const endpoint = device.getEndpoint(zclData.endpoint);
             const linkquality = zclData.linkquality;
             const groupID = zclData.groupID;
-            const eventData: MessagePayload = {type, device, endpoint, data, linkquality, groupID};
-            this.emit(Events.message, eventData);
+            const eventData: Events.MessagePayload = {type, device, endpoint, data, linkquality, groupID};
+            this.emit(Events.Events.message, eventData);
         }
 
         // Send a default response if necessary.

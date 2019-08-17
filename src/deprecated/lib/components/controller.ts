@@ -1,74 +1,7 @@
-/*************************************************************************************************/
-/*** Public ZigBee Utility APIs                                                                ***/
-/*************************************************************************************************/
-
-Controller.prototype.getNetInfo = function () {
-    var net = _.cloneDeep(this._net);
-
-    if (net.state === Zsc.COMMON.devStates.ZB_COORD)
-        net.state = 'Coordinator';
-
-    net.joinTimeLeft = this._permitJoinTime;
-
-    return net;
-};
-
 
 /*************************************************************************************************/
 /*** Mandatory Public APIs                                                                     ***/
 /*************************************************************************************************/
-
-Controller.prototype.remove = function (dev, cfg, callback) {
-    // cfg: { reJoin, rmChildren }
-    var self = this,
-        reqArgObj,
-        rmChildren_reJoin = 0x00;
-
-    if (!(dev instanceof Device))
-        throw new TypeError('dev should be an instance of Device class.');
-    else if (!_.isPlainObject(cfg))
-        throw new TypeError('cfg should be an object.');
-
-    cfg.reJoin = cfg.hasOwnProperty('reJoin') ? !!cfg.reJoin : true;               // defaults to true
-    cfg.rmChildren = cfg.hasOwnProperty('rmChildren') ? !!cfg.rmChildren : false;  // defaults to false
-
-    rmChildren_reJoin = cfg.reJoin ? (rmChildren_reJoin | 0x01) : rmChildren_reJoin;
-    rmChildren_reJoin = cfg.rmChildren ? (rmChildren_reJoin | 0x02) : rmChildren_reJoin;
-
-    reqArgObj = {
-        dstaddr: dev.getNwkAddr(),
-        deviceaddress: dev.getIeeeAddr(),
-        removechildren_rejoin: rmChildren_reJoin
-    };
-
-    return this.request('ZDO', 'mgmtLeaveReq', reqArgObj).then(function (rsp) {
-        if (rsp.status !== 0 && rsp.status !== 'SUCCESS')
-            return Q.reject(rsp.status);
-    }).nodeify(callback);
-};
-
-Controller.prototype.checkOnline = function (dev, callback) {
-    var self = this,
-        nwkAddr = dev.getNwkAddr(),
-        ieeeAddr = dev.getIeeeAddr(),
-        deferred = Q.defer();
-
-    Q.fcall(function () {
-        return self.request('ZDO', 'nodeDescReq', { dstaddr: nwkAddr, nwkaddrofinterest: nwkAddr }).timeout(5000).fail(function () {
-            return self.request('ZDO', 'nodeDescReq', { dstaddr: nwkAddr, nwkaddrofinterest: nwkAddr }).timeout(5000);
-        });
-    }).then(function () {
-        if (dev.status === 'offline') {
-            self.emit('ZDO:endDeviceAnnceInd', { srcaddr: nwkAddr, nwkaddr: nwkAddr, ieeeaddr: ieeeAddr, capabilities: {} });
-        }
-        return deferred.resolve();
-    }).fail(function (err) {
-        return deferred.reject(err);
-    }).done();
-
-    return deferred.promise.nodeify(callback);
-};
-
 Controller.prototype.backupCoordinator = async function (path, callback) {
     const deferred = Q.defer();
 

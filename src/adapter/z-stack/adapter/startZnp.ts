@@ -78,7 +78,7 @@ const Items = {
             // id/configid is used depending if SAPI or SYS command is executed
             id: NvItemsIds.PRECFGKEY,
             configid: NvItemsIds.PRECFGKEY,
-            len: 0x01,
+            len: 0x10,
             offset: 0x00,
             value: Buffer.from(key),
         }
@@ -170,19 +170,19 @@ async function validateItem(znp: Znp, item: NvItem, message: string, subsystem =
 async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions): Promise<boolean> {
     try {
         await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured');
-
-        // TODO: check for z-stack 3
-        await validateItem(znp, Items.panID(options.panID), 'panID');
-        await validateItem(znp, Items.extendedPanID(options.extenedPanID), 'extendedPanID');
-
         await validateItem(znp, Items.channelList(options.channelList), 'channelList');
         await validateItem(znp, Items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute');
 
         if (version === ZnpVersion.zStack3x0) {
-            // TODO: check for z-stack 3
             await validateItem(znp, Items.networkKey(options.networkKey), 'networkKey');
         } else {
             await validateItem(znp, Items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'readConfiguration');
+        }
+
+        if (version === ZnpVersion.zStack12) {
+            // TODO: add extendedPanID and panID for zStack 3
+            await validateItem(znp, Items.panID(options.panID), 'panID');
+            await validateItem(znp, Items.extendedPanID(options.extenedPanID), 'extendedPanID');
         }
 
         return false;
@@ -235,20 +235,23 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.networkKeyDistribute(options.networkKeyDistribute));
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.zdoDirectCb());
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.channelList(options.channelList));
-    await znp.request(Subsystem.SYS, 'osalNvWrite', Items.panID(options.panID)); // TODO z-stack 3
-    await znp.request(Subsystem.SYS, 'osalNvWrite', Items.extendedPanID(options.extenedPanID)); // TODO z-stack 3
+
+    if (version === ZnpVersion.zStack12) {
+        // TODO: add extendedPanID and panID for zStack 3
+        await validateItem(znp, Items.panID(options.panID), 'panID');
+        await validateItem(znp, Items.extendedPanID(options.extenedPanID), 'extendedPanID');
+    }
 
     if (version === ZnpVersion.zStack30x || version === ZnpVersion.zStack3x0) {
         await znp.request(Subsystem.SYS, 'osalNvWrite', Items.networkKey(options.networkKey));
         // Default link key is already OK for Z-Stack 3 ('ZigBeeAlliance09')
-        // TODO: check for z-stack 3
-        //
-        //
-        // Set panid and extended pan id
-        //         function () { return self.request('APP_CNF', 'bdbSetChannel', {isPrimary: 0x1, channel: channel}).delay(10); },
-        //         function () { return self.request('APP_CNF', 'bdbSetChannel', {isPrimary: 0x0, channel: 0x0}).delay(10); },
-        //         function () { return self.request('APP_CNF', 'bdbStartCommissioning', {mode: 0x04}).delay(5000); },
-        //         function () { return self.request('APP_CNF', 'bdbStartCommissioning', {mode: 0x02}).delay(10); },
+        const channelMask = Buffer.from(Constants.Utils.getChannelMask(options.channelList)).readUInt32LE(0);
+        await znp.request(Subsystem.APP_CNF, 'bdbSetChannel', {isPrimary: 0x1, channel: channelMask});
+        await znp.request(Subsystem.APP_CNF, 'bdbSetChannel', {isPrimary: 0x0, channel: 0x0});
+        const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000)
+        await znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x04});
+        await started;
+        await znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x02});
     } else {
         await znp.request(Subsystem.SAPI, 'writeConfiguration', Items.networkKey(options.networkKey));
         await znp.request(Subsystem.SYS, 'osalNvWrite', Items.tcLinkKey());
@@ -259,22 +262,22 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(version));
 }
 
-export default async (znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, backupPath?: string): Promise<void> => {
+export default async (znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, backupPath?: string): Promise<TsType.StartResult> => {
+    let result: TsType.StartResult = 'resumed';
+
     if (await needsToBeInitialised(znp, version, options)) {
         debug('Coordinator needs to be reinitialised');
         if (backupPath && fs.existsSync(backupPath)) {
             debug('Restoring coordinator from backup');
             await restore(backupPath);
+            result = 'restored';
         } else {
             await initialise(znp, version, options);
+            result = 'resetted';
         }
     }
 
     await boot(znp);
-
-    // After startup, write the channel again, otherwise the channel is not always persisted in the NV.
-    // Not sure why this is needed.
-    await znp.request(Subsystem.SYS, 'osalNvWrite', Items.channelList(options.channelList));
-
     await registerEndpoints(znp);
+    return result;
 };
