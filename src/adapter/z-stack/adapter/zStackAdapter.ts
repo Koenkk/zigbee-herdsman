@@ -5,7 +5,7 @@ import Adapter from '../../adapter';
 import {Znp, ZpiObject} from '../znp';
 import StartZnp from './startZnp';
 import {Constants as UnpiConstants} from '../unpi';
-import {ZclFrame} from '../../../zcl';
+import {ZclFrame, FrameType} from '../../../zcl';
 import {Queue, Waitress} from '../../../utils';
 import * as Constants from '../constants';
 import Debug from "debug";
@@ -31,10 +31,14 @@ const DataConfirmCodeLookup: {[k: number]: string} = {
     240: 'MAC transaction expired',
 }
 
+const DefaultTimeout = 10000;
+
 interface WaitressMatcher {
     networkAddress: number;
     endpoint: number;
     transactionSequenceNumber: number;
+    frameType: FrameType;
+    clusterID: number;
 };
 
 class ZStackAdapter extends Adapter {
@@ -178,8 +182,8 @@ class ZStackAdapter extends Adapter {
 
     public async sendZclFrameNetworkAddressWithResponse(networkAddress: number, endpoint: number, zclFrame: ZclFrame): Promise<ZclDataPayload> {
         return this.queue.execute<ZclDataPayload>(async () => {
-            const response = this.waitForIncomingMessage(networkAddress, endpoint, zclFrame.Header.transactionSequenceNumber);
-            await this.sendZclFrameNetworkAddress(networkAddress, endpoint, zclFrame);
+            const response = this.waitress.waitFor({networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber, clusterID: zclFrame.ClusterID, frameType: zclFrame.Header.frameControl.frameType}, DefaultTimeout);
+            await this.dataRequest(networkAddress, endpoint, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer());
             return await response;
         }, networkAddress);
     }
@@ -265,7 +269,7 @@ class ZStackAdapter extends Adapter {
         } else if (object.subsystem === Subsystem.AF) {
             if (object.command === 'incomingMsg' || object.command === 'incomingMsgExt') {
                 const payload: ZclDataPayload = this.incomingMsgToZclDataPayload(object);
-                this.resolveIncomingMessageWaiters(payload);
+                this.waitress.resolve(payload);
                 this.emit(Events.zclData, payload);
             }
         }
@@ -371,26 +375,8 @@ class ZStackAdapter extends Adapter {
     }
 
     private waitressValidator(payload: ZclDataPayload, matcher: WaitressMatcher): boolean {
-        return payload.networkAddress === matcher.networkAddress && payload.endpoint === matcher.endpoint && payload.frame.Header.transactionSequenceNumber === matcher.transactionSequenceNumber;
-    }
-
-    private resolveIncomingMessageWaiters(payload: ZclDataPayload): void {
-        for (let index = 0; index < this.incomingMessageWaiter.length; index++) {
-            const waiter = this.incomingMessageWaiter[index];
-            const match = payload.networkAddress === waiter.networkAddress && payload.endpoint === waiter.endpoint && payload.frame.Header.transactionSequenceNumber === waiter.transactionSequenceNumber;
-
-            if (waiter.timedout) {
-                this.incomingMessageWaiter.splice(index, 1);
-            } else if (match) {
-                clearTimeout(waiter.timer);
-                waiter.resolve(payload);
-                this.incomingMessageWaiter.splice(index, 1);
-            }
-        }
-    }
-
-    private waitForIncomingMessage(networkAddress: number, endpoint: number, transactionSequenceNumber: number): Promise<ZclDataPayload> {
-        return this.waitress.waitFor({networkAddress, endpoint, transactionSequenceNumber}, 10000);
+        return payload.networkAddress === matcher.networkAddress && payload.endpoint === matcher.endpoint && payload.frame.Header.transactionSequenceNumber === matcher.transactionSequenceNumber &&
+            payload.frame.ClusterID === matcher.clusterID && matcher.frameType === payload.frame.Header.frameControl.frameType;
     }
 }
 

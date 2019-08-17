@@ -2,7 +2,7 @@ import {KeyValue} from '../tstype';
 import {TsType as AdapterTsType} from '../../adapter'
 import Endpoint from './endpoint';
 import Entity from './entity';
-import {ArraySplitChunks} from '../../utils';
+import {ArraySplitChunks, Wait} from '../../utils';
 import * as Zcl from '../../zcl';
 import Debug from "debug";
 
@@ -25,7 +25,7 @@ class Device extends Entity {
     private dateCode?: string;
     private softwareBuildID?: string;
 
-    private interviewed: boolean;
+    private interviewCompleted: boolean;
     private interviewing: boolean;
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
@@ -36,7 +36,7 @@ class Device extends Entity {
         ID: number, type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
-        hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewed: boolean,
+        hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean,
     ) {
         super();
         this.ID = ID;
@@ -54,7 +54,7 @@ class Device extends Entity {
         this.hardwareVersion = hardwareVersion;
         this.dateCode = dateCode;
         this.softwareBuildID = softwareBuildID;
-        this.interviewed = interviewed;
+        this.interviewCompleted = interviewCompleted;
         this.interviewing = false;
     }
 
@@ -80,7 +80,7 @@ class Device extends Entity {
         return this.endpoints.find((e): boolean => e.ID === ID);
     }
 
-    public get(key: 'modelID' | 'networkAddress' | 'interviewed' | 'ieeeAddr'): string | number | boolean {
+    public get(key: 'modelID' | 'networkAddress' | 'interviewCompleted' | 'ieeeAddr' | 'interviewing'): string | number | boolean {
         return this[key];
     }
 
@@ -108,7 +108,7 @@ class Device extends Entity {
             record.id, record.type, ieeeAddr, networkAddress, record.manufId, endpoints,
             record.manufName, record.powerSource, record.modelId, record.appVersion,
             record.stackVersion, record.zclVersion, record.hwVersion, record.dateCode, record.swBuildId,
-            record.interviewed,
+            record.interviewCompleted,
         );
     }
 
@@ -124,7 +124,7 @@ class Device extends Entity {
             manufId: this.manufacturerID, manufName: this.manufacturerName, powerSource: this.powerSource,
             modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion, stackVersion: this.stackVersion,
             hwVersion: this.hardwareVersion, dateCode: this.dateCode, swBuildId: this.softwareBuildID, zclVersion: this.zclVersion,
-            interviewed: this.interviewed,
+            interviewCompleted: this.interviewCompleted,
         }
     }
 
@@ -134,6 +134,10 @@ class Device extends Entity {
 
     public static async all(): Promise<Device[]> {
         return this.find({});
+    }
+
+    public static async findCoordinator(): Promise<Device> {
+        return this.findSingle({type: 'Coordinator'});
     }
 
     public static async findByType(type: AdapterTsType.DeviceType): Promise<Device[]> {
@@ -195,10 +199,11 @@ class Device extends Entity {
     /**
      * Zigbee functions
      */
-    public async interview(): Promise<'failed' | 'successful' | 'alreadyInProgress'> {
+    public async interview(): Promise<void> {
         if (this.interviewing) {
-            debug(`Interview - interview already in progress for '${this.ieeeAddr}'`);
-            return 'alreadyInProgress';
+            const message = `Interview - interview already in progress for '${this.ieeeAddr}'`;
+            debug(message);
+            throw new Error(message);
         }
 
         this.interviewing = true;
@@ -212,7 +217,7 @@ class Device extends Entity {
             debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         }
 
-        const isXiaomiAndInterviewed = async (): Promise<boolean> => {
+        const isXiaomiAndinterviewCompleted = async (): Promise<boolean> => {
             // Xiaomi end devices have a different interview procedure, after pairing they report it's
             // modelID trough a readResponse. The readResponse is received by the controller and set on the device
             // Check if we have a modelID starting with lumi.* at this point, indicating a Xiaomi end device.
@@ -223,7 +228,7 @@ class Device extends Entity {
                 this.manufacturerName = 'LUMI';
                 this.powerSource = 'Battery';
                 this.interviewing = false;
-                this.interviewed = true;
+                this.interviewCompleted = true;
                 await this.save();
                 return true;
             } else {
@@ -232,74 +237,82 @@ class Device extends Entity {
         }
 
         try {
-            try {
-                await nodeDescriptorQuery();
-            } catch (error1) {
-                if (await isXiaomiAndInterviewed()) {
-                    return 'successful';
-                } else {
-                    try {
-                        await nodeDescriptorQuery();
-                    } catch (error2) {
-                        if (await isXiaomiAndInterviewed()) {
-                            return 'successful';
-                        } else {
-                            throw error2;
-                        }
-                    }
-                }
-            }
-
-            const activeEndpoints = await Device.adapter.activeEndpoints(this.networkAddress);
-            this.endpoints = activeEndpoints.endpoints.map((e): Endpoint => Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr));
-            await this.save();
-            debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
-
-            for (const endpoint of this.endpoints) {
-                const simpleDescriptor = await Device.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
-                endpoint.set('profileID', simpleDescriptor.profileID);
-                endpoint.set('deviceID', simpleDescriptor.deviceID);
-                endpoint.set('inputClusters', simpleDescriptor.inputerClusters);
-                endpoint.set('outputClusters', simpleDescriptor.outputClusters);
-                debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`)
-                await this.save();
-            }
-
-            if (this.endpoints.length !== 0) {
-                const endpoint = this.endpoints[0];
-                const attributes = ['manufacturerName', 'modelId', 'powerSource', 'zclVersion', 'appVersion', 'stackVersion', 'hwVersion', 'dateCode', 'swBuildId'];
-
-                // Split into chunks of 3, otherwise some devices fail to respond.
-                for (const chunk of ArraySplitChunks(attributes, 3)) {
-                    const result = await endpoint.read('genBasic', chunk);
-                    for (const [key, value] of Object.entries(result)) {
-                        if (key === 'manufacturerName') this.manufacturerName = value;
-                        else if (key === 'modelId') this.modelID = value;
-                        else if (key === 'zclVersion') this.zclVersion = value;
-                        else if (key === 'appVersion') this.applicationVersion = value;
-                        else if (key === 'stackVersion') this.stackVersion = value;
-                        else if (key === 'hwVersion') this.hardwareVersion = value;
-                        else if (key === 'dateCode') this.dateCode = value;
-                        else if (key === 'swBuildId') this.softwareBuildID = value;
-                        else if (key === 'powerSource') this.powerSource = Zcl.PowerSource[value];
-                    }
-
-                    debug(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
-                    this.save();
-                }
+            await nodeDescriptorQuery();
+        } catch (error1) {
+            if (await isXiaomiAndinterviewCompleted()) {
+                return;
             } else {
-                debug(`Interview - skip reading attributes because of no endpoint for device '${this.ieeeAddr}'`);
+                try {
+                    debug(`Interview - first node descriptor request failed for '${this.ieeeAddr}', retrying...`);
+                    await nodeDescriptorQuery();
+                } catch (error2) {
+                    if (await isXiaomiAndinterviewCompleted()) {
+                        return;
+                    } else {
+                        throw error2;
+                    }
+                }
             }
-
-            debug(`Interview - completed for device '${this.ieeeAddr}'`);
-            this.interviewed = true;
-            await this.save();
-            return 'successful';
-        } catch (error) {
-            this.interviewing = false;
-            debug(`Interview - failed with error '${error}' for device '${this.ieeeAddr}'`);
-            return 'failed';
         }
+
+        if (await isXiaomiAndinterviewCompleted()) {
+            return;
+        }
+
+        const activeEndpoints = await Device.adapter.activeEndpoints(this.networkAddress);
+        this.endpoints = activeEndpoints.endpoints.map((e): Endpoint => Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr));
+        await this.save();
+        debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
+
+        for (const endpoint of this.endpoints) {
+            const simpleDescriptor = await Device.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
+            endpoint.set('profileID', simpleDescriptor.profileID);
+            endpoint.set('deviceID', simpleDescriptor.deviceID);
+            endpoint.set('inputClusters', simpleDescriptor.inputerClusters);
+            endpoint.set('outputClusters', simpleDescriptor.outputClusters);
+            debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`)
+            await this.save();
+        }
+
+        if (this.endpoints.length !== 0) {
+            const endpoint = this.endpoints[0];
+            const attributes = ['manufacturerName', 'modelId', 'powerSource', 'zclVersion', 'appVersion', 'stackVersion', 'hwVersion', 'dateCode', 'swBuildId'];
+
+            // Split into chunks of 3, otherwise some devices fail to respond.
+            for (const chunk of ArraySplitChunks(attributes, 3)) {
+                const result = await endpoint.read('genBasic', chunk);
+                for (const [key, value] of Object.entries(result)) {
+                    if (key === 'manufacturerName') this.manufacturerName = value;
+                    else if (key === 'modelId') this.modelID = value;
+                    else if (key === 'zclVersion') this.zclVersion = value;
+                    else if (key === 'appVersion') this.applicationVersion = value;
+                    else if (key === 'stackVersion') this.stackVersion = value;
+                    else if (key === 'hwVersion') this.hardwareVersion = value;
+                    else if (key === 'dateCode') this.dateCode = value;
+                    else if (key === 'swBuildId') this.softwareBuildID = value;
+                    else if (key === 'powerSource') this.powerSource = Zcl.PowerSource[value];
+                }
+
+                debug(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
+                this.save();
+            }
+        } else {
+            debug(`Interview - skip reading attributes because of no endpoint for device '${this.ieeeAddr}'`);
+        }
+
+        // Enroll IAS device
+        for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
+            debug(`Interview - ssIasZone enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+            const coordinator = await Device.findCoordinator();
+            await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.get('ieeeAddr')});
+            await Wait(3000); // According to the spec, we should wait for an enrollRequest here, but the Bosch ISW-ZPR1 didn't send it.
+            await endpoint.command('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23});
+            debug(`Interview - succesfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+        }
+
+        debug(`Interview - completed for device '${this.ieeeAddr}'`);
+        this.interviewCompleted = true;
+        await this.save();
     }
 }
 

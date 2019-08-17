@@ -47,6 +47,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'panic': 'commandPanic',
     'emergency': 'commandEmergency',
     'operationEventNotification': 'commandOperationEventNotification',
+    'statusChangeNotification': 'commandStatusChangeNotification',
 };
 
 type MessagePayloadType =
@@ -59,7 +60,7 @@ type MessagePayloadType =
     'commandTradfriArrowSingle' | 'commandTradfriArrowHold' | 'commandTradfriArrowRelease' |
     'commandStepWithOnOff' | 'commandMoveToColorTemp' | 'commandMoveToColor' | 'commandOnWithTimedOff' |
     'commandRecall' | 'commandArm' | 'commandPanic' | 'commandEmergency' |
-    'commandOperationEventNotification';
+    'commandOperationEventNotification' | 'commandStatusChangeNotification';
 
 interface MessagePayload {
     type: MessagePayloadType;

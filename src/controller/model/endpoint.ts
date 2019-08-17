@@ -38,7 +38,6 @@ class Endpoint extends Entity {
     /**
      * Getters/setters
      */
-
     public async set(key: 'profileID' | 'deviceID' | 'inputClusters' | 'outputClusters', value: number | number[]): Promise<void> {
         if (typeof value === 'number' && (key === 'profileID' || key === 'deviceID')) {
             this[key] = value;
@@ -51,10 +50,14 @@ class Endpoint extends Entity {
         return this[key];
     }
 
+    public supportsInputCluster(clusterKey: number | string, ): boolean {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        return this.inputClusters.includes(cluster.ID);
+    }
+
     /**
      * CRUD
      */
-
     public static fromDatabaseRecord(record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string): Endpoint {
         return new Endpoint(
             record.epId, record.profId, record.devId, record.inClusterList, record.outClusterList, deviceNetworkAddress, deviceIeeeAddress,
@@ -79,9 +82,9 @@ class Endpoint extends Entity {
      * Zigbee functions
      */
 
-    public async write(clusterKey: number | string, attributes: {[s: string]: number | string}): Promise<void> {
+    public async write(clusterKey: number | string, attributes: {[s: string]: number | string | boolean}): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
-        const payload: {attrId: number; dataType: number; attrData: number| string}[] = [];
+        const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
         for (const [name, value] of Object.entries(attributes)) {
             const attribute = cluster.getAttribute(name);
             payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});

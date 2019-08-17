@@ -184,17 +184,20 @@ class Controller extends events.EventEmitter {
             await device.set('networkAddress', payload.networkAddress);
         }
 
-        if (!device.get('interviewed')) {
+        if (!device.get('interviewCompleted') && !device.get('interviewing')) {
             const payloadStart: DeviceInterviewPayload = {status: 'started', device};
             debug.log(`Interview '${device.get('ieeeAddr')}' start`);
             this.emit(Events.deviceInterview, payloadStart);
 
-            const status = await device.interview();
-            if (status !== 'alreadyInProgress') {
-                const payloadDone: DeviceInterviewPayload = {status, device};
-                this.emit(Events.deviceInterview, payloadDone);
-                const type = status === 'successful' ? 'log' : 'error';
-                debug[type](`Interview '${device.get('ieeeAddr')}' ${status}`);
+            try {
+                await device.interview();
+                debug.log(`Succesfully interviewed '${device.get('ieeeAddr')}'`);
+                const event: DeviceInterviewPayload = {status: 'successful', device};
+                this.emit(Events.deviceInterview, event);
+            } catch (error) {
+                debug.error(`Interview failed for '${device.get('ieeeAddr')} with error '${error}'`);
+                const event: DeviceInterviewPayload = {status: 'failed', device};
+                this.emit(Events.deviceInterview, event);
             }
         }
     }
