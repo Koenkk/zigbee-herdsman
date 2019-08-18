@@ -62,6 +62,13 @@ class Controller extends events.EventEmitter {
         this.adapter.on(AdapterEvents.Events.disconnected, this.onAdapterDisconnected.bind(this));
         this.adapter.on(AdapterEvents.Events.deviceAnnounce, this.onDeviceAnnounce.bind(this));
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
+
+        // Validate options
+        for (const channel of options.network.channelList) {
+            if (channel < 11 || channel > 26) {
+                throw new Error(`'${channel}' is an invalid channel, use a channel between 11 - 26.`);
+            }
+        }
     }
 
     public async start(): Promise<void> {
