@@ -324,6 +324,22 @@ class ZclFrame {
         return true;
     }
 
+    public isSpecific(): boolean {
+        return this.Header.frameControl.frameType === FrameType.SPECIFIC;
+    }
+
+    public isGlobal(): boolean {
+        return this.Header.frameControl.frameType === FrameType.GLOBAL;
+    }
+
+    public isCluster(clusterName: 'genTime'): boolean {
+        return this.getCluster().name === clusterName;
+    }
+
+    public isCommand(commandName: 'read' | 'report' | 'readRsp'): boolean {
+        return this.getCommand().name === commandName;
+    }
+
     public getCluster(): TsType.Cluster {
         return Utils.getCluster(this.ClusterID);
     }

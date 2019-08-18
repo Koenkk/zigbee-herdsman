@@ -4,7 +4,7 @@ import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter';
 import {Entity, Device} from './model';
 import * as AdapterEvents from '../adapter/events';
 import {ZclFrameConverter} from './helpers';
-import {FrameType, Foundation} from '../zcl';
+import {Foundation, Cluster} from '../zcl';
 import * as Events from './events';
 import {KeyValue} from './tstype';
 import Debug from "debug";
@@ -42,6 +42,8 @@ const debug = {
     error: Debug('zigbee-herdsman:controller:error'),
     log: Debug('zigbee-herdsman:controller:log'),
 };
+
+const OneJanuary2000 = new Date('January 01, 2000 00:00:00').getTime();
 
 class Controller extends events.EventEmitter {
     private options: Options;
@@ -272,24 +274,25 @@ class Controller extends events.EventEmitter {
         }
 
         // Parse command for event
-        const command = zclData.frame.Header.commandIdentifier;
+        const frame = zclData.frame;
+        const command = frame.getCommand();
+
         let type: Events.MessagePayloadType = undefined;
         let data: KeyValue;
-        if (zclData.frame.Header.frameControl.frameType === FrameType.GLOBAL) {
-            if (command === Foundation.report.ID) {
+        if (frame.isGlobal()) {
+            if (frame.isCommand('report')) {
                 type = 'attributeReport';
                 data = ZclFrameConverter.attributeList(zclData.frame);
-            } else if (command === Foundation.readRsp.ID) {
+            } else if (frame.isCommand('readRsp')) {
                 type = 'readResponse';
                 data = ZclFrameConverter.attributeList(zclData.frame);
             }
-        } else if (zclData.frame.Header.frameControl.frameType === FrameType.SPECIFIC) {
-            const command = zclData.frame.getCommand().name;
-            if (Events.CommandsLookup[command]) {
-                type = Events.CommandsLookup[command];
+        } else if (frame.isSpecific()) {
+            if (Events.CommandsLookup[command.name]) {
+                type = Events.CommandsLookup[command.name];
                 data = zclData.frame.Payload;
             } else {
-                debug.log(`Skipping command '${command}' because it is missing from the lookup`);
+                debug.log(`Skipping command '${command.name}' because it is missing from the lookup`);
             }
         }
 
@@ -313,6 +316,12 @@ class Controller extends events.EventEmitter {
             } catch (error) {
                 debug.error(`Default response to ${zclData.networkAddress} failed`);
             }
+        }
+
+        // Reponse to time reads
+        if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
+            const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
+            endpoint.readResponse(frame.getCluster().ID, frame.Header.transactionSequenceNumber, {time});
         }
     }
 }
