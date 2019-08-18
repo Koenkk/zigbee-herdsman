@@ -1,6 +1,6 @@
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
-    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup, NetworkParameters,
+    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
     StartResult,
 } from '../../tstype';
 import {ZnpVersion} from './tstype';
@@ -13,6 +13,7 @@ import {ZclFrame, FrameType} from '../../../zcl';
 import {Queue, Waitress} from '../../../utils';
 import * as Constants from '../constants';
 import Debug from "debug";
+import {Backup} from './backup';
 
 const debug = Debug("zigbee-herdsman:controller:zStack");
 const Subsystem = UnpiConstants.Subsystem;
@@ -351,7 +352,8 @@ class ZStackAdapter extends Adapter {
         return this.version.product !== ZnpVersion.zStack12;
     }
 
-    public async backup(): Promise<Backup> {
+    public async backup(): Promise<BackupType> {
+        return Backup(this.znp);
     }
 
     /**

@@ -19,7 +19,6 @@ const timeouts = {
     SREQ: 6000,
     reset: 30000,
     default: 10000,
-    bdbStartCommissioning: 20000,
 };
 
 const debug = {
@@ -188,7 +187,7 @@ class Znp extends events.EventEmitter {
             const frame = object.toUnpiFrame();
 
             if (object.type === Type.SREQ) {
-                const timeout = object.command === 'bdbStartCommissioning' ? timeouts.bdbStartCommissioning : timeouts.SREQ;
+                const timeout = object.command === 'bdbStartCommissioning' || object.command === 'startupFromApp' ? 20000 : timeouts.SREQ;
                 const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout);
                 this.unpiWriter.writeFrame(frame)
                 const result = await waiter;

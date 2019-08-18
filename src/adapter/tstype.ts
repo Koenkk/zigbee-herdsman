@@ -70,8 +70,10 @@ interface Coordinator {
 
 interface Backup {
     adapterType: "zStack";
+    time: string;
     meta: {[s: string]: number};
-    data: {[s: string]: number[]};
+    // eslint-disable-next-line
+    data: any;
 }
 
 interface NetworkParameters {

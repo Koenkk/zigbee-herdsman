@@ -3,123 +3,15 @@ import {Constants as UnpiConstants} from '../unpi';
 import * as Constants from '../constants';
 import equals from 'fast-deep-equal';
 import * as TsType from '../../tstype';
-import fs from 'fs';
 import * as Zcl from '../../../zcl';
-import {ZnpVersion} from './tstype';
+import {ZnpVersion, NvItem} from './tstype';
 import Debug from "debug";
+import {Restore} from './backup';
+import Items from './nvItems';
+import fs from 'fs';
 
 const debug = Debug('zigbee-herdsman:controller:zStack:startZnp');
 const Subsystem = UnpiConstants.Subsystem;
-const NvItemsIds = Constants.COMMON.nvItemIds;
-
-interface NvItem {
-    id: number;
-    offset?: number;
-    len: number;
-    value?: Buffer;
-    configid?: number;
-    initlen?: number;
-    initvalue?: Buffer;
-}
-
-const Items = {
-    znpHasConfiguredInit: (version: ZnpVersion): NvItem => {
-        return {
-            id: version === ZnpVersion.zStack12 ?
-                NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3,
-            len: 0x01,
-            initlen: 0x01,
-            initvalue: Buffer.from([0x00]),
-        };
-    },
-    znpHasConfigured: (version: ZnpVersion): NvItem => {
-        return {
-            id: version === ZnpVersion.zStack12 ?
-                NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3,
-            offset: 0x00,
-            len: 0x01,
-            value: Buffer.from([0x55]),
-        };
-    },
-    panID: (panID: number): NvItem => {
-        return {
-            id: NvItemsIds.PANID,
-            len: 0x02,
-            offset: 0x00,
-            value: Buffer.from([panID & 0xFF, (panID >> 8) & 0xFF]),
-        }
-    },
-    extendedPanID: (extendedPanID: number[]): NvItem =>  {
-        return {
-            id: NvItemsIds.EXTENDED_PAN_ID,
-            len: 0x08,
-            offset: 0x00,
-            value: Buffer.from(extendedPanID),
-        }
-    },
-    channelList: (channelList: number[]): NvItem => {
-        return {
-            id: NvItemsIds.CHANLIST,
-            len: 0x04,
-            offset: 0x00,
-            value: Buffer.from(Constants.Utils.getChannelMask(channelList)),
-        }
-    },
-    networkKeyDistribute: (distribute: boolean): NvItem => {
-        return {
-            id: NvItemsIds.PRECFGKEYS_ENABLE,
-            len: 0x01,
-            offset: 0x00,
-            value: Buffer.from([distribute ? 0x01 : 0x00]),
-        }
-    },
-    networkKey: (key: number[]): NvItem => {
-        return {
-            // id/configid is used depending if SAPI or SYS command is executed
-            id: NvItemsIds.PRECFGKEY,
-            configid: NvItemsIds.PRECFGKEY,
-            len: 0x10,
-            offset: 0x00,
-            value: Buffer.from(key),
-        }
-    },
-    startupOption: (value: number): NvItem => {
-        return {
-            id: NvItemsIds.STARTUP_OPTION,
-            len: 0x01,
-            offset: 0x00,
-            value: Buffer.from([value]),
-        };
-    },
-    logicalType: (value: number): NvItem => {
-        return {
-            id: NvItemsIds.LOGICAL_TYPE,
-            len: 0x01,
-            offset: 0x00,
-            value: Buffer.from([value]),
-        };
-    },
-    zdoDirectCb: (): NvItem => {
-        return {
-            id: NvItemsIds.ZDO_DIRECT_CB,
-            len: 0x01,
-            offset: 0x00,
-            value: Buffer.from([0x01]),
-        };
-    },
-    tcLinkKey: (): NvItem => {
-        return {
-            id: NvItemsIds.TCLK_TABLE_START,
-            offset: 0x00,
-            len: 0x20,
-            // ZigBee Alliance Pre-configured TC Link Key - 'ZigBeeAlliance09'
-            value: Buffer.from([
-                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c,
-                0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-            ]),
-        }
-    },
-}
 
 const EndpointDefaults: {
     appdeviceid: number;
@@ -169,7 +61,7 @@ async function validateItem(znp: Znp, item: NvItem, message: string, subsystem =
 
 async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions): Promise<boolean> {
     try {
-        await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured');
+        await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured')
         await validateItem(znp, Items.channelList(options.channelList), 'channelList');
         await validateItem(znp, Items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute');
 
@@ -197,18 +89,13 @@ async function boot(znp: Znp): Promise<void> {
 
     if (result.payload.devicestate !== Constants.COMMON.devStates.ZB_COORD) {
         debug('Start ZNP as coordinator...');
-        const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9})
+        const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000)
         znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, [0, 1]);
         await started;
         debug('ZNP started as coordinator');
     } else {
         debug('ZNP is already started as coordinator');
     }
-}
-
-async function restore(backupPath: string): Promise<void> {
-    backupPath;
-    // TODO: check for z-stack 3
 }
 
 async function registerEndpoints(znp: Znp): Promise<void> {
@@ -264,17 +151,23 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
 
 export default async (znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, backupPath?: string): Promise<TsType.StartResult> => {
     let result: TsType.StartResult = 'resumed';
+    let hasConfigured = false;
 
-    if (await needsToBeInitialised(znp, version, options)) {
-        debug('Coordinator needs to be reinitialised');
-        if (backupPath && fs.existsSync(backupPath)) {
-            debug('Restoring coordinator from backup');
-            await restore(backupPath);
-            result = 'restored';
-        } else {
-            await initialise(znp, version, options);
-            result = 'resetted';
-        }
+    try {
+        await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured')
+        hasConfigured = true;
+    } catch {
+        hasConfigured = false;
+    }
+
+    // Restore from backup when the coordinator has never been configured yet.
+    if (backupPath && fs.existsSync(backupPath) && !hasConfigured) {
+        debug('Restoring coordinator from backup');
+        await Restore(znp, backupPath, options);
+        result = 'restored';
+    } else if (await needsToBeInitialised(znp, version, options)) {
+        await initialise(znp, version, options);
+        result = 'resetted';
     }
 
     await boot(znp);

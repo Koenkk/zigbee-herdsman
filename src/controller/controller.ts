@@ -8,6 +8,7 @@ import {FrameType, Foundation} from '../zcl';
 import * as Events from './events';
 import {KeyValue} from './tstype';
 import Debug from "debug";
+import fs from 'fs';
 
 // @ts-ignore
 import mixin from 'mixin-deep';
@@ -48,6 +49,7 @@ class Controller extends events.EventEmitter {
     private adapter: Adapter;
     // eslint-disable-next-line
     private permitJoinTimer: any;
+    private backupTimer: any;
 
     public constructor(options: Options) {
         super();
@@ -85,6 +87,10 @@ class Controller extends events.EventEmitter {
                 undefined, undefined, undefined, coordinator.endpoints
             );
         }
+
+        // Set backup timer to 1 day.
+        await this.backup();
+        this.backupTimer = setInterval(() => this.backup(), 86400000)
 
         setTimeout(async (): Promise<void> => {
             console.log(await this.adapter.getNetworkParameters());
@@ -136,7 +142,18 @@ class Controller extends events.EventEmitter {
 
     public async stop(): Promise<void> {
         await this.permitJoin(false);
+        clearInterval(this.backupTimer);
+        await this.backup();
         await this.adapter.stop();
+    }
+
+    private async backup(): Promise<void> {
+        if (this.options.backupPath && this.adapter.supportsBackup()) {
+            debug.log('Creating coordinator backup');
+            const backup = await this.adapter.backup();
+            fs.writeFileSync(this.options.backupPath, JSON.stringify(backup, null, 2));
+            debug.log(`Wrote coordinator backup to '${this.options.backupPath}'`);
+        }
     }
 
     public async softReset(): Promise<void> {
