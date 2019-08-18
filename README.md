@@ -14,7 +14,7 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 - [x] What to do with ziee (-> removed)
 - [x] What to do with zive (-> removed)
 - [x] What to do with areq (-> removed)
-- [ ] Refactor lib (original source of zigbee-shepherd)
+- [x] Refactor lib (original source of zigbee-shepherd)
 
 ### Start
 ```
@@ -34,8 +34,8 @@ SUM:                            66           1546            430          17231
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-TypeScript                      69            726            159          11119
+TypeScript                      69            741            145          11048
 -------------------------------------------------------------------------------
-SUM:                            69            726            159          11119
+SUM:                            69            741            145          11048
 -------------------------------------------------------------------------------
 ```

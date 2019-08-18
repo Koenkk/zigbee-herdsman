@@ -49,6 +49,7 @@ class Controller extends events.EventEmitter {
     private adapter: Adapter;
     // eslint-disable-next-line
     private permitJoinTimer: any;
+    // eslint-disable-next-line
     private backupTimer: any;
 
     public constructor(options: Options) {

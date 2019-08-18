@@ -5,6 +5,7 @@ module.exports = {
     rules: {
         "@typescript-eslint/explicit-function-return-type": "error",
         "@typescript-eslint/ban-ts-ignore": "off",
-        "@typescript-eslint/no-empty-function": "off"
+        "@typescript-eslint/no-empty-function": "off",
+        "@typescript-eslint/no-explicit-any": "error"
     }
 }
