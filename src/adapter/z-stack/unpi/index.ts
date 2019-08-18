@@ -5,4 +5,4 @@ import * as Constants from './constants';
 
 export {
     Writer, Frame, Parser, Constants,
-}
+};

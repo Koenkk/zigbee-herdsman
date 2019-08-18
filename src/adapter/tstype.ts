@@ -86,4 +86,4 @@ export {
     SerialPortOptions, NetworkOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup, NetworkParameters,
     StartResult,
-}
+};

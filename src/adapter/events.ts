@@ -33,4 +33,4 @@ interface ZclDataPayload {
 
 export {
     Events, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload, DeviceLeavePayload,
-}
+};

@@ -155,6 +155,6 @@ const Foundation: {
      * - 21: discoverAttributesExtended
      * - 22: discoverAttributesExtendedResponse
      */
-}
+};
 
 export default Foundation;

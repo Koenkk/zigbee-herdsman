@@ -288,7 +288,7 @@ class Buffalo {
         } else if (type === 'LIST_UINT32') {
             this.writeListUInt32(value);
         } else {
-            throw new Error(`Write for '${type}' not available`)
+            throw new Error(`Write for '${type}' not available`);
         }
     }
 
@@ -330,7 +330,7 @@ class Buffalo {
         } else if (type === 'LIST_UINT32') {
             return this.readListUInt32(options);
         } else {
-            throw new Error(`Read for '${type}' not available`)
+            throw new Error(`Read for '${type}' not available`);
         }
     }
 }

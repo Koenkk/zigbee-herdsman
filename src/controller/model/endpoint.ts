@@ -97,7 +97,7 @@ class Endpoint extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number}[] = [];
         for (const attribute of attributes) {
-            payload.push({attrId: cluster.getAttribute(attribute).ID})
+            payload.push({attrId: cluster.getAttribute(attribute).ID});
         }
 
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(), 'read', cluster.ID, payload);
@@ -107,12 +107,12 @@ class Endpoint extends Entity {
 
     public async bind(clusterKey: number | string, endpoint: Endpoint): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
-        await Endpoint.adapter.bind(this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID, endpoint.deviceIeeeAddress, endpoint.ID)
+        await Endpoint.adapter.bind(this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID, endpoint.deviceIeeeAddress, endpoint.ID);
     }
 
     public async unbind(clusterKey: number | string, endpoint: Endpoint): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
-        await Endpoint.adapter.unbind(this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID, endpoint.deviceIeeeAddress, endpoint.ID)
+        await Endpoint.adapter.unbind(this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID, endpoint.deviceIeeeAddress, endpoint.ID);
     }
 
     public async defaultResponse(commandID: number, status: number, clusterID: number): Promise<void> {
@@ -132,7 +132,7 @@ class Endpoint extends Entity {
                 minRepIntval: item.minimumReportInterval,
                 maxRepIntval: item.maximumReportInterval,
                 repChange: item.reportableChange,
-            }
+            };
         });
 
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(), 'configReport', cluster.ID, payload);

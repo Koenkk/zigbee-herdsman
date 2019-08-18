@@ -80,4 +80,4 @@ interface MessagePayload {
 export {
     Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload,
     DeviceLeavePayload,
-}
+};

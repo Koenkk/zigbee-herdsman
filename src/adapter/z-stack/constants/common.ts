@@ -308,6 +308,6 @@ const COMMON: {
         ZNP_HAS_CONFIGURED_ZSTACK1: 3840,
         ZNP_HAS_CONFIGURED_ZSTACK3: 96,
     }
-}
+};
 
 export default COMMON;

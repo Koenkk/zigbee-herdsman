@@ -72,7 +72,7 @@ class BuffaloZcl extends Buffalo {
         for (let i = 0; i < numberOfElements; i++) {
             const elementType = this.readUInt8();
             const value = this.read(DataType[elementType], {});
-            values.push({elmType: elementType, elmVal: value})
+            values.push({elmType: elementType, elmVal: value});
         }
 
         return values;

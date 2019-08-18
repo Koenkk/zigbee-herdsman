@@ -6,6 +6,9 @@ module.exports = {
         "@typescript-eslint/explicit-function-return-type": "error",
         "@typescript-eslint/ban-ts-ignore": "off",
         "@typescript-eslint/no-empty-function": "off",
-        "@typescript-eslint/no-explicit-any": "error"
+        "@typescript-eslint/no-explicit-any": "error",
+        "indent": ["error", 4],
+        "max-len": ["error", { "code": 140 }],
+        "@typescript-eslint/semi": ["error"]
     }
 }

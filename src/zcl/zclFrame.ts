@@ -47,8 +47,8 @@ class ZclFrame {
      * Creating
      */
     public static create(
-        frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number, transactionSequenceNumber: number,
-        commandKey: number | string, clusterID: number, payload: ZclPayload
+        frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number,
+        transactionSequenceNumber: number, commandKey: number | string, clusterID: number, payload: ZclPayload
     ): ZclFrame {
         const command = frameType === FrameType.GLOBAL ?
             Utils.getGlobalCommand(commandKey) :
@@ -62,7 +62,7 @@ class ZclFrame {
             transactionSequenceNumber,
             manufacturerCode,
             commandIdentifier: command.ID,
-        }
+        };
 
         return new ZclFrame(header, payload, clusterID);
     }
@@ -76,7 +76,7 @@ class ZclFrame {
         } else if (this.Header.frameControl.frameType === FrameType.SPECIFIC) {
             this.writePayloadCluster(buffalo);
         } else {
-            throw new Error(`Frametype '${this.Header.frameControl.frameType}' not valid`)
+            throw new Error(`Frametype '${this.Header.frameControl.frameType}' not valid`);
         }
 
         return buffalo.getBuffer().slice(0, buffalo.getPosition());
@@ -88,7 +88,7 @@ class ZclFrame {
             (((this.Header.frameControl.manufacturerSpecific ? 1 : 0) << 2) & 0x04) |
             ((this.Header.frameControl.direction << 3) & 0x08) |
             (((this.Header.frameControl.disableDefaultResponse ? 1 : 0) << 4) & 0x10)
-        )
+        );
 
         buffalo.writeUInt8(frameControl);
 
@@ -172,7 +172,7 @@ class ZclFrame {
             manufacturerSpecific: ((frameControlValue >> 2) & 0x01) === 1,
             direction: (frameControlValue >> 3) & 0x01,
             disableDefaultResponse: ((frameControlValue >> 4) & 0x01) === 1,
-        }
+        };
 
         let manufacturerCode = null;
         if (frameControl.manufacturerSpecific) {
@@ -196,7 +196,7 @@ class ZclFrame {
     }
 
     private static parsePayloadCluster(header: ZclHeader, clusterID: number,  buffalo: BuffaloZcl): ZclPayload {
-        const command = Utils.getSpecificCommand(clusterID, header.frameControl.direction, header.commandIdentifier)
+        const command = Utils.getSpecificCommand(clusterID, header.frameControl.direction, header.commandIdentifier);
         const payload: ZclPayload = {};
 
         for (const parameter of command.parameters) {

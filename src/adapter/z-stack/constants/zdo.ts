@@ -98,6 +98,6 @@ const ZDO = {
         RESERVED5: 64,
         RESERVED6: 128
     }
-}
+};
 
 export default ZDO;

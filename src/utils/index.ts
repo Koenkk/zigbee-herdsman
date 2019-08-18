@@ -6,4 +6,4 @@ import Waitress from './waitress';
 
 export {
     Wait, IsNumberArray, ArraySplitChunks, Queue, Waitress,
-}
+};

@@ -27,7 +27,7 @@ function IsDataTypeAnalogOrDiscrete(dataType: DataType): 'ANALOG' | 'DISCRETE' {
     } else if (DataTypeValueType.analog.includes(dataType)) {
         return 'ANALOG';
     } else {
-        throw new Error(`Don't know value type for '${DataType[dataType]}'`)
+        throw new Error(`Don't know value type for '${DataType[dataType]}'`);
     }
 }
 
@@ -48,7 +48,7 @@ function getCluster(key: string | number): TsType.Cluster {
     const cluster = Cluster[name];
 
     if (!cluster) {
-        throw new Error(`Cluster with key '${key}' does not exist`)
+        throw new Error(`Cluster with key '${key}' does not exist`);
     }
 
     // eslint-disable-next-line
@@ -66,11 +66,11 @@ function getCluster(key: string | number): TsType.Cluster {
         }
 
         if (!result) {
-            throw new Error(`Cluster '${name}' has no attribute '${key}'`)
+            throw new Error(`Cluster '${name}' has no attribute '${key}'`);
         }
 
         return result;
-    }
+    };
 
     const getCommand = (key: number | string): TsType.Command => {
         let result: TsType.Command = null;
@@ -82,11 +82,11 @@ function getCluster(key: string | number): TsType.Cluster {
         }
 
         if (!result) {
-            throw new Error(`Cluster '${name}' has no command '${key}'`)
+            throw new Error(`Cluster '${name}' has no command '${key}'`);
         }
 
         return result;
-    }
+    };
 
     return {
         ID: cluster.ID,
@@ -117,7 +117,7 @@ function getGlobalCommand(key: number | string): TsType.Command {
     const command = Foundation[name];
 
     if (!command) {
-        throw new Error(`Global command with key '${key}' does not exist`)
+        throw new Error(`Global command with key '${key}' does not exist`);
     }
 
     return {
@@ -146,7 +146,9 @@ function getSpecificCommand(clusterKey: number | string, direction: Direction, k
     const command = commands[name];
 
     if (!command) {
-        throw new Error(`Cluster command with key '${key}' and direction '${Direction[direction]}' does not exist for cluster '${clusterKey}'`)
+        throw new Error(
+            `Cluster command with key '${key}' and direction '${Direction[direction]}' does not exist for cluster '${clusterKey}'`
+        );
     }
 
     return command;
@@ -157,4 +159,4 @@ export {
     getSpecificCommand,
     getGlobalCommand,
     IsDataTypeAnalogOrDiscrete,
-}
+};

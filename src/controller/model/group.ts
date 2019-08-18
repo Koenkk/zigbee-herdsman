@@ -59,7 +59,7 @@ class Group extends Entity {
 
     public static async create(groupID: number): Promise<Group> {
         if (await this.findByGroupID(groupID)) {
-            throw new Error(`Group with groupID '${groupID}' already exists`)
+            throw new Error(`Group with groupID '${groupID}' already exists`);
         }
 
         const databaseID = await this.database.newID();
@@ -74,11 +74,11 @@ class Group extends Entity {
      * Zigbee functions
      */
     public async addEndpoint(endpoint: Endpoint): Promise<void> {
-        await endpoint.command('genGroups', 'add', {groupid: this.groupID, groupname: ''})
+        await endpoint.command('genGroups', 'add', {groupid: this.groupID, groupname: ''});
     }
 
     public async removeEndpoint(endpoint: Endpoint): Promise<void> {
-        await endpoint.command('genGroups', 'remove', {groupid: this.groupID})
+        await endpoint.command('genGroups', 'remove', {groupid: this.groupID});
     }
 
     public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue): Promise<void> {

@@ -67,6 +67,6 @@ const SYS = {
         FAILED: 10,
         BAD_LENGTH: 12
     }
-}
+};
 
 export default SYS;

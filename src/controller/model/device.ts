@@ -1,5 +1,5 @@
 import {KeyValue} from '../tstype';
-import {TsType as AdapterTsType} from '../../adapter'
+import {TsType as AdapterTsType} from '../../adapter';
 import Endpoint from './endpoint';
 import Entity from './entity';
 import {ArraySplitChunks, Wait} from '../../utils';
@@ -109,7 +109,7 @@ class Device extends Entity {
         const networkAddress = record.nwkAddr;
         const ieeeAddr = record.ieeeAddr;
         const endpoints = Object.values(record.endpoints).map((e): Endpoint => {
-            return Endpoint.fromDatabaseRecord(e, networkAddress, ieeeAddr)
+            return Endpoint.fromDatabaseRecord(e, networkAddress, ieeeAddr);
         });
 
         return new Device(
@@ -133,7 +133,7 @@ class Device extends Entity {
             modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion, stackVersion: this.stackVersion,
             hwVersion: this.hardwareVersion, dateCode: this.dateCode, swBuildId: this.softwareBuildID, zclVersion: this.zclVersion,
             interviewCompleted: this.interviewCompleted,
-        }
+        };
     }
 
     private async save(): Promise<void> {
@@ -184,7 +184,7 @@ class Device extends Entity {
         endpoints: {ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[]}[]
     ): Promise<Device> {
         if (await this.findByIeeeAddr(ieeeAddr)) {
-            throw new Error(`Device with ieeeAddr '${ieeeAddr}' already exists`)
+            throw new Error(`Device with ieeeAddr '${ieeeAddr}' already exists`);
         }
 
         const endpointsMapped = endpoints.map((e): Endpoint => {
@@ -196,7 +196,7 @@ class Device extends Entity {
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false,
-        )
+        );
 
         await this.database.insert(device.toDatabaseRecord());
 
@@ -241,7 +241,7 @@ class Device extends Entity {
             this.type = nodeDescriptor.type;
             await this.save();
             debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
-        }
+        };
 
         const isXiaomiAndinterviewCompleted = async (): Promise<boolean> => {
             // Xiaomi end devices have a different interview procedure, after pairing they report it's
@@ -260,7 +260,7 @@ class Device extends Entity {
             } else {
                 return false;
             }
-        }
+        };
 
         try {
             await nodeDescriptorQuery();
@@ -293,7 +293,7 @@ class Device extends Entity {
             endpoint.set('deviceID', simpleDescriptor.deviceID);
             endpoint.set('inputClusters', simpleDescriptor.inputerClusters);
             endpoint.set('outputClusters', simpleDescriptor.outputClusters);
-            debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`)
+            debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`);
             await this.save();
         }
 

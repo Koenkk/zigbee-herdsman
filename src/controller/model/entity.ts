@@ -1,5 +1,5 @@
-import Database from '../database'
-import {Adapter} from '../../adapter'
+import Database from '../database';
+import {Adapter} from '../../adapter';
 
 class Entity {
     protected static database: Database;

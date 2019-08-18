@@ -3432,6 +3432,6 @@ const Cluster: {
         commandsResponse: {
         }
     },
-}
+};
 
 export default Cluster;

@@ -34,7 +34,7 @@ const DataConfirmCodeLookup: {[k: number]: string} = {
     233: 'MAC no ack',
     183: 'APS no ack',
     240: 'MAC transaction expired',
-}
+};
 
 const DefaultTimeout = 10000;
 
@@ -115,13 +115,13 @@ class ZStackAdapter extends Adapter {
                 manufacturerID: 0,
                 ieeeAddr: deviceInfo.payload.ieeeaddr,
                 endpoints,
-            }
+            };
         });
     }
 
     public async permitJoin(seconds: number): Promise<void> {
         this.queue.execute<void>(async () => {
-            const payload = {addrmode: 0x0F, dstaddr: 0xFFFC , duration: seconds, tcsignificance: 0 }
+            const payload = {addrmode: 0x0F, dstaddr: 0xFFFC , duration: seconds, tcsignificance: 0 };
             await this.znp.request(Subsystem.ZDO, 'mgmtPermitJoinReq', payload);
         });
     }
@@ -144,7 +144,7 @@ class ZStackAdapter extends Adapter {
             this.znp.request(Subsystem.ZDO, 'nodeDescReq', {dstaddr: networkAddress, nwkaddrofinterest: networkAddress});
             const descriptor = await response;
 
-            let type: DeviceType = 'Unknown'
+            let type: DeviceType = 'Unknown';
             const logicalType = descriptor.payload.logicaltype_cmplxdescavai_userdescavai & 0x07;
             for (const [key, value] of Object.entries(Constants.ZDO.deviceLogicalType)) {
                 if (value === logicalType) {
@@ -155,7 +155,7 @@ class ZStackAdapter extends Adapter {
                 }
             }
 
-            return {manufacturerCode: descriptor.payload.manufacturercode, type}
+            return {manufacturerCode: descriptor.payload.manufacturercode, type};
         }, networkAddress);
     }
 
@@ -179,7 +179,7 @@ class ZStackAdapter extends Adapter {
                 deviceID: descriptor.payload.deviceID,
                 inputerClusters: descriptor.payload.inclusterlist,
                 outputClusters: descriptor.payload.outclusterlist,
-            }
+            };
         }, networkAddress);
     }
 
@@ -360,7 +360,7 @@ class ZStackAdapter extends Adapter {
      * Private methods
      */
     private async dataRequest(destinationAddress: number, destinationEndpoint: number, sourceEndpoint: number, clusterID: number, radius: number, data: Buffer): Promise<ZpiObject> {
-        const transactionID = this.nextTransactionID()
+        const transactionID = this.nextTransactionID();
         const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID});
 
         await this.znp.request(Subsystem.AF, 'dataRequest', {
@@ -378,14 +378,14 @@ class ZStackAdapter extends Adapter {
         const dataConfirm =  await response;
 
         if (dataConfirm.payload.status !== 0) {
-            throw new Error(`Data request failed with error: '${DataConfirmCodeLookup[dataConfirm.payload.status] || 'unknown'}' (${dataConfirm.payload.status})`)
+            throw new Error(`Data request failed with error: '${DataConfirmCodeLookup[dataConfirm.payload.status] || 'unknown'}' (${dataConfirm.payload.status})`);
         }
 
         return dataConfirm;
     };
 
     private async dataRequestExtended(addressMode: number, destinationAddressOrGroupID: number | string, destinationEndpoint: number, sourceEndpoint: number, clusterID: number, radius: number, data: Buffer): Promise<ZpiObject> {
-        const transactionID = this.nextTransactionID()
+        const transactionID = this.nextTransactionID();
         const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID});
 
         await this.znp.request(Subsystem.AF, 'dataRequestExt', {
@@ -405,7 +405,7 @@ class ZStackAdapter extends Adapter {
         const dataConfirm =  await response;
 
         if (dataConfirm.payload.status !== 0) {
-            throw new Error(`Data request failed with error: '${DataConfirmCodeLookup[dataConfirm.payload.status] || 'unknown'}' (${dataConfirm.payload.status})`)
+            throw new Error(`Data request failed with error: '${DataConfirmCodeLookup[dataConfirm.payload.status] || 'unknown'}' (${dataConfirm.payload.status})`);
         }
 
         return dataConfirm;

@@ -77,6 +77,6 @@ const UTIL = {
         OTHER: 6,
         NOTUSED: 255
     }
-}
+};
 
 export default UTIL;

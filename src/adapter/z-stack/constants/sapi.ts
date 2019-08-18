@@ -20,6 +20,6 @@ const SAPI = {
         NONE: 0,
         END_TO_END_ACK: 1
     },
-}
+};
 
 export default SAPI;

@@ -4,4 +4,4 @@ import Entity from './entity';
 
 export {
     Device, Endpoint, Entity,
-}
+};

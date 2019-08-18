@@ -16,4 +16,4 @@ interface NvItem {
 
 export {
     ZnpVersion, NvItem,
-}
+};

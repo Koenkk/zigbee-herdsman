@@ -4,4 +4,4 @@ import {ZStackAdapter} from './z-stack/adapter';
 
 export {
     TsType, Adapter, ZStackAdapter,
-}
+};

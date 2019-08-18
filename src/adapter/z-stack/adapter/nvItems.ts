@@ -29,7 +29,7 @@ export default {
             len: 0x02,
             offset: 0x00,
             value: Buffer.from([panID & 0xFF, (panID >> 8) & 0xFF]),
-        }
+        };
     },
     extendedPanID: (extendedPanID: number[]): NvItem =>  {
         return {
@@ -37,7 +37,7 @@ export default {
             len: 0x08,
             offset: 0x00,
             value: Buffer.from(extendedPanID),
-        }
+        };
     },
     channelList: (channelList: number[]): NvItem => {
         return {
@@ -45,7 +45,7 @@ export default {
             len: 0x04,
             offset: 0x00,
             value: Buffer.from(Constants.Utils.getChannelMask(channelList)),
-        }
+        };
     },
     networkKeyDistribute: (distribute: boolean): NvItem => {
         return {
@@ -53,7 +53,7 @@ export default {
             len: 0x01,
             offset: 0x00,
             value: Buffer.from([distribute ? 0x01 : 0x00]),
-        }
+        };
     },
     networkKey: (key: number[]): NvItem => {
         return {
@@ -63,7 +63,7 @@ export default {
             len: 0x10,
             offset: 0x00,
             value: Buffer.from(key),
-        }
+        };
     },
     startupOption: (value: number): NvItem => {
         return {
@@ -99,6 +99,6 @@ export default {
                 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c,
                 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             ]),
-        }
+        };
     },
-}
+};

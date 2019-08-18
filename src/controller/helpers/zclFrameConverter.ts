@@ -19,4 +19,4 @@ function attributeList(frame: ZclFrame): KeyValue {
 
 export {
     attributeList,
-}
+};

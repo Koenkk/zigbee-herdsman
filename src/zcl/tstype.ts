@@ -31,15 +31,15 @@ interface Cluster {
     };
     getAttribute: (key: number | string) => Attribute;
     getCommand: (key: number | string) => Command;
-};
+}
 
 interface BuffaloZclOptions extends BuffaloTsType.Options {
     dataType?: string;
     attrId?: number;
 }
 
-type DataTypeValueType = 'ANALOG' | 'DISCRETE'
+type DataTypeValueType = 'ANALOG' | 'DISCRETE';
 
 export {
     Cluster, Attribute, Command, Parameter, DataTypeValueType, BuffaloZclOptions,
-}
+};

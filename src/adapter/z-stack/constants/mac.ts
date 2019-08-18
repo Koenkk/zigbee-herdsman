@@ -123,6 +123,6 @@ const MAC = {
         DEVICE_BEACON_ORDER: 228,
         PHY_TRANSMIT_POWER_SIGNED: 229
     }
-}
+};
 
 export default MAC;

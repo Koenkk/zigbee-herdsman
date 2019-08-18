@@ -4,4 +4,4 @@ import ZpiObject from './zpiObject';
 export {
     Znp,
     ZpiObject,
-}
+};

@@ -2,7 +2,7 @@ import events from 'events';
 import Database from './database';
 import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter';
 import {Entity, Device} from './model';
-import * as AdapterEvents from '../adapter/events'
+import * as AdapterEvents from '../adapter/events';
 import {ZclFrameConverter} from './helpers';
 import {FrameType, Foundation} from '../zcl';
 import * as Events from './events';
@@ -36,7 +36,7 @@ const DefaultOptions: Options = {
     },
     databasePath: null,
     backupPath: null,
-}
+};
 
 const debug = {
     error: Debug('zigbee-herdsman:controller:error'),
@@ -98,7 +98,7 @@ class Controller extends events.EventEmitter {
 
         // Set backup timer to 1 day.
         await this.backup();
-        this.backupTimer = setInterval(() => this.backup(), 86400000)
+        this.backupTimer = setInterval(() => this.backup(), 86400000);
 
         setTimeout(async (): Promise<void> => {
             console.log(await this.adapter.getNetworkParameters());
@@ -111,7 +111,7 @@ class Controller extends events.EventEmitter {
 
             // await Wait(3000);
             // endpoint.command('genOnOff', 'off', {});
-           // const group = await this.getOrCreateGroup(1);
+            // const group = await this.getOrCreateGroup(1);
             //group.addEndpoint(endpoint);
             //await group.addEndpoint(endpoint);
             //console.log('send on');
@@ -123,16 +123,16 @@ class Controller extends events.EventEmitter {
 
     public async permitJoin(permit: boolean): Promise<void> {
         if (permit && !this.permitJoinTimer) {
-            debug.log('Permit joining')
+            debug.log('Permit joining');
             await this.adapter.permitJoin(254);
 
             // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
             this.permitJoinTimer = setInterval(async (): Promise<void> => {
-                debug.log('Permit joining')
+                debug.log('Permit joining');
                 await this.adapter.permitJoin(254);
             }, 200 * 1000);
         } else if (permit && this.permitJoinTimer) {
-            debug.log('Joining already permitted')
+            debug.log('Joining already permitted');
         } else {
             debug.log('Disable joining');
             this.adapter.permitJoin(0);
@@ -219,7 +219,7 @@ class Controller extends events.EventEmitter {
     }
 
     private async onDeviceJoined(payload: AdapterEvents.DeviceJoinedPayload): Promise<void> {
-        let device = await Device.findByIeeeAddr(payload.ieeeAddr)
+        let device = await Device.findByIeeeAddr(payload.ieeeAddr);
         debug.log(`Device joined '${payload.ieeeAddr}'`);
 
         if (!device) {
@@ -252,7 +252,7 @@ class Controller extends events.EventEmitter {
                 this.emit(Events.Events.deviceInterview, event);
             }
         } else {
-            debug.log(`Not interviewing '${payload.ieeeAddr}', completed '${device.get('interviewCompleted')}', in progress '${device.get('interviewing')}'`)
+            debug.log(`Not interviewing '${payload.ieeeAddr}', completed '${device.get('interviewCompleted')}', in progress '${device.get('interviewing')}'`);
         }
     }
 
@@ -261,13 +261,13 @@ class Controller extends events.EventEmitter {
 
         const device = await Device.findByNetworkAddress(zclData.networkAddress);
         if (!device) {
-            debug.log(`ZCL data is from unknown device with network adress '${zclData.networkAddress}', skipping...`)
+            debug.log(`ZCL data is from unknown device with network adress '${zclData.networkAddress}', skipping...`);
             return;
         }
 
         let endpoint = device.getEndpoint(zclData.endpoint);
         if (!endpoint) {
-            debug.log(`ZCL data is from unknown endpoint '${zclData.endpoint}' from device with network adress '${zclData.networkAddress}', creating it...`)
+            debug.log(`ZCL data is from unknown endpoint '${zclData.endpoint}' from device with network adress '${zclData.networkAddress}', creating it...`);
             endpoint = await device.createEndpoint(zclData.endpoint);
         }
 

@@ -189,7 +189,7 @@ class Znp extends events.EventEmitter {
             if (object.type === Type.SREQ) {
                 const timeout = object.command === 'bdbStartCommissioning' || object.command === 'startupFromApp' ? 20000 : timeouts.SREQ;
                 const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout);
-                this.unpiWriter.writeFrame(frame)
+                this.unpiWriter.writeFrame(frame);
                 const result = await waiter;
                 if (result && result.payload.hasOwnProperty('status') && !expectedStatus.includes(result.payload.status)) {
                     throw new Error(`SREQ '${message}' failed with status '${result.payload.status}' (expected '${expectedStatus}')`);

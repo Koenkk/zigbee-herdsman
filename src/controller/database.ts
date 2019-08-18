@@ -14,7 +14,7 @@ class Database {
         return new Promise((resolve, reject): void => {
             store.ensureIndex({fieldName: 'id', unique: true}, (error): void => {
                 error == null ? resolve(new Database(store)) : reject(error);
-            })
+            });
         });
     }
 
@@ -22,7 +22,7 @@ class Database {
         return new Promise((resolve, reject): void => {
             this.store.remove({}, (error: Error): void => {
                 error == null ? resolve() : reject(error);
-            })
+            });
         });
     }
 
@@ -54,7 +54,7 @@ class Database {
         return new Promise((resolve, reject): void => {
             this.store.remove({id: ID}, (error: Error): void => {
                 error == null ? resolve() : reject(error);
-            })
+            });
         });
     }
 

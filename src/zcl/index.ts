@@ -20,4 +20,4 @@ export {
     Utils,
     PowerSource,
     TsType,
-}
+};

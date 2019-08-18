@@ -76,7 +76,7 @@ async function Backup(znp: Znp): Promise<BackupType> {
         time: new Date().toUTCString(),
         meta: {product},
         data,
-    }
+    };
 }
 
 async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): Promise<void> {
