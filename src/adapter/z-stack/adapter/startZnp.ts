@@ -172,5 +172,11 @@ export default async (znp: Znp, version: ZnpVersion, options: TsType.NetworkOpti
 
     await boot(znp);
     await registerEndpoints(znp);
+
+    if (result === 'restored') {
+        // Write channellist again, otherwise it doesnt seem to stick.
+        await znp.request(Subsystem.SYS, 'osalNvWrite', Items.channelList(options.channelList));
+    }
+
     return result;
 };

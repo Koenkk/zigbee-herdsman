@@ -265,18 +265,15 @@ class Device extends Entity {
         try {
             await nodeDescriptorQuery();
         } catch (error1) {
-            if (await isXiaomiAndinterviewCompleted()) {
-                return;
-            } else {
-                try {
-                    debug(`Interview - first node descriptor request failed for '${this.ieeeAddr}', retrying...`);
-                    await nodeDescriptorQuery();
-                } catch (error2) {
-                    if (await isXiaomiAndinterviewCompleted()) {
-                        return;
-                    } else {
-                        throw error2;
-                    }
+            try {
+                // Most of the times the first node descriptor query fails and the seconds one succeeds.
+                debug(`Interview - first node descriptor request failed for '${this.ieeeAddr}', retrying...`);
+                await nodeDescriptorQuery();
+            } catch (error2) {
+                if (await isXiaomiAndinterviewCompleted()) {
+                    return;
+                } else {
+                    throw error2;
                 }
             }
         }
