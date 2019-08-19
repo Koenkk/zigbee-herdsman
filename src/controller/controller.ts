@@ -174,6 +174,10 @@ class Controller extends events.EventEmitter {
         return await this.adapter.getCoordinatorVersion();
     }
 
+    public async getNetworkParameters(): Promise<AdapterTsType.NetworkParameters> {
+        return await this.adapter.getNetworkParameters();
+    }
+
     public async getDevices(): Promise<Device[]> {
         return Device.all();
     }

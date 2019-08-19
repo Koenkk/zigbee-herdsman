@@ -8,7 +8,7 @@ module.exports = {
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-explicit-any": "error",
         "indent": ["error", 4],
-        "max-len": ["error", { "code": 140 }],
+        "max-len": ["error", { "code": 120 }],
         "@typescript-eslint/semi": ["error"]
     }
 }
