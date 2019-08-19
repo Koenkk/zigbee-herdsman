@@ -85,7 +85,8 @@ class Znp extends events.EventEmitter {
     private onUnpiParsed(frame: UnpiFrame): void {
         try {
             const object = ZpiObject.fromUnpiFrame(frame);
-            const message = `<-- ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(object.payload)}`;
+            const message =
+                `<-- ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(object.payload)}`;
             this.log(object.type, message);
             this.waitress.resolve(object);
             this.emit('received', object);
@@ -173,7 +174,9 @@ class Znp extends events.EventEmitter {
 
     }
 
-    public request(subsystem: Subsystem, command: string, payload: ZpiObjectPayload, expectedStatus: number[] = [0]): Promise<ZpiObject> {
+    public request(
+        subsystem: Subsystem, command: string, payload: ZpiObjectPayload, expectedStatus: number[] = [0]
+    ): Promise<ZpiObject> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
         }
@@ -187,17 +190,25 @@ class Znp extends events.EventEmitter {
             const frame = object.toUnpiFrame();
 
             if (object.type === Type.SREQ) {
-                const timeout = object.command === 'bdbStartCommissioning' || object.command === 'startupFromApp' ? 20000 : timeouts.SREQ;
-                const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout);
+                const timeout = object.command === 'bdbStartCommissioning' || object.command === 'startupFromApp' ?
+                    20000 : timeouts.SREQ;
+                const waiter = this.waitress.waitFor(
+                    {type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout
+                );
                 this.unpiWriter.writeFrame(frame);
                 const result = await waiter;
-                if (result && result.payload.hasOwnProperty('status') && !expectedStatus.includes(result.payload.status)) {
-                    throw new Error(`SREQ '${message}' failed with status '${result.payload.status}' (expected '${expectedStatus}')`);
+                if (result && result.payload.hasOwnProperty('status') &&
+                    !expectedStatus.includes(result.payload.status)) {
+                    throw new Error(
+                        `SREQ '${message}' failed with status '${result.payload.status}' (expected '${expectedStatus}')`
+                    );
                 } else {
                     return result;
                 }
             } else if (object.type === Type.AREQ && object.isResetCommand()) {
-                const waiter = this.waitress.waitFor({type: Type.AREQ, subsystem: Subsystem.SYS, command: 'resetInd'}, timeouts.reset);
+                const waiter = this.waitress.waitFor(
+                    {type: Type.AREQ, subsystem: Subsystem.SYS, command: 'resetInd'}, timeouts.reset
+                );
                 this.queue.clear();
                 this.unpiWriter.writeFrame(frame);
                 return await waiter;
@@ -217,12 +228,16 @@ class Znp extends events.EventEmitter {
         return `${Type[matcher.type]} - ${Subsystem[matcher.subsystem]} - ${matcher.command} after ${timeout}ms`;
     }
 
-    public waitFor(type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload = {}, timeout: number = timeouts.default): Promise<ZpiObject> {
+    public waitFor(
+        type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload = {},
+        timeout: number = timeouts.default
+    ): Promise<ZpiObject> {
         return this.waitress.waitFor({type, subsystem, command, payload}, timeout);
     }
 
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {
-        const requiredMatch = matcher.type === zpiObject.type && matcher.subsystem == zpiObject.subsystem && matcher.command === zpiObject.command;
+        const requiredMatch = matcher.type === zpiObject.type && matcher.subsystem == zpiObject.subsystem &&
+            matcher.command === zpiObject.command;
         let payloadMatch = true;
 
         if (matcher.payload) {

@@ -69,7 +69,7 @@ describe('Zcl', () => {
     it('Get specific command by name non existing', () => {
         expect(() => {
             Zcl.Utils.getSpecificCommand('genIdentify', Direction.SERVER_TO_CLIENT, 'nonexisting');
-        }).toThrowError("Cluster command with key 'nonexisting' and direction 'SERVER_TO_CLIENT' does not exist")
+        }).toThrowError("Cluster command with key 'nonexisting' and direction 'SERVER_TO_CLIENT'does not exist for cluster 'genIdentify'")
     });
 
     it('Get discrete or analog of unkown type', () => {
@@ -108,6 +108,10 @@ describe('Zcl', () => {
 
         expect(frame.Header).toStrictEqual(header);
         expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.isGlobal()).toBe(true);
+        expect(frame.isSpecific()).toBe(false);
+        expect(frame.isCluster("genAnalogInput")).toBe(true);
+        expect(frame.isCommand('report')).toBe(true);
     });
 
     it('ZclFrame from buffer tradfriArrowSingle', () => {
@@ -735,5 +739,31 @@ describe('Zcl', () => {
         buffalo.write(DataType[DataType.uint64], payload, {});
         expect(buffalo.getPosition()).toBe(8);
         expect(buffer).toStrictEqual(expected);
+    });
+
+    it('Zcl utils get command', () => {
+        const cluster = Zcl.Utils.getCluster('genOnOff');
+        const command = cluster.getCommand(0);
+        expect(command.name).toEqual('off');
+        expect(cluster.getCommand('off')).toEqual(command);
+    });
+
+    it('Zcl utils get attribute', () => {
+        const cluster = Zcl.Utils.getCluster('genOnOff');
+        const command = cluster.getAttribute(16385);
+        expect(command.name).toEqual('onTime');
+        expect(cluster.getAttribute('onTime')).toEqual(command);
+    });
+
+    it('Zcl utils get attribute non-existing', () => {
+        const cluster = Zcl.Utils.getCluster('genOnOff');
+        expect(() => cluster.getAttribute('notExisting'))
+            .toThrowError("Cluster 'genOnOff' has no attribute 'notExisting'");
+    });
+
+    it('Zcl utils get command non-existing', () => {
+        const cluster = Zcl.Utils.getCluster('genOnOff');
+        expect(() => cluster.getCommand('notExisting'))
+            .toThrowError("Cluster 'genOnOff' has no command 'notExisting'");
     });
 });

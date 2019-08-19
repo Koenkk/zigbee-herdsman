@@ -61,7 +61,7 @@ function getCluster(key: string | number): TsType.Cluster {
 
         if (typeof key === 'number') {
             result = Object.values(attributes).find((a): boolean => a.ID === key);
-        } else if (typeof key === 'string') {
+        } else {
             result = Object.values(attributes).find((a): boolean => a.name === key);
         }
 
@@ -77,7 +77,7 @@ function getCluster(key: string | number): TsType.Cluster {
 
         if (typeof key === 'number') {
             result = Object.values(commands).find((a): boolean => a.ID === key);
-        } else if (typeof key === 'string') {
+        } else {
             result = Object.values(commands).find((a): boolean => a.name === key);
         }
 
@@ -146,9 +146,8 @@ function getSpecificCommand(clusterKey: number | string, direction: Direction, k
     const command = commands[name];
 
     if (!command) {
-        throw new Error(
-            `Cluster command with key '${key}' and direction '${Direction[direction]}' does not exist for cluster '${clusterKey}'`
-        );
+        throw new Error(`Cluster command with key '${key}' and direction '${Direction[direction]}'` +
+            `does not exist for cluster '${clusterKey}'`);
     }
 
     return command;

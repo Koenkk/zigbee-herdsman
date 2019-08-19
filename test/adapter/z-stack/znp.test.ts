@@ -469,6 +469,24 @@ describe('ZNP', () => {
         expect(error).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 6000ms"));
     });
 
+    it('znp request timeout for startupFromApp is longer', async () => {
+        await znp.open();
+
+        jest.useFakeTimers();
+        let result = znp.request(UnpiConstants.Subsystem.ZDO, 'startupFromApp', {startdelay: 100});
+        jest.advanceTimersByTime(10000);
+
+        let error;
+        try {
+            jest.advanceTimersByTime(15000);
+            await result;
+        } catch (e) {
+            error = e;
+        }
+
+        expect(error).toStrictEqual(new Error("SRSP - ZDO - startupFromApp after 20000ms"));
+    });
+
     it('znp request, responses comes after timeout', async () => {
         let parsedCb;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {

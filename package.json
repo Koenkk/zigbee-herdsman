@@ -67,8 +67,8 @@
     "build": "./node_modules/.bin/tsc --alwaysStrict",
     "start": "./node_modules/.bin/tsc --alwaysStrict -w",
     "test": "jest test",
-    "test-with-coverage": "jest test --coverage",
-    "test-watch": "jest test --watchr",
+    "test-with-coverage": "jest test --coverage --collectCoverageFrom '**/*.{ts,tsx}'",
+    "test-watch": "jest test --watch",
     "eslint": "node_modules/.bin/eslint . --ext .ts"
   },
   "version": "0.5.7",

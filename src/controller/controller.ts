@@ -4,7 +4,6 @@ import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter';
 import {Entity, Device} from './model';
 import * as AdapterEvents from '../adapter/events';
 import {ZclFrameConverter} from './helpers';
-import {Foundation, Cluster} from '../zcl';
 import * as Events from './events';
 import {KeyValue} from './tstype';
 import Debug from "debug";

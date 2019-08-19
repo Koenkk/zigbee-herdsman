@@ -143,7 +143,10 @@ class ZclFrame {
     }
 
     private writePayloadCluster(buffalo: BuffaloZcl): void {
-        const command = Utils.getSpecificCommand(this.ClusterID, this.Header.frameControl.direction, this.Header.commandIdentifier);
+        const command = Utils.getSpecificCommand(
+            this.ClusterID, this.Header.frameControl.direction, this.Header.commandIdentifier
+        );
+
         for (const parameter of command.parameters) {
             const typeStr = ZclFrame.getDataTypeString(parameter.type);
             buffalo.write(typeStr, this.Payload[parameter.name], {});
@@ -245,7 +248,8 @@ class ZclFrame {
                         }
                     }
 
-                    const typeStr = DataType[parameter.type] != null ? DataType[parameter.type] : BuffaloZclDataType[parameter.type];
+                    const typeStr = DataType[parameter.type] != null ?
+                        DataType[parameter.type] : BuffaloZclDataType[parameter.type];
                     entry[parameter.name] = buffalo.read(typeStr, options);
 
                     // TODO: not needed, but temp workaroudn to make payload equal to that of zcl-packet
@@ -299,7 +303,9 @@ class ZclFrame {
         return DataType[dataType] != null ? DataType[dataType] : BuffaloZclDataType[dataType];
     }
 
-    private static conditionsValid(parameter: DefinitionTsType.FoundationParameterDefinition, entry: ZclPayload): boolean {
+    private static conditionsValid(
+        parameter: DefinitionTsType.FoundationParameterDefinition, entry: ZclPayload
+    ): boolean {
         if (parameter.conditions) {
             const failedCondition = parameter.conditions.find((condition): boolean => {
                 if (condition.type === 'statusEquals') {
@@ -332,10 +338,12 @@ class ZclFrame {
         return this.Header.frameControl.frameType === FrameType.GLOBAL;
     }
 
-    public isCluster(clusterName: 'genTime'): boolean {
+    // List of clusters is not completed, feel free to add more.
+    public isCluster(clusterName: 'genTime' | 'genAnalogInput'): boolean {
         return this.getCluster().name === clusterName;
     }
 
+    // List of commands is not completed, feel free to add more.
     public isCommand(commandName: 'read' | 'report' | 'readRsp'): boolean {
         return this.getCommand().name === commandName;
     }

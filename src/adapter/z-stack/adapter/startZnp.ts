@@ -48,11 +48,16 @@ const Endpoints = [
     },
 ];
 
-async function validateItem(znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead'): Promise<void> {
+async function validateItem(
+    znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead'
+): Promise<void> {
     const result = await znp.request(subsystem, command, item);
 
     if (!equals(result.payload.value, item.value)) {
-        debug(`Item '${message}' is invalid, got '${JSON.stringify(result.payload.value)}', expected '${JSON.stringify(item.value)}'`);
+        debug(
+            `Item '${message}' is invalid, got '${JSON.stringify(result.payload.value)}', ` +
+            `expected '${JSON.stringify(item.value)}'`
+        );
         throw new Error();
     } else {
         debug(`Item '${message}' is valid`);
@@ -68,7 +73,9 @@ async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsTy
         if (version === ZnpVersion.zStack3x0) {
             await validateItem(znp, Items.networkKey(options.networkKey), 'networkKey');
         } else {
-            await validateItem(znp, Items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'readConfiguration');
+            await validateItem(
+                znp, Items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'readConfiguration'
+            );
         }
 
         if (version === ZnpVersion.zStack12) {
@@ -149,7 +156,9 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(version));
 }
 
-export default async (znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, backupPath?: string): Promise<TsType.StartResult> => {
+export default async (
+    znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, backupPath?: string
+): Promise<TsType.StartResult> => {
     let result: TsType.StartResult = 'resumed';
     let hasConfigured = false;
 

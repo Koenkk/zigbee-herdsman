@@ -8,7 +8,9 @@ abstract class Adapter extends events.EventEmitter {
     protected serialPortOptions: TsType.SerialPortOptions;
     protected backupPath: string;
 
-    public constructor(networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string) {
+    public constructor(
+        networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string)
+    {
         super();
         this.networkOptions = networkOptions;
         this.serialPortOptions = serialPortOptions;
@@ -39,15 +41,25 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor>;
 
-    public abstract sendZclFrameNetworkAddressWithResponse(networkAddress: number, endpoint: number, zclFrame: ZclFrame): Promise<ZclDataPayload>;
+    public abstract sendZclFrameNetworkAddressWithResponse(
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame
+    ): Promise<ZclDataPayload>;
 
-    public abstract sendZclFrameNetworkAddress(networkAddress: number, endpoint: number, zclFrame: ZclFrame): Promise<void>;
+    public abstract sendZclFrameNetworkAddress(
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame
+    ): Promise<void>;
 
     public abstract sendZclFrameGroup(groupID: number, zclFrame: ZclFrame): Promise<void>;
 
-    public abstract bind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number, destinationAddress: string, destinationEndpoint: number): Promise<void>;
+    public abstract bind(
+        destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
+        destinationAddress: string, destinationEndpoint: number
+    ): Promise<void>;
 
-    public abstract unbind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number, destinationAddress: string, destinationEndpoint: number): Promise<void>;
+    public abstract unbind(
+        destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
+        destinationAddress: string, destinationEndpoint: number
+    ): Promise<void>;
 
     public abstract removeDevice(networkAddress: number, ieeeAddr: string): Promise<void>;
 
