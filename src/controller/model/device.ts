@@ -278,10 +278,6 @@ class Device extends Entity {
             }
         }
 
-        if (await isXiaomiAndinterviewCompleted()) {
-            return;
-        }
-
         const activeEndpoints = await Device.adapter.activeEndpoints(this.networkAddress);
         this.endpoints = activeEndpoints.endpoints.map((e): Endpoint => Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr));
         await this.save();
