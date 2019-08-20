@@ -51,7 +51,7 @@ interface SimpleDescriptor {
     profileID: number;
     endpointID: number;
     deviceID: number;
-    inputerClusters: number[];
+    inputClusters: number[];
     outputClusters: number[];
 }
 

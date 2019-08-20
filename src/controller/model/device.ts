@@ -88,7 +88,9 @@ class Device extends Entity {
         return this.endpoints.find((e): boolean => e.ID === ID);
     }
 
-    public get(key: 'modelID' | 'networkAddress' | 'interviewCompleted' | 'ieeeAddr' | 'interviewing'): string | number | boolean {
+    public get(
+        key: 'modelID' | 'networkAddress' | 'interviewCompleted' | 'ieeeAddr' | 'interviewing'
+    ): string | number | boolean {
         return this[key];
     }
 
@@ -130,9 +132,9 @@ class Device extends Entity {
         return {
             id: this.ID, type: this.type, ieeeAddr: this.ieeeAddr, nwkAddr: this.networkAddress,
             manufId: this.manufacturerID, manufName: this.manufacturerName, powerSource: this.powerSource,
-            modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion, stackVersion: this.stackVersion,
-            hwVersion: this.hardwareVersion, dateCode: this.dateCode, swBuildId: this.softwareBuildID, zclVersion: this.zclVersion,
-            interviewCompleted: this.interviewCompleted,
+            modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion,
+            stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
+            swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
         };
     }
 
@@ -157,7 +159,8 @@ class Device extends Entity {
     }
 
     public static async findByNetworkAddress(networkAddress: number): Promise<Device>  {
-        return Object.values(this.lookup).find((d): boolean => d.networkAddress === networkAddress) || this.findSingle({nwkAddr: networkAddress});
+        return Object.values(this.lookup).find((d): boolean => d.networkAddress === networkAddress) ||
+            this.findSingle({nwkAddr: networkAddress});
     }
 
     private static async findSingle(query: {[s: string]: number | string}): Promise<Device> {
@@ -181,14 +184,18 @@ class Device extends Entity {
         type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
         manufacturerID: number, manufacturerName: string,
         powerSource: string, modelID: string,
-        endpoints: {ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[]}[]
+        endpoints: {
+            ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[]
+        }[]
     ): Promise<Device> {
         if (await this.findByIeeeAddr(ieeeAddr)) {
             throw new Error(`Device with ieeeAddr '${ieeeAddr}' already exists`);
         }
 
         const endpointsMapped = endpoints.map((e): Endpoint => {
-            return Endpoint.create(e.ID, e.profileID, e.deviceID, e.inputClusters, e.outputClusters, networkAddress, ieeeAddr);
+            return Endpoint.create(
+                e.ID, e.profileID, e.deviceID, e.inputClusters, e.outputClusters, networkAddress, ieeeAddr
+            );
         });
 
         const ID = await this.database.newID();
@@ -248,7 +255,10 @@ class Device extends Entity {
             // modelID trough a readResponse. The readResponse is received by the controller and set on the device
             // Check if we have a modelID starting with lumi.* at this point, indicating a Xiaomi end device.
             if (this.modelID && this.modelID.startsWith('lumi.')) {
-                debug('Node descriptor request failed for the second time, got modelID starting with lumi, assuming Xiaomi end device');
+                debug(
+                    'Node descriptor request failed for the second time, got modelID starting with lumi, ' +
+                    'assuming Xiaomi end device'
+                );
                 this.type = 'EndDevice';
                 this.manufacturerID = 4151;
                 this.manufacturerName = 'LUMI';
@@ -279,7 +289,9 @@ class Device extends Entity {
         }
 
         const activeEndpoints = await Device.adapter.activeEndpoints(this.networkAddress);
-        this.endpoints = activeEndpoints.endpoints.map((e): Endpoint => Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr));
+        this.endpoints = activeEndpoints.endpoints.map((e): Endpoint => {
+            return Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
+        });
         await this.save();
         debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
@@ -287,7 +299,7 @@ class Device extends Entity {
             const simpleDescriptor = await Device.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
             endpoint.set('profileID', simpleDescriptor.profileID);
             endpoint.set('deviceID', simpleDescriptor.deviceID);
-            endpoint.set('inputClusters', simpleDescriptor.inputerClusters);
+            endpoint.set('inputClusters', simpleDescriptor.inputClusters);
             endpoint.set('outputClusters', simpleDescriptor.outputClusters);
             debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`);
             await this.save();
@@ -295,7 +307,10 @@ class Device extends Entity {
 
         if (this.endpoints.length !== 0) {
             const endpoint = this.endpoints[0];
-            const attributes = ['manufacturerName', 'modelId', 'powerSource', 'zclVersion', 'appVersion', 'stackVersion', 'hwVersion', 'dateCode', 'swBuildId'];
+            const attributes = [
+                'manufacturerName', 'modelId', 'powerSource', 'zclVersion', 'appVersion',
+                'stackVersion', 'hwVersion', 'dateCode', 'swBuildId'
+            ];
 
             // Split into chunks of 3, otherwise some devices fail to respond.
             for (const chunk of ArraySplitChunks(attributes, 3)) {
@@ -324,7 +339,8 @@ class Device extends Entity {
             debug(`Interview - ssIasZone enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
             const coordinator = await Device.findCoordinator();
             await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.get('ieeeAddr')});
-            await Wait(3000); // According to the spec, we should wait for an enrollRequest here, but the Bosch ISW-ZPR1 didn't send it.
+            // According to the spec, we should wait for an enrollRequest here, but the Bosch ISW-ZPR1 didn't send it.
+            await Wait(3000);
             await endpoint.command('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23});
             debug(`Interview - succesfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
         }

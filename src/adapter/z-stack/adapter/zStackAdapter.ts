@@ -89,7 +89,7 @@ class ZStackAdapter extends Adapter {
             const endpoints = [];
             for (const endpoint of activeEp.payload.activeeplist) {
                 const simpleDescRsp = this.znp.waitFor(
-                    UnpiConstants.Type.AREQ, Subsystem.ZDO, 'simpleDescRsp'
+                    UnpiConstants.Type.AREQ, Subsystem.ZDO, 'simpleDescRsp', {endpoint}
                 );
 
                 this.znp.request(Subsystem.ZDO, 'simpleDescReq', {dstaddr: 0, nwkaddrofinterest: 0, endpoint});
@@ -172,10 +172,10 @@ class ZStackAdapter extends Adapter {
             this.znp.request(Subsystem.ZDO, 'simpleDescReq', payload);
             const descriptor = await response;
             return {
-                profileID: descriptor.payload.profId,
+                profileID: descriptor.payload.profileid,
                 endpointID: descriptor.payload.endpoint,
-                deviceID: descriptor.payload.deviceID,
-                inputerClusters: descriptor.payload.inclusterlist,
+                deviceID: descriptor.payload.deviceid,
+                inputClusters: descriptor.payload.inclusterlist,
                 outputClusters: descriptor.payload.outclusterlist,
             };
         }, networkAddress);
@@ -352,19 +352,26 @@ class ZStackAdapter extends Adapter {
                 };
 
                 this.emit(Events.Events.deviceAnnounce, payload);
-            } else if (object.command === 'leaveInd') {
-                const payload: Events.DeviceLeavePayload = {
-                    networkAddress: object.payload.srcaddr,
-                    ieeeAddr: object.payload.extaddr,
-                };
+            } else {
+                /* istanbul ignore else */
+                if (object.command === 'leaveInd') {
+                    const payload: Events.DeviceLeavePayload = {
+                        networkAddress: object.payload.srcaddr,
+                        ieeeAddr: object.payload.extaddr,
+                    };
 
-                this.emit(Events.Events.deviceLeave, payload);
+                    this.emit(Events.Events.deviceLeave, payload);
+                }
             }
-        } else if (object.subsystem === Subsystem.AF) {
-            if (object.command === 'incomingMsg' || object.command === 'incomingMsgExt') {
-                const payload: Events.ZclDataPayload = this.incomingMsgToZclDataPayload(object);
-                this.waitress.resolve(payload);
-                this.emit(Events.Events.zclData, payload);
+        } else {
+            /* istanbul ignore else */
+            if (object.subsystem === Subsystem.AF) {
+                /* istanbul ignore else */
+                if (object.command === 'incomingMsg' || object.command === 'incomingMsgExt') {
+                    const payload: Events.ZclDataPayload = this.incomingMsgToZclDataPayload(object);
+                    this.waitress.resolve(payload);
+                    this.emit(Events.Events.zclData, payload);
+                }
             }
         }
     }
@@ -412,7 +419,7 @@ class ZStackAdapter extends Adapter {
         if (dataConfirm.payload.status !== 0) {
             throw new Error(
                 `Data request failed with error: ` +
-                `'${DataConfirmCodeLookup[dataConfirm.payload.status] || 'unknown'}' (${dataConfirm.payload.status})`
+                `'${DataConfirmCodeLookup[dataConfirm.payload.status]}' (${dataConfirm.payload.status})`
             );
         }
 
@@ -420,7 +427,7 @@ class ZStackAdapter extends Adapter {
     };
 
     private async dataRequestExtended(
-        addressMode: number, destinationAddressOrGroupID: number | string, destinationEndpoint: number,
+        addressMode: number, destinationAddressOrGroupID: number, destinationEndpoint: number,
         sourceEndpoint: number, clusterID: number, radius: number, data: Buffer
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
@@ -445,7 +452,7 @@ class ZStackAdapter extends Adapter {
         if (dataConfirm.payload.status !== 0) {
             throw new Error(
                 `Data request failed with error: ` +
-                `'${DataConfirmCodeLookup[dataConfirm.payload.status] || 'unknown'}' (${dataConfirm.payload.status})`
+                `'${DataConfirmCodeLookup[dataConfirm.payload.status]}' (${dataConfirm.payload.status})`
             );
         }
 
@@ -462,18 +469,8 @@ class ZStackAdapter extends Adapter {
         return this.transactionID;
     }
 
-    private toAddressString(address: number | string): string {
-        let addressString;
-
-        if (typeof address === 'string') {
-            if (address.toLowerCase().startsWith('0x')) {
-                addressString = address.slice(2, address.length).toLowerCase();
-            } else {
-                addressString = address.toLowerCase();
-            }
-        } else {
-            addressString = address.toString(16);
-        }
+    private toAddressString(address: number): string {
+        let addressString = address.toString(16);
 
         for (let i = addressString.length; i < 16; i++) {
             addressString = '0' + addressString;

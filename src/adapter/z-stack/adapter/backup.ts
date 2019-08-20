@@ -88,7 +88,10 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
     }
 
     if (backup.meta.product != product) {
-        throw new Error(`Cannot restore backup, backup is for '${ZnpVersion[backup.meta.product]}', current is '${ZnpVersion[product]}'`);
+        throw new Error(
+            `Cannot restore backup, backup is for '${ZnpVersion[backup.meta.product]}', ` +
+            `current is '${ZnpVersion[product]}'`
+        );
     }
 
     if (!equals(backup.data.ZCD_NV_CHANLIST.value, Constants.Utils.getChannelMask(options.channelList))) {
