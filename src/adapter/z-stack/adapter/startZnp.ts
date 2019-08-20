@@ -132,8 +132,8 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
 
     if (version === ZnpVersion.zStack12) {
         // TODO: add extendedPanID and panID for zStack 3
-        await validateItem(znp, Items.panID(options.panID), 'panID');
-        await validateItem(znp, Items.extendedPanID(options.extenedPanID), 'extendedPanID');
+        await znp.request(Subsystem.SYS, 'osalNvWrite', Items.panID(options.panID));
+        await znp.request(Subsystem.SYS, 'osalNvWrite', Items.extendedPanID(options.extenedPanID));
     }
 
     if (version === ZnpVersion.zStack30x || version === ZnpVersion.zStack3x0) {
