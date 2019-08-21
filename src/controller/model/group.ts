@@ -91,7 +91,10 @@ class Group extends Entity {
             }
         }
 
-        const frame = Zcl.ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(), command.ID, cluster.ID, payload);
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
+            command.ID, cluster.ID, payload
+        );
         await Endpoint.adapter.sendZclFrameGroup(this.groupID, frame);
     }
 }

@@ -38,7 +38,9 @@ class Endpoint extends Entity {
     /**
      * Getters/setters
      */
-    public async set(key: 'profileID' | 'deviceID' | 'inputClusters' | 'outputClusters', value: number | number[]): Promise<void> {
+    public async set(
+        key: 'profileID' | 'deviceID' | 'inputClusters' | 'outputClusters', value: number | number[]
+    ): Promise<void> {
         if (typeof value === 'number' && (key === 'profileID' || key === 'deviceID')) {
             this[key] = value;
         } else if (IsNumberArray(value) && (key === 'inputClusters' || key === 'outputClusters')) {
@@ -58,9 +60,12 @@ class Endpoint extends Entity {
     /**
      * CRUD
      */
-    public static fromDatabaseRecord(record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string): Endpoint {
+    public static fromDatabaseRecord(
+        record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string
+    ): Endpoint {
         return new Endpoint(
-            record.epId, record.profId, record.devId, record.inClusterList, record.outClusterList, deviceNetworkAddress, deviceIeeeAddress,
+            record.epId, record.profId, record.devId, record.inClusterList, record.outClusterList,
+            deviceNetworkAddress, deviceIeeeAddress,
         );
     }
 
@@ -75,13 +80,16 @@ class Endpoint extends Entity {
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
         deviceNetworkAddress: number, deviceIeeeAddress: string,
     ): Endpoint {
-        return new Endpoint(ID, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress, deviceIeeeAddress);
+        return new Endpoint(
+            ID, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress,
+            deviceIeeeAddress
+        );
     }
 
     /**
      * Zigbee functions
      */
-    public async write(clusterKey: number | string, attributes: {[s: string]: number | string | boolean}): Promise<void> {
+    public async write(clusterKey: number | string, attributes: KeyValue): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
         for (const [name, value] of Object.entries(attributes)) {
@@ -89,7 +97,10 @@ class Endpoint extends Entity {
             payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
         }
 
-        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(), 'write', cluster.ID, payload);
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
+            'write', cluster.ID, payload
+        );
         await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
     }
 
@@ -100,12 +111,19 @@ class Endpoint extends Entity {
             payload.push({attrId: cluster.getAttribute(attribute).ID});
         }
 
-        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(), 'read', cluster.ID, payload);
-        const result = await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
+            'read', cluster.ID, payload
+        );
+        const result = await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(
+            this.deviceNetworkAddress, this.ID, frame
+        );
         return ZclFrameConverter.attributeList(result.frame);
     }
 
-    public async readResponse(clusterKey: number | string, transactionSequenceNumber: number, attributes: {[s: string]: number | string}): Promise<void> {
+    public async readResponse(
+        clusterKey: number | string, transactionSequenceNumber: number, attributes: KeyValue
+    ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number; status: number; dataType: number; attrData: number | string}[] = [];
         for (const [name, value] of Object.entries(attributes)) {
@@ -113,23 +131,35 @@ class Endpoint extends Entity {
             payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type, status: 0});
         }
 
-        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, transactionSequenceNumber, 'readRsp', cluster.ID, payload);
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, transactionSequenceNumber,
+            'readRsp', cluster.ID, payload
+        );
         await Endpoint.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
     }
 
     public async bind(clusterKey: number | string, endpoint: Endpoint): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
-        await Endpoint.adapter.bind(this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID, endpoint.deviceIeeeAddress, endpoint.ID);
+        await Endpoint.adapter.bind(
+            this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
+            endpoint.deviceIeeeAddress, endpoint.ID
+        );
     }
 
     public async unbind(clusterKey: number | string, endpoint: Endpoint): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
-        await Endpoint.adapter.unbind(this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID, endpoint.deviceIeeeAddress, endpoint.ID);
+        await Endpoint.adapter.unbind(
+            this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
+            endpoint.deviceIeeeAddress, endpoint.ID
+        );
     }
 
     public async defaultResponse(commandID: number, status: number, clusterID: number): Promise<void> {
         const payload = {cmdId: commandID, statusCode: status};
-        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(), 'defaultRsp', clusterID, payload);
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
+            'defaultRsp', clusterID, payload
+        );
         await Endpoint.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
     }
 
@@ -147,7 +177,10 @@ class Endpoint extends Entity {
             };
         });
 
-        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(), 'configReport', cluster.ID, payload);
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
+            'configReport', cluster.ID, payload
+        );
         await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
     }
 
@@ -161,7 +194,10 @@ class Endpoint extends Entity {
             }
         }
 
-        const frame = Zcl.ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false, null, ZclTransactionSequenceNumber.next(), command.ID, cluster.ID, payload);
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false, null, ZclTransactionSequenceNumber.next(),
+            command.ID, cluster.ID, payload
+        );
         await Endpoint.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
     }
 }

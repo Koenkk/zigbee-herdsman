@@ -11,7 +11,7 @@ function getChannelMask(channels: number[]): number[] {
         }
     }
 
-    return [value & 0xFF, (value >> 8) & 0xFF, (value >> 16) & 0xFF, (value >> 24) & 0xFF ];
+    return [value & 0xFF, (value >> 8) & 0xFF, (value >> 16) & 0xFF, (value >> 24) & 0xFF];
 }
 
 export {

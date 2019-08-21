@@ -35,8 +35,9 @@
   "description": "An open source ZigBee gateway solution with node.js.",
   "devDependencies": {
     "@babel/core": "*",
+    "@babel/plugin-proposal-class-properties": "*",
+    "@babel/plugin-proposal-object-rest-spread": "*",
     "@babel/preset-env": "*",
-    "@babel/preset-react": "*",
     "@babel/preset-typescript": "*",
     "@types/debug": "*",
     "@types/jest": "*",

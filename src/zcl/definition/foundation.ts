@@ -1,3 +1,5 @@
+/* eslint max-len: 0 */
+
 import DataType from './dataType';
 import BuffaloZclDataType from './buffaloZclDataType';
 import Status from './status';

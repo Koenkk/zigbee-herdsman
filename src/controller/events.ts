@@ -1,7 +1,5 @@
-import { Device, Endpoint } from "./model";
-import { KeyValue } from "./tstype";
-
-
+import {Device, Endpoint} from "./model";
+import {KeyValue} from "./tstype";
 
 enum Events {
     message = "message",

@@ -1,8 +1,7 @@
 import events from 'events';
 import Database from './database';
-import {TsType as AdapterTsType, ZStackAdapter, Adapter} from '../adapter';
+import {TsType as AdapterTsType, ZStackAdapter, Adapter, Events as AdapterEvents} from '../adapter';
 import {Entity, Device} from './model';
-import * as AdapterEvents from '../adapter/events';
 import {ZclFrameConverter} from './helpers';
 import * as Events from './events';
 import {KeyValue} from './tstype';
@@ -237,7 +236,10 @@ class Controller extends events.EventEmitter {
 
             this.emit(Events.Events.deviceJoined, device);
         } else if (device.get('networkAddress') !== payload.networkAddress) {
-            debug.log(`Device '${payload.ieeeAddr}' is already in database with different networkAddress, updating networkAddress`);
+            debug.log(
+                `Device '${payload.ieeeAddr}' is already in database with different networkAddress, ` +
+                `updating networkAddress`
+            );
             await device.set('networkAddress', payload.networkAddress);
         }
 
@@ -257,7 +259,10 @@ class Controller extends events.EventEmitter {
                 this.emit(Events.Events.deviceInterview, event);
             }
         } else {
-            debug.log(`Not interviewing '${payload.ieeeAddr}', completed '${device.get('interviewCompleted')}', in progress '${device.get('interviewing')}'`);
+            debug.log(
+                `Not interviewing '${payload.ieeeAddr}', completed '${device.get('interviewCompleted')}', ` +
+                `in progress '${device.get('interviewing')}'`
+            );
         }
     }
 
@@ -272,7 +277,10 @@ class Controller extends events.EventEmitter {
 
         let endpoint = device.getEndpoint(zclData.endpoint);
         if (!endpoint) {
-            debug.log(`ZCL data is from unknown endpoint '${zclData.endpoint}' from device with network adress '${zclData.networkAddress}', creating it...`);
+            debug.log(
+                `ZCL data is from unknown endpoint '${zclData.endpoint}' from device with network adress` +
+                `'${zclData.networkAddress}', creating it...`
+            );
             endpoint = await device.createEndpoint(zclData.endpoint);
         }
 

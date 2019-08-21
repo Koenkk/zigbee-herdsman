@@ -185,7 +185,7 @@ class Device extends Entity {
         manufacturerID: number, manufacturerName: string,
         powerSource: string, modelID: string,
         endpoints: {
-            ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[]
+            ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
         }[]
     ): Promise<Device> {
         if (await this.findByIeeeAddr(ieeeAddr)) {
