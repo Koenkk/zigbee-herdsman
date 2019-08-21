@@ -37,7 +37,7 @@ class ZclFrame {
     public readonly Payload: ZclPayload;
     public readonly ClusterID: number;
 
-    private constructor(header: ZclHeader, payload: ZclPayload, clusterID: number) {
+    public constructor(header: ZclHeader, payload: ZclPayload, clusterID: number) {
         this.Header = header;
         this.Payload = payload;
         this.ClusterID = clusterID;
@@ -339,7 +339,7 @@ class ZclFrame {
     }
 
     // List of clusters is not completed, feel free to add more.
-    public isCluster(clusterName: 'genTime' | 'genAnalogInput'): boolean {
+    public isCluster(clusterName: 'genTime' | 'genAnalogInput' | 'genBasic'): boolean {
         return this.getCluster().name === clusterName;
     }
 

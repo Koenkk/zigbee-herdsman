@@ -55,7 +55,7 @@ class Controller extends events.EventEmitter {
     public constructor(options: Options) {
         super();
         this.options = mixin(DefaultOptions, options);
-        this.adapter = new ZStackAdapter(options.network, options.serialPort, options.backupPath);
+        this.adapter = new ZStackAdapter(this.options.network, this.options.serialPort, this.options.backupPath);
 
         this.adapter.on(AdapterEvents.Events.deviceJoined, this.onDeviceJoined.bind(this));
         this.adapter.on(AdapterEvents.Events.zclData, this.onZclData.bind(this));
@@ -64,7 +64,7 @@ class Controller extends events.EventEmitter {
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
 
         // Validate options
-        for (const channel of options.network.channelList) {
+        for (const channel of this.options.network.channelList) {
             if (channel < 11 || channel > 26) {
                 throw new Error(`'${channel}' is an invalid channel, use a channel between 11 - 26.`);
             }
@@ -90,7 +90,7 @@ class Controller extends events.EventEmitter {
         if ((await Device.findByType('Coordinator')).length === 0) {
             debug.log('No coordinator in database, querying...');
             const coordinator = await this.adapter.getCoordinator();
-            Device.create(
+            await Device.create(
                 'Coordinator', coordinator.ieeeAddr, coordinator.networkAddress, coordinator.manufacturerID,
                 undefined, undefined, undefined, coordinator.endpoints
             );
@@ -99,26 +99,6 @@ class Controller extends events.EventEmitter {
         // Set backup timer to 1 day.
         await this.backup();
         this.backupTimer = setInterval(() => this.backup(), 86400000);
-
-        setTimeout(async (): Promise<void> => {
-            console.log(await this.adapter.getNetworkParameters());
-            //const device = await Device.findByIeeeAddr('0x000b57fffec6a5b2');
-            //console.log(await device.routingTable());
-            // const endpoint = device.getEndpoint(1);
-            // // console.log('removeing it');
-            //await device.removeFromNetwork();
-            //console.log('donee');
-
-            // await Wait(3000);
-            // endpoint.command('genOnOff', 'off', {});
-            // const group = await this.getOrCreateGroup(1);
-            //group.addEndpoint(endpoint);
-            //await group.addEndpoint(endpoint);
-            //console.log('send on');
-            //endpoint.command('genOnOff', 'off', {});
-            //group.command('genOnOff', 'off', {});
-            //endpoint.bind('genOnOff', coordinator.getEndpoint(1));
-        }, 1000);
     }
 
     public async permitJoin(permit: boolean): Promise<void> {
@@ -182,6 +162,10 @@ class Controller extends events.EventEmitter {
 
     public async getDevice(ieeeAddr: string): Promise<Device> {
         return Device.findByIeeeAddr(ieeeAddr);
+    }
+
+    public async getCoordinator(): Promise<Device> {
+        return Device.findCoordinator();
     }
 
     public async getOrCreateGroup(groupID: number): Promise<Group> {
