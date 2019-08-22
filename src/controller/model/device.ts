@@ -142,34 +142,39 @@ class Device extends Entity {
         await Device.database.update(this.ID, this.toDatabaseRecord());
     }
 
-    public static async all(): Promise<Device[]> {
-        return this.find({});
-    }
+    public static async findSingle(
+        query: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; networkAddress?: number}
+    ): Promise<Device> {
+        // Performance optimization: when querying with only ieeeAddr, try to return from lookup
+        const deviceIeeeAddr = Device.lookup[query.ieeeAddr];
+        if (deviceIeeeAddr && !query.hasOwnProperty('networkAddress') && !query.hasOwnProperty('type'))
+        {
+            return deviceIeeeAddr;
+        }
 
-    public static async findCoordinator(): Promise<Device> {
-        return this.findSingle({type: 'Coordinator'});
-    }
+        // Performance optimization: when querying with only networkAddress, try to return from lookup
+        const deviceNetworkAddress = Object.values(Device.lookup).find((d): boolean => {
+            return d.networkAddress === query.networkAddress;
+        });
 
-    public static async findByType(type: AdapterTsType.DeviceType): Promise<Device[]> {
-        return this.find({type});
-    }
+        if (deviceNetworkAddress && !query.hasOwnProperty('ieeeAddr') && !query.hasOwnProperty('type'))
+        {
+            return deviceNetworkAddress;
+        }
 
-    public static async findByIeeeAddr(ieeeAddr: string): Promise<Device> {
-        return Object.values(this.lookup).find((d): boolean => d.ieeeAddr === ieeeAddr) || this.findSingle({ieeeAddr});
-    }
-
-    public static async findByNetworkAddress(networkAddress: number): Promise<Device>  {
-        return Object.values(this.lookup).find((d): boolean => d.networkAddress === networkAddress) ||
-            this.findSingle({nwkAddr: networkAddress});
-    }
-
-    private static async findSingle(query: {[s: string]: number | string}): Promise<Device> {
         const results = await this.find(query);
         return results.length !== 0 ? results[0] : null;
     }
 
-    private static async find(query: {[s: string]: number | string}): Promise<Device[]> {
-        const results = await this.database.find({...query, type: {$ne: 'Group'}});
+    public static async find(
+        query: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; networkAddress?: number}
+    ): Promise<Device[]> {
+        const queryActual: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; nwkAddr?: number} = {};
+        if (query.hasOwnProperty('networkAddress')) queryActual.nwkAddr = query.networkAddress;
+        if (query.hasOwnProperty('ieeeAddr')) queryActual.ieeeAddr = query.ieeeAddr;
+        if (query.hasOwnProperty('type')) queryActual.type = query.type;
+
+        const results = await this.database.find({...queryActual, type: {$ne: 'Group'}});
         return results.map((r): Device => {
             const device = this.fromDatabaseRecord(r);
             if (!this.lookup[device.ieeeAddr]) {
@@ -188,7 +193,7 @@ class Device extends Entity {
             ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
         }[]
     ): Promise<Device> {
-        if (await this.findByIeeeAddr(ieeeAddr)) {
+        if (await this.findSingle({ieeeAddr})) {
             throw new Error(`Device with ieeeAddr '${ieeeAddr}' already exists`);
         }
 
@@ -337,7 +342,7 @@ class Device extends Entity {
         // Enroll IAS device
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
             debug(`Interview - ssIasZone enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
-            const coordinator = await Device.findCoordinator();
+            const coordinator = await Device.findSingle({type: 'Coordinator'});
             await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.get('ieeeAddr')});
             // According to the spec, we should wait for an enrollRequest here, but the Bosch ISW-ZPR1 didn't send it.
             await Wait(3000);
