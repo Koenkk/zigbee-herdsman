@@ -32,20 +32,18 @@ class Group extends Entity {
         return {id: this.databaseID, type: 'Group', groupID: this.groupID, members: this.members};
     }
 
-    public static async all(): Promise<Group[]> {
-        return this.find({});
-    }
+    public static async findSingle(query: {groupID: number}): Promise<Group> {
+        // Performance optimization: get from lookup if posible;
+        const groupGroupID = this.lookup[query.groupID];
+        if (query.hasOwnProperty('groupID') && groupGroupID) {
+            return groupGroupID;
+        }
 
-    public static async findByGroupID(groupID: number): Promise<Group> {
-        return Object.values(this.lookup).find((g): boolean => g.groupID === groupID) || this.findSingle({groupID});
-    }
-
-    private static async findSingle(query: {[s: string]: number | string}): Promise<Group> {
         const results = await this.find(query);
         return results.length !== 0 ? results[0] : null;
     }
 
-    private static async find(query: {[s: string]: number | string}): Promise<Group[]> {
+    public static async find(query: {groupID?: number}): Promise<Group[]> {
         const results = await this.database.find({...query, type: 'Group'});
         return results.map((r): Group => {
             const group = this.fromDatabaseRecord(r);
@@ -58,7 +56,7 @@ class Group extends Entity {
     }
 
     public static async create(groupID: number): Promise<Group> {
-        if (await this.findByGroupID(groupID)) {
+        if (await this.findSingle({groupID})) {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
 
@@ -68,6 +66,11 @@ class Group extends Entity {
 
         this.lookup[group.groupID] = group;
         return this.lookup[group.groupID];
+    }
+
+    public async removeFromDatabase(): Promise<void> {
+        await Group.database.remove(this.databaseID);
+        delete Group.lookup[this.groupID];
     }
 
     /**

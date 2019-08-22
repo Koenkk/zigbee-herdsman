@@ -154,10 +154,12 @@ class Endpoint extends Entity {
         );
     }
 
-    public async defaultResponse(commandID: number, status: number, clusterID: number): Promise<void> {
+    public async defaultResponse(
+        commandID: number, status: number, clusterID: number, transactionSequenceNumber: number
+    ): Promise<void> {
         const payload = {cmdId: commandID, statusCode: status};
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
+            Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, transactionSequenceNumber,
             'defaultRsp', clusterID, payload
         );
         await Endpoint.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);

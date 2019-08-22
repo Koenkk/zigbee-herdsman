@@ -77,14 +77,20 @@ class Controller extends events.EventEmitter {
         const startResult = await this.adapter.start();
         debug.log(`Started with result '${startResult}'`);
 
-        if (startResult === 'resetted') {
-            debug.log('Clearing database...');
-            await this.database.clear();
-        }
-
         // Inject adapter and database in entity
         Entity.injectAdapter(this.adapter);
         Entity.injectDatabse(this.database);
+
+        if (startResult === 'resetted') {
+            debug.log('Clearing database...');
+            for (const group of await Group.find({})) {
+                await group.removeFromDatabase();
+            }
+
+            for (const device of await Device.find({})) {
+                await device.removeFromDatabase();
+            }
+        }
 
         // Add coordinator to the database if it is not there yet.
         if ((await Device.findSingle({type: 'Coordinator'})) === null) {
@@ -102,7 +108,7 @@ class Controller extends events.EventEmitter {
     }
 
     public async permitJoin(permit: boolean): Promise<void> {
-        if (permit && !this.permitJoinTimer) {
+        if (permit && !this.getPermitJoin()) {
             debug.log('Permit joining');
             await this.adapter.permitJoin(254);
 
@@ -111,7 +117,7 @@ class Controller extends events.EventEmitter {
                 debug.log('Permit joining');
                 await this.adapter.permitJoin(254);
             }, 200 * 1000);
-        } else if (permit && this.permitJoinTimer) {
+        } else if (permit && this.getPermitJoin()) {
             debug.log('Joining already permitted');
         } else {
             debug.log('Disable joining');
@@ -164,8 +170,12 @@ class Controller extends events.EventEmitter {
         return Device.findSingle(query);
     }
 
-    public async getOrCreateGroup(groupID: number): Promise<Group> {
-        return await Group.findByGroupID(groupID) || await Group.create(groupID);
+    public async getGroup(query: {groupID: number}): Promise<Group> {
+        return Group.findSingle(query);
+    }
+
+    public async createGroup(groupID: number): Promise<Group> {
+        return Group.create(groupID);
     }
 
     public async disableLED(): Promise<void> {
@@ -274,16 +284,22 @@ class Controller extends events.EventEmitter {
             if (frame.isCommand('report')) {
                 type = 'attributeReport';
                 data = ZclFrameConverter.attributeList(zclData.frame);
-            } else if (frame.isCommand('readRsp')) {
-                type = 'readResponse';
-                data = ZclFrameConverter.attributeList(zclData.frame);
-            }
-        } else if (frame.isSpecific()) {
-            if (Events.CommandsLookup[command.name]) {
-                type = Events.CommandsLookup[command.name];
-                data = zclData.frame.Payload;
             } else {
-                debug.log(`Skipping command '${command.name}' because it is missing from the lookup`);
+                /* istanbul ignore else */
+                if (frame.isCommand('readRsp')) {
+                    type = 'readResponse';
+                    data = ZclFrameConverter.attributeList(zclData.frame);
+                }
+            }
+        } else {
+            /* istanbul ignore else */
+            if (frame.isSpecific()) {
+                if (Events.CommandsLookup[command.name]) {
+                    type = Events.CommandsLookup[command.name];
+                    data = zclData.frame.Payload;
+                } else {
+                    debug.log(`Skipping command '${command.name}' because it is missing from the lookup`);
+                }
             }
         }
 
@@ -296,14 +312,17 @@ class Controller extends events.EventEmitter {
             const endpoint = device.getEndpoint(zclData.endpoint);
             const linkquality = zclData.linkquality;
             const groupID = zclData.groupID;
-            const eventData: Events.MessagePayload = {type, device, endpoint, data, linkquality, groupID};
+            const eventData: Events.MessagePayload = {type: type, device, endpoint, data, linkquality, groupID};
             this.emit(Events.Events.message, eventData);
         }
 
         // Send a default response if necessary.
         if (!zclData.frame.Header.frameControl.disableDefaultResponse) {
             try {
-                await endpoint.defaultResponse(zclData.frame.getCommand().ID, 0, zclData.frame.ClusterID);
+                await endpoint.defaultResponse(
+                    zclData.frame.getCommand().ID, 0, zclData.frame.ClusterID,
+                    zclData.frame.Header.transactionSequenceNumber,
+                );
             } catch (error) {
                 debug.error(`Default response to ${zclData.networkAddress} failed`);
             }

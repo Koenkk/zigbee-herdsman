@@ -172,9 +172,13 @@ class Device extends Entity {
         const queryActual: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; nwkAddr?: number} = {};
         if (query.hasOwnProperty('networkAddress')) queryActual.nwkAddr = query.networkAddress;
         if (query.hasOwnProperty('ieeeAddr')) queryActual.ieeeAddr = query.ieeeAddr;
-        if (query.hasOwnProperty('type')) queryActual.type = query.type;
 
-        const results = await this.database.find({...queryActual, type: {$ne: 'Group'}});
+        const typeQuery: {type: {} | string} = {type: {$ne: 'Group'}};
+        if (query.hasOwnProperty('type')) {
+            typeQuery.type = query.type;
+        }
+
+        const results = await this.database.find({...queryActual, ...typeQuery});
         return results.map((r): Device => {
             const device = this.fromDatabaseRecord(r);
             if (!this.lookup[device.ieeeAddr]) {

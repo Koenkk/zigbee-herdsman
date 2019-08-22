@@ -13,15 +13,12 @@ class Database {
 
         return new Promise((resolve, reject): void => {
             store.ensureIndex({fieldName: 'id', unique: true}, (error): void => {
-                error == null ? resolve(new Database(store)) : reject(error);
-            });
-        });
-    }
-
-    public clear(): Promise<void> {
-        return new Promise((resolve, reject): void => {
-            this.store.remove({}, (error: Error): void => {
-                error == null ? resolve() : reject(error);
+                /* istanbul ignore else */
+                if (error == null) {
+                    resolve(new Database(store));
+                } else {
+                    reject(error);
+                }
             });
         });
     }
@@ -29,7 +26,12 @@ class Database {
     public find(query: KeyValue): Promise<KeyValue[]> {
         return new Promise((resolve, reject): void => {
             this.store.find(query, (error: Error, result: KeyValue[]): void => {
-                error == null ? resolve(result) : reject(error);
+                /* istanbul ignore else */
+                if (error == null) {
+                    resolve(result);
+                } else {
+                    reject(error);
+                }
             });
         });
     }
@@ -37,7 +39,12 @@ class Database {
     public insert(object: KeyValue): Promise<KeyValue> {
         return new Promise((resolve, reject): void => {
             this.store.insert(object, (error: Error, newObject: KeyValue): void => {
-                error == null ? resolve(newObject) : reject(error);
+                /* istanbul ignore else */
+                if (error == null) {
+                    resolve(newObject);
+                } else {
+                    reject(error);
+                }
             });
         });
     }
@@ -45,7 +52,12 @@ class Database {
     public update(ID: number, object: KeyValue): Promise<void> {
         return new Promise((resolve, reject): void => {
             this.store.update({id: ID}, object, {}, (error: Error): void => {
-                error == null ? resolve() : reject(error);
+                /* istanbul ignore else */
+                if (error == null) {
+                    resolve();
+                } else {
+                    reject(error);
+                }
             });
         });
     }
@@ -53,7 +65,12 @@ class Database {
     public async remove(ID: number): Promise<void> {
         return new Promise((resolve, reject): void => {
             this.store.remove({id: ID}, (error: Error): void => {
-                error == null ? resolve() : reject(error);
+                /* istanbul ignore else */
+                if (error == null) {
+                    resolve();
+                } else {
+                    reject(error);
+                }
             });
         });
     }
@@ -61,12 +78,14 @@ class Database {
     public async newID(): Promise<number> {
         return new Promise((resolve, reject): void => {
             this.store.find({}, (error: Error, result: KeyValue[]): void => {
+                /* istanbul ignore if */
                 if (error != null) {
                     reject(error);
                 }
 
                 let ID = 1;
                 for (const entry of result) {
+                    /* istanbul ignore else */
                     if (entry.id >= ID) {
                         ID = entry.id + 1;
                     }
