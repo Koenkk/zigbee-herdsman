@@ -16,6 +16,10 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 - [x] What to do with areq (-> removed)
 - [x] Refactor lib (original source of zigbee-shepherd)
 
+2019-08-23: Refactoring is done, next up is:
+- [ ] Integrate into zigbee2mqtt/zigbee-shepherd-controllers
+- [ ] Write brief examples here and cleanup this README.md
+
 ### Start
 ```
 -------------------------------------------------------------------------------
@@ -34,8 +38,8 @@ SUM:                            66           1546            430          17231
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-TypeScript                      69            741            145          11048
+TypeScript                      69            751            153          11273
 -------------------------------------------------------------------------------
-SUM:                            69            741            145          11048
+SUM:                            69            751            153          11273
 -------------------------------------------------------------------------------
 ```
