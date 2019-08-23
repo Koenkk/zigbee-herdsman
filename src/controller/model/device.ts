@@ -97,8 +97,11 @@ class Device extends Entity {
     public async set(key: 'modelID' | 'networkAddress', value: string | number): Promise<void> {
         if (typeof value === 'string' && (key === 'modelID')) {
             this[key] = value;
-        } else if (typeof value === 'number' && (key === 'networkAddress')) {
-            this[key] = value;
+        } else {
+            /* istanbul ignore else */
+            if (typeof value === 'number' && (key === 'networkAddress')) {
+                this[key] = value;
+            }
         }
 
         await this.save();
@@ -333,7 +336,10 @@ class Device extends Entity {
                     else if (key === 'hwVersion') this.hardwareVersion = value;
                     else if (key === 'dateCode') this.dateCode = value;
                     else if (key === 'swBuildId') this.softwareBuildID = value;
-                    else if (key === 'powerSource') this.powerSource = Zcl.PowerSource[value];
+                    else {
+                        /* istanbul ignore else */
+                        if (key === 'powerSource') this.powerSource = Zcl.PowerSource[value];
+                    }
                 }
 
                 debug(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
@@ -341,6 +347,7 @@ class Device extends Entity {
             }
         } else {
             debug(`Interview - skip reading attributes because of no endpoint for device '${this.ieeeAddr}'`);
+            throw new Error(`Interview failed because of not endpiont ('${this.ieeeAddr}')`);
         }
 
         // Enroll IAS device

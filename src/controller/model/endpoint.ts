@@ -43,8 +43,11 @@ class Endpoint extends Entity {
     ): Promise<void> {
         if (typeof value === 'number' && (key === 'profileID' || key === 'deviceID')) {
             this[key] = value;
-        } else if (IsNumberArray(value) && (key === 'inputClusters' || key === 'outputClusters')) {
-            this[key] = value;
+        } else {
+            /* istanbul ignore else */
+            if (IsNumberArray(value) && (key === 'inputClusters' || key === 'outputClusters')) {
+                this[key] = value;
+            }
         }
     }
 

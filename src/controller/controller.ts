@@ -174,6 +174,10 @@ class Controller extends events.EventEmitter {
         return Group.findSingle(query);
     }
 
+    public async getGroups(query: {groupID: number}): Promise<Group[]> {
+        return Group.find(query);
+    }
+
     public async createGroup(groupID: number): Promise<Group> {
         return Group.create(groupID);
     }

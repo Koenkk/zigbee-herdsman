@@ -1,11 +1,11 @@
 class ZclTransactionSequenceNumber {
-    private static number = 0;
+    private static number = 1;
 
     public static next(): number {
         this.number++;
 
         if (this.number > 255) {
-            this.number = 0;
+            this.number = 1;
         }
 
         return this.number;
