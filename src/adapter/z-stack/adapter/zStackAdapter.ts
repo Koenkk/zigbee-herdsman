@@ -114,7 +114,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async permitJoin(seconds: number): Promise<void> {
-        this.queue.execute<void>(async () => {
+        await this.queue.execute<void>(async () => {
             const payload = {addrmode: 0x0F, dstaddr: 0xFFFC , duration: seconds, tcsignificance: 0};
             await this.znp.request(Subsystem.ZDO, 'mgmtPermitJoinReq', payload);
         });

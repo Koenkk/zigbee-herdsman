@@ -121,7 +121,7 @@ class Controller extends events.EventEmitter {
             debug.log('Joining already permitted');
         } else {
             debug.log('Disable joining');
-            this.adapter.permitJoin(0);
+            await this.adapter.permitJoin(0);
 
             if (this.permitJoinTimer) {
                 clearInterval(this.permitJoinTimer);
