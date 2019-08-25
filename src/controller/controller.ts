@@ -228,7 +228,8 @@ class Controller extends events.EventEmitter {
                 undefined, undefined, undefined, []
             );
 
-            this.emit(Events.Events.deviceJoined, device);
+            const eventData: Events.DeviceJoinedPayload = {device};
+            this.emit(Events.Events.deviceJoined, eventData);
         } else if (device.get('networkAddress') !== payload.networkAddress) {
             debug.log(
                 `Device '${payload.ieeeAddr}' is already in database with different networkAddress, ` +

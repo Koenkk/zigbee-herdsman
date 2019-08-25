@@ -10,6 +10,10 @@ enum Events {
     deviceLeave = "deviceLeave",
 }
 
+interface DeviceJoinedPayload {
+    device: Device;
+}
+
 interface DeviceInterviewPayload {
     status: 'started' | 'successful' | 'failed';
     device: Device;
@@ -68,14 +72,13 @@ type MessagePayloadType =
 interface MessagePayload {
     type: MessagePayloadType;
     device: Device;
-    endpoint?: Endpoint;
-    linkquality?: number;
-    groupID?: number;
-    // eslint-disable-next-line
-    data?: KeyValue;
+    endpoint: Endpoint;
+    linkquality: number;
+    groupID: number;
+    data: KeyValue;
 }
 
 export {
     Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload,
-    DeviceLeavePayload,
+    DeviceLeavePayload, DeviceJoinedPayload,
 };

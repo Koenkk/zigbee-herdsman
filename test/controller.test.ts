@@ -266,7 +266,7 @@ describe('Controller', () => {
         await controller.start();
         expect(databaseContents().includes("0x129")).toBeFalsy();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        expect(equalsPartial(events.deviceJoined[0], {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
+        expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
         expect(events.deviceInterview[0]).toStrictEqual({"device":{"ID":2,"endpoints":[],"ieeeAddr":"0x129","interviewCompleted":false,"interviewing":false,"networkAddress":129},"status":"started"});
         const device = {"ID":2,"ieeeAddr":"0x129","networkAddress":129,"endpoints":[{"ID":1,"inputClusters":[1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","deviceID":5,"profileID":99}],"type":"Router","manufacturerID":1212,"manufacturerName":"KoenAndCo","powerSource":"Mains (single phase)","modelID":"myModelID","applicationVersion":2,"stackVersion":101,"zclVersion":1,"hardwareVersion":3,"dateCode":"201901","softwareBuildID":"1.01","interviewCompleted":true,"interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
@@ -387,7 +387,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(events.deviceJoined.length).toBe(1);
-        expect(equalsPartial(events.deviceJoined[0], {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
+        expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
         expect((await controller.getDevice({ieeeAddr: '0x129'})).networkAddress).toBe(129);
 
         await mockAdapterEvents['deviceJoined']({networkAddress: 130, ieeeAddr: '0x129'});
@@ -1128,5 +1128,18 @@ describe('Controller', () => {
         let error;
         try {await group.command('genIdentify', 'updateCommissionState', {action: 9})} catch (e) {error = e}
         expect(error).toStrictEqual(new Error("Parameter 'commstatemask' is missing"));
+    });
+
+    it('Endpoint command with options', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddress.mockClear();
+        await endpoint.command('genOnOff', 'off', {}, {manufacturerCode: 100, disableDefaultResponse: true})
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][0]).toBe(129);
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][1]).toBe(1);
+        const expected = {"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":105,"manufacturerCode":100,"commandIdentifier":0},"Payload":{},"ClusterID":6};
+        expect(deepClone(mockSendZclFrameNetworkAddress.mock.calls[0][2])).toStrictEqual(expected);
     });
 });

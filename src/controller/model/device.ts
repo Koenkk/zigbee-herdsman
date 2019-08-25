@@ -262,7 +262,7 @@ class Device extends Entity {
             debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         };
 
-        const isXiaomiAndinterviewCompleted = async (): Promise<boolean> => {
+        const isXiaomiAndInterviewCompleted = async (): Promise<boolean> => {
             // Xiaomi end devices have a different interview procedure, after pairing they report it's
             // modelID trough a readResponse. The readResponse is received by the controller and set on the device
             // Check if we have a modelID starting with lumi.* at this point, indicating a Xiaomi end device.
@@ -292,7 +292,7 @@ class Device extends Entity {
                 debug(`Interview - first node descriptor request failed for '${this.ieeeAddr}', retrying...`);
                 await nodeDescriptorQuery();
             } catch (error2) {
-                if (await isXiaomiAndinterviewCompleted()) {
+                if (await isXiaomiAndInterviewCompleted()) {
                     return;
                 } else {
                     throw error2;

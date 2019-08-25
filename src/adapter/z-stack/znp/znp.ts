@@ -196,7 +196,7 @@ class Znp extends events.EventEmitter {
                     {type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout
                 );
                 this.unpiWriter.writeFrame(frame);
-                const result = await waiter;
+                const result = await waiter.promise;
                 if (result && result.payload.hasOwnProperty('status') &&
                     !expectedStatus.includes(result.payload.status)) {
                     throw new Error(
@@ -211,7 +211,7 @@ class Znp extends events.EventEmitter {
                 );
                 this.queue.clear();
                 this.unpiWriter.writeFrame(frame);
-                return await waiter;
+                return await waiter.promise;
             } else {
                 /* istanbul ignore else */
                 if (object.type === Type.AREQ) {
@@ -232,7 +232,7 @@ class Znp extends events.EventEmitter {
         type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload = {},
         timeout: number = timeouts.default
     ): Promise<ZpiObject> {
-        return this.waitress.waitFor({type, subsystem, command, payload}, timeout);
+        return this.waitress.waitFor({type, subsystem, command, payload}, timeout).promise;
     }
 
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {

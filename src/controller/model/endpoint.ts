@@ -12,6 +12,11 @@ interface ConfigureReportingItem {
     reportableChange: number;
 }
 
+interface Options {
+    manufacturerCode: number;
+    disableDefaultResponse: boolean;
+}
+
 class Endpoint extends Entity {
     public readonly ID: number;
     private inputClusters: number[];
@@ -92,7 +97,10 @@ class Endpoint extends Entity {
     /**
      * Zigbee functions
      */
-    public async write(clusterKey: number | string, attributes: KeyValue): Promise<void> {
+    public async write(
+        clusterKey: number | string, attributes: KeyValue, options?: Options
+    ): Promise<void> {
+        options = this.getOptionsWithDefaults(options, true);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
         for (const [name, value] of Object.entries(attributes)) {
@@ -101,13 +109,16 @@ class Endpoint extends Entity {
         }
 
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
-            'write', cluster.ID, payload
+            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
+            options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'write', cluster.ID, payload
         );
         await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
     }
 
-    public async read(clusterKey: number | string, attributes: string[] | number []): Promise<KeyValue> {
+    public async read(
+        clusterKey: number | string, attributes: string[] | number [], options?: Options
+    ): Promise<KeyValue> {
+        options = this.getOptionsWithDefaults(options, true);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number}[] = [];
         for (const attribute of attributes) {
@@ -115,8 +126,8 @@ class Endpoint extends Entity {
         }
 
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
-            'read', cluster.ID, payload
+            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
+            options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'read', cluster.ID, payload
         );
         const result = await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(
             this.deviceNetworkAddress, this.ID, frame
@@ -189,7 +200,10 @@ class Endpoint extends Entity {
         await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
     }
 
-    public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue): Promise<void> {
+    public async command(
+        clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options
+    ): Promise<void> {
+        options = this.getOptionsWithDefaults(options, false);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
 
@@ -200,10 +214,15 @@ class Endpoint extends Entity {
         }
 
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false, null, ZclTransactionSequenceNumber.next(),
-            command.ID, cluster.ID, payload
+            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
+            options.manufacturerCode, ZclTransactionSequenceNumber.next(), command.ID, cluster.ID, payload
         );
         await Endpoint.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
+    }
+
+    private getOptionsWithDefaults(options: Options, disableDefaultResponse: boolean): Options {
+        const providedOptions = options || {};
+        return {manufacturerCode: null, disableDefaultResponse, ...providedOptions};
     }
 }
 

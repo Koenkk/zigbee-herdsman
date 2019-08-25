@@ -1,4 +1,5 @@
 interface Waiter<TPayload, TMatcher> {
+    ID: number;
     resolve: (payload: TPayload) => void;
     reject: Function;
     // eslint-disable-next-line
@@ -14,11 +15,13 @@ class Waitress<TPayload, TMatcher> {
     private waiters: Waiter<TPayload, TMatcher>[];
     private validator: Validator<TPayload, TMatcher>;
     private timeoutFormatter: TimeoutFormatter<TMatcher>;
+    private currentID: number;
 
     public constructor(validator: Validator<TPayload, TMatcher>, timeoutFormatter: TimeoutFormatter<TMatcher>) {
         this.waiters = [];
         this.timeoutFormatter = timeoutFormatter;
         this.validator = validator;
+        this.currentID = 0;
     }
 
     public resolve(payload: TPayload): void {
@@ -35,9 +38,23 @@ class Waitress<TPayload, TMatcher> {
         }
     }
 
-    public waitFor(matcher: TMatcher, timeout: number): Promise<TPayload> {
-        return new Promise((resolve, reject): void => {
-            const object: Waiter<TPayload, TMatcher> = {matcher, resolve, reject, timedout: false};
+    public remove(ID: number): void {
+        for (let index = 0; index < this.waiters.length; index++) {
+            const waiter = this.waiters[index];
+            if (this.waiters[index].ID === ID) {
+                if (!waiter.timedout && waiter.timer) {
+                    clearTimeout(waiter.timer);
+                }
+
+                this.waiters.splice(index, 1);
+            }
+        }
+    }
+
+    public waitFor(matcher: TMatcher, timeout: number): {promise: Promise<TPayload>; ID: number} {
+        const ID = this.currentID++;
+        const promise: Promise<TPayload> = new Promise((resolve, reject): void => {
+            const object: Waiter<TPayload, TMatcher> = {matcher, resolve, reject, timedout: false, ID};
 
             object.timer = setTimeout((): void => {
                 const message = this.timeoutFormatter(matcher, timeout);
@@ -47,6 +64,8 @@ class Waitress<TPayload, TMatcher> {
 
             this.waiters.push(object);
         });
+
+        return {ID, promise};
     }
 }
 

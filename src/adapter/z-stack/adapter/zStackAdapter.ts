@@ -9,7 +9,7 @@ import Adapter from '../../adapter';
 import {Znp, ZpiObject} from '../znp';
 import StartZnp from './startZnp';
 import {Constants as UnpiConstants} from '../unpi';
-import {ZclFrame, FrameType} from '../../../zcl';
+import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import {Queue, Waitress} from '../../../utils';
 import * as Constants from '../constants';
 import Debug from "debug";
@@ -27,6 +27,12 @@ const DataConfirmCodeLookup: {[k: number]: string} = {
 };
 
 const DefaultTimeout = 10000;
+const DefaultResponseTimeout = 15000;
+
+interface WaitFor {
+    ID: number;
+    promise: Promise<Events.ZclDataPayload>;
+}
 
 interface WaitressMatcher {
     networkAddress: number;
@@ -34,6 +40,8 @@ interface WaitressMatcher {
     transactionSequenceNumber: number;
     frameType: FrameType;
     clusterID: number;
+    commandIdentifier?: number;
+    direction?: number;
 };
 
 class ZStackAdapter extends Adapter {
@@ -185,15 +193,35 @@ class ZStackAdapter extends Adapter {
         networkAddress: number, endpoint: number, zclFrame: ZclFrame
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
+            const defaultResponse = !zclFrame.Header.frameControl.disableDefaultResponse ?
+                this.waitDefaultResponse(networkAddress, endpoint, zclFrame) : null;
+
             const responsePayload = {
                 networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
                 clusterID: zclFrame.ClusterID, frameType: zclFrame.Header.frameControl.frameType
             };
+
             const response = this.waitress.waitFor(responsePayload, DefaultTimeout);
-            await this.dataRequest(
-                networkAddress, endpoint, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
-            );
-            return await response;
+
+            try {
+                await this.dataRequest(
+                    networkAddress, endpoint, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
+                );
+            } catch (error) {
+                if (defaultResponse) {
+                    this.waitress.remove(defaultResponse.ID);
+                }
+
+                this.waitress.remove(response.ID);
+
+                throw error;
+            }
+
+            if (defaultResponse) {
+                await defaultResponse;
+            }
+
+            return await response.promise;
         }, networkAddress);
     }
 
@@ -201,9 +229,24 @@ class ZStackAdapter extends Adapter {
         networkAddress: number, endpoint: number, zclFrame: ZclFrame
     ): Promise<void> {
         return this.queue.execute<void>(async () => {
-            await this.dataRequest(
-                networkAddress, endpoint, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
-            );
+            const defaultResponse = !zclFrame.Header.frameControl.disableDefaultResponse ?
+                this.waitDefaultResponse(networkAddress, endpoint, zclFrame) : null;
+
+            try {
+                await this.dataRequest(
+                    networkAddress, endpoint, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
+                );
+            } catch (error) {
+                if (defaultResponse) {
+                    this.waitress.remove(defaultResponse.ID);
+                }
+
+                throw error;
+            }
+
+            if (defaultResponse) {
+                await defaultResponse.promise;
+            }
         }, networkAddress);
     }
 
@@ -489,16 +532,44 @@ class ZStackAdapter extends Adapter {
         };
     }
 
+    private waitDefaultResponse(
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame
+    ): WaitFor {
+        const payload = {
+            networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
+            clusterID: zclFrame.ClusterID, frameType: FrameType.GLOBAL, direction: Direction.SERVER_TO_CLIENT,
+            commandIdentifier: Foundation.defaultRsp.ID,
+        };
+
+        return this.waitress.waitFor(payload, DefaultResponseTimeout);
+    }
+
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
         return `Timeout - ${matcher.networkAddress} - ${matcher.endpoint}` +
             ` - ${matcher.transactionSequenceNumber} after ${timeout}ms`;
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        return payload.networkAddress === matcher.networkAddress && payload.endpoint === matcher.endpoint &&
-            payload.frame.Header.transactionSequenceNumber === matcher.transactionSequenceNumber &&
-            payload.frame.ClusterID === matcher.clusterID &&
-            matcher.frameType === payload.frame.Header.frameControl.frameType;
+        // Required
+        if (
+            payload.networkAddress !== matcher.networkAddress || payload.endpoint !== matcher.endpoint ||
+            payload.frame.Header.transactionSequenceNumber !== matcher.transactionSequenceNumber ||
+            payload.frame.ClusterID !== matcher.clusterID ||
+            matcher.frameType !== payload.frame.Header.frameControl.frameType
+        ) {
+            return false;
+        }
+
+        // Optional
+        if (payload.hasOwnProperty('direction') && matcher.direction !== payload.frame.Header.frameControl.direction) {
+            return false;
+        }
+
+        if (payload.hasOwnProperty('command') && matcher.commandIdentifier !== payload.frame.Header.commandIdentifier) {
+            return false;
+        }
+
+        return true;
     }
 }
 
