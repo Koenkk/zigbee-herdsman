@@ -10,6 +10,7 @@ interface FoundationDefinition {
     ID: number;
     parseStrategy: 'repetitive' | 'flat' | 'oneof';
     parameters: FoundationParameterDefinition[];
+    response?: number;
 };
 
 const Foundation: {
@@ -22,6 +23,7 @@ const Foundation: {
         parameters: [
             {name: 'attrId', type: DataType.uint16},
         ],
+        response: 1, // readRsp
     },
     readRsp: {
         ID: 1,
@@ -41,6 +43,7 @@ const Foundation: {
             {name: 'dataType', type: DataType.uint8},
             {name: 'attrData', type: BuffaloZclDataType.USE_DATA_TYPE},
         ],
+        response: 4, // writeRsp
     },
     writeUndiv: {
         ID: 3,
@@ -80,6 +83,7 @@ const Foundation: {
             {name: 'repChange', type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: 'directionEquals', value: Direction.CLIENT_TO_SERVER}, {type: 'dataTypeValueTypeEquals', value: 'ANALOG'}]},
             {name: 'timeout', type: DataType.uint16, conditions: [{type: 'directionEquals', value: Direction.SERVER_TO_CLIENT}]},
         ],
+        response: 7, // configReportRsp
     },
     configReportRsp: {
         ID: 7,

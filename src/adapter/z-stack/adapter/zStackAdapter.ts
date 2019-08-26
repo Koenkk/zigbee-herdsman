@@ -40,8 +40,8 @@ interface WaitressMatcher {
     transactionSequenceNumber: number;
     frameType: FrameType;
     clusterID: number;
-    commandIdentifier?: number;
-    direction?: number;
+    commandIdentifier: number;
+    direction: number;
 };
 
 class ZStackAdapter extends Adapter {
@@ -193,14 +193,18 @@ class ZStackAdapter extends Adapter {
         networkAddress: number, endpoint: number, zclFrame: ZclFrame
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
+            const command = zclFrame.getCommand();
+            if (!command.hasOwnProperty('response')) {
+                throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
+            }
+
             const defaultResponse = !zclFrame.Header.frameControl.disableDefaultResponse ?
                 this.waitDefaultResponse(networkAddress, endpoint, zclFrame) : null;
-
             const responsePayload = {
                 networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
-                clusterID: zclFrame.ClusterID, frameType: zclFrame.Header.frameControl.frameType
+                clusterID: zclFrame.ClusterID, frameType: zclFrame.Header.frameControl.frameType,
+                direction: Direction.SERVER_TO_CLIENT, commandIdentifier: command.response,
             };
-
             const response = this.waitress.waitFor(responsePayload, DefaultTimeout);
 
             try {
@@ -218,10 +222,11 @@ class ZStackAdapter extends Adapter {
             }
 
             if (defaultResponse) {
-                await defaultResponse;
+                const result = await Promise.all([response.promise, defaultResponse.promise]);
+                return result[0];
+            } else {
+                return await response.promise;
             }
-
-            return await response.promise;
         }, networkAddress);
     }
 
@@ -550,26 +555,12 @@ class ZStackAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        // Required
-        if (
-            payload.networkAddress !== matcher.networkAddress || payload.endpoint !== matcher.endpoint ||
-            payload.frame.Header.transactionSequenceNumber !== matcher.transactionSequenceNumber ||
-            payload.frame.ClusterID !== matcher.clusterID ||
-            matcher.frameType !== payload.frame.Header.frameControl.frameType
-        ) {
-            return false;
-        }
-
-        // Optional
-        if (payload.hasOwnProperty('direction') && matcher.direction !== payload.frame.Header.frameControl.direction) {
-            return false;
-        }
-
-        if (payload.hasOwnProperty('command') && matcher.commandIdentifier !== payload.frame.Header.commandIdentifier) {
-            return false;
-        }
-
-        return true;
+        return payload.networkAddress === matcher.networkAddress && payload.endpoint === matcher.endpoint &&
+            payload.frame.Header.transactionSequenceNumber === matcher.transactionSequenceNumber &&
+            payload.frame.ClusterID === matcher.clusterID &&
+            matcher.frameType === payload.frame.Header.frameControl.frameType &&
+            matcher.commandIdentifier === payload.frame.Header.commandIdentifier &&
+            matcher.direction === payload.frame.Header.frameControl.direction;
     }
 }
 

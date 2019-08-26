@@ -1,5 +1,5 @@
 import "regenerator-runtime/runtime";
-import {IsNumberArray, Wait, ArraySplitChunks, Queue} from '../src/utils';
+import {IsNumberArray, Wait, ArraySplitChunks, Queue, Waitress} from '../src/utils';
 
 describe('Utils', () => {
     it('IsNumberArray valid', () => {
@@ -24,6 +24,43 @@ describe('Utils', () => {
         expect(setTimeout).toHaveBeenCalledTimes(1);
         expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000);
         jest.runAllTimers();
+    });
+
+    it('Test waitress', async () => {
+        jest.useFakeTimers();
+        const validator = (payload: string, matcher: number): boolean => {
+            if (payload === 'one' && matcher === 1) return true;
+            if (payload === 'two' && matcher === 2) return true;
+            return false;
+        }
+        const waitress = new Waitress<string, number>(validator, (_, timeout) => `Timedout '${timeout}'`);
+
+        const wait1 = waitress.waitFor(1, 10000);
+        waitress.resolve('one');
+        expect(await wait1.promise).toBe('one');
+
+        const wait2_1 = waitress.waitFor(2, 10000);
+        const wait2_2 = waitress.waitFor(2, 10000);
+        const wait2_3 = waitress.waitFor(2, 10000);
+        const wait2_4 = waitress.waitFor(2, 5000);
+        const wait2_5 = waitress.waitFor(2, 5000);
+
+        waitress.remove(wait2_3.ID);
+        jest.runTimersToTime(6000);
+        waitress.remove(wait2_5.ID);
+        waitress.resolve('two');
+        expect(await wait2_1.promise).toBe('two');
+        expect(await wait2_2.promise).toBe('two');
+
+        let error2;
+        try {await wait2_4.promise} catch (e) { error2 = e};
+        expect(error2).toStrictEqual(new Error("Timedout '5000'"));
+
+        let error3;
+        try {await wait2_5.promise} catch (e) { error3 = e};
+        expect(error3).toStrictEqual(new Error("Timedout '5000'"));
+
+        jest.useRealTimers();
     });
 
     it('Test queue', async () => {

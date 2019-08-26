@@ -25,17 +25,18 @@ class Waitress<TPayload, TMatcher> {
     }
 
     public resolve(payload: TPayload): void {
-        for (let index = 0; index < this.waiters.length; index++) {
-            const waiter = this.waiters[index];
-
+        const toRemove = [];
+        for (const waiter of this.waiters) {
             if (waiter.timedout) {
-                this.waiters.splice(index, 1);
+                toRemove.push(waiter);
             } else if (this.validator(payload, waiter.matcher)) {
                 clearTimeout(waiter.timer);
                 waiter.resolve(payload);
-                this.waiters.splice(index, 1);
+                toRemove.push(waiter);
             }
         }
+
+        toRemove.forEach((waiter) => this.waiters.splice(this.waiters.indexOf(waiter), 1));
     }
 
     public remove(ID: number): void {
@@ -47,6 +48,7 @@ class Waitress<TPayload, TMatcher> {
                 }
 
                 this.waiters.splice(index, 1);
+                break;
             }
         }
     }

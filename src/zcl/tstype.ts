@@ -17,6 +17,7 @@ interface Command {
     ID: number;
     name: string;
     parameters: Parameter[];
+    response?: number;
 }
 
 interface Cluster {

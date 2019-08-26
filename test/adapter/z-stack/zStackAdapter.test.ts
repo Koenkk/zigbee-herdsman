@@ -1229,6 +1229,15 @@ describe('zStackAdapter', () => {
         expect(result.frame).toStrictEqual(responseFrame);
     });
 
+    it('Send zcl frame network address with response with command which has no response', async () => {
+        basicMocks();
+        await adapter.start();
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'readRsp', 0, [{attrId: 0}]);
+        let error;
+        try {await adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame);} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error("Command 'readRsp' has no response, cannot wait for response"));
+    });
+
     it('Send zcl frame network address with response and default response', async () => {
         basicMocks();
         await adapter.start();
@@ -1258,6 +1267,26 @@ describe('zStackAdapter', () => {
         expect(result.frame).toStrictEqual(responseFrame);
     });
 
+    it('Send zcl frame network address data confirm fails with default response', async () => {
+        basicMocks();
+        await adapter.start();
+        dataConfirmCode = 205;
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
+        let error;
+        try {await adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame)} catch (e) {error = e;}
+        expect(error).toStrictEqual(new Error("Data request failed with error: 'No network route' (205)"));
+    });
+
+    it('Send zcl frame network address data confirm fails without default response', async () => {
+        basicMocks();
+        await adapter.start();
+        dataConfirmCode = 205;
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
+        let error;
+        try {await adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame)} catch (e) {error = e;}
+        expect(error).toStrictEqual(new Error("Data request failed with error: 'No network route' (205)"));
+    });
+
     it('Send zcl frame network address with response timeout', async () => {
         basicMocks();
         await adapter.start();
@@ -1277,6 +1306,26 @@ describe('zStackAdapter', () => {
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 after 10000ms"));
+    });
+
+    it('Send zcl frame network address with default response timeout', async () => {
+        basicMocks();
+        await adapter.start();
+
+        mockZnpRequest.mockClear();
+        jest.useFakeTimers();
+        const responseFrame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 100, 'readRsp', 0, [{attrId: 0, attrData: 2, dataType: 32, status: 0}]);
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
+        const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()}};
+        const response = adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame);
+        znpReceived(object);
+
+        let error;
+        try {jest.runAllTimers(); await response} catch (e) {error = e;}
+        expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
+        expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 after 15000ms"));
     });
 
     it('Supports backup', async () => {

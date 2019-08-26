@@ -100,7 +100,7 @@ class Endpoint extends Entity {
     public async write(
         clusterKey: number | string, attributes: KeyValue, options?: Options
     ): Promise<void> {
-        options = this.getOptionsWithDefaults(options, true);
+        const {manufacturerCode, disableDefaultResponse} = this.getOptionsWithDefaults(options, true);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
         for (const [name, value] of Object.entries(attributes)) {
@@ -109,8 +109,8 @@ class Endpoint extends Entity {
         }
 
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
-            options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'write', cluster.ID, payload
+            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, disableDefaultResponse,
+            manufacturerCode, ZclTransactionSequenceNumber.next(), 'write', cluster.ID, payload
         );
         await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
     }
@@ -118,7 +118,7 @@ class Endpoint extends Entity {
     public async read(
         clusterKey: number | string, attributes: string[] | number [], options?: Options
     ): Promise<KeyValue> {
-        options = this.getOptionsWithDefaults(options, true);
+        const {manufacturerCode, disableDefaultResponse} = this.getOptionsWithDefaults(options, true);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number}[] = [];
         for (const attribute of attributes) {
@@ -126,8 +126,8 @@ class Endpoint extends Entity {
         }
 
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
-            options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'read', cluster.ID, payload
+            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, disableDefaultResponse,
+            manufacturerCode, ZclTransactionSequenceNumber.next(), 'read', cluster.ID, payload
         );
         const result = await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(
             this.deviceNetworkAddress, this.ID, frame
@@ -136,8 +136,9 @@ class Endpoint extends Entity {
     }
 
     public async readResponse(
-        clusterKey: number | string, transactionSequenceNumber: number, attributes: KeyValue
+        clusterKey: number | string, transactionSequenceNumber: number, attributes: KeyValue, options: Options
     ): Promise<void> {
+        const {manufacturerCode, disableDefaultResponse} = this.getOptionsWithDefaults(options, true);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number; status: number; dataType: number; attrData: number | string}[] = [];
         for (const [name, value] of Object.entries(attributes)) {
@@ -146,8 +147,8 @@ class Endpoint extends Entity {
         }
 
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, transactionSequenceNumber,
-            'readRsp', cluster.ID, payload
+            Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, disableDefaultResponse, manufacturerCode,
+            transactionSequenceNumber, 'readRsp', cluster.ID, payload
         );
         await Endpoint.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
     }
@@ -169,17 +170,21 @@ class Endpoint extends Entity {
     }
 
     public async defaultResponse(
-        commandID: number, status: number, clusterID: number, transactionSequenceNumber: number
+        commandID: number, status: number, clusterID: number, transactionSequenceNumber: number, options?: Options
     ): Promise<void> {
+        const {manufacturerCode, disableDefaultResponse} = this.getOptionsWithDefaults(options, true);
         const payload = {cmdId: commandID, statusCode: status};
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, transactionSequenceNumber,
-            'defaultRsp', clusterID, payload
+            Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, disableDefaultResponse,
+            manufacturerCode, transactionSequenceNumber, 'defaultRsp', clusterID, payload
         );
         await Endpoint.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
     }
 
-    public async configureReporting(clusterKey: number | string, items: ConfigureReportingItem[]): Promise<void> {
+    public async configureReporting(
+        clusterKey: number | string, items: ConfigureReportingItem[], options?: Options
+    ): Promise<void> {
+        const {manufacturerCode, disableDefaultResponse} = this.getOptionsWithDefaults(options, true);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload = items.map((item): KeyValue => {
             const attribute = cluster.getAttribute(item.attribute);
@@ -194,8 +199,8 @@ class Endpoint extends Entity {
         });
 
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
-            'configReport', cluster.ID, payload
+            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, disableDefaultResponse,
+            manufacturerCode, ZclTransactionSequenceNumber.next(), 'configReport', cluster.ID, payload
         );
         await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
     }
@@ -203,7 +208,7 @@ class Endpoint extends Entity {
     public async command(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options
     ): Promise<void> {
-        options = this.getOptionsWithDefaults(options, false);
+        const {manufacturerCode, disableDefaultResponse} = this.getOptionsWithDefaults(options, false);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
 
@@ -214,8 +219,8 @@ class Endpoint extends Entity {
         }
 
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
-            options.manufacturerCode, ZclTransactionSequenceNumber.next(), command.ID, cluster.ID, payload
+            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, disableDefaultResponse,
+            manufacturerCode, ZclTransactionSequenceNumber.next(), command.ID, cluster.ID, payload
         );
         await Endpoint.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
     }

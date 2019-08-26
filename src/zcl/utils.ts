@@ -120,11 +120,17 @@ function getGlobalCommand(key: number | string): TsType.Command {
         throw new Error(`Global command with key '${key}' does not exist`);
     }
 
-    return {
+    const result: TsType.Command = {
         ID: command.ID,
         name,
         parameters: command.parameters,
     };
+
+    if (command.hasOwnProperty('response')) {
+        result.response = command.response;
+    }
+
+    return result;
 }
 
 function getSpecificCommand(clusterKey: number | string, direction: Direction, key: number | string): TsType.Command {
