@@ -136,7 +136,7 @@ class Endpoint extends Entity {
     }
 
     public async readResponse(
-        clusterKey: number | string, transactionSequenceNumber: number, attributes: KeyValue, options: Options
+        clusterKey: number | string, transactionSequenceNumber: number, attributes: KeyValue, options?: Options
     ): Promise<void> {
         const {manufacturerCode, disableDefaultResponse} = this.getOptionsWithDefaults(options, true);
         const cluster = Zcl.Utils.getCluster(clusterKey);
