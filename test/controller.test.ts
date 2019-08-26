@@ -232,7 +232,7 @@ describe('Controller', () => {
         jest.useFakeTimers();
         await controller.start();
         expect(mockAdapterStart).toBeCalledTimes(1);
-        expect(true).toBe(equals(await controller.getDevice({type: 'Coordinator'}), {"ID": 1, "applicationVersion": undefined, "dateCode": undefined, "endpoints": [{"ID": 1, "deviceID": 3, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [10], "outputClusters": [11], "profileID": 2}, {"ID": 2, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [1], "outputClusters": [0], "profileID": 3}], "hardwareVersion": undefined, "ieeeAddr": "0x123", "interviewCompleted": false, "interviewing": false, "manufacturerID": 100, "manufacturerName": undefined, "modelID": undefined, "networkAddress": 123, "powerSource": undefined, "softwareBuildID": undefined, "stackVersion": undefined, "type": "Coordinator", "zclVersion": undefined}))
+        expect(true).toBe(equals(await controller.getDevice({type: 'Coordinator'}), {"ID": 1, "applicationVersion": undefined, "dateCode": undefined, "meta": {}, "endpoints": [{"ID": 1, "deviceID": 3, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [10], "outputClusters": [11], "profileID": 2}, {"ID": 2, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [1], "outputClusters": [0], "profileID": 3}], "hardwareVersion": undefined, "ieeeAddr": "0x123", "interviewCompleted": false, "interviewing": false, "manufacturerID": 100, "manufacturerName": undefined, "modelID": undefined, "networkAddress": 123, "powerSource": undefined, "softwareBuildID": undefined, "stackVersion": undefined, "type": "Coordinator", "zclVersion": undefined}))
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual({version: 'dummybackup'});
         jest.advanceTimersByTime(86500000);
     });
@@ -267,8 +267,8 @@ describe('Controller', () => {
         expect(databaseContents().includes("0x129")).toBeFalsy();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
-        expect(events.deviceInterview[0]).toStrictEqual({"device":{"ID":2,"endpoints":[],"ieeeAddr":"0x129","interviewCompleted":false,"interviewing":false,"networkAddress":129},"status":"started"});
-        const device = {"ID":2,"ieeeAddr":"0x129","networkAddress":129,"endpoints":[{"ID":1,"inputClusters":[1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","deviceID":5,"profileID":99}],"type":"Router","manufacturerID":1212,"manufacturerName":"KoenAndCo","powerSource":"Mains (single phase)","modelID":"myModelID","applicationVersion":2,"stackVersion":101,"zclVersion":1,"hardwareVersion":3,"dateCode":"201901","softwareBuildID":"1.01","interviewCompleted":true,"interviewing":false};
+        expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "ID":2,"endpoints":[],"ieeeAddr":"0x129","interviewCompleted":false,"interviewing":false,"networkAddress":129},"status":"started"});
+        const device = {"ID":2,"ieeeAddr":"0x129","networkAddress":129,"meta": {},"endpoints":[{"ID":1,"inputClusters":[1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","deviceID":5,"profileID":99}],"type":"Router","manufacturerID":1212,"manufacturerName":"KoenAndCo","powerSource":"Mains (single phase)","modelID":"myModelID","applicationVersion":2,"stackVersion":101,"zclVersion":1,"hardwareVersion":3,"dateCode":"201901","softwareBuildID":"1.01","interviewCompleted":true,"interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
         expect(deepClone(await controller.getDevice({ieeeAddr: '0x129'}))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
@@ -485,6 +485,7 @@ describe('Controller', () => {
                 "type":"Router",
                 "manufacturerID":1212,
                 "manufacturerName":"KoenAndCo",
+                "meta": {},
                 "powerSource":"Mains (single phase)",
                 "modelID":"myModelID",
                 "applicationVersion":2,
@@ -577,6 +578,7 @@ describe('Controller', () => {
                "type":"Router",
                "manufacturerID":1212,
                "manufacturerName":"KoenAndCo",
+               "meta": {},
                "powerSource":"Mains (single phase)",
                "modelID":"myModelID",
                "applicationVersion":2,
@@ -645,6 +647,7 @@ describe('Controller', () => {
                "type":"Router",
                "manufacturerID":1212,
                "manufacturerName":"KoenAndCo",
+               "meta": {},
                "powerSource":"Mains (single phase)",
                "modelID":"myModelID",
                "applicationVersion":2,
@@ -799,6 +802,7 @@ describe('Controller', () => {
                 "type":"EndDevice",
                 "manufacturerID":4151,
                 "manufacturerName":"LUMI",
+                "meta": {},
                 "powerSource":"Battery",
                 "modelID":"lumi.occupancy",
                 "interviewCompleted":true,
@@ -845,6 +849,7 @@ describe('Controller', () => {
                 "type":"Router",
                 "manufacturerID":1212,
                 "manufacturerName":"KoenAndCo",
+                "meta": {},
                 "powerSource":"Mains (single phase)",
                 "modelID":"myModelID",
                 "applicationVersion":2,

@@ -9,15 +9,19 @@ class Group extends Entity {
     private groupID: number;
     private members: Endpoint[]; // TODO: not implemented yet
 
+    // Can be used by applications to store data.
+    private meta: KeyValue;
+
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static lookup: {[groupID: number]: Group} = {};
 
-    private constructor(databaseID: number, groupID: number, members: Endpoint[]) {
+    private constructor(databaseID: number, groupID: number, members: Endpoint[], meta: KeyValue) {
         super();
         this.databaseID = databaseID;
         this.groupID = groupID;
         this.members = members;
+        this.meta = meta;
     }
 
     /**
@@ -25,11 +29,11 @@ class Group extends Entity {
      */
 
     private static fromDatabaseRecord(record: KeyValue): Group {
-        return new Group(record.id, record.groupID, record.members);
+        return new Group(record.id, record.groupID, record.members, record.meta);
     }
 
     private toDatabaseRecord(): KeyValue {
-        return {id: this.databaseID, type: 'Group', groupID: this.groupID, members: this.members};
+        return {id: this.databaseID, type: 'Group', groupID: this.groupID, members: this.members, meta: this.meta};
     }
 
     public static async findSingle(query: {groupID: number}): Promise<Group> {
@@ -61,7 +65,7 @@ class Group extends Entity {
         }
 
         const databaseID = await this.database.newID();
-        const group = new Group(databaseID, groupID, []);
+        const group = new Group(databaseID, groupID, [], {});
         await this.database.insert(group.toDatabaseRecord());
 
         this.lookup[group.groupID] = group;

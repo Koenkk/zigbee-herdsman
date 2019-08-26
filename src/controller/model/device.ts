@@ -36,6 +36,9 @@ class Device extends Entity {
     private interviewCompleted: boolean;
     private interviewing: boolean;
 
+    // Can be used by applications to store data.
+    private meta: KeyValue;
+
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static lookup: {[ieeeAddr: string]: Device} = {};
@@ -44,7 +47,7 @@ class Device extends Entity {
         ID: number, type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
-        hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean,
+        hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
     ) {
         super();
         this.ID = ID;
@@ -64,6 +67,7 @@ class Device extends Entity {
         this.softwareBuildID = softwareBuildID;
         this.interviewCompleted = interviewCompleted;
         this.interviewing = false;
+        this.meta = meta;
     }
 
     /**
@@ -117,11 +121,12 @@ class Device extends Entity {
             return Endpoint.fromDatabaseRecord(e, networkAddress, ieeeAddr);
         });
 
+        const meta = record.meta ? record.meta : {};
         return new Device(
             record.id, record.type, ieeeAddr, networkAddress, record.manufId, endpoints,
             record.manufName, record.powerSource, record.modelId, record.appVersion,
             record.stackVersion, record.zclVersion, record.hwVersion, record.dateCode, record.swBuildId,
-            record.interviewCompleted,
+            record.interviewCompleted, meta,
         );
     }
 
@@ -138,6 +143,7 @@ class Device extends Entity {
             modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion,
             stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
             swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
+            meta: this.meta,
         };
     }
 
@@ -214,7 +220,7 @@ class Device extends Entity {
 
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
-            powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false,
+            powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false, {},
         );
 
         await this.database.insert(device.toDatabaseRecord());
