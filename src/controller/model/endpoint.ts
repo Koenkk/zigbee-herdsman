@@ -6,7 +6,7 @@ import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumbe
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
 
 interface ConfigureReportingItem {
-    attribute: string | number;
+    attribute: string | number | {ID: number; type: number};
     minimumReportInterval: number;
     maximumReportInterval: number;
     reportableChange: number;
@@ -193,11 +193,23 @@ class Endpoint extends Entity {
         const {manufacturerCode, disableDefaultResponse} = this.getOptionsWithDefaults(options, true);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload = items.map((item): KeyValue => {
-            const attribute = cluster.getAttribute(item.attribute);
+            let dataType, attrId;
+
+            if (typeof item.attribute === 'object') {
+                dataType = item.attribute.type;
+                attrId = item.attribute.ID;
+            } else {
+                /* istanbul ignore else */
+                if (cluster.hasAttribute(item.attribute)) {
+                    const attribute = cluster.getAttribute(item.attribute);
+                    dataType = attribute.type;
+                    attrId = attribute.ID;
+                }
+            }
+
             return {
                 direction: Zcl.Direction.SERVER_TO_CLIENT,
-                attrId: attribute.ID,
-                dataType: attribute.type,
+                attrId, dataType,
                 minRepIntval: item.minimumReportInterval,
                 maxRepIntval: item.maximumReportInterval,
                 repChange: item.reportableChange,

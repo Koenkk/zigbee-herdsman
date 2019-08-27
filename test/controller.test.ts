@@ -1186,4 +1186,22 @@ describe('Controller', () => {
         expect(error).toStrictEqual(new Error(`Unknown attribute 'UNKNOWN', specify either an existing attribute or a number`))
         expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(0);
     });
+
+    it('Configure reporting endpoint custom attributes', async () => {
+        await controller.start();
+        await removeAllDevices();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        mockSendZclFrameNetworkAddressWithResponse.mockClear();
+        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const endpoint = device.getEndpoint(1);
+        await endpoint.configureReporting('hvacThermostat', [{
+            attribute: {ID: 0x4003, type: 41},
+            minimumReportInterval: 0,
+            maximumReportInterval: 3600,
+            reportableChange: 25,
+        }]);
+
+        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(1);
+        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledWith(129, 1, {"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":116,"manufacturerCode":null,"commandIdentifier":6},"Payload":[{"direction":1,"attrId":16387,"dataType":41,"minRepIntval":0,"maxRepIntval":3600,"repChange":25}],"ClusterID":513});
+    });
 });
