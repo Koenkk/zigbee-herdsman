@@ -75,6 +75,7 @@ interface MessagePayload {
     endpoint: Endpoint;
     linkquality: number;
     groupID: number;
+    cluster: string;
     data: KeyValue;
 }
 

@@ -317,7 +317,10 @@ class Controller extends events.EventEmitter {
             const endpoint = device.getEndpoint(zclData.endpoint);
             const linkquality = zclData.linkquality;
             const groupID = zclData.groupID;
-            const eventData: Events.MessagePayload = {type: type, device, endpoint, data, linkquality, groupID};
+            const cluster = frame.getCluster().name;
+            const eventData: Events.MessagePayload = {
+                type: type, device, endpoint, data, linkquality, groupID, cluster
+            };
             this.emit(Events.Events.message, eventData);
         }
 

@@ -19,9 +19,11 @@ describe('Zcl', () => {
         const cluster1 = Zcl.Utils.getCluster(0);
         delete cluster1.getAttribute;
         delete cluster1.getCommand;
+        delete cluster1.hasAttribute;
         const cluster2 = Zcl.Utils.getCluster('genBasic');
         delete cluster2.getAttribute;
         delete cluster2.getCommand;
+        delete cluster2.hasAttribute;
         expect(cluster1).toStrictEqual(cluster2);
     });
 
@@ -29,6 +31,14 @@ describe('Zcl', () => {
         const cluster = Zcl.Utils.getCluster(0);
         const attribute = cluster.getAttribute(1)
         expect(attribute).toStrictEqual({ID: 1, type: DataType.uint8, name: 'appVersion'});
+    });
+
+    it('Cluster has attribute', () => {
+        const cluster = Zcl.Utils.getCluster(0);
+        expect(cluster.hasAttribute('zclVersion')).toBeTruthy();
+        expect(cluster.hasAttribute('NOTEXISTING')).toBeFalsy();
+        expect(cluster.hasAttribute(0)).toBeTruthy();
+        expect(cluster.hasAttribute(910293)).toBeFalsy();
     });
 
     it('Get specific command by name', () => {

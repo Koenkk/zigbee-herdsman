@@ -462,6 +462,7 @@ describe('Controller', () => {
 
         expect(events.message.length).toBe(1);
         const expected = {
+            "cluster": "msOccupancySensing",
             "type":"attributeReport",
             "device":{
                 "ID":1,
@@ -544,6 +545,7 @@ describe('Controller', () => {
 
         expect(events.message.length).toBe(1);
         const expected = {
+            "cluster": "genBasic",
             "type":"readResponse",
             "device":{
                "ID":1,
@@ -624,6 +626,7 @@ describe('Controller', () => {
 
         expect(events.message.length).toBe(1);
         const expected = {
+            "cluster": "genScenes",
             "type":"commandTradfriArrowSingle",
             "device":{
                "ID":1,
@@ -826,6 +829,7 @@ describe('Controller', () => {
 
         expect(events.message.length).toBe(1);
         const expected = {
+            "cluster": 'genBasic',
             "type":"attributeReport",
             "device":{
                 "ID":1,
@@ -1155,5 +1159,31 @@ describe('Controller', () => {
         await controller.start();
         const expected = {"ID": 3, "applicationVersion": 17, "dateCode": "20170302", "endpoints": [{"ID": 1, "deviceID": 2096, "deviceIeeeAddress": "0x90fd9ffffe4b64ae", "deviceNetworkAddress": 19468, "inputClusters": [0, 1, 3, 9, 2821, 4096], "outputClusters": [3, 4, 5, 6, 8, 25, 4096], "profileID": 49246}], "hardwareVersion": 1, "ieeeAddr": "0x90fd9ffffe4b64ae", "interviewCompleted": true, "interviewing": false, "manufacturerID": 4476, "manufacturerName": "IKEA of Sweden", "meta": {}, "modelID": "TRADFRI remote control", "networkAddress": 19468, "powerSource": "Battery", "softwareBuildID": "1.2.214", "stackVersion": 87, "type": "EndDevice", "zclVersion": 1}
         expect(deepClone(await controller.getDevice({ieeeAddr: "0x90fd9ffffe4b64ae"}))).toStrictEqual(expected);
+    });
+
+    it('Write to endpoint custom attributes', async () => {
+        await controller.start();
+        await removeAllDevices();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        mockSendZclFrameNetworkAddressWithResponse.mockClear();
+        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const endpoint = device.getEndpoint(1);
+        const options = {manufacturerCode: 0x100B, disableDefaultResponse: true};
+        await endpoint.write('genBasic', {0x0031: {value: 0x000B, type: 0x19}}, options);
+        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(1);
+        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledWith(129, 1, {"ClusterID": 0, "Header": {"commandIdentifier": 2, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": true}, "manufacturerCode": 4107, "transactionSequenceNumber": 109}, "Payload": [{"attrData": 11, "attrId": 49, "dataType": 25}]});
+    });
+
+    it('Write to endpoint with unknown string attribute', async () => {
+        await controller.start();
+        await removeAllDevices();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        mockSendZclFrameNetworkAddressWithResponse.mockClear();
+        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const endpoint = device.getEndpoint(1);
+        let error;
+        try {await endpoint.write('genBasic', {'UNKNOWN': {value: 0x000B, type: 0x19}}) } catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`Unknown attribute 'UNKNOWN', specify either an existing attribute or a number`))
+        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(0);
     });
 });

@@ -31,6 +31,7 @@ interface Cluster {
         [s: string]: Command;
     };
     getAttribute: (key: number | string) => Attribute;
+    hasAttribute: (key: number | string) => boolean;
     getCommand: (key: number | string) => Command;
 }
 
