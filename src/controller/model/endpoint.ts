@@ -222,7 +222,7 @@ class Endpoint extends Entity {
             }
 
             return {
-                direction: Zcl.Direction.SERVER_TO_CLIENT,
+                direction: Zcl.Direction.CLIENT_TO_SERVER,
                 attrId, dataType,
                 minRepIntval: item.minimumReportInterval,
                 maxRepIntval: item.maximumReportInterval,

@@ -520,7 +520,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private toAddressString(address: number | string): string {
-        if (!isNaN(Number(address))) {
+        if (typeof address === 'number') {
             let addressString = address.toString(16);
 
             for (let i = addressString.length; i < 16; i++) {

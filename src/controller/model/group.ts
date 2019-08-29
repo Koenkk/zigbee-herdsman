@@ -3,6 +3,7 @@ import Entity from './entity';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as Zcl from '../../zcl';
 import Endpoint from './endpoint';
+import assert from 'assert';
 
 class Group extends Entity {
     private databaseID: number;
@@ -68,6 +69,7 @@ class Group extends Entity {
     }
 
     public static async create(groupID: number): Promise<Group> {
+        assert(typeof groupID === 'number', 'GroupID must be a number');
         if (await this.findSingle({groupID})) {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
