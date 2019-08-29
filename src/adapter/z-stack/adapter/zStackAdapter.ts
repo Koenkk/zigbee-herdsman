@@ -310,7 +310,8 @@ class ZStackAdapter extends Adapter {
 
     public async bind(
         destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number,
-        clusterID: number, destinationAddress: string, destinationEndpoint: number
+        clusterID: number, destinationAddressOrGroup: string | number, type: 'endpoint' | 'group',
+        destinationEndpoint?: number
     ): Promise<void> {
         return this.queue.execute<void>(async () => {
             const responsePayload = {srcaddr: destinationNetworkAddress};
@@ -320,9 +321,10 @@ class ZStackAdapter extends Adapter {
                 srcaddr: sourceIeeeAddress,
                 srcendpoint: sourceEndpoint,
                 clusterid: clusterID,
-                dstaddrmode: Constants.COMMON.addressMode.ADDR_64BIT,
-                dstaddress: destinationAddress,
-                dstendpoint: destinationEndpoint,
+                dstaddrmode: type === 'group' ?
+                    Constants.COMMON.addressMode.ADDR_GROUP : Constants.COMMON.addressMode.ADDR_64BIT,
+                dstaddress: this.toAddressString(destinationAddressOrGroup),
+                dstendpoint: type === 'group' ? 0xFF : destinationEndpoint,
             };
 
             this.znp.request(Subsystem.ZDO, 'bindReq', payload);
@@ -495,7 +497,7 @@ class ZStackAdapter extends Adapter {
             data: data,
         });
 
-        const dataConfirm =  await response;
+        const dataConfirm = await response;
 
         if (dataConfirm.payload.status !== 0) {
             throw new Error(
@@ -517,14 +519,18 @@ class ZStackAdapter extends Adapter {
         return this.transactionID;
     }
 
-    private toAddressString(address: number): string {
-        let addressString = address.toString(16);
+    private toAddressString(address: number | string): string {
+        if (!isNaN(Number(address))) {
+            let addressString = address.toString(16);
 
-        for (let i = addressString.length; i < 16; i++) {
-            addressString = '0' + addressString;
+            for (let i = addressString.length; i < 16; i++) {
+                addressString = '0' + addressString;
+            }
+
+            return `0x${addressString}`;
+        } else {
+            return address.toString();
         }
-
-        return `0x${addressString}`;
     }
 
     private incomingMsgToZclDataPayload(object: ZpiObject): Events.ZclDataPayload {
@@ -551,7 +557,7 @@ class ZStackAdapter extends Adapter {
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
         return `Timeout - ${matcher.networkAddress} - ${matcher.endpoint}` +
-            ` - ${matcher.transactionSequenceNumber} after ${timeout}ms`;
+            ` - ${matcher.transactionSequenceNumber} - ${matcher.commandIdentifier} after ${timeout}ms`;
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {

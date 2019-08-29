@@ -1,8 +1,8 @@
 import {KeyValue} from '../tstype';
-import Endpoint from './endpoint';
 import Entity from './entity';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as Zcl from '../../zcl';
+import Endpoint from './endpoint';
 
 class Group extends Entity {
     private databaseID: number;
@@ -22,6 +22,14 @@ class Group extends Entity {
         this.groupID = groupID;
         this.members = members;
         this.meta = meta;
+    }
+
+    public isType(type: string): boolean {
+        return type === 'group';
+    }
+
+    public get(key: 'groupID'): number {
+        return this[key];
     }
 
     /**
@@ -80,14 +88,6 @@ class Group extends Entity {
     /**
      * Zigbee functions
      */
-    public async addEndpoint(endpoint: Endpoint): Promise<void> {
-        await endpoint.command('genGroups', 'add', {groupid: this.groupID, groupname: ''});
-    }
-
-    public async removeEndpoint(endpoint: Endpoint): Promise<void> {
-        await endpoint.command('genGroups', 'remove', {groupid: this.groupID});
-    }
-
     public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
@@ -102,7 +102,7 @@ class Group extends Entity {
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
             command.ID, cluster.ID, payload
         );
-        await Endpoint.adapter.sendZclFrameGroup(this.groupID, frame);
+        await Group.adapter.sendZclFrameGroup(this.groupID, frame);
     }
 }
 

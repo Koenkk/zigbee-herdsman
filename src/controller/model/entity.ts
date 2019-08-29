@@ -1,7 +1,7 @@
 import Database from '../database';
 import {Adapter} from '../../adapter';
 
-class Entity {
+abstract class Entity {
     protected static database: Database;
     protected static adapter: Adapter;
 
@@ -12,6 +12,8 @@ class Entity {
     public static injectAdapter(adapter: Adapter): void {
         this.adapter = adapter;
     }
+
+    abstract isType(type: string): boolean;
 }
 
 export default Entity;

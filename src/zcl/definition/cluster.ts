@@ -21,6 +21,7 @@ interface ClusterDefinition {
 interface CommandDefinition {
     ID: number;
     parameters: TsType.Parameter[];
+    response?: number;
 };
 
 const Cluster: {
@@ -162,6 +163,7 @@ const Cluster: {
         commands: {
             add: {
                 ID: 0,
+                response: 0,
                 parameters: [
                     {name: 'groupid', type: DataType.uint16},
                     {name: 'groupname', type: DataType.charStr},
@@ -175,6 +177,7 @@ const Cluster: {
             },
             getMembership: {
                 ID: 2,
+                response: 2,
                 parameters: [
                     {name: 'groupcount', type: DataType.uint8},
                     {name: 'grouplist', type: BuffaloZclDataType.LIST_UINT16},
@@ -182,12 +185,14 @@ const Cluster: {
             },
             remove: {
                 ID: 3,
+                response: 3,
                 parameters: [
                     {name: 'groupid', type: DataType.uint16},
                 ],
             },
             removeAll: {
                 ID: 4,
+                response: 3,
                 parameters: [
                 ],
             },

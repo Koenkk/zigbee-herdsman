@@ -70,6 +70,10 @@ class Device extends Entity {
         this.meta = meta;
     }
 
+    public isType(type: string): boolean {
+        return type === 'device';
+    }
+
     /**
      * Getters, setters and creaters
      */
