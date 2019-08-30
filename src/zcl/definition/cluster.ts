@@ -192,7 +192,6 @@ const Cluster: {
             },
             removeAll: {
                 ID: 4,
-                response: 3,
                 parameters: [
                 ],
             },

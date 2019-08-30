@@ -1145,7 +1145,7 @@ describe('zStackAdapter', () => {
         let error;
         jest.runAllTimers();
         try {await request} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error('Timeout - 2 - 20 - 100 after 15000ms'));
+        expect(error).toStrictEqual(new Error('Timeout - 2 - 20 - 100 - 11 after 15000ms'));
     });
 
     it('Send zcl frame group', async () => {
@@ -1305,7 +1305,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 after 10000ms"));
+        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 1 after 10000ms"));
     });
 
     it('Send zcl frame network address with default response timeout', async () => {
@@ -1325,7 +1325,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 after 15000ms"));
+        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 11 after 15000ms"));
     });
 
     it('Supports backup', async () => {
@@ -1384,15 +1384,26 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 206, startindex: 0})
     });
 
-    it('Bind', async () => {
+    it('Bind endpoint', async () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
 
-        const result = await adapter.bind(301, '0x01', 1, 1, '0x02', 1);
+        const result = await adapter.bind(301, '0x01', 1, 1, '0x02', 'endpoint', 1);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(301);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'bindReq', {"clusterid": 1, "dstaddr": 301, "dstaddress": "0x02", "dstaddrmode": 3, "dstendpoint": 1, "srcaddr": "0x01", "srcendpoint": 1});
+    });
+
+    it('Bind group', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+
+        const result = await adapter.bind(301, "0x129", 1, 1, 4, "group", null);
+        expect(mockQueueExecute.mock.calls[0][1]).toBe(301);
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'bindReq', {"clusterid": 1, "dstaddr": 301, "dstaddress": "0x0000000000000004", "dstaddrmode": 1, "dstendpoint": 0xFF, "srcaddr": "0x129", "srcendpoint": 1});
     });
 
     it('Unbind', async () => {
@@ -1400,10 +1411,21 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
 
-        const result = await adapter.unbind(301, '0x01', 1, 1, '0x02', 1);
+        const result = await adapter.unbind(301, '0x01', 1, 1, '0x02', "endpoint", 1);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(301);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'unbindReq', {"clusterid": 1, "dstaddr": 301, "dstaddress": "0x02", "dstaddrmode": 3, "dstendpoint": 1, "srcaddr": "0x01", "srcendpoint": 1});
+    });
+
+    it('Unbind group', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+
+        const result = await adapter.unbind(301, "0x129", 1, 1, 4, "group", null);
+        expect(mockQueueExecute.mock.calls[0][1]).toBe(301);
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'unbindReq', {"clusterid": 1, "dstaddr": 301, "dstaddress": "0x0000000000000004", "dstaddrmode": 1, "dstendpoint": 0xFF, "srcaddr": "0x129", "srcendpoint": 1});
     });
 
     it('Remove device', async () => {

@@ -334,7 +334,8 @@ class ZStackAdapter extends Adapter {
 
     public async unbind(
         destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number,
-        clusterID: number, destinationAddress: string, destinationEndpoint: number
+        clusterID: number, destinationAddressOrGroup: string | number, type: 'endpoint' | 'group',
+        destinationEndpoint: number
     ): Promise<void> {
         return this.queue.execute<void>(async () => {
             const response = this.znp.waitFor(
@@ -346,9 +347,10 @@ class ZStackAdapter extends Adapter {
                 srcaddr: sourceIeeeAddress,
                 srcendpoint: sourceEndpoint,
                 clusterid: clusterID,
-                dstaddrmode: Constants.COMMON.addressMode.ADDR_64BIT,
-                dstaddress: destinationAddress,
-                dstendpoint: destinationEndpoint,
+                dstaddrmode: type === 'group' ?
+                    Constants.COMMON.addressMode.ADDR_GROUP : Constants.COMMON.addressMode.ADDR_64BIT,
+                dstaddress: this.toAddressString(destinationAddressOrGroup),
+                dstendpoint: type === 'group' ? 0xFF : destinationEndpoint,
             };
 
             this.znp.request(Subsystem.ZDO, 'unbindReq', payload);

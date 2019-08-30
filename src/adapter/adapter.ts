@@ -58,8 +58,9 @@ abstract class Adapter extends events.EventEmitter {
     ): Promise<void>;
 
     public abstract unbind(
-        destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
-        destinationAddress: string, destinationEndpoint: number
+        destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number,
+        clusterID: number, destinationAddressOrGroup: string | number, type: 'endpoint' | 'group',
+        destinationEndpoint: number
     ): Promise<void>;
 
     public abstract removeDevice(networkAddress: number, ieeeAddr: string): Promise<void>;

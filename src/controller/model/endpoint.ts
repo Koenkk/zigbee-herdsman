@@ -181,11 +181,14 @@ class Endpoint extends Entity {
         );
     }
 
-    public async unbind(clusterKey: number | string, endpoint: Endpoint): Promise<void> {
+    public async unbind(clusterKey: number | string, target: Endpoint | Group): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
+        const type = target instanceof Endpoint ? 'endpoint' : 'group';
         await Endpoint.adapter.unbind(
             this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
-            endpoint.deviceIeeeAddress, endpoint.ID
+            target instanceof Endpoint ? target.deviceIeeeAddress : target.get('groupID'),
+            type,
+            target instanceof Endpoint ? target.ID : null,
         );
     }
 
@@ -276,7 +279,7 @@ class Endpoint extends Entity {
     }
 
     public async removeFromGroup(group: Group): Promise<void> {
-        await this.command('genGroups', 'remove', {groupid: group.get('groupID')}, {});
+        await this.command('genGroups', 'remove', {groupid: group.get('groupID')});
     }
 
     public async removeFromAllGroups(): Promise<void> {
