@@ -45,9 +45,9 @@ class Endpoint extends Entity {
     /**
      * Getters/setters
      */
-    public async set(
+    public set(
         key: 'profileID' | 'deviceID' | 'inputClusters' | 'outputClusters', value: number | number[]
-    ): Promise<void> {
+    ): void {
         if (typeof value === 'number' && (key === 'profileID' || key === 'deviceID')) {
             this[key] = value;
         } else {
@@ -175,7 +175,7 @@ class Endpoint extends Entity {
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
         await Endpoint.adapter.bind(
             this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
-            target instanceof Endpoint ? target.deviceIeeeAddress : target.get('groupID'),
+            target instanceof Endpoint ? target.deviceIeeeAddress : target.groupID,
             type,
             target instanceof Endpoint ? target.ID : null,
         );
@@ -186,7 +186,7 @@ class Endpoint extends Entity {
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
         await Endpoint.adapter.unbind(
             this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
-            target instanceof Endpoint ? target.deviceIeeeAddress : target.get('groupID'),
+            target instanceof Endpoint ? target.deviceIeeeAddress : target.groupID,
             type,
             target instanceof Endpoint ? target.ID : null,
         );
@@ -275,11 +275,11 @@ class Endpoint extends Entity {
     }
 
     public async addToGroup(group: Group): Promise<void> {
-        await this.command('genGroups', 'add', {groupid: group.get('groupID'), groupname: ''});
+        await this.command('genGroups', 'add', {groupid: group.groupID, groupname: ''});
     }
 
     public async removeFromGroup(group: Group): Promise<void> {
-        await this.command('genGroups', 'remove', {groupid: group.get('groupID')});
+        await this.command('genGroups', 'remove', {groupid: group.groupID});
     }
 
     public async removeFromAllGroups(): Promise<void> {

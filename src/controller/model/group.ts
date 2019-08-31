@@ -7,7 +7,7 @@ import assert from 'assert';
 
 class Group extends Entity {
     private databaseID: number;
-    private groupID: number;
+    groupID: number;
     private members: Endpoint[]; // TODO: not implemented yet
 
     // Can be used by applications to store data.
@@ -16,6 +16,7 @@ class Group extends Entity {
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static lookup: {[groupID: number]: Group} = {};
+    static reload(): void { this.lookup = {} }
 
     private constructor(databaseID: number, groupID: number, members: Endpoint[], meta: KeyValue) {
         super();
@@ -37,53 +38,63 @@ class Group extends Entity {
      * CRUD
      */
 
-    private static fromDatabaseRecord(record: KeyValue): Group {
-        return new Group(record.id, record.groupID, record.members, record.meta);
+    static fromDatabaseRecord(record: KeyValue): Group {
+        const group = new Group(record.id, record.groupID, record.members, record.meta);
+        this.lookup[group.groupID] = group
+        return group
     }
 
     private toDatabaseRecord(): KeyValue {
         return {id: this.databaseID, type: 'Group', groupID: this.groupID, members: this.members, meta: this.meta};
     }
 
-    public static async findSingle(query: {groupID: number}): Promise<Group> {
-        // Performance optimization: get from lookup if posible;
-        const groupGroupID = this.lookup[query.groupID];
-        if (query.hasOwnProperty('groupID') && groupGroupID) {
-            return groupGroupID;
+    public static all(): Group[] {
+        return Object.values(this.lookup)
+    }
+
+    public static byID(groupID: number): Group | undefined {
+        return this.lookup[groupID]
+    }
+
+    public static findSingle(query: {groupID?: number, [key: string]: unknown}): Group | undefined {
+        const results = this.find(query)
+        if (results.length === 1) return results[0]
+        return undefined
+    }
+
+    public static find(query: {groupID?: number, [key: string]: unknown}): Group[] {
+        const queryKeys = Object.keys(query)
+
+        // fast path
+        if (queryKeys.length === 1 && query.groupID) {
+            const group = this.byID(query.groupID)
+            return group ? [group] : []
         }
 
-        const results = await this.find(query);
-        return results.length !== 0 ? results[0] : null;
-    }
-
-    public static async find(query: {groupID?: number}): Promise<Group[]> {
-        const results = await this.database.find({...query, type: 'Group'});
-        return results.map((r): Group => {
-            const group = this.fromDatabaseRecord(r);
-            if (!this.lookup[group.groupID]) {
-                this.lookup[group.groupID] = group;
+        return this.all().filter((d: any) => {
+            for (const key of queryKeys) {
+                if (d[key] != query[key]) return false
             }
-
-            return this.lookup[group.groupID];
-        });
+            return true
+        })
     }
 
-    public static async create(groupID: number): Promise<Group> {
+    public static create(groupID: number): Group {
         assert(typeof groupID === 'number', 'GroupID must be a number');
-        if (await this.findSingle({groupID})) {
+        if (this.byID(groupID)) {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
 
-        const databaseID = await this.database.newID();
+        const databaseID = this.database.newID();
         const group = new Group(databaseID, groupID, [], {});
-        await this.database.insert(group.toDatabaseRecord());
+        this.database.insert(group.toDatabaseRecord());
 
         this.lookup[group.groupID] = group;
-        return this.lookup[group.groupID];
+        return group
     }
 
-    public async removeFromDatabase(): Promise<void> {
-        await Group.database.remove(this.databaseID);
+    public removeFromDatabase(): void {
+        Group.database.remove(this.databaseID);
         delete Group.lookup[this.groupID];
     }
 

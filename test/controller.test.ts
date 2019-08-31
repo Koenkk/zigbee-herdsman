@@ -192,17 +192,17 @@ const options = {
 const databaseContents = () => fs.readFileSync(options.databasePath).toString();
 
 describe('Controller', () => {
-    let controller;
+    let controller: Controller;
 
     const removeAllDevices = async () => {
-        for (const device of await controller.getDevices({})) {
-            await device.removeFromDatabase();
+        for (const device of controller.getDevices({})) {
+            device.removeFromDatabase();
         }
     }
 
     const removeAllGroups = async () => {
-        for (const group of await controller.getGroups({})) {
-            await group.removeFromDatabase();
+        for (const group of controller.getGroups({})) {
+            group.removeFromDatabase();
         }
     }
 
@@ -236,7 +236,7 @@ describe('Controller', () => {
         jest.useFakeTimers();
         await controller.start();
         expect(mockAdapterStart).toBeCalledTimes(1);
-        expect(true).toBe(equals(await controller.getDevice({type: 'Coordinator'}), {"ID": 1, "applicationVersion": undefined, "dateCode": undefined, "meta": {}, "endpoints": [{"ID": 1, "deviceID": 3, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [10], "outputClusters": [11], "profileID": 2}, {"ID": 2, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [1], "outputClusters": [0], "profileID": 3}], "hardwareVersion": undefined, "ieeeAddr": "0x123", "interviewCompleted": false, "interviewing": false, "manufacturerID": 100, "manufacturerName": undefined, "modelID": undefined, "networkAddress": 123, "powerSource": undefined, "softwareBuildID": undefined, "stackVersion": undefined, "type": "Coordinator", "zclVersion": undefined}))
+        expect(controller.getDevice({type: 'Coordinator'})).toEqual({"ID": 1, "applicationVersion": undefined, "dateCode": undefined, "meta": {}, "endpoints": [{"ID": 1, "deviceID": 3, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [10], "outputClusters": [11], "profileID": 2}, {"ID": 2, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [1], "outputClusters": [0], "profileID": 3}], "hardwareVersion": undefined, "ieeeAddr": "0x123", "interviewCompleted": false, "interviewing": false, "manufacturerID": 100, "manufacturerName": undefined, "modelID": undefined, "networkAddress": 123, "powerSource": undefined, "softwareBuildID": undefined, "stackVersion": undefined, "type": "Coordinator", "zclVersion": undefined});
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual({version: 'dummybackup'});
         jest.advanceTimersByTime(86500000);
     });
@@ -274,7 +274,7 @@ describe('Controller', () => {
         expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "ID":2,"endpoints":[],"ieeeAddr":"0x129","interviewCompleted":false,"interviewing":false,"networkAddress":129},"status":"started"});
         const device = {"ID":2,"ieeeAddr":"0x129","networkAddress":129,"meta": {},"endpoints":[{"ID":1,"inputClusters":[1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","deviceID":5,"profileID":99}],"type":"Router","manufacturerID":1212,"manufacturerName":"KoenAndCo","powerSource":"Mains (single phase)","modelID":"myModelID","applicationVersion":2,"stackVersion":101,"zclVersion":1,"hardwareVersion":3,"dateCode":"201901","softwareBuildID":"1.01","interviewCompleted":true,"interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
-        expect(deepClone(await controller.getDevice({ieeeAddr: '0x129'}))).toStrictEqual(device);
+        expect(deepClone(controller.getDevice({ieeeAddr: '0x129'}))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
         expect(databaseContents().includes("0x129")).toBeTruthy();
     });
@@ -283,7 +283,7 @@ describe('Controller', () => {
         jest.useFakeTimers();
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        expect(await controller.getDevice({ieeeAddr: '0x129'})).toBe(await controller.getDevice({ieeeAddr: '0x129'}));
+        expect(controller.getDevice({ieeeAddr: '0x129'})).toBe(controller.getDevice({ieeeAddr: '0x129'}));
     });
 
     it('Device announce event', async () => {
@@ -293,19 +293,19 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceAnnounce']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(events.deviceAnnounce.length).toBe(1);
         expect(events.deviceAnnounce[0].device).toBeInstanceOf(Device);
-        expect(events.deviceAnnounce[0].device.get('ieeeAddr')).toBe('0x129');
-        expect(events.deviceAnnounce[0].device.get('modelID')).toBe('myModelID');
+        expect(events.deviceAnnounce[0].device.ieeeAddr).toBe('0x129');
+        expect(events.deviceAnnounce[0].device.modelID).toBe('myModelID');
     });
 
     it('Device leave event and remove from database', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        expect(await controller.getDevice({ieeeAddr: '0x129'})).toBeInstanceOf(Device);
+        expect(controller.getDevice({ieeeAddr: '0x129'})).toBeInstanceOf(Device);
         expect(events.deviceLeave.length).toBe(0);
         await mockAdapterEvents['deviceLeave']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(events.deviceLeave.length).toBe(1);
         expect(events.deviceLeave[0]).toStrictEqual({ieeeAddr: '0x129'});
-        expect(await controller.getDevice({ieeeAddr: '0x129'})).toBeNull();
+        expect(controller.getDeviceByAddress('0x129')).toBeFalsy();
 
         // leaves another time when not in database
         await mockAdapterEvents['deviceLeave']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -316,22 +316,22 @@ describe('Controller', () => {
     it('Start with reset should clear database', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await controller.createGroup(1);
-        expect(await controller.getGroup({groupID: 1})).toBeInstanceOf(Group);
-        expect(await controller.getDevice({ieeeAddr: '0x129'})).toBeInstanceOf(Device);
-        expect((await controller.getDevices({})).length).toBe(2);
-        expect((await controller.getDevices({type: 'Coordinator'}))[0].type).toBe('Coordinator');
-        expect((await controller.getDevices({type: 'Coordinator'}))[0].ieeeAddr).toBe('0x123');
-        expect((await controller.getDevices({type: 'Router'}))[0].ieeeAddr).toBe('0x129');
+        controller.createGroup(1);
+        expect(controller.getGroup({groupID: 1})).toBeInstanceOf(Group);
+        expect(controller.getDevice({ieeeAddr: '0x129'})).toBeInstanceOf(Device);
+        expect((controller.getDevices({})).length).toBe(2);
+        expect((controller.getDevices({type: 'Coordinator'}))[0].type).toBe('Coordinator');
+        expect((controller.getDevices({type: 'Coordinator'}))[0].ieeeAddr).toBe('0x123');
+        expect((controller.getDevices({type: 'Router'}))[0].ieeeAddr).toBe('0x129');
         expect(databaseContents().includes('0x129')).toBeTruthy()
         expect(databaseContents().includes('groupID')).toBeTruthy()
         await controller.stop();
         mockAdapterStart.mockReturnValueOnce("resetted");
         await controller.start();
-        expect((await controller.getDevices({})).length).toBe(1);
-        expect((await controller.getDevices({type: 'Coordinator'}))[0].type).toBe('Coordinator');
-        expect(await controller.getDevice({ieeeAddr: '0x129'})).toBeNull();
-        expect(await controller.getGroup({groupID: 1})).toBeNull();
+        expect((controller.getDevices({})).length).toBe(1);
+        expect((controller.getDevices({type: 'Coordinator'}))[0].type).toBe('Coordinator');
+        expect(controller.getDeviceByAddress('0x129')).toBeFalsy();
+        expect(controller.getGroup({groupID: 1})).toBeFalsy();
         // Items are marked as delete but still appear as lines in database, therefore we need to restart once
         // database will then remove deleted items.
         await controller.stop();
@@ -392,11 +392,11 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(events.deviceJoined.length).toBe(1);
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
-        expect((await controller.getDevice({ieeeAddr: '0x129'})).networkAddress).toBe(129);
+        expect((controller.getDevice({ieeeAddr: '0x129'})).networkAddress).toBe(129);
 
         await mockAdapterEvents['deviceJoined']({networkAddress: 130, ieeeAddr: '0x129'});
         expect(events.deviceJoined.length).toBe(1);
-        expect((await controller.getDevice({ieeeAddr: '0x129'})).networkAddress).toBe(130);
+        expect((controller.getDevice({ieeeAddr: '0x129'})).networkAddress).toBe(130);
     });
 
     it('Device joins and interview succeeds', async () => {
@@ -613,7 +613,7 @@ describe('Controller', () => {
             "linkquality":52
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
-        expect((await controller.getDevice({ieeeAddr: '0x129'})).getEndpoints().length).toBe(2);
+        expect((controller.getDevice({ieeeAddr: '0x129'})).getEndpoints().length).toBe(2);
     });
 
     it('Receive cluster command', async () => {
@@ -788,7 +788,7 @@ describe('Controller', () => {
         expect(events.deviceInterview[0].device.ieeeAddr).toBe('0x150')
         expect(events.deviceInterview[1].status).toBe('successful')
         expect(events.deviceInterview[1].device.ieeeAddr).toBe('0x150')
-        expect(deepClone(await controller.getDevice({ieeeAddr: '0x150'}))).toStrictEqual(
+        expect(deepClone(controller.getDevice({ieeeAddr: '0x150'}))).toStrictEqual(
             {
                 "ID":1,
                 "ieeeAddr":"0x150",
@@ -900,7 +900,7 @@ describe('Controller', () => {
         await removeAllDevices();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         expect(device.isType('device')).toBeTruthy();
         const endpoint = device.getEndpoint(1);
         expect(endpoint.supportsOutputCluster("genDeviceTempCfg")).toBeTruthy();
@@ -923,7 +923,7 @@ describe('Controller', () => {
         await controller.start();
         await removeAllDevices();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         let error;
         try {await device.createEndpoint(1)} catch (e) {error = e}
         expect(error).toStrictEqual(new Error("Device '0x129' already has an endpoint '1'"));
@@ -938,19 +938,11 @@ describe('Controller', () => {
         expect(error).toStrictEqual(new Error("Device with ieeeAddr '0x129' already exists"));
     });
 
-    it('Return device from databse when not in lookup', async () => {
-        await controller.start();
-        await removeAllDevices();
-        await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x129'});
-        Device['lookup'] = {};
-        expect(await controller.getDevice({ieeeAddr: '0x129'})).toBeInstanceOf(Device);
-    });
-
     it('Throw error when interviewing and calling interview again', async () => {
         await controller.start();
         await removeAllDevices();
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x129'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDeviceByAddress('0x129');
         const firstInterview = device.interview()
         let error;
         try {await device.interview()} catch (e) {error = e}
@@ -961,17 +953,17 @@ describe('Controller', () => {
     it('Remove device from network', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x140'});
-        const device = await controller.getDevice({ieeeAddr: '0x140'});
+        const device = controller.getDevice({ieeeAddr: '0x140'});
         await device.removeFromNetwork();
         expect(mockAdapterRemoveDevice).toBeCalledTimes(1);
         expect(mockAdapterRemoveDevice).toBeCalledWith(140, '0x140');
-        expect(await controller.getDevice({ieeeAddr: '0x140'})).toBeNull();
+        expect(controller.getDeviceByAddress('0x140')).toBeFalsy();
     });
 
     it('Device lqi', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x140'});
-        const device = await controller.getDevice({ieeeAddr: '0x140'});
+        const device = controller.getDevice({ieeeAddr: '0x140'});
         const result = await device.lqi();
         expect(result).toStrictEqual({neighbors: [
             {ieeeAddr: '0x160', networkAddress: 160, linkquality: 20},
@@ -982,7 +974,7 @@ describe('Controller', () => {
     it('Device routing table', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x140'});
-        const device = await controller.getDevice({ieeeAddr: '0x140'});
+        const device = controller.getDevice({ieeeAddr: '0x140'});
         const result = await device.routingTable();
         expect(result).toStrictEqual({table: [
             {destinationAddress: 120, status: 'SUCCESS', nextHop: 1},
@@ -993,7 +985,7 @@ describe('Controller', () => {
     it('Device ping', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
         const result = await device.ping();
         expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(1);
@@ -1006,7 +998,7 @@ describe('Controller', () => {
     it('Endpoint get id', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         expect(device.getEndpoint(1).get('ID')).toBe(1);
     });
 
@@ -1014,8 +1006,8 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
-        const target = await controller.getDevice({ieeeAddr: '0x170'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
+        const target = controller.getDevice({ieeeAddr: '0x170'});
         const endpoint = device.getEndpoint(1);
         await endpoint.bind('genBasic', target.getEndpoint(1));
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
@@ -1024,9 +1016,9 @@ describe('Controller', () => {
     it('Group bind', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const group = await controller.createGroup(4);
+        const group = controller.createGroup(4);
         expect(group.isType('group')).toBeTruthy();
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         const endpoint = device.getEndpoint(1);
         await endpoint.bind('genPowerCfg', group);
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 1, 4, "group", null);
@@ -1036,8 +1028,8 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
-        const target = await controller.getDevice({ieeeAddr: '0x170'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
+        const target = controller.getDevice({ieeeAddr: '0x170'});
         const endpoint = device.getEndpoint(1);
         await endpoint.unbind('genBasic', target.getEndpoint(1));
         expect(mockAdapterUnbind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
@@ -1046,9 +1038,9 @@ describe('Controller', () => {
     it('Group unbind', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const group = await controller.createGroup(5);
+        const group = controller.createGroup(5);
         expect(group.isType('group')).toBeTruthy();
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         const endpoint = device.getEndpoint(1);
         await endpoint.unbind('genPowerCfg', group);
         expect(mockAdapterUnbind).toBeCalledWith(129, "0x129", 1, 1, 5, "group", null);
@@ -1057,7 +1049,7 @@ describe('Controller', () => {
     it('Endpoint configure reporting', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         const endpoint = device.getEndpoint(1);
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
         await endpoint.configureReporting('genPowerCfg', [{
@@ -1099,7 +1091,7 @@ describe('Controller', () => {
     it('Endpoint throw error', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         const endpoint = device.getEndpoint(1);
         expect(endpoint.isType('endpoint')).toBeTruthy();
         let error;
@@ -1107,30 +1099,22 @@ describe('Controller', () => {
         expect(error).toStrictEqual(new Error("Parameter 'commstatemask' is missing"));
     });
 
-    it('Return group from databse when not in lookup', async () => {
-        await controller.start();
-        await removeAllGroups();
-        await controller.createGroup(2);
-        Group['lookup'] = {};
-        expect(await controller.getGroup({groupID: 2})).toBeInstanceOf(Group);
-    });
-
     it('Throw error when creating group already exists', async () => {
         await controller.start();
-        await removeAllGroups();
-        await controller.createGroup(2);
+        removeAllGroups();
+        controller.createGroup(2);
         let error;
-        try {await controller.createGroup(2)} catch (e) {error = e}
+        try {controller.createGroup(2)} catch (e) {error = e}
         expect(error).toStrictEqual(new Error("Group with groupID '2' already exists"));
     });
 
     it('Add endpoint to group', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         const endpoint = device.getEndpoint(1);
-        await removeAllGroups();
-        const group = await controller.createGroup(2);
+        removeAllGroups();
+        const group = controller.createGroup(2);
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
         await endpoint.addToGroup(group);
         const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
@@ -1142,10 +1126,10 @@ describe('Controller', () => {
     it('Remove endpoint from group', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         const endpoint = device.getEndpoint(1);
-        await removeAllGroups();
-        const group = await controller.createGroup(2);
+        removeAllGroups();
+        const group = controller.createGroup(2);
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
         await endpoint.removeFromGroup(group);
         const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
@@ -1156,8 +1140,8 @@ describe('Controller', () => {
 
     it('Group command', async () => {
         await controller.start();
-        await removeAllGroups();
-        const group = await controller.createGroup(2);
+        removeAllGroups();
+        const group = controller.createGroup(2);
         await group.command('genOnOff', 'offWithEffect', {effectid: 9, effectvariant: 10});
         const call = mockSendZclFrameGroup.mock.calls[0];
         expect(call[0]).toBe(2);
@@ -1166,8 +1150,8 @@ describe('Controller', () => {
 
     it('Group command throw error on missing parameter', async () => {
         await controller.start();
-        await removeAllGroups();
-        const group = await controller.createGroup(2);
+        removeAllGroups();
+        const group = controller.createGroup(2);
         let error;
         try {await group.command('genIdentify', 'updateCommissionState', {action: 9})} catch (e) {error = e}
         expect(error).toStrictEqual(new Error("Parameter 'commstatemask' is missing"));
@@ -1176,7 +1160,7 @@ describe('Controller', () => {
     it('Endpoint command with options', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         const endpoint = device.getEndpoint(1);
         mockSendZclFrameNetworkAddress.mockClear();
         await endpoint.command('genOnOff', 'off', {}, {manufacturerCode: 100, disableDefaultResponse: true})
@@ -1187,12 +1171,11 @@ describe('Controller', () => {
     });
 
     it('Device without meta should set meta to {}', async () => {
-        Device['lookup'] = {};
         const line = JSON.stringify({"id":3,"type":"EndDevice","ieeeAddr":"0x90fd9ffffe4b64ae","nwkAddr":19468,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Battery","modelId":"TRADFRI remote control","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0,1,3,9,2821,4096],"outClusterList":[3,4,5,6,8,25,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170302","swBuildId":"1.2.214","zclVersion":1,"interviewCompleted":true,"_id":"fJ5pmjqKRYbNvslK"});
-        fs.writeFileSync(options.databasePath, line + "\n");
+        fs.writeFileSync(options.databasePath, "[" + line + "]");
         await controller.start();
         const expected = {"ID": 3, "applicationVersion": 17, "dateCode": "20170302", "endpoints": [{"ID": 1, "deviceID": 2096, "deviceIeeeAddress": "0x90fd9ffffe4b64ae", "deviceNetworkAddress": 19468, "inputClusters": [0, 1, 3, 9, 2821, 4096], "outputClusters": [3, 4, 5, 6, 8, 25, 4096], "profileID": 49246}], "hardwareVersion": 1, "ieeeAddr": "0x90fd9ffffe4b64ae", "interviewCompleted": true, "interviewing": false, "manufacturerID": 4476, "manufacturerName": "IKEA of Sweden", "meta": {}, "modelID": "TRADFRI remote control", "networkAddress": 19468, "powerSource": "Battery", "softwareBuildID": "1.2.214", "stackVersion": 87, "type": "EndDevice", "zclVersion": 1}
-        expect(deepClone(await controller.getDevice({ieeeAddr: "0x90fd9ffffe4b64ae"}))).toStrictEqual(expected);
+        expect(deepClone(controller.getDevice({ieeeAddr: "0x90fd9ffffe4b64ae"}))).toStrictEqual(expected);
     });
 
     it('Write to endpoint custom attributes', async () => {
@@ -1200,7 +1183,7 @@ describe('Controller', () => {
         await removeAllDevices();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         const endpoint = device.getEndpoint(1);
         const options = {manufacturerCode: 0x100B, disableDefaultResponse: true};
         await endpoint.write('genBasic', {0x0031: {value: 0x000B, type: 0x19}}, options);
@@ -1213,7 +1196,7 @@ describe('Controller', () => {
         await removeAllDevices();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         const endpoint = device.getEndpoint(1);
         let error;
         try {await endpoint.write('genBasic', {'UNKNOWN': {value: 0x000B, type: 0x19}}) } catch (e) {error = e}
@@ -1226,7 +1209,7 @@ describe('Controller', () => {
         await removeAllDevices();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         const endpoint = device.getEndpoint(1);
         await endpoint.configureReporting('hvacThermostat', [{
             attribute: {ID: 0x4003, type: 41},
@@ -1243,7 +1226,7 @@ describe('Controller', () => {
     it('Remove endpoint from all groups', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
+        const device = controller.getDevice({ieeeAddr: '0x129'});
         const endpoint = device.getEndpoint(1);
         mockSendZclFrameNetworkAddress.mockClear();
         await endpoint.removeFromAllGroups();

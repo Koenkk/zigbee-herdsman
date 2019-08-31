@@ -43,6 +43,13 @@ const debug = {
 
 const OneJanuary2000 = new Date('January 01, 2000 00:00:00').getTime();
 
+function reviveValue(value: KeyValue): Device | Group {
+    if (value.type === 'Group') {
+        return Group.fromDatabaseRecord(value)
+    }
+    return Device.fromDatabaseRecord(value)
+}
+
 class Controller extends events.EventEmitter {
     private options: Options;
     private database: Database;
@@ -73,7 +80,9 @@ class Controller extends events.EventEmitter {
 
     public async start(): Promise<void> {
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
-        this.database = await Database.open(this.options.databasePath);
+        Device.reload()
+        Group.reload()
+        this.database = await Database.open(this.options.databasePath, reviveValue);
         const startResult = await this.adapter.start();
         debug.log(`Started with result '${startResult}'`);
 
@@ -83,20 +92,20 @@ class Controller extends events.EventEmitter {
 
         if (startResult === 'resetted') {
             debug.log('Clearing database...');
-            for (const group of await Group.find({})) {
-                await group.removeFromDatabase();
+            for (const group of Group.all()) {
+                group.removeFromDatabase();
             }
 
-            for (const device of await Device.find({})) {
-                await device.removeFromDatabase();
+            for (const device of Device.all()) {
+                device.removeFromDatabase();
             }
         }
 
         // Add coordinator to the database if it is not there yet.
-        if ((await Device.findSingle({type: 'Coordinator'})) === null) {
+        if ((Device.byType('Coordinator')) === null) {
             debug.log('No coordinator in database, querying...');
             const coordinator = await this.adapter.getCoordinator();
-            await Device.create(
+            Device.create(
                 'Coordinator', coordinator.ieeeAddr, coordinator.networkAddress, coordinator.manufacturerID,
                 undefined, undefined, undefined, coordinator.endpoints
             );
@@ -162,24 +171,32 @@ class Controller extends events.EventEmitter {
         return await this.adapter.getNetworkParameters();
     }
 
-    public async getDevices(query: {ieeeAddr?: string; type?: AdapterTsType.DeviceType}): Promise<Device[]> {
-        return Device.find(query);
+    public getDeviceByAddress(ieeeAddr: string): Device | undefined {
+        return Device.byAddress(ieeeAddr)
     }
 
-    public async getDevice(query: {ieeeAddr?: string; type?: AdapterTsType.DeviceType}): Promise<Device> {
+    public getDevice(query: {ieeeAddr?: string; type?: AdapterTsType.DeviceType}): Device | undefined {
         return Device.findSingle(query);
     }
 
-    public async getGroup(query: {groupID: number}): Promise<Group> {
+    public getDevices(query: {ieeeAddr?: string; type?: AdapterTsType.DeviceType}): Device[] {
+        return Device.find(query);
+    }
+
+    public createGroup(groupID: number): Group {
+        return Group.create(groupID);
+    }
+
+    public getGroupByID(groupID: number): Group | undefined {
+        return Group.byID(groupID)
+    }
+
+    public getGroup(query: {groupID: number}): Group | undefined {
         return Group.findSingle(query);
     }
 
-    public async getGroups(query: {groupID: number}): Promise<Group[]> {
+    public getGroups(query: {groupID?: number}): Group[] {
         return Group.find(query);
-    }
-
-    public async createGroup(groupID: number): Promise<Group> {
-        return Group.create(groupID);
     }
 
     public async disableLED(): Promise<void> {
@@ -188,17 +205,17 @@ class Controller extends events.EventEmitter {
 
     private async onDeviceAnnounce(payload: AdapterEvents.DeviceAnnouncePayload): Promise<void> {
         debug.log(`Device announce '${payload.ieeeAddr}'`);
-        const data: Events.DeviceAnnouncePayload = {device: await Device.findSingle({ieeeAddr: payload.ieeeAddr})};
+        const data: Events.DeviceAnnouncePayload = {device: Device.byAddress(payload.ieeeAddr)};
         this.emit(Events.Events.deviceAnnounce, data);
     }
 
     private async onDeviceLeave(payload: AdapterEvents.DeviceLeavePayload): Promise<void> {
         debug.log(`Device leave '${payload.ieeeAddr}'`);
 
-        const device = await Device.findSingle({ieeeAddr: payload.ieeeAddr});
+        const device = Device.byAddress(payload.ieeeAddr);
         if (device) {
             debug.log(`Removing device from database '${payload.ieeeAddr}'`);
-            await device.removeFromDatabase();
+            device.removeFromDatabase();
         }
 
         const data: Events.DeviceLeavePayload = {ieeeAddr: payload.ieeeAddr};
@@ -217,46 +234,46 @@ class Controller extends events.EventEmitter {
     }
 
     private async onDeviceJoined(payload: AdapterEvents.DeviceJoinedPayload): Promise<void> {
-        let device = await Device.findSingle({ieeeAddr: payload.ieeeAddr});
+        let device = Device.byAddress(payload.ieeeAddr);
         debug.log(`Device joined '${payload.ieeeAddr}'`);
 
         if (!device) {
             debug.log(`New device '${payload.ieeeAddr}' joined`);
             debug.log(`Creating device '${payload.ieeeAddr}'`);
-            device = await Device.create(
+            device = Device.create(
                 undefined, payload.ieeeAddr, payload.networkAddress, undefined,
                 undefined, undefined, undefined, []
             );
 
             const eventData: Events.DeviceJoinedPayload = {device};
             this.emit(Events.Events.deviceJoined, eventData);
-        } else if (device.get('networkAddress') !== payload.networkAddress) {
+        } else if (device.networkAddress !== payload.networkAddress) {
             debug.log(
                 `Device '${payload.ieeeAddr}' is already in database with different networkAddress, ` +
                 `updating networkAddress`
             );
-            await device.set('networkAddress', payload.networkAddress);
+            device.set('networkAddress', payload.networkAddress);
         }
 
-        if (!device.get('interviewCompleted') && !device.get('interviewing')) {
+        if (!device.interviewCompleted && !device.interviewing) {
             const payloadStart: Events.DeviceInterviewPayload = {status: 'started', device};
-            debug.log(`Interview '${device.get('ieeeAddr')}' start`);
+            debug.log(`Interview '${device.ieeeAddr}' start`);
             this.emit(Events.Events.deviceInterview, payloadStart);
 
             try {
                 await device.interview();
-                debug.log(`Succesfully interviewed '${device.get('ieeeAddr')}'`);
+                debug.log(`Succesfully interviewed '${device.ieeeAddr}'`);
                 const event: Events.DeviceInterviewPayload = {status: 'successful', device};
                 this.emit(Events.Events.deviceInterview, event);
             } catch (error) {
-                debug.error(`Interview failed for '${device.get('ieeeAddr')} with error '${error}'`);
+                debug.error(`Interview failed for '${device.ieeeAddr} with error '${error}'`);
                 const event: Events.DeviceInterviewPayload = {status: 'failed', device};
                 this.emit(Events.Events.deviceInterview, event);
             }
         } else {
             debug.log(
-                `Not interviewing '${payload.ieeeAddr}', completed '${device.get('interviewCompleted')}', ` +
-                `in progress '${device.get('interviewing')}'`
+                `Not interviewing '${payload.ieeeAddr}', completed '${device.interviewCompleted}', ` +
+                `in progress '${device.interviewing}'`
             );
         }
     }
@@ -264,7 +281,7 @@ class Controller extends events.EventEmitter {
     private async onZclData(zclData: AdapterEvents.ZclDataPayload): Promise<void> {
         debug.log(`Received ZCL data '${JSON.stringify(zclData)}'`);
 
-        const device = await Device.findSingle({networkAddress: zclData.networkAddress});
+        const device = Device.byNetworkAddress(zclData.networkAddress);
         if (!device) {
             debug.log(`ZCL data is from unknown device with network adress '${zclData.networkAddress}', skipping...`);
             return;
@@ -276,7 +293,7 @@ class Controller extends events.EventEmitter {
                 `ZCL data is from unknown endpoint '${zclData.endpoint}' from device with network adress` +
                 `'${zclData.networkAddress}', creating it...`
             );
-            endpoint = await device.createEndpoint(zclData.endpoint);
+            endpoint = device.createEndpoint(zclData.endpoint);
         }
 
         // Parse command for event
@@ -309,8 +326,8 @@ class Controller extends events.EventEmitter {
         }
 
         // Some device report it's modelID through a readResponse or attributeReport
-        if ((type === 'readResponse' || type === 'attributeReport') && data.modelId && !device.get('modelID')) {
-            await device.set('modelID', data.modelId);
+        if ((type === 'readResponse' || type === 'attributeReport') && data.modelId && !device.modelID) {
+            device.set('modelID', data.modelId);
         }
 
         if (type && data) {
