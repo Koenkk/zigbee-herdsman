@@ -52,7 +52,7 @@
     "cc253x"
   ],
   "license": "MIT",
-  "main": "index.js",
+  "main": "dist/index.js",
   "name": "zigbee-herdsman",
   "repository": {
     "type": "git",
