@@ -44,7 +44,7 @@ class Device extends Entity {
     interviewing: boolean;
 
     // Can be used by applications to store data.
-    private meta: KeyValue;
+    meta: KeyValue;
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
@@ -161,7 +161,7 @@ class Device extends Entity {
         };
     }
 
-    private save(): void {
+    save(): void {
         Device.database.update(this.ID, this.toDatabaseRecord());
     }
 
