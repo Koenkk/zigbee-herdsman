@@ -1,26 +1,21 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
+        "baseUrl": "src",
+        "outDir": "dist",
+        "declaration": true,
+        "alwaysStrict": true,
+
         "esModuleInterop": true,
         "target": "es6",
-        "noImplicitAny": true,
+        "module": "commonjs",
         "moduleResolution": "node",
+
+        // "noImplicitAny": true,
+        // "strictNullChecks": true,
+        "noImplicitThis": true,
         "sourceMap": true,
-        "outDir": "dist",
-        "baseUrl": ".",
-        "allowJs": true,
-        "resolveJsonModule": true,
-        "paths": {
-            "*": [
-                "node_modules/*"
-            ]
-        }
+        // "allowJs": true,
     },
-    "include": [
-        "src/**/*",
-        "src/**/*.json"
-    ],
-    "exclude": [
-        "src/deprecated"
-    ]
+    "exclude": [ "node_modules", "dist" ],
+    "filesGlob": ["**/*.ts"]
 }

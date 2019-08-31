@@ -13,10 +13,10 @@ import mixin from 'mixin-deep';
 import Group from './model/group';
 
 interface Options {
-    network: AdapterTsType.NetworkOptions;
-    serialPort: AdapterTsType.SerialPortOptions;
+    network?: AdapterTsType.NetworkOptions;
+    serialPort?: AdapterTsType.SerialPortOptions;
     databasePath: string;
-    backupPath: string;
+    backupPath?: string;
 };
 
 const DefaultOptions: Options = {
@@ -45,9 +45,9 @@ const OneJanuary2000 = new Date('January 01, 2000 00:00:00').getTime();
 
 function reviveValue(value: KeyValue): Device | Group {
     if (value.type === 'Group') {
-        return Group.fromDatabaseRecord(value)
+        return Group.fromDatabaseRecord(value);
     }
-    return Device.fromDatabaseRecord(value)
+    return Device.fromDatabaseRecord(value);
 }
 
 class Controller extends events.EventEmitter {
@@ -80,8 +80,8 @@ class Controller extends events.EventEmitter {
 
     public async start(): Promise<void> {
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
-        Device.reload()
-        Group.reload()
+        Device.reload();
+        Group.reload();
         this.database = await Database.open(this.options.databasePath, reviveValue);
         const startResult = await this.adapter.start();
         debug.log(`Started with result '${startResult}'`);
@@ -172,7 +172,7 @@ class Controller extends events.EventEmitter {
     }
 
     public getDeviceByAddress(ieeeAddr: string): Device | undefined {
-        return Device.byAddress(ieeeAddr)
+        return Device.byAddress(ieeeAddr);
     }
 
     public getDevice(query: {ieeeAddr?: string; type?: AdapterTsType.DeviceType}): Device | undefined {
@@ -188,7 +188,7 @@ class Controller extends events.EventEmitter {
     }
 
     public getGroupByID(groupID: number): Group | undefined {
-        return Group.byID(groupID)
+        return Group.byID(groupID);
     }
 
     public getGroup(query: {groupID: number}): Group | undefined {

@@ -16,7 +16,7 @@ class Group extends Entity {
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static lookup: {[groupID: number]: Group} = {};
-    static reload(): void { this.lookup = {} }
+    static reload(): void { this.lookup = {}; }
 
     private constructor(databaseID: number, groupID: number, members: Endpoint[], meta: KeyValue) {
         super();
@@ -40,8 +40,8 @@ class Group extends Entity {
 
     static fromDatabaseRecord(record: KeyValue): Group {
         const group = new Group(record.id, record.groupID, record.members, record.meta);
-        this.lookup[group.groupID] = group
-        return group
+        this.lookup[group.groupID] = group;
+        return group;
     }
 
     private toDatabaseRecord(): KeyValue {
@@ -49,34 +49,34 @@ class Group extends Entity {
     }
 
     public static all(): Group[] {
-        return Object.values(this.lookup)
+        return Object.values(this.lookup);
     }
 
     public static byID(groupID: number): Group | undefined {
-        return this.lookup[groupID]
+        return this.lookup[groupID];
     }
 
-    public static findSingle(query: {groupID?: number, [key: string]: unknown}): Group | undefined {
-        const results = this.find(query)
-        if (results.length === 1) return results[0]
-        return undefined
+    public static findSingle(query: {groupID?: number; [key: string]: unknown}): Group | undefined {
+        const results = this.find(query);
+        if (results.length === 1) return results[0];
+        return undefined;
     }
 
-    public static find(query: {groupID?: number, [key: string]: unknown}): Group[] {
-        const queryKeys = Object.keys(query)
+    public static find(query: {groupID?: number; [key: string]: unknown}): Group[] {
+        const queryKeys = Object.keys(query);
 
         // fast path
         if (queryKeys.length === 1 && query.groupID) {
-            const group = this.byID(query.groupID)
-            return group ? [group] : []
+            const group = this.byID(query.groupID);
+            return group ? [group] : [];
         }
 
-        return this.all().filter((d: any) => {
+        return this.all().filter((d: KeyValue) => {
             for (const key of queryKeys) {
-                if (d[key] != query[key]) return false
+                if (d[key] != query[key]) return false;
             }
-            return true
-        })
+            return true;
+        });
     }
 
     public static create(groupID: number): Group {
@@ -90,7 +90,7 @@ class Group extends Entity {
         this.database.insert(group.toDatabaseRecord());
 
         this.lookup[group.groupID] = group;
-        return group
+        return group;
     }
 
     public removeFromDatabase(): void {

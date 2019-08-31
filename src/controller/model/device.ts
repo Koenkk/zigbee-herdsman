@@ -16,7 +16,12 @@ interface RoutingTable {
     table: {destinationAddress: number; status: string; nextHop: number}[];
 }
 
-type DeviceQuery = {ieeeAddr?: string, networkAddress?: number, type?: AdapterTsType.DeviceType, [key: string]: unknown}
+type DeviceQuery = {
+    ieeeAddr?: string;
+    networkAddress?: number;
+    type?: AdapterTsType.DeviceType;
+    [key: string]: unknown;
+};
 
 class Device extends Entity {
     ID: number;
@@ -44,7 +49,7 @@ class Device extends Entity {
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static lookup: {[ieeeAddr: string]: Device} = {};
-    static reload(): void { this.lookup = {} }
+    static reload(): void { this.lookup = {}; }
 
     private constructor(
         ID: number, type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
@@ -135,8 +140,8 @@ class Device extends Entity {
             record.stackVersion, record.zclVersion, record.hwVersion, record.dateCode, record.swBuildId,
             record.interviewCompleted, meta,
         );
-        this.lookup[device.ieeeAddr] = device
-        return device
+        this.lookup[device.ieeeAddr] = device;
+        return device;
     }
 
     private toDatabaseRecord(): KeyValue {
@@ -161,44 +166,44 @@ class Device extends Entity {
     }
 
     public static all(): Device[] {
-        return Object.values(Device.lookup)
+        return Object.values(Device.lookup);
     }
 
     public static byAddress(ieeeAddr: string): Device | undefined {
-        return Device.lookup[ieeeAddr]
+        return Device.lookup[ieeeAddr];
     }
 
     public static byNetworkAddress(networkAddress: number): Device | undefined {
-        return Object.values(Device.lookup).find(d => d.networkAddress === networkAddress)
+        return Object.values(Device.lookup).find(d => d.networkAddress === networkAddress);
     }
 
     public static byType(type: AdapterTsType.DeviceType): Device | undefined {
-        const all = Object.values(Device.lookup).filter(d => d.type === type)
-        if (all.length !== 1) return null
-        return all[0]
+        const all = Object.values(Device.lookup).filter(d => d.type === type);
+        if (all.length !== 1) return null;
+        return all[0];
     }
 
     public static findSingle(query: DeviceQuery): Device | undefined {
-        const result = Device.find(query)
-        if (result.length === 1) return result[0]
-        return undefined
+        const result = Device.find(query);
+        if (result.length === 1) return result[0];
+        return undefined;
     }
 
     public static find(query: DeviceQuery): Device[] {
-        const queryKeys = Object.keys(query)
+        const queryKeys = Object.keys(query);
 
         // fast path
         if (queryKeys.length === 1 && query.ieeeAddr) {
-            const device = this.byAddress(query.ieeeAddr)
-            return device ? [device] : []
+            const device = this.byAddress(query.ieeeAddr);
+            return device ? [device] : [];
         }
 
-        return this.all().filter((d: any) => {
+        return this.all().filter((d: KeyValue) => {
             for (const key of queryKeys) {
-                if (d[key] != query[key]) return false
+                if (d[key] != query[key]) return false;
             }
-            return true
-        })
+            return true;
+        });
     }
 
     public static create(
@@ -219,7 +224,7 @@ class Device extends Entity {
             );
         });
 
-        const ID = this.database.newID()
+        const ID = this.database.newID();
 
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
@@ -228,7 +233,7 @@ class Device extends Entity {
 
         this.database.insert(device.toDatabaseRecord());
         this.lookup[device.ieeeAddr] = device;
-        return device
+        return device;
     }
 
     /**
