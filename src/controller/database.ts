@@ -11,9 +11,9 @@ class Database {
 
     }
 
-    public static async open(path: string, revive: ReviveFunction): Promise<Database> {
+    public static async open(path: string | undefined, revive: ReviveFunction): Promise<Database> {
         let data = [];
-        if (fs.existsSync(path)) {
+        if (path && fs.existsSync(path)) {
             const json = fs.readFileSync(path, "UTF8");
             if (json.trim().length > 0) {
                 data = JSON.parse(json);
@@ -28,6 +28,7 @@ class Database {
     }
 
     private save(): void {
+        if (!this.path) return;
         const data = JSON.stringify(this.data);
         fs.writeFileSync(this.path, data, "UTF8");
     }

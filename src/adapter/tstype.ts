@@ -10,7 +10,7 @@ interface NetworkOptions {
 interface SerialPortOptions {
     baudRate: number;
     rtscts: boolean;
-    path: string;
+    path?: string;
 };
 
 interface CoordinatorVersion {

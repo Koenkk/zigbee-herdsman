@@ -13,11 +13,18 @@ import mixin from 'mixin-deep';
 import Group from './model/group';
 
 interface Options {
-    network?: AdapterTsType.NetworkOptions;
-    serialPort?: AdapterTsType.SerialPortOptions;
-    databasePath: string;
+    network?: Partial<AdapterTsType.NetworkOptions>;
+    serialPort?: Partial<AdapterTsType.SerialPortOptions>;
+    databasePath?: string;
     backupPath?: string;
 };
+
+interface AllOptions {
+    network: AdapterTsType.NetworkOptions;
+    serialPort: AdapterTsType.SerialPortOptions;
+    databasePath?: string;
+    backupPath?: string;
+}
 
 const DefaultOptions: Options = {
     network: {
@@ -30,10 +37,10 @@ const DefaultOptions: Options = {
     serialPort: {
         baudRate: 115200,
         rtscts: true,
-        path: null,
+        path: undefined,
     },
-    databasePath: null,
-    backupPath: null,
+    databasePath: undefined,
+    backupPath: undefined,
 };
 
 const debug = {
@@ -51,7 +58,7 @@ function reviveValue(value: KeyValue): Device | Group {
 }
 
 class Controller extends events.EventEmitter {
-    private options: Options;
+    private options: AllOptions;
     private database: Database;
     private adapter: Adapter;
     // eslint-disable-next-line

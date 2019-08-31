@@ -54,7 +54,7 @@ class ZStackAdapter extends Adapter {
     private queue: Queue;
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
 
-    public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string) {
+    public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath?: string) {
         super(networkOptions, serialPortOptions, backupPath);
         this.znp = new Znp(this.serialPortOptions.path, this.serialPortOptions.baudRate, this.serialPortOptions.rtscts);
 
