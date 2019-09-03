@@ -36,6 +36,8 @@ interface LQI {
         ieeeAddr: string;
         networkAddress: number;
         linkquality: number;
+        relationship: number;
+        depth: number;
     }[];
 }
 

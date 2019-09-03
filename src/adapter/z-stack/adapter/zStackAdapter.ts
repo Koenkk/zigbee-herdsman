@@ -273,12 +273,17 @@ class ZStackAdapter extends Adapter {
                 throw new Error(`LQI for '${networkAddress}' failed`);
             }
 
-            const neighbors: {ieeeAddr: string; networkAddress: number; linkquality: number}[] = [];
+            const neighbors: {
+                ieeeAddr: string; networkAddress: number; linkquality: number; relationship: number;
+                depth: number;
+            }[] = [];
             for (const entry of result.payload.neighborlqilist) {
                 neighbors.push({
                     linkquality: entry.lqi,
                     networkAddress: entry.nwkAddr,
                     ieeeAddr: entry.extAddr,
+                    relationship: entry.relationship,
+                    depth: entry.depth,
                 });
             }
 

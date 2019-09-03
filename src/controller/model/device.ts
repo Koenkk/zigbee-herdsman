@@ -9,7 +9,10 @@ import Debug from "debug";
 const debug = Debug('zigbee-herdsman:controller:device');
 
 interface LQI {
-    neighbors: {ieeeAddr: string; networkAddress: number; linkquality: number}[];
+    neighbors: {
+        ieeeAddr: string; networkAddress: number; linkquality: number;
+        relationship: number; depth: number;
+    }[];
 }
 
 interface RoutingTable {
