@@ -145,8 +145,8 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             lqi: (networkAddress) => {
                 if (networkAddress === 140) {
                     return {neighbors: [
-                        {ieeeAddr: '0x160', networkAddress: 160, linkquality: 20},
-                        {ieeeAddr: '0x170', networkAddress: 170, linkquality: 21},
+                        {ieeeAddr: '0x160', networkAddress: 160, linkquality: 20, relationship: 2, depth: 5},
+                        {ieeeAddr: '0x170', networkAddress: 170, linkquality: 21, relationship: 4, depth: 8},
                     ]}
                 }
             },
@@ -974,8 +974,8 @@ describe('Controller', () => {
         const device = await controller.getDevice({ieeeAddr: '0x140'});
         const result = await device.lqi();
         expect(result).toStrictEqual({neighbors: [
-            {ieeeAddr: '0x160', networkAddress: 160, linkquality: 20},
-            {ieeeAddr: '0x170', networkAddress: 170, linkquality: 21},
+            {ieeeAddr: '0x160', networkAddress: 160, linkquality: 20, relationship: 2, depth: 5},
+            {ieeeAddr: '0x170', networkAddress: 170, linkquality: 21, relationship: 4, depth: 8},
         ]});
     });
 

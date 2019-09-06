@@ -145,7 +145,7 @@ const basicMocks = () => {
         } else if (type === Type.AREQ && subsystem === Subsystem.AF && command === 'dataConfirm') {
             return {payload: {status: dataConfirmCode}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 203})) {
-            return {payload: {status: 0, neighborlqilist: [{lqi: 10, nwkAddr: 2, extAddr: 3}, {lqi: 15, nwkAddr: 3, extAddr: 4}]}};
+            return {payload: {status: 0, neighborlqilist: [{lqi: 10, nwkAddr: 2, extAddr: 3, relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 3, extAddr: 4, relationship: 2, depth: 5}]}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 204})) {
             return {payload: {status: 1}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtRtgRsp' && equals(payload, {srcaddr: 205})) {
@@ -1343,7 +1343,7 @@ describe('zStackAdapter', () => {
         expect(mockQueueExecute.mock.calls[0][1]).toBe(203);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 0})
-        expect(result).toStrictEqual({"neighbors":[{"linkquality":10,"networkAddress":2,"ieeeAddr":3},{"linkquality":15,"networkAddress":3,"ieeeAddr":4}]});
+        expect(result).toStrictEqual({neighbors:[{linkquality:10,networkAddress:2,ieeeAddr:3, depth: 1, relationship: 3},{linkquality:15,networkAddress:3,ieeeAddr:4, depth: 5, relationship: 2}]});
     });
 
     it('LQI fails', async () => {
