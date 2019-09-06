@@ -1137,6 +1137,7 @@ describe('Controller', () => {
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 0, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 107}, "Payload": {groupid: 2, groupname: ''}});
+        expect(group.members).toContain(endpoint);
     });
 
     it('Remove endpoint from group', async () => {
@@ -1146,12 +1147,14 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         await removeAllGroups();
         const group = await controller.createGroup(2);
+        await group.addMember(endpoint);
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
         await endpoint.removeFromGroup(group);
         const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 3, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 108}, "Payload": {groupid: 2}});
+        expect(group.members).toStrictEqual(new Set());
     });
 
     it('Group command', async () => {
@@ -1239,17 +1242,29 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledWith(129, 1, {"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":121,"manufacturerCode":null,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":16387,"dataType":41,"minRepIntval":0,"maxRepIntval":3600,"repChange":25}],"ClusterID":513});
     });
 
-
     it('Remove endpoint from all groups', async () => {
         await controller.start();
+        await removeAllGroups();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = await controller.getDevice({ieeeAddr: '0x129'});
-        const endpoint = device.getEndpoint(1);
+        const device1 = await controller.getDevice({ieeeAddr: '0x129'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
+        const device2 = await controller.getDevice({ieeeAddr: '0x170'});
+        const group1 = await controller.createGroup(1);
+        const group6 = await controller.createGroup(6);
+        const group7 = await controller.createGroup(7);
+        const endpoint1 = device1.getEndpoint(1);
+        await group1.addMember(endpoint1);
+        await group6.addMember(endpoint1);
+        await group6.addMember(device2.getEndpoint(1));
+        await group7.addMember(device2.getEndpoint(1));
         mockSendZclFrameNetworkAddress.mockClear();
-        await endpoint.removeFromAllGroups();
+        await endpoint1.removeFromAllGroups();
         const call = mockSendZclFrameNetworkAddress.mock.calls[0];
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
-        expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 4, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 122}, "Payload": {}});
+        expect(group1.members).toStrictEqual(new Set());
+        expect(Array.from(group6.members)).toStrictEqual([device2.getEndpoint(1)]);
+        expect(Array.from(group7.members)).toStrictEqual([device2.getEndpoint(1)]);
+        expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 4, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 127}, "Payload": {}});
     });
 });

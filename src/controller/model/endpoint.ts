@@ -58,7 +58,7 @@ class Endpoint extends Entity {
         }
     }
 
-    public get(key: 'ID'): string | number {
+    public get(key: 'ID' | 'deviceIeeeAddress'): string | number {
         return this[key];
     }
 
@@ -276,14 +276,21 @@ class Endpoint extends Entity {
 
     public async addToGroup(group: Group): Promise<void> {
         await this.command('genGroups', 'add', {groupid: group.get('groupID'), groupname: ''});
+        await group.addMember(this);
     }
 
     public async removeFromGroup(group: Group): Promise<void> {
         await this.command('genGroups', 'remove', {groupid: group.get('groupID')});
+        await group.removeMember(this);
     }
 
     public async removeFromAllGroups(): Promise<void> {
         await this.command('genGroups', 'removeAll', {}, {disableDefaultResponse: true});
+        for (const group of await Group.find({})) {
+            if (group.hasMember(this)) {
+                await group.removeMember(this);
+            }
+        }
     }
 }
 

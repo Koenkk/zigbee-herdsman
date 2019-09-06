@@ -3,12 +3,13 @@ import Entity from './entity';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as Zcl from '../../zcl';
 import Endpoint from './endpoint';
+import Device from './device';
 import assert from 'assert';
 
 class Group extends Entity {
     private databaseID: number;
     private groupID: number;
-    private members: Endpoint[]; // TODO: not implemented yet
+    private members: Set<Endpoint>;
 
     // Can be used by applications to store data.
     private meta: KeyValue;
@@ -17,7 +18,7 @@ class Group extends Entity {
     // the same instance is returned.
     private static lookup: {[groupID: number]: Group} = {};
 
-    private constructor(databaseID: number, groupID: number, members: Endpoint[], meta: KeyValue) {
+    private constructor(databaseID: number, groupID: number, members: Set<Endpoint>, meta: KeyValue) {
         super();
         this.databaseID = databaseID;
         this.groupID = groupID;
@@ -37,12 +38,23 @@ class Group extends Entity {
      * CRUD
      */
 
-    private static fromDatabaseRecord(record: KeyValue): Group {
-        return new Group(record.id, record.groupID, record.members, record.meta);
+    private static async fromDatabaseRecord(record: KeyValue): Promise<Group> {
+        const members = new Set<Endpoint>();
+        for (const member of record.members) {
+            const device = await Device.findSingle({ieeeAddr: member.deviceIeeeAddr});
+            const endpoint = device.getEndpoint(member.endpointID);
+            members.add(endpoint);
+        }
+
+        return new Group(record.id, record.groupID, members, record.meta);
     }
 
     private toDatabaseRecord(): KeyValue {
-        return {id: this.databaseID, type: 'Group', groupID: this.groupID, members: this.members, meta: this.meta};
+        const members = Array.from(this.members).map((member) => {
+            return {deviceIeeeAddr: member.get('deviceIeeeAddress'), endpointID: member.get('ID')};
+        });
+
+        return {id: this.databaseID, type: 'Group', groupID: this.groupID, members, meta: this.meta};
     }
 
     public static async findSingle(query: {groupID: number}): Promise<Group> {
@@ -58,14 +70,17 @@ class Group extends Entity {
 
     public static async find(query: {groupID?: number}): Promise<Group[]> {
         const results = await this.database.find({...query, type: 'Group'});
-        return results.map((r): Group => {
-            const group = this.fromDatabaseRecord(r);
+        const groups = [];
+        for (const result of results) {
+            const group = await this.fromDatabaseRecord(result);
             if (!this.lookup[group.groupID]) {
                 this.lookup[group.groupID] = group;
             }
 
-            return this.lookup[group.groupID];
-        });
+            groups.push(this.lookup[group.groupID]);
+        }
+
+        return groups;
     }
 
     public static async create(groupID: number): Promise<Group> {
@@ -75,7 +90,7 @@ class Group extends Entity {
         }
 
         const databaseID = await this.database.newID();
-        const group = new Group(databaseID, groupID, [], {});
+        const group = new Group(databaseID, groupID, new Set(), {});
         await this.database.insert(group.toDatabaseRecord());
 
         this.lookup[group.groupID] = group;
@@ -85,6 +100,24 @@ class Group extends Entity {
     public async removeFromDatabase(): Promise<void> {
         await Group.database.remove(this.databaseID);
         delete Group.lookup[this.groupID];
+    }
+
+    private async save(): Promise<void> {
+        await Group.database.update(this.databaseID, this.toDatabaseRecord());
+    }
+
+    public async addMember(endpoint: Endpoint): Promise<void> {
+        this.members.add(endpoint);
+        await this.save();
+    }
+
+    public async removeMember(endpoint: Endpoint): Promise<void> {
+        this.members.delete(endpoint);
+        await this.save();
+    }
+
+    public hasMember(endpoint: Endpoint): boolean {
+        return this.members.has(endpoint);
     }
 
     /**
