@@ -1138,6 +1138,7 @@ describe('Controller', () => {
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 0, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 107}, "Payload": {groupid: 2, groupname: ''}});
         expect(group.members).toContain(endpoint);
+        expect(databaseContents()).toContain('{"id":3,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}');
     });
 
     it('Remove endpoint from group', async () => {
