@@ -120,6 +120,10 @@ class Group extends Entity {
         return this.members.has(endpoint);
     }
 
+    public getMembers(): Endpoint[] {
+        return Array.from(this.members);
+    }
+
     /**
      * Zigbee functions
      */

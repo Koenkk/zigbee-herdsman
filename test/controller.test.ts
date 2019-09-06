@@ -1137,7 +1137,7 @@ describe('Controller', () => {
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 0, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 107}, "Payload": {groupid: 2, groupname: ''}});
-        expect(group.members).toContain(endpoint);
+        expect(group.getMembers()).toContain(endpoint);
         expect(databaseContents()).toContain('{"id":5,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}');
     });
 
@@ -1155,7 +1155,7 @@ describe('Controller', () => {
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 3, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 108}, "Payload": {groupid: 2}});
-        expect(group.members).toStrictEqual(new Set());
+        expect(group.getMembers()).toStrictEqual([]);
     });
 
     it('Group command', async () => {
