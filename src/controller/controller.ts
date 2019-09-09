@@ -142,7 +142,7 @@ class Controller extends events.EventEmitter {
     }
 
     private async backup(): Promise<void> {
-        if (this.options.backupPath && this.adapter.supportsBackup()) {
+        if (this.options.backupPath && await this.adapter.supportsBackup()) {
             debug.log('Creating coordinator backup');
             const backup = await this.adapter.backup();
             fs.writeFileSync(this.options.backupPath, JSON.stringify(backup, null, 2));
