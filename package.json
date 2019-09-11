@@ -73,7 +73,7 @@
     "test-watch": "jest test --watch",
     "eslint": "node_modules/.bin/eslint . --ext .ts"
   },
-  "version": "0.6.5",
+  "version": "0.6.6",
   "jest": {
     "coverageThreshold": {
       "global": {
