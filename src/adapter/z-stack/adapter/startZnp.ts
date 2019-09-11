@@ -78,10 +78,24 @@ async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsTy
             );
         }
 
-        if (version === ZnpVersion.zStack12) {
-            // TODO: add extendedPanID and panID for zStack 3
+        try {
             await validateItem(znp, Items.panID(options.panID), 'panID');
             await validateItem(znp, Items.extendedPanID(options.extenedPanID), 'extendedPanID');
+        } catch (error) {
+            if (version === ZnpVersion.zStack30x || version === ZnpVersion.zStack3x0) {
+                // Zigbee-herdsman =< 0.6.5 didn't set the panID and extendedPanID on zStack 3.
+                // As we are now checking it, it would trigger a reinitialise which will cause users
+                // to lose their network. Therefore we are ignoring this case.
+                // When the panID has never been set, it will be [0xFF, 0xFF].
+                const current = await znp.request(Subsystem.SYS, 'osalNvRead', Items.panID(options.panID));
+                if (Buffer.compare(current.payload.value, Buffer.from([0xFF, 0XFF])) === 0) {
+                    debug('Skip enforcing panID because a random panID is used');
+                } else {
+                    throw error;
+                }
+            } else {
+                throw error;
+            }
         }
 
         return false;
@@ -129,12 +143,8 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.networkKeyDistribute(options.networkKeyDistribute));
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.zdoDirectCb());
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.channelList(options.channelList));
-
-    if (version === ZnpVersion.zStack12) {
-        // TODO: add extendedPanID and panID for zStack 3
-        await znp.request(Subsystem.SYS, 'osalNvWrite', Items.panID(options.panID));
-        await znp.request(Subsystem.SYS, 'osalNvWrite', Items.extendedPanID(options.extenedPanID));
-    }
+    await znp.request(Subsystem.SYS, 'osalNvWrite', Items.panID(options.panID));
+    await znp.request(Subsystem.SYS, 'osalNvWrite', Items.extendedPanID(options.extenedPanID));
 
     if (version === ZnpVersion.zStack30x || version === ZnpVersion.zStack3x0) {
         await znp.request(Subsystem.SYS, 'osalNvWrite', Items.networkKey(options.networkKey));

@@ -18,6 +18,10 @@ const items = {
         id: NvItemsIds.NIB,
         offset: 0x00
     },
+    ZCD_NV_PANID: {
+        id: NvItemsIds.PANID,
+        offset: 0x00
+    },
     ZCD_NV_EXTENDED_PAN_ID: {
         id: NvItemsIds.EXTENDED_PAN_ID,
         offset: 0x00
@@ -102,6 +106,14 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
         throw new Error(`Cannot restore backup, networkKey of backup is different`);
     }
 
+    if (!equals(backup.data.ZCD_NV_PANID.value, Array.from(Items.panID(options.panID).value))) {
+        throw new Error(`Cannot restore backup, panID of backup is different`);
+    }
+
+    if (!equals(backup.data.ZCD_NV_EXTENDED_PAN_ID.value, options.extenedPanID)) {
+        throw new Error(`Cannot restore backup, extendedPanID of backup is different`);
+    }
+
     const ZCD_NV_NIB = {
         ...backup.data.ZCD_NV_NIB,
         initvalue: backup.data.ZCD_NV_NIB.value,
@@ -119,6 +131,7 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
 
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_EXTADDR);
     await znp.request(Subsystem.SYS, 'osalNvItemInit', ZCD_NV_NIB, [9]);
+    await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_PANID);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_EXTENDED_PAN_ID);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_NWK_ALTERN_KEY_INFO);
