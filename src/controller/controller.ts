@@ -188,7 +188,9 @@ class Controller extends events.EventEmitter {
 
     private async onDeviceAnnounce(payload: AdapterEvents.DeviceAnnouncePayload): Promise<void> {
         debug.log(`Device announce '${payload.ieeeAddr}'`);
-        const data: Events.DeviceAnnouncePayload = {device: await Device.findSingle({ieeeAddr: payload.ieeeAddr})};
+        const device = await Device.findSingle({ieeeAddr: payload.ieeeAddr});
+        device.updateLastSeen();
+        const data: Events.DeviceAnnouncePayload = {device};
         this.emit(Events.Events.deviceAnnounce, data);
     }
 
@@ -238,6 +240,8 @@ class Controller extends events.EventEmitter {
             await device.set('networkAddress', payload.networkAddress);
         }
 
+        device.updateLastSeen();
+
         if (!device.get('interviewCompleted') && !device.get('interviewing')) {
             const payloadStart: Events.DeviceInterviewPayload = {status: 'started', device};
             debug.log(`Interview '${device.get('ieeeAddr')}' start`);
@@ -269,6 +273,8 @@ class Controller extends events.EventEmitter {
             debug.log(`ZCL data is from unknown device with network adress '${zclData.networkAddress}', skipping...`);
             return;
         }
+
+        device.updateLastSeen();
 
         let endpoint = device.getEndpoint(zclData.endpoint);
         if (!endpoint) {

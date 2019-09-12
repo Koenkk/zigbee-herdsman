@@ -10,6 +10,11 @@ import * as Zcl from '../src/zcl';
 import {Wait} from '../src/utils';
 import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
 
+Date.now = jest.fn()
+// @ts-ignore
+Date.now.mockReturnValue(new Date(150));
+const currentDate = new Date(150);
+
 const mockAdapterEvents = {};
 const mockAdapterPermitJoin = jest.fn();
 const mockAdapterSupportsBackup = jest.fn().mockReturnValue(true);
@@ -239,7 +244,7 @@ describe('Controller', () => {
         jest.useFakeTimers();
         await controller.start();
         expect(mockAdapterStart).toBeCalledTimes(1);
-        expect(true).toBe(equals(await controller.getDevice({type: 'Coordinator'}), {"ID": 1, "applicationVersion": undefined, "dateCode": undefined, "meta": {}, "endpoints": [{"ID": 1, "deviceID": 3, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [10], "outputClusters": [11], "profileID": 2}, {"ID": 2, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [1], "outputClusters": [0], "profileID": 3}], "hardwareVersion": undefined, "ieeeAddr": "0x123", "interviewCompleted": false, "interviewing": false, "manufacturerID": 100, "manufacturerName": undefined, "modelID": undefined, "networkAddress": 123, "powerSource": undefined, "softwareBuildID": undefined, "stackVersion": undefined, "type": "Coordinator", "zclVersion": undefined}))
+        expect(true).toBe(equals(await controller.getDevice({type: 'Coordinator'}), {"ID": 1, "lastSeen": null, "applicationVersion": undefined, "dateCode": undefined, "meta": {}, "endpoints": [{"ID": 1, "deviceID": 3, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [10], "outputClusters": [11], "profileID": 2}, {"ID": 2, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 123, "inputClusters": [1], "outputClusters": [0], "profileID": 3}], "hardwareVersion": undefined, "ieeeAddr": "0x123", "interviewCompleted": false, "interviewing": false, "manufacturerID": 100, "manufacturerName": undefined, "modelID": undefined, "networkAddress": 123, "powerSource": undefined, "softwareBuildID": undefined, "stackVersion": undefined, "type": "Coordinator", "zclVersion": undefined}))
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual({version: 'dummybackup'});
         jest.advanceTimersByTime(86500000);
     });
@@ -274,8 +279,8 @@ describe('Controller', () => {
         expect(databaseContents().includes("0x129")).toBeFalsy();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
-        expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "ID":2,"endpoints":[],"ieeeAddr":"0x129","interviewCompleted":false,"interviewing":false,"networkAddress":129},"status":"started"});
-        const device = {"ID":2,"ieeeAddr":"0x129","networkAddress":129,"meta": {},"endpoints":[{"ID":1,"inputClusters":[1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","deviceID":5,"profileID":99}],"type":"Router","manufacturerID":1212,"manufacturerName":"KoenAndCo","powerSource":"Mains (single phase)","modelID":"myModelID","applicationVersion":2,"stackVersion":101,"zclVersion":1,"hardwareVersion":3,"dateCode":"201901","softwareBuildID":"1.01","interviewCompleted":true,"interviewing":false};
+        expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "lastSeen": deepClone(Date.now()), "ID":2,"endpoints":[],"ieeeAddr":"0x129","interviewCompleted":false,"interviewing":false,"networkAddress":129},"status":"started"});
+        const device = {"ID":2,"lastSeen": deepClone(Date.now()),"ieeeAddr":"0x129","networkAddress":129,"meta": {},"endpoints":[{"ID":1,"inputClusters":[1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","deviceID":5,"profileID":99}],"type":"Router","manufacturerID":1212,"manufacturerName":"KoenAndCo","powerSource":"Mains (single phase)","modelID":"myModelID","applicationVersion":2,"stackVersion":101,"zclVersion":1,"hardwareVersion":3,"dateCode":"201901","softwareBuildID":"1.01","interviewCompleted":true,"interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
         expect(deepClone(await controller.getDevice({ieeeAddr: '0x129'}))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
@@ -475,6 +480,7 @@ describe('Controller', () => {
                 "ID":1,
                 "ieeeAddr":"0x129",
                 "networkAddress":129,
+                "lastSeen": deepClone(Date.now()),
                 "endpoints":[
                     {
                     "ID":1,
@@ -557,6 +563,7 @@ describe('Controller', () => {
             "device":{
                "ID":1,
                "ieeeAddr":"0x129",
+               "lastSeen": deepClone(Date.now()),
                "networkAddress":129,
                "endpoints":[
                   {
@@ -637,6 +644,7 @@ describe('Controller', () => {
             "type":"commandTradfriArrowSingle",
             "device":{
                "ID":1,
+               "lastSeen": deepClone(Date.now()),
                "ieeeAddr":"0x129",
                "networkAddress":129,
                "endpoints":[
@@ -813,6 +821,7 @@ describe('Controller', () => {
                 "ID":1,
                 "ieeeAddr":"0x150",
                 "networkAddress":150,
+                "lastSeen": deepClone(Date.now()),
                 "endpoints":[
                    {
                       "ID":1,
@@ -856,6 +865,7 @@ describe('Controller', () => {
             "cluster": 'genBasic',
             "type":"attributeReport",
             "device":{
+                "lastSeen": deepClone(Date.now()),
                 "ID":1,
                 "ieeeAddr":"0x129",
                 "networkAddress":129,
@@ -1215,7 +1225,7 @@ describe('Controller', () => {
         const line = JSON.stringify({"id":3,"type":"EndDevice","ieeeAddr":"0x90fd9ffffe4b64ae","nwkAddr":19468,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Battery","modelId":"TRADFRI remote control","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0,1,3,9,2821,4096],"outClusterList":[3,4,5,6,8,25,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170302","swBuildId":"1.2.214","zclVersion":1,"interviewCompleted":true,"_id":"fJ5pmjqKRYbNvslK"});
         fs.writeFileSync(options.databasePath, line + "\n");
         await controller.start();
-        const expected = {"ID": 3, "applicationVersion": 17, "dateCode": "20170302", "endpoints": [{"ID": 1, "deviceID": 2096, "deviceIeeeAddress": "0x90fd9ffffe4b64ae", "deviceNetworkAddress": 19468, "inputClusters": [0, 1, 3, 9, 2821, 4096], "outputClusters": [3, 4, 5, 6, 8, 25, 4096], "profileID": 49246}], "hardwareVersion": 1, "ieeeAddr": "0x90fd9ffffe4b64ae", "interviewCompleted": true, "interviewing": false, "manufacturerID": 4476, "manufacturerName": "IKEA of Sweden", "meta": {}, "modelID": "TRADFRI remote control", "networkAddress": 19468, "powerSource": "Battery", "softwareBuildID": "1.2.214", "stackVersion": 87, "type": "EndDevice", "zclVersion": 1}
+        const expected = {"ID": 3, "lastSeen": null, "applicationVersion": 17, "dateCode": "20170302", "endpoints": [{"ID": 1, "deviceID": 2096, "deviceIeeeAddress": "0x90fd9ffffe4b64ae", "deviceNetworkAddress": 19468, "inputClusters": [0, 1, 3, 9, 2821, 4096], "outputClusters": [3, 4, 5, 6, 8, 25, 4096], "profileID": 49246}], "hardwareVersion": 1, "ieeeAddr": "0x90fd9ffffe4b64ae", "interviewCompleted": true, "interviewing": false, "manufacturerID": 4476, "manufacturerName": "IKEA of Sweden", "meta": {}, "modelID": "TRADFRI remote control", "networkAddress": 19468, "powerSource": "Battery", "softwareBuildID": "1.2.214", "stackVersion": 87, "type": "EndDevice", "zclVersion": 1}
         expect(deepClone(await controller.getDevice({ieeeAddr: "0x90fd9ffffe4b64ae"}))).toStrictEqual(expected);
     });
 
@@ -1305,9 +1315,9 @@ describe('Controller', () => {
         Group['lookup'] = {};
         await controller.start();
         expect((await controller.getDevices({})).length).toBe(3);
-        expect(deepClone(await controller.getDevice({ieeeAddr: '0x00124b00120144ae'}))).toStrictEqual({"ID": 1, "endpoints": [{"ID": 1, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 260}, {"ID": 2, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 257}, {"ID": 3, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 261}, {"ID": 4, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 263}, {"ID": 5, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 264}, {"ID": 6, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 265}, {"ID": 11, "deviceID": 1024, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [1280], "profileID": 260}], "ieeeAddr": "0x00124b00120144ae", "interviewCompleted": false, "interviewing": false, "manufacturerID": 0, "meta": {}, "networkAddress": 0, "type": "Coordinator"});
-        expect(deepClone(await controller.getDevice({ieeeAddr: '0x000b57fffec6a5b2'}))).toStrictEqual({"ID": 3, "applicationVersion": 17, "dateCode": "20170331", "endpoints": [{"ID": 1, "deviceID": 544, "deviceIeeeAddress": "0x000b57fffec6a5b2", "deviceNetworkAddress": 40369, "inputClusters": [0, 3, 4, 5, 6, 8, 768, 2821, 4096], "outputClusters": [5, 25, 32, 4096], "profileID": 49246}], "hardwareVersion": 1, "ieeeAddr": "0x000b57fffec6a5b2", "interviewCompleted": true, "interviewing": false, "manufacturerID": 4476, "manufacturerName": "IKEA of Sweden", "meta": {"reporting": 1}, "modelID": "TRADFRI bulb E27 WS opal 980lm", "networkAddress": 40369, "powerSource": "Mains (single phase)", "softwareBuildID": "1.2.217", "stackVersion": 87, "type": "Router", "zclVersion": 1});
-        expect(deepClone(await controller.getDevice({ieeeAddr: '0x0017880104e45517'}))).toStrictEqual({"ID": 4, "applicationVersion": 2, "dateCode": "20160302", "endpoints": [{"ID": 1, "deviceID": 2096, "deviceIeeeAddress": "0x0017880104e45517", "deviceNetworkAddress": 6538, "inputClusters": [0], "outputClusters": [0, 3, 4, 6, 8, 5], "profileID": 49246}, {"ID": 2, "deviceID": 12, "deviceIeeeAddress": "0x0017880104e45517", "deviceNetworkAddress": 6538, "inputClusters": [0, 1, 3, 15, 64512], "outputClusters": [25], "profileID": 260}], "hardwareVersion": 1, "ieeeAddr": "0x0017880104e45517", "interviewCompleted": true, "interviewing": false, "manufacturerID": 4107, "manufacturerName": "Philips", "meta": {"configured": 1}, "modelID": "RWL021", "networkAddress": 6538, "powerSource": "Battery", "softwareBuildID": "5.45.1.17846", "stackVersion": 1, "type": "EndDevice", "zclVersion": 1});
+        expect(deepClone(await controller.getDevice({ieeeAddr: '0x00124b00120144ae'}))).toStrictEqual({"ID": 1, "lastSeen": null, "endpoints": [{"ID": 1, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 260}, {"ID": 2, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 257}, {"ID": 3, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 261}, {"ID": 4, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 263}, {"ID": 5, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 264}, {"ID": 6, "deviceID": 5, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 265}, {"ID": 11, "deviceID": 1024, "deviceIeeeAddress": "0x00124b00120144ae", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [1280], "profileID": 260}], "ieeeAddr": "0x00124b00120144ae", "interviewCompleted": false, "interviewing": false, "manufacturerID": 0, "meta": {}, "networkAddress": 0, "type": "Coordinator"});
+        expect(deepClone(await controller.getDevice({ieeeAddr: '0x000b57fffec6a5b2'}))).toStrictEqual({"ID": 3, "lastSeen": null,  "applicationVersion": 17, "dateCode": "20170331", "endpoints": [{"ID": 1, "deviceID": 544, "deviceIeeeAddress": "0x000b57fffec6a5b2", "deviceNetworkAddress": 40369, "inputClusters": [0, 3, 4, 5, 6, 8, 768, 2821, 4096], "outputClusters": [5, 25, 32, 4096], "profileID": 49246}], "hardwareVersion": 1, "ieeeAddr": "0x000b57fffec6a5b2", "interviewCompleted": true, "interviewing": false, "manufacturerID": 4476, "manufacturerName": "IKEA of Sweden", "meta": {"reporting": 1}, "modelID": "TRADFRI bulb E27 WS opal 980lm", "networkAddress": 40369, "powerSource": "Mains (single phase)", "softwareBuildID": "1.2.217", "stackVersion": 87, "type": "Router", "zclVersion": 1});
+        expect(deepClone(await controller.getDevice({ieeeAddr: '0x0017880104e45517'}))).toStrictEqual({"ID": 4, "lastSeen": null,  "applicationVersion": 2, "dateCode": "20160302", "endpoints": [{"ID": 1, "deviceID": 2096, "deviceIeeeAddress": "0x0017880104e45517", "deviceNetworkAddress": 6538, "inputClusters": [0], "outputClusters": [0, 3, 4, 6, 8, 5], "profileID": 49246}, {"ID": 2, "deviceID": 12, "deviceIeeeAddress": "0x0017880104e45517", "deviceNetworkAddress": 6538, "inputClusters": [0, 1, 3, 15, 64512], "outputClusters": [25], "profileID": 260}], "hardwareVersion": 1, "ieeeAddr": "0x0017880104e45517", "interviewCompleted": true, "interviewing": false, "manufacturerID": 4107, "manufacturerName": "Philips", "meta": {"configured": 1}, "modelID": "RWL021", "networkAddress": 6538, "powerSource": "Battery", "softwareBuildID": "5.45.1.17846", "stackVersion": 1, "type": "EndDevice", "zclVersion": 1});
         expect((await controller.getGroups({})).length).toBe(2);
 
         const group1 = await controller.getGroup({groupID: 1});

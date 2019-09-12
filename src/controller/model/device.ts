@@ -35,6 +35,7 @@ class Device extends Entity {
     private hardwareVersion?: number;
     private dateCode?: string;
     private softwareBuildID?: string;
+    private lastSeen: number;
 
     private interviewCompleted: boolean;
     private interviewing: boolean;
@@ -71,6 +72,7 @@ class Device extends Entity {
         this.interviewCompleted = interviewCompleted;
         this.interviewing = false;
         this.meta = meta;
+        this.lastSeen = null;
     }
 
     public isType(type: string): boolean {
@@ -116,6 +118,10 @@ class Device extends Entity {
         }
 
         await this.save();
+    }
+
+    public updateLastSeen(): void {
+        this.lastSeen = Date.now();
     }
 
     /**
