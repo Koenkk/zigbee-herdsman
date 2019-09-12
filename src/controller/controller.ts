@@ -332,14 +332,18 @@ class Controller extends events.EventEmitter {
                     zclData.frame.Header.transactionSequenceNumber,
                 );
             } catch (error) {
-                debug.error(`Default response to ${zclData.networkAddress} failed`);
+                debug.error(`Default response to ${endpoint.get('deviceIeeeAddress')} failed`);
             }
         }
 
         // Reponse to time reads
         if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
             const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
-            endpoint.readResponse(frame.getCluster().ID, frame.Header.transactionSequenceNumber, {time});
+            try {
+                await endpoint.readResponse(frame.getCluster().ID, frame.Header.transactionSequenceNumber, {time});
+            } catch (error) {
+                debug.error(`genTime response to ${endpoint.get('deviceIeeeAddress')} failed`);
+            }
         }
     }
 }

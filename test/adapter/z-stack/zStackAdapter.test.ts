@@ -749,7 +749,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
-    it('onlythis Start zStack 3.x.0 reset when panID doesnt match and is NOT 0xFF 0xFF', async () => {
+    it('Start zStack 3.x.0 reset when panID doesnt match and is NOT 0xFF 0xFF', async () => {
         mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
             const missing = () => {
                 const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;

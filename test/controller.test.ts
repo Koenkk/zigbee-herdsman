@@ -780,6 +780,23 @@ describe('Controller', () => {
             });
     });
 
+    it('Respond to genTime read fails', async () => {
+        await controller.start();
+        await removeAllDevices();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        mockSendZclFrameNetworkAddress.mockClear();
+        mockSendZclFrameNetworkAddress.mockRejectedValueOnce("");
+        await mockAdapterEvents['zclData']({
+            networkAddress: 129,
+            frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}]),
+            endpoint: 1,
+            linkquality: 19,
+            groupID: 10,
+        });
+
+        expect(mockSendZclFrameNetworkAddress).toBeCalledTimes(1);
+    });
+
     it('Xiaomi end device joins', async () => {
         await controller.start();
         await removeAllDevices();
