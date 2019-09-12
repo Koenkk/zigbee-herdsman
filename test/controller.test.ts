@@ -8,6 +8,7 @@ import { ZclFrame } from "../src/zcl";
 import { Device, Group } from "../src/controller/model";
 import * as Zcl from '../src/zcl';
 import {Wait} from '../src/utils';
+import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
 
 const mockAdapterEvents = {};
 const mockAdapterPermitJoin = jest.fn();
@@ -207,6 +208,8 @@ describe('Controller', () => {
     }
 
     beforeEach(async () => {
+        // @ts-ignore
+        zclTransactionSequenceNumber.number = 1;
         options.network.channelList = [15];
         Object.keys(events).forEach((key) => events[key] = []);
         controller = new Controller(options);
@@ -445,11 +448,11 @@ describe('Controller', () => {
         const write = mockSendZclFrameNetworkAddressWithResponse.mock.calls[3];
         expect(write[0]).toBe(170);
         expect(write[1]).toBe(1);
-        expect(deepClone(write[2])).toStrictEqual({"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":17,"manufacturerCode":null,"commandIdentifier":2},"Payload":[{"attrId":16,"attrData":"0x123","dataType":240}],"ClusterID":1280});
+        expect(deepClone(write[2])).toStrictEqual({"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":5,"manufacturerCode":null,"commandIdentifier":2},"Payload":[{"attrId":16,"attrData":"0x123","dataType":240}],"ClusterID":1280});
         const enrollRsp = mockSendZclFrameNetworkAddress.mock.calls[0];
         expect(enrollRsp[0]).toBe(170);
         expect(enrollRsp[1]).toBe(1);
-        expect(deepClone(enrollRsp[2])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":18,"manufacturerCode":null,"commandIdentifier":0},"Payload":{"enrollrspcode":0,"zoneid":23},"ClusterID":1280});
+        expect(deepClone(enrollRsp[2])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":6,"manufacturerCode":null,"commandIdentifier":0},"Payload":{"enrollrspcode":0,"zoneid":23},"ClusterID":1280});
     });
 
     it('Receive zclData occupancy report', async () => {
@@ -1000,7 +1003,7 @@ describe('Controller', () => {
         const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
-        expect(deepClone(call[2])).toStrictEqual({"ClusterID": 0, "Header": {"commandIdentifier": 0, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 100}, "Payload": [{"attrId": 0}]});
+        expect(deepClone(call[2])).toStrictEqual({"ClusterID": 0, "Header": {"commandIdentifier": 0, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 5}, "Payload": [{"attrId": 0}]});
     });
 
     it('Endpoint get id', async () => {
@@ -1078,7 +1081,7 @@ describe('Controller', () => {
                   "disableDefaultResponse":true,
                   "manufacturerSpecific":false
                },
-               "transactionSequenceNumber":106,
+               "transactionSequenceNumber":2,
                "manufacturerCode":null,
                "commandIdentifier":6
             },
@@ -1136,7 +1139,7 @@ describe('Controller', () => {
         const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
-        expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 0, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 107}, "Payload": {groupid: 2, groupname: ''}});
+        expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 0, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 2}, "Payload": {groupid: 2, groupname: ''}});
         expect(group.getMembers()).toContain(endpoint);
         expect(databaseContents()).toContain('{"id":5,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}');
     });
@@ -1154,7 +1157,7 @@ describe('Controller', () => {
         const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
-        expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 3, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 108}, "Payload": {groupid: 2}});
+        expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 3, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 2}, "Payload": {groupid: 2}});
         expect(group.getMembers()).toStrictEqual([]);
     });
 
@@ -1165,7 +1168,7 @@ describe('Controller', () => {
         await group.command('genOnOff', 'offWithEffect', {effectid: 9, effectvariant: 10});
         const call = mockSendZclFrameGroup.mock.calls[0];
         expect(call[0]).toBe(2);
-        expect(deepClone(call[1])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":109,"manufacturerCode":null,"commandIdentifier":64},"Payload":{"effectid":9,"effectvariant":10},"ClusterID":6});
+        expect(deepClone(call[1])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":2,"manufacturerCode":null,"commandIdentifier":64},"Payload":{"effectid":9,"effectvariant":10},"ClusterID":6});
     });
 
     it('Group command throw error on missing parameter', async () => {
@@ -1186,7 +1189,7 @@ describe('Controller', () => {
         await endpoint.command('genOnOff', 'off', {}, {manufacturerCode: 100, disableDefaultResponse: true})
         expect(mockSendZclFrameNetworkAddress.mock.calls[0][0]).toBe(129);
         expect(mockSendZclFrameNetworkAddress.mock.calls[0][1]).toBe(1);
-        const expected = {"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":110,"manufacturerCode":100,"commandIdentifier":0},"Payload":{},"ClusterID":6};
+        const expected = {"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":2,"manufacturerCode":100,"commandIdentifier":0},"Payload":{},"ClusterID":6};
         expect(deepClone(mockSendZclFrameNetworkAddress.mock.calls[0][2])).toStrictEqual(expected);
     });
 
@@ -1209,7 +1212,7 @@ describe('Controller', () => {
         const options = {manufacturerCode: 0x100B, disableDefaultResponse: true};
         await endpoint.write('genBasic', {0x0031: {value: 0x000B, type: 0x19}}, options);
         expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(1);
-        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledWith(129, 1, {"ClusterID": 0, "Header": {"commandIdentifier": 2, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": true}, "manufacturerCode": 4107, "transactionSequenceNumber": 114}, "Payload": [{"attrData": 11, "attrId": 49, "dataType": 25}]});
+        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledWith(129, 1, {"ClusterID": 0, "Header": {"commandIdentifier": 2, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": true}, "manufacturerCode": 4107, "transactionSequenceNumber": 5}, "Payload": [{"attrData": 11, "attrId": 49, "dataType": 25}]});
     });
 
     it('Write to endpoint with unknown string attribute', async () => {
@@ -1240,7 +1243,7 @@ describe('Controller', () => {
         }]);
 
         expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(1);
-        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledWith(129, 1, {"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":121,"manufacturerCode":null,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":16387,"dataType":41,"minRepIntval":0,"maxRepIntval":3600,"repChange":25}],"ClusterID":513});
+        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledWith(129, 1, {"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":5,"manufacturerCode":null,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":16387,"dataType":41,"minRepIntval":0,"maxRepIntval":3600,"repChange":25}],"ClusterID":513});
     });
 
     it('Remove endpoint from all groups', async () => {
@@ -1266,7 +1269,7 @@ describe('Controller', () => {
         expect(group1.members).toStrictEqual(new Set());
         expect(Array.from(group6.members)).toStrictEqual([device2.getEndpoint(1)]);
         expect(Array.from(group7.members)).toStrictEqual([device2.getEndpoint(1)]);
-        expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 4, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 127}, "Payload": {}});
+        expect(deepClone(call[2])).toStrictEqual({"ClusterID": 4, "Header": {"commandIdentifier": 4, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 7}, "Payload": {}});
     });
 
     it('Load database', async () => {
