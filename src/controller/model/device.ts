@@ -49,7 +49,7 @@ class Device extends Entity {
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static lookup: {[ieeeAddr: string]: Device} = {};
-    static reload(): void { this.lookup = {}; }
+    static reload(): void { Device.lookup = {}; }
 
     private constructor(
         ID: number, type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
@@ -140,7 +140,7 @@ class Device extends Entity {
             record.stackVersion, record.zclVersion, record.hwVersion, record.dateCode, record.swBuildId,
             record.interviewCompleted, meta,
         );
-        this.lookup[device.ieeeAddr] = device;
+        Device.lookup[device.ieeeAddr] = device;
         return device;
     }
 
@@ -194,11 +194,11 @@ class Device extends Entity {
 
         // fast path
         if (queryKeys.length === 1 && query.ieeeAddr) {
-            const device = this.byAddress(query.ieeeAddr);
+            const device = Device.byAddress(query.ieeeAddr);
             return device ? [device] : [];
         }
 
-        return this.all().filter((d: KeyValue) => {
+        return Device.all().filter((d: KeyValue) => {
             for (const key of queryKeys) {
                 if (d[key] != query[key]) return false;
             }
@@ -214,7 +214,7 @@ class Device extends Entity {
             ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
         }[]
     ): Device {
-        if (this.byAddress(ieeeAddr)) {
+        if (Device.byAddress(ieeeAddr)) {
             throw new Error(`Device with ieeeAddr '${ieeeAddr}' already exists`);
         }
 
@@ -224,15 +224,15 @@ class Device extends Entity {
             );
         });
 
-        const ID = this.database.newID();
+        const ID = Device.database.newID();
 
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false, {},
         );
 
-        this.database.insert(device.toDatabaseRecord());
-        this.lookup[device.ieeeAddr] = device;
+        Device.database.insert(device.toDatabaseRecord());
+        Device.lookup[device.ieeeAddr] = device;
         return device;
     }
 

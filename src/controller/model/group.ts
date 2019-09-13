@@ -16,7 +16,7 @@ class Group extends Entity {
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static lookup: {[groupID: number]: Group} = {};
-    static reload(): void { this.lookup = {}; }
+    static reload(): void { Group.lookup = {}; }
 
     private constructor(databaseID: number, groupID: number, members: Endpoint[], meta: KeyValue) {
         super();
@@ -40,7 +40,7 @@ class Group extends Entity {
 
     static fromDatabaseRecord(record: KeyValue): Group {
         const group = new Group(record.id, record.groupID, record.members, record.meta);
-        this.lookup[group.groupID] = group;
+        Group.lookup[group.groupID] = group;
         return group;
     }
 
@@ -49,15 +49,15 @@ class Group extends Entity {
     }
 
     public static all(): Group[] {
-        return Object.values(this.lookup);
+        return Object.values(Group.lookup);
     }
 
     public static byID(groupID: number): Group | undefined {
-        return this.lookup[groupID];
+        return Group.lookup[groupID];
     }
 
     public static findSingle(query: {groupID?: number; [key: string]: unknown}): Group | undefined {
-        const results = this.find(query);
+        const results = Group.find(query);
         if (results.length === 1) return results[0];
         return undefined;
     }
@@ -67,11 +67,11 @@ class Group extends Entity {
 
         // fast path
         if (queryKeys.length === 1 && query.groupID) {
-            const group = this.byID(query.groupID);
+            const group = Group.byID(query.groupID);
             return group ? [group] : [];
         }
 
-        return this.all().filter((d: KeyValue) => {
+        return Group.all().filter((d: KeyValue) => {
             for (const key of queryKeys) {
                 if (d[key] != query[key]) return false;
             }
@@ -81,15 +81,15 @@ class Group extends Entity {
 
     public static create(groupID: number): Group {
         assert(typeof groupID === 'number', 'GroupID must be a number');
-        if (this.byID(groupID)) {
+        if (Group.byID(groupID)) {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
 
-        const databaseID = this.database.newID();
+        const databaseID = Group.database.newID();
         const group = new Group(databaseID, groupID, [], {});
-        this.database.insert(group.toDatabaseRecord());
+        Group.database.insert(group.toDatabaseRecord());
 
-        this.lookup[group.groupID] = group;
+        Group.lookup[group.groupID] = group;
         return group;
     }
 
