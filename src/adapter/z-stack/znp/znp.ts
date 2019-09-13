@@ -132,7 +132,9 @@ class Znp extends events.EventEmitter {
                 if (error) {
                     reject(new Error(`Error while opening serialport '${error}'`));
                     this.initialized = false;
-                    this.serialPort.close();
+                    if (this.serialPort.isOpen) {
+                        this.serialPort.close();
+                    }
                 } else {
                     debug.log('Serialport opened');
                     await this.skipBootloader();
