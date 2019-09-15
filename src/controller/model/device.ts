@@ -38,6 +38,7 @@ class Device extends Entity {
     private hardwareVersion?: number;
     private dateCode?: string;
     private softwareBuildID?: string;
+    private lastSeen: number;
 
     private interviewCompleted: boolean;
     private interviewing: boolean;
@@ -74,6 +75,7 @@ class Device extends Entity {
         this.interviewCompleted = interviewCompleted;
         this.interviewing = false;
         this.meta = meta;
+        this.lastSeen = null;
     }
 
     /**
@@ -112,7 +114,6 @@ class Device extends Entity {
     }
 
     /**
-     *
      * @param {number} ID
      * @returns {Endpoint}
      */
@@ -121,7 +122,6 @@ class Device extends Entity {
     }
 
     /**
-     *
      * @param {string} key - 'modelID' | 'networkAddress' | 'interviewCompleted' | 'ieeeAddr' | 'interviewing'
      * @returns {string|number|boolean}
      */
@@ -147,6 +147,10 @@ class Device extends Entity {
         }
 
         await this.save();
+    }
+
+    public updateLastSeen(): void {
+        this.lastSeen = Date.now();
     }
 
     /*
@@ -191,7 +195,6 @@ class Device extends Entity {
     }
 
     /**
-     *
      * @param {Object} query
      * @param {DeviceType} [query.type]
      * @param {string} [query.ieeeAddr]
@@ -223,7 +226,6 @@ class Device extends Entity {
     }
 
     /**
-     *
      * @param {Object} query
      * @param {AdapterTsType.DeviceType} [query.type]
      * @param {string} [query.ieeeAddr]
@@ -289,9 +291,6 @@ class Device extends Entity {
      * Zigbee functions
      */
 
-    /**
-     * @returns {Promise}
-     */
     public async interview(): Promise<void> {
         if (this.interviewing) {
             const message = `Interview - interview already in progress for '${this.ieeeAddr}'`;

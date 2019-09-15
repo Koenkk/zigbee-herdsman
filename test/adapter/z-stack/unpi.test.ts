@@ -87,6 +87,30 @@ describe('Parser', () => {
         expect(parsed[0].length).toBe(3);
         expect(parsed[0].fcs).toBe(0x3e);
     });
+
+    it('Parse message when it doenst start with SOF and buffer is empty (throw away everything until SOF)', () => {
+        const buffer = Buffer.from([95,27,37,254,3,69,196,212,23,0,65,254,27,68,129,0,0,8,0,212,23,1,1,0,55,0,153,178,219,0,0,7,8,122,10,0,0,32,243,212,23,29,160,254,7,69,196,111,244,2,122,155,246,95,87,254,27,68,129,0,0,6,0,111,244,1,1,0,118,0,245,236,220,0,0,7,8,2,10,0,0,16,0,246,95,27,85]);
+        parser._transform(buffer, '', () => {});
+        expect(parsed.length).toBe(4);
+        expect(parsed[0].type).toBe(Constants.Type.AREQ);
+        expect(parsed[0].subsystem).toBe(Constants.Subsystem.ZDO);
+        expect(parsed[0].commandID).toBe(196);
+        expect(parsed[0].data).toStrictEqual(Buffer.from([0xd4, 0x17, 0x00]));
+        expect(parsed[0].length).toBe(3);
+        expect(parsed[0].fcs).toBe(65);
+        expect(parsed[1].type).toBe(Constants.Type.AREQ);
+        expect(parsed[1].subsystem).toBe(Constants.Subsystem.AF);
+        expect(parsed[1].commandID).toBe(129);
+        expect(parsed[1].data).toStrictEqual(Buffer.from([0,0,8,0,212,23,1,1,0,55,0,153,178,219,0,0,7,8,122,10,0,0,32,243,212,23,29]));
+        expect(parsed[1].length).toBe(27);
+        expect(parsed[1].fcs).toBe(160);
+    });
+
+    it('Empty buffer when message doesnt contain SOF and buffer is empty', () => {
+        const buffer = Buffer.from([95,27,37]);
+        parser._transform(buffer, '', () => {});
+        expect(parser.buffer.length).toBe(0);
+    });
 });
 
 describe('Frame', () => {

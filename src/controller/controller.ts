@@ -146,17 +146,10 @@ class Controller extends events.EventEmitter {
         }
     }
 
-    /**
-     * @returns {boolean} true if joining is currently permitted
-     */
     public getPermitJoin(): boolean {
         return this.permitJoinTimer != null;
     }
 
-    /**
-     * Stop the herdsman
-     * @returns {Promise}
-     */
     public async stop(): Promise<void> {
         await this.permitJoin(false);
         clearInterval(this.backupTimer);
@@ -164,10 +157,6 @@ class Controller extends events.EventEmitter {
         await this.adapter.stop();
     }
 
-    /**
-     * create a coordinatore backup
-     * @returns {Promise}
-     */
     private async backup(): Promise<void> {
         if (this.options.backupPath && await this.adapter.supportsBackup()) {
             debug.log('Creating coordinator backup');
@@ -186,22 +175,17 @@ class Controller extends events.EventEmitter {
     }
 
     /**
-     *
      * @returns {Promise}
      */
     public async getCoordinatorVersion(): Promise<AdapterTsType.CoordinatorVersion> {
         return await this.adapter.getCoordinatorVersion();
     }
 
-    /**
-     * @returns {Promise}
-     */
     public async getNetworkParameters(): Promise<AdapterTsType.NetworkParameters> {
         return await this.adapter.getNetworkParameters();
     }
 
     /**
-     *
      * @param query
      * @returns {Promise}
      */
@@ -210,7 +194,6 @@ class Controller extends events.EventEmitter {
     }
 
     /**
-     *
      * @param {object} query
      * @param {string} [query.ieeeAddr]
      * @param {DeviceType} [query.type]
@@ -221,7 +204,6 @@ class Controller extends events.EventEmitter {
     }
 
     /**
-     *
      * @param {Object} query
      * @param {number} query.groupID
      * @returns {Promise}
@@ -231,7 +213,6 @@ class Controller extends events.EventEmitter {
     }
 
     /**
-     *
      * @param {Object} query
      * @param {number} query.groupID
      * @returns {Promise}
@@ -259,7 +240,9 @@ class Controller extends events.EventEmitter {
 
     private async onDeviceAnnounce(payload: AdapterEvents.DeviceAnnouncePayload): Promise<void> {
         debug.log(`Device announce '${payload.ieeeAddr}'`);
-        const data: Events.DeviceAnnouncePayload = {device: await Device.findSingle({ieeeAddr: payload.ieeeAddr})};
+        const device = await Device.findSingle({ieeeAddr: payload.ieeeAddr});
+        device.updateLastSeen();
+        const data: Events.DeviceAnnouncePayload = {device};
         /**
          * @event Controller#deviceAnnounce
          * @type Object
