@@ -43,6 +43,9 @@ const debug = {
 
 const OneJanuary2000 = new Date('January 01, 2000 00:00:00').getTime();
 
+/**
+ *  Herdsman Controller Class
+ */
 class Controller extends events.EventEmitter {
     private options: Options;
     private database: Database;
@@ -52,6 +55,15 @@ class Controller extends events.EventEmitter {
     // eslint-disable-next-line
     private backupTimer: any;
 
+    /**
+     * Create a controller
+     * @constructs Controller
+     * @param options
+     * @param {Object} options.network
+     * @param {Boolean} [options.network.networkKeyDistribute=false]
+     * @param {Byte[]} [options.network.networkKey]
+     * @param {uint16} [options.network.panID=0x1a62]
+     */
     public constructor(options: Options) {
         super();
         this.options = mixin(DefaultOptions, options);
@@ -71,6 +83,10 @@ class Controller extends events.EventEmitter {
         }
     }
 
+    /**
+     * Start the Herdsman controller
+     * @returns {Promise}
+     */
     public async start(): Promise<void> {
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
         this.database = await Database.open(this.options.databasePath);
@@ -130,10 +146,17 @@ class Controller extends events.EventEmitter {
         }
     }
 
+    /**
+     * @returns {boolean} true if joining is currently permitted
+     */
     public getPermitJoin(): boolean {
         return this.permitJoinTimer != null;
     }
 
+    /**
+     * Stop the herdsman
+     * @returns {Promise}
+     */
     public async stop(): Promise<void> {
         await this.permitJoin(false);
         clearInterval(this.backupTimer);
@@ -141,6 +164,10 @@ class Controller extends events.EventEmitter {
         await this.adapter.stop();
     }
 
+    /**
+     * create a coordinatore backup
+     * @returns {Promise}
+     */
     private async backup(): Promise<void> {
         if (this.options.backupPath && await this.adapter.supportsBackup()) {
             debug.log('Creating coordinator backup');
@@ -150,38 +177,82 @@ class Controller extends events.EventEmitter {
         }
     }
 
+    /**
+     * soft-reset the z-stack
+     * @returns {Promise}
+     */
     public async softReset(): Promise<void> {
         await this.adapter.softReset();
     }
 
+    /**
+     *
+     * @returns {Promise}
+     */
     public async getCoordinatorVersion(): Promise<AdapterTsType.CoordinatorVersion> {
         return await this.adapter.getCoordinatorVersion();
     }
 
+    /**
+     * @returns {Promise}
+     */
     public async getNetworkParameters(): Promise<AdapterTsType.NetworkParameters> {
         return await this.adapter.getNetworkParameters();
     }
 
+    /**
+     *
+     * @param query
+     * @returns {Promise}
+     */
     public async getDevices(query: {ieeeAddr?: string; type?: AdapterTsType.DeviceType}): Promise<Device[]> {
         return Device.find(query);
     }
 
+    /**
+     *
+     * @param {object} query
+     * @param {string} [query.ieeeAddr]
+     * @param {DeviceType} [query.type]
+     * @returns {Promise}
+     */
     public async getDevice(query: {ieeeAddr?: string; type?: AdapterTsType.DeviceType}): Promise<Device> {
         return Device.findSingle(query);
     }
 
+    /**
+     *
+     * @param {Object} query
+     * @param {number} query.groupID
+     * @returns {Promise}
+     */
     public async getGroup(query: {groupID: number}): Promise<Group> {
         return Group.findSingle(query);
     }
 
+    /**
+     *
+     * @param {Object} query
+     * @param {number} query.groupID
+     * @returns {Promise}
+     */
     public async getGroups(query: {groupID: number}): Promise<Group[]> {
         return Group.find(query);
     }
 
+    /**
+     * Create a Group
+     * @param {number} groupID
+     * @returns {Promise}
+     */
     public async createGroup(groupID: number): Promise<Group> {
         return Group.create(groupID);
     }
 
+    /**
+     *  Disable the LED
+     *  @returns {Promise}
+     */
     public async disableLED(): Promise<void> {
         await this.adapter.disableLED();
     }
@@ -189,6 +260,11 @@ class Controller extends events.EventEmitter {
     private async onDeviceAnnounce(payload: AdapterEvents.DeviceAnnouncePayload): Promise<void> {
         debug.log(`Device announce '${payload.ieeeAddr}'`);
         const data: Events.DeviceAnnouncePayload = {device: await Device.findSingle({ieeeAddr: payload.ieeeAddr})};
+        /**
+         * @event Controller#deviceAnnounce
+         * @type Object
+         * @property {Device} device
+         */
         this.emit(Events.Events.deviceAnnounce, data);
     }
 
@@ -202,6 +278,10 @@ class Controller extends events.EventEmitter {
         }
 
         const data: Events.DeviceLeavePayload = {ieeeAddr: payload.ieeeAddr};
+        /**
+         * @event Controller#deviceLeave
+         *
+         */
         this.emit(Events.Events.deviceLeave, data);
     }
 
@@ -213,6 +293,9 @@ class Controller extends events.EventEmitter {
         } catch (error) {
         }
 
+        /**
+         * @event Controller#adapterDisconnected
+         */
         this.emit(Events.Events.adapterDisconnected);
     }
 
@@ -229,6 +312,10 @@ class Controller extends events.EventEmitter {
             );
 
             const eventData: Events.DeviceJoinedPayload = {device};
+            /**
+             * @event Controller#deviceJoined
+             *
+             */
             this.emit(Events.Events.deviceJoined, eventData);
         } else if (device.get('networkAddress') !== payload.networkAddress) {
             debug.log(
@@ -241,6 +328,9 @@ class Controller extends events.EventEmitter {
         if (!device.get('interviewCompleted') && !device.get('interviewing')) {
             const payloadStart: Events.DeviceInterviewPayload = {status: 'started', device};
             debug.log(`Interview '${device.get('ieeeAddr')}' start`);
+            /**
+             * @event Controller#deviceInterview
+             */
             this.emit(Events.Events.deviceInterview, payloadStart);
 
             try {
@@ -321,6 +411,9 @@ class Controller extends events.EventEmitter {
             const eventData: Events.MessagePayload = {
                 type: type, device, endpoint, data, linkquality, groupID, cluster
             };
+            /**
+             * @event Controller#message
+             */
             this.emit(Events.Events.message, eventData);
         }
 

@@ -19,6 +19,9 @@ interface RoutingTable {
     table: {destinationAddress: number; status: string; nextHop: number}[];
 }
 
+/**
+ * @class Device
+ */
 class Device extends Entity {
     private ID: number;
     private ieeeAddr: string;
@@ -73,12 +76,22 @@ class Device extends Entity {
         this.meta = meta;
     }
 
+    /**
+     * @param {string} type
+     * @returns {boolean} - true if type is 'device'
+     */
     public isType(type: string): boolean {
         return type === 'device';
     }
 
-    /**
+    /*
      * Getters, setters and creaters
+     */
+
+    /**
+     * @param {number} ID
+     * @returns {Promise}
+     * @fulfil {Endpoint}
      */
     public async createEndpoint(ID: number): Promise<Endpoint> {
         if (this.getEndpoint(ID)) {
@@ -91,20 +104,38 @@ class Device extends Entity {
         return endpoint;
     }
 
+    /**
+     * @returns {Endpoint[]}
+     */
     public getEndpoints(): Endpoint[] {
         return this.endpoints;
     }
 
+    /**
+     *
+     * @param {number} ID
+     * @returns {Endpoint}
+     */
     public getEndpoint(ID: number): Endpoint {
         return this.endpoints.find((e): boolean => e.ID === ID);
     }
 
+    /**
+     *
+     * @param {string} key - 'modelID' | 'networkAddress' | 'interviewCompleted' | 'ieeeAddr' | 'interviewing'
+     * @returns {string|number|boolean}
+     */
     public get(
         key: 'modelID' | 'networkAddress' | 'interviewCompleted' | 'ieeeAddr' | 'interviewing'
     ): string | number | boolean {
         return this[key];
     }
 
+    /**
+     * @param {string} key - 'modelID' | 'networkAddress'
+     * @param {string|number} value
+     * @returns {Promise}
+     */
     public async set(key: 'modelID' | 'networkAddress', value: string | number): Promise<void> {
         if (typeof value === 'string' && (key === 'modelID')) {
             this[key] = value;
@@ -118,9 +149,10 @@ class Device extends Entity {
         await this.save();
     }
 
-    /**
+    /*
      * CRUD
      */
+
     private static fromDatabaseRecord(record: KeyValue): Device {
         const networkAddress = record.nwkAddr;
         const ieeeAddr = record.ieeeAddr;
@@ -158,6 +190,14 @@ class Device extends Entity {
         await Device.database.update(this.ID, this.toDatabaseRecord());
     }
 
+    /**
+     *
+     * @param {Object} query
+     * @param {DeviceType} [query.type]
+     * @param {string} [query.ieeeAddr]
+     * @param {number} [query.networkAddress]
+     * @returns {Promise}
+     */
     public static async findSingle(
         query: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; networkAddress?: number}
     ): Promise<Device> {
@@ -182,6 +222,15 @@ class Device extends Entity {
         return results.length !== 0 ? results[0] : null;
     }
 
+    /**
+     *
+     * @param {Object} query
+     * @param {AdapterTsType.DeviceType} [query.type]
+     * @param {string} [query.ieeeAddr]
+     * @param {number} [query.networkAddress]
+     * @returns {Promise}
+     * @fulfil {Device}
+     */
     public static async find(
         query: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; networkAddress?: number}
     ): Promise<Device[]> {
@@ -236,8 +285,12 @@ class Device extends Entity {
         return this.lookup[device.ieeeAddr];
     }
 
-    /**
+    /*
      * Zigbee functions
+     */
+
+    /**
+     * @returns {Promise}
      */
     public async interview(): Promise<void> {
         if (this.interviewing) {
@@ -375,24 +428,41 @@ class Device extends Entity {
         }
     }
 
+    /**
+     * @returns {Promise}
+     */
     public async removeFromNetwork(): Promise<void> {
         await Device.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
         await this.removeFromDatabase();
     }
 
+    /**
+     * @returns {Promise}
+     */
     public async removeFromDatabase(): Promise<void> {
         await Device.database.remove(this.ID);
         delete Device.lookup[this.ieeeAddr];
     }
 
+    /**
+     * @returns {Promise}
+     * @fulfil {TsType.LQI}
+     */
     public async lqi(): Promise<LQI> {
         return await Device.adapter.lqi(this.networkAddress);
     }
 
+    /**
+     * @returns {Promise}
+     * @fulfil {TsType.RoutingTable} - The Routing Table
+     */
     public async routingTable(): Promise<RoutingTable> {
         return await Device.adapter.routingTable(this.networkAddress);
     }
 
+    /**
+     * @returns {Promise}
+     */
     public async ping(): Promise<void> {
         // Zigbee does not have an official pining mechamism. Use a read request
         // of a mandatory basic cluster attribute to keep it as lightweight as

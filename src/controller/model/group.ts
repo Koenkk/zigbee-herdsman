@@ -6,6 +6,9 @@ import Endpoint from './endpoint';
 import Device from './device';
 import assert from 'assert';
 
+/**
+ * @class Group
+ */
 class Group extends Entity {
     private databaseID: number;
     private groupID: number;
@@ -26,15 +29,23 @@ class Group extends Entity {
         this.meta = meta;
     }
 
+    /**
+     * @param {string} type
+     * @returns {boolean} true if type is 'group'
+     */
     public isType(type: string): boolean {
         return type === 'group';
     }
 
+    /**
+     * @param {number} groupID
+     * @returns {Group}
+     */
     public get(key: 'groupID'): number {
         return this[key];
     }
 
-    /**
+    /*
      * CRUD
      */
 
@@ -57,6 +68,12 @@ class Group extends Entity {
         return {id: this.databaseID, type: 'Group', groupID: this.groupID, members, meta: this.meta};
     }
 
+    /**
+     * @param {Object} query
+     * @param {number} query.groupID
+     * @returns {Promise}
+     * @fulfil {Group}
+     */
     public static async findSingle(query: {groupID: number}): Promise<Group> {
         // Performance optimization: get from lookup if posible;
         const groupGroupID = this.lookup[query.groupID];
@@ -68,6 +85,12 @@ class Group extends Entity {
         return results.length !== 0 ? results[0] : null;
     }
 
+    /**
+     * @param {Object} query
+     * @param {number} [query.groupID]
+     * @returns {Promise}
+     * @fulfil {Group}
+     */
     public static async find(query: {groupID?: number}): Promise<Group[]> {
         const results = await this.database.find({...query, type: 'Group'});
         const groups = [];
@@ -83,6 +106,11 @@ class Group extends Entity {
         return groups;
     }
 
+    /**
+     * @param {number} groupID
+     * @returns {Promise}
+     * @fulfil {Group}
+     */
     public static async create(groupID: number): Promise<Group> {
         assert(typeof groupID === 'number', 'GroupID must be a number');
         if (await this.findSingle({groupID})) {
@@ -97,35 +125,63 @@ class Group extends Entity {
         return this.lookup[group.groupID];
     }
 
+    /**
+     * @returns {Promise}
+     */
     public async removeFromDatabase(): Promise<void> {
         await Group.database.remove(this.databaseID);
         delete Group.lookup[this.groupID];
     }
 
+    /**
+     * @returns {Promise}
+     */
     private async save(): Promise<void> {
         await Group.database.update(this.databaseID, this.toDatabaseRecord());
     }
 
+    /**
+     * @param {Endpoint} endpoint
+     * @returns {Promise}
+     */
     public async addMember(endpoint: Endpoint): Promise<void> {
         this.members.add(endpoint);
         await this.save();
     }
 
+    /**
+     * @param {Endpoint} endpoint
+     * @returns {Promise}
+     */
     public async removeMember(endpoint: Endpoint): Promise<void> {
         this.members.delete(endpoint);
         await this.save();
     }
 
+    /**
+     * @param {Endpoint} endpoint
+     * @returns {boolean}
+     */
     public hasMember(endpoint: Endpoint): boolean {
         return this.members.has(endpoint);
     }
 
+    /**
+     * @returns {Endpoint[]}
+     */
     public getMembers(): Endpoint[] {
         return Array.from(this.members);
     }
 
-    /**
+    /*
      * Zigbee functions
+     */
+
+    /**
+     * @param {number|string} clusterKey
+     * @param {number} commandKey
+     * @param {KeyValue} payload
+     * @returns {Promise}
      */
     public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
