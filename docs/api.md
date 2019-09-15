@@ -38,7 +38,6 @@
         * [.getEndpoint(ID)](#Device+getEndpoint) ⇒ [<code>Endpoint</code>](#Endpoint)
         * [.get(key)](#Device+get) ⇒ <code>string</code> \| <code>number</code> \| <code>boolean</code>
         * [.set(key, value)](#Device+set) ⇒ <code>Promise</code>
-        * [.interview()](#Device+interview) ⇒ <code>Promise</code>
         * [.removeFromNetwork()](#Device+removeFromNetwork) ⇒ <code>Promise</code>
         * [.removeFromDatabase()](#Device+removeFromDatabase) ⇒ <code>Promise</code>
         * [.lqi()](#Device+lqi) ⇒ <code>Promise</code>
@@ -102,10 +101,6 @@
 | key | <code>string</code> | <p>'modelID' | 'networkAddress'</p> |
 | value | <code>string</code> \| <code>number</code> |  |
 
-<a name="Device+interview"></a>
-
-### device.interview() ⇒ <code>Promise</code>
-**Kind**: instance method of [<code>Device</code>](#Device)  
 <a name="Device+removeFromNetwork"></a>
 
 ### device.removeFromNetwork() ⇒ <code>Promise</code>
@@ -430,12 +425,8 @@
 * [Controller](#Controller)
     * [new Controller(options)](#new_Controller_new)
     * [.start()](#Controller+start) ⇒ <code>Promise</code>
-    * [.getPermitJoin()](#Controller+getPermitJoin) ⇒ <code>boolean</code>
-    * [.stop()](#Controller+stop) ⇒ <code>Promise</code>
-    * [.backup()](#Controller+backup) ⇒ <code>Promise</code>
     * [.softReset()](#Controller+softReset) ⇒ <code>Promise</code>
     * [.getCoordinatorVersion()](#Controller+getCoordinatorVersion) ⇒ <code>Promise</code>
-    * [.getNetworkParameters()](#Controller+getNetworkParameters) ⇒ <code>Promise</code>
     * [.getDevices(query)](#Controller+getDevices) ⇒ <code>Promise</code>
     * [.getDevice(query)](#Controller+getDevice) ⇒ <code>Promise</code>
     * [.getGroup(query)](#Controller+getGroup) ⇒ <code>Promise</code>
@@ -457,33 +448,23 @@
 
 | Param | Type | Default |
 | --- | --- | --- |
-| options |  |  | 
+| options | <code>Object</code> |  | 
+| options.databasePath | <code>string</code> |  | 
+| options.backupPath | <code>string</code> |  | 
 | options.network | <code>Object</code> |  | 
-| [options.network.networkKeyDistribute] | <code>Boolean</code> | <code>false</code> | 
-| [options.network.networkKey] | <code>Array.&lt;Byte&gt;</code> |  | 
-| [options.network.panID] | <code>uint16</code> | <code>0x1a62</code> | 
+| [options.network.networkKeyDistribute] | <code>boolean</code> | <code>false</code> | 
+| [options.network.networkKey] | <code>Array.&lt;number&gt;</code> |  | 
+| [options.network.panID] | <code>number</code> | <code>0x1a62</code> | 
+| [options.network.channelList] | <code>Array.&lt;number&gt;</code> | <code>[11]</code> | 
+| options.serialPort | <code>Object</code> |  | 
+| [options.serialPort.baudRate] | <code>number</code> | <code>115200</code> | 
+| [options.serialPort.rtscts] | <code>boolean</code> | <code>true</code> | 
+| options.serialPort.path | <code>string</code> |  | 
 
 <a name="Controller+start"></a>
 
 ### controller.start() ⇒ <code>Promise</code>
 <p>Start the Herdsman controller</p>
-
-**Kind**: instance method of [<code>Controller</code>](#Controller)  
-<a name="Controller+getPermitJoin"></a>
-
-### controller.getPermitJoin() ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Controller</code>](#Controller)  
-**Returns**: <code>boolean</code> - <p>true if joining is currently permitted</p>  
-<a name="Controller+stop"></a>
-
-### controller.stop() ⇒ <code>Promise</code>
-<p>Stop the herdsman</p>
-
-**Kind**: instance method of [<code>Controller</code>](#Controller)  
-<a name="Controller+backup"></a>
-
-### controller.backup() ⇒ <code>Promise</code>
-<p>create a coordinatore backup</p>
 
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
 <a name="Controller+softReset"></a>
@@ -495,10 +476,6 @@
 <a name="Controller+getCoordinatorVersion"></a>
 
 ### controller.getCoordinatorVersion() ⇒ <code>Promise</code>
-**Kind**: instance method of [<code>Controller</code>](#Controller)  
-<a name="Controller+getNetworkParameters"></a>
-
-### controller.getNetworkParameters() ⇒ <code>Promise</code>
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
 <a name="Controller+getDevices"></a>
 

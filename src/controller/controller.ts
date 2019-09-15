@@ -58,11 +58,18 @@ class Controller extends events.EventEmitter {
     /**
      * Create a controller
      * @constructs Controller
-     * @param options
+     * @param {Object} options
+     * @param {string} options.databasePath
+     * @param {string} options.backupPath
      * @param {Object} options.network
-     * @param {Boolean} [options.network.networkKeyDistribute=false]
-     * @param {Byte[]} [options.network.networkKey]
-     * @param {uint16} [options.network.panID=0x1a62]
+     * @param {boolean} [options.network.networkKeyDistribute=false]
+     * @param {number[]} [options.network.networkKey]
+     * @param {number} [options.network.panID=0x1a62]
+     * @param {number[]} [options.network.channelList=[11]]
+     * @param {Object} options.serialPort
+     * @param {number} [options.serialPort.baudRate=115200]
+     * @param {boolean} [options.serialPort.rtscts=true]
+     * @param {string} options.serialPort.path
      */
     public constructor(options: Options) {
         super();
