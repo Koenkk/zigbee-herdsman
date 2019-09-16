@@ -425,8 +425,10 @@
 * [Controller](#Controller)
     * [new Controller(options)](#new_Controller_new)
     * [.start()](#Controller+start) ⇒ <code>Promise</code>
+    * [.permitJoin(permit)](#Controller+permitJoin) ⇒ <code>Promise</code>
     * [.softReset()](#Controller+softReset) ⇒ <code>Promise</code>
     * [.getCoordinatorVersion()](#Controller+getCoordinatorVersion) ⇒ <code>Promise</code>
+    * [.getNetworkParameters()](#Controller+getNetworkParameters) ⇒ <code>Promise</code>
     * [.getDevices(query)](#Controller+getDevices) ⇒ <code>Promise</code>
     * [.getDevice(query)](#Controller+getDevice) ⇒ <code>Promise</code>
     * [.getGroup(query)](#Controller+getGroup) ⇒ <code>Promise</code>
@@ -467,6 +469,15 @@
 <p>Start the Herdsman controller</p>
 
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
+<a name="Controller+permitJoin"></a>
+
+### controller.permitJoin(permit) ⇒ <code>Promise</code>
+**Kind**: instance method of [<code>Controller</code>](#Controller)  
+
+| Param | Type |
+| --- | --- |
+| permit | <code>boolean</code> | 
+
 <a name="Controller+softReset"></a>
 
 ### controller.softReset() ⇒ <code>Promise</code>
@@ -477,30 +488,41 @@
 
 ### controller.getCoordinatorVersion() ⇒ <code>Promise</code>
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
+**Fulfil**: <code>AdapterTsType.CoordinatorVersion</code>  
+<a name="Controller+getNetworkParameters"></a>
+
+### controller.getNetworkParameters() ⇒ <code>Promise</code>
+**Kind**: instance method of [<code>Controller</code>](#Controller)  
+**Fulfil**: <code>AdapterTsType.NetworkParameters</code>  
 <a name="Controller+getDevices"></a>
 
 ### controller.getDevices(query) ⇒ <code>Promise</code>
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
+**Fulfil**: <code>Device[]</code>  
 
-| Param |
-| --- |
-| query | 
+| Param | Type |
+| --- | --- |
+| query | <code>Object</code> | 
+| [query.ieeeAddr] | <code>string</code> | 
+| [query.type] | <code>AdapterTsType.DeviceType</code> | 
 
 <a name="Controller+getDevice"></a>
 
 ### controller.getDevice(query) ⇒ <code>Promise</code>
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
+**Fulfil**: [<code>Device</code>](#Device)  
 
 | Param | Type |
 | --- | --- |
 | query | <code>object</code> | 
 | [query.ieeeAddr] | <code>string</code> | 
-| [query.type] | <code>DeviceType</code> | 
+| [query.type] | <code>AdapterTsType.DeviceType</code> | 
 
 <a name="Controller+getGroup"></a>
 
 ### controller.getGroup(query) ⇒ <code>Promise</code>
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
+**Fulfil**: [<code>Group</code>](#Group)  
 
 | Param | Type |
 | --- | --- |
@@ -511,6 +533,7 @@
 
 ### controller.getGroups(query) ⇒ <code>Promise</code>
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
+**Fulfil**: <code>Group[]</code>  
 
 | Param | Type |
 | --- | --- |
@@ -523,6 +546,7 @@
 <p>Create a Group</p>
 
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
+**Fulfil**: [<code>Group</code>](#Group)  
 
 | Param | Type |
 | --- | --- |

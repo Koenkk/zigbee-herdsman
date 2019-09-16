@@ -130,6 +130,11 @@ class Controller extends events.EventEmitter {
         this.backupTimer = setInterval(() => this.backup(), 86400000);
     }
 
+    /**
+     *
+     * @param {boolean} permit
+     * @returns {Promise}
+     */
     public async permitJoin(permit: boolean): Promise<void> {
         if (permit && !this.getPermitJoin()) {
             debug.log('Permit joining');
@@ -183,18 +188,26 @@ class Controller extends events.EventEmitter {
 
     /**
      * @returns {Promise}
+     * @fulfil {AdapterTsType.CoordinatorVersion}
      */
     public async getCoordinatorVersion(): Promise<AdapterTsType.CoordinatorVersion> {
         return await this.adapter.getCoordinatorVersion();
     }
 
+    /**
+     * @returns {Promise}
+     * @fulfil {AdapterTsType.NetworkParameters}
+     */
     public async getNetworkParameters(): Promise<AdapterTsType.NetworkParameters> {
         return await this.adapter.getNetworkParameters();
     }
 
     /**
-     * @param query
+     * @param {Object} query
+     * @param {string} [query.ieeeAddr]
+     * @param {AdapterTsType.DeviceType} [query.type]
      * @returns {Promise}
+     * @fulfil {Device[]}
      */
     public async getDevices(query: {ieeeAddr?: string; type?: AdapterTsType.DeviceType}): Promise<Device[]> {
         return Device.find(query);
@@ -203,8 +216,9 @@ class Controller extends events.EventEmitter {
     /**
      * @param {object} query
      * @param {string} [query.ieeeAddr]
-     * @param {DeviceType} [query.type]
+     * @param {AdapterTsType.DeviceType} [query.type]
      * @returns {Promise}
+     * @fulfil {Device}
      */
     public async getDevice(query: {ieeeAddr?: string; type?: AdapterTsType.DeviceType}): Promise<Device> {
         return Device.findSingle(query);
@@ -214,6 +228,7 @@ class Controller extends events.EventEmitter {
      * @param {Object} query
      * @param {number} query.groupID
      * @returns {Promise}
+     * @fulfil {Group}
      */
     public async getGroup(query: {groupID: number}): Promise<Group> {
         return Group.findSingle(query);
@@ -223,6 +238,7 @@ class Controller extends events.EventEmitter {
      * @param {Object} query
      * @param {number} query.groupID
      * @returns {Promise}
+     * @fulfil {Group[]}
      */
     public async getGroups(query: {groupID: number}): Promise<Group[]> {
         return Group.find(query);
@@ -232,6 +248,7 @@ class Controller extends events.EventEmitter {
      * Create a Group
      * @param {number} groupID
      * @returns {Promise}
+     * @fulfil {Group}
      */
     public async createGroup(groupID: number): Promise<Group> {
         return Group.create(groupID);
