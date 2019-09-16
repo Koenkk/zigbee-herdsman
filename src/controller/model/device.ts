@@ -200,7 +200,7 @@ class Device extends Entity {
             typeQuery.type = query.type;
         }
 
-        const results = await this.database.find({...queryActual, ...typeQuery});
+        const results = await Device.database.find({...queryActual, ...typeQuery});
         return results.map((r): Device => {
             const device = this.fromDatabaseRecord(r);
             if (!this.lookup[device.ieeeAddr]) {
@@ -229,14 +229,14 @@ class Device extends Entity {
             );
         });
 
-        const ID = await this.database.newID();
+        const ID = await Device.database.newID();
 
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false, {},
         );
 
-        await this.database.insert(device.toDatabaseRecord());
+        await Device.database.insert(device.toDatabaseRecord());
 
         this.lookup[device.ieeeAddr] = device;
         return this.lookup[device.ieeeAddr];

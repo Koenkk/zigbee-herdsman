@@ -69,7 +69,7 @@ class Group extends Entity {
     }
 
     public static async find(query: {groupID?: number}): Promise<Group[]> {
-        const results = await this.database.find({...query, type: 'Group'});
+        const results = await Group.database.find({...query, type: 'Group'});
         const groups = [];
         for (const result of results) {
             const group = await this.fromDatabaseRecord(result);
@@ -89,9 +89,9 @@ class Group extends Entity {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
 
-        const databaseID = await this.database.newID();
+        const databaseID = await Group.database.newID();
         const group = new Group(databaseID, groupID, new Set(), {});
-        await this.database.insert(group.toDatabaseRecord());
+        await Group.database.insert(group.toDatabaseRecord());
 
         this.lookup[group.groupID] = group;
         return this.lookup[group.groupID];
