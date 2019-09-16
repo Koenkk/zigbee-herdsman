@@ -12,6 +12,7 @@ const mockSerialPortOpen = jest.fn().mockImplementation((cb) => cb());
 const mockSerialPortConstructor = jest.fn();
 const mockSerialPortOnce = jest.fn();
 const mockSerialPortWrite = jest.fn((buffer, cb) => cb());
+let mockSerialPortIsOpen = false;
 
 jest.mock('../../../src/utils/wait', () => {
     return jest.fn();
@@ -29,6 +30,7 @@ jest.mock('serialport', () => {
             pipe: mockSerialPortPipe,
             write: mockSerialPortWrite,
             flush: mockSerialPortFlush,
+            isOpen: mockSerialPortIsOpen,
         };
     });
 });
@@ -94,6 +96,7 @@ describe('ZNP', () => {
 
     it('Open with error', async () => {
         mockSerialPortOpen.mockImplementationOnce((cb) => cb('failed!'));
+        mockSerialPortIsOpen = true;
 
         let error = false;
 
@@ -112,6 +115,33 @@ describe('ZNP', () => {
         expect(error).toEqual(new Error("Error while opening serialport 'failed!'"));
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
         expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortClose).toHaveBeenCalledTimes(1);
+        expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(0);
+        expect(mockSerialPortOnce).toHaveBeenCalledTimes(0);
+    });
+
+    it('Open with error when serialport is not open', async () => {
+        mockSerialPortOpen.mockImplementationOnce((cb) => cb('failed!'));
+        mockSerialPortIsOpen = false;
+
+        let error = false;
+
+        try {
+            await znp.open();
+        } catch (e) {
+            error = e;
+        }
+
+        expect(SerialPort).toHaveBeenCalledTimes(1);
+        expect(SerialPort).toHaveBeenCalledWith(
+            "/dev/ttyACM0",
+            {"autoOpen": false, "baudRate": 100, "rtscts": true},
+        );
+
+        expect(error).toEqual(new Error("Error while opening serialport 'failed!'"));
+        expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortClose).toHaveBeenCalledTimes(0);
         expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(0);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(0);
     });
