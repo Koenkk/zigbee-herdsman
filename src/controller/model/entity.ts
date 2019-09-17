@@ -6,11 +6,11 @@ abstract class Entity {
     protected static adapter: Adapter;
 
     public static injectDatabse(database: Database): void {
-        this.database = database;
+        Entity.database = database;
     }
 
     public static injectAdapter(adapter: Adapter): void {
-        this.adapter = adapter;
+        Entity.adapter = adapter;
     }
 
     abstract isType(type: string): boolean;

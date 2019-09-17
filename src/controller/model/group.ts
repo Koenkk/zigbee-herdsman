@@ -69,7 +69,7 @@ class Group extends Entity {
     }
 
     public static async find(query: {groupID?: number}): Promise<Group[]> {
-        const results = await Group.database.find({...query, type: 'Group'});
+        const results = await Entity.database.find({...query, type: 'Group'});
         const groups = [];
         for (const result of results) {
             const group = await this.fromDatabaseRecord(result);
@@ -89,21 +89,21 @@ class Group extends Entity {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
 
-        const databaseID = await Group.database.newID();
+        const databaseID = await Entity.database.newID();
         const group = new Group(databaseID, groupID, new Set(), {});
-        await Group.database.insert(group.toDatabaseRecord());
+        await Entity.database.insert(group.toDatabaseRecord());
 
         this.lookup[group.groupID] = group;
         return this.lookup[group.groupID];
     }
 
     public async removeFromDatabase(): Promise<void> {
-        await Group.database.remove(this.databaseID);
+        await Entity.database.remove(this.databaseID);
         delete Group.lookup[this.groupID];
     }
 
     private async save(): Promise<void> {
-        await Group.database.update(this.databaseID, this.toDatabaseRecord());
+        await Entity.database.update(this.databaseID, this.toDatabaseRecord());
     }
 
     public async addMember(endpoint: Endpoint): Promise<void> {

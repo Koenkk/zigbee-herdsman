@@ -161,7 +161,7 @@ class Device extends Entity {
     }
 
     private async save(): Promise<void> {
-        await Device.database.update(this.ID, this.toDatabaseRecord());
+        await Entity.database.update(this.ID, this.toDatabaseRecord());
     }
 
     public static async findSingle(
@@ -200,7 +200,7 @@ class Device extends Entity {
             typeQuery.type = query.type;
         }
 
-        const results = await Device.database.find({...queryActual, ...typeQuery});
+        const results = await Entity.database.find({...queryActual, ...typeQuery});
         return results.map((r): Device => {
             const device = this.fromDatabaseRecord(r);
             if (!this.lookup[device.ieeeAddr]) {
@@ -229,14 +229,14 @@ class Device extends Entity {
             );
         });
 
-        const ID = await Device.database.newID();
+        const ID = await Entity.database.newID();
 
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false, {},
         );
 
-        await Device.database.insert(device.toDatabaseRecord());
+        await Entity.database.insert(device.toDatabaseRecord());
 
         this.lookup[device.ieeeAddr] = device;
         return this.lookup[device.ieeeAddr];
@@ -387,7 +387,7 @@ class Device extends Entity {
     }
 
     public async removeFromDatabase(): Promise<void> {
-        await Device.database.remove(this.ID);
+        await Entity.database.remove(this.ID);
         delete Device.lookup[this.ieeeAddr];
     }
 
