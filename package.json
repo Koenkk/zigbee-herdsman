@@ -34,6 +34,7 @@
   "deprecated": false,
   "description": "An open source ZigBee gateway solution with node.js.",
   "devDependencies": {
+    "@babel/cli": "*",
     "@babel/core": "*",
     "@babel/plugin-proposal-class-properties": "*",
     "@babel/plugin-proposal-object-rest-spread": "*",
@@ -49,6 +50,8 @@
     "babel-jest": "*",
     "eslint": "*",
     "jest": "*",
+    "jsdoc-babel": "*",
+    "jsdoc-to-markdown": "*",
     "regenerator-runtime": "*",
     "tmp": "*",
     "typescript": "*"
@@ -71,7 +74,8 @@
     "test": "jest test",
     "test-with-coverage": "jest test --coverage --collectCoverageFrom '**/*.{ts,tsx}'",
     "test-watch": "jest test --watch",
-    "eslint": "node_modules/.bin/eslint . --ext .ts"
+    "eslint": "node_modules/.bin/eslint . --ext .ts",
+    "doc": "jsdoc2md --files index.js ./src/controller/model/*.ts ./src/controller/*.ts --configure ./jsdoc2md.json > ./docs/api.md"
   },
   "version": "0.6.11",
   "jest": {
