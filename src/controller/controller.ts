@@ -76,12 +76,6 @@ class Controller extends events.EventEmitter {
         this.options = mixin(DefaultOptions, options);
         this.adapter = new ZStackAdapter(this.options.network, this.options.serialPort, this.options.backupPath);
 
-        this.adapter.on(AdapterEvents.Events.deviceJoined, this.onDeviceJoined.bind(this));
-        this.adapter.on(AdapterEvents.Events.zclData, this.onZclData.bind(this));
-        this.adapter.on(AdapterEvents.Events.disconnected, this.onAdapterDisconnected.bind(this));
-        this.adapter.on(AdapterEvents.Events.deviceAnnounce, this.onDeviceAnnounce.bind(this));
-        this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
-
         // Validate options
         for (const channel of this.options.network.channelList) {
             if (channel < 11 || channel > 26) {
@@ -104,6 +98,13 @@ class Controller extends events.EventEmitter {
         debug.log(`Injected database: ${this.database != null}, adapter: ${this.adapter != null}`);
         Entity.injectAdapter(this.adapter);
         Entity.injectDatabse(this.database);
+
+        // Register adapter events
+        this.adapter.on(AdapterEvents.Events.deviceJoined, this.onDeviceJoined.bind(this));
+        this.adapter.on(AdapterEvents.Events.zclData, this.onZclData.bind(this));
+        this.adapter.on(AdapterEvents.Events.disconnected, this.onAdapterDisconnected.bind(this));
+        this.adapter.on(AdapterEvents.Events.deviceAnnounce, this.onDeviceAnnounce.bind(this));
+        this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
 
         if (startResult === 'resetted') {
             debug.log('Clearing database...');

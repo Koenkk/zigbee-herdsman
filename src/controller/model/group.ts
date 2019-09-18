@@ -92,7 +92,7 @@ class Group extends Entity {
      * @fulfil {Group}
      */
     public static async find(query: {groupID?: number}): Promise<Group[]> {
-        const results = await Entity.getDatabase().find({...query, type: 'Group'});
+        const results = await Entity.database.find({...query, type: 'Group'});
         const groups = [];
         for (const result of results) {
             const group = await this.fromDatabaseRecord(result);
@@ -117,9 +117,9 @@ class Group extends Entity {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
 
-        const databaseID = await Entity.getDatabase().newID();
+        const databaseID = await Entity.database.newID();
         const group = new Group(databaseID, groupID, new Set(), {});
-        await Entity.getDatabase().insert(group.toDatabaseRecord());
+        await Entity.database.insert(group.toDatabaseRecord());
 
         this.lookup[group.groupID] = group;
         return this.lookup[group.groupID];
@@ -129,7 +129,7 @@ class Group extends Entity {
      * @returns {Promise}
      */
     public async removeFromDatabase(): Promise<void> {
-        await Entity.getDatabase().remove(this.databaseID);
+        await Entity.database.remove(this.databaseID);
         delete Group.lookup[this.groupID];
     }
 
@@ -137,7 +137,7 @@ class Group extends Entity {
      * @returns {Promise}
      */
     private async save(): Promise<void> {
-        await Entity.getDatabase().update(this.databaseID, this.toDatabaseRecord());
+        await Entity.database.update(this.databaseID, this.toDatabaseRecord());
     }
 
     /**
@@ -197,7 +197,7 @@ class Group extends Entity {
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
             command.ID, cluster.ID, payload
         );
-        await Entity.getAdapter().sendZclFrameGroup(this.groupID, frame);
+        await Entity.adapter.sendZclFrameGroup(this.groupID, frame);
     }
 }
 
