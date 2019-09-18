@@ -129,7 +129,7 @@ class Endpoint extends Entity {
             Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, disableDefaultResponse,
             manufacturerCode, ZclTransactionSequenceNumber.next(), 'write', cluster.ID, payload
         );
-        await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
+        await Entity.getAdapter().sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
     }
 
     public async read(
@@ -146,7 +146,7 @@ class Endpoint extends Entity {
             Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, disableDefaultResponse,
             manufacturerCode, ZclTransactionSequenceNumber.next(), 'read', cluster.ID, payload
         );
-        const result = await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(
+        const result = await Entity.getAdapter().sendZclFrameNetworkAddressWithResponse(
             this.deviceNetworkAddress, this.ID, frame
         );
         return ZclFrameConverter.attributeList(result.frame);
@@ -167,13 +167,13 @@ class Endpoint extends Entity {
             Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, disableDefaultResponse, manufacturerCode,
             transactionSequenceNumber, 'readRsp', cluster.ID, payload
         );
-        await Endpoint.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
+        await Entity.getAdapter().sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
     }
 
     public async bind(clusterKey: number | string, target: Endpoint | Group): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
-        await Endpoint.adapter.bind(
+        await Entity.getAdapter().bind(
             this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
             target instanceof Endpoint ? target.deviceIeeeAddress : target.get('groupID'),
             type,
@@ -184,7 +184,7 @@ class Endpoint extends Entity {
     public async unbind(clusterKey: number | string, target: Endpoint | Group): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
-        await Endpoint.adapter.unbind(
+        await Entity.getAdapter().unbind(
             this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
             target instanceof Endpoint ? target.deviceIeeeAddress : target.get('groupID'),
             type,
@@ -201,7 +201,7 @@ class Endpoint extends Entity {
             Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, disableDefaultResponse,
             manufacturerCode, transactionSequenceNumber, 'defaultRsp', clusterID, payload
         );
-        await Endpoint.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
+        await Entity.getAdapter().sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
     }
 
     public async configureReporting(
@@ -237,7 +237,7 @@ class Endpoint extends Entity {
             Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, disableDefaultResponse,
             manufacturerCode, ZclTransactionSequenceNumber.next(), 'configReport', cluster.ID, payload
         );
-        await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
+        await Entity.getAdapter().sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
     }
 
     public async command(
@@ -260,12 +260,12 @@ class Endpoint extends Entity {
         );
 
         if (hasResponse) {
-            const result = await Endpoint.adapter.sendZclFrameNetworkAddressWithResponse(
+            const result = await Entity.getAdapter().sendZclFrameNetworkAddressWithResponse(
                 this.deviceNetworkAddress, this.ID, frame
             );
             return result.frame.Payload;
         } else {
-            await Endpoint.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
+            await Entity.getAdapter().sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
         }
     }
 

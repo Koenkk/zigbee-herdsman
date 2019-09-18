@@ -161,7 +161,7 @@ class Device extends Entity {
     }
 
     private async save(): Promise<void> {
-        await Entity.database.update(this.ID, this.toDatabaseRecord());
+        await Entity.getDatabase().update(this.ID, this.toDatabaseRecord());
     }
 
     public static async findSingle(
@@ -200,7 +200,7 @@ class Device extends Entity {
             typeQuery.type = query.type;
         }
 
-        const results = await Entity.database.find({...queryActual, ...typeQuery});
+        const results = await Entity.getDatabase().find({...queryActual, ...typeQuery});
         return results.map((r): Device => {
             const device = this.fromDatabaseRecord(r);
             if (!this.lookup[device.ieeeAddr]) {
@@ -229,14 +229,14 @@ class Device extends Entity {
             );
         });
 
-        const ID = await Entity.database.newID();
+        const ID = await Entity.getDatabase().newID();
 
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false, {},
         );
 
-        await Entity.database.insert(device.toDatabaseRecord());
+        await Entity.getDatabase().insert(device.toDatabaseRecord());
 
         this.lookup[device.ieeeAddr] = device;
         return this.lookup[device.ieeeAddr];
@@ -274,7 +274,7 @@ class Device extends Entity {
 
     private async interviewInternal(): Promise<void> {
         const nodeDescriptorQuery = async (): Promise<void> => {
-            const nodeDescriptor = await Device.adapter.nodeDescriptor(this.networkAddress);
+            const nodeDescriptor = await Entity.getAdapter().nodeDescriptor(this.networkAddress);
             this.manufacturerID = nodeDescriptor.manufacturerCode;
             this.type = nodeDescriptor.type;
             await this.save();
@@ -319,7 +319,7 @@ class Device extends Entity {
             }
         }
 
-        const activeEndpoints = await Device.adapter.activeEndpoints(this.networkAddress);
+        const activeEndpoints = await Entity.getAdapter().activeEndpoints(this.networkAddress);
         this.endpoints = activeEndpoints.endpoints.map((e): Endpoint => {
             return Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         });
@@ -327,7 +327,7 @@ class Device extends Entity {
         debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
         for (const endpoint of this.endpoints) {
-            const simpleDescriptor = await Device.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
+            const simpleDescriptor = await Entity.getAdapter().simpleDescriptor(this.networkAddress, endpoint.ID);
             endpoint.set('profileID', simpleDescriptor.profileID);
             endpoint.set('deviceID', simpleDescriptor.deviceID);
             endpoint.set('inputClusters', simpleDescriptor.inputClusters);
@@ -382,21 +382,21 @@ class Device extends Entity {
     }
 
     public async removeFromNetwork(): Promise<void> {
-        await Device.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
+        await Entity.getAdapter().removeDevice(this.networkAddress, this.ieeeAddr);
         await this.removeFromDatabase();
     }
 
     public async removeFromDatabase(): Promise<void> {
-        await Entity.database.remove(this.ID);
+        await Entity.getDatabase().remove(this.ID);
         delete Device.lookup[this.ieeeAddr];
     }
 
     public async lqi(): Promise<LQI> {
-        return await Device.adapter.lqi(this.networkAddress);
+        return await Entity.getAdapter().lqi(this.networkAddress);
     }
 
     public async routingTable(): Promise<RoutingTable> {
-        return await Device.adapter.routingTable(this.networkAddress);
+        return await Entity.getAdapter().routingTable(this.networkAddress);
     }
 
     public async ping(): Promise<void> {
