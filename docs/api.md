@@ -113,7 +113,7 @@
 
 | Name | Type |
 | --- | --- |
-| Device#endpoints | <code>Array.&lt;Endpoints&gt;</code> | 
+| Device#endpoints | [<code>Array.&lt;Endpoint&gt;</code>](#Endpoint) | 
 
 <a name="Device+manufacturerName"></a>
 

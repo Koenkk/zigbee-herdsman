@@ -66,7 +66,7 @@ class Device extends Entity {
         this.networkAddress = networkAddress;
         /** @property {number} [Device#manufacturerID] */
         this.manufacturerID = manufacturerID;
-        /** @property {Endpoints[]} Device#endpoints */
+        /** @property {Endpoint[]} Device#endpoints */
         this.endpoints = endpoints;
         /** @property {string} [Device#manufacturerName] */
         this.manufacturerName = manufacturerName;
