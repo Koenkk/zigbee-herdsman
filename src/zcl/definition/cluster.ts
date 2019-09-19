@@ -1,6 +1,8 @@
+/* eslint max-len: 0 */
 import DataType from './dataType';
 import * as TsType from '../tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
+import ManufacturerCode from './manufacturerCode';
 
 interface AttributeDefinition {
     ID: number;
@@ -1580,14 +1582,14 @@ const Cluster: {
             windowCoveringMode: {ID: 23, type: DataType.bitmap8},
             intermediateSetpointsLift: {ID: 24, type: DataType.octetStr},
             intermediateSetpointsTilt: {ID: 25, type: DataType.octetStr},
-            ubisysTurnaroundGuardTime: {ID: 0x1000, type: DataType.uint8},
-            ubisysLiftToTiltTransitionSteps: {ID: 0x1001, type: DataType.uint16},
-            ubisysTotalSteps: {ID: 0x1002, type: DataType.uint16},
-            ubisysLiftToTiltTransitionSteps2: {ID: 0x1003, type: DataType.uint16},
-            ubisysTotalSteps2: {ID: 0x1004, type: DataType.uint16},
-            ubisysAdditionalSteps: {ID: 0x1005, type: DataType.uint8},
-            ubisysInactivePowerThreshold: {ID: 0x1006, type: DataType.uint16},
-            ubisysStartupSteps: {ID: 0x1007, type: DataType.uint16},
+            ubisysTurnaroundGuardTime: {ID: 0x1000, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysLiftToTiltTransitionSteps: {ID: 0x1001, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysTotalSteps: {ID: 0x1002, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysLiftToTiltTransitionSteps2: {ID: 0x1003, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysTotalSteps2: {ID: 0x1004, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysAdditionalSteps: {ID: 0x1005, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysInactivePowerThreshold: {ID: 0x1006, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysStartupSteps: {ID: 0x1007, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
         },
         commands: {
             upOpen: {
@@ -3439,6 +3441,7 @@ const Cluster: {
     },
     manuSpecificUbisysDeviceSetup: {
         ID: 0xfc00,
+        manufacturerCode: ManufacturerCode.Ubisys,
         attributes: {
             inputConfigurations: {ID: 0x0000, type: DataType.array},
             inputActions: {ID: 0x0001, type: DataType.array},

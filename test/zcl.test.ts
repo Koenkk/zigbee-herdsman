@@ -751,6 +751,30 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
+    it('Zcl utils get cluster manufacturerCode', () => {
+        const cluster = Zcl.Utils.getCluster(0xfc00, 0x10f2);
+        expect(cluster.ID).toBe(0xfc00);
+        expect(cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+    });
+
+    it('Zcl utils get cluster manufacturerCode wrong', () => {
+        const cluster = Zcl.Utils.getCluster(0xfc00, 123);
+        expect(cluster.ID).toBe(0xfc00);
+        expect(cluster.name).toBe('manuSpecificPhilips');
+    });
+
+    it('Zcl utils get cluster attributes manufacturerCode', () => {
+        const cluster = Zcl.Utils.getCluster('closuresWindowCovering', 0x10f2);
+        const attribute = cluster.getAttribute(0x1000);
+        expect(attribute).toStrictEqual({"ID": 4096, "manufacturerCode": 4338, "name": "ubisysTurnaroundGuardTime", "type": 32});
+    });
+
+    it('Zcl utils get cluster attributes manufacturerCode wrong (should get it even tough manufacturerCode mismatches)', () => {
+        const cluster = Zcl.Utils.getCluster('closuresWindowCovering', 123);
+        const attribute = cluster.getAttribute(0x1000);
+        expect(attribute).toStrictEqual({"ID": 4096, "manufacturerCode": 4338, "name": "ubisysTurnaroundGuardTime", "type": 32});
+    });
+
     it('Zcl utils get command', () => {
         const cluster = Zcl.Utils.getCluster('genOnOff');
         const command = cluster.getCommand(0);

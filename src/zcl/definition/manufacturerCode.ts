@@ -1,5 +1,3 @@
-const manufacturerCode: {[s: string]: number} = {
+export default {
     Ubisys: 0x10f2,
 };
-
-export default manufacturerCode;

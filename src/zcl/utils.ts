@@ -35,10 +35,21 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
     let name: string;
 
     if (typeof key === 'number') {
-        for (const [clusterName, cluster] of Object.entries(Cluster)) {
-            if (cluster.ID === key && (!manufacturerCode || cluster.manufacturerCode === manufacturerCode)) {
-                name = clusterName;
-                break;
+        if (manufacturerCode) {
+            for (const [clusterName, cluster] of Object.entries(Cluster)) {
+                if (cluster.ID === key && cluster.manufacturerCode === manufacturerCode) {
+                    name = clusterName;
+                    break;
+                }
+            }
+        }
+
+        if (!name) {
+            for (const [clusterName, cluster] of Object.entries(Cluster)) {
+                if (cluster.ID === key) {
+                    name = clusterName;
+                    break;
+                }
             }
         }
     } else {
@@ -52,7 +63,7 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
     }
 
     // eslint-disable-next-line
-    let attributes: {[s: string]: TsType.Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).filter(([k, v]) => !v.manufacturerCode || v.manufacturerCode === manufacturerCode).map(([k, v]): any => ({[k]: {...v, name: k}})));
+    let attributes: {[s: string]: TsType.Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).map(([k, v]): any => ({[k]: {...v, name: k}})));
     // eslint-disable-next-line
     const commands: {[s: string]: TsType.Command} = Object.assign({}, ...Object.entries(cluster.commands).map(([k, v]): any => ({[k]: {...v, name: k}})));
 
@@ -60,7 +71,15 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
         let result: TsType.Attribute = null;
 
         if (typeof key === 'number') {
-            result = Object.values(attributes).find((a): boolean => a.ID === key);
+            if (manufacturerCode) {
+                result = Object.values(attributes).find((a): boolean => {
+                    return a.ID === key && a.manufacturerCode === manufacturerCode;
+                });
+            }
+
+            if (!result) {
+                result = Object.values(attributes).find((a): boolean => a.ID === key);
+            }
         } else {
             result = Object.values(attributes).find((a): boolean => a.name === key);
         }

@@ -6,6 +6,7 @@ interface Attribute {
     ID: number;
     name: string;
     type: DataType;
+    manufacturerCode?: number;
 }
 
 interface Parameter {
