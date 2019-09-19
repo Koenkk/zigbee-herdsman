@@ -751,6 +751,12 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
+    it('Zcl utils get cluster without manufacturerCode', () => {
+        const cluster = Zcl.Utils.getCluster(0xfc00);
+        expect(cluster.ID).toBe(0xfc00);
+        expect(cluster.name).toBe('manuSpecificPhilips');
+    });
+
     it('Zcl utils get cluster manufacturerCode', () => {
         const cluster = Zcl.Utils.getCluster(0xfc00, 0x10f2);
         expect(cluster.ID).toBe(0xfc00);
