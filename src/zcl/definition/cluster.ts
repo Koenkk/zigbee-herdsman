@@ -1580,6 +1580,14 @@ const Cluster: {
             windowCoveringMode: {ID: 23, type: DataType.bitmap8},
             intermediateSetpointsLift: {ID: 24, type: DataType.octetStr},
             intermediateSetpointsTilt: {ID: 25, type: DataType.octetStr},
+            ubisysTurnaroundGuardTime: {ID: 0x1000, type: DataType.uint8},
+            ubisysLiftToTiltTransitionSteps: {ID: 0x1001, type: DataType.uint16},
+            ubisysTotalSteps: {ID: 0x1002, type: DataType.uint16},
+            ubisysLiftToTiltTransitionSteps2: {ID: 0x1003, type: DataType.uint16},
+            ubisysTotalSteps2: {ID: 0x1004, type: DataType.uint16},
+            ubisysAdditionalSteps: {ID: 0x1005, type: DataType.uint8},
+            ubisysInactivePowerThreshold: {ID: 0x1006, type: DataType.uint16},
+            ubisysStartupSteps: {ID: 0x1007, type: DataType.uint16},
         },
         commands: {
             upOpen: {
@@ -3428,6 +3436,17 @@ const Cluster: {
                 ],
             },
         },
+    },
+    manuSpecificUbisysDeviceSetup: {
+        ID: 0xfc00,
+        attributes: {
+            inputConfigurations: {ID: 0x0000, type: DataType.array},
+            inputActions: {ID: 0x0001, type: DataType.array},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
     },
     manuSpecificCluster: {
         ID: 65535,
