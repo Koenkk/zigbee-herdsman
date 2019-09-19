@@ -31,12 +31,12 @@ function IsDataTypeAnalogOrDiscrete(dataType: DataType): 'ANALOG' | 'DISCRETE' {
     }
 }
 
-function getCluster(key: string | number): TsType.Cluster {
+function getCluster(key: string | number, manufacturerCode: number = null): TsType.Cluster {
     let name: string;
 
     if (typeof key === 'number') {
-        for (const clusterName in Cluster) {
-            if (Cluster[clusterName].ID === key) {
+        for (const [clusterName, cluster] of Object.entries(Cluster)) {
+            if (cluster.ID === key && (!manufacturerCode || cluster.manufacturerCode === manufacturerCode)) {
                 name = clusterName;
                 break;
             }
@@ -52,7 +52,7 @@ function getCluster(key: string | number): TsType.Cluster {
     }
 
     // eslint-disable-next-line
-    const attributes: {[s: string]: TsType.Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).map(([k, v]): any => ({[k]: {...v, name: k}})));
+    let attributes: {[s: string]: TsType.Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).filter(([k, v]) => !v.manufacturerCode || v.manufacturerCode === manufacturerCode).map(([k, v]): any => ({[k]: {...v, name: k}})));
     // eslint-disable-next-line
     const commands: {[s: string]: TsType.Command} = Object.assign({}, ...Object.entries(cluster.commands).map(([k, v]): any => ({[k]: {...v, name: k}})));
 

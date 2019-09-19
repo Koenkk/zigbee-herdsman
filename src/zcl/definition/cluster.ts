@@ -5,10 +5,12 @@ import BuffaloZclDataType from './buffaloZclDataType';
 interface AttributeDefinition {
     ID: number;
     type: DataType;
+    manufacturerCode?: number;
 }
 
 interface ClusterDefinition {
     ID: number;
+    manufacturerCode?: number;
     attributes: {[s: string]: AttributeDefinition};
     commands: {
         [s: string]: CommandDefinition;
