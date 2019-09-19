@@ -59,7 +59,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
 
 type MessagePayloadType =
     // Global
-    'attributeReport' | 'readResponse' |
+    'attributeReport' | 'readResponse' | 'raw' |
     // Specific
     'commandOn' | 'commandOffWithEffect' | 'commandStep' | 'commandStop' | 'commandHueNotification' |
     'commandOff' | 'commandStepColorTemp' | 'commandMoveWithOnOff' | 'commandMove' | 'commandMoveHue' |

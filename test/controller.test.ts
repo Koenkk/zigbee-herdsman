@@ -529,6 +529,78 @@ describe('Controller', () => {
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 
+    it('Receive raw data', async () => {
+        await controller.start();
+        await removeAllDevices();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['rawData']({
+            clusterID: 9,
+            networkAddress: 129,
+            data: Buffer.from([0, 1, 2, 3]),
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.message.length).toBe(1);
+        const expected = {
+            "cluster": "genAlarms",
+            "type":"raw",
+            "device":{
+                "ID":1,
+                "ieeeAddr":"0x129",
+                "networkAddress":129,
+                "lastSeen": deepClone(Date.now()),
+                "endpoints":[
+                    {
+                    "ID":1,
+                    "inputClusters":[
+                        1
+                    ],
+                    "outputClusters":[
+                        2
+                    ],
+                    "deviceNetworkAddress":129,
+                    "deviceIeeeAddress":"0x129",
+                    "deviceID":5,
+                    "profileID":99
+                    }
+                ],
+                "type":"Router",
+                "manufacturerID":1212,
+                "manufacturerName":"KoenAndCo",
+                "meta": {},
+                "powerSource":"Mains (single phase)",
+                "modelID":"myModelID",
+                "applicationVersion":2,
+                "stackVersion":101,
+                "zclVersion":1,
+                "hardwareVersion":3,
+                "dateCode":"201901",
+                "softwareBuildID":"1.01",
+                "interviewCompleted":true,
+                "interviewing":false
+            },
+            "endpoint":{
+                "ID":1,
+                "deviceID": 5,
+                "inputClusters":[1],
+                "outputClusters":[2],
+                "deviceNetworkAddress":129,
+                "deviceIeeeAddress":"0x129",
+                "profileID": 99,
+            },
+            "data": {
+                data: [0, 1, 2, 3],
+                type: 'Buffer',
+            },
+            "linkquality":50,
+            "groupID":1
+         };
+        expect(deepClone(events.message[0])).toStrictEqual(expected);
+    });
+
     it('Receive zclData from unkonwn device shouldnt emit anything', async () => {
         await controller.start();
         await removeAllDevices();

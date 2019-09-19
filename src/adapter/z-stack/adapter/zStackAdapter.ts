@@ -425,9 +425,29 @@ class ZStackAdapter extends Adapter {
             if (object.subsystem === Subsystem.AF) {
                 /* istanbul ignore else */
                 if (object.command === 'incomingMsg' || object.command === 'incomingMsgExt') {
-                    const payload: Events.ZclDataPayload = this.incomingMsgToZclDataPayload(object);
-                    this.waitress.resolve(payload);
-                    this.emit(Events.Events.zclData, payload);
+                    try {
+                        const payload: Events.ZclDataPayload = {
+                            frame: ZclFrame.fromBuffer(object.payload.clusterid, object.payload.data),
+                            networkAddress: object.payload.srcaddr,
+                            endpoint: object.payload.srcendpoint,
+                            linkquality: object.payload.linkquality,
+                            groupID: object.payload.groupid,
+                        };
+
+                        this.waitress.resolve(payload);
+                        this.emit(Events.Events.zclData, payload);
+                    } catch (error) {
+                        const payload: Events.RawDataPayload = {
+                            clusterID: object.payload.clusterid,
+                            data: object.payload.data,
+                            networkAddress: object.payload.srcaddr,
+                            endpoint: object.payload.srcendpoint,
+                            linkquality: object.payload.linkquality,
+                            groupID: object.payload.groupid,
+                        };
+
+                        this.emit(Events.Events.rawData, payload);
+                    }
                 }
             }
         }
@@ -538,16 +558,6 @@ class ZStackAdapter extends Adapter {
         } else {
             return address.toString();
         }
-    }
-
-    private incomingMsgToZclDataPayload(object: ZpiObject): Events.ZclDataPayload {
-        return {
-            frame: ZclFrame.fromBuffer(object.payload.clusterid, object.payload.data),
-            networkAddress: object.payload.srcaddr,
-            endpoint: object.payload.srcendpoint,
-            linkquality: object.payload.linkquality,
-            groupID: object.payload.groupid,
-        };
     }
 
     private waitDefaultResponse(

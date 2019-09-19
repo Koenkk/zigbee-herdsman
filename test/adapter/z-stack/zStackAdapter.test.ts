@@ -1681,6 +1681,21 @@ describe('zStackAdapter', () => {
         expect(zclData.frame).toStrictEqual(responseFrame);
     });
 
+    it('Incoming message raw (not ZCL)', async () => {
+        basicMocks();
+        await adapter.start();
+        let rawData;
+        const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 1, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: Buffer.from([0x0, 0x1])}};
+        adapter.on("rawData", (p) => {rawData = p;})
+        znpReceived(object);
+        expect(rawData.clusterID).toStrictEqual(1);
+        expect(rawData.endpoint).toStrictEqual(20);
+        expect(rawData.groupID).toStrictEqual(12);
+        expect(rawData.linkquality).toStrictEqual(101);
+        expect(rawData.networkAddress).toStrictEqual(2);
+        expect(rawData.data).toStrictEqual(Buffer.from([0x0, 0x01]));
+    });
+
     it('Adapter disconnected', async () => {
         basicMocks();
         await adapter.start();

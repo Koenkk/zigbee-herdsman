@@ -7,6 +7,7 @@ import * as Events from './events';
 import {KeyValue} from './tstype';
 import Debug from "debug";
 import fs from 'fs';
+import {Utils as ZclUtils} from '../zcl';
 
 // @ts-ignore
 import mixin from 'mixin-deep';
@@ -101,7 +102,8 @@ class Controller extends events.EventEmitter {
 
         // Register adapter events
         this.adapter.on(AdapterEvents.Events.deviceJoined, this.onDeviceJoined.bind(this));
-        this.adapter.on(AdapterEvents.Events.zclData, this.onZclData.bind(this));
+        this.adapter.on(AdapterEvents.Events.zclData, (data) => this.onZclOrRawData('zcl', data));
+        this.adapter.on(AdapterEvents.Events.rawData, (data) => this.onZclOrRawData('raw', data));
         this.adapter.on(AdapterEvents.Events.disconnected, this.onAdapterDisconnected.bind(this));
         this.adapter.on(AdapterEvents.Events.deviceAnnounce, this.onDeviceAnnounce.bind(this));
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
@@ -362,93 +364,117 @@ class Controller extends events.EventEmitter {
         }
     }
 
-    private async onZclData(zclData: AdapterEvents.ZclDataPayload): Promise<void> {
-        debug.log(`Received ZCL data '${JSON.stringify(zclData)}'`);
+    private isZclDataPayload(
+        dataPayload: AdapterEvents.ZclDataPayload | AdapterEvents.RawDataPayload, type: 'zcl' | 'raw'
+    ): dataPayload is AdapterEvents.ZclDataPayload {
+        return type === 'zcl';
+    }
 
-        const device = await Device.findSingle({networkAddress: zclData.networkAddress});
+    private async onZclOrRawData(
+        dataType: 'zcl' | 'raw', dataPayload: AdapterEvents.ZclDataPayload | AdapterEvents.RawDataPayload
+    ): Promise<void> {
+        debug.log(`Received '${dataType}' data '${JSON.stringify(dataPayload)}'`);
+
+        const device = await Device.findSingle({networkAddress: dataPayload.networkAddress});
         if (!device) {
-            debug.log(`ZCL data is from unknown device with network adress '${zclData.networkAddress}', skipping...`);
+            debug.log(
+                `'${dataType}' data is from unknown device with network adress '${dataPayload.networkAddress}', ` +
+                `skipping...`
+            );
             return;
         }
 
         device.updateLastSeen();
 
-        let endpoint = device.getEndpoint(zclData.endpoint);
+        let endpoint = device.getEndpoint(dataPayload.endpoint);
         if (!endpoint) {
             debug.log(
-                `ZCL data is from unknown endpoint '${zclData.endpoint}' from device with network adress` +
-                `'${zclData.networkAddress}', creating it...`
+                `'${dataType}' data is from unknown endpoint '${dataPayload.endpoint}' from device with ` +
+                `network adress '${dataPayload.networkAddress}', creating it...`
             );
-            endpoint = await device.createEndpoint(zclData.endpoint);
+            endpoint = await device.createEndpoint(dataPayload.endpoint);
         }
 
         // Parse command for event
-        const frame = zclData.frame;
-        const command = frame.getCommand();
-
         let type: Events.MessagePayloadType = undefined;
         let data: KeyValue;
-        if (frame.isGlobal()) {
-            if (frame.isCommand('report')) {
-                type = 'attributeReport';
-                data = ZclFrameConverter.attributeList(zclData.frame);
+        let cluster = undefined;
+
+        if (this.isZclDataPayload(dataPayload, dataType)) {
+            const frame = dataPayload.frame;
+            const command = frame.getCommand();
+            cluster = frame.getCluster().name;
+
+            if (frame.isGlobal()) {
+                if (frame.isCommand('report')) {
+                    type = 'attributeReport';
+                    data = ZclFrameConverter.attributeList(dataPayload.frame);
+                } else {
+                    /* istanbul ignore else */
+                    if (frame.isCommand('readRsp')) {
+                        type = 'readResponse';
+                        data = ZclFrameConverter.attributeList(dataPayload.frame);
+                    }
+                }
             } else {
                 /* istanbul ignore else */
-                if (frame.isCommand('readRsp')) {
-                    type = 'readResponse';
-                    data = ZclFrameConverter.attributeList(zclData.frame);
+                if (frame.isSpecific()) {
+                    if (Events.CommandsLookup[command.name]) {
+                        type = Events.CommandsLookup[command.name];
+                        data = dataPayload.frame.Payload;
+                    } else {
+                        debug.log(`Skipping command '${command.name}' because it is missing from the lookup`);
+                    }
                 }
+            }
+
+            // Some device report it's modelID through a readResponse or attributeReport
+            if ((type === 'readResponse' || type === 'attributeReport') && data.modelId && !device.get('modelID')) {
+                await device.set('modelID', data.modelId);
             }
         } else {
-            /* istanbul ignore else */
-            if (frame.isSpecific()) {
-                if (Events.CommandsLookup[command.name]) {
-                    type = Events.CommandsLookup[command.name];
-                    data = zclData.frame.Payload;
-                } else {
-                    debug.log(`Skipping command '${command.name}' because it is missing from the lookup`);
-                }
-            }
-        }
-
-        // Some device report it's modelID through a readResponse or attributeReport
-        if ((type === 'readResponse' || type === 'attributeReport') && data.modelId && !device.get('modelID')) {
-            await device.set('modelID', data.modelId);
+            type = 'raw';
+            data = dataPayload.data;
+            cluster = ZclUtils.getCluster(dataPayload.clusterID).name;
         }
 
         if (type && data) {
-            const endpoint = device.getEndpoint(zclData.endpoint);
-            const linkquality = zclData.linkquality;
-            const groupID = zclData.groupID;
-            const cluster = frame.getCluster().name;
+            const endpoint = device.getEndpoint(dataPayload.endpoint);
+            const linkquality = dataPayload.linkquality;
+            const groupID = dataPayload.groupID;
             const eventData: Events.MessagePayload = {
                 type: type, device, endpoint, data, linkquality, groupID, cluster
             };
+
             /**
              * @event Controller#message
              */
             this.emit(Events.Events.message, eventData);
         }
 
-        // Send a default response if necessary.
-        if (!zclData.frame.Header.frameControl.disableDefaultResponse) {
-            try {
-                await endpoint.defaultResponse(
-                    zclData.frame.getCommand().ID, 0, zclData.frame.ClusterID,
-                    zclData.frame.Header.transactionSequenceNumber,
-                );
-            } catch (error) {
-                debug.error(`Default response to ${endpoint.get('deviceIeeeAddress')} failed`);
-            }
-        }
 
-        // Reponse to time reads
-        if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
-            const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
-            try {
-                await endpoint.readResponse(frame.getCluster().ID, frame.Header.transactionSequenceNumber, {time});
-            } catch (error) {
-                debug.error(`genTime response to ${endpoint.get('deviceIeeeAddress')} failed`);
+        if (this.isZclDataPayload(dataPayload, dataType)) {
+            const frame = dataPayload.frame;
+
+            // Send a default response if necessary.
+            if (!frame.Header.frameControl.disableDefaultResponse) {
+                try {
+                    await endpoint.defaultResponse(
+                        frame.getCommand().ID, 0, frame.ClusterID, frame.Header.transactionSequenceNumber,
+                    );
+                } catch (error) {
+                    debug.error(`Default response to ${endpoint.get('deviceIeeeAddress')} failed`);
+                }
+            }
+
+            // Reponse to time reads
+            if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
+                const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
+                try {
+                    await endpoint.readResponse(frame.getCluster().ID, frame.Header.transactionSequenceNumber, {time});
+                } catch (error) {
+                    debug.error(`genTime response to ${endpoint.get('deviceIeeeAddress')} failed`);
+                }
             }
         }
     }

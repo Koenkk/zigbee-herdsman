@@ -3,6 +3,7 @@ import {ZclFrame} from '../zcl';
 enum Events {
     deviceJoined = "deviceJoined",
     zclData = "zclData",
+    rawData = "rawData",
     disconnected = "disconnected",
     deviceAnnounce = "deviceAnnounce",
     deviceLeave = "deviceLeave"
@@ -31,6 +32,15 @@ interface ZclDataPayload {
     groupID: number;
 }
 
+interface RawDataPayload {
+    clusterID: number;
+    networkAddress: number;
+    data: Buffer;
+    endpoint: number;
+    linkquality: number;
+    groupID: number;
+}
+
 export {
-    Events, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload, DeviceLeavePayload,
+    Events, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload, DeviceLeavePayload, RawDataPayload,
 };
