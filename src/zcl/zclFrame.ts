@@ -35,12 +35,12 @@ const ListTypes: number[] = [
 class ZclFrame {
     public readonly Header: ZclHeader;
     public readonly Payload: ZclPayload;
-    public readonly ClusterID: number;
+    public readonly Cluster: TsType.Cluster;
 
-    public constructor(header: ZclHeader, payload: ZclPayload, clusterID: number) {
+    private constructor(header: ZclHeader, payload: ZclPayload, cluster: TsType.Cluster) {
         this.Header = header;
         this.Payload = payload;
-        this.ClusterID = clusterID;
+        this.Cluster = cluster;
     }
 
     /**
@@ -64,7 +64,8 @@ class ZclFrame {
             commandIdentifier: command.ID,
         };
 
-        return new ZclFrame(header, payload, clusterID);
+        const cluster = Utils.getCluster(clusterID);
+        return new ZclFrame(header, payload, cluster);
     }
 
     public toBuffer(): Buffer {
@@ -144,7 +145,7 @@ class ZclFrame {
 
     private writePayloadCluster(buffalo: BuffaloZcl): void {
         const command = Utils.getSpecificCommand(
-            this.ClusterID, this.Header.frameControl.direction, this.Header.commandIdentifier
+            this.Cluster.ID, this.Header.frameControl.direction, this.Header.commandIdentifier
         );
 
         for (const parameter of command.parameters) {
@@ -161,11 +162,12 @@ class ZclFrame {
             throw new Error("ZclFrame length is lower than minimal length");
         }
 
+        const cluster = Utils.getCluster(clusterID);
         const buffalo = new BuffaloZcl(buffer);
         const header = this.parseHeader(buffalo);
         const payload = this.parsePayload(header, clusterID, buffalo);
 
-        return new ZclFrame(header, payload, clusterID);
+        return new ZclFrame(header, payload, cluster);
     }
 
     private static parseHeader(buffalo: BuffaloZcl): ZclHeader {
@@ -340,7 +342,7 @@ class ZclFrame {
 
     // List of clusters is not completed, feel free to add more.
     public isCluster(clusterName: 'genTime' | 'genAnalogInput' | 'genBasic'): boolean {
-        return this.getCluster().name === clusterName;
+        return this.Cluster.name === clusterName;
     }
 
     // List of commands is not completed, feel free to add more.
@@ -348,14 +350,12 @@ class ZclFrame {
         return this.getCommand().name === commandName;
     }
 
-    public getCluster(): TsType.Cluster {
-        return Utils.getCluster(this.ClusterID);
-    }
-
     public getCommand(): TsType.Command {
         return this.Header.frameControl.frameType === FrameType.GLOBAL ?
             Utils.getGlobalCommand(this.Header.commandIdentifier) :
-            Utils.getSpecificCommand(this.ClusterID, this.Header.frameControl.direction, this.Header.commandIdentifier);
+            Utils.getSpecificCommand(
+                this.Cluster.ID, this.Header.frameControl.direction, this.Header.commandIdentifier
+            );
     }
 }
 

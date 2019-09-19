@@ -356,7 +356,7 @@ describe('Zcl', () => {
 
         expect(frame.Header).toStrictEqual(header);
         expect(frame.Payload).toStrictEqual(payload);
-        expect(frame.getCluster().name).toEqual('genPowerCfg');
+        expect(frame.Cluster.name).toEqual('genPowerCfg');
         expect(frame.getCommand().name).toEqual('discoverRsp');
     });
 

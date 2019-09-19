@@ -7,7 +7,7 @@ function attributeList(frame: ZclFrame): KeyValue {
 
     for (const item of frame.Payload) {
         try {
-            const attribute = frame.getCluster().getAttribute(item.attrId);
+            const attribute = frame.Cluster.getAttribute(item.attrId);
             payload[attribute.name] = item.attrData;
         } catch (error) {
             payload[item.attrId] = item.attrData;

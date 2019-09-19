@@ -403,7 +403,7 @@ class Controller extends events.EventEmitter {
         if (this.isZclDataPayload(dataPayload, dataType)) {
             const frame = dataPayload.frame;
             const command = frame.getCommand();
-            cluster = frame.getCluster().name;
+            cluster = frame.Cluster.name;
 
             if (frame.isGlobal()) {
                 if (frame.isCommand('report')) {
@@ -460,7 +460,7 @@ class Controller extends events.EventEmitter {
             if (!frame.Header.frameControl.disableDefaultResponse) {
                 try {
                     await endpoint.defaultResponse(
-                        frame.getCommand().ID, 0, frame.ClusterID, frame.Header.transactionSequenceNumber,
+                        frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
                     );
                 } catch (error) {
                     debug.error(`Default response to ${endpoint.get('deviceIeeeAddress')} failed`);
@@ -471,7 +471,7 @@ class Controller extends events.EventEmitter {
             if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
                 const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
                 try {
-                    await endpoint.readResponse(frame.getCluster().ID, frame.Header.transactionSequenceNumber, {time});
+                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, {time});
                 } catch (error) {
                     debug.error(`genTime response to ${endpoint.get('deviceIeeeAddress')} failed`);
                 }

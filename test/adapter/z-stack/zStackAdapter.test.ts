@@ -19,6 +19,7 @@ const mockZnpClose = jest.fn();
 const mockQueueExecute = jest.fn().mockImplementation(async (func) => await func());
 
 const mocks = [mockZnpOpen, mockZnpWaitfor, mockZnpRequest, mockZnpClose];
+const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const equalsPartial = (object, expected) => {
     for (const [key, value] of Object.entries(expected)) {
@@ -1472,7 +1473,7 @@ describe('zStackAdapter', () => {
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
         expect(result.networkAddress).toStrictEqual(2);
-        expect(result.frame).toStrictEqual(responseFrame);
+        expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
     });
 
     it('Send zcl frame network address with response with command which has no response', async () => {
@@ -1510,7 +1511,7 @@ describe('zStackAdapter', () => {
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
         expect(result.networkAddress).toStrictEqual(2);
-        expect(result.frame).toStrictEqual(responseFrame);
+        expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
     });
 
     it('Send zcl frame network address data confirm fails with default response', async () => {
@@ -1697,7 +1698,7 @@ describe('zStackAdapter', () => {
         expect(zclData.groupID).toStrictEqual(12);
         expect(zclData.linkquality).toStrictEqual(101);
         expect(zclData.networkAddress).toStrictEqual(2);
-        expect(zclData.frame).toStrictEqual(responseFrame);
+        expect(deepClone(zclData.frame)).toStrictEqual(deepClone(responseFrame));
     });
 
     it('Incoming message raw (not ZCL)', async () => {

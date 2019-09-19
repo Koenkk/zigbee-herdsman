@@ -202,14 +202,14 @@ class ZStackAdapter extends Adapter {
                 this.waitDefaultResponse(networkAddress, endpoint, zclFrame) : null;
             const responsePayload = {
                 networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
-                clusterID: zclFrame.ClusterID, frameType: zclFrame.Header.frameControl.frameType,
+                clusterID: zclFrame.Cluster.ID, frameType: zclFrame.Header.frameControl.frameType,
                 direction: Direction.SERVER_TO_CLIENT, commandIdentifier: command.response,
             };
             const response = this.waitress.waitFor(responsePayload, DefaultTimeout);
 
             try {
                 await this.dataRequest(
-                    networkAddress, endpoint, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
+                    networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
                 );
             } catch (error) {
                 if (defaultResponse) {
@@ -239,7 +239,7 @@ class ZStackAdapter extends Adapter {
 
             try {
                 await this.dataRequest(
-                    networkAddress, endpoint, 1, zclFrame.ClusterID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
+                    networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
                 );
             } catch (error) {
                 if (defaultResponse) {
@@ -258,7 +258,7 @@ class ZStackAdapter extends Adapter {
     public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
-                Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.ClusterID,
+                Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.Cluster.ID,
                 Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
             );
         });
@@ -565,7 +565,7 @@ class ZStackAdapter extends Adapter {
     ): WaitFor {
         const payload = {
             networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
-            clusterID: zclFrame.ClusterID, frameType: FrameType.GLOBAL, direction: Direction.SERVER_TO_CLIENT,
+            clusterID: zclFrame.Cluster.ID, frameType: FrameType.GLOBAL, direction: Direction.SERVER_TO_CLIENT,
             commandIdentifier: Foundation.defaultRsp.ID,
         };
 
@@ -580,7 +580,7 @@ class ZStackAdapter extends Adapter {
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
         return payload.networkAddress === matcher.networkAddress && payload.endpoint === matcher.endpoint &&
             payload.frame.Header.transactionSequenceNumber === matcher.transactionSequenceNumber &&
-            payload.frame.ClusterID === matcher.clusterID &&
+            payload.frame.Cluster.ID === matcher.clusterID &&
             matcher.frameType === payload.frame.Header.frameControl.frameType &&
             matcher.commandIdentifier === payload.frame.Header.commandIdentifier &&
             matcher.direction === payload.frame.Header.frameControl.direction;
