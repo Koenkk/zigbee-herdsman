@@ -426,6 +426,14 @@ class Controller extends events.EventEmitter {
             };
             /**
              * @event Controller#message
+             * @type {Object}
+             * @property {string} type - 'attributeReport' | 'readResponse' | 'command*'
+             * @property {Device} device
+             * @property {Endpoint} endpoint
+             * @property {Object} data
+             * @property {number} linkquality
+             * @property {number} groupID
+             * @property {string} cluster
              */
             this.emit(Events.Events.message, eventData);
         }
