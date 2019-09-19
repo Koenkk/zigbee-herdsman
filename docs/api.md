@@ -373,7 +373,7 @@
 
 | Param | Type | Description |
 | --- | --- | --- |
-| key | <code>string</code> | <p>'profileID' | 'deviceID' | 'inputClusters' | 'outputClusters'</p> |
+| key | <code>string</code> | <p>'profileID', 'deviceID', 'inputClusters', 'outputClusters'</p> |
 | value | <code>number</code> \| <code>Array.&lt;number&gt;</code> |  |
 
 <a name="Endpoint+get"></a>
@@ -383,7 +383,7 @@
 
 | Param | Type | Description |
 | --- | --- | --- |
-| key | <code>number</code> \| <code>string</code> | <p>'ID' | 'deviceIeeeAddress'</p> |
+| key | <code>number</code> \| <code>string</code> | <p>'ID', 'deviceIeeeAddress'</p> |
 
 <a name="Endpoint+supportsInputCluster"></a>
 

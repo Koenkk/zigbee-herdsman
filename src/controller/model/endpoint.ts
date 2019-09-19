@@ -50,7 +50,7 @@ class Endpoint extends Entity {
      */
 
     /**
-     * @param {string} key - 'profileID' | 'deviceID' | 'inputClusters' | 'outputClusters'
+     * @param {string} key - 'profileID', 'deviceID', 'inputClusters', 'outputClusters'
      * @param {number|number[]} value
      * @returns {Promise}
      */
@@ -68,7 +68,7 @@ class Endpoint extends Entity {
     }
 
     /**
-     * @param {number|string} key - 'ID' | 'deviceIeeeAddress'
+     * @param {number|string} key - 'ID', 'deviceIeeeAddress'
      * @returns {Endpoint}
      */
     public get(key: 'ID' | 'deviceIeeeAddress'): string | number {
