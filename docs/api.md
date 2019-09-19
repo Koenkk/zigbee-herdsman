@@ -790,7 +790,7 @@
 
 | Name | Type | Description |
 | --- | --- | --- |
-| type | <code>string</code> | <p>'attributeReport' | 'readResponse' | 'command*'</p> |
+| type | <code>string</code> | <p>'attributeReport', 'readResponse', 'command*'</p> |
 | device | [<code>Device</code>](#Device) |  |
 | endpoint | [<code>Endpoint</code>](#Endpoint) |  |
 | data | <code>Object</code> |  |
