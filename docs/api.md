@@ -32,6 +32,24 @@
 
 * [Device](#Device)
     * _instance_
+        * [.type](#Device+type)
+        * [.ieeeAddr](#Device+ieeeAddr)
+        * [.networkAddress](#Device+networkAddress)
+        * [.manufacturerID](#Device+manufacturerID)
+        * [.endpoints](#Device+endpoints)
+        * [.manufacturerName](#Device+manufacturerName)
+        * [.powerSource](#Device+powerSource)
+        * [.modelID](#Device+modelID)
+        * [.applicationVersion](#Device+applicationVersion)
+        * [.stackVersion](#Device+stackVersion)
+        * [.zclVersion](#Device+zclVersion)
+        * [.hardwareVersion](#Device+hardwareVersion)
+        * [.dateCode](#Device+dateCode)
+        * [.softwareBuildID](#Device+softwareBuildID)
+        * [.interviewCompleted](#Device+interviewCompleted)
+        * [.interviewing](#Device+interviewing)
+        * [.meta](#Device+meta)
+        * [.lastSeen](#Device+lastSeen)
         * [.isType(type)](#Device+isType) ⇒ <code>boolean</code>
         * [.createEndpoint(ID)](#Device+createEndpoint) ⇒ <code>Promise</code>
         * [.getEndpoints()](#Device+getEndpoints) ⇒ [<code>Array.&lt;Endpoint&gt;</code>](#Endpoint)
@@ -46,6 +64,186 @@
     * _static_
         * [.findSingle(query)](#Device.findSingle) ⇒ <code>Promise</code>
         * [.find(query)](#Device.find) ⇒ <code>Promise</code>
+
+<a name="Device+type"></a>
+
+### device.type
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| [Device#type] | <code>DeviceType</code> | 
+
+<a name="Device+ieeeAddr"></a>
+
+### device.ieeeAddr
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| Device#ieeeAddr | <code>string</code> | 
+
+<a name="Device+networkAddress"></a>
+
+### device.networkAddress
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| Device#networkAddress | <code>number</code> | 
+
+<a name="Device+manufacturerID"></a>
+
+### device.manufacturerID
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| [Device#manufacturerID] | <code>number</code> | 
+
+<a name="Device+endpoints"></a>
+
+### device.endpoints
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| Device#endpoints | <code>Array.&lt;Endpoints&gt;</code> | 
+
+<a name="Device+manufacturerName"></a>
+
+### device.manufacturerName
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| [Device#manufacturerName] | <code>string</code> | 
+
+<a name="Device+powerSource"></a>
+
+### device.powerSource
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| [Device#powerSource] | <code>string</code> | 
+
+<a name="Device+modelID"></a>
+
+### device.modelID
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| [Device#modelID] | <code>string</code> | 
+
+<a name="Device+applicationVersion"></a>
+
+### device.applicationVersion
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| [Device#applicationVersion] | <code>number</code> | 
+
+<a name="Device+stackVersion"></a>
+
+### device.stackVersion
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| [Device#stackVersion] | <code>number</code> | 
+
+<a name="Device+zclVersion"></a>
+
+### device.zclVersion
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| [Device#zclVersion] | <code>number</code> | 
+
+<a name="Device+hardwareVersion"></a>
+
+### device.hardwareVersion
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| [Device#hardwareVersion] | <code>number</code> | 
+
+<a name="Device+dateCode"></a>
+
+### device.dateCode
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| [Device#dateCode] | <code>string</code> | 
+
+<a name="Device+softwareBuildID"></a>
+
+### device.softwareBuildID
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| [Device#softwareBuildID] | <code>string</code> | 
+
+<a name="Device+interviewCompleted"></a>
+
+### device.interviewCompleted
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| Device#interviewCompleted | <code>boolean</code> | 
+
+<a name="Device+interviewing"></a>
+
+### device.interviewing
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| Device#interviewing | <code>boolean</code> | 
+
+<a name="Device+meta"></a>
+
+### device.meta
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| Device#meta | <code>Object</code> | <p>Can be used by applications to store data</p> |
+
+<a name="Device+lastSeen"></a>
+
+### device.lastSeen
+**Kind**: instance property of [<code>Device</code>](#Device)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| Device#lastSeen | <code>null</code> \| <code>number</code> | 
 
 <a name="Device+isType"></a>
 
@@ -588,3 +786,15 @@
 
 ### "message"
 **Kind**: event emitted by [<code>Controller</code>](#Controller)  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| type | <code>string</code> | <p>'attributeReport' | 'readResponse' | 'command*'</p> |
+| device | [<code>Device</code>](#Device) |  |
+| endpoint | [<code>Endpoint</code>](#Endpoint) |  |
+| data | <code>Object</code> |  |
+| linkquality | <code>number</code> |  |
+| groupID | <code>number</code> |  |
+| cluster | <code>string</code> |  |
+
