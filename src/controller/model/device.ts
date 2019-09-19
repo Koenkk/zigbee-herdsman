@@ -43,7 +43,6 @@ class Device extends Entity {
     private interviewCompleted: boolean;
     private interviewing: boolean;
 
-    // Can be used by applications to store data.
     private meta: KeyValue;
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
@@ -57,24 +56,43 @@ class Device extends Entity {
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
     ) {
         super();
+        /** @property {number} Device#ID */
         this.ID = ID;
+        /** @property {DeviceType} [Device#type] */
         this.type = type;
+        /** @property {string} Device#ieeeAddr */
         this.ieeeAddr = ieeeAddr;
+        /** @property {number} Device#networkAddress */
         this.networkAddress = networkAddress;
+        /** @property {number} [Device#manufacturerID] */
         this.manufacturerID = manufacturerID;
+        /** @property {Endpoints[]} Device#endpoints */
         this.endpoints = endpoints;
+        /** @property {string} [Device#manufacturerName] */
         this.manufacturerName = manufacturerName;
+        /** @property {string} [Device#powerSource] */
         this.powerSource = powerSource;
+        /** @property {string} [Device#modelID] */
         this.modelID = modelID;
+        /** @property {number} [Device#applicationVersion] */
         this.applicationVersion = applicationVersion;
+        /** @property {number} [Device#stackVersion] */
         this.stackVersion = stackVersion;
+        /** @property {number} [Device#zclVersion] */
         this.zclVersion = zclVersion;
+        /** @property {number} [Device#hardwareVersion] */
         this.hardwareVersion = hardwareVersion;
+        /** @property {string} [Device#dateCode] */
         this.dateCode = dateCode;
+        /** @property {string} [Device#softwareBuildID] */
         this.softwareBuildID = softwareBuildID;
+        /** @property {boolean} Device#interviewCompleted*/
         this.interviewCompleted = interviewCompleted;
+        /** @property {boolean} Device#interviewing */
         this.interviewing = false;
+        /** @property {Object} Device#meta - Can be used by applications to store data */
         this.meta = meta;
+        /** @property {null|number} Device#lastSeen*/
         this.lastSeen = null;
     }
 
