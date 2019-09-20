@@ -20,10 +20,12 @@ describe('Zcl', () => {
         delete cluster1.getAttribute;
         delete cluster1.getCommand;
         delete cluster1.hasAttribute;
+        delete cluster1.getCommandResponse;
         const cluster2 = Zcl.Utils.getCluster('genBasic');
         delete cluster2.getAttribute;
         delete cluster2.getCommand;
         delete cluster2.hasAttribute;
+        delete cluster2.getCommandResponse;
         expect(cluster1).toStrictEqual(cluster2);
     });
 
@@ -42,7 +44,8 @@ describe('Zcl', () => {
     });
 
     it('Get specific command by name', () => {
-        const command = Zcl.Utils.getSpecificCommand('genIdentify', Direction.CLIENT_TO_SERVER, 'ezmodeInvoke');
+        const cluster = Zcl.Utils.getCluster('genIdentify');
+        const command = cluster.getCommand('ezmodeInvoke');
         expect(command.ID).toBe(2);
         expect(command.name).toBe('ezmodeInvoke');
     });
@@ -66,20 +69,23 @@ describe('Zcl', () => {
     });
 
     it('Get specific command by ID', () => {
-        const command = Zcl.Utils.getSpecificCommand('genIdentify', Direction.CLIENT_TO_SERVER, 2);
-        expect(command).toStrictEqual(Zcl.Utils.getSpecificCommand('genIdentify', Direction.CLIENT_TO_SERVER, 'ezmodeInvoke'));
+        const cluster = Zcl.Utils.getCluster('genIdentify');
+        const command = cluster.getCommand(2);
+        expect(command).toStrictEqual(cluster.getCommand('ezmodeInvoke'));
     });
 
     it('Get specific command by name server to client', () => {
-        const command = Zcl.Utils.getSpecificCommand('genIdentify', Direction.SERVER_TO_CLIENT, 0);
+        const cluster = Zcl.Utils.getCluster('genIdentify');
+        const command = cluster.getCommandResponse(0);
         expect(command.ID).toBe(0);
         expect(command.name).toBe('identifyQueryRsp');
     });
 
     it('Get specific command by name non existing', () => {
         expect(() => {
-            Zcl.Utils.getSpecificCommand('genIdentify', Direction.SERVER_TO_CLIENT, 'nonexisting');
-        }).toThrowError("Cluster command with key 'nonexisting' and direction 'SERVER_TO_CLIENT'does not exist for cluster 'genIdentify'")
+            const cluster = Zcl.Utils.getCluster('genIdentify');
+            cluster.getCommandResponse('nonexisting');
+        }).toThrowError("Cluster 'genIdentify' has no command response 'nonexisting'")
     });
 
     it('Get discrete or analog of unkown type', () => {
@@ -514,6 +520,30 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
+    it('ZclFrame with Ubisys (manufacturer specific) cluster create', () => {
+        const payload = [{attrId: 0x0000, status: 0, attrData: 1, dataType: 32}];
+        const frame = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f2, 8, 'readRsp', 0xfc00, payload
+        );
+
+        expect(frame.Cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+    });
+
+    it('ZclFrame with Ubisys (manufacturer specific) cluster create with non Ubisys manufcode', () => {
+        const payload = [{attrId: 0x0000, status: 0, attrData: 1, dataType: 32}];
+        const frame = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f3, 8, 'readRsp', 0xfc00, payload
+        );
+
+        expect(frame.Cluster.name).toBe('manuSpecificPhilips');
+    });
+
+    it('ZclFrame with Ubisys (manufacturer specific) cluster fromBuffer', () => {
+        const buffer = Buffer.from([0x04, 0xf2, 0x10, 0x08, 0x01, 0x00, 0x00, 0x00, 0x20, 0x01])
+        const frame = Zcl.ZclFrame.fromBuffer(0xfc00, buffer);
+        expect(frame.Cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+    });
+
     it('ZclFrame to buffer discover', () => {
         const expected = Buffer.from([0,8,12,0,0,240]);
         const payload = {startAttrId: 0, maxAttrIds: 240};
@@ -594,6 +624,16 @@ describe('Zcl', () => {
 
         const frame = Zcl.ZclFrame.create(
             FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, false, null, 1, 64, 6, payload
+        );
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame to buffer offWithEffect', () => {
+        const expected = Buffer.from([9, 9, 0, 1]);
+
+        const frame = Zcl.ZclFrame.create(
+            FrameType.SPECIFIC, Direction.SERVER_TO_CLIENT, false, null, 9, 'restartDeviceRsp', 21, {status: 1}
         );
 
         expect(frame.toBuffer()).toStrictEqual(expected);

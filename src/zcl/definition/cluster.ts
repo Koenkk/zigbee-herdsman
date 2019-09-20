@@ -3439,21 +3439,21 @@ const Cluster: {
             },
         },
     },
-    manuSpecificUbisysDeviceSetup: {
-        ID: 0xfc00,
-        manufacturerCode: ManufacturerCode.Ubisys,
+    manuSpecificCluster: {
+        ID: 65535,
         attributes: {
-            inputConfigurations: {ID: 0x0000, type: DataType.array},
-            inputActions: {ID: 0x0001, type: DataType.array},
         },
         commands: {
         },
         commandsResponse: {
         }
     },
-    manuSpecificCluster: {
-        ID: 65535,
+    manuSpecificUbisysDeviceSetup: {
+        ID: 0xfc00,
+        manufacturerCode: ManufacturerCode.Ubisys,
         attributes: {
+            inputConfigurations: {ID: 0x0000, type: DataType.array},
+            inputActions: {ID: 0x0001, type: DataType.array},
         },
         commands: {
         },

@@ -104,6 +104,7 @@ const getCluster = (key) => {
     delete cluster.getAttribute;
     delete cluster.getCommand;
     delete cluster.hasAttribute;
+    delete cluster.getCommandResponse;
     return cluster;
 }
 

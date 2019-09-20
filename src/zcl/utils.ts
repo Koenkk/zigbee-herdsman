@@ -1,5 +1,5 @@
 
-import {DataType, Cluster, Direction, Foundation} from './definition';
+import {DataType, Cluster, Foundation} from './definition';
 import * as TsType from './tstype';
 
 const DataTypeValueType = {
@@ -66,6 +66,8 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
     let attributes: {[s: string]: TsType.Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).map(([k, v]): any => ({[k]: {...v, name: k}})));
     // eslint-disable-next-line
     const commands: {[s: string]: TsType.Command} = Object.assign({}, ...Object.entries(cluster.commands).map(([k, v]): any => ({[k]: {...v, name: k}})));
+    // eslint-disable-next-line
+    const commandsResponse: {[s: string]: TsType.Command} = Object.assign({}, ...Object.entries(cluster.commandsResponse).map(([k, v]): any => ({[k]: {...v, name: k}})));
 
     const getAttribute = (key: number | string): TsType.Attribute => {
         let result: TsType.Attribute = null;
@@ -119,6 +121,22 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
         return result;
     };
 
+    const getCommandResponse = (key: number | string): TsType.Command => {
+        let result: TsType.Command = null;
+
+        if (typeof key === 'number') {
+            result = Object.values(commandsResponse).find((a): boolean => a.ID === key);
+        } else {
+            result = Object.values(commandsResponse).find((a): boolean => a.name === key);
+        }
+
+        if (!result) {
+            throw new Error(`Cluster '${name}' has no command response '${key}'`);
+        }
+
+        return result;
+    };
+
     return {
         ID: cluster.ID,
         attributes,
@@ -129,6 +147,7 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
         getAttribute,
         hasAttribute,
         getCommand,
+        getCommandResponse,
     };
 }
 
@@ -165,35 +184,8 @@ function getGlobalCommand(key: number | string): TsType.Command {
     return result;
 }
 
-function getSpecificCommand(clusterKey: number | string, direction: Direction, key: number | string): TsType.Command {
-    const cluster = getCluster(clusterKey);
-    const commands = direction === Direction.CLIENT_TO_SERVER ? cluster.commands : cluster.commandsResponse;
-    let name;
-
-    if (typeof key === 'number') {
-        for (const commandName in commands) {
-            if (commands[commandName].ID === key) {
-                name = commandName;
-                break;
-            }
-        }
-    } else {
-        name = key;
-    }
-
-    const command = commands[name];
-
-    if (!command) {
-        throw new Error(`Cluster command with key '${key}' and direction '${Direction[direction]}'` +
-            `does not exist for cluster '${clusterKey}'`);
-    }
-
-    return command;
-}
-
 export {
     getCluster,
-    getSpecificCommand,
     getGlobalCommand,
     IsDataTypeAnalogOrDiscrete,
 };

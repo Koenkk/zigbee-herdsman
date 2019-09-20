@@ -50,9 +50,14 @@ class ZclFrame {
         frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number,
         transactionSequenceNumber: number, commandKey: number | string, clusterID: number, payload: ZclPayload
     ): ZclFrame {
-        const command = frameType === FrameType.GLOBAL ?
-            Utils.getGlobalCommand(commandKey) :
-            Utils.getSpecificCommand(clusterID, direction, commandKey);
+        const cluster = Utils.getCluster(clusterID, manufacturerCode != null ? manufacturerCode : null);
+        let command: TsType.Command = null;
+        if (frameType === FrameType.GLOBAL) {
+            command = Utils.getGlobalCommand(commandKey);
+        } else {
+            command = direction === Direction.CLIENT_TO_SERVER ?
+                cluster.getCommand(commandKey) : cluster.getCommandResponse(commandKey);
+        }
 
         const header: ZclHeader = {
             frameControl: {
@@ -64,7 +69,6 @@ class ZclFrame {
             commandIdentifier: command.ID,
         };
 
-        const cluster = Utils.getCluster(clusterID);
         return new ZclFrame(header, payload, cluster);
     }
 
@@ -144,9 +148,9 @@ class ZclFrame {
     }
 
     private writePayloadCluster(buffalo: BuffaloZcl): void {
-        const command = Utils.getSpecificCommand(
-            this.Cluster.ID, this.Header.frameControl.direction, this.Header.commandIdentifier
-        );
+        const command = this.Header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
+            this.Cluster.getCommand(this.Header.commandIdentifier) :
+            this.Cluster.getCommandResponse(this.Header.commandIdentifier);
 
         for (const parameter of command.parameters) {
             const typeStr = ZclFrame.getDataTypeString(parameter.type);
@@ -162,10 +166,13 @@ class ZclFrame {
             throw new Error("ZclFrame length is lower than minimal length");
         }
 
-        const cluster = Utils.getCluster(clusterID);
         const buffalo = new BuffaloZcl(buffer);
         const header = this.parseHeader(buffalo);
-        const payload = this.parsePayload(header, clusterID, buffalo);
+        const cluster = Utils.getCluster(
+            clusterID,
+            header.frameControl.manufacturerSpecific ? header.manufacturerCode : null
+        );
+        const payload = this.parsePayload(header, cluster, buffalo);
 
         return new ZclFrame(header, payload, cluster);
     }
@@ -190,18 +197,19 @@ class ZclFrame {
         return {frameControl, transactionSequenceNumber, manufacturerCode, commandIdentifier};
     }
 
-    private static parsePayload(header: ZclHeader, clusterID: number, buffalo: BuffaloZcl): ZclPayload {
+    private static parsePayload(header: ZclHeader, cluster: TsType.Cluster, buffalo: BuffaloZcl): ZclPayload {
         if (header.frameControl.frameType === FrameType.GLOBAL) {
             return this.parsePayloadGlobal(header, buffalo);
         } else if (header.frameControl.frameType === FrameType.SPECIFIC) {
-            return this.parsePayloadCluster(header, clusterID, buffalo);
+            return this.parsePayloadCluster(header, cluster, buffalo);
         } else {
             throw new Error(`Unsupported frameType '${header.frameControl.frameType}'`);
         }
     }
 
-    private static parsePayloadCluster(header: ZclHeader, clusterID: number,  buffalo: BuffaloZcl): ZclPayload {
-        const command = Utils.getSpecificCommand(clusterID, header.frameControl.direction, header.commandIdentifier);
+    private static parsePayloadCluster(header: ZclHeader, cluster: TsType.Cluster,  buffalo: BuffaloZcl): ZclPayload {
+        const command = header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
+            cluster.getCommand(header.commandIdentifier) : cluster.getCommandResponse(header.commandIdentifier);
         const payload: ZclPayload = {};
 
         for (const parameter of command.parameters) {
@@ -351,11 +359,15 @@ class ZclFrame {
     }
 
     public getCommand(): TsType.Command {
-        return this.Header.frameControl.frameType === FrameType.GLOBAL ?
-            Utils.getGlobalCommand(this.Header.commandIdentifier) :
-            Utils.getSpecificCommand(
-                this.Cluster.ID, this.Header.frameControl.direction, this.Header.commandIdentifier
-            );
+        let command: TsType.Command = null;
+        if (this.Header.frameControl.frameType === FrameType.GLOBAL) {
+            command = Utils.getGlobalCommand(this.Header.commandIdentifier);
+        } else {
+            command = this.Header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
+                this.Cluster.getCommand(this.Header.commandIdentifier) :
+                this.Cluster.getCommandResponse(this.Header.commandIdentifier);
+        }
+        return command;
     }
 }
 
