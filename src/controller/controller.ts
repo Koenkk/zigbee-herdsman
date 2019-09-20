@@ -427,7 +427,7 @@ class Controller extends events.EventEmitter {
             /**
              * @event Controller#message
              * @type {Object}
-             * @property {string} type - 'attributeReport', 'readResponse', 'command*'
+             * @property {string} type - 'attributeReport', 'readResponse', 'command*', 'raw'
              * @property {Device} device
              * @property {Endpoint} endpoint
              * @property {Object} data
