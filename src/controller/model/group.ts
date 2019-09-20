@@ -53,8 +53,10 @@ class Group extends Entity {
         const members = new Set<Endpoint>();
         for (const member of record.members) {
             const device = await Device.findSingle({ieeeAddr: member.deviceIeeeAddr});
-            const endpoint = device.getEndpoint(member.endpointID);
-            members.add(endpoint);
+            if (device) {
+                const endpoint = device.getEndpoint(member.endpointID);
+                members.add(endpoint);
+            }
         }
 
         return new Group(record.id, record.groupID, members, record.meta);
