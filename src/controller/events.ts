@@ -55,6 +55,8 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'emergency': 'commandEmergency',
     'operationEventNotification': 'commandOperationEventNotification',
     'statusChangeNotification': 'commandStatusChangeNotification',
+    'checkin': 'commandCheckin',
+    'enrollReq': 'commandEnrollReq',
 };
 
 type MessagePayloadType =
@@ -67,7 +69,8 @@ type MessagePayloadType =
     'commandTradfriArrowSingle' | 'commandTradfriArrowHold' | 'commandTradfriArrowRelease' |
     'commandStepWithOnOff' | 'commandMoveToColorTemp' | 'commandMoveToColor' | 'commandOnWithTimedOff' |
     'commandRecall' | 'commandArm' | 'commandPanic' | 'commandEmergency' |
-    'commandOperationEventNotification' | 'commandStatusChangeNotification';
+    'commandOperationEventNotification' | 'commandStatusChangeNotification' | 'commandCheckin' |
+    'commandEnrollReq';
 
 interface MessagePayload {
     type: MessagePayloadType;
