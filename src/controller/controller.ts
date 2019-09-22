@@ -428,9 +428,14 @@ class Controller extends events.EventEmitter {
                 }
             }
 
-            // Some device report it's modelID through a readResponse or attributeReport
-            if ((type === 'readResponse' || type === 'attributeReport') && data.modelId && !device.get('modelID')) {
-                await device.set('modelID', data.modelId);
+            if (type === 'readResponse' || type === 'attributeReport') {
+                // Some device report, e.g. it's modelID through a readResponse or attributeReport
+                for (const [key, value] of Object.entries(data)) {
+                    const setKey = Device.ReportablePropertiesMapping[key];
+                    if (setKey && !device.get(setKey)) {
+                        await device.set(setKey, value);
+                    }
+                }
             }
         } else {
             type = 'raw';

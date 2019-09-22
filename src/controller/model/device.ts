@@ -8,6 +8,11 @@ import Debug from "debug";
 
 const debug = Debug('zigbee-herdsman:controller:device');
 
+type DeviceProperties =
+    'manufacturerName' | 'powerSource' | 'zclVersion' | 'applicationVersion' | 'stackVersion' |
+    'hardwareVersion' | 'dateCode' | 'softwareBuildID' | 'modelID' | 'networkAddress' | 'ieeeAddr' |
+    'interviewCompleted' | 'interviewing';
+
 interface LQI {
     neighbors: {
         ieeeAddr: string; networkAddress: number; linkquality: number;
@@ -48,6 +53,18 @@ class Device extends Entity {
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static lookup: {[ieeeAddr: string]: Device} = {};
+
+    public static readonly ReportablePropertiesMapping: {[s: string]: DeviceProperties} = {
+        modelId: 'modelID',
+        manufacturerName: 'manufacturerName',
+        powerSource: 'powerSource',
+        zclVersion: 'zclVersion',
+        appVersion: 'applicationVersion',
+        stackVersion: 'stackVersion',
+        hwVersion: 'hardwareVersion',
+        dateCode: 'dateCode',
+        swBuildId: 'softwareBuildID',
+    };
 
     private constructor(
         ID: number, type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
@@ -140,31 +157,38 @@ class Device extends Entity {
     }
 
     /**
-     * @param {string} key - 'modelID' | 'networkAddress' | 'interviewCompleted' | 'ieeeAddr' | 'interviewing'
+     * @param {DeviceProperties} key
      * @returns {string|number|boolean}
      */
-    public get(
-        key: 'modelID' | 'networkAddress' | 'interviewCompleted' | 'ieeeAddr' | 'interviewing'
-    ): string | number | boolean {
+    public get(key: DeviceProperties): string | number | boolean {
         return this[key];
     }
 
     /**
-     * @param {string} key - 'modelID' | 'networkAddress'
+     * @param {DeviceProperties} key
      * @param {string|number} value
+     * @param {boolean?} save Wether to write the new value immediately to the databse.
      * @returns {Promise}
      */
-    public async set(key: 'modelID' | 'networkAddress', value: string | number): Promise<void> {
-        if (typeof value === 'string' && (key === 'modelID')) {
+    public async set(key: DeviceProperties, value: string | number, save=true): Promise<void> {
+        if (typeof value === 'number' && key === 'powerSource') {
+            value = Zcl.PowerSource[value];
+        }
+
+        if (typeof value === 'string' && (key === 'manufacturerName' || key === 'powerSource' || key === 'dateCode' ||
+            key === 'softwareBuildID' || key === 'modelID')) {
             this[key] = value;
         } else {
             /* istanbul ignore else */
-            if (typeof value === 'number' && (key === 'networkAddress')) {
+            if (typeof value === 'number' && (key === 'networkAddress' || key === 'zclVersion' ||
+                key === 'applicationVersion' || key === 'stackVersion' || key === 'hardwareVersion')) {
                 this[key] = value;
             }
         }
 
-        await this.save();
+        if (save) {
+            await this.save();
+        }
     }
 
     public updateLastSeen(): void {
@@ -402,27 +426,12 @@ class Device extends Entity {
 
         if (this.endpoints.length !== 0) {
             const endpoint = this.endpoints[0];
-            const attributes = [
-                'manufacturerName', 'modelId', 'powerSource', 'zclVersion', 'appVersion',
-                'stackVersion', 'hwVersion', 'dateCode', 'swBuildId'
-            ];
 
             // Split into chunks of 3, otherwise some devices fail to respond.
-            for (const chunk of ArraySplitChunks(attributes, 3)) {
+            for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 3)) {
                 const result = await endpoint.read('genBasic', chunk);
                 for (const [key, value] of Object.entries(result)) {
-                    if (key === 'manufacturerName') this.manufacturerName = value;
-                    else if (key === 'modelId') this.modelID = value;
-                    else if (key === 'zclVersion') this.zclVersion = value;
-                    else if (key === 'appVersion') this.applicationVersion = value;
-                    else if (key === 'stackVersion') this.stackVersion = value;
-                    else if (key === 'hwVersion') this.hardwareVersion = value;
-                    else if (key === 'dateCode') this.dateCode = value;
-                    else if (key === 'swBuildId') this.softwareBuildID = value;
-                    else {
-                        /* istanbul ignore else */
-                        if (key === 'powerSource') this.powerSource = Zcl.PowerSource[value];
-                    }
+                    await this.set(Device.ReportablePropertiesMapping[key], value, false);
                 }
 
                 debug(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
