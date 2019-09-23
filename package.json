@@ -28,7 +28,6 @@
     "debug": "^4.1.1",
     "fast-deep-equal": "^2.0.1",
     "mixin-deep": "^2.0.1",
-    "nedb": "^1.8.0",
     "serialport": "8.0.1"
   },
   "deprecated": false,
