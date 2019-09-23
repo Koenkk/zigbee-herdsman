@@ -123,10 +123,6 @@ class Endpoint extends Entity {
         );
     }
 
-    public isType(type: string): boolean {
-        return type === 'endpoint';
-    }
-
     /*
      * Zigbee functions
      */
@@ -337,7 +333,7 @@ class Endpoint extends Entity {
      */
     public async addToGroup(group: Group): Promise<void> {
         await this.command('genGroups', 'add', {groupid: group.get('groupID'), groupname: ''});
-        await group.addMember(this);
+        group.addMember(this);
     }
 
     /**
@@ -346,7 +342,7 @@ class Endpoint extends Entity {
      */
     public async removeFromGroup(group: Group): Promise<void> {
         await this.command('genGroups', 'remove', {groupid: group.get('groupID')});
-        await group.removeMember(this);
+        group.removeMember(this);
     }
 
     /**
@@ -354,9 +350,9 @@ class Endpoint extends Entity {
      */
     public async removeFromAllGroups(): Promise<void> {
         await this.command('genGroups', 'removeAll', {}, {disableDefaultResponse: true});
-        for (const group of await Group.find({})) {
+        for (const group of Group.all()) {
             if (group.hasMember(this)) {
-                await group.removeMember(this);
+                group.removeMember(this);
             }
         }
     }

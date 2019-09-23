@@ -1,4 +1,4 @@
-import {KeyValue} from '../tstype';
+import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
 import {TsType as AdapterTsType} from '../../adapter';
 import Endpoint from './endpoint';
 import Entity from './entity';
@@ -32,7 +32,7 @@ class Device extends Entity {
     private ieeeAddr: string;
     private networkAddress: number;
     private endpoints: Endpoint[];
-    private type?: AdapterTsType.DeviceType;
+    private type?: DeviceType;
     private manufacturerID?: number;
     private manufacturerName?: string;
     private powerSource?: string;
@@ -52,7 +52,7 @@ class Device extends Entity {
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
-    private static lookup: {[ieeeAddr: string]: Device} = {};
+    private static devices: {[ieeeAddr: string]: Device} = null;
 
     public static readonly ReportablePropertiesMapping: {[s: string]: DeviceProperties} = {
         modelId: 'modelID',
@@ -67,7 +67,7 @@ class Device extends Entity {
     };
 
     private constructor(
-        ID: number, type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
+        ID: number, type: DeviceType, ieeeAddr: string, networkAddress: number,
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
@@ -113,14 +113,6 @@ class Device extends Entity {
         this.lastSeen = null;
     }
 
-    /**
-     * @param {string} type
-     * @returns {boolean} - true if type is 'device'
-     */
-    public isType(type: string): boolean {
-        return type === 'device';
-    }
-
     /*
      * Getters, setters and creaters
      */
@@ -137,7 +129,7 @@ class Device extends Entity {
 
         const endpoint = Endpoint.create(ID, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         this.endpoints.push(endpoint);
-        await this.save();
+        this.save();
         return endpoint;
     }
 
@@ -187,7 +179,7 @@ class Device extends Entity {
         }
 
         if (save) {
-            await this.save();
+            this.save();
         }
     }
 
@@ -199,23 +191,28 @@ class Device extends Entity {
      * CRUD
      */
 
-    private static fromDatabaseRecord(record: KeyValue): Device {
-        const networkAddress = record.nwkAddr;
-        const ieeeAddr = record.ieeeAddr;
-        const endpoints = Object.values(record.endpoints).map((e): Endpoint => {
+    private static fromDatabaseEntry(entry: DatabaseEntry): Device {
+        const networkAddress = entry.nwkAddr;
+        const ieeeAddr = entry.ieeeAddr;
+        const endpoints = Object.values(entry.endpoints).map((e): Endpoint => {
             return Endpoint.fromDatabaseRecord(e, networkAddress, ieeeAddr);
         });
 
-        const meta = record.meta ? record.meta : {};
+        const meta = entry.meta ? entry.meta : {};
+
+        if (entry.type === 'Group') {
+            throw new Error('Cannot load device from group');
+        }
+
         return new Device(
-            record.id, record.type, ieeeAddr, networkAddress, record.manufId, endpoints,
-            record.manufName, record.powerSource, record.modelId, record.appVersion,
-            record.stackVersion, record.zclVersion, record.hwVersion, record.dateCode, record.swBuildId,
-            record.interviewCompleted, meta,
+            entry.id, entry.type, ieeeAddr, networkAddress, entry.manufId, endpoints,
+            entry.manufName, entry.powerSource, entry.modelId, entry.appVersion,
+            entry.stackVersion, entry.zclVersion, entry.hwVersion, entry.dateCode, entry.swBuildId,
+            entry.interviewCompleted, meta,
         );
     }
 
-    private toDatabaseRecord(): KeyValue {
+    private toDatabaseEntry(): DatabaseEntry {
         const epList = this.endpoints.map((e): number => e.ID);
         const endpoints: KeyValue = {};
         for (const endpoint of this.endpoints) {
@@ -232,81 +229,66 @@ class Device extends Entity {
         };
     }
 
-    private async save(): Promise<void> {
-        await Entity.database.update(this.ID, this.toDatabaseRecord());
+    private save(): void {
+        Entity.database.update(this.toDatabaseEntry());
     }
 
-    /**
-     * @param {Object} query
-     * @param {DeviceType} [query.type]
-     * @param {string} [query.ieeeAddr]
-     * @param {number} [query.networkAddress]
-     * @returns {Promise}
-     */
-    public static async findSingle(
-        query: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; networkAddress?: number}
-    ): Promise<Device> {
-        // Performance optimization: when querying with only ieeeAddr, try to return from lookup
-        const deviceIeeeAddr = Device.lookup[query.ieeeAddr];
-        if (deviceIeeeAddr && !query.hasOwnProperty('networkAddress') && !query.hasOwnProperty('type'))
-        {
-            return deviceIeeeAddr;
-        }
-
-        // Performance optimization: when querying with only networkAddress, try to return from lookup
-        const deviceNetworkAddress = Object.values(Device.lookup).find((d): boolean => {
-            return d.networkAddress === query.networkAddress;
-        });
-
-        if (deviceNetworkAddress && !query.hasOwnProperty('ieeeAddr') && !query.hasOwnProperty('type'))
-        {
-            return deviceNetworkAddress;
-        }
-
-        const results = await this.find(query);
-        return results.length !== 0 ? results[0] : null;
-    }
-
-    /**
-     * @param {Object} query
-     * @param {AdapterTsType.DeviceType} [query.type]
-     * @param {string} [query.ieeeAddr]
-     * @param {number} [query.networkAddress]
-     * @returns {Promise}
-     * @fulfil {Device}
-     */
-    public static async find(
-        query: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; networkAddress?: number}
-    ): Promise<Device[]> {
-        const queryActual: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; nwkAddr?: number} = {};
-        if (query.hasOwnProperty('networkAddress')) queryActual.nwkAddr = query.networkAddress;
-        if (query.hasOwnProperty('ieeeAddr')) queryActual.ieeeAddr = query.ieeeAddr;
-
-        const typeQuery: {type: {} | string} = {type: {$ne: 'Group'}};
-        if (query.hasOwnProperty('type')) {
-            typeQuery.type = query.type;
-        }
-
-        const results = await Entity.database.find({...queryActual, ...typeQuery});
-        return results.map((r): Device => {
-            const device = this.fromDatabaseRecord(r);
-            if (!this.lookup[device.ieeeAddr]) {
-                this.lookup[device.ieeeAddr] = device;
+    private static loadFromDatabaseIfNecessary(): void {
+        if (!Device.devices) {
+            Device.devices = {};
+            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router']);
+            for (const entry of entries) {
+                const device = Device.fromDatabaseEntry(entry);
+                Device.devices[device.ieeeAddr] = device;
             }
-
-            return this.lookup[device.ieeeAddr];
-        });
+        }
     }
 
-    public static async create(
+    /**
+     * @param {string} ieeeAddr
+     * @returns {Device}
+     */
+    public static byIeeeAddr(ieeeAddr: string): Device {
+        Device.loadFromDatabaseIfNecessary();
+        return Device.devices[ieeeAddr];
+    }
+
+    /**
+     * @param {number} networkAddress
+     * @returns {Device}
+     */
+    public static byNetworkAddress(networkAddress: number): Device {
+        Device.loadFromDatabaseIfNecessary();
+        return Object.values(Device.devices).find(d => d.networkAddress === networkAddress);
+    }
+
+    /**
+     * @param {DeviceType} type
+     * @returns {Device}
+     */
+    public static byType(type: DeviceType): Device[] {
+        Device.loadFromDatabaseIfNecessary();
+        return Object.values(Device.devices).filter(d => d.type === type);
+    }
+
+    /**
+     * @returns {Device[]}
+     */
+    public static all(): Device[] {
+        Device.loadFromDatabaseIfNecessary();
+        return Object.values(Device.devices);
+    }
+
+    public static create(
         type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
         manufacturerID: number, manufacturerName: string,
         powerSource: string, modelID: string,
         endpoints: {
             ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
         }[]
-    ): Promise<Device> {
-        if (await this.findSingle({ieeeAddr})) {
+    ): Device {
+        Device.loadFromDatabaseIfNecessary();
+        if (Device.devices[ieeeAddr]) {
             throw new Error(`Device with ieeeAddr '${ieeeAddr}' already exists`);
         }
 
@@ -316,17 +298,15 @@ class Device extends Entity {
             );
         });
 
-        const ID = await Entity.database.newID();
-
+        const ID = Entity.database.newID();
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false, {},
         );
 
-        await Entity.database.insert(device.toDatabaseRecord());
-
-        this.lookup[device.ieeeAddr] = device;
-        return this.lookup[device.ieeeAddr];
+        Entity.database.insert(device.toDatabaseEntry());
+        Device.devices[device.ieeeAddr] = device;
+        return device;
     }
 
     /*
@@ -352,7 +332,7 @@ class Device extends Entity {
             error = e;
         } finally {
             this.interviewing = false;
-            await this.save();
+            this.save();
         }
 
         if (error) {
@@ -365,7 +345,7 @@ class Device extends Entity {
             const nodeDescriptor = await Entity.adapter.nodeDescriptor(this.networkAddress);
             this.manufacturerID = nodeDescriptor.manufacturerCode;
             this.type = nodeDescriptor.type;
-            await this.save();
+            this.save();
             debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         };
 
@@ -384,7 +364,7 @@ class Device extends Entity {
                 this.powerSource = 'Battery';
                 this.interviewing = false;
                 this.interviewCompleted = true;
-                await this.save();
+                this.save();
                 return true;
             } else {
                 return false;
@@ -411,7 +391,7 @@ class Device extends Entity {
         this.endpoints = activeEndpoints.endpoints.map((e): Endpoint => {
             return Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         });
-        await this.save();
+        this.save();
         debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
         for (const endpoint of this.endpoints) {
@@ -421,7 +401,7 @@ class Device extends Entity {
             endpoint.set('inputClusters', simpleDescriptor.inputClusters);
             endpoint.set('outputClusters', simpleDescriptor.outputClusters);
             debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`);
-            await this.save();
+            this.save();
         }
 
         if (this.endpoints.length !== 0) {
@@ -445,7 +425,7 @@ class Device extends Entity {
         // Enroll IAS device
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
             debug(`Interview - ssIasZone enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
-            const coordinator = await Device.findSingle({type: 'Coordinator'});
+            const coordinator = Device.byType('Coordinator')[0];
             await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.get('ieeeAddr')});
             // According to the spec, we should wait for an enrollRequest here, but the Bosch ISW-ZPR1 didn't send it.
             await Wait(3000);
@@ -466,8 +446,9 @@ class Device extends Entity {
      * @returns {Promise}
      */
     public async removeFromDatabase(): Promise<void> {
-        await Entity.database.remove(this.ID);
-        delete Device.lookup[this.ieeeAddr];
+        Device.loadFromDatabaseIfNecessary();
+        Entity.database.remove(this.ID);
+        delete Device.devices[this.ieeeAddr];
     }
 
     /**
@@ -475,7 +456,7 @@ class Device extends Entity {
      * @fulfil {TsType.LQI}
      */
     public async lqi(): Promise<LQI> {
-        return await Entity.adapter.lqi(this.networkAddress);
+        return Entity.adapter.lqi(this.networkAddress);
     }
 
     /**
@@ -483,7 +464,7 @@ class Device extends Entity {
      * @fulfil {TsType.RoutingTable} - The Routing Table
      */
     public async routingTable(): Promise<RoutingTable> {
-        return await Entity.adapter.routingTable(this.networkAddress);
+        return Entity.adapter.routingTable(this.networkAddress);
     }
 
     /**

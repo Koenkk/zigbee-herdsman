@@ -50,20 +50,21 @@
         * [.interviewing](#Device+interviewing)
         * [.meta](#Device+meta)
         * [.lastSeen](#Device+lastSeen)
-        * [.isType(type)](#Device+isType) ⇒ <code>boolean</code>
         * [.createEndpoint(ID)](#Device+createEndpoint) ⇒ <code>Promise</code>
         * [.getEndpoints()](#Device+getEndpoints) ⇒ [<code>Array.&lt;Endpoint&gt;</code>](#Endpoint)
         * [.getEndpoint(ID)](#Device+getEndpoint) ⇒ [<code>Endpoint</code>](#Endpoint)
         * [.get(key)](#Device+get) ⇒ <code>string</code> \| <code>number</code> \| <code>boolean</code>
-        * [.set(key, value)](#Device+set) ⇒ <code>Promise</code>
+        * [.set(key, value, save)](#Device+set) ⇒ <code>Promise</code>
         * [.removeFromNetwork()](#Device+removeFromNetwork) ⇒ <code>Promise</code>
         * [.removeFromDatabase()](#Device+removeFromDatabase) ⇒ <code>Promise</code>
         * [.lqi()](#Device+lqi) ⇒ <code>Promise</code>
         * [.routingTable()](#Device+routingTable) ⇒ <code>Promise</code>
         * [.ping()](#Device+ping) ⇒ <code>Promise</code>
     * _static_
-        * [.findSingle(query)](#Device.findSingle) ⇒ <code>Promise</code>
-        * [.find(query)](#Device.find) ⇒ <code>Promise</code>
+        * [.byIeeeAddr(ieeeAddr)](#Device.byIeeeAddr) ⇒ [<code>Device</code>](#Device)
+        * [.byNetworkAddress(networkAddress)](#Device.byNetworkAddress) ⇒ [<code>Device</code>](#Device)
+        * [.byType(type)](#Device.byType) ⇒ [<code>Device</code>](#Device)
+        * [.all()](#Device.all) ⇒ [<code>Array.&lt;Device&gt;</code>](#Device)
 
 <a name="Device+type"></a>
 
@@ -245,18 +246,6 @@
 | --- | --- |
 | Device#lastSeen | <code>null</code> \| <code>number</code> | 
 
-<a name="Device+isType"></a>
-
-### device.isType(type) ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Device</code>](#Device)  
-**Returns**: <code>boolean</code> - <ul>
-<li>true if type is 'device'</li>
-</ul>  
-
-| Param | Type |
-| --- | --- |
-| type | <code>string</code> | 
-
 <a name="Device+createEndpoint"></a>
 
 ### device.createEndpoint(ID) ⇒ <code>Promise</code>
@@ -285,19 +274,20 @@
 ### device.get(key) ⇒ <code>string</code> \| <code>number</code> \| <code>boolean</code>
 **Kind**: instance method of [<code>Device</code>](#Device)  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| key | <code>string</code> | <p>'modelID' | 'networkAddress' | 'interviewCompleted' | 'ieeeAddr' | 'interviewing'</p> |
+| Param | Type |
+| --- | --- |
+| key | <code>DeviceProperties</code> | 
 
 <a name="Device+set"></a>
 
-### device.set(key, value) ⇒ <code>Promise</code>
+### device.set(key, value, save) ⇒ <code>Promise</code>
 **Kind**: instance method of [<code>Device</code>](#Device)  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| key | <code>string</code> | <p>'modelID' | 'networkAddress'</p> |
-| value | <code>string</code> \| <code>number</code> |  |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| key | <code>DeviceProperties</code> |  |  |
+| value | <code>string</code> \| <code>number</code> |  |  |
+| save | <code>boolean</code> | <code>true</code> | <p>Wether to write the new value immediately to the databse.</p> |
 
 <a name="Device+removeFromNetwork"></a>
 
@@ -321,31 +311,37 @@
 
 ### device.ping() ⇒ <code>Promise</code>
 **Kind**: instance method of [<code>Device</code>](#Device)  
-<a name="Device.findSingle"></a>
+<a name="Device.byIeeeAddr"></a>
 
-### Device.findSingle(query) ⇒ <code>Promise</code>
+### Device.byIeeeAddr(ieeeAddr) ⇒ [<code>Device</code>](#Device)
 **Kind**: static method of [<code>Device</code>](#Device)  
 
 | Param | Type |
 | --- | --- |
-| query | <code>Object</code> | 
-| [query.type] | <code>DeviceType</code> | 
-| [query.ieeeAddr] | <code>string</code> | 
-| [query.networkAddress] | <code>number</code> | 
+| ieeeAddr | <code>string</code> | 
 
-<a name="Device.find"></a>
+<a name="Device.byNetworkAddress"></a>
 
-### Device.find(query) ⇒ <code>Promise</code>
+### Device.byNetworkAddress(networkAddress) ⇒ [<code>Device</code>](#Device)
 **Kind**: static method of [<code>Device</code>](#Device)  
-**Fulfil**: [<code>Device</code>](#Device)  
 
 | Param | Type |
 | --- | --- |
-| query | <code>Object</code> | 
-| [query.type] | <code>AdapterTsType.DeviceType</code> | 
-| [query.ieeeAddr] | <code>string</code> | 
-| [query.networkAddress] | <code>number</code> | 
+| networkAddress | <code>number</code> | 
 
+<a name="Device.byType"></a>
+
+### Device.byType(type) ⇒ [<code>Device</code>](#Device)
+**Kind**: static method of [<code>Device</code>](#Device)  
+
+| Param | Type |
+| --- | --- |
+| type | <code>DeviceType</code> | 
+
+<a name="Device.all"></a>
+
+### Device.all() ⇒ [<code>Array.&lt;Device&gt;</code>](#Device)
+**Kind**: static method of [<code>Device</code>](#Device)  
 <a name="Endpoint"></a>
 
 ## Endpoint
@@ -498,29 +494,18 @@
 
 * [Group](#Group)
     * _instance_
-        * [.isType(type)](#Group+isType) ⇒ <code>boolean</code>
         * [.get(groupID)](#Group+get) ⇒ [<code>Group</code>](#Group)
-        * [.removeFromDatabase()](#Group+removeFromDatabase) ⇒ <code>Promise</code>
-        * [.save()](#Group+save) ⇒ <code>Promise</code>
-        * [.addMember(endpoint)](#Group+addMember) ⇒ <code>Promise</code>
-        * [.removeMember(endpoint)](#Group+removeMember) ⇒ <code>Promise</code>
+        * [.removeFromDatabase()](#Group+removeFromDatabase) ⇒ [<code>Group</code>](#Group)
+        * [.save()](#Group+save) ⇒ <code>void</code>
+        * [.addMember(endpoint)](#Group+addMember) ⇒ <code>void</code>
+        * [.removeMember(endpoint)](#Group+removeMember) ⇒ <code>void</code>
         * [.hasMember(endpoint)](#Group+hasMember) ⇒ <code>boolean</code>
         * [.getMembers()](#Group+getMembers) ⇒ [<code>Array.&lt;Endpoint&gt;</code>](#Endpoint)
         * [.command(clusterKey, commandKey, payload)](#Group+command) ⇒ <code>Promise</code>
     * _static_
-        * [.findSingle(query)](#Group.findSingle) ⇒ <code>Promise</code>
-        * [.find(query)](#Group.find) ⇒ <code>Promise</code>
+        * [.byGroupID(groupID)](#Group.byGroupID) ⇒ [<code>Group</code>](#Group)
+        * [.all()](#Group.all) ⇒ [<code>Array.&lt;Group&gt;</code>](#Group)
         * [.create(groupID)](#Group.create) ⇒ <code>Promise</code>
-
-<a name="Group+isType"></a>
-
-### group.isType(type) ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Group</code>](#Group)  
-**Returns**: <code>boolean</code> - <p>true if type is 'group'</p>  
-
-| Param | Type |
-| --- | --- |
-| type | <code>string</code> | 
 
 <a name="Group+get"></a>
 
@@ -533,15 +518,15 @@
 
 <a name="Group+removeFromDatabase"></a>
 
-### group.removeFromDatabase() ⇒ <code>Promise</code>
+### group.removeFromDatabase() ⇒ [<code>Group</code>](#Group)
 **Kind**: instance method of [<code>Group</code>](#Group)  
 <a name="Group+save"></a>
 
-### group.save() ⇒ <code>Promise</code>
+### group.save() ⇒ <code>void</code>
 **Kind**: instance method of [<code>Group</code>](#Group)  
 <a name="Group+addMember"></a>
 
-### group.addMember(endpoint) ⇒ <code>Promise</code>
+### group.addMember(endpoint) ⇒ <code>void</code>
 **Kind**: instance method of [<code>Group</code>](#Group)  
 
 | Param | Type |
@@ -550,7 +535,7 @@
 
 <a name="Group+removeMember"></a>
 
-### group.removeMember(endpoint) ⇒ <code>Promise</code>
+### group.removeMember(endpoint) ⇒ <code>void</code>
 **Kind**: instance method of [<code>Group</code>](#Group)  
 
 | Param | Type |
@@ -581,28 +566,19 @@
 | commandKey | <code>number</code> | 
 | payload | <code>KeyValue</code> | 
 
-<a name="Group.findSingle"></a>
+<a name="Group.byGroupID"></a>
 
-### Group.findSingle(query) ⇒ <code>Promise</code>
+### Group.byGroupID(groupID) ⇒ [<code>Group</code>](#Group)
 **Kind**: static method of [<code>Group</code>](#Group)  
-**Fulfil**: [<code>Group</code>](#Group)  
 
 | Param | Type |
 | --- | --- |
-| query | <code>Object</code> | 
-| query.groupID | <code>number</code> | 
+| groupID | <code>number</code> | 
 
-<a name="Group.find"></a>
+<a name="Group.all"></a>
 
-### Group.find(query) ⇒ <code>Promise</code>
+### Group.all() ⇒ [<code>Array.&lt;Group&gt;</code>](#Group)
 **Kind**: static method of [<code>Group</code>](#Group)  
-**Fulfil**: [<code>Group</code>](#Group)  
-
-| Param | Type |
-| --- | --- |
-| query | <code>Object</code> | 
-| [query.groupID] | <code>number</code> | 
-
 <a name="Group.create"></a>
 
 ### Group.create(groupID) ⇒ <code>Promise</code>
@@ -627,11 +603,12 @@
     * [.softReset()](#Controller+softReset) ⇒ <code>Promise</code>
     * [.getCoordinatorVersion()](#Controller+getCoordinatorVersion) ⇒ <code>Promise</code>
     * [.getNetworkParameters()](#Controller+getNetworkParameters) ⇒ <code>Promise</code>
-    * [.getDevices(query)](#Controller+getDevices) ⇒ <code>Promise</code>
-    * [.getDevice(query)](#Controller+getDevice) ⇒ <code>Promise</code>
-    * [.getGroup(query)](#Controller+getGroup) ⇒ <code>Promise</code>
-    * [.getGroups(query)](#Controller+getGroups) ⇒ <code>Promise</code>
-    * [.createGroup(groupID)](#Controller+createGroup) ⇒ <code>Promise</code>
+    * [.getDevices()](#Controller+getDevices) ⇒ [<code>Array.&lt;Device&gt;</code>](#Device)
+    * [.getDevicesByType()](#Controller+getDevicesByType) ⇒ [<code>Array.&lt;Device&gt;</code>](#Device)
+    * [.getDeviceByIeeeAddr(ieeeAddr)](#Controller+getDeviceByIeeeAddr) ⇒ [<code>Device</code>](#Device)
+    * [.getGroupByID(groupID)](#Controller+getGroupByID) ⇒ [<code>Group</code>](#Group)
+    * [.getGroups()](#Controller+getGroups) ⇒ [<code>Array.&lt;Group&gt;</code>](#Group)
+    * [.createGroup(groupID)](#Controller+createGroup) ⇒ [<code>Group</code>](#Group)
     * [.disableLED()](#Controller+disableLED) ⇒ <code>Promise</code>
     * ["deviceAnnounce"](#Controller+event_deviceAnnounce)
     * ["deviceLeave"](#Controller+event_deviceLeave)
@@ -694,57 +671,50 @@
 **Fulfil**: <code>AdapterTsType.NetworkParameters</code>  
 <a name="Controller+getDevices"></a>
 
-### controller.getDevices(query) ⇒ <code>Promise</code>
+### controller.getDevices() ⇒ [<code>Array.&lt;Device&gt;</code>](#Device)
+<p>Get all devices</p>
+
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
-**Fulfil**: <code>Device[]</code>  
+<a name="Controller+getDevicesByType"></a>
+
+### controller.getDevicesByType() ⇒ [<code>Array.&lt;Device&gt;</code>](#Device)
+<p>Get all devices with a specific type</p>
+
+**Kind**: instance method of [<code>Controller</code>](#Controller)  
+<a name="Controller+getDeviceByIeeeAddr"></a>
+
+### controller.getDeviceByIeeeAddr(ieeeAddr) ⇒ [<code>Device</code>](#Device)
+<p>Get device by ieeeAddr</p>
+
+**Kind**: instance method of [<code>Controller</code>](#Controller)  
 
 | Param | Type |
 | --- | --- |
-| query | <code>Object</code> | 
-| [query.ieeeAddr] | <code>string</code> | 
-| [query.type] | <code>AdapterTsType.DeviceType</code> | 
+| ieeeAddr | <code>string</code> | 
 
-<a name="Controller+getDevice"></a>
+<a name="Controller+getGroupByID"></a>
 
-### controller.getDevice(query) ⇒ <code>Promise</code>
+### controller.getGroupByID(groupID) ⇒ [<code>Group</code>](#Group)
+<p>Get group by ID</p>
+
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
-**Fulfil**: [<code>Device</code>](#Device)  
 
 | Param | Type |
 | --- | --- |
-| query | <code>object</code> | 
-| [query.ieeeAddr] | <code>string</code> | 
-| [query.type] | <code>AdapterTsType.DeviceType</code> | 
-
-<a name="Controller+getGroup"></a>
-
-### controller.getGroup(query) ⇒ <code>Promise</code>
-**Kind**: instance method of [<code>Controller</code>](#Controller)  
-**Fulfil**: [<code>Group</code>](#Group)  
-
-| Param | Type |
-| --- | --- |
-| query | <code>Object</code> | 
-| query.groupID | <code>number</code> | 
+| groupID | <code>number</code> | 
 
 <a name="Controller+getGroups"></a>
 
-### controller.getGroups(query) ⇒ <code>Promise</code>
+### controller.getGroups() ⇒ [<code>Array.&lt;Group&gt;</code>](#Group)
+<p>Get all groups</p>
+
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
-**Fulfil**: <code>Group[]</code>  
-
-| Param | Type |
-| --- | --- |
-| query | <code>Object</code> | 
-| query.groupID | <code>number</code> | 
-
 <a name="Controller+createGroup"></a>
 
-### controller.createGroup(groupID) ⇒ <code>Promise</code>
+### controller.createGroup(groupID) ⇒ [<code>Group</code>](#Group)
 <p>Create a Group</p>
 
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
-**Fulfil**: [<code>Group</code>](#Group)  
 
 | Param | Type |
 | --- | --- |
@@ -790,7 +760,7 @@
 
 | Name | Type | Description |
 | --- | --- | --- |
-| type | <code>string</code> | <p>'attributeReport', 'readResponse', 'command*'</p> |
+| type | <code>string</code> | <p>'attributeReport', 'readResponse', 'command*', 'raw'</p> |
 | device | [<code>Device</code>](#Device) |  |
 | endpoint | [<code>Endpoint</code>](#Endpoint) |  |
 | data | <code>Object</code> |  |

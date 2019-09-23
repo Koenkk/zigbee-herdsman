@@ -213,7 +213,7 @@ class Znp extends events.EventEmitter {
                 );
                 this.queue.clear();
                 this.unpiWriter.writeFrame(frame);
-                return await waiter.promise;
+                return waiter.promise;
             } else {
                 /* istanbul ignore else */
                 if (object.type === Type.AREQ) {

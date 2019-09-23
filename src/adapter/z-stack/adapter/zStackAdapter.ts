@@ -78,7 +78,7 @@ class ZStackAdapter extends Adapter {
         this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
 
-        return await StartZnp(this.znp, this.version.product, this.networkOptions, this.backupPath);
+        return StartZnp(this.znp, this.version.product, this.networkOptions, this.backupPath);
     }
 
     public async stop(): Promise<void> {
@@ -225,7 +225,7 @@ class ZStackAdapter extends Adapter {
                 const result = await Promise.all([response.promise, defaultResponse.promise]);
                 return result[0];
             } else {
-                return await response.promise;
+                return response.promise;
             }
         }, networkAddress);
     }

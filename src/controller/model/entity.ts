@@ -12,8 +12,6 @@ abstract class Entity {
     public static injectAdapter(adapter: Adapter): void {
         Entity.adapter = adapter;
     }
-
-    abstract isType(type: string): boolean;
 }
 
 export default Entity;

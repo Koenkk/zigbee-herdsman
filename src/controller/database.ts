@@ -1,99 +1,78 @@
-import Datastore from 'nedb';
-import {KeyValue} from './tstype';
+import fs from 'fs';
+import {DatabaseEntry, EntityType} from './tstype';
 
 class Database {
-    private store: Datastore;
+    private entries: {[id: number]: DatabaseEntry};
+    private path: string;
 
-    private constructor(store: Datastore) {
-        this.store = store;
+    private constructor(entries: {[id: number]: DatabaseEntry}, path: string) {
+        this.entries = entries;
+        this.path = path;
     }
 
-    public static open(path: string): Promise<Database> {
-        const store = new Datastore({filename: path, autoload: true});
+    public static open(path: string): Database {
+        const entries: {[id: number]: DatabaseEntry} = {};
 
-        return new Promise((resolve, reject): void => {
-            store.ensureIndex({fieldName: 'id', unique: true}, (error): void => {
-                /* istanbul ignore else */
-                if (error == null) {
-                    resolve(new Database(store));
-                } else {
-                    reject(error);
+        if (fs.existsSync(path)) {
+            const rows = fs.readFileSync(path, 'utf-8').split('\n').map((r) => r.trim()).filter((r) => r != '');
+            for (const row of rows) {
+                const json = JSON.parse(row);
+                if (json.hasOwnProperty('id')) {
+                    entries[json.id] = json;
                 }
-            });
-        });
+            }
+        }
+
+        return new Database(entries, path);
     }
 
-    public find(query: KeyValue): Promise<KeyValue[]> {
-        return new Promise((resolve, reject): void => {
-            this.store.find(query, (error: Error, result: KeyValue[]): void => {
-                /* istanbul ignore else */
-                if (error == null) {
-                    resolve(result);
-                } else {
-                    reject(error);
-                }
-            });
-        });
+    public getEntries(type: EntityType[]): DatabaseEntry[] {
+        return Object.values(this.entries).filter(e => type.includes(e.type));
     }
 
-    public insert(object: KeyValue): Promise<KeyValue> {
-        return new Promise((resolve, reject): void => {
-            this.store.insert(object, (error: Error, newObject: KeyValue): void => {
-                /* istanbul ignore else */
-                if (error == null) {
-                    resolve(newObject);
-                } else {
-                    reject(error);
-                }
-            });
-        });
+    public insert(DatabaseEntry: DatabaseEntry): void {
+        if (this.entries[DatabaseEntry.id]) {
+            throw new Error(`DatabaseEntry with ID '${DatabaseEntry.id}' already exists`);
+        }
+
+        this.entries[DatabaseEntry.id] = DatabaseEntry;
+        this.write();
     }
 
-    public update(ID: number, object: KeyValue): Promise<void> {
-        return new Promise((resolve, reject): void => {
-            this.store.update({id: ID}, object, {}, (error: Error): void => {
-                /* istanbul ignore else */
-                if (error == null) {
-                    resolve();
-                } else {
-                    reject(error);
-                }
-            });
-        });
+    public update(DatabaseEntry: DatabaseEntry): void {
+        if (!this.entries[DatabaseEntry.id]) {
+            throw new Error(`DatabaseEntry with ID '${DatabaseEntry.id}' does not exist`);
+        }
+
+        this.entries[DatabaseEntry.id] = DatabaseEntry;
+        this.write();
     }
 
-    public async remove(ID: number): Promise<void> {
-        return new Promise((resolve, reject): void => {
-            this.store.remove({id: ID}, (error: Error): void => {
-                /* istanbul ignore else */
-                if (error == null) {
-                    resolve();
-                } else {
-                    reject(error);
-                }
-            });
-        });
+    public remove(ID: number): void {
+        if (!this.entries[ID]) {
+            throw new Error(`DatabaseEntry with ID '${ID}' does not exist`);
+        }
+
+        delete this.entries[ID];
+        this.write();
     }
 
-    public async newID(): Promise<number> {
-        return new Promise((resolve, reject): void => {
-            this.store.find({}, (error: Error, result: KeyValue[]): void => {
-                /* istanbul ignore if */
-                if (error != null) {
-                    reject(error);
-                }
+    public newID(): number {
+        for (let i = 1; i < 100000; i++) {
+            if (!this.entries[i]) {
+                return i;
+            }
+        }
+    }
 
-                let ID = 1;
-                for (const entry of result) {
-                    /* istanbul ignore else */
-                    if (entry.id >= ID) {
-                        ID = entry.id + 1;
-                    }
-                }
+    private write(): void {
+        const lines = [];
+        for (const DatabaseEntry of Object.values(this.entries)) {
+            const json = JSON.stringify(DatabaseEntry);
+            lines.push(json);
+        }
 
-                resolve(ID);
-            });
-        });
+        fs.writeFileSync(this.path, lines.join('\n'));
     }
 }
 

@@ -1,4 +1,4 @@
-import {KeyValue} from '../tstype';
+import {DatabaseEntry, KeyValue} from '../tstype';
 import Entity from './entity';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as Zcl from '../../zcl';
@@ -19,7 +19,7 @@ class Group extends Entity {
 
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
-    private static lookup: {[groupID: number]: Group} = {};
+    private static groups: {[groupID: number]: Group} = null;
 
     private constructor(databaseID: number, groupID: number, members: Set<Endpoint>, meta: KeyValue) {
         super();
@@ -27,14 +27,6 @@ class Group extends Entity {
         this.groupID = groupID;
         this.members = members;
         this.meta = meta;
-    }
-
-    /**
-     * @param {string} type
-     * @returns {boolean} true if type is 'group'
-     */
-    public isType(type: string): boolean {
-        return type === 'group';
     }
 
     /**
@@ -49,20 +41,20 @@ class Group extends Entity {
      * CRUD
      */
 
-    private static async fromDatabaseRecord(record: KeyValue): Promise<Group> {
+    private static fromDatabaseEntry(entry: DatabaseEntry): Group {
         const members = new Set<Endpoint>();
-        for (const member of record.members) {
-            const device = await Device.findSingle({ieeeAddr: member.deviceIeeeAddr});
+        for (const member of entry.members) {
+            const device = Device.byIeeeAddr(member.deviceIeeeAddr);
             if (device) {
                 const endpoint = device.getEndpoint(member.endpointID);
                 members.add(endpoint);
             }
         }
 
-        return new Group(record.id, record.groupID, members, record.meta);
+        return new Group(entry.id, entry.groupID, members, entry.meta);
     }
 
-    private toDatabaseRecord(): KeyValue {
+    private toDatabaseRecord(): DatabaseEntry {
         const members = Array.from(this.members).map((member) => {
             return {deviceIeeeAddr: member.get('deviceIeeeAddress'), endpointID: member.get('ID')};
         });
@@ -70,42 +62,32 @@ class Group extends Entity {
         return {id: this.databaseID, type: 'Group', groupID: this.groupID, members, meta: this.meta};
     }
 
-    /**
-     * @param {Object} query
-     * @param {number} query.groupID
-     * @returns {Promise}
-     * @fulfil {Group}
-     */
-    public static async findSingle(query: {groupID: number}): Promise<Group> {
-        // Performance optimization: get from lookup if posible;
-        const groupGroupID = this.lookup[query.groupID];
-        if (query.hasOwnProperty('groupID') && groupGroupID) {
-            return groupGroupID;
+    private static loadFromDatabaseIfNecessary(): void {
+        if (!Group.groups) {
+            Group.groups = {};
+            const entries = Entity.database.getEntries(['Group']);
+            for (const entry of entries) {
+                const group = Group.fromDatabaseEntry(entry);
+                Group.groups[group.groupID] = group;
+            }
         }
-
-        const results = await this.find(query);
-        return results.length !== 0 ? results[0] : null;
     }
 
     /**
-     * @param {Object} query
-     * @param {number} [query.groupID]
-     * @returns {Promise}
-     * @fulfil {Group}
+     * @param {number} groupID
+     * @returns {Group}
      */
-    public static async find(query: {groupID?: number}): Promise<Group[]> {
-        const results = await Entity.database.find({...query, type: 'Group'});
-        const groups = [];
-        for (const result of results) {
-            const group = await this.fromDatabaseRecord(result);
-            if (!this.lookup[group.groupID]) {
-                this.lookup[group.groupID] = group;
-            }
+    public static byGroupID(groupID: number): Group {
+        Group.loadFromDatabaseIfNecessary();
+        return Group.groups[groupID];
+    }
 
-            groups.push(this.lookup[group.groupID]);
-        }
-
-        return groups;
+    /**
+     * @returns {Group[]}
+     */
+    public static all(): Group[] {
+        Group.loadFromDatabaseIfNecessary();
+        return Object.values(Group.groups);
     }
 
     /**
@@ -113,51 +95,53 @@ class Group extends Entity {
      * @returns {Promise}
      * @fulfil {Group}
      */
-    public static async create(groupID: number): Promise<Group> {
+    public static create(groupID: number): Group {
         assert(typeof groupID === 'number', 'GroupID must be a number');
-        if (await this.findSingle({groupID})) {
+        Group.loadFromDatabaseIfNecessary();
+        if (Group.groups[groupID]) {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
 
-        const databaseID = await Entity.database.newID();
+        const databaseID = Entity.database.newID();
         const group = new Group(databaseID, groupID, new Set(), {});
-        await Entity.database.insert(group.toDatabaseRecord());
+        Entity.database.insert(group.toDatabaseRecord());
 
-        this.lookup[group.groupID] = group;
-        return this.lookup[group.groupID];
+        Group.groups[group.groupID] = group;
+        return group;
     }
 
     /**
-     * @returns {Promise}
+     * @returns {Group}
      */
-    public async removeFromDatabase(): Promise<void> {
-        await Entity.database.remove(this.databaseID);
-        delete Group.lookup[this.groupID];
+    public removeFromDatabase(): void {
+        Group.loadFromDatabaseIfNecessary();
+        Entity.database.remove(this.databaseID);
+        delete Group.groups[this.groupID];
     }
 
     /**
-     * @returns {Promise}
+     * @returns {void}
      */
-    private async save(): Promise<void> {
-        await Entity.database.update(this.databaseID, this.toDatabaseRecord());
+    private save(): void {
+        Entity.database.update(this.toDatabaseRecord());
     }
 
     /**
      * @param {Endpoint} endpoint
-     * @returns {Promise}
+     * @returns {void}
      */
-    public async addMember(endpoint: Endpoint): Promise<void> {
+    public addMember(endpoint: Endpoint): void {
         this.members.add(endpoint);
-        await this.save();
+        this.save();
     }
 
     /**
      * @param {Endpoint} endpoint
-     * @returns {Promise}
+     * @returns {void}
      */
-    public async removeMember(endpoint: Endpoint): Promise<void> {
+    public removeMember(endpoint: Endpoint): void {
         this.members.delete(endpoint);
-        await this.save();
+        this.save();
     }
 
     /**
