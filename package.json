@@ -76,7 +76,7 @@
     "eslint": "node_modules/.bin/eslint . --ext .ts",
     "doc": "jsdoc2md --files index.js ./src/controller/model/*.ts ./src/controller/*.ts --configure ./jsdoc2md.json > ./docs/api.md"
   },
-  "version": "0.7.2",
+  "version": "0.7.3",
   "jest": {
     "coverageThreshold": {
       "global": {
