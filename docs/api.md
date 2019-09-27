@@ -600,6 +600,8 @@
     * [new Controller(options)](#new_Controller_new)
     * [.start()](#Controller+start) ⇒ <code>Promise</code>
     * [.permitJoin(permit)](#Controller+permitJoin) ⇒ <code>Promise</code>
+    * [.getPermitJoin()](#Controller+getPermitJoin) ⇒ <code>boolean</code>
+    * [.stop()](#Controller+stop) ⇒ <code>Promise</code>
     * [.softReset()](#Controller+softReset) ⇒ <code>Promise</code>
     * [.getCoordinatorVersion()](#Controller+getCoordinatorVersion) ⇒ <code>Promise</code>
     * [.getNetworkParameters()](#Controller+getNetworkParameters) ⇒ <code>Promise</code>
@@ -653,6 +655,16 @@
 | --- | --- |
 | permit | <code>boolean</code> | 
 
+<a name="Controller+getPermitJoin"></a>
+
+### controller.getPermitJoin() ⇒ <code>boolean</code>
+**Kind**: instance method of [<code>Controller</code>](#Controller)  
+<a name="Controller+stop"></a>
+
+### controller.stop() ⇒ <code>Promise</code>
+<p>Stop the herdsman</p>
+
+**Kind**: instance method of [<code>Controller</code>](#Controller)  
 <a name="Controller+softReset"></a>
 
 ### controller.softReset() ⇒ <code>Promise</code>

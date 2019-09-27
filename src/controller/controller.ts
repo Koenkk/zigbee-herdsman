@@ -162,10 +162,17 @@ class Controller extends events.EventEmitter {
         }
     }
 
+    /**
+     * @returns {boolean}
+     */
     public getPermitJoin(): boolean {
         return this.permitJoinTimer != null;
     }
 
+    /**
+     * Stop the herdsman
+     * @returns {Promise}
+     */
     public async stop(): Promise<void> {
         for (const device of Device.all()) {
             device.save();
