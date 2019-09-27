@@ -162,10 +162,17 @@ class Controller extends events.EventEmitter {
         }
     }
 
+    /**
+     * @returns {boolean}
+     */
     public getPermitJoin(): boolean {
         return this.permitJoinTimer != null;
     }
 
+    /**
+     * Stop the herdsman
+     * @returns {Promise}
+     */
     public async stop(): Promise<void> {
         await this.permitJoin(false);
         clearInterval(this.backupTimer);
