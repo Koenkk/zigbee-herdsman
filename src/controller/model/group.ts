@@ -122,7 +122,7 @@ class Group extends Entity {
     /**
      * @returns {void}
      */
-    private save(): void {
+    public save(): void {
         Entity.database.update(this.toDatabaseRecord());
     }
 

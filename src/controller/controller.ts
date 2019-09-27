@@ -167,6 +167,14 @@ class Controller extends events.EventEmitter {
     }
 
     public async stop(): Promise<void> {
+        for (const device of Device.all()) {
+            device.save();
+        }
+
+        for (const group of Group.all()) {
+            group.save();
+        }
+
         await this.permitJoin(false);
         clearInterval(this.backupTimer);
         await this.backup();

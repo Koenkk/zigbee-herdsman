@@ -229,7 +229,7 @@ class Device extends Entity {
         };
     }
 
-    private save(): void {
+    public save(): void {
         Entity.database.update(this.toDatabaseEntry());
     }
 
