@@ -443,6 +443,8 @@ class Controller extends events.EventEmitter {
                         await device.set(setKey, value);
                     }
                 }
+
+                endpoint.saveClusterAttributeList(cluster, data);
             }
         } else {
             type = 'raw';

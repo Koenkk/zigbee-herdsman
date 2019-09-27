@@ -19,6 +19,12 @@ interface Options {
     response?: boolean;
 }
 
+interface Clusters {
+    [cluster: string]: {
+        attributes: {[attribute: string]: number | string};
+    };
+}
+
 /**
  * @class Endpoint
  */
@@ -30,10 +36,11 @@ class Endpoint extends Entity {
     private deviceIeeeAddress: string;
     private deviceID?: number;
     private profileID?: number;
+    private clusters: Clusters;
 
     private constructor(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
-        deviceNetworkAddress: number, deviceIeeeAddress: string,
+        deviceNetworkAddress: number, deviceIeeeAddress: string, clusters: Clusters,
     ) {
         super();
         this.ID = ID;
@@ -43,6 +50,7 @@ class Endpoint extends Entity {
         this.outputClusters = outputClusters;
         this.deviceNetworkAddress = deviceNetworkAddress;
         this.deviceIeeeAddress = deviceIeeeAddress;
+        this.clusters = clusters;
     }
 
     /*
@@ -100,16 +108,24 @@ class Endpoint extends Entity {
     public static fromDatabaseRecord(
         record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string
     ): Endpoint {
+        // Migrate attrs to attributes
+        for (const entry of Object.values(record.clusters).filter((e) => e.hasOwnProperty('attrs'))) {
+            // @ts-ignore
+            entry.attributes = entry.attrs;
+            // @ts-ignore
+            delete entry.attrs;
+        }
+
         return new Endpoint(
             record.epId, record.profId, record.devId, record.inClusterList, record.outClusterList,
-            deviceNetworkAddress, deviceIeeeAddress,
+            deviceNetworkAddress, deviceIeeeAddress, record.clusters,
         );
     }
 
     public toDatabaseRecord(): KeyValue {
         return {
             profId: this.profileID, epId: this.ID, devId: this.deviceID,
-            inClusterList: this.inputClusters, outClusterList: this.outputClusters, clusters: {},
+            inClusterList: this.inputClusters, outClusterList: this.outputClusters, clusters: this.clusters,
         };
     }
 
@@ -119,8 +135,27 @@ class Endpoint extends Entity {
     ): Endpoint {
         return new Endpoint(
             ID, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress,
-            deviceIeeeAddress
+            deviceIeeeAddress, {},
         );
+    }
+
+    public saveClusterAttributeList(clusterKey: number | string, list: KeyValue): void {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        if (!this.clusters[cluster.name]) this.clusters[cluster.name] = {attributes: {}};
+
+        for (const [attribute, value] of Object.entries(list)) {
+            this.clusters[cluster.name].attributes[attribute] = value;
+        }
+    }
+
+    public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const attribute = cluster.getAttribute(attributeKey);
+        if (this.clusters[cluster.name] && this.clusters[cluster.name].attributes) {
+            return this.clusters[cluster.name].attributes[attribute.name];
+        }
+
+        return null;
     }
 
     /*
