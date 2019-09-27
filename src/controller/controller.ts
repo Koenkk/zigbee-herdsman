@@ -182,6 +182,14 @@ class Controller extends events.EventEmitter {
             group.save();
         }
 
+        // Unregister adapter events
+        this.adapter.removeAllListeners(AdapterEvents.Events.deviceJoined);
+        this.adapter.removeAllListeners(AdapterEvents.Events.zclData);
+        this.adapter.removeAllListeners(AdapterEvents.Events.rawData);
+        this.adapter.removeAllListeners(AdapterEvents.Events.disconnected);
+        this.adapter.removeAllListeners(AdapterEvents.Events.deviceAnnounce);
+        this.adapter.removeAllListeners(AdapterEvents.Events.deviceLeave);
+
         await this.permitJoin(false);
         clearInterval(this.backupTimer);
         await this.backup();

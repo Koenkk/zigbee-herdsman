@@ -113,6 +113,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
     return jest.fn().mockImplementation(() => {
         return {
             on: (event, handler) => mockAdapterEvents[event] = handler,
+            removeAllListeners: (event) => delete mockAdapterEvents[event],
             start: mockAdapterStart,
             getCoordinator: () => {
                 return {
