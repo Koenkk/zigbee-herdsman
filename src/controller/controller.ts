@@ -162,11 +162,26 @@ class Controller extends events.EventEmitter {
         }
     }
 
+    /**
+     * @returns {boolean}
+     */
     public getPermitJoin(): boolean {
         return this.permitJoinTimer != null;
     }
 
+    /**
+     * Stop the herdsman
+     * @returns {Promise}
+     */
     public async stop(): Promise<void> {
+        for (const device of Device.all()) {
+            device.save();
+        }
+
+        for (const group of Group.all()) {
+            group.save();
+        }
+
         // Unregister adapter events
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceJoined);
         this.adapter.removeAllListeners(AdapterEvents.Events.zclData);
@@ -443,6 +458,8 @@ class Controller extends events.EventEmitter {
                         await device.set(setKey, value);
                     }
                 }
+
+                endpoint.saveClusterAttributeList(cluster, data);
             }
         } else {
             type = 'raw';
