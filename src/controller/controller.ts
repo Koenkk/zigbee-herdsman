@@ -239,6 +239,7 @@ class Controller extends events.EventEmitter {
 
     /**
      * Get all devices with a specific type
+     * @param {DeviceType} type - 'Coordinator', 'Router', 'EndDevice', 'Unknown'
      * @returns {Device[]}
      */
     public getDevicesByType(type: DeviceType): Device[] {
