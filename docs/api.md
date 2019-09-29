@@ -611,7 +611,7 @@
     * [.getGroupByID(groupID)](#Controller+getGroupByID) ⇒ [<code>Group</code>](#Group)
     * [.getGroups()](#Controller+getGroups) ⇒ [<code>Array.&lt;Group&gt;</code>](#Group)
     * [.createGroup(groupID)](#Controller+createGroup) ⇒ [<code>Group</code>](#Group)
-    * [.disableLED()](#Controller+disableLED) ⇒ <code>Promise</code>
+    * [.setLED(enabled)](#Controller+setLED) ⇒ <code>Promise</code>
     * ["deviceAnnounce"](#Controller+event_deviceAnnounce)
     * ["deviceLeave"](#Controller+event_deviceLeave)
     * ["adapterDisconnected"](#Controller+event_adapterDisconnected)
@@ -737,12 +737,17 @@
 | --- | --- |
 | groupID | <code>number</code> | 
 
-<a name="Controller+disableLED"></a>
+<a name="Controller+setLED"></a>
 
-### controller.disableLED() ⇒ <code>Promise</code>
-<p>Disable the LED</p>
+### controller.setLED(enabled) ⇒ <code>Promise</code>
+<p>Enable/Disable the LED</p>
 
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
+
+| Param | Type |
+| --- | --- |
+| enabled | <code>boolean</code> | 
+
 <a name="Controller+event_deviceAnnounce"></a>
 
 ### "deviceAnnounce"
