@@ -286,7 +286,7 @@ class Controller extends events.EventEmitter {
      *  @returns {Promise}
      */
     public async setLED(enabled: boolean): Promise<void> {
-        await this.adapter.setLED();
+        await this.adapter.setLED(enabled);
     }
 
     private onDeviceAnnounce(payload: AdapterEvents.DeviceAnnouncePayload): void {
