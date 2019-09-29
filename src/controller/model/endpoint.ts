@@ -25,6 +25,14 @@ interface Clusters {
     };
 }
 
+interface Bind {
+    cluster: string | number;
+    type: string;
+    targetIeeeAddr: string | null;
+    targetEndpointID: number | null;
+    targetGroupID: number | null;
+}
+
 /**
  * @class Endpoint
  */
@@ -37,10 +45,11 @@ class Endpoint extends Entity {
     private deviceID?: number;
     private profileID?: number;
     private clusters: Clusters;
+    private binds?: Bind[];
 
     private constructor(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
-        deviceNetworkAddress: number, deviceIeeeAddress: string, clusters: Clusters,
+        deviceNetworkAddress: number, deviceIeeeAddress: string, clusters: Clusters, binds: Bind[] = [],
     ) {
         super();
         this.ID = ID;
@@ -51,6 +60,7 @@ class Endpoint extends Entity {
         this.deviceNetworkAddress = deviceNetworkAddress;
         this.deviceIeeeAddress = deviceIeeeAddress;
         this.clusters = clusters;
+        this.binds = binds;
     }
 
     /*
@@ -251,6 +261,29 @@ class Endpoint extends Entity {
             type,
             target instanceof Endpoint ? target.ID : null,
         );
+
+        const bindInfo = {
+            type: target instanceof Endpoint ? 'endpoint' : 'group',
+            cluster: clusterKey,
+            targetIeeeAddr: target instanceof Endpoint ? target.deviceIeeeAddress : null,
+            targetEndpointID: target instanceof Endpoint ? target.ID : null,
+            targetGroupID: target instanceof Group ? target.get('groupID') : null
+        };
+
+        if (!this.binds.find(b => {
+            if (b.type === 'endpoint') {
+                return b.type === bindInfo.type &&
+                    b.cluster === bindInfo.cluster &&
+                    b.targetIeeeAddr === bindInfo.targetIeeeAddr &&
+                    b.targetEndpointID === bindInfo.targetEndpointID;
+            } else if (b.type === 'group') {
+                return b.type === bindInfo.type &&
+                    b.cluster === bindInfo.cluster &&
+                    b.targetGroupID === bindInfo.targetGroupID;
+            }
+        })) {
+            this.binds.push(bindInfo);
+        }
     }
 
     /**
@@ -267,6 +300,31 @@ class Endpoint extends Entity {
             type,
             target instanceof Endpoint ? target.ID : null,
         );
+
+        const bindInfo = {
+            type: target instanceof Endpoint ? 'endpoint' : 'group',
+            cluster: clusterKey,
+            targetIeeeAddr: target instanceof Endpoint ? target.deviceIeeeAddress : null,
+            targetEndpointID: target instanceof Endpoint ? target.ID : null,
+            targetGroupID: target instanceof Group ? target.get('groupID') : null
+        };
+
+        const bindInfoIndex = this.binds.findIndex(b => {
+            if (b.type === 'endpoint') {
+                return b.type === bindInfo.type &&
+                    b.cluster === bindInfo.cluster &&
+                    b.targetIeeeAddr === bindInfo.targetIeeeAddr &&
+                    b.targetEndpointID === bindInfo.targetEndpointID;
+            } else if (b.type === 'group') {
+                return b.type === bindInfo.type &&
+                    b.cluster === bindInfo.cluster &&
+                    b.targetGroupID === bindInfo.targetGroupID;
+            }
+        });
+
+        if (bindInfoIndex !== -1) {
+            this.binds.splice(bindInfoIndex, 1);
+        }
     }
 
     public async defaultResponse(
