@@ -606,7 +606,7 @@
     * [.getCoordinatorVersion()](#Controller+getCoordinatorVersion) ⇒ <code>Promise</code>
     * [.getNetworkParameters()](#Controller+getNetworkParameters) ⇒ <code>Promise</code>
     * [.getDevices()](#Controller+getDevices) ⇒ [<code>Array.&lt;Device&gt;</code>](#Device)
-    * [.getDevicesByType()](#Controller+getDevicesByType) ⇒ [<code>Array.&lt;Device&gt;</code>](#Device)
+    * [.getDevicesByType(type)](#Controller+getDevicesByType) ⇒ [<code>Array.&lt;Device&gt;</code>](#Device)
     * [.getDeviceByIeeeAddr(ieeeAddr)](#Controller+getDeviceByIeeeAddr) ⇒ [<code>Device</code>](#Device)
     * [.getGroupByID(groupID)](#Controller+getGroupByID) ⇒ [<code>Group</code>](#Group)
     * [.getGroups()](#Controller+getGroups) ⇒ [<code>Array.&lt;Group&gt;</code>](#Group)
@@ -689,10 +689,15 @@
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
 <a name="Controller+getDevicesByType"></a>
 
-### controller.getDevicesByType() ⇒ [<code>Array.&lt;Device&gt;</code>](#Device)
+### controller.getDevicesByType(type) ⇒ [<code>Array.&lt;Device&gt;</code>](#Device)
 <p>Get all devices with a specific type</p>
 
 **Kind**: instance method of [<code>Controller</code>](#Controller)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| type | <code>DeviceType</code> | <p>'Coordinator', 'Router', 'EndDevice', 'Unknown'</p> |
+
 <a name="Controller+getDeviceByIeeeAddr"></a>
 
 ### controller.getDeviceByIeeeAddr(ieeeAddr) ⇒ [<code>Device</code>](#Device)
