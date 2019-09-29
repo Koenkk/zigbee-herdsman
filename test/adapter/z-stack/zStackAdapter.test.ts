@@ -1286,6 +1286,15 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0});
     });
 
+    it('Enable led', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        await adapter.enableLED();
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1});
+    });
+
     it('Node descriptor', async () => {
         basicMocks();
         let result;

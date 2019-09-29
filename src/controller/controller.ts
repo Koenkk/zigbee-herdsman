@@ -288,6 +288,14 @@ class Controller extends events.EventEmitter {
         await this.adapter.disableLED();
     }
 
+    /**
+     *  Enable the LED
+     *  @returns {Promise}
+     */
+    public async enableLED(): Promise<void> {
+        await this.adapter.enableLED();
+    }
+
     private onDeviceAnnounce(payload: AdapterEvents.DeviceAnnouncePayload): void {
         debug.log(`Device announce '${payload.ieeeAddr}'`);
         const device = Device.byIeeeAddr(payload.ieeeAddr);

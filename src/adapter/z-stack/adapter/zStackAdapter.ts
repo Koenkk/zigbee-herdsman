@@ -140,6 +140,10 @@ class ZStackAdapter extends Adapter {
         await this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0});
     }
 
+    public async enableLED(): Promise<void> {
+        await this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1});
+    }
+
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
         return this.queue.execute<NodeDescriptor>(async () => {
             const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'nodeDescRsp', {nwkaddr: networkAddress});
