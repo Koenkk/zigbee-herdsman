@@ -21,8 +21,7 @@ const mockAdapterSupportsBackup = jest.fn().mockReturnValue(true);
 const mockAdapterSoftReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
-const mockDisableLED = jest.fn();
-const mockEnableLED = jest.fn();
+const mockSetLED = jest.fn();
 const mockAdapterBind = jest.fn();
 const mockSendZclFrameGroup = jest.fn();
 const mockAdapterUnbind = jest.fn();
@@ -132,8 +131,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             backup: () => {return {version: 'dummybackup'}},
             getCoordinatorVersion: () => {return {type: 'zStack', meta: {version: 1}}},
             getNetworkParameters: () => {return {panID: 1, extenedPanID: 3, channel: 15}},
-            disableLED: mockDisableLED,
-            enableLED: mockEnableLED,
+            setLED: mockSetLED,
             nodeDescriptor: async (networkAddress) => {
                 if (mockDevices[networkAddress].nodeDescriptor === 'xiaomi') {
                     await mockAdapterEvents['zclData']({
@@ -267,14 +265,8 @@ describe('Controller', () => {
 
     it('Disable led', async () => {
         await controller.start();
-        await controller.disableLED();
-        expect(mockDisableLED).toBeCalledTimes(1);
-    });
-
-    it('Enable led', async () => {
-        await controller.start();
-        await controller.enableLED();
-        expect(mockEnableLED).toBeCalledTimes(1);
+        await controller.setLED(false);
+        expect(mockSetLED).toBeCalledTimes(1);
     });
 
     it('Get coordinator version', async () => {

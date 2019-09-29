@@ -281,19 +281,12 @@ class Controller extends events.EventEmitter {
     }
 
     /**
-     *  Disable the LED
+     *  Enable/Disable the LED
+     *  @param {boolean} enabled
      *  @returns {Promise}
      */
-    public async disableLED(): Promise<void> {
-        await this.adapter.disableLED();
-    }
-
-    /**
-     *  Enable the LED
-     *  @returns {Promise}
-     */
-    public async enableLED(): Promise<void> {
-        await this.adapter.enableLED();
+    public async setLED(enabled: boolean): Promise<void> {
+        await this.adapter.setLED();
     }
 
     private onDeviceAnnounce(payload: AdapterEvents.DeviceAnnouncePayload): void {
