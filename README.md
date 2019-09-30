@@ -1,4 +1,4 @@
-# zigbee-herdsman
+# zigbee-herdsmandd
 [![Build Status](https://dev.azure.com/koenkk-zigbee/zigbee-herdsman/_apis/build/status/Koenkk.zigbee-herdsman?branchName=master)](https://dev.azure.com/koenkk-zigbee/zigbee-herdsman/_build/latest?definitionId=2&branchName=master)
 
 An open source ZigBee gateway solution with node.js, forked from zigbee-shepherd.
