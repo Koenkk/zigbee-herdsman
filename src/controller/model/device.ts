@@ -3,15 +3,10 @@ import {TsType as AdapterTsType} from '../../adapter';
 import Endpoint from './endpoint';
 import Entity from './entity';
 import {ArraySplitChunks, Wait} from '../../utils';
-import * as Zcl from '../../zcl';
 import Debug from "debug";
+import * as Zcl from '../../zcl';
 
 const debug = Debug('zigbee-herdsman:controller:device');
-
-type DeviceProperties =
-    'manufacturerName' | 'powerSource' | 'zclVersion' | 'applicationVersion' | 'stackVersion' |
-    'hardwareVersion' | 'dateCode' | 'softwareBuildID' | 'modelID' | 'networkAddress' | 'ieeeAddr' |
-    'interviewCompleted' | 'interviewing';
 
 interface LQI {
     neighbors: {
@@ -28,25 +23,54 @@ interface RoutingTable {
  * @class Device
  */
 class Device extends Entity {
-    private ID: number;
-    private ieeeAddr: string;
-    private networkAddress: number;
-    private endpoints: Endpoint[];
-    private type?: DeviceType;
-    private manufacturerID?: number;
-    private manufacturerName?: string;
-    private powerSource?: string;
-    private modelID?: string;
-    private applicationVersion?: number;
-    private stackVersion?: number;
-    private zclVersion?: number;
-    private hardwareVersion?: number;
-    private dateCode?: string;
-    private softwareBuildID?: string;
-    private lastSeen: number;
+    private readonly ID: number;
+    private _applicationVersion?: number;
+    private _dateCode?: string;
+    private _endpoints: Endpoint[];
+    private _hardwareVersion?: number;
+    public readonly ieeeAddr: string;
+    private _interviewCompleted: boolean;
+    private _interviewing: boolean;
+    private _lastSeen: number;
+    private _manufacturerID?: number;
+    private _manufacturerName?: string;
+    private _modelID?: string;
+    private _networkAddress: number;
+    private _powerSource?: string;
+    private _softwareBuildID?: string;
+    private _stackVersion?: number;
+    private _type?: DeviceType;
+    private _zclVersion?: number;
 
-    private interviewCompleted: boolean;
-    private interviewing: boolean;
+    // Getters/setters
+    get applicationVersion(): number {return this._applicationVersion;}
+    set applicationVersion(applicationVersion) {this._applicationVersion = applicationVersion;}
+    get endpoints(): Endpoint[] {return this._endpoints;}
+    get interviewCompleted(): boolean {return this._interviewCompleted;}
+    get interviewing(): boolean {return this._interviewing;}
+    get lastSeen(): number {return this._lastSeen;}
+    get manufacturerID(): number {return this._manufacturerID;}
+    get type(): DeviceType {return this._type;}
+    get dateCode(): string {return this._dateCode;}
+    set dateCode(dateCode) {this._dateCode = dateCode;}
+    set hardwareVersion(hardwareVersion) {this._hardwareVersion = hardwareVersion;}
+    get hardwareVersion(): number {return this._hardwareVersion;}
+    get manufacturerName(): string {return this._manufacturerName;}
+    set manufacturerName(manufacturerName) {this._manufacturerName = manufacturerName;}
+    set modelID(modelID) {this._modelID = modelID;}
+    get modelID(): string {return this._modelID;}
+    get networkAddress(): number {return this._networkAddress;}
+    set networkAddress(networkAddress) {this._networkAddress = networkAddress;}
+    get powerSource(): string {return this._powerSource;}
+    set powerSource(powerSource) {
+        this._powerSource = typeof powerSource === 'number' ? Zcl.PowerSource[powerSource] : powerSource;
+    }
+    get softwareBuildID(): string {return this._softwareBuildID;}
+    set softwareBuildID(softwareBuildID) {this._softwareBuildID = softwareBuildID;}
+    get stackVersion(): number {return this._stackVersion;}
+    set stackVersion(stackVersion) {this._stackVersion = stackVersion;}
+    get zclVersion(): number {return this._zclVersion;}
+    set zclVersion(zclVersion) {this._zclVersion = zclVersion;}
 
     private meta: KeyValue;
 
@@ -54,7 +78,10 @@ class Device extends Entity {
     // the same instance is returned.
     private static devices: {[ieeeAddr: string]: Device} = null;
 
-    public static readonly ReportablePropertiesMapping: {[s: string]: DeviceProperties} = {
+    public static readonly ReportablePropertiesMapping: {[s: string]:
+        'modelID' | 'manufacturerName' | 'powerSource' | 'zclVersion' | 'stackVersion' | 'hardwareVersion' |
+        'softwareBuildID' | 'dateCode' | 'applicationVersion';
+    } = {
         modelId: 'modelID',
         manufacturerName: 'manufacturerName',
         powerSource: 'powerSource',
@@ -76,46 +103,42 @@ class Device extends Entity {
         /** @property {number} Device#ID */
         this.ID = ID;
         /** @property {DeviceType} [Device#type] */
-        this.type = type;
+        this._type = type;
         /** @property {string} Device#ieeeAddr */
         this.ieeeAddr = ieeeAddr;
         /** @property {number} Device#networkAddress */
-        this.networkAddress = networkAddress;
+        this._networkAddress = networkAddress;
         /** @property {number} [Device#manufacturerID] */
-        this.manufacturerID = manufacturerID;
+        this._manufacturerID = manufacturerID;
         /** @property {Endpoint[]} Device#endpoints */
-        this.endpoints = endpoints;
+        this._endpoints = endpoints;
         /** @property {string} [Device#manufacturerName] */
-        this.manufacturerName = manufacturerName;
+        this._manufacturerName = manufacturerName;
         /** @property {string} [Device#powerSource] */
-        this.powerSource = powerSource;
+        this._powerSource = powerSource;
         /** @property {string} [Device#modelID] */
-        this.modelID = modelID;
+        this._modelID = modelID;
         /** @property {number} [Device#applicationVersion] */
-        this.applicationVersion = applicationVersion;
+        this._applicationVersion = applicationVersion;
         /** @property {number} [Device#stackVersion] */
-        this.stackVersion = stackVersion;
+        this._stackVersion = stackVersion;
         /** @property {number} [Device#zclVersion] */
-        this.zclVersion = zclVersion;
+        this._zclVersion = zclVersion;
         /** @property {number} [Device#hardwareVersion] */
         this.hardwareVersion = hardwareVersion;
         /** @property {string} [Device#dateCode] */
-        this.dateCode = dateCode;
+        this._dateCode = dateCode;
         /** @property {string} [Device#softwareBuildID] */
-        this.softwareBuildID = softwareBuildID;
+        this._softwareBuildID = softwareBuildID;
         /** @property {boolean} Device#interviewCompleted*/
-        this.interviewCompleted = interviewCompleted;
+        this._interviewCompleted = interviewCompleted;
         /** @property {boolean} Device#interviewing */
-        this.interviewing = false;
+        this._interviewing = false;
         /** @property {Object} Device#meta - Can be used by applications to store data */
         this.meta = meta;
         /** @property {null|number} Device#lastSeen*/
-        this.lastSeen = null;
+        this._lastSeen = null;
     }
-
-    /*
-     * Getters, setters and creaters
-     */
 
     /**
      * @param {number} ID
@@ -134,13 +157,6 @@ class Device extends Entity {
     }
 
     /**
-     * @returns {Endpoint[]}
-     */
-    public getEndpoints(): Endpoint[] {
-        return this.endpoints;
-    }
-
-    /**
      * @param {number} ID
      * @returns {Endpoint}
      */
@@ -148,43 +164,8 @@ class Device extends Entity {
         return this.endpoints.find((e): boolean => e.ID === ID);
     }
 
-    /**
-     * @param {DeviceProperties} key
-     * @returns {string|number|boolean}
-     */
-    public get(key: DeviceProperties): string | number | boolean {
-        return this[key];
-    }
-
-    /**
-     * @param {DeviceProperties} key
-     * @param {string|number} value
-     * @param {boolean?} save Wether to write the new value immediately to the databse.
-     * @returns {Promise}
-     */
-    public async set(key: DeviceProperties, value: string | number, save=true): Promise<void> {
-        if (typeof value === 'number' && key === 'powerSource') {
-            value = Zcl.PowerSource[value];
-        }
-
-        if (typeof value === 'string' && (key === 'manufacturerName' || key === 'powerSource' || key === 'dateCode' ||
-            key === 'softwareBuildID' || key === 'modelID')) {
-            this[key] = value;
-        } else {
-            /* istanbul ignore else */
-            if (typeof value === 'number' && (key === 'networkAddress' || key === 'zclVersion' ||
-                key === 'applicationVersion' || key === 'stackVersion' || key === 'hardwareVersion')) {
-                this[key] = value;
-            }
-        }
-
-        if (save) {
-            this.save();
-        }
-    }
-
     public updateLastSeen(): void {
-        this.lastSeen = Date.now();
+        this._lastSeen = Date.now();
     }
 
     /*
@@ -321,17 +302,17 @@ class Device extends Entity {
         }
 
         let error;
-        this.interviewing = true;
+        this._interviewing = true;
         debug(`Interview - start device '${this.ieeeAddr}'`);
 
         try {
             await this.interviewInternal();
             debug(`Interview - completed for device '${this.ieeeAddr}'`);
-            this.interviewCompleted = true;
+            this._interviewCompleted = true;
         } catch (e) {
             error = e;
         } finally {
-            this.interviewing = false;
+            this._interviewing = false;
             this.save();
         }
 
@@ -343,8 +324,8 @@ class Device extends Entity {
     private async interviewInternal(): Promise<void> {
         const nodeDescriptorQuery = async (): Promise<void> => {
             const nodeDescriptor = await Entity.adapter.nodeDescriptor(this.networkAddress);
-            this.manufacturerID = nodeDescriptor.manufacturerCode;
-            this.type = nodeDescriptor.type;
+            this._manufacturerID = nodeDescriptor.manufacturerCode;
+            this._type = nodeDescriptor.type;
             this.save();
             debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         };
@@ -358,12 +339,12 @@ class Device extends Entity {
                     'Node descriptor request failed for the second time, got modelID starting with lumi, ' +
                     'assuming Xiaomi end device'
                 );
-                this.type = 'EndDevice';
-                this.manufacturerID = 4151;
-                this.manufacturerName = 'LUMI';
-                this.powerSource = 'Battery';
-                this.interviewing = false;
-                this.interviewCompleted = true;
+                this._type = 'EndDevice';
+                this._manufacturerID = 4151;
+                this._manufacturerName = 'LUMI';
+                this._powerSource = 'Battery';
+                this._interviewing = false;
+                this._interviewCompleted = true;
                 this.save();
                 return true;
             } else {
@@ -388,7 +369,7 @@ class Device extends Entity {
         }
 
         const activeEndpoints = await Entity.adapter.activeEndpoints(this.networkAddress);
-        this.endpoints = activeEndpoints.endpoints.map((e): Endpoint => {
+        this._endpoints = activeEndpoints.endpoints.map((e): Endpoint => {
             return Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         });
         this.save();
@@ -396,10 +377,10 @@ class Device extends Entity {
 
         for (const endpoint of this.endpoints) {
             const simpleDescriptor = await Entity.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
-            endpoint.set('profileID', simpleDescriptor.profileID);
-            endpoint.set('deviceID', simpleDescriptor.deviceID);
-            endpoint.set('inputClusters', simpleDescriptor.inputClusters);
-            endpoint.set('outputClusters', simpleDescriptor.outputClusters);
+            endpoint.profileID = simpleDescriptor.profileID;
+            endpoint.deviceID = simpleDescriptor.deviceID;
+            endpoint.inputClusters = simpleDescriptor.inputClusters;
+            endpoint.outputClusters = simpleDescriptor.outputClusters;
             debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`);
             this.save();
         }
@@ -411,7 +392,7 @@ class Device extends Entity {
             for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 3)) {
                 const result = await endpoint.read('genBasic', chunk);
                 for (const [key, value] of Object.entries(result)) {
-                    await this.set(Device.ReportablePropertiesMapping[key], value, false);
+                    this[Device.ReportablePropertiesMapping[key]] = value;
                 }
 
                 debug(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
@@ -426,7 +407,7 @@ class Device extends Entity {
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
             debug(`Interview - ssIasZone enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
             const coordinator = Device.byType('Coordinator')[0];
-            await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.get('ieeeAddr')});
+            await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
             // According to the spec, we should wait for an enrollRequest here, but the Bosch ISW-ZPR1 didn't send it.
             await Wait(3000);
             await endpoint.command('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23});

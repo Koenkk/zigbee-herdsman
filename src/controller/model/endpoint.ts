@@ -1,6 +1,5 @@
 import Entity from './entity';
 import {KeyValue} from '../tstype';
-import {IsNumberArray} from '../../utils';
 import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
@@ -43,30 +42,31 @@ interface Bind {
  * @class Endpoint
  */
 class Endpoint extends Entity {
+    public deviceID?: number;
+    public inputClusters: number[];
+    public outputClusters: number[];
+    public profileID?: number;
     public readonly ID: number;
-    private inputClusters: number[];
-    private outputClusters: number[];
-    private deviceNetworkAddress: number;
+    public readonly clusters: Clusters;
     public readonly deviceIeeeAddress: string;
-    private deviceID?: number;
-    private profileID?: number;
-    private clusters: Clusters;
-
+    public readonly deviceNetworkAddress: number;
     private _binds: BindInternal[];
+
+    // Getters/setters
     get binds(): Bind[] {
         return this._binds.map((entry) => {
             let target: Group | Endpoint = null;
             if (entry.type === 'endpoint') {
                 const device = Device.byIeeeAddr(entry.deviceIeeeAddress);
                 if (device) {
-                    target = device.getEndpoint(entry.endpointID)
+                    target = device.getEndpoint(entry.endpointID);
                 }
             } else {
                 target = Group.byGroupID(entry.groupID);
             }
             return {target, cluster: entry.cluster};
         });
-    }
+    };
 
     private constructor(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
@@ -82,36 +82,6 @@ class Endpoint extends Entity {
         this.deviceIeeeAddress = deviceIeeeAddress;
         this.clusters = clusters;
         this._binds = binds;
-    }
-
-    /*
-     * Getters/setters
-     */
-
-    /**
-     * @param {string} key - 'profileID', 'deviceID', 'inputClusters', 'outputClusters'
-     * @param {number|number[]} value
-     * @returns {Promise}
-     */
-    public async set(
-        key: 'profileID' | 'deviceID' | 'inputClusters' | 'outputClusters', value: number | number[]
-    ): Promise<void> {
-        if (typeof value === 'number' && (key === 'profileID' || key === 'deviceID')) {
-            this[key] = value;
-        } else {
-            /* istanbul ignore else */
-            if (IsNumberArray(value) && (key === 'inputClusters' || key === 'outputClusters')) {
-                this[key] = value;
-            }
-        }
-    }
-
-    /**
-     * @param {number|string} key - 'ID', 'deviceIeeeAddress'
-     * @returns {Endpoint}
-     */
-    public get(key: 'ID' | 'deviceIeeeAddress'): string | number {
-        return this[key];
     }
 
     /**
@@ -156,7 +126,8 @@ class Endpoint extends Entity {
     public toDatabaseRecord(): KeyValue {
         return {
             profId: this.profileID, epId: this.ID, devId: this.deviceID,
-            inClusterList: this.inputClusters, outClusterList: this.outputClusters, clusters: this.clusters, binds: this._binds,
+            inClusterList: this.inputClusters, outClusterList: this.outputClusters, clusters: this.clusters,
+            binds: this._binds,
         };
     }
 
@@ -287,7 +258,10 @@ class Endpoint extends Entity {
             if (target instanceof Group) {
                 this._binds.push({cluster: cluster.ID, groupID: target.get('groupID'), type: 'group'});
             } else {
-                this._binds.push({cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress, endpointID: target.ID});
+                this._binds.push({
+                    cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress,
+                    endpointID: target.ID
+                });
             }
         }
     }

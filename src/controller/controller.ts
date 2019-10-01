@@ -352,19 +352,20 @@ class Controller extends events.EventEmitter {
              *
              */
             this.emit(Events.Events.deviceJoined, eventData);
-        } else if (device.get('networkAddress') !== payload.networkAddress) {
+        } else if (device.networkAddress !== payload.networkAddress) {
             debug.log(
                 `Device '${payload.ieeeAddr}' is already in database with different networkAddress, ` +
                 `updating networkAddress`
             );
-            device.set('networkAddress', payload.networkAddress);
+            device.networkAddress = payload.networkAddress;
+            device.save();
         }
 
         device.updateLastSeen();
 
-        if (!device.get('interviewCompleted') && !device.get('interviewing')) {
+        if (!device.interviewCompleted && !device.interviewing) {
             const payloadStart: Events.DeviceInterviewPayload = {status: 'started', device};
-            debug.log(`Interview '${device.get('ieeeAddr')}' start`);
+            debug.log(`Interview '${device.ieeeAddr}' start`);
             /**
              * @event Controller#deviceInterview
              */
@@ -372,18 +373,18 @@ class Controller extends events.EventEmitter {
 
             try {
                 await device.interview();
-                debug.log(`Succesfully interviewed '${device.get('ieeeAddr')}'`);
+                debug.log(`Succesfully interviewed '${device.ieeeAddr}'`);
                 const event: Events.DeviceInterviewPayload = {status: 'successful', device};
                 this.emit(Events.Events.deviceInterview, event);
             } catch (error) {
-                debug.error(`Interview failed for '${device.get('ieeeAddr')} with error '${error}'`);
+                debug.error(`Interview failed for '${device.ieeeAddr} with error '${error}'`);
                 const event: Events.DeviceInterviewPayload = {status: 'failed', device};
                 this.emit(Events.Events.deviceInterview, event);
             }
         } else {
             debug.log(
-                `Not interviewing '${payload.ieeeAddr}', completed '${device.get('interviewCompleted')}', ` +
-                `in progress '${device.get('interviewing')}'`
+                `Not interviewing '${payload.ieeeAddr}', completed '${device.interviewCompleted}', ` +
+                `in progress '${device.interviewing}'`
             );
         }
     }
@@ -456,8 +457,8 @@ class Controller extends events.EventEmitter {
                 // Some device report, e.g. it's modelID through a readResponse or attributeReport
                 for (const [key, value] of Object.entries(data)) {
                     const setKey = Device.ReportablePropertiesMapping[key];
-                    if (setKey && !device.get(setKey)) {
-                        await device.set(setKey, value);
+                    if (setKey && !device[setKey]) {
+                        device[setKey] = value;
                     }
                 }
 
@@ -502,7 +503,7 @@ class Controller extends events.EventEmitter {
                         frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
                     );
                 } catch (error) {
-                    debug.error(`Default response to ${endpoint.get('deviceIeeeAddress')} failed`);
+                    debug.error(`Default response to ${endpoint.deviceIeeeAddress} failed`);
                 }
             }
 
@@ -512,7 +513,7 @@ class Controller extends events.EventEmitter {
                 try {
                     await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, {time});
                 } catch (error) {
-                    debug.error(`genTime response to ${endpoint.get('deviceIeeeAddress')} failed`);
+                    debug.error(`genTime response to ${endpoint.deviceIeeeAddress} failed`);
                 }
             }
         }

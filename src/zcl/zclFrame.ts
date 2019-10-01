@@ -349,12 +349,12 @@ class ZclFrame {
     }
 
     // List of clusters is not completed, feel free to add more.
-    public isCluster(clusterName: 'genTime' | 'genAnalogInput' | 'genBasic'): boolean {
+    public isCluster(clusterName: 'genTime' | 'genAnalogInput' | 'genBasic' | 'genGroups'): boolean {
         return this.Cluster.name === clusterName;
     }
 
     // List of commands is not completed, feel free to add more.
-    public isCommand(commandName: 'read' | 'report' | 'readRsp'): boolean {
+    public isCommand(commandName: 'read' | 'report' | 'readRsp' | 'remove' | 'add'): boolean {
         return this.getCommand().name === commandName;
     }
 

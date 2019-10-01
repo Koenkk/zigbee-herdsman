@@ -11,11 +11,11 @@ import assert from 'assert';
  */
 class Group extends Entity {
     private databaseID: number;
-    private groupID: number;
-    private members: Set<Endpoint>;
-
+    public readonly groupID: number;
+    private readonly _members: Set<Endpoint>;
+    get members(): Endpoint[] {return Array.from(this._members);}
     // Can be used by applications to store data.
-    private meta: KeyValue;
+    public readonly meta: KeyValue;
 
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
@@ -25,7 +25,7 @@ class Group extends Entity {
         super();
         this.databaseID = databaseID;
         this.groupID = groupID;
-        this.members = members;
+        this._members = members;
         this.meta = meta;
     }
 
@@ -56,7 +56,7 @@ class Group extends Entity {
 
     private toDatabaseRecord(): DatabaseEntry {
         const members = Array.from(this.members).map((member) => {
-            return {deviceIeeeAddr: member.get('deviceIeeeAddress'), endpointID: member.get('ID')};
+            return {deviceIeeeAddr: member.deviceIeeeAddress, endpointID: member.ID};
         });
 
         return {id: this.databaseID, type: 'Group', groupID: this.groupID, members, meta: this.meta};
@@ -131,7 +131,7 @@ class Group extends Entity {
      * @returns {void}
      */
     public addMember(endpoint: Endpoint): void {
-        this.members.add(endpoint);
+        this._members.add(endpoint);
         this.save();
     }
 
@@ -140,7 +140,7 @@ class Group extends Entity {
      * @returns {void}
      */
     public removeMember(endpoint: Endpoint): void {
-        this.members.delete(endpoint);
+        this._members.delete(endpoint);
         this.save();
     }
 
@@ -149,14 +149,7 @@ class Group extends Entity {
      * @returns {boolean}
      */
     public hasMember(endpoint: Endpoint): boolean {
-        return this.members.has(endpoint);
-    }
-
-    /**
-     * @returns {Endpoint[]}
-     */
-    public getMembers(): Endpoint[] {
-        return Array.from(this.members);
+        return this._members.has(endpoint);
     }
 
     /*
