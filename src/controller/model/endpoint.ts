@@ -5,6 +5,7 @@ import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
 import Group from './group';
+import Device from './device';
 
 interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
@@ -25,6 +26,19 @@ interface Clusters {
     };
 }
 
+interface BindInternal {
+    cluster: number;
+    type: 'endpoint' | 'group';
+    deviceIeeeAddress?: string;
+    endpointID?: number;
+    groupID?: number;
+}
+
+interface Bind {
+    cluster: number;
+    target: Endpoint | Group;
+}
+
 /**
  * @class Endpoint
  */
@@ -33,14 +47,30 @@ class Endpoint extends Entity {
     private inputClusters: number[];
     private outputClusters: number[];
     private deviceNetworkAddress: number;
-    private deviceIeeeAddress: string;
+    public readonly deviceIeeeAddress: string;
     private deviceID?: number;
     private profileID?: number;
     private clusters: Clusters;
 
+    private _binds: BindInternal[];
+    get binds(): Bind[] {
+        return this._binds.map((entry) => {
+            let target: Group | Endpoint = null;
+            if (entry.type === 'endpoint') {
+                const device = Device.byIeeeAddr(entry.deviceIeeeAddress);
+                if (device) {
+                    target = device.getEndpoint(entry.endpointID)
+                }
+            } else {
+                target = Group.byGroupID(entry.groupID);
+            }
+            return {target, cluster: entry.cluster};
+        });
+    }
+
     private constructor(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
-        deviceNetworkAddress: number, deviceIeeeAddress: string, clusters: Clusters,
+        deviceNetworkAddress: number, deviceIeeeAddress: string, clusters: Clusters, binds: BindInternal[],
     ) {
         super();
         this.ID = ID;
@@ -51,6 +81,7 @@ class Endpoint extends Entity {
         this.deviceNetworkAddress = deviceNetworkAddress;
         this.deviceIeeeAddress = deviceIeeeAddress;
         this.clusters = clusters;
+        this._binds = binds;
     }
 
     /*
@@ -118,14 +149,14 @@ class Endpoint extends Entity {
 
         return new Endpoint(
             record.epId, record.profId, record.devId, record.inClusterList, record.outClusterList,
-            deviceNetworkAddress, deviceIeeeAddress, record.clusters,
+            deviceNetworkAddress, deviceIeeeAddress, record.clusters, record.binds || [],
         );
     }
 
     public toDatabaseRecord(): KeyValue {
         return {
             profId: this.profileID, epId: this.ID, devId: this.deviceID,
-            inClusterList: this.inputClusters, outClusterList: this.outputClusters, clusters: this.clusters,
+            inClusterList: this.inputClusters, outClusterList: this.outputClusters, clusters: this.clusters, binds: this._binds,
         };
     }
 
@@ -135,7 +166,7 @@ class Endpoint extends Entity {
     ): Endpoint {
         return new Endpoint(
             ID, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress,
-            deviceIeeeAddress, {},
+            deviceIeeeAddress, {}, [],
         );
     }
 
@@ -251,6 +282,14 @@ class Endpoint extends Entity {
             type,
             target instanceof Endpoint ? target.ID : null,
         );
+
+        if (!this.binds.find((b) => b.cluster === cluster.ID && b.target === target)) {
+            if (target instanceof Group) {
+                this._binds.push({cluster: cluster.ID, groupID: target.get('groupID'), type: 'group'});
+            } else {
+                this._binds.push({cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress, endpointID: target.ID});
+            }
+        }
     }
 
     /**
@@ -267,6 +306,11 @@ class Endpoint extends Entity {
             type,
             target instanceof Endpoint ? target.ID : null,
         );
+
+        const index = this.binds.findIndex((b) => b.cluster === cluster.ID && b.target === target);
+        if (index !== -1) {
+            this._binds.splice(index, 1);
+        }
     }
 
     public async defaultResponse(
