@@ -42,10 +42,13 @@ const debug = {
     log: Debug('zigbee-herdsman:controller:log'),
 };
 
+/**
+ * @ignore
+ */
 const OneJanuary2000 = new Date('January 01, 2000 00:00:00').getTime();
 
 /**
- *  Herdsman Controller Class
+ * @noInheritDoc
  */
 class Controller extends events.EventEmitter {
     private options: Options;
@@ -58,19 +61,6 @@ class Controller extends events.EventEmitter {
 
     /**
      * Create a controller
-     * @constructs Controller
-     * @param {Object} options
-     * @param {string} options.databasePath
-     * @param {string} options.backupPath
-     * @param {Object} options.network
-     * @param {boolean} [options.network.networkKeyDistribute=false]
-     * @param {number[]} [options.network.networkKey]
-     * @param {number} [options.network.panID=0x1a62]
-     * @param {number[]} [options.network.channelList=[11]]
-     * @param {Object} options.serialPort
-     * @param {number} [options.serialPort.baudRate=115200]
-     * @param {boolean} [options.serialPort.rtscts=true]
-     * @param {string} options.serialPort.path
      */
     public constructor(options: Options) {
         super();
@@ -87,7 +77,6 @@ class Controller extends events.EventEmitter {
 
     /**
      * Start the Herdsman controller
-     * @returns {Promise}
      */
     public async start(): Promise<void> {
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
@@ -134,11 +123,6 @@ class Controller extends events.EventEmitter {
         this.backupTimer = setInterval(() => this.backup(), 86400000);
     }
 
-    /**
-     *
-     * @param {boolean} permit
-     * @returns {Promise}
-     */
     public async permitJoin(permit: boolean): Promise<void> {
         if (permit && !this.getPermitJoin()) {
             debug.log('Permit joining');
@@ -162,17 +146,10 @@ class Controller extends events.EventEmitter {
         }
     }
 
-    /**
-     * @returns {boolean}
-     */
     public getPermitJoin(): boolean {
         return this.permitJoinTimer != null;
     }
 
-    /**
-     * Stop the herdsman
-     * @returns {Promise}
-     */
     public async stop(): Promise<void> {
         for (const device of Device.all()) {
             device.save();
@@ -207,31 +184,21 @@ class Controller extends events.EventEmitter {
 
     /**
      * soft-reset the z-stack
-     * @returns {Promise}
      */
     public async softReset(): Promise<void> {
         await this.adapter.softReset();
     }
 
-    /**
-     * @returns {Promise}
-     * @fulfil {AdapterTsType.CoordinatorVersion}
-     */
     public async getCoordinatorVersion(): Promise<AdapterTsType.CoordinatorVersion> {
         return this.adapter.getCoordinatorVersion();
     }
 
-    /**
-     * @returns {Promise}
-     * @fulfil {AdapterTsType.NetworkParameters}
-     */
     public async getNetworkParameters(): Promise<AdapterTsType.NetworkParameters> {
         return this.adapter.getNetworkParameters();
     }
 
     /**
      * Get all devices
-     * @returns {Device[]}
      */
     public getDevices(): Device[] {
         return Device.all();
@@ -239,8 +206,6 @@ class Controller extends events.EventEmitter {
 
     /**
      * Get all devices with a specific type
-     * @param {DeviceType} type - 'Coordinator', 'Router', 'EndDevice', 'Unknown'
-     * @returns {Device[]}
      */
     public getDevicesByType(type: DeviceType): Device[] {
         return Device.byType(type);
@@ -248,8 +213,6 @@ class Controller extends events.EventEmitter {
 
     /**
      * Get device by ieeeAddr
-     * @param {string} ieeeAddr
-     * @returns {Device}
      */
     public getDeviceByIeeeAddr(ieeeAddr: string): Device {
         return Device.byIeeeAddr(ieeeAddr);
@@ -257,8 +220,6 @@ class Controller extends events.EventEmitter {
 
     /**
      * Get group by ID
-     * @param {number} groupID
-     * @returns {Group}
      */
     public getGroupByID(groupID: number): Group {
         return Group.byGroupID(groupID);
@@ -266,7 +227,6 @@ class Controller extends events.EventEmitter {
 
     /**
      * Get all groups
-     * @returns {Group[]}
      */
     public getGroups(): Group[] {
         return Group.all();
@@ -274,8 +234,6 @@ class Controller extends events.EventEmitter {
 
     /**
      * Create a Group
-     * @param {number} groupID
-     * @returns {Group}
      */
     public createGroup(groupID: number): Group {
         return Group.create(groupID);
@@ -283,8 +241,6 @@ class Controller extends events.EventEmitter {
 
     /**
      *  Enable/Disable the LED
-     *  @param {boolean} enabled
-     *  @returns {Promise}
      */
     public async setLED(enabled: boolean): Promise<void> {
         await this.adapter.setLED(enabled);
@@ -295,11 +251,6 @@ class Controller extends events.EventEmitter {
         const device = Device.byIeeeAddr(payload.ieeeAddr);
         device.updateLastSeen();
         const data: Events.DeviceAnnouncePayload = {device};
-        /**
-         * @event Controller#deviceAnnounce
-         * @type Object
-         * @property {Device} device
-         */
         this.emit(Events.Events.deviceAnnounce, data);
     }
 
@@ -313,10 +264,6 @@ class Controller extends events.EventEmitter {
         }
 
         const data: Events.DeviceLeavePayload = {ieeeAddr: payload.ieeeAddr};
-        /**
-         * @event Controller#deviceLeave
-         *
-         */
         this.emit(Events.Events.deviceLeave, data);
     }
 
@@ -328,9 +275,6 @@ class Controller extends events.EventEmitter {
         } catch (error) {
         }
 
-        /**
-         * @event Controller#adapterDisconnected
-         */
         this.emit(Events.Events.adapterDisconnected);
     }
 
@@ -347,10 +291,6 @@ class Controller extends events.EventEmitter {
             );
 
             const eventData: Events.DeviceJoinedPayload = {device};
-            /**
-             * @event Controller#deviceJoined
-             *
-             */
             this.emit(Events.Events.deviceJoined, eventData);
         } else if (device.networkAddress !== payload.networkAddress) {
             debug.log(
@@ -366,9 +306,6 @@ class Controller extends events.EventEmitter {
         if (!device.interviewCompleted && !device.interviewing) {
             const payloadStart: Events.DeviceInterviewPayload = {status: 'started', device};
             debug.log(`Interview '${device.ieeeAddr}' start`);
-            /**
-             * @event Controller#deviceInterview
-             */
             this.emit(Events.Events.deviceInterview, payloadStart);
 
             try {
@@ -478,17 +415,6 @@ class Controller extends events.EventEmitter {
                 type: type, device, endpoint, data, linkquality, groupID, cluster
             };
 
-            /**
-             * @event Controller#message
-             * @type {Object}
-             * @property {string} type - 'attributeReport', 'readResponse', 'command*', 'raw'
-             * @property {Device} device
-             * @property {Endpoint} endpoint
-             * @property {Object} data
-             * @property {number} linkquality
-             * @property {number} groupID
-             * @property {string} cluster
-             */
             this.emit(Events.Events.message, eventData);
         }
 

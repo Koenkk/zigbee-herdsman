@@ -6,9 +6,6 @@ import Endpoint from './endpoint';
 import Device from './device';
 import assert from 'assert';
 
-/**
- * @class Group
- */
 class Group extends Entity {
     private databaseID: number;
     public readonly groupID: number;
@@ -29,10 +26,6 @@ class Group extends Entity {
         this.meta = meta;
     }
 
-    /**
-     * @param {number} groupID
-     * @returns {Group}
-     */
     public get(key: 'groupID'): number {
         return this[key];
     }
@@ -73,28 +66,16 @@ class Group extends Entity {
         }
     }
 
-    /**
-     * @param {number} groupID
-     * @returns {Group}
-     */
     public static byGroupID(groupID: number): Group {
         Group.loadFromDatabaseIfNecessary();
         return Group.groups[groupID];
     }
 
-    /**
-     * @returns {Group[]}
-     */
     public static all(): Group[] {
         Group.loadFromDatabaseIfNecessary();
         return Object.values(Group.groups);
     }
 
-    /**
-     * @param {number} groupID
-     * @returns {Promise}
-     * @fulfil {Group}
-     */
     public static create(groupID: number): Group {
         assert(typeof groupID === 'number', 'GroupID must be a number');
         Group.loadFromDatabaseIfNecessary();
@@ -110,44 +91,26 @@ class Group extends Entity {
         return group;
     }
 
-    /**
-     * @returns {Group}
-     */
     public removeFromDatabase(): void {
         Group.loadFromDatabaseIfNecessary();
         Entity.database.remove(this.databaseID);
         delete Group.groups[this.groupID];
     }
 
-    /**
-     * @returns {void}
-     */
     public save(): void {
         Entity.database.update(this.toDatabaseRecord());
     }
 
-    /**
-     * @param {Endpoint} endpoint
-     * @returns {void}
-     */
     public addMember(endpoint: Endpoint): void {
         this._members.add(endpoint);
         this.save();
     }
 
-    /**
-     * @param {Endpoint} endpoint
-     * @returns {void}
-     */
     public removeMember(endpoint: Endpoint): void {
         this._members.delete(endpoint);
         this.save();
     }
 
-    /**
-     * @param {Endpoint} endpoint
-     * @returns {boolean}
-     */
     public hasMember(endpoint: Endpoint): boolean {
         return this._members.has(endpoint);
     }
@@ -156,12 +119,6 @@ class Group extends Entity {
      * Zigbee functions
      */
 
-    /**
-     * @param {number|string} clusterKey
-     * @param {number} commandKey
-     * @param {KeyValue} payload
-     * @returns {Promise}
-     */
     public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);

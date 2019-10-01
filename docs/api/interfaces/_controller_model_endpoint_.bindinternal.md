@@ -1,0 +1,57 @@
+[zigbee-herdsman](../README.md) › ["controller/model/endpoint"](../modules/_controller_model_endpoint_.md) › [BindInternal](_controller_model_endpoint_.bindinternal.md)
+
+# Interface: BindInternal
+
+## Hierarchy
+
+* **BindInternal**
+
+## Index
+
+### Properties
+
+* [cluster](_controller_model_endpoint_.bindinternal.md#cluster)
+* [deviceIeeeAddress](_controller_model_endpoint_.bindinternal.md#optional-deviceieeeaddress)
+* [endpointID](_controller_model_endpoint_.bindinternal.md#optional-endpointid)
+* [groupID](_controller_model_endpoint_.bindinternal.md#optional-groupid)
+* [type](_controller_model_endpoint_.bindinternal.md#type)
+
+## Properties
+
+###  cluster
+
+• **cluster**: *number*
+
+*Defined in [controller/model/endpoint.ts:29](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L29)*
+
+___
+
+### `Optional` deviceIeeeAddress
+
+• **deviceIeeeAddress**? : *string*
+
+*Defined in [controller/model/endpoint.ts:31](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L31)*
+
+___
+
+### `Optional` endpointID
+
+• **endpointID**? : *number*
+
+*Defined in [controller/model/endpoint.ts:32](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L32)*
+
+___
+
+### `Optional` groupID
+
+• **groupID**? : *number*
+
+*Defined in [controller/model/endpoint.ts:33](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L33)*
+
+___
+
+###  type
+
+• **type**: *"endpoint" | "group"*
+
+*Defined in [controller/model/endpoint.ts:30](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L30)*

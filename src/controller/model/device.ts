@@ -19,9 +19,6 @@ interface RoutingTable {
     table: {destinationAddress: number; status: string; nextHop: number}[];
 }
 
-/**
- * @class Device
- */
 class Device extends Entity {
     private readonly ID: number;
     private _applicationVersion?: number;
@@ -101,51 +98,27 @@ class Device extends Entity {
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
     ) {
         super();
-        /** @property {number} Device#ID */
         this.ID = ID;
-        /** @property {DeviceType} [Device#type] */
         this._type = type;
-        /** @property {string} Device#ieeeAddr */
         this.ieeeAddr = ieeeAddr;
-        /** @property {number} Device#networkAddress */
         this._networkAddress = networkAddress;
-        /** @property {number} [Device#manufacturerID] */
         this._manufacturerID = manufacturerID;
-        /** @property {Endpoint[]} Device#endpoints */
         this._endpoints = endpoints;
-        /** @property {string} [Device#manufacturerName] */
         this._manufacturerName = manufacturerName;
-        /** @property {string} [Device#powerSource] */
         this._powerSource = powerSource;
-        /** @property {string} [Device#modelID] */
         this._modelID = modelID;
-        /** @property {number} [Device#applicationVersion] */
         this._applicationVersion = applicationVersion;
-        /** @property {number} [Device#stackVersion] */
         this._stackVersion = stackVersion;
-        /** @property {number} [Device#zclVersion] */
         this._zclVersion = zclVersion;
-        /** @property {number} [Device#hardwareVersion] */
         this.hardwareVersion = hardwareVersion;
-        /** @property {string} [Device#dateCode] */
         this._dateCode = dateCode;
-        /** @property {string} [Device#softwareBuildID] */
         this._softwareBuildID = softwareBuildID;
-        /** @property {boolean} Device#interviewCompleted*/
         this._interviewCompleted = interviewCompleted;
-        /** @property {boolean} Device#interviewing */
         this._interviewing = false;
-        /** @property {Object} Device#meta - Can be used by applications to store data */
         this.meta = meta;
-        /** @property {null|number} Device#lastSeen*/
         this._lastSeen = null;
     }
 
-    /**
-     * @param {number} ID
-     * @returns {Promise}
-     * @fulfil {Endpoint}
-     */
     public async createEndpoint(ID: number): Promise<Endpoint> {
         if (this.getEndpoint(ID)) {
             throw new Error(`Device '${this.ieeeAddr}' already has an endpoint '${ID}'`);
@@ -157,10 +130,6 @@ class Device extends Entity {
         return endpoint;
     }
 
-    /**
-     * @param {number} ID
-     * @returns {Endpoint}
-     */
     public getEndpoint(ID: number): Endpoint {
         return this.endpoints.find((e): boolean => e.ID === ID);
     }
@@ -226,36 +195,21 @@ class Device extends Entity {
         }
     }
 
-    /**
-     * @param {string} ieeeAddr
-     * @returns {Device}
-     */
     public static byIeeeAddr(ieeeAddr: string): Device {
         Device.loadFromDatabaseIfNecessary();
         return Device.devices[ieeeAddr];
     }
 
-    /**
-     * @param {number} networkAddress
-     * @returns {Device}
-     */
     public static byNetworkAddress(networkAddress: number): Device {
         Device.loadFromDatabaseIfNecessary();
         return Object.values(Device.devices).find(d => d.networkAddress === networkAddress);
     }
 
-    /**
-     * @param {DeviceType} type
-     * @returns {Device}
-     */
     public static byType(type: DeviceType): Device[] {
         Device.loadFromDatabaseIfNecessary();
         return Object.values(Device.devices).filter(d => d.type === type);
     }
 
-    /**
-     * @returns {Device[]}
-     */
     public static all(): Device[] {
         Device.loadFromDatabaseIfNecessary();
         return Object.values(Device.devices);
@@ -416,42 +370,25 @@ class Device extends Entity {
         }
     }
 
-    /**
-     * @returns {Promise}
-     */
     public async removeFromNetwork(): Promise<void> {
         await Entity.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
         await this.removeFromDatabase();
     }
 
-    /**
-     * @returns {Promise}
-     */
     public async removeFromDatabase(): Promise<void> {
         Device.loadFromDatabaseIfNecessary();
         Entity.database.remove(this.ID);
         delete Device.devices[this.ieeeAddr];
     }
 
-    /**
-     * @returns {Promise}
-     * @fulfil {TsType.LQI}
-     */
     public async lqi(): Promise<LQI> {
         return Entity.adapter.lqi(this.networkAddress);
     }
 
-    /**
-     * @returns {Promise}
-     * @fulfil {TsType.RoutingTable} - The Routing Table
-     */
     public async routingTable(): Promise<RoutingTable> {
         return Entity.adapter.routingTable(this.networkAddress);
     }
 
-    /**
-     * @returns {Promise}
-     */
     public async ping(): Promise<void> {
         // Zigbee does not have an official pining mechamism. Use a read request
         // of a mandatory basic cluster attribute to keep it as lightweight as
