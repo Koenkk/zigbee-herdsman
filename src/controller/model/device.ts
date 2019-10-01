@@ -78,19 +78,20 @@ class Device extends Entity {
     // the same instance is returned.
     private static devices: {[ieeeAddr: string]: Device} = null;
 
-    public static readonly ReportablePropertiesMapping: {[s: string]:
-        'modelID' | 'manufacturerName' | 'powerSource' | 'zclVersion' | 'stackVersion' | 'hardwareVersion' |
-        'softwareBuildID' | 'dateCode' | 'applicationVersion';
-    } = {
-        modelId: 'modelID',
-        manufacturerName: 'manufacturerName',
-        powerSource: 'powerSource',
-        zclVersion: 'zclVersion',
-        appVersion: 'applicationVersion',
-        stackVersion: 'stackVersion',
-        hwVersion: 'hardwareVersion',
-        dateCode: 'dateCode',
-        swBuildId: 'softwareBuildID',
+    public static readonly ReportablePropertiesMapping: {[s: string]: {
+        set: (value: string | number, device: Device) => void;
+        key: 'modelID' | 'manufacturerName' | 'applicationVersion' | 'zclVersion' | 'powerSource' | 'stackVersion' |
+            'dateCode' | 'softwareBuildID' | 'hardwareVersion';
+    };} = {
+        modelId: {key: 'modelID', set: (v: string, d: Device): void => {d.modelID = v;}},
+        manufacturerName: {key: 'manufacturerName', set: (v: string, d: Device): void => {d.manufacturerName = v;}},
+        powerSource: {key: 'powerSource', set: (v: string, d: Device): void => {d.powerSource = v;}},
+        zclVersion: {key: 'zclVersion', set: (v: number, d: Device): void => {d.zclVersion = v;}},
+        appVersion: {key: 'applicationVersion', set: (v: number, d: Device): void => {d.applicationVersion = v;}},
+        stackVersion: {key: 'stackVersion', set: (v: number, d: Device): void => {d.stackVersion = v;}},
+        hwVersion: {key: 'hardwareVersion', set: (v: number, d: Device): void => {d.hardwareVersion = v;}},
+        dateCode: {key: 'dateCode', set: (v: string, d: Device): void => {d.dateCode = v;}},
+        swBuildId: {key: 'softwareBuildID', set: (v: string, d: Device): void => {d.softwareBuildID = v;}},
     };
 
     private constructor(
@@ -392,7 +393,7 @@ class Device extends Entity {
             for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 3)) {
                 const result = await endpoint.read('genBasic', chunk);
                 for (const [key, value] of Object.entries(result)) {
-                    this[Device.ReportablePropertiesMapping[key]] = value;
+                    Device.ReportablePropertiesMapping[key].set(value, this);
                 }
 
                 debug(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);

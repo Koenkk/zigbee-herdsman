@@ -48,7 +48,7 @@ class Endpoint extends Entity {
     public profileID?: number;
     public readonly ID: number;
     public readonly clusters: Clusters;
-    public readonly deviceIeeeAddress: string;
+    private readonly deviceIeeeAddress: string;
     public readonly deviceNetworkAddress: number;
     private _binds: BindInternal[];
 
@@ -82,6 +82,14 @@ class Endpoint extends Entity {
         this.deviceIeeeAddress = deviceIeeeAddress;
         this.clusters = clusters;
         this._binds = binds;
+    }
+
+    /**
+     * Get device of this endpoint
+     * @return {Device}
+     */
+    public getDevice(): Device {
+        return Device.byIeeeAddr(this.deviceIeeeAddress);
     }
 
     /**

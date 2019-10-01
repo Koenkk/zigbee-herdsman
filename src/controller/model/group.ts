@@ -56,7 +56,7 @@ class Group extends Entity {
 
     private toDatabaseRecord(): DatabaseEntry {
         const members = Array.from(this.members).map((member) => {
-            return {deviceIeeeAddr: member.deviceIeeeAddress, endpointID: member.ID};
+            return {deviceIeeeAddr: member.getDevice().ieeeAddr, endpointID: member.ID};
         });
 
         return {id: this.databaseID, type: 'Group', groupID: this.groupID, members, meta: this.meta};

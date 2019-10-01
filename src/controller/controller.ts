@@ -456,9 +456,9 @@ class Controller extends events.EventEmitter {
             if (type === 'readResponse' || type === 'attributeReport') {
                 // Some device report, e.g. it's modelID through a readResponse or attributeReport
                 for (const [key, value] of Object.entries(data)) {
-                    const setKey = Device.ReportablePropertiesMapping[key];
-                    if (setKey && !device[setKey]) {
-                        device[setKey] = value;
+                    const property =  Device.ReportablePropertiesMapping[key];
+                    if (property && !device[property.key]) {
+                        property.set(value, device);
                     }
                 }
 
@@ -503,7 +503,7 @@ class Controller extends events.EventEmitter {
                         frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
                     );
                 } catch (error) {
-                    debug.error(`Default response to ${endpoint.deviceIeeeAddress} failed`);
+                    debug.error(`Default response to ${device.ieeeAddr} failed`);
                 }
             }
 
@@ -513,7 +513,7 @@ class Controller extends events.EventEmitter {
                 try {
                     await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, {time});
                 } catch (error) {
-                    debug.error(`genTime response to ${endpoint.deviceIeeeAddress} failed`);
+                    debug.error(`genTime response to ${device.ieeeAddr} failed`);
                 }
             }
         }
