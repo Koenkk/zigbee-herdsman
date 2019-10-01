@@ -271,6 +271,8 @@ class Endpoint extends Entity {
                     endpointID: target.ID
                 });
             }
+
+            this.getDevice().save();
         }
     }
 
@@ -292,6 +294,7 @@ class Endpoint extends Entity {
         const index = this.binds.findIndex((b) => b.cluster === cluster.ID && b.target === target);
         if (index !== -1) {
             this._binds.splice(index, 1);
+            this.getDevice().save();
         }
     }
 
