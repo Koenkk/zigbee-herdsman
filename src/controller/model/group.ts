@@ -14,6 +14,15 @@ class Group extends Entity {
     // Can be used by applications to store data.
     public readonly meta: KeyValue;
 
+    private toJSON(): Object {
+        return {
+            groupID: this.groupID,
+            databaseID: this.databaseID,
+            members: this.members,
+            meta: this.meta
+        };
+    }
+
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static groups: {[groupID: number]: Group} = null;

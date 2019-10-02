@@ -71,6 +71,29 @@ class Device extends Entity {
 
     private meta: KeyValue;
 
+    private toJSON(): Object {
+        return {
+            ID: this.ID,
+            ieeeAddr: this.ieeeAddr,
+            applicationVersion: this.applicationVersion,
+            endpoints: this.endpoints,
+            interviewCompleted: this.interviewCompleted,
+            interviewing: this.interviewing,
+            lastSeen: this.lastSeen,
+            type: this.type,
+            dateCode: this.dateCode,
+            hardwareVersion: this.hardwareVersion,
+            manufacturerName: this.manufacturerName,
+            modelID: this.modelID,
+            networkAddress: this.networkAddress,
+            powerSource: this.powerSource,
+            softwareBuildID: this.softwareBuildID,
+            stackVersion: this.stackVersion,
+            zclVersion: this.zclVersion,
+            meta: this.meta
+        };
+    }
+
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static devices: {[ieeeAddr: string]: Device} = null;

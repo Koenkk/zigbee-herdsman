@@ -65,6 +65,20 @@ class Endpoint extends Entity {
         });
     };
 
+    private toJSON(): Object {
+        return {
+            ID: this.ID,
+            profileID: this.profileID,
+            clusters: this.clusters,
+            inputClusters: this.inputClusters,
+            outputClusters: this.outputClusters,
+            binds: this.binds,
+            deviceID: this.deviceID,
+            deviceIeeeAddress: this.deviceIeeeAddress,
+            deviceNetworkAddress: this.deviceNetworkAddress,
+        };
+    }
+
     private constructor(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
         deviceNetworkAddress: number, deviceIeeeAddress: string, clusters: Clusters, binds: BindInternal[],
