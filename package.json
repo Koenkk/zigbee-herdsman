@@ -28,8 +28,7 @@
     "debug": "^4.1.1",
     "fast-deep-equal": "^2.0.1",
     "mixin-deep": "^2.0.1",
-    "serialport": "8.0.1",
-    "typedoc-plugin-internal-external": "^2.0.2"
+    "serialport": "8.0.1"
   },
   "deprecated": false,
   "description": "An open source ZigBee gateway solution with node.js.",
@@ -77,7 +76,7 @@
     "test-with-coverage": "jest test --coverage --collectCoverageFrom '**/*.{ts,tsx}'",
     "test-watch": "jest test --watch",
     "eslint": "node_modules/.bin/eslint . --ext .ts",
-    "typedoc": "typedoc --tsconfig typedoc-tsconfig.json"
+    "docs": "typedoc --tsconfig typedoc-tsconfig.json"
   },
   "version": "0.8.0",
   "jest": {
