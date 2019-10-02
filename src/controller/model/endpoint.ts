@@ -38,9 +38,6 @@ interface Bind {
     target: Endpoint | Group;
 }
 
-/**
- * @class Endpoint
- */
 class Endpoint extends Entity {
     public deviceID?: number;
     public inputClusters: number[];
@@ -86,7 +83,6 @@ class Endpoint extends Entity {
 
     /**
      * Get device of this endpoint
-     * @return {Device}
      */
     public getDevice(): Device {
         return Device.byIeeeAddr(this.deviceIeeeAddress);
@@ -101,10 +97,6 @@ class Endpoint extends Entity {
         return this.inputClusters.includes(cluster.ID);
     }
 
-    /**
-     * @param {number|string} clusterKey
-     * @returns {boolean}
-     */
     public supportsOutputCluster(clusterKey: number | string, ): boolean {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         return this.outputClusters.includes(cluster.ID);
@@ -172,12 +164,6 @@ class Endpoint extends Entity {
      * Zigbee functions
      */
 
-    /**
-     * @param {number|string} clusterKey
-     * @param {KeyValue} attributes
-     * @param {Options} [options]
-     * @returns {Promise}
-     */
     public async write(
         clusterKey: number | string, attributes: KeyValue, options?: Options
     ): Promise<void> {
@@ -202,13 +188,6 @@ class Endpoint extends Entity {
         await Entity.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
     }
 
-    /**
-     * @param {number|string} clusterKey
-     * @param {KeyValue} attributes
-     * @param {Options} [options]
-     * @returns {Promise}
-     * @fulfil {KeyValue}
-     */
     public async read(
         clusterKey: number | string, attributes: string[] | number [], options?: Options
     ): Promise<KeyValue> {
@@ -247,11 +226,6 @@ class Endpoint extends Entity {
         await Entity.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
     }
 
-    /**
-     * @param {number|string} clusterKey
-     * @param {Endpoint|Group} target
-     * @returns {Promise}
-     */
     public async bind(clusterKey: number | string, target: Endpoint | Group): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
@@ -276,11 +250,6 @@ class Endpoint extends Entity {
         }
     }
 
-    /**
-     * @param {number|string} clusterKey
-     * @param {Endpoint|Group} target
-     * @returns {Promise}
-     */
     public async unbind(clusterKey: number | string, target: Endpoint | Group): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
@@ -310,11 +279,6 @@ class Endpoint extends Entity {
         await Entity.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame);
     }
 
-    /**
-     * @param {number|string} clusterKey
-     * @param {ConfigureReportingItem[]} items
-     * @param {Options} [options]
-     */
     public async configureReporting(
         clusterKey: number | string, items: ConfigureReportingItem[], options?: Options
     ): Promise<void> {
@@ -351,12 +315,6 @@ class Endpoint extends Entity {
         await Entity.adapter.sendZclFrameNetworkAddressWithResponse(this.deviceNetworkAddress, this.ID, frame);
     }
 
-    /**
-     * @param {number|string} clusterKey
-     * @param {number} commandKey
-     * @param {KeyValue} payload
-     * @param {Options} [options]
-     */
     public async command(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
     ): Promise<void | KeyValue> {
@@ -391,27 +349,16 @@ class Endpoint extends Entity {
         return {manufacturerCode: null, disableDefaultResponse, ...providedOptions};
     }
 
-    /**
-     * @param {Group} group
-     * @returns {Promise}
-     */
     public async addToGroup(group: Group): Promise<void> {
         await this.command('genGroups', 'add', {groupid: group.get('groupID'), groupname: ''});
         group.addMember(this);
     }
 
-    /**
-     * @param {Group} group
-     * @returns {Promise}
-     */
     public async removeFromGroup(group: Group): Promise<void> {
         await this.command('genGroups', 'remove', {groupid: group.get('groupID')});
         group.removeMember(this);
     }
 
-    /**
-     * @returns {Promise}
-     */
     public async removeFromAllGroups(): Promise<void> {
         await this.command('genGroups', 'removeAll', {}, {disableDefaultResponse: true});
         for (const group of Group.all()) {

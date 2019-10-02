@@ -49,10 +49,12 @@
     "babel-jest": "*",
     "eslint": "*",
     "jest": "*",
-    "jsdoc-babel": "*",
-    "jsdoc-to-markdown": "*",
     "regenerator-runtime": "*",
     "tmp": "*",
+    "typedoc": "^0.15.0",
+    "typedoc-plugin-markdown": "^2.2.7",
+    "typedoc-plugin-no-inherit": "^1.1.10",
+    "typedoc-plugin-sourcefile-url": "^1.0.4",
     "typescript": "*"
   },
   "homepage": "https://github.com/Koenkk/zigbee-herdsman",
@@ -74,7 +76,7 @@
     "test-with-coverage": "jest test --coverage --collectCoverageFrom '**/*.{ts,tsx}'",
     "test-watch": "jest test --watch",
     "eslint": "node_modules/.bin/eslint . --ext .ts",
-    "doc": "jsdoc2md --files index.js ./src/controller/model/*.ts ./src/controller/*.ts --configure ./jsdoc2md.json > ./docs/api.md"
+    "docs": "typedoc --tsconfig typedoc-tsconfig.json"
   },
   "version": "0.8.0",
   "jest": {
