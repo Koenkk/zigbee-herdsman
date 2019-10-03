@@ -1714,6 +1714,8 @@ const Cluster: {
             acLouverPosition: {ID: 69, type: DataType.enum8},
             acCollTemp: {ID: 70, type: DataType.int16},
             acCapacityFormat: {ID: 71, type: DataType.enum8},
+            SinopeOccupancy: {ID: 1024, type: DataType.enum8, manufacturerCode: ManufacturerCode.Sinope},
+            SinopeBacklight: {ID: 1026, type: DataType.enum8, manufacturerCode: ManufacturerCode.Sinope},
         },
         commands: {
             setpointRaiseLower: {
@@ -3437,6 +3439,19 @@ const Cluster: {
                     {name: 'unknown2', type: DataType.uint8},
                 ],
             },
+        },
+    },
+    manuSpecificSinope: {
+        ID: 65281,
+        manufacturerCode: ManufacturerCode.Sinope,
+        attributes: {
+            outdoorTempToDisplay: {ID: 16, type: DataType.int16},
+            outdoorTempToDisplayTimeout: {ID: 17, type: DataType.uint16},
+            currentTimeToDisplay: {ID: 32, type: DataType.uint32},
+        },
+        commands: {
+        },
+        commandsResponse: {
         },
     },
     manuSpecificCluster: {
