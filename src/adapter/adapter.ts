@@ -29,6 +29,8 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract softReset(): Promise<void>;
 
+    public abstract hardReset(): Promise<void>;
+
     public abstract setLED(enabled: boolean): Promise<void>;
 
     public abstract lqi(networkAddress: number): Promise<TsType.LQI>;

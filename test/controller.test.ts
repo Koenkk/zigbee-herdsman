@@ -19,6 +19,7 @@ const mockAdapterEvents = {};
 const mockAdapterPermitJoin = jest.fn();
 const mockAdapterSupportsBackup = jest.fn().mockReturnValue(true);
 const mockAdapterSoftReset = jest.fn();
+const mockAdapterHardReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockSetLED = jest.fn();
@@ -127,6 +128,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
                 }
             },
             softReset: mockAdapterSoftReset,
+            hardReset: mockAdapterHardReset,
             supportsBackup: mockAdapterSupportsBackup,
             backup: () => {return {version: 'dummybackup'}},
             getCoordinatorVersion: () => {return {type: 'zStack', meta: {version: 1}}},
@@ -429,6 +431,12 @@ describe('Controller', () => {
         await controller.start();
         await controller.softReset();
         expect(mockAdapterSoftReset).toBeCalledTimes(1);
+    });
+
+    it('Hard reset', async () => {
+        await controller.start();
+        await controller.hardReset();
+        expect(mockAdapterHardReset).toBeCalledTimes(1);
     });
 
     it('Device announce event', async () => {

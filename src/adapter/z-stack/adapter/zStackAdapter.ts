@@ -136,6 +136,10 @@ class ZStackAdapter extends Adapter {
         await this.znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.SOFT});
     }
 
+    public async hardReset(): Promise<void> {
+        await this.znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.HARD});
+    }
+
     public async setLED(enabled: boolean): Promise<void> {
         await this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: enabled ? 1 : 0});
     }

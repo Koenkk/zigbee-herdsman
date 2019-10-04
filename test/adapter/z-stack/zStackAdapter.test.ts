@@ -1277,6 +1277,15 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'resetReq', {type: 1});
     });
 
+    it('Hard reset', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        await adapter.hardReset();
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'resetReq', {type: 0});
+    });
+
     it('Disable led', async () => {
         basicMocks();
         await adapter.start();

@@ -189,6 +189,13 @@ class Controller extends events.EventEmitter {
         await this.adapter.softReset();
     }
 
+    /**
+     * hard-reset the z-stack
+     */
+    public async hardReset(): Promise<void> {
+        await this.adapter.hardReset();
+    }
+
     public async getCoordinatorVersion(): Promise<AdapterTsType.CoordinatorVersion> {
         return this.adapter.getCoordinatorVersion();
     }
