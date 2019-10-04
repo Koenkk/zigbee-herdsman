@@ -250,6 +250,13 @@ class Controller extends events.EventEmitter {
         debug.log(`Device announce '${payload.ieeeAddr}'`);
         const device = Device.byIeeeAddr(payload.ieeeAddr);
         device.updateLastSeen();
+
+        if (device.networkAddress !== payload.networkAddress) {
+            debug.log(`Device '${payload.ieeeAddr}' announced with new networkAddress '${payload.networkAddress}'`);
+            device.networkAddress = payload.networkAddress;
+            device.save();
+        }
+
         const data: Events.DeviceAnnouncePayload = {device};
         this.emit(Events.Events.deviceAnnounce, data);
     }

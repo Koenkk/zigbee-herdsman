@@ -348,6 +348,14 @@ describe('Controller', () => {
         expect(events.deviceAnnounce[0].device.modelID).toBe('myModelID');
     });
 
+    it('Device announce event should update network address when different', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(events.deviceAnnounce.length).toBe(0);
+        await mockAdapterEvents['deviceAnnounce']({networkAddress: 9999, ieeeAddr: '0x129'});
+        expect(controller.getDeviceByIeeeAddr('0x129').networkAddress).toBe(9999);
+    });
+
     it('Device leave event and remove from database', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
