@@ -1,35 +1,41 @@
 import * as stream from 'stream';
-// import {DataStart, SOF, MinMessageLength, PositionDataLength} from './constants';
-// import Frame from './frame';
+// @ts-ignore
+import slip from 'slip';
+import Frame from './frame';
 import Debug from "debug";
 
 const debug = Debug('zigbee-herdsman:unpi:parser');
 
 class Parser extends stream.Transform {
     private buffer: Buffer;
+    private decoder: slip.Decoder;
 
     public constructor() {
         super();
-        this.buffer = Buffer.from([]);
+
+        this.onMessage = this.onMessage.bind(this);
+        this.onError = this.onError.bind(this);
+
+        this.decoder = new slip.Decoder({
+            onMessage: this.onMessage,
+            maxMessageSize: 1000000,
+            bufferSize: 2048
+        });
+    }
+
+    private onMessage(message: Uint8Array): void {
+
+    }
+
+    private onError(_: Uint8Array, error: string): void {
+        debug(`<-- error '${error}'`);
     }
 
     public _transform(chunk: Buffer, _: string, cb: Function): void {
-        // debug(`<-- [${chunk.toJSON().data}]`);
-
-        // if (this.buffer.length === 0 && chunk[0] !== SOF) {
-        //     const index = chunk.indexOf(SOF);
-        //     if (index != -1) {
-        //         chunk = chunk.slice(index);
-        //     } else {
-        //         chunk = Buffer.alloc(0);
-        //     }
-        // }
-
-        // this.buffer = Buffer.concat([this.buffer, chunk]);
-        // this.parseNext();
+        debug(`<-- [${chunk.toJSON().data}]`);
+        this.decoder.decode(chunk);
         cb();
     }
-
 }
 
 export default Parser;
