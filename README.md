@@ -11,6 +11,9 @@ The Module exports an Object containing the class [Controller](docs/api/classes/
 
 # Changelog
 
+## 0.9.0 breaking changes
+- Removed controller.softReset() -> use controller.reset('soft') now
+
 ## 0.8.0 breaking changes
 - Removed device.getEndpoints() -> use device.endpoints now
 - Removed device/endpoint.set() -> directly set properties now (e.g. device.modelID = 'newmodelid')

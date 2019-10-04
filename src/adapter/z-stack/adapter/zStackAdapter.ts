@@ -132,12 +132,12 @@ class ZStackAdapter extends Adapter {
         return {type: ZnpVersion[this.version.product], meta: this.version};
     }
 
-    public async softReset(): Promise<void> {
-        await this.znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.SOFT});
-    }
-
-    public async hardReset(): Promise<void> {
-        await this.znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.HARD});
+    public async reset(type: 'soft' | 'hard'): Promise<void> {
+        if (type === 'soft') {
+            await this.znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.SOFT});
+        } else {
+            await this.znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.HARD});
+        }
     }
 
     public async setLED(enabled: boolean): Promise<void> {

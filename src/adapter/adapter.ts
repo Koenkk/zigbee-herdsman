@@ -27,9 +27,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract getCoordinatorVersion(): Promise<TsType.CoordinatorVersion>;
 
-    public abstract softReset(): Promise<void>;
-
-    public abstract hardReset(): Promise<void>;
+    public abstract reset(type: 'soft' | 'hard'): Promise<void>;
 
     public abstract setLED(enabled: boolean): Promise<void>;
 
