@@ -182,11 +182,8 @@ class Controller extends events.EventEmitter {
         }
     }
 
-    /**
-     * soft-reset the z-stack
-     */
-    public async softReset(): Promise<void> {
-        await this.adapter.softReset();
+    public async reset(type: 'soft' | 'hard'): Promise<void> {
+        await this.adapter.reset(type);
     }
 
     public async getCoordinatorVersion(): Promise<AdapterTsType.CoordinatorVersion> {

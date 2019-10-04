@@ -18,7 +18,7 @@ const currentDate = new Date(150);
 const mockAdapterEvents = {};
 const mockAdapterPermitJoin = jest.fn();
 const mockAdapterSupportsBackup = jest.fn().mockReturnValue(true);
-const mockAdapterSoftReset = jest.fn();
+const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockSetLED = jest.fn();
@@ -47,7 +47,7 @@ const mockSendZclFrameNetworkAddressWithResponse = jest.fn().mockImplementation(
 })
 
 const mocksRestore = [mockAdapterStart, mockAdapterPermitJoin, mockAdapterStop, mockSendZclFrameNetworkAddress, mockAdapterRemoveDevice];
-const mocksClear = [mockSendZclFrameNetworkAddressWithResponse];
+const mocksClear = [mockSendZclFrameNetworkAddressWithResponse, mockAdapterReset];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const equalsPartial = (object, expected) => {
@@ -126,7 +126,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
                     ]
                 }
             },
-            softReset: mockAdapterSoftReset,
+            reset: mockAdapterReset,
             supportsBackup: mockAdapterSupportsBackup,
             backup: () => {return {version: 'dummybackup'}},
             getCoordinatorVersion: () => {return {type: 'zStack', meta: {version: 1}}},
@@ -435,8 +435,16 @@ describe('Controller', () => {
 
     it('Soft reset', async () => {
         await controller.start();
-        await controller.softReset();
-        expect(mockAdapterSoftReset).toBeCalledTimes(1);
+        await controller.reset('soft');
+        expect(mockAdapterReset).toBeCalledTimes(1);
+        expect(mockAdapterReset).toHaveBeenCalledWith('soft');
+    });
+
+    it('Hard reset', async () => {
+        await controller.start();
+        await controller.reset('hard');
+        expect(mockAdapterReset).toBeCalledTimes(1);
+        expect(mockAdapterReset).toHaveBeenCalledWith('hard');
     });
 
     it('Device announce event', async () => {
