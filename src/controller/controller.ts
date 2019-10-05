@@ -61,6 +61,8 @@ class Controller extends events.EventEmitter {
 
     /**
      * Create a controller
+     *
+     * To auto detect the port provide `null` for `options.serialPort.path`
      */
     public constructor(options: Options) {
         super();

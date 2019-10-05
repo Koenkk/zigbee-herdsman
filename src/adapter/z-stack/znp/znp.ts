@@ -113,8 +113,24 @@ class Znp extends events.EventEmitter {
         debug.error(`Serialport error: ${error}`);
     }
 
-    public open(): Promise<void> {
+    public async open(): Promise<void> {
         const options = {baudRate: this.baudRate, rtscts: this.rtscts, autoOpen: false};
+
+        if (!this.path) {
+            debug.log(`No path provided, auto detecting...`);
+            const device = (await SerialPort.list()).find((d) => {
+                return d.manufacturer === 'Texas Instruments' && d.vendorId === '0451' && d.productId === '16a8';
+            });
+
+            if (device) {
+                // @ts-ignore; not sure why this is needed as path exists (definition is wrong?)
+                this.path = device.path;
+                debug.log(`Auto detected path '${this.path}'`);
+            } else {
+                throw new Error(`Failed to auto detect path`);
+            }
+        }
+
         debug.log(`Opening with ${this.path} and ${JSON.stringify(options)}`);
         this.serialPort = new SerialPort(this.path, options);
 

@@ -8,6 +8,7 @@ import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
 const mockSerialPortPipe = jest.fn();
+const mockSerialPortList = jest.fn().mockReturnValue([]);
 const mockSerialPortOpen = jest.fn().mockImplementation((cb) => cb());
 const mockSerialPortConstructor = jest.fn();
 const mockSerialPortOnce = jest.fn();
@@ -34,6 +35,8 @@ jest.mock('serialport', () => {
         };
     });
 });
+
+SerialPort.list = mockSerialPortList;
 
 const mockUnpiParserOn = jest.fn();
 
@@ -92,6 +95,37 @@ describe('ZNP', () => {
         expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
         expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(1);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
+    });
+
+    it('Open autodetect port', async () => {
+        znp = new Znp(null, 100, true);
+        mockSerialPortList.mockReturnValue([
+            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
+            {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected1'}
+        ])
+        await znp.open();
+
+        expect(SerialPort).toHaveBeenCalledTimes(1);
+        expect(SerialPort).toHaveBeenCalledWith(
+            "/dev/autodetected1",
+            {"autoOpen": false, "baudRate": 100, "rtscts": true},
+        );
+    });
+
+    it('Open autodetect port error when there are not available devices', async () => {
+        znp = new Znp(null, 100, true);
+        mockSerialPortList.mockReturnValue([
+            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
+        ])
+
+        let error;
+        try {
+            await znp.open();
+        } catch (e) {
+            error = e;
+        }
+
+        expect(error).toStrictEqual(new Error('Failed to auto detect path'))
     });
 
     it('Open with error', async () => {
