@@ -1,4 +1,7 @@
 # zigbee-herdsman
+
+![npm](https://img.shields.io/npm/v/zigbee-herdsman)
+
 An open source ZigBee gateway solution with node.js, forked from zigbee-shepherd.
 
 The goal is to refactor zigbee-shepherd to improve maintainability.
