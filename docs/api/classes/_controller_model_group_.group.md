@@ -32,7 +32,7 @@
 * [byGroupID](_controller_model_group_.group.md#static-bygroupid)
 * [create](_controller_model_group_.group.md#static-create)
 * [injectAdapter](_controller_model_group_.group.md#static-injectadapter)
-* [injectDatabse](_controller_model_group_.group.md#static-injectdatabse)
+* [injectDatabase](_controller_model_group_.group.md#static-injectdatabase)
 
 ## Properties
 
@@ -224,9 +224,9 @@ Name | Type |
 
 ___
 
-### `Static` injectDatabse
+### `Static` injectDatabase
 
-▸ **injectDatabse**(`database`: Database): *void*
+▸ **injectDatabase**(`database`: Database): *void*
 
 *Inherited from void*
 
