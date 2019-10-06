@@ -89,7 +89,7 @@ class Controller extends events.EventEmitter {
         // Inject adapter and database in entity
         debug.log(`Injected database: ${this.database != null}, adapter: ${this.adapter != null}`);
         Entity.injectAdapter(this.adapter);
-        Entity.injectDatabse(this.database);
+        Entity.injectDatabase(this.database);
 
         // Register adapter events
         this.adapter.on(AdapterEvents.Events.deviceJoined, this.onDeviceJoined.bind(this));

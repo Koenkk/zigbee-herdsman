@@ -51,7 +51,7 @@
 * [byType](_controller_model_device_.device.md#static-bytype)
 * [create](_controller_model_device_.device.md#static-create)
 * [injectAdapter](_controller_model_device_.device.md#static-injectadapter)
-* [injectDatabse](_controller_model_device_.device.md#static-injectdatabse)
+* [injectDatabase](_controller_model_device_.device.md#static-injectdatabase)
 
 ### Object literals
 
@@ -558,9 +558,9 @@ Name | Type |
 
 ___
 
-### `Static` injectDatabse
+### `Static` injectDatabase
 
-▸ **injectDatabse**(`database`: Database): *void*
+▸ **injectDatabase**(`database`: Database): *void*
 
 *Inherited from void*
 

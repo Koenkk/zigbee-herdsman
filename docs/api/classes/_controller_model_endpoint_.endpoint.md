@@ -46,7 +46,7 @@
 * [create](_controller_model_endpoint_.endpoint.md#static-create)
 * [fromDatabaseRecord](_controller_model_endpoint_.endpoint.md#static-fromdatabaserecord)
 * [injectAdapter](_controller_model_endpoint_.endpoint.md#static-injectadapter)
-* [injectDatabse](_controller_model_endpoint_.endpoint.md#static-injectdatabse)
+* [injectDatabase](_controller_model_endpoint_.endpoint.md#static-injectdatabase)
 
 ## Properties
 
@@ -450,9 +450,9 @@ Name | Type |
 
 ___
 
-### `Static` injectDatabse
+### `Static` injectDatabase
 
-▸ **injectDatabse**(`database`: Database): *void*
+▸ **injectDatabase**(`database`: Database): *void*
 
 *Inherited from void*
 
