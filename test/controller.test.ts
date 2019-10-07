@@ -1410,6 +1410,19 @@ describe('Controller', () => {
         expect(group.members).toStrictEqual([]);
     });
 
+    it('Remove endpoint from group by number', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddressWithResponse.mockClear();
+        await endpoint.removeFromGroup(4);
+        const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
+        expect(call[0]).toBe(129);
+        expect(call[1]).toBe(1);
+        expect(deepClone(call[2])).toStrictEqual({"Cluster": getCluster(4), "Header": {"commandIdentifier": 3, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 5}, "Payload": {groupid: 4}});
+    });
+
     it('Group command', async () => {
         await controller.start();
         const group = await controller.createGroup(2);

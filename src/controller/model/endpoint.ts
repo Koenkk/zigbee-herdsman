@@ -231,14 +231,14 @@ class Endpoint extends Entity {
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
         await Entity.adapter.bind(
             this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
-            target instanceof Endpoint ? target.deviceIeeeAddress : target.get('groupID'),
+            target instanceof Endpoint ? target.deviceIeeeAddress : target.groupID,
             type,
             target instanceof Endpoint ? target.ID : null,
         );
 
         if (!this.binds.find((b) => b.cluster === cluster.ID && b.target === target)) {
             if (target instanceof Group) {
-                this._binds.push({cluster: cluster.ID, groupID: target.get('groupID'), type: 'group'});
+                this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
             } else {
                 this._binds.push({
                     cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress,
@@ -255,7 +255,7 @@ class Endpoint extends Entity {
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
         await Entity.adapter.unbind(
             this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
-            target instanceof Endpoint ? target.deviceIeeeAddress : target.get('groupID'),
+            target instanceof Endpoint ? target.deviceIeeeAddress : target.groupID,
             type,
             target instanceof Endpoint ? target.ID : null,
         );
@@ -350,13 +350,20 @@ class Endpoint extends Entity {
     }
 
     public async addToGroup(group: Group): Promise<void> {
-        await this.command('genGroups', 'add', {groupid: group.get('groupID'), groupname: ''});
+        await this.command('genGroups', 'add', {groupid: group.groupID, groupname: ''});
         group.addMember(this);
     }
 
-    public async removeFromGroup(group: Group): Promise<void> {
-        await this.command('genGroups', 'remove', {groupid: group.get('groupID')});
-        group.removeMember(this);
+    /**
+     * Remove endpoint from a group, accepts both a Group and number as parameter.
+     * The number parameter type should only be used when removing from a group which is not known
+     * to zigbee-herdsman.
+     */
+    public async removeFromGroup(group: Group | number): Promise<void> {
+        await this.command('genGroups', 'remove', {groupid: group instanceof Group ? group.groupID : group});
+        if (group instanceof Group) {
+            group.removeMember(this);
+        }
     }
 
     public async removeFromAllGroups(): Promise<void> {

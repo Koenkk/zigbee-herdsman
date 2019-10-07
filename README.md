@@ -16,6 +16,7 @@ The Module exports an Object containing the class [Controller](docs/api/classes/
 
 ## 0.9.0 breaking changes
 - Removed controller.softReset() -> use controller.reset('soft') now
+- Removed group.get('groupID') -> use group.groupID now
 
 ## 0.8.0 breaking changes
 - Removed device.getEndpoints() -> use device.endpoints now

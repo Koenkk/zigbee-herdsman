@@ -276,7 +276,7 @@ ___
 
 ▸ **removeFromAllGroups**(): *Promise‹void›*
 
-*Defined in [controller/model/endpoint.ts:362](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L362)*
+*Defined in [controller/model/endpoint.ts:369](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L369)*
 
 **Returns:** *Promise‹void›*
 
@@ -284,15 +284,19 @@ ___
 
 ###  removeFromGroup
 
-▸ **removeFromGroup**(`group`: [Group](_controller_model_group_.group.md)): *Promise‹void›*
+▸ **removeFromGroup**(`group`: [Group](_controller_model_group_.group.md) | number): *Promise‹void›*
 
-*Defined in [controller/model/endpoint.ts:357](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L357)*
+*Defined in [controller/model/endpoint.ts:362](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L362)*
+
+Remove endpoint from a group, accepts both a Group and number as parameter.
+The number parameter type should only be used when removing from a group which is not known
+to zigbee-herdsman.
 
 **Parameters:**
 
 Name | Type |
 ------ | ------ |
-`group` | [Group](_controller_model_group_.group.md) |
+`group` | [Group](_controller_model_group_.group.md) &#124; number |
 
 **Returns:** *Promise‹void›*
 

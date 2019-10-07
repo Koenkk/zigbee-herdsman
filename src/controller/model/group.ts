@@ -26,10 +26,6 @@ class Group extends Entity {
         this.meta = meta;
     }
 
-    public get(key: 'groupID'): number {
-        return this[key];
-    }
-
     /*
      * CRUD
      */
