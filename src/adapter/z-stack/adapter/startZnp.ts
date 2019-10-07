@@ -10,7 +10,7 @@ import {Restore} from './backup';
 import Items from './nvItems';
 import fs from 'fs';
 
-const debug = Debug('zigbee-herdsman:controller:zStack:startZnp');
+const debug = Debug('zigbee-herdsman:zStack:startZnp');
 const Subsystem = UnpiConstants.Subsystem;
 
 const EndpointDefaults: {
