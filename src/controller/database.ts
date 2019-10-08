@@ -71,8 +71,9 @@ class Database {
             const json = JSON.stringify(DatabaseEntry);
             lines.push(json);
         }
-
-        fs.writeFileSync(this.path, lines.join('\n'));
+        const tmpPath = this.path + '.tmp';
+        fs.writeFileSync(tmpPath, lines.join('\n'));
+        fs.renameSync(tmpPath, this.path);
     }
 }
 
