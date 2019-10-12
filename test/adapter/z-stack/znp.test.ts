@@ -101,13 +101,15 @@ describe('ZNP', () => {
         znp = new Znp(null, 100, true);
         mockSerialPortList.mockReturnValue([
             {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
-            {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected1'}
-        ])
+            {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+            {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+            {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+        ]);
         await znp.open();
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
         expect(SerialPort).toHaveBeenCalledWith(
-            "/dev/autodetected1",
+            "/dev/tty.usbmodemL43001T21",
             {"autoOpen": false, "baudRate": 100, "rtscts": true},
         );
     });

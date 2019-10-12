@@ -4,7 +4,7 @@ import {
     Frame as UnpiFrame,
 } from '../unpi';
 
-import {Wait, Queue, Waitress} from '../../../utils';
+import {Wait, Queue, Waitress, EqualsPartial} from '../../../utils';
 
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
@@ -36,6 +36,11 @@ interface WaitressMatcher {
     command: string;
     payload?: ZpiObjectPayload;
 };
+
+const autoDetectDefinitions = [
+    {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16a8'}, // CC2531
+    {manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'}, // CC1352P_2 and CC26X2R1
+];
 
 class Znp extends events.EventEmitter {
     private path: string;
@@ -118,9 +123,17 @@ class Znp extends events.EventEmitter {
 
         if (!this.path) {
             debug.log(`No path provided, auto detecting...`);
-            const device = (await SerialPort.list()).find((d) => {
-                return d.manufacturer === 'Texas Instruments' && d.vendorId === '0451' && d.productId === '16a8';
+            const devices = (await SerialPort.list()).filter((d) => {
+                return autoDetectDefinitions.find((definition) => EqualsPartial(d, definition)) != null;
             });
+
+            // CC1352P_2 and CC26X2R1 lists as 2 USB devices with same manufacturer, productId and vendorId
+            // one is the actual chip interface, other is the XDS110.
+            // The chip is always exposed on the first one after alphabetical sorting.
+            // @ts-ignore; not sure why this is needed as path exists (definition is wrong?)
+            devices.sort((a, b) => (a.path < b.path) ? -1 : 1);
+
+            const device = devices.length > 0 ? devices[0] : null;
 
             if (device) {
                 // @ts-ignore; not sure why this is needed as path exists (definition is wrong?)
