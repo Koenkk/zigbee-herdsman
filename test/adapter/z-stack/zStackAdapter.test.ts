@@ -331,7 +331,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toHaveBeenCalledTimes(32);
     });
 
-    it('Start zStack 1.2 initialize', async () => {
+    it('Start zStack 1.2 initialize - already configured; extended pan id mismatch -> should be resetted', async () => {
         networkOptions.networkKeyDistribute = true;
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json');
         mockZnpRequest.mockImplementation(async (subsystem, command, payload, expectedStatus) => {
@@ -433,6 +433,95 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[19][2].id).toStrictEqual(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
         expect(mockZnpRequest.mock.calls[20][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[20][2].value).toStrictEqual(Buffer.from([0x55]));
+    });
+
+    it('Start zStack 1.2 initialize - not configured; -> should be restored', async () => {
+        networkOptions.networkKeyDistribute = true;
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json');
+        mockZnpRequest.mockImplementation(async (subsystem, command, payload, expectedStatus) => {
+            const missing = () => {
+                const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
+                console.log(msg)
+                throw new Error(msg);
+            }
+
+            if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
+                return {payload: {product: 0}};
+            } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
+                if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, offset: 0})) {
+                    return {payload: {value: Buffer.from([0x00])}};
+                } else {
+                    missing();
+                }
+            } else if (subsystem === Subsystem.UTIL && command === 'getDeviceInfo') {
+                return {payload: {devicestate: Constants.COMMON.devStates.ZB_COORD}};
+            } else if (subsystem === Subsystem.ZDO && command === 'activeEpReq') {
+                return {};
+            } else if (subsystem === Subsystem.AF && command === 'register') {
+                return {};
+            } else if (subsystem === Subsystem.SYS && command === 'resetReq') {
+                return {};
+            } else if (subsystem === Subsystem.SYS && command === 'osalNvWrite') {
+                return {};
+            } else if (subsystem === Subsystem.SYS && command === 'osalNvItemInit') {
+                return {};
+            } else if (subsystem === Subsystem.SAPI && command === 'readConfiguration') {
+                return {payload: {value: Buffer.from(networkOptions.networkKey)}};
+            } else if (subsystem === Subsystem.SAPI && command === 'writeConfiguration') {
+                return {};
+            } else {
+                missing();
+            }
+        });
+
+        mockZnpWaitfor.mockImplementation((type, subsystem, command, payload) => {
+            const missing = () => {
+                const msg = `Not implemented - ${Type[type]} - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
+                console.log(msg)
+                throw new Error(msg);
+            }
+
+            if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
+                return {payload: {activeeplist: []}};
+            } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
+                return {payload: {activeeplist: []}};
+            } else {
+                missing();
+            }
+        });
+
+        const result = await adapter.start();
+        expect(result).toBe('restored');
+        expect(Znp).toBeCalledWith("dummy", 800, false);
+        expect(mockZnpOpen).toBeCalledTimes(1);
+        expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
+        expect(mockZnpRequest.mock.calls[1][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
+        expect(mockZnpRequest.mock.calls[2][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
+
+        expect(mockZnpRequest.mock.calls[3][1]).toBe('resetReq');
+        expect(mockZnpRequest.mock.calls[4][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[4][2].value).toStrictEqual(Buffer.from([0x02]));
+        expect(mockZnpRequest.mock.calls[5][1]).toBe('resetReq');
+        expect(mockZnpRequest.mock.calls[6][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[6][2].value).toStrictEqual(Buffer.from([0]));
+        expect(mockZnpRequest.mock.calls[7][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[7][2].value).toStrictEqual(Buffer.from([1]));
+        expect(mockZnpRequest.mock.calls[8][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[8][2].value).toStrictEqual(Buffer.from([1]));
+        expect(mockZnpRequest.mock.calls[9][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[9][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
+        expect(mockZnpRequest.mock.calls[10][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[10][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
+        expect(mockZnpRequest.mock.calls[11][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from(networkOptions.extenedPanID));
+        expect(mockZnpRequest.mock.calls[12][1]).toBe('writeConfiguration');
+        expect(mockZnpRequest.mock.calls[12][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
+        expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
+        expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvItemInit');
+        expect(mockZnpRequest.mock.calls[14][2].id).toStrictEqual(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
+        expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from([0x55]));
     });
 
     it('Start zStack 3.0.x initialize', async () => {
