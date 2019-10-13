@@ -7,9 +7,13 @@ An open source ZigBee gateway solution with node.js, forked from zigbee-shepherd
 The goal is to refactor zigbee-shepherd to improve maintainability.
 
 
-# Usage
+# API Documentation
 
-The Module exports an Object containing the class [Controller](docs/api/classes/_controller_controller_.controller.md)
+* [Class Controller](docs/api/classes/_controller_controller_.controller.md)
+* [Events emitted by Controller](docs/api/modules/_controller_events_.md)
+* [Class Device](docs/api/classes/_controller_model_device_.device.md)
+* [Class Endpoint](docs/api/classes/_controller_model_endpoint_.endpoint.md)
+* [Class Group](docs/api/classes/_controller_model_group_.group.md)
 
 
 # Changelog
