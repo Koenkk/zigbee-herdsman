@@ -16,9 +16,10 @@ const mockZnpRequest = jest.fn().mockReturnValue({payload: {}});
 const mockZnpWaitfor = jest.fn();
 const mockZnpOpen = jest.fn();
 const mockZnpClose = jest.fn();
+const mockZnpRemoveWaitFor = jest.fn();
 const mockQueueExecute = jest.fn().mockImplementation(async (func) => await func());
 
-const mocks = [mockZnpOpen, mockZnpWaitfor, mockZnpRequest, mockZnpClose];
+const mocks = [mockZnpOpen, mockZnpWaitfor, mockZnpRequest, mockZnpClose, mockZnpRemoveWaitFor];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const equalsPartial = (object, expected) => {
@@ -34,6 +35,8 @@ const equalsPartial = (object, expected) => {
 let znpReceived;
 let znpClose;
 let dataConfirmCode = 0;
+let dataRequestCode = 0;
+let dataRequestExtCode = 0;
 
 jest.mock('../../../src/adapter/z-stack/znp/znp', () => {
     return jest.fn().mockImplementation(() => {
@@ -48,6 +51,7 @@ jest.mock('../../../src/adapter/z-stack/znp/znp', () => {
             open: mockZnpOpen,
             request: mockZnpRequest,
             waitFor: mockZnpWaitfor,
+            removeWaitFor: mockZnpRemoveWaitFor,
             close: mockZnpClose,
         };
     });
@@ -102,8 +106,14 @@ const basicMocks = () => {
         } else if (subsystem === Subsystem.ZDO && command === 'nodeDescReq') {
             return {};
         } else if (subsystem === Subsystem.AF && command === 'dataRequest') {
+            if (dataRequestCode !== 0) {
+                throw new Error(`Data request failed with code '${dataRequestCode}'`);
+            }
             return {};
         } else if (subsystem === Subsystem.AF && command === 'dataRequestExt') {
+            if (dataRequestExtCode !== 0) {
+                throw new Error(`Data request failed with code '${dataRequestExtCode}'`);
+            }
             return {};
         } else if (subsystem === Subsystem.ZDO && command === 'extNwkInfo') {
             return {payload: {panid: 20, extendedpanid: 10, channel: 12}};
@@ -130,29 +140,29 @@ const basicMocks = () => {
         }
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}};
+            return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-            return {payload: {}};
+            return {promise: {payload: {}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'simpleDescRsp') {
             if (equals(payload, {endpoint: 1})) {
-                return {payload: {endpoint: 1, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]}};
+                return {promise: {payload: {endpoint: 1, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]}}};
             } else if (equals(payload, {endpoint: 99})) {
-                return {payload: {endpoint: 99, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]}};
+                return {promise: {payload: {endpoint: 99, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]}}};
             } else {
-                return {payload: {endpoint: payload.endpoint, profileid: 124, deviceid: 7, inclusterlist: [8], outclusterlist: [9]}};
+                return {promise: {payload: {endpoint: payload.endpoint, profileid: 124, deviceid: 7, inclusterlist: [8], outclusterlist: [9]}}};
             }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nodeDescRsp') {
-            return {payload: {manufacturercode: payload.nwkaddr * 2, logicaltype_cmplxdescavai_userdescavai: payload.nwkaddr - 1}};
+            return {promise: {payload: {manufacturercode: payload.nwkaddr * 2, logicaltype_cmplxdescavai_userdescavai: payload.nwkaddr - 1}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.AF && command === 'dataConfirm') {
-            return {payload: {status: dataConfirmCode}};
+            return {promise: {payload: {status: dataConfirmCode}}, ID: 99};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 203})) {
-            return {payload: {status: 0, neighborlqilist: [{lqi: 10, nwkAddr: 2, extAddr: 3, relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 3, extAddr: 4, relationship: 2, depth: 5}]}};
+            return {promise: {payload: {status: 0, neighborlqilist: [{lqi: 10, nwkAddr: 2, extAddr: 3, relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 3, extAddr: 4, relationship: 2, depth: 5}]}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 204})) {
-            return {payload: {status: 1}};
+            return {promise: {payload: {status: 1}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtRtgRsp' && equals(payload, {srcaddr: 205})) {
-            return {payload: {status: 0, routingtablelist: [{destNwkAddr: 10, routeStatus: 'OK', nextHopNwkAddr: 3}]}};
+            return {promise: {payload: {status: 0, routingtablelist: [{destNwkAddr: 10, routeStatus: 'OK', nextHopNwkAddr: 3}]}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtRtgRsp' && equals(payload, {srcaddr: 206})) {
-            return {payload: {status: 1}};
+            return {promise: {payload: {status: 1}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'bindRsp' && equals(payload, {srcaddr: 301})) {
             return {};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'unbindRsp' && equals(payload, {srcaddr: 301})) {
@@ -189,6 +199,8 @@ describe('zStackAdapter', () => {
         mockQueueExecute.mockClear();
         jest.useRealTimers();
         dataConfirmCode = 0;
+        dataRequestCode = 0;
+        dataRequestExtCode = 0;
         networkOptions.networkKeyDistribute = false;
     });
 
@@ -248,9 +260,9 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else {
                 missing();
             }
@@ -387,9 +399,9 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else {
                 missing();
             }
@@ -482,9 +494,9 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else {
                 missing();
             }
@@ -576,9 +588,9 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else {
                 missing();
             }
@@ -716,9 +728,9 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8]}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else {
                 missing();
             }
@@ -810,9 +822,9 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8]}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else {
                 missing();
             }
@@ -904,9 +916,9 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {payload: {activeeplist: [1, 2, 3, 4, 5, 6]}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else {
                 missing();
             }
@@ -957,9 +969,9 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else {
                 missing();
             }
@@ -1056,9 +1068,9 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-                return {payload: {activeeplist: []}};
+                return {promise: {payload: {activeeplist: []}}};
             } else {
                 missing();
             }
@@ -1311,9 +1323,9 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-                return {payload: {}};
+                return {promise: {payload: {}}};
             } else {
                 missing();
             }
@@ -1401,9 +1413,9 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
-                return {payload: {}};
+                return {promise: {payload: {}}};
             } else {
                 missing();
             }
@@ -1640,7 +1652,20 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
     });
 
-    it('Send zcl frame network address fails', async () => {
+    it('Send zcl frame network address dataRequest fails', async () => {
+        basicMocks();
+        await adapter.start();
+        dataRequestCode = 17;
+        mockZnpRequest.mockClear();
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
+        let error;
+        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame)} catch (e) {error = e;}
+        expect(error).toStrictEqual(new Error("Data request failed with code '17'"));
+        expect(mockZnpRemoveWaitFor).toHaveBeenCalledTimes(1);
+        expect(mockZnpRemoveWaitFor).toHaveBeenCalledWith(99);
+    });
+
+    it('Send zcl frame network address dataConfirm fails', async () => {
         basicMocks();
         await adapter.start();
         dataConfirmCode = 205;
@@ -1734,7 +1759,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledTimes(300);
     });
 
-    it('Send zcl frame group fails', async () => {
+    it('Send zcl frame group dataConfirm fails', async () => {
         basicMocks();
         await adapter.start();
         dataConfirmCode = 184;
@@ -1746,6 +1771,22 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
         expect(error).toStrictEqual(new Error("Data request failed with error: 'undefined' (184)"));
+    });
+
+    it('Send zcl frame group dataRequestExt fails', async () => {
+        basicMocks();
+        await adapter.start();
+        dataRequestExtCode = 17;
+        let error;
+        mockZnpRequest.mockClear();
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
+        try {await adapter.sendZclFrameGroup(25, frame);} catch (e) { error = e};
+        expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
+        expect(error).toStrictEqual(new Error("Data request failed with code '17'"));
+        expect(mockZnpRemoveWaitFor).toHaveBeenCalledTimes(1);
+        expect(mockZnpRemoveWaitFor).toHaveBeenCalledWith(99);
     });
 
     it('Send zcl frame network address with response and default response', async () => {

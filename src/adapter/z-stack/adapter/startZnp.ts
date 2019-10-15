@@ -113,7 +113,7 @@ async function boot(znp: Znp): Promise<void> {
         debug('Start ZNP as coordinator...');
         const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
         znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, [0, 1]);
-        await started;
+        await started.promise;
         debug('ZNP started as coordinator');
     } else {
         debug('ZNP is already started as coordinator');
@@ -123,7 +123,7 @@ async function boot(znp: Znp): Promise<void> {
 async function registerEndpoints(znp: Znp): Promise<void> {
     const activeEpResponse = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'activeEpRsp');
     znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: 0, nwkaddrofinterest: 0});
-    const activeEp = await activeEpResponse;
+    const activeEp = await activeEpResponse.promise;
 
     for (const endpoint of Endpoints) {
         if (activeEp.payload.activeeplist.includes(endpoint.endpoint)) {
@@ -155,7 +155,7 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
         await znp.request(Subsystem.APP_CNF, 'bdbSetChannel', {isPrimary: 0x0, channel: 0x0});
         const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
         await znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x04});
-        await started;
+        await started.promise;
         await znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x02});
     } else {
         await znp.request(Subsystem.SAPI, 'writeConfiguration', Items.networkKey(options.networkKey));

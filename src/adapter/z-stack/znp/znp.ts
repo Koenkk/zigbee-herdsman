@@ -262,8 +262,12 @@ class Znp extends events.EventEmitter {
     public waitFor(
         type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload = {},
         timeout: number = timeouts.default
-    ): Promise<ZpiObject> {
-        return this.waitress.waitFor({type, subsystem, command, payload}, timeout).promise;
+    ): {promise: Promise<ZpiObject>; ID: number} {
+        return this.waitress.waitFor({type, subsystem, command, payload}, timeout);
+    }
+
+    public removeWaitFor(ID: number): void {
+        this.waitress.remove(ID);
     }
 
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {
