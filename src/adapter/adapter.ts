@@ -24,9 +24,11 @@ abstract class Adapter extends events.EventEmitter {
         networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string
     ): Promise<Adapter> {
         const {ZStackAdapter} = await import('./z-stack/adapter');
+        const {DeconzAdapter} = await import('./deconz/adapter');
+        type AdapterImplementation = typeof ZStackAdapter | typeof DeconzAdapter;
 
-        const adapters: typeof ZStackAdapter[] = [ZStackAdapter];
-        let adapter: typeof ZStackAdapter = null;
+        const adapters: AdapterImplementation[] = [ZStackAdapter, DeconzAdapter];
+        let adapter: AdapterImplementation = null;
 
         if (!serialPortOptions.path) {
             debug('No path provided, auto detecting path');

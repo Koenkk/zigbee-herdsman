@@ -4,7 +4,7 @@ import Frame from './frame';
 import slip from 'slip';
 import Debug from "debug";
 
-const debug = Debug('zigbee-herdsman:conbee:driver:writer');
+const debug = Debug('zigbee-herdsman:deconz:driver:writer');
 
 class Writer extends stream.Readable {
     public writeFrame(frame: Frame): void {
