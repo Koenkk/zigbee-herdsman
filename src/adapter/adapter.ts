@@ -3,7 +3,6 @@ import {ZclDataPayload} from './events';
 import events from 'events';
 import {ZclFrame} from '../zcl';
 import Debug from "debug";
-import {ZStackAdapter} from './z-stack/adapter';
 
 const debug = Debug("zigbee-herdsman:adapter");
 
@@ -24,6 +23,8 @@ abstract class Adapter extends events.EventEmitter {
     public static async create(
         networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string
     ): Promise<Adapter> {
+        const {ZStackAdapter} = await import('./z-stack/adapter');
+
         const adapters: typeof ZStackAdapter[] = [ZStackAdapter];
         let adapter: typeof ZStackAdapter = null;
 
