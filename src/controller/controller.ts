@@ -239,9 +239,17 @@ class Controller extends events.EventEmitter {
     }
 
     /**
+     *  Check if the adapters supports LED
+     */
+    public async supportsLED(): Promise<boolean> {
+        return this.adapter.supportsLED();
+    }
+
+    /**
      *  Enable/Disable the LED
      */
     public async setLED(enabled: boolean): Promise<void> {
+        if (!(await this.supportsLED())) throw new Error(`Adapter doesn't support LED`);
         await this.adapter.setLED(enabled);
     }
 

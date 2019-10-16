@@ -148,6 +148,10 @@ class ZStackAdapter extends Adapter {
         }
     }
 
+    public async supportsLED(): Promise<boolean> {
+        return this.version.product !== ZnpVersion.zStack3x0;
+    }
+
     public async setLED(enabled: boolean): Promise<void> {
         await this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: enabled ? 1 : 0});
     }

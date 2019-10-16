@@ -30,6 +30,7 @@
 * [setLED](_controller_controller_.controller.md#setled)
 * [start](_controller_controller_.controller.md#start)
 * [stop](_controller_controller_.controller.md#stop)
+* [supportsLED](_controller_controller_.controller.md#supportsled)
 
 ## Constructors
 
@@ -215,7 +216,7 @@ ___
 
 ▸ **setLED**(`enabled`: boolean): *Promise‹void›*
 
-*Defined in [controller/controller.ts:244](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L244)*
+*Defined in [controller/controller.ts:251](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L251)*
 
  Enable/Disable the LED
 
@@ -248,3 +249,15 @@ ___
 *Defined in [controller/controller.ts:155](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L155)*
 
 **Returns:** *Promise‹void›*
+
+___
+
+###  supportsLED
+
+▸ **supportsLED**(): *Promise‹boolean›*
+
+*Defined in [controller/controller.ts:244](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L244)*
+
+ Check if the adapters supports LED
+
+**Returns:** *Promise‹boolean›*
