@@ -1,6 +1,6 @@
 import events from 'events';
 import Database from './database';
-import {TsType as AdapterTsType, ZStackAdapter, Adapter, Events as AdapterEvents} from '../adapter';
+import {TsType as AdapterTsType, Adapter, Events as AdapterEvents} from '../adapter';
 import {Entity, Device} from './model';
 import {ZclFrameConverter} from './helpers';
 import * as Events from './events';
@@ -67,7 +67,6 @@ class Controller extends events.EventEmitter {
     public constructor(options: Options) {
         super();
         this.options = mixin(DefaultOptions, options);
-        this.adapter = new ZStackAdapter(this.options.network, this.options.serialPort, this.options.backupPath);
 
         // Validate options
         for (const channel of this.options.network.channelList) {
@@ -81,6 +80,7 @@ class Controller extends events.EventEmitter {
      * Start the Herdsman controller
      */
     public async start(): Promise<void> {
+        this.adapter = await Adapter.create(this.options.network, this.options.serialPort, this.options.backupPath);
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
         this.database = Database.open(this.options.databasePath);
         const startResult = await this.adapter.start();

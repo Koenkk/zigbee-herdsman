@@ -2,19 +2,60 @@ import * as TsType from './tstype';
 import {ZclDataPayload} from './events';
 import events from 'events';
 import {ZclFrame} from '../zcl';
+import Debug from "debug";
+import {ZStackAdapter} from './z-stack/adapter';
+
+const debug = Debug("zigbee-herdsman:adapter");
 
 abstract class Adapter extends events.EventEmitter {
     protected networkOptions: TsType.NetworkOptions;
     protected serialPortOptions: TsType.SerialPortOptions;
     protected backupPath: string;
 
-    public constructor(
+    protected constructor(
         networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string)
     {
         super();
         this.networkOptions = networkOptions;
         this.serialPortOptions = serialPortOptions;
         this.backupPath = backupPath;
+    }
+
+    public static async create(
+        networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string
+    ): Promise<Adapter> {
+        const adapters: typeof ZStackAdapter[] = [ZStackAdapter];
+        let adapter: typeof ZStackAdapter = null;
+
+        if (!serialPortOptions.path) {
+            debug('No path provided, auto detecting path');
+            for (const candidate of adapters) {
+                const path = await candidate.autoDetectPath();
+                if (path) {
+                    debug(`Auto detected path '${path}' from adapter '${candidate}'`);
+                    serialPortOptions.path = path;
+                    break;
+                }
+            }
+
+            if (!serialPortOptions.path) {
+                throw new Error("No path provided and failed to auto detect path");
+            }
+        }
+
+        // Determine adapter to use
+        for (const candidate of adapters) {
+            if (await candidate.isValidPath(serialPortOptions.path)) {
+                debug(`Path '${serialPortOptions.path}' is valid for '${candidate}'`);
+                adapter = candidate;
+            }
+        }
+
+        if (!adapter) {
+            adapter = adapters[0];
+        }
+
+        return new adapter(networkOptions, serialPortOptions, backupPath);
     }
 
     public abstract start(): Promise<TsType.StartResult>;

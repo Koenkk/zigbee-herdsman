@@ -1,6 +1,6 @@
 import "regenerator-runtime/runtime";
 import {Znp} from '../../../src/adapter/z-stack/znp';
-import {ZStackAdapter} from '../../../src/adapter';
+import {ZStackAdapter} from '../../../src/adapter/z-stack/adapter';
 import {Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
 import equals from 'fast-deep-equal';
 import * as Constants from '../../../src/adapter/z-stack/constants';
@@ -189,6 +189,8 @@ const serialPortOptions = {
     path: 'dummy',
 };
 
+Znp.isValidPath = jest.fn().mockReturnValue(true);
+Znp.autoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
 
 describe('zStackAdapter', () => {
     let adapter;
@@ -202,6 +204,18 @@ describe('zStackAdapter', () => {
         dataRequestCode = 0;
         dataRequestExtCode = 0;
         networkOptions.networkKeyDistribute = false;
+    });
+
+    it('Is valid path', async () => {
+        const result = await ZStackAdapter.isValidPath("/dev/autodetected");
+        expect(result).toBeTruthy();
+        expect(Znp.isValidPath).toHaveBeenCalledWith("/dev/autodetected");
+    });
+
+    it('Auto detect path', async () => {
+        const result = await ZStackAdapter.autoDetectPath();
+        expect(result).toBe("/dev/autodetected");
+        expect(Znp.autoDetectPath).toHaveBeenCalledTimes(1);
     });
 
     it('Call znp constructor', async () => {
@@ -1333,7 +1347,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.start();
         const actualBackup = await adapter.backup();
-        delete backup.time;
+        delete backup['time'];
         delete actualBackup.time;
         expect(equals(backup, actualBackup)).toBeTruthy();
     });

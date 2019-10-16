@@ -4,7 +4,9 @@ import {
     Frame as UnpiFrame,
 } from '../unpi';
 
-import {Wait, Queue, Waitress, EqualsPartial} from '../../../utils';
+import {Wait, Queue, Waitress} from '../../../utils';
+
+import SerialPortUtils from '../../serialPortUtils';
 
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
@@ -121,29 +123,6 @@ class Znp extends events.EventEmitter {
     public async open(): Promise<void> {
         const options = {baudRate: this.baudRate, rtscts: this.rtscts, autoOpen: false};
 
-        if (!this.path) {
-            debug.log(`No path provided, auto detecting...`);
-            const devices = (await SerialPort.list()).filter((d) => {
-                return autoDetectDefinitions.find((definition) => EqualsPartial(d, definition)) != null;
-            });
-
-            // CC1352P_2 and CC26X2R1 lists as 2 USB devices with same manufacturer, productId and vendorId
-            // one is the actual chip interface, other is the XDS110.
-            // The chip is always exposed on the first one after alphabetical sorting.
-            // @ts-ignore; not sure why this is needed as path exists (definition is wrong?)
-            devices.sort((a, b) => (a.path < b.path) ? -1 : 1);
-
-            const device = devices.length > 0 ? devices[0] : null;
-
-            if (device) {
-                // @ts-ignore; not sure why this is needed as path exists (definition is wrong?)
-                this.path = device.path;
-                debug.log(`Auto detected path '${this.path}'`);
-            } else {
-                throw new Error(`Failed to auto detect path`);
-            }
-        }
-
         debug.log(`Opening with ${this.path} and ${JSON.stringify(options)}`);
         this.serialPort = new SerialPort(this.path, options);
 
@@ -183,6 +162,21 @@ class Znp extends events.EventEmitter {
         debug.log('Writing skip bootloader payload');
         this.unpiWriter.writeBuffer(buffer);
         await Wait(1000);
+    }
+
+    public static async isValidPath(path: string): Promise<boolean> {
+        return SerialPortUtils.is(path, autoDetectDefinitions);
+    }
+
+    public static async autoDetectPath(): Promise<string> {
+        const paths = await SerialPortUtils.find(autoDetectDefinitions);
+
+        // CC1352P_2 and CC26X2R1 lists as 2 USB devices with same manufacturer, productId and vendorId
+        // one is the actual chip interface, other is the XDS110.
+        // The chip is always exposed on the first one after alphabetical sorting.
+        paths.sort((a, b) => (a < b) ? -1 : 1);
+
+        return paths.length > 0 ? paths[0] : null;
     }
 
     public close(): Promise<void> {

@@ -98,36 +98,34 @@ describe('ZNP', () => {
     });
 
     it('Open autodetect port', async () => {
-        znp = new Znp(null, 100, true);
         mockSerialPortList.mockReturnValue([
             {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
             {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
             {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
             {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
         ]);
-        await znp.open();
 
-        expect(SerialPort).toHaveBeenCalledTimes(1);
-        expect(SerialPort).toHaveBeenCalledWith(
-            "/dev/tty.usbmodemL43001T21",
-            {"autoOpen": false, "baudRate": 100, "rtscts": true},
-        );
+        expect(await Znp.autoDetectPath()).toBe("/dev/tty.usbmodemL43001T21");
     });
 
-    it('Open autodetect port error when there are not available devices', async () => {
-        znp = new Znp(null, 100, true);
+    it('Autodetect port error when there are not available devices', async () => {
         mockSerialPortList.mockReturnValue([
             {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
         ])
 
-        let error;
-        try {
-            await znp.open();
-        } catch (e) {
-            error = e;
-        }
+        expect(await Znp.autoDetectPath()).toBeNull();
+    });
 
-        expect(error).toStrictEqual(new Error('Failed to auto detect path'))
+    it('Check if path is valid', async () => {
+        mockSerialPortList.mockReturnValue([
+            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
+            {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+            {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+            {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+        ])
+
+        expect(await Znp.isValidPath('/dev/tty.usbmodemL43001T21')).toBeTruthy();
+        expect(await Znp.isValidPath('/dev/autodetected2')).toBeFalsy();
     });
 
     it('Open with error', async () => {

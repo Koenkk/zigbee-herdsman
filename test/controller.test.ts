@@ -1,7 +1,7 @@
 import "regenerator-runtime/runtime";
 import tmp from 'tmp';
 import {Controller} from '../src/controller';
-import {ZStackAdapter} from '../src/adapter';
+import {ZStackAdapter} from '../src/adapter/z-stack/adapter';
 import equals from 'fast-deep-equal';
 import fs from 'fs';
 import { ZclFrame } from "../src/zcl";
@@ -9,11 +9,11 @@ import { Device, Group } from "../src/controller/model";
 import * as Zcl from '../src/zcl';
 import {Wait} from '../src/utils';
 import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
+import {Adapter} from '../src/adapter';
 
 Date.now = jest.fn()
 // @ts-ignore
 Date.now.mockReturnValue(new Date(150));
-const currentDate = new Date(150);
 
 const mockAdapterEvents = {};
 const mockAdapterPermitJoin = jest.fn();
@@ -46,7 +46,6 @@ const mockSendZclFrameNetworkAddressWithResponse = jest.fn().mockImplementation(
     }
 })
 
-const mocksRestore = [mockAdapterStart, mockAdapterPermitJoin, mockAdapterStop, mockSendZclFrameNetworkAddress, mockAdapterRemoveDevice];
 const mocksClear = [mockSendZclFrameNetworkAddressWithResponse, mockAdapterReset];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
@@ -182,6 +181,17 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
     });
 });
 
+// Mock static methods
+const mockZStackAdapterIsValidPath = jest.fn().mockReturnValue(true);
+const mockZStackAdapterAutoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
+ZStackAdapter.isValidPath = mockZStackAdapterIsValidPath;
+ZStackAdapter.autoDetectPath = mockZStackAdapterAutoDetectPath;
+
+const mocksRestore = [
+    mockAdapterStart, mockAdapterPermitJoin, mockAdapterStop, mockSendZclFrameNetworkAddress, mockAdapterRemoveDevice,
+    mockZStackAdapterIsValidPath, mockZStackAdapterAutoDetectPath
+];
+
 const events = {
     deviceJoined: [],
     deviceInterview: [],
@@ -235,7 +245,8 @@ describe('Controller', () => {
     });
 
     it('Call controller constructor options mixed with default options', async () => {
-       expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extenedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true}, backupPath);
+        await controller.start();
+        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extenedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true}, backupPath);
     });
 
     it('Call controller constructor error on invalid channel', async () => {
@@ -1598,5 +1609,42 @@ describe('Controller', () => {
         const endpoint = device.endpoints[0];
         expect(endpoint.getClusterAttributeValue('msOccupancySensing', 'occupancy')).toBe(1);
         expect(endpoint.getClusterAttributeValue('genBasic', 'modelId')).toBeNull();
+    });
+
+
+    it('Adapter create', async () => {
+        mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
+        await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false}, null);
+        expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/bla');
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false}, null);
+    });
+
+    it('Adapter create auto detect', async () => {
+        mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
+        mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
+        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false}, null);
+        expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/test');
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false}, null);
+    });
+
+    it('Adapter create auto detect nothing found', async () => {
+        mockZStackAdapterIsValidPath.mockReturnValueOnce(false);
+        mockZStackAdapterAutoDetectPath.mockReturnValueOnce(null);
+
+        let error;
+        try {
+            await Adapter.create(null, {path: null, baudRate: 100, rtscts: false}, null);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).toStrictEqual(new Error('No path provided and failed to auto detect path'));
+    });
+
+    it('Adapter create with unknown path should take ZStackAdapter by default', async () => {
+        mockZStackAdapterIsValidPath.mockReturnValueOnce(false);
+        mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
+        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false}, null);
+        expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/test');
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false}, null);
     });
 });

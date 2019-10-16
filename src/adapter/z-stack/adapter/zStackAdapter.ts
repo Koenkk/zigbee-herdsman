@@ -15,7 +15,7 @@ import * as Constants from '../constants';
 import Debug from "debug";
 import {Backup} from './backup';
 
-const debug = Debug("zigbee-herdsman:controller:zStack");
+const debug = Debug("zigbee-herdsman:adapter:zStack");
 const Subsystem = UnpiConstants.Subsystem;
 const Type = UnpiConstants.Type;
 
@@ -84,6 +84,14 @@ class ZStackAdapter extends Adapter {
     public async stop(): Promise<void> {
         this.closing = true;
         await this.znp.close();
+    }
+
+    public static async isValidPath(path: string): Promise<boolean> {
+        return Znp.isValidPath(path);
+    }
+
+    public static async autoDetectPath(): Promise<string> {
+        return Znp.autoDetectPath();
     }
 
     public async getCoordinator(): Promise<Coordinator> {
