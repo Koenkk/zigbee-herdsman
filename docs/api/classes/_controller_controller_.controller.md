@@ -233,7 +233,7 @@ ___
 
 ▸ **start**(): *Promise‹void›*
 
-*Defined in [controller/controller.ts:83](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L83)*
+*Defined in [controller/controller.ts:82](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L82)*
 
 Start the Herdsman controller
 

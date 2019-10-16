@@ -18,6 +18,9 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 
 # Changelog
 
+## 0.10.0 breaking changes
+- controller.start() renamed `resetted` start result to `reset`
+
 ## 0.9.0 breaking changes
 - Removed controller.softReset() -> use controller.reset('soft') now
 - Removed group.get('groupID') -> use group.groupID now

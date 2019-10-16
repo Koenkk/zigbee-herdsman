@@ -35,6 +35,6 @@ ___
 
 ###  StartResult
 
-Ƭ **StartResult**: *"resumed" | "resetted" | "restored"*
+Ƭ **StartResult**: *"resumed" | "reset" | "restored"*
 
 *Defined in [adapter/tstype.ts:23](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/adapter/tstype.ts#L23)*

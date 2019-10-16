@@ -396,7 +396,7 @@ describe('Controller', () => {
         expect(databaseContents().includes('0x129')).toBeTruthy()
         expect(databaseContents().includes('groupID')).toBeTruthy()
         await controller.stop();
-        mockAdapterStart.mockReturnValueOnce("resetted");
+        mockAdapterStart.mockReturnValueOnce("reset");
         await controller.start();
         expect((controller.getDevices()).length).toBe(1);
         expect(controller.getDevicesByType('Coordinator')[0].type).toBe('Coordinator');

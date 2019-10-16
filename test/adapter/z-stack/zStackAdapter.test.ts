@@ -283,7 +283,7 @@ describe('zStackAdapter', () => {
         });
 
         const result = await adapter.start();
-        expect(result).toBe('resetted');
+        expect(result).toBe('reset');
         expect(Znp).toBeCalledWith("dummy", 800, false);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
@@ -357,7 +357,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toHaveBeenCalledTimes(32);
     });
 
-    it('Start zStack 1.2 initialize - already configured; extended pan id mismatch -> should be resetted', async () => {
+    it('Start zStack 1.2 initialize - already configured; extended pan id mismatch -> should be reset', async () => {
         networkOptions.networkKeyDistribute = true;
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json');
         mockZnpRequest.mockImplementation(async (subsystem, command, payload, expectedStatus) => {
@@ -422,7 +422,7 @@ describe('zStackAdapter', () => {
         });
 
         const result = await adapter.start();
-        expect(result).toBe('resetted');
+        expect(result).toBe('reset');
         expect(Znp).toBeCalledWith("dummy", 800, false);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
@@ -611,7 +611,7 @@ describe('zStackAdapter', () => {
         });
 
         const result = await adapter.start();
-        expect(result).toBe('resetted');
+        expect(result).toBe('reset');
         expect(Znp).toBeCalledWith("dummy", 800, false);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
@@ -939,7 +939,7 @@ describe('zStackAdapter', () => {
         });
 
         const result = await adapter.start();
-        expect(result).toBe('resetted');
+        expect(result).toBe('reset');
     });
 
     it('Start restore from backup zStack 3.0.x', async () => {

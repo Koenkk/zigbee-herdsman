@@ -20,7 +20,7 @@ interface CoordinatorVersion {
 
 type DeviceType = 'Coordinator' | 'EndDevice' | 'Router' | 'Unknown';
 
-type StartResult = 'resumed' | 'resetted' | 'restored';
+type StartResult = 'resumed' | 'reset' | 'restored';
 
 interface NodeDescriptor {
     type: DeviceType;

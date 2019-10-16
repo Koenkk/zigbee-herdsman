@@ -192,10 +192,10 @@ export default async (
             // zStack12 allows to restore a network without restoring a backup (as long as the
             // networkey, panid and channel don't change).
             // If the device has not been configured yet we assume that this is the case.
-            // If we always return 'resetted' the controller clears the database on a reflash of the stick.
-            result = hasConfigured ? 'resetted' : 'restored';
+            // If we always return 'reset' the controller clears the database on a reflash of the stick.
+            result = hasConfigured ? 'reset' : 'restored';
         } else {
-            result = 'resetted';
+            result = 'reset';
         }
     }
 

@@ -99,7 +99,7 @@ class Controller extends events.EventEmitter {
         this.adapter.on(AdapterEvents.Events.deviceAnnounce, this.onDeviceAnnounce.bind(this));
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
 
-        if (startResult === 'resetted') {
+        if (startResult === 'reset') {
             debug.log('Clearing database...');
             for (const group of Group.all()) {
                 group.removeFromDatabase();
