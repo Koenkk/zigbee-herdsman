@@ -93,6 +93,9 @@ const mockDevices = {
 
 const mockZclFrame = ZclFrame;
 
+// Mock realPathSync
+fs.realpathSync = (path) => path;
+
 jest.mock('../src/utils/wait', () => {
     return jest.fn().mockImplementation(() => {
         return new Promise((resolve, reject) => resolve());
@@ -1635,7 +1638,6 @@ describe('Controller', () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false}, null);
-        expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/test');
         expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false}, null);
     });
 
@@ -1656,7 +1658,6 @@ describe('Controller', () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(false);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false}, null);
-        expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/test');
         expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false}, null);
     });
 });
