@@ -3,7 +3,7 @@ import {ZclDataPayload} from './events';
 import events from 'events';
 import {ZclFrame} from '../zcl';
 import Debug from "debug";
-import fs from 'fs';
+import {RealpathSync} from '../utils';
 
 const debug = Debug("zigbee-herdsman:adapter");
 
@@ -47,7 +47,7 @@ abstract class Adapter extends events.EventEmitter {
             }
         } else {
             // Path can be a symlink, resolve it.
-            serialPortOptions.path = fs.realpathSync(serialPortOptions.path);
+            serialPortOptions.path = RealpathSync(serialPortOptions.path);
 
             // Determine adapter to use
             for (const candidate of adapters) {

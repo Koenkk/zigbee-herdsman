@@ -94,7 +94,11 @@ const mockDevices = {
 const mockZclFrame = ZclFrame;
 
 // Mock realPathSync
-fs.realpathSync = (path) => path;
+jest.mock('../src/utils/realpathSync', () => {
+    return jest.fn().mockImplementation((path) => {
+        return path;
+    });
+});
 
 jest.mock('../src/utils/wait', () => {
     return jest.fn().mockImplementation(() => {
