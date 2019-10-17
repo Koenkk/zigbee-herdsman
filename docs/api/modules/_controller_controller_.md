@@ -23,23 +23,29 @@
 
 ### ▪ **DefaultOptions**: *object*
 
-*Defined in [controller/controller.ts:23](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L23)*
+*Defined in [controller/controller.ts:29](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L29)*
+
+###  acceptJoiningDeviceHandler
+
+• **acceptJoiningDeviceHandler**: *null* =  null
+
+*Defined in [controller/controller.ts:44](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L44)*
 
 ###  backupPath
 
 • **backupPath**: *null* =  null
 
-*Defined in [controller/controller.ts:37](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L37)*
+*Defined in [controller/controller.ts:43](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L43)*
 
 ###  databasePath
 
 • **databasePath**: *null* =  null
 
-*Defined in [controller/controller.ts:36](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L36)*
+*Defined in [controller/controller.ts:42](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L42)*
 
 ▪ **network**: *object*
 
-*Defined in [controller/controller.ts:24](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L24)*
+*Defined in [controller/controller.ts:30](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L30)*
 
 * **channelList**: *number[]* =  [11]
 
@@ -53,7 +59,7 @@
 
 ▪ **serialPort**: *object*
 
-*Defined in [controller/controller.ts:31](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L31)*
+*Defined in [controller/controller.ts:37](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L37)*
 
 * **baudRate**: *number* = 115200
 
@@ -67,16 +73,16 @@ ___
 
 ### ▪ **debug**: *object*
 
-*Defined in [controller/controller.ts:40](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L40)*
+*Defined in [controller/controller.ts:47](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L47)*
 
 ###  error
 
 • **error**: *Debugger* =  Debug('zigbee-herdsman:controller:error')
 
-*Defined in [controller/controller.ts:41](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L41)*
+*Defined in [controller/controller.ts:48](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L48)*
 
 ###  log
 
 • **log**: *Debugger* =  Debug('zigbee-herdsman:controller:log')
 
-*Defined in [controller/controller.ts:42](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L42)*
+*Defined in [controller/controller.ts:49](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L49)*

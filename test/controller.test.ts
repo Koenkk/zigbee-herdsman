@@ -223,7 +223,8 @@ const options = {
         path: '/dummy/conbee',
     },
     databasePath: tmp.fileSync().name,
-    backupPath
+    backupPath,
+    acceptJoiningDeviceHandler: null,
 }
 
 const databaseContents = () => fs.readFileSync(options.databasePath).toString();
@@ -350,6 +351,39 @@ describe('Controller', () => {
         expect(events.deviceInterview.length).toBe(2);
         expect(databaseContents().includes("0x129")).toBeTruthy();
         expect(controller.getDeviceByIeeeAddr('0x129').lastSeen).toBe(Date.now());
+    });
+
+    it('Join a device and explictly accept it', async () => {
+        const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(true);
+        controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
+        controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
+        controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
+        await controller.start();
+        expect(databaseContents().includes("0x129")).toBeFalsy();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
+        expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "_lastSeen": deepClone(Date.now()), "ID":2,"_endpoints":[],"ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129},"status":"started"});
+        const device = {"ID":2,"_lastSeen": deepClone(Date.now()),"ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"clusters": {}, "ID":1,"inputClusters":[1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
+        expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x129'))).toStrictEqual(device);
+        expect(events.deviceInterview.length).toBe(2);
+        expect(databaseContents().includes("0x129")).toBeTruthy();
+        expect(controller.getDeviceByIeeeAddr('0x129').lastSeen).toBe(Date.now());
+    });
+
+    it('Join a device and explictly refuse it', async () => {
+        const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(false);
+        controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
+        controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
+        controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
+        await controller.start();
+        expect(databaseContents().includes("0x129")).toBeFalsy();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(events.deviceJoined.length).toBe(0);
+        expect(events.deviceInterview.length).toBe(0);
+        expect(databaseContents().includes("0x129")).toBeFalsy();
+        expect(controller.getDeviceByIeeeAddr('0x129')).toBeUndefined();
+        expect(mockAdapterRemoveDevice).toHaveBeenNthCalledWith(1, 129, '0x129');
     });
 
     it('Set device powersource by string', async () => {

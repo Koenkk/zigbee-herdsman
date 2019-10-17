@@ -18,6 +18,12 @@ interface Options {
     serialPort: AdapterTsType.SerialPortOptions;
     databasePath: string;
     backupPath: string;
+    /**
+     * This lambda can be used by an application to explictly reject or accept an incoming device.
+     * When false is returned zigbee-herdsman will not start the interview process and immidiately
+     * try to remove the device from the network.
+     */
+    acceptJoiningDeviceHandler: (ieeeAddr: string) => Promise<boolean>;
 };
 
 const DefaultOptions: Options = {
@@ -35,6 +41,7 @@ const DefaultOptions: Options = {
     },
     databasePath: null,
     backupPath: null,
+    acceptJoiningDeviceHandler: null,
 };
 
 const debug = {
@@ -293,9 +300,19 @@ class Controller extends events.EventEmitter {
     }
 
     private async onDeviceJoined(payload: AdapterEvents.DeviceJoinedPayload): Promise<void> {
-        let device = Device.byIeeeAddr(payload.ieeeAddr);
-        debug.log(`Device joined '${payload.ieeeAddr}'`);
+        debug.log(`Device '${payload.ieeeAddr}' joined`);
 
+        if (this.options.acceptJoiningDeviceHandler) {
+            if (!(await this.options.acceptJoiningDeviceHandler(payload.ieeeAddr))) {
+                debug.log(`Device '${payload.ieeeAddr}' rejected by handler, removing it`);
+                await this.adapter.removeDevice(payload.networkAddress, payload.ieeeAddr);
+                return;
+            } else {
+                debug.log(`Device '${payload.ieeeAddr}' accepted by handler`);
+            }
+        }
+
+        let device = Device.byIeeeAddr(payload.ieeeAddr);
         if (!device) {
             debug.log(`New device '${payload.ieeeAddr}' joined`);
             debug.log(`Creating device '${payload.ieeeAddr}'`);
