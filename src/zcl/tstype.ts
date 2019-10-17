@@ -6,6 +6,7 @@ interface Attribute {
     ID: number;
     name: string;
     type: DataType;
+    manufacturerCode?: number;
 }
 
 interface Parameter {
@@ -33,6 +34,7 @@ interface Cluster {
     getAttribute: (key: number | string) => Attribute;
     hasAttribute: (key: number | string) => boolean;
     getCommand: (key: number | string) => Command;
+    getCommandResponse: (key: number | string) => Command;
 }
 
 interface BuffaloZclOptions extends BuffaloTsType.Options {

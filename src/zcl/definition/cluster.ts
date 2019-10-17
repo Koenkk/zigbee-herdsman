@@ -1,14 +1,18 @@
+/* eslint max-len: 0 */
 import DataType from './dataType';
 import * as TsType from '../tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
+import ManufacturerCode from './manufacturerCode';
 
 interface AttributeDefinition {
     ID: number;
     type: DataType;
+    manufacturerCode?: number;
 }
 
 interface ClusterDefinition {
     ID: number;
+    manufacturerCode?: number;
     attributes: {[s: string]: AttributeDefinition};
     commands: {
         [s: string]: CommandDefinition;
@@ -1578,6 +1582,14 @@ const Cluster: {
             windowCoveringMode: {ID: 23, type: DataType.bitmap8},
             intermediateSetpointsLift: {ID: 24, type: DataType.octetStr},
             intermediateSetpointsTilt: {ID: 25, type: DataType.octetStr},
+            ubisysTurnaroundGuardTime: {ID: 0x1000, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysLiftToTiltTransitionSteps: {ID: 0x1001, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysTotalSteps: {ID: 0x1002, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysLiftToTiltTransitionSteps2: {ID: 0x1003, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysTotalSteps2: {ID: 0x1004, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysAdditionalSteps: {ID: 0x1005, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysInactivePowerThreshold: {ID: 0x1006, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysStartupSteps: {ID: 0x1007, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
         },
         commands: {
             upOpen: {
@@ -1702,6 +1714,8 @@ const Cluster: {
             acLouverPosition: {ID: 69, type: DataType.enum8},
             acCollTemp: {ID: 70, type: DataType.int16},
             acCapacityFormat: {ID: 71, type: DataType.enum8},
+            SinopeOccupancy: {ID: 1024, type: DataType.enum8, manufacturerCode: ManufacturerCode.Sinope},
+            SinopeBacklight: {ID: 1026, type: DataType.enum8, manufacturerCode: ManufacturerCode.Sinope},
         },
         commands: {
             setpointRaiseLower: {
@@ -3427,9 +3441,34 @@ const Cluster: {
             },
         },
     },
+    manuSpecificSinope: {
+        ID: 65281,
+        manufacturerCode: ManufacturerCode.Sinope,
+        attributes: {
+            outdoorTempToDisplay: {ID: 16, type: DataType.int16},
+            outdoorTempToDisplayTimeout: {ID: 17, type: DataType.uint16},
+            currentTimeToDisplay: {ID: 32, type: DataType.uint32},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        },
+    },
     manuSpecificCluster: {
         ID: 65535,
         attributes: {
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
+    },
+    manuSpecificUbisysDeviceSetup: {
+        ID: 0xfc00,
+        manufacturerCode: ManufacturerCode.Ubisys,
+        attributes: {
+            inputConfigurations: {ID: 0x0000, type: DataType.array},
+            inputActions: {ID: 0x0001, type: DataType.array},
         },
         commands: {
         },

@@ -6,6 +6,8 @@ import {
 
 import {Wait, Queue, Waitress} from '../../../utils';
 
+import SerialPortUtils from '../../serialPortUtils';
+
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
 import {Subsystem, Type} from '../unpi/constants';
@@ -22,12 +24,12 @@ const timeouts = {
 };
 
 const debug = {
-    error: Debug('zigbee-herdsman:znp:error'),
-    timeout: Debug('zigbee-herdsman:znp:timeout'),
-    log: Debug('zigbee-herdsman:znp:log'),
-    SREQ: Debug('zigbee-herdsman:znp:SREQ'),
-    AREQ: Debug('zigbee-herdsman:znp:AREQ'),
-    SRSP: Debug('zigbee-herdsman:znp:SRSP'),
+    error: Debug('zigbee-herdsman:zStack:znp:error'),
+    timeout: Debug('zigbee-herdsman:zStack:znp:timeout'),
+    log: Debug('zigbee-herdsman:zStack:znp:log'),
+    SREQ: Debug('zigbee-herdsman:zStack:znp:SREQ'),
+    AREQ: Debug('zigbee-herdsman:zStack:znp:AREQ'),
+    SRSP: Debug('zigbee-herdsman:zStack:znp:SRSP'),
 };
 
 interface WaitressMatcher {
@@ -36,6 +38,11 @@ interface WaitressMatcher {
     command: string;
     payload?: ZpiObjectPayload;
 };
+
+const autoDetectDefinitions = [
+    {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16a8'}, // CC2531
+    {manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'}, // CC1352P_2 and CC26X2R1
+];
 
 class Znp extends events.EventEmitter {
     private path: string;
@@ -113,8 +120,9 @@ class Znp extends events.EventEmitter {
         debug.error(`Serialport error: ${error}`);
     }
 
-    public open(): Promise<void> {
+    public async open(): Promise<void> {
         const options = {baudRate: this.baudRate, rtscts: this.rtscts, autoOpen: false};
+
         debug.log(`Opening with ${this.path} and ${JSON.stringify(options)}`);
         this.serialPort = new SerialPort(this.path, options);
 
@@ -132,7 +140,9 @@ class Znp extends events.EventEmitter {
                 if (error) {
                     reject(new Error(`Error while opening serialport '${error}'`));
                     this.initialized = false;
-                    this.serialPort.close();
+                    if (this.serialPort.isOpen) {
+                        this.serialPort.close();
+                    }
                 } else {
                     debug.log('Serialport opened');
                     await this.skipBootloader();
@@ -152,6 +162,21 @@ class Znp extends events.EventEmitter {
         debug.log('Writing skip bootloader payload');
         this.unpiWriter.writeBuffer(buffer);
         await Wait(1000);
+    }
+
+    public static async isValidPath(path: string): Promise<boolean> {
+        return SerialPortUtils.is(path, autoDetectDefinitions);
+    }
+
+    public static async autoDetectPath(): Promise<string> {
+        const paths = await SerialPortUtils.find(autoDetectDefinitions);
+
+        // CC1352P_2 and CC26X2R1 lists as 2 USB devices with same manufacturer, productId and vendorId
+        // one is the actual chip interface, other is the XDS110.
+        // The chip is always exposed on the first one after alphabetical sorting.
+        paths.sort((a, b) => (a < b) ? -1 : 1);
+
+        return paths.length > 0 ? paths[0] : null;
     }
 
     public close(): Promise<void> {
@@ -211,7 +236,7 @@ class Znp extends events.EventEmitter {
                 );
                 this.queue.clear();
                 this.unpiWriter.writeFrame(frame);
-                return await waiter.promise;
+                return waiter.promise;
             } else {
                 /* istanbul ignore else */
                 if (object.type === Type.AREQ) {
@@ -231,8 +256,12 @@ class Znp extends events.EventEmitter {
     public waitFor(
         type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload = {},
         timeout: number = timeouts.default
-    ): Promise<ZpiObject> {
-        return this.waitress.waitFor({type, subsystem, command, payload}, timeout).promise;
+    ): {promise: Promise<ZpiObject>; ID: number} {
+        return this.waitress.waitFor({type, subsystem, command, payload}, timeout);
+    }
+
+    public removeWaitFor(ID: number): void {
+        this.waitress.remove(ID);
     }
 
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {

@@ -8,10 +8,12 @@ import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
 const mockSerialPortPipe = jest.fn();
+const mockSerialPortList = jest.fn().mockReturnValue([]);
 const mockSerialPortOpen = jest.fn().mockImplementation((cb) => cb());
 const mockSerialPortConstructor = jest.fn();
 const mockSerialPortOnce = jest.fn();
 const mockSerialPortWrite = jest.fn((buffer, cb) => cb());
+let mockSerialPortIsOpen = false;
 
 jest.mock('../../../src/utils/wait', () => {
     return jest.fn();
@@ -29,9 +31,12 @@ jest.mock('serialport', () => {
             pipe: mockSerialPortPipe,
             write: mockSerialPortWrite,
             flush: mockSerialPortFlush,
+            isOpen: mockSerialPortIsOpen,
         };
     });
 });
+
+SerialPort.list = mockSerialPortList;
 
 const mockUnpiParserOn = jest.fn();
 
@@ -92,8 +97,58 @@ describe('ZNP', () => {
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
     });
 
+    it('Open autodetect port', async () => {
+        mockSerialPortList.mockReturnValue([
+            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
+            {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+            {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+            {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+        ]);
+
+        expect(await Znp.autoDetectPath()).toBe("/dev/tty.usbmodemL43001T21");
+    });
+
+    it('Autodetect port error when there are not available devices', async () => {
+        mockSerialPortList.mockReturnValue([
+            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
+        ])
+
+        expect(await Znp.autoDetectPath()).toBeNull();
+    });
+
+    it('Check if path is valid', async () => {
+        mockSerialPortList.mockReturnValue([
+            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
+            {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+            {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+            {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+        ])
+
+        expect(await Znp.isValidPath('/dev/tty.usbmodemL43001T21')).toBeTruthy();
+        expect(await Znp.isValidPath('/dev/autodetected2')).toBeFalsy();
+    });
+
+    it('Check if path is valid; throw error when path does not exist', async () => {
+        mockSerialPortList.mockReturnValue([
+            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
+            {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+            {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+            {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
+        ])
+
+        let error;
+        try {
+            await Znp.isValidPath('/dev/notexisting')
+        } catch (e) {
+            error  = e;
+        }
+
+        expect(error).toStrictEqual(new Error(`Path '/dev/notexisting' does not exist`));
+    });
+
     it('Open with error', async () => {
         mockSerialPortOpen.mockImplementationOnce((cb) => cb('failed!'));
+        mockSerialPortIsOpen = true;
 
         let error = false;
 
@@ -112,6 +167,33 @@ describe('ZNP', () => {
         expect(error).toEqual(new Error("Error while opening serialport 'failed!'"));
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
         expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortClose).toHaveBeenCalledTimes(1);
+        expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(0);
+        expect(mockSerialPortOnce).toHaveBeenCalledTimes(0);
+    });
+
+    it('Open with error when serialport is not open', async () => {
+        mockSerialPortOpen.mockImplementationOnce((cb) => cb('failed!'));
+        mockSerialPortIsOpen = false;
+
+        let error = false;
+
+        try {
+            await znp.open();
+        } catch (e) {
+            error = e;
+        }
+
+        expect(SerialPort).toHaveBeenCalledTimes(1);
+        expect(SerialPort).toHaveBeenCalledWith(
+            "/dev/ttyACM0",
+            {"autoOpen": false, "baudRate": 100, "rtscts": true},
+        );
+
+        expect(error).toEqual(new Error("Error while opening serialport 'failed!'"));
+        expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortClose).toHaveBeenCalledTimes(0);
         expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(0);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(0);
     });
@@ -538,7 +620,7 @@ describe('ZNP', () => {
             Buffer.from([0x00, 0x02, 0x01, 0x02])
         ));
 
-        const object = await waiter;
+        const object = await waiter.promise;
         expect(object.payload).toStrictEqual({len: 2, status: 0, value: Buffer.from([1, 2])});
     });
 
@@ -562,7 +644,7 @@ describe('ZNP', () => {
             Buffer.from([0x00, 0x02, 0x01, 0x02])
         ));
 
-        const object = await waiter;
+        const object = await waiter.promise;
         expect(object.payload).toStrictEqual({len: 2, status: 0, value: Buffer.from([1, 2])});
     });
 
@@ -591,13 +673,21 @@ describe('ZNP', () => {
 
         let error;
         try {
-            await waiter;
+            await waiter.promise;
         } catch (e) {
             error = e;
         }
 
 
         expect(error).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 10000ms"));
+    });
+
+    it('znp request, waitfor remove', async () => {
+        await znp.open();
+        jest.useFakeTimers();
+        const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 3, value: Buffer.from([1, 3])});
+        znp.removeWaitFor(waiter.ID);
+        expect(znp.waitress.waiters.length).toBe(0);
     });
 
     it('ZpiObject throw error on missing write parser', async () => {

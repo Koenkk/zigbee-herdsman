@@ -91,7 +91,7 @@ export default {
     },
     tcLinkKey: (): NvItem => {
         return {
-            id: NvItemsIds.TCLK_TABLE_START,
+            id: NvItemsIds.LEGACY_TCLK_TABLE_START,
             offset: 0x00,
             len: 0x20,
             // ZigBee Alliance Pre-configured TC Link Key - 'ZigBeeAlliance09'

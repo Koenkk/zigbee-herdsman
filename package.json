@@ -28,12 +28,12 @@
     "debug": "^4.1.1",
     "fast-deep-equal": "^2.0.1",
     "mixin-deep": "^2.0.1",
-    "nedb": "^1.8.0",
-    "serialport": "7.1.5"
+    "serialport": "8.0.1"
   },
   "deprecated": false,
   "description": "An open source ZigBee gateway solution with node.js.",
   "devDependencies": {
+    "@babel/cli": "*",
     "@babel/core": "*",
     "@babel/plugin-proposal-class-properties": "*",
     "@babel/plugin-proposal-object-rest-spread": "*",
@@ -51,6 +51,10 @@
     "jest": "*",
     "regenerator-runtime": "*",
     "tmp": "*",
+    "typedoc": "^0.15.0",
+    "typedoc-plugin-markdown": "^2.2.7",
+    "typedoc-plugin-no-inherit": "^1.1.10",
+    "typedoc-plugin-sourcefile-url": "^1.0.4",
     "typescript": "*"
   },
   "homepage": "https://github.com/Koenkk/zigbee-herdsman",
@@ -66,14 +70,15 @@
     "url": "git+https://github.com/Koenkk/zigbee-herdsman.git"
   },
   "scripts": {
-    "build": "./node_modules/.bin/tsc --alwaysStrict",
-    "start": "./node_modules/.bin/tsc --alwaysStrict -w",
+    "build": "./node_modules/.bin/tsc",
+    "start": "./node_modules/.bin/tsc -w",
     "test": "jest test",
     "test-with-coverage": "jest test --coverage --collectCoverageFrom '**/*.{ts,tsx}'",
     "test-watch": "jest test --watch",
-    "eslint": "node_modules/.bin/eslint . --ext .ts"
+    "eslint": "node_modules/.bin/eslint . --ext .ts",
+    "docs": "typedoc --tsconfig typedoc-tsconfig.json"
   },
-  "version": "0.6.9",
+  "version": "0.10.1",
   "jest": {
     "coverageThreshold": {
       "global": {

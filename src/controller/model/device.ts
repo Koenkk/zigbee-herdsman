@@ -1,10 +1,10 @@
-import {KeyValue} from '../tstype';
+import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
 import {TsType as AdapterTsType} from '../../adapter';
 import Endpoint from './endpoint';
 import Entity from './entity';
 import {ArraySplitChunks, Wait} from '../../utils';
-import * as Zcl from '../../zcl';
 import Debug from "debug";
+import * as Zcl from '../../zcl';
 
 const debug = Debug('zigbee-herdsman:controller:device');
 
@@ -20,68 +20,105 @@ interface RoutingTable {
 }
 
 class Device extends Entity {
-    private ID: number;
-    private ieeeAddr: string;
-    private networkAddress: number;
-    private endpoints: Endpoint[];
-    private type?: AdapterTsType.DeviceType;
-    private manufacturerID?: number;
-    private manufacturerName?: string;
-    private powerSource?: string;
-    private modelID?: string;
-    private applicationVersion?: number;
-    private stackVersion?: number;
-    private zclVersion?: number;
-    private hardwareVersion?: number;
-    private dateCode?: string;
-    private softwareBuildID?: string;
-    private lastSeen: number;
+    private readonly ID: number;
+    private _applicationVersion?: number;
+    private _dateCode?: string;
+    private _endpoints: Endpoint[];
+    private _hardwareVersion?: number;
+    public readonly ieeeAddr: string;
+    private _interviewCompleted: boolean;
+    private _interviewing: boolean;
+    private _lastSeen: number;
+    private _manufacturerID?: number;
+    private _manufacturerName?: string;
+    private _modelID?: string;
+    private _networkAddress: number;
+    private _powerSource?: string;
+    private _softwareBuildID?: string;
+    private _stackVersion?: number;
+    private _type?: DeviceType;
+    private _zclVersion?: number;
 
-    private interviewCompleted: boolean;
-    private interviewing: boolean;
+    // Getters/setters
+    get applicationVersion(): number {return this._applicationVersion;}
+    set applicationVersion(applicationVersion) {this._applicationVersion = applicationVersion;}
+    get endpoints(): Endpoint[] {return this._endpoints;}
+    get interviewCompleted(): boolean {return this._interviewCompleted;}
+    get interviewing(): boolean {return this._interviewing;}
+    get lastSeen(): number {return this._lastSeen;}
+    get manufacturerID(): number {return this._manufacturerID;}
+    get type(): DeviceType {return this._type;}
+    get dateCode(): string {return this._dateCode;}
+    set dateCode(dateCode) {this._dateCode = dateCode;}
+    set hardwareVersion(hardwareVersion) {this._hardwareVersion = hardwareVersion;}
+    get hardwareVersion(): number {return this._hardwareVersion;}
+    get manufacturerName(): string {return this._manufacturerName;}
+    set manufacturerName(manufacturerName) {this._manufacturerName = manufacturerName;}
+    set modelID(modelID) {this._modelID = modelID;}
+    get modelID(): string {return this._modelID;}
+    get networkAddress(): number {return this._networkAddress;}
+    set networkAddress(networkAddress) {this._networkAddress = networkAddress;}
+    get powerSource(): string {return this._powerSource;}
+    set powerSource(powerSource) {
+        this._powerSource = typeof powerSource === 'number' ? Zcl.PowerSource[powerSource] : powerSource;
+    }
+    get softwareBuildID(): string {return this._softwareBuildID;}
+    set softwareBuildID(softwareBuildID) {this._softwareBuildID = softwareBuildID;}
+    get stackVersion(): number {return this._stackVersion;}
+    set stackVersion(stackVersion) {this._stackVersion = stackVersion;}
+    get zclVersion(): number {return this._zclVersion;}
+    set zclVersion(zclVersion) {this._zclVersion = zclVersion;}
 
-    // Can be used by applications to store data.
     private meta: KeyValue;
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
-    private static lookup: {[ieeeAddr: string]: Device} = {};
+    private static devices: {[ieeeAddr: string]: Device} = null;
+
+    public static readonly ReportablePropertiesMapping: {[s: string]: {
+        set: (value: string | number, device: Device) => void;
+        key: 'modelID' | 'manufacturerName' | 'applicationVersion' | 'zclVersion' | 'powerSource' | 'stackVersion' |
+            'dateCode' | 'softwareBuildID' | 'hardwareVersion';
+    };} = {
+        modelId: {key: 'modelID', set: (v: string, d: Device): void => {d.modelID = v;}},
+        manufacturerName: {key: 'manufacturerName', set: (v: string, d: Device): void => {d.manufacturerName = v;}},
+        powerSource: {key: 'powerSource', set: (v: string, d: Device): void => {d.powerSource = v;}},
+        zclVersion: {key: 'zclVersion', set: (v: number, d: Device): void => {d.zclVersion = v;}},
+        appVersion: {key: 'applicationVersion', set: (v: number, d: Device): void => {d.applicationVersion = v;}},
+        stackVersion: {key: 'stackVersion', set: (v: number, d: Device): void => {d.stackVersion = v;}},
+        hwVersion: {key: 'hardwareVersion', set: (v: number, d: Device): void => {d.hardwareVersion = v;}},
+        dateCode: {key: 'dateCode', set: (v: string, d: Device): void => {d.dateCode = v;}},
+        swBuildId: {key: 'softwareBuildID', set: (v: string, d: Device): void => {d.softwareBuildID = v;}},
+    };
 
     private constructor(
-        ID: number, type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
+        ID: number, type: DeviceType, ieeeAddr: string, networkAddress: number,
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
     ) {
         super();
         this.ID = ID;
-        this.type = type;
+        this._type = type;
         this.ieeeAddr = ieeeAddr;
-        this.networkAddress = networkAddress;
-        this.manufacturerID = manufacturerID;
-        this.endpoints = endpoints;
-        this.manufacturerName = manufacturerName;
-        this.powerSource = powerSource;
-        this.modelID = modelID;
-        this.applicationVersion = applicationVersion;
-        this.stackVersion = stackVersion;
-        this.zclVersion = zclVersion;
+        this._networkAddress = networkAddress;
+        this._manufacturerID = manufacturerID;
+        this._endpoints = endpoints;
+        this._manufacturerName = manufacturerName;
+        this._powerSource = powerSource;
+        this._modelID = modelID;
+        this._applicationVersion = applicationVersion;
+        this._stackVersion = stackVersion;
+        this._zclVersion = zclVersion;
         this.hardwareVersion = hardwareVersion;
-        this.dateCode = dateCode;
-        this.softwareBuildID = softwareBuildID;
-        this.interviewCompleted = interviewCompleted;
-        this.interviewing = false;
+        this._dateCode = dateCode;
+        this._softwareBuildID = softwareBuildID;
+        this._interviewCompleted = interviewCompleted;
+        this._interviewing = false;
         this.meta = meta;
-        this.lastSeen = null;
+        this._lastSeen = null;
     }
 
-    public isType(type: string): boolean {
-        return type === 'device';
-    }
-
-    /**
-     * Getters, setters and creaters
-     */
     public async createEndpoint(ID: number): Promise<Endpoint> {
         if (this.getEndpoint(ID)) {
             throw new Error(`Device '${this.ieeeAddr}' already has an endpoint '${ID}'`);
@@ -89,61 +126,44 @@ class Device extends Entity {
 
         const endpoint = Endpoint.create(ID, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         this.endpoints.push(endpoint);
-        await this.save();
+        this.save();
         return endpoint;
-    }
-
-    public getEndpoints(): Endpoint[] {
-        return this.endpoints;
     }
 
     public getEndpoint(ID: number): Endpoint {
         return this.endpoints.find((e): boolean => e.ID === ID);
     }
 
-    public get(
-        key: 'modelID' | 'networkAddress' | 'interviewCompleted' | 'ieeeAddr' | 'interviewing'
-    ): string | number | boolean {
-        return this[key];
-    }
-
-    public async set(key: 'modelID' | 'networkAddress', value: string | number): Promise<void> {
-        if (typeof value === 'string' && (key === 'modelID')) {
-            this[key] = value;
-        } else {
-            /* istanbul ignore else */
-            if (typeof value === 'number' && (key === 'networkAddress')) {
-                this[key] = value;
-            }
-        }
-
-        await this.save();
-    }
-
     public updateLastSeen(): void {
-        this.lastSeen = Date.now();
+        this._lastSeen = Date.now();
     }
 
-    /**
+    /*
      * CRUD
      */
-    private static fromDatabaseRecord(record: KeyValue): Device {
-        const networkAddress = record.nwkAddr;
-        const ieeeAddr = record.ieeeAddr;
-        const endpoints = Object.values(record.endpoints).map((e): Endpoint => {
+
+    private static fromDatabaseEntry(entry: DatabaseEntry): Device {
+        const networkAddress = entry.nwkAddr;
+        const ieeeAddr = entry.ieeeAddr;
+        const endpoints = Object.values(entry.endpoints).map((e): Endpoint => {
             return Endpoint.fromDatabaseRecord(e, networkAddress, ieeeAddr);
         });
 
-        const meta = record.meta ? record.meta : {};
+        const meta = entry.meta ? entry.meta : {};
+
+        if (entry.type === 'Group') {
+            throw new Error('Cannot load device from group');
+        }
+
         return new Device(
-            record.id, record.type, ieeeAddr, networkAddress, record.manufId, endpoints,
-            record.manufName, record.powerSource, record.modelId, record.appVersion,
-            record.stackVersion, record.zclVersion, record.hwVersion, record.dateCode, record.swBuildId,
-            record.interviewCompleted, meta,
+            entry.id, entry.type, ieeeAddr, networkAddress, entry.manufId, endpoints,
+            entry.manufName, entry.powerSource, entry.modelId, entry.appVersion,
+            entry.stackVersion, entry.zclVersion, entry.hwVersion, entry.dateCode, entry.swBuildId,
+            entry.interviewCompleted, meta,
         );
     }
 
-    private toDatabaseRecord(): KeyValue {
+    private toDatabaseEntry(): DatabaseEntry {
         const epList = this.endpoints.map((e): number => e.ID);
         const endpoints: KeyValue = {};
         for (const endpoint of this.endpoints) {
@@ -160,66 +180,51 @@ class Device extends Entity {
         };
     }
 
-    private async save(): Promise<void> {
-        await Device.database.update(this.ID, this.toDatabaseRecord());
+    public save(): void {
+        Entity.database.update(this.toDatabaseEntry());
     }
 
-    public static async findSingle(
-        query: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; networkAddress?: number}
-    ): Promise<Device> {
-        // Performance optimization: when querying with only ieeeAddr, try to return from lookup
-        const deviceIeeeAddr = Device.lookup[query.ieeeAddr];
-        if (deviceIeeeAddr && !query.hasOwnProperty('networkAddress') && !query.hasOwnProperty('type'))
-        {
-            return deviceIeeeAddr;
-        }
-
-        // Performance optimization: when querying with only networkAddress, try to return from lookup
-        const deviceNetworkAddress = Object.values(Device.lookup).find((d): boolean => {
-            return d.networkAddress === query.networkAddress;
-        });
-
-        if (deviceNetworkAddress && !query.hasOwnProperty('ieeeAddr') && !query.hasOwnProperty('type'))
-        {
-            return deviceNetworkAddress;
-        }
-
-        const results = await this.find(query);
-        return results.length !== 0 ? results[0] : null;
-    }
-
-    public static async find(
-        query: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; networkAddress?: number}
-    ): Promise<Device[]> {
-        const queryActual: {type?: AdapterTsType.DeviceType; ieeeAddr?: string; nwkAddr?: number} = {};
-        if (query.hasOwnProperty('networkAddress')) queryActual.nwkAddr = query.networkAddress;
-        if (query.hasOwnProperty('ieeeAddr')) queryActual.ieeeAddr = query.ieeeAddr;
-
-        const typeQuery: {type: {} | string} = {type: {$ne: 'Group'}};
-        if (query.hasOwnProperty('type')) {
-            typeQuery.type = query.type;
-        }
-
-        const results = await this.database.find({...queryActual, ...typeQuery});
-        return results.map((r): Device => {
-            const device = this.fromDatabaseRecord(r);
-            if (!this.lookup[device.ieeeAddr]) {
-                this.lookup[device.ieeeAddr] = device;
+    private static loadFromDatabaseIfNecessary(): void {
+        if (!Device.devices) {
+            Device.devices = {};
+            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router']);
+            for (const entry of entries) {
+                const device = Device.fromDatabaseEntry(entry);
+                Device.devices[device.ieeeAddr] = device;
             }
-
-            return this.lookup[device.ieeeAddr];
-        });
+        }
     }
 
-    public static async create(
+    public static byIeeeAddr(ieeeAddr: string): Device {
+        Device.loadFromDatabaseIfNecessary();
+        return Device.devices[ieeeAddr];
+    }
+
+    public static byNetworkAddress(networkAddress: number): Device {
+        Device.loadFromDatabaseIfNecessary();
+        return Object.values(Device.devices).find(d => d.networkAddress === networkAddress);
+    }
+
+    public static byType(type: DeviceType): Device[] {
+        Device.loadFromDatabaseIfNecessary();
+        return Object.values(Device.devices).filter(d => d.type === type);
+    }
+
+    public static all(): Device[] {
+        Device.loadFromDatabaseIfNecessary();
+        return Object.values(Device.devices);
+    }
+
+    public static create(
         type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
         manufacturerID: number, manufacturerName: string,
         powerSource: string, modelID: string,
         endpoints: {
             ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
         }[]
-    ): Promise<Device> {
-        if (await this.findSingle({ieeeAddr})) {
+    ): Device {
+        Device.loadFromDatabaseIfNecessary();
+        if (Device.devices[ieeeAddr]) {
             throw new Error(`Device with ieeeAddr '${ieeeAddr}' already exists`);
         }
 
@@ -229,22 +234,21 @@ class Device extends Entity {
             );
         });
 
-        const ID = await this.database.newID();
-
+        const ID = Entity.database.newID();
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false, {},
         );
 
-        await this.database.insert(device.toDatabaseRecord());
-
-        this.lookup[device.ieeeAddr] = device;
-        return this.lookup[device.ieeeAddr];
+        Entity.database.insert(device.toDatabaseEntry());
+        Device.devices[device.ieeeAddr] = device;
+        return device;
     }
 
-    /**
+    /*
      * Zigbee functions
      */
+
     public async interview(): Promise<void> {
         if (this.interviewing) {
             const message = `Interview - interview already in progress for '${this.ieeeAddr}'`;
@@ -253,18 +257,18 @@ class Device extends Entity {
         }
 
         let error;
-        this.interviewing = true;
+        this._interviewing = true;
         debug(`Interview - start device '${this.ieeeAddr}'`);
 
         try {
             await this.interviewInternal();
             debug(`Interview - completed for device '${this.ieeeAddr}'`);
-            this.interviewCompleted = true;
+            this._interviewCompleted = true;
         } catch (e) {
             error = e;
         } finally {
-            this.interviewing = false;
-            await this.save();
+            this._interviewing = false;
+            this.save();
         }
 
         if (error) {
@@ -274,10 +278,10 @@ class Device extends Entity {
 
     private async interviewInternal(): Promise<void> {
         const nodeDescriptorQuery = async (): Promise<void> => {
-            const nodeDescriptor = await Device.adapter.nodeDescriptor(this.networkAddress);
-            this.manufacturerID = nodeDescriptor.manufacturerCode;
-            this.type = nodeDescriptor.type;
-            await this.save();
+            const nodeDescriptor = await Entity.adapter.nodeDescriptor(this.networkAddress);
+            this._manufacturerID = nodeDescriptor.manufacturerCode;
+            this._type = nodeDescriptor.type;
+            this.save();
             debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         };
 
@@ -290,13 +294,13 @@ class Device extends Entity {
                     'Node descriptor request failed for the second time, got modelID starting with lumi, ' +
                     'assuming Xiaomi end device'
                 );
-                this.type = 'EndDevice';
-                this.manufacturerID = 4151;
-                this.manufacturerName = 'LUMI';
-                this.powerSource = 'Battery';
-                this.interviewing = false;
-                this.interviewCompleted = true;
-                await this.save();
+                this._type = 'EndDevice';
+                this._manufacturerID = 4151;
+                this._manufacturerName = 'LUMI';
+                this._powerSource = 'Battery';
+                this._interviewing = false;
+                this._interviewCompleted = true;
+                this.save();
                 return true;
             } else {
                 return false;
@@ -319,46 +323,31 @@ class Device extends Entity {
             }
         }
 
-        const activeEndpoints = await Device.adapter.activeEndpoints(this.networkAddress);
-        this.endpoints = activeEndpoints.endpoints.map((e): Endpoint => {
+        const activeEndpoints = await Entity.adapter.activeEndpoints(this.networkAddress);
+        this._endpoints = activeEndpoints.endpoints.map((e): Endpoint => {
             return Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         });
-        await this.save();
+        this.save();
         debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
         for (const endpoint of this.endpoints) {
-            const simpleDescriptor = await Device.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
-            endpoint.set('profileID', simpleDescriptor.profileID);
-            endpoint.set('deviceID', simpleDescriptor.deviceID);
-            endpoint.set('inputClusters', simpleDescriptor.inputClusters);
-            endpoint.set('outputClusters', simpleDescriptor.outputClusters);
+            const simpleDescriptor = await Entity.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
+            endpoint.profileID = simpleDescriptor.profileID;
+            endpoint.deviceID = simpleDescriptor.deviceID;
+            endpoint.inputClusters = simpleDescriptor.inputClusters;
+            endpoint.outputClusters = simpleDescriptor.outputClusters;
             debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`);
-            await this.save();
+            this.save();
         }
 
         if (this.endpoints.length !== 0) {
             const endpoint = this.endpoints[0];
-            const attributes = [
-                'manufacturerName', 'modelId', 'powerSource', 'zclVersion', 'appVersion',
-                'stackVersion', 'hwVersion', 'dateCode', 'swBuildId'
-            ];
 
             // Split into chunks of 3, otherwise some devices fail to respond.
-            for (const chunk of ArraySplitChunks(attributes, 3)) {
+            for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 3)) {
                 const result = await endpoint.read('genBasic', chunk);
                 for (const [key, value] of Object.entries(result)) {
-                    if (key === 'manufacturerName') this.manufacturerName = value;
-                    else if (key === 'modelId') this.modelID = value;
-                    else if (key === 'zclVersion') this.zclVersion = value;
-                    else if (key === 'appVersion') this.applicationVersion = value;
-                    else if (key === 'stackVersion') this.stackVersion = value;
-                    else if (key === 'hwVersion') this.hardwareVersion = value;
-                    else if (key === 'dateCode') this.dateCode = value;
-                    else if (key === 'swBuildId') this.softwareBuildID = value;
-                    else {
-                        /* istanbul ignore else */
-                        if (key === 'powerSource') this.powerSource = Zcl.PowerSource[value];
-                    }
+                    Device.ReportablePropertiesMapping[key].set(value, this);
                 }
 
                 debug(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
@@ -372,31 +361,32 @@ class Device extends Entity {
         // Enroll IAS device
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
             debug(`Interview - ssIasZone enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
-            const coordinator = await Device.findSingle({type: 'Coordinator'});
-            await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.get('ieeeAddr')});
+            const coordinator = Device.byType('Coordinator')[0];
+            await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
             // According to the spec, we should wait for an enrollRequest here, but the Bosch ISW-ZPR1 didn't send it.
             await Wait(3000);
             await endpoint.command('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23});
-            debug(`Interview - succesfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+            debug(`Interview - successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
         }
     }
 
     public async removeFromNetwork(): Promise<void> {
-        await Device.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
+        await Entity.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
         await this.removeFromDatabase();
     }
 
     public async removeFromDatabase(): Promise<void> {
-        await Device.database.remove(this.ID);
-        delete Device.lookup[this.ieeeAddr];
+        Device.loadFromDatabaseIfNecessary();
+        Entity.database.remove(this.ID);
+        delete Device.devices[this.ieeeAddr];
     }
 
     public async lqi(): Promise<LQI> {
-        return await Device.adapter.lqi(this.networkAddress);
+        return Entity.adapter.lqi(this.networkAddress);
     }
 
     public async routingTable(): Promise<RoutingTable> {
-        return await Device.adapter.routingTable(this.networkAddress);
+        return Entity.adapter.routingTable(this.networkAddress);
     }
 
     public async ping(): Promise<void> {

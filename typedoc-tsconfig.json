@@ -1,0 +1,44 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "esModuleInterop": true,
+        "target": "es6",
+        "noImplicitAny": true,
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "outDir": "dist",
+        "baseUrl": ".",
+        "allowJs": true,
+        "resolveJsonModule": true,
+        "paths": {
+            "*": [
+                "node_modules/*"
+            ]
+        }
+    },
+    "files": [
+        "src/adapter/tstype.ts",
+        "src/controller/controller.ts",
+        "src/controller/events.ts",
+        "src/controller/tstype.ts",
+        "src/controller/model/device.ts",
+        "src/controller/model/group.ts",
+        "src/controller/model/endpoint.ts"
+
+    ],
+    "typedocOptions": {
+        "name": "zigbee-herdsman",
+        "mode": "modules",
+        "target": "es6",
+        "module": "commonjs",
+        "readme": "none",
+        "excludePrivate": true,
+        "excludeProtected": true,
+        "excludeNotExported": false,
+        "excludeExternals": true,
+        "sourcefile-url-prefix": "https://github.com/Koenkk/zigbee-herdsman/blob/master/src/",
+        "out": "./docs/api/",
+        "logger": "console",
+        "ignoreCompilerErrors": true
+    }
+}

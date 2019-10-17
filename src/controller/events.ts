@@ -55,19 +55,24 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'emergency': 'commandEmergency',
     'operationEventNotification': 'commandOperationEventNotification',
     'statusChangeNotification': 'commandStatusChangeNotification',
+    'colorLoopSet': 'commandColorLoopSet',
+    'enhancedMoveToHueAndSaturation': 'commandEnhancedMoveToHueAndSaturation',
+    'downClose': 'commandDownClose',
+    'upOpen': 'commandUpOpen',
 };
 
 type MessagePayloadType =
     // Global
-    'attributeReport' | 'readResponse' |
+    'attributeReport' | 'readResponse' | 'raw' |
     // Specific
     'commandOn' | 'commandOffWithEffect' | 'commandStep' | 'commandStop' | 'commandHueNotification' |
     'commandOff' | 'commandStepColorTemp' | 'commandMoveWithOnOff' | 'commandMove' | 'commandMoveHue' |
     'commandMoveToSaturation' | 'commandStopWithOnOff' | 'commandMoveToLevelWithOnOff' | 'commandToggle' |
     'commandTradfriArrowSingle' | 'commandTradfriArrowHold' | 'commandTradfriArrowRelease' |
     'commandStepWithOnOff' | 'commandMoveToColorTemp' | 'commandMoveToColor' | 'commandOnWithTimedOff' |
-    'commandRecall' | 'commandArm' | 'commandPanic' | 'commandEmergency' |
-    'commandOperationEventNotification' | 'commandStatusChangeNotification';
+    'commandRecall' | 'commandArm' | 'commandPanic' | 'commandEmergency' | 'commandColorLoopSet' |
+    'commandOperationEventNotification' | 'commandStatusChangeNotification' | 'commandEnhancedMoveToHueAndSaturation' |
+    'commandUpOpen' | 'commandDownClose';
 
 interface MessagePayload {
     type: MessagePayloadType;

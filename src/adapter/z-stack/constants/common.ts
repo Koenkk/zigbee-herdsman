@@ -194,6 +194,9 @@ const COMMON: {
         T_30_MSEC: 1,
         T_15_MSEC: 0
     },
+    nvSystemIds: {
+        ZSTACK: 1,
+    },
     nvItemIds: {
         EXTADDR: 1,
         BOOTCOUNTER: 2,
@@ -260,7 +263,8 @@ const COMMON: {
         RNG_COUNTER: 111,
         RANDOM_SEED: 112,
         TRUSTCENTER_ADDR: 113,
-        NWK_SEC_MATERIAL_TABLE_START: 117,
+        LEGACY_NWK_SEC_MATERIAL_TABLE_START: 117, // Valid for <= Z-Stack 3.0.x
+        EX_NWK_SEC_MATERIAL_TABLE: 7, // Valid for >= Z-Stack 3.x.0
         USERDESC: 129,
         NWKKEY: 130,
         PANID: 131,
@@ -298,8 +302,9 @@ const COMMON: {
         SAS_CURR_TC_MASTER_KEY: 209,
         SAS_CURR_NWK_KEY: 210,
         SAS_CURR_PRECFG_LINK_KEY: 211,
-        TCLK_TABLE_START: 257,
-        TCLK_TABLE_END: 511,
+        LEGACY_TCLK_TABLE_START: 257, // Valid for <= Z-Stack 3.0.x
+        LEGACY_TCLK_TABLE_END: 511, // Valid for <= Z-Stack 3.0.x
+        EX_TCLK_TABLE: 4, // Valid for >= Z-Stack 3.0.x
         APS_LINK_KEY_DATA_START: 513,
         APS_LINK_KEY_DATA_END: 767,
         DUPLICATE_BINDING_TABLE: 768,

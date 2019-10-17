@@ -3,7 +3,7 @@ import {DataStart, SOF, MinMessageLength, PositionDataLength} from './constants'
 import Frame from './frame';
 import Debug from "debug";
 
-const debug = Debug('zigbee-herdsman:unpi:parser');
+const debug = Debug('zigbee-herdsman:zStack:unpi:parser');
 
 class Parser extends stream.Transform {
     private buffer: Buffer;

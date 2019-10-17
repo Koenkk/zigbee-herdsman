@@ -7,5 +7,9 @@ import Status from './status';
 import * as TsType from './tstype';
 import FrameType from './frameType';
 import PowerSource from './powerSource';
+import ManufacturerCode from './manufacturerCode';
 
-export {BuffaloZclDataType, Cluster, Direction, Foundation, Status, DataType, TsType, FrameType, PowerSource};
+export {
+    BuffaloZclDataType, Cluster, Direction, Foundation, Status, DataType, TsType, FrameType, PowerSource,
+    ManufacturerCode
+};
