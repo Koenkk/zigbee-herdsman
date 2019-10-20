@@ -265,7 +265,22 @@ class Device extends Entity {
             debug(`Interview - completed for device '${this.ieeeAddr}'`);
             this._interviewCompleted = true;
         } catch (e) {
-            error = e;
+            // Xiaomi end devices have a different interview procedure, after pairing they report it's
+            // modelID trough a readResponse. The readResponse is received by the controller and set on the device
+            // Check if we have a modelID starting with lumi.* at this point, indicating a Xiaomi end device.
+            if (this.modelID && this.modelID.startsWith('lumi.')) {
+                debug('Interview procedure failed but got modelID starting with lumi, assuming Xiaomi end device');
+                this._type = 'EndDevice';
+                this._manufacturerID = 4151;
+                this._manufacturerName = 'LUMI';
+                this._powerSource = 'Battery';
+                this._interviewing = false;
+                this._interviewCompleted = true;
+                this.save();
+            } else {
+                debug(`Interview - failed for device '${this.ieeeAddr}' with error '${e.stack}'`);
+                error = e;
+            }
         } finally {
             this._interviewing = false;
             this.save();
@@ -285,42 +300,12 @@ class Device extends Entity {
             debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         };
 
-        const isXiaomiAndInterviewCompleted = async (): Promise<boolean> => {
-            // Xiaomi end devices have a different interview procedure, after pairing they report it's
-            // modelID trough a readResponse. The readResponse is received by the controller and set on the device
-            // Check if we have a modelID starting with lumi.* at this point, indicating a Xiaomi end device.
-            if (this.modelID && this.modelID.startsWith('lumi.')) {
-                debug(
-                    'Node descriptor request failed for the second time, got modelID starting with lumi, ' +
-                    'assuming Xiaomi end device'
-                );
-                this._type = 'EndDevice';
-                this._manufacturerID = 4151;
-                this._manufacturerName = 'LUMI';
-                this._powerSource = 'Battery';
-                this._interviewing = false;
-                this._interviewCompleted = true;
-                this.save();
-                return true;
-            } else {
-                return false;
-            }
-        };
-
         try {
             await nodeDescriptorQuery();
-        } catch (error1) {
-            try {
-                // Most of the times the first node descriptor query fails and the seconds one succeeds.
-                debug(`Interview - first node descriptor request failed for '${this.ieeeAddr}', retrying...`);
-                await nodeDescriptorQuery();
-            } catch (error2) {
-                if (await isXiaomiAndInterviewCompleted()) {
-                    return;
-                } else {
-                    throw error2;
-                }
-            }
+        } catch (error) {
+            // Most of the times the first node descriptor query fails and the seconds one succeeds.
+            debug(`Interview - first node descriptor request failed for '${this.ieeeAddr}', retrying...`);
+            await nodeDescriptorQuery();
         }
 
         const activeEndpoints = await Entity.adapter.activeEndpoints(this.networkAddress);
