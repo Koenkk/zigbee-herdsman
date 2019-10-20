@@ -128,7 +128,7 @@ describe('ZNP', () => {
         expect(await Znp.isValidPath('/dev/autodetected2')).toBeFalsy();
     });
 
-    it('Check if path is valid; throw error when path does not exist', async () => {
+    it('Check if path is valid; return false when path does not exist in device list', async () => {
         mockSerialPortList.mockReturnValue([
             {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
             {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
@@ -136,14 +136,7 @@ describe('ZNP', () => {
             {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
         ])
 
-        let error;
-        try {
-            await Znp.isValidPath('/dev/notexisting')
-        } catch (e) {
-            error  = e;
-        }
-
-        expect(error).toStrictEqual(new Error(`Path '/dev/notexisting' does not exist`));
+        expect(await Znp.isValidPath('/dev/notexisting')).toBeFalsy();
     });
 
     it('Open with error', async () => {

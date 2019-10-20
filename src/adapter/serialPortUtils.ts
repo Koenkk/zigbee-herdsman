@@ -19,7 +19,7 @@ async function is(path: string, matchers: PortInfoMatch[]): Promise<boolean> {
     // @ts-ignore; not sure why this is needed as path exists (definition is wrong?)
     const device = devices.find((device) => device.path === path);
     if (!device) {
-        throw new Error(`Path '${path}' does not exist`);
+        return false;
     }
 
     return matchers.find((matcher) => EqualsPartial(device, matcher)) != null;
