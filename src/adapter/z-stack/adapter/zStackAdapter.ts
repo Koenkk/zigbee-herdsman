@@ -10,7 +10,7 @@ import {Znp, ZpiObject} from '../znp';
 import StartZnp from './startZnp';
 import {Constants as UnpiConstants} from '../unpi';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
-import {Queue, Waitress} from '../../../utils';
+import {Queue, Waitress, Wait} from '../../../utils';
 import * as Constants from '../constants';
 import Debug from "debug";
 import {Backup} from './backup';
@@ -19,10 +19,11 @@ const debug = Debug("zigbee-herdsman:adapter:zStack");
 const Subsystem = UnpiConstants.Subsystem;
 const Type = UnpiConstants.Type;
 
-const DataConfirmCodeLookup: {[k: number]: string} = {
-    205: 'No network route',
-    233: 'MAC no ack',
+const DataConfirmErrorCodeLookup: {[k: number]: string} = {
     183: 'APS no ack',
+    205: 'No network route',
+    225: 'MAC channel access failure',
+    233: 'MAC no ack',
     240: 'MAC transaction expired',
 };
 
@@ -43,6 +44,15 @@ interface WaitressMatcher {
     commandIdentifier: number;
     direction: number;
 };
+
+class DataConfirmError extends Error {
+    public code: number;
+    constructor (code: number) {
+        const message = `Data request failed with error: '${DataConfirmErrorCodeLookup[code]}' (${code})`;
+        super(message);
+        this.code = code;
+    }
+}
 
 class ZStackAdapter extends Adapter {
     private znp: Znp;
@@ -273,10 +283,29 @@ class ZStackAdapter extends Adapter {
 
     public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         return this.queue.execute<void>(async () => {
-            await this.dataRequestExtended(
-                Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.Cluster.ID,
-                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
-            );
+            try {
+                await this.dataRequestExtended(
+                    Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.Cluster.ID,
+                    Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
+                );
+            } catch (error) {
+                if (error.code === 225) {
+                    /**
+                     * When many group commands at once are executed we can end up in a MAC channel access failure
+                     * error (225).
+                     * This is because there is too much traffic on the network.
+                     * Retry this command once after a cooling down period.
+                     */
+                    debug('Got MAC channel access failure, retry once after 1 second');
+                    await Wait(1000);
+                    await this.dataRequestExtended(
+                        Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.Cluster.ID,
+                        Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
+                    );
+                } else {
+                    throw error;
+                }
+            }
         });
     }
 
@@ -514,10 +543,7 @@ class ZStackAdapter extends Adapter {
 
         const dataConfirm = await response.promise;
         if (dataConfirm.payload.status !== 0) {
-            throw new Error(
-                `Data request failed with error: ` +
-                `'${DataConfirmCodeLookup[dataConfirm.payload.status]}' (${dataConfirm.payload.status})`
-            );
+            throw new DataConfirmError(dataConfirm.payload.status);
         }
 
         return dataConfirm;
@@ -551,10 +577,7 @@ class ZStackAdapter extends Adapter {
 
         const dataConfirm = await response.promise;
         if (dataConfirm.payload.status !== 0) {
-            throw new Error(
-                `Data request failed with error: ` +
-                `'${DataConfirmCodeLookup[dataConfirm.payload.status]}' (${dataConfirm.payload.status})`
-            );
+            throw new DataConfirmError(dataConfirm.payload.status);
         }
 
         return dataConfirm;
