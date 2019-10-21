@@ -283,29 +283,10 @@ class ZStackAdapter extends Adapter {
 
     public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         return this.queue.execute<void>(async () => {
-            try {
-                await this.dataRequestExtended(
-                    Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.Cluster.ID,
-                    Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
-                );
-            } catch (error) {
-                if (error.code === 225) {
-                    /**
-                     * When many group commands at once are executed we can end up in a MAC channel access failure
-                     * error (225).
-                     * This is because there is too much traffic on the network.
-                     * Retry this command once after a cooling down period.
-                     */
-                    debug('Got MAC channel access failure, retry once after 1 second');
-                    await Wait(1000);
-                    await this.dataRequestExtended(
-                        Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.Cluster.ID,
-                        Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
-                    );
-                } else {
-                    throw error;
-                }
-            }
+            await this.dataRequestExtended(
+                Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.Cluster.ID,
+                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
+            );
         });
     }
 
@@ -519,7 +500,7 @@ class ZStackAdapter extends Adapter {
      */
     private async dataRequest(
         destinationAddress: number, destinationEndpoint: number, sourceEndpoint: number, clusterID: number,
-        radius: number, data: Buffer
+        radius: number, data: Buffer, tries = 0,
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
         const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID});
@@ -543,7 +524,18 @@ class ZStackAdapter extends Adapter {
 
         const dataConfirm = await response.promise;
         if (dataConfirm.payload.status !== 0) {
-            throw new DataConfirmError(dataConfirm.payload.status);
+            if (dataConfirm.payload.status === 225 && tries === 0) {
+                /**
+                 * When many commands at once are executed we can end up in a MAC channel access failure
+                 * error (225). This is because there is too much traffic on the network.
+                 * Retry this command once after a cooling down period.
+                 */
+                return this.dataRequest(
+                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, 1
+                );
+            } else {
+                throw new DataConfirmError(dataConfirm.payload.status);
+            }
         }
 
         return dataConfirm;
@@ -551,7 +543,7 @@ class ZStackAdapter extends Adapter {
 
     private async dataRequestExtended(
         addressMode: number, destinationAddressOrGroupID: number, destinationEndpoint: number,
-        sourceEndpoint: number, clusterID: number, radius: number, data: Buffer
+        sourceEndpoint: number, clusterID: number, radius: number, data: Buffer, tries = 0,
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
         const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID});
@@ -577,7 +569,19 @@ class ZStackAdapter extends Adapter {
 
         const dataConfirm = await response.promise;
         if (dataConfirm.payload.status !== 0) {
-            throw new DataConfirmError(dataConfirm.payload.status);
+            if (dataConfirm.payload.status === 225 && tries === 0) {
+                /**
+                 * When many commands at once are executed we can end up in a MAC channel access failure
+                 * error (225). This is because there is too much traffic on the network.
+                 * Retry this command once after a cooling down period.
+                 */
+                return this.dataRequestExtended(
+                    addressMode, destinationAddressOrGroupID, destinationEndpoint, sourceEndpoint, clusterID,
+                    radius, data, 1
+                );
+            } else {
+                throw new DataConfirmError(dataConfirm.payload.status);
+            }
         }
 
         return dataConfirm;

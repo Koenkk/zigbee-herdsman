@@ -1678,6 +1678,19 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
     });
 
+    it('Send zcl frame network address retry on MAC channel access failure', async () => {
+        basicMocks();
+        dataConfirmCode = 225;
+        dataConfirmCodeReset = true;
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
+        await adapter.sendZclFrameNetworkAddress(2, 20, frame);
+        expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
+        expect(mockZnpRequest).toBeCalledTimes(2);
+        expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1});
+    });
+
     it('Send zcl frame network address dataRequest fails', async () => {
         basicMocks();
         await adapter.start();
