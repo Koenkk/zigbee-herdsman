@@ -34,7 +34,7 @@ interface BindInternal {
 }
 
 interface Bind {
-    cluster: number;
+    cluster: Zcl.TsType.Cluster;
     target: Endpoint | Group;
 }
 
@@ -61,7 +61,8 @@ class Endpoint extends Entity {
             } else {
                 target = Group.byGroupID(entry.groupID);
             }
-            return {target, cluster: entry.cluster};
+
+            return {target, cluster: Zcl.Utils.getCluster(entry.cluster)};
         });
     };
 
@@ -236,7 +237,7 @@ class Endpoint extends Entity {
             target instanceof Endpoint ? target.ID : null,
         );
 
-        if (!this.binds.find((b) => b.cluster === cluster.ID && b.target === target)) {
+        if (!this.binds.find((b) => b.cluster.ID === cluster.ID && b.target === target)) {
             if (target instanceof Group) {
                 this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
             } else {
@@ -260,7 +261,7 @@ class Endpoint extends Entity {
             target instanceof Endpoint ? target.ID : null,
         );
 
-        const index = this.binds.findIndex((b) => b.cluster === cluster.ID && b.target === target);
+        const index = this.binds.findIndex((b) => b.cluster.ID === cluster.ID && b.target === target);
         if (index !== -1) {
             this._binds.splice(index, 1);
             this.getDevice().save();

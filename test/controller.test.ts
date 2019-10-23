@@ -1315,13 +1315,13 @@ describe('Controller', () => {
         const target = controller.getDeviceByIeeeAddr('0x170').getEndpoint(1);
         const endpoint = device.getEndpoint(1);
         await endpoint.bind('genBasic', target);
-        expect(endpoint.binds).toStrictEqual([{cluster: 0, target}]);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(0), target}]));
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
 
         // Should bind another time but not add it to the binds
         mockAdapterBind.mockClear();
         await endpoint.bind('genBasic', target);
-        expect(endpoint.binds).toStrictEqual([{cluster: 0, target}]);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(0), target}]));
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
     });
 
@@ -1331,7 +1331,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         endpoint._binds.push({type: 'endpoint', deviceIeeeAddress: 'notexisting', endpointID: 1, cluster: 2});
-        expect(endpoint.binds).toStrictEqual([{cluster: 2, target: null}]);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(2), target: null}]));
     });
 
     it('Group bind', async () => {
@@ -1341,7 +1341,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         await endpoint.bind('genPowerCfg', group);
-        expect(endpoint.binds).toStrictEqual([{cluster: 1, target: group}]);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(1), target: group}]));
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 1, 4, "group", null);
     });
 
