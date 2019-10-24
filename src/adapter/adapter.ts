@@ -46,16 +46,20 @@ abstract class Adapter extends events.EventEmitter {
                 throw new Error("No path provided and failed to auto detect path");
             }
         } else {
-            // Path can be a symlink, resolve it.
-            serialPortOptions.path = RealpathSync(serialPortOptions.path);
+            try {
+                // Path can be a symlink, resolve it.
+                serialPortOptions.path = RealpathSync(serialPortOptions.path);
 
-            // Determine adapter to use
-            for (const candidate of adapters) {
-                if (await candidate.isValidPath(serialPortOptions.path)) {
-                    debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
-                    adapter = candidate;
-                    break;
+                // Determine adapter to use
+                for (const candidate of adapters) {
+                    if (await candidate.isValidPath(serialPortOptions.path)) {
+                        debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
+                        adapter = candidate;
+                        break;
+                    }
                 }
+            } catch (error) {
+                debug(`Failed to validate path: '${error}'`);
             }
         }
 

@@ -1672,6 +1672,13 @@ describe('Controller', () => {
         expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false}, null);
     });
 
+    it('Adapter create continue when is valid path fails', async () => {
+        mockZStackAdapterIsValidPath.mockImplementationOnce(() => {throw new Error('failed')});
+        await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false}, null);
+        expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/bla');
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false}, null);
+    });
+
     it('Adapter create auto detect', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
