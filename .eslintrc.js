@@ -11,6 +11,7 @@ module.exports = {
         "@typescript-eslint/explicit-function-return-type": "error",
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-unused-vars": "error",
         "@typescript-eslint/semi": ["error"],
         "array-bracket-spacing": ["error", "never"],
         "indent": ["error", 4],

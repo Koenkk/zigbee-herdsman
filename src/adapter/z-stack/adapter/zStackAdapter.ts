@@ -10,7 +10,7 @@ import {Znp, ZpiObject} from '../znp';
 import StartZnp from './startZnp';
 import {Constants as UnpiConstants} from '../unpi';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
-import {Queue, Waitress, Wait} from '../../../utils';
+import {Queue, Waitress} from '../../../utils';
 import * as Constants from '../constants';
 import Debug from "debug";
 import {Backup} from './backup';
