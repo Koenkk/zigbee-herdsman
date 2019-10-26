@@ -740,6 +740,81 @@ describe('Controller', () => {
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 
+    it('Receive raw data from unknown cluster', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['rawData']({
+            clusterID: 99999999,
+            networkAddress: 129,
+            data: Buffer.from([0, 1, 2, 3]),
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.message.length).toBe(1);
+        const expected = {
+            "cluster": "unknown",
+            "type":"raw",
+            "device":{
+                "ID":2,
+                "ieeeAddr":"0x129",
+                "_networkAddress":129,
+                "_lastSeen": deepClone(Date.now()),
+                "_endpoints":[
+                    {
+                    "ID":1,
+                    "clusters": {},
+                    "inputClusters":[
+                        1
+                    ],
+                    "outputClusters":[
+                        2
+                    ],
+                    "deviceNetworkAddress":129,
+                    "deviceIeeeAddress":"0x129",
+                    "_binds": [],
+                    "deviceID":5,
+                    "profileID":99
+                    }
+                ],
+                "_type":"Router",
+                "_manufacturerID":1212,
+                "_manufacturerName":"KoenAndCo",
+                "meta": {},
+                "_powerSource":"Mains (single phase)",
+                "_modelID":"myModelID",
+                "_applicationVersion":2,
+                "_stackVersion":101,
+                "_zclVersion":1,
+                "_hardwareVersion":3,
+                "_dateCode":"201901",
+                "_softwareBuildID":"1.01",
+                "_interviewCompleted":true,
+                "_interviewing":false
+            },
+            "endpoint":{
+                "clusters": {},
+                "ID":1,
+                "deviceID": 5,
+                "inputClusters":[1],
+                "outputClusters":[2],
+                "deviceNetworkAddress":129,
+                "deviceIeeeAddress":"0x129",
+                "_binds": [],
+                "profileID": 99,
+            },
+            "data": {
+                data: [0, 1, 2, 3],
+                type: 'Buffer',
+            },
+            "linkquality":50,
+            "groupID":1
+         };
+        expect(deepClone(events.message[0])).toStrictEqual(expected);
+    });
+
     it('Receive zclData from unkonwn device shouldnt emit anything', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});

@@ -391,12 +391,12 @@ class Controller extends events.EventEmitter {
         // Parse command for event
         let type: Events.MessagePayloadType = undefined;
         let data: KeyValue;
-        let cluster = undefined;
+        let clusterName = undefined;
 
         if (this.isZclDataPayload(dataPayload, dataType)) {
             const frame = dataPayload.frame;
             const command = frame.getCommand();
-            cluster = frame.Cluster.name;
+            clusterName = frame.Cluster.name;
 
             if (frame.isGlobal()) {
                 if (frame.isCommand('report')) {
@@ -430,12 +430,18 @@ class Controller extends events.EventEmitter {
                     }
                 }
 
-                endpoint.saveClusterAttributeList(cluster, data);
+                endpoint.saveClusterAttributeList(clusterName, data);
             }
         } else {
             type = 'raw';
             data = dataPayload.data;
-            cluster = ZclUtils.getCluster(dataPayload.clusterID).name;
+            try {
+                const cluster = ZclUtils.getCluster(dataPayload.clusterID);
+                clusterName = cluster.name;
+            } catch (error) {
+                clusterName = 'unknown';
+                debug.error(`Error while retrieving cluster for raw '${error}'`);
+            }
         }
 
         if (type && data) {
@@ -443,7 +449,7 @@ class Controller extends events.EventEmitter {
             const linkquality = dataPayload.linkquality;
             const groupID = dataPayload.groupID;
             const eventData: Events.MessagePayload = {
-                type: type, device, endpoint, data, linkquality, groupID, cluster
+                type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName
             };
 
             this.emit(Events.Events.message, eventData);
