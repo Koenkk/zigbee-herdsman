@@ -35,6 +35,7 @@ const equalsPartial = (object, expected) => {
 let znpReceived;
 let znpClose;
 let dataConfirmCode = 0;
+let dataConfirmCodeReset = false;
 let dataRequestCode = 0;
 let dataRequestExtCode = 0;
 
@@ -154,7 +155,11 @@ const basicMocks = () => {
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nodeDescRsp') {
             return {promise: {payload: {manufacturercode: payload.nwkaddr * 2, logicaltype_cmplxdescavai_userdescavai: payload.nwkaddr - 1}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.AF && command === 'dataConfirm') {
-            return {promise: {payload: {status: dataConfirmCode}}, ID: 99};
+            const status = dataConfirmCode;
+            if (dataConfirmCodeReset) {
+                dataConfirmCode = 0;
+            }
+            return {promise: {payload: {status}}, ID: 99};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 203})) {
             return {promise: {payload: {status: 0, neighborlqilist: [{lqi: 10, nwkAddr: 2, extAddr: 3, relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 3, extAddr: 4, relationship: 2, depth: 5}]}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 204})) {
@@ -204,6 +209,7 @@ describe('zStackAdapter', () => {
         dataRequestCode = 0;
         dataRequestExtCode = 0;
         networkOptions.networkKeyDistribute = false;
+        dataConfirmCodeReset = false;
     });
 
     it('Is valid path', async () => {
@@ -1672,6 +1678,19 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
     });
 
+    it('Send zcl frame network address retry on MAC channel access failure', async () => {
+        basicMocks();
+        dataConfirmCode = 225;
+        dataConfirmCodeReset = true;
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
+        await adapter.sendZclFrameNetworkAddress(2, 20, frame);
+        expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
+        expect(mockZnpRequest).toBeCalledTimes(2);
+        expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1});
+    });
+
     it('Send zcl frame network address dataRequest fails', async () => {
         basicMocks();
         await adapter.start();
@@ -1693,7 +1712,7 @@ describe('zStackAdapter', () => {
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
         try {await adapter.sendZclFrameNetworkAddress(2, 20, frame)} catch (e) {error = e;}
-        expect(error).toStrictEqual(new Error("Data request failed with error: 'No network route' (205)"));
+        expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
     });
 
     it('Send zcl frame network address with default response', async () => {
@@ -1722,7 +1741,7 @@ describe('zStackAdapter', () => {
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
-        expect(error).toStrictEqual(new Error("Data request failed with error: 'No network route' (205)"));
+        expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
     });
 
     it('Send zcl frame network address with missing default response', async () => {
@@ -1747,6 +1766,19 @@ describe('zStackAdapter', () => {
         await adapter.sendZclFrameGroup(25, frame);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
         expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
+    });
+
+    it('Send zcl frame group retry on MAC channel access failure', async () => {
+        basicMocks();
+        dataConfirmCode = 225;
+        dataConfirmCodeReset = true;
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
+        await adapter.sendZclFrameGroup(25, frame);
+        expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
+        expect(mockZnpRequest).toBeCalledTimes(2);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
     });
 
@@ -1790,7 +1822,7 @@ describe('zStackAdapter', () => {
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
-        expect(error).toStrictEqual(new Error("Data request failed with error: 'undefined' (184)"));
+        expect(error.message).toStrictEqual("Data request failed with error: 'undefined' (184)");
     });
 
     it('Send zcl frame group dataRequestExt fails', async () => {
@@ -1880,7 +1912,7 @@ describe('zStackAdapter', () => {
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
         try {await adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame)} catch (e) {error = e;}
-        expect(error).toStrictEqual(new Error("Data request failed with error: 'No network route' (205)"));
+        expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
     });
 
     it('Send zcl frame network address data confirm fails without default response', async () => {
@@ -1890,7 +1922,7 @@ describe('zStackAdapter', () => {
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
         try {await adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame)} catch (e) {error = e;}
-        expect(error).toStrictEqual(new Error("Data request failed with error: 'No network route' (205)"));
+        expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
     });
 
     it('Send zcl frame network address with response timeout', async () => {

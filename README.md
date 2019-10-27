@@ -18,6 +18,9 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 
 # Changelog
 
+## 0.11.0 breaking changes
+- endpoint.bind[].cluster will now return cluster object instead of cluster number
+
 ## 0.10.0 breaking changes
 - controller.start() renamed `resetted` start result to `reset`
 

@@ -3,6 +3,7 @@ import {ZclDataPayload} from './events';
 import events from 'events';
 import {ZclFrame} from '../zcl';
 import Debug from "debug";
+import {RealpathSync} from '../utils';
 
 const debug = Debug("zigbee-herdsman:adapter");
 
@@ -26,7 +27,8 @@ abstract class Adapter extends events.EventEmitter {
         const {ZStackAdapter} = await import('./z-stack/adapter');
 
         const adapters: typeof ZStackAdapter[] = [ZStackAdapter];
-        let adapter: typeof ZStackAdapter = null;
+        // Use ZStackAdapter by default
+        let adapter: typeof ZStackAdapter = ZStackAdapter;
 
         if (!serialPortOptions.path) {
             debug('No path provided, auto detecting path');
@@ -35,6 +37,7 @@ abstract class Adapter extends events.EventEmitter {
                 if (path) {
                     debug(`Auto detected path '${path}' from adapter '${candidate.name}'`);
                     serialPortOptions.path = path;
+                    adapter = candidate;
                     break;
                 }
             }
@@ -42,18 +45,22 @@ abstract class Adapter extends events.EventEmitter {
             if (!serialPortOptions.path) {
                 throw new Error("No path provided and failed to auto detect path");
             }
-        }
+        } else {
+            try {
+                // Path can be a symlink, resolve it.
+                serialPortOptions.path = RealpathSync(serialPortOptions.path);
 
-        // Determine adapter to use
-        for (const candidate of adapters) {
-            if (await candidate.isValidPath(serialPortOptions.path)) {
-                debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
-                adapter = candidate;
+                // Determine adapter to use
+                for (const candidate of adapters) {
+                    if (await candidate.isValidPath(serialPortOptions.path)) {
+                        debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
+                        adapter = candidate;
+                        break;
+                    }
+                }
+            } catch (error) {
+                debug(`Failed to validate path: '${error}'`);
             }
-        }
-
-        if (!adapter) {
-            adapter = adapters[0];
         }
 
         return new adapter(networkOptions, serialPortOptions, backupPath);
