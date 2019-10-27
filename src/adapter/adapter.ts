@@ -4,6 +4,7 @@ import events from 'events';
 import {ZclFrame} from '../zcl';
 import Debug from "debug";
 import {RealpathSync} from '../utils';
+import SocketPortUtils from './socketPortUtils';
 
 const debug = Debug("zigbee-herdsman:adapter");
 
@@ -47,15 +48,28 @@ abstract class Adapter extends events.EventEmitter {
             }
         } else {
             try {
-                // Path can be a symlink, resolve it.
-                serialPortOptions.path = RealpathSync(serialPortOptions.path);
+                if (SocketPortUtils.isTcp(serialPortOptions.path)) {
+                    // check socket port
+                    if (SocketPortUtils.isValidTcpPath(serialPortOptions.path)) {
+                        debug(`Path '${serialPortOptions.path}' is valid`);
+                    }
+                    else {
+                        throw new Error(`Invalid path: '${serialPortOptions.path}'`);
+                    }
+                }
+                else {
+                    // check serial port
 
-                // Determine adapter to use
-                for (const candidate of adapters) {
-                    if (await candidate.isValidPath(serialPortOptions.path)) {
-                        debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
-                        adapter = candidate;
-                        break;
+                    // Path can be a symlink, resolve it.
+                    serialPortOptions.path = RealpathSync(serialPortOptions.path);
+
+                    // Determine adapter to use
+                    for (const candidate of adapters) {
+                        if (await candidate.isValidPath(serialPortOptions.path)) {
+                            debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
+                            adapter = candidate;
+                            break;
+                        }
                     }
                 }
             } catch (error) {

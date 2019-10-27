@@ -7,12 +7,14 @@ import {
 import {Wait, Queue, Waitress} from '../../../utils';
 
 import SerialPortUtils from '../../serialPortUtils';
+import SocketPortUtils from '../../socketPortUtils';
 
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
 import {Subsystem, Type} from '../unpi/constants';
 
 import SerialPort from 'serialport';
+import * as Net from 'net';
 import events from 'events';
 import Equals from 'fast-deep-equal';
 import Debug from "debug";
@@ -48,8 +50,10 @@ class Znp extends events.EventEmitter {
     private path: string;
     private baudRate: number;
     private rtscts: boolean;
+    private useTCP: boolean = false;
 
     private serialPort: SerialPort;
+    private socketPort : Net.Socket;
     private unpiWriter: UnpiWriter;
     private unpiParser: UnpiParser;
     private initialized: boolean;
@@ -62,6 +66,10 @@ class Znp extends events.EventEmitter {
         this.path = path;
         this.baudRate = baudRate;
         this.rtscts = rtscts;
+
+        if (SocketPortUtils.isTcp(path)) {
+            this.useTCP = true;
+        }
 
         this.initialized = false;
 
@@ -121,6 +129,15 @@ class Znp extends events.EventEmitter {
     }
 
     public async open(): Promise<void> {
+        if (this.useTCP) {
+            return this.openSocket();
+        }
+        else {
+            return this.openSerial();
+        }
+    }
+
+    public async openSerial(): Promise<void> {
         const options = {baudRate: this.baudRate, rtscts: this.rtscts, autoOpen: false};
 
         debug.log(`Opening with ${this.path} and ${JSON.stringify(options)}`);
@@ -153,6 +170,49 @@ class Znp extends events.EventEmitter {
                 }
             });
         });
+    }
+
+    public async openSocket(): Promise<void> {
+        var host = SocketPortUtils.getHost(this.path);
+        var port = SocketPortUtils.getPort(this.path);  
+        debug.log(`Opening tcp socket with ${host}:${port}`);
+
+        this.socketPort = new Net.Socket();
+        this.socketPort.setNoDelay(true);
+
+        this.unpiWriter = new UnpiWriter();
+        this.unpiParser = new UnpiParser();
+
+        this.unpiParser.on('parsed', this.onUnpiParsed);
+        this.unpiParser.on('error', this.onUnpiParsedError);
+
+        // this is needed for .on methods inside Promise
+        var znp = this;
+
+        this.unpiWriter.pipe(this.socketPort);
+        this.socketPort.pipe(this.unpiParser);
+
+        return new Promise((resolve, reject): void => {
+            znp.socketPort.connect(port, host);
+
+            znp.socketPort.on('connect', function() {
+                debug.log('socket connected');
+            })
+
+            znp.socketPort.on('ready', async function() {
+                debug.log('socket ready');
+                await znp.skipBootloader();
+                znp.initialized = true;
+                resolve();
+            })
+
+            this.socketPort.on('error', function () {
+                debug.log('socket error');
+                reject(new Error(`Error while opening socket`));
+                znp.initialized = false;
+            })
+
+       });
     }
 
     private async skipBootloader(): Promise<void> {
