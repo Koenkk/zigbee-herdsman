@@ -173,6 +173,12 @@ class Znp extends events.EventEmitter {
     }
 
     public async openSocket(): Promise<void> {
+        if (!SocketPortUtils.isValidTcpPath(this.path)) {
+            return new Promise((resolve, reject): void => {
+                    reject(new Error(`Invalid tcp path: '${this.path}'`));
+            });            
+        }
+
         var host = SocketPortUtils.getHost(this.path);
         var port = SocketPortUtils.getPort(this.path);  
         debug.log(`Opening tcp socket with ${host}:${port}`);
@@ -196,18 +202,18 @@ class Znp extends events.EventEmitter {
             znp.socketPort.connect(port, host);
 
             znp.socketPort.on('connect', function() {
-                debug.log('socket connected');
+                debug.log('Socket connected');
             })
 
             znp.socketPort.on('ready', async function() {
-                debug.log('socket ready');
+                debug.log('Socket ready');
                 await znp.skipBootloader();
                 znp.initialized = true;
                 resolve();
             })
 
             this.socketPort.on('error', function () {
-                debug.log('socket error');
+                debug.log('Socket error');
                 reject(new Error(`Error while opening socket`));
                 znp.initialized = false;
             })
@@ -225,6 +231,10 @@ class Znp extends events.EventEmitter {
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
+ 
+        if (SocketPortUtils.isTcp(path)) {
+            return SocketPortUtils.isValidTcpPath(path);
+        }
         return SerialPortUtils.is(path, autoDetectDefinitions);
     }
 
