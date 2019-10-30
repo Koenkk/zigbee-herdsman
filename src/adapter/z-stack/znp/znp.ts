@@ -4,7 +4,7 @@ import {
     Frame as UnpiFrame,
 } from '../unpi';
 
-import {Wait, Queue, Waitress} from '../../../utils';
+import {Wait, Queue, Waitress, RealpathSync} from '../../../utils';
 
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
@@ -63,12 +63,17 @@ class Znp extends events.EventEmitter {
     public constructor(path: string, baudRate: number, rtscts: boolean) {
         super();
 
-        this.path = path;
         this.baudRate = baudRate;
         this.rtscts = rtscts;
 
         if (SocketPortUtils.isTcp(path)) {
             this.useTCP = true;
+            // keep path unchanged
+            this.path = path
+        }
+        else {
+            // Path can be a symlink, resolve it.
+            this.path = RealpathSync(path);
         }
 
         this.initialized = false;
@@ -235,7 +240,8 @@ class Znp extends events.EventEmitter {
         if (SocketPortUtils.isTcp(path)) {
             return SocketPortUtils.isValidTcpPath(path);
         }
-        return SerialPortUtils.is(path, autoDetectDefinitions);
+        // Path can be a symlink, resolve it. 
+        return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
     }
 
     public static async autoDetectPath(): Promise<string> {

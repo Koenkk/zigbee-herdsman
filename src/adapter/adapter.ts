@@ -47,18 +47,14 @@ abstract class Adapter extends events.EventEmitter {
             }
         } else {
             try {
-
-                // Path can be a symlink, resolve it.
-                serialPortOptions.path = RealpathSync(serialPortOptions.path);
-
-                // Determine adapter to use
+               // Determine adapter to use
                 for (const candidate of adapters) {
                     if (await candidate.isValidPath(serialPortOptions.path)) {
                         debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
                         adapter = candidate;
                         break;
                     }
-                }               
+                }
             } catch (error) {
                 debug(`Failed to validate path: '${error}'`);
             }
