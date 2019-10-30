@@ -15,7 +15,7 @@ import * as Constants from '../constants';
 import Debug from "debug";
 import {Backup} from './backup';
 
-const debug = Debug("zigbee-herdsman:adapter:zStack");
+const debug = Debug("zigbee-herdsman:adapter:zStack:adapter");
 const Subsystem = UnpiConstants.Subsystem;
 const Type = UnpiConstants.Type;
 
