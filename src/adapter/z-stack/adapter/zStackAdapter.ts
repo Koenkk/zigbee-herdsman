@@ -10,7 +10,7 @@ import {Znp, ZpiObject} from '../znp';
 import StartZnp from './startZnp';
 import {Constants as UnpiConstants} from '../unpi';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
-import {Queue, Waitress} from '../../../utils';
+import {Queue, Waitress, Wait} from '../../../utils';
 import * as Constants from '../constants';
 import Debug from "debug";
 import {Backup} from './backup';
@@ -287,6 +287,13 @@ class ZStackAdapter extends Adapter {
                 Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.Cluster.ID,
                 Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer()
             );
+
+            /**
+             * As a group command is not confirmed and thus immidiately returns
+             * (contrary to network address requests) we will give the
+             * command some time to 'settle' in the network.
+             */
+            await Wait(200);
         });
     }
 
