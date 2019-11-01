@@ -69,7 +69,6 @@ class Znp extends events.EventEmitter {
         this.waitress = new Waitress<ZpiObject, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
         this.onUnpiParsed = this.onUnpiParsed.bind(this);
-        this.onUnpiParsedError = this.onUnpiParsedError.bind(this);
         this.onSerialPortClose = this.onSerialPortClose.bind(this);
         this.onSerialPortError = this.onSerialPortError.bind(this);
     }
@@ -106,10 +105,6 @@ class Znp extends events.EventEmitter {
         return this.initialized;
     }
 
-    private onUnpiParsedError(error: Error): void {
-        debug.error(`Got unpi error ${error}`);
-    }
-
     private onSerialPortClose(): void {
         debug.log('Serialport closed');
         this.initialized = false;
@@ -133,7 +128,6 @@ class Znp extends events.EventEmitter {
         this.unpiParser = new UnpiParser();
         this.serialPort.pipe(this.unpiParser);
         this.unpiParser.on('parsed', this.onUnpiParsed);
-        this.unpiParser.on('error', this.onUnpiParsedError);
 
         return new Promise((resolve, reject): void => {
             this.serialPort.open(async (error: object): Promise<void> => {

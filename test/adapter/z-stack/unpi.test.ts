@@ -3,14 +3,11 @@ import {Parser, Constants, Frame, Writer} from '../../../src/adapter/z-stack/unp
 describe('Parser', () => {
     let parser;
     let parsed = [];
-    let error = [];
 
     beforeEach(() => {
         parser = new Parser();
         parser.on('parsed', (result) => parsed.push(result));
-        parser.on('error', (result) => error.push(result));
         parsed = [];
-        error = [];
     });
 
     it('Parse simple message', () => {
@@ -43,23 +40,20 @@ describe('Parser', () => {
         expect(parsed[1].fcs).toBe(0x3e);
     });
 
-    it('Throw error on fcs mismatch', () => {
+    it('Dont throw error on fcs mismatch', () => {
         const buffer = Buffer.from([0xfe, 0x03, 0x61, 0x08, 0x00, 0x01, 0x55, 0x3f]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(0);
-        expect(error.length).toBe(1);
     });
 
     it('Message in two chunks', () => {
         let buffer = Buffer.from([0xfe, 0x03, 0x61, 0x08, 0x00, 0x01]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(0);
-        expect(error.length).toBe(0);
 
         buffer = Buffer.from([0x55, 0x3e]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(1);
-        expect(error.length).toBe(0);
 
         expect(parsed[0].type).toBe(Constants.Type.SRSP);
         expect(parsed[0].subsystem).toBe(Constants.Subsystem.SYS);
@@ -73,12 +67,10 @@ describe('Parser', () => {
         let buffer = Buffer.from([0xfe, 0x03, 0x61, 0x08, 0x00, 0x01, 0x55]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(0);
-        expect(error.length).toBe(0);
 
         buffer = Buffer.from([0x3e]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(1);
-        expect(error.length).toBe(0);
 
         expect(parsed[0].type).toBe(Constants.Type.SRSP);
         expect(parsed[0].subsystem).toBe(Constants.Subsystem.SYS);
@@ -130,7 +122,6 @@ describe('Parser', () => {
         parser._transform(buffer3, '', () => {});
         parser._transform(buffer4, '', () => {});
 
-        expect(error.length).toBe(1);
         expect(parsed.length).toBe(1);
         expect(parsed[0].type).toBe(Constants.Type.SRSP);
         expect(parsed[0].subsystem).toBe(Constants.Subsystem.SYS);
