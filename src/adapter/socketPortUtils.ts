@@ -11,7 +11,7 @@ function isValidTcpPath( path : string) : boolean {
     }
     // tcp path must be:
     // tcp://<host>:<port>
-    var regex = /^(?:tcp:\/\/)[\w.-]+(?:\.[\w\.-]+)+[:][\d]+$/gm;
+    var regex = /^(?:tcp:\/\/)[\w.-]+[:][\d]+$/gm;
     if (regex.test(path)) {
         return true;
     }
