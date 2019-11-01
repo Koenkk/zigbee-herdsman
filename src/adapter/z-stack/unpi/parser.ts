@@ -3,7 +3,7 @@ import {DataStart, SOF, MinMessageLength, PositionDataLength} from './constants'
 import Frame from './frame';
 import Debug from "debug";
 
-const debug = Debug('zigbee-herdsman:zStack:unpi:parser');
+const debug = Debug('zigbee-herdsman:adapter:zStack:unpi:parser');
 
 class Parser extends stream.Transform {
     private buffer: Buffer;
@@ -15,16 +15,6 @@ class Parser extends stream.Transform {
 
     public _transform(chunk: Buffer, _: string, cb: Function): void {
         debug(`<-- [${chunk.toJSON().data}]`);
-
-        if (this.buffer.length === 0 && chunk[0] !== SOF) {
-            const index = chunk.indexOf(SOF);
-            if (index != -1) {
-                chunk = chunk.slice(index);
-            } else {
-                chunk = Buffer.alloc(0);
-            }
-        }
-
         this.buffer = Buffer.concat([this.buffer, chunk]);
         this.parseNext();
         cb();
@@ -32,6 +22,15 @@ class Parser extends stream.Transform {
 
     private parseNext(): void {
         debug(`--- parseNext [${this.buffer.toJSON().data}]`);
+
+        if (this.buffer.length !== 0 && this.buffer.readUInt8(0) !== SOF) {
+            // Buffer doesn't start with SOF, skip till SOF.
+            const index = this.buffer.indexOf(SOF);
+            if (index !== -1) {
+                this.buffer = this.buffer.slice(index, this.buffer.length);
+            }
+        }
+
         if (this.buffer.length >= MinMessageLength && this.buffer.readUInt8(0) == SOF) {
             const dataLength = this.buffer[PositionDataLength];
             const fcsPosition = DataStart + dataLength;
