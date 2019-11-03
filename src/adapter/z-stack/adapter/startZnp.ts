@@ -47,6 +47,7 @@ const Endpoints = [
         appnumoutclusters: 1,
         appoutclusterlist: [Zcl.Utils.getCluster('ssIasZone').ID]
     },
+    {...EndpointDefaults, endpoint: 0x6E, appprofid: 0x0104},  // TERNCY endpoint 
 ];
 
 async function validateItem(
