@@ -277,15 +277,17 @@ class Device extends Entity {
                 this._interviewing = false;
                 this._interviewCompleted = true;
                 this.save();
-            } else if (this.modelID && this.modelID.startsWith('TERNCY-PP01')) {
-                    debug('Interview procedure failed but got modelID starting with TERNCY-PP01, assuming Terncy end device');
-                    this._type = 'EndDevice';
-                    this._manufacturerID = 4648;
-                    this._manufacturerName = 'TERNCY';
-                    this._powerSource = 'Battery';
-                    this._interviewing = false;
-                    this._interviewCompleted = true;
-                    this.save();
+            } else
+            // Same trick for Terncy end device
+            if (this.modelID && this.modelID.startsWith('TERNCY-PP01')) {
+                debug('Interview procedure failed but got modelID starting with TERNCY-PP01, assuming Terncy end device');
+                this._type = 'EndDevice';
+                this._manufacturerID = 4648;
+                this._manufacturerName = 'TERNCY';
+                this._powerSource = 'Battery';
+                this._interviewing = false;
+                this._interviewCompleted = true;
+                this.save();
             } else {
                 debug(`Interview - failed for device '${this.ieeeAddr}' with error '${e.stack}'`);
                 error = e;
