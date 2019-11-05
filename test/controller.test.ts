@@ -755,7 +755,7 @@ describe('Controller', () => {
 
         expect(events.message.length).toBe(1);
         const expected = {
-            "cluster": "unknown",
+            "cluster": 99999999,
             "type":"raw",
             "device":{
                 "ID":2,

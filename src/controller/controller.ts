@@ -439,8 +439,7 @@ class Controller extends events.EventEmitter {
                 const cluster = ZclUtils.getCluster(dataPayload.clusterID);
                 clusterName = cluster.name;
             } catch (error) {
-                clusterName = 'unknown';
-                debug.error(`Error while retrieving cluster for raw '${error}'`);
+                clusterName = dataPayload.clusterID;
             }
         }
 
