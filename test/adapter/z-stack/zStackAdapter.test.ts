@@ -141,7 +141,7 @@ const basicMocks = () => {
         }
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
+            return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return {promise: {payload: {}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'simpleDescRsp') {
@@ -360,7 +360,11 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[31][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[31][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[31][2].appoutclusterlist).toStrictEqual([1280]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(32);
+        expect(mockZnpRequest.mock.calls[32][1]).toBe('register');
+        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(33);
     });
 
     it('Start zStack 1.2 initialize - already configured; extended pan id mismatch -> should be reset', async () => {
@@ -688,7 +692,11 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[31][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[31][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[31][2].appoutclusterlist).toStrictEqual([1280]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(32);
+        expect(mockZnpRequest.mock.calls[32][1]).toBe('register');
+        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(33);
     });
 
     it('Start zStack 3.x.0 resume', async () => {
@@ -781,7 +789,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[11][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[11][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[11][2].appoutclusterlist).toStrictEqual([1280]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(12);
+        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(13);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -875,7 +886,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[11][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[11][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[11][2].appoutclusterlist).toStrictEqual([1280]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(12);
+        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(13);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -989,7 +1003,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {activeeplist: []}}};
             } else {
@@ -1088,7 +1102,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {activeeplist: []}}};
             } else {
@@ -1343,7 +1357,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {}}};
             } else {
@@ -1433,7 +1447,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {}}};
             } else {
@@ -1548,7 +1562,7 @@ describe('zStackAdapter', () => {
                    9
                 ]
              },
-               {
+                {
                   "ID":11,
                   "profileID":124,
                   "deviceID":7,
@@ -1558,7 +1572,18 @@ describe('zStackAdapter', () => {
                   "outputClusters":[
                      9
                   ]
-               }
+               },
+               {
+                "ID":110,
+                "profileID": 124,
+                "deviceID":7,
+                "inputClusters":[
+                   8
+                ],
+                "outputClusters":[
+                   9
+                ]
+             }
             ]
          };
         expect(info).toStrictEqual(expected)
@@ -1654,7 +1679,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.activeEndpoints(3);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(3);
-        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,11]})
+        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,11, 110]})
     });
 
     it('Simple descriptor', async () => {
