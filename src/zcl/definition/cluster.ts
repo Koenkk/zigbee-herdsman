@@ -1007,15 +1007,6 @@ const Cluster: {
             },
         },
     },
-    cluster23: {
-        ID: 23,
-        attributes: {
-        },
-        commands: {
-        },
-        commandsResponse: {
-        },
-    },
     genOta: {
         ID: 25,
         attributes: {
