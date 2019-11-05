@@ -437,6 +437,8 @@ describe('Controller', () => {
     });
 
     it('Start with reset should clear database', async () => {
+        const dbBackupPath = `${options.databasePath}.backup`;
+        expect(fs.existsSync(dbBackupPath)).toBeFalsy();
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await controller.createGroup(1);
@@ -459,8 +461,9 @@ describe('Controller', () => {
         // database will then remove deleted items.
         await controller.stop();
         await controller.start();
-        expect(databaseContents().includes('0x129')).toBeFalsy()
-        expect(databaseContents().includes('groupID')).toBeFalsy()
+        expect(databaseContents().includes('0x129')).toBeFalsy();
+        expect(databaseContents().includes('groupID')).toBeFalsy();
+        expect(fs.existsSync(dbBackupPath)).toBeTruthy();
     });
 
     it('Controller permit joining', async () => {

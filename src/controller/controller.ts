@@ -107,6 +107,8 @@ class Controller extends events.EventEmitter {
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
 
         if (startResult === 'reset') {
+            fs.copyFileSync(this.options.databasePath, `${this.options.databasePath}.backup`);
+
             debug.log('Clearing database...');
             for (const group of Group.all()) {
                 group.removeFromDatabase();
