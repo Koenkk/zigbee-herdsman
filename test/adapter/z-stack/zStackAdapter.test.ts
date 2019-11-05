@@ -1779,7 +1779,7 @@ describe('zStackAdapter', () => {
         let error;
         jest.runAllTimers();
         try {await request} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error('Timeout - 2 - 20 - 100 - 11 after 15000ms'));
+        expect(error).toStrictEqual(new Error('Timeout - 2 - 20 - 100 - 0 - 11 after 15000ms'));
     });
 
     it('Send zcl frame group', async () => {
@@ -1968,7 +1968,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 1 after 10000ms"));
+        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 0 - 1 after 10000ms"));
     });
 
     it('Send zcl frame network address with default response timeout', async () => {
@@ -1988,7 +1988,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 11 after 15000ms"));
+        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 0 - 11 after 15000ms"));
     });
 
     it('Supports backup', async () => {

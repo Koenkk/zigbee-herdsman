@@ -632,7 +632,8 @@ class ZStackAdapter extends Adapter {
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
         return `Timeout - ${matcher.networkAddress} - ${matcher.endpoint}` +
-            ` - ${matcher.transactionSequenceNumber} - ${matcher.commandIdentifier} after ${timeout}ms`;
+            ` - ${matcher.transactionSequenceNumber} - ${matcher.clusterID}` +
+            ` - ${matcher.commandIdentifier} after ${timeout}ms`;
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
