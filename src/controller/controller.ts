@@ -17,6 +17,7 @@ interface Options {
     network: AdapterTsType.NetworkOptions;
     serialPort: AdapterTsType.SerialPortOptions;
     databasePath: string;
+    databaseBackupPath: string;
     backupPath: string;
     /**
      * This lambda can be used by an application to explictly reject or accept an incoming device.
@@ -40,6 +41,7 @@ const DefaultOptions: Options = {
         path: null,
     },
     databasePath: null,
+    databaseBackupPath: null,
     backupPath: null,
     acceptJoiningDeviceHandler: null,
 };
@@ -107,7 +109,9 @@ class Controller extends events.EventEmitter {
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
 
         if (startResult === 'reset') {
-            fs.copyFileSync(this.options.databasePath, `${this.options.databasePath}.backup`);
+            if (this.options.databaseBackupPath) {
+                fs.copyFileSync(this.options.databasePath, this.options.databaseBackupPath);
+            }
 
             debug.log('Clearing database...');
             for (const group of Group.all()) {

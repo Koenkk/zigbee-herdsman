@@ -223,6 +223,7 @@ const options = {
         path: '/dummy/conbee',
     },
     databasePath: tmp.fileSync().name,
+    databaseBackupPath: null,
     backupPath,
     acceptJoiningDeviceHandler: null,
 }
@@ -437,8 +438,6 @@ describe('Controller', () => {
     });
 
     it('Start with reset should clear database', async () => {
-        const dbBackupPath = `${options.databasePath}.backup`;
-        expect(fs.existsSync(dbBackupPath)).toBeFalsy();
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await controller.createGroup(1);
@@ -463,7 +462,20 @@ describe('Controller', () => {
         await controller.start();
         expect(databaseContents().includes('0x129')).toBeFalsy();
         expect(databaseContents().includes('groupID')).toBeFalsy();
-        expect(fs.existsSync(dbBackupPath)).toBeTruthy();
+    });
+
+    it('onlythis Should create backup of databse before clearing when datbaseBackupPath is provided', async () => {
+        const databaseBackupPath = tmp.fileSync().name;
+        fs.unlinkSync(databaseBackupPath);
+        controller = new Controller({...options, databaseBackupPath});
+        expect(fs.existsSync(databaseBackupPath)).toBeFalsy();
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await controller.createGroup(1);
+        await controller.stop();
+        mockAdapterStart.mockReturnValueOnce("reset");
+        await controller.start();
+        expect(fs.existsSync(databaseBackupPath)).toBeTruthy();
     });
 
     it('Controller permit joining', async () => {
