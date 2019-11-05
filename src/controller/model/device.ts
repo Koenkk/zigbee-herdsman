@@ -320,7 +320,7 @@ class Device extends Entity {
         }
 
         const activeEndpoints = await Entity.adapter.activeEndpoints(this.networkAddress);
-        this._endpoints = activeEndpoints.endpoints.filter((e) => e.ID !== 0).map((e): Endpoint => {
+        this._endpoints = activeEndpoints.endpoints.filter((e) => e !== 0).map((e): Endpoint => {
             return Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         });
         this.save();
