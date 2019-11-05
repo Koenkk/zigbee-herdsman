@@ -464,7 +464,7 @@ describe('Controller', () => {
         expect(databaseContents().includes('groupID')).toBeFalsy();
     });
 
-    it('onlythis Should create backup of databse before clearing when datbaseBackupPath is provided', async () => {
+    it('Should create backup of databse before clearing when datbaseBackupPath is provided', async () => {
         const databaseBackupPath = tmp.fileSync().name;
         fs.unlinkSync(databaseBackupPath);
         controller = new Controller({...options, databaseBackupPath});
