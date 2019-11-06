@@ -137,7 +137,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             supportsBackup: mockAdapterSupportsBackup,
             backup: () => {return {version: 'dummybackup'}},
             getCoordinatorVersion: () => {return {type: 'zStack', meta: {version: 1}}},
-            getNetworkParameters: () => {return {panID: 1, extenedPanID: 3, channel: 15}},
+            getNetworkParameters: () => {return {panID: 1, extendedPanID: 3, channel: 15}},
             setLED: mockAdapterSetLED,
             supportsLED: mockAdapterSupportsLED,
             nodeDescriptor: async (networkAddress) => {
@@ -257,7 +257,7 @@ describe('Controller', () => {
 
     it('Call controller constructor options mixed with default options', async () => {
         await controller.start();
-        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extenedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true}, backupPath);
+        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true}, backupPath);
     });
 
     it('Call controller constructor error on invalid channel', async () => {
@@ -337,7 +337,7 @@ describe('Controller', () => {
 
     it('Get network parameters', async () => {
         await controller.start();
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extenedPanID: 3});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
     });
 
     it('Join a device', async () => {

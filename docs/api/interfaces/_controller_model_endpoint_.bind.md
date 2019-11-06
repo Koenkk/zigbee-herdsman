@@ -17,7 +17,7 @@
 
 ###  cluster
 
-• **cluster**: *number*
+• **cluster**: *Cluster*
 
 *Defined in [controller/model/endpoint.ts:37](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L37)*
 

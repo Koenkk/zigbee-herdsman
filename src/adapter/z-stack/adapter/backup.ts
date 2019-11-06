@@ -160,7 +160,7 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
         throw new Error(`Cannot restore backup, panID of backup is different`);
     }
 
-    if (!equals(backup.data.ZCD_NV_EXTENDED_PAN_ID.value, options.extenedPanID)) {
+    if (!equals(backup.data.ZCD_NV_EXTENDED_PAN_ID.value, options.extendedPanID)) {
         throw new Error(`Cannot restore backup, extendedPanID of backup is different`);
     }
 

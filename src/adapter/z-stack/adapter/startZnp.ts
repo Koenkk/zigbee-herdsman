@@ -83,7 +83,7 @@ async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsTy
 
         try {
             await validateItem(znp, Items.panID(options.panID), 'panID');
-            await validateItem(znp, Items.extendedPanID(options.extenedPanID), 'extendedPanID');
+            await validateItem(znp, Items.extendedPanID(options.extendedPanID), 'extendedPanID');
         } catch (error) {
             if (version === ZnpVersion.zStack30x || version === ZnpVersion.zStack3x0) {
                 // Zigbee-herdsman =< 0.6.5 didn't set the panID and extendedPanID on zStack 3.
@@ -147,7 +147,7 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.zdoDirectCb());
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.channelList(options.channelList));
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.panID(options.panID));
-    await znp.request(Subsystem.SYS, 'osalNvWrite', Items.extendedPanID(options.extenedPanID));
+    await znp.request(Subsystem.SYS, 'osalNvWrite', Items.extendedPanID(options.extendedPanID));
 
     if (version === ZnpVersion.zStack30x || version === ZnpVersion.zStack3x0) {
         await znp.request(Subsystem.SYS, 'osalNvWrite', Items.networkKey(options.networkKey));

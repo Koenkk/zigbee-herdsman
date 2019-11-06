@@ -120,7 +120,7 @@ ___
 
 ▸ **addToGroup**(`group`: [Group](_controller_model_group_.group.md)): *Promise‹void›*
 
-*Defined in [controller/model/endpoint.ts:352](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L352)*
+*Defined in [controller/model/endpoint.ts:353](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L353)*
 
 **Parameters:**
 
@@ -136,7 +136,7 @@ ___
 
 ▸ **bind**(`clusterKey`: number | string, `target`: [Endpoint](_controller_model_endpoint_.endpoint.md) | [Group](_controller_model_group_.group.md)): *Promise‹void›*
 
-*Defined in [controller/model/endpoint.ts:229](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L229)*
+*Defined in [controller/model/endpoint.ts:230](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L230)*
 
 **Parameters:**
 
@@ -153,7 +153,7 @@ ___
 
 ▸ **command**(`clusterKey`: number | string, `commandKey`: number | string, `payload`: [KeyValue](../interfaces/_controller_tstype_.keyvalue.md), `options?`: [Options](../interfaces/_controller_model_endpoint_.options.md)): *Promise‹void | [KeyValue](../interfaces/_controller_tstype_.keyvalue.md)›*
 
-*Defined in [controller/model/endpoint.ts:318](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L318)*
+*Defined in [controller/model/endpoint.ts:319](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L319)*
 
 **Parameters:**
 
@@ -172,7 +172,7 @@ ___
 
 ▸ **configureReporting**(`clusterKey`: number | string, `items`: [ConfigureReportingItem](../interfaces/_controller_model_endpoint_.configurereportingitem.md)[], `options?`: [Options](../interfaces/_controller_model_endpoint_.options.md)): *Promise‹void›*
 
-*Defined in [controller/model/endpoint.ts:282](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L282)*
+*Defined in [controller/model/endpoint.ts:283](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L283)*
 
 **Parameters:**
 
@@ -190,7 +190,7 @@ ___
 
 ▸ **defaultResponse**(`commandID`: number, `status`: number, `clusterID`: number, `transactionSequenceNumber`: number, `options?`: [Options](../interfaces/_controller_model_endpoint_.options.md)): *Promise‹void›*
 
-*Defined in [controller/model/endpoint.ts:270](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L270)*
+*Defined in [controller/model/endpoint.ts:271](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L271)*
 
 **Parameters:**
 
@@ -210,7 +210,7 @@ ___
 
 ▸ **getClusterAttributeValue**(`clusterKey`: number | string, `attributeKey`: number | string): *number | string*
 
-*Defined in [controller/model/endpoint.ts:153](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L153)*
+*Defined in [controller/model/endpoint.ts:154](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L154)*
 
 **Parameters:**
 
@@ -227,7 +227,7 @@ ___
 
 ▸ **getDevice**(): *[Device](_controller_model_device_.device.md)*
 
-*Defined in [controller/model/endpoint.ts:87](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L87)*
+*Defined in [controller/model/endpoint.ts:88](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L88)*
 
 Get device of this endpoint
 
@@ -239,7 +239,7 @@ ___
 
 ▸ **read**(`clusterKey`: number | string, `attributes`: string[] | number[], `options?`: [Options](../interfaces/_controller_model_endpoint_.options.md)): *Promise‹[KeyValue](../interfaces/_controller_tstype_.keyvalue.md)›*
 
-*Defined in [controller/model/endpoint.ts:191](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L191)*
+*Defined in [controller/model/endpoint.ts:192](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L192)*
 
 **Parameters:**
 
@@ -257,7 +257,7 @@ ___
 
 ▸ **readResponse**(`clusterKey`: number | string, `transactionSequenceNumber`: number, `attributes`: [KeyValue](../interfaces/_controller_tstype_.keyvalue.md), `options?`: [Options](../interfaces/_controller_model_endpoint_.options.md)): *Promise‹void›*
 
-*Defined in [controller/model/endpoint.ts:211](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L211)*
+*Defined in [controller/model/endpoint.ts:212](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L212)*
 
 **Parameters:**
 
@@ -276,7 +276,7 @@ ___
 
 ▸ **removeFromAllGroups**(): *Promise‹void›*
 
-*Defined in [controller/model/endpoint.ts:369](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L369)*
+*Defined in [controller/model/endpoint.ts:370](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L370)*
 
 **Returns:** *Promise‹void›*
 
@@ -286,7 +286,7 @@ ___
 
 ▸ **removeFromGroup**(`group`: [Group](_controller_model_group_.group.md) | number): *Promise‹void›*
 
-*Defined in [controller/model/endpoint.ts:362](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L362)*
+*Defined in [controller/model/endpoint.ts:363](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L363)*
 
 Remove endpoint from a group, accepts both a Group and number as parameter.
 The number parameter type should only be used when removing from a group which is not known
@@ -306,7 +306,7 @@ ___
 
 ▸ **saveClusterAttributeList**(`clusterKey`: number | string, `list`: [KeyValue](../interfaces/_controller_tstype_.keyvalue.md)): *void*
 
-*Defined in [controller/model/endpoint.ts:144](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L144)*
+*Defined in [controller/model/endpoint.ts:145](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L145)*
 
 **Parameters:**
 
@@ -323,7 +323,7 @@ ___
 
 ▸ **supportsInputCluster**(`clusterKey`: number | string): *boolean*
 
-*Defined in [controller/model/endpoint.ts:95](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L95)*
+*Defined in [controller/model/endpoint.ts:96](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L96)*
 
 **Parameters:**
 
@@ -339,7 +339,7 @@ ___
 
 ▸ **supportsOutputCluster**(`clusterKey`: number | string): *boolean*
 
-*Defined in [controller/model/endpoint.ts:100](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L100)*
+*Defined in [controller/model/endpoint.ts:101](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L101)*
 
 **Parameters:**
 
@@ -355,7 +355,7 @@ ___
 
 ▸ **toDatabaseRecord**(): *[KeyValue](../interfaces/_controller_tstype_.keyvalue.md)*
 
-*Defined in [controller/model/endpoint.ts:126](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L126)*
+*Defined in [controller/model/endpoint.ts:127](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L127)*
 
 **Returns:** *[KeyValue](../interfaces/_controller_tstype_.keyvalue.md)*
 
@@ -365,7 +365,7 @@ ___
 
 ▸ **unbind**(`clusterKey`: number | string, `target`: [Endpoint](_controller_model_endpoint_.endpoint.md) | [Group](_controller_model_group_.group.md)): *Promise‹void›*
 
-*Defined in [controller/model/endpoint.ts:253](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L253)*
+*Defined in [controller/model/endpoint.ts:254](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L254)*
 
 **Parameters:**
 
@@ -382,7 +382,7 @@ ___
 
 ▸ **write**(`clusterKey`: number | string, `attributes`: [KeyValue](../interfaces/_controller_tstype_.keyvalue.md), `options?`: [Options](../interfaces/_controller_model_endpoint_.options.md)): *Promise‹void›*
 
-*Defined in [controller/model/endpoint.ts:167](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L167)*
+*Defined in [controller/model/endpoint.ts:168](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L168)*
 
 **Parameters:**
 
@@ -400,7 +400,7 @@ ___
 
 ▸ **create**(`ID`: number, `profileID`: number, `deviceID`: number, `inputClusters`: number[], `outputClusters`: number[], `deviceNetworkAddress`: number, `deviceIeeeAddress`: string): *[Endpoint](_controller_model_endpoint_.endpoint.md)*
 
-*Defined in [controller/model/endpoint.ts:134](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L134)*
+*Defined in [controller/model/endpoint.ts:135](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L135)*
 
 **Parameters:**
 
@@ -422,7 +422,7 @@ ___
 
 ▸ **fromDatabaseRecord**(`record`: [KeyValue](../interfaces/_controller_tstype_.keyvalue.md), `deviceNetworkAddress`: number, `deviceIeeeAddress`: string): *[Endpoint](_controller_model_endpoint_.endpoint.md)*
 
-*Defined in [controller/model/endpoint.ts:109](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L109)*
+*Defined in [controller/model/endpoint.ts:110](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L110)*
 
 **Parameters:**
 

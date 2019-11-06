@@ -86,7 +86,7 @@ const basicMocks = () => {
             } else if (equalsPartial(payload, {id: NvItemsIds.PANID, offset: 0})) {
                 return {payload: {value: Buffer.from([networkOptions.panID, 0])}};
             } else if (equalsPartial(payload, {id: NvItemsIds.EXTENDED_PAN_ID, offset: 0})) {
-                return {payload: {value: Buffer.from(networkOptions.extenedPanID)}};
+                return {payload: {value: Buffer.from(networkOptions.extendedPanID)}};
             } else {
                 missing();
             }
@@ -182,7 +182,7 @@ const basicMocks = () => {
 
 const networkOptions = {
     panID: 123,
-    extenedPanID: [1, 2, 3],
+    extendedPanID: [1, 2, 3],
     channelList: [11],
     networkKey: [1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],
     networkKeyDistribute: false,
@@ -314,7 +314,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
         expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from(networkOptions.extenedPanID));
+        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
         expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
         expect(mockZnpRequest.mock.calls[16][1]).toBe('bdbSetChannel');
@@ -460,7 +460,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
         expect(mockZnpRequest.mock.calls[16][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[16][2].value).toStrictEqual(Buffer.from(networkOptions.extenedPanID));
+        expect(mockZnpRequest.mock.calls[16][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
         expect(mockZnpRequest.mock.calls[17][1]).toBe('writeConfiguration');
         expect(mockZnpRequest.mock.calls[17][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
         expect(mockZnpRequest.mock.calls[18][1]).toBe('osalNvWrite');
@@ -549,7 +549,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[10][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[10][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
         expect(mockZnpRequest.mock.calls[11][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from(networkOptions.extenedPanID));
+        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
         expect(mockZnpRequest.mock.calls[12][1]).toBe('writeConfiguration');
         expect(mockZnpRequest.mock.calls[12][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
         expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
@@ -646,7 +646,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
         expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from(networkOptions.extenedPanID));
+        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
         expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
         expect(mockZnpRequest.mock.calls[16][1]).toBe('bdbSetChannel');
@@ -721,7 +721,7 @@ describe('zStackAdapter', () => {
                 } else if (equalsPartial(payload, {id: NvItemsIds.PANID, offset: 0})) {
                     return {payload: {value: Buffer.from([networkOptions.panID, 0])}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.EXTENDED_PAN_ID, offset: 0})) {
-                    return {payload: {value: Buffer.from(networkOptions.extenedPanID)}};
+                    return {payload: {value: Buffer.from(networkOptions.extendedPanID)}};
                 } else {
                     missing();
                 }
@@ -818,7 +818,7 @@ describe('zStackAdapter', () => {
                 } else if (equalsPartial(payload, {id: NvItemsIds.PANID, offset: 0})) {
                     return {payload: {value: Buffer.from([0xFF, 0xFF])}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.EXTENDED_PAN_ID, offset: 0})) {
-                    return {payload: {value: Buffer.from(networkOptions.extenedPanID)}};
+                    return {payload: {value: Buffer.from(networkOptions.extendedPanID)}};
                 } else {
                     missing();
                 }
@@ -915,7 +915,7 @@ describe('zStackAdapter', () => {
                 } else if (equalsPartial(payload, {id: NvItemsIds.PANID, offset: 0})) {
                     return {payload: {value: Buffer.from([0xFF, 0xAA])}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.EXTENDED_PAN_ID, offset: 0})) {
-                    return {payload: {value: Buffer.from(networkOptions.extenedPanID)}};
+                    return {payload: {value: Buffer.from(networkOptions.extendedPanID)}};
                 } else {
                     missing();
                 }
