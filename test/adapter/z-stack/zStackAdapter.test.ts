@@ -1697,7 +1697,7 @@ describe('zStackAdapter', () => {
 
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        await adapter.sendZclFrameNetworkAddress(2, 20, frame, 15000);
+        await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
@@ -1710,7 +1710,7 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        await adapter.sendZclFrameNetworkAddress(2, 20, frame, 15000);
+        await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(2);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1});
@@ -1723,7 +1723,7 @@ describe('zStackAdapter', () => {
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
-        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 15000)} catch (e) {error = e;}
+        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000)} catch (e) {error = e;}
         expect(error).toStrictEqual(new Error("Data request failed with code '17'"));
         expect(mockZnpRemoveWaitFor).toHaveBeenCalledTimes(1);
         expect(mockZnpRemoveWaitFor).toHaveBeenCalledWith(99);
@@ -1736,7 +1736,7 @@ describe('zStackAdapter', () => {
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
-        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 15000)} catch (e) {error = e;}
+        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000)} catch (e) {error = e;}
         expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
     });
 
@@ -1747,7 +1747,7 @@ describe('zStackAdapter', () => {
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: defaultReponse.toBuffer()}};
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
-        const request =  adapter.sendZclFrameNetworkAddress(2, 20, frame, 15000);
+        const request =  adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000);
         znpReceived(object);
         await request;
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
@@ -1762,7 +1762,7 @@ describe('zStackAdapter', () => {
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
-        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 15000)} catch (e) { error = e};
+        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000)} catch (e) { error = e};
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
@@ -1775,7 +1775,7 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
-        const request =  adapter.sendZclFrameNetworkAddress(2, 20, frame, 15000);
+        const request =  adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000);
         let error;
         jest.runAllTimers();
         try {await request} catch (e) {error = e}
@@ -1788,7 +1788,7 @@ describe('zStackAdapter', () => {
 
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        await adapter.sendZclFrameGroup(25, frame);
+        await adapter.sendZclFrameGroup(25, frame, 10000);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
@@ -1801,7 +1801,7 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        await adapter.sendZclFrameGroup(25, frame);
+        await adapter.sendZclFrameGroup(25, frame, 10000);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
         expect(mockZnpRequest).toBeCalledTimes(2);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
@@ -1820,7 +1820,7 @@ describe('zStackAdapter', () => {
             }
 
             const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, transactionID++, 'read', 0, [{attrId: 0}]);
-            await adapter.sendZclFrameNetworkAddress(2, 20, frame, 15000);
+            await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000);
         }
 
         const got = []
@@ -1843,7 +1843,7 @@ describe('zStackAdapter', () => {
         let error;
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        try {await adapter.sendZclFrameGroup(25, frame);} catch (e) { error = e};
+        try {await adapter.sendZclFrameGroup(25, frame, 10000);} catch (e) { error = e};
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
@@ -1857,7 +1857,7 @@ describe('zStackAdapter', () => {
         let error;
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        try {await adapter.sendZclFrameGroup(25, frame);} catch (e) { error = e};
+        try {await adapter.sendZclFrameGroup(25, frame, 10000);} catch (e) { error = e};
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})

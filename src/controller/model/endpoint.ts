@@ -229,7 +229,7 @@ class Endpoint extends Entity {
             options.manufacturerCode, transactionSequenceNumber, 'readRsp', cluster.ID, payload
         );
         await Entity.adapter.sendZclFrameNetworkAddress(
-            this.deviceNetworkAddress, this.ID, frame, options.defaultResponseTimeout,
+            this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
         );
     }
 
@@ -284,7 +284,7 @@ class Endpoint extends Entity {
             options.manufacturerCode, transactionSequenceNumber, 'defaultRsp', clusterID, payload
         );
         await Entity.adapter.sendZclFrameNetworkAddress(
-            this.deviceNetworkAddress, this.ID, frame, options.defaultResponseTimeout,
+            this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
         );
     }
 
@@ -352,7 +352,7 @@ class Endpoint extends Entity {
             return result.frame.Payload;
         } else {
             await Entity.adapter.sendZclFrameNetworkAddress(
-                this.deviceNetworkAddress, this.ID, frame, options.defaultResponseTimeout,
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
             );
         }
     }

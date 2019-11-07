@@ -1605,7 +1605,8 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddress.mock.calls[0][1]).toBe(1);
         const expected = {"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":5,"manufacturerCode":100,"commandIdentifier":0},"Payload":{},"Cluster":getCluster(6)};
         expect(deepClone(mockSendZclFrameNetworkAddress.mock.calls[0][2])).toStrictEqual(expected);
-        expect(mockSendZclFrameNetworkAddress.mock.calls[0][3]).toBe(15000);
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][3]).toBe(10000);
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][4]).toBe(15000);
     });
 
     it('Device without meta should set meta to {}', async () => {
