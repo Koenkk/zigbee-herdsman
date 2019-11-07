@@ -27,9 +27,6 @@ const DataConfirmErrorCodeLookup: {[k: number]: string} = {
     240: 'MAC transaction expired',
 };
 
-const DefaultTimeout = 10000;
-const DefaultResponseTimeout = 15000;
-
 interface WaitFor {
     ID: number;
     promise: Promise<Events.ZclDataPayload>;
@@ -216,7 +213,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameNetworkAddressWithResponse(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
             const command = zclFrame.getCommand();
@@ -225,13 +222,13 @@ class ZStackAdapter extends Adapter {
             }
 
             const defaultResponse = !zclFrame.Header.frameControl.disableDefaultResponse ?
-                this.waitDefaultResponse(networkAddress, endpoint, zclFrame) : null;
+                this.waitDefaultResponse(networkAddress, endpoint, zclFrame, defaultResponseTimeout) : null;
             const responsePayload = {
                 networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
                 clusterID: zclFrame.Cluster.ID, frameType: zclFrame.Header.frameControl.frameType,
                 direction: Direction.SERVER_TO_CLIENT, commandIdentifier: command.response,
             };
-            const response = this.waitress.waitFor(responsePayload, DefaultTimeout);
+            const response = this.waitress.waitFor(responsePayload, timeout);
 
             try {
                 await this.dataRequest(
@@ -257,11 +254,11 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameNetworkAddress(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, defaultResponseTimeout: number,
     ): Promise<void> {
         return this.queue.execute<void>(async () => {
             const defaultResponse = !zclFrame.Header.frameControl.disableDefaultResponse ?
-                this.waitDefaultResponse(networkAddress, endpoint, zclFrame) : null;
+                this.waitDefaultResponse(networkAddress, endpoint, zclFrame, defaultResponseTimeout) : null;
 
             try {
                 await this.dataRequest(
@@ -619,7 +616,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private waitDefaultResponse(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
     ): WaitFor {
         const payload = {
             networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
@@ -627,7 +624,7 @@ class ZStackAdapter extends Adapter {
             commandIdentifier: Foundation.defaultRsp.ID,
         };
 
-        return this.waitress.waitFor(payload, DefaultResponseTimeout);
+        return this.waitress.waitFor(payload, timeout);
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {

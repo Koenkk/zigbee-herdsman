@@ -93,11 +93,11 @@ abstract class Adapter extends events.EventEmitter {
     public abstract simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor>;
 
     public abstract sendZclFrameNetworkAddressWithResponse(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
     ): Promise<ZclDataPayload>;
 
     public abstract sendZclFrameNetworkAddress(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, defaultResponseTimeout: number,
     ): Promise<void>;
 
     public abstract sendZclFrameGroup(groupID: number, zclFrame: ZclFrame): Promise<void>;

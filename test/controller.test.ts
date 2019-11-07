@@ -1605,6 +1605,7 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddress.mock.calls[0][1]).toBe(1);
         const expected = {"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":5,"manufacturerCode":100,"commandIdentifier":0},"Payload":{},"Cluster":getCluster(6)};
         expect(deepClone(mockSendZclFrameNetworkAddress.mock.calls[0][2])).toStrictEqual(expected);
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][3]).toBe(15000);
     });
 
     it('Device without meta should set meta to {}', async () => {
@@ -1616,19 +1617,21 @@ describe('Controller', () => {
         expect(deepClone(controller.getDeviceByIeeeAddr("0x90fd9ffffe4b64ae"))).toStrictEqual(expected);
     });
 
-    it('Write to endpoint custom attributes', async () => {
+    it('Write to endpoint custom attributes with non default timeouts', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
-        const options = {manufacturerCode: 0x100B, disableDefaultResponse: true};
+        const options = {manufacturerCode: 0x100B, disableDefaultResponse: true, timeout: 12, defaultResponseTimeout: 16};
         await endpoint.write('genBasic', {0x0031: {value: 0x000B, type: 0x19}}, options);
         expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(1);
         const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual( {"Cluster": getCluster(0), "Header": {"commandIdentifier": 2, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": true}, "manufacturerCode": 4107, "transactionSequenceNumber": 5}, "Payload": [{"attrData": 11, "attrId": 49, "dataType": 25}]});
+        expect(call[3]).toBe(12);
+        expect(call[4]).toBe(16);
     });
 
     it('Write to endpoint with unknown string attribute', async () => {
@@ -1661,6 +1664,8 @@ describe('Controller', () => {
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual( {"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":5,"manufacturerCode":null,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":16387,"dataType":41,"minRepIntval":0,"maxRepIntval":3600,"repChange":25}],"Cluster":getCluster(513)});
+        expect(call[3]).toBe(10000);
+        expect(call[4]).toBe(15000);
     });
 
     it('Remove endpoint from all groups', async () => {
