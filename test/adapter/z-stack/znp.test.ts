@@ -160,10 +160,7 @@ describe('ZNP', () => {
         expect(await Znp.isValidPath('tcp://localhost:8080')).toBeTruthy();
         expect(await Znp.isValidPath('tcp://192.168.2.1')).toBeFalsy();
         expect(await Znp.isValidPath('tcp://localhost')).toBeFalsy();
-        expect(await Znp.isValidPath('192.168.2.1:8080')).toBeFalsy();
-        expect(await Znp.isValidPath('localhost:8080')).toBeFalsy();
-        expect(await Znp.isValidPath('localhost')).toBeFalsy();
-        expect(await Znp.isValidPath('http://192.168.2.1:8080')).toBeFalsy();
+        expect(await socketPortUtils.isTcp('http')).toBeFalsy();
         expect(socketPortUtils.isValidTcpPath('http://192.168.2.1:8080')).toBeFalsy();
     });
 
