@@ -5,7 +5,6 @@ import net from 'net';
 import {Frame as UnpiFrame, Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
-import { EventEmitter } from "events";
 import socketPortUtils from "zigbee-herdsman/src/adapter/socketPortUtils";
 
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
@@ -40,6 +39,14 @@ jest.mock('serialport', () => {
 });
 
 jest.mock('net');
+
+// Mock realPathSync
+jest.mock('../../../src/utils/realpathSync', () => {
+    return jest.fn().mockImplementation((path) => {
+        return path;
+    });
+});
+
 
 SerialPort.list = mockSerialPortList;
 
