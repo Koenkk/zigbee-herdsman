@@ -11,7 +11,7 @@
 ### Properties
 
 * [channelList](_adapter_tstype_.networkoptions.md#channellist)
-* [extenedPanID](_adapter_tstype_.networkoptions.md#optional-extenedpanid)
+* [extendedPanID](_adapter_tstype_.networkoptions.md#optional-extendedpanid)
 * [networkKey](_adapter_tstype_.networkoptions.md#optional-networkkey)
 * [networkKeyDistribute](_adapter_tstype_.networkoptions.md#optional-networkkeydistribute)
 * [panID](_adapter_tstype_.networkoptions.md#panid)
@@ -26,9 +26,9 @@
 
 ___
 
-### `Optional` extenedPanID
+### `Optional` extendedPanID
 
-• **extenedPanID**? : *number[]*
+• **extendedPanID**? : *number[]*
 
 *Defined in [adapter/tstype.ts:3](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/adapter/tstype.ts#L3)*
 

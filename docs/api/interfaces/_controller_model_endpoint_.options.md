@@ -10,11 +10,21 @@
 
 ### Properties
 
+* [defaultResponseTimeout](_controller_model_endpoint_.options.md#optional-defaultresponsetimeout)
 * [disableDefaultResponse](_controller_model_endpoint_.options.md#optional-disabledefaultresponse)
 * [manufacturerCode](_controller_model_endpoint_.options.md#optional-manufacturercode)
 * [response](_controller_model_endpoint_.options.md#optional-response)
+* [timeout](_controller_model_endpoint_.options.md#optional-timeout)
 
 ## Properties
+
+### `Optional` defaultResponseTimeout
+
+• **defaultResponseTimeout**? : *number*
+
+*Defined in [controller/model/endpoint.ts:21](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L21)*
+
+___
 
 ### `Optional` disableDefaultResponse
 
@@ -37,3 +47,11 @@ ___
 • **response**? : *boolean*
 
 *Defined in [controller/model/endpoint.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L19)*
+
+___
+
+### `Optional` timeout
+
+• **timeout**? : *number*
+
+*Defined in [controller/model/endpoint.ts:20](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L20)*

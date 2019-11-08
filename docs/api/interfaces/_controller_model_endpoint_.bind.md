@@ -17,9 +17,9 @@
 
 ###  cluster
 
-• **cluster**: *number*
+• **cluster**: *Cluster*
 
-*Defined in [controller/model/endpoint.ts:37](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L37)*
+*Defined in [controller/model/endpoint.ts:39](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L39)*
 
 ___
 
@@ -27,4 +27,4 @@ ___
 
 • **target**: *[Endpoint](../classes/_controller_model_endpoint_.endpoint.md) | [Group](../classes/_controller_model_group_.group.md)*
 
-*Defined in [controller/model/endpoint.ts:38](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L38)*
+*Defined in [controller/model/endpoint.ts:40](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/endpoint.ts#L40)*

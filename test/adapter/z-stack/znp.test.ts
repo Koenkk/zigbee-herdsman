@@ -265,19 +265,6 @@ describe('ZNP', () => {
         errorCb();
     });
 
-    it('UnpiParser error (do nothing)', async () => {
-        let errorCb;
-
-        mockUnpiParserOn.mockImplementation(((event, cb) => {
-            if (event === 'error') {
-                errorCb = cb;
-            }
-        }));
-
-        await znp.open();
-        errorCb();
-    });
-
     it('znp receive', async () => {
         let parsedCb;
         const received = jest.fn();

@@ -393,7 +393,7 @@ ___
 
 ▸ **lqi**(): *Promise‹[LQI](../interfaces/_controller_model_device_.lqi.md)›*
 
-*Defined in [controller/model/device.ts:384](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L384)*
+*Defined in [controller/model/device.ts:388](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L388)*
 
 **Returns:** *Promise‹[LQI](../interfaces/_controller_model_device_.lqi.md)›*
 
@@ -403,7 +403,7 @@ ___
 
 ▸ **ping**(): *Promise‹void›*
 
-*Defined in [controller/model/device.ts:392](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L392)*
+*Defined in [controller/model/device.ts:396](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L396)*
 
 **Returns:** *Promise‹void›*
 
@@ -413,7 +413,7 @@ ___
 
 ▸ **removeFromDatabase**(): *Promise‹void›*
 
-*Defined in [controller/model/device.ts:378](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L378)*
+*Defined in [controller/model/device.ts:382](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L382)*
 
 **Returns:** *Promise‹void›*
 
@@ -423,7 +423,7 @@ ___
 
 ▸ **removeFromNetwork**(): *Promise‹void›*
 
-*Defined in [controller/model/device.ts:373](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L373)*
+*Defined in [controller/model/device.ts:377](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L377)*
 
 **Returns:** *Promise‹void›*
 
@@ -433,7 +433,7 @@ ___
 
 ▸ **routingTable**(): *Promise‹[RoutingTable](../interfaces/_controller_model_device_.routingtable.md)›*
 
-*Defined in [controller/model/device.ts:388](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L388)*
+*Defined in [controller/model/device.ts:392](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L392)*
 
 **Returns:** *Promise‹[RoutingTable](../interfaces/_controller_model_device_.routingtable.md)›*
 

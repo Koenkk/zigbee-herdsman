@@ -17,6 +17,7 @@ interface Options {
     network: AdapterTsType.NetworkOptions;
     serialPort: AdapterTsType.SerialPortOptions;
     databasePath: string;
+    databaseBackupPath: string;
     backupPath: string;
     /**
      * This lambda can be used by an application to explictly reject or accept an incoming device.
@@ -31,7 +32,7 @@ const DefaultOptions: Options = {
         networkKeyDistribute: false,
         networkKey: [0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F, 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D],
         panID: 0x1a62,
-        extenedPanID: [0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD],
+        extendedPanID: [0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD],
         channelList: [11],
     },
     serialPort: {
@@ -40,6 +41,7 @@ const DefaultOptions: Options = {
         path: null,
     },
     databasePath: null,
+    databaseBackupPath: null,
     backupPath: null,
     acceptJoiningDeviceHandler: null,
 };
@@ -107,6 +109,10 @@ class Controller extends events.EventEmitter {
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
 
         if (startResult === 'reset') {
+            if (this.options.databaseBackupPath) {
+                fs.copyFileSync(this.options.databasePath, this.options.databaseBackupPath);
+            }
+
             debug.log('Clearing database...');
             for (const group of Group.all()) {
                 group.removeFromDatabase();
@@ -439,8 +445,7 @@ class Controller extends events.EventEmitter {
                 const cluster = ZclUtils.getCluster(dataPayload.clusterID);
                 clusterName = cluster.name;
             } catch (error) {
-                clusterName = 'unknown';
-                debug.error(`Error while retrieving cluster for raw '${error}'`);
+                clusterName = dataPayload.clusterID;
             }
         }
 

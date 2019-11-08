@@ -137,7 +137,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             supportsBackup: mockAdapterSupportsBackup,
             backup: () => {return {version: 'dummybackup'}},
             getCoordinatorVersion: () => {return {type: 'zStack', meta: {version: 1}}},
-            getNetworkParameters: () => {return {panID: 1, extenedPanID: 3, channel: 15}},
+            getNetworkParameters: () => {return {panID: 1, extendedPanID: 3, channel: 15}},
             setLED: mockAdapterSetLED,
             supportsLED: mockAdapterSupportsLED,
             nodeDescriptor: async (networkAddress) => {
@@ -223,6 +223,7 @@ const options = {
         path: '/dummy/conbee',
     },
     databasePath: tmp.fileSync().name,
+    databaseBackupPath: null,
     backupPath,
     acceptJoiningDeviceHandler: null,
 }
@@ -256,7 +257,7 @@ describe('Controller', () => {
 
     it('Call controller constructor options mixed with default options', async () => {
         await controller.start();
-        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extenedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true}, backupPath);
+        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true}, backupPath);
     });
 
     it('Call controller constructor error on invalid channel', async () => {
@@ -336,7 +337,7 @@ describe('Controller', () => {
 
     it('Get network parameters', async () => {
         await controller.start();
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extenedPanID: 3});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
     });
 
     it('Join a device', async () => {
@@ -459,8 +460,22 @@ describe('Controller', () => {
         // database will then remove deleted items.
         await controller.stop();
         await controller.start();
-        expect(databaseContents().includes('0x129')).toBeFalsy()
-        expect(databaseContents().includes('groupID')).toBeFalsy()
+        expect(databaseContents().includes('0x129')).toBeFalsy();
+        expect(databaseContents().includes('groupID')).toBeFalsy();
+    });
+
+    it('Should create backup of databse before clearing when datbaseBackupPath is provided', async () => {
+        const databaseBackupPath = tmp.fileSync().name;
+        fs.unlinkSync(databaseBackupPath);
+        controller = new Controller({...options, databaseBackupPath});
+        expect(fs.existsSync(databaseBackupPath)).toBeFalsy();
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await controller.createGroup(1);
+        await controller.stop();
+        mockAdapterStart.mockReturnValueOnce("reset");
+        await controller.start();
+        expect(fs.existsSync(databaseBackupPath)).toBeTruthy();
     });
 
     it('Controller permit joining', async () => {
@@ -755,7 +770,7 @@ describe('Controller', () => {
 
         expect(events.message.length).toBe(1);
         const expected = {
-            "cluster": "unknown",
+            "cluster": 99999999,
             "type":"raw",
             "device":{
                 "ID":2,
@@ -1569,6 +1584,7 @@ describe('Controller', () => {
         const call = mockSendZclFrameGroup.mock.calls[0];
         expect(call[0]).toBe(2);
         expect(deepClone(call[1])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":2,"manufacturerCode":null,"commandIdentifier":64},"Payload":{"effectid":9,"effectvariant":10},"Cluster":getCluster(6)});
+        expect(call[2]).toBe(10000);
     });
 
     it('Group command throw error on missing parameter', async () => {
@@ -1590,6 +1606,8 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddress.mock.calls[0][1]).toBe(1);
         const expected = {"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":5,"manufacturerCode":100,"commandIdentifier":0},"Payload":{},"Cluster":getCluster(6)};
         expect(deepClone(mockSendZclFrameNetworkAddress.mock.calls[0][2])).toStrictEqual(expected);
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][3]).toBe(10000);
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][4]).toBe(15000);
     });
 
     it('Device without meta should set meta to {}', async () => {
@@ -1601,19 +1619,21 @@ describe('Controller', () => {
         expect(deepClone(controller.getDeviceByIeeeAddr("0x90fd9ffffe4b64ae"))).toStrictEqual(expected);
     });
 
-    it('Write to endpoint custom attributes', async () => {
+    it('Write to endpoint custom attributes with non default timeouts', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
-        const options = {manufacturerCode: 0x100B, disableDefaultResponse: true};
+        const options = {manufacturerCode: 0x100B, disableDefaultResponse: true, timeout: 12, defaultResponseTimeout: 16};
         await endpoint.write('genBasic', {0x0031: {value: 0x000B, type: 0x19}}, options);
         expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(1);
         const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual( {"Cluster": getCluster(0), "Header": {"commandIdentifier": 2, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": true}, "manufacturerCode": 4107, "transactionSequenceNumber": 5}, "Payload": [{"attrData": 11, "attrId": 49, "dataType": 25}]});
+        expect(call[3]).toBe(12);
+        expect(call[4]).toBe(16);
     });
 
     it('Write to endpoint with unknown string attribute', async () => {
@@ -1646,6 +1666,8 @@ describe('Controller', () => {
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual( {"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":5,"manufacturerCode":null,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":16387,"dataType":41,"minRepIntval":0,"maxRepIntval":3600,"repChange":25}],"Cluster":getCluster(513)});
+        expect(call[3]).toBe(10000);
+        expect(call[4]).toBe(15000);
     });
 
     it('Remove endpoint from all groups', async () => {

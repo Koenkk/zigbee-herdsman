@@ -86,7 +86,7 @@ const basicMocks = () => {
             } else if (equalsPartial(payload, {id: NvItemsIds.PANID, offset: 0})) {
                 return {payload: {value: Buffer.from([networkOptions.panID, 0])}};
             } else if (equalsPartial(payload, {id: NvItemsIds.EXTENDED_PAN_ID, offset: 0})) {
-                return {payload: {value: Buffer.from(networkOptions.extenedPanID)}};
+                return {payload: {value: Buffer.from(networkOptions.extendedPanID)}};
             } else {
                 missing();
             }
@@ -141,7 +141,7 @@ const basicMocks = () => {
         }
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
+            return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return {promise: {payload: {}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'simpleDescRsp') {
@@ -182,7 +182,7 @@ const basicMocks = () => {
 
 const networkOptions = {
     panID: 123,
-    extenedPanID: [1, 2, 3],
+    extendedPanID: [1, 2, 3],
     channelList: [11],
     networkKey: [1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],
     networkKeyDistribute: false,
@@ -314,7 +314,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
         expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from(networkOptions.extenedPanID));
+        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
         expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
         expect(mockZnpRequest.mock.calls[16][1]).toBe('bdbSetChannel');
@@ -360,7 +360,11 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[31][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[31][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[31][2].appoutclusterlist).toStrictEqual([1280]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(32);
+        expect(mockZnpRequest.mock.calls[32][1]).toBe('register');
+        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(33);
     });
 
     it('Start zStack 1.2 initialize - already configured; extended pan id mismatch -> should be reset', async () => {
@@ -456,7 +460,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
         expect(mockZnpRequest.mock.calls[16][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[16][2].value).toStrictEqual(Buffer.from(networkOptions.extenedPanID));
+        expect(mockZnpRequest.mock.calls[16][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
         expect(mockZnpRequest.mock.calls[17][1]).toBe('writeConfiguration');
         expect(mockZnpRequest.mock.calls[17][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
         expect(mockZnpRequest.mock.calls[18][1]).toBe('osalNvWrite');
@@ -545,7 +549,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[10][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[10][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
         expect(mockZnpRequest.mock.calls[11][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from(networkOptions.extenedPanID));
+        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
         expect(mockZnpRequest.mock.calls[12][1]).toBe('writeConfiguration');
         expect(mockZnpRequest.mock.calls[12][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
         expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
@@ -642,7 +646,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
         expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from(networkOptions.extenedPanID));
+        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
         expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
         expect(mockZnpRequest.mock.calls[16][1]).toBe('bdbSetChannel');
@@ -688,7 +692,11 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[31][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[31][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[31][2].appoutclusterlist).toStrictEqual([1280]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(32);
+        expect(mockZnpRequest.mock.calls[32][1]).toBe('register');
+        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(33);
     });
 
     it('Start zStack 3.x.0 resume', async () => {
@@ -713,7 +721,7 @@ describe('zStackAdapter', () => {
                 } else if (equalsPartial(payload, {id: NvItemsIds.PANID, offset: 0})) {
                     return {payload: {value: Buffer.from([networkOptions.panID, 0])}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.EXTENDED_PAN_ID, offset: 0})) {
-                    return {payload: {value: Buffer.from(networkOptions.extenedPanID)}};
+                    return {payload: {value: Buffer.from(networkOptions.extendedPanID)}};
                 } else {
                     missing();
                 }
@@ -781,7 +789,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[11][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[11][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[11][2].appoutclusterlist).toStrictEqual([1280]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(12);
+        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(13);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -807,7 +818,7 @@ describe('zStackAdapter', () => {
                 } else if (equalsPartial(payload, {id: NvItemsIds.PANID, offset: 0})) {
                     return {payload: {value: Buffer.from([0xFF, 0xFF])}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.EXTENDED_PAN_ID, offset: 0})) {
-                    return {payload: {value: Buffer.from(networkOptions.extenedPanID)}};
+                    return {payload: {value: Buffer.from(networkOptions.extendedPanID)}};
                 } else {
                     missing();
                 }
@@ -875,7 +886,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[11][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[11][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[11][2].appoutclusterlist).toStrictEqual([1280]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(12);
+        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(13);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -901,7 +915,7 @@ describe('zStackAdapter', () => {
                 } else if (equalsPartial(payload, {id: NvItemsIds.PANID, offset: 0})) {
                     return {payload: {value: Buffer.from([0xFF, 0xAA])}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.EXTENDED_PAN_ID, offset: 0})) {
-                    return {payload: {value: Buffer.from(networkOptions.extenedPanID)}};
+                    return {payload: {value: Buffer.from(networkOptions.extendedPanID)}};
                 } else {
                     missing();
                 }
@@ -989,7 +1003,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {activeeplist: []}}};
             } else {
@@ -1088,7 +1102,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {activeeplist: []}}};
             } else {
@@ -1343,7 +1357,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {}}};
             } else {
@@ -1433,7 +1447,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {}}};
             } else {
@@ -1548,7 +1562,7 @@ describe('zStackAdapter', () => {
                    9
                 ]
              },
-               {
+                {
                   "ID":11,
                   "profileID":124,
                   "deviceID":7,
@@ -1558,7 +1572,18 @@ describe('zStackAdapter', () => {
                   "outputClusters":[
                      9
                   ]
-               }
+               },
+               {
+                "ID":110,
+                "profileID": 124,
+                "deviceID":7,
+                "inputClusters":[
+                   8
+                ],
+                "outputClusters":[
+                   9
+                ]
+             }
             ]
          };
         expect(info).toStrictEqual(expected)
@@ -1654,7 +1679,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.activeEndpoints(3);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(3);
-        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,11]})
+        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,11, 110]})
     });
 
     it('Simple descriptor', async () => {
@@ -1672,7 +1697,7 @@ describe('zStackAdapter', () => {
 
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        await adapter.sendZclFrameNetworkAddress(2, 20, frame);
+        await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
@@ -1685,7 +1710,7 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        await adapter.sendZclFrameNetworkAddress(2, 20, frame);
+        await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(2);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1});
@@ -1698,7 +1723,7 @@ describe('zStackAdapter', () => {
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
-        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame)} catch (e) {error = e;}
+        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000)} catch (e) {error = e;}
         expect(error).toStrictEqual(new Error("Data request failed with code '17'"));
         expect(mockZnpRemoveWaitFor).toHaveBeenCalledTimes(1);
         expect(mockZnpRemoveWaitFor).toHaveBeenCalledWith(99);
@@ -1711,7 +1736,7 @@ describe('zStackAdapter', () => {
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
-        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame)} catch (e) {error = e;}
+        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000)} catch (e) {error = e;}
         expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
     });
 
@@ -1722,7 +1747,7 @@ describe('zStackAdapter', () => {
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: defaultReponse.toBuffer()}};
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
-        const request =  adapter.sendZclFrameNetworkAddress(2, 20, frame);
+        const request =  adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000);
         znpReceived(object);
         await request;
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
@@ -1737,7 +1762,7 @@ describe('zStackAdapter', () => {
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
-        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame)} catch (e) { error = e};
+        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000)} catch (e) { error = e};
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
@@ -1750,11 +1775,11 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
-        const request =  adapter.sendZclFrameNetworkAddress(2, 20, frame);
+        const request =  adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000);
         let error;
         jest.runAllTimers();
         try {await request} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error('Timeout - 2 - 20 - 100 - 11 after 15000ms'));
+        expect(error).toStrictEqual(new Error('Timeout - 2 - 20 - 100 - 0 - 11 after 15000ms'));
     });
 
     it('Send zcl frame group', async () => {
@@ -1763,7 +1788,7 @@ describe('zStackAdapter', () => {
 
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        await adapter.sendZclFrameGroup(25, frame);
+        await adapter.sendZclFrameGroup(25, frame, 10000);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
@@ -1776,7 +1801,7 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        await adapter.sendZclFrameGroup(25, frame);
+        await adapter.sendZclFrameGroup(25, frame, 10000);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
         expect(mockZnpRequest).toBeCalledTimes(2);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
@@ -1795,7 +1820,7 @@ describe('zStackAdapter', () => {
             }
 
             const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, transactionID++, 'read', 0, [{attrId: 0}]);
-            await adapter.sendZclFrameNetworkAddress(2, 20, frame);
+            await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000);
         }
 
         const got = []
@@ -1818,7 +1843,7 @@ describe('zStackAdapter', () => {
         let error;
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        try {await adapter.sendZclFrameGroup(25, frame);} catch (e) { error = e};
+        try {await adapter.sendZclFrameGroup(25, frame, 10000);} catch (e) { error = e};
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
@@ -1832,7 +1857,7 @@ describe('zStackAdapter', () => {
         let error;
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
-        try {await adapter.sendZclFrameGroup(25, frame);} catch (e) { error = e};
+        try {await adapter.sendZclFrameGroup(25, frame, 10000);} catch (e) { error = e};
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
@@ -1852,7 +1877,7 @@ describe('zStackAdapter', () => {
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()}};
         const objectMismatch = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()}};
-        const response = adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame);
+        const response = adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame, 10000, 15000);
         znpReceived(objectMismatch);
         znpReceived(object);
         const result = await response;
@@ -1872,7 +1897,7 @@ describe('zStackAdapter', () => {
         await adapter.start();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'readRsp', 0, [{attrId: 0}]);
         let error;
-        try {await adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame);} catch (e) {error = e}
+        try {await adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame, 10000, 15000);} catch (e) {error = e}
         expect(error).toStrictEqual(new Error("Command 'readRsp' has no response, cannot wait for response"));
     });
 
@@ -1889,7 +1914,7 @@ describe('zStackAdapter', () => {
         const objectMismatch = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()}};
         const defaultReponse = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 100, 'defaultRsp', 0, {cmdId: 0, status: 0});
         const defaultObject = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: defaultReponse.toBuffer()}};
-        const response = adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame);
+        const response = adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame, 10000, 15000);
         znpReceived(objectMismatch);
         znpReceived(defaultObject);
         znpReceived(object);
@@ -1911,7 +1936,7 @@ describe('zStackAdapter', () => {
         dataConfirmCode = 205;
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
-        try {await adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame)} catch (e) {error = e;}
+        try {await adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame, 10000, 15000)} catch (e) {error = e;}
         expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
     });
 
@@ -1921,7 +1946,7 @@ describe('zStackAdapter', () => {
         dataConfirmCode = 205;
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
-        try {await adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame)} catch (e) {error = e;}
+        try {await adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame, 10000, 15000)} catch (e) {error = e;}
         expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
     });
 
@@ -1935,7 +1960,7 @@ describe('zStackAdapter', () => {
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         const objectMismatch = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()}};
         jest.useFakeTimers();
-        const response = adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame);
+        const response = adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame, 10000, 15000);
         znpReceived(objectMismatch);
 
         let error;
@@ -1943,7 +1968,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 1 after 10000ms"));
+        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 0 - 1 after 10000ms"));
     });
 
     it('Send zcl frame network address with default response timeout', async () => {
@@ -1955,7 +1980,7 @@ describe('zStackAdapter', () => {
         const responseFrame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 100, 'readRsp', 0, [{attrId: 0, attrData: 2, dataType: 32, status: 0}]);
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()}};
-        const response = adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame);
+        const response = adapter.sendZclFrameNetworkAddressWithResponse(2, 20, frame, 10000, 15000);
         znpReceived(object);
 
         let error;
@@ -1963,7 +1988,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 11 after 15000ms"));
+        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 0 - 11 after 15000ms"));
     });
 
     it('Supports backup', async () => {
