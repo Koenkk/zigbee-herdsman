@@ -125,7 +125,7 @@ describe('ZNP', () => {
         // test tcp port
         znp = new Znp("tcp://localhost:8080", 100, false);        
         await znp.open();
-        expect(znp.isInitialized()).toBeFalsy();
+        expect(znp.isInitialized()).toBeTruthy();
     });
 
     it('Open tcp port error', async () => {
@@ -140,6 +140,20 @@ describe('ZNP', () => {
         }
         expect(znp.isInitialized()).toBeFalsy();
     });
+
+    it('Open tcp port with socket error', async () => {
+        // test tcp port
+        znp = new Znp("tcp://localhost:666", 100, false);        
+
+        let error = false;
+        try {
+            await znp.open();
+        } catch (e) {
+            error = e;
+        }
+        expect(znp.isInitialized()).toBeFalsy();
+    });
+
 
     it('Check if tcp path is valid', async () => {
         expect(await Znp.isValidPath('tcp://192.168.2.1:8080')).toBeTruthy();
