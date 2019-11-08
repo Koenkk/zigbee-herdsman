@@ -18,6 +18,7 @@ import net from 'net';
 import events from 'events';
 import Equals from 'fast-deep-equal';
 import Debug from "debug";
+import {realpathSync} from 'fs';
 
 const timeouts = {
     SREQ: 6000,
@@ -50,10 +51,10 @@ class Znp extends events.EventEmitter {
     private path: string;
     private baudRate: number;
     private rtscts: boolean;
-    private useTCP: boolean = false;
+    private useTCP = false;
 
     private serialPort: SerialPort;
-    private socketPort : net.Socket;
+    private socketPort: net.Socket;
     private unpiWriter: UnpiWriter;
     private unpiParser: UnpiParser;
     private initialized: boolean;
@@ -68,9 +69,13 @@ class Znp extends events.EventEmitter {
 
         if (SocketPortUtils.isTcp(path)) {
             this.useTCP = true;
+            // keep path unchanged
+            this.path = path;
+        }
+        else {
+            this.path = realpathSync(path);
         }
         
-        this.path = path
         this.initialized = false;
 
         this.queue = new Queue();
@@ -125,7 +130,10 @@ class Znp extends events.EventEmitter {
 
     public async open(): Promise<void> {
         if (this.useTCP) {
-            return this.openSocket();
+            // this parameter is a work-around 
+            // because eslint won't accept local variable with 'this'
+            // this is needed for .on methods inside Promise
+            return this.openSocket(this);
         }
         else {
             return this.openSerial();
@@ -166,15 +174,15 @@ class Znp extends events.EventEmitter {
         });
     }
 
-    public async openSocket(): Promise<void> {
+    public async openSocket(znpObject: Znp): Promise<void> {
         if (!SocketPortUtils.isValidTcpPath(this.path)) {
             return new Promise((resolve, reject): void => {
-                    reject(new Error(`Invalid tcp path: '${this.path}'`));
+                reject(new Error(`Invalid tcp path: '${this.path}'`));
             });            
         }
 
-        var host = SocketPortUtils.getHost(this.path);
-        var port = SocketPortUtils.getPort(this.path);  
+        const host = SocketPortUtils.getHost(this.path);
+        const port = SocketPortUtils.getPort(this.path);  
         debug.log(`Opening tcp socket with ${host}:${port}`);
 
         this.socketPort = new net.Socket();
@@ -185,32 +193,30 @@ class Znp extends events.EventEmitter {
 
         this.unpiParser.on('parsed', this.onUnpiParsed);
 
-        // this is needed for .on methods inside Promise
-        var znp = this;
 
         this.unpiWriter.pipe(this.socketPort);
         this.socketPort.pipe(this.unpiParser);
 
         return new Promise((resolve, reject): void => {
-            znp.socketPort.connect(port, host);
+            znpObject.socketPort.connect(port, host);
 
-            znp.socketPort.on('connect', function() {
+            znpObject.socketPort.on('connect', function() {
                 debug.log('Socket connected');
-            })
+            });
 
-            znp.socketPort.on('ready', async function() {
+            znpObject.socketPort.on('ready', async function() {
                 debug.log('Socket ready');
-                await znp.skipBootloader();
-                znp.initialized = true;
+                await znpObject.skipBootloader();
+                znpObject.initialized = true;
                 resolve();
-            })
+            });
 
             this.socketPort.on('error', function () {
                 debug.log('Socket error');
                 reject(new Error(`Error while opening socket`));
-                znp.initialized = false;
-            })
-       });
+                znpObject.initialized = false;
+            });
+        });
     }
 
     private async skipBootloader(): Promise<void> {
