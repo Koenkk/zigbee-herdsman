@@ -18,7 +18,6 @@ import net from 'net';
 import events from 'events';
 import Equals from 'fast-deep-equal';
 import Debug from "debug";
-import {realpathSync} from 'fs';
 
 const timeouts = {
     SREQ: 6000,
@@ -73,7 +72,7 @@ class Znp extends events.EventEmitter {
             this.path = path;
         }
         else {
-            this.path = realpathSync(path);
+            this.path = RealpathSync(path);
         }
         
         this.initialized = false;
