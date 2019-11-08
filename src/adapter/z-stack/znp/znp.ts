@@ -14,7 +14,7 @@ import {ZpiObjectPayload} from './tstype';
 import {Subsystem, Type} from '../unpi/constants';
 
 import SerialPort from 'serialport';
-import * as Net from 'net';
+import net from 'net';
 import events from 'events';
 import Equals from 'fast-deep-equal';
 import Debug from "debug";
@@ -53,7 +53,7 @@ class Znp extends events.EventEmitter {
     private useTCP: boolean = false;
 
     private serialPort: SerialPort;
-    private socketPort : Net.Socket;
+    private socketPort : net.Socket;
     private unpiWriter: UnpiWriter;
     private unpiParser: UnpiParser;
     private initialized: boolean;
@@ -182,14 +182,13 @@ class Znp extends events.EventEmitter {
         var port = SocketPortUtils.getPort(this.path);  
         debug.log(`Opening tcp socket with ${host}:${port}`);
 
-        this.socketPort = new Net.Socket();
+        this.socketPort = new net.Socket();
         this.socketPort.setNoDelay(true);
 
         this.unpiWriter = new UnpiWriter();
         this.unpiParser = new UnpiParser();
 
         this.unpiParser.on('parsed', this.onUnpiParsed);
-        this.unpiParser.on('error', this.onUnpiParsedError);
 
         // this is needed for .on methods inside Promise
         var znp = this;
@@ -216,7 +215,6 @@ class Znp extends events.EventEmitter {
                 reject(new Error(`Error while opening socket`));
                 znp.initialized = false;
             })
-
        });
     }
 
@@ -234,8 +232,7 @@ class Znp extends events.EventEmitter {
         if (SocketPortUtils.isTcp(path)) {
             return SocketPortUtils.isValidTcpPath(path);
         }
-        // Path can be a symlink, resolve it. 
-        return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+        return SerialPortUtils.is(path, autoDetectDefinitions);
     }
 
     public static async autoDetectPath(): Promise<string> {
