@@ -68,14 +68,9 @@ class Znp extends events.EventEmitter {
 
         if (SocketPortUtils.isTcp(path)) {
             this.useTCP = true;
-            // keep path unchanged
-            this.path = path
         }
-        else {
-            // Path can be a symlink, resolve it.
-            this.path = RealpathSync(path);
-        }
-
+        
+        this.path = path
         this.initialized = false;
 
         this.queue = new Queue();
