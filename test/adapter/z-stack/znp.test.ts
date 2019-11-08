@@ -1,9 +1,12 @@
 import "regenerator-runtime/runtime";
 import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
 import SerialPort from 'serialport';
+import net from 'net';
 import {Frame as UnpiFrame, Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
+import { EventEmitter } from "events";
+import socketPortUtils from "zigbee-herdsman/src/adapter/socketPortUtils";
 
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
@@ -35,6 +38,8 @@ jest.mock('serialport', () => {
         };
     });
 });
+
+jest.mock('net');
 
 SerialPort.list = mockSerialPortList;
 
@@ -114,6 +119,38 @@ describe('ZNP', () => {
         ])
 
         expect(await Znp.autoDetectPath()).toBeNull();
+    });
+
+    it('Open tcp port', async () => {
+        // test tcp port
+        znp = new Znp("tcp://localhost:8080", 100, false);        
+        await znp.open();
+        expect(znp.isInitialized()).toBeFalsy();
+    });
+
+    it('Open tcp port error', async () => {
+        // test tcp port
+        znp = new Znp("tcp://localhost:abc", 100, false);        
+
+        let error = false;
+        try {
+            await znp.open();
+        } catch (e) {
+            error = e;
+        }
+        expect(znp.isInitialized()).toBeFalsy();
+    });
+
+    it('Check if tcp path is valid', async () => {
+        expect(await Znp.isValidPath('tcp://192.168.2.1:8080')).toBeTruthy();
+        expect(await Znp.isValidPath('tcp://localhost:8080')).toBeTruthy();
+        expect(await Znp.isValidPath('tcp://192.168.2.1')).toBeFalsy();
+        expect(await Znp.isValidPath('tcp://localhost')).toBeFalsy();
+        expect(await Znp.isValidPath('192.168.2.1:8080')).toBeFalsy();
+        expect(await Znp.isValidPath('localhost:8080')).toBeFalsy();
+        expect(await Znp.isValidPath('localhost')).toBeFalsy();
+        expect(await Znp.isValidPath('http://192.168.2.1:8080')).toBeFalsy();
+        expect(socketPortUtils.isValidTcpPath('http://192.168.2.1:8080')).toBeFalsy();
     });
 
     it('Check if path is valid', async () => {
