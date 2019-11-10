@@ -1,7 +1,7 @@
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
-    StartResult,
+    StartResult, LQINeighbor, RoutingTableEntry,
 } from '../../tstype';
 import {ZnpVersion} from './tstype';
 import * as Events from '../../events';
@@ -298,25 +298,42 @@ class ZStackAdapter extends Adapter {
 
     public async lqi(networkAddress: number): Promise<LQI> {
         return this.queue.execute<LQI>(async (): Promise<LQI> => {
-            const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'mgmtLqiRsp', {srcaddr: networkAddress});
-            this.znp.request(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: networkAddress, startindex: 0});
-            const result = await response.promise;
-            if (result.payload.status !== 0) {
-                throw new Error(`LQI for '${networkAddress}' failed`);
-            }
+            const neighbors: LQINeighbor[] = [];
 
-            const neighbors: {
-                ieeeAddr: string; networkAddress: number; linkquality: number; relationship: number;
-                depth: number;
-            }[] = [];
-            for (const entry of result.payload.neighborlqilist) {
-                neighbors.push({
-                    linkquality: entry.lqi,
-                    networkAddress: entry.nwkAddr,
-                    ieeeAddr: entry.extAddr,
-                    relationship: entry.relationship,
-                    depth: entry.depth,
-                });
+            // eslint-disable-next-line
+            const request = async (startIndex: number): Promise<any> => {
+                const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'mgmtLqiRsp', {srcaddr: networkAddress});
+                this.znp.request(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: networkAddress, startindex: startIndex});
+                const result = await response.promise;
+                if (result.payload.status !== 0) {
+                    throw new Error(`LQI for '${networkAddress}' failed`);
+                }
+
+                return result;
+            };
+
+            // eslint-disable-next-line
+            const add = (list: any) => {
+                for (const entry of list) {
+                    neighbors.push({
+                        linkquality: entry.lqi,
+                        networkAddress: entry.nwkAddr,
+                        ieeeAddr: entry.extAddr,
+                        relationship: entry.relationship,
+                        depth: entry.depth,
+                    });
+                }
+            };
+
+            let response = await request(0);
+            add(response.payload.neighborlqilist);
+            const size = response.payload.neighbortableentries;
+            let nextStartIndex = response.payload.neighborlqilist.length;
+
+            while (neighbors.length < size) {
+                response = await request(nextStartIndex);
+                add(response.payload.neighborlqilist);
+                nextStartIndex += response.payload.neighborlqilist.length;
             }
 
             return {neighbors};
@@ -325,20 +342,40 @@ class ZStackAdapter extends Adapter {
 
     public async routingTable(networkAddress: number): Promise<RoutingTable> {
         return this.queue.execute<RoutingTable>(async (): Promise<RoutingTable> => {
-            const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'mgmtRtgRsp', {srcaddr: networkAddress});
-            this.znp.request(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: networkAddress, startindex: 0});
-            const result = await response.promise;
-            if (result.payload.status !== 0) {
-                throw new Error(`Routing table for '${networkAddress}' failed`);
-            }
+            const table: RoutingTableEntry[] = [];
 
-            const table: {destinationAddress: number; status: string; nextHop: number}[] = [];
-            for (const entry of result.payload.routingtablelist) {
-                table.push({
-                    destinationAddress: entry.destNwkAddr,
-                    status: entry.routeStatus,
-                    nextHop: entry.nextHopNwkAddr,
-                });
+            // eslint-disable-next-line
+            const request = async (startIndex: number): Promise<any> => {
+                const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'mgmtRtgRsp', {srcaddr: networkAddress});
+                this.znp.request(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: networkAddress, startindex: startIndex});
+                const result = await response.promise;
+                if (result.payload.status !== 0) {
+                    throw new Error(`Routing table for '${networkAddress}' failed`);
+                }
+
+                return result;
+            };
+
+            // eslint-disable-next-line
+            const add = (list: any) => {
+                for (const entry of list) {
+                    table.push({
+                        destinationAddress: entry.destNwkAddr,
+                        status: entry.routeStatus,
+                        nextHop: entry.nextHopNwkAddr,
+                    });
+                }
+            };
+
+            let response = await request(0);
+            add(response.payload.routingtablelist);
+            const size = response.payload.routingtableentries;
+            let nextStartIndex = response.payload.routingtablelist.length;
+
+            while (table.length < size) {
+                response = await request(nextStartIndex);
+                add(response.payload.routingtablelist);
+                nextStartIndex += response.payload.routingtablelist.length;
             }
 
             return {table};

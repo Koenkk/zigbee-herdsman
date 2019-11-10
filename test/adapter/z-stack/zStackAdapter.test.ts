@@ -38,6 +38,7 @@ let dataConfirmCode = 0;
 let dataConfirmCodeReset = false;
 let dataRequestCode = 0;
 let dataRequestExtCode = 0;
+let lastStartIndex = 0;
 
 jest.mock('../../../src/adapter/z-stack/znp/znp', () => {
     return jest.fn().mockImplementation(() => {
@@ -119,8 +120,10 @@ const basicMocks = () => {
         } else if (subsystem === Subsystem.ZDO && command === 'extNwkInfo') {
             return {payload: {panid: 20, extendedpanid: 10, channel: 12}};
         } else if (subsystem === Subsystem.ZDO && command === 'mgmtLqiReq') {
+            lastStartIndex = payload.startindex;
             return {};
         } else if (subsystem === Subsystem.ZDO && command === 'mgmtRtgReq') {
+            lastStartIndex = payload.startindex;
             return {};
         } else if (subsystem === Subsystem.ZDO && command === 'bindReq') {
             return {};
@@ -161,11 +164,23 @@ const basicMocks = () => {
             }
             return {promise: {payload: {status}}, ID: 99};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 203})) {
-            return {promise: {payload: {status: 0, neighborlqilist: [{lqi: 10, nwkAddr: 2, extAddr: 3, relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 3, extAddr: 4, relationship: 2, depth: 5}]}}};
+            if (lastStartIndex === 0) {
+                return {promise: {payload: {status: 0, neighbortableentries: 5, neighborlqilist: [{lqi: 10, nwkAddr: 2, extAddr: 3, relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 3, extAddr: 4, relationship: 2, depth: 5}]}}};
+            } else if (lastStartIndex === 2) {
+                return {promise: {payload: {status: 0, neighbortableentries: 5, neighborlqilist: [{lqi: 10, nwkAddr: 5, extAddr: 6, relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 7, extAddr: 8, relationship: 2, depth: 5}]}}};
+            } else if (lastStartIndex === 4) {
+                return {promise: {payload: {status: 0, neighbortableentries: 5, neighborlqilist: [{lqi: 10, nwkAddr: 9, extAddr: 10, relationship: 3, depth: 1}]}}};
+            }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 204})) {
             return {promise: {payload: {status: 1}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtRtgRsp' && equals(payload, {srcaddr: 205})) {
-            return {promise: {payload: {status: 0, routingtablelist: [{destNwkAddr: 10, routeStatus: 'OK', nextHopNwkAddr: 3}]}}};
+            if (lastStartIndex === 0) {
+                return {promise: {payload: {status: 0, routingtableentries: 5, routingtablelist: [{destNwkAddr: 10, routeStatus: 'OK', nextHopNwkAddr: 3}, {destNwkAddr: 11, routeStatus: 'OK', nextHopNwkAddr: 3}]}}};
+            } else if (lastStartIndex === 2) {
+                return {promise: {payload: {status: 0, routingtableentries: 5, routingtablelist: [{destNwkAddr: 12, routeStatus: 'OK', nextHopNwkAddr: 3}, {destNwkAddr: 13, routeStatus: 'OK', nextHopNwkAddr: 3}]}}};
+            } else if (lastStartIndex === 4) {
+                return {promise: {payload: {status: 0, routingtableentries: 5, routingtablelist: [{destNwkAddr: 14, routeStatus: 'OK', nextHopNwkAddr: 3}]}}};
+            }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtRtgRsp' && equals(payload, {srcaddr: 206})) {
             return {promise: {payload: {status: 1}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'bindRsp' && equals(payload, {srcaddr: 301})) {
@@ -2004,9 +2019,11 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.lqi(203);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(203);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 0})
-        expect(result).toStrictEqual({neighbors:[{linkquality:10,networkAddress:2,ieeeAddr:3, depth: 1, relationship: 3},{linkquality:15,networkAddress:3,ieeeAddr:4, depth: 5, relationship: 2}]});
+        expect(mockZnpRequest).toBeCalledTimes(3);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 0});
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 2});
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 4});
+        expect(result).toStrictEqual({"neighbors":[{"linkquality":10,"networkAddress":2,"ieeeAddr":3,"relationship":3,"depth":1},{"linkquality":15,"networkAddress":3,"ieeeAddr":4,"relationship":2,"depth":5},{"linkquality":10,"networkAddress":2,"ieeeAddr":3,"relationship":3,"depth":1},{"linkquality":15,"networkAddress":3,"ieeeAddr":4,"relationship":2,"depth":5},{"linkquality":10,"networkAddress":5,"ieeeAddr":6,"relationship":3,"depth":1},{"linkquality":15,"networkAddress":7,"ieeeAddr":8,"relationship":2,"depth":5}]});
     });
 
     it('LQI fails', async () => {
@@ -2029,9 +2046,11 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.routingTable(205);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(205);
-        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledTimes(3);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 0})
-        expect(result).toStrictEqual({"table":[{"destinationAddress":10,"nextHop":3,"status":"OK"}]});
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 2})
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 4})
+        expect(result).toStrictEqual({"table":[{"destinationAddress":10,"status":"OK","nextHop":3},{"destinationAddress":11,"status":"OK","nextHop":3},{"destinationAddress":10,"status":"OK","nextHop":3},{"destinationAddress":11,"status":"OK","nextHop":3},{"destinationAddress":12,"status":"OK","nextHop":3},{"destinationAddress":13,"status":"OK","nextHop":3}]});
     });
 
     it('Routing table fails', async () => {

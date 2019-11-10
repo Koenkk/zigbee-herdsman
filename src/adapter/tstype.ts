@@ -31,22 +31,26 @@ interface ActiveEndpoints {
     endpoints: number[];
 }
 
-interface LQI {
-    neighbors: {
-        ieeeAddr: string;
-        networkAddress: number;
-        linkquality: number;
-        relationship: number;
-        depth: number;
-    }[];
+interface LQINeighbor {
+    ieeeAddr: string;
+    networkAddress: number;
+    linkquality: number;
+    relationship: number;
+    depth: number;
 }
 
+interface LQI {
+    neighbors: LQINeighbor[];
+}
+
+interface RoutingTableEntry {
+    destinationAddress: number;
+    status: string;
+    nextHop: number;
+};
+
 interface RoutingTable {
-    table: {
-        destinationAddress: number;
-        status: string;
-        nextHop: number;
-    }[];
+    table: RoutingTableEntry[];
 }
 
 interface SimpleDescriptor {
@@ -86,6 +90,6 @@ interface NetworkParameters {
 
 export {
     SerialPortOptions, NetworkOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
-    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup, NetworkParameters,
-    StartResult,
+    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, LQINeighbor, RoutingTable, Backup, NetworkParameters,
+    StartResult, RoutingTableEntry,
 };
