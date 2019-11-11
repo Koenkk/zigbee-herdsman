@@ -163,11 +163,19 @@ describe('ZNP', () => {
 
 
     it('Check if tcp path is valid', async () => {
-        expect(await Znp.isValidPath('tcp://192.168.2.1:8080')).toBeTruthy();
-        expect(await Znp.isValidPath('tcp://localhost:8080')).toBeTruthy();
+        expect(await Znp.isValidPath('tcp://192.168.2.1:8080')).toBeFalsy();
+        expect(await Znp.isValidPath('tcp://localhost:8080')).toBeFalsy();
         expect(await Znp.isValidPath('tcp://192.168.2.1')).toBeFalsy();
         expect(await Znp.isValidPath('tcp://localhost')).toBeFalsy();
-        expect(await socketPortUtils.isTcp('http')).toBeFalsy();
+        expect(await Znp.isValidPath('tcp')).toBeFalsy();
+        expect(socketPortUtils.isTcp('http')).toBeFalsy();
+        expect(socketPortUtils.isTcp('tcp')).toBeTruthy();
+        expect(socketPortUtils.isValidTcpPath('http://192.168.2.1:8080')).toBeFalsy();
+        expect(socketPortUtils.isValidTcpPath('tcp://192.168.2.1:8080')).toBeTruthy();
+        expect(socketPortUtils.isValidTcpPath('tcp://localhost:8080')).toBeTruthy();
+        expect(socketPortUtils.isValidTcpPath('tcp://192.168.2.1')).toBeFalsy();
+        expect(socketPortUtils.isValidTcpPath('tcp://localhost')).toBeFalsy();
+        expect(socketPortUtils.isValidTcpPath('http')).toBeFalsy();
         expect(socketPortUtils.isValidTcpPath('http://192.168.2.1:8080')).toBeFalsy();
     });
 

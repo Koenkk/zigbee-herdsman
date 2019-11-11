@@ -230,7 +230,7 @@ class Znp extends events.EventEmitter {
     public static async isValidPath(path: string): Promise<boolean> {
  
         if (SocketPortUtils.isTcp(path)) {
-            return SocketPortUtils.isValidTcpPath(path);
+            return false;
         }
         return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
     }
