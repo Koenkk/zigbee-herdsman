@@ -5,7 +5,6 @@ import net from 'net';
 import {Frame as UnpiFrame, Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
-import socketPortUtils from "zigbee-herdsman/src/adapter/socketPortUtils";
 
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
@@ -38,11 +37,38 @@ jest.mock('serialport', () => {
     });
 });
 
-jest.mock('net');
+const mockSocketSetNoDelay = jest.fn();
+const mockSocketPipe = jest.fn();
+const mockSocketOnce = jest.fn();
+const mockSocketCallbacks = {};
+const mockSocketConnect = jest.fn().mockImplementation(() => {
+    mockSocketCallbacks['connect']();
+    mockSocketCallbacks['ready']();
+});
+const mockSocketDestroy = jest.fn();
+
+jest.mock('net', () => {
+    return {
+        Socket: jest.fn().mockImplementation(() => {
+            return {
+                setNoDelay: mockSocketSetNoDelay,
+                pipe: mockSocketPipe,
+                connect: mockSocketConnect,
+                on: (event, cb) => mockSocketCallbacks[event] = cb,
+                once: mockSocketOnce,
+                destroy: mockSocketDestroy,
+            };
+        }),
+    }
+});
 
 // Mock realPathSync
+let mockRealPathSyncError = false;
 jest.mock('../../../src/utils/realpathSync', () => {
     return jest.fn().mockImplementation((path) => {
+        if (mockRealPathSyncError) {
+            throw new Error('Not a valid path');
+        }
         return path;
     });
 });
@@ -128,29 +154,24 @@ describe('ZNP', () => {
         expect(await Znp.autoDetectPath()).toBeNull();
     });
 
-    it('Open tcp port', async () => {
-        // test tcp port
-        znp = new Znp("tcp://localhost:8080", 100, false);        
+    it('Open and close tcp port', async () => {
+        znp = new Znp("tcp://localhost:8080", 100, false);
         await znp.open();
+        expect(mockSocketConnect).toBeCalledTimes(1);
+        expect(mockSocketConnect).toBeCalledWith(8080, 'localhost');
         expect(znp.isInitialized()).toBeTruthy();
-    });
+        expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(1);
 
-    it('Open tcp port error', async () => {
-        // test tcp port
-        znp = new Znp("tcp://localhost:abc", 100, false);        
-
-        let error = false;
-        try {
-            await znp.open();
-        } catch (e) {
-            error = e;
-        }
-        expect(znp.isInitialized()).toBeFalsy();
+        await znp.close();
+        expect(mockSocketDestroy).toHaveBeenCalledTimes(1);
     });
 
     it('Open tcp port with socket error', async () => {
-        // test tcp port
-        znp = new Znp("tcp://localhost:666", 100, false);        
+        mockSocketConnect.mockImplementationOnce(() => {
+            mockSocketCallbacks['error']();
+        })
+
+        znp = new Znp("tcp://localhost:666", 100, false);
 
         let error = false;
         try {
@@ -158,6 +179,8 @@ describe('ZNP', () => {
         } catch (e) {
             error = e;
         }
+
+        expect(error).toStrictEqual(new Error('Error while opening socket'));
         expect(znp.isInitialized()).toBeFalsy();
     });
 
@@ -168,15 +191,6 @@ describe('ZNP', () => {
         expect(await Znp.isValidPath('tcp://192.168.2.1')).toBeFalsy();
         expect(await Znp.isValidPath('tcp://localhost')).toBeFalsy();
         expect(await Znp.isValidPath('tcp')).toBeFalsy();
-        expect(socketPortUtils.isTcp('http')).toBeFalsy();
-        expect(socketPortUtils.isTcp('tcp')).toBeTruthy();
-        expect(socketPortUtils.isValidTcpPath('http://192.168.2.1:8080')).toBeFalsy();
-        expect(socketPortUtils.isValidTcpPath('tcp://192.168.2.1:8080')).toBeTruthy();
-        expect(socketPortUtils.isValidTcpPath('tcp://localhost:8080')).toBeTruthy();
-        expect(socketPortUtils.isValidTcpPath('tcp://192.168.2.1')).toBeFalsy();
-        expect(socketPortUtils.isValidTcpPath('tcp://localhost')).toBeFalsy();
-        expect(socketPortUtils.isValidTcpPath('http')).toBeFalsy();
-        expect(socketPortUtils.isValidTcpPath('http://192.168.2.1:8080')).toBeFalsy();
     });
 
     it('Check if path is valid', async () => {
@@ -200,6 +214,12 @@ describe('ZNP', () => {
         ])
 
         expect(await Znp.isValidPath('/dev/notexisting')).toBeFalsy();
+    });
+
+    it('Check if path is valid path resolve fails', async () => {
+        mockRealPathSyncError = true;
+        expect(await Znp.isValidPath('/dev/tty.usbmodemL43001T21')).toBeFalsy();
+        mockRealPathSyncError = false;
     });
 
     it('Open with error', async () => {

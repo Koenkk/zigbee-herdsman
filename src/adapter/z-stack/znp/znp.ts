@@ -50,8 +50,8 @@ class Znp extends events.EventEmitter {
     private path: string;
     private baudRate: number;
     private rtscts: boolean;
-    private useTCP = false;
 
+    private portType: 'serial' | 'socket';
     private serialPort: SerialPort;
     private socketPort: net.Socket;
     private unpiWriter: UnpiWriter;
@@ -63,26 +63,18 @@ class Znp extends events.EventEmitter {
     public constructor(path: string, baudRate: number, rtscts: boolean) {
         super();
 
+        this.path = path;
         this.baudRate = baudRate;
         this.rtscts = rtscts;
+        this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
 
-        if (SocketPortUtils.isTcp(path)) {
-            this.useTCP = true;
-            // keep path unchanged
-            this.path = path;
-        }
-        else {
-            this.path = RealpathSync(path);
-        }
-        
         this.initialized = false;
 
         this.queue = new Queue();
         this.waitress = new Waitress<ZpiObject, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
         this.onUnpiParsed = this.onUnpiParsed.bind(this);
-        this.onSerialPortClose = this.onSerialPortClose.bind(this);
-        this.onSerialPortError = this.onSerialPortError.bind(this);
+        this.onPortClose = this.onPortClose.bind(this);
     }
 
     private log(type: Type, message: string): void {
@@ -117,32 +109,20 @@ class Znp extends events.EventEmitter {
         return this.initialized;
     }
 
-    private onSerialPortClose(): void {
-        debug.log('Serialport closed');
+    private onPortClose(): void {
+        debug.log('Port closed');
         this.initialized = false;
         this.emit('close');
     }
 
-    private onSerialPortError(error: Error): void {
-        debug.error(`Serialport error: ${error}`);
-    }
-
     public async open(): Promise<void> {
-        if (this.useTCP) {
-            // this parameter is a work-around 
-            // because eslint won't accept local variable with 'this'
-            // this is needed for .on methods inside Promise
-            return this.openSocket(this);
-        }
-        else {
-            return this.openSerial();
-        }
+        return this.portType === 'serial' ? this.openSerialPort() : this.openSocketPort();
     }
 
-    public async openSerial(): Promise<void> {
+    private async openSerialPort(): Promise<void> {
         const options = {baudRate: this.baudRate, rtscts: this.rtscts, autoOpen: false};
 
-        debug.log(`Opening with ${this.path} and ${JSON.stringify(options)}`);
+        debug.log(`Opening SerialPort with ${this.path} and ${JSON.stringify(options)}`);
         this.serialPort = new SerialPort(this.path, options);
 
         this.unpiWriter = new UnpiWriter();
@@ -164,8 +144,10 @@ class Znp extends events.EventEmitter {
                 } else {
                     debug.log('Serialport opened');
                     await this.skipBootloader();
-                    this.serialPort.once('close', this.onSerialPortClose);
-                    this.serialPort.once('error', this.onSerialPortError);
+                    this.serialPort.once('close', this.onPortClose);
+                    this.serialPort.once('error', (error) => {
+                        debug.error(`Serialport error: ${error}`);
+                    });
                     this.initialized = true;
                     resolve();
                 }
@@ -173,48 +155,42 @@ class Znp extends events.EventEmitter {
         });
     }
 
-    public async openSocket(znpObject: Znp): Promise<void> {
-        if (!SocketPortUtils.isValidTcpPath(this.path)) {
-            return new Promise((resolve, reject): void => {
-                reject(new Error(`Invalid tcp path: '${this.path}'`));
-            });            
-        }
-
-        const host = SocketPortUtils.getHost(this.path);
-        const port = SocketPortUtils.getPort(this.path);  
-        debug.log(`Opening tcp socket with ${host}:${port}`);
+    private async openSocketPort(): Promise<void> {
+        const info = SocketPortUtils.parseTcpPath(this.path);
+        debug.log(`Opening TCP socket with ${info.host}:${info.port}`);
 
         this.socketPort = new net.Socket();
         this.socketPort.setNoDelay(true);
 
         this.unpiWriter = new UnpiWriter();
-        this.unpiParser = new UnpiParser();
+        this.unpiWriter.pipe(this.socketPort);
 
+        this.unpiParser = new UnpiParser();
+        this.socketPort.pipe(this.unpiParser);
         this.unpiParser.on('parsed', this.onUnpiParsed);
 
-
-        this.unpiWriter.pipe(this.socketPort);
-        this.socketPort.pipe(this.unpiParser);
-
         return new Promise((resolve, reject): void => {
-            znpObject.socketPort.connect(port, host);
-
-            znpObject.socketPort.on('connect', function() {
+            this.socketPort.on('connect', function() {
                 debug.log('Socket connected');
             });
 
-            znpObject.socketPort.on('ready', async function() {
+            const self = this;
+            this.socketPort.on('ready', async function() {
                 debug.log('Socket ready');
-                await znpObject.skipBootloader();
-                znpObject.initialized = true;
+                await self.skipBootloader();
+                self.initialized = true;
                 resolve();
             });
+
+            this.socketPort.once('close', this.onPortClose);
 
             this.socketPort.on('error', function () {
                 debug.log('Socket error');
                 reject(new Error(`Error while opening socket`));
-                znpObject.initialized = false;
+                self.initialized = false;
             });
+
+            this.socketPort.connect(info.port, info.host);
         });
     }
 
@@ -228,11 +204,17 @@ class Znp extends events.EventEmitter {
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
- 
-        if (SocketPortUtils.isTcp(path)) {
+        // For TCP paths we cannot get device information, therefore we cannot validate it.
+        if (SocketPortUtils.isTcpPath(path)) {
             return false;
         }
-        return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+
+        try {
+            return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+        } catch (error) {
+            debug.error(`Failed to determine if path is valid: '${error}'`);
+            return false;
+        }
     }
 
     public static async autoDetectPath(): Promise<string> {
@@ -249,15 +231,20 @@ class Znp extends events.EventEmitter {
     public close(): Promise<void> {
         return new Promise((resolve, reject): void => {
             if (this.initialized) {
-                this.serialPort.flush((): void => {
-                    this.serialPort.close((error): void => {
-                        this.initialized = false;
-                        error == null ?
-                            resolve() :
-                            reject(new Error(`Error while closing serialport '${error}'`));
-                        this.emit('close');
+                if (this.portType === 'serial') {
+                    this.serialPort.flush((): void => {
+                        this.serialPort.close((error): void => {
+                            this.initialized = false;
+                            error == null ?
+                                resolve() :
+                                reject(new Error(`Error while closing serialport '${error}'`));
+                            this.emit('close');
+                        });
                     });
-                });
+                } else {
+                    this.socketPort.destroy();
+                    resolve();
+                }
             } else {
                 resolve();
                 this.emit('close');

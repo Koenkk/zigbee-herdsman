@@ -1,5 +1,5 @@
 import "regenerator-runtime/runtime";
-import {IsNumberArray, Wait, ArraySplitChunks, Queue, Waitress} from '../src/utils';
+import {IsNumberArray, Wait, ArraySplitChunks, Queue, Waitress, Sock} from '../src/utils';
 
 describe('Utils', () => {
     it('IsNumberArray valid', () => {

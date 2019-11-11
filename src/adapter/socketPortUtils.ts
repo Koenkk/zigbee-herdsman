@@ -1,33 +1,16 @@
-function isTcp(path: string): boolean {
-    if (path.length > 0 && path.toLowerCase().startsWith('tcp')) {
-        return true;
-    }
-    return false;
-}
-
-function isValidTcpPath(path: string): boolean {
-    if (!this.isTcp(path)) {
-        return false;
-    }
+function isTcpPath(path: string): boolean {
     // tcp path must be:
     // tcp://<host>:<port>
     const regex = /^(?:tcp:\/\/)[\w.-]+[:][\d]+$/gm;
-    if (regex.test(path)) {
-        return true;
-    }
-    return false;
+    return regex.test(path);
 }
 
-function getHost(path: string): string {
+function parseTcpPath(path: string): {host: string; port: number} {
     const str = path.replace("tcp://", "");
-    const retValue = str.substring(0, str.indexOf(":"));
-    return retValue;
+    return {
+        host: str.substring(0, str.indexOf(":")),
+        port: Number(str.substring(str.indexOf(":") + 1)),
+    };
 }
 
-function getPort(path: string): number {
-    const str = path.replace("tcp://", "");
-    const retValue = str.substring(str.indexOf(":") + 1);
-    return Number(retValue);
-}
-
-export default {isTcp, isValidTcpPath, getHost, getPort};
+export default {isTcpPath, parseTcpPath};
