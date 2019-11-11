@@ -174,6 +174,7 @@ class Znp extends events.EventEmitter {
                 debug.log('Socket connected');
             });
 
+            // eslint-disable-next-line
             const self = this;
             this.socketPort.on('ready', async function() {
                 debug.log('Socket ready');
