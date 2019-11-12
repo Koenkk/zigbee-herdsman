@@ -280,6 +280,53 @@ class ZStackAdapter extends Adapter {
         }, networkAddress);
     }
 
+    public async sendTouchlink(zclFrame: ZclFrame): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 2, data: [12]});
+
+            await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [11]});
+            const data = zclFrame.toBuffer();
+            await this.znp.request(Subsystem.AF, 'dataRequestExt', {
+                dstaddrmode: Constants.COMMON.addressMode.ADDR_16BIT,
+                dstaddr: this.toAddressString(0xFFFF),
+                destendpoint: 0xFE,
+                dstpanid: 0xFFFF,
+                srcendpoint: 12,
+                clusterid: zclFrame.Cluster.ID,
+                transid: 10,
+                options: 0, // TODO: why was this here? Constants.AF.options.DISCV_ROUTE,
+                radius: 30,
+                len: data.length,
+                data: data,
+            });
+
+
+            // await this.dataRequest(
+            //     0xFFFF, 0xFE, 12, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(),
+            //     10000, 0,
+            // );
+
+
+            //console.log('\n\n HERE', i);
+            await Wait(5000);
+            console.log('END');
+
+
+
+            // await this.dataRequestExtended(
+            //     Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFF, 0xFE, 12, zclFrame.Cluster.ID,
+            //     Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 10000, 0
+            // );
+
+            /**
+             * As a group command is not confirmed and thus immidiately returns
+             * (contrary to network address requests) we will give the
+             * command some time to 'settle' in the network.
+             */
+            await Wait(200);
+        });
+    }
+
     public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
@@ -546,7 +593,7 @@ class ZStackAdapter extends Adapter {
         radius: number, data: Buffer, timeout: number, attempt: number,
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
-        const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout);
+        //const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout);
 
         try {
             await this.znp.request(Subsystem.AF, 'dataRequest', {
@@ -561,27 +608,27 @@ class ZStackAdapter extends Adapter {
                 data: data,
             });
         } catch (error) {
-            this.znp.removeWaitFor(response.ID);
+            //this.znp.removeWaitFor(response.ID);
             throw error;
         }
 
-        const dataConfirm = await response.promise;
-        if (dataConfirm.payload.status !== 0) {
-            if (dataConfirm.payload.status === 225 && attempt === 0) {
-                /**
-                 * When many commands at once are executed we can end up in a MAC channel access failure
-                 * error (225). This is because there is too much traffic on the network.
-                 * Retry this command once after a cooling down period.
-                 */
-                return this.dataRequest(
-                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout, 1
-                );
-            } else {
-                throw new DataConfirmError(dataConfirm.payload.status);
-            }
-        }
+        // const dataConfirm = await response.promise;
+        // if (dataConfirm.payload.status !== 0) {
+        //     if (dataConfirm.payload.status === 225 && attempt === 0) {
+        //         /**
+        //          * When many commands at once are executed we can end up in a MAC channel access failure
+        //          * error (225). This is because there is too much traffic on the network.
+        //          * Retry this command once after a cooling down period.
+        //          */
+        //         return this.dataRequest(
+        //             destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout, 1
+        //         );
+        //     } else {
+        //         throw new DataConfirmError(dataConfirm.payload.status);
+        //     }
+        // }
 
-        return dataConfirm;
+        //return dataConfirm;
     };
 
     private async dataRequestExtended(

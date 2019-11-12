@@ -49,6 +49,7 @@ const Endpoints = [
     },
     // TERNCY: https://github.com/Koenkk/zigbee-herdsman/issues/82
     {...EndpointDefaults, endpoint: 0x6E, appprofid: 0x0104},
+    {...EndpointDefaults, endpoint: 12, appprofid: 0xc05e},
 ];
 
 async function validateItem(

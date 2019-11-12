@@ -8,10 +8,12 @@ import {KeyValue, DeviceType} from './tstype';
 import Debug from "debug";
 import fs from 'fs';
 import {Utils as ZclUtils} from '../zcl';
+import * as Zcl from '../zcl';
 
 // @ts-ignore
 import mixin from 'mixin-deep';
 import Group from './model/group';
+import { Wait } from '../utils';
 
 interface Options {
     network: AdapterTsType.NetworkOptions;
@@ -136,6 +138,39 @@ class Controller extends events.EventEmitter {
         // Set backup timer to 1 day.
         await this.backup();
         this.backupTimer = setInterval(() => this.backup(), 86400000);
+
+        const payload = {
+            'transactionID': 1,
+            'zigbeeInformation': 4,
+            'touchlinkInformation': 18,
+        };
+        setTimeout(async () => {
+            console.log('Start scan');
+            const frame = Zcl.ZclFrame.create(
+                Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false,
+                null, 12, 'scanRequest', 4096, payload
+            );
+             this.adapter.sendTouchlink(
+                frame,
+            );
+
+            // await Wait(500);
+            //  this.adapter.sendTouchlink(
+            //     frame,
+            // );
+            // await Wait(500);
+            //  this.adapter.sendTouchlink(
+            //     frame,
+            // );
+            // await Wait(500);
+            //  this.adapter.sendTouchlink(
+            //     frame,
+            // );
+            // await Wait(500);
+            //  this.adapter.sendTouchlink(
+            //     frame,
+            // );
+        }, 3000);
     }
 
     public async permitJoin(permit: boolean): Promise<void> {

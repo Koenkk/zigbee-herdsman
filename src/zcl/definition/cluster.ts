@@ -3373,11 +3373,20 @@ const Cluster: {
         commandsResponse: {
         },
     },
-    lightLink: {
+    touchlink: {
         ID: 4096,
         attributes: {
         },
         commands: {
+            scanRequest: {
+                ID: 0,
+                parameters: [
+                    {name: 'transactionID', type: DataType.uint32},
+                    {name: 'zigbeeInformation', type: DataType.bitmap8},
+                    {name: 'touchlinkInformation', type: DataType.bitmap8},
+
+                ],
+            },
         },
         commandsResponse: {
         },
