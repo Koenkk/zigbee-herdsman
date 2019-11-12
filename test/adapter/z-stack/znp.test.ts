@@ -1,6 +1,7 @@
 import "regenerator-runtime/runtime";
 import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
 import SerialPort from 'serialport';
+import net from 'net';
 import {Frame as UnpiFrame, Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
@@ -35,6 +36,43 @@ jest.mock('serialport', () => {
         };
     });
 });
+
+const mockSocketSetNoDelay = jest.fn();
+const mockSocketPipe = jest.fn();
+const mockSocketOnce = jest.fn();
+const mockSocketCallbacks = {};
+const mockSocketConnect = jest.fn().mockImplementation(() => {
+    mockSocketCallbacks['connect']();
+    mockSocketCallbacks['ready']();
+});
+const mockSocketDestroy = jest.fn();
+
+jest.mock('net', () => {
+    return {
+        Socket: jest.fn().mockImplementation(() => {
+            return {
+                setNoDelay: mockSocketSetNoDelay,
+                pipe: mockSocketPipe,
+                connect: mockSocketConnect,
+                on: (event, cb) => mockSocketCallbacks[event] = cb,
+                once: mockSocketOnce,
+                destroy: mockSocketDestroy,
+            };
+        }),
+    }
+});
+
+// Mock realPathSync
+let mockRealPathSyncError = false;
+jest.mock('../../../src/utils/realpathSync', () => {
+    return jest.fn().mockImplementation((path) => {
+        if (mockRealPathSyncError) {
+            throw new Error('Not a valid path');
+        }
+        return path;
+    });
+});
+
 
 SerialPort.list = mockSerialPortList;
 
@@ -116,6 +154,45 @@ describe('ZNP', () => {
         expect(await Znp.autoDetectPath()).toBeNull();
     });
 
+    it('Open and close tcp port', async () => {
+        znp = new Znp("tcp://localhost:8080", 100, false);
+        await znp.open();
+        expect(mockSocketConnect).toBeCalledTimes(1);
+        expect(mockSocketConnect).toBeCalledWith(8080, 'localhost');
+        expect(znp.isInitialized()).toBeTruthy();
+        expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(1);
+
+        await znp.close();
+        expect(mockSocketDestroy).toHaveBeenCalledTimes(1);
+    });
+
+    it('Open tcp port with socket error', async () => {
+        mockSocketConnect.mockImplementationOnce(() => {
+            mockSocketCallbacks['error']();
+        })
+
+        znp = new Znp("tcp://localhost:666", 100, false);
+
+        let error = false;
+        try {
+            await znp.open();
+        } catch (e) {
+            error = e;
+        }
+
+        expect(error).toStrictEqual(new Error('Error while opening socket'));
+        expect(znp.isInitialized()).toBeFalsy();
+    });
+
+
+    it('Check if tcp path is valid', async () => {
+        expect(await Znp.isValidPath('tcp://192.168.2.1:8080')).toBeFalsy();
+        expect(await Znp.isValidPath('tcp://localhost:8080')).toBeFalsy();
+        expect(await Znp.isValidPath('tcp://192.168.2.1')).toBeFalsy();
+        expect(await Znp.isValidPath('tcp://localhost')).toBeFalsy();
+        expect(await Znp.isValidPath('tcp')).toBeFalsy();
+    });
+
     it('Check if path is valid', async () => {
         mockSerialPortList.mockReturnValue([
             {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
@@ -137,6 +214,12 @@ describe('ZNP', () => {
         ])
 
         expect(await Znp.isValidPath('/dev/notexisting')).toBeFalsy();
+    });
+
+    it('Check if path is valid path resolve fails', async () => {
+        mockRealPathSyncError = true;
+        expect(await Znp.isValidPath('/dev/tty.usbmodemL43001T21')).toBeFalsy();
+        mockRealPathSyncError = false;
     });
 
     it('Open with error', async () => {
