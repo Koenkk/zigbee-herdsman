@@ -12,6 +12,8 @@ class Writer extends stream.Readable {
         debug(`--> frame [${buffer.toJSON().data}]`);
         this.push(buffer);
     }
+
+    public _read(): void {}
 }
 
 export default Writer;
