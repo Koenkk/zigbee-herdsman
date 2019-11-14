@@ -643,7 +643,7 @@ class ZStackAdapter extends Adapter {
                  * Retry this command once after a cooling down period.
                  */
                 return this.dataRequestExtended(
-                    addressMode, destinationAddressOrGroupID, destinationEndpoint, sourceEndpoint, clusterID,
+                    addressMode, destinationAddressOrGroupID, destinationEndpoint, panID, sourceEndpoint, clusterID,
                     radius, data, timeout, 1
                 );
             } else {

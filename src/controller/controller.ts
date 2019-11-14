@@ -9,11 +9,11 @@ import Debug from "debug";
 import fs from 'fs';
 import {Utils as ZclUtils} from '../zcl';
 import * as Zcl from '../zcl';
+import Touchlink from './touchlink';
 
 // @ts-ignore
 import mixin from 'mixin-deep';
 import Group from './model/group';
-import { Wait } from '../utils';
 
 interface Options {
     network: AdapterTsType.NetworkOptions;
@@ -69,6 +69,7 @@ class Controller extends events.EventEmitter {
     private permitJoinTimer: any;
     // eslint-disable-next-line
     private backupTimer: any;
+    private touchlink: Touchlink;
 
     /**
      * Create a controller
@@ -139,37 +140,9 @@ class Controller extends events.EventEmitter {
         await this.backup();
         this.backupTimer = setInterval(() => this.backup(), 86400000);
 
-        const payload = {
-            'transactionID': 1,
-            'zigbeeInformation': 4,
-            'touchlinkInformation': 18,
-        };
+        this.touchlink = new Touchlink(this.adapter);
         setTimeout(async () => {
-            console.log('Start scan');
-            const frame = Zcl.ZclFrame.create(
-                Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false,
-                null, 12, 'scanRequest', 4096, payload
-            );
-             this.adapter.sendTouchlink(
-                frame,
-            );
-
-            // await Wait(500);
-            //  this.adapter.sendTouchlink(
-            //     frame,
-            // );
-            // await Wait(500);
-            //  this.adapter.sendTouchlink(
-            //     frame,
-            // );
-            // await Wait(500);
-            //  this.adapter.sendTouchlink(
-            //     frame,
-            // );
-            // await Wait(500);
-            //  this.adapter.sendTouchlink(
-            //     frame,
-            // );
+            this.touchlink.scanAndJoin();
         }, 3000);
     }
 
