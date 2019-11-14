@@ -284,7 +284,7 @@ class ZStackAdapter extends Adapter {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 0, 1, zclFrame.Cluster.ID,
-                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), timeout, 0
+                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), timeout, 0, true
             );
 
             /**
@@ -551,7 +551,7 @@ class ZStackAdapter extends Adapter {
 
             await this.dataRequestExtended(
                 Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFF, 0xFE, 0xFFFF,
-                12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0
+                12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
             );
         });
     }
@@ -611,9 +611,11 @@ class ZStackAdapter extends Adapter {
     private async dataRequestExtended(
         addressMode: number, destinationAddressOrGroupID: number, destinationEndpoint: number, panID: number,
         sourceEndpoint: number, clusterID: number, radius: number, data: Buffer, timeout: number, attempt: number,
+        confirmation: boolean
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
-        const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout);
+        const response = confirmation ?
+            this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout) : null;
 
         try {
             await this.znp.request(Subsystem.AF, 'dataRequestExt', {
@@ -630,28 +632,33 @@ class ZStackAdapter extends Adapter {
                 data: data,
             });
         } catch (error) {
-            this.znp.removeWaitFor(response.ID);
+            if (confirmation) {
+                this.znp.removeWaitFor(response.ID);
+            }
+
             throw error;
         }
 
-        const dataConfirm = await response.promise;
-        if (dataConfirm.payload.status !== 0) {
-            if (dataConfirm.payload.status === 225 && attempt === 0) {
-                /**
-                 * When many commands at once are executed we can end up in a MAC channel access failure
-                 * error (225). This is because there is too much traffic on the network.
-                 * Retry this command once after a cooling down period.
-                 */
-                return this.dataRequestExtended(
-                    addressMode, destinationAddressOrGroupID, destinationEndpoint, panID, sourceEndpoint, clusterID,
-                    radius, data, timeout, 1
-                );
-            } else {
-                throw new DataConfirmError(dataConfirm.payload.status);
+        if (confirmation) {
+            const dataConfirm = await response.promise;
+            if (dataConfirm.payload.status !== 0) {
+                if (dataConfirm.payload.status === 225 && attempt === 0) {
+                    /**
+                     * When many commands at once are executed we can end up in a MAC channel access failure
+                     * error (225). This is because there is too much traffic on the network.
+                     * Retry this command once after a cooling down period.
+                     */
+                    return this.dataRequestExtended(
+                        addressMode, destinationAddressOrGroupID, destinationEndpoint, panID, sourceEndpoint, clusterID,
+                        radius, data, timeout, 1, confirmation,
+                    );
+                } else {
+                    throw new DataConfirmError(dataConfirm.payload.status);
+                }
             }
-        }
 
-        return dataConfirm;
+            return dataConfirm;
+        }
     };
 
     private nextTransactionID(): number {

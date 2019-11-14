@@ -8,7 +8,6 @@ import {KeyValue, DeviceType} from './tstype';
 import Debug from "debug";
 import fs from 'fs';
 import {Utils as ZclUtils} from '../zcl';
-import * as Zcl from '../zcl';
 import Touchlink from './touchlink';
 
 // @ts-ignore
