@@ -10,16 +10,48 @@
 
 ### Properties
 
+* [acceptJoiningDeviceHandler](_controller_controller_.options.md#acceptjoiningdevicehandler)
 * [backupPath](_controller_controller_.options.md#backuppath)
+* [databaseBackupPath](_controller_controller_.options.md#databasebackuppath)
 * [databasePath](_controller_controller_.options.md#databasepath)
 * [network](_controller_controller_.options.md#network)
 * [serialPort](_controller_controller_.options.md#serialport)
 
 ## Properties
 
+###  acceptJoiningDeviceHandler
+
+• **acceptJoiningDeviceHandler**: *function*
+
+*Defined in [controller/controller.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L27)*
+
+This lambda can be used by an application to explictly reject or accept an incoming device.
+When false is returned zigbee-herdsman will not start the interview process and immidiately
+try to remove the device from the network.
+
+#### Type declaration:
+
+▸ (`ieeeAddr`: string): *Promise‹boolean›*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`ieeeAddr` | string |
+
+___
+
 ###  backupPath
 
 • **backupPath**: *string*
+
+*Defined in [controller/controller.ts:21](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L21)*
+
+___
+
+###  databaseBackupPath
+
+• **databaseBackupPath**: *string*
 
 *Defined in [controller/controller.ts:20](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/controller.ts#L20)*
 

@@ -22,7 +22,7 @@
 
 ###  cluster
 
-• **cluster**: *string*
+• **cluster**: *string | number*
 
 *Defined in [controller/events.ts:83](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/events.ts#L83)*
 

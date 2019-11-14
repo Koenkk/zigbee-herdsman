@@ -265,7 +265,35 @@ class Device extends Entity {
             debug(`Interview - completed for device '${this.ieeeAddr}'`);
             this._interviewCompleted = true;
         } catch (e) {
-            error = e;
+            // Some devices, e.g. Xiaomi end devices have a different interview procedure, after pairing they
+            // report it's modelID trough a readResponse. The readResponse is received by the controller and set
+            // on the device.
+            const lookup: {[s: string]: {
+                type: DeviceType; manufacturerID: number; manufacturerName: string; powerSource: string;
+            };} = {
+                'lumi\..*': {
+                    type: 'EndDevice', manufacturerID: 4151, manufacturerName: 'LUMI', powerSource: 'Battery'
+                },
+                'TERNCY-PP01': {
+                    type: 'EndDevice', manufacturerID: 4648, manufacturerName: 'TERNCY', powerSource: 'Battery'
+                },
+            };
+
+            const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
+            if (match) {
+                const info = lookup[match];
+                debug(`Interview procedure failed but got modelID matching '${match}', assuming interview succeeded`);
+                this._type = info.type;
+                this._manufacturerID = info.manufacturerID;
+                this._manufacturerName = info.manufacturerName;
+                this._powerSource = info.powerSource;
+                this._interviewing = false;
+                this._interviewCompleted = true;
+                this.save();
+            } else {
+                debug(`Interview - failed for device '${this.ieeeAddr}' with error '${e.stack}'`);
+                error = e;
+            }
         } finally {
             this._interviewing = false;
             this.save();
@@ -285,46 +313,19 @@ class Device extends Entity {
             debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         };
 
-        const isXiaomiAndInterviewCompleted = async (): Promise<boolean> => {
-            // Xiaomi end devices have a different interview procedure, after pairing they report it's
-            // modelID trough a readResponse. The readResponse is received by the controller and set on the device
-            // Check if we have a modelID starting with lumi.* at this point, indicating a Xiaomi end device.
-            if (this.modelID && this.modelID.startsWith('lumi.')) {
-                debug(
-                    'Node descriptor request failed for the second time, got modelID starting with lumi, ' +
-                    'assuming Xiaomi end device'
-                );
-                this._type = 'EndDevice';
-                this._manufacturerID = 4151;
-                this._manufacturerName = 'LUMI';
-                this._powerSource = 'Battery';
-                this._interviewing = false;
-                this._interviewCompleted = true;
-                this.save();
-                return true;
-            } else {
-                return false;
-            }
-        };
-
         try {
             await nodeDescriptorQuery();
-        } catch (error1) {
-            try {
-                // Most of the times the first node descriptor query fails and the seconds one succeeds.
-                debug(`Interview - first node descriptor request failed for '${this.ieeeAddr}', retrying...`);
-                await nodeDescriptorQuery();
-            } catch (error2) {
-                if (await isXiaomiAndInterviewCompleted()) {
-                    return;
-                } else {
-                    throw error2;
-                }
-            }
+        } catch (error) {
+            // Most of the times the first node descriptor query fails and the seconds one succeeds.
+            debug(`Interview - first node descriptor request failed for '${this.ieeeAddr}', retrying...`);
+            await nodeDescriptorQuery();
         }
 
         const activeEndpoints = await Entity.adapter.activeEndpoints(this.networkAddress);
-        this._endpoints = activeEndpoints.endpoints.map((e): Endpoint => {
+        // Some devices, e.g. TERNCY return endpoint 0 in the active endpoints request.
+        // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
+        // into an error. Therefore we filter it, more info: https://github.com/Koenkk/zigbee-herdsman/issues/82
+        this._endpoints = activeEndpoints.endpoints.filter((e) => e !== 0).map((e): Endpoint => {
             return Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         });
         this.save();
@@ -365,7 +366,10 @@ class Device extends Entity {
             await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
             // According to the spec, we should wait for an enrollRequest here, but the Bosch ISW-ZPR1 didn't send it.
             await Wait(3000);
-            await endpoint.command('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23});
+
+            // Konke devices don't do a defaultResponse
+            const disableDefaultResponse = this.manufacturerName === 'Konke';
+            await endpoint.command('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23}, {disableDefaultResponse});
             debug(`Interview - successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
         }
     }

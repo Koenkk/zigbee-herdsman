@@ -4,15 +4,17 @@ import {
     Frame as UnpiFrame,
 } from '../unpi';
 
-import {Wait, Queue, Waitress} from '../../../utils';
+import {Wait, Queue, Waitress, RealpathSync} from '../../../utils';
 
 import SerialPortUtils from '../../serialPortUtils';
+import SocketPortUtils from '../../socketPortUtils';
 
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
 import {Subsystem, Type} from '../unpi/constants';
 
 import SerialPort from 'serialport';
+import net from 'net';
 import events from 'events';
 import Equals from 'fast-deep-equal';
 import Debug from "debug";
@@ -24,12 +26,12 @@ const timeouts = {
 };
 
 const debug = {
-    error: Debug('zigbee-herdsman:zStack:znp:error'),
-    timeout: Debug('zigbee-herdsman:zStack:znp:timeout'),
-    log: Debug('zigbee-herdsman:zStack:znp:log'),
-    SREQ: Debug('zigbee-herdsman:zStack:znp:SREQ'),
-    AREQ: Debug('zigbee-herdsman:zStack:znp:AREQ'),
-    SRSP: Debug('zigbee-herdsman:zStack:znp:SRSP'),
+    error: Debug('zigbee-herdsman:adapter:zStack:znp:error'),
+    timeout: Debug('zigbee-herdsman:adapter:zStack:znp:timeout'),
+    log: Debug('zigbee-herdsman:adapter:zStack:znp:log'),
+    SREQ: Debug('zigbee-herdsman:adapter:zStack:znp:SREQ'),
+    AREQ: Debug('zigbee-herdsman:adapter:zStack:znp:AREQ'),
+    SRSP: Debug('zigbee-herdsman:adapter:zStack:znp:SRSP'),
 };
 
 interface WaitressMatcher {
@@ -49,7 +51,9 @@ class Znp extends events.EventEmitter {
     private baudRate: number;
     private rtscts: boolean;
 
+    private portType: 'serial' | 'socket';
     private serialPort: SerialPort;
+    private socketPort: net.Socket;
     private unpiWriter: UnpiWriter;
     private unpiParser: UnpiParser;
     private initialized: boolean;
@@ -62,6 +66,7 @@ class Znp extends events.EventEmitter {
         this.path = path;
         this.baudRate = baudRate;
         this.rtscts = rtscts;
+        this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
 
         this.initialized = false;
 
@@ -69,9 +74,7 @@ class Znp extends events.EventEmitter {
         this.waitress = new Waitress<ZpiObject, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
         this.onUnpiParsed = this.onUnpiParsed.bind(this);
-        this.onUnpiParsedError = this.onUnpiParsedError.bind(this);
-        this.onSerialPortClose = this.onSerialPortClose.bind(this);
-        this.onSerialPortError = this.onSerialPortError.bind(this);
+        this.onPortClose = this.onPortClose.bind(this);
     }
 
     private log(type: Type, message: string): void {
@@ -106,24 +109,20 @@ class Znp extends events.EventEmitter {
         return this.initialized;
     }
 
-    private onUnpiParsedError(error: Error): void {
-        debug.error(`Got unpi error ${error}`);
-    }
-
-    private onSerialPortClose(): void {
-        debug.log('Serialport closed');
+    private onPortClose(): void {
+        debug.log('Port closed');
         this.initialized = false;
         this.emit('close');
     }
 
-    private onSerialPortError(error: Error): void {
-        debug.error(`Serialport error: ${error}`);
+    public async open(): Promise<void> {
+        return this.portType === 'serial' ? this.openSerialPort() : this.openSocketPort();
     }
 
-    public async open(): Promise<void> {
+    private async openSerialPort(): Promise<void> {
         const options = {baudRate: this.baudRate, rtscts: this.rtscts, autoOpen: false};
 
-        debug.log(`Opening with ${this.path} and ${JSON.stringify(options)}`);
+        debug.log(`Opening SerialPort with ${this.path} and ${JSON.stringify(options)}`);
         this.serialPort = new SerialPort(this.path, options);
 
         this.unpiWriter = new UnpiWriter();
@@ -133,7 +132,6 @@ class Znp extends events.EventEmitter {
         this.unpiParser = new UnpiParser();
         this.serialPort.pipe(this.unpiParser);
         this.unpiParser.on('parsed', this.onUnpiParsed);
-        this.unpiParser.on('error', this.onUnpiParsedError);
 
         return new Promise((resolve, reject): void => {
             this.serialPort.open(async (error: object): Promise<void> => {
@@ -146,12 +144,54 @@ class Znp extends events.EventEmitter {
                 } else {
                     debug.log('Serialport opened');
                     await this.skipBootloader();
-                    this.serialPort.once('close', this.onSerialPortClose);
-                    this.serialPort.once('error', this.onSerialPortError);
+                    this.serialPort.once('close', this.onPortClose);
+                    this.serialPort.once('error', (error) => {
+                        debug.error(`Serialport error: ${error}`);
+                    });
                     this.initialized = true;
                     resolve();
                 }
             });
+        });
+    }
+
+    private async openSocketPort(): Promise<void> {
+        const info = SocketPortUtils.parseTcpPath(this.path);
+        debug.log(`Opening TCP socket with ${info.host}:${info.port}`);
+
+        this.socketPort = new net.Socket();
+        this.socketPort.setNoDelay(true);
+
+        this.unpiWriter = new UnpiWriter();
+        this.unpiWriter.pipe(this.socketPort);
+
+        this.unpiParser = new UnpiParser();
+        this.socketPort.pipe(this.unpiParser);
+        this.unpiParser.on('parsed', this.onUnpiParsed);
+
+        return new Promise((resolve, reject): void => {
+            this.socketPort.on('connect', function() {
+                debug.log('Socket connected');
+            });
+
+            // eslint-disable-next-line
+            const self = this;
+            this.socketPort.on('ready', async function() {
+                debug.log('Socket ready');
+                await self.skipBootloader();
+                self.initialized = true;
+                resolve();
+            });
+
+            this.socketPort.once('close', this.onPortClose);
+
+            this.socketPort.on('error', function () {
+                debug.log('Socket error');
+                reject(new Error(`Error while opening socket`));
+                self.initialized = false;
+            });
+
+            this.socketPort.connect(info.port, info.host);
         });
     }
 
@@ -165,7 +205,17 @@ class Znp extends events.EventEmitter {
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
-        return SerialPortUtils.is(path, autoDetectDefinitions);
+        // For TCP paths we cannot get device information, therefore we cannot validate it.
+        if (SocketPortUtils.isTcpPath(path)) {
+            return false;
+        }
+
+        try {
+            return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+        } catch (error) {
+            debug.error(`Failed to determine if path is valid: '${error}'`);
+            return false;
+        }
     }
 
     public static async autoDetectPath(): Promise<string> {
@@ -182,15 +232,20 @@ class Znp extends events.EventEmitter {
     public close(): Promise<void> {
         return new Promise((resolve, reject): void => {
             if (this.initialized) {
-                this.serialPort.flush((): void => {
-                    this.serialPort.close((error): void => {
-                        this.initialized = false;
-                        error == null ?
-                            resolve() :
-                            reject(new Error(`Error while closing serialport '${error}'`));
-                        this.emit('close');
+                if (this.portType === 'serial') {
+                    this.serialPort.flush((): void => {
+                        this.serialPort.close((error): void => {
+                            this.initialized = false;
+                            error == null ?
+                                resolve() :
+                                reject(new Error(`Error while closing serialport '${error}'`));
+                            this.emit('close');
+                        });
                     });
-                });
+                } else {
+                    this.socketPort.destroy();
+                    resolve();
+                }
             } else {
                 resolve();
                 this.emit('close');

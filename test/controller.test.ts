@@ -21,7 +21,8 @@ const mockAdapterSupportsBackup = jest.fn().mockReturnValue(true);
 const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
-const mockSetLED = jest.fn();
+const mockAdapterSetLED = jest.fn();
+const mockAdapterSupportsLED = jest.fn().mockReturnValue(true);
 const mockAdapterBind = jest.fn();
 const mockSendZclFrameGroup = jest.fn();
 const mockAdapterUnbind = jest.fn();
@@ -92,6 +93,13 @@ const mockDevices = {
 
 const mockZclFrame = ZclFrame;
 
+// Mock realPathSync
+jest.mock('../src/utils/realpathSync', () => {
+    return jest.fn().mockImplementation((path) => {
+        return path;
+    });
+});
+
 jest.mock('../src/utils/wait', () => {
     return jest.fn().mockImplementation(() => {
         return new Promise((resolve, reject) => resolve());
@@ -129,8 +137,9 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             supportsBackup: mockAdapterSupportsBackup,
             backup: () => {return {version: 'dummybackup'}},
             getCoordinatorVersion: () => {return {type: 'zStack', meta: {version: 1}}},
-            getNetworkParameters: () => {return {panID: 1, extenedPanID: 3, channel: 15}},
-            setLED: mockSetLED,
+            getNetworkParameters: () => {return {panID: 1, extendedPanID: 3, channel: 15}},
+            setLED: mockAdapterSetLED,
+            supportsLED: mockAdapterSupportsLED,
             nodeDescriptor: async (networkAddress) => {
                 if (mockDevices[networkAddress].nodeDescriptor === 'xiaomi') {
                     await mockAdapterEvents['zclData']({
@@ -214,7 +223,9 @@ const options = {
         path: '/dummy/conbee',
     },
     databasePath: tmp.fileSync().name,
-    backupPath
+    databaseBackupPath: null,
+    backupPath,
+    acceptJoiningDeviceHandler: null,
 }
 
 const databaseContents = () => fs.readFileSync(options.databasePath).toString();
@@ -246,7 +257,7 @@ describe('Controller', () => {
 
     it('Call controller constructor options mixed with default options', async () => {
         await controller.start();
-        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extenedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true}, backupPath);
+        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true}, backupPath);
     });
 
     it('Call controller constructor error on invalid channel', async () => {
@@ -306,7 +317,17 @@ describe('Controller', () => {
     it('Disable led', async () => {
         await controller.start();
         await controller.setLED(false);
-        expect(mockSetLED).toBeCalledTimes(1);
+        expect(mockAdapterSetLED).toBeCalledTimes(1);
+    });
+
+    it('Throw error when not supports LED', async () => {
+        await controller.start();
+        mockAdapterSupportsLED.mockReturnValueOnce(false);
+        expect(await controller.supportsLED()).toBeFalsy();
+        mockAdapterSupportsLED.mockReturnValueOnce(false);
+        let error;
+        try {await controller.setLED(false)} catch (e) {error = e;}
+        expect(error).toStrictEqual(new Error(`Adapter doesn't support LED`));
     });
 
     it('Get coordinator version', async () => {
@@ -316,7 +337,7 @@ describe('Controller', () => {
 
     it('Get network parameters', async () => {
         await controller.start();
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extenedPanID: 3});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
     });
 
     it('Join a device', async () => {
@@ -331,6 +352,39 @@ describe('Controller', () => {
         expect(events.deviceInterview.length).toBe(2);
         expect(databaseContents().includes("0x129")).toBeTruthy();
         expect(controller.getDeviceByIeeeAddr('0x129').lastSeen).toBe(Date.now());
+    });
+
+    it('Join a device and explictly accept it', async () => {
+        const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(true);
+        controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
+        controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
+        controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
+        await controller.start();
+        expect(databaseContents().includes("0x129")).toBeFalsy();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
+        expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "_lastSeen": deepClone(Date.now()), "ID":2,"_endpoints":[],"ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129},"status":"started"});
+        const device = {"ID":2,"_lastSeen": deepClone(Date.now()),"ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"clusters": {}, "ID":1,"inputClusters":[1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
+        expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x129'))).toStrictEqual(device);
+        expect(events.deviceInterview.length).toBe(2);
+        expect(databaseContents().includes("0x129")).toBeTruthy();
+        expect(controller.getDeviceByIeeeAddr('0x129').lastSeen).toBe(Date.now());
+    });
+
+    it('Join a device and explictly refuse it', async () => {
+        const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(false);
+        controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
+        controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
+        controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
+        await controller.start();
+        expect(databaseContents().includes("0x129")).toBeFalsy();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(events.deviceJoined.length).toBe(0);
+        expect(events.deviceInterview.length).toBe(0);
+        expect(databaseContents().includes("0x129")).toBeFalsy();
+        expect(controller.getDeviceByIeeeAddr('0x129')).toBeUndefined();
+        expect(mockAdapterRemoveDevice).toHaveBeenNthCalledWith(1, 129, '0x129');
     });
 
     it('Set device powersource by string', async () => {
@@ -406,8 +460,22 @@ describe('Controller', () => {
         // database will then remove deleted items.
         await controller.stop();
         await controller.start();
-        expect(databaseContents().includes('0x129')).toBeFalsy()
-        expect(databaseContents().includes('groupID')).toBeFalsy()
+        expect(databaseContents().includes('0x129')).toBeFalsy();
+        expect(databaseContents().includes('groupID')).toBeFalsy();
+    });
+
+    it('Should create backup of databse before clearing when datbaseBackupPath is provided', async () => {
+        const databaseBackupPath = tmp.fileSync().name;
+        fs.unlinkSync(databaseBackupPath);
+        controller = new Controller({...options, databaseBackupPath});
+        expect(fs.existsSync(databaseBackupPath)).toBeFalsy();
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await controller.createGroup(1);
+        await controller.stop();
+        mockAdapterStart.mockReturnValueOnce("reset");
+        await controller.start();
+        expect(fs.existsSync(databaseBackupPath)).toBeTruthy();
     });
 
     it('Controller permit joining', async () => {
@@ -628,6 +696,81 @@ describe('Controller', () => {
         expect(events.message.length).toBe(1);
         const expected = {
             "cluster": "genAlarms",
+            "type":"raw",
+            "device":{
+                "ID":2,
+                "ieeeAddr":"0x129",
+                "_networkAddress":129,
+                "_lastSeen": deepClone(Date.now()),
+                "_endpoints":[
+                    {
+                    "ID":1,
+                    "clusters": {},
+                    "inputClusters":[
+                        1
+                    ],
+                    "outputClusters":[
+                        2
+                    ],
+                    "deviceNetworkAddress":129,
+                    "deviceIeeeAddress":"0x129",
+                    "_binds": [],
+                    "deviceID":5,
+                    "profileID":99
+                    }
+                ],
+                "_type":"Router",
+                "_manufacturerID":1212,
+                "_manufacturerName":"KoenAndCo",
+                "meta": {},
+                "_powerSource":"Mains (single phase)",
+                "_modelID":"myModelID",
+                "_applicationVersion":2,
+                "_stackVersion":101,
+                "_zclVersion":1,
+                "_hardwareVersion":3,
+                "_dateCode":"201901",
+                "_softwareBuildID":"1.01",
+                "_interviewCompleted":true,
+                "_interviewing":false
+            },
+            "endpoint":{
+                "clusters": {},
+                "ID":1,
+                "deviceID": 5,
+                "inputClusters":[1],
+                "outputClusters":[2],
+                "deviceNetworkAddress":129,
+                "deviceIeeeAddress":"0x129",
+                "_binds": [],
+                "profileID": 99,
+            },
+            "data": {
+                data: [0, 1, 2, 3],
+                type: 'Buffer',
+            },
+            "linkquality":50,
+            "groupID":1
+         };
+        expect(deepClone(events.message[0])).toStrictEqual(expected);
+    });
+
+    it('Receive raw data from unknown cluster', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['rawData']({
+            clusterID: 99999999,
+            networkAddress: 129,
+            data: Buffer.from([0, 1, 2, 3]),
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.message.length).toBe(1);
+        const expected = {
+            "cluster": 99999999,
             "type":"raw",
             "device":{
                 "ID":2,
@@ -1262,13 +1405,13 @@ describe('Controller', () => {
         const target = controller.getDeviceByIeeeAddr('0x170').getEndpoint(1);
         const endpoint = device.getEndpoint(1);
         await endpoint.bind('genBasic', target);
-        expect(endpoint.binds).toStrictEqual([{cluster: 0, target}]);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(0), target}]));
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
 
         // Should bind another time but not add it to the binds
         mockAdapterBind.mockClear();
         await endpoint.bind('genBasic', target);
-        expect(endpoint.binds).toStrictEqual([{cluster: 0, target}]);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(0), target}]));
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
     });
 
@@ -1278,7 +1421,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         endpoint._binds.push({type: 'endpoint', deviceIeeeAddress: 'notexisting', endpointID: 1, cluster: 2});
-        expect(endpoint.binds).toStrictEqual([{cluster: 2, target: null}]);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(2), target: null}]));
     });
 
     it('Group bind', async () => {
@@ -1288,7 +1431,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         await endpoint.bind('genPowerCfg', group);
-        expect(endpoint.binds).toStrictEqual([{cluster: 1, target: group}]);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(1), target: group}]));
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 1, 4, "group", null);
     });
 
@@ -1441,6 +1584,7 @@ describe('Controller', () => {
         const call = mockSendZclFrameGroup.mock.calls[0];
         expect(call[0]).toBe(2);
         expect(deepClone(call[1])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":2,"manufacturerCode":null,"commandIdentifier":64},"Payload":{"effectid":9,"effectvariant":10},"Cluster":getCluster(6)});
+        expect(call[2]).toBe(10000);
     });
 
     it('Group command throw error on missing parameter', async () => {
@@ -1462,6 +1606,8 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddress.mock.calls[0][1]).toBe(1);
         const expected = {"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":5,"manufacturerCode":100,"commandIdentifier":0},"Payload":{},"Cluster":getCluster(6)};
         expect(deepClone(mockSendZclFrameNetworkAddress.mock.calls[0][2])).toStrictEqual(expected);
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][3]).toBe(10000);
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][4]).toBe(15000);
     });
 
     it('Device without meta should set meta to {}', async () => {
@@ -1473,19 +1619,21 @@ describe('Controller', () => {
         expect(deepClone(controller.getDeviceByIeeeAddr("0x90fd9ffffe4b64ae"))).toStrictEqual(expected);
     });
 
-    it('Write to endpoint custom attributes', async () => {
+    it('Write to endpoint custom attributes with non default timeouts', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddressWithResponse.mockClear();
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
-        const options = {manufacturerCode: 0x100B, disableDefaultResponse: true};
+        const options = {manufacturerCode: 0x100B, disableDefaultResponse: true, timeout: 12, defaultResponseTimeout: 16};
         await endpoint.write('genBasic', {0x0031: {value: 0x000B, type: 0x19}}, options);
         expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(1);
         const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual( {"Cluster": getCluster(0), "Header": {"commandIdentifier": 2, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": true}, "manufacturerCode": 4107, "transactionSequenceNumber": 5}, "Payload": [{"attrData": 11, "attrId": 49, "dataType": 25}]});
+        expect(call[3]).toBe(12);
+        expect(call[4]).toBe(16);
     });
 
     it('Write to endpoint with unknown string attribute', async () => {
@@ -1518,6 +1666,8 @@ describe('Controller', () => {
         expect(call[0]).toBe(129);
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual( {"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":5,"manufacturerCode":null,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":16387,"dataType":41,"minRepIntval":0,"maxRepIntval":3600,"repChange":25}],"Cluster":getCluster(513)});
+        expect(call[3]).toBe(10000);
+        expect(call[4]).toBe(15000);
     });
 
     it('Remove endpoint from all groups', async () => {
@@ -1619,11 +1769,17 @@ describe('Controller', () => {
         expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false}, null);
     });
 
+    it('Adapter create continue when is valid path fails', async () => {
+        mockZStackAdapterIsValidPath.mockImplementationOnce(() => {throw new Error('failed')});
+        await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false}, null);
+        expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/bla');
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false}, null);
+    });
+
     it('Adapter create auto detect', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false}, null);
-        expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/test');
         expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false}, null);
     });
 
@@ -1644,7 +1800,6 @@ describe('Controller', () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(false);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false}, null);
-        expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/test');
         expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false}, null);
     });
 });

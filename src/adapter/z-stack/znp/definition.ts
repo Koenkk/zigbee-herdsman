@@ -1931,6 +1931,16 @@ const Definition: {
             ],
         },
         {
+            name: 'concentratorIndCb',
+            ID: 200,
+            type: CommandType.AREQ,
+            request: [
+                {name: 'srcaddr', parameterType: ParameterType.UINT16},
+                {name: 'extaddr', parameterType: ParameterType.IEEEADDR},
+                {name: 'pktCost', parameterType: ParameterType.UINT8},
+            ],
+        },
+        {
             name: 'leaveInd',
             ID: 201,
             type: CommandType.AREQ,

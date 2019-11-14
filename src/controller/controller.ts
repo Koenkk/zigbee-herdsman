@@ -17,7 +17,14 @@ interface Options {
     network: AdapterTsType.NetworkOptions;
     serialPort: AdapterTsType.SerialPortOptions;
     databasePath: string;
+    databaseBackupPath: string;
     backupPath: string;
+    /**
+     * This lambda can be used by an application to explictly reject or accept an incoming device.
+     * When false is returned zigbee-herdsman will not start the interview process and immidiately
+     * try to remove the device from the network.
+     */
+    acceptJoiningDeviceHandler: (ieeeAddr: string) => Promise<boolean>;
 };
 
 const DefaultOptions: Options = {
@@ -25,7 +32,7 @@ const DefaultOptions: Options = {
         networkKeyDistribute: false,
         networkKey: [0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F, 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D],
         panID: 0x1a62,
-        extenedPanID: [0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD],
+        extendedPanID: [0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD],
         channelList: [11],
     },
     serialPort: {
@@ -34,7 +41,9 @@ const DefaultOptions: Options = {
         path: null,
     },
     databasePath: null,
+    databaseBackupPath: null,
     backupPath: null,
+    acceptJoiningDeviceHandler: null,
 };
 
 const debug = {
@@ -100,6 +109,10 @@ class Controller extends events.EventEmitter {
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
 
         if (startResult === 'reset') {
+            if (this.options.databaseBackupPath) {
+                fs.copyFileSync(this.options.databasePath, this.options.databaseBackupPath);
+            }
+
             debug.log('Clearing database...');
             for (const group of Group.all()) {
                 group.removeFromDatabase();
@@ -239,9 +252,17 @@ class Controller extends events.EventEmitter {
     }
 
     /**
+     *  Check if the adapters supports LED
+     */
+    public async supportsLED(): Promise<boolean> {
+        return this.adapter.supportsLED();
+    }
+
+    /**
      *  Enable/Disable the LED
      */
     public async setLED(enabled: boolean): Promise<void> {
+        if (!(await this.supportsLED())) throw new Error(`Adapter doesn't support LED`);
         await this.adapter.setLED(enabled);
     }
 
@@ -285,9 +306,19 @@ class Controller extends events.EventEmitter {
     }
 
     private async onDeviceJoined(payload: AdapterEvents.DeviceJoinedPayload): Promise<void> {
-        let device = Device.byIeeeAddr(payload.ieeeAddr);
-        debug.log(`Device joined '${payload.ieeeAddr}'`);
+        debug.log(`Device '${payload.ieeeAddr}' joined`);
 
+        if (this.options.acceptJoiningDeviceHandler) {
+            if (!(await this.options.acceptJoiningDeviceHandler(payload.ieeeAddr))) {
+                debug.log(`Device '${payload.ieeeAddr}' rejected by handler, removing it`);
+                await this.adapter.removeDevice(payload.networkAddress, payload.ieeeAddr);
+                return;
+            } else {
+                debug.log(`Device '${payload.ieeeAddr}' accepted by handler`);
+            }
+        }
+
+        let device = Device.byIeeeAddr(payload.ieeeAddr);
         if (!device) {
             debug.log(`New device '${payload.ieeeAddr}' joined`);
             debug.log(`Creating device '${payload.ieeeAddr}'`);
@@ -366,12 +397,12 @@ class Controller extends events.EventEmitter {
         // Parse command for event
         let type: Events.MessagePayloadType = undefined;
         let data: KeyValue;
-        let cluster = undefined;
+        let clusterName = undefined;
 
         if (this.isZclDataPayload(dataPayload, dataType)) {
             const frame = dataPayload.frame;
             const command = frame.getCommand();
-            cluster = frame.Cluster.name;
+            clusterName = frame.Cluster.name;
 
             if (frame.isGlobal()) {
                 if (frame.isCommand('report')) {
@@ -405,12 +436,17 @@ class Controller extends events.EventEmitter {
                     }
                 }
 
-                endpoint.saveClusterAttributeList(cluster, data);
+                endpoint.saveClusterAttributeList(clusterName, data);
             }
         } else {
             type = 'raw';
             data = dataPayload.data;
-            cluster = ZclUtils.getCluster(dataPayload.clusterID).name;
+            try {
+                const cluster = ZclUtils.getCluster(dataPayload.clusterID);
+                clusterName = cluster.name;
+            } catch (error) {
+                clusterName = dataPayload.clusterID;
+            }
         }
 
         if (type && data) {
@@ -418,7 +454,7 @@ class Controller extends events.EventEmitter {
             const linkquality = dataPayload.linkquality;
             const groupID = dataPayload.groupID;
             const eventData: Events.MessagePayload = {
-                type: type, device, endpoint, data, linkquality, groupID, cluster
+                type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName
             };
 
             this.emit(Events.Events.message, eventData);

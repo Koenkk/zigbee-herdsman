@@ -3454,15 +3454,6 @@ const Cluster: {
         commandsResponse: {
         },
     },
-    manuSpecificCluster: {
-        ID: 65535,
-        attributes: {
-        },
-        commands: {
-        },
-        commandsResponse: {
-        }
-    },
     manuSpecificUbisysDeviceSetup: {
         ID: 0xfc00,
         manufacturerCode: ManufacturerCode.Ubisys,

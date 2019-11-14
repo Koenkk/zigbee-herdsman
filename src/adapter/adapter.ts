@@ -35,8 +35,9 @@ abstract class Adapter extends events.EventEmitter {
             for (const candidate of adapters) {
                 const path = await candidate.autoDetectPath();
                 if (path) {
-                    debug(`Auto detected path '${path}' from adapter '${candidate}'`);
+                    debug(`Auto detected path '${path}' from adapter '${candidate.name}'`);
                     serialPortOptions.path = path;
+                    adapter = candidate;
                     break;
                 }
             }
@@ -44,18 +45,19 @@ abstract class Adapter extends events.EventEmitter {
             if (!serialPortOptions.path) {
                 throw new Error("No path provided and failed to auto detect path");
             }
-        }
-
-        // Determine adapter to use
-        for (const candidate of adapters) {
-            if (await candidate.isValidPath(serialPortOptions.path)) {
-                debug(`Path '${serialPortOptions.path}' is valid for '${candidate}'`);
-                adapter = candidate;
+        } else {
+            try {
+                // Determine adapter to use
+                for (const candidate of adapters) {
+                    if (await candidate.isValidPath(serialPortOptions.path)) {
+                        debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
+                        adapter = candidate;
+                        break;
+                    }
+                }
+            } catch (error) {
+                debug(`Failed to validate path: '${error}'`);
             }
-        }
-
-        if (!adapter) {
-            adapter = adapters[0];
         }
 
         return new adapter(networkOptions, serialPortOptions, backupPath);
@@ -73,6 +75,8 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract reset(type: 'soft' | 'hard'): Promise<void>;
 
+    public abstract supportsLED(): Promise<boolean>;
+
     public abstract setLED(enabled: boolean): Promise<void>;
 
     public abstract lqi(networkAddress: number): Promise<TsType.LQI>;
@@ -86,14 +90,14 @@ abstract class Adapter extends events.EventEmitter {
     public abstract simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor>;
 
     public abstract sendZclFrameNetworkAddressWithResponse(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
     ): Promise<ZclDataPayload>;
 
     public abstract sendZclFrameNetworkAddress(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
     ): Promise<void>;
 
-    public abstract sendZclFrameGroup(groupID: number, zclFrame: ZclFrame): Promise<void>;
+    public abstract sendZclFrameGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void>;
 
     public abstract bind(
         destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number,

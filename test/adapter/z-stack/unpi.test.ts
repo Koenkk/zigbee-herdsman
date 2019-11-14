@@ -3,14 +3,11 @@ import {Parser, Constants, Frame, Writer} from '../../../src/adapter/z-stack/unp
 describe('Parser', () => {
     let parser;
     let parsed = [];
-    let error = [];
 
     beforeEach(() => {
         parser = new Parser();
         parser.on('parsed', (result) => parsed.push(result));
-        parser.on('error', (result) => error.push(result));
         parsed = [];
-        error = [];
     });
 
     it('Parse simple message', () => {
@@ -43,23 +40,20 @@ describe('Parser', () => {
         expect(parsed[1].fcs).toBe(0x3e);
     });
 
-    it('Throw error on fcs mismatch', () => {
+    it('Dont throw error on fcs mismatch', () => {
         const buffer = Buffer.from([0xfe, 0x03, 0x61, 0x08, 0x00, 0x01, 0x55, 0x3f]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(0);
-        expect(error.length).toBe(1);
     });
 
-    it('Message in two buffer steps', () => {
+    it('Message in two chunks', () => {
         let buffer = Buffer.from([0xfe, 0x03, 0x61, 0x08, 0x00, 0x01]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(0);
-        expect(error.length).toBe(0);
 
         buffer = Buffer.from([0x55, 0x3e]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(1);
-        expect(error.length).toBe(0);
 
         expect(parsed[0].type).toBe(Constants.Type.SRSP);
         expect(parsed[0].subsystem).toBe(Constants.Subsystem.SYS);
@@ -69,16 +63,14 @@ describe('Parser', () => {
         expect(parsed[0].fcs).toBe(0x3e);
     });
 
-    it('Message in two buffer steps, fcs as separate', () => {
+    it('Message in two chunks, fcs as separate', () => {
         let buffer = Buffer.from([0xfe, 0x03, 0x61, 0x08, 0x00, 0x01, 0x55]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(0);
-        expect(error.length).toBe(0);
 
         buffer = Buffer.from([0x3e]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(1);
-        expect(error.length).toBe(0);
 
         expect(parsed[0].type).toBe(Constants.Type.SRSP);
         expect(parsed[0].subsystem).toBe(Constants.Subsystem.SYS);
@@ -106,10 +98,37 @@ describe('Parser', () => {
         expect(parsed[1].fcs).toBe(160);
     });
 
-    it('Empty buffer when message doesnt contain SOF and buffer is empty', () => {
-        const buffer = Buffer.from([95,27,37]);
-        parser._transform(buffer, '', () => {});
-        expect(parser.buffer.length).toBe(0);
+    it('Continue parsing on fcs mismatch', () => {
+        const buffer1 = Buffer.from([
+            0x01, 0x02, 0xfe, 0x03, 0x61, 0x08, 0x00, 0x01, 0x55, 0x3f, // fcs mismatch
+            0x08, 0x09, 0x12 // Noise
+        ]);
+
+        const buffer2 = Buffer.from([
+            0x08, 0x09, 0x12 // Noise
+        ])
+
+        const buffer3 = Buffer.from([
+            0x08, 0x09, 0x12, // Noise
+            0xfe, 0x0e, 0x61, 0x02 // Valid message part 1
+        ])
+
+        const buffer4 = Buffer.from([
+            0x02, 0x00, 0x02, 0x06, 0x03, 0xd9, 0x14, 0x34, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x92 // Valid message part 2
+        ]);
+
+        parser._transform(buffer1, '', () => {});
+        parser._transform(buffer2, '', () => {});
+        parser._transform(buffer3, '', () => {});
+        parser._transform(buffer4, '', () => {});
+
+        expect(parsed.length).toBe(1);
+        expect(parsed[0].type).toBe(Constants.Type.SRSP);
+        expect(parsed[0].subsystem).toBe(Constants.Subsystem.SYS);
+        expect(parsed[0].commandID).toBe(2);
+        expect(parsed[0].data).toStrictEqual(Buffer.from([2, 0, 2, 6, 3, 217, 20, 52, 1, 2, 0, 0, 0, 0]));
+        expect(parsed[0].length).toBe(14);
+        expect(parsed[0].fcs).toBe(0x92);
     });
 });
 

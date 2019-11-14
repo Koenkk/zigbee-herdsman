@@ -80,7 +80,7 @@ interface MessagePayload {
     endpoint: Endpoint;
     linkquality: number;
     groupID: number;
-    cluster: string;
+    cluster: string | number;
     data: KeyValue;
 }
 
