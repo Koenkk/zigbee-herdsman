@@ -130,6 +130,10 @@ class DeconzAdapter extends Adapter {
     public async getNetworkParameters(): Promise<NetworkParameters> {
         return null;
     }
+
+    public async supportsLED(): Promise<boolean> {
+        return null;
+    }
 }
 
 export default DeconzAdapter;
