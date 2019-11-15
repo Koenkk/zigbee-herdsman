@@ -381,6 +381,11 @@ class Controller extends events.EventEmitter {
     ): Promise<void> {
         debug.log(`Received '${dataType}' data '${JSON.stringify(dataPayload)}'`);
 
+        if (this.isZclDataPayload(dataPayload, 'zcl') && dataPayload.frame.Cluster.name === 'touchlink') {
+            this.touchlink.onZclData(dataPayload);
+            return;
+        }
+
         const device = Device.byNetworkAddress(dataPayload.networkAddress);
         if (!device) {
             debug.log(

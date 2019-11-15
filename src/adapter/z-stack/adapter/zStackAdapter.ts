@@ -622,7 +622,7 @@ class ZStackAdapter extends Adapter {
                 dstaddrmode: addressMode,
                 dstaddr: this.toAddressString(destinationAddressOrGroupID),
                 destendpoint: destinationEndpoint,
-                dstpanid: 0,
+                dstpanid: panID,
                 srcendpoint: sourceEndpoint,
                 clusterid: clusterID,
                 transid: transactionID,
