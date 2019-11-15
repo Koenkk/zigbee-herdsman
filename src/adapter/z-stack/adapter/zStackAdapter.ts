@@ -328,6 +328,19 @@ class ZStackAdapter extends Adapter {
         });
     }
 
+    public async sendZclFrameBroadcast(zclFrame: ZclFrame): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            await this.dataRequestExtended(Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFD, 242, 0, 242, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 6000, false, 0)
+
+            /**
+             * As a group command is not confirmed and thus immidiately returns
+             * (contrary to network address requests) we will give the
+             * command some time to 'settle' in the network.
+             */
+            await Wait(200);
+        });
+    }
+
     public async lqi(networkAddress: number): Promise<LQI> {
         return this.queue.execute<LQI>(async (): Promise<LQI> => {
             const neighbors: LQINeighbor[] = [];
