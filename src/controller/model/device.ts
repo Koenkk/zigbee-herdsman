@@ -367,8 +367,9 @@ class Device extends Entity {
             // According to the spec, we should wait for an enrollRequest here, but the Bosch ISW-ZPR1 didn't send it.
             await Wait(3000);
 
-            // Konke devices don't do a defaultResponse
-            const disableDefaultResponse = this.manufacturerName === 'Konke';
+            // Some devices don't do a defaultResponse
+            const disableDefaultResponse =
+                this.manufacturerName === 'Konke' || this.manufacturerName.startsWith('_TYZB01_');
             await endpoint.command('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23}, {disableDefaultResponse});
             debug(`Interview - successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
         }
