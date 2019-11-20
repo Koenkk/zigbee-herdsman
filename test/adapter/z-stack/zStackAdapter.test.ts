@@ -382,6 +382,70 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toHaveBeenCalledTimes(33);
     });
 
+    it('Start zStack 3.x.0 initialize fails because of state change timeout', async () => {
+        mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
+            const missing = () => {
+                const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
+                console.log(msg)
+                throw new Error(msg);
+            }
+
+            if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
+                return {payload: {product: 1}};
+            } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
+                if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
+                    return {payload: {value: Buffer.from([0x55])}};
+                } else if (equalsPartial(payload, {id: NvItemsIds.CHANLIST, offset: 0})) {
+                    return {payload: {value: Buffer.from([0,8,0,0])}};
+                } else if (equalsPartial(payload, {id: NvItemsIds.PRECFGKEYS_ENABLE, offset: 0})) {
+                    return {payload: {value: Buffer.from([0])}};
+                } else if (equalsPartial(payload, {id: NvItemsIds.PRECFGKEY, offset: 0})) {
+                    // This one is invalid
+                    return {payload: {value: Buffer.from([1, 2])}};
+                } else {
+                    missing();
+                }
+            } else if (subsystem === Subsystem.UTIL && command === 'getDeviceInfo') {
+                return {payload: {devicestate: Constants.COMMON.devStates.ZB_COORD}};
+            } else if (subsystem === Subsystem.ZDO && command === 'activeEpReq') {
+                return {};
+            } else if (subsystem === Subsystem.AF && command === 'register') {
+                return {};
+            } else if (subsystem === Subsystem.SYS && command === 'resetReq') {
+                return {};
+            } else if (subsystem === Subsystem.SYS && command === 'osalNvWrite') {
+                return {};
+            } else if (subsystem === Subsystem.APP_CNF && command === 'bdbSetChannel') {
+                return {};
+            } else if (subsystem === Subsystem.APP_CNF && command === 'bdbStartCommissioning') {
+                return {};
+            } else if (subsystem === Subsystem.SYS && command === 'osalNvItemInit') {
+                return {};
+            } else {
+                missing();
+            }
+        });
+
+        mockZnpWaitfor.mockImplementation((type, subsystem, command, payload) => {
+            const missing = () => {
+                const msg = `Not implemented - ${Type[type]} - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
+                console.log(msg)
+                throw new Error(msg);
+            }
+
+            if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
+                return {promise: new Promise((resolve, reject) => {reject('timeout')})};
+            } else {
+                missing();
+            }
+        });
+
+        let error;
+        try {await adapter.start()} catch (e) {error = e}
+
+        expect(error).toStrictEqual(new Error('Coordinator failed to start, probably the panID is already in use, try a different panID or channel'))
+    });
+
     it('Start zStack 1.2 initialize - already configured; extended pan id mismatch -> should be reset', async () => {
         networkOptions.networkKeyDistribute = true;
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json');
