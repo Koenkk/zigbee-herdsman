@@ -28,7 +28,7 @@
     "debug": "^4.1.1",
     "fast-deep-equal": "^2.0.1",
     "mixin-deep": "^2.0.1",
-    "serialport": "8.0.1"
+    "serialport": "8.0.5"
   },
   "deprecated": false,
   "description": "An open source ZigBee gateway solution with node.js.",
@@ -51,10 +51,10 @@
     "jest": "*",
     "regenerator-runtime": "*",
     "tmp": "*",
-    "typedoc": "^0.15.0",
-    "typedoc-plugin-markdown": "^2.2.7",
-    "typedoc-plugin-no-inherit": "^1.1.10",
-    "typedoc-plugin-sourcefile-url": "^1.0.4",
+    "typedoc": "*",
+    "typedoc-plugin-markdown": "*",
+    "typedoc-plugin-no-inherit": "*",
+    "typedoc-plugin-sourcefile-url": "*",
     "typescript": "*"
   },
   "homepage": "https://github.com/Koenkk/zigbee-herdsman",
