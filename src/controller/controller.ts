@@ -139,11 +139,11 @@ class Controller extends events.EventEmitter {
         await this.backup();
         this.backupTimer = setInterval(() => this.backup(), 86400000);
 
-        this.touchlink = new Touchlink(this.adapter, this.options.network);
+        this.touchlink = new Touchlink(this.adapter);
+    }
 
-        setTimeout(async () => {
-            this.touchlink.scanAndFactoryReset();
-        }, 3000);
+    public async touchlinkFactoryReset(): Promise<void> {
+        await this.touchlink.factoryReset();
     }
 
     public async permitJoin(permit: boolean): Promise<void> {
