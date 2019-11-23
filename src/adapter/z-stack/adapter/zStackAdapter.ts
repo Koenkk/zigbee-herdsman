@@ -541,18 +541,14 @@ class ZStackAdapter extends Adapter {
     public async setChannelInterPAN(channel: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [channel]});
-        });
-    }
 
-    private async registerInterPANEndpoint(): Promise<void> {
-        // Make sure that endpoint 12 is registered to proxy the InterPAN messages.
-        await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 2, data: [12]});
+            // Make sure that endpoint 12 is registered to proxy the InterPAN messages.
+            await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 2, data: [12]});
+        });
     }
 
     public async sendZclFrameInterPAN(zclFrame: ZclFrame): Promise<void> {
         return this.queue.execute<void>(async () => {
-            await this.registerInterPANEndpoint();
-
             await this.dataRequestExtended(
                 Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFF, 0xFE, 0xFFFF,
                 12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
@@ -562,8 +558,6 @@ class ZStackAdapter extends Adapter {
 
     public async sendZclFrameInterPANWithResponse(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
-            await this.registerInterPANEndpoint();
-
             const command = zclFrame.getCommand();
             if (!command.hasOwnProperty('response')) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
