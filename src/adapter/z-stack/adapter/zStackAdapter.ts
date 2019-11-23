@@ -594,6 +594,8 @@ class ZStackAdapter extends Adapter {
     public async restoreChannelInterPAN(): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 0, data: []});
+            // Give adapter some time to restore, otherwise stuff crashes
+            await Wait(1000);
         });
     }
 
