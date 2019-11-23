@@ -544,15 +544,50 @@ class ZStackAdapter extends Adapter {
         });
     }
 
+    private async registerInterPANEndpoint(): Promise<void> {
+        // Make sure that endpoint 12 is registered to proxy the InterPAN messages.
+        await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 2, data: [12]});
+    }
+
     public async sendZclFrameInterPAN(zclFrame: ZclFrame): Promise<void> {
         return this.queue.execute<void>(async () => {
-            // Make sure that endpoint 12 is registered to proxy the InterPAN messages.
-            await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 2, data: [12]});
+            await this.registerInterPANEndpoint();
 
             await this.dataRequestExtended(
                 Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFF, 0xFE, 0xFFFF,
                 12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
             );
+        });
+    }
+
+    public async sendZclFrameInterPANWithResponse(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclDataPayload> {
+        return this.queue.execute<Events.ZclDataPayload>(async () => {
+            await this.registerInterPANEndpoint();
+
+            const command = zclFrame.getCommand();
+            if (!command.hasOwnProperty('response')) {
+                throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
+            }
+
+            const responsePayload: WaitressMatcher = {
+                networkAddress: null, endpoint: 0xFE,
+                transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
+                clusterID: zclFrame.Cluster.ID, frameType: zclFrame.Header.frameControl.frameType,
+                direction: Direction.SERVER_TO_CLIENT, commandIdentifier: command.response,
+            };
+            const response = this.waitress.waitFor(responsePayload, timeout);
+
+            try {
+                await this.dataRequestExtended(
+                    Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFF, 0xFE, 0xFFFF,
+                    12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
+                );
+            } catch (error) {
+                this.waitress.remove(response.ID);
+                throw error;
+            }
+
+            return response.promise;
         });
     }
 
@@ -704,7 +739,8 @@ class ZStackAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        return payload.networkAddress === matcher.networkAddress && payload.endpoint === matcher.endpoint &&
+        return (!matcher.networkAddress || payload.networkAddress === matcher.networkAddress) &&
+            payload.endpoint === matcher.endpoint &&
             payload.frame.Header.transactionSequenceNumber === matcher.transactionSequenceNumber &&
             payload.frame.Cluster.ID === matcher.clusterID &&
             matcher.frameType === payload.frame.Header.frameControl.frameType &&

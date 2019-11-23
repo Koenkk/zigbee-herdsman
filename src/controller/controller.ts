@@ -139,9 +139,10 @@ class Controller extends events.EventEmitter {
         await this.backup();
         this.backupTimer = setInterval(() => this.backup(), 86400000);
 
-        this.touchlink = new Touchlink(this.adapter);
+        this.touchlink = new Touchlink(this.adapter, this.options.network);
+
         setTimeout(async () => {
-            this.touchlink.scanAndJoin();
+            this.touchlink.scanAndFactoryReset();
         }, 3000);
     }
 
@@ -382,7 +383,7 @@ class Controller extends events.EventEmitter {
         debug.log(`Received '${dataType}' data '${JSON.stringify(dataPayload)}'`);
 
         if (this.isZclDataPayload(dataPayload, 'zcl') && dataPayload.frame.Cluster.name === 'touchlink') {
-            this.touchlink.onZclData(dataPayload);
+            // This is handled by touchlink
             return;
         }
 

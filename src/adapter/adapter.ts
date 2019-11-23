@@ -122,6 +122,8 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract sendZclFrameInterPAN(zclFrame: ZclFrame): Promise<void>;
 
+    public abstract sendZclFrameInterPANWithResponse(zclFrame: ZclFrame, timeout: number): Promise<ZclDataPayload>;
+
     public abstract restoreChannelInterPAN(): Promise<void>;
 }
 

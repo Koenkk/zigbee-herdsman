@@ -1166,7 +1166,7 @@ const Definition: {
                 {name: 'securityuse', parameterType: ParameterType.UINT8},
                 {name: 'timestamp', parameterType: ParameterType.UINT32},
                 {name: 'transseqnumber', parameterType: ParameterType.UINT8},
-                {name: 'len', parameterType: ParameterType.UINT8},
+                {name: 'len', parameterType: ParameterType.UINT16},
                 {name: 'data', parameterType: ParameterType.BUFFER},
             ],
         },
