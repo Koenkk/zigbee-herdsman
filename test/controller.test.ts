@@ -16,6 +16,10 @@ Date.now = jest.fn()
 Date.now.mockReturnValue(new Date(150));
 
 const mockAdapterEvents = {};
+const mockSetChannelInterPAN = jest.fn();
+const mockSendZclFrameInterPAN = jest.fn();
+const mockSendZclFrameInterPANWithResponse = jest.fn();
+const mockRestoreChannelInterPAN = jest.fn();
 const mockAdapterPermitJoin = jest.fn();
 const mockAdapterSupportsBackup = jest.fn().mockReturnValue(true);
 const mockAdapterReset = jest.fn();
@@ -186,6 +190,10 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             },
             bind: mockAdapterBind,
             unbind: mockAdapterUnbind,
+            setChannelInterPAN: mockSetChannelInterPAN,
+            sendZclFrameInterPAN: mockSendZclFrameInterPAN,
+            sendZclFrameInterPANWithResponse: mockSendZclFrameInterPANWithResponse,
+            restoreChannelInterPAN: mockRestoreChannelInterPAN,
         };
     });
 });
@@ -312,6 +320,42 @@ describe('Controller', () => {
         expect(mockAdapterPermitJoin).toBeCalledWith(0);
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual({version: 'dummybackup'});
         expect(mockAdapterStop).toBeCalledTimes(1);
+    });
+
+    it('Touchlink factory reset', async () => {
+        await controller.start();
+        mockSendZclFrameInterPANWithResponse.mockImplementationOnce(() => {throw new Error('no response')});
+        const result = await controller.touchlinkFactoryReset();
+        expect(result).toBeTruthy();
+
+        expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(2);
+        expect(mockSetChannelInterPAN).toHaveBeenCalledWith(11);
+        expect(mockSetChannelInterPAN).toHaveBeenCalledWith(15);
+        expect(mockSendZclFrameInterPANWithResponse).toHaveBeenCalledTimes(2);
+        expect(deepClone(mockSendZclFrameInterPANWithResponse.mock.calls[0][0])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":2,"manufacturerCode":null,"commandIdentifier":0},"Payload":{"transactionID":1,"zigbeeInformation":4,"touchlinkInformation":18},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}});
+        expect(deepClone(mockSendZclFrameInterPANWithResponse.mock.calls[1][0])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":3,"manufacturerCode":null,"commandIdentifier":0},"Payload":{"transactionID":1,"zigbeeInformation":4,"touchlinkInformation":18},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}});
+        expect(mockRestoreChannelInterPAN).toHaveBeenCalledTimes(2);
+        expect(mockSendZclFrameInterPAN).toHaveBeenCalledTimes(2);
+        expect(deepClone(mockSendZclFrameInterPAN.mock.calls[0][0])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":4,"manufacturerCode":null,"commandIdentifier":6},"Payload":{"transactionID":1,"duration":65535},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}});
+        expect(deepClone(mockSendZclFrameInterPAN.mock.calls[1][0])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":5,"manufacturerCode":null,"commandIdentifier":7},"Payload":{"transactionID":1},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}});
+    });
+
+    it('Controller should ignore touchlink messages', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['zclData']({
+            networkAddress: 129,
+            frame: Zcl.ZclFrame.create(
+                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, false,
+                null, 1, 'scanResponse', Zcl.Utils.getCluster('touchlink').ID,
+                {}
+            ),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.message.length).toBe(0);
     });
 
     it('Disable led', async () => {
