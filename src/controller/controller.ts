@@ -387,10 +387,11 @@ class Controller extends events.EventEmitter {
             return;
         }
 
-        const device = Device.byNetworkAddress(dataPayload.networkAddress);
+        const device = typeof dataPayload.address === 'string' ?
+            Device.byIeeeAddr(dataPayload.address) : Device.byNetworkAddress(dataPayload.address);
         if (!device) {
             debug.log(
-                `'${dataType}' data is from unknown device with network adress '${dataPayload.networkAddress}', ` +
+                `'${dataType}' data is from unknown device with address '${dataPayload.address}', ` +
                 `skipping...`
             );
             return;
@@ -402,7 +403,7 @@ class Controller extends events.EventEmitter {
         if (!endpoint) {
             debug.log(
                 `'${dataType}' data is from unknown endpoint '${dataPayload.endpoint}' from device with ` +
-                `network adress '${dataPayload.networkAddress}', creating it...`
+                `network address '${dataPayload.address}', creating it...`
             );
             endpoint = await device.createEndpoint(dataPayload.endpoint);
         }

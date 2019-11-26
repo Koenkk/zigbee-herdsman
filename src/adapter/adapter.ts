@@ -120,9 +120,11 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract setChannelInterPAN(channel: number): Promise<void>;
 
-    public abstract sendZclFrameInterPAN(zclFrame: ZclFrame): Promise<void>;
+    public abstract sendZclFrameInterPANIeeeAddr(zclFrame: ZclFrame, ieeeAddress: string): Promise<void>;
 
-    public abstract sendZclFrameInterPANWithResponse(zclFrame: ZclFrame, timeout: number): Promise<ZclDataPayload>;
+    public abstract sendZclFrameInterPANBroadcastWithResponse(
+        zclFrame: ZclFrame, timeout: number
+    ): Promise<ZclDataPayload>;
 
     public abstract restoreChannelInterPAN(): Promise<void>;
 }

@@ -1,8 +1,7 @@
 import {Adapter} from '../adapter';
 import * as Zcl from '../zcl';
-import {Wait} from '../utils';
+import {Wait, AssertString} from '../utils';
 import Debug from "debug";
-import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber';
 
 const debug = Debug('zigbee-herdsman:controller:touchlink');
 const scanChannels = [11, 15, 20, 25, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24, 26];
@@ -22,17 +21,22 @@ class Touchlink {
             await this.adapter.setChannelInterPAN(channel);
 
             try {
-                await this.adapter.sendZclFrameInterPANWithResponse(this.createScanRequestFrame(), 2000);
+                const response = await this.adapter.sendZclFrameInterPANBroadcastWithResponse(
+                    this.createScanRequestFrame(), 500
+                );
                 debug(`Got scan response on channel '${channel}'`);
+                AssertString(response.address);
 
                 // Device answered (if not it will fall in the catch below),
                 // identify it (this will make e.g. the bulb flash)
                 debug(`Identifying`);
-                await this.adapter.sendZclFrameInterPAN(this.createIdentifyRequestFrame());
+                await this.adapter.sendZclFrameInterPANIeeeAddr(this.createIdentifyRequestFrame(), response.address);
                 await Wait(2000);
 
                 debug(`Reset to factory new`);
-                await this.adapter.sendZclFrameInterPAN(this.createResetFactoryNewRequestFrame());
+                await this.adapter.sendZclFrameInterPANIeeeAddr(
+                    this.createResetFactoryNewRequestFrame(), response.address
+                );
                 done = true;
             } catch (error) {
                 debug(`Scan request failed or was not answered: '${error}'`);
@@ -49,24 +53,24 @@ class Touchlink {
 
     private createScanRequestFrame(): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
-            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false,
-            null, ZclTransactionSequenceNumber.next(), 'scanRequest', Zcl.Utils.getCluster('touchlink').ID,
+            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
+            null, 0, 'scanRequest', Zcl.Utils.getCluster('touchlink').ID,
             {transactionID: 1, zigbeeInformation: 4, touchlinkInformation: 18}
         );
     }
 
     private createIdentifyRequestFrame(): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
-            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false,
-            null, ZclTransactionSequenceNumber.next(), 'identifyRequest', Zcl.Utils.getCluster('touchlink').ID,
+            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
+            null, 0, 'identifyRequest', Zcl.Utils.getCluster('touchlink').ID,
             {transactionID: 1, duration: 65535}
         );
     }
 
     private createResetFactoryNewRequestFrame(): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
-            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false,
-            null, ZclTransactionSequenceNumber.next(), 'resetToFactoryNew', Zcl.Utils.getCluster('touchlink').ID,
+            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
+            null, 0, 'resetToFactoryNew', Zcl.Utils.getCluster('touchlink').ID,
             {transactionID: 1}
         );
     }

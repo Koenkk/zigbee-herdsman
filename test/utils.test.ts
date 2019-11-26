@@ -1,5 +1,5 @@
 import "regenerator-runtime/runtime";
-import {IsNumberArray, Wait, ArraySplitChunks, Queue, Waitress} from '../src/utils';
+import {IsNumberArray, Wait, ArraySplitChunks, Queue, Waitress, AssertString} from '../src/utils';
 
 describe('Utils', () => {
     it('IsNumberArray valid', () => {
@@ -16,6 +16,16 @@ describe('Utils', () => {
 
     it('Split array in chunks', () => {
         expect(ArraySplitChunks([1, 2, 3, 4], 2)).toEqual([[1, 2], [3, 4]]);
+    });
+
+    it('Assert string true', () => {
+        AssertString('bla');
+    });
+
+    it('Assert string false', () => {
+        let error;
+        try {AssertString(1)} catch (e) {error = e;}
+        expect(error).toStrictEqual(new Error('Input must be a string!'))
     });
 
     it('Test wait', async () => {

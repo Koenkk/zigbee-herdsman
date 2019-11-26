@@ -2012,7 +2012,7 @@ describe('zStackAdapter', () => {
         expect(result.endpoint).toStrictEqual(20);
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
-        expect(result.networkAddress).toStrictEqual(2);
+        expect(result.address).toStrictEqual(2);
         expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
     });
 
@@ -2050,7 +2050,7 @@ describe('zStackAdapter', () => {
         expect(result.endpoint).toStrictEqual(20);
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
-        expect(result.networkAddress).toStrictEqual(2);
+        expect(result.address).toStrictEqual(2);
         expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
     });
 
@@ -2241,7 +2241,7 @@ describe('zStackAdapter', () => {
         expect(zclData.endpoint).toStrictEqual(20);
         expect(zclData.groupID).toStrictEqual(12);
         expect(zclData.linkquality).toStrictEqual(101);
-        expect(zclData.networkAddress).toStrictEqual(2);
+        expect(zclData.address).toStrictEqual(2);
         expect(deepClone(zclData.frame)).toStrictEqual(deepClone(responseFrame));
     });
 
@@ -2256,7 +2256,7 @@ describe('zStackAdapter', () => {
         expect(rawData.endpoint).toStrictEqual(20);
         expect(rawData.groupID).toStrictEqual(12);
         expect(rawData.linkquality).toStrictEqual(101);
-        expect(rawData.networkAddress).toStrictEqual(2);
+        expect(rawData.address).toStrictEqual(2);
         expect(rawData.data).toStrictEqual(Buffer.from([0x0, 0x01]));
     });
 
@@ -2352,9 +2352,9 @@ describe('zStackAdapter', () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
-        const result = await adapter.sendZclFrameInterPAN(touchlinkIdentifyRequest);
+        const result = await adapter.sendZclFrameInterPANIeeeAddr(touchlinkIdentifyRequest, '0x0017880104c9cd33');
         expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 4096, "data": touchlinkIdentifyRequest.toBuffer(), "destendpoint": 254, "dstaddr": "0x000000000000ffff", "len": 9, "options": 0, "radius": 30, "srcendpoint": 12, "transid": 1, "dstaddrmode": 2, "dstpanid": 65535})
+        expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 4096, "data": touchlinkIdentifyRequest.toBuffer(), "destendpoint": 254, "dstaddr": '0x0017880104c9cd33', "len": 9, "options": 0, "radius": 30, "srcendpoint": 12, "transid": 1, "dstaddrmode": 3, "dstpanid": 65535})
     });
 
     it('Send zcl frame interpan with response', async () => {
@@ -2363,13 +2363,13 @@ describe('zStackAdapter', () => {
         mockZnpRequest.mockClear();
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsgExt', payload: {clusterid: 4096, srcendpoint: 0xFE, srcaddr: 12394, linkquality: 101, groupid: 0, data: touchlinkScanResponse.toBuffer()}};
 
-        let result = adapter.sendZclFrameInterPANWithResponse(touchlinkScanRequest, 1000);
+        let result = adapter.sendZclFrameInterPANBroadcastWithResponse(touchlinkScanRequest, 1000);
         znpReceived(object);
         result = await result;
 
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 4096, "data": touchlinkScanRequest.toBuffer(), "destendpoint": 254, "dstaddr": "0x000000000000ffff", "len": 9, "options": 0, "radius": 30, "srcendpoint": 12, "transid": 1, "dstaddrmode": 2, "dstpanid": 65535});
-        expect(deepClone(result)).toStrictEqual({"frame":{"Header":{"frameControl":{"frameType":1,"manufacturerSpecific":false,"direction":1,"disableDefaultResponse":false},"transactionSequenceNumber":12,"manufacturerCode":null,"commandIdentifier":1},"Payload":{"transactionID":1,"rssiCorrection":10,"zigbeeInformation":5,"touchlinkInformation":6,"keyBitmask":12,"responseID":11,"extendedPanID":"0x0017210104d9cd33","networkUpdateID":1,"logicalChannel":12,"panID":13,"networkAddress":5,"numberOfSubDevices":10,"totalGroupIdentifiers":5,"endpointID":1,"profileID":99,"deviceID":101,"version":3,"groupIdentifierCount":8},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}},"networkAddress":12394,"endpoint":254,"linkquality":101,"groupID":0});
+        expect(deepClone(result)).toStrictEqual({"frame":{"Header":{"frameControl":{"frameType":1,"manufacturerSpecific":false,"direction":1,"disableDefaultResponse":false},"transactionSequenceNumber":12,"manufacturerCode":null,"commandIdentifier":1},"Payload":{"transactionID":1,"rssiCorrection":10,"zigbeeInformation":5,"touchlinkInformation":6,"keyBitmask":12,"responseID":11,"extendedPanID":"0x0017210104d9cd33","networkUpdateID":1,"logicalChannel":12,"panID":13,"networkAddress":5,"numberOfSubDevices":10,"totalGroupIdentifiers":5,"endpointID":1,"profileID":99,"deviceID":101,"version":3,"groupIdentifierCount":8},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}},"address":12394,"endpoint":254,"linkquality":101,"groupID":0});
     });
 
     it('Send zcl frame interpan with response throw exception when command has no response', async () => {
@@ -2377,7 +2377,7 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         let error;
-        try { await adapter.sendZclFrameInterPANWithResponse(touchlinkIdentifyRequest, 1000)} catch (e) { error = e};
+        try { await adapter.sendZclFrameInterPANBroadcastWithResponse(touchlinkIdentifyRequest, 1000)} catch (e) { error = e};
         expect(error).toStrictEqual(new Error(`Command 'identifyRequest' has no response, cannot wait for response`))
     });
 
@@ -2387,7 +2387,7 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         let error;
-        try { await adapter.sendZclFrameInterPANWithResponse(touchlinkScanRequest, 1000)} catch (e) { error = e};
+        try { await adapter.sendZclFrameInterPANBroadcastWithResponse(touchlinkScanRequest, 1000)} catch (e) { error = e};
         expect(error).toStrictEqual(new Error(`Data request failed with code '99'`))
     });
 });

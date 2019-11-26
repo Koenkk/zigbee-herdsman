@@ -33,7 +33,7 @@ interface WaitFor {
 }
 
 interface WaitressMatcher {
-    networkAddress: number;
+    address: number | string;
     endpoint: number;
     transactionSequenceNumber: number;
     frameType: FrameType;
@@ -224,7 +224,7 @@ class ZStackAdapter extends Adapter {
             const defaultResponse = !zclFrame.Header.frameControl.disableDefaultResponse ?
                 this.waitDefaultResponse(networkAddress, endpoint, zclFrame, defaultResponseTimeout) : null;
             const responsePayload = {
-                networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
+                address: networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
                 clusterID: zclFrame.Cluster.ID, frameType: zclFrame.Header.frameControl.frameType,
                 direction: Direction.SERVER_TO_CLIENT, commandIdentifier: command.response,
             };
@@ -497,7 +497,7 @@ class ZStackAdapter extends Adapter {
                     try {
                         const payload: Events.ZclDataPayload = {
                             frame: ZclFrame.fromBuffer(object.payload.clusterid, object.payload.data),
-                            networkAddress: object.payload.srcaddr,
+                            address: object.payload.srcaddr,
                             endpoint: object.payload.srcendpoint,
                             linkquality: object.payload.linkquality,
                             groupID: object.payload.groupid,
@@ -509,7 +509,7 @@ class ZStackAdapter extends Adapter {
                         const payload: Events.RawDataPayload = {
                             clusterID: object.payload.clusterid,
                             data: object.payload.data,
-                            networkAddress: object.payload.srcaddr,
+                            address: object.payload.srcaddr,
                             endpoint: object.payload.srcendpoint,
                             linkquality: object.payload.linkquality,
                             groupID: object.payload.groupid,
@@ -547,16 +547,18 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPAN(zclFrame: ZclFrame): Promise<void> {
+    public async sendZclFrameInterPANIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
-                Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFF, 0xFE, 0xFFFF,
+                Constants.COMMON.addressMode.ADDR_64BIT, ieeeAddr, 0xFE, 0xFFFF,
                 12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
             );
         });
     }
 
-    public async sendZclFrameInterPANWithResponse(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclDataPayload> {
+    public async sendZclFrameInterPANBroadcastWithResponse(
+        zclFrame: ZclFrame, timeout: number
+    ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
             const command = zclFrame.getCommand();
             if (!command.hasOwnProperty('response')) {
@@ -564,8 +566,7 @@ class ZStackAdapter extends Adapter {
             }
 
             const responsePayload: WaitressMatcher = {
-                networkAddress: null, endpoint: 0xFE,
-                transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
+                address: null, endpoint: 0xFE, transactionSequenceNumber: null,
                 clusterID: zclFrame.Cluster.ID, frameType: zclFrame.Header.frameControl.frameType,
                 direction: Direction.SERVER_TO_CLIENT, commandIdentifier: command.response,
             };
@@ -640,7 +641,7 @@ class ZStackAdapter extends Adapter {
     };
 
     private async dataRequestExtended(
-        addressMode: number, destinationAddressOrGroupID: number, destinationEndpoint: number, panID: number,
+        addressMode: number, destinationAddressOrGroupID: number | string, destinationEndpoint: number, panID: number,
         sourceEndpoint: number, clusterID: number, radius: number, data: Buffer, timeout: number, attempt: number,
         confirmation: boolean
     ): Promise<ZpiObject> {
@@ -720,7 +721,7 @@ class ZStackAdapter extends Adapter {
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
     ): WaitFor {
         const payload = {
-            networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
+            address: networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
             clusterID: zclFrame.Cluster.ID, frameType: FrameType.GLOBAL, direction: Direction.SERVER_TO_CLIENT,
             commandIdentifier: Foundation.defaultRsp.ID,
         };
@@ -729,15 +730,16 @@ class ZStackAdapter extends Adapter {
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
-        return `Timeout - ${matcher.networkAddress} - ${matcher.endpoint}` +
+        return `Timeout - ${matcher.address} - ${matcher.endpoint}` +
             ` - ${matcher.transactionSequenceNumber} - ${matcher.clusterID}` +
             ` - ${matcher.commandIdentifier} after ${timeout}ms`;
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        return (!matcher.networkAddress || payload.networkAddress === matcher.networkAddress) &&
+        const transactionSequenceNumber = payload.frame.Header.transactionSequenceNumber;
+        return (!matcher.address || payload.address === matcher.address) &&
             payload.endpoint === matcher.endpoint &&
-            payload.frame.Header.transactionSequenceNumber === matcher.transactionSequenceNumber &&
+            (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
             payload.frame.Cluster.ID === matcher.clusterID &&
             matcher.frameType === payload.frame.Header.frameControl.frameType &&
             matcher.commandIdentifier === payload.frame.Header.commandIdentifier &&
