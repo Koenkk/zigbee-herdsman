@@ -19,6 +19,8 @@ enum ParameterType {
     LIST_NEIGHBOR_LQI = 15,
     LIST_NETWORK = 16,
     LIST_ASSOC_DEV = 17,
+
+    INT8 = 18,
 }
 
 export default ParameterType;

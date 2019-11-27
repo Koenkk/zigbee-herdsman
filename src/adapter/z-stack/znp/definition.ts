@@ -193,7 +193,7 @@ const Definition: {
             type: CommandType.SREQ,
             request: [
                 {name: 'operation', parameterType: ParameterType.UINT8},
-                {name: 'value', parameterType: ParameterType.UINT8},
+                {name: 'value', parameterType: ParameterType.INT8},
             ],
             response: [
                 {name: 'value', parameterType: ParameterType.UINT8},
