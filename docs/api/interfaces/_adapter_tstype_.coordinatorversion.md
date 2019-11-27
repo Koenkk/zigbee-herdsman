@@ -19,7 +19,7 @@
 
 • **meta**: *object*
 
-*Defined in [adapter/tstype.ts:18](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/adapter/tstype.ts#L18)*
+*Defined in [src/adapter/tstype.ts:18](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L18)*
 
 #### Type declaration:
 
@@ -31,4 +31,4 @@ ___
 
 • **type**: *string*
 
-*Defined in [adapter/tstype.ts:17](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/adapter/tstype.ts#L17)*
+*Defined in [src/adapter/tstype.ts:17](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L17)*
