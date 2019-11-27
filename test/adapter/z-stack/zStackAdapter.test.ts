@@ -123,6 +123,8 @@ const basicMocks = () => {
             return {};
         } else if (subsystem === Subsystem.SYS && command === 'resetReq') {
             return {};
+        } else if (subsystem === Subsystem.SYS && command === 'stackTune') {
+            return {};
         } else if (subsystem === Subsystem.UTIL && command === 'ledControl') {
             return {};
         } else if (subsystem === Subsystem.ZDO && command === 'nodeDescReq') {
@@ -1745,6 +1747,15 @@ describe('zStackAdapter', () => {
         await adapter.reset('hard');
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'resetReq', {type: 0});
+    });
+
+    it('Set transmit power', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        await adapter.setTransmitPower(15);
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 15});
     });
 
     it('Disable led', async () => {

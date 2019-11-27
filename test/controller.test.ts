@@ -27,6 +27,7 @@ const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockAdapterSetLED = jest.fn();
 const mockAdapterSupportsLED = jest.fn().mockReturnValue(true);
+const mockAdapterSetTransmitPower = jest.fn();
 const mockAdapterBind = jest.fn();
 const mockSendZclFrameGroup = jest.fn();
 const mockAdapterUnbind = jest.fn();
@@ -150,6 +151,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             getNetworkParameters: () => {return {panID: 1, extendedPanID: 3, channel: 15}},
             setLED: mockAdapterSetLED,
             supportsLED: mockAdapterSupportsLED,
+            setTransmitPower: mockAdapterSetTransmitPower,
             nodeDescriptor: async (networkAddress) => {
                 const descriptor = mockDevices[networkAddress].nodeDescriptor;
                 if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
@@ -382,6 +384,12 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(0);
+    });
+
+    it('Set transmit power', async () => {
+        await controller.start();
+        await controller.setTransmitPower(15);
+        expect(mockAdapterSetTransmitPower).toHaveBeenCalledWith(15);
     });
 
     it('Disable led', async () => {

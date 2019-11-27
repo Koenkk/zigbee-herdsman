@@ -594,6 +594,12 @@ class ZStackAdapter extends Adapter {
         });
     }
 
+    public async setTransmitPower(value: number): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value});
+        });
+    }
+
     /**
      * Private methods
      */

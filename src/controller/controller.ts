@@ -267,6 +267,13 @@ class Controller extends events.EventEmitter {
     }
 
     /**
+     *  Set transmit power of the adapter
+     */
+    public async setTransmitPower(value: number): Promise<void> {
+        return this.adapter.setTransmitPower(value);
+    }
+
+    /**
      *  Enable/Disable the LED
      */
     public async setLED(enabled: boolean): Promise<void> {

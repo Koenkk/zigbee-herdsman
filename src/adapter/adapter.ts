@@ -127,6 +127,8 @@ abstract class Adapter extends events.EventEmitter {
     ): Promise<ZclDataPayload>;
 
     public abstract restoreChannelInterPAN(): Promise<void>;
+
+    public abstract setTransmitPower(value: number): Promise<void>;
 }
 
 export default Adapter;
