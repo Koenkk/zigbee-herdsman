@@ -265,31 +265,8 @@ class Device extends Entity {
             debug(`Interview - completed for device '${this.ieeeAddr}'`);
             this._interviewCompleted = true;
         } catch (e) {
-            // Some devices, e.g. Xiaomi end devices have a different interview procedure, after pairing they
-            // report it's modelID trough a readResponse. The readResponse is received by the controller and set
-            // on the device.
-            const lookup: {[s: string]: {
-                type: DeviceType; manufacturerID: number; manufacturerName: string; powerSource: string;
-            };} = {
-                'lumi\..*': {
-                    type: 'EndDevice', manufacturerID: 4151, manufacturerName: 'LUMI', powerSource: 'Battery'
-                },
-                'TERNCY-PP01': {
-                    type: 'EndDevice', manufacturerID: 4648, manufacturerName: 'TERNCY', powerSource: 'Battery'
-                },
-            };
-
-            const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
-            if (match) {
-                const info = lookup[match];
-                debug(`Interview procedure failed but got modelID matching '${match}', assuming interview succeeded`);
-                this._type = info.type;
-                this._manufacturerID = info.manufacturerID;
-                this._manufacturerName = info.manufacturerName;
-                this._powerSource = info.powerSource;
-                this._interviewing = false;
-                this._interviewCompleted = true;
-                this.save();
+            if (this.interviewQuirks()) {
+                debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks`);
             } else {
                 debug(`Interview - failed for device '${this.ieeeAddr}' with error '${e.stack}'`);
                 error = e;
@@ -304,6 +281,38 @@ class Device extends Entity {
         }
     }
 
+    private interviewQuirks(): boolean {
+        // Some devices, e.g. Xiaomi end devices have a different interview procedure, after pairing they
+        // report it's modelID trough a readResponse. The readResponse is received by the controller and set
+        // on the device.
+        const lookup: {[s: string]: {
+            type: DeviceType; manufacturerID: number; manufacturerName: string; powerSource: string;
+        };} = {
+            'lumi\..*': {
+                type: 'EndDevice', manufacturerID: 4151, manufacturerName: 'LUMI', powerSource: 'Battery'
+            },
+            'TERNCY-PP01': {
+                type: 'EndDevice', manufacturerID: 4648, manufacturerName: 'TERNCY', powerSource: 'Battery'
+            },
+        };
+
+        const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
+        if (match) {
+            const info = lookup[match];
+            debug(`Interview procedure failed but got modelID matching '${match}', assuming interview succeeded`);
+            this._type = info.type;
+            this._manufacturerID = info.manufacturerID;
+            this._manufacturerName = info.manufacturerName;
+            this._powerSource = info.powerSource;
+            this._interviewing = false;
+            this._interviewCompleted = true;
+            this.save();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     private async interviewInternal(): Promise<void> {
         const nodeDescriptorQuery = async (): Promise<void> => {
             const nodeDescriptor = await Entity.adapter.nodeDescriptor(this.networkAddress);
@@ -313,12 +322,19 @@ class Device extends Entity {
             debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         };
 
-        try {
-            await nodeDescriptorQuery();
-        } catch (error) {
-            // Most of the times the first node descriptor query fails and the seconds one succeeds.
-            debug(`Interview - first node descriptor request failed for '${this.ieeeAddr}', retrying...`);
-            await nodeDescriptorQuery();
+        for (let attempt = 0; attempt < 6; attempt++) {
+            try {
+                await nodeDescriptorQuery();
+                break;
+            } catch (error) {
+                if (this.interviewQuirks()) {
+                    debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks`);
+                    return;
+                } else {
+                    // Most of the times the first node descriptor query fails and the seconds one succeeds.
+                    debug(`Interview - node descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`);
+                }
+            }
         }
 
         const activeEndpoints = await Entity.adapter.activeEndpoints(this.networkAddress);

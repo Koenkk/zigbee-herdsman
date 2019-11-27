@@ -79,7 +79,11 @@ const mockDevices = {
         nodeDescriptor: undefined,
     },
     150: {
+        nodeDescriptor: 'xiaomi_error',
+    },
+    151: {
         nodeDescriptor: 'xiaomi',
+        activeEndpoints: 'error',
     },
     160: {
         nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
@@ -147,7 +151,8 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             setLED: mockAdapterSetLED,
             supportsLED: mockAdapterSupportsLED,
             nodeDescriptor: async (networkAddress) => {
-                if (mockDevices[networkAddress].nodeDescriptor === 'xiaomi') {
+                const descriptor = mockDevices[networkAddress].nodeDescriptor;
+                if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
                     await mockAdapterEvents['zclData']({
                         address: networkAddress,
                         frame: mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'lumi.occupancy'}]),
@@ -155,12 +160,23 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
                         linkquality: 50,
                         groupID: 1,
                     });
-                    throw new Error('failed');
+
+                    if (descriptor.endsWith('error')) {
+                        throw new Error('failed');
+                    } else {
+                        return {type: 'EndDevice', manufacturerCode: 1219};
+                    }
                 } else {
-                    return mockDevices[networkAddress].nodeDescriptor;
+                    return descriptor;
                 }
             },
-            activeEndpoints: (networkAddress) => mockDevices[networkAddress].activeEndpoints,
+            activeEndpoints: (networkAddress) => {
+                if (mockDevices[networkAddress].activeEndpoints === 'error') {
+                    throw new Error('timeout');
+                } else {
+                    return mockDevices[networkAddress].activeEndpoints;
+                } 
+            },
             simpleDescriptor: (networkAddress, endpoint) => {
                 if (mockDevices[networkAddress].simpleDescriptor[endpoint] === undefined) {
                     throw new Error('Simple descriptor failed');
@@ -1176,7 +1192,7 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddress).toBeCalledTimes(1);
     });
 
-    it('Xiaomi end device joins', async () => {
+    it('Xiaomi end device joins (node descriptor fails)', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 150, ieeeAddr: '0x150'});
         expect(events.deviceInterview.length).toBe(2);
@@ -1208,6 +1224,53 @@ describe('Controller', () => {
                       ],
                       "deviceNetworkAddress":150,
                       "deviceIeeeAddress":"0x150",
+                      "_binds": [],
+                   }
+                ],
+                "_type":"EndDevice",
+                "_manufacturerID":4151,
+                "_manufacturerName":"LUMI",
+                "meta": {},
+                "_powerSource":"Battery",
+                "_modelID":"lumi.occupancy",
+                "_interviewCompleted":true,
+                "_interviewing":false
+             }
+        );
+    });
+
+    it('Xiaomi end device joins (node descriptor succeeds, but active endpoint response fails)', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 151, ieeeAddr: '0x151'});
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe('started')
+        expect(events.deviceInterview[0].device.ieeeAddr).toBe('0x151')
+        expect(events.deviceInterview[1].status).toBe('successful')
+        expect(events.deviceInterview[1].device.ieeeAddr).toBe('0x151')
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x151'))).toStrictEqual(
+            {
+                "ID":2,
+                "ieeeAddr":"0x151",
+                "_networkAddress":151,
+                "_lastSeen": deepClone(Date.now()),
+                "_endpoints":[
+                   {
+                      "ID":1,
+                      "clusters": {
+                          "genBasic": {
+                            "attributes": {
+                              "modelId": "lumi.occupancy",
+                            },
+                          },
+                      },
+                      "inputClusters":[
+
+                      ],
+                      "outputClusters":[
+
+                      ],
+                      "deviceNetworkAddress":151,
+                      "deviceIeeeAddress":"0x151",
                       "_binds": [],
                    }
                 ],
@@ -1845,6 +1908,16 @@ describe('Controller', () => {
         const endpoint = device.endpoints[0];
         expect(endpoint.getClusterAttributeValue('msOccupancySensing', 'occupancy')).toBe(1);
         expect(endpoint.getClusterAttributeValue('genBasic', 'modelId')).toBeNull();
+
+        await mockAdapterEvents['zclData']({
+            address: 129,
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,0])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(endpoint.getClusterAttributeValue('msOccupancySensing', 'occupancy')).toBe(0);
     });
 
 
