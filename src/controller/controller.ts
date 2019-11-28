@@ -389,7 +389,8 @@ class Controller extends events.EventEmitter {
     ): Promise<void> {
         debug.log(`Received '${dataType}' data '${JSON.stringify(dataPayload)}'`);
 
-        if (this.isZclDataPayload(dataPayload, 'zcl') && dataPayload.frame.Cluster.name === 'touchlink') {
+        if (this.isZclDataPayload(dataPayload, 'zcl') && dataPayload.frame &&
+            dataPayload.frame.Cluster.name === 'touchlink') {
             // This is handled by touchlink
             return;
         }
