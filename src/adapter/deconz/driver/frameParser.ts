@@ -45,11 +45,11 @@ function parseReadFirmwareResponse(view : DataView) : Command {
     return null;
 }
 
-//todo
-function parseWriteParameterResponse(view : DataView) : Command {
-    const status = view.getUint8(2);
-    console.log("parse write parameter response");
-    return null;
+function parseWriteParameterResponse(view : DataView) : number {
+    const parameterId = view.getUint8(7);
+    debug(`write parameter response - parameter id: ${parameterId}`);
+    return parameterId;
+
 }
 
 function getParserForCommandId(id: Number) : Function {
@@ -61,7 +61,7 @@ function getParserForCommandId(id: Number) : Function {
         //case Constants.CMD_READ_FW_VERSION:
         //  return parseReadFirmwareResponse;
         default:
-            throw new Error("unknown command id");
+            throw new Error(`unknown command id ${id}`);
     }
 }
 
@@ -93,7 +93,6 @@ function parseFrame(frame: Uint8Array) : [number, number, Command] {
     }
 
     const view = new DataView(frame.buffer);
-    const littleEndian = true;
 
     const commandId = view.getUint8(0);
     const seqNumber = view.getUint8(1);

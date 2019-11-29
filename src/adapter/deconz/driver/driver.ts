@@ -9,7 +9,7 @@ import PARAM from './constants';
 
 // @ts-ignore
 import slip from 'slip';
-import { Request } from './constants';
+import { Request, parameterT } from './constants';
 
 const debug = Debug('zigbee-herdsman:deconz:driver');
 
@@ -21,6 +21,7 @@ var queue: Array<object> = [];
 var busyQueue: Array<object> = [];
 export { busyQueue };
 
+const littleEndian = true;
 
 class Driver extends events.EventEmitter {
     private path: string;
@@ -83,16 +84,16 @@ class Driver extends events.EventEmitter {
 
                     // tests
                     try {
+                        const result1 = await this.writeParameterRequest(PARAM.PARAM.Network.MAC, [0x00,0x21,0x2e,0xff,0xff,0x03,0xd4,0x9a], 3);
                         const mac = await this.readParameterRequest(PARAM.PARAM.Network.MAC, 1);
+
+                        //const nwkAddress = await this.readParameterRequest(PARAM.PARAM.Network.NWK_ADDRESS, 5);
+
+                        const result = await this.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, 0xaffe, 4);
                         const panId = await this.readParameterRequest(PARAM.PARAM.Network.PAN_ID, 2);
-                        const nwkAddress = await this.readParameterRequest(PARAM.PARAM.Network.NWK_ADDRESS, 3);
                     } catch {
                         debug("Error");
                     }
-
-                    //todo
-                    //this.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, 0xaffe);
-                    //this.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
 
                     this.initialized = true;
                     resolve();
@@ -108,21 +109,87 @@ class Driver extends events.EventEmitter {
     private readParameterRequest(parameterId: number, seqNumber: number) : Promise<void> {
         return new Promise((resolve, reject): void => {
             debug(`push read parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId}`);
-            const ts = Date.now();
-            const req: Request = {parameterId, seqNumber, resolve, reject, ts};
+            const ts = 0;
+            const commandId = PARAM.PARAM.FrameType.ReadParameter;
+            const req: Request = {commandId, parameterId, seqNumber, resolve, reject, ts};
+            queue.push(req);
+        });
+    }
+
+    private writeParameterRequest(parameterId: number, parameter: parameterT, seqNumber: number) : Promise<void> {
+        return new Promise((resolve, reject): void => {
+            debug(`push write parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId} parameter: ${parameter}`);
+            const ts = 0;
+            const commandId = PARAM.PARAM.FrameType.WriteParameter;
+            const req: Request = {commandId, parameterId, parameter, seqNumber, resolve, reject, ts};
             queue.push(req);
         });
     }
 
     private sendReadParameterRequest(parameterId: number, seqNumber: number) {
-        // command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id
+        /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id */
         const requestFrame = [PARAM.PARAM.FrameType.ReadParameter, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, parameterId];
         this.sendRequest(requestFrame);
+    }
+
+    private sendWriteParameterRequest(parameterId: number, parameter: parameterT, seqNumber: number) {
+        /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, pameter */
+        const parameterLength = this.getLengthOfParameter(parameterId);
+        debug("parameter: " + parameter.toString(16) + " length: " + parameterLength);
+
+        const payloadLength = 1 + parameterLength;
+        const frameLength = 7 + payloadLength;
+
+        const fLength1 = frameLength & 0xff;
+        const fLength2 = frameLength >> 8;
+
+        const pLength1 = payloadLength & 0xff;
+        const pLength2 = payloadLength >> 8;
+
+        const requestframe = [PARAM.PARAM.FrameType.WriteParameter, seqNumber, 0x00, fLength1, fLength2, pLength1, pLength2, parameterId].concat(this.parameterBuffer(parameter, parameterLength));
+        this.sendRequest(requestframe);
+
+    }
+
+    private getLengthOfParameter(parameterId: number) : number {
+        switch (parameterId) {
+            case 9: case 16: case 21: case 28: case 36:
+                return 1;
+            case 5: case 7: case 34:
+                return 2;
+            case 10: case 38:
+                return 4;
+            case 1: case 8: case 11: case 14:
+                return 8;
+            case 24: case 25:
+                return 16;
+            default:
+                return 0;
+        }
+    }
+
+    private parameterBuffer(parameter: parameterT, parameterLength: number) : Array<number> {
+        const paramArray = new Array();
+
+        if (typeof parameter === 'number') {
+            // for parameter <= 4 Byte
+            if (parameterLength > 4)
+                throw new Error("parameter to big for type number");
+
+            for (let i = 0; i < parameterLength; i++) {
+                paramArray[i] = (parameter >> (8 * i)) & 0xff;
+            }
+        } else {
+            return parameter.reverse();
+        }
+
+        return paramArray;
     }
 
     private sendRequest(buffer: number[]) {
         const crc = this.calcCrc(Buffer.from(buffer));
         const frame = Buffer.from([0xc0].concat(buffer).concat([crc[0], crc[1], 0xc0]));
+        debug(frame);
         this.serialPort.write(frame);
     }
 
@@ -135,9 +202,23 @@ class Driver extends events.EventEmitter {
             return;
         }
         const req: Request = queue.shift();
-        debug(`send request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId}`);
+        req.ts = Date.now();
+
+        switch (req.commandId) {
+            case PARAM.PARAM.FrameType.ReadParameter:
+                debug(`send read parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId}`);
+                this.sendReadParameterRequest(req.parameterId, req.seqNumber);
+                break;
+            case PARAM.PARAM.FrameType.WriteParameter:
+                debug(`send write parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId} param: ${req.parameter}`);
+                this.sendWriteParameterRequest(req.parameterId, req.parameter, req.seqNumber);
+                break;
+            default:
+                throw new Error("process queue - unknown command id");
+                break;
+        }
+
         busyQueue.push(req);
-        this.sendReadParameterRequest(req.parameterId, req.seqNumber);
     }
 
     private processBusyQueue() {
@@ -153,23 +234,6 @@ class Driver extends events.EventEmitter {
                 req.reject("TIMEOUT");
             }
         }
-    }
-
-    //todo
-    private writeParameterRequest(parameterId: number, parameter: number) : boolean {
-        /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, pameter */
-        let parameterLength = parameter.toString(16).length;
-        let payloadLength = 1 + parameterLength;
-        let frameLength = 7 + payloadLength;
-        const requestframe = [PARAM.PARAM.FrameType.WriteParameter, 0x01, 0x00, frameLength, 0x00, payloadLength, 0x00, parameterId, parameter];
-        console.log("request write Parameter " + parameterId + ": " + parameter);
-        //console.log("parameter length: " + parameterLength);
-        const crc = this.calcCrc(Buffer.from(requestframe));
-        console.log("CRC: " + crc[0].toString(16) + ", " + crc[1].toString(16));
-        const k = Buffer.from([0xc0].concat(requestframe).concat([crc[0], crc[1], 0xc0]));
-        //console.log(k);
-        this.serialPort.write(k);
-        return true;
     }
 
     private calcCrc(buffer: Uint8Array) : Array<number>{

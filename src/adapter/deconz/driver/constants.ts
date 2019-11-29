@@ -15,13 +15,17 @@ const PARAM: {
 }
 
 interface Request {
+    commandId?: number;
     parameterId?: number;
+    parameter?: parameterT;
     seqNumber?: number;
     resolve?: Function;
     reject?: Function;
     ts?: number;
 }
 
-export { Request };
+type parameterT = number | number[];
+
+export { Request, parameterT };
 
 export default {PARAM};
