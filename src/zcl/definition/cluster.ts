@@ -2005,6 +2005,25 @@ const Cluster: {
                     {name: 'starthue', type: DataType.uint16},
                 ],
             },
+            moveColorTemp: {
+                ID: 75,
+                parameters: [
+                    {name: 'movemode', type: DataType.uint8},
+                    {name: 'rate', type: DataType.uint16},
+                    {name: 'minimum', type: DataType.uint16},
+                    {name: 'maximum', type: DataType.uint16},
+                ],
+            },
+            stepColorTemp: {
+                ID: 76,
+                parameters: [
+                    {name: 'stepmode', type: DataType.uint8},
+                    {name: 'stepsize', type: DataType.uint16},
+                    {name: 'transtime', type: DataType.uint16},
+                    {name: 'minimum', type: DataType.uint16},
+                    {name: 'maximum', type: DataType.uint16},
+                ],
+            },
         },
         commandsResponse: {
         },
