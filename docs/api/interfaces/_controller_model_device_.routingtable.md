@@ -18,4 +18,4 @@
 
 • **table**: *object[]*
 
-*Defined in [controller/model/device.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L19)*
+*Defined in [src/controller/model/device.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L19)*

@@ -2005,6 +2005,25 @@ const Cluster: {
                     {name: 'starthue', type: DataType.uint16},
                 ],
             },
+            moveColorTemp: {
+                ID: 75,
+                parameters: [
+                    {name: 'movemode', type: DataType.uint8},
+                    {name: 'rate', type: DataType.uint16},
+                    {name: 'minimum', type: DataType.uint16},
+                    {name: 'maximum', type: DataType.uint16},
+                ],
+            },
+            stepColorTemp: {
+                ID: 76,
+                parameters: [
+                    {name: 'stepmode', type: DataType.uint8},
+                    {name: 'stepsize', type: DataType.uint16},
+                    {name: 'transtime', type: DataType.uint16},
+                    {name: 'minimum', type: DataType.uint16},
+                    {name: 'maximum', type: DataType.uint16},
+                ],
+            },
         },
         commandsResponse: {
         },
@@ -3373,13 +3392,58 @@ const Cluster: {
         commandsResponse: {
         },
     },
-    lightLink: {
+    touchlink: {
         ID: 4096,
         attributes: {
         },
         commands: {
+            scanRequest: {
+                ID: 0,
+                response: 1,
+                parameters: [
+                    {name: 'transactionID', type: DataType.uint32},
+                    {name: 'zigbeeInformation', type: DataType.bitmap8},
+                    {name: 'touchlinkInformation', type: DataType.bitmap8},
+                ],
+            },
+            identifyRequest: {
+                ID: 6,
+                parameters: [
+                    {name: 'transactionID', type: DataType.uint32},
+                    {name: 'duration', type: DataType.uint16},
+                ],
+            },
+            resetToFactoryNew: {
+                ID: 7,
+                parameters: [
+                    {name: 'transactionID', type: DataType.uint32},
+                ],
+            },
         },
         commandsResponse: {
+            scanResponse: {
+                ID: 1,
+                parameters: [
+                    {name: 'transactionID', type: DataType.uint32},
+                    {name: 'rssiCorrection', type: DataType.uint8},
+                    {name: 'zigbeeInformation', type: DataType.uint8},
+                    {name: 'touchlinkInformation', type: DataType.uint8},
+                    {name: 'keyBitmask', type: DataType.uint16},
+                    {name: 'responseID', type: DataType.uint32},
+                    {name: 'extendedPanID', type: DataType.ieeeAddr},
+                    {name: 'networkUpdateID', type: DataType.uint8},
+                    {name: 'logicalChannel', type: DataType.uint8},
+                    {name: 'panID', type: DataType.uint16},
+                    {name: 'networkAddress', type: DataType.uint16},
+                    {name: 'numberOfSubDevices', type: DataType.uint8},
+                    {name: 'totalGroupIdentifiers', type: DataType.uint8},
+                    {name: 'endpointID', type: DataType.uint8},
+                    {name: 'profileID', type: DataType.uint16},
+                    {name: 'deviceID', type: DataType.uint16},
+                    {name: 'version', type: DataType.uint8},
+                    {name: 'groupIdentifierCount', type: DataType.uint8},
+                ],
+            },
         },
     },
     manuSpecificClusterAduroSmart: {

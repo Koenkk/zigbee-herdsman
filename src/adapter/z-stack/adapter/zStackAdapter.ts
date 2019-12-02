@@ -33,7 +33,7 @@ interface WaitFor {
 }
 
 interface WaitressMatcher {
-    networkAddress: number;
+    address: number | string;
     endpoint: number;
     transactionSequenceNumber: number;
     frameType: FrameType;
@@ -224,7 +224,7 @@ class ZStackAdapter extends Adapter {
             const defaultResponse = !zclFrame.Header.frameControl.disableDefaultResponse ?
                 this.waitDefaultResponse(networkAddress, endpoint, zclFrame, defaultResponseTimeout) : null;
             const responsePayload = {
-                networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
+                address: networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
                 clusterID: zclFrame.Cluster.ID, frameType: zclFrame.Header.frameControl.frameType,
                 direction: Direction.SERVER_TO_CLIENT, commandIdentifier: command.response,
             };
@@ -283,8 +283,8 @@ class ZStackAdapter extends Adapter {
     public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
-                Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 1, zclFrame.Cluster.ID,
-                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), timeout, 0
+                Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 0, 1, zclFrame.Cluster.ID,
+                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), timeout, 0, true
             );
 
             /**
@@ -497,7 +497,7 @@ class ZStackAdapter extends Adapter {
                     try {
                         const payload: Events.ZclDataPayload = {
                             frame: ZclFrame.fromBuffer(object.payload.clusterid, object.payload.data),
-                            networkAddress: object.payload.srcaddr,
+                            address: object.payload.srcaddr,
                             endpoint: object.payload.srcendpoint,
                             linkquality: object.payload.linkquality,
                             groupID: object.payload.groupid,
@@ -509,7 +509,7 @@ class ZStackAdapter extends Adapter {
                         const payload: Events.RawDataPayload = {
                             clusterID: object.payload.clusterid,
                             data: object.payload.data,
-                            networkAddress: object.payload.srcaddr,
+                            address: object.payload.srcaddr,
                             endpoint: object.payload.srcendpoint,
                             linkquality: object.payload.linkquality,
                             groupID: object.payload.groupid,
@@ -536,6 +536,68 @@ class ZStackAdapter extends Adapter {
 
     public async backup(): Promise<BackupType> {
         return Backup(this.znp);
+    }
+
+    public async setChannelInterPAN(channel: number): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [channel]});
+
+            // Make sure that endpoint 12 is registered to proxy the InterPAN messages.
+            await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 2, data: [12]});
+        });
+    }
+
+    public async sendZclFrameInterPANIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            await this.dataRequestExtended(
+                Constants.COMMON.addressMode.ADDR_64BIT, ieeeAddr, 0xFE, 0xFFFF,
+                12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
+            );
+        });
+    }
+
+    public async sendZclFrameInterPANBroadcastWithResponse(
+        zclFrame: ZclFrame, timeout: number
+    ): Promise<Events.ZclDataPayload> {
+        return this.queue.execute<Events.ZclDataPayload>(async () => {
+            const command = zclFrame.getCommand();
+            if (!command.hasOwnProperty('response')) {
+                throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
+            }
+
+            const responsePayload: WaitressMatcher = {
+                address: null, endpoint: 0xFE, transactionSequenceNumber: null,
+                clusterID: zclFrame.Cluster.ID, frameType: zclFrame.Header.frameControl.frameType,
+                direction: Direction.SERVER_TO_CLIENT, commandIdentifier: command.response,
+            };
+            const response = this.waitress.waitFor(responsePayload, timeout);
+
+            try {
+                await this.dataRequestExtended(
+                    Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFF, 0xFE, 0xFFFF,
+                    12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
+                );
+            } catch (error) {
+                this.waitress.remove(response.ID);
+                throw error;
+            }
+
+            return response.promise;
+        });
+    }
+
+    public async restoreChannelInterPAN(): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 0, data: []});
+            // Give adapter some time to restore, otherwise stuff crashes
+            await Wait(1000);
+        });
+    }
+
+    public async setTransmitPower(value: number): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value});
+        });
     }
 
     /**
@@ -585,18 +647,20 @@ class ZStackAdapter extends Adapter {
     };
 
     private async dataRequestExtended(
-        addressMode: number, destinationAddressOrGroupID: number, destinationEndpoint: number,
+        addressMode: number, destinationAddressOrGroupID: number | string, destinationEndpoint: number, panID: number,
         sourceEndpoint: number, clusterID: number, radius: number, data: Buffer, timeout: number, attempt: number,
+        confirmation: boolean
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
-        const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout);
+        const response = confirmation ?
+            this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout) : null;
 
         try {
             await this.znp.request(Subsystem.AF, 'dataRequestExt', {
                 dstaddrmode: addressMode,
                 dstaddr: this.toAddressString(destinationAddressOrGroupID),
                 destendpoint: destinationEndpoint,
-                dstpanid: 0,
+                dstpanid: panID,
                 srcendpoint: sourceEndpoint,
                 clusterid: clusterID,
                 transid: transactionID,
@@ -606,28 +670,33 @@ class ZStackAdapter extends Adapter {
                 data: data,
             });
         } catch (error) {
-            this.znp.removeWaitFor(response.ID);
+            if (confirmation) {
+                this.znp.removeWaitFor(response.ID);
+            }
+
             throw error;
         }
 
-        const dataConfirm = await response.promise;
-        if (dataConfirm.payload.status !== 0) {
-            if (dataConfirm.payload.status === 225 && attempt === 0) {
-                /**
-                 * When many commands at once are executed we can end up in a MAC channel access failure
-                 * error (225). This is because there is too much traffic on the network.
-                 * Retry this command once after a cooling down period.
-                 */
-                return this.dataRequestExtended(
-                    addressMode, destinationAddressOrGroupID, destinationEndpoint, sourceEndpoint, clusterID,
-                    radius, data, timeout, 1
-                );
-            } else {
-                throw new DataConfirmError(dataConfirm.payload.status);
+        if (confirmation) {
+            const dataConfirm = await response.promise;
+            if (dataConfirm.payload.status !== 0) {
+                if (dataConfirm.payload.status === 225 && attempt === 0) {
+                    /**
+                     * When many commands at once are executed we can end up in a MAC channel access failure
+                     * error (225). This is because there is too much traffic on the network.
+                     * Retry this command once after a cooling down period.
+                     */
+                    return this.dataRequestExtended(
+                        addressMode, destinationAddressOrGroupID, destinationEndpoint, panID, sourceEndpoint, clusterID,
+                        radius, data, timeout, 1, confirmation,
+                    );
+                } else {
+                    throw new DataConfirmError(dataConfirm.payload.status);
+                }
             }
-        }
 
-        return dataConfirm;
+            return dataConfirm;
+        }
     };
 
     private nextTransactionID(): number {
@@ -658,7 +727,7 @@ class ZStackAdapter extends Adapter {
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
     ): WaitFor {
         const payload = {
-            networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
+            address: networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
             clusterID: zclFrame.Cluster.ID, frameType: FrameType.GLOBAL, direction: Direction.SERVER_TO_CLIENT,
             commandIdentifier: Foundation.defaultRsp.ID,
         };
@@ -667,14 +736,16 @@ class ZStackAdapter extends Adapter {
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
-        return `Timeout - ${matcher.networkAddress} - ${matcher.endpoint}` +
+        return `Timeout - ${matcher.address} - ${matcher.endpoint}` +
             ` - ${matcher.transactionSequenceNumber} - ${matcher.clusterID}` +
             ` - ${matcher.commandIdentifier} after ${timeout}ms`;
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        return payload.networkAddress === matcher.networkAddress && payload.endpoint === matcher.endpoint &&
-            payload.frame.Header.transactionSequenceNumber === matcher.transactionSequenceNumber &&
+        const transactionSequenceNumber = payload.frame.Header.transactionSequenceNumber;
+        return (!matcher.address || payload.address === matcher.address) &&
+            payload.endpoint === matcher.endpoint &&
+            (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
             payload.frame.Cluster.ID === matcher.clusterID &&
             matcher.frameType === payload.frame.Header.frameControl.frameType &&
             matcher.commandIdentifier === payload.frame.Header.commandIdentifier &&

@@ -25,7 +25,7 @@ interface DeviceLeavePayload {
 }
 
 interface ZclDataPayload {
-    networkAddress: number;
+    address: number | string;
     frame: ZclFrame;
     endpoint: number;
     linkquality: number;
@@ -34,7 +34,7 @@ interface ZclDataPayload {
 
 interface RawDataPayload {
     clusterID: number;
-    networkAddress: number;
+    address: number | string;
     data: Buffer;
     endpoint: number;
     linkquality: number;

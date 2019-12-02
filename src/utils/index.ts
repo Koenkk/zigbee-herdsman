@@ -5,7 +5,9 @@ import Queue from './queue';
 import Waitress from './waitress';
 import EqualsPartial from './equalsPartial';
 import RealpathSync from './realpathSync';
+import AssertString from './assertString';
 
 export {
     Wait, IsNumberArray, ArraySplitChunks, Queue, Waitress, EqualsPartial, RealpathSync,
+    AssertString,
 };

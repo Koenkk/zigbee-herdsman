@@ -23,4 +23,4 @@
 
 • **debug**: *Debugger* =  Debug('zigbee-herdsman:controller:device')
 
-*Defined in [controller/model/device.ts:9](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L9)*
+*Defined in [src/controller/model/device.ts:9](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L9)*

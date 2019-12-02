@@ -19,6 +19,26 @@ const mockZnpClose = jest.fn();
 const mockZnpRemoveWaitFor = jest.fn();
 const mockQueueExecute = jest.fn().mockImplementation(async (func) => await func());
 
+const touchlinkScanRequest = Zcl.ZclFrame.create(
+    Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false,
+    null, 12, 'scanRequest', Zcl.Utils.getCluster('touchlink').ID,
+    {transactionID: 1, zigbeeInformation: 4, touchlinkInformation: 18}
+);
+
+const touchlinkScanResponse = Zcl.ZclFrame.create(
+    Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, false,
+    null, 12, 'scanResponse', Zcl.Utils.getCluster('touchlink').ID,
+    {transactionID: 1, rssiCorrection: 10, zigbeeInformation: 5, touchlinkInformation: 6, keyBitmask: 12, responseID: 11,
+     extendedPanID: '0x0017210104d9cd33', networkUpdateID: 1, logicalChannel: 12, panID: 13, networkAddress: 5, numberOfSubDevices: 10,
+     totalGroupIdentifiers: 5, endpointID: 1, profileID: 99, deviceID: 101, version: 3, groupIdentifierCount: 8 }
+);
+
+const touchlinkIdentifyRequest = Zcl.ZclFrame.create(
+    Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false,
+    null, 12, 'identifyRequest', Zcl.Utils.getCluster('touchlink').ID,
+    {transactionID: 1, duration: 65535}
+);
+
 const mocks = [mockZnpOpen, mockZnpWaitfor, mockZnpRequest, mockZnpClose, mockZnpRemoveWaitFor];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
@@ -103,6 +123,8 @@ const basicMocks = () => {
             return {};
         } else if (subsystem === Subsystem.SYS && command === 'resetReq') {
             return {};
+        } else if (subsystem === Subsystem.SYS && command === 'stackTune') {
+            return {};
         } else if (subsystem === Subsystem.UTIL && command === 'ledControl') {
             return {};
         } else if (subsystem === Subsystem.ZDO && command === 'nodeDescReq') {
@@ -131,6 +153,8 @@ const basicMocks = () => {
             return {};
         } else if (subsystem === Subsystem.ZDO && command === 'mgmtLeaveReq') {
             return {};
+        } else if (subsystem === Subsystem.AF && command === 'interPanCtl') {
+            return {};
         } else {
             missing();
         }
@@ -144,7 +168,7 @@ const basicMocks = () => {
         }
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
+            return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12]}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return {promise: {payload: {}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'simpleDescRsp') {
@@ -379,7 +403,74 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(110);
         expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(33);
+        expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[33][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(34);
+    });
+
+    it('Start zStack 3.x.0 initialize fails because of state change timeout', async () => {
+        mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
+            const missing = () => {
+                const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
+                console.log(msg)
+                throw new Error(msg);
+            }
+
+            if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
+                return {payload: {product: 1}};
+            } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
+                if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
+                    return {payload: {value: Buffer.from([0x55])}};
+                } else if (equalsPartial(payload, {id: NvItemsIds.CHANLIST, offset: 0})) {
+                    return {payload: {value: Buffer.from([0,8,0,0])}};
+                } else if (equalsPartial(payload, {id: NvItemsIds.PRECFGKEYS_ENABLE, offset: 0})) {
+                    return {payload: {value: Buffer.from([0])}};
+                } else if (equalsPartial(payload, {id: NvItemsIds.PRECFGKEY, offset: 0})) {
+                    // This one is invalid
+                    return {payload: {value: Buffer.from([1, 2])}};
+                } else {
+                    missing();
+                }
+            } else if (subsystem === Subsystem.UTIL && command === 'getDeviceInfo') {
+                return {payload: {devicestate: Constants.COMMON.devStates.ZB_COORD}};
+            } else if (subsystem === Subsystem.ZDO && command === 'activeEpReq') {
+                return {};
+            } else if (subsystem === Subsystem.AF && command === 'register') {
+                return {};
+            } else if (subsystem === Subsystem.SYS && command === 'resetReq') {
+                return {};
+            } else if (subsystem === Subsystem.SYS && command === 'osalNvWrite') {
+                return {};
+            } else if (subsystem === Subsystem.APP_CNF && command === 'bdbSetChannel') {
+                return {};
+            } else if (subsystem === Subsystem.APP_CNF && command === 'bdbStartCommissioning') {
+                return {};
+            } else if (subsystem === Subsystem.SYS && command === 'osalNvItemInit') {
+                return {};
+            } else {
+                missing();
+            }
+        });
+
+        mockZnpWaitfor.mockImplementation((type, subsystem, command, payload) => {
+            const missing = () => {
+                const msg = `Not implemented - ${Type[type]} - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
+                console.log(msg)
+                throw new Error(msg);
+            }
+
+            if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
+                return {promise: new Promise((resolve, reject) => {reject('timeout')})};
+            } else {
+                missing();
+            }
+        });
+
+        let error;
+        try {await adapter.start()} catch (e) {error = e}
+
+        expect(error).toStrictEqual(new Error('Coordinator failed to start, probably the panID is already in use, try a different panID or channel'))
     });
 
     it('Start zStack 1.2 initialize - already configured; extended pan id mismatch -> should be reset', async () => {
@@ -711,7 +802,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(110);
         expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(33);
+        expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[33][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(34);
     });
 
     it('Start zStack 3.x.0 resume', async () => {
@@ -807,7 +901,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(110);
         expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(13);
+        expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(14);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -904,7 +1001,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(110);
         expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(13);
+        expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(14);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -1018,7 +1118,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {activeeplist: []}}};
             } else {
@@ -1117,7 +1217,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {activeeplist: []}}};
             } else {
@@ -1372,7 +1472,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {}}};
             } else {
@@ -1462,7 +1562,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {}}};
             } else {
@@ -1598,6 +1698,17 @@ describe('zStackAdapter', () => {
                 "outputClusters":[
                    9
                 ]
+             },
+             {
+                "ID":12,
+                "profileID": 124,
+                "deviceID":7,
+                "inputClusters":[
+                   8
+                ],
+                "outputClusters":[
+                   9
+                ]
              }
             ]
          };
@@ -1636,6 +1747,15 @@ describe('zStackAdapter', () => {
         await adapter.reset('hard');
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'resetReq', {type: 0});
+    });
+
+    it('Set transmit power', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        await adapter.setTransmitPower(15);
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 15});
     });
 
     it('Disable led', async () => {
@@ -1694,7 +1814,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.activeEndpoints(3);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(3);
-        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,11, 110]})
+        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,11,110,12]})
     });
 
     it('Simple descriptor', async () => {
@@ -1903,7 +2023,7 @@ describe('zStackAdapter', () => {
         expect(result.endpoint).toStrictEqual(20);
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
-        expect(result.networkAddress).toStrictEqual(2);
+        expect(result.address).toStrictEqual(2);
         expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
     });
 
@@ -1941,7 +2061,7 @@ describe('zStackAdapter', () => {
         expect(result.endpoint).toStrictEqual(20);
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
-        expect(result.networkAddress).toStrictEqual(2);
+        expect(result.address).toStrictEqual(2);
         expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
     });
 
@@ -2132,7 +2252,7 @@ describe('zStackAdapter', () => {
         expect(zclData.endpoint).toStrictEqual(20);
         expect(zclData.groupID).toStrictEqual(12);
         expect(zclData.linkquality).toStrictEqual(101);
-        expect(zclData.networkAddress).toStrictEqual(2);
+        expect(zclData.address).toStrictEqual(2);
         expect(deepClone(zclData.frame)).toStrictEqual(deepClone(responseFrame));
     });
 
@@ -2147,7 +2267,7 @@ describe('zStackAdapter', () => {
         expect(rawData.endpoint).toStrictEqual(20);
         expect(rawData.groupID).toStrictEqual(12);
         expect(rawData.linkquality).toStrictEqual(101);
-        expect(rawData.networkAddress).toStrictEqual(2);
+        expect(rawData.address).toStrictEqual(2);
         expect(rawData.data).toStrictEqual(Buffer.from([0x0, 0x01]));
     });
 
@@ -2218,5 +2338,67 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extNwkInfo', {});
         expect(result).toStrictEqual({channel: 12, extendedPanID: 10, panID: 20});
+    });
+
+    it('Set interpan channel', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        const result = await adapter.setChannelInterPAN(14);
+        expect(mockZnpRequest).toBeCalledTimes(2);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [14]});
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 2, data: [12]});
+    });
+
+    it('Restore interpan channel', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        const result = await adapter.restoreChannelInterPAN();
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 0, data: []});
+    });
+
+    it('Send zcl frame interpan', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        const result = await adapter.sendZclFrameInterPANIeeeAddr(touchlinkIdentifyRequest, '0x0017880104c9cd33');
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 4096, "data": touchlinkIdentifyRequest.toBuffer(), "destendpoint": 254, "dstaddr": '0x0017880104c9cd33', "len": 9, "options": 0, "radius": 30, "srcendpoint": 12, "transid": 1, "dstaddrmode": 3, "dstpanid": 65535})
+    });
+
+    it('Send zcl frame interpan with response', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsgExt', payload: {clusterid: 4096, srcendpoint: 0xFE, srcaddr: 12394, linkquality: 101, groupid: 0, data: touchlinkScanResponse.toBuffer()}};
+
+        let result = adapter.sendZclFrameInterPANBroadcastWithResponse(touchlinkScanRequest, 1000);
+        znpReceived(object);
+        result = await result;
+
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 4096, "data": touchlinkScanRequest.toBuffer(), "destendpoint": 254, "dstaddr": "0x000000000000ffff", "len": 9, "options": 0, "radius": 30, "srcendpoint": 12, "transid": 1, "dstaddrmode": 2, "dstpanid": 65535});
+        expect(deepClone(result)).toStrictEqual({"frame":{"Header":{"frameControl":{"frameType":1,"manufacturerSpecific":false,"direction":1,"disableDefaultResponse":false},"transactionSequenceNumber":12,"manufacturerCode":null,"commandIdentifier":1},"Payload":{"transactionID":1,"rssiCorrection":10,"zigbeeInformation":5,"touchlinkInformation":6,"keyBitmask":12,"responseID":11,"extendedPanID":"0x0017210104d9cd33","networkUpdateID":1,"logicalChannel":12,"panID":13,"networkAddress":5,"numberOfSubDevices":10,"totalGroupIdentifiers":5,"endpointID":1,"profileID":99,"deviceID":101,"version":3,"groupIdentifierCount":8},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}},"address":12394,"endpoint":254,"linkquality":101,"groupID":0});
+    });
+
+    it('Send zcl frame interpan with response throw exception when command has no response', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        let error;
+        try { await adapter.sendZclFrameInterPANBroadcastWithResponse(touchlinkIdentifyRequest, 1000)} catch (e) { error = e};
+        expect(error).toStrictEqual(new Error(`Command 'identifyRequest' has no response, cannot wait for response`))
+    });
+
+    it('Send zcl frame interpan with response throw exception data request fails', async () => {
+        basicMocks();
+        dataRequestExtCode = 99;
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        let error;
+        try { await adapter.sendZclFrameInterPANBroadcastWithResponse(touchlinkScanRequest, 1000)} catch (e) { error = e};
+        expect(error).toStrictEqual(new Error(`Data request failed with code '99'`))
     });
 });

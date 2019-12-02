@@ -28,7 +28,7 @@
     "debug": "^4.1.1",
     "fast-deep-equal": "^2.0.1",
     "mixin-deep": "^2.0.1",
-    "serialport": "8.0.1",
+    "serialport": "8.0.5",
     "slip": "^1.0.2"
   },
   "deprecated": false,
@@ -52,10 +52,10 @@
     "jest": "*",
     "regenerator-runtime": "*",
     "tmp": "*",
-    "typedoc": "^0.15.0",
-    "typedoc-plugin-markdown": "^2.2.7",
-    "typedoc-plugin-no-inherit": "^1.1.10",
-    "typedoc-plugin-sourcefile-url": "^1.0.4",
+    "typedoc": "*",
+    "typedoc-plugin-markdown": "*",
+    "typedoc-plugin-no-inherit": "*",
+    "typedoc-plugin-sourcefile-url": "*",
     "typescript": "*"
   },
   "homepage": "https://github.com/Koenkk/zigbee-herdsman",
@@ -79,7 +79,7 @@
     "eslint": "node_modules/.bin/eslint . --ext .ts",
     "docs": "typedoc --tsconfig typedoc-tsconfig.json"
   },
-  "version": "0.12.5",
+  "version": "0.12.15",
   "jest": {
     "coverageThreshold": {
       "global": {

@@ -193,7 +193,7 @@ const Definition: {
             type: CommandType.SREQ,
             request: [
                 {name: 'operation', parameterType: ParameterType.UINT8},
-                {name: 'value', parameterType: ParameterType.UINT8},
+                {name: 'value', parameterType: ParameterType.INT8},
             ],
             response: [
                 {name: 'value', parameterType: ParameterType.UINT8},
@@ -1166,7 +1166,7 @@ const Definition: {
                 {name: 'securityuse', parameterType: ParameterType.UINT8},
                 {name: 'timestamp', parameterType: ParameterType.UINT32},
                 {name: 'transseqnumber', parameterType: ParameterType.UINT8},
-                {name: 'len', parameterType: ParameterType.UINT8},
+                {name: 'len', parameterType: ParameterType.UINT16},
                 {name: 'data', parameterType: ParameterType.BUFFER},
             ],
         },

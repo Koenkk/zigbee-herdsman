@@ -200,7 +200,7 @@ class Endpoint extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number}[] = [];
         for (const attribute of attributes) {
-            payload.push({attrId: cluster.getAttribute(attribute).ID});
+            payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
         }
 
         const frame = Zcl.ZclFrame.create(

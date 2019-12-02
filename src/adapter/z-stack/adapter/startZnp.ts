@@ -49,6 +49,7 @@ const Endpoints = [
     },
     // TERNCY: https://github.com/Koenkk/zigbee-herdsman/issues/82
     {...EndpointDefaults, endpoint: 0x6E, appprofid: 0x0104},
+    {...EndpointDefaults, endpoint: 12, appprofid: 0xc05e},
 ];
 
 async function validateItem(
@@ -157,7 +158,14 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
         await znp.request(Subsystem.APP_CNF, 'bdbSetChannel', {isPrimary: 0x0, channel: 0x0});
         const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
         await znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x04});
-        await started.promise;
+        try {
+            await started.promise;
+        } catch (error) {
+            throw new Error(
+                'Coordinator failed to start, probably the panID is already in use, try a different panID or channel'
+            );
+        }
+
         await znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x02});
     } else {
         await znp.request(Subsystem.SAPI, 'writeConfiguration', Items.networkKey(options.networkKey));

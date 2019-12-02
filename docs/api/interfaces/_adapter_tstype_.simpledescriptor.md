@@ -22,7 +22,7 @@
 
 • **deviceID**: *number*
 
-*Defined in [adapter/tstype.ts:55](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/adapter/tstype.ts#L55)*
+*Defined in [src/adapter/tstype.ts:59](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L59)*
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 • **endpointID**: *number*
 
-*Defined in [adapter/tstype.ts:54](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/adapter/tstype.ts#L54)*
+*Defined in [src/adapter/tstype.ts:58](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L58)*
 
 ___
 
@@ -38,7 +38,7 @@ ___
 
 • **inputClusters**: *number[]*
 
-*Defined in [adapter/tstype.ts:56](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/adapter/tstype.ts#L56)*
+*Defined in [src/adapter/tstype.ts:60](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L60)*
 
 ___
 
@@ -46,7 +46,7 @@ ___
 
 • **outputClusters**: *number[]*
 
-*Defined in [adapter/tstype.ts:57](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/adapter/tstype.ts#L57)*
+*Defined in [src/adapter/tstype.ts:61](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L61)*
 
 ___
 
@@ -54,4 +54,4 @@ ___
 
 • **profileID**: *number*
 
-*Defined in [adapter/tstype.ts:53](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/adapter/tstype.ts#L53)*
+*Defined in [src/adapter/tstype.ts:57](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L57)*

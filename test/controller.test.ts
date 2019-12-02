@@ -16,6 +16,10 @@ Date.now = jest.fn()
 Date.now.mockReturnValue(new Date(150));
 
 const mockAdapterEvents = {};
+const mockSetChannelInterPAN = jest.fn();
+const mocksendZclFrameInterPANIeeeAddr = jest.fn();
+const mocksendZclFrameInterPANBroadcastWithResponse = jest.fn();
+const mockRestoreChannelInterPAN = jest.fn();
 const mockAdapterPermitJoin = jest.fn();
 const mockAdapterSupportsBackup = jest.fn().mockReturnValue(true);
 const mockAdapterReset = jest.fn();
@@ -23,6 +27,7 @@ const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockAdapterSetLED = jest.fn();
 const mockAdapterSupportsLED = jest.fn().mockReturnValue(true);
+const mockAdapterSetTransmitPower = jest.fn();
 const mockAdapterBind = jest.fn();
 const mockSendZclFrameGroup = jest.fn();
 const mockAdapterUnbind = jest.fn();
@@ -33,8 +38,10 @@ const mockSendZclFrameNetworkAddressWithResponse = jest.fn().mockImplementation(
         const payload = [];
         const cluster = frame.Cluster;
         for (const item of frame.Payload) {
-            const attribute = cluster.getAttribute(item.attrId).name;
-            payload.push({attrId: item.attrId, attrData: mockDevices[networkAddress].attributes[endpoint][attribute]})
+            if (item.attrId !== 65314) {
+                const attribute = cluster.getAttribute(item.attrId).name;
+                payload.push({attrId: item.attrId, attrData: mockDevices[networkAddress].attributes[endpoint][attribute]})
+            }
         }
 
         // @ts-ignore
@@ -73,7 +80,11 @@ const mockDevices = {
         nodeDescriptor: undefined,
     },
     150: {
+        nodeDescriptor: 'xiaomi_error',
+    },
+    151: {
         nodeDescriptor: 'xiaomi',
+        activeEndpoints: 'error',
     },
     160: {
         nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
@@ -140,21 +151,34 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             getNetworkParameters: () => {return {panID: 1, extendedPanID: 3, channel: 15}},
             setLED: mockAdapterSetLED,
             supportsLED: mockAdapterSupportsLED,
+            setTransmitPower: mockAdapterSetTransmitPower,
             nodeDescriptor: async (networkAddress) => {
-                if (mockDevices[networkAddress].nodeDescriptor === 'xiaomi') {
+                const descriptor = mockDevices[networkAddress].nodeDescriptor;
+                if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
                     await mockAdapterEvents['zclData']({
-                        networkAddress,
+                        address: networkAddress,
                         frame: mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'lumi.occupancy'}]),
                         endpoint: 1,
                         linkquality: 50,
                         groupID: 1,
                     });
-                    throw new Error('failed');
+
+                    if (descriptor.endsWith('error')) {
+                        throw new Error('failed');
+                    } else {
+                        return {type: 'EndDevice', manufacturerCode: 1219};
+                    }
                 } else {
-                    return mockDevices[networkAddress].nodeDescriptor;
+                    return descriptor;
                 }
             },
-            activeEndpoints: (networkAddress) => mockDevices[networkAddress].activeEndpoints,
+            activeEndpoints: (networkAddress) => {
+                if (mockDevices[networkAddress].activeEndpoints === 'error') {
+                    throw new Error('timeout');
+                } else {
+                    return mockDevices[networkAddress].activeEndpoints;
+                } 
+            },
             simpleDescriptor: (networkAddress, endpoint) => {
                 if (mockDevices[networkAddress].simpleDescriptor[endpoint] === undefined) {
                     throw new Error('Simple descriptor failed');
@@ -186,6 +210,10 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             },
             bind: mockAdapterBind,
             unbind: mockAdapterUnbind,
+            setChannelInterPAN: mockSetChannelInterPAN,
+            sendZclFrameInterPANIeeeAddr: mocksendZclFrameInterPANIeeeAddr,
+            sendZclFrameInterPANBroadcastWithResponse: mocksendZclFrameInterPANBroadcastWithResponse,
+            restoreChannelInterPAN: mockRestoreChannelInterPAN,
         };
     });
 });
@@ -312,6 +340,56 @@ describe('Controller', () => {
         expect(mockAdapterPermitJoin).toBeCalledWith(0);
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual({version: 'dummybackup'});
         expect(mockAdapterStop).toBeCalledTimes(1);
+    });
+
+    it('Touchlink factory reset', async () => {
+        await controller.start();
+        let counter = 0;
+        mocksendZclFrameInterPANBroadcastWithResponse.mockImplementation(() => {
+            counter++;
+            if (counter === 1) {
+                throw new Error('no response')
+            } else if (counter === 2) {
+                return {address: '0x123'};
+            }
+        });
+        const result = await controller.touchlinkFactoryReset();
+        expect(result).toBeTruthy();
+
+        expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(2);
+        expect(mockSetChannelInterPAN).toHaveBeenCalledWith(11);
+        expect(mockSetChannelInterPAN).toHaveBeenCalledWith(15);
+        expect(mocksendZclFrameInterPANBroadcastWithResponse).toHaveBeenCalledTimes(2);
+        expect(deepClone(mocksendZclFrameInterPANBroadcastWithResponse.mock.calls[0][0])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":0,"manufacturerCode":null,"commandIdentifier":0},"Payload":{"transactionID":1,"zigbeeInformation":4,"touchlinkInformation":18},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}});
+        expect(deepClone(mocksendZclFrameInterPANBroadcastWithResponse.mock.calls[1][0])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":0,"manufacturerCode":null,"commandIdentifier":0},"Payload":{"transactionID":1,"zigbeeInformation":4,"touchlinkInformation":18},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}});
+        expect(mockRestoreChannelInterPAN).toHaveBeenCalledTimes(2);
+        expect(mocksendZclFrameInterPANIeeeAddr).toHaveBeenCalledTimes(2);
+        expect(deepClone(mocksendZclFrameInterPANIeeeAddr.mock.calls[0][0])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":0,"manufacturerCode":null,"commandIdentifier":6},"Payload":{"transactionID":1,"duration":65535},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}});
+        expect(deepClone(mocksendZclFrameInterPANIeeeAddr.mock.calls[1][0])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":0,"manufacturerCode":null,"commandIdentifier":7},"Payload":{"transactionID":1},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}});
+    });
+
+    it('Controller should ignore touchlink messages', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['zclData']({
+            networkAddress: 129,
+            frame: Zcl.ZclFrame.create(
+                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, false,
+                null, 1, 'scanResponse', Zcl.Utils.getCluster('touchlink').ID,
+                {}
+            ),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.message.length).toBe(0);
+    });
+
+    it('Set transmit power', async () => {
+        await controller.start();
+        await controller.setTransmitPower(15);
+        expect(mockAdapterSetTransmitPower).toHaveBeenCalledWith(15);
     });
 
     it('Disable led', async () => {
@@ -600,7 +678,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['zclData']({
-            networkAddress: 129,
+            address: '0x129',
             frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
             endpoint: 1,
             linkquality: 50,
@@ -685,7 +763,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['rawData']({
             clusterID: 9,
-            networkAddress: 129,
+            address: 129,
             data: Buffer.from([0, 1, 2, 3]),
             frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
             endpoint: 1,
@@ -760,7 +838,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['rawData']({
             clusterID: 99999999,
-            networkAddress: 129,
+            address: 129,
             data: Buffer.from([0, 1, 2, 3]),
             frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
             endpoint: 1,
@@ -848,7 +926,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['zclData']({
-            networkAddress: 129,
+            address: 129,
             frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from([8, 1, 1, 1, 0, 0, 32, 3])),
             endpoint: 3,
             linkquality: 52,
@@ -947,7 +1025,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['zclData']({
-            networkAddress: 129,
+            address: 129,
             frame: ZclFrame.fromBuffer(5, Buffer.from([0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00])),
             endpoint: 1,
             linkquality: 19,
@@ -1039,7 +1117,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddress.mockClear();
         await mockAdapterEvents['zclData']({
-            networkAddress: 129,
+            address: 129,
             frame: ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1}),
             endpoint: 1,
             linkquality: 19,
@@ -1064,7 +1142,7 @@ describe('Controller', () => {
         mockSendZclFrameNetworkAddress.mockClear();
         mockSendZclFrameNetworkAddress.mockRejectedValueOnce("");
         await mockAdapterEvents['zclData']({
-            networkAddress: 129,
+            address: 129,
             frame: ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1}),
             endpoint: 1,
             linkquality: 19,
@@ -1079,7 +1157,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddress.mockClear();
         await mockAdapterEvents['zclData']({
-            networkAddress: 129,
+            address: 129,
             frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}]),
             endpoint: 1,
             linkquality: 19,
@@ -1112,7 +1190,7 @@ describe('Controller', () => {
         mockSendZclFrameNetworkAddress.mockClear();
         mockSendZclFrameNetworkAddress.mockRejectedValueOnce("");
         await mockAdapterEvents['zclData']({
-            networkAddress: 129,
+            address: 129,
             frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}]),
             endpoint: 1,
             linkquality: 19,
@@ -1122,7 +1200,7 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddress).toBeCalledTimes(1);
     });
 
-    it('Xiaomi end device joins', async () => {
+    it('Xiaomi end device joins (node descriptor fails)', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 150, ieeeAddr: '0x150'});
         expect(events.deviceInterview.length).toBe(2);
@@ -1169,12 +1247,59 @@ describe('Controller', () => {
         );
     });
 
+    it('Xiaomi end device joins (node descriptor succeeds, but active endpoint response fails)', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 151, ieeeAddr: '0x151'});
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe('started')
+        expect(events.deviceInterview[0].device.ieeeAddr).toBe('0x151')
+        expect(events.deviceInterview[1].status).toBe('successful')
+        expect(events.deviceInterview[1].device.ieeeAddr).toBe('0x151')
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x151'))).toStrictEqual(
+            {
+                "ID":2,
+                "ieeeAddr":"0x151",
+                "_networkAddress":151,
+                "_lastSeen": deepClone(Date.now()),
+                "_endpoints":[
+                   {
+                      "ID":1,
+                      "clusters": {
+                          "genBasic": {
+                            "attributes": {
+                              "modelId": "lumi.occupancy",
+                            },
+                          },
+                      },
+                      "inputClusters":[
+
+                      ],
+                      "outputClusters":[
+
+                      ],
+                      "deviceNetworkAddress":151,
+                      "deviceIeeeAddress":"0x151",
+                      "_binds": [],
+                   }
+                ],
+                "_type":"EndDevice",
+                "_manufacturerID":4151,
+                "_manufacturerName":"LUMI",
+                "meta": {},
+                "_powerSource":"Battery",
+                "_modelID":"lumi.occupancy",
+                "_interviewCompleted":true,
+                "_interviewing":false
+             }
+        );
+    });
+
     it('Receive zclData report from unkown attribute', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const buffer = [28,95,17,3,10,5,0,66,21,108,117,109,105,46,115,101,110,115,111,114,95,119,108,101,97,107,46,97,113,49,1,255,66,34,1,33,213,12,3,40,33,4,33,168,19,5,33,43,0,6,36,0,0,5,0,0,8,33,4,2,10,33,0,0,100,16,0];
         await mockAdapterEvents['zclData']({
-            networkAddress: 129,
+            address: 129,
             frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer)),
             endpoint: 1,
             linkquality: 50,
@@ -1648,6 +1773,38 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(0);
     });
 
+    it('Read from endpoint with string', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        mockSendZclFrameNetworkAddressWithResponse.mockClear();
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        await endpoint.read('genBasic', ['stackVersion']);
+        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(1);
+        const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
+        expect(call[0]).toBe(129);
+        expect(call[1]).toBe(1);
+        expect(deepClone(call[2])).toStrictEqual({"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":5,"manufacturerCode":null,"commandIdentifier":0},"Payload":[{"attrId":2}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"}},"commandsResponse":{}}});
+        expect(call[3]).toBe(10000);
+        expect(call[4]).toBe(15000);
+    });
+
+    it('Read from endpoint unknown attribute with options', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        mockSendZclFrameNetworkAddressWithResponse.mockClear();
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        await endpoint.read('genBasic', [0xFF22], {manufacturerCode: 0x115F, disableDefaultResponse: true});
+        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(1);
+        const call = mockSendZclFrameNetworkAddressWithResponse.mock.calls[0];
+        expect(call[0]).toBe(129);
+        expect(call[1]).toBe(1);
+        expect(deepClone(call[2])).toStrictEqual({"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":5,"manufacturerCode":4447,"commandIdentifier":0},"Payload":[{"attrId":65314}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"}},"commandsResponse":{}}});
+        expect(call[3]).toBe(10000);
+        expect(call[4]).toBe(15000);
+    });
+
     it('Configure reporting endpoint custom attributes', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -1749,7 +1906,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['zclData']({
-            networkAddress: 129,
+            address: 129,
             frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
             endpoint: 1,
             linkquality: 50,
@@ -1759,6 +1916,16 @@ describe('Controller', () => {
         const endpoint = device.endpoints[0];
         expect(endpoint.getClusterAttributeValue('msOccupancySensing', 'occupancy')).toBe(1);
         expect(endpoint.getClusterAttributeValue('genBasic', 'modelId')).toBeNull();
+
+        await mockAdapterEvents['zclData']({
+            address: 129,
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,0])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(endpoint.getClusterAttributeValue('msOccupancySensing', 'occupancy')).toBe(0);
     });
 
 

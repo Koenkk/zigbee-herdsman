@@ -118,6 +118,18 @@ abstract class Adapter extends events.EventEmitter {
     public abstract backup(): Promise<TsType.Backup>;
 
     public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
+
+    public abstract setChannelInterPAN(channel: number): Promise<void>;
+
+    public abstract sendZclFrameInterPANIeeeAddr(zclFrame: ZclFrame, ieeeAddress: string): Promise<void>;
+
+    public abstract sendZclFrameInterPANBroadcastWithResponse(
+        zclFrame: ZclFrame, timeout: number
+    ): Promise<ZclDataPayload>;
+
+    public abstract restoreChannelInterPAN(): Promise<void>;
+
+    public abstract setTransmitPower(value: number): Promise<void>;
 }
 
 export default Adapter;

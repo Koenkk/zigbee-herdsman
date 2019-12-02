@@ -8,6 +8,7 @@ import {KeyValue, DeviceType} from './tstype';
 import Debug from "debug";
 import fs from 'fs';
 import {Utils as ZclUtils} from '../zcl';
+import Touchlink from './touchlink';
 
 // @ts-ignore
 import mixin from 'mixin-deep';
@@ -67,6 +68,7 @@ class Controller extends events.EventEmitter {
     private permitJoinTimer: any;
     // eslint-disable-next-line
     private backupTimer: any;
+    private touchlink: Touchlink;
 
     /**
      * Create a controller
@@ -136,6 +138,12 @@ class Controller extends events.EventEmitter {
         // Set backup timer to 1 day.
         await this.backup();
         this.backupTimer = setInterval(() => this.backup(), 86400000);
+
+        this.touchlink = new Touchlink(this.adapter);
+    }
+
+    public async touchlinkFactoryReset(): Promise<boolean> {
+        return this.touchlink.factoryReset();
     }
 
     public async permitJoin(permit: boolean): Promise<void> {
@@ -259,6 +267,13 @@ class Controller extends events.EventEmitter {
     }
 
     /**
+     *  Set transmit power of the adapter
+     */
+    public async setTransmitPower(value: number): Promise<void> {
+        return this.adapter.setTransmitPower(value);
+    }
+
+    /**
      *  Enable/Disable the LED
      */
     public async setLED(enabled: boolean): Promise<void> {
@@ -374,10 +389,17 @@ class Controller extends events.EventEmitter {
     ): Promise<void> {
         debug.log(`Received '${dataType}' data '${JSON.stringify(dataPayload)}'`);
 
-        const device = Device.byNetworkAddress(dataPayload.networkAddress);
+        if (this.isZclDataPayload(dataPayload, 'zcl') && dataPayload.frame &&
+            dataPayload.frame.Cluster.name === 'touchlink') {
+            // This is handled by touchlink
+            return;
+        }
+
+        const device = typeof dataPayload.address === 'string' ?
+            Device.byIeeeAddr(dataPayload.address) : Device.byNetworkAddress(dataPayload.address);
         if (!device) {
             debug.log(
-                `'${dataType}' data is from unknown device with network adress '${dataPayload.networkAddress}', ` +
+                `'${dataType}' data is from unknown device with address '${dataPayload.address}', ` +
                 `skipping...`
             );
             return;
@@ -389,7 +411,7 @@ class Controller extends events.EventEmitter {
         if (!endpoint) {
             debug.log(
                 `'${dataType}' data is from unknown endpoint '${dataPayload.endpoint}' from device with ` +
-                `network adress '${dataPayload.networkAddress}', creating it...`
+                `network address '${dataPayload.address}', creating it...`
             );
             endpoint = await device.createEndpoint(dataPayload.endpoint);
         }
