@@ -10,7 +10,8 @@ const PARAM: {
     },
     FrameType: {
         ReadParameter: 0x0a,
-        WriteParameter: 0x0b
+        WriteParameter: 0x0b,
+        ReadFirmwareVersion: 0x0d
     }
 }
 

@@ -82,7 +82,11 @@ class DeconzAdapter extends Adapter {
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
-        return null;
+        // product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string;
+        const fw = await this.driver.readFirmwareVersionRequest(1);
+        const type: string = (fw[1] === 5) ? "raspbee" : "conbee2";
+        const meta = {major: fw[3], minor: fw[2]}
+        return {type: type, meta: meta};
     }
 
     public async reset(type: 'soft' | 'hard'): Promise<void> {

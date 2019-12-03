@@ -34,11 +34,10 @@ function parseReadParameterResponse(view: DataView) : Command {
     }
 }
 
-//todo
-function parseReadFirmwareResponse(view : DataView) : Command {
-    const status = view.getUint8(2);
-    console.log("Read Firmware - status: " + status + " version: " + view.getUint32(5));
-    return null;
+function parseReadFirmwareResponse(view : DataView) : number[] {
+    const fw = [view.getUint8(5), view.getUint8(6), view.getUint8(7), view.getUint8(8)];
+    debug("read firmware version response - version: " + fw);
+    return fw;
 }
 
 function parseWriteParameterResponse(view : DataView) : number {
@@ -54,8 +53,8 @@ function getParserForCommandId(id: Number) : Function {
             return parseReadParameterResponse;
         case PARAM.PARAM.FrameType.WriteParameter:
             return parseWriteParameterResponse;
-        //case Constants.CMD_READ_FW_VERSION:
-        //  return parseReadFirmwareResponse;
+        case PARAM.PARAM.FrameType.ReadFirmwareVersion:
+            return parseReadFirmwareResponse;
         default:
             throw new Error(`unknown command id ${id}`);
     }

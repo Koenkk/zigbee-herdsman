@@ -85,13 +85,12 @@ class Driver extends events.EventEmitter {
 
                     // tests
                     try {
-                        const result1 = await this.writeParameterRequest(PARAM.PARAM.Network.MAC, [0x00,0x21,0x2e,0xff,0xff,0x03,0xd4,0x9a], 3);
-                        const mac = await this.readParameterRequest(PARAM.PARAM.Network.MAC, 1);
-
+                        //const result1 = await this.writeParameterRequest(PARAM.PARAM.Network.MAC, [0x00,0x21,0x2e,0xff,0xff,0x03,0xd4,0x9a], 3);
+                        //const mac = await this.readParameterRequest(PARAM.PARAM.Network.MAC, 1);
                         //const nwkAddress = await this.readParameterRequest(PARAM.PARAM.Network.NWK_ADDRESS, 5);
-
-                        const result = await this.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, 0xaffe, 4);
-                        const panId = await this.readParameterRequest(PARAM.PARAM.Network.PAN_ID, 2);
+                        //const result = await this.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, 0xaffe, 4);
+                        //const panId = await this.readParameterRequest(PARAM.PARAM.Network.PAN_ID, 2);
+                        //const fw = await this.readFirmwareVersionRequest(1);
                     } catch {
                         debug("Error");
                     }
@@ -117,12 +116,22 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private writeParameterRequest(parameterId: number, parameter: parameterT, seqNumber: number) : Promise<void> {
+    public writeParameterRequest(parameterId: number, parameter: parameterT, seqNumber: number) : Promise<void> {
         return new Promise((resolve, reject): void => {
             debug(`push write parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId} parameter: ${parameter}`);
             const ts = 0;
             const commandId = PARAM.PARAM.FrameType.WriteParameter;
             const req: Request = {commandId, parameterId, parameter, seqNumber, resolve, reject, ts};
+            queue.push(req);
+        });
+    }
+
+    public readFirmwareVersionRequest(seqNumber: number) : Promise<number[]> {
+        return new Promise((resolve, reject): void => {
+            debug(`push read firmware version request to queue. seqNr: ${seqNumber}`);
+            const ts = 0;
+            const commandId = PARAM.PARAM.FrameType.ReadFirmwareVersion;
+            const req: Request = {commandId, seqNumber, resolve, reject, ts};
             queue.push(req);
         });
     }
@@ -187,6 +196,12 @@ class Driver extends events.EventEmitter {
         return paramArray;
     }
 
+    private sendReadFirmwareVersionRequest(seqNumber: number) {
+        /* command id, sequence number, 0, framelength(U16) */
+        const requestFrame = [PARAM.PARAM.FrameType.ReadFirmwareVersion, seqNumber, 0x00, 0x05, 0x00];
+        this.sendRequest(requestFrame);
+    }
+
     private sendRequest(buffer: number[]) {
         const crc = this.calcCrc(Buffer.from(buffer));
         const frame = Buffer.from([0xc0].concat(buffer).concat([crc[0], crc[1], 0xc0]));
@@ -213,6 +228,10 @@ class Driver extends events.EventEmitter {
             case PARAM.PARAM.FrameType.WriteParameter:
                 debug(`send write parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId} param: ${req.parameter}`);
                 this.sendWriteParameterRequest(req.parameterId, req.parameter, req.seqNumber);
+                break;
+            case PARAM.PARAM.FrameType.ReadFirmwareVersion:
+                debug(`send read firmware version request from queue. seqNr: ${req.seqNumber}`);
+                this.sendReadFirmwareVersionRequest(req.seqNumber);
                 break;
             default:
                 throw new Error("process queue - unknown command id");
