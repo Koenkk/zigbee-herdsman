@@ -111,7 +111,7 @@ class Controller extends events.EventEmitter {
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
 
         if (startResult === 'reset') {
-            if (this.options.databaseBackupPath) {
+            if (this.options.databaseBackupPath && fs.existsSync(this.options.databasePath)) {
                 fs.copyFileSync(this.options.databasePath, this.options.databaseBackupPath);
             }
 
