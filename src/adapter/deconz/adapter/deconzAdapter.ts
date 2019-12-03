@@ -164,7 +164,29 @@ class DeconzAdapter extends Adapter {
     public async supportsLED(): Promise<boolean> {
         return false;
     }
+
+    public async restoreChannelInterPAN(): Promise<void> {
+        return Promise.reject();
     }
+
+    public async sendZclFrameInterPANBroadcastWithResponse(
+        zclFrame: ZclFrame, timeout: number
+    ): Promise<Events.ZclDataPayload> {
+        return Promise.reject();
+    }
+
+    public async setChannelInterPAN(channel: number): Promise<void> {
+        return Promise.reject();
+    }
+
+    public async setTransmitPower(value: number): Promise<void> {
+        return Promise.reject();
+    }
+
+    public async sendZclFrameInterPANIeeeAddr(zclFrame: ZclFrame, ieeeAddr: any): Promise<void> {
+        return Promise.reject();
+    }
+
 }
 
 export default DeconzAdapter;
