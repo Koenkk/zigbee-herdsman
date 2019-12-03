@@ -2,7 +2,7 @@ const MIN_BUFFER_SIZE = 3;
 const littleEndian = true;
 import PARAM from './constants';
 import { busyQueue } from './driver';
-import { Request, Command, ParamMac, ParamPanId, ParamNwkAddr } from './constants';
+import { Request, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask } from './constants';
 
 import Debug from 'debug';
 const debug = Debug('zigbee-herdsman:deconz:frameParser');
@@ -29,6 +29,18 @@ function parseReadParameterResponse(view: DataView) : Command {
             const nwkAddr: ParamNwkAddr = view.getUint16(8, littleEndian);
             debug('NWKADDR: ' + nwkAddr.toString(16));
             return nwkAddr;
+        case PARAM.PARAM.Network.EXT_PAN_ID:
+            const extPanId: ParamExtPanId = view.getBigUint64(8, littleEndian).toString(16);
+            debug(`EXT_PANID: ${extPanId}`);
+            return extPanId;
+        case PARAM.PARAM.Network.CHANNEL:
+            const channel: ParamChannel = view.getUint8(8);
+            debug('CHANNEL: ' + channel);
+            return channel;
+        case PARAM.PARAM.Network.CHANNEL_MASK:
+            const chMask: ParamChannelMask = view.getUint32(8, littleEndian);
+            debug('CHANNELMASK: ' + chMask.toString(16));
+            return chMask;
         default:
             throw new Error("unknown parameter id");
     }

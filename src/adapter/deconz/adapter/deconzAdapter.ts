@@ -162,7 +162,15 @@ class DeconzAdapter extends Adapter {
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
-        return null;
+        const panid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID, 1);
+        const expanid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.EXT_PAN_ID, 2);
+        const channel: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL, 3);
+
+        return {
+            panID: panid,
+            extendedPanID: expanid,
+            channel: channel
+        };
     }
 
     public async supportsLED(): Promise<boolean> {
