@@ -132,7 +132,8 @@ class DeconzAdapter extends Adapter {
     }
 
     public async supportsLED(): Promise<boolean> {
-        return null;
+        return false;
+    }
     }
 }
 
