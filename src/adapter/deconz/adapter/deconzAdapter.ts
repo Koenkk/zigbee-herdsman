@@ -10,15 +10,20 @@ import Driver from '../driver/driver';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
 import processFrame from '../driver/frameParser';
+import {Queue} from '../../../utils';
+import PARAM from '../driver/constants';
+import { Command } from '../driver/constants';
 
 class DeconzAdapter extends Adapter {
     private driver: Driver;
+    private queue: Queue;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string) {
         super(networkOptions, serialPortOptions, backupPath);
 
         this.driver = new Driver(serialPortOptions.path);
         this.driver.on('rxFrame', (frame) => {processFrame(frame)});
+        this.queue = new Queue(2);
         console.log('CREATED DECONZ ADAPTER');
     }
 
@@ -44,7 +49,32 @@ class DeconzAdapter extends Adapter {
     }
 
     public async getCoordinator(): Promise<Coordinator> {
-        return null;
+        return this.queue.execute<Coordinator>(async () => {
+            const ieeeAddr: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.MAC, 1);
+            const nwkAddr: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.NWK_ADDRESS, 2);
+
+            const endpoints: any = [{
+                    ID: 0x01,
+                    profileID: 0x0104,
+                    deviceID: 0x0005,
+                    inputClusters: [0x0019, 0x000A],
+                    outputClusters: [0x0500]
+                },
+                {
+                    ID: 0xF2,
+                    profileID: 0xA1E0,
+                    deviceID: 0x0064,
+                    inputClusters: [],
+                    outputClusters: [0x0021]
+                }];
+
+            return {
+                networkAddress: nwkAddr,
+                manufacturerID: 0x1135,
+                ieeeAddr: ieeeAddr,
+                endpoints,
+            };
+        });
     }
 
     public async permitJoin(seconds: number): Promise<void> {

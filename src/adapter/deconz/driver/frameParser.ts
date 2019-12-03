@@ -2,16 +2,12 @@ const MIN_BUFFER_SIZE = 3;
 const littleEndian = true;
 import PARAM from './constants';
 import { busyQueue } from './driver';
-import { Request } from './constants';
+import { Request, Command, ParamMac, ParamPanId, ParamNwkAddr } from './constants';
 
 import Debug from 'debug';
 const debug = Debug('zigbee-herdsman:deconz:frameParser');
 
-type ParamMac = string;
-type ParamPanId = number;
-type ParamNwkAddr = number;
 
-type Command = ParamMac | ParamPanId | ParamNwkAddr;
 
 function isValidCommandId(id: Number) : Boolean {
     return true;

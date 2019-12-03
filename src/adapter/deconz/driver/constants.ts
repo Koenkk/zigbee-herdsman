@@ -24,8 +24,13 @@ interface Request {
     ts?: number;
 }
 
+type ParamMac = string;
+type ParamPanId = number;
+type ParamNwkAddr = number;
+
+type Command = ParamMac | ParamPanId | ParamNwkAddr;
 type parameterT = number | number[];
 
-export { Request, parameterT };
+export { Request, parameterT , Command, ParamMac, ParamPanId, ParamNwkAddr};
 
 export default {PARAM};

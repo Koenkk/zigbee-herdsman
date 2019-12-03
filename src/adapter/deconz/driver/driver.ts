@@ -6,6 +6,7 @@ import Parser from './parser';
 import Frame from './frame';
 import SerialPortUtils from '../../serialPortUtils';
 import PARAM from './constants';
+import { Command } from './constants';
 
 // @ts-ignore
 import slip from 'slip';
@@ -106,7 +107,7 @@ class Driver extends events.EventEmitter {
         this.serialPort.close();
     }
 
-    private readParameterRequest(parameterId: number, seqNumber: number) : Promise<void> {
+    public readParameterRequest(parameterId: number, seqNumber: number) : Promise<Command> {
         return new Promise((resolve, reject): void => {
             debug(`push read parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId}`);
             const ts = 0;
