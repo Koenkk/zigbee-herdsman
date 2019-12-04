@@ -348,6 +348,7 @@ class Device extends Entity {
         if (!activeEndpoints) {
             throw new Error(`Interview failed because can not get active endpoints ('${this.ieeeAddr}')`);
         }
+ 
         // Some devices, e.g. TERNCY return endpoint 0 in the active endpoints request.
         // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
         // into an error. Therefore we filter it, more info: https://github.com/Koenkk/zigbee-herdsman/issues/82
