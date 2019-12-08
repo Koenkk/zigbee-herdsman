@@ -219,9 +219,15 @@ class Endpoint extends Entity {
         options = this.getOptionsWithDefaults(options, true);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number; status: number; dataType: number; attrData: number | string}[] = [];
-        for (const [name, value] of Object.entries(attributes)) {
-            const attribute = cluster.getAttribute(name);
-            payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type, status: 0});
+        for (const [nameOrID, value] of Object.entries(attributes)) {
+            if (cluster.hasAttribute(nameOrID)) {
+                const attribute = cluster.getAttribute(nameOrID);
+                payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type, status: 0});
+            } else if (!isNaN(Number(nameOrID))){
+                payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type, status: 0});
+            } else {
+                throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
+            }
         }
 
         const frame = Zcl.ZclFrame.create(
