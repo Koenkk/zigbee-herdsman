@@ -435,6 +435,9 @@ class Controller extends events.EventEmitter {
                     if (frame.isCommand('readRsp')) {
                         type = 'readResponse';
                         data = ZclFrameConverter.attributeList(dataPayload.frame);
+                    }else if (frame.isCommand('read')) {
+                        type = 'readGlobal';
+                        data = ZclFrameConverter.attributeList(dataPayload.frame);
                     }
                 }
             } else {
@@ -476,7 +479,8 @@ class Controller extends events.EventEmitter {
             const linkquality = dataPayload.linkquality;
             const groupID = dataPayload.groupID;
             const eventData: Events.MessagePayload = {
-                type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName
+                type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName,
+                frame: this.isZclDataPayload(dataPayload, dataType) ? dataPayload.frame : null
             };
 
             this.emit(Events.Events.message, eventData);

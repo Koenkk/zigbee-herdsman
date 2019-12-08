@@ -10,7 +10,7 @@ function attributeList(frame: ZclFrame): KeyValue {
             const attribute = frame.Cluster.getAttribute(item.attrId);
             payload[attribute.name] = item.attrData;
         } catch (error) {
-            payload[item.attrId] = item.attrData;
+            payload[item.attrId] = typeof item.attrData !== 'undefined' ? item.attrData : item.attrId;
         }
     }
 

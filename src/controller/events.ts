@@ -1,5 +1,6 @@
 import {Device, Endpoint} from "./model";
 import {KeyValue} from "./tstype";
+import {ZclFrame} from "../zcl";
 
 enum Events {
     message = "message",
@@ -63,7 +64,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
 
 type MessagePayloadType =
     // Global
-    'attributeReport' | 'readResponse' | 'raw' |
+    'attributeReport' | 'readResponse' | 'raw' | 'readGlobal' |
     // Specific
     'commandOn' | 'commandOffWithEffect' | 'commandStep' | 'commandStop' | 'commandHueNotification' |
     'commandOff' | 'commandStepColorTemp' | 'commandMoveWithOnOff' | 'commandMove' | 'commandMoveHue' |
@@ -82,6 +83,7 @@ interface MessagePayload {
     groupID: number;
     cluster: string | number;
     data: KeyValue;
+    frame: ZclFrame | null;
 }
 
 export {
