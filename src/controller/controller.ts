@@ -420,24 +420,26 @@ class Controller extends events.EventEmitter {
         let type: Events.MessagePayloadType = undefined;
         let data: KeyValue;
         let clusterName = undefined;
+        const meta: {zclTransactionSequenceNumber?: number} = {};
 
         if (this.isZclDataPayload(dataPayload, dataType)) {
             const frame = dataPayload.frame;
             const command = frame.getCommand();
             clusterName = frame.Cluster.name;
+            meta.zclTransactionSequenceNumber = frame.Header.transactionSequenceNumber;
 
             if (frame.isGlobal()) {
                 if (frame.isCommand('report')) {
                     type = 'attributeReport';
+                    data = ZclFrameConverter.attributeKeyValue(dataPayload.frame);
+                } else if (frame.isCommand('read')) {
+                    type = 'read';
                     data = ZclFrameConverter.attributeList(dataPayload.frame);
                 } else {
                     /* istanbul ignore else */
                     if (frame.isCommand('readRsp')) {
                         type = 'readResponse';
-                        data = ZclFrameConverter.attributeList(dataPayload.frame);
-                    }else if (frame.isCommand('read')) {
-                        type = 'readGlobal';
-                        data = ZclFrameConverter.attributeList(dataPayload.frame);
+                        data = ZclFrameConverter.attributeKeyValue(dataPayload.frame);
                     }
                 }
             } else {
@@ -461,7 +463,7 @@ class Controller extends events.EventEmitter {
                     }
                 }
 
-                endpoint.saveClusterAttributeList(clusterName, data);
+                endpoint.saveClusterAttributeKeyValue(clusterName, data);
             }
         } else {
             type = 'raw';
@@ -479,8 +481,7 @@ class Controller extends events.EventEmitter {
             const linkquality = dataPayload.linkquality;
             const groupID = dataPayload.groupID;
             const eventData: Events.MessagePayload = {
-                type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName,
-                frame: this.isZclDataPayload(dataPayload, dataType) ? dataPayload.frame : null
+                type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName, meta
             };
 
             this.emit(Events.Events.message, eventData);

@@ -44,9 +44,6 @@ const Cluster: {
             dateCode: {ID: 6, type: DataType.charStr},
             powerSource: {ID: 7, type: DataType.enum8},
             appProfileVersion: {ID: 8, type: DataType.enum8},
-
-            legrandUnknown: {ID: 0x00a, type: DataType.octetStr},
-
             swBuildId: {ID: 16384, type: DataType.charStr},
             locationDesc: {ID: 16, type: DataType.charStr},
             physicalEnv: {ID: 17, type: DataType.enum8},

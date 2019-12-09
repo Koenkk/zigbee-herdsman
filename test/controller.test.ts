@@ -177,7 +177,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
                     throw new Error('timeout');
                 } else {
                     return mockDevices[networkAddress].activeEndpoints;
-                } 
+                }
             },
             simpleDescriptor: (networkAddress, endpoint) => {
                 if (mockDevices[networkAddress].simpleDescriptor[endpoint] === undefined) {
@@ -753,7 +753,10 @@ describe('Controller', () => {
                 "occupancy":1
             },
             "linkquality":50,
-            "groupID":1
+            "groupID":1,
+            "meta": {
+                "zclTransactionSequenceNumber": 169,
+            },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
@@ -828,7 +831,8 @@ describe('Controller', () => {
                 type: 'Buffer',
             },
             "linkquality":50,
-            "groupID":1
+            "groupID":1,
+            "meta": {},
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
@@ -903,7 +907,8 @@ describe('Controller', () => {
                 type: 'Buffer',
             },
             "linkquality":50,
-            "groupID":1
+            "groupID":1,
+            "meta": {},
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
@@ -1015,7 +1020,10 @@ describe('Controller', () => {
             "data":{
                "appVersion":3
             },
-            "linkquality":52
+            "linkquality":52,
+            "meta": {
+                "zclTransactionSequenceNumber": 1,
+            },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
         expect((controller.getDeviceByIeeeAddr('0x129')).endpoints.length).toBe(2);
@@ -1093,7 +1101,10 @@ describe('Controller', () => {
                "value2":13
             },
             "linkquality":19,
-            "groupID":10
+            "groupID":10,
+            "meta": {
+                "zclTransactionSequenceNumber": 29,
+            },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
@@ -1408,7 +1419,10 @@ describe('Controller', () => {
                 modelId: 'lumi.sensor_wleak.aq1'
             },
             "linkquality":50,
-            "groupID":1
+            "groupID":1,
+            "meta": {
+                "zclTransactionSequenceNumber": 3,
+            },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
@@ -1805,6 +1819,34 @@ describe('Controller', () => {
         expect(call[4]).toBe(15000);
     });
 
+    it('Read response to endpoint with non ZCL attribute', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        mockSendZclFrameNetworkAddressWithResponse.mockClear();
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        await endpoint.readResponse('genBasic', 99, {0x55: {value: 0x000B, type: 0x19}});
+        expect(mockSendZclFrameNetworkAddress).toBeCalledTimes(1);
+        const call = mockSendZclFrameNetworkAddress.mock.calls[0];
+        expect(call[0]).toBe(129);
+        expect(call[1]).toBe(1);
+        expect(deepClone(call[2])).toStrictEqual( {"Cluster": getCluster(0), "Header": {"commandIdentifier": 1, "frameControl": {"direction": 1, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 99}, "Payload": [{"attrData": 11, "attrId": 85, "dataType": 25, "status": 0}]});
+        expect(call[3]).toBe(10000);
+        expect(call[4]).toBe(15000);
+    });
+
+    it('Read response to endpoint with unknown string attribute', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        mockSendZclFrameNetworkAddressWithResponse.mockClear();
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        let error;
+        try {await endpoint.readResponse('genBasic', 99, {'UNKNOWN': {value: 0x000B, type: 0x19}}) } catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`Unknown attribute 'UNKNOWN', specify either an existing attribute or a number`))
+        expect(mockSendZclFrameNetworkAddressWithResponse).toBeCalledTimes(0);
+    });
+
     it('Configure reporting endpoint custom attributes', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -1968,5 +2010,99 @@ describe('Controller', () => {
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false}, null);
         expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false}, null);
+    });
+
+    it('Emit read from device', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        mockSendZclFrameNetworkAddress.mockClear();
+        await mockAdapterEvents['zclData']({
+            networkAddress: 129,
+            // Attrid 9999 does not exist in ZCL
+            frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}, {attrId: 9999}]),
+            endpoint: 1,
+            linkquality: 19,
+            groupID: 10,
+        });
+
+        const expected = {
+            "type":"read",
+            "device":{
+                "ID":2,
+                "_applicationVersion":2,
+                "_dateCode":"201901",
+                "_endpoints":[
+                    {
+                        "deviceID":5,
+                        "inputClusters":[
+                            1
+                        ],
+                        "outputClusters":[
+                            2
+                        ],
+                        "profileID":99,
+                        "ID":1,
+                        "clusters":{
+
+                        },
+                        "deviceIeeeAddress":"0x129",
+                        "deviceNetworkAddress":129,
+                        "_binds":[
+
+                        ]
+                    }
+                ],
+                "_hardwareVersion":3,
+                "ieeeAddr":"0x129",
+                "_interviewCompleted":true,
+                "_interviewing":false,
+                "_lastSeen":"1970-01-01T00:00:00.150Z",
+                "_manufacturerID":1212,
+                "_manufacturerName":"KoenAndCo",
+                "_modelID":"myModelID",
+                "_networkAddress":129,
+                "_powerSource":"Mains (single phase)",
+                "_softwareBuildID":"1.01",
+                "_stackVersion":101,
+                "_type":"Router",
+                "_zclVersion":1,
+                "meta":{
+
+                }
+            },
+            "endpoint":{
+                "deviceID":5,
+                "inputClusters":[
+                    1
+                ],
+                "outputClusters":[
+                    2
+                ],
+                "profileID":99,
+                "ID":1,
+                "clusters":{
+
+                },
+                "deviceIeeeAddress":"0x129",
+                "deviceNetworkAddress":129,
+                "_binds":[
+
+                ]
+            },
+            "data":[
+                "time",
+                9999
+            ],
+            "linkquality":19,
+            "groupID":10,
+            "cluster":"genTime",
+            "meta":{
+                "zclTransactionSequenceNumber":40
+            }
+        };
+
+
+        expect(events.message.length).toBe(1);
+        expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 });

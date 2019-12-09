@@ -144,7 +144,7 @@ class Endpoint extends Entity {
         );
     }
 
-    public saveClusterAttributeList(clusterKey: number | string, list: KeyValue): void {
+    public saveClusterAttributeKeyValue(clusterKey: number | string, list: KeyValue): void {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         if (!this.clusters[cluster.name]) this.clusters[cluster.name] = {attributes: {}};
 
@@ -210,7 +210,7 @@ class Endpoint extends Entity {
         const result = await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
             this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
         );
-        return ZclFrameConverter.attributeList(result.frame);
+        return ZclFrameConverter.attributeKeyValue(result.frame);
     }
 
     public async readResponse(
