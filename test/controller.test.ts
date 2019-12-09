@@ -2015,9 +2015,8 @@ describe('Controller', () => {
     it('Emit read from device', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        mockSendZclFrameNetworkAddress.mockClear();
         await mockAdapterEvents['zclData']({
-            networkAddress: 129,
+            address: 129,
             // Attrid 9999 does not exist in ZCL
             frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}, {attrId: 9999}]),
             endpoint: 1,
@@ -2100,7 +2099,6 @@ describe('Controller', () => {
                 "zclTransactionSequenceNumber":40
             }
         };
-
 
         expect(events.message.length).toBe(1);
         expect(deepClone(events.message[0])).toStrictEqual(expected);
