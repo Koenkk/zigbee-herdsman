@@ -354,7 +354,7 @@ class ZclFrame {
     }
 
     // List of commands is not completed, feel free to add more.
-    public isCommand(commandName: 'read' | 'report' | 'readRsp' | 'remove' | 'add'): boolean {
+    public isCommand(commandName: 'read' | 'report' | 'readRsp' | 'remove' | 'add' | 'write'): boolean {
         return this.getCommand().name === commandName;
     }
 
