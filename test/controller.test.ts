@@ -2103,4 +2103,95 @@ describe('Controller', () => {
         expect(events.message.length).toBe(1);
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
+
+    it('Emit write from device', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['zclData']({
+            address: 129,
+            // Attrid 9999 does not exist in ZCL
+            frame: ZclFrame.create(0, 0, true, null, 40, 2, 10, [{attrId:16389, dataType:32, attrData:3}]),
+            endpoint: 1,
+            linkquality: 19,
+            groupID: 10,
+        });
+
+        const expected = {
+            "type":"write",
+            "device":{
+                "ID":2,
+                "_applicationVersion":2,
+                "_dateCode":"201901",
+                "_endpoints":[
+                    {
+                        "deviceID":5,
+                        "inputClusters":[
+                            1
+                        ],
+                        "outputClusters":[
+                            2
+                        ],
+                        "profileID":99,
+                        "ID":1,
+                        "clusters":{
+
+                        },
+                        "deviceIeeeAddress":"0x129",
+                        "deviceNetworkAddress":129,
+                        "_binds":[
+
+                        ]
+                    }
+                ],
+                "_hardwareVersion":3,
+                "ieeeAddr":"0x129",
+                "_interviewCompleted":true,
+                "_interviewing":false,
+                "_lastSeen":"1970-01-01T00:00:00.150Z",
+                "_manufacturerID":1212,
+                "_manufacturerName":"KoenAndCo",
+                "_modelID":"myModelID",
+                "_networkAddress":129,
+                "_powerSource":"Mains (single phase)",
+                "_softwareBuildID":"1.01",
+                "_stackVersion":101,
+                "_type":"Router",
+                "_zclVersion":1,
+                "meta":{
+
+                }
+            },
+            "endpoint":{
+                "deviceID":5,
+                "inputClusters":[
+                    1
+                ],
+                "outputClusters":[
+                    2
+                ],
+                "profileID":99,
+                "ID":1,
+                "clusters":{
+
+                },
+                "deviceIeeeAddress":"0x129",
+                "deviceNetworkAddress":129,
+                "_binds":[
+
+                ]
+            },
+            "data":{
+                "16389": 3,
+            },
+            "linkquality":19,
+            "groupID":10,
+            "cluster":"genTime",
+            "meta":{
+                "zclTransactionSequenceNumber":40
+            }
+        };
+
+        expect(events.message.length).toBe(1);
+        expect(deepClone(events.message[0])).toStrictEqual(expected);
+    });
 });
