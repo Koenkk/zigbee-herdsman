@@ -3530,6 +3530,17 @@ const Cluster: {
         commandsResponse: {
         }
     },
+    manuSpecificLegrandDevices: {
+        ID: 0xfc01,
+        manufacturerCode: ManufacturerCode.LegrandNetatmo,
+        attributes: {
+            // attributes seems to vary depending on the device. Can't be static
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
+    },
 };
 
 export default Cluster;
