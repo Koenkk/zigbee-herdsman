@@ -110,9 +110,13 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
-    private writeCharStr(value: string): void {
-        this.writeUInt8(value.length);
-        this.position += this.buffer.write(value, this.position, 'utf8');
+    private writeCharStr(value: string | number[]): void {
+        if (typeof value === 'string') {
+            this.writeUInt8(value.length);
+            this.position += this.buffer.write(value, this.position, 'utf8');
+        } else {
+            this.writeBuffer(value, value.length);
+        }
     }
 
     private readLongCharStr(): TsType.Value {
