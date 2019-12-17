@@ -40,6 +40,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'moveHue': 'commandMoveHue',
     'moveToSaturation': 'commandMoveToSaturation',
     'stopWithOnOff': 'commandStopWithOnOff',
+    'moveToLevel': 'commandMoveToLevel',
     'moveToLevelWithOnOff': 'commandMoveToLevelWithOnOff',
     'toggle': 'commandToggle',
     'tradfriArrowSingle': 'commandTradfriArrowSingle',
