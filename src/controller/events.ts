@@ -37,6 +37,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'stepColorTemp': 'commandStepColorTemp',
     'moveWithOnOff': 'commandMoveWithOnOff',
     'move': 'commandMove',
+    'moveColorTemp': 'commandMoveColorTemp',
     'moveHue': 'commandMoveHue',
     'moveToSaturation': 'commandMoveToSaturation',
     'stopWithOnOff': 'commandStopWithOnOff',
