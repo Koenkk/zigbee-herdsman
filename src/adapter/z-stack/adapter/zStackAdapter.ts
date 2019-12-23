@@ -217,7 +217,7 @@ class ZStackAdapter extends Adapter {
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
             const command = zclFrame.getCommand();
-            if (!command.hasOwnProperty('response')) {
+            if (!command.hasOwnProperty('response') && zclFrame.Header.frameControl.disableDefaultResponse) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
@@ -747,9 +747,12 @@ class ZStackAdapter extends Adapter {
             payload.endpoint === matcher.endpoint &&
             (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
             payload.frame.Cluster.ID === matcher.clusterID &&
-            matcher.frameType === payload.frame.Header.frameControl.frameType &&
-            matcher.commandIdentifier === payload.frame.Header.commandIdentifier &&
-            matcher.direction === payload.frame.Header.frameControl.direction;
+            (
+                (matcher.commandIdentifier === payload.frame.Header.commandIdentifier &&
+                matcher.direction === payload.frame.Header.frameControl.direction) ||
+                (payload.frame.Header.commandIdentifier === 0x0b && // defaultResponse device->coordinator
+                payload.frame.Header.frameControl.direction === Direction.SERVER_TO_CLIENT)
+            );
     }
 }
 

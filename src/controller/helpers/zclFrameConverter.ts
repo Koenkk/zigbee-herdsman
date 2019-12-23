@@ -12,6 +12,7 @@ function attributeKeyValue(frame: ZclFrame): KeyValue {
         } catch (error) {
             payload[item.attrId] = item.attrData;
         }
+        payload["statusCode"] = item.status;
     }
 
     return payload;
