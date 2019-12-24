@@ -149,7 +149,7 @@ class Endpoint extends Entity {
         if (!this.clusters[cluster.name]) this.clusters[cluster.name] = {attributes: {}};
 
         for (const [attribute, value] of Object.entries(list)) {
-            this.clusters[cluster.name].attributes[attribute] = value;
+            this.clusters[cluster.name].attributes[attribute] = value.data;
         }
     }
 
@@ -191,7 +191,11 @@ class Endpoint extends Entity {
         const result = await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
             this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout
         );
-        return ZclFrameConverter.attributeKeyValue(result.frame);
+        if (options.disableDefaultResponse && result.frame.Header.commandIdentifier === 0x0b) {
+            // device responds with defaultResponse in case of UnsupportedCluster,..
+            return {error: 'Write failed', statusCode: result.frame.Payload.statusCode}
+        }
+        return ZclFrameConverter.attributeKeyValue(result.frame, false);
     }
 
     public async read(
@@ -211,7 +215,11 @@ class Endpoint extends Entity {
         const result = await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
             this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
         );
-        return ZclFrameConverter.attributeKeyValue(result.frame);
+        if (options.disableDefaultResponse && result.frame.Header.commandIdentifier === 0x0b) {
+            // device responds with defaultResponse in case of UnsupportedCluster,..
+            return {error: 'Read failed', statusCode: result.frame.Payload.statusCode}
+        }
+        return ZclFrameConverter.attributeKeyValue(result.frame, false);
     }
 
     public async readResponse(
@@ -340,7 +348,7 @@ class Endpoint extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
         const hasResponse = command.hasOwnProperty('response') || !options.disableDefaultResponse;
-        options = this.getOptionsWithDefaults(options, hasResponse);
+        options = this.getOptionsWithDefaults(options, !hasResponse);
 
         for (const parameter of command.parameters) {
             if (!payload.hasOwnProperty(parameter.name)) {

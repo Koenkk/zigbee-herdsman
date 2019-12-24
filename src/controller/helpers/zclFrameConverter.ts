@@ -1,18 +1,25 @@
 import {ZclFrame} from '../../zcl';
 
-interface KeyValue {[s: string]: number | string};
+interface KeyValue {[s: string]: {data: number | string, statusCode: number}};
 
-function attributeKeyValue(frame: ZclFrame): KeyValue {
+function attributeKeyValue(frame: ZclFrame, flat=true): KeyValue {
     const payload: KeyValue = {};
 
     for (const item of frame.Payload) {
         try {
             const attribute = frame.Cluster.getAttribute(item.attrId);
-            payload[attribute.name] = item.attrData;
+            if (flat) {
+                payload[attribute.name] = item.attrData;
+            } else {
+                payload[attribute.name] = {data:item.attrData, statusCode: item.status};
+            }
         } catch (error) {
-            payload[item.attrId] = item.attrData;
+            if (flat) {
+                payload[item.attrId] = item.attrData;
+            } else {
+                payload[item.attrId] = {data: item.attrData, statusCode: 1}; // 1=failure
+            }
         }
-        payload["statusCode"] = item.status;
     }
 
     return payload;

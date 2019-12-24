@@ -383,7 +383,7 @@ class Device extends Entity {
             for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 3)) {
                 const result = await endpoint.read('genBasic', chunk);
                 for (const [key, value] of Object.entries(result)) {
-                    Device.ReportablePropertiesMapping[key].set(value, this);
+                    Device.ReportablePropertiesMapping[key].set(value.data, this);
                 }
 
                 debug(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
