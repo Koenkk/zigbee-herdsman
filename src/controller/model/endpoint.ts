@@ -328,9 +328,10 @@ class Endpoint extends Entity {
             Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
             options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'configReport', cluster.ID, payload
         );
-        await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
+        const result = await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
             this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
         );
+        return result.frame.Payload;
     }
 
     public async command(
