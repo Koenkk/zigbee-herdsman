@@ -237,6 +237,27 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
+    it('ZclFrame from buffer configReportRsp (hvacThermostat)', () => {
+        const buffer = [0x18, 0x03, 0x07, 0x00, 0x00, 0x12, 0x00];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 7,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: true,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 3,
+        };
+
+        const payload = [{ status:0, direction: 0, attrId: 18 }];
+
+        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.Header).toStrictEqual(header);
+    });
+
     it('ZclFrame from buffer configReportRsp failed', () => {
         const buffer = [0x08, 0x01, 0x07, 0x02, 0x01, 0x01, 0x01];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
