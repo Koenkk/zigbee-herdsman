@@ -90,8 +90,8 @@ const Foundation: {
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'status', type: DataType.uint8},
-            {name: 'direction', type: DataType.uint8, conditions: [{type: 'statusNotEquals', value: Status.SUCCESS}]},
-            {name: 'attrId', type: DataType.uint16, conditions: [{type: 'statusNotEquals', value: Status.SUCCESS}]},
+            {name: 'direction', type: DataType.uint8, conditions: [{type: 'statusEquals', value: Status.SUCCESS}]},
+            {name: 'attrId', type: DataType.uint16, conditions: [{type: 'statusEquals', value: Status.SUCCESS}]},
         ],
     },
     readReportConfig: {
