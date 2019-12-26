@@ -38,6 +38,7 @@ jest.mock('serialport', () => {
 });
 
 const mockSocketSetNoDelay = jest.fn();
+const mockSocketSetKeepAlive = jest.fn();
 const mockSocketPipe = jest.fn();
 const mockSocketOnce = jest.fn();
 const mockSocketCallbacks = {};
@@ -57,6 +58,7 @@ jest.mock('net', () => {
                 on: (event, cb) => mockSocketCallbacks[event] = cb,
                 once: mockSocketOnce,
                 destroy: mockSocketDestroy,
+                setKeepAlive: mockSocketSetKeepAlive,
             };
         }),
     }
