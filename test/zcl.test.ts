@@ -217,7 +217,7 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer configReportRsp', () => {
-        const buffer = [0x08, 0x01, 0x07, 0x00];
+        const buffer = [0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
         const header = {
             commandIdentifier: 7,
@@ -231,7 +231,7 @@ describe('Zcl', () => {
             transactionSequenceNumber: 1,
         };
 
-        const payload = [{status: 0}];
+        const payload = [{status: 0, direction:1, attrId: 0x1234}];
 
         expect(frame.Header).toStrictEqual(header);
         expect(frame.Payload).toStrictEqual(payload);
