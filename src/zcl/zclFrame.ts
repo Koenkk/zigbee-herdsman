@@ -320,8 +320,6 @@ class ZclFrame {
             const failedCondition = parameter.conditions.find((condition): boolean => {
                 if (condition.type === 'statusEquals') {
                     return entry.status !== condition.value;
-                } else if (condition.type == 'statusNotEquals') {
-                    return entry.status === condition.value;
                 } else if (condition.type == 'directionEquals') {
                     return entry.direction !== condition.value;
                 } else  {
