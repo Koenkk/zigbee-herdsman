@@ -18,4 +18,4 @@
 
 • **neighbors**: *[LQINeighbor](_adapter_tstype_.lqineighbor.md)[]*
 
-*Defined in [src/adapter/tstype.ts:43](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L43)*
+*Defined in [adapter/tstype.ts:43](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/adapter/tstype.ts#L43)*
