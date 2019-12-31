@@ -20,7 +20,7 @@
 
 Ƭ **DeviceType**: *"Coordinator" | "Router" | "EndDevice" | "Unknown"*
 
-*Defined in [src/controller/tstype.ts:4](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/tstype.ts#L4)*
+*Defined in [controller/tstype.ts:4](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/tstype.ts#L4)*
 
 ___
 
@@ -28,4 +28,4 @@ ___
 
 Ƭ **EntityType**: *[DeviceType](_controller_tstype_.md#devicetype) | "Group"*
 
-*Defined in [src/controller/tstype.ts:6](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/tstype.ts#L6)*
+*Defined in [controller/tstype.ts:6](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/tstype.ts#L6)*
