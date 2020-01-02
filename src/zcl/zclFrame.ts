@@ -244,7 +244,7 @@ class ZclFrame {
                 for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
 
-                    if (!this.conditionsValid(parameter, entry)) {
+                    if (!this.conditionsValid(parameter, entry, buffalo.getPosition() - buffalo.getBuffer().length)) {
                         continue;
                     }
 
@@ -277,7 +277,11 @@ class ZclFrame {
             const payload: {[s: string]: BuffaloTsType.Value} = {};
 
             for (const parameter of command.parameters) {
-                payload[parameter.name] = buffalo.read(DataType[parameter.type], {});
+                const entry: {[s: string]: BuffaloTsType.Value} = {};
+                if (!this.conditionsValid(parameter, entry, buffalo.getBuffer().length - buffalo.getPosition())) {
+                    continue;
+                }
+            payload[parameter.name] = buffalo.read(DataType[parameter.type], {});
             }
 
             return payload;
@@ -314,7 +318,9 @@ class ZclFrame {
     }
 
     private static conditionsValid(
-        parameter: DefinitionTsType.FoundationParameterDefinition, entry: ZclPayload
+        parameter: DefinitionTsType.FoundationParameterDefinition,
+        entry: ZclPayload,
+        remainingBufferBytes: number
     ): boolean {
         if (parameter.conditions) {
             const failedCondition = parameter.conditions.find((condition): boolean => {
@@ -322,6 +328,8 @@ class ZclFrame {
                     return entry.status !== condition.value;
                 } else if (condition.type == 'directionEquals') {
                     return entry.direction !== condition.value;
+                } else if (condition.type == 'remainingBufferBytes') {
+                    return remainingBufferBytes < (condition.value || 1);
                 } else  {
                     /* istanbul ignore else */
                     if (condition.type == 'dataTypeValueTypeEquals') {
