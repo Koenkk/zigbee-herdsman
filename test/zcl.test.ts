@@ -616,6 +616,17 @@ describe('Zcl', () => {
         expect(Buffer.from(expected)).toStrictEqual(frame.toBuffer());
     });
 
+    it('ZclFrame write rsp', () => {
+        const payload = [{status: 0x11, attrId: 0x22}];
+        const frame = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, 0x115f, 15, 'writeRsp', 0, payload
+        );
+        const buffer = frame.toBuffer();
+
+        const expected = [0x14, 0x5f, 0x11, 0x0f, 0x04, 0x11, 0x22, 0x00];
+        expect(Buffer.from(expected)).toStrictEqual(buffer);
+    });
+
     //{ frameType: 0, manufSpec: 0, direction: 0, disDefaultRsp: 0 } 0 8 'discover' { startAttrId: 0, maxAttrIds: 240 }
     it('ZclFrame to buffer readRsp success', () => {
         const expected = Buffer.from([8, 1, 1, 1, 0, 0, 32, 3]);
