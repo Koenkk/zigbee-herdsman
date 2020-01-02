@@ -3541,6 +3541,14 @@ const Cluster: {
         commandsResponse: {
         }
     },
+    draytonDeviceInfo: {
+        ID: 0xFE03, // 65027
+        attributes: {
+            deviceInfo: { ID: 32, type: DataType.charStr },
+        },
+        commands: {},
+        commandsResponse: {}
+    },
 };
 
 export default Cluster;
