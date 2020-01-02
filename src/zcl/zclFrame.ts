@@ -113,7 +113,7 @@ class ZclFrame {
                 for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
 
-                    if (!ZclFrame.conditionsValid(parameter, entry)) {
+                    if (!ZclFrame.conditionsValid(parameter, entry, 255)) {
                         continue;
                     }
 
@@ -280,7 +280,7 @@ class ZclFrame {
                 if (!this.conditionsValid(parameter, payload, buffalo.getBuffer().length - buffalo.getPosition())) {
                     continue;
                 }
-            payload[parameter.name] = buffalo.read(DataType[parameter.type], {});
+                payload[parameter.name] = buffalo.read(DataType[parameter.type], {});
             }
 
             return payload;
@@ -319,7 +319,7 @@ class ZclFrame {
     private static conditionsValid(
         parameter: DefinitionTsType.FoundationParameterDefinition,
         entry: ZclPayload,
-        remainingBufferBytes: number = 255
+        remainingBufferBytes: number
     ): boolean {
         if (parameter.conditions) {
             const failedCondition = parameter.conditions.find((condition): boolean => {

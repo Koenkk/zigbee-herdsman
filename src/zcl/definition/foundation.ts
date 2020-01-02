@@ -90,7 +90,7 @@ const Foundation: {
         parseStrategy: 'flat',
         parameters: [
             {name: 'status', type: DataType.uint8},
-            {name: 'direction', type: DataType.uint8, conditions: [{type: 'remainingBufferBytes'}] },
+            {name: 'direction', type: DataType.uint8, conditions: [{type: 'remainingBufferBytes'}]},
             {name: 'attrId', type: DataType.uint16, conditions: [{type: 'remainingBufferBytes'}]},
         ],
     },
