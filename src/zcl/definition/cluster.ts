@@ -1716,6 +1716,8 @@ const Cluster: {
             acCapacityFormat: {ID: 71, type: DataType.enum8},
             SinopeOccupancy: {ID: 1024, type: DataType.enum8, manufacturerCode: ManufacturerCode.Sinope},
             SinopeBacklight: {ID: 1026, type: DataType.enum8, manufacturerCode: ManufacturerCode.Sinope},
+            StelproSystemMode: {ID: 0x401c, type: DataType.enum8},
+            StelproOutdoorTemp: {ID: 0x4001, type: DataType.int16, manufacturerCode: ManufacturerCode.Stelpro},
         },
         commands: {
             setpointRaiseLower: {

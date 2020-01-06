@@ -216,7 +216,7 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer configReportRsp', () => {
+    it('ZclFrame from buffer configReportRsp - short', () => {
         const buffer = [0x08, 0x01, 0x07, 0x00];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
         const header = {
@@ -235,6 +235,48 @@ describe('Zcl', () => {
 
         expect(frame.Header).toStrictEqual(header);
         expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame from buffer configReportRsp - long', () => {
+        const buffer = [0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 7,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 1,
+        };
+
+        const payload = [{status: 0, direction:1, attrId: 0x1234}, {status: 1, direction:1, attrId: 0x1235}];
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame from buffer configReportRsp (hvacThermostat)', () => {
+        const buffer = [0x18, 0x03, 0x07, 0x00, 0x00, 0x12, 0x00];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 7,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: true,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 3,
+        };
+
+        const payload = [{status:0, direction: 0, attrId: 18}];
+
+        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.Header).toStrictEqual(header);
     });
 
     it('ZclFrame from buffer configReportRsp failed', () => {
@@ -572,6 +614,17 @@ describe('Zcl', () => {
 
         const expected = [0x14, 0x5f, 0x11, 0x0f, 0x02, 0x01, 0x04, 0x42, 0x07, 0x00, 0x02, 0x01, 0x00, 0x00, 0x00, 0x14];
         expect(Buffer.from(expected)).toStrictEqual(frame.toBuffer());
+    });
+
+    it('ZclFrame write rsp', () => {
+        const payload = [{status: 0x11, attrId: 0x22}];
+        const frame = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, 0x115f, 15, 'writeRsp', 0, payload
+        );
+        const buffer = frame.toBuffer();
+
+        const expected = [0x14, 0x5f, 0x11, 0x0f, 0x04, 0x11, 0x22, 0x00];
+        expect(Buffer.from(expected)).toStrictEqual(buffer);
     });
 
     //{ frameType: 0, manufSpec: 0, direction: 0, disDefaultRsp: 0 } 0 8 'discover' { startAttrId: 0, maxAttrIds: 240 }

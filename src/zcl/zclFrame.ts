@@ -113,7 +113,7 @@ class ZclFrame {
                 for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
 
-                    if (!ZclFrame.conditionsValid(parameter, entry)) {
+                    if (!ZclFrame.conditionsValid(parameter, entry, null)) {
                         continue;
                     }
 
@@ -244,7 +244,7 @@ class ZclFrame {
                 for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
 
-                    if (!this.conditionsValid(parameter, entry)) {
+                    if (!this.conditionsValid(parameter, entry, buffalo.getBuffer().length - buffalo.getPosition())) {
                         continue;
                     }
 
@@ -314,7 +314,9 @@ class ZclFrame {
     }
 
     private static conditionsValid(
-        parameter: DefinitionTsType.FoundationParameterDefinition, entry: ZclPayload
+        parameter: DefinitionTsType.FoundationParameterDefinition,
+        entry: ZclPayload,
+        remainingBufferBytes: number
     ): boolean {
         if (parameter.conditions) {
             const failedCondition = parameter.conditions.find((condition): boolean => {
@@ -324,6 +326,8 @@ class ZclFrame {
                     return entry.status === condition.value;
                 } else if (condition.type == 'directionEquals') {
                     return entry.direction !== condition.value;
+                } else if (remainingBufferBytes !== null && condition.type == 'minimumRemainingBufferBytes') {
+                    return remainingBufferBytes < condition.value;
                 } else  {
                     /* istanbul ignore else */
                     if (condition.type == 'dataTypeValueTypeEquals') {
