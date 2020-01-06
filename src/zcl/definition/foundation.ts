@@ -87,11 +87,13 @@ const Foundation: {
     },
     configReportRsp: {
         ID: 7,
-        parseStrategy: 'flat',
+        parseStrategy: 'repetitive',
         parameters: [
             {name: 'status', type: DataType.uint8},
-            {name: 'direction', type: DataType.uint8, conditions: [{type: 'remainingBufferBytes'}]},
-            {name: 'attrId', type: DataType.uint16, conditions: [{type: 'remainingBufferBytes'}]},
+            // minimumRemainingBufferBytes: if direction is present, attrId is also present
+            // https://github.com/Koenkk/zigbee-herdsman/pull/115
+            {name: 'direction', type: DataType.uint8, conditions: [{type: 'minimumRemainingBufferBytes', value: 3}]},
+            {name: 'attrId', type: DataType.uint16, conditions: [{type: 'minimumRemainingBufferBytes', value: 2}]},
         ],
     },
     readReportConfig: {

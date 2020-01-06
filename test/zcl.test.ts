@@ -231,14 +231,14 @@ describe('Zcl', () => {
             transactionSequenceNumber: 1,
         };
 
-        const payload = {status: 0};
+        const payload = [{status: 0}];
 
         expect(frame.Header).toStrictEqual(header);
         expect(frame.Payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer configReportRsp - long', () => {
-        const buffer = [0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12];
+        const buffer = [0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
         const header = {
             commandIdentifier: 7,
@@ -252,7 +252,7 @@ describe('Zcl', () => {
             transactionSequenceNumber: 1,
         };
 
-        const payload = {status: 0, direction:1, attrId: 0x1234};
+        const payload = [{status: 0, direction:1, attrId: 0x1234}, {status: 1, direction:1, attrId: 0x1235}];
 
         expect(frame.Header).toStrictEqual(header);
         expect(frame.Payload).toStrictEqual(payload);
@@ -273,7 +273,7 @@ describe('Zcl', () => {
             transactionSequenceNumber: 3,
         };
 
-        const payload = { status:0, direction: 0, attrId: 18 };
+        const payload = [{status:0, direction: 0, attrId: 18}];
 
         expect(frame.Payload).toStrictEqual(payload);
         expect(frame.Header).toStrictEqual(header);
@@ -294,7 +294,7 @@ describe('Zcl', () => {
             transactionSequenceNumber: 1,
         };
 
-        const payload = {status: 2, direction: 1, attrId: 257};
+        const payload = [{status: 2, direction: 1, attrId: 257}];
 
         expect(frame.Header).toStrictEqual(header);
         expect(frame.Payload).toStrictEqual(payload);

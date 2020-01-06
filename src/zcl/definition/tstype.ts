@@ -6,7 +6,7 @@ interface FoundationParameterDefinition extends TsType.Parameter {
     conditions?: {
         type: 'statusEquals' |
             'statusNotEquals' |
-            'remainingBufferBytes' |
+            'minimumRemainingBufferBytes' |
             'directionEquals' |
             'dataTypeValueTypeEquals';
         value?: number | string;
