@@ -3544,7 +3544,7 @@ const Cluster: {
     wiserDeviceInfo: {
         ID: 0xFE03, // 65027
         attributes: {
-            deviceInfo: { ID: 32, type: DataType.charStr },
+            deviceInfo: {ID: 32, type: DataType.charStr},
         },
         commands: {},
         commandsResponse: {}
