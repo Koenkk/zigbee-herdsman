@@ -6,11 +6,10 @@ import Parser from './parser';
 import Frame from './frame';
 import SerialPortUtils from '../../serialPortUtils';
 import PARAM from './constants';
-import { Command } from './constants';
+import { Command, Request, parameterT, ApsDataRequest } from './constants';
 
 // @ts-ignore
 import slip from 'slip';
-import { Request, parameterT } from './constants';
 
 const debug = Debug('zigbee-herdsman:deconz:driver');
 
@@ -20,7 +19,12 @@ const autoDetectDefinitions = [
 
 var queue: Array<object> = [];
 var busyQueue: Array<object> = [];
-export { busyQueue };
+var apsQueue: Array<object> = [];
+var apsBusyQueue: Array<object> = [];
+var seqNumber: number = 0;
+export { busyQueue, apsBusyQueue };
+
+var frameParser = require('./frameParser');
 
 const littleEndian = true;
 
@@ -30,8 +34,7 @@ class Driver extends events.EventEmitter {
     private initialized: boolean;
     private writer: Writer;
     private parser: Parser;
-    private queue: Array<object>;
-    private busyQueue: Array<object>;
+    private frameParserEvent = frameParser.frameParserEvents;
 
     public constructor(path: string) {
         super();
@@ -41,8 +44,10 @@ class Driver extends events.EventEmitter {
         const that = this;
         setInterval(() => { that.processQueue(); }, 10);
         setInterval(() => { that.processBusyQueue(); }, 10);
-
+        setInterval(() => { that.processApsQueue(); }, 10);
+        setInterval(() => { that.processApsBusyQueue(); }, 10);
         this.onParsed = this.onParsed.bind(this);
+        this.frameParserEvent.on('receivedDataNotification', (data: any) => {this.deviceStateResponse(data)});
 
         // this.onUnpiParsed = this.onUnpiParsed.bind(this);
         // this.onUnpiParsedError = this.onUnpiParsedError.bind(this);
@@ -202,6 +207,12 @@ class Driver extends events.EventEmitter {
         this.sendRequest(requestFrame);
     }
 
+    private sendReadDeviceStateRequest(seqNumber: number) {
+        /* command id, sequence number, 0, framelength(U16) */
+        const requestFrame = [PARAM.PARAM.FrameType.ReadDeviceState, seqNumber, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00];
+        this.sendRequest(requestFrame);
+    }
+
     private sendRequest(buffer: number[]) {
         const crc = this.calcCrc(Buffer.from(buffer));
         const frame = Buffer.from([0xc0].concat(buffer).concat([crc[0], crc[1], 0xc0]));
@@ -233,6 +244,10 @@ class Driver extends events.EventEmitter {
                 debug(`send read firmware version request from queue. seqNr: ${req.seqNumber}`);
                 this.sendReadFirmwareVersionRequest(req.seqNumber);
                 break;
+            case PARAM.PARAM.FrameType.ReadDeviceState:
+                debug(`send read device state from queue. seqNr: ${req.seqNumber}`);
+                this.sendReadDeviceStateRequest(req.seqNumber);
+                break;
             default:
                 throw new Error("process queue - unknown command id");
                 break;
@@ -248,10 +263,115 @@ class Driver extends events.EventEmitter {
             const now = Date.now();
 
             if ((now - req.ts) > 1000) {
-                debug(`Timeout for request paramId: ${req.parameterId} seq: ${req.seqNumber}`);
+                debug(`Timeout for request cmd: ${req.commandId} seq: ${req.seqNumber}`);
                 //remove from busyQueue
                 busyQueue.splice(i, 1);
                 req.reject("TIMEOUT");
+            }
+        }
+    }
+
+    private deviceStateRequest() {
+        return new Promise((resolve, reject): void => {
+            if (seqNumber > 255)
+                seqNumber = 0;
+            seqNumber++;
+            debug(`device state request. seqNr: ${seqNumber}`);
+            const ts = 0;
+            const commandId = PARAM.PARAM.FrameType.ReadDeviceState;
+            const req: Request = {commandId, seqNumber, resolve, reject, ts};
+            queue.push(req);
+        });
+    }
+
+    private async deviceStateResponse(value: number) {
+        networkState = value & 0x03;
+        const apsDataConfirm = (value >> 2) & 0x01;
+        const apsDataIndication = (value >> 3) & 0x01;
+        const configChanged = (value >> 4) & 0x01;
+        apsRequestFreeSlots = (value >> 5) & 0x01;
+
+        console.log("network state: " + networkState.toString(2));
+        console.log("apsDataConfirm: " + apsDataConfirm.toString(2));
+        console.log("apsDataIndication: " + apsDataIndication);
+        console.log("configChanged: " + configChanged.toString(2));
+        console.log("freeSlots: " + apsRequestFreeSlots.toString(2));
+
+        if (apsDataIndication === 1) {
+            try {
+                const x = await this.readReceivedDataRequest(1);
+            } catch {
+                debug("APS Error");
+            }
+        }
+
+        if (apsDataConfirm === 1) {
+
+        }
+
+        if (configChanged === 1) {
+
+        }
+    }
+
+    private readReceivedDataRequest(seqNumber: number) : Promise<void> {
+        return new Promise((resolve, reject): void => {
+            debug(`push read received data request to apsQueue. seqNr: ${seqNumber}`);
+            const ts = 0;
+            const commandId = PARAM.PARAM.APS.DATA_INDICATION;
+            const req: Request = {commandId, seqNumber, resolve, reject, ts};
+            apsQueue.push(req);
+        });
+    }
+
+
+    private processApsQueue() {
+        if (apsQueue.length === 0) {
+            return;
+        }
+
+        const req: Request = apsQueue.shift();
+        req.ts = Date.now();
+
+        switch (req.commandId) {
+            case PARAM.PARAM.APS.DATA_INDICATION:
+                debug(`read received data request. seqNr: ${req.seqNumber}`);
+                this.sendReadReceivedDataRequest(req.seqNumber);
+                break;
+            case PARAM.PARAM.APS.DATA_CONFIRM:
+                debug(`query send data state request. seqNr: ${req.seqNumber}`);
+
+                break;
+            case PARAM.PARAM.APS.DATA_REQUEST:
+                debug(`send data request. seqNr: ${req.seqNumber}`);
+                this.sendEnqueueSendDataRequest(req.request, req.seqNumber);
+                break;
+            default:
+                throw new Error("process APS queue - unknown command id");
+                break;
+        }
+
+        apsBusyQueue.push(req);
+    }
+
+    private sendReadReceivedDataRequest(seqNumber: number) {
+        // payloadlength = 0, flag = none
+        const requestFrame = [PARAM.PARAM.APS.DATA_INDICATION, seqNumber, 0x00, 0x07, 0x00, 0x00, 0x00];
+        this.sendRequest(requestFrame);
+    }
+
+
+    private processApsBusyQueue() {
+        let i = apsBusyQueue.length;
+        while (i--) {
+            const req: Request = apsBusyQueue[i];
+            const now = Date.now();
+
+            if ((now - req.ts) > 10000) { // 10 seconds
+                debug(`Timeout for aps request cmd: ${req.commandId} seq: ${req.seqNumber}`);
+                //remove from busyQueue
+                apsBusyQueue.splice(i, 1);
+                req.reject("APS TIMEOUT");
             }
         }
     }
