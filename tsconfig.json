@@ -6,18 +6,14 @@
         "noImplicitAny": true,
         "moduleResolution": "node",
         "sourceMap": true,
+        "declaration": true,
+        "declarationMap": true,
         "outDir": "dist",
         "baseUrl": ".",
-        "allowJs": true,
         "resolveJsonModule": true,
-        "paths": {
-            "*": [
-                "node_modules/*"
-            ]
-        }
     },
     "include": [
-        "src/**/*",
+        "src/**/*.ts",
         "src/**/*.json"
     ],
     "exclude": [
