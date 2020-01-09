@@ -794,6 +794,16 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
+    it('BuffaloZcl write octetStr', () => {
+        const payload = [1,2,4];
+        const buffer = Buffer.alloc(5);
+        const expected = Buffer.from([3, 1, 2, 4, 0]);
+        const buffalo = new BuffaloZcl(buffer);
+        const result = buffalo.write(DataType[DataType.octetStr], payload, {});
+        expect(buffalo.getPosition()).toBe(4);
+        expect(buffer).toStrictEqual(expected);
+    });
+
     it('BuffaloZcl write extensionFieldSets', () => {
         const payload = [{clstId: 5, len: 3, extField: [1, 2, 3]}];
         const buffer = Buffer.alloc(6);
