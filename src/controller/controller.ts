@@ -420,13 +420,14 @@ class Controller extends events.EventEmitter {
         let type: Events.MessagePayloadType = undefined;
         let data: KeyValue;
         let clusterName = undefined;
-        const meta: {zclTransactionSequenceNumber?: number} = {};
+        const meta: {zclTransactionSequenceNumber?: number; manufacturerCode?: number} = {};
 
         if (this.isZclDataPayload(dataPayload, dataType)) {
             const frame = dataPayload.frame;
             const command = frame.getCommand();
             clusterName = frame.Cluster.name;
             meta.zclTransactionSequenceNumber = frame.Header.transactionSequenceNumber;
+            meta.manufacturerCode = frame.Header.manufacturerCode;
 
             if (frame.isGlobal()) {
                 if (frame.isCommand('report')) {
