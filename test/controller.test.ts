@@ -776,6 +776,7 @@ describe('Controller', () => {
             "groupID":1,
             "meta": {
                 "zclTransactionSequenceNumber": 169,
+                "manufacturerCode": null,
             },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
@@ -1043,6 +1044,7 @@ describe('Controller', () => {
             "linkquality":52,
             "meta": {
                 "zclTransactionSequenceNumber": 1,
+                "manufacturerCode": null,
             },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
@@ -1124,6 +1126,7 @@ describe('Controller', () => {
             "groupID":10,
             "meta": {
                 "zclTransactionSequenceNumber": 29,
+                "manufacturerCode": 4476,
             },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
@@ -1442,6 +1445,7 @@ describe('Controller', () => {
             "groupID":1,
             "meta": {
                 "zclTransactionSequenceNumber": 3,
+                "manufacturerCode": 4447,
             },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
@@ -2116,7 +2120,8 @@ describe('Controller', () => {
             "groupID":10,
             "cluster":"genTime",
             "meta":{
-                "zclTransactionSequenceNumber":40
+                "zclTransactionSequenceNumber":40,
+                "manufacturerCode": null,
             }
         };
 
@@ -2207,7 +2212,8 @@ describe('Controller', () => {
             "groupID":10,
             "cluster":"genTime",
             "meta":{
-                "zclTransactionSequenceNumber":40
+                "zclTransactionSequenceNumber":40,
+                "manufacturerCode": null,
             }
         };
 

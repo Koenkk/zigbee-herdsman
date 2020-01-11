@@ -420,7 +420,7 @@ class Controller extends events.EventEmitter {
         let type: Events.MessagePayloadType = undefined;
         let data: KeyValue;
         let clusterName = undefined;
-        const meta: {zclTransactionSequenceNumber?: number;manufacturerCode?: number} = {};
+        const meta: {zclTransactionSequenceNumber?: number; manufacturerCode?: number} = {};
 
         if (this.isZclDataPayload(dataPayload, dataType)) {
             const frame = dataPayload.frame;
