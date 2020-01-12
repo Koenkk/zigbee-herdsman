@@ -61,6 +61,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'enhancedMoveToHueAndSaturation': 'commandEnhancedMoveToHueAndSaturation',
     'downClose': 'commandDownClose',
     'upOpen': 'commandUpOpen',
+    'getData': 'commandGetData',
 };
 
 type MessagePayloadType =
