@@ -509,8 +509,13 @@ class Controller extends events.EventEmitter {
             // Reponse to time reads
             if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
                 const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
+                const localTime = time + (new Date()).getTimezoneOffset() * 60;
                 try {
-                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, {time});
+                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, {
+                        time: time,
+                        timeStatus: 3,        // Time-master + synchronised
+                        localTime: localTime, // Some devices also expect local time
+                    });
                 } catch (error) {
                     debug.error(`genTime response to ${device.ieeeAddr} failed`);
                 }
