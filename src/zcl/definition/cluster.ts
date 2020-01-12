@@ -3551,6 +3551,35 @@ const Cluster: {
         commands: {},
         commandsResponse: {}
     },
+    manuSpecificTuyaDimmer: {
+        ID: 0xEF00,  // 61184
+        attributes: {
+        },
+        commands: {
+            setData: {
+                ID: 0,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'transid', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint16},
+                    {name: 'fn', type: DataType.uint8},
+                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+        },
+        commandsResponse: {
+            getData: {
+                ID: 1,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'transid', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint16},
+                    {name: 'fn', type: DataType.uint8},
+                    {name: 'data', type: DataType.octetStr},
+                ],
+            },
+        },
+    },
 };
 
 export default Cluster;
