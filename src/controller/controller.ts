@@ -508,14 +508,32 @@ class Controller extends events.EventEmitter {
 
             // Reponse to time reads
             if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
-                const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
-                const localTime = time + (new Date()).getTimezoneOffset() * 60;
                 try {
-                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, {
-                        time: time,
-                        timeStatus: 3,        // Time-master + synchronised
-                        localTime: localTime, // Some devices also expect local time
-                    });
+                    let resp: KeyValue;
+                    const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
+                    if (frame.Payload.length == 1) {
+                        switch (frame.Payload[0].attrId) {
+                        case frame.Cluster.attributes.time.ID:
+                            resp = {time};
+                            break;
+
+                        case frame.Cluster.attributes.timeStatus.ID:
+                            resp = {timeStatus: 3}; // Time-master + synchronised
+                            break;
+
+                        case frame.Cluster.attributes.localTime.ID:
+                            resp = {localTime: time + (new Date()).getTimezoneOffset() * 60};
+                            break
+
+                        default:
+                            resp = {time};
+                            debug.error(`genTime unsupported response to attribute '${frame.Cluster.getAttribute(frame.Payload[0].attrId).name}'`);
+                            break;
+                        }
+                    } else {
+                        resp = {time};
+                    }
+                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, resp);
                 } catch (error) {
                     debug.error(`genTime response to ${device.ieeeAddr} failed`);
                 }
