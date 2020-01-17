@@ -256,6 +256,10 @@ class BuffaloZcl extends Buffalo {
         } else if (type === 'USE_DATA_TYPE') {
             return this.writeUseDataType(value, options);
         } else {
+            // In case the type is undefined, write it as a buffer to easily allow for custom types
+            // e.g. for https://github.com/Koenkk/zigbee-herdsman/issues/127
+            type = type === undefined ? 'BUFFER' : type;
+
             // TODO: remove uppercase once dataTypes are snake case
             return super.write(type.toUpperCase(), value, options);
         }

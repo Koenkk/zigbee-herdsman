@@ -606,6 +606,23 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
+    it('ZclFrame to buffer write Livolo malformed', () => {
+        // Created as example for https://github.com/Koenkk/zigbee-herdsman/issues/127
+        const expectedOn = Buffer.from([0x1c ,0xd2 ,0x1a ,0xe9 ,0x02 ,0x01 ,0x00 ,0x01 ,0x01 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00, 0x00]);
+        const payloadOn = [{attrId: 1, attrData: Buffer.from([1, 0, 0, 0, 0, 0, 0, 0]), dataType: 1}];
+        const frameOn = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, 0x1ad2, 233, 'write', 0, payloadOn
+        );
+        expect(frameOn.toBuffer()).toStrictEqual(expectedOn);
+
+        const expectedOff = Buffer.from([0x1c ,0xd2 ,0x1a ,0xe9 ,0x02 ,0x01 ,0x00 ,0x01 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00, 0x00]);
+        const payloadOff = [{attrId: 1, attrData: Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]), dataType: 1}];
+        const frameOff = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, 0x1ad2, 233, 'write', 0, payloadOff
+        );
+        expect(frameOff.toBuffer()).toStrictEqual(expectedOff);
+    });
+
     it('ZclFrame write request with string as bytes array', () => {
         const payload = [{attrId: 0x0401, attrData: [0x07, 0x00, 0x02, 0x01, 0x00, 0x00, 0x00, 0x14], dataType: 0x42}];
         const frame = Zcl.ZclFrame.create(
