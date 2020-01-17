@@ -380,7 +380,7 @@ class Device extends Entity {
             const endpoint = this.endpoints[0];
 
             // Split into chunks of 3, otherwise some devices fail to respond.
-            for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 3)) {
+            for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 2)) {
                 const result = await endpoint.read('genBasic', chunk);
                 for (const [key, value] of Object.entries(result)) {
                     Device.ReportablePropertiesMapping[key].set(value, this);
