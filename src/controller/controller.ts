@@ -393,7 +393,11 @@ class Controller extends events.EventEmitter {
     private async onZclOrRawData(
         dataType: 'zcl' | 'raw', dataPayload: AdapterEvents.ZclDataPayload | AdapterEvents.RawDataPayload
     ): Promise<void> {
-        debug.log(`Received '${dataType}' data '${JSON.stringify(dataPayload)}'`);
+        const logDataPayload = JSON.parse(JSON.stringify(dataPayload));
+        if (dataType === 'zcl') {
+            delete logDataPayload.frame.Cluster;
+        }
+        debug.log(`Received '${dataType}' data '${JSON.stringify(logDataPayload)}'`);
 
         if (this.isZclDataPayload(dataPayload, 'zcl') && dataPayload.frame &&
             dataPayload.frame.Cluster.name === 'touchlink') {
