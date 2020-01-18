@@ -512,11 +512,28 @@ class Controller extends events.EventEmitter {
                 }
             }
 
-            // Reponse to time reads
+            // Reponse to genTime reads
             if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
                 const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
+                const response: KeyValue = {};
+                const values: KeyValue = {
+                    timeStatus: 3, // Time-master + synchronised
+                    time: time,
+                    localTime: time + (new Date()).getTimezoneOffset() * 60
+                };
+
+                const cluster = ZclUtils.getCluster('genTime');
+                for (const entry of frame.Payload) {
+                    const name = cluster.getAttribute(entry.attrId).name;
+                    if (values.hasOwnProperty(name)) {
+                        response[name] = values[name];
+                    } else {
+                        debug.error(`'${device.ieeeAddr}' read unsupported attribute from genTime '${name}'`);
+                    }
+                }
+
                 try {
-                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, {time});
+                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response);
                 } catch (error) {
                     debug.error(`genTime response to ${device.ieeeAddr} failed`);
                 }

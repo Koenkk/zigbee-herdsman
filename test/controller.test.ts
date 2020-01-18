@@ -1211,7 +1211,7 @@ describe('Controller', () => {
         mockSendZclFrameNetworkAddress.mockClear();
         await mockAdapterEvents['zclData']({
             address: 129,
-            frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}]),
+            frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 9}]),
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1221,11 +1221,20 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddress.mock.calls[0][0]).toBe(129);
         expect(mockSendZclFrameNetworkAddress.mock.calls[0][1]).toBe(1);
         const message = mockSendZclFrameNetworkAddress.mock.calls[0][2];
-        expect(message.Payload.length).toBe(1);
+        // attrId 9 is not supported by controller.ts therefore should not be in the response
+        expect(message.Payload.length).toBe(3);
         expect(message.Payload[0].attrId).toBe(0);
         expect(message.Payload[0].dataType).toBe(226);
         expect(message.Payload[0].status).toBe(0);
         expect(message.Payload[0].attrData).toBeGreaterThan(600822353);
+        expect(message.Payload[1].attrId).toBe(1);
+        expect(message.Payload[1].dataType).toBe(24);
+        expect(message.Payload[1].status).toBe(0);
+        expect(message.Payload[1].attrData).toBe(3);
+        expect(message.Payload[2].attrId).toBe(7);
+        expect(message.Payload[2].dataType).toBe(35);
+        expect(message.Payload[2].status).toBe(0);
+        expect(message.Payload[2].attrData).toBeGreaterThan(600822353);
         delete message.Payload;
         const call = mockSendZclFrameNetworkAddress.mock.calls[0];
         expect(call[0]).toBe(129);
@@ -2061,7 +2070,7 @@ describe('Controller', () => {
         await mockAdapterEvents['zclData']({
             address: 129,
             // Attrid 9999 does not exist in ZCL
-            frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}, {attrId: 9999}]),
+            frame: ZclFrame.create(0, 0, true, null, 40, 0, 1, [{attrId: 0}, {attrId: 9999}]),
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -2132,12 +2141,12 @@ describe('Controller', () => {
                 ]
             },
             "data":[
-                "time",
+                "mainsVoltage",
                 9999
             ],
             "linkquality":19,
             "groupID":10,
-            "cluster":"genTime",
+            "cluster":"genPowerCfg",
             "meta":{
                 "zclTransactionSequenceNumber":40,
                 "manufacturerCode": null,
