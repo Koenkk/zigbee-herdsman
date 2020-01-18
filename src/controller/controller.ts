@@ -284,6 +284,12 @@ class Controller extends events.EventEmitter {
     private onDeviceAnnounce(payload: AdapterEvents.DeviceAnnouncePayload): void {
         debug.log(`Device announce '${payload.ieeeAddr}'`);
         const device = Device.byIeeeAddr(payload.ieeeAddr);
+
+        if (!device) {
+            debug.log(`Device announce is from unknown device '${payload.ieeeAddr}'`);
+            return;
+        }
+
         device.updateLastSeen();
 
         if (device.networkAddress !== payload.networkAddress) {

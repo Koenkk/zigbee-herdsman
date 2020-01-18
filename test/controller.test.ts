@@ -500,6 +500,12 @@ describe('Controller', () => {
         expect(events.deviceAnnounce[0].device.modelID).toBe('myModelID');
     });
 
+    it('Skip Device announce event from unknown device', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceAnnounce']({networkAddress: 12999, ieeeAddr: '0x12999'});
+        expect(events.deviceAnnounce.length).toBe(0);
+    });
+
     it('Device announce event should update network address when different', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
