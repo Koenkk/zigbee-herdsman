@@ -7,7 +7,7 @@ import * as Events from './events';
 import {KeyValue, DeviceType} from './tstype';
 import Debug from "debug";
 import fs from 'fs';
-import {Utils as ZclUtils} from '../zcl';
+import {Utils as ZclUtils, Cluster} from '../zcl';
 import Touchlink from './touchlink';
 
 // @ts-ignore
@@ -506,34 +506,28 @@ class Controller extends events.EventEmitter {
                 }
             }
 
-            // Reponse to time reads
+            // Reponse to genTime reads
             if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
-                try {
-                    let resp: KeyValue;
-                    const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
-                    if (frame.Payload.length == 1) {
-                        switch (frame.Payload[0].attrId) {
-                        case frame.Cluster.attributes.time.ID:
-                            resp = {time};
-                            break;
+                const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
+                const response: KeyValue = {};
+                const values: KeyValue = {
+                    timeStatus: 3, // Time-master + synchronised
+                    time: time,
+                    localTime: time + (new Date()).getTimezoneOffset() * 60
+                };
 
-                        case frame.Cluster.attributes.timeStatus.ID:
-                            resp = {timeStatus: 3}; // Time-master + synchronised
-                            break;
-
-                        case frame.Cluster.attributes.localTime.ID:
-                            resp = {localTime: time + (new Date()).getTimezoneOffset() * 60};
-                            break
-
-                        default:
-                            resp = {time};
-                            debug.error(`genTime unsupported response to attribute '${frame.Cluster.getAttribute(frame.Payload[0].attrId).name}'`);
-                            break;
-                        }
+                const cluster = ZclUtils.getCluster('genTime');
+                for (const entry of frame.Payload) {
+                    const name = cluster.getAttribute(entry.attrId).name;
+                    if (values.hasOwnProperty(name)) {
+                        response[name] = values[name];
                     } else {
-                        resp = {time};
+                        debug.error(`'${device.ieeeAddr}' read unsupported attribute from genTime '${name}'`);
                     }
-                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, resp);
+                }
+
+                try {
+                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response);
                 } catch (error) {
                     debug.error(`genTime response to ${device.ieeeAddr} failed`);
                 }
