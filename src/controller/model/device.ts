@@ -391,22 +391,35 @@ class Device extends Entity {
             }
         } else {
             debug(`Interview - skip reading attributes because of no endpoint for device '${this.ieeeAddr}'`);
-            throw new Error(`Interview failed because of not endpiont ('${this.ieeeAddr}')`);
+            throw new Error(`Interview failed because of not endpoint ('${this.ieeeAddr}')`);
         }
 
         // Enroll IAS device
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
-            debug(`Interview - ssIasZone enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+            debug(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+
+            const stateBefore = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState']);
+            debug(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`);
+
             const coordinator = Device.byType('Coordinator')[0];
             await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
-            // According to the spec, we should wait for an enrollRequest here, but the Bosch ISW-ZPR1 didn't send it.
-            await Wait(3000);
+            debug(`Interview - IAS - wrote iasCieAddr`);
 
-            // Some devices don't do a defaultResponse
-            const disableDefaultResponse =
-                this.manufacturerName === 'Konke' || this.manufacturerName.startsWith('_TYZB01_');
-            await endpoint.command('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23}, {disableDefaultResponse});
-            debug(`Interview - successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+            await Wait(300);
+            const payload = {enrollrspcode: 0, zoneid: 23};
+            await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
+            debug(`Interview - IAS - sent enroll response`);
+
+            await Wait(300);
+            const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState']);
+            debug(`Interview - IAS - after enrolling state: '${JSON.stringify(stateAfter)}'`);
+            if (stateAfter.zoneState !== 1) {
+                throw new Error(
+                    `Interview failed because of failed IAS enroll (zoneState didn't change ('${this.ieeeAddr}')`
+                );
+            }
+
+            debug(`Interview - IAS successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
         }
     }
 

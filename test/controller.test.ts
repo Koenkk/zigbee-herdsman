@@ -34,7 +34,7 @@ const mockAdapterUnbind = jest.fn();
 const mockAdapterRemoveDevice = jest.fn();
 const mockSendZclFrameNetworkAddress = jest.fn();
 const mockSendZclFrameNetworkAddressWithResponse = jest.fn().mockImplementation((networkAddress, endpoint, frame: ZclFrame) => {
-    if (frame.isGlobal() && frame.isCommand('read') && frame.isCluster('genBasic')) {
+    if (frame.isGlobal() && frame.isCommand('read') && (frame.isCluster('genBasic') || frame.isCluster('ssIasZone'))) {
         const payload = [];
         const cluster = frame.Cluster;
         for (const item of frame.Payload) {
@@ -106,7 +106,7 @@ const mockDevices = {
         activeEndpoints: {endpoints: [1]},
         simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [1280], outputClusters: [2], profileID: 99}},
         attributes: {
-            1: {modelId: 'myIasDevice', manufacturerName: 'KoenAndCoSecurity', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101}
+            1: {zoneState: 1, iasCieAddr: '0x123', modelId: 'myIasDevice', manufacturerName: 'KoenAndCoSecurity', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
         },
     },
 }
@@ -674,7 +674,7 @@ describe('Controller', () => {
         expect(events.deviceInterview[1].device._modelID).toBe('myDevice9123');
     });
 
-    it('Device joins and interview iAs enrollment', async () => {
+    it('Device joins and interview iAs enrollment succeeds', async () => {
         await controller.start();
         const event = mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         await event;
@@ -683,15 +683,28 @@ describe('Controller', () => {
         expect(events.deviceInterview[0].device.ieeeAddr).toBe('0x170')
         expect(events.deviceInterview[1].status).toBe('successful')
         expect(events.deviceInterview[1].device.ieeeAddr).toBe('0x170');
-        expect(Wait).toBeCalledWith(3000);
-        const write = mockSendZclFrameNetworkAddressWithResponse.mock.calls[5];
+
+        const write = mockSendZclFrameNetworkAddressWithResponse.mock.calls[6];
         expect(write[0]).toBe(170);
         expect(write[1]).toBe(1);
-        expect(deepClone(write[2])).toStrictEqual({"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":7,"manufacturerCode":null,"commandIdentifier":2},"Payload":[{"attrId":16,"attrData":"0x123","dataType":240}],"Cluster":getCluster(1280)});
+        expect(deepClone(write[2])).toStrictEqual({"Header":{"frameControl":{"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":8,"manufacturerCode":null,"commandIdentifier":2},"Payload":[{"attrId":16,"attrData":"0x123","dataType":240}],"Cluster":getCluster(1280)});
+
         const enrollRsp = mockSendZclFrameNetworkAddress.mock.calls[0];
         expect(enrollRsp[0]).toBe(170);
         expect(enrollRsp[1]).toBe(1);
-        expect(deepClone(enrollRsp[2])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":8,"manufacturerCode":null,"commandIdentifier":0},"Payload":{"enrollrspcode":0,"zoneid":23},"Cluster":getCluster(1280)});
+        expect(deepClone(enrollRsp[2])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":9,"manufacturerCode":null,"commandIdentifier":0},"Payload":{"enrollrspcode":0,"zoneid":23},"Cluster":getCluster(1280)});
+    });
+
+    it('Device joins and interview iAs enrollment fails', async () => {
+        mockDevices['170'].attributes['1'].zoneState = 0;
+        await controller.start();
+        const event = mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
+        await event;
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe('started')
+        expect(events.deviceInterview[0].device.ieeeAddr).toBe('0x170')
+        expect(events.deviceInterview[1].status).toBe('failed')
+        expect(events.deviceInterview[1].device.ieeeAddr).toBe('0x170');
     });
 
     it('Receive zclData occupancy report', async () => {
@@ -1915,7 +1928,7 @@ describe('Controller', () => {
         expect(group1.members).toStrictEqual([]);
         expect(Array.from(group6.members)).toStrictEqual([device2.getEndpoint(1)]);
         expect(Array.from(group7.members)).toStrictEqual([device2.getEndpoint(1)]);
-        expect(deepClone(call[2])).toStrictEqual({"Cluster": getCluster(4), "Header": {"commandIdentifier": 4, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 14}, "Payload": {}});
+        expect(deepClone(call[2])).toStrictEqual({"Cluster": getCluster(4), "Header": {"commandIdentifier": 4, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 16}, "Payload": {}});
     });
 
     it('Load database', async () => {
