@@ -1186,7 +1186,7 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddress).toBeCalledTimes(1);
     });
 
-    it('onlythis Respond to genTime read', async () => {
+    it('Respond to genTime read', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddress.mockClear();
@@ -2045,7 +2045,7 @@ describe('Controller', () => {
         expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false}, null);
     });
 
-    it('onlythis Emit read from device', async () => {
+    it('Emit read from device', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['zclData']({
