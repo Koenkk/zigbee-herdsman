@@ -505,26 +505,6 @@ class Controller extends events.EventEmitter {
         if (this.isZclDataPayload(dataPayload, dataType)) {
             const frame = dataPayload.frame;
 
-            // Send a default response if necessary.
-            if (!frame.Header.frameControl.disableDefaultResponse) {
-                try {
-                    await endpoint.defaultResponse(
-                        frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
-                    );
-                } catch (error) {
-                    debug.error(`Default response to ${device.ieeeAddr} failed, force route discovery`);
-                    await this.adapter.discoverRoute(device.networkAddress);
-
-                    try {
-                        await endpoint.defaultResponse(
-                            frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
-                        );
-                    } catch (error) {
-                        debug.error(`Default response to ${device.ieeeAddr} failed, even after route discovery`);
-                    }
-                }
-            }
-
             // Reponse to genTime reads
             if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
                 const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
@@ -549,6 +529,26 @@ class Controller extends events.EventEmitter {
                     await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response);
                 } catch (error) {
                     debug.error(`genTime response to ${device.ieeeAddr} failed`);
+                }
+            }
+
+            // Send a default response if necessary.
+            if (!frame.Header.frameControl.disableDefaultResponse) {
+                try {
+                    await endpoint.defaultResponse(
+                        frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
+                    );
+                } catch (error) {
+                    debug.error(`Default response to ${device.ieeeAddr} failed, force route discovery`);
+                    await this.adapter.discoverRoute(device.networkAddress);
+
+                    try {
+                        await endpoint.defaultResponse(
+                            frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
+                        );
+                    } catch (error) {
+                        debug.error(`Default response to ${device.ieeeAddr} failed, even after route discovery`);
+                    }
                 }
             }
         }
