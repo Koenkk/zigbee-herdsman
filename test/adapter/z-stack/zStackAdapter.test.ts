@@ -155,6 +155,8 @@ const basicMocks = () => {
             return {};
         } else if (subsystem === Subsystem.AF && command === 'interPanCtl') {
             return {};
+        } else if (subsystem === Subsystem.ZDO && command === 'extRouteDisc') {
+            return {};
         } else {
             missing();
         }
@@ -1780,6 +1782,15 @@ describe('zStackAdapter', () => {
         basicMocks();
         await adapter.start();
         expect(await adapter.supportsLED()).toBeTruthy();
+    });
+
+    it('Route discovery', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        await adapter.discoverRoute(1239);
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 1239, options: 2, radius: 30});
     });
 
     it('Node descriptor', async () => {

@@ -163,6 +163,11 @@ class ZStackAdapter extends Adapter {
         await this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: enabled ? 1 : 0});
     }
 
+    public async discoverRoute(networkAddress: number): Promise<void> {
+        const payload =  {dstAddr: networkAddress, options: 2, radius: Constants.AF.DEFAULT_RADIUS};
+        await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
+    }
+
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
         return this.queue.execute<NodeDescriptor>(async () => {
             const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'nodeDescRsp', {nwkaddr: networkAddress});

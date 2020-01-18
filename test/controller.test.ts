@@ -21,6 +21,7 @@ const mocksendZclFrameInterPANIeeeAddr = jest.fn();
 const mocksendZclFrameInterPANBroadcastWithResponse = jest.fn();
 const mockRestoreChannelInterPAN = jest.fn();
 const mockAdapterPermitJoin = jest.fn();
+const mockDiscoverRoute = jest.fn();
 const mockAdapterSupportsBackup = jest.fn().mockReturnValue(true);
 const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
@@ -199,6 +200,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             sendZclFrameNetworkAddress: mockSendZclFrameNetworkAddress,
             sendZclFrameGroup: mockSendZclFrameGroup,
             permitJoin: mockAdapterPermitJoin,
+            discoverRoute: mockDiscoverRoute,
             stop: mockAdapterStop,
             removeDevice: mockAdapterRemoveDevice,
             lqi: (networkAddress) => {
@@ -1189,11 +1191,11 @@ describe('Controller', () => {
         });
     });
 
-    it('Receive zclData send default response fails', async () => {
+    it('Receive zclData send default response fails should attempt route discover', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockSendZclFrameNetworkAddress.mockClear();
-        mockSendZclFrameNetworkAddress.mockRejectedValueOnce("");
+        mockSendZclFrameNetworkAddress.mockRejectedValue("");
         await mockAdapterEvents['zclData']({
             address: 129,
             frame: ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1}),
@@ -1202,7 +1204,8 @@ describe('Controller', () => {
             groupID: 10,
         });
 
-        expect(mockSendZclFrameNetworkAddress).toBeCalledTimes(1);
+        expect(mockDiscoverRoute).toBeCalledTimes(1);
+        expect(mockSendZclFrameNetworkAddress).toBeCalledTimes(2);
     });
 
     it('Respond to genTime read', async () => {
