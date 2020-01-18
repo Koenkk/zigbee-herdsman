@@ -7,7 +7,7 @@ import * as Events from './events';
 import {KeyValue, DeviceType} from './tstype';
 import Debug from "debug";
 import fs from 'fs';
-import {Utils as ZclUtils, Cluster} from '../zcl';
+import {Utils as ZclUtils} from '../zcl';
 import Touchlink from './touchlink';
 
 // @ts-ignore
