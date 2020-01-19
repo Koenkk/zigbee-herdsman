@@ -216,12 +216,16 @@ class ZclFrame {
             const options: BuffaloTsType.Options = {};
 
             if (ListTypes.includes(parameter.type)) {
-                const lengthParameter = command.parameters[command.parameters.indexOf(parameter) - 1];
-                const length = payload[lengthParameter.name];
-
-                /* istanbul ignore else */
-                if (typeof length === 'number') {
-                    options.length = length;
+                if (command['name'] == 'getWeeklyScheduleRsp') {
+                    // Each transition in the array contains timestamp + optional heat point + optional cool point.
+                    options.length = payload['numoftrans'] * (1 + (payload['mode'] & 1 ? 1 : 0) + (payload['mode'] & 2 ? 1 : 0));
+                } else {
+                    const lengthParameter = command.parameters[command.parameters.indexOf(parameter) - 1];
+                    const length = payload[lengthParameter.name];
+                    /* istanbul ignore else */
+                    if (typeof length === 'number') {
+                        options.length = length;
+                    }
                 }
             }
 
