@@ -279,6 +279,27 @@ describe('Zcl', () => {
         expect(frame.Header).toStrictEqual(header);
     });
 
+    it('ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
+        const buffer = [9, 7, 0, 6, 64, 1, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 0,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: false,
+                frameType: 1,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 7,
+        };
+
+        const payload = {numoftrans:6, dayofweek:64, mode:1, thermoseqmode: [360, 2300, 570, 2200, 720, 2150, 840, 2150, 990, 2300, 1380, 2100]};
+
+        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.Header).toStrictEqual(header);
+    });
+
     it('ZclFrame from buffer configReportRsp failed', () => {
         const buffer = [0x08, 0x01, 0x07, 0x02, 0x01, 0x01, 0x01];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
