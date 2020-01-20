@@ -279,25 +279,18 @@ describe('Zcl', () => {
         expect(frame.Header).toStrictEqual(header);
     });
 
-    it('ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
-        const buffer = [9, 7, 0, 6, 64, 1, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 0,
-            frameControl: {
-                direction: 1,
-                disableDefaultResponse: false,
-                frameType: 1,
-                manufacturerSpecific: false,
-            },
-            manufacturerCode: null,
-            transactionSequenceNumber: 7,
-        };
+    it('onlythis ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
+        const bufferHeat = [9, 7, 0, 6, 64, 1, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8];
+        const frameHeat = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(bufferHeat));
+        expect(frameHeat.Payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:1, transitions: [{transitionTime:360,heatSetpoint:23},{transitionTime:570,heatSetpoint:22},{transitionTime:720,heatSetpoint:21.5},{transitionTime:840,heatSetpoint:21.5},{transitionTime:990,heatSetpoint:23},{transitionTime:1380,heatSetpoint:21}]});
 
-        const payload = {numoftrans:6, dayofweek:64, mode:1, thermoseqmode: [360, 2300, 570, 2200, 720, 2150, 840, 2150, 990, 2300, 1380, 2100]};
+        const bufferCool = [9, 7, 0, 6, 64, 2, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8];
+        const frameCool = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(bufferCool));
+        expect(frameCool.Payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:2, transitions: [{transitionTime:360,coolSetpoint:23},{transitionTime:570,coolSetpoint:22},{transitionTime:720,coolSetpoint:21.5},{transitionTime:840,coolSetpoint:21.5},{transitionTime:990,coolSetpoint:23},{transitionTime:1380,coolSetpoint:21}]});
 
-        expect(frame.Payload).toStrictEqual(payload);
-        expect(frame.Header).toStrictEqual(header);
+        const bufferHeatAndCool = [9, 7, 0, 1, 64, 3, 104, 1, 252, 8, 58, 2];
+        const frameHeatAndCool = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(bufferHeatAndCool));
+        expect(frameHeatAndCool.Payload).toStrictEqual({numoftrans:1, dayofweek:64, mode:3, transitions: [{transitionTime:360,coolSetpoint:5.7, heatSetpoint: 23}]});
     });
 
     it('ZclFrame from buffer configReportRsp failed', () => {

@@ -184,6 +184,32 @@ class BuffaloZcl extends Buffalo {
         return value;
     }
 
+    private readListThermoTransitions(options: TsType.Options): TsType.Value {
+        const heat = options.payload['mode'] & 1;
+        const cool = options.payload['mode'] & 2;
+        const result = [];
+
+        for (let i = 0; i < options.payload.numoftrans; i++) {
+            const entry: {
+                transitionTime: number;
+                heatSetpoint?: number;
+                coolSetpoint?: number;
+            } = {transitionTime: this.readUInt16()};
+
+            if (heat) {
+                entry.heatSetpoint = this.readUInt16() / 100;
+            }
+
+            if (cool) {
+                entry.coolSetpoint = this.readUInt16() / 100;
+            }
+
+            result.push(entry);
+        }
+
+        return result;
+    }
+
     private readUInt40(): TsType.Value {
         const lsb = this.readUInt32();
         const msb = this.readUInt8();
@@ -274,6 +300,8 @@ class BuffaloZcl extends Buffalo {
             return this.readExtensionFielSets();
         } else if (type === 'LIST_ZONEINFO') {
             return this.readListZoneInfo(options);
+        } else if (type === 'LIST_THERMO_TRANSITIONS') {
+            return this.readListThermoTransitions(options);
         } else if (type === 'uint40') {
             return this.readUInt40();
         } else if (type === 'uint48') {
