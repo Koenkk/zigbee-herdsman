@@ -279,7 +279,7 @@ describe('Zcl', () => {
         expect(frame.Header).toStrictEqual(header);
     });
 
-    it('onlythis ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
+    it('ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
         const bufferHeat = [9, 7, 0, 6, 64, 1, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8];
         const frameHeat = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(bufferHeat));
         expect(frameHeat.Payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:1, transitions: [{transitionTime:360,heatSetpoint:23},{transitionTime:570,heatSetpoint:22},{transitionTime:720,heatSetpoint:21.5},{transitionTime:840,heatSetpoint:21.5},{transitionTime:990,heatSetpoint:23},{transitionTime:1380,heatSetpoint:21}]});
