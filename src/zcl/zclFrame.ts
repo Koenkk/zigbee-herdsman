@@ -218,6 +218,7 @@ class ZclFrame {
             if (ListTypes.includes(parameter.type)) {
                 const lengthParameter = command.parameters[command.parameters.indexOf(parameter) - 1];
                 const length = payload[lengthParameter.name];
+
                 /* istanbul ignore else */
                 if (typeof length === 'number') {
                     options.length = length;
