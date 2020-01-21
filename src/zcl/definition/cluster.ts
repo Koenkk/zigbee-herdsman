@@ -1733,7 +1733,7 @@ const Cluster: {
                     {name: 'numoftrans', type: DataType.uint8},
                     {name: 'dayofweek', type: DataType.uint8},
                     {name: 'mode', type: DataType.uint8},
-                    {name: 'thermoseqmode', type: BuffaloZclDataType.LIST_UINT16},
+                    {name: 'transitions', type: BuffaloZclDataType.LIST_THERMO_TRANSITIONS},
                 ],
             },
             getWeeklySchedule: {
