@@ -279,7 +279,7 @@ describe('Zcl', () => {
         expect(frame.Header).toStrictEqual(header);
     });
 
-    it('ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
+    it('onlythis ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
         const bufferHeat = [9, 7, 0, 6, 64, 1, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8];
         const frameHeat = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(bufferHeat));
         expect(frameHeat.Payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:1, transitions: [{transitionTime:360,heatSetpoint:2300},{transitionTime:570,heatSetpoint:2200},{transitionTime:720,heatSetpoint:2150},{transitionTime:840,heatSetpoint:2150},{transitionTime:990,heatSetpoint:2300},{transitionTime:1380,heatSetpoint:2100}]});
@@ -294,17 +294,17 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame to buffer setWeeklyScheduleRsp (hvacThermostat)', () => {
-        const payloadHeat = {numoftrans:6, dayofweek:64, mode:1, transitions: [{transitionTime:360,heatSetpoint:23},{transitionTime:570,heatSetpoint:22},{transitionTime:720,heatSetpoint:21.5},{transitionTime:840,heatSetpoint:21.5},{transitionTime:990,heatSetpoint:23},{transitionTime:1380,heatSetpoint:21}]};
+        const payloadHeat = {numoftrans:6, dayofweek:64, mode:1, transitions: [{transitionTime:360,heatSetpoint:23},{transitionTime:570,heatSetpoint:2200},{transitionTime:720,heatSetpoint:2150},{transitionTime:840,heatSetpoint:2150},{transitionTime:990,heatSetpoint:2300},{transitionTime:1380,heatSetpoint:2100}]};
         const frameHeat = Zcl.ZclFrame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, false, null, 8, 'setWeeklySchedule', 513, payloadHeat);
-        expect(frameHeat.toBuffer()).toStrictEqual(Buffer.from([1,8,1,6,64,1,104,1,23,0,58,2,22,0,208,2,21,0,72,3,21,0,222,3,23,0,100,5,21,0]));
+        expect(frameHeat.toBuffer()).toStrictEqual(Buffer.from([1,8,1,6,64,1,104,1,23,0,58,2,152,8,208,2,102,8,72,3,102,8,222,3,252,8,100,5,52,8]));
 
-        const payloadCool = {numoftrans:6, dayofweek:64, mode:2, transitions: [{transitionTime:360,coolSetpoint:23},{transitionTime:570,coolSetpoint:22},{transitionTime:720,coolSetpoint:21.5},{transitionTime:840,coolSetpoint:21.5},{transitionTime:990,coolSetpoint:23},{transitionTime:1380,coolSetpoint:21}]};
+        const payloadCool = {numoftrans:6, dayofweek:64, mode:2, transitions: [{transitionTime:360,coolSetpoint:2300},{transitionTime:570,coolSetpoint:2200},{transitionTime:720,coolSetpoint:2150},{transitionTime:840,coolSetpoint:2150},{transitionTime:990,coolSetpoint:2300},{transitionTime:1380,coolSetpoint:2100}]};
         const frameCool = Zcl.ZclFrame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, false, null, 8, 'setWeeklySchedule', 513, payloadCool);
-        expect(frameCool.toBuffer()).toStrictEqual(Buffer.from([1,8,1,6,64,2,104,1,23,0,58,2,22,0,208,2,21,0,72,3,21,0,222,3,23,0,100,5,21,0]));
+        expect(frameCool.toBuffer()).toStrictEqual(Buffer.from([1,8,1,6,64,2,104,1,252,8,58,2,152,8,208,2,102,8,72,3,102,8,222,3,252,8,100,5,52,8]));
 
-        const payloadHeatAndCool = {numoftrans:6, dayofweek:64, mode:2, transitions: [{transitionTime:360,coolSetpoint:5.7, heatSetpoint: 23}]};
+        const payloadHeatAndCool = {numoftrans:6, dayofweek:64, mode:2, transitions: [{transitionTime:360,coolSetpoint:570, heatSetpoint: 2300}]};
         const frameHeatAndCool = Zcl.ZclFrame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, false, null, 8, 'setWeeklySchedule', 513, payloadHeatAndCool);
-        expect(frameHeatAndCool.toBuffer()).toStrictEqual(Buffer.from([1,8,1,6,64,2,104,1,23,0,5,0]));
+        expect(frameHeatAndCool.toBuffer()).toStrictEqual(Buffer.from([1,8,1,6,64,2,104,1,252,8,58,2]));
     });
 
     it('ZclFrame from buffer configReportRsp failed', () => {
