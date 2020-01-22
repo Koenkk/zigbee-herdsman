@@ -377,7 +377,8 @@ class Device extends Entity {
         }
 
         if (this.endpoints.length !== 0) {
-            // If none of the endpoints advertises to support genBasic, read from the first endpoint; not sure if this happens in practice.
+            // If none of the endpoints advertises to support genBasic, read from the first endpoint;
+            // not sure if this happens in practice.
             const endpoint = this.endpoints.find(e => e.supportsInputCluster('genBasic')) || this.endpoints[0];
 
             // Split into chunks of 3, otherwise some devices fail to respond.
