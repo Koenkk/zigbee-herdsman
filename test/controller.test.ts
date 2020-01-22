@@ -102,6 +102,15 @@ const mockDevices = {
             4: {}
         },
     },
+    162: {
+        nodeDescriptor: {type: 'Router', manufacturerCode: 1213},
+        activeEndpoints: {endpoints: [2, 1]},
+        simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [1], outputClusters: [2], profileID: 99}, 2: {endpointID: 2, deviceID: 5, inputClusters: [0, 1], outputClusters: [2], profileID: 99}},
+        attributes: {
+            2: {modelId: 'myDevice9124', manufacturerName: 'Boef', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
+            1: {}
+        },
+    },
     170: {
         nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
         activeEndpoints: {endpoints: [1]},
@@ -680,6 +689,17 @@ describe('Controller', () => {
         expect(events.deviceInterview[1].status).toBe('successful')
         expect(events.deviceInterview[1].device.ieeeAddr).toBe('0x161');
         expect(events.deviceInterview[1].device._modelID).toBe('myDevice9123');
+    });
+
+    it('Device joins with endpoints [2,1], as 2 is the only endpoint supporting genBasic it should read modelID from that', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 162, ieeeAddr: '0x162'});
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe('started')
+        expect(events.deviceInterview[0].device.ieeeAddr).toBe('0x162')
+        expect(events.deviceInterview[1].status).toBe('successful')
+        expect(events.deviceInterview[1].device.ieeeAddr).toBe('0x162');
+        expect(events.deviceInterview[1].device._modelID).toBe('myDevice9124');
     });
 
     it('Device joins and interview iAs enrollment succeeds', async () => {

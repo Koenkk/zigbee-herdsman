@@ -354,7 +354,7 @@ class Device extends Entity {
             throw new Error(`Interview failed because can not get active endpoints ('${this.ieeeAddr}')`);
         }
 
-        // Make sure that the endpoint are sorted so that e.g. below modelID is read from the first endpoint.
+        // Make sure that the endpoint are sorted.
         activeEndpoints.endpoints.sort();
 
         // Some devices, e.g. TERNCY return endpoint 0 in the active endpoints request.
@@ -377,7 +377,8 @@ class Device extends Entity {
         }
 
         if (this.endpoints.length !== 0) {
-            const endpoint = this.endpoints[0];
+            // If none of the endpoints advertises to support genBasic, read from the first endpoint; not sure if this happens in practice.
+            const endpoint = this.endpoints.find(e => e.supportsInputCluster('genBasic')) || this.endpoints[0];
 
             // Split into chunks of 3, otherwise some devices fail to respond.
             for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 2)) {
