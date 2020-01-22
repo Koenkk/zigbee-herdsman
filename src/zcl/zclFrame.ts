@@ -213,7 +213,7 @@ class ZclFrame {
         const payload: ZclPayload = {};
 
         for (const parameter of command.parameters) {
-            const options: BuffaloTsType.Options = {};
+            const options: BuffaloTsType.Options = {payload};
 
             if (ListTypes.includes(parameter.type)) {
                 const lengthParameter = command.parameters[command.parameters.indexOf(parameter) - 1];

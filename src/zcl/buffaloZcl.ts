@@ -42,6 +42,8 @@ const aliases: {[s: string]: string} = {
     'set': 'array',
 };
 
+interface ThermoTransition {transitionTime: number; heatSetpoint?: number; coolSetpoint?: number};
+
 class BuffaloZcl extends Buffalo {
     private readUseDataType(options: BuffaloZclOptions): TsType.Value {
         return this.read(options.dataType, options);
@@ -184,6 +186,42 @@ class BuffaloZcl extends Buffalo {
         return value;
     }
 
+    private readListThermoTransitions(options: TsType.Options): TsType.Value {
+        const heat = options.payload['mode'] & 1;
+        const cool = options.payload['mode'] & 2;
+        const result = [];
+
+        for (let i = 0; i < options.payload.numoftrans; i++) {
+            const entry: ThermoTransition = {transitionTime: this.readUInt16()};
+
+            if (heat) {
+                entry.heatSetpoint = this.readUInt16();
+            }
+
+            if (cool) {
+                entry.coolSetpoint = this.readUInt16();
+            }
+
+            result.push(entry);
+        }
+
+        return result;
+    }
+
+    private writeListThermoTransitions(value: ThermoTransition[]): void {
+        for (const entry of value) {
+            this.writeUInt16(entry.transitionTime);
+
+            if (entry.hasOwnProperty('heatSetpoint')) {
+                this.writeUInt16(entry.heatSetpoint);
+            }
+
+            if (entry.hasOwnProperty('coolSetpoint')) {
+                this.writeUInt16(entry.coolSetpoint);
+            }
+        }
+    }
+
     private readUInt40(): TsType.Value {
         const lsb = this.readUInt32();
         const msb = this.readUInt8();
@@ -241,6 +279,8 @@ class BuffaloZcl extends Buffalo {
             return this.writeExtensionFieldSets(value);
         } else if (type === 'LIST_ZONEINFO') {
             return this.writeListZoneInfo(value);
+        } else if (type === 'LIST_THERMO_TRANSITIONS') {
+            return this.writeListThermoTransitions(value);
         } else if (type === 'uint48') {
             return this.writeUInt48(value);
         } else if (type === 'uint56') {
@@ -274,6 +314,8 @@ class BuffaloZcl extends Buffalo {
             return this.readExtensionFielSets();
         } else if (type === 'LIST_ZONEINFO') {
             return this.readListZoneInfo(options);
+        } else if (type === 'LIST_THERMO_TRANSITIONS') {
+            return this.readListThermoTransitions(options);
         } else if (type === 'uint40') {
             return this.readUInt40();
         } else if (type === 'uint48') {

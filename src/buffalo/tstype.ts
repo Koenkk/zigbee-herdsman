@@ -1,5 +1,7 @@
 interface Options {
     length?: number;
+    // eslint-disable-next-line
+    payload?: {[key: string]: any};
 }
 
 // eslint-disable-next-line
