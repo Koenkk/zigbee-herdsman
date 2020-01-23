@@ -82,7 +82,12 @@ class ZStackAdapter extends Adapter {
     public async start(): Promise<StartResult> {
         await this.znp.open();
 
-        this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
+        // Old firmware did not contain version information and parse with error now
+        try {
+            this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
+        } catch (e) {
+            this.version = {"transportrev":2, "product":0, "majorrel":2, "minorrel":0, "maintrel":0, "revision":""};
+        }
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
 
         return StartZnp(this.znp, this.version.product, this.networkOptions, this.backupPath);
