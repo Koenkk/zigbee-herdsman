@@ -86,6 +86,7 @@ class ZStackAdapter extends Adapter {
         try {
             this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
         } catch (e) {
+            /* istanbul ignore next */
             this.version = {"transportrev":2, "product":0, "majorrel":2, "minorrel":0, "maintrel":0, "revision":""};
         }
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
