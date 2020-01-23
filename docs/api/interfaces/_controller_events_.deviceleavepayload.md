@@ -18,4 +18,4 @@
 
 • **ieeeAddr**: *string*
 
-*Defined in [controller/events.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/events.ts#L27)*
+*Defined in [src/controller/events.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/events.ts#L27)*

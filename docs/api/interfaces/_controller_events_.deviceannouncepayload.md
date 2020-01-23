@@ -18,4 +18,4 @@
 
 • **device**: *[Device](../classes/_controller_model_device_.device.md)*
 
-*Defined in [controller/events.ts:23](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/events.ts#L23)*
+*Defined in [src/controller/events.ts:23](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/events.ts#L23)*

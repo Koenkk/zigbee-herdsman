@@ -21,6 +21,6 @@
 
 ### `Const` debug
 
-• **debug**: *Debugger* =  Debug('zigbee-herdsman:controller:device')
+• **debug**: *Debugger* = Debug('zigbee-herdsman:controller:device')
 
-*Defined in [controller/model/device.ts:9](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/controller/model/device.ts#L9)*
+*Defined in [src/controller/model/device.ts:9](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/device.ts#L9)*
