@@ -239,20 +239,21 @@ class Endpoint extends Entity {
         );
     }
 
-    public async bind(clusterKey: number | string, target: Endpoint | Group): Promise<void> {
+    public async bind(clusterKey: number | string, target: Endpoint | Group | number): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
         await Entity.adapter.bind(
             this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
-            target instanceof Endpoint ? target.deviceIeeeAddress : target.groupID,
+            target instanceof Endpoint ? target.deviceIeeeAddress : (target instanceof Group ? target.groupID : target),
             type,
             target instanceof Endpoint ? target.ID : null,
         );
 
+        // NOTE: In case the bind is done by group number, it won't be saved to the database
         if (!this.binds.find((b) => b.cluster.ID === cluster.ID && b.target === target)) {
             if (target instanceof Group) {
                 this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
-            } else {
+            } else if (target instanceof Endpoint) {
                 this._binds.push({
                     cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress,
                     endpointID: target.ID
@@ -263,12 +264,12 @@ class Endpoint extends Entity {
         }
     }
 
-    public async unbind(clusterKey: number | string, target: Endpoint | Group): Promise<void> {
+    public async unbind(clusterKey: number | string, target: Endpoint | Group | number): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
         await Entity.adapter.unbind(
             this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
-            target instanceof Endpoint ? target.deviceIeeeAddress : target.groupID,
+            target instanceof Endpoint ? target.deviceIeeeAddress : (target instanceof Group ? target.groupID : target),
             type,
             target instanceof Endpoint ? target.ID : null,
         );
