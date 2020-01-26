@@ -1844,6 +1844,12 @@ describe('zStackAdapter', () => {
         expect(await adapter.supportsLED()).toBeTruthy();
     });
 
+    it('Supports route discovery', async () => {
+        basicMocks();
+        await adapter.start();
+        expect(await adapter.supportsDiscoverRoute()).toBeFalsy();
+    });
+
     it('Route discovery', async () => {
         basicMocks();
         await adapter.start();

@@ -169,6 +169,10 @@ class ZStackAdapter extends Adapter {
         await this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: enabled ? 1 : 0});
     }
 
+    public async supportsDiscoverRoute(): Promise<boolean> {
+        return this.version.product !== ZnpVersion.zStack12;
+    }
+
     public async discoverRoute(networkAddress: number): Promise<void> {
         const payload =  {dstAddr: networkAddress, options: 2, radius: Constants.AF.DEFAULT_RADIUS};
         await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);

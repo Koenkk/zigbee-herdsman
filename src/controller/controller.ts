@@ -539,15 +539,17 @@ class Controller extends events.EventEmitter {
                         frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
                     );
                 } catch (error) {
-                    debug.error(`Default response to ${device.ieeeAddr} failed, force route discovery`);
-                    await this.adapter.discoverRoute(device.networkAddress);
+                    if ((await this.adapter.supportsDiscoverRoute())) {
+                        debug.error(`Default response to ${device.ieeeAddr} failed, force route discovery`);
+                        await this.adapter.discoverRoute(device.networkAddress);
 
-                    try {
-                        await endpoint.defaultResponse(
-                            frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
-                        );
-                    } catch (error) {
-                        debug.error(`Default response to ${device.ieeeAddr} failed, even after route discovery`);
+                        try {
+                            await endpoint.defaultResponse(
+                                frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
+                            );
+                        } catch (error) {
+                            debug.error(`Default response to ${device.ieeeAddr} failed, even after route discovery`);
+                        }
                     }
                 }
             }
