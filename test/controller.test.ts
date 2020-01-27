@@ -820,6 +820,12 @@ describe('Controller', () => {
             "meta": {
                 "zclTransactionSequenceNumber": 169,
                 "manufacturerCode": null,
+                "frameControl": {
+                    "direction": 1,
+                    "disableDefaultResponse": true,
+                    "frameType": 0,
+                    "manufacturerSpecific": false,
+                },
             },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
@@ -1088,6 +1094,12 @@ describe('Controller', () => {
             "meta": {
                 "zclTransactionSequenceNumber": 1,
                 "manufacturerCode": null,
+                "frameControl": {
+                    "direction": 1,
+                    "disableDefaultResponse": false,
+                    "frameType": 0,
+                    "manufacturerSpecific": false,
+                },
             },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
@@ -1170,6 +1182,12 @@ describe('Controller', () => {
             "meta": {
                 "zclTransactionSequenceNumber": 29,
                 "manufacturerCode": 4476,
+                "frameControl": {
+                    "direction": 0,
+                    "disableDefaultResponse": false,
+                    "frameType": 1,
+                    "manufacturerSpecific": true,
+                },
             },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
@@ -1520,6 +1538,12 @@ describe('Controller', () => {
             "meta": {
                 "zclTransactionSequenceNumber": 3,
                 "manufacturerCode": 4447,
+                "frameControl": {
+                    "direction": 1,
+                    "disableDefaultResponse": true,
+                    "frameType": 0,
+                    "manufacturerSpecific": true,
+                },
             },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
@@ -2215,6 +2239,12 @@ describe('Controller', () => {
             "meta":{
                 "zclTransactionSequenceNumber":40,
                 "manufacturerCode": null,
+                "frameControl": {
+                    "direction": 0,
+                    "disableDefaultResponse": true,
+                    "frameType": 0,
+                    "manufacturerSpecific": false,
+                },
             }
         };
 
@@ -2307,6 +2337,12 @@ describe('Controller', () => {
             "meta":{
                 "zclTransactionSequenceNumber":40,
                 "manufacturerCode": null,
+                "frameControl": {
+                    "direction": 0,
+                    "disableDefaultResponse": true,
+                    "frameType": 0,
+                    "manufacturerSpecific": false,
+                },
             }
         };
 

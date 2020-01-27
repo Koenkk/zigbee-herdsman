@@ -8,8 +8,9 @@ import * as TsType from './tstype';
 import FrameType from './frameType';
 import PowerSource from './powerSource';
 import ManufacturerCode from './manufacturerCode';
+import FrameControl from './frameControl';
 
 export {
     BuffaloZclDataType, Cluster, Direction, Foundation, Status, DataType, TsType, FrameType, PowerSource,
-    ManufacturerCode
+    ManufacturerCode, FrameControl,
 };
