@@ -9,7 +9,6 @@ import Debug from "debug";
 import fs from 'fs';
 import {Utils as ZclUtils} from '../zcl';
 import Touchlink from './touchlink';
-import ZclHeader from '../zcl/zclFrame';
 import {FrameControl} from '../zcl/zclFrame';
 
 // @ts-ignore
@@ -432,7 +431,11 @@ class Controller extends events.EventEmitter {
         let type: Events.MessagePayloadType = undefined;
         let data: KeyValue;
         let clusterName = undefined;
-        const meta: {zclTransactionSequenceNumber?: number; manufacturerCode?: number; frameControl?: FrameControl;} = {};
+        const meta: {
+            zclTransactionSequenceNumber?: number;
+            manufacturerCode?: number;
+            frameControl?: FrameControl;
+        } = {};
 
         if (this.isZclDataPayload(dataPayload, dataType)) {
             const frame = dataPayload.frame;
