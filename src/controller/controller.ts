@@ -7,9 +7,8 @@ import * as Events from './events';
 import {KeyValue, DeviceType} from './tstype';
 import Debug from "debug";
 import fs from 'fs';
-import {Utils as ZclUtils} from '../zcl';
+import {Utils as ZclUtils, FrameControl} from '../zcl';
 import Touchlink from './touchlink';
-import {FrameControl} from '../zcl/zclFrame';
 
 // @ts-ignore
 import mixin from 'mixin-deep';

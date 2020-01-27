@@ -1,4 +1,4 @@
-import {Direction, Foundation, DataType, BuffaloZclDataType, Cluster} from './definition';
+import {Direction, Foundation, DataType, BuffaloZclDataType, FrameControl} from './definition';
 import * as Utils from './utils';
 import BuffaloZcl from './buffaloZcl';
 import {TsType as BuffaloTsType} from '../buffalo';
@@ -6,13 +6,6 @@ import * as TsType from './tstype';
 import {TsType as DefinitionTsType, FrameType} from './definition';
 
 const MINIMAL_FRAME_LENGTH = 3;
-
-interface FrameControl {
-    frameType: FrameType;
-    manufacturerSpecific: boolean;
-    direction: Direction;
-    disableDefaultResponse: boolean;
-}
 
 // eslint-disable-next-line
 type ZclPayload = any;
