@@ -3580,6 +3580,14 @@ const Cluster: {
             },
         },
     },
+    aqaraOpple: {
+        ID: 0xFCC0,
+        attributes: {
+            mode: {ID: 9, type: DataType.uint8},
+        },
+        commands: {},
+        commandsResponse: {}
+    },
 };
 
 export default Cluster;
