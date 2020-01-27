@@ -369,4 +369,3 @@ class ZclFrame {
 }
 
 export default ZclFrame;
-export {FrameControl};
