@@ -2349,4 +2349,101 @@ describe('Controller', () => {
         expect(events.message.length).toBe(1);
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
+
+    it('Endpoint command error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddress.mockRejectedValueOnce('timeout occurred');
+        let error;
+        try {await endpoint.command('genOnOff', 'toggle', {})} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`Command 0x129/1 genOnOff.toggle({}, {"timeout":10000,"defaultResponseTimeout":15000,"manufacturerCode":null,"disableDefaultResponse":false}) failed (timeout occurred)`));
+    });
+
+    it('ConfigureReporting error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddressWithResponse.mockRejectedValueOnce('timeout occurred');
+        let error;
+        try {await endpoint.configureReporting('genOnOff', [{attribute: 'onOff', minimumReportInterval: 0, maximumReportInterval: 2, reportableChange: 10}])} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`ConfigureReporting 0x129/1 genOnOff([{"attribute":"onOff","minimumReportInterval":0,"maximumReportInterval":2,"reportableChange":10}], {"timeout":10000,"defaultResponseTimeout":15000,"manufacturerCode":null,"disableDefaultResponse":true}) failed (timeout occurred)`));
+    });
+
+    it('DefaultResponse error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddress.mockRejectedValueOnce('timeout occurred');
+        let error;
+        try {await endpoint.defaultResponse(1, 0, 1, 3)} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`DefaultResponse 0x129/1 1(1, {"timeout":10000,"defaultResponseTimeout":15000,"manufacturerCode":null,"disableDefaultResponse":true}) failed (timeout occurred)`));
+    });
+
+    it('Unbind error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockAdapterUnbind.mockRejectedValueOnce('timeout occurred');
+        let error;
+        try {await endpoint.unbind('genOnOff', 1)} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`Unbind 0x129/1 genOnOff from '1' failed (timeout occurred)`));
+    });
+
+    it('Bind error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockAdapterBind.mockRejectedValueOnce('timeout occurred');
+        let error;
+        try {await endpoint.bind('genOnOff', 1)} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`Bind 0x129/1 genOnOff from '1' failed (timeout occurred)`));
+    });
+
+    it('ReadResponse error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddress.mockRejectedValueOnce('timeout occurred');
+        let error;
+        try {await endpoint.readResponse('genOnOff', 1, [{onOff: 1}])} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`ReadResponse 0x129/1 genOnOff([{"onOff":1}], {"timeout":10000,"defaultResponseTimeout":15000,"manufacturerCode":null,"disableDefaultResponse":true}) failed (timeout occurred)`));
+    });
+
+    it('Read error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddressWithResponse.mockRejectedValueOnce('timeout occurred');
+        let error;
+        try {await endpoint.read('genOnOff', ['onOff'])} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`Read 0x129/1 genOnOff(["onOff"], {"timeout":10000,"defaultResponseTimeout":15000,"manufacturerCode":null,"disableDefaultResponse":true}) failed (timeout occurred)`));
+    });
+
+    it('Write error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddressWithResponse.mockRejectedValueOnce('timeout occurred');
+        let error;
+        try {await endpoint.write('genOnOff', {onOff: 1})} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`Write 0x129/1 genOnOff({"onOff":1}, {"timeout":10000,"defaultResponseTimeout":15000,"manufacturerCode":null,"disableDefaultResponse":true}) failed (timeout occurred)`));
+    });
+
+    it('Group command error', async () => {
+        await controller.start();
+        const group = await controller.createGroup(2);
+        mockSendZclFrameGroup.mockRejectedValueOnce('timeout');
+        let error;
+        try {await group.command('genOnOff', 'toggle', {})} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`Command 2 genOnOff.toggle({}) failed (timeout)`));
+    });
 });

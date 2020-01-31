@@ -5,6 +5,12 @@ import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumbe
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
 import Group from './group';
 import Device from './device';
+import Debug from "debug";
+
+const debug = {
+    info: Debug('zigbee-herdsman:controller:endpoint'),
+    error: Debug('zigbee-herdsman:controller:endpoint'),
+};
 
 interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
@@ -184,13 +190,23 @@ class Endpoint extends Entity {
             }
         }
 
-        const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
-            options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'write', cluster.ID, payload
-        );
-        await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
-            this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout
-        );
+        const log = `Write ${this.deviceIeeeAddress}/${this.ID} ` +
+            `${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            const frame = Zcl.ZclFrame.create(
+                Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
+                options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'write', cluster.ID, payload
+            );
+            await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout
+            );
+        } catch (error) {
+            const message = `${log} failed (${error})`;
+            debug.error(message);
+            throw Error(message);
+        }
     }
 
     public async read(
@@ -207,10 +223,21 @@ class Endpoint extends Entity {
             Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
             options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'read', cluster.ID, payload
         );
-        const result = await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
-            this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
-        );
-        return ZclFrameConverter.attributeKeyValue(result.frame);
+
+        const log = `Read ${this.deviceIeeeAddress}/${this.ID} ` +
+            `${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            const result = await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+            );
+            return ZclFrameConverter.attributeKeyValue(result.frame);
+        } catch (error) {
+            const message = `${log} failed (${error})`;
+            debug.error(message);
+            throw Error(message);
+        }
     }
 
     public async readResponse(
@@ -234,50 +261,85 @@ class Endpoint extends Entity {
             Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, options.disableDefaultResponse,
             options.manufacturerCode, transactionSequenceNumber, 'readRsp', cluster.ID, payload
         );
-        await Entity.adapter.sendZclFrameNetworkAddress(
-            this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
-        );
+
+        const log = `ReadResponse ${this.deviceIeeeAddress}/${this.ID} ` +
+            `${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            await Entity.adapter.sendZclFrameNetworkAddress(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+            );
+        } catch (error) {
+            const message = `${log} failed (${error})`;
+            debug.error(message);
+            throw Error(message);
+        }
     }
 
     public async bind(clusterKey: number | string, target: Endpoint | Group | number): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
-        await Entity.adapter.bind(
-            this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
-            target instanceof Endpoint ? target.deviceIeeeAddress : (target instanceof Group ? target.groupID : target),
-            type,
-            target instanceof Endpoint ? target.ID : null,
-        );
 
-        // NOTE: In case the bind is done by group number, it won't be saved to the database
-        if (!this.binds.find((b) => b.cluster.ID === cluster.ID && b.target === target)) {
-            if (target instanceof Group) {
-                this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
-            } else if (target instanceof Endpoint) {
-                this._binds.push({
-                    cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress,
-                    endpointID: target.ID
-                });
+        const destinationAddress =
+            target instanceof Endpoint ? target.deviceIeeeAddress : (target instanceof Group ? target.groupID : target);
+
+        const log = `Bind ${this.deviceIeeeAddress}/${this.ID} ${cluster.name} from ` +
+            `'${target instanceof Endpoint ? `${destinationAddress}/${target.ID}` : destinationAddress}'`;
+        debug.info(log);
+
+        try {
+            await Entity.adapter.bind(
+                this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID, destinationAddress, type,
+                target instanceof Endpoint ? target.ID : null,
+            );
+
+            // NOTE: In case the bind is done by group number, it won't be saved to the database
+            if (!this.binds.find((b) => b.cluster.ID === cluster.ID && b.target === target)) {
+                if (target instanceof Group) {
+                    this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
+                } else if (target instanceof Endpoint) {
+                    this._binds.push({
+                        cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress,
+                        endpointID: target.ID
+                    });
+                }
+
+                this.getDevice().save();
             }
-
-            this.getDevice().save();
+        } catch (error) {
+            const message = `${log} failed (${error})`;
+            debug.error(message);
+            throw Error(message);
         }
     }
 
     public async unbind(clusterKey: number | string, target: Endpoint | Group | number): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
-        await Entity.adapter.unbind(
-            this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID,
-            target instanceof Endpoint ? target.deviceIeeeAddress : (target instanceof Group ? target.groupID : target),
-            type,
-            target instanceof Endpoint ? target.ID : null,
-        );
 
-        const index = this.binds.findIndex((b) => b.cluster.ID === cluster.ID && b.target === target);
-        if (index !== -1) {
-            this._binds.splice(index, 1);
-            this.getDevice().save();
+        const destinationAddress =
+            target instanceof Endpoint ? target.deviceIeeeAddress : (target instanceof Group ? target.groupID : target);
+
+        const log = `Unbind ${this.deviceIeeeAddress}/${this.ID} ${cluster.name} from ` +
+            `'${target instanceof Endpoint ? `${destinationAddress}/${target.ID}` : destinationAddress}'`;
+        debug.info(log);
+
+        try {
+            await Entity.adapter.unbind(
+                this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID, destinationAddress, type,
+                target instanceof Endpoint ? target.ID : null,
+            );
+
+            const index = this.binds.findIndex((b) => b.cluster.ID === cluster.ID && b.target === target);
+            if (index !== -1) {
+                this._binds.splice(index, 1);
+                this.getDevice().save();
+            }
+        } catch (error) {
+            const message = `${log} failed (${error})`;
+            debug.error(message);
+            throw Error(message);
         }
     }
 
@@ -290,9 +352,20 @@ class Endpoint extends Entity {
             Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, options.disableDefaultResponse,
             options.manufacturerCode, transactionSequenceNumber, 'defaultRsp', clusterID, payload
         );
-        await Entity.adapter.sendZclFrameNetworkAddress(
-            this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
-        );
+
+        const log = `DefaultResponse ${this.deviceIeeeAddress}/${this.ID} ` +
+            `${clusterID}(${commandID}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            await Entity.adapter.sendZclFrameNetworkAddress(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+            );
+        } catch (error) {
+            const message = `${log} failed (${error})`;
+            debug.error(message);
+            throw Error(message);
+        }
     }
 
     public async configureReporting(
@@ -328,9 +401,20 @@ class Endpoint extends Entity {
             Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
             options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'configReport', cluster.ID, payload
         );
-        await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
-            this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
-        );
+
+        const log = `ConfigureReporting ${this.deviceIeeeAddress}/${this.ID} ` +
+            `${cluster.name}(${JSON.stringify(items)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+            );
+        } catch (error) {
+            const message = `${log} failed (${error})`;
+            debug.error(message);
+            throw Error(message);
+        }
     }
 
     public async command(
@@ -352,15 +436,25 @@ class Endpoint extends Entity {
             options.manufacturerCode, ZclTransactionSequenceNumber.next(), command.ID, cluster.ID, payload
         );
 
-        if (hasResponse) {
-            const result = await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
-            );
-            return result.frame.Payload;
-        } else {
-            await Entity.adapter.sendZclFrameNetworkAddress(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
-            );
+        const log = `Command ${this.deviceIeeeAddress}/${this.ID} ` +
+            `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            if (hasResponse) {
+                const result = await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
+                    this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+                );
+                return result.frame.Payload;
+            } else {
+                await Entity.adapter.sendZclFrameNetworkAddress(
+                    this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+                );
+            }
+        } catch (error) {
+            const message = `${log} failed (${error})`;
+            debug.error(message);
+            throw Error(message);
         }
     }
 
