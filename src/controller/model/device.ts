@@ -25,7 +25,7 @@ class Device extends Entity {
     private _dateCode?: string;
     private _endpoints: Endpoint[];
     private _hardwareVersion?: number;
-    public readonly ieeeAddr: string;
+    private _ieeeAddr: string;
     private _interviewCompleted: boolean;
     private _interviewing: boolean;
     private _lastSeen: number;
@@ -40,6 +40,8 @@ class Device extends Entity {
     private _zclVersion?: number;
 
     // Getters/setters
+    get ieeeAddr(): string {return this._ieeeAddr;}
+    set ieeeAddr(ieeeAddr) {this._ieeeAddr = ieeeAddr;}
     get applicationVersion(): number {return this._applicationVersion;}
     set applicationVersion(applicationVersion) {this._applicationVersion = applicationVersion;}
     get endpoints(): Endpoint[] {return this._endpoints;}

@@ -126,13 +126,21 @@ class Controller extends events.EventEmitter {
         }
 
         // Add coordinator to the database if it is not there yet.
+        const coordinator = await this.adapter.getCoordinator();
         if (Device.byType('Coordinator').length === 0) {
             debug.log('No coordinator in database, querying...');
-            const coordinator = await this.adapter.getCoordinator();
             Device.create(
                 'Coordinator', coordinator.ieeeAddr, coordinator.networkAddress, coordinator.manufacturerID,
                 undefined, undefined, undefined, coordinator.endpoints
             );
+        }
+
+        // Update coordinator ieeeAddr if changed, can happen due to e.g. reflashing
+        const databaseCoordinator = Device.byType('Coordinator')[0];
+        if (databaseCoordinator.ieeeAddr !== coordinator.ieeeAddr) {
+            debug.log(`Coordinator address changed, updating to '${coordinator.ieeeAddr}'`);
+            databaseCoordinator.ieeeAddr = coordinator.ieeeAddr;
+            databaseCoordinator.save();
         }
 
         // Set backup timer to 1 day.
