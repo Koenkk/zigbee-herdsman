@@ -1023,8 +1023,24 @@ const Cluster: {
             imageStamp: {ID: 10, type: DataType.uint32},
         },
         commands: {
+            queryNextImageRequest: {
+                ID: 1,
+                parameters: [
+                    {name: 'fieldControl', type: DataType.uint8},
+                    {name: 'manufacturerCode', type: DataType.uint16},
+                    {name: 'imageType', type: DataType.uint16},
+                    {name: 'currentFileVersion', type: DataType.uint32},
+                ],
+            },
         },
         commandsResponse: {
+            imageNotify: {
+                ID: 0,
+                parameters: [
+                    {name: 'payloadType', type: DataType.uint8},
+                    {name: 'queryJitter', type: DataType.uint8},
+                ],
+            },
         },
     },
     genPollCtrl: {

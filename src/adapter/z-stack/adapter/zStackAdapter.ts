@@ -35,7 +35,7 @@ interface WaitFor {
 interface WaitressMatcher {
     address: number | string;
     endpoint: number;
-    transactionSequenceNumber: number;
+    transactionSequenceNumber?: number;
     frameType: FrameType;
     clusterID: number;
     commandIdentifier: number;
@@ -613,6 +613,17 @@ class ZStackAdapter extends Adapter {
         return this.queue.execute<void>(async () => {
             await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value});
         });
+    }
+
+    public async waitFor(
+        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
+        clusterID: number, commandIdentifier: number, timeout: number,
+    ): Promise<Events.ZclDataPayload> {
+        const payload = {
+            address: networkAddress, endpoint, clusterID, commandIdentifier, frameType, direction,
+        };
+
+        return this.waitress.waitFor(payload, timeout).promise;
     }
 
     /**

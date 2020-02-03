@@ -458,6 +458,52 @@ class Endpoint extends Entity {
         }
     }
 
+    public async commandResponse(
+        clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
+    ): Promise<void | KeyValue> {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const command = cluster.getCommandResponse(commandKey);
+        options = this.getOptionsWithDefaults(options, true);
+
+        for (const parameter of command.parameters) {
+            if (!payload.hasOwnProperty(parameter.name)) {
+                throw new Error(`Parameter '${parameter.name}' is missing`);
+            }
+        }
+
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, options.disableDefaultResponse,
+            options.manufacturerCode, ZclTransactionSequenceNumber.next(), command.ID, cluster.ID, payload
+        );
+
+        const log = `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
+            `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            await Entity.adapter.sendZclFrameNetworkAddress(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+            );
+        } catch (error) {
+            const message = `${log} failed (${error})`;
+            debug.error(message);
+            throw Error(message);
+        }
+    }
+
+    public async waitForCommand(
+        clusterKey: number | string, commandKey: number | string, timeout: number,
+    ): Promise<void | KeyValue> {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const command = cluster.getCommand(commandKey);
+        const result = await Entity.adapter.waitFor(
+            this.deviceNetworkAddress, this.ID, Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER,
+            cluster.ID, command.ID, timeout
+        );
+
+        return result.frame.Payload;
+    }
+
     private getOptionsWithDefaults(options: Options, disableDefaultResponse: boolean): Options {
         const providedOptions = options || {};
         return {
