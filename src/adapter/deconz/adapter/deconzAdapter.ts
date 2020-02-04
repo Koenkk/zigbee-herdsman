@@ -252,6 +252,14 @@ class DeconzAdapter extends Adapter {
         return false;
     }
 
+    public async supportsDiscoverRoute(): Promise<boolean> {
+        return false;
+    }
+
+    public async discoverRoute(networkAddress: number): Promise<void> {
+        return Promise.reject();
+    }
+
     public async restoreChannelInterPAN(): Promise<void> {
         return Promise.reject();
     }
