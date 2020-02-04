@@ -122,17 +122,90 @@ class DeconzAdapter extends Adapter {
     public async sendZclFrameNetworkAddressWithResponse(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame
     ): Promise<Events.ZclDataPayload> {
-        return null;
+
+        const command = zclFrame.getCommand();
+        if (!command.hasOwnProperty('response')) {
+            throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
+        }
+
+        const transactionID = this.nextTransactionID();
+        const request: ApsDataRequest = {};
+        const data = zclFrame.toBuffer();
+
+        request.requestId = transactionID;
+        request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
+        request.destAddr16 = networkAddress;
+        request.destEndpoint = endpoint;
+        request.profileId = 0x104;
+        request.clusterId = zclFrame.Cluster.ID;
+        request.srcEndpoint = 1;
+        request.asduLength = data.length;
+        console.log(data);
+        request.asduPayload = [...data];
+        request.txOptions = 0;
+        request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
+        //todo timeout
+
+        try {
+            return this.driver.enqueueSendDataRequestWithResponse(request);
+        } catch (error) {
+            throw error;
+        }
     }
 
     public async sendZclFrameNetworkAddress(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number
     ): Promise<void> {
 
+        const transactionID = this.nextTransactionID();
+        const request: ApsDataRequest = {};
+        const data = zclFrame.toBuffer();
+
+        request.requestId = transactionID;
+        request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
+        request.destAddr16 = networkAddress;
+        request.destEndpoint = endpoint;
+        request.profileId = 0x104;
+        request.clusterId = zclFrame.Cluster.ID;
+        request.srcEndpoint = 1;
+        request.asduLength = data.length;
+        console.log(data);
+        request.asduPayload = [...data];
+        request.txOptions = 0;
+        request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
+        //todo timeout
+
+        try {
+            return this.driver.enqueueSendDataRequest(request);
+        } catch (error) {
+            throw error;
+        }
     }
 
-    public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
+    public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void> {
+        //todo
+        const transactionID = this.nextTransactionID();
+        const request: ApsDataRequest = {};
+        const data = zclFrame.toBuffer();
 
+        request.requestId = transactionID;
+        request.destAddrMode = PARAM.PARAM.addressMode.GROUP_ADDR;
+        request.destAddr16 = groupID;
+        request.profileId = 0x104;
+        request.clusterId = zclFrame.Cluster.ID;
+        request.srcEndpoint = 1;
+        request.asduLength = data.length;
+        console.log(data);
+        request.asduPayload = [...data];
+        request.txOptions = 0;
+        request.radius = PARAM.PARAM.txRadius.UNLIMITED;
+        //todo timeout
+
+        try {
+            return this.driver.enqueueSendDataRequest(request);
+        } catch (error) {
+            throw error;
+        }
     }
 
     public async bind(
