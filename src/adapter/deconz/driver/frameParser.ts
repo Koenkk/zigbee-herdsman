@@ -2,7 +2,8 @@ const MIN_BUFFER_SIZE = 3;
 const littleEndian = true;
 import PARAM from './constants';
 import { busyQueue, apsBusyQueue } from './driver';
-import { Request, ReceivedDataResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask } from './constants';
+import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask } from './constants';
+import * as Events from '../../events';
 
 import Debug from 'debug';
 const debug = Debug('zigbee-herdsman:deconz:frameParser');
@@ -10,7 +11,6 @@ const debug = Debug('zigbee-herdsman:deconz:frameParser');
 var events = require('events');
 var frameParserEvents = new events.EventEmitter();
 module.exports.frameParserEvents = frameParserEvents;
-
 
 function parseReadParameterResponse(view: DataView) : Command {
     const parameterId = view.getUint8(7);
@@ -57,13 +57,105 @@ function parseDeviceStateResponse(view : DataView) : number {
     return flag;
 }
 
+function parseChangeNetworkStateResponse(view : DataView) : number {
+    const status = view.getUint8(2);
+    const state = view.getUint8(5);
+    debug("change network state - status: " + status + " new state: " + state);
+    return state;
+}
+
+function parseQuerySendDataStateResponse(view : DataView) : object {
+    const response: DataStateResponse = {};
+    let buf2, buf3;
+
+    response.commandId = view.getUint8(0);
+    response.seqNr = view.getUint8(1);
+    response.frameLength = 7;
+    response.payloadLength = view.getUint16(5, littleEndian);
+    if (response.payloadLength != 11 && response.payloadLength != 12 && response.payloadLength != 18) {
+        debug("query send data state response - invalid payload length");
+        return null;
+    }
+    response.deviceState = view.getUint8(7);
+    response.requestId = view.getUint8(8);
+    response.destAddrMode = view.getUint8(9);
+
+    let destAddr = "";
+    if (response.destAddrMode === 0x03) {
+        response.destAddr64 = view.getBigUint64(10, littleEndian).toString(16);
+        buf2 = view.buffer.slice(18, view.buffer.byteLength);
+        destAddr = response.destAddr64;
+    } else {
+        response.destAddr16 = view.getUint16(10, littleEndian);
+        buf2 = view.buffer.slice(12, view.buffer.byteLength);
+        destAddr = response.destAddr16.toString(16);
+    }
+    if (response.destAddrMode === 0x02 || response.destAddrMode === 0x03) {
+        response.destEndpoint = view.getUint8(view.byteLength - 7);
+    }
+
+    response.srcEndpoint = view.getUint8(view.byteLength - 6);
+    response.confirmStatus = view.getInt8(view.byteLength - 5);
+
+    let newStatus = response.deviceState.toString(2);
+    for (let l = 0; l <= (8 - newStatus.length); l++) {
+        newStatus = "0" + newStatus;
+    }
+
+    // resolve send data request promise
+    const i = apsBusyQueue.findIndex((r: Request) => r.request.requestId === response.requestId);
+    if (i < 0) {
+        return;
+    }
+
+    let string = "";
+    for (let u = 0; u < apsBusyQueue.length; u++) {
+        const re: Request = apsBusyQueue[u];
+        string += re.seqNumber;
+        string += ",";
+    }
+
+    const req: Request = apsBusyQueue[i];
+    // TODO timeout (at driver.ts)
+    if (response.confirmStatus !== 0) {
+        // reject if status is not SUCCESS
+        debug("REJECT APS REQUEST");
+        debug(response.confirmStatus);
+        req.reject(response.confirmStatus);
+    } else {
+        debug("RESOLVE APS REQUEST");
+        req.resolve(response.confirmStatus);
+    }
+
+    //remove from busyqueue
+    apsBusyQueue.splice(i, 1);
+
+    debug("query send data state response - to 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus + " new device state: " + newStatus);
+    frameParserEvents.emit('receivedDataNotification', response.deviceState);
+/*
+    const zclPayload: ZclDataPayload = {
+        frame: ZclFrame;
+        endpoint: number;
+        linkquality: number;
+        groupID: number;
+    }
+*/
+    return response;
+}
+
 function parseReadReceivedDataResponse(view : DataView) : object {
+    // min 28 bytelength
     const response: ReceivedDataResponse = {};
     let buf2, buf3;
 
     response.commandId = view.getUint8(0);
     response.seqNr = view.getUint8(1);
     response.status = view.getUint8(2);
+
+    if (response.status != 0) {
+        debug("read received data response - status != 0");
+        return null;
+    }
     response.frameLength = view.getUint16(3, littleEndian);
     response.payloadLength = view.getUint16(5, littleEndian);
     response.deviceState = view.getUint8(7);
@@ -118,9 +210,19 @@ function parseReadReceivedDataResponse(view : DataView) : object {
     for (let l = 0; l <= (8 - newStatus.length); l++) {
         newStatus = "0" + newStatus;
     }
-    debug("received data from 0x" + srcAddr + " to 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16) + " new state: " + newStatus);
+    debug("received data from 0x" + srcAddr + " to 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16) + " new state: " + newStatus + " payload: " + payload);
     //console.log(response);
+    frameParserEvents.emit('receivedDataNotification', response.deviceState);
     return response;
+}
+
+function parseEnqueueSendDataResponse(view : DataView) : number {
+    const status = view.getUint8(2);
+    const requestId = view.getUint8(8);
+    const deviceState = view.getUint8(7);
+    debug("Received Enqeue send data response status: " + status + " request id: " + requestId + " new device state: " + deviceState.toString(2));
+    frameParserEvents.emit('receivedDataNotification', deviceState);
+    return deviceState;
 }
 
 function parseWriteParameterResponse(view : DataView) : number {
@@ -146,6 +248,11 @@ function parseBeaconRequest(view : DataView) : number {
     return 31;
 }
 
+function parseUnknownCommand(view : DataView) : number {
+    const id = view.getUint8(0);
+    debug(`received unknown command - id ${id}`);
+    return id;
+}
 function getParserForCommandId(id: Number) : Function {
     switch (id) {
         case PARAM.PARAM.FrameType.ReadParameter:
@@ -160,20 +267,25 @@ function getParserForCommandId(id: Number) : Function {
             return parseReadReceivedDataResponse;
         case PARAM.PARAM.APS.DATA_REQUEST:
             return parseEnqueueSendDataResponse;
+        case PARAM.PARAM.APS.DATA_CONFIRM:
+            return parseQuerySendDataStateResponse;
         case PARAM.PARAM.FrameType.DeviceStateChanged:
             return parseReceivedDataNotification;
+        case PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE:
+            return parseChangeNetworkStateResponse;
         case 28:
             return parseMacPollCommand;
         case 31:
             return parseBeaconRequest;
         default:
-            throw new Error(`unknown command id ${id}`);
+            return parseUnknownCommand;
+            //throw new Error(`unknown command id ${id}`);
     }
 }
 
 async function processFrame(frame: Uint8Array) : Promise<void> {
     const [seqNumber, status, command, commandId] = await parseFrame(frame);
-    //debug(`process frame with seq: ${seqNumber} status: ${status}`);
+    debug(`process frame with seq: ${seqNumber} status: ${status}`);
 
     let queue = busyQueue;
 
@@ -184,18 +296,29 @@ async function processFrame(frame: Uint8Array) : Promise<void> {
     }
 
     const i = queue.findIndex((r: Request) => r.seqNumber === seqNumber);
-    if (i < 0)
+    if (i < 0) {
         return;
+    }
 
     const req: Request = queue[i];
 
-    if (status !== 0) {
-        // reject if status is not SUCCESS
-        req.reject({status});
-    } else {
-        req.resolve(command);
+    if (commandId === PARAM.PARAM.APS.DATA_REQUEST) {
+        // if confirm is true resolve request only when data confirm arrives
+        // TODO only return if a confirm was requested. if no confirm needed: go ahead
+        //if (req.confirm === true) {
+            return;
+        //}
     }
 
+    if (status !== 0) {
+        // reject if status is not SUCCESS
+        debug("REJECT REQUEST");
+        debug({status});
+        req.reject({status});
+    } else {
+        debug("RESOLVE REQUEST");
+        req.resolve(command);
+    }
     //remove from busyqueue
     queue.splice(i, 1);
 }
@@ -210,12 +333,15 @@ function parseFrame(frame: Uint8Array) : [number, number, Command, number] {
 
     const commandId = view.getUint8(0);
     const seqNumber = view.getUint8(1);
-    const status = view.getUint8(2);
+    let status = view.getUint8(2);
     const frameLength = view.getUint16(3, littleEndian);
     const payloadLength = view.getUint16(5, littleEndian);
     // todo check framelength, payloadlength < x
 
     const parser = getParserForCommandId(commandId);
+    if (parser === null) {
+        status = 5; // query send data state response has no status field only confirm status that can not be used here
+    }
     return [seqNumber, status, parser(view), commandId];
 
 }
