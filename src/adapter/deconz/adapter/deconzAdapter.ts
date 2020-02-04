@@ -9,14 +9,16 @@ const debug = Debug("zigbee-herdsman:deconz:adapter");
 import Driver from '../driver/driver';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
+import * as Zcl from '../../../zcl';
 import processFrame from '../driver/frameParser';
 import {Queue} from '../../../utils';
 import PARAM from '../driver/constants';
-import { Command } from '../driver/constants';
+import { Command, ApsDataRequest } from '../driver/constants';
 
 class DeconzAdapter extends Adapter {
     private driver: Driver;
     private queue: Queue;
+    private transactionID: number;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string) {
         super(networkOptions, serialPortOptions, backupPath);
@@ -24,6 +26,7 @@ class DeconzAdapter extends Adapter {
         this.driver = new Driver(serialPortOptions.path);
         this.driver.on('rxFrame', (frame) => {processFrame(frame)});
         this.queue = new Queue(2);
+        this.transactionID = 0;
         console.log('CREATED DECONZ ADAPTER');
     }
 
@@ -40,7 +43,6 @@ class DeconzAdapter extends Adapter {
      */
     public async start(): Promise<StartResult> {
         await this.driver.open();
-        //throw new Error('Not implemented yet');
         return "resumed";
     }
 
@@ -50,8 +52,8 @@ class DeconzAdapter extends Adapter {
 
     public async getCoordinator(): Promise<Coordinator> {
         return this.queue.execute<Coordinator>(async () => {
-            const ieeeAddr: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.MAC, 1);
-            const nwkAddr: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.NWK_ADDRESS, 2);
+            const ieeeAddr: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.MAC);
+            const nwkAddr: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.NWK_ADDRESS);
 
             const endpoints: any = [{
                     ID: 0x01,
@@ -83,7 +85,7 @@ class DeconzAdapter extends Adapter {
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
         // product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string;
-        const fw = await this.driver.readFirmwareVersionRequest(1);
+        const fw = await this.driver.readFirmwareVersionRequest();
         const type: string = (fw[1] === 5) ? "raspbee" : "conbee2";
         const meta = {major: fw[3], minor: fw[2]}
         return {type: type, meta: meta};
@@ -162,9 +164,9 @@ class DeconzAdapter extends Adapter {
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
-        const panid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID, 1);
-        const expanid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.EXT_PAN_ID, 2);
-        const channel: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL, 3);
+        const panid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
+        const expanid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.EXT_PAN_ID);
+        const channel: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
 
         return {
             panID: panid,
@@ -199,6 +201,15 @@ class DeconzAdapter extends Adapter {
         return Promise.reject();
     }
 
+    private nextTransactionID(): number {
+        this.transactionID++;
+
+        if (this.transactionID > 255) {
+            this.transactionID = 1;
+        }
+
+        return this.transactionID;
+    }
 }
 
 export default DeconzAdapter;
