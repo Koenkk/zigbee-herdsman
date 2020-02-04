@@ -28,14 +28,26 @@ const PARAM: {
         NET_JOINING: 0x01,
         NET_CONNECTED: 0x02,
         NET_LEAVING: 0x03,
+        CHANGE_NETWORK_STATE: 0x08
+    },
+    addressMode: {
+        GROUP_ADDR: 0x01,
+        NWK_ADDR: 0x02,
+        IEEE_ADDR: 0x03,
+    },
+    txRadius: {
+        DEFAULT_RADIUS: 30,
+        UNLIMITED: 0
     }
+
 }
 
 interface Request {
     commandId?: number;
+    networkState?: number;
     parameterId?: number;
     parameter?: parameterT;
-    request?: object;
+    request?: ApsDataRequest;
     seqNumber?: number;
     resolve?: Function;
     reject?: Function;
@@ -65,16 +77,26 @@ interface ReceivedDataResponse {
     rssi?: number;
 }
 
-interface ApsDataRequest {
+interface DataStateResponse {
     commandId?: number;
     seqNr?: number;
     frameLength?: number;
     payloadLength?: number;
+    deviceState?: number;
     requestId?: number;
-    flags?: number;
     destAddrMode?: number;
     destAddr16?: number;
-    destAddr64?: number[];
+    destAddr64?: string;
+    destEndpoint?: number;
+    srcEndpoint?: number;
+    confirmStatus?: number;
+}
+
+interface ApsDataRequest {
+    requestId?: number;
+    destAddrMode?: number;
+    destAddr16?: number;
+    destAddr64?: string; //number[];
     destEndpoint?: number;
     profileId?: number;
     clusterId?: number;
@@ -95,6 +117,6 @@ type ParamChannelMask = number;
 type Command = ParamMac | ParamPanId | ParamNwkAddr | ParamExtPanId | ParamChannel |ParamChannelMask;
 type parameterT = number | number[];
 
-export { Request, ApsDataRequest, ReceivedDataResponse, parameterT , Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask };
+export { Request, ApsDataRequest, ReceivedDataResponse, DataStateResponse, parameterT , Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask };
 
 export default {PARAM};
