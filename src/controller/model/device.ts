@@ -25,7 +25,7 @@ class Device extends Entity {
     private _dateCode?: string;
     private _endpoints: Endpoint[];
     private _hardwareVersion?: number;
-    public readonly ieeeAddr: string;
+    private _ieeeAddr: string;
     private _interviewCompleted: boolean;
     private _interviewing: boolean;
     private _lastSeen: number;
@@ -40,6 +40,8 @@ class Device extends Entity {
     private _zclVersion?: number;
 
     // Getters/setters
+    get ieeeAddr(): string {return this._ieeeAddr;}
+    set ieeeAddr(ieeeAddr) {this._ieeeAddr = ieeeAddr;}
     get applicationVersion(): number {return this._applicationVersion;}
     set applicationVersion(applicationVersion) {this._applicationVersion = applicationVersion;}
     get endpoints(): Endpoint[] {return this._endpoints;}
@@ -96,6 +98,7 @@ class Device extends Entity {
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
+        lastSeen: number,
     ) {
         super();
         this.ID = ID;
@@ -116,7 +119,7 @@ class Device extends Entity {
         this._interviewCompleted = interviewCompleted;
         this._interviewing = false;
         this.meta = meta;
-        this._lastSeen = null;
+        this._lastSeen = lastSeen;
     }
 
     public async createEndpoint(ID: number): Promise<Endpoint> {
@@ -159,7 +162,7 @@ class Device extends Entity {
             entry.id, entry.type, ieeeAddr, networkAddress, entry.manufId, endpoints,
             entry.manufName, entry.powerSource, entry.modelId, entry.appVersion,
             entry.stackVersion, entry.zclVersion, entry.hwVersion, entry.dateCode, entry.swBuildId,
-            entry.interviewCompleted, meta,
+            entry.interviewCompleted, meta, entry.lastSeen || null,
         );
     }
 
@@ -176,7 +179,7 @@ class Device extends Entity {
             modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion,
             stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
             swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
-            meta: this.meta,
+            meta: this.meta, lastSeen: this.lastSeen,
         };
     }
 
@@ -238,6 +241,7 @@ class Device extends Entity {
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false, {},
+            null,
         );
 
         Entity.database.insert(device.toDatabaseEntry());
@@ -337,7 +341,24 @@ class Device extends Entity {
             }
         }
 
-        const activeEndpoints = await Entity.adapter.activeEndpoints(this.networkAddress);
+        // e.g. Xiaomi Aqara Opple devices fail to respond to the first active endpoints request, therefore try 2 times
+        // https://github.com/Koenkk/zigbee-herdsman/pull/103
+        let activeEndpoints;
+        for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+                activeEndpoints = await Entity.adapter.activeEndpoints(this.networkAddress);
+                break;
+            } catch (error) {
+                debug(`Interview - active endpoints request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`);
+            }
+        }
+        if (!activeEndpoints) {
+            throw new Error(`Interview failed because can not get active endpoints ('${this.ieeeAddr}')`);
+        }
+
+        // Make sure that the endpoint are sorted.
+        activeEndpoints.endpoints.sort();
+
         // Some devices, e.g. TERNCY return endpoint 0 in the active endpoints request.
         // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
         // into an error. Therefore we filter it, more info: https://github.com/Koenkk/zigbee-herdsman/issues/82
@@ -358,10 +379,12 @@ class Device extends Entity {
         }
 
         if (this.endpoints.length !== 0) {
-            const endpoint = this.endpoints[0];
+            // If none of the endpoints advertises to support genBasic, read from the first endpoint;
+            // not sure if this happens in practice.
+            const endpoint = this.endpoints.find(e => e.supportsInputCluster('genBasic')) || this.endpoints[0];
 
             // Split into chunks of 3, otherwise some devices fail to respond.
-            for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 3)) {
+            for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 2)) {
                 const result = await endpoint.read('genBasic', chunk);
                 for (const [key, value] of Object.entries(result)) {
                     Device.ReportablePropertiesMapping[key].set(value, this);
@@ -372,22 +395,35 @@ class Device extends Entity {
             }
         } else {
             debug(`Interview - skip reading attributes because of no endpoint for device '${this.ieeeAddr}'`);
-            throw new Error(`Interview failed because of not endpiont ('${this.ieeeAddr}')`);
+            throw new Error(`Interview failed because of not endpoint ('${this.ieeeAddr}')`);
         }
 
         // Enroll IAS device
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
-            debug(`Interview - ssIasZone enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+            debug(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+
+            const stateBefore = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState']);
+            debug(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`);
+
             const coordinator = Device.byType('Coordinator')[0];
             await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
-            // According to the spec, we should wait for an enrollRequest here, but the Bosch ISW-ZPR1 didn't send it.
-            await Wait(3000);
+            debug(`Interview - IAS - wrote iasCieAddr`);
 
-            // Some devices don't do a defaultResponse
-            const disableDefaultResponse =
-                this.manufacturerName === 'Konke' || this.manufacturerName.startsWith('_TYZB01_');
-            await endpoint.command('ssIasZone', 'enrollRsp', {enrollrspcode: 0, zoneid: 23}, {disableDefaultResponse});
-            debug(`Interview - successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+            await Wait(300);
+            const payload = {enrollrspcode: 0, zoneid: 23};
+            await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
+            debug(`Interview - IAS - sent enroll response`);
+
+            await Wait(300);
+            const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState']);
+            debug(`Interview - IAS - after enrolling state: '${JSON.stringify(stateAfter)}'`);
+            if (stateAfter.zoneState !== 1) {
+                throw new Error(
+                    `Interview failed because of failed IAS enroll (zoneState didn't change ('${this.ieeeAddr}')`
+                );
+            }
+
+            debug(`Interview - IAS successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
         }
     }
 

@@ -6,6 +6,7 @@ enum BuffaloZclDataType {
     LIST_UINT32 = 1004,
     LIST_ZONEINFO = 1005,
     EXTENSION_FIELD_SETS = 1006,
+    LIST_THERMO_TRANSITIONS = 1007,
 };
 
 export default BuffaloZclDataType;

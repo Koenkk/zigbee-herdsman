@@ -216,7 +216,7 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer configReportRsp', () => {
+    it('ZclFrame from buffer configReportRsp - short', () => {
         const buffer = [0x08, 0x01, 0x07, 0x00];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
         const header = {
@@ -235,6 +235,76 @@ describe('Zcl', () => {
 
         expect(frame.Header).toStrictEqual(header);
         expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame from buffer configReportRsp - long', () => {
+        const buffer = [0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 7,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 1,
+        };
+
+        const payload = [{status: 0, direction:1, attrId: 0x1234}, {status: 1, direction:1, attrId: 0x1235}];
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame from buffer configReportRsp (hvacThermostat)', () => {
+        const buffer = [0x18, 0x03, 0x07, 0x00, 0x00, 0x12, 0x00];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 7,
+            frameControl: {
+                direction: 1,
+                disableDefaultResponse: true,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 3,
+        };
+
+        const payload = [{status:0, direction: 0, attrId: 18}];
+
+        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.Header).toStrictEqual(header);
+    });
+
+    it('ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
+        const bufferHeat = [9, 7, 0, 6, 64, 1, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8];
+        const frameHeat = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(bufferHeat));
+        expect(frameHeat.Payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:1, transitions: [{transitionTime:360,heatSetpoint:2300},{transitionTime:570,heatSetpoint:2200},{transitionTime:720,heatSetpoint:2150},{transitionTime:840,heatSetpoint:2150},{transitionTime:990,heatSetpoint:2300},{transitionTime:1380,heatSetpoint:2100}]});
+
+        const bufferCool = [9, 7, 0, 6, 64, 2, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8];
+        const frameCool = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(bufferCool));
+        expect(frameCool.Payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:2, transitions: [{transitionTime:360,coolSetpoint:2300},{transitionTime:570,coolSetpoint:2200},{transitionTime:720,coolSetpoint:2150},{transitionTime:840,coolSetpoint:2150},{transitionTime:990,coolSetpoint:2300},{transitionTime:1380,coolSetpoint:2100}]});
+
+        const bufferHeatAndCool = [9, 7, 0, 1, 64, 3, 104, 1, 252, 8, 58, 2];
+        const frameHeatAndCool = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(bufferHeatAndCool));
+        expect(frameHeatAndCool.Payload).toStrictEqual({numoftrans:1, dayofweek:64, mode:3, transitions: [{transitionTime:360,coolSetpoint:570, heatSetpoint: 2300}]});
+    });
+
+    it('ZclFrame to buffer setWeeklyScheduleRsp (hvacThermostat)', () => {
+        const payloadHeat = {numoftrans:6, dayofweek:64, mode:1, transitions: [{transitionTime:360,heatSetpoint:23},{transitionTime:570,heatSetpoint:2200},{transitionTime:720,heatSetpoint:2150},{transitionTime:840,heatSetpoint:2150},{transitionTime:990,heatSetpoint:2300},{transitionTime:1380,heatSetpoint:2100}]};
+        const frameHeat = Zcl.ZclFrame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, false, null, 8, 'setWeeklySchedule', 513, payloadHeat);
+        expect(frameHeat.toBuffer()).toStrictEqual(Buffer.from([1,8,1,6,64,1,104,1,23,0,58,2,152,8,208,2,102,8,72,3,102,8,222,3,252,8,100,5,52,8]));
+
+        const payloadCool = {numoftrans:6, dayofweek:64, mode:2, transitions: [{transitionTime:360,coolSetpoint:2300},{transitionTime:570,coolSetpoint:2200},{transitionTime:720,coolSetpoint:2150},{transitionTime:840,coolSetpoint:2150},{transitionTime:990,coolSetpoint:2300},{transitionTime:1380,coolSetpoint:2100}]};
+        const frameCool = Zcl.ZclFrame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, false, null, 8, 'setWeeklySchedule', 513, payloadCool);
+        expect(frameCool.toBuffer()).toStrictEqual(Buffer.from([1,8,1,6,64,2,104,1,252,8,58,2,152,8,208,2,102,8,72,3,102,8,222,3,252,8,100,5,52,8]));
+
+        const payloadHeatAndCool = {numoftrans:6, dayofweek:64, mode:2, transitions: [{transitionTime:360,coolSetpoint:570, heatSetpoint: 2300}]};
+        const frameHeatAndCool = Zcl.ZclFrame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, false, null, 8, 'setWeeklySchedule', 513, payloadHeatAndCool);
+        expect(frameHeatAndCool.toBuffer()).toStrictEqual(Buffer.from([1,8,1,6,64,2,104,1,252,8,58,2]));
     });
 
     it('ZclFrame from buffer configReportRsp failed', () => {
@@ -564,6 +634,44 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
+    it('ZclFrame to buffer write Livolo malformed', () => {
+        // Created as example for https://github.com/Koenkk/zigbee-herdsman/issues/127
+        const expectedOn = Buffer.from([0x1c ,0xd2 ,0x1a ,0xe9 ,0x02 ,0x01 ,0x00 ,0x01 ,0x01 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00, 0x00]);
+        const payloadOn = [{attrId: 1, attrData: Buffer.from([1, 0, 0, 0, 0, 0, 0, 0]), dataType: 1}];
+        const frameOn = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, 0x1ad2, 233, 'write', 0, payloadOn
+        );
+        expect(frameOn.toBuffer()).toStrictEqual(expectedOn);
+
+        const expectedOff = Buffer.from([0x1c ,0xd2 ,0x1a ,0xe9 ,0x02 ,0x01 ,0x00 ,0x01 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00 ,0x00, 0x00]);
+        const payloadOff = [{attrId: 1, attrData: Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]), dataType: 1}];
+        const frameOff = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, 0x1ad2, 233, 'write', 0, payloadOff
+        );
+        expect(frameOff.toBuffer()).toStrictEqual(expectedOff);
+    });
+
+    it('ZclFrame write request with string as bytes array', () => {
+        const payload = [{attrId: 0x0401, attrData: [0x07, 0x00, 0x02, 0x01, 0x00, 0x00, 0x00, 0x14], dataType: 0x42}];
+        const frame = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, 0x115f, 15, 'write', 0, payload
+        );
+
+        const expected = [0x14, 0x5f, 0x11, 0x0f, 0x02, 0x01, 0x04, 0x42, 0x07, 0x00, 0x02, 0x01, 0x00, 0x00, 0x00, 0x14];
+        expect(Buffer.from(expected)).toStrictEqual(frame.toBuffer());
+    });
+
+    it('ZclFrame write rsp', () => {
+        const payload = [{status: 0x11, attrId: 0x22}];
+        const frame = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, 0x115f, 15, 'writeRsp', 0, payload
+        );
+        const buffer = frame.toBuffer();
+
+        const expected = [0x14, 0x5f, 0x11, 0x0f, 0x04, 0x11, 0x22, 0x00];
+        expect(Buffer.from(expected)).toStrictEqual(buffer);
+    });
+
     //{ frameType: 0, manufSpec: 0, direction: 0, disDefaultRsp: 0 } 0 8 'discover' { startAttrId: 0, maxAttrIds: 240 }
     it('ZclFrame to buffer readRsp success', () => {
         const expected = Buffer.from([8, 1, 1, 1, 0, 0, 32, 3]);
@@ -728,6 +836,16 @@ describe('Zcl', () => {
         const buffalo = new BuffaloZcl(buffer);
         const result = buffalo.write(DataType[DataType.longCharStr], payload, {});
         expect(buffalo.getPosition()).toBe(7);
+        expect(buffer).toStrictEqual(expected);
+    });
+
+    it('BuffaloZcl write octetStr', () => {
+        const payload = [1,2,4];
+        const buffer = Buffer.alloc(5);
+        const expected = Buffer.from([3, 1, 2, 4, 0]);
+        const buffalo = new BuffaloZcl(buffer);
+        const result = buffalo.write(DataType[DataType.octetStr], payload, {});
+        expect(buffalo.getPosition()).toBe(4);
         expect(buffer).toStrictEqual(expected);
     });
 

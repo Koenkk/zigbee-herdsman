@@ -2,7 +2,7 @@ import {ZclFrame} from '../../zcl';
 
 interface KeyValue {[s: string]: number | string};
 
-function attributeList(frame: ZclFrame): KeyValue {
+function attributeKeyValue(frame: ZclFrame): KeyValue {
     const payload: KeyValue = {};
 
     for (const item of frame.Payload) {
@@ -17,6 +17,22 @@ function attributeList(frame: ZclFrame): KeyValue {
     return payload;
 }
 
+function attributeList(frame: ZclFrame): Array<string | number> {
+    const payload: Array<string | number> = [];
+
+    for (const item of frame.Payload) {
+        try {
+            const attribute = frame.Cluster.getAttribute(item.attrId);
+            payload.push(attribute.name);
+        } catch (error) {
+            payload.push(item.attrId);
+        }
+    }
+
+    return payload;
+}
+
 export {
+    attributeKeyValue,
     attributeList,
 };

@@ -7,7 +7,7 @@ import * as Events from './events';
 import {KeyValue, DeviceType} from './tstype';
 import Debug from "debug";
 import fs from 'fs';
-import {Utils as ZclUtils} from '../zcl';
+import {Utils as ZclUtils, FrameControl} from '../zcl';
 import Touchlink from './touchlink';
 
 // @ts-ignore
@@ -111,7 +111,7 @@ class Controller extends events.EventEmitter {
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
 
         if (startResult === 'reset') {
-            if (this.options.databaseBackupPath) {
+            if (this.options.databaseBackupPath && fs.existsSync(this.options.databasePath)) {
                 fs.copyFileSync(this.options.databasePath, this.options.databaseBackupPath);
             }
 
@@ -126,13 +126,21 @@ class Controller extends events.EventEmitter {
         }
 
         // Add coordinator to the database if it is not there yet.
+        const coordinator = await this.adapter.getCoordinator();
         if (Device.byType('Coordinator').length === 0) {
             debug.log('No coordinator in database, querying...');
-            const coordinator = await this.adapter.getCoordinator();
             Device.create(
                 'Coordinator', coordinator.ieeeAddr, coordinator.networkAddress, coordinator.manufacturerID,
                 undefined, undefined, undefined, coordinator.endpoints
             );
+        }
+
+        // Update coordinator ieeeAddr if changed, can happen due to e.g. reflashing
+        const databaseCoordinator = Device.byType('Coordinator')[0];
+        if (databaseCoordinator.ieeeAddr !== coordinator.ieeeAddr) {
+            debug.log(`Coordinator address changed, updating to '${coordinator.ieeeAddr}'`);
+            databaseCoordinator.ieeeAddr = coordinator.ieeeAddr;
+            databaseCoordinator.save();
         }
 
         // Set backup timer to 1 day.
@@ -284,6 +292,12 @@ class Controller extends events.EventEmitter {
     private onDeviceAnnounce(payload: AdapterEvents.DeviceAnnouncePayload): void {
         debug.log(`Device announce '${payload.ieeeAddr}'`);
         const device = Device.byIeeeAddr(payload.ieeeAddr);
+
+        if (!device) {
+            debug.log(`Device announce is from unknown device '${payload.ieeeAddr}'`);
+            return;
+        }
+
         device.updateLastSeen();
 
         if (device.networkAddress !== payload.networkAddress) {
@@ -387,7 +401,11 @@ class Controller extends events.EventEmitter {
     private async onZclOrRawData(
         dataType: 'zcl' | 'raw', dataPayload: AdapterEvents.ZclDataPayload | AdapterEvents.RawDataPayload
     ): Promise<void> {
-        debug.log(`Received '${dataType}' data '${JSON.stringify(dataPayload)}'`);
+        const logDataPayload = JSON.parse(JSON.stringify(dataPayload));
+        if (dataType === 'zcl') {
+            delete logDataPayload.frame.Cluster;
+        }
+        debug.log(`Received '${dataType}' data '${JSON.stringify(logDataPayload)}'`);
 
         if (this.isZclDataPayload(dataPayload, 'zcl') && dataPayload.frame &&
             dataPayload.frame.Cluster.name === 'touchlink') {
@@ -420,21 +438,35 @@ class Controller extends events.EventEmitter {
         let type: Events.MessagePayloadType = undefined;
         let data: KeyValue;
         let clusterName = undefined;
+        const meta: {
+            zclTransactionSequenceNumber?: number;
+            manufacturerCode?: number;
+            frameControl?: FrameControl;
+        } = {};
 
         if (this.isZclDataPayload(dataPayload, dataType)) {
             const frame = dataPayload.frame;
             const command = frame.getCommand();
             clusterName = frame.Cluster.name;
+            meta.zclTransactionSequenceNumber = frame.Header.transactionSequenceNumber;
+            meta.manufacturerCode = frame.Header.manufacturerCode;
+            meta.frameControl = frame.Header.frameControl;
 
             if (frame.isGlobal()) {
                 if (frame.isCommand('report')) {
                     type = 'attributeReport';
+                    data = ZclFrameConverter.attributeKeyValue(dataPayload.frame);
+                } else if (frame.isCommand('read')) {
+                    type = 'read';
                     data = ZclFrameConverter.attributeList(dataPayload.frame);
+                } else if (frame.isCommand('write')) {
+                    type = 'write';
+                    data = ZclFrameConverter.attributeKeyValue(dataPayload.frame);
                 } else {
                     /* istanbul ignore else */
                     if (frame.isCommand('readRsp')) {
                         type = 'readResponse';
-                        data = ZclFrameConverter.attributeList(dataPayload.frame);
+                        data = ZclFrameConverter.attributeKeyValue(dataPayload.frame);
                     }
                 }
             } else {
@@ -458,7 +490,7 @@ class Controller extends events.EventEmitter {
                     }
                 }
 
-                endpoint.saveClusterAttributeList(clusterName, data);
+                endpoint.saveClusterAttributeKeyValue(clusterName, data);
             }
         } else {
             type = 'raw';
@@ -476,7 +508,7 @@ class Controller extends events.EventEmitter {
             const linkquality = dataPayload.linkquality;
             const groupID = dataPayload.groupID;
             const eventData: Events.MessagePayload = {
-                type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName
+                type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName, meta
             };
 
             this.emit(Events.Events.message, eventData);
@@ -486,6 +518,33 @@ class Controller extends events.EventEmitter {
         if (this.isZclDataPayload(dataPayload, dataType)) {
             const frame = dataPayload.frame;
 
+            // Reponse to genTime reads
+            if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
+                const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
+                const response: KeyValue = {};
+                const values: KeyValue = {
+                    timeStatus: 3, // Time-master + synchronised
+                    time: time,
+                    localTime: time + (new Date()).getTimezoneOffset() * 60
+                };
+
+                const cluster = ZclUtils.getCluster('genTime');
+                for (const entry of frame.Payload) {
+                    const name = cluster.getAttribute(entry.attrId).name;
+                    if (values.hasOwnProperty(name)) {
+                        response[name] = values[name];
+                    } else {
+                        debug.error(`'${device.ieeeAddr}' read unsupported attribute from genTime '${name}'`);
+                    }
+                }
+
+                try {
+                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response);
+                } catch (error) {
+                    debug.error(`genTime response to ${device.ieeeAddr} failed`);
+                }
+            }
+
             // Send a default response if necessary.
             if (!frame.Header.frameControl.disableDefaultResponse) {
                 try {
@@ -493,17 +552,18 @@ class Controller extends events.EventEmitter {
                         frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
                     );
                 } catch (error) {
-                    debug.error(`Default response to ${device.ieeeAddr} failed`);
-                }
-            }
+                    if ((await this.adapter.supportsDiscoverRoute())) {
+                        debug.error(`Default response to ${device.ieeeAddr} failed, force route discovery`);
+                        await this.adapter.discoverRoute(device.networkAddress);
 
-            // Reponse to time reads
-            if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
-                const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
-                try {
-                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, {time});
-                } catch (error) {
-                    debug.error(`genTime response to ${device.ieeeAddr} failed`);
+                        try {
+                            await endpoint.defaultResponse(
+                                frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
+                            );
+                        } catch (error) {
+                            debug.error(`Default response to ${device.ieeeAddr} failed, even after route discovery`);
+                        }
+                    }
                 }
             }
         }

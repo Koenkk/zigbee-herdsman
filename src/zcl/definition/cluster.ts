@@ -1716,6 +1716,8 @@ const Cluster: {
             acCapacityFormat: {ID: 71, type: DataType.enum8},
             SinopeOccupancy: {ID: 1024, type: DataType.enum8, manufacturerCode: ManufacturerCode.Sinope},
             SinopeBacklight: {ID: 1026, type: DataType.enum8, manufacturerCode: ManufacturerCode.Sinope},
+            StelproSystemMode: {ID: 0x401c, type: DataType.enum8},
+            StelproOutdoorTemp: {ID: 0x4001, type: DataType.int16, manufacturerCode: ManufacturerCode.Stelpro},
         },
         commands: {
             setpointRaiseLower: {
@@ -1731,7 +1733,7 @@ const Cluster: {
                     {name: 'numoftrans', type: DataType.uint8},
                     {name: 'dayofweek', type: DataType.uint8},
                     {name: 'mode', type: DataType.uint8},
-                    {name: 'thermoseqmode', type: BuffaloZclDataType.LIST_UINT16},
+                    {name: 'transitions', type: BuffaloZclDataType.LIST_THERMO_TRANSITIONS},
                 ],
             },
             getWeeklySchedule: {
@@ -1759,7 +1761,7 @@ const Cluster: {
                     {name: 'numoftrans', type: DataType.uint8},
                     {name: 'dayofweek', type: DataType.uint8},
                     {name: 'mode', type: DataType.uint8},
-                    {name: 'thermoseqmode', type: BuffaloZclDataType.LIST_UINT16},
+                    {name: 'transitions', type: BuffaloZclDataType.LIST_THERMO_TRANSITIONS},
                 ],
             },
             getRelayStatusLogRsp: {
@@ -3529,6 +3531,62 @@ const Cluster: {
         },
         commandsResponse: {
         }
+    },
+    manuSpecificLegrandDevices: {
+        ID: 0xfc01,
+        manufacturerCode: ManufacturerCode.LegrandNetatmo,
+        attributes: {
+            // attributes seems to vary depending on the device. Can't be static
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
+    },
+    wiserDeviceInfo: {
+        ID: 0xFE03, // 65027
+        attributes: {
+            deviceInfo: {ID: 32, type: DataType.charStr},
+        },
+        commands: {},
+        commandsResponse: {}
+    },
+    manuSpecificTuyaDimmer: {
+        ID: 0xEF00,  // 61184
+        attributes: {
+        },
+        commands: {
+            setData: {
+                ID: 0,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'transid', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint16},
+                    {name: 'fn', type: DataType.uint8},
+                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+        },
+        commandsResponse: {
+            getData: {
+                ID: 1,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'transid', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint16},
+                    {name: 'fn', type: DataType.uint8},
+                    {name: 'data', type: DataType.octetStr},
+                ],
+            },
+        },
+    },
+    aqaraOpple: {
+        ID: 0xFCC0,
+        attributes: {
+            mode: {ID: 9, type: DataType.uint8},
+        },
+        commands: {},
+        commandsResponse: {}
     },
 };
 

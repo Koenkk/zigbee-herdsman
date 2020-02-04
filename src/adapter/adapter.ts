@@ -79,6 +79,10 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract setLED(enabled: boolean): Promise<void>;
 
+    public abstract supportsDiscoverRoute(): Promise<boolean>;
+
+    public abstract discoverRoute(networkAddress: number): Promise<void>;
+
     public abstract lqi(networkAddress: number): Promise<TsType.LQI>;
 
     public abstract routingTable(networkAddress: number): Promise<TsType.RoutingTable>;

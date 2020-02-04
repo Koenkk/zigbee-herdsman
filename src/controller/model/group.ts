@@ -5,6 +5,12 @@ import * as Zcl from '../../zcl';
 import Endpoint from './endpoint';
 import Device from './device';
 import assert from 'assert';
+import Debug from "debug";
+
+const debug = {
+    info: Debug('zigbee-herdsman:controller:group'),
+    error: Debug('zigbee-herdsman:controller:group'),
+};
 
 class Group extends Entity {
     private databaseID: number;
@@ -125,11 +131,20 @@ class Group extends Entity {
             }
         }
 
-        const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
-            command.ID, cluster.ID, payload
-        );
-        await Entity.adapter.sendZclFrameGroup(this.groupID, frame, 10000);
+        const log = `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
+        debug.info(log);
+
+        try {
+            const frame = Zcl.ZclFrame.create(
+                Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
+                command.ID, cluster.ID, payload
+            );
+            await Entity.adapter.sendZclFrameGroup(this.groupID, frame, 10000);
+        } catch (error) {
+            const message = `${log} failed (${error})`;
+            debug.error(message);
+            throw Error(message);
+        }
     }
 }
 

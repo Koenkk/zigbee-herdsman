@@ -37,9 +37,11 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'stepColorTemp': 'commandStepColorTemp',
     'moveWithOnOff': 'commandMoveWithOnOff',
     'move': 'commandMove',
+    'moveColorTemp': 'commandMoveColorTemp',
     'moveHue': 'commandMoveHue',
     'moveToSaturation': 'commandMoveToSaturation',
     'stopWithOnOff': 'commandStopWithOnOff',
+    'moveToLevel': 'commandMoveToLevel',
     'moveToLevelWithOnOff': 'commandMoveToLevelWithOnOff',
     'toggle': 'commandToggle',
     'tradfriArrowSingle': 'commandTradfriArrowSingle',
@@ -59,11 +61,13 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'enhancedMoveToHueAndSaturation': 'commandEnhancedMoveToHueAndSaturation',
     'downClose': 'commandDownClose',
     'upOpen': 'commandUpOpen',
+    'getData': 'commandGetData',
+    'getWeeklyScheduleRsp': 'commandGetWeeklyScheduleRsp',
 };
 
 type MessagePayloadType =
     // Global
-    'attributeReport' | 'readResponse' | 'raw' |
+    'attributeReport' | 'readResponse' | 'raw' | 'read' | 'write' |
     // Specific
     'commandOn' | 'commandOffWithEffect' | 'commandStep' | 'commandStop' | 'commandHueNotification' |
     'commandOff' | 'commandStepColorTemp' | 'commandMoveWithOnOff' | 'commandMove' | 'commandMoveHue' |
@@ -72,7 +76,8 @@ type MessagePayloadType =
     'commandStepWithOnOff' | 'commandMoveToColorTemp' | 'commandMoveToColor' | 'commandOnWithTimedOff' |
     'commandRecall' | 'commandArm' | 'commandPanic' | 'commandEmergency' | 'commandColorLoopSet' |
     'commandOperationEventNotification' | 'commandStatusChangeNotification' | 'commandEnhancedMoveToHueAndSaturation' |
-    'commandUpOpen' | 'commandDownClose';
+    'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandGetData' |
+    'commandGetWeeklyScheduleRsp';
 
 interface MessagePayload {
     type: MessagePayloadType;
@@ -81,7 +86,10 @@ interface MessagePayload {
     linkquality: number;
     groupID: number;
     cluster: string | number;
-    data: KeyValue;
+    data: KeyValue | Array<string | number>;
+    meta: {
+        zclTransactionSequenceNumber?: number;
+    };
 }
 
 export {

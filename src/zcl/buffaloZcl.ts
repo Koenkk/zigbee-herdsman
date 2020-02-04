@@ -42,6 +42,8 @@ const aliases: {[s: string]: string} = {
     'set': 'array',
 };
 
+interface ThermoTransition {transitionTime: number; heatSetpoint?: number; coolSetpoint?: number};
+
 class BuffaloZcl extends Buffalo {
     private readUseDataType(options: BuffaloZclOptions): TsType.Value {
         return this.read(options.dataType, options);
@@ -110,9 +112,13 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
-    private writeCharStr(value: string): void {
-        this.writeUInt8(value.length);
-        this.position += this.buffer.write(value, this.position, 'utf8');
+    private writeCharStr(value: string | number[]): void {
+        if (typeof value === 'string') {
+            this.writeUInt8(value.length);
+            this.position += this.buffer.write(value, this.position, 'utf8');
+        } else {
+            this.writeBuffer(value, value.length);
+        }
     }
 
     private readLongCharStr(): TsType.Value {
@@ -125,6 +131,11 @@ class BuffaloZcl extends Buffalo {
     private writeLongCharStr(value: string): void {
         this.writeUInt16(value.length);
         this.position += this.buffer.write(value, this.position, 'utf8');
+    }
+
+    private writeOctetStr(value: number[]): void {
+        this.writeUInt8(value.length);
+        this.writeBuffer(value, value.length);
     }
 
     private readExtensionFielSets(): TsType.Value {
@@ -175,6 +186,42 @@ class BuffaloZcl extends Buffalo {
         return value;
     }
 
+    private readListThermoTransitions(options: TsType.Options): TsType.Value {
+        const heat = options.payload['mode'] & 1;
+        const cool = options.payload['mode'] & 2;
+        const result = [];
+
+        for (let i = 0; i < options.payload.numoftrans; i++) {
+            const entry: ThermoTransition = {transitionTime: this.readUInt16()};
+
+            if (heat) {
+                entry.heatSetpoint = this.readUInt16();
+            }
+
+            if (cool) {
+                entry.coolSetpoint = this.readUInt16();
+            }
+
+            result.push(entry);
+        }
+
+        return result;
+    }
+
+    private writeListThermoTransitions(value: ThermoTransition[]): void {
+        for (const entry of value) {
+            this.writeUInt16(entry.transitionTime);
+
+            if (entry.hasOwnProperty('heatSetpoint')) {
+                this.writeUInt16(entry.heatSetpoint);
+            }
+
+            if (entry.hasOwnProperty('coolSetpoint')) {
+                this.writeUInt16(entry.coolSetpoint);
+            }
+        }
+    }
+
     private readUInt40(): TsType.Value {
         const lsb = this.readUInt32();
         const msb = this.readUInt8();
@@ -223,7 +270,7 @@ class BuffaloZcl extends Buffalo {
     }
 
     public write(type: string, value: TsType.Value, options: BuffaloZclOptions): void {
-        // TODO: write for the following is missing: octetStr, struct, array (+ bag/set)
+        // TODO: write for the following is missing: struct, array (+ bag/set)
         type = aliases[type] || type;
 
         if (type === 'uint40') {
@@ -232,6 +279,8 @@ class BuffaloZcl extends Buffalo {
             return this.writeExtensionFieldSets(value);
         } else if (type === 'LIST_ZONEINFO') {
             return this.writeListZoneInfo(value);
+        } else if (type === 'LIST_THERMO_TRANSITIONS') {
+            return this.writeListThermoTransitions(value);
         } else if (type === 'uint48') {
             return this.writeUInt48(value);
         } else if (type === 'uint56') {
@@ -242,9 +291,15 @@ class BuffaloZcl extends Buffalo {
             return this.writeCharStr(value);
         } else if (type === 'longCharStr') {
             return this.writeLongCharStr(value);
+        } else if (type === 'octetStr') {
+            return this.writeOctetStr(value);
         } else if (type === 'USE_DATA_TYPE') {
             return this.writeUseDataType(value, options);
         } else {
+            // In case the type is undefined, write it as a buffer to easily allow for custom types
+            // e.g. for https://github.com/Koenkk/zigbee-herdsman/issues/127
+            type = type === undefined ? 'BUFFER' : type;
+
             // TODO: remove uppercase once dataTypes are snake case
             return super.write(type.toUpperCase(), value, options);
         }
@@ -259,6 +314,8 @@ class BuffaloZcl extends Buffalo {
             return this.readExtensionFielSets();
         } else if (type === 'LIST_ZONEINFO') {
             return this.readListZoneInfo(options);
+        } else if (type === 'LIST_THERMO_TRANSITIONS') {
+            return this.readListThermoTransitions(options);
         } else if (type === 'uint40') {
             return this.readUInt40();
         } else if (type === 'uint48') {

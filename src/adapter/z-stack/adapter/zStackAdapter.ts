@@ -82,7 +82,13 @@ class ZStackAdapter extends Adapter {
     public async start(): Promise<StartResult> {
         await this.znp.open();
 
-        this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
+        // Old firmware did not support version, assume it's Z-Stack 1.2 for now.
+        try {
+            this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
+        } catch (e) {
+            this.version = {"transportrev":2, "product":0, "majorrel":2, "minorrel":0, "maintrel":0, "revision":""};
+        }
+
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
 
         return StartZnp(this.znp, this.version.product, this.networkOptions, this.backupPath);
@@ -161,6 +167,15 @@ class ZStackAdapter extends Adapter {
 
     public async setLED(enabled: boolean): Promise<void> {
         await this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: enabled ? 1 : 0});
+    }
+
+    public async supportsDiscoverRoute(): Promise<boolean> {
+        return this.version.product !== ZnpVersion.zStack12;
+    }
+
+    public async discoverRoute(networkAddress: number): Promise<void> {
+        const payload =  {dstAddr: networkAddress, options: 2, radius: Constants.AF.DEFAULT_RADIUS};
+        await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {

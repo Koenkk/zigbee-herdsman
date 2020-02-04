@@ -3,6 +3,7 @@ import Cluster from './definition/cluster';
 import Status from './definition/status';
 import Direction from './definition/direction';
 import FrameType from './definition/frameType';
+import FrameControl from './definition/frameControl';
 import DataType from './definition/dataType';
 import Foundation from './definition/foundation';
 import PowerSource from './definition/powerSource';
@@ -22,4 +23,5 @@ export {
     PowerSource,
     TsType,
     ManufacturerCode,
+    FrameControl,
 };

@@ -20,7 +20,7 @@
 
 • **baudRate**: *number*
 
-*Defined in [src/adapter/tstype.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L11)*
+*Defined in [src/adapter/tstype.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/adapter/tstype.ts#L11)*
 
 ___
 
@@ -28,7 +28,7 @@ ___
 
 • **path**: *string*
 
-*Defined in [src/adapter/tstype.ts:13](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L13)*
+*Defined in [src/adapter/tstype.ts:13](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/adapter/tstype.ts#L13)*
 
 ___
 
@@ -36,4 +36,4 @@ ___
 
 • **rtscts**: *boolean*
 
-*Defined in [src/adapter/tstype.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L12)*
+*Defined in [src/adapter/tstype.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/adapter/tstype.ts#L12)*

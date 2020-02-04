@@ -90,8 +90,10 @@ const Foundation: {
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'status', type: DataType.uint8},
-            {name: 'direction', type: DataType.uint8, conditions: [{type: 'statusNotEquals', value: Status.SUCCESS}]},
-            {name: 'attrId', type: DataType.uint16, conditions: [{type: 'statusNotEquals', value: Status.SUCCESS}]},
+            // minimumRemainingBufferBytes: if direction is present, attrId is also present
+            // https://github.com/Koenkk/zigbee-herdsman/pull/115
+            {name: 'direction', type: DataType.uint8, conditions: [{type: 'minimumRemainingBufferBytes', value: 3}]},
+            {name: 'attrId', type: DataType.uint16, conditions: [{type: 'minimumRemainingBufferBytes', value: 2}]},
         ],
     },
     readReportConfig: {

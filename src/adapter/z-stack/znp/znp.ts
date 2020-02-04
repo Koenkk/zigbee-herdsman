@@ -161,6 +161,7 @@ class Znp extends events.EventEmitter {
 
         this.socketPort = new net.Socket();
         this.socketPort.setNoDelay(true);
+        this.socketPort.setKeepAlive(true, 15000);
 
         this.unpiWriter = new UnpiWriter();
         this.unpiWriter.pipe(this.socketPort);

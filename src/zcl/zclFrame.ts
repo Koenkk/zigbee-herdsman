@@ -1,4 +1,4 @@
-import {Direction, Foundation, DataType, BuffaloZclDataType, Cluster} from './definition';
+import {Direction, Foundation, DataType, BuffaloZclDataType, FrameControl} from './definition';
 import * as Utils from './utils';
 import BuffaloZcl from './buffaloZcl';
 import {TsType as BuffaloTsType} from '../buffalo';
@@ -6,13 +6,6 @@ import * as TsType from './tstype';
 import {TsType as DefinitionTsType, FrameType} from './definition';
 
 const MINIMAL_FRAME_LENGTH = 3;
-
-interface FrameControl {
-    frameType: FrameType;
-    manufacturerSpecific: boolean;
-    direction: Direction;
-    disableDefaultResponse: boolean;
-}
 
 // eslint-disable-next-line
 type ZclPayload = any;
@@ -113,7 +106,7 @@ class ZclFrame {
                 for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
 
-                    if (!ZclFrame.conditionsValid(parameter, entry)) {
+                    if (!ZclFrame.conditionsValid(parameter, entry, null)) {
                         continue;
                     }
 
@@ -213,7 +206,7 @@ class ZclFrame {
         const payload: ZclPayload = {};
 
         for (const parameter of command.parameters) {
-            const options: BuffaloTsType.Options = {};
+            const options: BuffaloTsType.Options = {payload};
 
             if (ListTypes.includes(parameter.type)) {
                 const lengthParameter = command.parameters[command.parameters.indexOf(parameter) - 1];
@@ -244,7 +237,7 @@ class ZclFrame {
                 for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
 
-                    if (!this.conditionsValid(parameter, entry)) {
+                    if (!this.conditionsValid(parameter, entry, buffalo.getBuffer().length - buffalo.getPosition())) {
                         continue;
                     }
 
@@ -314,7 +307,9 @@ class ZclFrame {
     }
 
     private static conditionsValid(
-        parameter: DefinitionTsType.FoundationParameterDefinition, entry: ZclPayload
+        parameter: DefinitionTsType.FoundationParameterDefinition,
+        entry: ZclPayload,
+        remainingBufferBytes: number
     ): boolean {
         if (parameter.conditions) {
             const failedCondition = parameter.conditions.find((condition): boolean => {
@@ -324,6 +319,8 @@ class ZclFrame {
                     return entry.status === condition.value;
                 } else if (condition.type == 'directionEquals') {
                     return entry.direction !== condition.value;
+                } else if (remainingBufferBytes !== null && condition.type == 'minimumRemainingBufferBytes') {
+                    return remainingBufferBytes < condition.value;
                 } else  {
                     /* istanbul ignore else */
                     if (condition.type == 'dataTypeValueTypeEquals') {
@@ -354,7 +351,7 @@ class ZclFrame {
     }
 
     // List of commands is not completed, feel free to add more.
-    public isCommand(commandName: 'read' | 'report' | 'readRsp' | 'remove' | 'add'): boolean {
+    public isCommand(commandName: 'read' | 'report' | 'readRsp' | 'remove' | 'add' | 'write'): boolean {
         return this.getCommand().name === commandName;
     }
 
