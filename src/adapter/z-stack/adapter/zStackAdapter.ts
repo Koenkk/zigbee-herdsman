@@ -170,7 +170,9 @@ class ZStackAdapter extends Adapter {
     }
 
     public async supportsDiscoverRoute(): Promise<boolean> {
-        return this.version.product !== ZnpVersion.zStack12;
+        // Z-stack 3.0.x supports route discovery but does not seem to handle it well
+        // https://github.com/Koenkk/zigbee2mqtt/issues/2901
+        return this.version.product === ZnpVersion.zStack3x0;
     }
 
     public async discoverRoute(networkAddress: number): Promise<void> {
