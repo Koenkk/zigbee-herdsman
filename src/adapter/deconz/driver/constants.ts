@@ -9,7 +9,8 @@ const PARAM: {
         NWK_ADDRESS: 0x07,
         EXT_PAN_ID: 0x08,
         CHANNEL_MASK: 0x0a,
-        CHANNEL: 0x1c
+        CHANNEL: 0x1c,
+        PERMIT_JOIN: 0x21
     },
     FrameType: {
         ReadDeviceState: 0x07,
@@ -54,6 +55,14 @@ interface Request {
     ts?: number;
 }
 
+interface WaitForDataRequest {
+    addr?: number;
+    clusterId?: number;
+    resolve?: Function;
+    reject?: Function;
+    ts?: number;
+}
+
 interface ReceivedDataResponse {
     commandId?: number;
     seqNr?: number;
@@ -80,6 +89,7 @@ interface ReceivedDataResponse {
 interface DataStateResponse {
     commandId?: number;
     seqNr?: number;
+    status?: number;
     frameLength?: number;
     payloadLength?: number;
     deviceState?: number;
@@ -113,10 +123,11 @@ type ParamExtPanId = string;
 type ParamNwkAddr = number;
 type ParamChannel = number;
 type ParamChannelMask = number;
+type ParamPermitJoin = number;
 
-type Command = ParamMac | ParamPanId | ParamNwkAddr | ParamExtPanId | ParamChannel |ParamChannelMask;
+type Command = ParamMac | ParamPanId | ParamNwkAddr | ParamExtPanId | ParamChannel | ParamChannelMask | ParamPermitJoin;
 type parameterT = number | number[];
 
-export { Request, ApsDataRequest, ReceivedDataResponse, DataStateResponse, parameterT , Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask };
+export { Request, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, parameterT , Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin };
 
 export default {PARAM};
