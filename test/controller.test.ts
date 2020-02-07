@@ -1,5 +1,4 @@
 import "regenerator-runtime/runtime";
-import tmp from 'tmp';
 import {Controller} from '../src/controller';
 import {ZStackAdapter} from '../src/adapter/z-stack/adapter';
 import equals from 'fast-deep-equal';
@@ -9,6 +8,7 @@ import { Device, Group } from "../src/controller/model";
 import * as Zcl from '../src/zcl';
 import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
 import {Adapter} from '../src/adapter';
+import path  from 'path';
 
 Date.now = jest.fn()
 // @ts-ignore
@@ -238,6 +238,15 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
     });
 });
 
+const getTempFile = (filename) => {
+    const tempPath = path.resolve('temp');
+    if (!fs.existsSync(tempPath)){
+        fs.mkdirSync(tempPath);
+    }
+
+    return path.join(tempPath, filename);
+}
+
 // Mock static methods
 const mockZStackAdapterIsValidPath = jest.fn().mockReturnValue(true);
 const mockZStackAdapterAutoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
@@ -258,7 +267,7 @@ const events = {
     message: [],
 }
 
-const backupPath = tmp.fileSync().name;
+const backupPath = getTempFile('backup');
 
 const options = {
     network: {
@@ -270,7 +279,7 @@ const options = {
         rtscts: true,
         path: '/dummy/conbee',
     },
-    databasePath: tmp.fileSync().name,
+    databasePath: getTempFile('database'),
     databaseBackupPath: null,
     backupPath,
     acceptJoiningDeviceHandler: null,
@@ -355,7 +364,7 @@ describe('Controller', () => {
 
     it('Controller stop, should create backup', async () => {
         await controller.start();
-        fs.unlinkSync(options.backupPath);
+        if (fs.existsSync(options.backupPath)) fs.unlinkSync(options.backupPath);
         await controller.stop();
         expect(mockAdapterPermitJoin).toBeCalledWith(0);
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual({version: 'dummybackup'});
@@ -586,8 +595,8 @@ describe('Controller', () => {
     });
 
     it('Should create backup of databse before clearing when datbaseBackupPath is provided', async () => {
-        const databaseBackupPath = tmp.fileSync().name;
-        fs.unlinkSync(databaseBackupPath);
+        const databaseBackupPath = getTempFile('database.backup');
+        if (fs.existsSync(databaseBackupPath)) fs.unlinkSync(databaseBackupPath);
         controller = new Controller({...options, databaseBackupPath});
         expect(fs.existsSync(databaseBackupPath)).toBeFalsy();
         await controller.start();
@@ -627,7 +636,7 @@ describe('Controller', () => {
 
     it('Shouldnt create backup when adapter doesnt support it', async () => {
         mockAdapterSupportsBackup.mockReturnValue(false);
-        fs.unlinkSync(options.backupPath);
+        if (fs.existsSync(options.backupPath)) fs.unlinkSync(options.backupPath);
         await controller.start();
         await controller.stop();
         expect(fs.existsSync(options.backupPath)).toBeFalsy();
