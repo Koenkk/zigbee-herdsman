@@ -81,7 +81,7 @@ const mockDevices = {
     129: {
         nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
         activeEndpoints: {endpoints: [1]},
-        simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [1], outputClusters: [2], profileID: 99}},
+        simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [0, 1], outputClusters: [2], profileID: 99}},
         attributes: {
             1: {modelId: 'myModelID', manufacturerName: 'KoenAndCo', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101}
         },
@@ -105,7 +105,7 @@ const mockDevices = {
     161: {
         nodeDescriptor: {type: 'Router', manufacturerCode: 1213},
         activeEndpoints: {endpoints: [4, 1]},
-        simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [1], outputClusters: [2], profileID: 99}, 4: {endpointID: 1, deviceID: 5, inputClusters: [1], outputClusters: [2], profileID: 99}},
+        simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [0, 1], outputClusters: [2], profileID: 99}, 4: {endpointID: 1, deviceID: 5, inputClusters: [1], outputClusters: [2], profileID: 99}},
         attributes: {
             1: {modelId: 'myDevice9123', manufacturerName: 'Boef', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
             4: {}
@@ -123,9 +123,32 @@ const mockDevices = {
     170: {
         nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
         activeEndpoints: {endpoints: [1]},
-        simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [1280], outputClusters: [2], profileID: 99}},
+        simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [0, 1280], outputClusters: [2], profileID: 99}},
         attributes: {
             1: {zoneState: 1, iasCieAddr: '0x123', modelId: 'myIasDevice', manufacturerName: 'KoenAndCoSecurity', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
+        },
+    },
+    171: {
+        // Xiaomi WXCJKG11LM - https://github.com/koenkk/zigbee2mqtt/issues/2844
+        nodeDescriptor: {type: 'EndDevice', manufacturerCode: 1212},
+        activeEndpoints: {endpoints: [1,2,3,4,5,6]},
+        simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [0, 1, 2], outputClusters: [2], profileID: 99}},
+        attributes: {
+            1: {modelId: 'lumi.remote.b286opcn01', manufacturerName: 'Xioami', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
+        },
+    },
+    172: {
+        // Gledopto GL-C-007/GL-C-008 - https://github.com/Koenkk/zigbee2mqtt/issues/2872
+        // All endpoints announce to support genBasic but only endpoint 12 really responds
+        nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
+        activeEndpoints: {endpoints: [12,11,13]},
+        simpleDescriptor: {
+            11: {endpointID: 11, deviceID: 5, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
+            12: {endpointID: 12, deviceID: 5, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
+            13: {endpointID: 13, deviceID: 5, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
+        },
+        attributes: {
+            12: {modelId: 'GL-C-008', manufacturerName: 'Gledopto', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
         },
     },
 }
@@ -470,11 +493,11 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
         expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "_lastSeen": deepClone(Date.now()), "ID":2,"_endpoints":[],"_ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129},"status":"started"});
-        const device = {"ID":2,"_lastSeen": deepClone(Date.now()),"_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"clusters": {}, "ID":1,"inputClusters":[1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
+        const device = {"ID":2,"_lastSeen": deepClone(Date.now()),"_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"clusters": {}, "ID":1,"inputClusters":[0,1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
         expect(deepClone(controller.getDeviceByIeeeAddr('0x129'))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
-        expect(databaseContents()).toStrictEqual(`{"id":1,"type":"Coordinator","ieeeAddr":"0x123","nwkAddr":123,"manufId":100,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[]},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[]}},"interviewCompleted":false,"meta":{},"lastSeen":null}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[1],"outClusterList":[2],"clusters":{},"binds":[]}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}`);
+        expect(databaseContents()).toStrictEqual(`{"id":1,"type":"Coordinator","ieeeAddr":"0x123","nwkAddr":123,"manufId":100,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[]},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[]}},"interviewCompleted":false,"meta":{},"lastSeen":null}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[]}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}`);
         expect(controller.getDeviceByIeeeAddr('0x129').lastSeen).toBe(Date.now());
     });
 
@@ -488,7 +511,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
         expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "_lastSeen": deepClone(Date.now()), "ID":2,"_endpoints":[],"_ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129},"status":"started"});
-        const device = {"ID":2,"_lastSeen": deepClone(Date.now()),"_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"clusters": {}, "ID":1,"inputClusters":[1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
+        const device = {"ID":2,"_lastSeen": deepClone(Date.now()),"_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"clusters": {}, "ID":1,"inputClusters":[0,1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
         expect(deepClone(controller.getDeviceByIeeeAddr('0x129'))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
@@ -785,6 +808,7 @@ describe('Controller', () => {
                     {
                     "ID":1,
                     "inputClusters":[
+                        0,
                         1
                     ],
                     "outputClusters":[
@@ -822,7 +846,7 @@ describe('Controller', () => {
             "endpoint":{
                 "ID":1,
                 "deviceID": 5,
-                "inputClusters":[1],
+                "inputClusters":[0,1],
                 "outputClusters":[2],
                 "deviceNetworkAddress":129,
                 "deviceIeeeAddress":"0x129",
@@ -882,6 +906,7 @@ describe('Controller', () => {
                     "ID":1,
                     "clusters": {},
                     "inputClusters":[
+                        0,
                         1
                     ],
                     "outputClusters":[
@@ -913,7 +938,7 @@ describe('Controller', () => {
                 "clusters": {},
                 "ID":1,
                 "deviceID": 5,
-                "inputClusters":[1],
+                "inputClusters":[0, 1],
                 "outputClusters":[2],
                 "deviceNetworkAddress":129,
                 "deviceIeeeAddress":"0x129",
@@ -958,6 +983,7 @@ describe('Controller', () => {
                     "ID":1,
                     "clusters": {},
                     "inputClusters":[
+                        0,
                         1
                     ],
                     "outputClusters":[
@@ -989,7 +1015,7 @@ describe('Controller', () => {
                 "clusters": {},
                 "ID":1,
                 "deviceID": 5,
-                "inputClusters":[1],
+                "inputClusters":[0, 1],
                 "outputClusters":[2],
                 "deviceNetworkAddress":129,
                 "deviceIeeeAddress":"0x129",
@@ -1046,6 +1072,7 @@ describe('Controller', () => {
                      "clusters": {},
                      "ID":1,
                      "inputClusters":[
+                        0,
                         1
                      ],
                      "outputClusters":[
@@ -1155,6 +1182,7 @@ describe('Controller', () => {
                      "ID":1,
                      "clusters": {},
                      "inputClusters":[
+                        0,
                         1
                      ],
                      "outputClusters":[
@@ -1186,6 +1214,7 @@ describe('Controller', () => {
                "ID":1,
                "clusters": {},
                "inputClusters":[
+                  0,
                   1
                ],
                "outputClusters":[
@@ -1350,6 +1379,30 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddress).toBeCalledTimes(1);
     });
 
+    it('Xiaomi WXCJKG11LM join (get simple descriptor for endpoint 2 fails)', async () => {
+        // https://github.com/koenkk/zigbee2mqtt/issues/2844
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 171, ieeeAddr: '0x171'});
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe('started')
+        expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x171')
+        expect(events.deviceInterview[1].status).toBe('successful')
+        expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x171')
+        expect(controller.getDeviceByIeeeAddr('0x171').modelID).toBe('lumi.remote.b286opcn01')
+    });
+
+    it('onlythis Gledopto GL-C-007/GL-C-008 join (all endpoints support genBasic but only 12 responds)', async () => {
+        //  - https://github.com/Koenkk/zigbee2mqtt/issues/2872
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 172, ieeeAddr: '0x172'});
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe('started')
+        expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x172')
+        expect(events.deviceInterview[1].status).toBe('successful')
+        expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x172')
+        expect(controller.getDeviceByIeeeAddr('0x172').modelID).toBe('GL-C-008')
+    });
+
     it('Xiaomi end device joins (node descriptor fails)', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 150, ieeeAddr: '0x150'});
@@ -1375,7 +1428,6 @@ describe('Controller', () => {
                           },
                       },
                       "inputClusters":[
-
                       ],
                       "outputClusters":[
 
@@ -1489,6 +1541,7 @@ describe('Controller', () => {
                         },
                     },
                     "inputClusters":[
+                        0,
                         1
                     ],
                     "outputClusters":[
@@ -1519,7 +1572,7 @@ describe('Controller', () => {
             "endpoint":{
                 "ID":1,
                 "deviceID": 5,
-                "inputClusters":[1],
+                "inputClusters":[0, 1],
                 "outputClusters":[2],
                 "deviceNetworkAddress":129,
                 "deviceIeeeAddress":"0x129",
@@ -1849,7 +1902,7 @@ describe('Controller', () => {
         expect(call[1]).toBe(1);
         expect(deepClone(call[2])).toStrictEqual({"Cluster": getCluster(4), "Header": {"commandIdentifier": 0, "frameControl": {"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 7}, "Payload": {groupid: 2, groupname: ''}});
         expect(group.members).toContain(endpoint);
-        expect(databaseContents()).toContain(`{"id":1,"type":"Coordinator","ieeeAddr":"0x123","nwkAddr":123,"manufId":100,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[]},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[]}},"interviewCompleted":false,"meta":{},"lastSeen":null}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[1],"outClusterList":[2],"clusters":{},"binds":[]}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}\n{"id":3,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}}`);
+        expect(databaseContents()).toContain(`{"id":1,"type":"Coordinator","ieeeAddr":"0x123","nwkAddr":123,"manufId":100,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[]},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[]}},"interviewCompleted":false,"meta":{},"lastSeen":null}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[]}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}\n{"id":3,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}}`);
     });
 
     it('Remove endpoint from group', async () => {
@@ -2199,6 +2252,7 @@ describe('Controller', () => {
                     {
                         "deviceID":5,
                         "inputClusters":[
+                            0,
                             1
                         ],
                         "outputClusters":[
@@ -2237,6 +2291,7 @@ describe('Controller', () => {
             "endpoint":{
                 "deviceID":5,
                 "inputClusters":[
+                    0,
                     1
                 ],
                 "outputClusters":[
@@ -2298,6 +2353,7 @@ describe('Controller', () => {
                     {
                         "deviceID":5,
                         "inputClusters":[
+                            0,
                             1
                         ],
                         "outputClusters":[
@@ -2336,6 +2392,7 @@ describe('Controller', () => {
             "endpoint":{
                 "deviceID":5,
                 "inputClusters":[
+                    0,
                     1
                 ],
                 "outputClusters":[
