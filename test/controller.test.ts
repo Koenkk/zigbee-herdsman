@@ -349,6 +349,14 @@ describe('Controller', () => {
         }).toThrowError("'10' is an invalid channel, use a channel between 11 - 26.");
     });
 
+    it('Call controller constructor error on invalid channel', async () => {
+        const newOptions = deepClone(options);
+        newOptions.network.networkKey = [1,2,3];
+        expect(() => {
+            new Controller(newOptions);
+        }).toThrowError('Network key must be 16 digits long, got 3.');
+    });
+
     it('Controller start', async () => {
         jest.useFakeTimers();
         await controller.start();
@@ -1393,7 +1401,7 @@ describe('Controller', () => {
         expect(controller.getDeviceByIeeeAddr('0x171').modelID).toBe('lumi.remote.b286opcn01')
     });
 
-    it('onlythis Gledopto GL-C-007/GL-C-008 join (all endpoints support genBasic but only 12 responds)', async () => {
+    it('Gledopto GL-C-007/GL-C-008 join (all endpoints support genBasic but only 12 responds)', async () => {
         //  - https://github.com/Koenkk/zigbee2mqtt/issues/2872
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 172, ieeeAddr: '0x172'});
