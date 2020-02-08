@@ -23,7 +23,7 @@
 
 • **id**: *number*
 
-*Defined in [src/controller/tstype.ts:9](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/tstype.ts#L9)*
+*Defined in [src/controller/tstype.ts:9](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/tstype.ts#L9)*
 
 ___
 
@@ -31,4 +31,4 @@ ___
 
 • **type**: *[EntityType](../modules/_controller_tstype_.md#entitytype)*
 
-*Defined in [src/controller/tstype.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/tstype.ts#L10)*
+*Defined in [src/controller/tstype.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/tstype.ts#L10)*
