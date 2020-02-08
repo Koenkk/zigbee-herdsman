@@ -493,20 +493,24 @@ class Endpoint extends Entity {
         }
     }
 
-    public async waitForCommand(
-        clusterKey: number | string, commandKey: number | string, timeout: number,
-    ): Promise<void | KeyValue> {
+    public waitForCommand(
+        clusterKey: number | string, commandKey: number | string, transactionSequenceNumber: number, timeout: number,
+    ): {promise: Promise<{header: KeyValue; payload: KeyValue}>; cancel: () => void} {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
-        const result = await Entity.adapter.waitFor(
+        const waiter = Entity.adapter.waitFor(
             this.deviceNetworkAddress, this.ID, Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER,
-            cluster.ID, command.ID, timeout
+            transactionSequenceNumber, cluster.ID, command.ID, timeout
         );
 
-        return {
-            header: result.frame.Header,
-            payload: result.frame.Payload
-        };
+        const promise = new Promise<{header: KeyValue; payload: KeyValue}>((resolve, reject) => {
+            waiter.promise.then(
+                (payload) => resolve({header: payload.frame.Header, payload: payload.frame.Payload}),
+                (error) => reject(error),
+            );
+        });
+
+        return {promise, cancel: waiter.cancel};
     }
 
     private getOptionsWithDefaults(options: Options, disableDefaultResponse: boolean): Options {

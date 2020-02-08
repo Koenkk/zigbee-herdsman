@@ -94,8 +94,8 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
-        clusterID: number, commandIdentifier: number, timeout: number,
-    ): Promise<ZclDataPayload>;
+        transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
+    ): {promise: Promise<ZclDataPayload>; cancel: () => void};
 
     public abstract sendZclFrameNetworkAddressWithResponse(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,

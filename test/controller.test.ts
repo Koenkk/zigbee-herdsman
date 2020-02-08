@@ -15,6 +15,7 @@ Date.now = jest.fn()
 Date.now.mockReturnValue(150);
 
 const mockAdapterEvents = {};
+const mockAdapterWaitFor = jest.fn();
 const mockAdapterSupportsDiscoverRoute = jest.fn();
 const mockSetChannelInterPAN = jest.fn();
 const mocksendZclFrameInterPANIeeeAddr = jest.fn();
@@ -169,6 +170,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             getNetworkParameters: () => {return {panID: 1, extendedPanID: 3, channel: 15}},
             setLED: mockAdapterSetLED,
             supportsLED: mockAdapterSupportsLED,
+            waitFor: mockAdapterWaitFor,
             setTransmitPower: mockAdapterSetTransmitPower,
             nodeDescriptor: async (networkAddress) => {
                 const descriptor = mockDevices[networkAddress].nodeDescriptor;
@@ -1905,6 +1907,61 @@ describe('Controller', () => {
         expect(mockSendZclFrameNetworkAddress.mock.calls[0][4]).toBe(15000);
     });
 
+    it('Endpoint commandResponse', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddress.mockClear();
+        await endpoint.commandResponse('genOta', 'imageNotify', {payloadType: 0, queryJitter: 1}, null, null)
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][0]).toBe(129);
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][1]).toBe(1);
+        const expected = {"Header":{"frameControl":{"frameType":1,"direction":1,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":7,"manufacturerCode":null,"commandIdentifier":0},"Payload":{payloadType: 0, queryJitter: 1},"Cluster":getCluster(25)};
+        expect(deepClone(mockSendZclFrameNetworkAddress.mock.calls[0][2])).toStrictEqual(expected);
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][3]).toBe(10000);
+        expect(mockSendZclFrameNetworkAddress.mock.calls[0][4]).toBe(15000);
+    });
+
+    it('Endpoint waitForCommand', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddress.mockClear();
+        const promise = new Promise((resolve, reject) => resolve({frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1]))}))
+        mockAdapterWaitFor.mockReturnValueOnce({promise, cancel: () => {}});
+        const result = endpoint.waitForCommand('genOta', 'upgradeEndRequest', 10, 20);
+        expect(mockAdapterWaitFor).toHaveBeenCalledTimes(1);
+        expect(mockAdapterWaitFor).toHaveBeenCalledWith(129, 1, 1, 0, 10, 25, 6, 20);
+        expect(result.cancel).toStrictEqual(expect.any(Function));
+        expect((await result.promise)).toStrictEqual({"header": {"commandIdentifier": 10, "frameControl": {"direction": 1, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 169}, "payload": [{"attrData": 1, "attrId": 0, "dataType": 24}]});
+    });
+
+    it('Endpoint waitForCommand error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddress.mockClear();
+        const promise = new Promise((resolve, reject) => reject(new Error('whoops!')))
+        mockAdapterWaitFor.mockReturnValueOnce({promise, cancel: () => {}});
+        const result = endpoint.waitForCommand('genOta', 'upgradeEndRequest', 10, 20);
+        let error;
+        try {await result.promise} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error('whoops!'));
+    });
+
+    it('Endpoint commandResponse throw error when parameter is missing', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddress.mockClear();
+        let error;
+        try {await endpoint.commandResponse('genOta', 'imageNotify', {queryJitter: 1}, null, null)} catch (e) {error = e;}
+        expect(error).toStrictEqual(new Error("Parameter 'payloadType' is missing"));
+    });
+
     it('Device without meta should set meta to {}', async () => {
         Device['lookup'] = {};
         const line = JSON.stringify({"id":3,"type":"EndDevice","ieeeAddr":"0x90fd9ffffe4b64ae","nwkAddr":19468,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Battery","modelId":"TRADFRI remote control","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0,1,3,9,2821,4096],"outClusterList":[3,4,5,6,8,25,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170302","swBuildId":"1.2.214","zclVersion":1,"interviewCompleted":true,"_id":"fJ5pmjqKRYbNvslK"});
@@ -2374,6 +2431,17 @@ describe('Controller', () => {
         let error;
         try {await endpoint.command('genOnOff', 'toggle', {})} catch (e) {error = e}
         expect(error).toStrictEqual(new Error(`Command 0x129/1 genOnOff.toggle({}, {"timeout":10000,"defaultResponseTimeout":15000,"manufacturerCode":null,"disableDefaultResponse":false}) failed (timeout occurred)`));
+    });
+
+    it('Endpoint commandResponse error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mockSendZclFrameNetworkAddress.mockRejectedValueOnce('timeout occurred');
+        let error;
+        try {await endpoint.commandResponse('genOta', 'imageNotify', {payloadType: 0, queryJitter: 1}, null, null)} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`CommandResponse 0x129/1 genOta.imageNotify({"payloadType":0,"queryJitter":1}, {"timeout":10000,"defaultResponseTimeout":15000,"manufacturerCode":null,"disableDefaultResponse":true}) failed (timeout occurred)`));
     });
 
     it('ConfigureReporting error', async () => {
