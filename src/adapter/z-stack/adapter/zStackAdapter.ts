@@ -171,7 +171,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async discoverRoute(networkAddress: number): Promise<void> {
-        const payload =  {dstAddr: networkAddress, options: 2, radius: Constants.AF.DEFAULT_RADIUS};
+        const payload =  {dstAddr: networkAddress, options: 1, radius: Constants.AF.DEFAULT_RADIUS};
         await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
     }
 

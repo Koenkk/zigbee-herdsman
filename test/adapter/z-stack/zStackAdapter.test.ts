@@ -1892,7 +1892,7 @@ describe('zStackAdapter', () => {
         mockZnpRequest.mockClear();
         await adapter.discoverRoute(1239);
         expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 1239, options: 2, radius: 30});
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 1239, options: 1, radius: 30});
     });
 
     it('Node descriptor', async () => {
