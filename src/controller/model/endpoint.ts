@@ -458,6 +458,61 @@ class Endpoint extends Entity {
         }
     }
 
+    public async commandResponse(
+        clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
+        transactionSequenceNumber?: number
+    ): Promise<void | KeyValue> {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const command = cluster.getCommandResponse(commandKey);
+        transactionSequenceNumber = transactionSequenceNumber || ZclTransactionSequenceNumber.next();
+        options = this.getOptionsWithDefaults(options, true);
+
+        for (const parameter of command.parameters) {
+            if (!payload.hasOwnProperty(parameter.name)) {
+                throw new Error(`Parameter '${parameter.name}' is missing`);
+            }
+        }
+
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, options.disableDefaultResponse,
+            options.manufacturerCode, transactionSequenceNumber, command.ID, cluster.ID, payload
+        );
+
+        const log = `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
+            `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            await Entity.adapter.sendZclFrameNetworkAddress(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+            );
+        } catch (error) {
+            const message = `${log} failed (${error})`;
+            debug.error(message);
+            throw Error(message);
+        }
+    }
+
+    public waitForCommand(
+        clusterKey: number | string, commandKey: number | string, transactionSequenceNumber: number, timeout: number,
+    ): {promise: Promise<{header: KeyValue; payload: KeyValue}>; cancel: () => void} {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const command = cluster.getCommand(commandKey);
+        const waiter = Entity.adapter.waitFor(
+            this.deviceNetworkAddress, this.ID, Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER,
+            transactionSequenceNumber, cluster.ID, command.ID, timeout
+        );
+
+        const promise = new Promise<{header: KeyValue; payload: KeyValue}>((resolve, reject) => {
+            waiter.promise.then(
+                (payload) => resolve({header: payload.frame.Header, payload: payload.frame.Payload}),
+                (error) => reject(error),
+            );
+        });
+
+        return {promise, cancel: waiter.cancel};
+    }
+
     private getOptionsWithDefaults(options: Options, disableDefaultResponse: boolean): Options {
         const providedOptions = options || {};
         return {

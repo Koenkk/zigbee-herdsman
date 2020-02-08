@@ -1023,8 +1023,76 @@ const Cluster: {
             imageStamp: {ID: 10, type: DataType.uint32},
         },
         commands: {
+            queryNextImageRequest: {
+                ID: 1,
+                parameters: [
+                    {name: 'fieldControl', type: DataType.uint8},
+                    {name: 'manufacturerCode', type: DataType.uint16},
+                    {name: 'imageType', type: DataType.uint16},
+                    {name: 'fileVersion', type: DataType.uint32},
+                ],
+            },
+            imageBlockRequest: {
+                ID: 3,
+                parameters: [
+                    {name: 'fieldControl', type: DataType.uint8},
+                    {name: 'manufacturerCode', type: DataType.uint16},
+                    {name: 'imageType', type: DataType.uint16},
+                    {name: 'fileVersion', type: DataType.uint32},
+                    {name: 'fileOffset', type: DataType.uint32},
+                    {name: 'maximumDataSize', type: DataType.uint8},
+                ],
+            },
+            upgradeEndRequest: {
+                ID: 6,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'manufacturerCode', type: DataType.uint16},
+                    {name: 'imageType', type: DataType.uint16},
+                    {name: 'fileVersion', type: DataType.uint32},
+                ],
+            }
         },
         commandsResponse: {
+            imageNotify: {
+                ID: 0,
+                parameters: [
+                    {name: 'payloadType', type: DataType.uint8},
+                    {name: 'queryJitter', type: DataType.uint8},
+                ],
+            },
+            queryNextImageResponse: {
+                ID: 2,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'manufacturerCode', type: DataType.uint16},
+                    {name: 'imageType', type: DataType.uint16},
+                    {name: 'fileVersion', type: DataType.uint32},
+                    {name: 'imageSize', type: DataType.uint32},
+                ],
+            },
+            imageBlockResponse: {
+                ID: 5,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'manufacturerCode', type: DataType.uint16},
+                    {name: 'imageType', type: DataType.uint16},
+                    {name: 'fileVersion', type: DataType.uint32},
+                    {name: 'fileOffset', type: DataType.uint32},
+                    {name: 'dataSize', type: DataType.uint8},
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+            upgradeEndResponse: {
+                ID: 7,
+                parameters: [
+                    {name: 'manufacturerCode', type: DataType.uint16},
+                    {name: 'imageType', type: DataType.uint16},
+                    {name: 'fileVersion', type: DataType.uint32},
+                    {name: 'currentTime', type: DataType.uint32},
+                    {name: 'upgradeTime', type: DataType.uint32},
+                ],
+            }
         },
     },
     genPollCtrl: {

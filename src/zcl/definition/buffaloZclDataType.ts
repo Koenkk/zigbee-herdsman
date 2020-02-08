@@ -7,6 +7,7 @@ enum BuffaloZclDataType {
     LIST_ZONEINFO = 1005,
     EXTENSION_FIELD_SETS = 1006,
     LIST_THERMO_TRANSITIONS = 1007,
+    BUFFER = 1008,
 };
 
 export default BuffaloZclDataType;

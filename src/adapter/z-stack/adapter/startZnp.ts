@@ -50,6 +50,13 @@ const Endpoints = [
     // TERNCY: https://github.com/Koenkk/zigbee-herdsman/issues/82
     {...EndpointDefaults, endpoint: 0x6E, appprofid: 0x0104},
     {...EndpointDefaults, endpoint: 12, appprofid: 0xc05e},
+    {
+        ...EndpointDefaults,
+        endpoint: 13,
+        appprofid: 0x0104,
+        appnuminclusters: 1,
+        appinclusterlist: [Zcl.Utils.getCluster('genOta').ID]
+    },
 ];
 
 async function validateItem(
