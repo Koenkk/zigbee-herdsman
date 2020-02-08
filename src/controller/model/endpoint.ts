@@ -460,9 +460,11 @@ class Endpoint extends Entity {
 
     public async commandResponse(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
+        transactionSequenceNumber?: number
     ): Promise<void | KeyValue> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommandResponse(commandKey);
+        transactionSequenceNumber = transactionSequenceNumber || ZclTransactionSequenceNumber.next();
         options = this.getOptionsWithDefaults(options, true);
 
         for (const parameter of command.parameters) {
@@ -473,7 +475,7 @@ class Endpoint extends Entity {
 
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, options.disableDefaultResponse,
-            options.manufacturerCode, ZclTransactionSequenceNumber.next(), command.ID, cluster.ID, payload
+            options.manufacturerCode, transactionSequenceNumber, command.ID, cluster.ID, payload
         );
 
         const log = `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
@@ -501,7 +503,10 @@ class Endpoint extends Entity {
             cluster.ID, command.ID, timeout
         );
 
-        return result.frame.Payload;
+        return {
+            header: result.frame.Header,
+            payload: result.frame.Payload
+        };
     }
 
     private getOptionsWithDefaults(options: Options, disableDefaultResponse: boolean): Options {
