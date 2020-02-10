@@ -311,11 +311,11 @@ class Driver extends events.EventEmitter {
     //}
 
     private async checkDeviceStatus(currentDeviceStatus: number) {
-        networkState = currentDeviceStatus & 0x03;
+        const networkState = currentDeviceStatus & 0x03;
         const apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
         const apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
         const configChanged = (currentDeviceStatus >> 4) & 0x01;
-        apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
+        const apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
         //console.log("check current device status");
         //console.log("network state: " + networkState.toString(2));
         //console.log("apsDataConfirm: " + apsDataConfirm.toString(2));
