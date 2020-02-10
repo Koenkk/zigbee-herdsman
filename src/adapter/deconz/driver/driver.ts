@@ -7,7 +7,7 @@ import Frame from './frame';
 import * as Events from '../../events';
 import SerialPortUtils from '../../serialPortUtils';
 import PARAM from './constants';
-import { Command, Request, parameterT, ApsDataRequest } from './constants';
+import { Command, Request, parameterT, ApsDataRequest, ReceivedDataResponse, DataStateResponse } from './constants';
 
 // @ts-ignore
 import slip from 'slip';
@@ -116,7 +116,7 @@ class Driver extends events.EventEmitter {
     public readParameterRequest(parameterId: number) : Promise<Command> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            debug(`push read parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId}`);
+            //debug(`push read parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId}`);
             const ts = 0;
             const commandId = PARAM.PARAM.FrameType.ReadParameter;
             const req: Request = {commandId, parameterId, seqNumber, resolve, reject, ts};
@@ -127,7 +127,7 @@ class Driver extends events.EventEmitter {
     public writeParameterRequest(parameterId: number, parameter: parameterT) : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            debug(`push write parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId} parameter: ${parameter}`);
+            //debug(`push write parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId} parameter: ${parameter}`);
             const ts = 0;
             const commandId = PARAM.PARAM.FrameType.WriteParameter;
             const req: Request = {commandId, parameterId, parameter, seqNumber, resolve, reject, ts};
@@ -138,7 +138,7 @@ class Driver extends events.EventEmitter {
     public readFirmwareVersionRequest() : Promise<number[]> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            debug(`push read firmware version request to queue. seqNr: ${seqNumber}`);
+            //debug(`push read firmware version request to queue. seqNr: ${seqNumber}`);
             const ts = 0;
             const commandId = PARAM.PARAM.FrameType.ReadFirmwareVersion;
             const req: Request = {commandId, seqNumber, resolve, reject, ts};
@@ -152,10 +152,10 @@ class Driver extends events.EventEmitter {
         this.sendRequest(requestFrame);
     }
 
-    private sendWriteParameterRequest(parameterId: number, parameter: parameterT, seqNumber: number) {
+    private sendWriteParameterRequest(parameterId: number, value: parameterT, seqNumber: number) {
         /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, pameter */
         const parameterLength = this.getLengthOfParameter(parameterId);
-        debug("parameter: " + parameter.toString(16) + " length: " + parameterLength);
+        debug("SEND WRITE_PARAMETER Request - parameter id: " + parameterId + " value: " + value.toString(16) + " length: " + parameterLength);
 
         const payloadLength = 1 + parameterLength;
         const frameLength = 7 + payloadLength;
@@ -166,9 +166,8 @@ class Driver extends events.EventEmitter {
         const pLength1 = payloadLength & 0xff;
         const pLength2 = payloadLength >> 8;
 
-        const requestframe = [PARAM.PARAM.FrameType.WriteParameter, seqNumber, 0x00, fLength1, fLength2, pLength1, pLength2, parameterId].concat(this.parameterBuffer(parameter, parameterLength));
+        const requestframe = [PARAM.PARAM.FrameType.WriteParameter, seqNumber, 0x00, fLength1, fLength2, pLength1, pLength2, parameterId].concat(this.parameterBuffer(value, parameterLength));
         this.sendRequest(requestframe);
-
     }
 
     private getLengthOfParameter(parameterId: number) : number {
@@ -221,7 +220,7 @@ class Driver extends events.EventEmitter {
     private sendRequest(buffer: number[]) {
         const crc = this.calcCrc(Buffer.from(buffer));
         const frame = Buffer.from([0xc0].concat(buffer).concat([crc[0], crc[1], 0xc0]));
-        debug(frame);
+        //debug(frame);
         this.serialPort.write(frame);
     }
 
@@ -272,7 +271,7 @@ class Driver extends events.EventEmitter {
             const now = Date.now();
 
             if ((now - req.ts) > 1000) {
-                debug(`Timeout for request cmd: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`);
+                debug(`Timeout for request - CMD: 0x${req.commandId.toString(16)} seqNr: ${req.seqNumber}`);
                 //remove from busyQueue
                 busyQueue.splice(i, 1);
                 req.reject("TIMEOUT");
@@ -283,7 +282,7 @@ class Driver extends events.EventEmitter {
     private changeNetworkStateRequest(networkState: number) : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            debug(`push change network state request to apsQueue. seqNr: ${seqNumber}`);
+            //debug(`push change network state request to apsQueue. seqNr: ${seqNumber}`);
             const ts = 0;
             const commandId = PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE;
             const req: Request = {commandId, networkState, seqNumber, resolve, reject, ts};
@@ -299,7 +298,7 @@ class Driver extends events.EventEmitter {
     private deviceStateRequest() {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            debug(`device state request. seqNr: ${seqNumber}`);
+            //debug(`DEVICE_STATE Request - seqNr: ${seqNumber}`);
             const ts = 0;
             const commandId = PARAM.PARAM.FrameType.ReadDeviceState;
             const req: Request = {commandId, seqNumber, resolve, reject, ts};
@@ -307,36 +306,36 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private async deviceStateResponse(value: number) {
-        networkState = value & 0x03;
-        const apsDataConfirm = (value >> 2) & 0x01;
-        const apsDataIndication = (value >> 3) & 0x01;
-        const configChanged = (value >> 4) & 0x01;
-        apsRequestFreeSlots = (value >> 5) & 0x01;
+    //private async updateDeviceStatus(value: number) {
+    //    this.currentDeviceStatus = value;
+    //}
 
+    private async checkDeviceStatus(currentDeviceStatus: number) {
+        networkState = currentDeviceStatus & 0x03;
+        const apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
+        const apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
+        const configChanged = (currentDeviceStatus >> 4) & 0x01;
+        apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
+        //console.log("check current device status");
         //console.log("network state: " + networkState.toString(2));
         //console.log("apsDataConfirm: " + apsDataConfirm.toString(2));
         //console.log("apsDataIndication: " + apsDataIndication);
         //console.log("configChanged: " + configChanged.toString(2));
         //console.log("freeSlots: " + apsRequestFreeSlots.toString(2));
 
-        if (apsDataIndication === 1) {
-            try {
-                const x = await this.readReceivedDataRequest();
-            } catch {
-                debug("APS Error - data indication");
-            }
-        }
-
         if (apsDataConfirm === 1) {
             try {
                 const x = await this.querySendDataStateRequest();
             } catch {
-                debug("APS Error - data confirm");
+                //debug("APS Error - data confirm");
             }
-        }
-
-        if (configChanged === 1) {
+        } else if (apsDataIndication === 1) {
+            try {
+                const x = await this.readReceivedDataRequest();
+            } catch {
+                //debug("APS Error - data indication");
+            }
+        } else if (configChanged === 1) {
             // wenn network settings sich geändert haben (noch mal konfiguration einlesen)
         }
     }
@@ -344,7 +343,7 @@ class Driver extends events.EventEmitter {
     private readReceivedDataRequest() : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            debug(`push read received data request to apsQueue. seqNr: ${seqNumber}`);
+            //debug(`push read received data request to apsQueue. seqNr: ${seqNumber}`);
             const ts = 0;
             const commandId = PARAM.PARAM.APS.DATA_INDICATION;
             const req: Request = {commandId, seqNumber, resolve, reject, ts};
@@ -352,10 +351,10 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public enqueueSendDataRequest(request: ApsDataRequest) : Promise<void> {
+    public enqueueSendDataRequest(request: ApsDataRequest) : Promise<void | ReceivedDataResponse> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            debug(`push enqueue send data request to apsQueue. seqNr: ${seqNumber}`);
+            //debug(`push enqueue send data request to apsQueue. seqNr: ${seqNumber}`);
             const ts = 0;
             const requestId = request.requestId;
             const commandId = PARAM.PARAM.APS.DATA_REQUEST;
@@ -367,7 +366,7 @@ class Driver extends events.EventEmitter {
     public enqueueSendDataRequestWithResponse(request: ApsDataRequest) : Promise<Events.ZclDataPayload> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            debug(`push enqueue send data request to apsQueue. seqNr: ${seqNumber}`);
+            //debug(`push enqueue send data request to apsQueue. seqNr: ${seqNumber}`);
             const ts = 0;
             const requestId = request.requestId;
             const commandId = PARAM.PARAM.APS.DATA_REQUEST;
@@ -379,7 +378,7 @@ class Driver extends events.EventEmitter {
     private querySendDataStateRequest() : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            debug(`push query send data state request to apsQueue. seqNr: ${seqNumber}`);
+            //debug(`push query send data state request to apsQueue. seqNr: ${seqNumber}`);
             const ts = 0;
             const commandId = PARAM.PARAM.APS.DATA_CONFIRM;
             const req: Request = {commandId, seqNumber, resolve, reject, ts};
@@ -396,7 +395,7 @@ class Driver extends events.EventEmitter {
         req.ts = Date.now();
 
         apsBusyQueue.push(req);
-
+/*
         let string = "";
     for (let u = 0; u < apsBusyQueue.length; u++) {
         const re: Request = apsBusyQueue[u];
@@ -404,18 +403,18 @@ class Driver extends events.EventEmitter {
         string += ",";
     }
 //    console.log("aps busy queue contains seqNumbers: "+ string);
-
+*/
         switch (req.commandId) {
             case PARAM.PARAM.APS.DATA_INDICATION:
-                debug(`read received data request. seqNr: ${req.seqNumber}`);
+                //debug(`read received data request. seqNr: ${req.seqNumber}`);
                 this.sendReadReceivedDataRequest(req.seqNumber);
                 break;
             case PARAM.PARAM.APS.DATA_CONFIRM:
-                debug(`query send data state request. seqNr: ${req.seqNumber}`);
+                //debug(`query send data state request. seqNr: ${req.seqNumber}`);
                 this.sendQueryDataStateRequest(req.seqNumber);
                 break;
             case PARAM.PARAM.APS.DATA_REQUEST:
-                debug(`send data request. seqNr: ${req.seqNumber}`);
+                //debug(`send data request. seqNr: ${req.seqNumber}`);
                 this.sendEnqueueSendDataRequest(req.request, req.seqNumber);
                 break;
             default:
@@ -425,11 +424,13 @@ class Driver extends events.EventEmitter {
     }
 
     private sendQueryDataStateRequest(seqNumber: number) {
+        debug(`DATA_CONFIRM - sending data state request - SeqNr. ${seqNumber}`);
         const requestFrame = [PARAM.PARAM.APS.DATA_CONFIRM, seqNumber, 0x00, 0x07, 0x00, 0x00, 0x00];
         this.sendRequest(requestFrame);
     }
 
     private sendReadReceivedDataRequest(seqNumber: number) {
+        debug(`DATA_INDICATION - sending read data request - SeqNr. ${seqNumber}`);
         // payloadlength = 0, flag = none
         const requestFrame = [PARAM.PARAM.APS.DATA_INDICATION, seqNumber, 0x00, 0x07, 0x00, 0x00, 0x00];
         this.sendRequest(requestFrame);

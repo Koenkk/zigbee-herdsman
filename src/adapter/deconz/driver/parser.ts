@@ -24,7 +24,7 @@ class Parser extends stream.Transform {
     }
 
     private onMessage(message: Uint8Array): void {
-        debug(`message received: ${message}`);
+        //debug(`message received: ${message}`);
         this.emit('parsed', message);
     }
 

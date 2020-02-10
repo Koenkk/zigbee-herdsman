@@ -70,14 +70,17 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
 
     response.commandId = view.getUint8(0);
     response.seqNr = view.getUint8(1);
+    response.status = view.getUint8(2);
     response.frameLength = 7;
     response.payloadLength = view.getUint16(5, littleEndian);
-    if (response.payloadLength != 11 && response.payloadLength != 12 && response.payloadLength != 18) {
-        debug("query send data state response - invalid payload length");
-        return null;
-    }
     response.deviceState = view.getUint8(7);
     response.requestId = view.getUint8(8);
+
+    if (response.status != 0) {
+        debug("DATA_CONFIRM Response - rejected - seqNr.: " + response.seqNr + " request id: " + response.requestId + " status: " + response.status);
+        return null;
+    }
+
     response.destAddrMode = view.getUint8(9);
 
     let destAddr = "";
@@ -119,18 +122,17 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
     // TODO timeout (at driver.ts)
     if (response.confirmStatus !== 0) {
         // reject if status is not SUCCESS
-        debug("REJECT APS REQUEST");
-        debug(response.confirmStatus);
+        //debug("REJECT APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
         req.reject(response.confirmStatus);
     } else {
-        debug("RESOLVE APS REQUEST");
+        //debug("RESOLVE APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
         req.resolve(response.confirmStatus);
     }
 
     //remove from busyqueue
     apsBusyQueue.splice(i, 1);
 
-    debug("query send data state response - to 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus + " new device state: " + newStatus);
+    debug("DATA_CONFIRM Response - destAddr: 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus + " new device state: " + newStatus);
     frameParserEvents.emit('receivedDataNotification', response.deviceState);
 /*
     const zclPayload: ZclDataPayload = {
@@ -153,9 +155,10 @@ function parseReadReceivedDataResponse(view : DataView) : object {
     response.status = view.getUint8(2);
 
     if (response.status != 0) {
-        debug("read received data response - status != 0");
+        debug("DATA_INDICATION Response - rejected - seqNr.: " + response.seqNr + " status: " + response.status);
         return null;
     }
+
     response.frameLength = view.getUint16(3, littleEndian);
     response.payloadLength = view.getUint16(5, littleEndian);
     response.deviceState = view.getUint8(7);
@@ -210,8 +213,10 @@ function parseReadReceivedDataResponse(view : DataView) : object {
     for (let l = 0; l <= (8 - newStatus.length); l++) {
         newStatus = "0" + newStatus;
     }
-    debug("received data from 0x" + srcAddr + " to 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16) + " new state: " + newStatus + " payload: " + payload);
-    //console.log(response);
+
+    debug("DATA_INDICATION Response - seqNr. " + response.seqNr + " srcAddr: 0x" + srcAddr + " destAddr: 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16) + " new state: " + newStatus);
+    debug("payload: " + payload);
+    frameParserEvents.emit('receivedDataPayload', response);
     frameParserEvents.emit('receivedDataNotification', response.deviceState);
     return response;
 }
@@ -220,7 +225,7 @@ function parseEnqueueSendDataResponse(view : DataView) : number {
     const status = view.getUint8(2);
     const requestId = view.getUint8(8);
     const deviceState = view.getUint8(7);
-    debug("Received Enqeue send data response status: " + status + " request id: " + requestId + " new device state: " + deviceState.toString(2));
+    debug("DATA_REQUEST Response - status: " + status + " request id: " + requestId + " new device state: " + deviceState.toString(2));
     frameParserEvents.emit('receivedDataNotification', deviceState);
     return deviceState;
 }
@@ -232,10 +237,10 @@ function parseWriteParameterResponse(view : DataView) : number {
 }
 
 function parseReceivedDataNotification(view : DataView) : number {
-    const flag = view.getUint8(5);
-    debug("received data - device state changed: " + flag.toString(2));
-    frameParserEvents.emit('receivedDataNotification', flag);
-    return flag;
+    const deviceState = view.getUint8(5);
+    debug("DEVICE_STATE changed: " + deviceState.toString(2));
+    frameParserEvents.emit('receivedDataNotification', deviceState);
+    return deviceState;
 }
 
 function parseMacPollCommand(view : DataView) : number {
@@ -285,7 +290,7 @@ function getParserForCommandId(id: Number) : Function {
 
 async function processFrame(frame: Uint8Array) : Promise<void> {
     const [seqNumber, status, command, commandId] = await parseFrame(frame);
-    debug(`process frame with seq: ${seqNumber} status: ${status}`);
+    //debug(`process frame with seq: ${seqNumber} status: ${status}`);
 
     let queue = busyQueue;
 
@@ -312,11 +317,10 @@ async function processFrame(frame: Uint8Array) : Promise<void> {
 
     if (status !== 0) {
         // reject if status is not SUCCESS
-        debug("REJECT REQUEST");
-        debug({status});
+        //debug("REJECT REQUEST");
         req.reject({status});
     } else {
-        debug("RESOLVE REQUEST");
+        //debug("RESOLVE REQUEST");
         req.resolve(command);
     }
     //remove from busyqueue
@@ -330,18 +334,14 @@ function parseFrame(frame: Uint8Array) : [number, number, Command, number] {
     }
 
     const view = new DataView(frame.buffer);
-
     const commandId = view.getUint8(0);
     const seqNumber = view.getUint8(1);
-    let status = view.getUint8(2);
+    const status = view.getUint8(2);
     const frameLength = view.getUint16(3, littleEndian);
     const payloadLength = view.getUint16(5, littleEndian);
     // todo check framelength, payloadlength < x
-
     const parser = getParserForCommandId(commandId);
-    if (parser === null) {
-        status = 5; // query send data state response has no status field only confirm status that can not be used here
-    }
+
     return [seqNumber, status, parser(view), commandId];
 
 }
