@@ -49,7 +49,7 @@ class Driver extends events.EventEmitter {
         setInterval(() => { that.processApsQueue(); }, 10);
         setInterval(() => { that.processApsBusyQueue(); }, 10);
         this.onParsed = this.onParsed.bind(this);
-        this.frameParserEvent.on('receivedDataNotification', (data: any) => {this.deviceStateResponse(data)});
+        this.frameParserEvent.on('receivedDataNotification', (data: number) => {this.checkDeviceStatus(data)});
 
         // this.onUnpiParsed = this.onUnpiParsed.bind(this);
         // this.onUnpiParsedError = this.onUnpiParsedError.bind(this);
@@ -172,7 +172,7 @@ class Driver extends events.EventEmitter {
 
     private getLengthOfParameter(parameterId: number) : number {
         switch (parameterId) {
-            case 9: case 16: case 21: case 28: case 36:
+            case 9: case 16: case 21: case 28: case 33: case 36:
                 return 1;
             case 5: case 7: case 34:
                 return 2;
@@ -439,22 +439,29 @@ class Driver extends events.EventEmitter {
     private sendEnqueueSendDataRequest(request: ApsDataRequest, seqNumber: number) {
         const payloadLength = 12 + ((request.destAddrMode === 0x01) ? 2 : (request.destAddrMode === 0x02) ? 3 : 9) + request.asduLength;
         const frameLength = 7 + payloadLength;
-
         const cid1 = request.clusterId & 0xff;
         const cid2 = (request.clusterId >> 8) & 0xff;
         const asdul1 = request.asduLength & 0xff;
         const asdul2 = (request.asduLength >> 8) & 0xff;
         let destArray: Array<number> = [];
-        if (request.destAddr16) {
+        let dest = "";
+        if (request.destAddr16 != null) {
             destArray[0] = request.destAddr16 & 0xff;
             destArray[1] = (request.destAddr16 >> 8) & 0xff;
+            dest = request.destAddr16.toString(16);
         }
-        if (request.destAddr64) {
+        if (request.destAddr64 != null) {
+            dest = request.destAddr64;
             destArray = this.macAddrStringToArray(request.destAddr64);
         }
-        if (request.destEndpoint) {
+        if (request.destEndpoint != null) {
             destArray.push(request.destEndpoint);
+            dest += " EP:";
+            dest += request.destEndpoint;
         }
+
+        debug(`DATA_REQUEST - sending data request - destAddr: 0x${dest} SeqNr. ${seqNumber} request id: ${request.requestId}`);
+
         const requestFrame = [PARAM.PARAM.APS.DATA_REQUEST, seqNumber, 0x00, frameLength & 0xff, (frameLength >> 8) & 0xff,
             payloadLength & 0xff, (payloadLength >> 8) & 0xff,
             request.requestId, 0x00, request.destAddrMode].concat(
@@ -471,8 +478,8 @@ class Driver extends events.EventEmitter {
             const req: Request = apsBusyQueue[i];
             const now = Date.now();
 
-            if ((now - req.ts) > 10000) { // 10 seconds
-                debug(`Timeout for aps request cmd: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`);
+            if ((now - req.ts) > 60000) { // 60 seconds
+                debug(`Timeout for aps request CMD: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`);
                 //remove from busyQueue
                 apsBusyQueue.splice(i, 1);
                 req.reject("APS TIMEOUT");

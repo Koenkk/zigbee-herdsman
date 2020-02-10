@@ -98,7 +98,7 @@ class DeconzAdapter extends Adapter {
     }
 
     public async reset(type: 'soft' | 'hard'): Promise<void> {
-
+        return Promise.reject();
     }
 
     public async setLED(enabled: boolean): Promise<void> {
