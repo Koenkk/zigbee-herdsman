@@ -86,7 +86,36 @@ class DeconzAdapter extends Adapter {
     }
 
     public async permitJoin(seconds: number): Promise<void> {
+        if (seconds < 0 || seconds > 255) {
+            throw new Error(`invalid value ${seconds} for permit join`);
+        }
 
+        return this.queue.execute<void>(async () => {
+            const transactionID = this.nextTransactionID();
+            const request: ApsDataRequest = {};
+            const zdpFrame = [transactionID, seconds, 0]; // tc_significance 1 or 0 ?
+
+            request.requestId = transactionID;
+            request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
+            request.destAddr16 = 0xfffc;
+            request.destEndpoint = 0;
+            request.profileId = 0;
+            request.clusterId = 0x36; // permit join
+            request.srcEndpoint = 0;
+            request.asduLength = 3;
+            request.asduPayload = zdpFrame;
+            request.txOptions = 0;
+            request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
+            //todo timeout
+
+            try {
+                await this.driver.enqueueSendDataRequest(request);
+                debug("PERMIT_JOIN - " + seconds + " seconds");
+                return
+            } catch (error) {
+                debug("PERMIT_JOIN FAILED - " + error);
+            }
+        });
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {

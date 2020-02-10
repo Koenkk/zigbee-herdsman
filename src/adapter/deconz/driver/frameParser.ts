@@ -2,7 +2,7 @@ const MIN_BUFFER_SIZE = 3;
 const littleEndian = true;
 import PARAM from './constants';
 import { busyQueue, apsBusyQueue } from './driver';
-import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask } from './constants';
+import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin } from './constants';
 import * as Events from '../../events';
 
 import Debug from 'debug';
@@ -40,6 +40,10 @@ function parseReadParameterResponse(view: DataView) : Command {
             const chMask: ParamChannelMask = view.getUint32(8, littleEndian);
             debug('CHANNELMASK: ' + chMask.toString(16));
             return chMask;
+        case PARAM.PARAM.Network.PERMIT_JOIN:
+            const permitJoin: ParamPermitJoin = view.getUint8(8);
+            debug('PERMIT_JOIN: ' + permitJoin);
+            return permitJoin;
         default:
             throw new Error("unknown parameter id");
     }
