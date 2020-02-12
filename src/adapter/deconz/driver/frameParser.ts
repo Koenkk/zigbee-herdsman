@@ -69,21 +69,23 @@ function parseChangeNetworkStateResponse(view : DataView) : number {
 }
 
 function parseQuerySendDataStateResponse(view : DataView) : object {
+
     const response: DataStateResponse = {};
     let buf2, buf3;
 
     response.commandId = view.getUint8(0);
     response.seqNr = view.getUint8(1);
     response.status = view.getUint8(2);
+
+    if (response.status != 0) {
+        debug("DATA_CONFIRM Response - rejected - seqNr.: " + response.seqNr + " status: " + response.status);
+        return null;
+    }
+
     response.frameLength = 7;
     response.payloadLength = view.getUint16(5, littleEndian);
     response.deviceState = view.getUint8(7);
     response.requestId = view.getUint8(8);
-
-    if (response.status != 0) {
-        debug("DATA_CONFIRM Response - rejected - seqNr.: " + response.seqNr + " request id: " + response.requestId + " status: " + response.status);
-        return null;
-    }
 
     response.destAddrMode = view.getUint8(9);
 
