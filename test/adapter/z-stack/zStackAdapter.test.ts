@@ -110,6 +110,8 @@ const basicMocks = () => {
 
         if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
             return {payload: {product: 0, revision: "20190425"}};
+        } else if (subsystem === Subsystem.SYS && command === 'ping') {
+            return {};
         } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
             if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, offset: 0})) {
                 return {payload: {value: Buffer.from([0x55])}};
@@ -292,6 +294,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -346,85 +350,86 @@ describe('zStackAdapter', () => {
         expect(result).toBe('reset');
         expect(Znp).toBeCalledWith("dummy", 800, false);
         expect(mockZnpOpen).toBeCalledTimes(1);
-        expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
-        expect(mockZnpRequest.mock.calls[1][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
+        expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
         expect(mockZnpRequest.mock.calls[2][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[3][2].id).toBe(NvItemsIds.CHANLIST);
-        expect(mockZnpRequest.mock.calls[4][2].id).toBe(NvItemsIds.PRECFGKEYS_ENABLE);
-        expect(mockZnpRequest.mock.calls[5][1]).toBe('osalNvRead');
-        expect(mockZnpRequest.mock.calls[5][2].id).toBe(NvItemsIds.PRECFGKEY);
-        expect(mockZnpRequest.mock.calls[6][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[7][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[7][2].value).toStrictEqual(Buffer.from([0x02]));
-        expect(mockZnpRequest.mock.calls[8][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[9][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[9][2].value).toStrictEqual(Buffer.from([0]));
+        expect(mockZnpRequest.mock.calls[3][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[4][2].id).toBe(NvItemsIds.CHANLIST);
+        expect(mockZnpRequest.mock.calls[5][2].id).toBe(NvItemsIds.PRECFGKEYS_ENABLE);
+        expect(mockZnpRequest.mock.calls[6][1]).toBe('osalNvRead');
+        expect(mockZnpRequest.mock.calls[6][2].id).toBe(NvItemsIds.PRECFGKEY);
+        expect(mockZnpRequest.mock.calls[7][1]).toBe('resetReq');
+        expect(mockZnpRequest.mock.calls[8][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[8][2].value).toStrictEqual(Buffer.from([0x02]));
+        expect(mockZnpRequest.mock.calls[9][1]).toBe('resetReq');
         expect(mockZnpRequest.mock.calls[10][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[10][2].value).toStrictEqual(Buffer.from([0]));
         expect(mockZnpRequest.mock.calls[11][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from([1]));
+        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from([0]));
         expect(mockZnpRequest.mock.calls[12][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[12][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
+        expect(mockZnpRequest.mock.calls[12][2].value).toStrictEqual(Buffer.from([1]));
         expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
+        expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
         expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
+        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
         expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
-        expect(mockZnpRequest.mock.calls[16][1]).toBe('bdbSetChannel');
-        expect(mockZnpRequest.mock.calls[16][2].channel).toStrictEqual(2048);
+        expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
+        expect(mockZnpRequest.mock.calls[16][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[16][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
         expect(mockZnpRequest.mock.calls[17][1]).toBe('bdbSetChannel');
-        expect(mockZnpRequest.mock.calls[17][2].channel).toStrictEqual(0);
-        expect(mockZnpRequest.mock.calls[18][1]).toBe('bdbStartCommissioning');
-        expect(mockZnpRequest.mock.calls[18][2].mode).toStrictEqual(4);
+        expect(mockZnpRequest.mock.calls[17][2].channel).toStrictEqual(2048);
+        expect(mockZnpRequest.mock.calls[18][1]).toBe('bdbSetChannel');
+        expect(mockZnpRequest.mock.calls[18][2].channel).toStrictEqual(0);
+        expect(mockZnpRequest.mock.calls[19][1]).toBe('bdbStartCommissioning');
+        expect(mockZnpRequest.mock.calls[19][2].mode).toStrictEqual(4);
         expect(mockZnpWaitfor.mock.calls[0][2]).toBe('stateChangeInd');
         expect(mockZnpWaitfor.mock.calls[0][3].state).toStrictEqual(9);
         expect(mockZnpWaitfor.mock.calls[0][4]).toStrictEqual(60000);
-        expect(mockZnpRequest.mock.calls[19][1]).toBe('bdbStartCommissioning');
-        expect(mockZnpRequest.mock.calls[19][2].mode).toStrictEqual(2);
-        expect(mockZnpRequest.mock.calls[20][1]).toBe('osalNvItemInit');
-        expect(mockZnpRequest.mock.calls[20][2].id).toStrictEqual(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[21][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[21][2].value).toStrictEqual(Buffer.from([0x55]));
-        expect(mockZnpRequest.mock.calls[22][1]).toBe('getDeviceInfo');
-        expect(mockZnpRequest.mock.calls[23][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[24][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[24][2].endpoint).toBe(1);
-        expect(mockZnpRequest.mock.calls[24][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[20][1]).toBe('bdbStartCommissioning');
+        expect(mockZnpRequest.mock.calls[20][2].mode).toStrictEqual(2);
+        expect(mockZnpRequest.mock.calls[21][1]).toBe('osalNvItemInit');
+        expect(mockZnpRequest.mock.calls[21][2].id).toStrictEqual(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[22][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[22][2].value).toStrictEqual(Buffer.from([0x55]));
+        expect(mockZnpRequest.mock.calls[23][1]).toBe('getDeviceInfo');
+        expect(mockZnpRequest.mock.calls[24][1]).toBe('activeEpReq');
         expect(mockZnpRequest.mock.calls[25][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[25][2].endpoint).toBe(2);
-        expect(mockZnpRequest.mock.calls[25][2].appprofid).toBe(0x0101);
+        expect(mockZnpRequest.mock.calls[25][2].endpoint).toBe(1);
+        expect(mockZnpRequest.mock.calls[25][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[26][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[26][2].endpoint).toBe(3);
-        expect(mockZnpRequest.mock.calls[26][2].appprofid).toBe(0x0105);
+        expect(mockZnpRequest.mock.calls[26][2].endpoint).toBe(2);
+        expect(mockZnpRequest.mock.calls[26][2].appprofid).toBe(0x0101);
         expect(mockZnpRequest.mock.calls[27][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[27][2].endpoint).toBe(4);
-        expect(mockZnpRequest.mock.calls[27][2].appprofid).toBe(0x0107);
+        expect(mockZnpRequest.mock.calls[27][2].endpoint).toBe(3);
+        expect(mockZnpRequest.mock.calls[27][2].appprofid).toBe(0x0105);
         expect(mockZnpRequest.mock.calls[28][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[28][2].endpoint).toBe(5);
-        expect(mockZnpRequest.mock.calls[28][2].appprofid).toBe(0x0108);
+        expect(mockZnpRequest.mock.calls[28][2].endpoint).toBe(4);
+        expect(mockZnpRequest.mock.calls[28][2].appprofid).toBe(0x0107);
         expect(mockZnpRequest.mock.calls[29][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[29][2].endpoint).toBe(6);
-        expect(mockZnpRequest.mock.calls[29][2].appprofid).toBe(0x0109);
+        expect(mockZnpRequest.mock.calls[29][2].endpoint).toBe(5);
+        expect(mockZnpRequest.mock.calls[29][2].appprofid).toBe(0x0108);
         expect(mockZnpRequest.mock.calls[30][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[30][2].endpoint).toBe(8);
-        expect(mockZnpRequest.mock.calls[30][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[30][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[30][2].endpoint).toBe(6);
+        expect(mockZnpRequest.mock.calls[30][2].appprofid).toBe(0x0109);
         expect(mockZnpRequest.mock.calls[31][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[31][2].endpoint).toBe(11);
+        expect(mockZnpRequest.mock.calls[31][2].endpoint).toBe(8);
         expect(mockZnpRequest.mock.calls[31][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[31][2].appoutclusterlist).toStrictEqual([1280]);
+        expect(mockZnpRequest.mock.calls[31][2].appoutclusterlist).toStrictEqual([]);
         expect(mockZnpRequest.mock.calls[32][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(12);
-        expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([1280]);
+        expect(mockZnpRequest.mock.calls[33][1]).toBe('register');
+        expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[33][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[34][2].endpoint).toBe(13);
-        expect(mockZnpRequest.mock.calls[34][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[34][2].appinclusterlist).toStrictEqual([25]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(35);
+        expect(mockZnpRequest.mock.calls[34][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[34][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[34][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[35][2].endpoint).toBe(13);
+        expect(mockZnpRequest.mock.calls[35][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[35][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(36);
     });
 
     it('Start zStack 3.x.0 initialize fails because of state change timeout', async () => {
@@ -437,6 +442,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -503,6 +510,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 0}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -559,40 +568,40 @@ describe('zStackAdapter', () => {
         expect(result).toBe('reset');
         expect(Znp).toBeCalledWith("dummy", 800, false);
         expect(mockZnpOpen).toBeCalledTimes(1);
-        expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
-        expect(mockZnpRequest.mock.calls[1][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
+        expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
+        expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
         expect(mockZnpRequest.mock.calls[2][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
-        expect(mockZnpRequest.mock.calls[3][2].id).toBe(NvItemsIds.CHANLIST);
-        expect(mockZnpRequest.mock.calls[4][2].id).toBe(NvItemsIds.PRECFGKEYS_ENABLE);
-        expect(mockZnpRequest.mock.calls[5][1]).toBe('readConfiguration');
-        expect(mockZnpRequest.mock.calls[5][2].id).toBe(NvItemsIds.PRECFGKEY);
-        expect(mockZnpRequest.mock.calls[6][2].id).toBe(NvItemsIds.PANID);
-        expect(mockZnpRequest.mock.calls[7][2].id).toBe(NvItemsIds.EXTENDED_PAN_ID);
-
-        expect(mockZnpRequest.mock.calls[8][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[9][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[9][2].value).toStrictEqual(Buffer.from([0x02]));
-        expect(mockZnpRequest.mock.calls[10][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[11][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from([0]));
+        expect(mockZnpRequest.mock.calls[3][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
+        expect(mockZnpRequest.mock.calls[4][2].id).toBe(NvItemsIds.CHANLIST);
+        expect(mockZnpRequest.mock.calls[5][2].id).toBe(NvItemsIds.PRECFGKEYS_ENABLE);
+        expect(mockZnpRequest.mock.calls[6][1]).toBe('readConfiguration');
+        expect(mockZnpRequest.mock.calls[6][2].id).toBe(NvItemsIds.PRECFGKEY);
+        expect(mockZnpRequest.mock.calls[7][2].id).toBe(NvItemsIds.PANID);
+        expect(mockZnpRequest.mock.calls[8][2].id).toBe(NvItemsIds.EXTENDED_PAN_ID);
+        expect(mockZnpRequest.mock.calls[9][1]).toBe('resetReq');
+        expect(mockZnpRequest.mock.calls[10][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[10][2].value).toStrictEqual(Buffer.from([0x02]));
+        expect(mockZnpRequest.mock.calls[11][1]).toBe('resetReq');
         expect(mockZnpRequest.mock.calls[12][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[12][2].value).toStrictEqual(Buffer.from([1]));
+        expect(mockZnpRequest.mock.calls[12][2].value).toStrictEqual(Buffer.from([0]));
         expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from([1]));
         expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
+        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from([1]));
         expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
+        expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
         expect(mockZnpRequest.mock.calls[16][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[16][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
-        expect(mockZnpRequest.mock.calls[17][1]).toBe('writeConfiguration');
-        expect(mockZnpRequest.mock.calls[17][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
-        expect(mockZnpRequest.mock.calls[18][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[18][2].value).toStrictEqual(Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
-        expect(mockZnpRequest.mock.calls[19][1]).toBe('osalNvItemInit');
-        expect(mockZnpRequest.mock.calls[19][2].id).toStrictEqual(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
-        expect(mockZnpRequest.mock.calls[20][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[20][2].value).toStrictEqual(Buffer.from([0x55]));
+        expect(mockZnpRequest.mock.calls[16][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
+        expect(mockZnpRequest.mock.calls[17][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[17][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
+        expect(mockZnpRequest.mock.calls[18][1]).toBe('writeConfiguration');
+        expect(mockZnpRequest.mock.calls[18][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
+        expect(mockZnpRequest.mock.calls[19][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[19][2].value).toStrictEqual(Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
+        expect(mockZnpRequest.mock.calls[20][1]).toBe('osalNvItemInit');
+        expect(mockZnpRequest.mock.calls[20][2].id).toStrictEqual(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
+        expect(mockZnpRequest.mock.calls[21][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[21][2].value).toStrictEqual(Buffer.from([0x55]));
     });
 
     it('Start zStack 1.2 initialize - not configured; -> should be restored', async () => {
@@ -607,6 +616,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 0}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, offset: 0})) {
                     return {payload: {value: Buffer.from([0x00])}};
@@ -654,34 +665,34 @@ describe('zStackAdapter', () => {
         expect(result).toBe('restored');
         expect(Znp).toBeCalledWith("dummy", 800, false);
         expect(mockZnpOpen).toBeCalledTimes(1);
-        expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
-        expect(mockZnpRequest.mock.calls[1][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
+        expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
+        expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
         expect(mockZnpRequest.mock.calls[2][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
-
-        expect(mockZnpRequest.mock.calls[3][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[4][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[4][2].value).toStrictEqual(Buffer.from([0x02]));
-        expect(mockZnpRequest.mock.calls[5][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[6][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[6][2].value).toStrictEqual(Buffer.from([0]));
+        expect(mockZnpRequest.mock.calls[2][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
+        expect(mockZnpRequest.mock.calls[4][1]).toBe('resetReq');
+        expect(mockZnpRequest.mock.calls[5][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[5][2].value).toStrictEqual(Buffer.from([0x02]));
+        expect(mockZnpRequest.mock.calls[6][1]).toBe('resetReq');
         expect(mockZnpRequest.mock.calls[7][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[7][2].value).toStrictEqual(Buffer.from([1]));
+        expect(mockZnpRequest.mock.calls[7][2].value).toStrictEqual(Buffer.from([0]));
         expect(mockZnpRequest.mock.calls[8][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[8][2].value).toStrictEqual(Buffer.from([1]));
         expect(mockZnpRequest.mock.calls[9][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[9][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
+        expect(mockZnpRequest.mock.calls[9][2].value).toStrictEqual(Buffer.from([1]));
         expect(mockZnpRequest.mock.calls[10][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[10][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
+        expect(mockZnpRequest.mock.calls[10][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
         expect(mockZnpRequest.mock.calls[11][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
-        expect(mockZnpRequest.mock.calls[12][1]).toBe('writeConfiguration');
-        expect(mockZnpRequest.mock.calls[12][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
-        expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
-        expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvItemInit');
-        expect(mockZnpRequest.mock.calls[14][2].id).toStrictEqual(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
-        expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from([0x55]));
+        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
+        expect(mockZnpRequest.mock.calls[12][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[12][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
+        expect(mockZnpRequest.mock.calls[13][1]).toBe('writeConfiguration');
+        expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
+        expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
+        expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvItemInit');
+        expect(mockZnpRequest.mock.calls[15][2].id).toStrictEqual(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1);
+        expect(mockZnpRequest.mock.calls[16][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[16][2].value).toStrictEqual(Buffer.from([0x55]));
     });
 
     it('Start zStack 1.2 when it doesnt support version call (on old firmwares)', async () => {
@@ -697,6 +708,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 throw new Error('Not implemented');
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, offset: 0})) {
                     return {payload: {value: Buffer.from([0x00])}};
@@ -754,6 +767,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 2}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -808,85 +823,86 @@ describe('zStackAdapter', () => {
         expect(result).toBe('reset');
         expect(Znp).toBeCalledWith("dummy", 800, false);
         expect(mockZnpOpen).toBeCalledTimes(1);
-        expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
-        expect(mockZnpRequest.mock.calls[1][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
+        expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
         expect(mockZnpRequest.mock.calls[2][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[3][2].id).toBe(NvItemsIds.CHANLIST);
-        expect(mockZnpRequest.mock.calls[4][2].id).toBe(NvItemsIds.PRECFGKEYS_ENABLE);
-        expect(mockZnpRequest.mock.calls[5][1]).toBe('readConfiguration');
-        expect(mockZnpRequest.mock.calls[5][2].id).toBe(NvItemsIds.PRECFGKEY);
-        expect(mockZnpRequest.mock.calls[6][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[7][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[7][2].value).toStrictEqual(Buffer.from([0x02]));
-        expect(mockZnpRequest.mock.calls[8][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[9][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[9][2].value).toStrictEqual(Buffer.from([0]));
+        expect(mockZnpRequest.mock.calls[3][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[4][2].id).toBe(NvItemsIds.CHANLIST);
+        expect(mockZnpRequest.mock.calls[5][2].id).toBe(NvItemsIds.PRECFGKEYS_ENABLE);
+        expect(mockZnpRequest.mock.calls[6][1]).toBe('readConfiguration');
+        expect(mockZnpRequest.mock.calls[6][2].id).toBe(NvItemsIds.PRECFGKEY);
+        expect(mockZnpRequest.mock.calls[7][1]).toBe('resetReq');
+        expect(mockZnpRequest.mock.calls[8][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[8][2].value).toStrictEqual(Buffer.from([0x02]));
+        expect(mockZnpRequest.mock.calls[9][1]).toBe('resetReq');
         expect(mockZnpRequest.mock.calls[10][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[10][2].value).toStrictEqual(Buffer.from([0]));
         expect(mockZnpRequest.mock.calls[11][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from([1]));
+        expect(mockZnpRequest.mock.calls[11][2].value).toStrictEqual(Buffer.from([0]));
         expect(mockZnpRequest.mock.calls[12][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[12][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
+        expect(mockZnpRequest.mock.calls[12][2].value).toStrictEqual(Buffer.from([1]));
         expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
+        expect(mockZnpRequest.mock.calls[13][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
         expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
+        expect(mockZnpRequest.mock.calls[14][2].value).toStrictEqual(Buffer.from([networkOptions.panID, 0]));
         expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
-        expect(mockZnpRequest.mock.calls[16][1]).toBe('bdbSetChannel');
-        expect(mockZnpRequest.mock.calls[16][2].channel).toStrictEqual(2048);
+        expect(mockZnpRequest.mock.calls[15][2].value).toStrictEqual(Buffer.from(networkOptions.extendedPanID));
+        expect(mockZnpRequest.mock.calls[16][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[16][2].value).toStrictEqual(Buffer.from(networkOptions.networkKey));
         expect(mockZnpRequest.mock.calls[17][1]).toBe('bdbSetChannel');
-        expect(mockZnpRequest.mock.calls[17][2].channel).toStrictEqual(0);
-        expect(mockZnpRequest.mock.calls[18][1]).toBe('bdbStartCommissioning');
-        expect(mockZnpRequest.mock.calls[18][2].mode).toStrictEqual(4);
+        expect(mockZnpRequest.mock.calls[17][2].channel).toStrictEqual(2048);
+        expect(mockZnpRequest.mock.calls[18][1]).toBe('bdbSetChannel');
+        expect(mockZnpRequest.mock.calls[18][2].channel).toStrictEqual(0);
+        expect(mockZnpRequest.mock.calls[19][1]).toBe('bdbStartCommissioning');
+        expect(mockZnpRequest.mock.calls[19][2].mode).toStrictEqual(4);
         expect(mockZnpWaitfor.mock.calls[0][2]).toBe('stateChangeInd');
         expect(mockZnpWaitfor.mock.calls[0][3].state).toStrictEqual(9);
         expect(mockZnpWaitfor.mock.calls[0][4]).toStrictEqual(60000);
-        expect(mockZnpRequest.mock.calls[19][1]).toBe('bdbStartCommissioning');
-        expect(mockZnpRequest.mock.calls[19][2].mode).toStrictEqual(2);
-        expect(mockZnpRequest.mock.calls[20][1]).toBe('osalNvItemInit');
-        expect(mockZnpRequest.mock.calls[20][2].id).toStrictEqual(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[21][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[21][2].value).toStrictEqual(Buffer.from([0x55]));
-        expect(mockZnpRequest.mock.calls[22][1]).toBe('getDeviceInfo');
-        expect(mockZnpRequest.mock.calls[23][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[24][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[24][2].endpoint).toBe(1);
-        expect(mockZnpRequest.mock.calls[24][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[20][1]).toBe('bdbStartCommissioning');
+        expect(mockZnpRequest.mock.calls[20][2].mode).toStrictEqual(2);
+        expect(mockZnpRequest.mock.calls[21][1]).toBe('osalNvItemInit');
+        expect(mockZnpRequest.mock.calls[21][2].id).toStrictEqual(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[22][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[22][2].value).toStrictEqual(Buffer.from([0x55]));
+        expect(mockZnpRequest.mock.calls[23][1]).toBe('getDeviceInfo');
+        expect(mockZnpRequest.mock.calls[24][1]).toBe('activeEpReq');
         expect(mockZnpRequest.mock.calls[25][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[25][2].endpoint).toBe(2);
-        expect(mockZnpRequest.mock.calls[25][2].appprofid).toBe(0x0101);
+        expect(mockZnpRequest.mock.calls[25][2].endpoint).toBe(1);
+        expect(mockZnpRequest.mock.calls[25][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[26][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[26][2].endpoint).toBe(3);
-        expect(mockZnpRequest.mock.calls[26][2].appprofid).toBe(0x0105);
+        expect(mockZnpRequest.mock.calls[26][2].endpoint).toBe(2);
+        expect(mockZnpRequest.mock.calls[26][2].appprofid).toBe(0x0101);
         expect(mockZnpRequest.mock.calls[27][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[27][2].endpoint).toBe(4);
-        expect(mockZnpRequest.mock.calls[27][2].appprofid).toBe(0x0107);
+        expect(mockZnpRequest.mock.calls[27][2].endpoint).toBe(3);
+        expect(mockZnpRequest.mock.calls[27][2].appprofid).toBe(0x0105);
         expect(mockZnpRequest.mock.calls[28][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[28][2].endpoint).toBe(5);
-        expect(mockZnpRequest.mock.calls[28][2].appprofid).toBe(0x0108);
+        expect(mockZnpRequest.mock.calls[28][2].endpoint).toBe(4);
+        expect(mockZnpRequest.mock.calls[28][2].appprofid).toBe(0x0107);
         expect(mockZnpRequest.mock.calls[29][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[29][2].endpoint).toBe(6);
-        expect(mockZnpRequest.mock.calls[29][2].appprofid).toBe(0x0109);
+        expect(mockZnpRequest.mock.calls[29][2].endpoint).toBe(5);
+        expect(mockZnpRequest.mock.calls[29][2].appprofid).toBe(0x0108);
         expect(mockZnpRequest.mock.calls[30][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[30][2].endpoint).toBe(8);
-        expect(mockZnpRequest.mock.calls[30][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[30][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[30][2].endpoint).toBe(6);
+        expect(mockZnpRequest.mock.calls[30][2].appprofid).toBe(0x0109);
         expect(mockZnpRequest.mock.calls[31][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[31][2].endpoint).toBe(11);
+        expect(mockZnpRequest.mock.calls[31][2].endpoint).toBe(8);
         expect(mockZnpRequest.mock.calls[31][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[31][2].appoutclusterlist).toStrictEqual([1280]);
+        expect(mockZnpRequest.mock.calls[31][2].appoutclusterlist).toStrictEqual([]);
         expect(mockZnpRequest.mock.calls[32][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(12);
-        expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([1280]);
+        expect(mockZnpRequest.mock.calls[33][1]).toBe('register');
+        expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[33][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[34][2].endpoint).toBe(13);
-        expect(mockZnpRequest.mock.calls[34][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[34][2].appinclusterlist).toStrictEqual([25]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(35);
+        expect(mockZnpRequest.mock.calls[34][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[34][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[34][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[35][2].endpoint).toBe(13);
+        expect(mockZnpRequest.mock.calls[35][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[35][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(36);
     });
 
     it('Start zStack 3.x.0 resume', async () => {
@@ -899,6 +915,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -958,37 +976,38 @@ describe('zStackAdapter', () => {
         expect(result).toBe('resumed');
         expect(Znp).toBeCalledWith("dummy", 800, false);
         expect(mockZnpOpen).toBeCalledTimes(1);
-        expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
-        expect(mockZnpRequest.mock.calls[1][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
+        expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
         expect(mockZnpRequest.mock.calls[2][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[3][2].id).toBe(NvItemsIds.CHANLIST);
-        expect(mockZnpRequest.mock.calls[4][2].id).toBe(NvItemsIds.PRECFGKEYS_ENABLE);
-        expect(mockZnpRequest.mock.calls[5][1]).toBe('osalNvRead');
-        expect(mockZnpRequest.mock.calls[5][2].id).toBe(NvItemsIds.PRECFGKEY);
+        expect(mockZnpRequest.mock.calls[3][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[4][2].id).toBe(NvItemsIds.CHANLIST);
+        expect(mockZnpRequest.mock.calls[5][2].id).toBe(NvItemsIds.PRECFGKEYS_ENABLE);
         expect(mockZnpRequest.mock.calls[6][1]).toBe('osalNvRead');
-        expect(mockZnpRequest.mock.calls[6][2].id).toBe(NvItemsIds.PANID);
+        expect(mockZnpRequest.mock.calls[6][2].id).toBe(NvItemsIds.PRECFGKEY);
         expect(mockZnpRequest.mock.calls[7][1]).toBe('osalNvRead');
-        expect(mockZnpRequest.mock.calls[7][2].id).toBe(NvItemsIds.EXTENDED_PAN_ID);
-        expect(mockZnpRequest.mock.calls[8][1]).toBe('getDeviceInfo');
+        expect(mockZnpRequest.mock.calls[7][2].id).toBe(NvItemsIds.PANID);
+        expect(mockZnpRequest.mock.calls[8][1]).toBe('osalNvRead');
+        expect(mockZnpRequest.mock.calls[8][2].id).toBe(NvItemsIds.EXTENDED_PAN_ID);
+        expect(mockZnpRequest.mock.calls[9][1]).toBe('getDeviceInfo');
         expect(mockZnpWaitfor.mock.calls[0][2]).toBe('stateChangeInd');
         expect(mockZnpWaitfor.mock.calls[0][3].state).toStrictEqual(9);
         expect(mockZnpWaitfor.mock.calls[0][4]).toStrictEqual(60000);
-        expect(mockZnpRequest.mock.calls[9][1]).toBe('startupFromApp');
+        expect(mockZnpRequest.mock.calls[10][1]).toBe('startupFromApp');
         expect(mockZnpWaitfor.mock.calls[1][2]).toBe('activeEpRsp');
-        expect(mockZnpRequest.mock.calls[10][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[11][2].endpoint).toBe(11);
-        expect(mockZnpRequest.mock.calls[11][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[11][2].appoutclusterlist).toStrictEqual([1280]);
-        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[11][1]).toBe('activeEpReq');
+        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(12);
-        expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([1280]);
+        expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[14][2].endpoint).toBe(13);
-        expect(mockZnpRequest.mock.calls[14][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[14][2].appinclusterlist).toStrictEqual([25]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(15);
+        expect(mockZnpRequest.mock.calls[14][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[14][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[14][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[15][2].endpoint).toBe(13);
+        expect(mockZnpRequest.mock.calls[15][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[15][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(16);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -1002,6 +1021,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -1061,37 +1082,38 @@ describe('zStackAdapter', () => {
         expect(result).toBe('resumed');
         expect(Znp).toBeCalledWith("dummy", 800, false);
         expect(mockZnpOpen).toBeCalledTimes(1);
-        expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
-        expect(mockZnpRequest.mock.calls[1][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
+        expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
         expect(mockZnpRequest.mock.calls[2][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[3][2].id).toBe(NvItemsIds.CHANLIST);
-        expect(mockZnpRequest.mock.calls[4][2].id).toBe(NvItemsIds.PRECFGKEYS_ENABLE);
-        expect(mockZnpRequest.mock.calls[5][1]).toBe('osalNvRead');
-        expect(mockZnpRequest.mock.calls[5][2].id).toBe(NvItemsIds.PRECFGKEY);
+        expect(mockZnpRequest.mock.calls[3][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[4][2].id).toBe(NvItemsIds.CHANLIST);
+        expect(mockZnpRequest.mock.calls[5][2].id).toBe(NvItemsIds.PRECFGKEYS_ENABLE);
         expect(mockZnpRequest.mock.calls[6][1]).toBe('osalNvRead');
-        expect(mockZnpRequest.mock.calls[6][2].id).toBe(NvItemsIds.PANID);
+        expect(mockZnpRequest.mock.calls[6][2].id).toBe(NvItemsIds.PRECFGKEY);
         expect(mockZnpRequest.mock.calls[7][1]).toBe('osalNvRead');
         expect(mockZnpRequest.mock.calls[7][2].id).toBe(NvItemsIds.PANID);
-        expect(mockZnpRequest.mock.calls[8][1]).toBe('getDeviceInfo');
+        expect(mockZnpRequest.mock.calls[8][1]).toBe('osalNvRead');
+        expect(mockZnpRequest.mock.calls[8][2].id).toBe(NvItemsIds.PANID);
+        expect(mockZnpRequest.mock.calls[9][1]).toBe('getDeviceInfo');
         expect(mockZnpWaitfor.mock.calls[0][2]).toBe('stateChangeInd');
         expect(mockZnpWaitfor.mock.calls[0][3].state).toStrictEqual(9);
         expect(mockZnpWaitfor.mock.calls[0][4]).toStrictEqual(60000);
-        expect(mockZnpRequest.mock.calls[9][1]).toBe('startupFromApp');
+        expect(mockZnpRequest.mock.calls[10][1]).toBe('startupFromApp');
         expect(mockZnpWaitfor.mock.calls[1][2]).toBe('activeEpRsp');
-        expect(mockZnpRequest.mock.calls[10][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[11][2].endpoint).toBe(11);
-        expect(mockZnpRequest.mock.calls[11][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[11][2].appoutclusterlist).toStrictEqual([1280]);
-        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[11][1]).toBe('activeEpReq');
+        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(12);
-        expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([1280]);
+        expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[14][2].endpoint).toBe(13);
-        expect(mockZnpRequest.mock.calls[14][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[14][2].appinclusterlist).toStrictEqual([25]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(15);
+        expect(mockZnpRequest.mock.calls[14][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[14][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[14][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[15][2].endpoint).toBe(13);
+        expect(mockZnpRequest.mock.calls[15][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[15][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(16);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -1105,6 +1127,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -1174,6 +1198,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 2}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0])}};
@@ -1222,43 +1248,44 @@ describe('zStackAdapter', () => {
         expect(result).toBe('restored');
         expect(Znp).toBeCalledWith("dummy", 800, false);
         expect(mockZnpOpen).toBeCalledTimes(1);
-        expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
-        expect(mockZnpRequest.mock.calls[1][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[2][1]).toBe('version');
-        expect(mockZnpRequest.mock.calls[3][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[3][2]).toStrictEqual(backup.data.ZCD_NV_EXTADDR);
-        expect(mockZnpRequest.mock.calls[4][1]).toBe('osalNvItemInit');
-        expect(mockZnpRequest.mock.calls[4][2].value).toStrictEqual(backup.data.ZCD_NV_NIB.value);
-        expect(mockZnpRequest.mock.calls[5][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[5][2]).toStrictEqual(backup.data.ZCD_NV_PANID);
+        expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
+        expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
+        expect(mockZnpRequest.mock.calls[2][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[3][1]).toBe('version');
+        expect(mockZnpRequest.mock.calls[4][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[4][2]).toStrictEqual(backup.data.ZCD_NV_EXTADDR);
+        expect(mockZnpRequest.mock.calls[5][1]).toBe('osalNvItemInit');
+        expect(mockZnpRequest.mock.calls[5][2].value).toStrictEqual(backup.data.ZCD_NV_NIB.value);
         expect(mockZnpRequest.mock.calls[6][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[6][2]).toStrictEqual(backup.data.ZCD_NV_EXTENDED_PAN_ID);
+        expect(mockZnpRequest.mock.calls[6][2]).toStrictEqual(backup.data.ZCD_NV_PANID);
         expect(mockZnpRequest.mock.calls[7][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[7][2]).toStrictEqual(backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO);
+        expect(mockZnpRequest.mock.calls[7][2]).toStrictEqual(backup.data.ZCD_NV_EXTENDED_PAN_ID);
         expect(mockZnpRequest.mock.calls[8][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[8][2]).toStrictEqual(backup.data.ZCD_NV_NWK_ALTERN_KEY_INFO);
+        expect(mockZnpRequest.mock.calls[8][2]).toStrictEqual(backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO);
         expect(mockZnpRequest.mock.calls[9][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[9][2]).toStrictEqual(backup.data.ZCD_NV_APS_USE_EXT_PANID);
+        expect(mockZnpRequest.mock.calls[9][2]).toStrictEqual(backup.data.ZCD_NV_NWK_ALTERN_KEY_INFO);
         expect(mockZnpRequest.mock.calls[10][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[10][2]).toStrictEqual(backup.data.ZCD_NV_PRECFGKEY);
+        expect(mockZnpRequest.mock.calls[10][2]).toStrictEqual(backup.data.ZCD_NV_APS_USE_EXT_PANID);
         expect(mockZnpRequest.mock.calls[11][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[11][2]).toStrictEqual(backup.data.ZCD_NV_PRECFGKEY_ENABLE);
+        expect(mockZnpRequest.mock.calls[11][2]).toStrictEqual(backup.data.ZCD_NV_PRECFGKEY);
         expect(mockZnpRequest.mock.calls[12][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[12][2]).toStrictEqual(backup.data.ZCD_NV_LEGACY_TCLK_TABLE_START);
+        expect(mockZnpRequest.mock.calls[12][2]).toStrictEqual(backup.data.ZCD_NV_PRECFGKEY_ENABLE);
         expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[13][2]).toStrictEqual(backup.data.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START);
-        expect(mockZnpRequest.mock.calls[14][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[13][2]).toStrictEqual(backup.data.ZCD_NV_LEGACY_TCLK_TABLE_START);
+        expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[14][2]).toStrictEqual(backup.data.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START);
         expect(mockZnpRequest.mock.calls[15][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[16][1]).toBe('osalNvItemInit');
-        expect(mockZnpRequest.mock.calls[16][2].initvalue).toStrictEqual([1]);
-        expect(mockZnpRequest.mock.calls[17][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[17][2].value).toStrictEqual([1]);
-        expect(mockZnpRequest.mock.calls[18][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[19][1]).toBe('getDeviceInfo');
-        expect(mockZnpRequest.mock.calls[20][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[21][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[21][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
-        expect(mockZnpRequest).toBeCalledTimes(22);
+        expect(mockZnpRequest.mock.calls[16][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[17][1]).toBe('osalNvItemInit');
+        expect(mockZnpRequest.mock.calls[17][2].initvalue).toStrictEqual([1]);
+        expect(mockZnpRequest.mock.calls[18][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[18][2].value).toStrictEqual([1]);
+        expect(mockZnpRequest.mock.calls[19][1]).toBe('resetReq');
+        expect(mockZnpRequest.mock.calls[20][1]).toBe('getDeviceInfo');
+        expect(mockZnpRequest.mock.calls[21][1]).toBe('activeEpReq');
+        expect(mockZnpRequest.mock.calls[22][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[22][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
+        expect(mockZnpRequest).toBeCalledTimes(23);
     });
 
     it('Start restore from backup zStack 3.x.0', async () => {
@@ -1271,6 +1298,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0])}};
@@ -1321,43 +1350,44 @@ describe('zStackAdapter', () => {
         expect(result).toBe('restored');
         expect(Znp).toBeCalledWith("dummy", 800, false);
         expect(mockZnpOpen).toBeCalledTimes(1);
-        expect(mockZnpRequest.mock.calls[0][1]).toBe('version');
-        expect(mockZnpRequest.mock.calls[1][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[2][1]).toBe('version');
-        expect(mockZnpRequest.mock.calls[3][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[3][2]).toStrictEqual(backup.data.ZCD_NV_EXTADDR);
-        expect(mockZnpRequest.mock.calls[4][1]).toBe('osalNvItemInit');
-        expect(mockZnpRequest.mock.calls[4][2].value).toStrictEqual(backup.data.ZCD_NV_NIB.value);
-        expect(mockZnpRequest.mock.calls[5][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[5][2]).toStrictEqual(backup.data.ZCD_NV_PANID);
+        expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
+        expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
+        expect(mockZnpRequest.mock.calls[2][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[3][1]).toBe('version');
+        expect(mockZnpRequest.mock.calls[4][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[4][2]).toStrictEqual(backup.data.ZCD_NV_EXTADDR);
+        expect(mockZnpRequest.mock.calls[5][1]).toBe('osalNvItemInit');
+        expect(mockZnpRequest.mock.calls[5][2].value).toStrictEqual(backup.data.ZCD_NV_NIB.value);
         expect(mockZnpRequest.mock.calls[6][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[6][2]).toStrictEqual(backup.data.ZCD_NV_EXTENDED_PAN_ID);
+        expect(mockZnpRequest.mock.calls[6][2]).toStrictEqual(backup.data.ZCD_NV_PANID);
         expect(mockZnpRequest.mock.calls[7][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[7][2]).toStrictEqual(backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO);
+        expect(mockZnpRequest.mock.calls[7][2]).toStrictEqual(backup.data.ZCD_NV_EXTENDED_PAN_ID);
         expect(mockZnpRequest.mock.calls[8][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[8][2]).toStrictEqual(backup.data.ZCD_NV_NWK_ALTERN_KEY_INFO);
+        expect(mockZnpRequest.mock.calls[8][2]).toStrictEqual(backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO);
         expect(mockZnpRequest.mock.calls[9][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[9][2]).toStrictEqual(backup.data.ZCD_NV_APS_USE_EXT_PANID);
+        expect(mockZnpRequest.mock.calls[9][2]).toStrictEqual(backup.data.ZCD_NV_NWK_ALTERN_KEY_INFO);
         expect(mockZnpRequest.mock.calls[10][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[10][2]).toStrictEqual(backup.data.ZCD_NV_PRECFGKEY);
+        expect(mockZnpRequest.mock.calls[10][2]).toStrictEqual(backup.data.ZCD_NV_APS_USE_EXT_PANID);
         expect(mockZnpRequest.mock.calls[11][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[11][2]).toStrictEqual(backup.data.ZCD_NV_PRECFGKEY_ENABLE);
-        expect(mockZnpRequest.mock.calls[12][1]).toBe('nvWrite');
-        expect(mockZnpRequest.mock.calls[12][2]).toStrictEqual(backup.data.ZCD_NV_EX_TCLK_TABLE);
+        expect(mockZnpRequest.mock.calls[11][2]).toStrictEqual(backup.data.ZCD_NV_PRECFGKEY);
+        expect(mockZnpRequest.mock.calls[12][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[12][2]).toStrictEqual(backup.data.ZCD_NV_PRECFGKEY_ENABLE);
         expect(mockZnpRequest.mock.calls[13][1]).toBe('nvWrite');
-        expect(mockZnpRequest.mock.calls[13][2]).toStrictEqual(backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE);
-        expect(mockZnpRequest.mock.calls[14][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[13][2]).toStrictEqual(backup.data.ZCD_NV_EX_TCLK_TABLE);
+        expect(mockZnpRequest.mock.calls[14][1]).toBe('nvWrite');
+        expect(mockZnpRequest.mock.calls[14][2]).toStrictEqual(backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE);
         expect(mockZnpRequest.mock.calls[15][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[16][1]).toBe('osalNvItemInit');
-        expect(mockZnpRequest.mock.calls[16][2].initvalue).toStrictEqual([1]);
-        expect(mockZnpRequest.mock.calls[17][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[17][2].value).toStrictEqual([1]);
-        expect(mockZnpRequest.mock.calls[18][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[19][1]).toBe('getDeviceInfo');
-        expect(mockZnpRequest.mock.calls[20][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[21][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[21][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
-        expect(mockZnpRequest).toBeCalledTimes(22);
+        expect(mockZnpRequest.mock.calls[16][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
+        expect(mockZnpRequest.mock.calls[17][1]).toBe('osalNvItemInit');
+        expect(mockZnpRequest.mock.calls[17][2].initvalue).toStrictEqual([1]);
+        expect(mockZnpRequest.mock.calls[18][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[18][2].value).toStrictEqual([1]);
+        expect(mockZnpRequest.mock.calls[19][1]).toBe('resetReq');
+        expect(mockZnpRequest.mock.calls[20][1]).toBe('getDeviceInfo');
+        expect(mockZnpRequest.mock.calls[21][1]).toBe('activeEpReq');
+        expect(mockZnpRequest.mock.calls[22][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[22][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
+        expect(mockZnpRequest).toBeCalledTimes(23);
     });
 
     it('Start restore from backup wrong zStack', async () => {
@@ -1367,6 +1397,9 @@ describe('zStackAdapter', () => {
             }
             else if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 2}};
+            }
+            else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             }
 
             throw new Error('missing');
@@ -1390,6 +1423,9 @@ describe('zStackAdapter', () => {
             else if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
             }
+            else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
+            }
 
             throw new Error('missing');
         });
@@ -1411,6 +1447,9 @@ describe('zStackAdapter', () => {
             }
             else if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
+            }
+            else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             }
 
             throw new Error('missing');
@@ -1434,6 +1473,9 @@ describe('zStackAdapter', () => {
             else if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
             }
+            else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
+            }
 
             throw new Error('missing');
         });
@@ -1456,6 +1498,9 @@ describe('zStackAdapter', () => {
             else if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
             }
+            else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
+            }
 
             throw new Error('missing');
         });
@@ -1477,6 +1522,9 @@ describe('zStackAdapter', () => {
             }
             else if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
+            }
+            else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             }
 
             throw new Error('missing');
@@ -1504,6 +1552,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 2}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -1586,6 +1636,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
+            } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -2513,5 +2565,25 @@ describe('zStackAdapter', () => {
         let error;
         try { await adapter.sendZclFrameInterPANBroadcastWithResponse(touchlinkScanRequest, 1000)} catch (e) { error = e};
         expect(error).toStrictEqual(new Error(`Data request failed with code '99'`))
+    });
+
+    it('Refuse to start when ping fails', async () => {
+        mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
+            const missing = () => {
+                const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
+                console.log(msg)
+                throw new Error(msg);
+            }
+
+            if (subsystem === Subsystem.SYS && command === 'ping') {
+                throw new Error('Couldnt lock port');
+            } else {
+                missing();
+            }
+        });
+
+        let error;
+        try {await adapter.start()} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error('Failed to connect to the adapter (Error: Couldnt lock port)'));
     });
 });

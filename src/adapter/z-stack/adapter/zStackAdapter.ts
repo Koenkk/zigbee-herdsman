@@ -77,10 +77,17 @@ class ZStackAdapter extends Adapter {
     public async start(): Promise<StartResult> {
         await this.znp.open();
 
+        try {
+            await this.znp.request(Subsystem.SYS, 'ping', {capabilities: 1});
+        } catch (e) {
+            throw new Error(`Failed to connect to the adapter (${e})`);
+        }
+
         // Old firmware did not support version, assume it's Z-Stack 1.2 for now.
         try {
             this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
         } catch (e) {
+            debug(`Failed to get zStack version, assuming 1.2`);
             this.version = {"transportrev":2, "product":0, "majorrel":2, "minorrel":0, "maintrel":0, "revision":""};
         }
 
