@@ -206,7 +206,7 @@ function parseReadReceivedDataResponse(view : DataView) : object {
 
     let payload = [];
     let i = 0;
-    for (let u = 7; u < (response.asduLength + 7); u++) {
+    for (let u = 8; u < (response.asduLength + 7); u++) {
         payload[i] = view.getUint8(u);
         i++;
     }
