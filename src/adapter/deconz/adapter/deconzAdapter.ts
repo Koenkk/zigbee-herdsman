@@ -224,7 +224,62 @@ class DeconzAdapter extends Adapter {
     }
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
-        return null;
+        return this.queue.execute<SimpleDescriptor>(async () => {
+            const transactionID = this.nextTransactionID();
+            const nwk1 = networkAddress & 0xff;
+            const nwk2 = (networkAddress >> 8) & 0xff;
+            const request: ApsDataRequest = {};
+            const zdpFrame = [transactionID, nwk1, nwk2, endpointID];
+
+            request.requestId = transactionID;
+            request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
+            request.destAddr16 = networkAddress;
+            request.destEndpoint = 0;
+            request.profileId = 0;
+            request.clusterId = 0x04; // simple descriptor
+            request.srcEndpoint = 0;
+            request.asduLength = 4;
+            request.asduPayload = zdpFrame;
+            request.txOptions = 0;
+            request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
+            //todo timeout
+
+            try {
+                this.driver.enqueueSendDataRequest(request) as ReceivedDataResponse;
+                const data = await this.waitForData(networkAddress, 0x8004);
+
+                const buf = Buffer.from(data);
+                const inCount = buf.readUInt8(10);
+                const inClusters = [];
+                let cIndex = 11;
+                for (let i = 0; i < inCount; i++) {
+                    inClusters[i] = buf.readUInt16LE(cIndex);
+                    cIndex += 2;
+                }
+                const outCount = buf.readUInt8(11 + (inCount*2));
+                const outClusters = [];
+                cIndex = 12 + (inCount*2);
+                for (let l = 0; l < outCount; l++) {
+                    outClusters[l] = buf.readUInt16LE(cIndex);
+                    cIndex += 2;
+                }
+
+                const simpleDesc = {
+                    profileID: buf.readUInt16LE(5),
+                    endpointID: buf.readUInt8(4),
+                    deviceID: buf.readUInt16LE(7),
+                    inputClusters: inClusters,
+                    outputClusters: outClusters
+                }
+
+                debug("RECEIVING SIMPLE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " EP:" + endpointID + " inClusters: " + inClusters + " outClusters: " + outClusters);
+                return simpleDesc;
+            } catch (error) {
+                debug("RECEIVING SIMPLE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " EP:" + endpointID + " " + error);
+        }
+
+
+        }, networkAddress);
     }
 
     public async sendZclFrameNetworkAddressWithResponse(
