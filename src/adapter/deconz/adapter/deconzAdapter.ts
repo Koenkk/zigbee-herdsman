@@ -282,6 +282,13 @@ class DeconzAdapter extends Adapter {
         }, networkAddress);
     }
 
+    public waitFor(
+        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
+        transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
+    ): {promise: Promise<Events.ZclDataPayload>; cancel: () => void} {
+        return null;
+    }
+
     public async sendZclFrameNetworkAddressWithResponse(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame
     ): Promise<Events.ZclDataPayload> {
