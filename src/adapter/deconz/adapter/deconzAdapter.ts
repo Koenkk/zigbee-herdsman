@@ -168,15 +168,15 @@ class DeconzAdapter extends Adapter {
                 const data = await this.waitForData(networkAddress, 0x8002);
 
                 const buf = Buffer.from(data);
-                //todo: data[0] ist immer 1 (sollte 0 bei coordinator sein)
-                let type: DeviceType = (data[0] === 0) ? 'Coordinator' : (data[0] === 1) ? 'Router' : (data[0] === 2) ? 'EndDevice' : 'Unknown';
-                const manufacturer = buf.readUInt16LE(7);
+                const logicaltype = (data[3] & 7);
+                const type: DeviceType = (logicaltype === 1) ? 'Router' : (logicaltype === 2) ? 'EndDevice' : (logicaltype === 0) ? 'Coordinator' : 'Unknown';
+                const manufacturer = buf.readUInt16LE(6);
+
                 debug("RECEIVING NODE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " type: " + type + " manufacturer: 0x" + manufacturer.toString(16));
                 return {manufacturerCode: manufacturer, type};
             } catch (error) {
                 debug("RECEIVING NODE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
         }
-
 
         }, networkAddress);
     }
