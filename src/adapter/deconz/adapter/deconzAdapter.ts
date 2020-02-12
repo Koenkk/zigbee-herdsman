@@ -182,7 +182,45 @@ class DeconzAdapter extends Adapter {
     }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
-        return null;
+        return this.queue.execute<ActiveEndpoints>(async () => {
+            const transactionID = this.nextTransactionID();
+            const nwk1 = networkAddress & 0xff;
+            const nwk2 = (networkAddress >> 8) & 0xff;
+            const request: ApsDataRequest = {};
+            const zdpFrame = [transactionID, nwk1, nwk2];
+
+            request.requestId = transactionID;
+            request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
+            request.destAddr16 = networkAddress;
+            request.destEndpoint = 0;
+            request.profileId = 0;
+            request.clusterId = 0x05; // active endpoints
+            request.srcEndpoint = 0;
+            request.asduLength = 3;
+            request.asduPayload = zdpFrame;
+            request.txOptions = 0;
+            request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
+            //todo timeout
+
+            try {
+                this.driver.enqueueSendDataRequest(request) as ReceivedDataResponse;
+                const data = await this.waitForData(networkAddress, 0x8005);
+
+                const buf = Buffer.from(data);
+                const epCount = buf.readUInt8(3);
+                const epList = [];
+                for (let i = 4; i < (epCount + 4); i++) {
+                    epList.push(buf.readUInt8(i));
+                }
+
+                debug("ACTIVE_ENDPOINTS - addr: 0x" + networkAddress.toString(16) + " EP list: " + epList);
+                return {endpoints: epList};
+            } catch (error) {
+                debug("READING ACTIVE_ENDPOINTS FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
+        }
+
+
+        }, networkAddress);
     }
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
