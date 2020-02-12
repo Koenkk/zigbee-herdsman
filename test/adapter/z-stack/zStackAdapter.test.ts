@@ -4,9 +4,22 @@ import {ZStackAdapter} from '../../../src/adapter/z-stack/adapter';
 import {Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
 import equals from 'fast-deep-equal';
 import * as Constants from '../../../src/adapter/z-stack/constants';
-import tmp from 'tmp';
 import fs from 'fs';
+import path from 'path';
 import * as Zcl from '../../../src/zcl';
+
+function getRandomArbitrary(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+const getTempFile = () => {
+    const tempPath = path.resolve('temp');
+    if (!fs.existsSync(tempPath)){
+        fs.mkdirSync(tempPath);
+    }
+
+    return path.join(tempPath, `temp_${getRandomArbitrary(1, 99999999)}`);
+}
 
 const Type = UnpiConstants.Type;
 const Subsystem = UnpiConstants.Subsystem;
@@ -170,7 +183,7 @@ const basicMocks = () => {
         }
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12]}}};
+            return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13]}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return {promise: {payload: {}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'simpleDescRsp') {
@@ -408,7 +421,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(12);
         expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0xc05e);
         expect(mockZnpRequest.mock.calls[33][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(34);
+        expect(mockZnpRequest.mock.calls[34][2].endpoint).toBe(13);
+        expect(mockZnpRequest.mock.calls[34][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[34][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(35);
     });
 
     it('Start zStack 3.x.0 initialize fails because of state change timeout', async () => {
@@ -867,7 +883,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(12);
         expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0xc05e);
         expect(mockZnpRequest.mock.calls[33][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(34);
+        expect(mockZnpRequest.mock.calls[34][2].endpoint).toBe(13);
+        expect(mockZnpRequest.mock.calls[34][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[34][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(35);
     });
 
     it('Start zStack 3.x.0 resume', async () => {
@@ -966,7 +985,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(12);
         expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0xc05e);
         expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(14);
+        expect(mockZnpRequest.mock.calls[14][2].endpoint).toBe(13);
+        expect(mockZnpRequest.mock.calls[14][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[14][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(15);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -1066,7 +1088,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(12);
         expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0xc05e);
         expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(14);
+        expect(mockZnpRequest.mock.calls[14][2].endpoint).toBe(13);
+        expect(mockZnpRequest.mock.calls[14][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[14][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(15);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -1180,7 +1205,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {activeeplist: []}}};
             } else {
@@ -1189,10 +1214,10 @@ describe('zStackAdapter', () => {
         });
 
         const backup = {"adapterType":"zStack","meta":{"product":2},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"osal":true,"product":-1,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"osal":true,"product":-1,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_PANID":{"id":131,"offset":0,"osal":true,"product":-1,"value":[123,0],"len":2},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"osal":true,"product":-1,"value":[1,2,3],"len":3},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"osal":true,"product":-1,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"osal":true,"product":-1,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"osal":true,"product":-1,"value":[0],"len":1},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"osal":true,"product":-1,"value":[0,8,0,0],"len":4},"ZCD_NV_LEGACY_TCLK_TABLE_START":{"id":257,"product":2,"offset":0,"osal":true,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"product":2,"offset":0,"osal":true,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
-        const backupFile = tmp.fileSync();
-        fs.writeFileSync(backupFile.name, JSON.stringify(backup), 'utf8');
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
 
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile.name);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
         const result = await adapter.start();
         expect(result).toBe('restored');
         expect(Znp).toBeCalledWith("dummy", 800, false);
@@ -1279,7 +1304,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {activeeplist: []}}};
             } else {
@@ -1288,10 +1313,10 @@ describe('zStackAdapter', () => {
         });
 
         const backup = {"adapterType":"zStack","time":"Sat, 12 Oct 2019 11:44:30 GMT","meta":{"product":1},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"osal":true,"product":-1,"value":[71,98,161,28,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"osal":true,"product":-1,"value":[153,5,2,0,20,0,0,30,0,0,0,1,5,1,143,0,7,0,2,5,30,0,254,255,0,0,254,255,0,0,0,0,0,0,0,0,255,255,0,0,0,0,0,0,15,15,0,0,0,0,0,0,0,0,0,0,0,221,221,221,221,221,221,221,221,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15,3,0,1,120,10,1,0,0,0,0,0,0,0],"len":116},"ZCD_NV_PANID":{"id":131,"offset":0,"osal":true,"product":-1,"value":[123,0],"len":2},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"osal":true,"product":-1,"value":[1,2,3],"len":3},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"osal":true,"product":-1,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"osal":true,"product":-1,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"osal":true,"product":-1,"value":[0],"len":1},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"osal":true,"product":-1,"value":[0,8,0,0],"len":4},"ZCD_NV_EX_TCLK_TABLE":{"sysid":1,"itemid":4,"subid":0,"product":1,"osal":false,"offset":0,"value":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,255,0,0,0],"len":20},"ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE":{"sysid":1,"itemid":7,"subid":0,"product":1,"osal":false,"offset":0,"value":[1,0,0,0,221,221,221,221,221,221,221,221],"len":12}}};
-        const backupFile = tmp.fileSync();
-        fs.writeFileSync(backupFile.name, JSON.stringify(backup), 'utf8');
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
 
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile.name);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
         const result = await adapter.start();
         expect(result).toBe('restored');
         expect(Znp).toBeCalledWith("dummy", 800, false);
@@ -1348,9 +1373,9 @@ describe('zStackAdapter', () => {
         });
 
         const backup = {"adapterType":"zStack","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":1},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"value":[0],"len":1},"ZCD_NV_TCLK_TABLE_START":{"id":257,"offset":0,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"value":[0,8,0,0],"len":4},"ZCD_NV_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"offset":0,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
-        const backupFile = tmp.fileSync();
-        fs.writeFileSync(backupFile.name, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile.name);
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -1370,9 +1395,9 @@ describe('zStackAdapter', () => {
         });
 
         const backup = {"adapterType":"conbee","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":1},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"value":[0],"len":1},"ZCD_NV_TCLK_TABLE_START":{"id":257,"offset":0,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"value":[0,8,0,0],"len":4},"ZCD_NV_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"offset":0,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
-        const backupFile = tmp.fileSync();
-        fs.writeFileSync(backupFile.name, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile.name);
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -1392,9 +1417,9 @@ describe('zStackAdapter', () => {
         });
 
         const backup = {"adapterType":"zStack","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":1},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"value":[0],"len":1},"ZCD_NV_TCLK_TABLE_START":{"id":257,"offset":0,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"value":[0,9,0,0],"len":4},"ZCD_NV_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"offset":0,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
-        const backupFile = tmp.fileSync();
-        fs.writeFileSync(backupFile.name, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile.name);
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -1414,9 +1439,9 @@ describe('zStackAdapter', () => {
         });
 
         const backup = {"adapterType":"zStack","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":1},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"value":[1,3,5,8,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"value":[0],"len":1},"ZCD_NV_TCLK_TABLE_START":{"id":257,"offset":0,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"value":[0,8,0,0],"len":4},"ZCD_NV_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"offset":0,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
-        const backupFile = tmp.fileSync();
-        fs.writeFileSync(backupFile.name, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile.name);
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -1436,9 +1461,9 @@ describe('zStackAdapter', () => {
         });
 
         const backup = {"adapterType":"zStack","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":1},"data":{"ZCD_NV_PANID":{"id": 131,"offset": 0,"value": [123,1],"len": 2},"ZCD_NV_EXTADDR":{"id":1,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"value":[0],"len":1},"ZCD_NV_TCLK_TABLE_START":{"id":257,"offset":0,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"value":[0,8,0,0],"len":4},"ZCD_NV_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"offset":0,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
-        const backupFile = tmp.fileSync();
-        fs.writeFileSync(backupFile.name, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile.name);
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -1458,9 +1483,9 @@ describe('zStackAdapter', () => {
         });
 
         const backup = {"adapterType":"zStack","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":1},"data":{"ZCD_NV_PANID":{"id": 131,"offset": 0,"value": [123,0],"len": 2},"ZCD_NV_EXTADDR":{"id":1,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"value":[175,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"value":[0],"len":1},"ZCD_NV_TCLK_TABLE_START":{"id":257,"offset":0,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"value":[0,8,0,0],"len":4},"ZCD_NV_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"offset":0,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
-        const backupFile = tmp.fileSync();
-        fs.writeFileSync(backupFile.name, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile.name);
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -1534,7 +1559,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {}}};
             } else {
@@ -1624,7 +1649,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {}}};
             } else {
@@ -1771,6 +1796,17 @@ describe('zStackAdapter', () => {
                 "outputClusters":[
                    9
                 ]
+             },
+             {
+                "ID":13,
+                "profileID": 124,
+                "deviceID":7,
+                "inputClusters":[
+                   8
+                ],
+                "outputClusters":[
+                   9
+                ]
              }
             ]
          };
@@ -1856,7 +1892,7 @@ describe('zStackAdapter', () => {
         mockZnpRequest.mockClear();
         await adapter.discoverRoute(1239);
         expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 1239, options: 2, radius: 30});
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 1239, options: 1, radius: 30});
     });
 
     it('Node descriptor', async () => {
@@ -1891,7 +1927,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.activeEndpoints(3);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(3);
-        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,11,110,12]})
+        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,11,110,12, 13]})
     });
 
     it('Simple descriptor', async () => {

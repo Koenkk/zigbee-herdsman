@@ -19,7 +19,7 @@
 
 • **manufacturerCode**: *number*
 
-*Defined in [src/adapter/tstype.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/adapter/tstype.ts#L27)*
+*Defined in [src/adapter/tstype.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/adapter/tstype.ts#L27)*
 
 ___
 
@@ -27,4 +27,4 @@ ___
 
 • **type**: *[DeviceType](../modules/_adapter_tstype_.md#devicetype)*
 
-*Defined in [src/adapter/tstype.ts:26](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/adapter/tstype.ts#L26)*
+*Defined in [src/adapter/tstype.ts:26](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/adapter/tstype.ts#L26)*

@@ -19,7 +19,7 @@
 
 • **cluster**: *Cluster*
 
-*Defined in [src/controller/model/endpoint.ts:39](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/endpoint.ts#L39)*
+*Defined in [src/controller/model/endpoint.ts:45](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L45)*
 
 ___
 
@@ -27,4 +27,4 @@ ___
 
 • **target**: *[Endpoint](../classes/_controller_model_endpoint_.endpoint.md) | [Group](../classes/_controller_model_group_.group.md)*
 
-*Defined in [src/controller/model/endpoint.ts:40](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/endpoint.ts#L40)*
+*Defined in [src/controller/model/endpoint.ts:46](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L46)*

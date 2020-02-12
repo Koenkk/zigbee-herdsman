@@ -15,3 +15,27 @@
 * [Clusters](../interfaces/_controller_model_endpoint_.clusters.md)
 * [ConfigureReportingItem](../interfaces/_controller_model_endpoint_.configurereportingitem.md)
 * [Options](../interfaces/_controller_model_endpoint_.options.md)
+
+### Object literals
+
+* [debug](_controller_model_endpoint_.md#const-debug)
+
+## Object literals
+
+### `Const` debug
+
+### ▪ **debug**: *object*
+
+*Defined in [src/controller/model/endpoint.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L10)*
+
+###  error
+
+• **error**: *Debugger* = Debug('zigbee-herdsman:controller:endpoint')
+
+*Defined in [src/controller/model/endpoint.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L12)*
+
+###  info
+
+• **info**: *Debugger* = Debug('zigbee-herdsman:controller:endpoint')
+
+*Defined in [src/controller/model/endpoint.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L11)*

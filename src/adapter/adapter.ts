@@ -1,7 +1,7 @@
 import * as TsType from './tstype';
 import {ZclDataPayload} from './events';
 import events from 'events';
-import {ZclFrame} from '../zcl';
+import {ZclFrame, FrameType, Direction} from '../zcl';
 import Debug from "debug";
 
 const debug = Debug("zigbee-herdsman:adapter");
@@ -92,6 +92,11 @@ abstract class Adapter extends events.EventEmitter {
     public abstract activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints>;
 
     public abstract simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor>;
+
+    public abstract waitFor(
+        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
+        transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
+    ): {promise: Promise<ZclDataPayload>; cancel: () => void};
 
     public abstract sendZclFrameNetworkAddressWithResponse(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,

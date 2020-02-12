@@ -27,15 +27,10 @@ const DataConfirmErrorCodeLookup: {[k: number]: string} = {
     240: 'MAC transaction expired',
 };
 
-interface WaitFor {
-    ID: number;
-    promise: Promise<Events.ZclDataPayload>;
-}
-
 interface WaitressMatcher {
     address: number | string;
     endpoint: number;
-    transactionSequenceNumber: number;
+    transactionSequenceNumber?: number;
     frameType: FrameType;
     clusterID: number;
     commandIdentifier: number;
@@ -170,11 +165,13 @@ class ZStackAdapter extends Adapter {
     }
 
     public async supportsDiscoverRoute(): Promise<boolean> {
-        return this.version.product !== ZnpVersion.zStack12;
+        // Z-stack 3.0.x supports route discovery but does not seem to handle it well
+        // https://github.com/Koenkk/zigbee2mqtt/issues/2901
+        return this.version.product === ZnpVersion.zStack3x0;
     }
 
     public async discoverRoute(networkAddress: number): Promise<void> {
-        const payload =  {dstAddr: networkAddress, options: 2, radius: Constants.AF.DEFAULT_RADIUS};
+        const payload =  {dstAddr: networkAddress, options: 1, radius: Constants.AF.DEFAULT_RADIUS};
         await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
     }
 
@@ -238,12 +235,10 @@ class ZStackAdapter extends Adapter {
 
             const defaultResponse = !zclFrame.Header.frameControl.disableDefaultResponse ?
                 this.waitDefaultResponse(networkAddress, endpoint, zclFrame, defaultResponseTimeout) : null;
-            const responsePayload = {
-                address: networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
-                clusterID: zclFrame.Cluster.ID, frameType: zclFrame.Header.frameControl.frameType,
-                direction: Direction.SERVER_TO_CLIENT, commandIdentifier: command.response,
-            };
-            const response = this.waitress.waitFor(responsePayload, timeout);
+            const response = this.waitFor(
+                networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
+                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
+            );
 
             try {
                 await this.dataRequest(
@@ -252,11 +247,10 @@ class ZStackAdapter extends Adapter {
                 );
             } catch (error) {
                 if (defaultResponse) {
-                    this.waitress.remove(defaultResponse.ID);
+                    defaultResponse.cancel();
                 }
 
-                this.waitress.remove(response.ID);
-
+                response.cancel();
                 throw error;
             }
 
@@ -283,7 +277,7 @@ class ZStackAdapter extends Adapter {
                 );
             } catch (error) {
                 if (defaultResponse) {
-                    this.waitress.remove(defaultResponse.ID);
+                    defaultResponse.cancel();
                 }
 
                 throw error;
@@ -580,12 +574,10 @@ class ZStackAdapter extends Adapter {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
-            const responsePayload: WaitressMatcher = {
-                address: null, endpoint: 0xFE, transactionSequenceNumber: null,
-                clusterID: zclFrame.Cluster.ID, frameType: zclFrame.Header.frameControl.frameType,
-                direction: Direction.SERVER_TO_CLIENT, commandIdentifier: command.response,
-            };
-            const response = this.waitress.waitFor(responsePayload, timeout);
+            const response = this.waitFor(
+                null, 0xFE, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT, null,
+                zclFrame.Cluster.ID, command.response, timeout
+            );
 
             try {
                 await this.dataRequestExtended(
@@ -593,7 +585,7 @@ class ZStackAdapter extends Adapter {
                     12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
                 );
             } catch (error) {
-                this.waitress.remove(response.ID);
+                response.cancel();
                 throw error;
             }
 
@@ -613,6 +605,20 @@ class ZStackAdapter extends Adapter {
         return this.queue.execute<void>(async () => {
             await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value});
         });
+    }
+
+    public waitFor(
+        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
+        transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
+    ): {promise: Promise<Events.ZclDataPayload>; cancel: () => void} {
+        const payload = {
+            address: networkAddress, endpoint, clusterID, commandIdentifier, frameType, direction,
+            transactionSequenceNumber,
+        };
+
+        const waiter = this.waitress.waitFor(payload, timeout);
+        const cancel = (): void => this.waitress.remove(waiter.ID);
+        return {promise: waiter.promise, cancel};
     }
 
     /**
@@ -740,14 +746,11 @@ class ZStackAdapter extends Adapter {
 
     private waitDefaultResponse(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
-    ): WaitFor {
-        const payload = {
-            address: networkAddress, endpoint, transactionSequenceNumber: zclFrame.Header.transactionSequenceNumber,
-            clusterID: zclFrame.Cluster.ID, frameType: FrameType.GLOBAL, direction: Direction.SERVER_TO_CLIENT,
-            commandIdentifier: Foundation.defaultRsp.ID,
-        };
-
-        return this.waitress.waitFor(payload, timeout);
+    ):  {cancel: () => void; promise: Promise<Events.ZclDataPayload>} {
+        return this.waitFor(
+            networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
+            zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID, timeout,
+        );
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {

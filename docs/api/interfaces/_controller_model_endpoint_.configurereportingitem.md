@@ -21,7 +21,7 @@
 
 • **attribute**: *string | number | object*
 
-*Defined in [src/controller/model/endpoint.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/endpoint.ts#L10)*
+*Defined in [src/controller/model/endpoint.ts:16](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L16)*
 
 ___
 
@@ -29,7 +29,7 @@ ___
 
 • **maximumReportInterval**: *number*
 
-*Defined in [src/controller/model/endpoint.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/endpoint.ts#L12)*
+*Defined in [src/controller/model/endpoint.ts:18](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L18)*
 
 ___
 
@@ -37,7 +37,7 @@ ___
 
 • **minimumReportInterval**: *number*
 
-*Defined in [src/controller/model/endpoint.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/endpoint.ts#L11)*
+*Defined in [src/controller/model/endpoint.ts:17](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L17)*
 
 ___
 
@@ -45,4 +45,4 @@ ___
 
 • **reportableChange**: *number*
 
-*Defined in [src/controller/model/endpoint.ts:13](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/endpoint.ts#L13)*
+*Defined in [src/controller/model/endpoint.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L19)*

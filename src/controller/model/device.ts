@@ -270,7 +270,7 @@ class Device extends Entity {
             this._interviewCompleted = true;
         } catch (e) {
             if (this.interviewQuirks()) {
-                debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks`);
+                debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${e}')`);
             } else {
                 debug(`Interview - failed for device '${this.ieeeAddr}' with error '${e.stack}'`);
                 error = e;
@@ -326,19 +326,24 @@ class Device extends Entity {
             debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         };
 
+        let gotNodeDescriptor = false;
         for (let attempt = 0; attempt < 6; attempt++) {
             try {
                 await nodeDescriptorQuery();
+                gotNodeDescriptor = true;
                 break;
             } catch (error) {
                 if (this.interviewQuirks()) {
-                    debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks`);
+                    debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${error}')`);
                     return;
                 } else {
                     // Most of the times the first node descriptor query fails and the seconds one succeeds.
                     debug(`Interview - node descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`);
                 }
             }
+        }
+        if (!gotNodeDescriptor) {
+            throw new Error(`Interview failed because can not get node descriptor ('${this.ieeeAddr}')`);
         }
 
         // e.g. Xiaomi Aqara Opple devices fail to respond to the first active endpoints request, therefore try 2 times
@@ -368,6 +373,7 @@ class Device extends Entity {
         this.save();
         debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
+        let readAttributes = false;
         for (const endpoint of this.endpoints) {
             const simpleDescriptor = await Entity.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
             endpoint.profileID = simpleDescriptor.profileID;
@@ -376,26 +382,29 @@ class Device extends Entity {
             endpoint.outputClusters = simpleDescriptor.outputClusters;
             debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`);
             this.save();
-        }
 
-        if (this.endpoints.length !== 0) {
-            // If none of the endpoints advertises to support genBasic, read from the first endpoint;
-            // not sure if this happens in practice.
-            const endpoint = this.endpoints.find(e => e.supportsInputCluster('genBasic')) || this.endpoints[0];
+            // Read attributes
+            if (endpoint.supportsInputCluster('genBasic') && !readAttributes) {
+                try {
+                    // Split into chunks of 2, otherwise some devices fail to respond.
+                    for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 2)) {
+                        const result = await endpoint.read('genBasic', chunk);
+                        for (const [key, value] of Object.entries(result)) {
+                            Device.ReportablePropertiesMapping[key].set(value, this);
+                        }
 
-            // Split into chunks of 3, otherwise some devices fail to respond.
-            for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 2)) {
-                const result = await endpoint.read('genBasic', chunk);
-                for (const [key, value] of Object.entries(result)) {
-                    Device.ReportablePropertiesMapping[key].set(value, this);
+                        debug(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
+                        this.save();
+                    }
+
+                    readAttributes = true;
+                } catch (error) {
+                    debug(`Failed to read attributes from endpoint '${endpoint.ID}' (${error})`);
                 }
-
-                debug(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
-                this.save();
             }
-        } else {
-            debug(`Interview - skip reading attributes because of no endpoint for device '${this.ieeeAddr}'`);
-            throw new Error(`Interview failed because of not endpoint ('${this.ieeeAddr}')`);
+        }
+        if (!readAttributes) {
+            throw new Error(`Interview failed because could not read attributes ('${this.ieeeAddr}')`);
         }
 
         // Enroll IAS device

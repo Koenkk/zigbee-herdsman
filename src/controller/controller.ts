@@ -77,13 +77,17 @@ class Controller extends events.EventEmitter {
      */
     public constructor(options: Options) {
         super();
-        this.options = mixin(DefaultOptions, options);
+        this.options = mixin(JSON.parse(JSON.stringify(DefaultOptions)), options);
 
         // Validate options
         for (const channel of this.options.network.channelList) {
             if (channel < 11 || channel > 26) {
                 throw new Error(`'${channel}' is an invalid channel, use a channel between 11 - 26.`);
             }
+        }
+
+        if (this.options.network.networkKey.length !== 16) {
+            throw new Error(`Network key must be 16 digits long, got ${this.options.network.networkKey.length}.`);
         }
     }
 

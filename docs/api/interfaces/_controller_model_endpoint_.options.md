@@ -22,7 +22,7 @@
 
 • **defaultResponseTimeout**? : *number*
 
-*Defined in [src/controller/model/endpoint.ts:21](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/endpoint.ts#L21)*
+*Defined in [src/controller/model/endpoint.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L27)*
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 • **disableDefaultResponse**? : *boolean*
 
-*Defined in [src/controller/model/endpoint.ts:18](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/endpoint.ts#L18)*
+*Defined in [src/controller/model/endpoint.ts:24](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L24)*
 
 ___
 
@@ -38,7 +38,7 @@ ___
 
 • **manufacturerCode**? : *number*
 
-*Defined in [src/controller/model/endpoint.ts:17](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/endpoint.ts#L17)*
+*Defined in [src/controller/model/endpoint.ts:23](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L23)*
 
 ___
 
@@ -46,7 +46,7 @@ ___
 
 • **response**? : *boolean*
 
-*Defined in [src/controller/model/endpoint.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/endpoint.ts#L19)*
+*Defined in [src/controller/model/endpoint.ts:25](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L25)*
 
 ___
 
@@ -54,4 +54,4 @@ ___
 
 • **timeout**? : *number*
 
-*Defined in [src/controller/model/endpoint.ts:20](https://github.com/Koenkk/zigbee-herdsman/blob/293b172/src/controller/model/endpoint.ts#L20)*
+*Defined in [src/controller/model/endpoint.ts:26](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L26)*

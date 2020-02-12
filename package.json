@@ -51,7 +51,6 @@
     "eslint": "*",
     "jest": "*",
     "regenerator-runtime": "*",
-    "tmp": "*",
     "typedoc": "*",
     "typedoc-plugin-markdown": "*",
     "typedoc-plugin-no-inherit": "*",
@@ -80,7 +79,7 @@
     "eslint": "node_modules/.bin/eslint . --ext .ts",
     "docs": "typedoc --tsconfig typedoc-tsconfig.json"
   },
-  "version": "0.12.44",
+  "version": "0.12.47",
   "jest": {
     "coverageThreshold": {
       "global": {
