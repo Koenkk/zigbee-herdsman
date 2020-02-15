@@ -399,7 +399,7 @@ describe('Controller', () => {
         await controller.start();
         if (fs.existsSync(options.backupPath)) fs.unlinkSync(options.backupPath);
         await controller.stop();
-        expect(mockAdapterPermitJoin).toBeCalledWith(0);
+        expect(mockAdapterPermitJoin).toBeCalledWith(0, null);
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual({version: 'dummybackup'});
         expect(mockAdapterStop).toBeCalledTimes(1);
     });
@@ -665,6 +665,21 @@ describe('Controller', () => {
         expect(mockAdapterPermitJoin.mock.calls[3][0]).toBe(0);
         jest.advanceTimersByTime(210 * 1000);
         expect(mockAdapterPermitJoin).toBeCalledTimes(4);
+    });
+
+    it('Controller permit joining through specific device', async () => {
+        jest.useFakeTimers();
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await controller.permitJoin(true, controller.getDeviceByIeeeAddr('0x129'));
+        expect(mockAdapterPermitJoin).toBeCalledTimes(1);
+        expect(mockAdapterPermitJoin.mock.calls[0][0]).toBe(254);
+        expect(mockAdapterPermitJoin.mock.calls[0][1]).toBe(129);
+
+        jest.advanceTimersByTime(210 * 1000);
+        expect(mockAdapterPermitJoin).toBeCalledTimes(2);
+        expect(mockAdapterPermitJoin.mock.calls[1][0]).toBe(254);
+        expect(mockAdapterPermitJoin.mock.calls[1][1]).toBe(129);
     });
 
     it('Shouldnt create backup when adapter doesnt support it', async () => {

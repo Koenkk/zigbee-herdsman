@@ -1865,13 +1865,22 @@ describe('zStackAdapter', () => {
         expect(info).toStrictEqual(expected)
     });
 
-    it('Permit join', async () => {
+    it('Permit join all', async () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
-        await adapter.permitJoin(100);
+        await adapter.permitJoin(100, null);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtPermitJoinReq', {addrmode: 0x0F, dstaddr: 0xFFFC , duration: 100, tcsignificance: 0 });
+    });
+
+    it('Permit join specific networkAddress', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        await adapter.permitJoin(102, 42102);
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtPermitJoinReq', {addrmode: 2, dstaddr: 42102 , duration: 102, tcsignificance: 0 });
     });
 
     it('Get coordinator version', async () => {
