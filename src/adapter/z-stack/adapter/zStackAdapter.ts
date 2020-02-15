@@ -144,9 +144,11 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async permitJoin(seconds: number): Promise<void> {
+    public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
+        const addrmode = networkAddress === null ? 0x0F : 0x02;
+        const dstaddr = networkAddress || 0xFFFC;
         await this.queue.execute<void>(async () => {
-            const payload = {addrmode: 0x0F, dstaddr: 0xFFFC , duration: seconds, tcsignificance: 0};
+            const payload = {addrmode, dstaddr , duration: seconds, tcsignificance: 0};
             await this.znp.request(Subsystem.ZDO, 'mgmtPermitJoinReq', payload);
         });
     }

@@ -68,7 +68,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract getCoordinator(): Promise<TsType.Coordinator>;
 
-    public abstract permitJoin(seconds: number): Promise<void>;
+    public abstract permitJoin(seconds: number, networkAddress: number): Promise<void>;
 
     public abstract getCoordinatorVersion(): Promise<TsType.CoordinatorVersion>;
 

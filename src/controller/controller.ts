@@ -158,21 +158,21 @@ class Controller extends events.EventEmitter {
         return this.touchlink.factoryReset();
     }
 
-    public async permitJoin(permit: boolean): Promise<void> {
+    public async permitJoin(permit: boolean, device?: Device): Promise<void> {
         if (permit && !this.getPermitJoin()) {
             debug.log('Permit joining');
-            await this.adapter.permitJoin(254);
+            await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
 
             // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
             this.permitJoinTimer = setInterval(async (): Promise<void> => {
                 debug.log('Permit joining');
-                await this.adapter.permitJoin(254);
+                await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
             }, 200 * 1000);
         } else if (permit && this.getPermitJoin()) {
             debug.log('Joining already permitted');
         } else {
             debug.log('Disable joining');
-            await this.adapter.permitJoin(0);
+            await this.adapter.permitJoin(0, null);
 
             if (this.permitJoinTimer) {
                 clearInterval(this.permitJoinTimer);
