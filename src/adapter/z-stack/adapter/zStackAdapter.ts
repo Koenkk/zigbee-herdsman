@@ -659,12 +659,14 @@ class ZStackAdapter extends Adapter {
 
         const dataConfirm = await response.promise;
         if (dataConfirm.payload.status !== 0) {
-            if (dataConfirm.payload.status === 225 && attempt === 0) {
+            if ([225, 233, 240].includes(dataConfirm.payload.status) && attempt <= 5) {
                 /**
-                 * When many commands at once are executed we can end up in a MAC channel access failure
-                 * error (225). This is because there is too much traffic on the network.
+                 * 225: When many commands at once are executed we can end up in a MAC channel access failure
+                 * error. This is because there is too much traffic on the network.
                  * Retry this command once after a cooling down period.
+                 * 233/240: https://github.com/Koenkk/zigbee-herdsman-converters/issues/715#issuecomment-586693990
                  */
+                await Wait(2000);
                 return this.dataRequest(
                     destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout, 1
                 );
@@ -710,12 +712,14 @@ class ZStackAdapter extends Adapter {
         if (confirmation) {
             const dataConfirm = await response.promise;
             if (dataConfirm.payload.status !== 0) {
-                if (dataConfirm.payload.status === 225 && attempt === 0) {
+                if ([225, 233, 240].includes(dataConfirm.payload.status) && attempt <= 5) {
                     /**
-                     * When many commands at once are executed we can end up in a MAC channel access failure
-                     * error (225). This is because there is too much traffic on the network.
+                     * 225: When many commands at once are executed we can end up in a MAC channel access failure
+                     * error. This is because there is too much traffic on the network.
                      * Retry this command once after a cooling down period.
+                     * 233/240: https://github.com/Koenkk/zigbee-herdsman-converters/issues/715#issuecomment-586693990
                      */
+                    await Wait(2000);
                     return this.dataRequestExtended(
                         addressMode, destinationAddressOrGroupID, destinationEndpoint, panID, sourceEndpoint, clusterID,
                         radius, data, timeout, 1, confirmation,
