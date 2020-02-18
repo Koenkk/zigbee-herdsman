@@ -78,10 +78,6 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract setLED(enabled: boolean): Promise<void>;
 
-    public abstract supportsDiscoverRoute(): Promise<boolean>;
-
-    public abstract discoverRoute(networkAddress: number): Promise<void>;
-
     public abstract lqi(networkAddress: number): Promise<TsType.LQI>;
 
     public abstract routingTable(networkAddress: number): Promise<TsType.RoutingTable>;
@@ -97,13 +93,9 @@ abstract class Adapter extends events.EventEmitter {
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
     ): {promise: Promise<ZclDataPayload>; cancel: () => void};
 
-    public abstract sendZclFrameNetworkAddressWithResponse(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
-    ): Promise<ZclDataPayload>;
-
     public abstract sendZclFrameNetworkAddress(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
-    ): Promise<void>;
+    ): Promise<ZclDataPayload>;
 
     public abstract sendZclFrameGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void>;
 

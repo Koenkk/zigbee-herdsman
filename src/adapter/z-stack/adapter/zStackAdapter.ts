@@ -173,14 +173,23 @@ class ZStackAdapter extends Adapter {
         await this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: enabled ? 1 : 0});
     }
 
-    public async supportsDiscoverRoute(): Promise<boolean> {
-        // Z-stack 3.0.x supports route discovery but does not seem to handle it well
-        // https://github.com/Koenkk/zigbee2mqtt/issues/2901
-        return this.version.product === ZnpVersion.zStack3x0;
+    private supportsSourceRouting(): boolean {
+        if (
+            (this.version.product === ZnpVersion.zStack12 && this.version.revision === '20190619') ||
+            (this.version.product === ZnpVersion.zStack30x && this.version.revision === '20200211') ||
+            (this.version.product === ZnpVersion.zStack3x0)
+        ) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    public async discoverRoute(networkAddress: number): Promise<void> {
-        const payload =  {dstAddr: networkAddress, options: 1, radius: Constants.AF.DEFAULT_RADIUS};
+    private async discoverRoute(networkAddress: number): Promise<void> {
+        // 8  = No multicast; Extended destination: True; Many-to-One discovery: With Source Routing
+        // 16 = No multicast; Extended destination: True; Many-to-One discovery: Without Source Routing
+        const options = this.supportsSourceRouting() ? 8 : 16;
+        const payload =  {dstAddr: networkAddress, options, radius: Constants.AF.DEFAULT_RADIUS};
         await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
     }
 
@@ -233,21 +242,24 @@ class ZStackAdapter extends Adapter {
         }, networkAddress);
     }
 
-    public async sendZclFrameNetworkAddressWithResponse(
+    public async sendZclFrameNetworkAddress(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
+            let response = null;
             const command = zclFrame.getCommand();
-            if (!command.hasOwnProperty('response')) {
-                throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
+            if (command.hasOwnProperty('response')) {
+                response = this.waitFor(
+                    networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
+                    zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
+                );
+            } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
+                response = this.waitFor(
+                    networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
+                    zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
+                    defaultResponseTimeout,
+                );
             }
-
-            const defaultResponse = !zclFrame.Header.frameControl.disableDefaultResponse ?
-                this.waitDefaultResponse(networkAddress, endpoint, zclFrame, defaultResponseTimeout) : null;
-            const response = this.waitFor(
-                networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
-                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
-            );
 
             try {
                 await this.dataRequest(
@@ -255,46 +267,14 @@ class ZStackAdapter extends Adapter {
                     timeout, 0
                 );
             } catch (error) {
-                if (defaultResponse) {
-                    defaultResponse.cancel();
-                }
-
-                response.cancel();
-                throw error;
-            }
-
-            if (defaultResponse) {
-                const result = await Promise.all([response.promise, defaultResponse.promise]);
-                return result[0];
-            } else {
-                return response.promise;
-            }
-        }, networkAddress);
-    }
-
-    public async sendZclFrameNetworkAddress(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
-    ): Promise<void> {
-        return this.queue.execute<void>(async () => {
-            const defaultResponse = !zclFrame.Header.frameControl.disableDefaultResponse ?
-                this.waitDefaultResponse(networkAddress, endpoint, zclFrame, defaultResponseTimeout) : null;
-
-            try {
-                await this.dataRequest(
-                    networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(),
-                    timeout, 0,
-                );
-            } catch (error) {
-                if (defaultResponse) {
-                    defaultResponse.cancel();
+                if (response) {
+                    response.cancel();
                 }
 
                 throw error;
             }
 
-            if (defaultResponse) {
-                await defaultResponse.promise;
-            }
+            return response !== null ? response.promise : null;
         }, networkAddress);
     }
 
@@ -666,6 +646,7 @@ class ZStackAdapter extends Adapter {
                  * Retry this command once after a cooling down period.
                  * 233/240: https://github.com/Koenkk/zigbee-herdsman-converters/issues/715#issuecomment-586693990
                  */
+                debug(`TransactionID ${transactionID} attempt ${attempt}`);
                 await Wait(2000);
                 return this.dataRequest(
                     destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout, 1
@@ -719,6 +700,7 @@ class ZStackAdapter extends Adapter {
                      * Retry this command once after a cooling down period.
                      * 233/240: https://github.com/Koenkk/zigbee-herdsman-converters/issues/715#issuecomment-586693990
                      */
+                    debug(`TransactionID ${transactionID} attempt ${attempt}`);
                     await Wait(2000);
                     return this.dataRequestExtended(
                         addressMode, destinationAddressOrGroupID, destinationEndpoint, panID, sourceEndpoint, clusterID,
@@ -755,15 +737,6 @@ class ZStackAdapter extends Adapter {
         } else {
             return address.toString();
         }
-    }
-
-    private waitDefaultResponse(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
-    ):  {cancel: () => void; promise: Promise<Events.ZclDataPayload>} {
-        return this.waitFor(
-            networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
-            zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID, timeout,
-        );
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
