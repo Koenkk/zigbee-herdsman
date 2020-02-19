@@ -1,7 +1,7 @@
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
-    StartResult,
+    StartResult, LQINeighbor, RoutingTableEntry
 } from '../../tstype';
 import Debug from "debug";
 import Adapter from '../../adapter';
@@ -135,7 +135,91 @@ class DeconzAdapter extends Adapter {
     }
 
     public async lqi(networkAddress: number): Promise<LQI> {
-        return null;
+        return this.queue.execute<LQI>(async (): Promise<LQI> => {
+
+            const neighbors: LQINeighbor[] = [];
+
+            const add = (list: any) => {
+                for (const entry of list) {
+                    const relationByte = entry.readUInt8(18);
+                    const extAddr: number[] = [];
+                    for (let i = 8; i < 16; i++) {
+                        extAddr.push(entry[i]);
+                    }
+
+                    neighbors.push({
+                        linkquality: entry.readUInt8(21),
+                        networkAddress: entry.readUInt16LE(16),
+                        ieeeAddr: this.driver.macAddrArrayToString(extAddr),
+                        relationship: (relationByte >> 1) & ((1 << 3)-1),
+                        depth: entry.readUInt8(20)
+                    });
+                }
+            };
+
+            const request = async (startIndex: number): Promise<any> => {
+                const transactionID = this.nextTransactionID();
+                const req: ApsDataRequest = {};
+                req.requestId = transactionID;
+                req.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
+                req.destAddr16 = networkAddress;
+                req.destEndpoint = 0;
+                req.profileId = 0;
+                req.clusterId = 0x31; // mgmt_lqi_request
+                req.srcEndpoint = 0;
+                req.asduLength = 2;
+                req.asduPayload = [transactionID, startIndex];
+                req.txOptions = 0;
+                req.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
+                //todo timeout
+
+                try {
+                    this.driver.enqueueSendDataRequest(req) as ReceivedDataResponse;
+                    const data = await this.waitForData(networkAddress, 0x8031);
+
+                    if (data[0] !== 0) { // status
+                        throw new Error(`LQI for '${networkAddress}' failed`);
+                    }
+                    const tableList: Buffer[] = [];
+                    const response = {
+                        status: data[0],
+                        tableEntrys: data[1],
+                        startIndex: data[2],
+                        tableListCount: data[3],
+                        tableList: tableList
+                    }
+
+                    let tableEntry: number[] = [];
+                    let counter = 0;
+                    for (let i = 4; i < ((response.tableListCount * 22) + 4); i++) { // one tableentry = 22 bytes
+                        tableEntry.push(data[i]);
+                        counter++;
+                        if (counter === 22) {
+                            response.tableList.push(Buffer.from(tableEntry));
+                            tableEntry = [];
+                            counter = 0;
+                        }
+                    }
+
+                    debug("LQI RESPONSE - addr: 0x" + networkAddress.toString(16) + " status: " + response.status + " read " + (response.tableListCount + response.startIndex) + "/" + response.tableEntrys + " entrys");
+                    return response;
+                } catch (error) {
+                    debug("LQI REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
+                }
+            };
+
+            let response = await request(0);
+            add(response.tableList);
+            let nextStartIndex = response.tableListCount;
+
+            while (neighbors.length < response.tableEntrys) {
+                response = await request(nextStartIndex);
+                add(response.tableList);
+                nextStartIndex += response.tableListCount;
+            }
+
+            return {neighbors};
+        }, networkAddress);
     }
 
     public async routingTable(networkAddress: number): Promise<RoutingTable> {
