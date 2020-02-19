@@ -293,10 +293,9 @@ class ZStackAdapter extends Adapter {
                     // Timeout could happen because of invalid route, rediscover and retry.
                     await this.discoverRoute(networkAddress);
                     await Wait(3000);
-                    const result = await this.sendZclFrameNetworkAddressInternal(
+                    return this.sendZclFrameNetworkAddressInternal(
                         networkAddress, endpoint, zclFrame, timeout, defaultResponseTimeout, false
                     );
-                    return result;
                 } else {
                     throw error;
                 }
