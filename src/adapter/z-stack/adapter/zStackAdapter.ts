@@ -244,6 +244,7 @@ class ZStackAdapter extends Adapter {
 
     public async sendZclFrameNetworkAddress(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
+        firstAttempt = true,
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
             let response = null;
@@ -264,7 +265,7 @@ class ZStackAdapter extends Adapter {
             try {
                 await this.dataRequest(
                     networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(),
-                    timeout, 0
+                    timeout
                 );
             } catch (error) {
                 if (response) {
@@ -274,7 +275,25 @@ class ZStackAdapter extends Adapter {
                 throw error;
             }
 
-            return response !== null ? response.promise : null;
+            if (response !== null) {
+                try {
+                    const result = await response.promise;
+                    return result;
+                } catch (error) {
+                    if (firstAttempt) {
+                        // Timeout could happen because of invalid route, rediscover and retry.
+                        await this.discoverRoute(networkAddress);
+                        await Wait(3000);
+                        return this.sendZclFrameNetworkAddress(
+                            networkAddress, endpoint, zclFrame, timeout, defaultResponseTimeout, false
+                        );
+                    } else {
+                        throw error;
+                    }
+                }
+            } else {
+                return null;
+            }
         }, networkAddress);
     }
 
@@ -282,7 +301,7 @@ class ZStackAdapter extends Adapter {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 0, 1, zclFrame.Cluster.ID,
-                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), timeout, 0, true
+                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), timeout, true
             );
 
             /**
@@ -549,7 +568,7 @@ class ZStackAdapter extends Adapter {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 Constants.COMMON.addressMode.ADDR_64BIT, ieeeAddr, 0xFE, 0xFFFF,
-                12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
+                12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, false,
             );
         });
     }
@@ -571,7 +590,7 @@ class ZStackAdapter extends Adapter {
             try {
                 await this.dataRequestExtended(
                     Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFF, 0xFE, 0xFFFF,
-                    12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
+                    12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, false,
                 );
             } catch (error) {
                 response.cancel();
@@ -615,7 +634,7 @@ class ZStackAdapter extends Adapter {
      */
     private async dataRequest(
         destinationAddress: number, destinationEndpoint: number, sourceEndpoint: number, clusterID: number,
-        radius: number, data: Buffer, timeout: number, attempt: number,
+        radius: number, data: Buffer, timeout: number, attemptsLeft = 5,
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
         const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout);
@@ -639,17 +658,24 @@ class ZStackAdapter extends Adapter {
 
         const dataConfirm = await response.promise;
         if (dataConfirm.payload.status !== 0) {
-            if ([225, 233, 240].includes(dataConfirm.payload.status) && attempt <= 5) {
+            if ([225, 233, 240].includes(dataConfirm.payload.status) && attemptsLeft > 0) {
                 /**
                  * 225: When many commands at once are executed we can end up in a MAC channel access failure
                  * error. This is because there is too much traffic on the network.
                  * Retry this command once after a cooling down period.
                  * 233/240: https://github.com/Koenkk/zigbee-herdsman-converters/issues/715#issuecomment-586693990
                  */
-                debug(`TransactionID ${transactionID} attempt ${attempt}`);
                 await Wait(2000);
                 return this.dataRequest(
-                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout, 1
+                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout,
+                    attemptsLeft - 1
+                );
+            } else if (dataConfirm.payload.status === 205 && attemptsLeft > 0) {
+                // 205: no network route => rediscover route
+                await this.discoverRoute(destinationAddress);
+                await Wait(3000);
+                return this.dataRequest(
+                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout, 0
                 );
             } else {
                 throw new DataConfirmError(dataConfirm.payload.status);
@@ -661,8 +687,8 @@ class ZStackAdapter extends Adapter {
 
     private async dataRequestExtended(
         addressMode: number, destinationAddressOrGroupID: number | string, destinationEndpoint: number, panID: number,
-        sourceEndpoint: number, clusterID: number, radius: number, data: Buffer, timeout: number, attempt: number,
-        confirmation: boolean
+        sourceEndpoint: number, clusterID: number, radius: number, data: Buffer, timeout: number, confirmation: boolean,
+        attemptsLeft = 5,
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
         const response = confirmation ?
@@ -693,18 +719,16 @@ class ZStackAdapter extends Adapter {
         if (confirmation) {
             const dataConfirm = await response.promise;
             if (dataConfirm.payload.status !== 0) {
-                if ([225, 233, 240].includes(dataConfirm.payload.status) && attempt <= 5) {
+                if (dataConfirm.payload.status === 225 && attemptsLeft > 0) {
                     /**
                      * 225: When many commands at once are executed we can end up in a MAC channel access failure
                      * error. This is because there is too much traffic on the network.
                      * Retry this command once after a cooling down period.
-                     * 233/240: https://github.com/Koenkk/zigbee-herdsman-converters/issues/715#issuecomment-586693990
                      */
-                    debug(`TransactionID ${transactionID} attempt ${attempt}`);
                     await Wait(2000);
                     return this.dataRequestExtended(
                         addressMode, destinationAddressOrGroupID, destinationEndpoint, panID, sourceEndpoint, clusterID,
-                        radius, data, timeout, 1, confirmation,
+                        radius, data, timeout, confirmation, attemptsLeft - 1,
                     );
                 } else {
                     throw new DataConfirmError(dataConfirm.payload.status);

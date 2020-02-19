@@ -8,6 +8,10 @@ import fs from 'fs';
 import path from 'path';
 import * as Zcl from '../../../src/zcl';
 
+function flushPromises() {
+    return new Promise(resolve => setImmediate(resolve));
+  }
+
 function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
   }
@@ -1955,7 +1959,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 1239, options: 16, radius: 30});
     });
 
-    it('onlythis Route discovery with source routing', async () => {
+    it('Route discovery with source routing', async () => {
         sysVersionResponse = {payload: {product: 2, revision: "20200211"}};
         basicMocks();
         await adapter.start();
@@ -2059,12 +2063,12 @@ describe('zStackAdapter', () => {
     it('Send zcl frame network address dataConfirm fails', async () => {
         basicMocks();
         await adapter.start();
-        dataConfirmCode = 205;
+        dataConfirmCode = 201;
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
         let error;
         try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000)} catch (e) {error = e;}
-        expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'undefined' (201)");
     });
 
     it('Send zcl frame network address with default response', async () => {
@@ -2082,17 +2086,25 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
     });
 
-    it('Send zcl frame network address fails', async () => {
+    it('Send zcl frame network address fails with 205 should rediscover route and try again', async () => {
         basicMocks();
+        jest.useFakeTimers();
         await adapter.start();
         dataConfirmCode = 205;
         mockZnpRequest.mockClear();
-        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
+        const response = adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000);
         let error;
-        try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000)} catch (e) { error = e};
+        try {
+            await flushPromises();
+            jest.runAllTimers();
+            await response;
+        } catch (e) { error = e};
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
+        expect(mockZnpRequest).toBeCalledTimes(3);
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(1, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 5, 'extRouteDisc', {dstAddr: 2, options: 16, radius: 30})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 2})
         expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
     });
 
@@ -2238,24 +2250,24 @@ describe('zStackAdapter', () => {
     it('Send zcl frame network address data confirm fails with default response', async () => {
         basicMocks();
         await adapter.start();
-        dataConfirmCode = 205;
+        dataConfirmCode = 201;
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
         try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000)} catch (e) {error = e;}
-        expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'undefined' (201)");
     });
 
     it('Send zcl frame network address data confirm fails without default response', async () => {
         basicMocks();
         await adapter.start();
-        dataConfirmCode = 205;
+        dataConfirmCode = 201;
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
         try {await adapter.sendZclFrameNetworkAddress(2, 20, frame, 10000, 15000)} catch (e) {error = e;}
-        expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'undefined' (201)");
     });
 
-    it('Send zcl frame network address timeout', async () => {
+    it('Send zcl frame network address timeout should discover route and retry', async () => {
         basicMocks();
         await adapter.start();
 
@@ -2269,10 +2281,20 @@ describe('zStackAdapter', () => {
         znpReceived(objectMismatch);
 
         let error;
-        try {jest.runAllTimers(); await response} catch (e) {error = e;}
-        expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
+        try {
+            await flushPromises();
+            jest.runAllTimers();
+            await flushPromises();
+            jest.runAllTimers();
+            await flushPromises();
+            jest.runAllTimers();
+            await response
+        } catch (e) {error = e;}
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
-        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledTimes(3);
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(1, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 5, 'extRouteDisc', {dstAddr: 2, options: 16, radius: Constants.AF.DEFAULT_RADIUS})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 2})
         expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 0 - 1 after 10000ms"));
     });
 
