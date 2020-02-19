@@ -89,19 +89,6 @@ class Driver extends events.EventEmitter {
                     }
                 } else {
                     debug('Serialport opened');
-
-                    // tests
-                    try {
-                        //const result1 = await this.writeParameterRequest(PARAM.PARAM.Network.MAC, [0x00,0x21,0x2e,0xff,0xff,0x03,0xd4,0x9a], 3);
-                        //const mac = await this.readParameterRequest(PARAM.PARAM.Network.MAC, 1);
-                        //const nwkAddress = await this.readParameterRequest(PARAM.PARAM.Network.NWK_ADDRESS, 5);
-                        //const result = await this.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, 0xaffe, 4);
-                        //const panId = await this.readParameterRequest(PARAM.PARAM.Network.PAN_ID, 2);
-                        //const fw = await this.readFirmwareVersionRequest(1);
-                    } catch {
-                        debug("Error");
-                    }
-
                     this.initialized = true;
                     resolve();
                 }
@@ -229,7 +216,7 @@ class Driver extends events.EventEmitter {
             return;
         }
         if (busyQueue.length > 0) {
-            debug("don't process queue. Request pending");
+            //debug("don't process queue. Request pending");
             return;
         }
         const req: Request = queue.shift();
@@ -497,7 +484,7 @@ class Driver extends events.EventEmitter {
         return [crc0, crc1];
     }
 
-    private macAddrStringToArray(addr: string) : Array<number>{
+    public macAddrStringToArray(addr: string) : Array<number>{
         if (addr.length < 16) {
             for (let l = 0; l < (16 - addr.length); l++) {
                 addr = "0" + addr;
@@ -508,6 +495,26 @@ class Driver extends events.EventEmitter {
         for (let i = 0; i < 8; i++) {
             result[i] = parseInt(addr.substr(y,2), 16);
             y += 2;
+        }
+        return result;
+    }
+
+    public macAddrArrayToString(addr: Array<number>) : string{
+        if (addr.length != 8) {
+            throw new Error("invalid array length for MAC address: " + addr.length);
+        }
+
+        let result: string = "";
+        let y = 0;
+        let char = "";
+        let i = 8;
+        let l = 0;
+        while (i--) {
+            char = addr[i].toString(16);
+            if (char.length < 2) {
+                char = "0" + char;
+            }
+            result += char;
         }
         return result;
     }
