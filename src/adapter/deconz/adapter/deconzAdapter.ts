@@ -551,7 +551,45 @@ class DeconzAdapter extends Adapter {
         clusterID: number, destinationAddressOrGroup: string | number, type: 'endpoint' | 'group',
         destinationEndpoint?: number
     ): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            const transactionID = this.nextTransactionID();
+            const clid1 = clusterID & 0xff;
+            const clid2 = (clusterID >> 8) & 0xff;
+            const destAddrMode = (type === 'group') ? PARAM.PARAM.addressMode.GROUP_ADDR : PARAM.PARAM.addressMode.IEEE_ADDR;
+            let asduLength = 14;
+            let destArray: number[];
+            if (type === 'endpoint') {
+                destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
+                destArray.concat([destinationEndpoint]);
+                asduLength = 21;
+            } else {
+                destArray = [destinationAddressOrGroup as number & 0xff, (destinationAddressOrGroup as number >> 8) & 0xff];
+            }
+            const request: ApsDataRequest = {};
+            const zdpFrame = [transactionID].concat(this.driver.macAddrStringToArray(sourceIeeeAddress)).concat(
+                [sourceEndpoint,clid1,clid2,destAddrMode]).concat(destArray);
 
+            request.requestId = transactionID;
+            request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
+            request.destAddr16 = destinationNetworkAddress;
+            request.destEndpoint = 0;
+            request.profileId = 0;
+            request.clusterId = 0x21; // bind_request
+            request.srcEndpoint = 0;
+            request.asduLength = asduLength;
+            request.asduPayload = zdpFrame;
+            request.txOptions = 0;
+            request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
+            //todo timeout
+
+            try {
+                this.driver.enqueueSendDataRequest(request) as ReceivedDataResponse;
+                const data = await this.waitForData(destinationNetworkAddress, 0x8021);
+                debug("BIND RESPONSE - addr: 0x" + destinationNetworkAddress.toString(16) + " status: " + data[0]);
+            } catch (error) {
+                debug("BIND FAILED - addr: 0x" + destinationNetworkAddress.toString(16) + " " + error);
+            }
+        }, destinationNetworkAddress);
     }
 
     public async unbind(
