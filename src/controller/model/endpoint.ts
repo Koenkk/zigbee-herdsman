@@ -199,7 +199,7 @@ class Endpoint extends Entity {
                 Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
                 options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'write', cluster.ID, payload
             );
-            await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
+            await Entity.adapter.sendZclFrameNetworkAddress(
                 this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout
             );
         } catch (error) {
@@ -229,7 +229,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const result = await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
+            const result = await Entity.adapter.sendZclFrameNetworkAddress(
                 this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
             );
             return ZclFrameConverter.attributeKeyValue(result.frame);
@@ -407,7 +407,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
+            await Entity.adapter.sendZclFrameNetworkAddress(
                 this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
             );
         } catch (error) {
@@ -441,15 +441,12 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            if (hasResponse) {
-                const result = await Entity.adapter.sendZclFrameNetworkAddressWithResponse(
-                    this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
-                );
+            const result = await Entity.adapter.sendZclFrameNetworkAddress(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+            );
+
+            if (result) {
                 return result.frame.Payload;
-            } else {
-                await Entity.adapter.sendZclFrameNetworkAddress(
-                    this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
-                );
             }
         } catch (error) {
             const message = `${log} failed (${error})`;
