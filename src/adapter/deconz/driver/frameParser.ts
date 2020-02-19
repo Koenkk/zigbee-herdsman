@@ -112,7 +112,7 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
     }
 
     // resolve send data request promise
-    const i = apsBusyQueue.findIndex((r: Request) => r.request.requestId === response.requestId);
+    const i = apsBusyQueue.findIndex((r: Request) => (r.request && r.request.requestId === response.requestId));
     if (i < 0) {
         return;
     }
@@ -125,6 +125,7 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
     }
 
     const req: Request = apsBusyQueue[i];
+
     // TODO timeout (at driver.ts)
     if (response.confirmStatus !== 0) {
         // reject if status is not SUCCESS
