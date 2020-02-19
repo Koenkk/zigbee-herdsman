@@ -639,7 +639,34 @@ class DeconzAdapter extends Adapter {
     }
 
     public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            const transactionID = this.nextTransactionID();
+            const nwk1 = networkAddress & 0xff;
+            const nwk2 = (networkAddress >> 8) & 0xff;
+            const request: ApsDataRequest = {};
+            const zdpFrame = [transactionID].concat(this.driver.macAddrStringToArray(ieeeAddr)).concat([0]);
 
+            request.requestId = transactionID;
+            request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
+            request.destAddr16 = networkAddress;
+            request.destEndpoint = 0;
+            request.profileId = 0;
+            request.clusterId = 0x34; // mgmt_leave_request
+            request.srcEndpoint = 0;
+            request.asduLength = 4;
+            request.asduPayload = zdpFrame;
+            request.txOptions = 0;
+            request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
+            //todo timeout
+
+            try {
+                this.driver.enqueueSendDataRequest(request) as ReceivedDataResponse;
+                const data = await this.waitForData(networkAddress, 0x8034);
+                debug("REMOVE_DEVICE - addr: 0x" + networkAddress.toString(16) + " status: " + data[0]);
+            } catch (error) {
+                debug("REMOVE_DEVICE FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
+            }
+        }, networkAddress);
     }
 
     public async supportsBackup(): Promise<boolean> {
