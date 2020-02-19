@@ -550,7 +550,8 @@ class Controller extends events.EventEmitter {
             }
 
             // Send a default response if necessary.
-            if (!frame.Header.frameControl.disableDefaultResponse) {
+            const isDefaultResponse = frame.isGlobal() && frame.getCommand().name === 'defaultRsp';
+            if (!frame.Header.frameControl.disableDefaultResponse && !isDefaultResponse) {
                 try {
                     await endpoint.defaultResponse(
                         frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
