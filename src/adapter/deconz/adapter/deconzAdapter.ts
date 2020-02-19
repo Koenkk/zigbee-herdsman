@@ -223,7 +223,94 @@ class DeconzAdapter extends Adapter {
     }
 
     public async routingTable(networkAddress: number): Promise<RoutingTable> {
-        return null;
+        return this.queue.execute<RoutingTable>(async (): Promise<RoutingTable> => {
+
+            const table: RoutingTableEntry[] = [];
+            const statusLookup: {[n: number]: string} = {
+                0: 'ACTIVE',
+                1: 'DISCOVERY_UNDERWAY',
+                2: 'DISCOVERY_FAILED',
+                3: 'INACTIVE',
+            };
+            const add = (list: any) => {
+                for (const entry of list) {
+                    const statusByte = entry.readUInt8(2);
+                    const extAddr: number[] = [];
+                    for (let i = 8; i < 16; i++) {
+                        extAddr.push(entry[i]);
+                    }
+
+                    table.push({
+                        destinationAddress: entry.readUInt16LE(0),
+                        status: statusLookup[(statusByte >> 5) & ((1 << 3)-1)],
+                        nextHop: entry.readUInt16LE(3)
+                    });
+                }
+            };
+
+            const request = async (startIndex: number): Promise<any> => {
+                const transactionID = this.nextTransactionID();
+                const req: ApsDataRequest = {};
+                req.requestId = transactionID;
+                req.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
+                req.destAddr16 = networkAddress;
+                req.destEndpoint = 0;
+                req.profileId = 0;
+                req.clusterId = 0x32; // mgmt_rtg_request
+                req.srcEndpoint = 0;
+                req.asduLength = 2;
+                req.asduPayload = [transactionID, startIndex];
+                req.txOptions = 0;
+                req.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
+                //todo timeout
+
+                try {
+                    this.driver.enqueueSendDataRequest(req) as ReceivedDataResponse;
+                    const data = await this.waitForData(networkAddress, 0x8032);
+
+                    if (data[0] !== 0) { // status
+                        throw new Error(`Routingtables for '${networkAddress}' failed`);
+                    }
+                    const tableList: Buffer[] = [];
+                    const response = {
+                        status: data[0],
+                        tableEntrys: data[1],
+                        startIndex: data[2],
+                        tableListCount: data[3],
+                        tableList: tableList
+                    }
+
+                    let tableEntry: number[] = [];
+                    let counter = 0;
+                    for (let i = 4; i < ((response.tableListCount * 5) + 4); i++) { // one tableentry = 5 bytes
+                        tableEntry.push(data[i]);
+                        counter++;
+                        if (counter === 5) {
+                            response.tableList.push(Buffer.from(tableEntry));
+                            tableEntry = [];
+                            counter = 0;
+                        }
+                    }
+
+                    debug("ROUTING_TABLE RESPONSE - addr: 0x" + networkAddress.toString(16) + " status: " + response.status + " read " + (response.tableListCount + response.startIndex) + "/" + response.tableEntrys + " entrys");
+                    return response;
+                } catch (error) {
+                    debug("ROUTING_TABLE REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
+                }
+            };
+
+            let response = await request(0);
+            add(response.tableList);
+            let nextStartIndex = response.tableListCount;
+
+            while (table.length < response.tableEntrys) {
+                response = await request(nextStartIndex);
+                add(response.tableList);
+                nextStartIndex += response.tableListCount;
+            }
+
+            return {table};
+        }, networkAddress);
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
