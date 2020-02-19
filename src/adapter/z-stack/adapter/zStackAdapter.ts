@@ -244,57 +244,66 @@ class ZStackAdapter extends Adapter {
 
     public async sendZclFrameNetworkAddress(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
-        firstAttempt = true,
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
-            let response = null;
-            const command = zclFrame.getCommand();
-            if (command.hasOwnProperty('response')) {
-                response = this.waitFor(
-                    networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
-                    zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
-                );
-            } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
-                response = this.waitFor(
-                    networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
-                    zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
-                    defaultResponseTimeout,
-                );
-            }
-
-            try {
-                await this.dataRequest(
-                    networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(),
-                    timeout
-                );
-            } catch (error) {
-                if (response) {
-                    response.cancel();
-                }
-
-                throw error;
-            }
-
-            if (response !== null) {
-                try {
-                    const result = await response.promise;
-                    return result;
-                } catch (error) {
-                    if (firstAttempt) {
-                        // Timeout could happen because of invalid route, rediscover and retry.
-                        await this.discoverRoute(networkAddress);
-                        await Wait(3000);
-                        return this.sendZclFrameNetworkAddress(
-                            networkAddress, endpoint, zclFrame, timeout, defaultResponseTimeout, false
-                        );
-                    } else {
-                        throw error;
-                    }
-                }
-            } else {
-                return null;
-            }
+            return this.sendZclFrameNetworkAddressInternal(
+                networkAddress, endpoint, zclFrame, timeout, defaultResponseTimeout, true
+            );
         }, networkAddress);
+    }
+
+    private async sendZclFrameNetworkAddressInternal(
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
+        firstAttempt: boolean,
+    ): Promise<Events.ZclDataPayload> {
+        let response = null;
+        const command = zclFrame.getCommand();
+        if (command.hasOwnProperty('response')) {
+            response = this.waitFor(
+                networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
+                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
+            );
+        } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
+            response = this.waitFor(
+                networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
+                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
+                defaultResponseTimeout,
+            );
+        }
+
+        try {
+            await this.dataRequest(
+                networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(),
+                timeout
+            );
+        } catch (error) {
+            if (response) {
+                response.cancel();
+            }
+
+            throw error;
+        }
+
+        if (response !== null) {
+            try {
+                const result = await response.promise;
+                return result;
+            } catch (error) {
+                if (firstAttempt) {
+                    // Timeout could happen because of invalid route, rediscover and retry.
+                    await this.discoverRoute(networkAddress);
+                    await Wait(3000);
+                    const result = await this.sendZclFrameNetworkAddressInternal(
+                        networkAddress, endpoint, zclFrame, timeout, defaultResponseTimeout, false
+                    );
+                    return result;
+                } else {
+                    throw error;
+                }
+            }
+        } else {
+            return null;
+        }
     }
 
     public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void> {
