@@ -62,7 +62,7 @@ class ZStackAdapter extends Adapter {
 
         this.transactionID = 0;
         this.closing = false;
-        this.queue = new Queue(2);
+        this.queue = new Queue(16);
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
