@@ -127,7 +127,7 @@ abstract class Adapter extends events.EventEmitter {
      * ZCL
      */
 
-    public abstract sendZclFrameNetworkAddress(
+    public abstract sendZclFrameToEndpoint(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
     ): Promise<ZclDataPayload>;
 

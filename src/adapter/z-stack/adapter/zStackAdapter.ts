@@ -242,17 +242,17 @@ class ZStackAdapter extends Adapter {
         }, networkAddress);
     }
 
-    public async sendZclFrameNetworkAddress(
+    public async sendZclFrameToEndpoint(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
-            return this.sendZclFrameNetworkAddressInternal(
+            return this.sendZclFrameToEndpointInternal(
                 networkAddress, endpoint, zclFrame, timeout, true
             );
         }, networkAddress);
     }
 
-    private async sendZclFrameNetworkAddressInternal(
+    private async sendZclFrameToEndpointInternal(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, firstAttempt: boolean,
     ): Promise<Events.ZclDataPayload> {
         let response = null;
@@ -292,7 +292,7 @@ class ZStackAdapter extends Adapter {
                     // Timeout could happen because of invalid route, rediscover and retry.
                     await this.discoverRoute(networkAddress);
                     await Wait(3000);
-                    return this.sendZclFrameNetworkAddressInternal(
+                    return this.sendZclFrameToEndpointInternal(
                         networkAddress, endpoint, zclFrame, timeout, false
                     );
                 } else {

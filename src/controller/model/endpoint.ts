@@ -198,7 +198,7 @@ class Endpoint extends Entity {
                 Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
                 options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'write', cluster.ID, payload
             );
-            await Entity.adapter.sendZclFrameNetworkAddress(
+            await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceNetworkAddress, this.ID, frame, options.timeout,
             );
         } catch (error) {
@@ -228,7 +228,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const result = await Entity.adapter.sendZclFrameNetworkAddress(
+            const result = await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceNetworkAddress, this.ID, frame, options.timeout,
             );
             return ZclFrameConverter.attributeKeyValue(result.frame);
@@ -266,7 +266,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await Entity.adapter.sendZclFrameNetworkAddress(
+            await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceNetworkAddress, this.ID, frame, options.timeout,
             );
         } catch (error) {
@@ -357,7 +357,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await Entity.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame, options.timeout);
+            await Entity.adapter.sendZclFrameToEndpoint(this.deviceNetworkAddress, this.ID, frame, options.timeout);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -404,7 +404,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await Entity.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame, options.timeout);
+            await Entity.adapter.sendZclFrameToEndpoint(this.deviceNetworkAddress, this.ID, frame, options.timeout);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -436,7 +436,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const result = await Entity.adapter.sendZclFrameNetworkAddress(
+            const result = await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceNetworkAddress, this.ID, frame, options.timeout,
             );
 
@@ -475,7 +475,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await Entity.adapter.sendZclFrameNetworkAddress(this.deviceNetworkAddress, this.ID, frame, options.timeout);
+            await Entity.adapter.sendZclFrameToEndpoint(this.deviceNetworkAddress, this.ID, frame, options.timeout);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
