@@ -274,8 +274,7 @@ class ZStackAdapter extends Adapter {
 
         try {
             await this.dataRequest(
-                networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(),
-                timeout
+                networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 5
             );
         } catch (error) {
             if (response) {
@@ -643,7 +642,7 @@ class ZStackAdapter extends Adapter {
      */
     private async dataRequest(
         destinationAddress: number, destinationEndpoint: number, sourceEndpoint: number, clusterID: number,
-        radius: number, data: Buffer, attemptsLeft = 5,
+        radius: number, data: Buffer, attemptsLeft: number,
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
         const response = this.znp.waitFor(
