@@ -131,7 +131,7 @@ abstract class Adapter extends events.EventEmitter {
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
     ): Promise<ZclDataPayload>;
 
-    public abstract sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void>;
+    public abstract sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void>;
 
     /**
      * InterPAN
