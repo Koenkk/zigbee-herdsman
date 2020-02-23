@@ -10,7 +10,6 @@
 
 ### Properties
 
-* [defaultResponseTimeout](_controller_model_endpoint_.options.md#optional-defaultresponsetimeout)
 * [disableDefaultResponse](_controller_model_endpoint_.options.md#optional-disabledefaultresponse)
 * [manufacturerCode](_controller_model_endpoint_.options.md#optional-manufacturercode)
 * [response](_controller_model_endpoint_.options.md#optional-response)
@@ -18,19 +17,11 @@
 
 ## Properties
 
-### `Optional` defaultResponseTimeout
-
-• **defaultResponseTimeout**? : *number*
-
-*Defined in [src/controller/model/endpoint.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L27)*
-
-___
-
 ### `Optional` disableDefaultResponse
 
 • **disableDefaultResponse**? : *boolean*
 
-*Defined in [src/controller/model/endpoint.ts:24](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L24)*
+*Defined in [src/controller/model/endpoint.ts:24](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/endpoint.ts#L24)*
 
 ___
 
@@ -38,7 +29,7 @@ ___
 
 • **manufacturerCode**? : *number*
 
-*Defined in [src/controller/model/endpoint.ts:23](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L23)*
+*Defined in [src/controller/model/endpoint.ts:23](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/endpoint.ts#L23)*
 
 ___
 
@@ -46,7 +37,7 @@ ___
 
 • **response**? : *boolean*
 
-*Defined in [src/controller/model/endpoint.ts:25](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L25)*
+*Defined in [src/controller/model/endpoint.ts:25](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/endpoint.ts#L25)*
 
 ___
 
@@ -54,4 +45,4 @@ ___
 
 • **timeout**? : *number*
 
-*Defined in [src/controller/model/endpoint.ts:26](https://github.com/Koenkk/zigbee-herdsman/blob/632e6e4/src/controller/model/endpoint.ts#L26)*
+*Defined in [src/controller/model/endpoint.ts:26](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/endpoint.ts#L26)*
