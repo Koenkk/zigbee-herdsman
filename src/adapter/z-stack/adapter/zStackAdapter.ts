@@ -62,7 +62,6 @@ class ZStackAdapter extends Adapter {
 
         this.transactionID = 0;
         this.closing = false;
-        this.queue = new Queue(16);
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
@@ -90,6 +89,8 @@ class ZStackAdapter extends Adapter {
             debug(`Failed to get zStack version, assuming 1.2`);
             this.version = {"transportrev":2, "product":0, "majorrel":2, "minorrel":0, "maintrel":0, "revision":""};
         }
+
+        this.queue = new Queue(this.version.product === ZnpVersion.zStack3x0 ? 16 : 2);
 
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
 
