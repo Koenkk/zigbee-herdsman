@@ -668,19 +668,20 @@ class ZStackAdapter extends Adapter {
 
         const dataConfirm = await response.promise;
         if (dataConfirm.payload.status !== 0) {
-            if ([225, 233, 240].includes(dataConfirm.payload.status) && attemptsLeft > 0) {
+            if ([225, 240].includes(dataConfirm.payload.status) && attemptsLeft > 0) {
                 /**
                  * 225: When many commands at once are executed we can end up in a MAC channel access failure
                  * error. This is because there is too much traffic on the network.
                  * Retry this command once after a cooling down period.
-                 * 233/240: https://github.com/Koenkk/zigbee-herdsman-converters/issues/715#issuecomment-586693990
+                 * 240: Mac layer is sleeping, try a few more times
                  */
                 await Wait(2000);
                 return this.dataRequest(
                     destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, attemptsLeft - 1
                 );
-            } else if (dataConfirm.payload.status === 205 && attemptsLeft > 0) {
+            } else if ([205, 233].includes(dataConfirm.payload.status) && attemptsLeft > 0) {
                 // 205: no network route => rediscover route
+                // 233: route may be corrupted
                 await this.discoverRoute(destinationAddress);
                 await Wait(3000);
                 return this.dataRequest(
