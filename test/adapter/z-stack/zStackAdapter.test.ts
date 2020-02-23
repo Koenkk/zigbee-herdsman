@@ -2555,7 +2555,7 @@ describe('zStackAdapter', () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
-        const result = await adapter.sendZclFrameInterPANIeeeAddr(touchlinkIdentifyRequest, '0x0017880104c9cd33');
+        const result = await adapter.sendZclFrameInterPANToIeeeAddr(touchlinkIdentifyRequest, '0x0017880104c9cd33');
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 4096, "data": touchlinkIdentifyRequest.toBuffer(), "destendpoint": 254, "dstaddr": '0x0017880104c9cd33', "len": 9, "options": 0, "radius": 30, "srcendpoint": 12, "transid": 1, "dstaddrmode": 3, "dstpanid": 65535})
     });

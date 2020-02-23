@@ -571,7 +571,7 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPANIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
+    public async sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 Constants.COMMON.addressMode.ADDR_64BIT, ieeeAddr, 0xFE, 0xFFFF,
