@@ -304,7 +304,7 @@ class ZStackAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 0, 1, zclFrame.Cluster.ID,

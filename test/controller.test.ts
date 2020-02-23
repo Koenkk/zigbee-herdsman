@@ -40,7 +40,7 @@ const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
     ]
 });
 const mockAdapterBind = jest.fn();
-const mockSendZclFrameGroup = jest.fn();
+const mocksendZclFrameToGroup = jest.fn();
 const mockAdapterUnbind = jest.fn();
 const mockAdapterRemoveDevice = jest.fn();
 const mocksendZclFrameToEndpoint = jest.fn();
@@ -233,7 +233,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
                 return mockDevices[networkAddress].simpleDescriptor[endpoint];
             },
             sendZclFrameToEndpoint: mocksendZclFrameToEndpoint,
-            sendZclFrameGroup: mockSendZclFrameGroup,
+            sendZclFrameToGroup: mocksendZclFrameToGroup,
             permitJoin: mockAdapterPermitJoin,
             supportsDiscoverRoute: mockAdapterSupportsDiscoverRoute,
             discoverRoute: mockDiscoverRoute,
@@ -1947,7 +1947,7 @@ describe('Controller', () => {
         await controller.start();
         const group = await controller.createGroup(2);
         await group.command('genOnOff', 'offWithEffect', {effectid: 9, effectvariant: 10});
-        const call = mockSendZclFrameGroup.mock.calls[0];
+        const call = mocksendZclFrameToGroup.mock.calls[0];
         expect(call[0]).toBe(2);
         expect(deepClone(call[1])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":2,"manufacturerCode":null,"commandIdentifier":64},"Payload":{"effectid":9,"effectvariant":10},"Cluster":getCluster(6)});
         expect(call[2]).toBe(10000);
@@ -2590,7 +2590,7 @@ describe('Controller', () => {
     it('Group command error', async () => {
         await controller.start();
         const group = await controller.createGroup(2);
-        mockSendZclFrameGroup.mockRejectedValueOnce('timeout');
+        mocksendZclFrameToGroup.mockRejectedValueOnce('timeout');
         let error;
         try {await group.command('genOnOff', 'toggle', {})} catch (e) {error = e}
         expect(error).toStrictEqual(new Error(`Command 2 genOnOff.toggle({}) failed (timeout)`));
