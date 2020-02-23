@@ -1950,7 +1950,6 @@ describe('Controller', () => {
         const call = mocksendZclFrameToGroup.mock.calls[0];
         expect(call[0]).toBe(2);
         expect(deepClone(call[1])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":2,"manufacturerCode":null,"commandIdentifier":64},"Payload":{"effectid":9,"effectvariant":10},"Cluster":getCluster(6)});
-        expect(call[2]).toBe(10000);
     });
 
     it('Group command throw error on missing parameter', async () => {

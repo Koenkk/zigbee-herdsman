@@ -139,7 +139,7 @@ class Group extends Entity {
                 Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
                 command.ID, cluster.ID, payload
             );
-            await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, 10000);
+            await Entity.adapter.sendZclFrameToGroup(this.groupID, frame);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
