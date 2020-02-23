@@ -21,7 +21,7 @@ class Touchlink {
             await this.adapter.setChannelInterPAN(channel);
 
             try {
-                const response = await this.adapter.sendZclFrameInterPANBroadcastWithResponse(
+                const response = await this.adapter.sendZclFrameInterPANBroadcast(
                     this.createScanRequestFrame(), 500
                 );
                 debug(`Got scan response on channel '${channel}'`);

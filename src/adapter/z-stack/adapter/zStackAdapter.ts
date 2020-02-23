@@ -580,7 +580,7 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPANBroadcastWithResponse(
+    public async sendZclFrameInterPANBroadcast(
         zclFrame: ZclFrame, timeout: number
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {

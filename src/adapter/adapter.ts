@@ -141,7 +141,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddress: string): Promise<void>;
 
-    public abstract sendZclFrameInterPANBroadcastWithResponse(
+    public abstract sendZclFrameInterPANBroadcast(
         zclFrame: ZclFrame, timeout: number
     ): Promise<ZclDataPayload>;
 

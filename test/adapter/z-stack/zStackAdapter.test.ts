@@ -2566,7 +2566,7 @@ describe('zStackAdapter', () => {
         mockZnpRequest.mockClear();
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsgExt', payload: {clusterid: 4096, srcendpoint: 0xFE, srcaddr: 12394, linkquality: 101, groupid: 0, data: touchlinkScanResponse.toBuffer()}};
 
-        let result = adapter.sendZclFrameInterPANBroadcastWithResponse(touchlinkScanRequest, 1000);
+        let result = adapter.sendZclFrameInterPANBroadcast(touchlinkScanRequest, 1000);
         znpReceived(object);
         result = await result;
 
@@ -2580,7 +2580,7 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         let error;
-        try { await adapter.sendZclFrameInterPANBroadcastWithResponse(touchlinkIdentifyRequest, 1000)} catch (e) { error = e};
+        try { await adapter.sendZclFrameInterPANBroadcast(touchlinkIdentifyRequest, 1000)} catch (e) { error = e};
         expect(error).toStrictEqual(new Error(`Command 'identifyRequest' has no response, cannot wait for response`))
     });
 
@@ -2590,7 +2590,7 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         let error;
-        try { await adapter.sendZclFrameInterPANBroadcastWithResponse(touchlinkScanRequest, 1000)} catch (e) { error = e};
+        try { await adapter.sendZclFrameInterPANBroadcast(touchlinkScanRequest, 1000)} catch (e) { error = e};
         expect(error).toStrictEqual(new Error(`Data request failed with code '99'`))
     });
 
