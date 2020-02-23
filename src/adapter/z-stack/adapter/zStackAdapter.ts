@@ -243,18 +243,17 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameNetworkAddress(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
             return this.sendZclFrameNetworkAddressInternal(
-                networkAddress, endpoint, zclFrame, timeout, defaultResponseTimeout, true
+                networkAddress, endpoint, zclFrame, timeout, true
             );
         }, networkAddress);
     }
 
     private async sendZclFrameNetworkAddressInternal(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
-        firstAttempt: boolean,
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, firstAttempt: boolean,
     ): Promise<Events.ZclDataPayload> {
         let response = null;
         const command = zclFrame.getCommand();
@@ -267,7 +266,7 @@ class ZStackAdapter extends Adapter {
             response = this.waitFor(
                 networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
                 zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
-                defaultResponseTimeout,
+                timeout,
             );
         }
 
@@ -294,7 +293,7 @@ class ZStackAdapter extends Adapter {
                     await this.discoverRoute(networkAddress);
                     await Wait(3000);
                     return this.sendZclFrameNetworkAddressInternal(
-                        networkAddress, endpoint, zclFrame, timeout, defaultResponseTimeout, false
+                        networkAddress, endpoint, zclFrame, timeout, false
                     );
                 } else {
                     throw error;
