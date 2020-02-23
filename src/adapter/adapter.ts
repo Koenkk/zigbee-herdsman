@@ -20,6 +20,10 @@ abstract class Adapter extends events.EventEmitter {
         this.backupPath = backupPath;
     }
 
+    /**
+     * Utility
+     */
+
     public static async create(
         networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string
     ): Promise<Adapter> {
@@ -68,8 +72,6 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract getCoordinator(): Promise<TsType.Coordinator>;
 
-    public abstract permitJoin(seconds: number, networkAddress: number): Promise<void>;
-
     public abstract getCoordinatorVersion(): Promise<TsType.CoordinatorVersion>;
 
     public abstract reset(type: 'soft' | 'hard'): Promise<void>;
@@ -77,6 +79,25 @@ abstract class Adapter extends events.EventEmitter {
     public abstract supportsLED(): Promise<boolean>;
 
     public abstract setLED(enabled: boolean): Promise<void>;
+
+    public abstract supportsBackup(): Promise<boolean>;
+
+    public abstract backup(): Promise<TsType.Backup>;
+
+    public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
+
+    public abstract setTransmitPower(value: number): Promise<void>;
+
+    public abstract waitFor(
+        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
+        transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
+    ): {promise: Promise<ZclDataPayload>; cancel: () => void};
+
+    /**
+     * ZDO
+     */
+
+    public abstract permitJoin(seconds: number, networkAddress: number): Promise<void>;
 
     public abstract lqi(networkAddress: number): Promise<TsType.LQI>;
 
@@ -87,17 +108,6 @@ abstract class Adapter extends events.EventEmitter {
     public abstract activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints>;
 
     public abstract simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor>;
-
-    public abstract waitFor(
-        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
-        transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): {promise: Promise<ZclDataPayload>; cancel: () => void};
-
-    public abstract sendZclFrameNetworkAddress(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
-    ): Promise<ZclDataPayload>;
-
-    public abstract sendZclFrameGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void>;
 
     public abstract bind(
         destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number,
@@ -113,11 +123,19 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract removeDevice(networkAddress: number, ieeeAddr: string): Promise<void>;
 
-    public abstract supportsBackup(): Promise<boolean>;
+    /**
+     * ZCL
+     */
 
-    public abstract backup(): Promise<TsType.Backup>;
+    public abstract sendZclFrameNetworkAddress(
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
+    ): Promise<ZclDataPayload>;
 
-    public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
+    public abstract sendZclFrameGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void>;
+
+    /**
+     * InterPAN
+     */
 
     public abstract setChannelInterPAN(channel: number): Promise<void>;
 
@@ -129,7 +147,6 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract restoreChannelInterPAN(): Promise<void>;
 
-    public abstract setTransmitPower(value: number): Promise<void>;
 }
 
 export default Adapter;
