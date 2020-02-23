@@ -506,7 +506,7 @@ class Endpoint extends Entity {
     private getOptionsWithDefaults(options: Options, disableDefaultResponse: boolean): Options {
         const providedOptions = options || {};
         return {
-            timeout: 10000,
+            timeout: 6000,
             manufacturerCode: null,
             disableDefaultResponse, ...providedOptions
         };
