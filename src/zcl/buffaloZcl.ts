@@ -1,7 +1,7 @@
 
 import {Buffalo, TsType} from '../buffalo';
 import {DataType} from './definition';
-import {BuffaloZclOptions} from './tstype';
+import {BuffaloZclOptions, ZclArray} from './tstype';
 
 const aliases: {[s: string]: string} = {
     'boolean': 'uint8',
@@ -65,6 +65,15 @@ class BuffaloZcl extends Buffalo {
         }
 
         return values;
+    }
+
+    private writeArray(value: ZclArray): void {
+        const elTypeNumeric = typeof value.elementType === 'number' ? value.elementType : DataType[value.elementType];
+        this.writeUInt8(elTypeNumeric);
+        this.writeUInt16(value.elements.length);
+        value.elements.forEach(element => {
+            this.write(DataType[elTypeNumeric], element, {});
+        });
     }
 
     private readStruct(): TsType.Value {
@@ -270,7 +279,7 @@ class BuffaloZcl extends Buffalo {
     }
 
     public write(type: string, value: TsType.Value, options: BuffaloZclOptions): void {
-        // TODO: write for the following is missing: struct, array (+ bag/set)
+        // TODO: write for the following is missing: struct
         type = aliases[type] || type;
 
         if (type === 'uint40') {
@@ -293,6 +302,8 @@ class BuffaloZcl extends Buffalo {
             return this.writeLongCharStr(value);
         } else if (type === 'octetStr') {
             return this.writeOctetStr(value);
+        } else if (type === 'array') {
+            return this.writeArray(value);
         } else if (type === 'USE_DATA_TYPE') {
             return this.writeUseDataType(value, options);
         } else {
