@@ -57,6 +57,7 @@ interface Request {
 
 interface WaitForDataRequest {
     addr?: number;
+    profileId?: number;
     clusterId?: number;
     resolve?: Function;
     reject?: Function;
