@@ -116,6 +116,7 @@ interface ApsDataRequest {
     asduPayload?: number[];
     txOptions?: number;
     radius?: number;
+    timeout?: number  // seconds
 }
 
 type ParamMac = string;

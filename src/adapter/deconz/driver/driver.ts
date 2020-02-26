@@ -452,8 +452,12 @@ class Driver extends events.EventEmitter {
         while (i--) {
             const req: Request = apsBusyQueue[i];
             const now = Date.now();
+            let timeout = 60000;
+            if (req.request != null && req.request.timeout != null) {
+                timeout = req.request.timeout * 1000; // seconds * 1000 = milliseconds
+            }
 
-            if ((now - req.ts) > 60000) { // 60 seconds
+            if ((now - req.ts) > timeout) {
                 debug(`Timeout for aps request CMD: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`);
                 //remove from busyQueue
                 apsBusyQueue.splice(i, 1);

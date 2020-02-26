@@ -102,7 +102,7 @@ class DeconzAdapter extends Adapter {
             request.asduPayload = zdpFrame;
             request.txOptions = 0;
             request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
-            //todo timeout
+            request.timeout = 5;
 
             try {
                 await this.driver.enqueueSendDataRequest(request);
