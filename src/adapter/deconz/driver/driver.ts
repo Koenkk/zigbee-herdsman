@@ -485,6 +485,9 @@ class Driver extends events.EventEmitter {
     }
 
     public macAddrStringToArray(addr: string) : Array<number>{
+        if (addr.indexOf("0x") === 0) {
+            addr = addr.slice(2, addr.length);
+        }
         if (addr.length < 16) {
             for (let l = 0; l < (16 - addr.length); l++) {
                 addr = "0" + addr;
@@ -504,7 +507,7 @@ class Driver extends events.EventEmitter {
             throw new Error("invalid array length for MAC address: " + addr.length);
         }
 
-        let result: string = "";
+        let result: string = "0x";
         let y = 0;
         let char = "";
         let i = 8;
