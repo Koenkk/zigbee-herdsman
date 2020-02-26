@@ -350,18 +350,6 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public enqueueSendDataRequestWithResponse(request: ApsDataRequest) : Promise<Events.ZclDataPayload> {
-        const seqNumber = this.nextSeqNumber();
-        return new Promise((resolve, reject): void => {
-            //debug(`push enqueue send data request to apsQueue. seqNr: ${seqNumber}`);
-            const ts = 0;
-            const requestId = request.requestId;
-            const commandId = PARAM.PARAM.APS.DATA_REQUEST;
-            const req: Request = {commandId, seqNumber, request, resolve, reject, ts};
-            apsQueue.push(req);
-        });
-    }
-
     private querySendDataStateRequest() : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
