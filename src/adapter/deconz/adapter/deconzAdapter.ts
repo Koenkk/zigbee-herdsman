@@ -86,10 +86,6 @@ class DeconzAdapter extends Adapter {
     }
 
     public async permitJoin(seconds: number): Promise<void> {
-        if (seconds < 0 || seconds > 255) {
-            throw new Error(`invalid value ${seconds} for permit join`);
-        }
-
         return this.queue.execute<void>(async () => {
             const transactionID = this.nextTransactionID();
             const request: ApsDataRequest = {};
@@ -120,10 +116,16 @@ class DeconzAdapter extends Adapter {
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
         // product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string;
-        const fw = await this.driver.readFirmwareVersionRequest();
-        const type: string = (fw[1] === 5) ? "raspbee" : "conbee2";
-        const meta = {major: fw[3], minor: fw[2]}
-        return {type: type, meta: meta};
+        try {
+            const fw = await this.driver.readFirmwareVersionRequest();
+            const buf = Buffer.from(fw);
+            let fwString = "0x" + buf.readUInt32LE(0).toString(16);
+            const type: string = (fw[1] === 5) ? "RaspBee" : "ConBee2";
+            const meta = {"transportrev":0, "product":0, "majorrel": fw[3], "minorrel": fw[2], "maintrel":0, "revision":fwString};
+            return {type: type, meta: meta};
+        } catch (error) {
+            debug("Get coordinator version error: " + error);
+        }
     }
 
     public async reset(type: 'soft' | 'hard'): Promise<void> {
@@ -175,23 +177,24 @@ class DeconzAdapter extends Adapter {
 
                 try {
                     this.driver.enqueueSendDataRequest(req) as ReceivedDataResponse;
-                    const data = await this.waitForData(networkAddress, 0x8031);
+                    const d = await this.waitForData(networkAddress, 0, 0x8031);
+                    const data = d.asduPayload;
 
-                    if (data[0] !== 0) { // status
+                    if (data[1] !== 0) { // status
                         throw new Error(`LQI for '${networkAddress}' failed`);
                     }
                     const tableList: Buffer[] = [];
                     const response = {
-                        status: data[0],
-                        tableEntrys: data[1],
-                        startIndex: data[2],
-                        tableListCount: data[3],
+                        status: data[1],
+                        tableEntrys: data[2],
+                        startIndex: data[3],
+                        tableListCount: data[4],
                         tableList: tableList
                     }
 
                     let tableEntry: number[] = [];
                     let counter = 0;
-                    for (let i = 4; i < ((response.tableListCount * 22) + 4); i++) { // one tableentry = 22 bytes
+                    for (let i = 5; i < ((response.tableListCount * 22) + 5); i++) { // one tableentry = 22 bytes
                         tableEntry.push(data[i]);
                         counter++;
                         if (counter === 22) {
@@ -266,23 +269,24 @@ class DeconzAdapter extends Adapter {
 
                 try {
                     this.driver.enqueueSendDataRequest(req) as ReceivedDataResponse;
-                    const data = await this.waitForData(networkAddress, 0x8032);
+                    const d = await this.waitForData(networkAddress, 0, 0x8032);
+                    const data = d.asduPayload;
 
-                    if (data[0] !== 0) { // status
+                    if (data[1] !== 0) { // status
                         throw new Error(`Routingtables for '${networkAddress}' failed`);
                     }
                     const tableList: Buffer[] = [];
                     const response = {
-                        status: data[0],
-                        tableEntrys: data[1],
-                        startIndex: data[2],
-                        tableListCount: data[3],
+                        status: data[1],
+                        tableEntrys: data[2],
+                        startIndex: data[3],
+                        tableListCount: data[4],
                         tableList: tableList
                     }
 
                     let tableEntry: number[] = [];
                     let counter = 0;
-                    for (let i = 4; i < ((response.tableListCount * 5) + 4); i++) { // one tableentry = 5 bytes
+                    for (let i = 5; i < ((response.tableListCount * 5) + 5); i++) { // one tableentry = 5 bytes
                         tableEntry.push(data[i]);
                         counter++;
                         if (counter === 5) {
@@ -336,18 +340,18 @@ class DeconzAdapter extends Adapter {
 
             try {
                 this.driver.enqueueSendDataRequest(request) as ReceivedDataResponse;
-                const data = await this.waitForData(networkAddress, 0x8002);
+                const d = await this.waitForData(networkAddress, 0, 0x8002);
+                const data = d.asduPayload;
 
                 const buf = Buffer.from(data);
-                const logicaltype = (data[3] & 7);
+                const logicaltype = (data[4] & 7);
                 const type: DeviceType = (logicaltype === 1) ? 'Router' : (logicaltype === 2) ? 'EndDevice' : (logicaltype === 0) ? 'Coordinator' : 'Unknown';
-                const manufacturer = buf.readUInt16LE(6);
-
+                const manufacturer = buf.readUInt16LE(7);
                 debug("RECEIVING NODE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " type: " + type + " manufacturer: 0x" + manufacturer.toString(16));
                 return {manufacturerCode: manufacturer, type};
             } catch (error) {
                 debug("RECEIVING NODE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-        }
+            }
 
         }, networkAddress);
     }
@@ -375,15 +379,15 @@ class DeconzAdapter extends Adapter {
 
             try {
                 this.driver.enqueueSendDataRequest(request) as ReceivedDataResponse;
-                const data = await this.waitForData(networkAddress, 0x8005);
+                const d = await this.waitForData(networkAddress, 0, 0x8005);
+                const data = d.asduPayload;
 
                 const buf = Buffer.from(data);
-                const epCount = buf.readUInt8(3);
+                const epCount = buf.readUInt8(4);
                 const epList = [];
-                for (let i = 4; i < (epCount + 4); i++) {
+                for (let i = 5; i < (epCount + 5); i++) {
                     epList.push(buf.readUInt8(i));
                 }
-
                 debug("ACTIVE_ENDPOINTS - addr: 0x" + networkAddress.toString(16) + " EP list: " + epList);
                 return {endpoints: epList};
             } catch (error) {
@@ -417,28 +421,29 @@ class DeconzAdapter extends Adapter {
 
             try {
                 this.driver.enqueueSendDataRequest(request) as ReceivedDataResponse;
-                const data = await this.waitForData(networkAddress, 0x8004);
+                const d = await this.waitForData(networkAddress, 0, 0x8004);
+                const data = d.asduPayload;
 
                 const buf = Buffer.from(data);
-                const inCount = buf.readUInt8(10);
+                const inCount = buf.readUInt8(11);
                 const inClusters = [];
-                let cIndex = 11;
+                let cIndex = 12;
                 for (let i = 0; i < inCount; i++) {
                     inClusters[i] = buf.readUInt16LE(cIndex);
                     cIndex += 2;
                 }
-                const outCount = buf.readUInt8(11 + (inCount*2));
+                const outCount = buf.readUInt8(12 + (inCount*2));
                 const outClusters = [];
-                cIndex = 12 + (inCount*2);
+                cIndex = 13 + (inCount*2);
                 for (let l = 0; l < outCount; l++) {
                     outClusters[l] = buf.readUInt16LE(cIndex);
                     cIndex += 2;
                 }
 
                 const simpleDesc = {
-                    profileID: buf.readUInt16LE(5),
-                    endpointID: buf.readUInt8(4),
-                    deviceID: buf.readUInt16LE(7),
+                    profileID: buf.readUInt16LE(6),
+                    endpointID: buf.readUInt8(5),
+                    deviceID: buf.readUInt16LE(8),
                     inputClusters: inClusters,
                     outputClusters: outClusters
                 }
@@ -460,43 +465,9 @@ class DeconzAdapter extends Adapter {
         return null;
     }
 
-    public async sendZclFrameNetworkAddressWithResponse(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame
-    ): Promise<Events.ZclDataPayload> {
-
-        const command = zclFrame.getCommand();
-        if (!command.hasOwnProperty('response')) {
-            throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
-        }
-
-        const transactionID = this.nextTransactionID();
-        const request: ApsDataRequest = {};
-        const data = zclFrame.toBuffer();
-
-        request.requestId = transactionID;
-        request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
-        request.destAddr16 = networkAddress;
-        request.destEndpoint = endpoint;
-        request.profileId = 0x104;
-        request.clusterId = zclFrame.Cluster.ID;
-        request.srcEndpoint = 1;
-        request.asduLength = data.length;
-        request.asduPayload = [...data];
-        request.txOptions = 0;
-        request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
-        //todo timeout
-
-        try {
-            return this.driver.enqueueSendDataRequestWithResponse(request);
-        } catch (error) {
-            throw error;
-        }
-    }
-
     public async sendZclFrameNetworkAddress(
         networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number
-    ): Promise<void> {
-
+    ): Promise<Events.ZclDataPayload> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
         const data = zclFrame.toBuffer();
@@ -584,7 +555,8 @@ class DeconzAdapter extends Adapter {
 
             try {
                 this.driver.enqueueSendDataRequest(request) as ReceivedDataResponse;
-                const data = await this.waitForData(destinationNetworkAddress, 0x8021);
+                const d = await this.waitForData(destinationNetworkAddress, 0, 0x8021);
+                const data = d.asduPayload;
                 debug("BIND RESPONSE - addr: 0x" + destinationNetworkAddress.toString(16) + " status: " + data[0]);
             } catch (error) {
                 debug("BIND FAILED - addr: 0x" + destinationNetworkAddress.toString(16) + " " + error);
@@ -630,7 +602,8 @@ class DeconzAdapter extends Adapter {
 
             try {
                 this.driver.enqueueSendDataRequest(request) as ReceivedDataResponse;
-                const data = await this.waitForData(destinationNetworkAddress, 0x8022);
+                const d = await this.waitForData(destinationNetworkAddress, 0, 0x8022);
+                const data = d.asduPayload;
                 debug("UNBIND RESPONSE - addr: 0x" + destinationNetworkAddress.toString(16) + " status: " + data[0]);
             } catch (error) {
                 debug("UNBIND FAILED - addr: 0x" + destinationNetworkAddress.toString(16) + " " + error);
@@ -661,7 +634,8 @@ class DeconzAdapter extends Adapter {
 
             try {
                 this.driver.enqueueSendDataRequest(request) as ReceivedDataResponse;
-                const data = await this.waitForData(networkAddress, 0x8034);
+                const d = await this.waitForData(networkAddress, 0, 0x8034);
+                const data = d.asduPayload;
                 debug("REMOVE_DEVICE - addr: 0x" + networkAddress.toString(16) + " status: " + data[0]);
             } catch (error) {
                 debug("REMOVE_DEVICE FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
@@ -670,11 +644,11 @@ class DeconzAdapter extends Adapter {
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return null;
+        return false;
     }
 
     public async backup(): Promise<BackupType> {
-        return null;
+        return Promise.reject();
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
@@ -723,27 +697,37 @@ class DeconzAdapter extends Adapter {
         return Promise.reject();
     }
 
-    private waitForData(addr: number, clusterId: number) : Promise<number[]> {
+    /**
+     * Private methods
+     */
+    private waitForData(addr: number, profileId: number, clusterId: number) : Promise<ReceivedDataResponse> {
         return new Promise((resolve, reject): void => {
-            const ts = 0;
+            const ts = Date.now();
             const commandId = PARAM.PARAM.APS.DATA_INDICATION;
-            const req: WaitForDataRequest = {addr, clusterId, resolve, reject, ts};
+            const req: WaitForDataRequest = {addr, profileId, clusterId, resolve, reject, ts};
             this.openRequestsQueue.push(req);
-            //todo: delete not used anymore requests? timeout!
         });
     }
 
     private checkReceivedDataPayload(resp: ReceivedDataResponse) {
         const srcAddr = (resp.srcAddr16 != null) ? resp.srcAddr16 : resp.srcAddr64;
         let i = this.openRequestsQueue.length;
+
         while (i--) {
             const req: WaitForDataRequest = this.openRequestsQueue[i];
-            if (req.addr === srcAddr && req.clusterId === resp.clusterId) {
+            if (req.addr === srcAddr && req.clusterId === resp.clusterId && req.profileId === resp.profileId) {
                 this.openRequestsQueue.splice(i, 1);
-                req.resolve(resp.asduPayload);
+                req.resolve(resp);
+            }
+
+            const now = Date.now();
+            if ((now - req.ts) > 60000) { // 60 seconds
+                debug(`Timeout for request in openRequestsQueue addr: ${req.addr} clusterId: ${req.clusterId} profileId: ${req.profileId}`);
+                //remove from busyQueue
+                this.openRequestsQueue.splice(i, 1);
+                req.reject("openRequest TIMEOUT");
             }
         }
-        //req.reject("TIMEOUT");
     }
 
     private nextTransactionID(): number {
