@@ -137,6 +137,11 @@ class Device extends Entity {
         return this.endpoints.find((e): boolean => e.ID === ID);
     }
 
+    // There might be multiple endpoints with same DeviceId but it is not supported and first endpoint is returned
+    public getEndpointByDeviceId(devId: number): Endpoint {
+        return this.endpoints.find((d): boolean => d.deviceID === devId);
+    }
+
     public updateLastSeen(): void {
         this._lastSeen = Date.now();
     }

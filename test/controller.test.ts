@@ -147,9 +147,9 @@ const mockDevices = {
         nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
         activeEndpoints: {endpoints: [12,11,13]},
         simpleDescriptor: {
-            11: {endpointID: 11, deviceID: 5, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
-            12: {endpointID: 12, deviceID: 5, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
-            13: {endpointID: 13, deviceID: 5, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
+            11: {endpointID: 11, deviceID: 0x0210, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
+            12: {endpointID: 12, deviceID: 0xe15e, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
+            13: {endpointID: 13, deviceID: 0x0100, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
         },
         attributes: {
             12: {modelId: 'GL-C-008', manufacturerName: 'Gledopto', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
@@ -1744,6 +1744,14 @@ describe('Controller', () => {
         expect(device.getEndpoint(1).ID).toBe(1);
     });
 
+    it('Endpoint get id by deviceId', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 172, ieeeAddr: '0x172'});
+        const device = controller.getDeviceByIeeeAddr('0x172');
+        expect(device.getEndpointByDeviceId(0x010)).toBeUndefined();
+        expect(device.getEndpointByDeviceId(0x210).ID).toBe(11);
+    });
+    
     it('Endpoint bind', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
