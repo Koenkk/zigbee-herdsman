@@ -909,9 +909,19 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write array', () => {
+    it('BuffaloZcl write array element type string', () => {
         const payload = {elementType: 'octetStr', elements: [[0,13,1,6,0,2], [1,13,2,6,0,2], [2,13,3,6,0,2], [3,13,4,6,0,2]]};
         const expected = Buffer.from([0x41, 0x04, 0x00, 6, 0, 13, 1, 6, 0, 2, 6, 1, 13, 2, 6, 0, 2, 6, 2, 13, 3, 6, 0, 2, 6, 3, 13, 4, 6, 0, 2]);
+        const buffer = Buffer.alloc(expected.length);
+        const buffalo = new BuffaloZcl(buffer);
+        const result = buffalo.write(DataType[DataType.array], payload, {});
+        expect(buffalo.getPosition()).toBe(expected.length);
+        expect(buffer).toStrictEqual(expected);
+    });
+
+    it('BuffaloZcl write array element type numeric', () => {
+        const payload = {elementType: 0x08, elements: [0, 0, 0, 0]};
+        const expected = Buffer.from([0x08, 0x04, 0x00, 0, 0, 0, 0]);
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
         const result = buffalo.write(DataType[DataType.array], payload, {});
