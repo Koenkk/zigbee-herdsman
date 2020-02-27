@@ -1744,14 +1744,14 @@ describe('Controller', () => {
         expect(device.getEndpoint(1).ID).toBe(1);
     });
 
-    it('Endpoint get id by deviceId', async () => {
+    it('Endpoint get id by endpoint device type', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 172, ieeeAddr: '0x172'});
         const device = controller.getDeviceByIeeeAddr('0x172');
-        expect(device.getEndpointByDeviceId(0x010)).toBeUndefined();
-        expect(device.getEndpointByDeviceId(0x210).ID).toBe(11);
+        expect(device.getEndpointByDeviceType('ZLLOnOffPluginUnit')).toBeUndefined();
+        expect(device.getEndpointByDeviceType('ZLLExtendedColorLight').ID).toBe(11);
     });
-    
+
     it('Endpoint bind', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});

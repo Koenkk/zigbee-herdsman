@@ -5,6 +5,7 @@ import Entity from './entity';
 import {ArraySplitChunks, Wait} from '../../utils';
 import Debug from "debug";
 import * as Zcl from '../../zcl';
+import EndpointDeviceType from '../../zcl/definition/endpointDeviceType';
 
 const debug = Debug('zigbee-herdsman:controller:device');
 
@@ -138,7 +139,8 @@ class Device extends Entity {
     }
 
     // There might be multiple endpoints with same DeviceId but it is not supported and first endpoint is returned
-    public getEndpointByDeviceId(devId: number): Endpoint {
+    public getEndpointByDeviceType(devType: string): Endpoint {
+        const devId = EndpointDeviceType[devType];
         return this.endpoints.find((d): boolean => d.deviceID === devId);
     }
 
