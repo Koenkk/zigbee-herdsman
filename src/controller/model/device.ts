@@ -138,9 +138,9 @@ class Device extends Entity {
     }
 
     // There might be multiple endpoints with same DeviceId but it is not supported and first endpoint is returned
-    public getEndpointByDeviceType(devType: string): Endpoint {
-        const devId = Zcl.EndpointDeviceType[devType];
-        return this.endpoints.find((d): boolean => d.deviceID === devId);
+    public getEndpointByDeviceType(deviceType: string): Endpoint {
+        const deviceID = Zcl.EndpointDeviceType[deviceType];
+        return this.endpoints.find((d): boolean => d.deviceID === deviceID);
     }
 
     public updateLastSeen(): void {
