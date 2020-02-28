@@ -4,12 +4,12 @@ import DataType from './dataType';
 import BuffaloZclDataType from './buffaloZclDataType';
 import Status from './status';
 import Direction from './direction';
-import {FoundationParameterDefinition} from './tstype';
+import {ParameterDefinition} from './tstype';
 
 interface FoundationDefinition {
     ID: number;
     parseStrategy: 'repetitive' | 'flat' | 'oneof';
-    parameters: FoundationParameterDefinition[];
+    parameters: ParameterDefinition[];
     response?: number;
 };
 

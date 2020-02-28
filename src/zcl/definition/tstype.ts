@@ -2,7 +2,7 @@ import DataType from './dataType';
 import BuffaloZclDataType from './buffaloZclDataType';
 import * as TsType from '../tstype';
 
-interface FoundationParameterDefinition extends TsType.Parameter {
+interface ParameterDefinition extends TsType.Parameter {
     conditions?: {
         type: 'statusEquals' |
             'statusNotEquals' |
@@ -16,5 +16,5 @@ interface FoundationParameterDefinition extends TsType.Parameter {
 }
 
 export {
-    FoundationParameterDefinition,
+    ParameterDefinition,
 };

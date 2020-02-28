@@ -624,6 +624,26 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
+    it('ZclFrame to buffer queryNextImageResponse with non zero status', () => {
+        const expected = Buffer.from([9, 8, 2, 1]);
+        const payload = {status: 1};
+        const frame = Zcl.ZclFrame.create(
+            FrameType.SPECIFIC, Direction.SERVER_TO_CLIENT, false, null, 8, 'queryNextImageResponse', 25, payload
+        );
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame to buffer queryNextImageResponse with zero status', () => {
+        const expected = Buffer.from([9, 8, 2, 0, 1, 0, 3, 0, 5, 0, 0, 0, 6, 0, 0, 0]);
+        const payload = {status: 0, manufacturerCode: 1, imageType: 3, fileVersion: 5, imageSize: 6};
+        const frame = Zcl.ZclFrame.create(
+            FrameType.SPECIFIC, Direction.SERVER_TO_CLIENT, false, null, 8, 'queryNextImageResponse', 25, payload
+        );
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
     it('ZclFrame to buffer readRsp UTC', () => {
         const expected = Buffer.from([24,74,1,0,0,0,226,234,83,218,36]);
         const payload = [{attrId: 0, status: 0, attrData: 618288106, dataType: 226}];
