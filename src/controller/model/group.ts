@@ -125,12 +125,6 @@ class Group extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
 
-        for (const parameter of command.parameters) {
-            if (!payload.hasOwnProperty(parameter.name)) {
-                throw new Error(`Parameter '${parameter.name}' is missing`);
-            }
-        }
-
         const log = `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
         debug.info(log);
 

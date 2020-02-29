@@ -150,6 +150,10 @@ class ZclFrame {
                 continue;
             }
 
+            if (!this.Payload.hasOwnProperty(parameter.name)) {
+                throw new Error(`Parameter '${parameter.name}' is missing`);
+            }
+
             const typeStr = ZclFrame.getDataTypeString(parameter.type);
             buffalo.write(typeStr, this.Payload[parameter.name], {});
         }

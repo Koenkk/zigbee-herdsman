@@ -644,6 +644,18 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
+    it('ZclFrame to buffer queryNextImageResponse with zero status and missing parameters', () => {
+        const expected = Buffer.from([9, 8, 2, 1]);
+        const payload = {status: 0};
+        const frame = Zcl.ZclFrame.create(
+            FrameType.SPECIFIC, Direction.SERVER_TO_CLIENT, false, null, 8, 'queryNextImageResponse', 25, payload
+        );
+
+        let error;
+        try {frame.toBuffer()} catch (e) {error = e};
+        expect(error).toStrictEqual(new Error(`Parameter 'manufacturerCode' is missing`))
+    });
+
     it('ZclFrame to buffer readRsp UTC', () => {
         const expected = Buffer.from([24,74,1,0,0,0,226,234,83,218,36]);
         const payload = [{attrId: 0, status: 0, attrData: 618288106, dataType: 226}];

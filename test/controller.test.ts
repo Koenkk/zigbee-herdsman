@@ -1881,16 +1881,6 @@ describe('Controller', () => {
          });
     });
 
-    it('Endpoint throw error', async () => {
-        await controller.start();
-        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = controller.getDeviceByIeeeAddr('0x129');
-        const endpoint = device.getEndpoint(1);
-        let error;
-        try {await endpoint.command('genIdentify', 'updateCommissionState', {action: 9})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error("Parameter 'commstatemask' is missing"));
-    });
-
     it('Return group from databse when not in lookup', async () => {
         await controller.start();
         await controller.createGroup(2);
@@ -1960,14 +1950,6 @@ describe('Controller', () => {
         expect(deepClone(call[1])).toStrictEqual({"Header":{"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":2,"manufacturerCode":null,"commandIdentifier":64},"Payload":{"effectid":9,"effectvariant":10},"Cluster":getCluster(6)});
     });
 
-    it('Group command throw error on missing parameter', async () => {
-        await controller.start();
-        const group = controller.createGroup(2);
-        let error;
-        try {await group.command('genIdentify', 'updateCommissionState', {action: 9})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error("Parameter 'commstatemask' is missing"));
-    });
-
     it('Endpoint command with options', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -2023,17 +2005,6 @@ describe('Controller', () => {
         let error;
         try {await result.promise} catch (e) {error = e}
         expect(error).toStrictEqual(new Error('whoops!'));
-    });
-
-    it('Endpoint commandResponse throw error when parameter is missing', async () => {
-        await controller.start();
-        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = controller.getDeviceByIeeeAddr('0x129');
-        const endpoint = device.getEndpoint(1);
-        mocksendZclFrameToEndpoint.mockClear();
-        let error;
-        try {await endpoint.commandResponse('genOta', 'imageNotify', {queryJitter: 1}, null, null)} catch (e) {error = e;}
-        expect(error).toStrictEqual(new Error("Parameter 'payloadType' is missing"));
     });
 
     it('Device without meta should set meta to {}', async () => {

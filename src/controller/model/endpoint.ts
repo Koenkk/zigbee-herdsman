@@ -420,12 +420,6 @@ class Endpoint extends Entity {
         const hasResponse = command.hasOwnProperty('response');
         options = this.getOptionsWithDefaults(options, hasResponse);
 
-        for (const parameter of command.parameters) {
-            if (!payload.hasOwnProperty(parameter.name)) {
-                throw new Error(`Parameter '${parameter.name}' is missing`);
-            }
-        }
-
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
             options.manufacturerCode, ZclTransactionSequenceNumber.next(), command.ID, cluster.ID, payload
@@ -458,12 +452,6 @@ class Endpoint extends Entity {
         const command = cluster.getCommandResponse(commandKey);
         transactionSequenceNumber = transactionSequenceNumber || ZclTransactionSequenceNumber.next();
         options = this.getOptionsWithDefaults(options, true);
-
-        for (const parameter of command.parameters) {
-            if (!payload.hasOwnProperty(parameter.name)) {
-                throw new Error(`Parameter '${parameter.name}' is missing`);
-            }
-        }
 
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, options.disableDefaultResponse,
