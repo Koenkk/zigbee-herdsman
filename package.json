@@ -26,7 +26,7 @@
   ],
   "dependencies": {
     "debug": "^4.1.1",
-    "fast-deep-equal": "^2.0.1",
+    "fast-deep-equal": "^3.1.1",
     "mixin-deep": "^2.0.1",
     "serialport": "8.0.6"
   },
