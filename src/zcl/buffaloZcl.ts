@@ -7,7 +7,7 @@ const aliases: {[s: string]: string} = {
     'boolean': 'uint8',
     'bitmap8': 'uint8',
     'enum8': 'uint8',
-    'data8': 'int8',
+    'data8': 'uint8',
     'data16': 'uint16',
     'bitmap16': 'uint16',
     'uint16': 'uint16',
