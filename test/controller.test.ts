@@ -1700,6 +1700,17 @@ describe('Controller', () => {
         expect(mockAdapterRemoveDevice).toBeCalledTimes(1);
         expect(mockAdapterRemoveDevice).toBeCalledWith(140, '0x140');
         expect(controller.getDeviceByIeeeAddr('0x140')).toBeUndefined();
+        // shouldn't throw when removing from database when not in
+        await device.removeFromDatabase();
+    });
+
+    it('Remove group from database', async () => {
+        await controller.start();
+        const group = await controller.createGroup(4);
+        await group.removeFromDatabase();
+        expect(controller.getGroupByID(4)).toStrictEqual(undefined);
+        // shouldn't throw when removing from database when not in
+        await group.removeFromDatabase();
     });
 
     it('Device lqi', async () => {

@@ -95,7 +95,11 @@ class Group extends Entity {
 
     public removeFromDatabase(): void {
         Group.loadFromDatabaseIfNecessary();
-        Entity.database.remove(this.databaseID);
+
+        if (Entity.database.has(this.databaseID)) {
+            Entity.database.remove(this.databaseID);
+        }
+
         delete Group.groups[this.groupID];
     }
 

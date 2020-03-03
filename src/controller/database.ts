@@ -57,6 +57,10 @@ class Database {
         this.write();
     }
 
+    public has(ID: number): boolean {
+        return this.entries.hasOwnProperty(ID);
+    }
+
     public newID(): number {
         for (let i = 1; i < 100000; i++) {
             if (!this.entries[i]) {

@@ -449,7 +449,11 @@ class Device extends Entity {
 
     public async removeFromDatabase(): Promise<void> {
         Device.loadFromDatabaseIfNecessary();
-        Entity.database.remove(this.ID);
+
+        if (Entity.database.has(this.ID)) {
+            Entity.database.remove(this.ID);
+        }
+
         delete Device.devices[this.ieeeAddr];
     }
 
