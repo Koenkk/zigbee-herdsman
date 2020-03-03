@@ -19,7 +19,6 @@ const debug = Debug("zigbee-herdsman:adapter:zStack:adapter");
 const Subsystem = UnpiConstants.Subsystem;
 const Type = UnpiConstants.Type;
 
-const DataConfirmTimeout = 3000;
 const DataConfirmErrorCodeLookup: {[k: number]: string} = {
     183: 'APS no ack',
     205: 'No network route',
@@ -274,7 +273,8 @@ class ZStackAdapter extends Adapter {
 
         try {
             await this.dataRequest(
-                networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 5
+                networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(),
+                timeout - 1000, 5
             );
         } catch (error) {
             if (response) {
@@ -309,7 +309,7 @@ class ZStackAdapter extends Adapter {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 0, 1, zclFrame.Cluster.ID,
-                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), DataConfirmTimeout, true
+                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, true
             );
 
             /**
@@ -642,11 +642,11 @@ class ZStackAdapter extends Adapter {
      */
     private async dataRequest(
         destinationAddress: number, destinationEndpoint: number, sourceEndpoint: number, clusterID: number,
-        radius: number, data: Buffer, attemptsLeft: number,
+        radius: number, data: Buffer, timeout: number, attemptsLeft: number,
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
         const response = this.znp.waitFor(
-            Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, DataConfirmTimeout
+            Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout
         );
 
         try {
@@ -677,7 +677,8 @@ class ZStackAdapter extends Adapter {
                  */
                 await Wait(2000);
                 return this.dataRequest(
-                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, attemptsLeft - 1
+                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout,
+                    attemptsLeft - 1
                 );
             } else if ([205, 233].includes(dataConfirm.payload.status) && attemptsLeft > 0) {
                 // 205: no network route => rediscover route
@@ -685,7 +686,7 @@ class ZStackAdapter extends Adapter {
                 await this.discoverRoute(destinationAddress);
                 await Wait(3000);
                 return this.dataRequest(
-                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, 0
+                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout, 0
                 );
             } else {
                 throw new DataConfirmError(dataConfirm.payload.status);
