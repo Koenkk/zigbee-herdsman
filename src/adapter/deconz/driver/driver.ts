@@ -44,17 +44,18 @@ class Driver extends events.EventEmitter {
         this.seqNumber = 0;
 
         const that = this;
-        setInterval(() => { that.processQueue(); }, 10);
-        setInterval(() => { that.processBusyQueue(); }, 10);
-        setInterval(() => { that.processApsQueue(); }, 10);
-        setInterval(() => { that.processApsBusyQueue(); }, 10);
+        setInterval(() => { that.processQueue(); }, 300);
+        setInterval(() => { that.processBusyQueue(); }, 200);
+        setInterval(() => { that.processApsQueue(); }, 300);
+        setInterval(() => { that.processApsBusyQueue(); }, 200);
+        setInterval(() => {
+            that.writeParameterRequest(0x26, 240) // reset watchdog
+                .then(result => {})
+                .catch(error => {});
+             }, (1000 * 180));
+
         this.onParsed = this.onParsed.bind(this);
         this.frameParserEvent.on('receivedDataNotification', (data: number) => {this.checkDeviceStatus(data)});
-
-        // this.onUnpiParsed = this.onUnpiParsed.bind(this);
-        // this.onUnpiParsedError = this.onUnpiParsedError.bind(this);
-        // this.onSerialPortClose = this.onSerialPortClose.bind(this);
-        // this.onSerialPortError = this.onSerialPortError.bind(this);
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
@@ -142,7 +143,7 @@ class Driver extends events.EventEmitter {
     private sendWriteParameterRequest(parameterId: number, value: parameterT, seqNumber: number) {
         /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, pameter */
         const parameterLength = this.getLengthOfParameter(parameterId);
-        debug("SEND WRITE_PARAMETER Request - parameter id: " + parameterId + " value: " + value.toString(16) + " length: " + parameterLength);
+        //debug("SEND WRITE_PARAMETER Request - parameter id: " + parameterId + " value: " + value.toString(16) + " length: " + parameterLength);
 
         const payloadLength = 1 + parameterLength;
         const frameLength = 7 + payloadLength;
@@ -216,7 +217,7 @@ class Driver extends events.EventEmitter {
             return;
         }
         if (busyQueue.length > 0) {
-            //debug("don't process queue. Request pending");
+ //           debug("don't process queue. Request pending");
             return;
         }
         const req: Request = queue.shift();
@@ -257,7 +258,7 @@ class Driver extends events.EventEmitter {
             const req: Request = busyQueue[i];
             const now = Date.now();
 
-            if ((now - req.ts) > 1000) {
+            if ((now - req.ts) > 10000) {
                 debug(`Timeout for request - CMD: 0x${req.commandId.toString(16)} seqNr: ${req.seqNumber}`);
                 //remove from busyQueue
                 busyQueue.splice(i, 1);
@@ -293,22 +294,12 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    //private async updateDeviceStatus(value: number) {
-    //    this.currentDeviceStatus = value;
-    //}
-
     private async checkDeviceStatus(currentDeviceStatus: number) {
         const networkState = currentDeviceStatus & 0x03;
         const apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
         const apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
         const configChanged = (currentDeviceStatus >> 4) & 0x01;
         const apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
-        //console.log("check current device status");
-        //console.log("network state: " + networkState.toString(2));
-        //console.log("apsDataConfirm: " + apsDataConfirm.toString(2));
-        //console.log("apsDataIndication: " + apsDataIndication);
-        //console.log("configChanged: " + configChanged.toString(2));
-        //console.log("freeSlots: " + apsRequestFreeSlots.toString(2));
 
         if (apsDataConfirm === 1) {
             try {
@@ -323,7 +314,7 @@ class Driver extends events.EventEmitter {
                 //debug("APS Error - data indication");
             }
         } else if (configChanged === 1) {
-            // wenn network settings sich geändert haben (noch mal konfiguration einlesen)
+            // when network settings changed
         }
     }
 
@@ -370,15 +361,7 @@ class Driver extends events.EventEmitter {
         req.ts = Date.now();
 
         apsBusyQueue.push(req);
-/*
-        let string = "";
-    for (let u = 0; u < apsBusyQueue.length; u++) {
-        const re: Request = apsBusyQueue[u];
-        string += re.seqNumber;
-        string += ",";
-    }
-//    console.log("aps busy queue contains seqNumbers: "+ string);
-*/
+
         switch (req.commandId) {
             case PARAM.PARAM.APS.DATA_INDICATION:
                 //debug(`read received data request. seqNr: ${req.seqNumber}`);
@@ -491,7 +474,8 @@ class Driver extends events.EventEmitter {
             result[i] = parseInt(addr.substr(y,2), 16);
             y += 2;
         }
-        return result;
+        const reverse = result.reverse();
+        return reverse;
     }
 
     public macAddrArrayToString(addr: Array<number>) : string{
@@ -500,10 +484,8 @@ class Driver extends events.EventEmitter {
         }
 
         let result: string = "0x";
-        let y = 0;
-        let char = "";
+        let char = '';
         let i = 8;
-        let l = 0;
         while (i--) {
             char = addr[i].toString(16);
             if (char.length < 2) {
