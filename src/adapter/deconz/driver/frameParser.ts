@@ -4,7 +4,7 @@ import PARAM from './constants';
 import { busyQueue, apsBusyQueue } from './driver';
 import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin } from './constants';
 import * as Events from '../../events';
-
+import {ZclFrame} from '../../../zcl';
 import Debug from 'debug';
 const debug = Debug('zigbee-herdsman:deconz:frameParser');
 
@@ -18,8 +18,13 @@ function parseReadParameterResponse(view: DataView) : Command {
     switch (parameterId) {
         case PARAM.PARAM.Network.MAC:
             const mac: ParamMac = view.getBigUint64(8, littleEndian).toString(16);
-            debug(`MAC: ${mac}`);
-            return mac;
+            let result = mac;
+            while (result.length < 16) {
+                result = "0" + result;
+            }
+            result = "0x" + result;
+            debug(`MAC: ${result}`);
+            return result;
         case PARAM.PARAM.Network.PAN_ID:
             const panId: ParamPanId = view.getUint16(8, littleEndian);
             debug('PANID: ' + panId.toString(16));
@@ -30,8 +35,13 @@ function parseReadParameterResponse(view: DataView) : Command {
             return nwkAddr;
         case PARAM.PARAM.Network.EXT_PAN_ID:
             const extPanId: ParamExtPanId = view.getBigUint64(8, littleEndian).toString(16);
-            debug(`EXT_PANID: ${extPanId}`);
-            return extPanId;
+            let res = extPanId;
+            while (res.length < 16) {
+                res = "0" + res;
+            }
+            res = "0x" + res;
+            debug(`EXT_PANID: ${res}`);
+            return res;
         case PARAM.PARAM.Network.CHANNEL:
             const channel: ParamChannel = view.getUint8(8);
             debug('CHANNEL: ' + channel);
@@ -44,6 +54,10 @@ function parseReadParameterResponse(view: DataView) : Command {
             const permitJoin: ParamPermitJoin = view.getUint8(8);
             debug('PERMIT_JOIN: ' + permitJoin);
             return permitJoin;
+        case PARAM.PARAM.Network.WATCHDOG_TTL:
+            const ttl: ParamPermitJoin = view.getUint32(8);
+            debug('WATCHDOG_TTL: ' + ttl);
+            return ttl;
         default:
             throw new Error("unknown parameter id");
     }
@@ -208,7 +222,6 @@ function parseReadReceivedDataResponse(view : DataView) : object {
     let payload = [];
     let i = 0;
     for (let u = 7; u < (response.asduLength + 7); u++) {
-        console.log(view.getUint8(u));
         payload[i] = view.getUint8(u);
         i++;
     }
@@ -252,7 +265,7 @@ function parseReceivedDataNotification(view : DataView) : number {
 }
 
 function parseMacPollCommand(view : DataView) : number {
-    debug("Received command MAC_POLL");
+    //debug("Received command MAC_POLL");
     return 28;
 }
 
