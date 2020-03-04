@@ -62,7 +62,6 @@ class ZStackAdapter extends Adapter {
 
         this.transactionID = 0;
         this.closing = false;
-        this.queue = new Queue(2);
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
@@ -90,6 +89,8 @@ class ZStackAdapter extends Adapter {
             debug(`Failed to get zStack version, assuming 1.2`);
             this.version = {"transportrev":2, "product":0, "majorrel":2, "minorrel":0, "maintrel":0, "revision":""};
         }
+
+        this.queue = new Queue(this.version.product === ZnpVersion.zStack3x0 ? 16 : 2);
 
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
 
@@ -242,47 +243,73 @@ class ZStackAdapter extends Adapter {
         }, networkAddress);
     }
 
-    public async sendZclFrameNetworkAddress(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number,
+    public async sendZclFrameToEndpoint(
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
-            let response = null;
-            const command = zclFrame.getCommand();
-            if (command.hasOwnProperty('response')) {
-                response = this.waitFor(
-                    networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
-                    zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
-                );
-            } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
-                response = this.waitFor(
-                    networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
-                    zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
-                    defaultResponseTimeout,
-                );
-            }
-
-            try {
-                await this.dataRequest(
-                    networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(),
-                    timeout, 0
-                );
-            } catch (error) {
-                if (response) {
-                    response.cancel();
-                }
-
-                throw error;
-            }
-
-            return response !== null ? response.promise : null;
+            return this.sendZclFrameToEndpointInternal(
+                networkAddress, endpoint, zclFrame, timeout, true
+            );
         }, networkAddress);
     }
 
-    public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void> {
+    private async sendZclFrameToEndpointInternal(
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, firstAttempt: boolean,
+    ): Promise<Events.ZclDataPayload> {
+        let response = null;
+        const command = zclFrame.getCommand();
+        if (command.hasOwnProperty('response')) {
+            response = this.waitFor(
+                networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
+                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
+            );
+        } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
+            response = this.waitFor(
+                networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
+                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
+                timeout,
+            );
+        }
+
+        try {
+            await this.dataRequest(
+                networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(),
+                timeout - 1000, 5
+            );
+        } catch (error) {
+            if (response) {
+                response.cancel();
+            }
+
+            throw error;
+        }
+
+        if (response !== null) {
+            try {
+                const result = await response.promise;
+                return result;
+            } catch (error) {
+                if (firstAttempt) {
+                    // Timeout could happen because of invalid route, rediscover and retry.
+                    await this.discoverRoute(networkAddress);
+                    await Wait(3000);
+                    return this.sendZclFrameToEndpointInternal(
+                        networkAddress, endpoint, zclFrame, timeout, false
+                    );
+                } else {
+                    throw error;
+                }
+            }
+        } else {
+            return null;
+        }
+    }
+
+    public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 0, 1, zclFrame.Cluster.ID,
-                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), timeout, 0, true
+                Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, true
             );
 
             /**
@@ -545,16 +572,16 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPANIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
+    public async sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 Constants.COMMON.addressMode.ADDR_64BIT, ieeeAddr, 0xFE, 0xFFFF,
-                12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
+                12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, false,
             );
         });
     }
 
-    public async sendZclFrameInterPANBroadcastWithResponse(
+    public async sendZclFrameInterPANBroadcast(
         zclFrame: ZclFrame, timeout: number
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
@@ -571,7 +598,7 @@ class ZStackAdapter extends Adapter {
             try {
                 await this.dataRequestExtended(
                     Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFF, 0xFE, 0xFFFF,
-                    12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, 0, false
+                    12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, false,
                 );
             } catch (error) {
                 response.cancel();
@@ -615,10 +642,12 @@ class ZStackAdapter extends Adapter {
      */
     private async dataRequest(
         destinationAddress: number, destinationEndpoint: number, sourceEndpoint: number, clusterID: number,
-        radius: number, data: Buffer, timeout: number, attempt: number,
+        radius: number, data: Buffer, timeout: number, attemptsLeft: number,
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
-        const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout);
+        const response = this.znp.waitFor(
+            Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout
+        );
 
         try {
             await this.znp.request(Subsystem.AF, 'dataRequest', {
@@ -639,17 +668,25 @@ class ZStackAdapter extends Adapter {
 
         const dataConfirm = await response.promise;
         if (dataConfirm.payload.status !== 0) {
-            if ([225, 233, 240].includes(dataConfirm.payload.status) && attempt <= 5) {
+            if ([225, 240].includes(dataConfirm.payload.status) && attemptsLeft > 0) {
                 /**
                  * 225: When many commands at once are executed we can end up in a MAC channel access failure
                  * error. This is because there is too much traffic on the network.
                  * Retry this command once after a cooling down period.
-                 * 233/240: https://github.com/Koenkk/zigbee-herdsman-converters/issues/715#issuecomment-586693990
+                 * 240: Mac layer is sleeping, try a few more times
                  */
-                debug(`TransactionID ${transactionID} attempt ${attempt}`);
                 await Wait(2000);
                 return this.dataRequest(
-                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout, 1
+                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout,
+                    attemptsLeft - 1
+                );
+            } else if ([205, 233].includes(dataConfirm.payload.status) && attemptsLeft > 0) {
+                // 205: no network route => rediscover route
+                // 233: route may be corrupted
+                await this.discoverRoute(destinationAddress);
+                await Wait(3000);
+                return this.dataRequest(
+                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout, 0
                 );
             } else {
                 throw new DataConfirmError(dataConfirm.payload.status);
@@ -661,8 +698,8 @@ class ZStackAdapter extends Adapter {
 
     private async dataRequestExtended(
         addressMode: number, destinationAddressOrGroupID: number | string, destinationEndpoint: number, panID: number,
-        sourceEndpoint: number, clusterID: number, radius: number, data: Buffer, timeout: number, attempt: number,
-        confirmation: boolean
+        sourceEndpoint: number, clusterID: number, radius: number, data: Buffer, timeout: number, confirmation: boolean,
+        attemptsLeft = 5,
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
         const response = confirmation ?
@@ -693,18 +730,16 @@ class ZStackAdapter extends Adapter {
         if (confirmation) {
             const dataConfirm = await response.promise;
             if (dataConfirm.payload.status !== 0) {
-                if ([225, 233, 240].includes(dataConfirm.payload.status) && attempt <= 5) {
+                if (dataConfirm.payload.status === 225 && attemptsLeft > 0) {
                     /**
                      * 225: When many commands at once are executed we can end up in a MAC channel access failure
                      * error. This is because there is too much traffic on the network.
                      * Retry this command once after a cooling down period.
-                     * 233/240: https://github.com/Koenkk/zigbee-herdsman-converters/issues/715#issuecomment-586693990
                      */
-                    debug(`TransactionID ${transactionID} attempt ${attempt}`);
                     await Wait(2000);
                     return this.dataRequestExtended(
                         addressMode, destinationAddressOrGroupID, destinationEndpoint, panID, sourceEndpoint, clusterID,
-                        radius, data, timeout, 1, confirmation,
+                        radius, data, timeout, confirmation, attemptsLeft - 1,
                     );
                 } else {
                     throw new DataConfirmError(dataConfirm.payload.status);

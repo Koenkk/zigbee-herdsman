@@ -624,6 +624,38 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
+    it('ZclFrame to buffer queryNextImageResponse with non zero status', () => {
+        const expected = Buffer.from([9, 8, 2, 1]);
+        const payload = {status: 1};
+        const frame = Zcl.ZclFrame.create(
+            FrameType.SPECIFIC, Direction.SERVER_TO_CLIENT, false, null, 8, 'queryNextImageResponse', 25, payload
+        );
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame to buffer queryNextImageResponse with zero status', () => {
+        const expected = Buffer.from([9, 8, 2, 0, 1, 0, 3, 0, 5, 0, 0, 0, 6, 0, 0, 0]);
+        const payload = {status: 0, manufacturerCode: 1, imageType: 3, fileVersion: 5, imageSize: 6};
+        const frame = Zcl.ZclFrame.create(
+            FrameType.SPECIFIC, Direction.SERVER_TO_CLIENT, false, null, 8, 'queryNextImageResponse', 25, payload
+        );
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame to buffer queryNextImageResponse with zero status and missing parameters', () => {
+        const expected = Buffer.from([9, 8, 2, 1]);
+        const payload = {status: 0};
+        const frame = Zcl.ZclFrame.create(
+            FrameType.SPECIFIC, Direction.SERVER_TO_CLIENT, false, null, 8, 'queryNextImageResponse', 25, payload
+        );
+
+        let error;
+        try {frame.toBuffer()} catch (e) {error = e};
+        expect(error).toStrictEqual(new Error(`Parameter 'manufacturerCode' is missing`))
+    });
+
     it('ZclFrame to buffer readRsp UTC', () => {
         const expected = Buffer.from([24,74,1,0,0,0,226,234,83,218,36]);
         const payload = [{attrId: 0, status: 0, attrData: 618288106, dataType: 226}];
@@ -906,6 +938,26 @@ describe('Zcl', () => {
         const buffalo = new BuffaloZcl(buffer);
         buffalo.write(DataType[DataType.uint64], payload, {});
         expect(buffalo.getPosition()).toBe(8);
+        expect(buffer).toStrictEqual(expected);
+    });
+
+    it('BuffaloZcl write array element type string', () => {
+        const payload = {elementType: 'octetStr', elements: [[0,13,1,6,0,2], [1,13,2,6,0,2], [2,13,3,6,0,2], [3,13,4,6,0,2]]};
+        const expected = Buffer.from([0x41, 0x04, 0x00, 6, 0, 13, 1, 6, 0, 2, 6, 1, 13, 2, 6, 0, 2, 6, 2, 13, 3, 6, 0, 2, 6, 3, 13, 4, 6, 0, 2]);
+        const buffer = Buffer.alloc(expected.length);
+        const buffalo = new BuffaloZcl(buffer);
+        const result = buffalo.write(DataType[DataType.array], payload, {});
+        expect(buffalo.getPosition()).toBe(expected.length);
+        expect(buffer).toStrictEqual(expected);
+    });
+
+    it('BuffaloZcl write array element type numeric', () => {
+        const payload = {elementType: 0x08, elements: [0, 0, 0, 0]};
+        const expected = Buffer.from([0x08, 0x04, 0x00, 0, 0, 0, 0]);
+        const buffer = Buffer.alloc(expected.length);
+        const buffalo = new BuffaloZcl(buffer);
+        const result = buffalo.write(DataType[DataType.array], payload, {});
+        expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });
 

@@ -1,6 +1,6 @@
 /* eslint max-len: 0 */
 import DataType from './dataType';
-import * as TsType from '../tstype';
+import {ParameterDefinition} from './tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
 import ManufacturerCode from './manufacturerCode';
 
@@ -24,7 +24,7 @@ interface ClusterDefinition {
 
 interface CommandDefinition {
     ID: number;
-    parameters: TsType.Parameter[];
+    parameters: ParameterDefinition[];
     response?: number;
 };
 
@@ -1065,10 +1065,10 @@ const Cluster: {
                 ID: 2,
                 parameters: [
                     {name: 'status', type: DataType.uint8},
-                    {name: 'manufacturerCode', type: DataType.uint16},
-                    {name: 'imageType', type: DataType.uint16},
-                    {name: 'fileVersion', type: DataType.uint32},
-                    {name: 'imageSize', type: DataType.uint32},
+                    {name: 'manufacturerCode', type: DataType.uint16, conditions: [{type: 'statusEquals', value: 0}]},
+                    {name: 'imageType', type: DataType.uint16, conditions: [{type: 'statusEquals', value: 0}]},
+                    {name: 'fileVersion', type: DataType.uint32, conditions: [{type: 'statusEquals', value: 0}]},
+                    {name: 'imageSize', type: DataType.uint32, conditions: [{type: 'statusEquals', value: 0}]},
                 ],
             },
             imageBlockResponse: {

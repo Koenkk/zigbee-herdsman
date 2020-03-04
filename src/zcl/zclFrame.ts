@@ -146,6 +146,14 @@ class ZclFrame {
             this.Cluster.getCommandResponse(this.Header.commandIdentifier);
 
         for (const parameter of command.parameters) {
+            if (!ZclFrame.conditionsValid(parameter, this.Payload, null)) {
+                continue;
+            }
+
+            if (!this.Payload.hasOwnProperty(parameter.name)) {
+                throw new Error(`Parameter '${parameter.name}' is missing`);
+            }
+
             const typeStr = ZclFrame.getDataTypeString(parameter.type);
             buffalo.write(typeStr, this.Payload[parameter.name], {});
         }
@@ -307,7 +315,7 @@ class ZclFrame {
     }
 
     private static conditionsValid(
-        parameter: DefinitionTsType.FoundationParameterDefinition,
+        parameter: DefinitionTsType.ParameterDefinition,
         entry: ZclPayload,
         remainingBufferBytes: number
     ): boolean {

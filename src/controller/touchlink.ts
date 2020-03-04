@@ -21,7 +21,7 @@ class Touchlink {
             await this.adapter.setChannelInterPAN(channel);
 
             try {
-                const response = await this.adapter.sendZclFrameInterPANBroadcastWithResponse(
+                const response = await this.adapter.sendZclFrameInterPANBroadcast(
                     this.createScanRequestFrame(), 500
                 );
                 debug(`Got scan response on channel '${channel}'`);
@@ -30,11 +30,11 @@ class Touchlink {
                 // Device answered (if not it will fall in the catch below),
                 // identify it (this will make e.g. the bulb flash)
                 debug(`Identifying`);
-                await this.adapter.sendZclFrameInterPANIeeeAddr(this.createIdentifyRequestFrame(), response.address);
+                await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(), response.address);
                 await Wait(2000);
 
                 debug(`Reset to factory new`);
-                await this.adapter.sendZclFrameInterPANIeeeAddr(
+                await this.adapter.sendZclFrameInterPANToIeeeAddr(
                     this.createResetFactoryNewRequestFrame(), response.address
                 );
                 done = true;

@@ -7,6 +7,7 @@ import FrameControl from './definition/frameControl';
 import DataType from './definition/dataType';
 import Foundation from './definition/foundation';
 import PowerSource from './definition/powerSource';
+import EndpointDeviceType from './definition/endpointDeviceType';
 import ManufacturerCode from './definition/manufacturerCode';
 import ZclFrame from './zclFrame';
 import * as TsType from './tstype';
@@ -24,4 +25,5 @@ export {
     TsType,
     ManufacturerCode,
     FrameControl,
+    EndpointDeviceType,
 };

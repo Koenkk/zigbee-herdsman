@@ -24,7 +24,6 @@ interface Options {
     disableDefaultResponse?: boolean;
     response?: boolean;
     timeout?: number;
-    defaultResponseTimeout?: number;
 }
 
 interface Clusters {
@@ -199,8 +198,8 @@ class Endpoint extends Entity {
                 Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
                 options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'write', cluster.ID, payload
             );
-            await Entity.adapter.sendZclFrameNetworkAddress(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout
+            await Entity.adapter.sendZclFrameToEndpoint(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout,
             );
         } catch (error) {
             const message = `${log} failed (${error})`;
@@ -229,8 +228,8 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const result = await Entity.adapter.sendZclFrameNetworkAddress(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+            const result = await Entity.adapter.sendZclFrameToEndpoint(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout,
             );
             return ZclFrameConverter.attributeKeyValue(result.frame);
         } catch (error) {
@@ -267,8 +266,8 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await Entity.adapter.sendZclFrameNetworkAddress(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+            await Entity.adapter.sendZclFrameToEndpoint(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout,
             );
         } catch (error) {
             const message = `${log} failed (${error})`;
@@ -358,9 +357,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await Entity.adapter.sendZclFrameNetworkAddress(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
-            );
+            await Entity.adapter.sendZclFrameToEndpoint(this.deviceNetworkAddress, this.ID, frame, options.timeout);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -407,9 +404,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await Entity.adapter.sendZclFrameNetworkAddress(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
-            );
+            await Entity.adapter.sendZclFrameToEndpoint(this.deviceNetworkAddress, this.ID, frame, options.timeout);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -425,12 +420,6 @@ class Endpoint extends Entity {
         const hasResponse = command.hasOwnProperty('response');
         options = this.getOptionsWithDefaults(options, hasResponse);
 
-        for (const parameter of command.parameters) {
-            if (!payload.hasOwnProperty(parameter.name)) {
-                throw new Error(`Parameter '${parameter.name}' is missing`);
-            }
-        }
-
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
             options.manufacturerCode, ZclTransactionSequenceNumber.next(), command.ID, cluster.ID, payload
@@ -441,8 +430,8 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const result = await Entity.adapter.sendZclFrameNetworkAddress(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
+            const result = await Entity.adapter.sendZclFrameToEndpoint(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout,
             );
 
             if (result) {
@@ -464,12 +453,6 @@ class Endpoint extends Entity {
         transactionSequenceNumber = transactionSequenceNumber || ZclTransactionSequenceNumber.next();
         options = this.getOptionsWithDefaults(options, true);
 
-        for (const parameter of command.parameters) {
-            if (!payload.hasOwnProperty(parameter.name)) {
-                throw new Error(`Parameter '${parameter.name}' is missing`);
-            }
-        }
-
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, options.disableDefaultResponse,
             options.manufacturerCode, transactionSequenceNumber, command.ID, cluster.ID, payload
@@ -480,9 +463,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await Entity.adapter.sendZclFrameNetworkAddress(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.defaultResponseTimeout,
-            );
+            await Entity.adapter.sendZclFrameToEndpoint(this.deviceNetworkAddress, this.ID, frame, options.timeout);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -513,8 +494,7 @@ class Endpoint extends Entity {
     private getOptionsWithDefaults(options: Options, disableDefaultResponse: boolean): Options {
         const providedOptions = options || {};
         return {
-            timeout: 10000,
-            defaultResponseTimeout: 15000,
+            timeout: 6000,
             manufacturerCode: null,
             disableDefaultResponse, ...providedOptions
         };

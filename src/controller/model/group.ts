@@ -95,7 +95,11 @@ class Group extends Entity {
 
     public removeFromDatabase(): void {
         Group.loadFromDatabaseIfNecessary();
-        Entity.database.remove(this.databaseID);
+
+        if (Entity.database.has(this.databaseID)) {
+            Entity.database.remove(this.databaseID);
+        }
+
         delete Group.groups[this.groupID];
     }
 
@@ -125,12 +129,6 @@ class Group extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
 
-        for (const parameter of command.parameters) {
-            if (!payload.hasOwnProperty(parameter.name)) {
-                throw new Error(`Parameter '${parameter.name}' is missing`);
-            }
-        }
-
         const log = `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
         debug.info(log);
 
@@ -139,7 +137,7 @@ class Group extends Entity {
                 Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
                 command.ID, cluster.ID, payload
             );
-            await Entity.adapter.sendZclFrameGroup(this.groupID, frame, 10000);
+            await Entity.adapter.sendZclFrameToGroup(this.groupID, frame);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);

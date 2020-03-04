@@ -42,8 +42,13 @@ interface BuffaloZclOptions extends BuffaloTsType.Options {
     attrId?: number;
 }
 
+interface ZclArray {
+    elementType: DataType | keyof typeof DataType;
+    elements: BuffaloTsType.Value[];
+}
+
 type DataTypeValueType = 'ANALOG' | 'DISCRETE';
 
 export {
-    Cluster, Attribute, Command, Parameter, DataTypeValueType, BuffaloZclOptions,
+    Cluster, Attribute, Command, Parameter, DataTypeValueType, BuffaloZclOptions, ZclArray,
 };
