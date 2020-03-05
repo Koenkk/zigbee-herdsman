@@ -48,11 +48,13 @@ class Driver extends events.EventEmitter {
         setInterval(() => { that.processBusyQueue(); }, 200);
         setInterval(() => { that.processApsQueue(); }, 300);
         setInterval(() => { that.processApsBusyQueue(); }, 200);
+        setInterval(() => { that.deviceStateRequest(); }, 10000);
+
         setInterval(() => {
-            that.writeParameterRequest(0x26, 240) // reset watchdog
+            that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
                 .then(result => {})
                 .catch(error => {});
-             }, (1000 * 180));
+             }, (1000 * 60 * 8)); // 8 minutes
 
         this.onParsed = this.onParsed.bind(this);
         this.frameParserEvent.on('receivedDataNotification', (data: number) => {this.checkDeviceStatus(data)});
