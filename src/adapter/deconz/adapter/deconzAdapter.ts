@@ -485,8 +485,6 @@ class DeconzAdapter extends Adapter {
     ): Promise<Events.ZclDataPayload> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
-        //const frameControl = zclFrame.Header.frameControl.frameType | zclFrame.Header.frameControl.direction | zclFrame.Header.frameControl.disableDefaultResponse | zclFrame.Header.frameControl.manufacturerSpecific;
-        //console.log("frameControl: " + frameControl);
         const payload = [zclFrame.Header.frameControl.frameType, zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
         //TODO: frameControl Byte instead frameType bit ?
         for (let i in zclFrame.Payload) {
