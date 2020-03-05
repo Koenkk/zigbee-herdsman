@@ -753,14 +753,6 @@ class DeconzAdapter extends Adapter {
         return false;
     }
 
-    public async supportsDiscoverRoute(): Promise<boolean> {
-        return false;
-    }
-
-    public async discoverRoute(networkAddress: number): Promise<void> {
-        return Promise.reject();
-    }
-
     public async restoreChannelInterPAN(): Promise<void> {
         return Promise.reject();
     }
@@ -840,6 +832,31 @@ class DeconzAdapter extends Adapter {
                 this.emit(Events.Events.deviceJoined, payload);
             } else {
                 this.emit(Events.Events.deviceAnnounce, payload);
+            }
+        }
+        if (resp != null && resp.profileId != 0x00) {
+            const payBuf = Buffer.from(resp.asduPayload);
+            try {
+                const payload: Events.ZclDataPayload = {
+                    frame: ZclFrame.fromBuffer(resp.clusterId, payBuf),
+                    address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
+                    endpoint: resp.srcEndpoint,
+                    linkquality: resp.lqi,
+                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null
+                };
+
+                this.emit(Events.Events.zclData, payload);
+            } catch (error) {
+                const payload: Events.RawDataPayload = {
+                    clusterID: resp.clusterId,
+                    data: payBuf,
+                    address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
+                    endpoint: resp.srcEndpoint,
+                    linkquality: resp.lqi,
+                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null
+                };
+
+                this.emit(Events.Events.rawData, payload);
             }
         }
     }
