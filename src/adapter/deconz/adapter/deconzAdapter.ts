@@ -480,8 +480,8 @@ class DeconzAdapter extends Adapter {
         return null;
     }
 
-    public async sendZclFrameNetworkAddress(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, defaultResponseTimeout: number
+    public async sendZclFrameToEndpoint(
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number
     ): Promise<Events.ZclDataPayload> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
@@ -491,8 +491,6 @@ class DeconzAdapter extends Adapter {
         //TODO: frameControl Byte instead frameType bit ?
         for (let i in zclFrame.Payload) {
             let entry = zclFrame.Payload[i];
-            console.log(entry);
-            console.log(typeof entry);
             if ((typeof entry) === 'object') {
                 const array: number[] = Object.values(entry);
                 for (let val in array) {
@@ -541,7 +539,7 @@ class DeconzAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameGroup(groupID: number, zclFrame: ZclFrame, timeout: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
         const payload = [zclFrame.Header.frameControl.frameType, zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
@@ -570,7 +568,6 @@ class DeconzAdapter extends Adapter {
         request.asduPayload = payload;
         request.txOptions = 0;
         request.radius = PARAM.PARAM.txRadius.UNLIMITED;
-        request.timeout = timeout;
 
         this.driver.enqueueSendDataRequest(request)
                 .then(result => {})
@@ -775,6 +772,16 @@ class DeconzAdapter extends Adapter {
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
+        return Promise.reject();
+    }
+
+    public async sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
+        return Promise.reject();
+    }
+
+    public async sendZclFrameInterPANBroadcast(
+        zclFrame: ZclFrame, timeout: number
+    ): Promise<Events.ZclDataPayload> {
         return Promise.reject();
     }
 
