@@ -48,7 +48,9 @@ class Driver extends events.EventEmitter {
         setInterval(() => { that.processBusyQueue(); }, 200);
         setInterval(() => { that.processApsQueue(); }, 300);
         setInterval(() => { that.processApsBusyQueue(); }, 200);
-        setInterval(() => { that.deviceStateRequest(); }, 10000);
+        setInterval(() => { that.deviceStateRequest()
+                            .then(result => {})
+                            .catch(error => {}); }, 10000);
 
         setInterval(() => {
             that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
