@@ -691,7 +691,7 @@ class DeconzAdapter extends Adapter {
         const request: ApsDataRequest = {};
         //const zdpFrame = [transactionID].concat(this.driver.macAddrStringToArray(ieeeAddr)).concat([0]);
         const zdpFrame = [transactionID].concat([0,0,0,0,0,0,0,0]).concat([0]);
-        // TODO: if router: mac addr = 0000..., if enddevice use ieeeAddr parameter...
+
         request.requestId = transactionID;
         request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
         request.destAddr16 = networkAddress;
@@ -703,15 +703,7 @@ class DeconzAdapter extends Adapter {
         request.asduPayload = zdpFrame;
         request.txOptions = 0;
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
-/*
-        try {
-            const lqi = await this.lqi(networkAddress);
-            console.log(lqi);
-        } catch (error) {
-            console.log("await lqi in remove device error");
-            return Promise.reject();
-        }
-*/
+
         this.driver.enqueueSendDataRequest(request)
             .then(result => {})
             .catch(error => {});
