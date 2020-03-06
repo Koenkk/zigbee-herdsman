@@ -1025,6 +1025,7 @@ const Cluster: {
         commands: {
             queryNextImageRequest: {
                 ID: 1,
+                response: 2,
                 parameters: [
                     {name: 'fieldControl', type: DataType.uint8},
                     {name: 'manufacturerCode', type: DataType.uint16},
@@ -1034,6 +1035,7 @@ const Cluster: {
             },
             imageBlockRequest: {
                 ID: 3,
+                response: 5,
                 parameters: [
                     {name: 'fieldControl', type: DataType.uint8},
                     {name: 'manufacturerCode', type: DataType.uint16},
@@ -1045,6 +1047,7 @@ const Cluster: {
             },
             upgradeEndRequest: {
                 ID: 6,
+                response: 7,
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                     {name: 'manufacturerCode', type: DataType.uint16},
