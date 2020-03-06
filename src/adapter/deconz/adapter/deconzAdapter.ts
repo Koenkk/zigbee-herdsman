@@ -485,8 +485,17 @@ class DeconzAdapter extends Adapter {
     ): Promise<Events.ZclDataPayload> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
-        const payload = [zclFrame.Header.frameControl.frameType, zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
-        //TODO: frameControl Byte instead frameType bit ?
+        let frameControl: string = "";
+        frameControl += (0);
+        frameControl += (0);
+        frameControl += (0);
+        frameControl += ((zclFrame.Header.frameControl.disableDefaultResponse) ? 1 : 0);
+        frameControl += (zclFrame.Header.frameControl.direction);
+        frameControl += ((zclFrame.Header.frameControl.manufacturerSpecific) ? 1 : 0);
+        frameControl += (0);
+        frameControl += (zclFrame.Header.frameControl.frameType);
+        const payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
+
         for (let i in zclFrame.Payload) {
             let entry = zclFrame.Payload[i];
             if ((typeof entry) === 'object') {
@@ -514,33 +523,47 @@ class DeconzAdapter extends Adapter {
         request.timeout = timeout;
 
         this.driver.enqueueSendDataRequest(request)
-                .then(result => {})
-                .catch(error => {});
+            .then(result => {
+                debug(`sendZclFrameToEndpoint - message send`);
+            })
+            .catch(error => {
+                debug(`sendZclFrameToEndpoint ERROR: ${error}`);
+                return Promise.reject();
+            });
 
-        try {
-            const data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID);
-            const asdu = data.asduPayload;
-            const buffer = Buffer.from(asdu);
-            const frame: ZclFrame = ZclFrame.fromBuffer(zclFrame.Cluster.ID, buffer);
-            const response: Events.ZclDataPayload = {
-                address: (data.srcAddrMode === 0x02) ? data.srcAddr16 : null,
-                frame: frame,
-                endpoint: data.srcEndpoint,
-                linkquality: data.lqi,
-                groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null
-            };
-
-            return response;
-        } catch (error) {
-            debug(`sendZclFrameNetworkAddress ERROR: ${error}`);
-            return Promise.reject();
-        }
+            try {
+                const data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID);
+                const asdu = data.asduPayload;
+                const buffer = Buffer.from(asdu);
+                const frame: ZclFrame = ZclFrame.fromBuffer(zclFrame.Cluster.ID, buffer);
+                const response: Events.ZclDataPayload = {
+                    address: (data.srcAddrMode === 0x02) ? data.srcAddr16 : null,
+                    frame: frame,
+                    endpoint: data.srcEndpoint,
+                    linkquality: data.lqi,
+                    groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null
+                };
+                debug(`response received: ${response}`);
+                return response;
+            } catch (error) {
+                //debug(`no response received`);
+                return null;
+            }
     }
 
     public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
-        const payload = [zclFrame.Header.frameControl.frameType, zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
+        let frameControl: string = "";
+        frameControl += (0);
+        frameControl += (0);
+        frameControl += (0);
+        frameControl += ((zclFrame.Header.frameControl.disableDefaultResponse) ? 1 : 0);
+        frameControl += (zclFrame.Header.frameControl.direction);
+        frameControl += ((zclFrame.Header.frameControl.manufacturerSpecific) ? 1 : 0);
+        frameControl += (0);
+        frameControl += (zclFrame.Header.frameControl.frameType);
+        const payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
         for (let i in zclFrame.Payload) {
             let entry = zclFrame.Payload[i];
             console.log(entry);
@@ -567,14 +590,10 @@ class DeconzAdapter extends Adapter {
         request.txOptions = 0;
         request.radius = PARAM.PARAM.txRadius.UNLIMITED;
 
-        this.driver.enqueueSendDataRequest(request)
-                .then(result => {})
-                .catch(error => {});
-
         try {
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
-            debug(`sendZclFrameGroup ERROR: ${error}`);
+            debug(`sendZclFrameToGroup ERROR: ${error}`);
             return Promise.reject();
         }
     }
