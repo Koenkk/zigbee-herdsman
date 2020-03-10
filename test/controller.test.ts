@@ -585,6 +585,7 @@ describe('Controller', () => {
         expect(events.deviceAnnounce.length).toBe(0);
         await mockAdapterEvents['deviceAnnounce']({networkAddress: 9999, ieeeAddr: '0x129'});
         expect(controller.getDeviceByIeeeAddr('0x129').networkAddress).toBe(9999);
+        expect(controller.getDeviceByIeeeAddr('0x129').getEndpoint(1).deviceNetworkAddress).toBe(9999);
     });
 
     it('Device leave event and remove from database', async () => {
