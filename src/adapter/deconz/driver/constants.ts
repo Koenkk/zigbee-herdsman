@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const PARAM: {
     [s: string]: {
         [s: string]: number;

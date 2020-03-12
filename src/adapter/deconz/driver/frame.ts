@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 class Frame {
     public toBuffer(): Buffer {
         return Buffer.alloc(0);

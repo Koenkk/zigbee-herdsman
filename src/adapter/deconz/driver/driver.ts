@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import Debug from 'debug';
 import events from 'events';
 import SerialPort from 'serialport';

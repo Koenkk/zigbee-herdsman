@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import * as stream from 'stream';
 // @ts-ignore
 import slip from 'slip';

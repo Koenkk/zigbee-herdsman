@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import * as stream from 'stream';
 import Frame from './frame';
 // @ts-ignore

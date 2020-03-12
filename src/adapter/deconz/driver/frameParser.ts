@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const MIN_BUFFER_SIZE = 3;
 const littleEndian = true;
 import PARAM from './constants';
