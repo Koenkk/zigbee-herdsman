@@ -543,7 +543,7 @@ class DeconzAdapter extends Adapter {
                     linkquality: data.lqi,
                     groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null
                 };
-                debug(`response received: ${response}`);
+                debug(`response received`);
                 return response;
             } catch (error) {
                 //debug(`no response received`);
