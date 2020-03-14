@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+/* eslint-disable */
 const PARAM: {
     [s: string]: {
         [s: string]: number;

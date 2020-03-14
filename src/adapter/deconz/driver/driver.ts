@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+/* eslint-disable */
 import Debug from 'debug';
 import events from 'events';
 import SerialPort from 'serialport';
