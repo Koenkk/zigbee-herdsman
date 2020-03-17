@@ -93,35 +93,37 @@ class DeconzAdapter extends Adapter {
     }
 
     public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
-            const transactionID = this.nextTransactionID();
-            const request: ApsDataRequest = {};
-            const zdpFrame = [transactionID, seconds, 0]; // tc_significance 1 or 0 ?
+        const transactionID = this.nextTransactionID();
+        const request: ApsDataRequest = {};
+        const zdpFrame = [transactionID, seconds, 0]; // tc_significance 1 or 0 ?
 
-            request.requestId = transactionID;
-            request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
-            request.destAddr16 = networkAddress || 0xFFFC;
-            request.destEndpoint = 0;
-            request.profileId = 0;
-            request.clusterId = 0x36; // permit join
-            request.srcEndpoint = 0;
-            request.asduLength = 3;
-            request.asduPayload = zdpFrame;
-            request.txOptions = 0;
-            request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
-            request.timeout = 5;
+        request.requestId = transactionID;
+        request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
+        request.destAddr16 = networkAddress || 0xFFFC;
+        request.destEndpoint = 0;
+        request.profileId = 0;
+        request.clusterId = 0x36; // permit join
+        request.srcEndpoint = 0;
+        request.asduLength = 3;
+        request.asduPayload = zdpFrame;
+        request.txOptions = 0;
+        request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
+        request.timeout = 5;
 
-            try {
-                await this.driver.enqueueSendDataRequest(request);
-                if (seconds === 0) {
-                    this.joinPermitted = false;
-                } else {
-                    this.joinPermitted = true;
-                }
-                debug("PERMIT_JOIN - " + seconds + " seconds");
-            } catch (error) {
-                debug("PERMIT_JOIN FAILED - " + error);
-                return Promise.reject();
+        try {
+            await this.driver.enqueueSendDataRequest(request);
+            if (seconds === 0) {
+                this.joinPermitted = false;
+            } else {
+                this.joinPermitted = true;
             }
+            this.driver.writeParameterRequest(PARAM.PARAM.Network.PERMIT_JOIN, seconds);
+
+            debug("PERMIT_JOIN - " + seconds + " seconds");
+        } catch (error) {
+            debug("PERMIT_JOIN FAILED - " + error);
+            return Promise.reject();
+        }
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
@@ -568,8 +570,6 @@ class DeconzAdapter extends Adapter {
         const payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
         for (let i in zclFrame.Payload) {
             let entry = zclFrame.Payload[i];
-            console.log(entry);
-            console.log(typeof entry);
             if ((typeof entry) === 'object') {
                 const array: number[] = Object.values(entry);
                 for (let val in array) {
