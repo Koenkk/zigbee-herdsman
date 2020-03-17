@@ -59,7 +59,12 @@ class Device extends Entity {
     set modelID(modelID) {this._modelID = modelID;}
     get modelID(): string {return this._modelID;}
     get networkAddress(): number {return this._networkAddress;}
-    set networkAddress(networkAddress) {this._networkAddress = networkAddress;}
+    set networkAddress(networkAddress) {
+        this._networkAddress = networkAddress;
+        for (const endpoint of this._endpoints) {
+            endpoint.deviceNetworkAddress = networkAddress;
+        }
+    }
     get powerSource(): string {return this._powerSource;}
     set powerSource(powerSource) {
         this._powerSource = typeof powerSource === 'number' ? Zcl.PowerSource[powerSource] : powerSource;

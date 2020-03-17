@@ -32,7 +32,8 @@ abstract class Adapter extends events.EventEmitter {
         type AdapterImplementation = typeof ZStackAdapter | typeof DeconzAdapter;
 
         const adapters: AdapterImplementation[] = [ZStackAdapter, DeconzAdapter];
-        let adapter: AdapterImplementation = null;
+        // Use ZStackAdapter by default
+        let adapter: AdapterImplementation = ZStackAdapter;
 
         if (!serialPortOptions.path) {
             debug('No path provided, auto detecting path');

@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+/* eslint-disable */
 import * as stream from 'stream';
 import Frame from './frame';
 // @ts-ignore

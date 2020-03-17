@@ -174,23 +174,8 @@ class ZStackAdapter extends Adapter {
         await this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: enabled ? 1 : 0});
     }
 
-    private supportsSourceRouting(): boolean {
-        if (
-            (this.version.product === ZnpVersion.zStack12 && this.version.revision === '20190619') ||
-            (this.version.product === ZnpVersion.zStack30x && this.version.revision === '20200211') ||
-            (this.version.product === ZnpVersion.zStack3x0)
-        ) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     private async discoverRoute(networkAddress: number): Promise<void> {
-        // 8  = No multicast; Extended destination: True; Many-to-One discovery: With Source Routing
-        // 16 = No multicast; Extended destination: True; Many-to-One discovery: Without Source Routing
-        const options = this.supportsSourceRouting() ? 8 : 16;
-        const payload =  {dstAddr: networkAddress, options, radius: Constants.AF.DEFAULT_RADIUS};
+        const payload =  {dstAddr: networkAddress, options: 0, radius: Constants.AF.DEFAULT_RADIUS};
         await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
     }
 

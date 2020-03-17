@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+/* eslint-disable */
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
@@ -613,7 +614,7 @@ class DeconzAdapter extends Adapter {
             destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
             destArray = destArray.concat([destinationEndpoint]);
         } else {
-            destArray = [destinationAddressOrGroup as number & 0xff, (destinationAddressOrGroup as number >> 8) & 0xff];
+            destArray = [destinationAddressOrGroup as number & 0xff, ((destinationAddressOrGroup as number) >> 8) & 0xff];
         }
 
         const request: ApsDataRequest = {};
@@ -664,7 +665,7 @@ class DeconzAdapter extends Adapter {
             destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
             destArray.concat([destinationEndpoint]);
         } else {
-            destArray = [destinationAddressOrGroup as number & 0xff, (destinationAddressOrGroup as number >> 8) & 0xff];
+            destArray = [destinationAddressOrGroup as number & 0xff, ((destinationAddressOrGroup as number) >> 8) & 0xff];
         }
         const request: ApsDataRequest = {};
         const zdpFrame = [transactionID].concat(this.driver.macAddrStringToArray(sourceIeeeAddress)).concat(

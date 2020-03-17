@@ -53,7 +53,7 @@ class Endpoint extends Entity {
     public readonly ID: number;
     public readonly clusters: Clusters;
     private readonly deviceIeeeAddress: string;
-    public readonly deviceNetworkAddress: number;
+    public deviceNetworkAddress: number;
     private _binds: BindInternal[];
 
     // Getters/setters

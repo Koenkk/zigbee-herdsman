@@ -1025,6 +1025,7 @@ const Cluster: {
         commands: {
             queryNextImageRequest: {
                 ID: 1,
+                response: 2,
                 parameters: [
                     {name: 'fieldControl', type: DataType.uint8},
                     {name: 'manufacturerCode', type: DataType.uint16},
@@ -1034,6 +1035,7 @@ const Cluster: {
             },
             imageBlockRequest: {
                 ID: 3,
+                response: 5,
                 parameters: [
                     {name: 'fieldControl', type: DataType.uint8},
                     {name: 'manufacturerCode', type: DataType.uint16},
@@ -1045,6 +1047,7 @@ const Cluster: {
             },
             upgradeEndRequest: {
                 ID: 6,
+                response: 7,
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                     {name: 'manufacturerCode', type: DataType.uint16},
@@ -1236,24 +1239,28 @@ const Cluster: {
         commands: {
             lockDoor: {
                 ID: 0,
+                response: 0,
                 parameters: [
                     {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             unlockDoor: {
                 ID: 1,
+                response: 1,
                 parameters: [
                     {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             toggleDoor: {
                 ID: 2,
+                response: 2,
                 parameters: [
                     {name: 'pincodevalue', type: DataType.charStr},
                 ],
             },
             unlockWithTimeout: {
                 ID: 3,
+                response: 3,
                 parameters: [
                     {name: 'timeout', type: DataType.uint16},
                     {name: 'pincodevalue', type: DataType.charStr},
@@ -1261,12 +1268,14 @@ const Cluster: {
             },
             getLogRecord: {
                 ID: 4,
+                response: 4,
                 parameters: [
                     {name: 'logindex', type: DataType.uint16},
                 ],
             },
             setPinCode: {
                 ID: 5,
+                response: 5,
                 parameters: [
                     {name: 'userid', type: DataType.uint16},
                     {name: 'userstatus', type: DataType.uint8},
@@ -1276,23 +1285,27 @@ const Cluster: {
             },
             getPinCode: {
                 ID: 6,
+                response: 6,
                 parameters: [
                     {name: 'userid', type: DataType.uint16},
                 ],
             },
             clearPinCode: {
                 ID: 7,
+                response: 7,
                 parameters: [
                     {name: 'userid', type: DataType.uint16},
                 ],
             },
             clearAllPinCodes: {
                 ID: 8,
+                response: 8,
                 parameters: [
                 ],
             },
             setUserStatus: {
                 ID: 9,
+                response: 9,
                 parameters: [
                     {name: 'userid', type: DataType.uint16},
                     {name: 'userstatus', type: DataType.uint8},
@@ -1300,12 +1313,14 @@ const Cluster: {
             },
             getUserStatus: {
                 ID: 10,
+                response: 10,
                 parameters: [
                     {name: 'userid', type: DataType.uint16},
                 ],
             },
             setWeekDaySchedule: {
                 ID: 11,
+                response: 11,
                 parameters: [
                     {name: 'scheduleid', type: DataType.uint8},
                     {name: 'userid', type: DataType.uint16},
@@ -1318,6 +1333,7 @@ const Cluster: {
             },
             getWeekDaySchedule: {
                 ID: 12,
+                response: 12,
                 parameters: [
                     {name: 'scheduleid', type: DataType.uint8},
                     {name: 'userid', type: DataType.uint16},
@@ -1325,6 +1341,7 @@ const Cluster: {
             },
             clearWeekDaySchedule: {
                 ID: 13,
+                response: 13,
                 parameters: [
                     {name: 'scheduleid', type: DataType.uint8},
                     {name: 'userid', type: DataType.uint16},
@@ -1332,6 +1349,7 @@ const Cluster: {
             },
             setYearDaySchedule: {
                 ID: 14,
+                response: 14,
                 parameters: [
                     {name: 'scheduleid', type: DataType.uint8},
                     {name: 'userid', type: DataType.uint16},
@@ -1341,6 +1359,7 @@ const Cluster: {
             },
             getYearDaySchedule: {
                 ID: 15,
+                response: 15,
                 parameters: [
                     {name: 'scheduleid', type: DataType.uint8},
                     {name: 'userid', type: DataType.uint16},
@@ -1348,6 +1367,7 @@ const Cluster: {
             },
             clearYearDaySchedule: {
                 ID: 16,
+                response: 16,
                 parameters: [
                     {name: 'scheduleid', type: DataType.uint8},
                     {name: 'userid', type: DataType.uint16},
@@ -1355,6 +1375,7 @@ const Cluster: {
             },
             setHolidaySchedule: {
                 ID: 17,
+                response: 17,
                 parameters: [
                     {name: 'holidayscheduleid', type: DataType.uint8},
                     {name: 'zigbeelocalstarttime', type: DataType.uint32},
@@ -1364,18 +1385,21 @@ const Cluster: {
             },
             getHolidaySchedule: {
                 ID: 18,
+                response: 18,
                 parameters: [
                     {name: 'holidayscheduleid', type: DataType.uint8},
                 ],
             },
             clearHolidaySchedule: {
                 ID: 19,
+                response: 19,
                 parameters: [
                     {name: 'holidayscheduleid', type: DataType.uint8},
                 ],
             },
             setUserType: {
                 ID: 20,
+                response: 20,
                 parameters: [
                     {name: 'userid', type: DataType.uint16},
                     {name: 'usertype', type: DataType.uint8},
@@ -1383,12 +1407,14 @@ const Cluster: {
             },
             getUserType: {
                 ID: 21,
+                response: 21,
                 parameters: [
                     {name: 'userid', type: DataType.uint16},
                 ],
             },
             setRfidCode: {
                 ID: 22,
+                response: 22,
                 parameters: [
                     {name: 'userid', type: DataType.uint16},
                     {name: 'userstatus', type: DataType.uint8},
@@ -1398,18 +1424,21 @@ const Cluster: {
             },
             getRfidCode: {
                 ID: 23,
+                response: 23,
                 parameters: [
                     {name: 'userid', type: DataType.uint16},
                 ],
             },
             clearRfidCode: {
                 ID: 24,
+                response: 24,
                 parameters: [
                     {name: 'userid', type: DataType.uint16},
                 ],
             },
             clearAllRfidCodes: {
                 ID: 25,
+                response: 25,
                 parameters: [
                 ],
             },
