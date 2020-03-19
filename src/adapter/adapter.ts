@@ -31,9 +31,23 @@ abstract class Adapter extends events.EventEmitter {
         const {DeconzAdapter} = await import('./deconz/adapter');
         type AdapterImplementation = typeof ZStackAdapter | typeof DeconzAdapter;
 
-        const adapters: AdapterImplementation[] = [ZStackAdapter, DeconzAdapter];
+        let adapters: AdapterImplementation[];
+        const adapterLookup = {zstack: ZStackAdapter, deconz: DeconzAdapter};
+        if (serialPortOptions.adapter) {
+            if (adapterLookup.hasOwnProperty(serialPortOptions.adapter)) {
+                adapters = [adapterLookup[serialPortOptions.adapter]];
+            } else {
+                throw new Error(
+                    `Adapter '${serialPortOptions.adapter}' does not exists, possible ` +
+                    `options: ${Object.keys(adapterLookup).join(', ')}`
+                );
+            }
+        } else {
+            adapters = Object.values(adapterLookup);
+        }
+
         // Use ZStackAdapter by default
-        let adapter: AdapterImplementation = ZStackAdapter;
+        let adapter: AdapterImplementation = adapters[0];
 
         if (!serialPortOptions.path) {
             debug('No path provided, auto detecting path');

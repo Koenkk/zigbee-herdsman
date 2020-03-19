@@ -40,6 +40,7 @@ const DefaultOptions: Options = {
         baudRate: 115200,
         rtscts: true,
         path: null,
+        adapter: null,
     },
     databasePath: null,
     databaseBackupPath: null,
