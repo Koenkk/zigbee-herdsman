@@ -39,7 +39,7 @@
 
 • **groupID**: *number*
 
-*Defined in [src/controller/model/group.ts:17](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L17)*
+*Defined in [src/controller/model/group.ts:17](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L17)*
 
 ___
 
@@ -47,7 +47,7 @@ ___
 
 • **meta**: *[KeyValue](../interfaces/_controller_tstype_.keyvalue.md)*
 
-*Defined in [src/controller/model/group.ts:21](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L21)*
+*Defined in [src/controller/model/group.ts:21](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L21)*
 
 ## Accessors
 
@@ -55,7 +55,7 @@ ___
 
 • **get members**(): *[Endpoint](_controller_model_endpoint_.endpoint.md)[]*
 
-*Defined in [src/controller/model/group.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L19)*
+*Defined in [src/controller/model/group.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L19)*
 
 **Returns:** *[Endpoint](_controller_model_endpoint_.endpoint.md)[]*
 
@@ -65,7 +65,7 @@ ___
 
 ▸ **addMember**(`endpoint`: [Endpoint](_controller_model_endpoint_.endpoint.md)): *void*
 
-*Defined in [src/controller/model/group.ts:106](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L106)*
+*Defined in [src/controller/model/group.ts:110](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L110)*
 
 **Parameters:**
 
@@ -81,7 +81,7 @@ ___
 
 ▸ **command**(`clusterKey`: number | string, `commandKey`: number | string, `payload`: [KeyValue](../interfaces/_controller_tstype_.keyvalue.md)): *Promise‹void›*
 
-*Defined in [src/controller/model/group.ts:124](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L124)*
+*Defined in [src/controller/model/group.ts:128](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L128)*
 
 **Parameters:**
 
@@ -99,7 +99,7 @@ ___
 
 ▸ **hasMember**(`endpoint`: [Endpoint](_controller_model_endpoint_.endpoint.md)): *boolean*
 
-*Defined in [src/controller/model/group.ts:116](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L116)*
+*Defined in [src/controller/model/group.ts:120](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L120)*
 
 **Parameters:**
 
@@ -115,7 +115,7 @@ ___
 
 ▸ **removeFromDatabase**(): *void*
 
-*Defined in [src/controller/model/group.ts:96](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L96)*
+*Defined in [src/controller/model/group.ts:96](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L96)*
 
 **Returns:** *void*
 
@@ -125,7 +125,7 @@ ___
 
 ▸ **removeMember**(`endpoint`: [Endpoint](_controller_model_endpoint_.endpoint.md)): *void*
 
-*Defined in [src/controller/model/group.ts:111](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L111)*
+*Defined in [src/controller/model/group.ts:115](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L115)*
 
 **Parameters:**
 
@@ -141,7 +141,7 @@ ___
 
 ▸ **save**(): *void*
 
-*Defined in [src/controller/model/group.ts:102](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L102)*
+*Defined in [src/controller/model/group.ts:106](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L106)*
 
 **Returns:** *void*
 
@@ -151,7 +151,7 @@ ___
 
 ▸ **all**(): *[Group](_controller_model_group_.group.md)[]*
 
-*Defined in [src/controller/model/group.ts:76](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L76)*
+*Defined in [src/controller/model/group.ts:76](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L76)*
 
 **Returns:** *[Group](_controller_model_group_.group.md)[]*
 
@@ -161,7 +161,7 @@ ___
 
 ▸ **byGroupID**(`groupID`: number): *[Group](_controller_model_group_.group.md)*
 
-*Defined in [src/controller/model/group.ts:71](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L71)*
+*Defined in [src/controller/model/group.ts:71](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L71)*
 
 **Parameters:**
 
@@ -177,7 +177,7 @@ ___
 
 ▸ **create**(`groupID`: number): *[Group](_controller_model_group_.group.md)*
 
-*Defined in [src/controller/model/group.ts:81](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/group.ts#L81)*
+*Defined in [src/controller/model/group.ts:81](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L81)*
 
 **Parameters:**
 
@@ -195,7 +195,7 @@ ___
 
 *Inherited from [Group](_controller_model_group_.group.md).[injectAdapter](_controller_model_group_.group.md#static-injectadapter)*
 
-*Defined in [src/controller/model/entity.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/entity.ts#L12)*
+*Defined in [src/controller/model/entity.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/entity.ts#L12)*
 
 **Parameters:**
 
@@ -213,7 +213,7 @@ ___
 
 *Inherited from [Group](_controller_model_group_.group.md).[injectDatabase](_controller_model_group_.group.md#static-injectdatabase)*
 
-*Defined in [src/controller/model/entity.ts:8](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/model/entity.ts#L8)*
+*Defined in [src/controller/model/entity.ts:8](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/entity.ts#L8)*
 
 **Parameters:**
 

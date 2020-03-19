@@ -23,7 +23,7 @@
 
 • **acceptJoiningDeviceHandler**: *function*
 
-*Defined in [src/controller/controller.ts:28](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/controller.ts#L28)*
+*Defined in [src/controller/controller.ts:28](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/controller.ts#L28)*
 
 This lambda can be used by an application to explictly reject or accept an incoming device.
 When false is returned zigbee-herdsman will not start the interview process and immidiately
@@ -45,7 +45,7 @@ ___
 
 • **backupPath**: *string*
 
-*Defined in [src/controller/controller.ts:22](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/controller.ts#L22)*
+*Defined in [src/controller/controller.ts:22](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/controller.ts#L22)*
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 • **databaseBackupPath**: *string*
 
-*Defined in [src/controller/controller.ts:21](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/controller.ts#L21)*
+*Defined in [src/controller/controller.ts:21](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/controller.ts#L21)*
 
 ___
 
@@ -61,7 +61,7 @@ ___
 
 • **databasePath**: *string*
 
-*Defined in [src/controller/controller.ts:20](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/controller.ts#L20)*
+*Defined in [src/controller/controller.ts:20](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/controller.ts#L20)*
 
 ___
 
@@ -69,7 +69,7 @@ ___
 
 • **network**: *[NetworkOptions](_adapter_tstype_.networkoptions.md)*
 
-*Defined in [src/controller/controller.ts:18](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/controller.ts#L18)*
+*Defined in [src/controller/controller.ts:18](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/controller.ts#L18)*
 
 ___
 
@@ -77,4 +77,4 @@ ___
 
 • **serialPort**: *[SerialPortOptions](_adapter_tstype_.serialportoptions.md)*
 
-*Defined in [src/controller/controller.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/controller/controller.ts#L19)*
+*Defined in [src/controller/controller.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/controller.ts#L19)*

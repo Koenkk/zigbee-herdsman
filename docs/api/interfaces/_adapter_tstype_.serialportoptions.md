@@ -10,17 +10,26 @@
 
 ### Properties
 
+* [adapter](_adapter_tstype_.serialportoptions.md#adapter)
 * [baudRate](_adapter_tstype_.serialportoptions.md#baudrate)
 * [path](_adapter_tstype_.serialportoptions.md#path)
 * [rtscts](_adapter_tstype_.serialportoptions.md#rtscts)
 
 ## Properties
 
+###  adapter
+
+• **adapter**: *"zstack" | "deconz"*
+
+*Defined in [src/adapter/tstype.ts:14](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L14)*
+
+___
+
 ###  baudRate
 
 • **baudRate**: *number*
 
-*Defined in [src/adapter/tstype.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/adapter/tstype.ts#L11)*
+*Defined in [src/adapter/tstype.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L11)*
 
 ___
 
@@ -28,7 +37,7 @@ ___
 
 • **path**: *string*
 
-*Defined in [src/adapter/tstype.ts:13](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/adapter/tstype.ts#L13)*
+*Defined in [src/adapter/tstype.ts:13](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L13)*
 
 ___
 
@@ -36,4 +45,4 @@ ___
 
 • **rtscts**: *boolean*
 
-*Defined in [src/adapter/tstype.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/610fe5a/src/adapter/tstype.ts#L12)*
+*Defined in [src/adapter/tstype.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L12)*
