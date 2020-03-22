@@ -163,6 +163,13 @@ class Device extends Entity {
     public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, endpoint: Endpoint): Promise<void> {
         const frame = dataPayload.frame;
 
+        // Respond to enroll requests
+        if (frame.isSpecific() && frame.isCluster('ssIasZone') && frame.isCommand('enrollReq')) {
+            debug.log(`IAS - '${this.ieeeAddr}' responding to enroll response`);
+            const payload = {enrollrspcode: 0, zoneid: 23};
+            await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
+        }
+
         // Reponse to genTime reads
         if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
             const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
@@ -479,25 +486,41 @@ class Device extends Entity {
             const stateBefore = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState']);
             debug.log(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`);
 
-            const coordinator = Device.byType('Coordinator')[0];
-            await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
-            debug.log(`Interview - IAS - wrote iasCieAddr`);
+            // Do not enroll when device has already been enrolled
+            if (stateBefore.zoneState !== 1) {
+                debug.log(`Interview - IAS - not enrolled, enrolling`);
 
-            await Wait(300);
-            const payload = {enrollrspcode: 0, zoneid: 23};
-            await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
-            debug.log(`Interview - IAS - sent enroll response`);
+                const coordinator = Device.byType('Coordinator')[0];
+                await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
+                debug.log(`Interview - IAS - wrote iasCieAddr`);
 
-            await Wait(300);
-            const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState']);
-            debug.log(`Interview - IAS - after enrolling state: '${JSON.stringify(stateAfter)}'`);
-            if (stateAfter.zoneState !== 1) {
-                throw new Error(
-                    `Interview failed because of failed IAS enroll (zoneState didn't change ('${this.ieeeAddr}')`
-                );
+                // According to the ZCL, after the iasCieAddr is written, the device will do an
+                // enroll request. This should be responded with an enroll resopnse.
+                // As some devices send these enroll requests randomly (while the iasCieAddr has not been written yet)
+                // we always respond to these enroll requests in the onZclData() function.
+                // Therefore we don't have to do it here anymore.
+                // https://github.com/Koenkk/zigbee2mqtt/issues/3012
+                let enrolled = false;
+                for (let attempt = 0; attempt < 5; attempt++) {
+                    await Wait(300);
+                    const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState']);
+                    debug.log(`Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`);
+                    if (stateAfter.zoneState === 1) {
+                        enrolled = true;
+                        break;
+                    }
+                }
+
+                if (enrolled) {
+                    debug.log(`Interview - IAS successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+                } else {
+                    throw new Error(
+                        `Interview failed because of failed IAS enroll (zoneState didn't change ('${this.ieeeAddr}')`
+                    );
+                }
+            } else {
+                debug.log(`Interview - IAS - already enrolled, skipping enroll`);
             }
-
-            debug.log(`Interview - IAS successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
         }
     }
 

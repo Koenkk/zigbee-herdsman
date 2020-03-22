@@ -10,6 +10,16 @@ import * as Zcl from '../src/zcl';
 import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
 import {Adapter} from '../src/adapter';
 import path  from 'path';
+import {Wait} from '../src/utils';
+
+let skipWait = false;
+Wait.mockImplementation((milliseconds) => {
+    if (!skipWait) {
+        return new Promise((resolve): void => {
+            setTimeout((): void => resolve(), milliseconds);
+        });
+    }
+})
 
 Date.now = jest.fn()
 // @ts-ignore
@@ -46,13 +56,19 @@ const mockAdapterUnbind = jest.fn();
 const mockAdapterRemoveDevice = jest.fn();
 const mocksendZclFrameToEndpoint = jest.fn();
 
+let iasZoneReadState170Count = 0;
+let enroll170 = true;
+
 const restoreMocksendZclFrameToEndpoint = () => {
     mocksendZclFrameToEndpoint.mockImplementation((networkAddress, endpoint, frame: ZclFrame) => {
         if (frame.isGlobal() && frame.isCommand('read') && (frame.isCluster('genBasic') || frame.isCluster('ssIasZone'))) {
             const payload = [];
             const cluster = frame.Cluster;
             for (const item of frame.Payload) {
-                if (item.attrId !== 65314) {
+                if (frame.isCluster('ssIasZone') && item.attrId === 0) {
+                    iasZoneReadState170Count++;
+                    payload.push({attrId: item.attrId, attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0});
+                } else if (item.attrId !== 65314) {
                     const attribute = cluster.getAttribute(item.attrId).name;
                     payload.push({attrId: item.attrId, attrData: mockDevices[networkAddress].attributes[endpoint][attribute]})
                 }
@@ -65,6 +81,23 @@ const restoreMocksendZclFrameToEndpoint = () => {
         if (frame.isSpecific() && (frame.isCommand('add') || frame.isCommand('remove')) && frame.isCluster('genGroups')) {
             // @ts-ignore
             return {frame: new ZclFrame(null, {status: 0, groupid: 1}, frame.Cluster)};
+        }
+
+        if (networkAddress === 170 && frame.isGlobal() && frame.isCluster('ssIasZone') && frame.isCommand('write') && frame.Payload[0].attrId === 16) {
+            // Write of ias cie address
+            const response = Zcl.ZclFrame.create(
+                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, false,
+                null, 1, 'enrollReq', Zcl.Utils.getCluster('ssIasZone').ID,
+                {zonetype: 0, manucode: 1}
+            );
+
+            mockAdapterEvents['zclData']({
+                address: 170,
+                frame: response,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 1,
+            });
         }
     })
 }
@@ -130,7 +163,7 @@ const mockDevices = {
         activeEndpoints: {endpoints: [1]},
         simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [0, 1280], outputClusters: [2], profileID: 99}},
         attributes: {
-            1: {zoneState: 1, iasCieAddr: '0x123', modelId: 'myIasDevice', manufacturerName: 'KoenAndCoSecurity', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
+            1: {zoneState: 0, iasCieAddr: '0x123', modelId: 'myIasDevice', manufacturerName: 'KoenAndCoSecurity', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
         },
     },
     171: {
@@ -334,6 +367,9 @@ describe('Controller', () => {
     beforeEach(async () => {
         // @ts-ignore
         zclTransactionSequenceNumber.number = 1;
+        iasZoneReadState170Count = 0;
+        skipWait = false;
+        enroll170 = true;
         options.network.channelList = [15];
         Object.keys(events).forEach((key) => events[key] = []);
         Device['devices'] = null;
@@ -796,6 +832,7 @@ describe('Controller', () => {
 
     it('Device joins and interview iAs enrollment succeeds', async () => {
         await controller.start();
+        skipWait = true;
         const event = mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         await event;
         expect(events.deviceInterview.length).toBe(2);
@@ -817,14 +854,28 @@ describe('Controller', () => {
 
     it('Device joins and interview iAs enrollment fails', async () => {
         mockDevices['170'].attributes['1'].zoneState = 0;
+        enroll170 = false;
         await controller.start();
-        const event = mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
-        await event;
+        skipWait = true;
+        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started')
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x170')
         expect(events.deviceInterview[1].status).toBe('failed')
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x170');
+    });
+
+    it('Device joins, shouldnt enroll when already enrolled', async () => {
+        await controller.start();
+        iasZoneReadState170Count = 1;
+        skipWait = true;
+        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe('started')
+        expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x170')
+        expect(events.deviceInterview[1].status).toBe('successful')
+        expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x170');
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(6);
     });
 
     it('Receive zclData occupancy report', async () => {
@@ -1780,6 +1831,7 @@ describe('Controller', () => {
 
     it('Endpoint bind', async () => {
         await controller.start();
+        skipWait = true;
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -1828,6 +1880,7 @@ describe('Controller', () => {
 
     it('Endpoint unbind', async () => {
         await controller.start();
+        skipWait = true;
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -2150,6 +2203,7 @@ describe('Controller', () => {
 
     it('Remove endpoint from all groups', async () => {
         await controller.start();
+        skipWait = true;
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device1 = controller.getDeviceByIeeeAddr('0x129');
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
