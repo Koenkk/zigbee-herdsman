@@ -1045,6 +1045,20 @@ const Cluster: {
                     {name: 'maximumDataSize', type: DataType.uint8},
                 ],
             },
+            imagePageRequest: {
+                ID: 4,
+                response: 5,
+                parameters: [
+                    {name: 'fieldControl', type: DataType.uint8},
+                    {name: 'manufacturerCode', type: DataType.uint16},
+                    {name: 'imageType', type: DataType.uint16},
+                    {name: 'fileVersion', type: DataType.uint32},
+                    {name: 'fileOffset', type: DataType.uint32},
+                    {name: 'maximumDataSize', type: DataType.uint8},
+                    {name: 'pageSize', type: DataType.uint16},
+                    {name: 'responseSpacing', type: DataType.uint16},
+                ],
+            },
             upgradeEndRequest: {
                 ID: 6,
                 response: 7,
