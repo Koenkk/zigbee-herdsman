@@ -495,7 +495,7 @@ class Device extends Entity {
                 debug.log(`Interview - IAS - wrote iasCieAddr`);
 
                 // According to the ZCL, after the iasCieAddr is written, the device will do an
-                // enroll request. This should be responded with an enroll resopnse.
+                // enroll request. This should be responded with an enroll response.
                 // As some devices send these enroll requests randomly (while the iasCieAddr has not been written yet)
                 // we always respond to these enroll requests in the onZclData() function.
                 // Therefore we don't have to do it here anymore.
