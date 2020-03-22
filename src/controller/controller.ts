@@ -54,11 +54,6 @@ const debug = {
 };
 
 /**
- * @ignore
- */
-const OneJanuary2000 = new Date('January 01, 2000 00:00:00 UTC+00:00').getTime();
-
-/**
  * @noInheritDoc
  */
 class Controller extends events.EventEmitter {
@@ -521,47 +516,7 @@ class Controller extends events.EventEmitter {
 
 
         if (this.isZclDataPayload(dataPayload, dataType)) {
-            const frame = dataPayload.frame;
-
-            // Reponse to genTime reads
-            if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
-                const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
-                const response: KeyValue = {};
-                const values: KeyValue = {
-                    timeStatus: 3, // Time-master + synchronised
-                    time: time,
-                    localTime: time - (new Date()).getTimezoneOffset() * 60
-                };
-
-                const cluster = ZclUtils.getCluster('genTime');
-                for (const entry of frame.Payload) {
-                    const name = cluster.getAttribute(entry.attrId).name;
-                    if (values.hasOwnProperty(name)) {
-                        response[name] = values[name];
-                    } else {
-                        debug.error(`'${device.ieeeAddr}' read unsupported attribute from genTime '${name}'`);
-                    }
-                }
-
-                try {
-                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response);
-                } catch (error) {
-                    debug.error(`genTime response to ${device.ieeeAddr} failed`);
-                }
-            }
-
-            // Send a default response if necessary.
-            const isDefaultResponse = frame.isGlobal() && frame.getCommand().name === 'defaultRsp';
-            const commandHasResponse = frame.getCommand().hasOwnProperty('response');
-            if (!frame.Header.frameControl.disableDefaultResponse && !isDefaultResponse && !commandHasResponse) {
-                try {
-                    await endpoint.defaultResponse(
-                        frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
-                    );
-                } catch (error) {
-                    debug.error(`Default response to ${device.ieeeAddr} failed`);
-                }
-            }
+            device.onZclData(dataPayload, endpoint);
         }
     }
 }
