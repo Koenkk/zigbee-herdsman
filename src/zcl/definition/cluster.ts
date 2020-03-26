@@ -3689,7 +3689,7 @@ const Cluster: {
         ID: 0xFC45,
         manufacturerCode: ManufacturerCode.Centralite,
         attributes: {
-            measuredValue: { ID: 0, type: DataType.uint16 },
+            measuredValue: {ID: 0, type: DataType.uint16},
         },
         commands: {},
         commandsResponse: {},
