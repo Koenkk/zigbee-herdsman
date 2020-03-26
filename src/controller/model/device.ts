@@ -1,12 +1,20 @@
 import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
-import {TsType as AdapterTsType} from '../../adapter';
+import {TsType as AdapterTsType, Events as AdapterEvents} from '../../adapter';
 import Endpoint from './endpoint';
 import Entity from './entity';
 import {ArraySplitChunks, Wait} from '../../utils';
 import Debug from "debug";
 import * as Zcl from '../../zcl';
 
-const debug = Debug('zigbee-herdsman:controller:device');
+/**
+ * @ignore
+ */
+const OneJanuary2000 = new Date('January 01, 2000 00:00:00 UTC+00:00').getTime();
+
+const debug = {
+    error: Debug('zigbee-herdsman:controller:device:error'),
+    log: Debug('zigbee-herdsman:controller:device:log'),
+};
 
 interface LQI {
     neighbors: {
@@ -152,6 +160,57 @@ class Device extends Entity {
         this._lastSeen = Date.now();
     }
 
+    public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, endpoint: Endpoint): Promise<void> {
+        const frame = dataPayload.frame;
+
+        // Respond to enroll requests
+        if (frame.isSpecific() && frame.isCluster('ssIasZone') && frame.isCommand('enrollReq')) {
+            debug.log(`IAS - '${this.ieeeAddr}' responding to enroll response`);
+            const payload = {enrollrspcode: 0, zoneid: 23};
+            await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
+        }
+
+        // Reponse to genTime reads
+        if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
+            const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
+            const response: KeyValue = {};
+            const values: KeyValue = {
+                timeStatus: 3, // Time-master + synchronised
+                time: time,
+                localTime: time - (new Date()).getTimezoneOffset() * 60
+            };
+
+            const cluster = Zcl.Utils.getCluster('genTime');
+            for (const entry of frame.Payload) {
+                const name = cluster.getAttribute(entry.attrId).name;
+                if (values.hasOwnProperty(name)) {
+                    response[name] = values[name];
+                } else {
+                    debug.error(`'${this.ieeeAddr}' read unsupported attribute from genTime '${name}'`);
+                }
+            }
+
+            try {
+                await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response);
+            } catch (error) {
+                debug.error(`genTime response to ${this.ieeeAddr} failed`);
+            }
+        }
+
+        // Send a default response if necessary.
+        const isDefaultResponse = frame.isGlobal() && frame.getCommand().name === 'defaultRsp';
+        const commandHasResponse = frame.getCommand().hasOwnProperty('response');
+        if (!frame.Header.frameControl.disableDefaultResponse && !isDefaultResponse && !commandHasResponse) {
+            try {
+                await endpoint.defaultResponse(
+                    frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
+                );
+            } catch (error) {
+                debug.error(`Default response to ${this.ieeeAddr} failed`);
+            }
+        }
+    }
+
     /*
      * CRUD
      */
@@ -267,23 +326,23 @@ class Device extends Entity {
     public async interview(): Promise<void> {
         if (this.interviewing) {
             const message = `Interview - interview already in progress for '${this.ieeeAddr}'`;
-            debug(message);
+            debug.log(message);
             throw new Error(message);
         }
 
         let error;
         this._interviewing = true;
-        debug(`Interview - start device '${this.ieeeAddr}'`);
+        debug.log(`Interview - start device '${this.ieeeAddr}'`);
 
         try {
             await this.interviewInternal();
-            debug(`Interview - completed for device '${this.ieeeAddr}'`);
+            debug.log(`Interview - completed for device '${this.ieeeAddr}'`);
             this._interviewCompleted = true;
         } catch (e) {
             if (this.interviewQuirks()) {
-                debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${e}')`);
+                debug.log(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${e}')`);
             } else {
-                debug(`Interview - failed for device '${this.ieeeAddr}' with error '${e.stack}'`);
+                debug.log(`Interview - failed for device '${this.ieeeAddr}' with error '${e.stack}'`);
                 error = e;
             }
         } finally {
@@ -314,7 +373,7 @@ class Device extends Entity {
         const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
         if (match) {
             const info = lookup[match];
-            debug(`Interview procedure failed but got modelID matching '${match}', assuming interview succeeded`);
+            debug.log(`Interview procedure failed but got modelID matching '${match}', assuming interview succeeded`);
             this._type = info.type;
             this._manufacturerID = info.manufacturerID;
             this._manufacturerName = info.manufacturerName;
@@ -334,7 +393,7 @@ class Device extends Entity {
             this._manufacturerID = nodeDescriptor.manufacturerCode;
             this._type = nodeDescriptor.type;
             this.save();
-            debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
+            debug.log(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         };
 
         let gotNodeDescriptor = false;
@@ -345,11 +404,13 @@ class Device extends Entity {
                 break;
             } catch (error) {
                 if (this.interviewQuirks()) {
-                    debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${error}')`);
+                    debug.log(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${error}')`);
                     return;
                 } else {
                     // Most of the times the first node descriptor query fails and the seconds one succeeds.
-                    debug(`Interview - node descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`);
+                    debug.log(
+                        `Interview - node descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`
+                    );
                 }
             }
         }
@@ -365,7 +426,7 @@ class Device extends Entity {
                 activeEndpoints = await Entity.adapter.activeEndpoints(this.networkAddress);
                 break;
             } catch (error) {
-                debug(`Interview - active endpoints request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`);
+                debug.log(`Interview - active endpoints request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`);
             }
         }
         if (!activeEndpoints) {
@@ -382,7 +443,7 @@ class Device extends Entity {
             return Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         });
         this.save();
-        debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
+        debug.log(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
         let readAttributes = false;
         for (const endpoint of this.endpoints) {
@@ -391,7 +452,7 @@ class Device extends Entity {
             endpoint.deviceID = simpleDescriptor.deviceID;
             endpoint.inputClusters = simpleDescriptor.inputClusters;
             endpoint.outputClusters = simpleDescriptor.outputClusters;
-            debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`);
+            debug.log(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`);
             this.save();
 
             // Read attributes
@@ -404,13 +465,13 @@ class Device extends Entity {
                             Device.ReportablePropertiesMapping[key].set(value, this);
                         }
 
-                        debug(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
+                        debug.log(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
                         this.save();
                     }
 
                     readAttributes = true;
                 } catch (error) {
-                    debug(`Failed to read attributes from endpoint '${endpoint.ID}' (${error})`);
+                    debug.log(`Failed to read attributes from endpoint '${endpoint.ID}' (${error})`);
                 }
             }
         }
@@ -420,30 +481,46 @@ class Device extends Entity {
 
         // Enroll IAS device
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
-            debug(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+            debug.log(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
 
             const stateBefore = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState']);
-            debug(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`);
+            debug.log(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`);
 
-            const coordinator = Device.byType('Coordinator')[0];
-            await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
-            debug(`Interview - IAS - wrote iasCieAddr`);
+            // Do not enroll when device has already been enrolled
+            if (stateBefore.zoneState !== 1) {
+                debug.log(`Interview - IAS - not enrolled, enrolling`);
 
-            await Wait(300);
-            const payload = {enrollrspcode: 0, zoneid: 23};
-            await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
-            debug(`Interview - IAS - sent enroll response`);
+                const coordinator = Device.byType('Coordinator')[0];
+                await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
+                debug.log(`Interview - IAS - wrote iasCieAddr`);
 
-            await Wait(300);
-            const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState']);
-            debug(`Interview - IAS - after enrolling state: '${JSON.stringify(stateAfter)}'`);
-            if (stateAfter.zoneState !== 1) {
-                throw new Error(
-                    `Interview failed because of failed IAS enroll (zoneState didn't change ('${this.ieeeAddr}')`
-                );
+                // According to the ZCL, after the iasCieAddr is written, the device will do an
+                // enroll request. This should be responded with an enroll response.
+                // As some devices send these enroll requests randomly (while the iasCieAddr has not been written yet)
+                // we always respond to these enroll requests in the onZclData() function.
+                // Therefore we don't have to do it here anymore.
+                // https://github.com/Koenkk/zigbee2mqtt/issues/3012
+                let enrolled = false;
+                for (let attempt = 0; attempt < 5; attempt++) {
+                    await Wait(300);
+                    const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState']);
+                    debug.log(`Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`);
+                    if (stateAfter.zoneState === 1) {
+                        enrolled = true;
+                        break;
+                    }
+                }
+
+                if (enrolled) {
+                    debug.log(`Interview - IAS successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+                } else {
+                    throw new Error(
+                        `Interview failed because of failed IAS enroll (zoneState didn't change ('${this.ieeeAddr}')`
+                    );
+                }
+            } else {
+                debug.log(`Interview - IAS - already enrolled, skipping enroll`);
             }
-
-            debug(`Interview - IAS successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
         }
     }
 
