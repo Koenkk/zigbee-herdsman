@@ -1560,7 +1560,7 @@ describe('Controller', () => {
                    }
                 ],
                 "_type":"EndDevice",
-                "_manufacturerID":4151,
+                "_manufacturerID":1219,
                 "_manufacturerName":"LUMI",
                 "meta": {},
                 "_powerSource":"Battery",
