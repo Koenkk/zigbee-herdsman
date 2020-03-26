@@ -3699,6 +3699,15 @@ const Cluster: {
         commands: {},
         commandsResponse: {}
     },
+    manuSpecificCentraliteHumidity: {
+        ID: 0xFC45,
+        manufacturerCode: ManufacturerCode.Centralite,
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.uint16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
 };
 
 export default Cluster;

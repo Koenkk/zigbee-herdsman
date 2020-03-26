@@ -1,4 +1,5 @@
 export default {
+    Centralite: 0x104E,
     Philips: 0x100B,
     Sinope: 0x119C,
     Stelpro: 0x1185,
