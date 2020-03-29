@@ -532,6 +532,10 @@ class Device extends Entity {
     public async removeFromDatabase(): Promise<void> {
         Device.loadFromDatabaseIfNecessary();
 
+        for (const endpoint of this.endpoints) {
+            endpoint.removeFromAllGroupsDatabase();
+        }
+
         if (Entity.database.has(this.ID)) {
             Entity.database.remove(this.ID);
         }

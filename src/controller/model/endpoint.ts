@@ -519,6 +519,10 @@ class Endpoint extends Entity {
 
     public async removeFromAllGroups(): Promise<void> {
         await this.command('genGroups', 'removeAll', {}, {disableDefaultResponse: true});
+        this.removeFromAllGroupsDatabase();
+    }
+
+    public removeFromAllGroupsDatabase(): void {
         for (const group of Group.all()) {
             if (group.hasMember(this)) {
                 group.removeMember(this);
