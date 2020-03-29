@@ -25,7 +25,10 @@ abstract class Adapter extends events.EventEmitter {
      */
 
     public static async create(
-        networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string
+        networkOptions: TsType.NetworkOptions,
+        serialPortOptions: TsType.SerialPortOptions,
+        backupPath: string,
+        concurrent: number,
     ): Promise<Adapter> {
         const {ZStackAdapter} = await import('./z-stack/adapter');
         const {DeconzAdapter} = await import('./deconz/adapter');
@@ -79,7 +82,7 @@ abstract class Adapter extends events.EventEmitter {
             }
         }
 
-        return new adapter(networkOptions, serialPortOptions, backupPath);
+        return new adapter(networkOptions, serialPortOptions, backupPath, concurrent);
     }
 
     public abstract start(): Promise<TsType.StartResult>;

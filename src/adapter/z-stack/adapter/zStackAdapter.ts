@@ -55,11 +55,15 @@ class ZStackAdapter extends Adapter {
     private closing: boolean;
     private queue: Queue;
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
+    private concurrent: number;
 
-    public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string) {
+    public constructor(networkOptions: NetworkOptions,
+        serialPortOptions: SerialPortOptions, backupPath: string, concurrent: number) {
+            
         super(networkOptions, serialPortOptions, backupPath);
         this.znp = new Znp(this.serialPortOptions.path, this.serialPortOptions.baudRate, this.serialPortOptions.rtscts);
 
+        this.concurrent = concurrent;
         this.transactionID = 0;
         this.closing = false;
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
@@ -90,7 +94,11 @@ class ZStackAdapter extends Adapter {
             this.version = {"transportrev":2, "product":0, "majorrel":2, "minorrel":0, "maintrel":0, "revision":""};
         }
 
-        this.queue = new Queue(this.version.product === ZnpVersion.zStack3x0 ? 16 : 2);
+        if (!this.concurrent) {
+            this.concurrent = this.version.product === ZnpVersion.zStack3x0 ? 16 : 2;
+        }
+
+        this.queue = new Queue(this.concurrent);
 
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
 

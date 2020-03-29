@@ -27,12 +27,14 @@ class DeconzAdapter extends Adapter {
     private joinPermitted: boolean;
     private fwVersion: CoordinatorVersion;
 
-    public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string) {
+    public constructor(networkOptions: NetworkOptions,
+        serialPortOptions: SerialPortOptions, backupPath: string, concurrent: number = 2) {
+
         super(networkOptions, serialPortOptions, backupPath);
 
         this.driver = new Driver(serialPortOptions.path);
         this.driver.on('rxFrame', (frame) => {processFrame(frame)});
-        this.queue = new Queue(2);
+        this.queue = new Queue(concurrent);
         this.transactionID = 0;
         this.openRequestsQueue = [];
         this.joinPermitted = false;
