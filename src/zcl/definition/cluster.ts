@@ -3689,6 +3689,16 @@ const Cluster: {
                     {name: 'data', type: DataType.octetStr},
                 ],
             },
+            setDataResponse: {
+                ID: 2,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'transid', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint16},
+                    {name: 'fn', type: DataType.uint8},
+                    {name: 'data', type: DataType.octetStr},
+                ],
+            },
         },
     },
     aqaraOpple: {
