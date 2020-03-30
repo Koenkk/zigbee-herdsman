@@ -3,7 +3,7 @@
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
-    StartResult, LQINeighbor, RoutingTableEntry
+    StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions,
 } from '../../tstype';
 import Debug from "debug";
 import Adapter from '../../adapter';
@@ -28,9 +28,12 @@ class DeconzAdapter extends Adapter {
     private fwVersion: CoordinatorVersion;
 
     public constructor(networkOptions: NetworkOptions,
-        serialPortOptions: SerialPortOptions, backupPath: string, concurrent: number = 2) {
+        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
 
-        super(networkOptions, serialPortOptions, backupPath);
+        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+
+        const concurrent = this.adapterOptions && this.adapterOptions.concurrent ?
+            this.adapterOptions.concurrent : 2;
 
         this.driver = new Driver(serialPortOptions.path);
         this.driver.on('rxFrame', (frame) => {processFrame(frame)});
