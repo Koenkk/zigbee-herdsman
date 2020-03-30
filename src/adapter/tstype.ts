@@ -6,12 +6,15 @@ interface NetworkOptions {
     networkKeyDistribute?: boolean;
 }
 
-
 interface SerialPortOptions {
     baudRate: number;
     rtscts: boolean;
     path: string;
     adapter: 'zstack' | 'deconz';
+};
+
+interface AdapterOptions {
+    concurrent: number;
 };
 
 interface CoordinatorVersion {
@@ -92,5 +95,5 @@ interface NetworkParameters {
 export {
     SerialPortOptions, NetworkOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, LQINeighbor, RoutingTable, Backup, NetworkParameters,
-    StartResult, RoutingTableEntry,
+    StartResult, RoutingTableEntry, AdapterOptions,
 };

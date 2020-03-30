@@ -266,7 +266,7 @@ describe('zStackAdapter', () => {
 
     beforeEach(() => {
         sysVersionResponse = {payload: {product: 0, revision: "20190425"}};
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {concurrent: 3});
         mocks.forEach((m) => m.mockRestore());
         mockQueueExecute.mockClear();
         jest.useRealTimers();

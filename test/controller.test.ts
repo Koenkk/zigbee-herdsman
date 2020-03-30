@@ -392,7 +392,7 @@ describe('Controller', () => {
 
     it('Call controller constructor options mixed with default options', async () => {
         await controller.start();
-        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath);
+        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, null);
     });
 
     it('Call controller constructor error on invalid channel', async () => {
@@ -2306,23 +2306,23 @@ describe('Controller', () => {
 
     it('Adapter create', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
-        await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null);
+        await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null, null);
         expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/bla');
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter create continue when is valid path fails', async () => {
         mockZStackAdapterIsValidPath.mockImplementationOnce(() => {throw new Error('failed')});
-        await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null);
+        await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null, null);
         expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/bla');
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter create auto detect', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
-        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null);
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null);
+        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter create auto detect nothing found', async () => {
@@ -2331,7 +2331,7 @@ describe('Controller', () => {
 
         let error;
         try {
-            await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null);
+            await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null, null);
         } catch(e) {
             error = e;
         }
@@ -2341,8 +2341,8 @@ describe('Controller', () => {
     it('Adapter create with unknown path should take ZStackAdapter by default', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(false);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
-        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null);
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null);
+        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter create should be able to specify adapter', async () => {
@@ -2350,8 +2350,8 @@ describe('Controller', () => {
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         mockDeconzAdapterIsValidPath.mockReturnValueOnce(false);
         mockDeconzAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
-        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'deconz'}, null);
-        expect(DeconzAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'deconz'}, null);
+        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'deconz'}, null, null);
+        expect(DeconzAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'deconz'}, null, null);
     });
 
     it('Adapter create should throw on uknown adapter', async () => {
@@ -2360,7 +2360,7 @@ describe('Controller', () => {
         mockDeconzAdapterIsValidPath.mockReturnValueOnce(false);
         mockDeconzAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         let error;
-        try {await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'zigate'}, null)} catch (e) {error = e;}
+        try {await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'zigate'}, null, null)} catch (e) {error = e;}
         expect(error).toStrictEqual(new Error(`Adapter 'zigate' does not exists, possible options: zstack, deconz`));
     });
 
