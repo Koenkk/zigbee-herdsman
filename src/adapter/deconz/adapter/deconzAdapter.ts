@@ -498,18 +498,29 @@ class DeconzAdapter extends Adapter {
         frameControl += ((zclFrame.Header.frameControl.manufacturerSpecific) ? 1 : 0);
         frameControl += (0);
         frameControl += (zclFrame.Header.frameControl.frameType);
-        const payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
+        let payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
 
-        for (let i in zclFrame.Payload) {
-            let entry = zclFrame.Payload[i];
-            if ((typeof entry) === 'object') {
-                const array: number[] = Object.values(entry);
-                for (let val in array) {
-                    payload.push(array[val] & 0xff);
-                    payload.push((array[val] >> 8) & 0xff);
+        let pay: number[] = [];
+        if ((typeof zclFrame.Payload) === 'object') {
+            if (Array.isArray(zclFrame.Payload)) {
+                for (let i in zclFrame.Payload) {
+                    let entry = zclFrame.Payload[i];
+                    if ((typeof entry) === 'object') {
+                        // payload is array of objects
+                        const array: number[] = Object.values(entry);
+                        for (let val in array) {
+                            payload.push(array[val] & 0xff);
+                            payload.push((array[val] >> 8) & 0xff);
+                        }
+                    } else {
+                        // payload is array of raw data
+                        payload.push(entry);
+                    }
                 }
+                pay = payload;
             } else {
-                payload.push(entry);
+                // payload is object
+                pay = payload.concat(this.zclPayloadToArray(zclFrame.Payload));
             }
         }
 
@@ -520,8 +531,8 @@ class DeconzAdapter extends Adapter {
         request.profileId = 0x104;
         request.clusterId = zclFrame.Cluster.ID;
         request.srcEndpoint = 1;
-        request.asduLength = payload.length;
-        request.asduPayload = payload;
+        request.asduLength = pay.length;
+        request.asduPayload = pay;
         request.txOptions = 0;
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = timeout;
@@ -567,17 +578,29 @@ class DeconzAdapter extends Adapter {
         frameControl += ((zclFrame.Header.frameControl.manufacturerSpecific) ? 1 : 0);
         frameControl += (0);
         frameControl += (zclFrame.Header.frameControl.frameType);
-        const payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
-        for (let i in zclFrame.Payload) {
-            let entry = zclFrame.Payload[i];
-            if ((typeof entry) === 'object') {
-                const array: number[] = Object.values(entry);
-                for (let val in array) {
-                    payload.push(array[val] & 0xff);
-                    payload.push((array[val] >> 8) & 0xff);
+        let payload = [parseInt(frameControl,2), zclFrame.Header.transactionSequenceNumber, zclFrame.Header.commandIdentifier];
+
+        let pay: number[] = [];
+        if ((typeof zclFrame.Payload) === 'object') {
+            if (Array.isArray(zclFrame.Payload)) {
+                for (let i in zclFrame.Payload) {
+                    let entry = zclFrame.Payload[i];
+                    if ((typeof entry) === 'object') {
+                        // payload is array of objects
+                        const array: number[] = Object.values(entry);
+                        for (let val in array) {
+                            payload.push(array[val] & 0xff);
+                            payload.push((array[val] >> 8) & 0xff);
+                        }
+                    } else {
+                        // payload is array of raw data
+                        payload.push(entry);
+                    }
                 }
+                pay = payload;
             } else {
-                payload.push(entry);
+                // payload is object
+                pay = payload.concat(this.zclPayloadToArray(zclFrame.Payload));
             }
         }
 
@@ -587,8 +610,8 @@ class DeconzAdapter extends Adapter {
         request.profileId = 0x104;
         request.clusterId = zclFrame.Cluster.ID;
         request.srcEndpoint = 1;
-        request.asduLength = payload.length;
-        request.asduPayload = payload;
+        request.asduLength = pay.length;
+        request.asduPayload = pay;
         request.txOptions = 0;
         request.radius = PARAM.PARAM.txRadius.UNLIMITED;
 
@@ -702,8 +725,6 @@ class DeconzAdapter extends Adapter {
     }
 
     public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
-        console.log("remove device ieee Addr");
-        console.log(ieeeAddr);
         const transactionID = this.nextTransactionID();
         const nwk1 = networkAddress & 0xff;
         const nwk2 = (networkAddress >> 8) & 0xff;
@@ -880,6 +901,45 @@ class DeconzAdapter extends Adapter {
                 this.emit(Events.Events.rawData, payload);
             }
         }
+    }
+
+    private zclPayloadToArray(payload: Object): Array<number> {
+        let buf = Buffer.alloc(20); // zclPayload could be bigger ?
+        let offset = 0;
+        if ('colorx' in payload) {
+            // move to color
+            buf.writeUInt16LE(payload['colorx'], 0);
+            buf.writeUInt16LE(payload['colory'], 2);
+            buf.writeUInt16LE(payload['transtime'], 4);
+            offset = 6;
+        } else if ('enhancehue' in payload) {
+            // move to ext hue and saturation
+            buf.writeUInt16LE(payload['enhancehue'], 0);
+            buf.writeUInt8(payload['saturation'], 2);
+            buf.writeUInt16LE(payload['transtime'], 3);
+            offset = 5;
+        }
+         else {
+            for (let [key, value] of Object.entries(payload)) {
+                debug(`${key}: ${value}`);
+                switch (key) {
+                    case "level": case "cmdId": case "statusCode": case "effectid": case "effectvariant": case "saturation": case "direction":
+                        buf.writeUInt8(value, offset);
+                        offset++;
+                        break;
+                    case "transtime": case "colortemp":
+                        buf.writeUInt16LE(value, offset);
+                        offset += 2;
+                        break;
+                    default:
+                        debug("zclPayload to Array not implemented for key: " + key);
+                        break;
+                }
+            }
+        }
+
+        let ret = [...buf].splice(0, offset);
+        return ret;
     }
 
     private nextTransactionID(): number {
