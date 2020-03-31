@@ -58,6 +58,7 @@ const mocksendZclFrameToEndpoint = jest.fn();
 
 let iasZoneReadState170Count = 0;
 let enroll170 = true;
+let configureReportStatus = 0;
 
 const restoreMocksendZclFrameToEndpoint = () => {
     mocksendZclFrameToEndpoint.mockImplementation((networkAddress, endpoint, frame: ZclFrame) => {
@@ -67,10 +68,10 @@ const restoreMocksendZclFrameToEndpoint = () => {
             for (const item of frame.Payload) {
                 if (frame.isCluster('ssIasZone') && item.attrId === 0) {
                     iasZoneReadState170Count++;
-                    payload.push({attrId: item.attrId, attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0});
+                    payload.push({attrId: item.attrId, attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0, status: 0});
                 } else if (item.attrId !== 65314) {
                     const attribute = cluster.getAttribute(item.attrId).name;
-                    payload.push({attrId: item.attrId, attrData: mockDevices[networkAddress].attributes[endpoint][attribute]})
+                    payload.push({attrId: item.attrId, attrData: mockDevices[networkAddress].attributes[endpoint][attribute], status: 0})
                 }
             }
 
@@ -98,6 +99,26 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 linkquality: 50,
                 groupID: 1,
             });
+        }
+
+        if (frame.isGlobal() && frame.isCommand('write')) {
+            const payload = [];
+            for (const item of frame.Payload) {
+                payload.push({attrId: item.attrId, status: 0})
+            }
+
+            // @ts-ignore
+            return {frame: new ZclFrame(null, payload, frame.Cluster)};
+        }
+
+        if (frame.isGlobal() && frame.isCommand('configReport')) {
+            const payload = [];
+            for (const item of frame.Payload) {
+                payload.push({attrId: item.attrId, status: configureReportStatus, direction: 1})
+            }
+
+            // @ts-ignore
+            return {frame: new ZclFrame(null, payload, frame.Cluster)};
         }
     })
 }
@@ -368,6 +389,7 @@ describe('Controller', () => {
         // @ts-ignore
         zclTransactionSequenceNumber.number = 1;
         iasZoneReadState170Count = 0;
+        configureReportStatus = 0;
         skipWait = false;
         enroll170 = true;
         options.network.channelList = [15];
@@ -1958,6 +1980,28 @@ describe('Controller', () => {
             ],
             "Cluster":getCluster(1)
          });
+    });
+
+    it('Endpoint configure reporting fails when status code is not 0', async () => {
+        configureReportStatus = 1;
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockClear();
+        let error;
+        try {
+            await endpoint.configureReporting('genPowerCfg', [{
+                attribute: 'mainsFrequency',
+                minimumReportInterval: 1,
+                maximumReportInterval: 10,
+                reportableChange: 1,
+            }]);
+        }
+        catch (e) {
+            error = e;
+        }
+        expect(error).toStrictEqual(new Error(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"timeout":6000,"manufacturerCode":null,"disableDefaultResponse":true}) failed (Error: Status 'FAILURE')`));
     });
 
     it('Return group from databse when not in lookup', async () => {
