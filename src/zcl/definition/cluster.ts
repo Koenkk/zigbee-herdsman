@@ -3689,6 +3689,9 @@ const Cluster: {
                     {name: 'data', type: DataType.octetStr},
                 ],
             },
+            // The ZED will respond with the command 0x02 when a change was requested
+            // from the MCU. The payload of that response is exacly the same as used
+            // for the command 0x01.
             setDataResponse: {
                 ID: 2,
                 parameters: [
