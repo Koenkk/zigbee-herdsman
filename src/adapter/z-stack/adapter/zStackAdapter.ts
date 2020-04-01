@@ -96,6 +96,8 @@ class ZStackAdapter extends Adapter {
             this.adapterOptions.concurrent :
             (this.version.product === ZnpVersion.zStack3x0 ? 16 : 2);
 
+        debug(`Adapter concurrent: ${concurrent}`);
+
         this.queue = new Queue(concurrent);
 
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
