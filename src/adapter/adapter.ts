@@ -8,14 +8,17 @@ const debug = Debug("zigbee-herdsman:adapter");
 
 abstract class Adapter extends events.EventEmitter {
     protected networkOptions: TsType.NetworkOptions;
+    protected adapterOptions: TsType.AdapterOptions;
     protected serialPortOptions: TsType.SerialPortOptions;
     protected backupPath: string;
 
     protected constructor(
-        networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string)
+        networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string,
+        adapterOptions: TsType.AdapterOptions)
     {
         super();
         this.networkOptions = networkOptions;
+        this.adapterOptions = adapterOptions;
         this.serialPortOptions = serialPortOptions;
         this.backupPath = backupPath;
     }
@@ -25,7 +28,10 @@ abstract class Adapter extends events.EventEmitter {
      */
 
     public static async create(
-        networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string
+        networkOptions: TsType.NetworkOptions,
+        serialPortOptions: TsType.SerialPortOptions,
+        backupPath: string,
+        adapterOptions: TsType.AdapterOptions,
     ): Promise<Adapter> {
         const {ZStackAdapter} = await import('./z-stack/adapter');
         const {DeconzAdapter} = await import('./deconz/adapter');
@@ -79,7 +85,7 @@ abstract class Adapter extends events.EventEmitter {
             }
         }
 
-        return new adapter(networkOptions, serialPortOptions, backupPath);
+        return new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
     }
 
     public abstract start(): Promise<TsType.StartResult>;

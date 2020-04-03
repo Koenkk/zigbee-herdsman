@@ -1,7 +1,7 @@
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
-    StartResult, LQINeighbor, RoutingTableEntry,
+    StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions,
 } from '../../tstype';
 import {ZnpVersion} from './tstype';
 import * as Events from '../../events';
@@ -56,8 +56,10 @@ class ZStackAdapter extends Adapter {
     private queue: Queue;
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
 
-    public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string) {
-        super(networkOptions, serialPortOptions, backupPath);
+    public constructor(networkOptions: NetworkOptions,
+        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
+
+        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         this.znp = new Znp(this.serialPortOptions.path, this.serialPortOptions.baudRate, this.serialPortOptions.rtscts);
 
         this.transactionID = 0;
@@ -90,7 +92,13 @@ class ZStackAdapter extends Adapter {
             this.version = {"transportrev":2, "product":0, "majorrel":2, "minorrel":0, "maintrel":0, "revision":""};
         }
 
-        this.queue = new Queue(this.version.product === ZnpVersion.zStack3x0 ? 16 : 2);
+        const concurrent = this.adapterOptions && this.adapterOptions.concurrent ?
+            this.adapterOptions.concurrent :
+            (this.version.product === ZnpVersion.zStack3x0 ? 16 : 2);
+
+        debug(`Adapter concurrent: ${concurrent}`);
+
+        this.queue = new Queue(concurrent);
 
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
 

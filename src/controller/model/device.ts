@@ -374,10 +374,10 @@ class Device extends Entity {
         if (match) {
             const info = lookup[match];
             debug.log(`Interview procedure failed but got modelID matching '${match}', assuming interview succeeded`);
-            this._type = info.type;
-            this._manufacturerID = info.manufacturerID;
-            this._manufacturerName = info.manufacturerName;
-            this._powerSource = info.powerSource;
+            this._type = this._type || info.type;
+            this._manufacturerID = this._manufacturerID || info.manufacturerID;
+            this._manufacturerName = this._manufacturerName || info.manufacturerName;
+            this._powerSource = this._powerSource || info.powerSource;
             this._interviewing = false;
             this._interviewCompleted = true;
             this.save();
@@ -531,6 +531,10 @@ class Device extends Entity {
 
     public async removeFromDatabase(): Promise<void> {
         Device.loadFromDatabaseIfNecessary();
+
+        for (const endpoint of this.endpoints) {
+            endpoint.removeFromAllGroupsDatabase();
+        }
 
         if (Entity.database.has(this.ID)) {
             Entity.database.remove(this.ID);

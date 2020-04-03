@@ -172,6 +172,14 @@ class Endpoint extends Entity {
      * Zigbee functions
      */
 
+    private checkStatus(payload: [{status: Zcl.Status}]): void {
+        for (const item of payload) {
+            if (item.status !== Zcl.Status.SUCCESS) {
+                throw new Error(`Status '${Zcl.Status[item.status]}'`);
+            }
+        }
+    }
+
     public async write(
         clusterKey: number | string, attributes: KeyValue, options?: Options
     ): Promise<void> {
@@ -198,9 +206,10 @@ class Endpoint extends Entity {
                 Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, options.disableDefaultResponse,
                 options.manufacturerCode, ZclTransactionSequenceNumber.next(), 'write', cluster.ID, payload
             );
-            await Entity.adapter.sendZclFrameToEndpoint(
+            const result = await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceNetworkAddress, this.ID, frame, options.timeout,
             );
+            this.checkStatus(result.frame.Payload);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -231,6 +240,7 @@ class Endpoint extends Entity {
             const result = await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceNetworkAddress, this.ID, frame, options.timeout,
             );
+            this.checkStatus(result.frame.Payload);
             return ZclFrameConverter.attributeKeyValue(result.frame);
         } catch (error) {
             const message = `${log} failed (${error})`;
@@ -404,7 +414,10 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await Entity.adapter.sendZclFrameToEndpoint(this.deviceNetworkAddress, this.ID, frame, options.timeout);
+            const result = await Entity.adapter.sendZclFrameToEndpoint(
+                this.deviceNetworkAddress, this.ID, frame, options.timeout
+            );
+            this.checkStatus(result.frame.Payload);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -519,6 +532,10 @@ class Endpoint extends Entity {
 
     public async removeFromAllGroups(): Promise<void> {
         await this.command('genGroups', 'removeAll', {}, {disableDefaultResponse: true});
+        this.removeFromAllGroupsDatabase();
+    }
+
+    public removeFromAllGroupsDatabase(): void {
         for (const group of Group.all()) {
             if (group.hasMember(this)) {
                 group.removeMember(this);

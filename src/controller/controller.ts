@@ -20,6 +20,7 @@ interface Options {
     databasePath: string;
     databaseBackupPath: string;
     backupPath: string;
+    adapter: AdapterTsType.AdapterOptions;
     /**
      * This lambda can be used by an application to explictly reject or accept an incoming device.
      * When false is returned zigbee-herdsman will not start the interview process and immidiately
@@ -45,6 +46,7 @@ const DefaultOptions: Options = {
     databasePath: null,
     databaseBackupPath: null,
     backupPath: null,
+    adapter: null,
     acceptJoiningDeviceHandler: null,
 };
 
@@ -91,7 +93,8 @@ class Controller extends events.EventEmitter {
      * Start the Herdsman controller
      */
     public async start(): Promise<void> {
-        this.adapter = await Adapter.create(this.options.network, this.options.serialPort, this.options.backupPath);
+        this.adapter = await Adapter.create(this.options.network,
+            this.options.serialPort, this.options.backupPath, this.options.adapter);
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
         this.database = Database.open(this.options.databasePath);
         const startResult = await this.adapter.start();

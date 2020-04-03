@@ -58,6 +58,7 @@ const mocksendZclFrameToEndpoint = jest.fn();
 
 let iasZoneReadState170Count = 0;
 let enroll170 = true;
+let configureReportStatus = 0;
 
 const restoreMocksendZclFrameToEndpoint = () => {
     mocksendZclFrameToEndpoint.mockImplementation((networkAddress, endpoint, frame: ZclFrame) => {
@@ -67,10 +68,10 @@ const restoreMocksendZclFrameToEndpoint = () => {
             for (const item of frame.Payload) {
                 if (frame.isCluster('ssIasZone') && item.attrId === 0) {
                     iasZoneReadState170Count++;
-                    payload.push({attrId: item.attrId, attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0});
+                    payload.push({attrId: item.attrId, attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0, status: 0});
                 } else if (item.attrId !== 65314) {
                     const attribute = cluster.getAttribute(item.attrId).name;
-                    payload.push({attrId: item.attrId, attrData: mockDevices[networkAddress].attributes[endpoint][attribute]})
+                    payload.push({attrId: item.attrId, attrData: mockDevices[networkAddress].attributes[endpoint][attribute], status: 0})
                 }
             }
 
@@ -98,6 +99,26 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 linkquality: 50,
                 groupID: 1,
             });
+        }
+
+        if (frame.isGlobal() && frame.isCommand('write')) {
+            const payload = [];
+            for (const item of frame.Payload) {
+                payload.push({attrId: item.attrId, status: 0})
+            }
+
+            // @ts-ignore
+            return {frame: new ZclFrame(null, payload, frame.Cluster)};
+        }
+
+        if (frame.isGlobal() && frame.isCommand('configReport')) {
+            const payload = [];
+            for (const item of frame.Payload) {
+                payload.push({attrId: item.attrId, status: configureReportStatus, direction: 1})
+            }
+
+            // @ts-ignore
+            return {frame: new ZclFrame(null, payload, frame.Cluster)};
         }
     })
 }
@@ -368,6 +389,7 @@ describe('Controller', () => {
         // @ts-ignore
         zclTransactionSequenceNumber.number = 1;
         iasZoneReadState170Count = 0;
+        configureReportStatus = 0;
         skipWait = false;
         enroll170 = true;
         options.network.channelList = [15];
@@ -392,7 +414,7 @@ describe('Controller', () => {
 
     it('Call controller constructor options mixed with default options', async () => {
         await controller.start();
-        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath);
+        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, null);
     });
 
     it('Call controller constructor error on invalid channel', async () => {
@@ -1560,7 +1582,7 @@ describe('Controller', () => {
                    }
                 ],
                 "_type":"EndDevice",
-                "_manufacturerID":4151,
+                "_manufacturerID":1219,
                 "_manufacturerName":"LUMI",
                 "meta": {},
                 "_powerSource":"Battery",
@@ -1960,6 +1982,28 @@ describe('Controller', () => {
          });
     });
 
+    it('Endpoint configure reporting fails when status code is not 0', async () => {
+        configureReportStatus = 1;
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockClear();
+        let error;
+        try {
+            await endpoint.configureReporting('genPowerCfg', [{
+                attribute: 'mainsFrequency',
+                minimumReportInterval: 1,
+                maximumReportInterval: 10,
+                reportableChange: 1,
+            }]);
+        }
+        catch (e) {
+            error = e;
+        }
+        expect(error).toStrictEqual(new Error(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"timeout":6000,"manufacturerCode":null,"disableDefaultResponse":true}) failed (Error: Status 'FAILURE')`));
+    });
+
     it('Return group from databse when not in lookup', async () => {
         await controller.start();
         await controller.createGroup(2);
@@ -2306,23 +2350,23 @@ describe('Controller', () => {
 
     it('Adapter create', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
-        await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null);
+        await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null, null);
         expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/bla');
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter create continue when is valid path fails', async () => {
         mockZStackAdapterIsValidPath.mockImplementationOnce(() => {throw new Error('failed')});
-        await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null);
+        await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null, null);
         expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/bla');
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter create auto detect', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
-        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null);
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null);
+        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter create auto detect nothing found', async () => {
@@ -2331,7 +2375,7 @@ describe('Controller', () => {
 
         let error;
         try {
-            await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null);
+            await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null, null);
         } catch(e) {
             error = e;
         }
@@ -2341,8 +2385,8 @@ describe('Controller', () => {
     it('Adapter create with unknown path should take ZStackAdapter by default', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(false);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
-        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null);
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null);
+        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter create should be able to specify adapter', async () => {
@@ -2350,8 +2394,8 @@ describe('Controller', () => {
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         mockDeconzAdapterIsValidPath.mockReturnValueOnce(false);
         mockDeconzAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
-        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'deconz'}, null);
-        expect(DeconzAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'deconz'}, null);
+        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'deconz'}, null, null);
+        expect(DeconzAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'deconz'}, null, null);
     });
 
     it('Adapter create should throw on uknown adapter', async () => {
@@ -2360,7 +2404,7 @@ describe('Controller', () => {
         mockDeconzAdapterIsValidPath.mockReturnValueOnce(false);
         mockDeconzAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         let error;
-        try {await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'zigate'}, null)} catch (e) {error = e;}
+        try {await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'zigate'}, null, null)} catch (e) {error = e;}
         expect(error).toStrictEqual(new Error(`Adapter 'zigate' does not exists, possible options: zstack, deconz`));
     });
 
