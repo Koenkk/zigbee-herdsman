@@ -185,6 +185,7 @@ class ZStackAdapter extends Adapter {
     private async discoverRoute(networkAddress: number): Promise<void> {
         const payload =  {dstAddr: networkAddress, options: 0, radius: Constants.AF.DEFAULT_RADIUS};
         await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
+        await Wait(3000);
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
@@ -221,19 +222,33 @@ class ZStackAdapter extends Adapter {
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
         return this.queue.execute<SimpleDescriptor>(async () => {
-            const responsePayload = {nwkaddr: networkAddress, endpoint: endpointID};
-            const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'simpleDescRsp', responsePayload);
-            const payload = {dstaddr: networkAddress, nwkaddrofinterest: networkAddress, endpoint: endpointID};
-            this.znp.request(Subsystem.ZDO, 'simpleDescReq', payload);
-            const descriptor = await response.promise;
-            return {
-                profileID: descriptor.payload.profileid,
-                endpointID: descriptor.payload.endpoint,
-                deviceID: descriptor.payload.deviceid,
-                inputClusters: descriptor.payload.inclusterlist,
-                outputClusters: descriptor.payload.outclusterlist,
-            };
+            try {
+                const result = await this.simpleDescriptorInternal(networkAddress, endpointID);
+                return result;
+            } catch (error) {
+                debug(`Simple descriptor request for '${networkAddress}/${endpointID}' failed (${error}), retry`);
+                // Doing a route discovery after simple descriptor request fails makes it succeed sometimes.
+                // https://github.com/Koenkk/zigbee2mqtt/issues/3276
+                await this.discoverRoute(networkAddress);
+                const result = await this.simpleDescriptorInternal(networkAddress, endpointID);
+                return result;
+            }
         }, networkAddress);
+    }
+
+    private async simpleDescriptorInternal(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
+        const responsePayload = {nwkaddr: networkAddress, endpoint: endpointID};
+        const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'simpleDescRsp', responsePayload);
+        const payload = {dstaddr: networkAddress, nwkaddrofinterest: networkAddress, endpoint: endpointID};
+        this.znp.request(Subsystem.ZDO, 'simpleDescReq', payload);
+        const descriptor = await response.promise;
+        return {
+            profileID: descriptor.payload.profileid,
+            endpointID: descriptor.payload.endpoint,
+            deviceID: descriptor.payload.deviceid,
+            inputClusters: descriptor.payload.inclusterlist,
+            outputClusters: descriptor.payload.outclusterlist,
+        };
     }
 
     public async sendZclFrameToEndpoint(
@@ -285,7 +300,6 @@ class ZStackAdapter extends Adapter {
                 if (firstAttempt) {
                     // Timeout could happen because of invalid route, rediscover and retry.
                     await this.discoverRoute(networkAddress);
-                    await Wait(3000);
                     return this.sendZclFrameToEndpointInternal(
                         networkAddress, endpoint, zclFrame, timeout, false
                     );
@@ -677,7 +691,6 @@ class ZStackAdapter extends Adapter {
                 // 205: no network route => rediscover route
                 // 233: route may be corrupted
                 await this.discoverRoute(destinationAddress);
-                await Wait(3000);
                 return this.dataRequest(
                     destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout, 0
                 );
