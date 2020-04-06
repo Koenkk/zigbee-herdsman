@@ -8,6 +8,19 @@ import fs from 'fs';
 import path from 'path';
 import * as Zcl from '../../../src/zcl';
 
+let mockSkipWait = true;
+jest.mock('../../../src/utils/wait', () => {
+    return jest.fn().mockImplementation((milliseconds) => {
+        if (!mockSkipWait) {
+            return new Promise((resolve): void => {
+                setTimeout((): void => resolve(), milliseconds);
+            });
+        } else {
+            return new Promise((resolve) => {resolve()});
+        }
+    });
+});
+
 function flushPromises() {
     return new Promise(resolve => setImmediate(resolve));
   }
@@ -73,6 +86,7 @@ let znpReceived;
 let znpClose;
 let dataConfirmCode = 0;
 let dataConfirmCodeReset = false;
+let nodeDescRspErrorOnce = false;
 let dataRequestCode = 0;
 let dataRequestExtCode = 0;
 let lastStartIndex = 0;
@@ -205,6 +219,11 @@ const basicMocks = () => {
                 return {promise: {payload: {endpoint: payload.endpoint, profileid: 124, deviceid: 7, inclusterlist: [8], outclusterlist: [9]}}};
             }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nodeDescRsp') {
+            if (nodeDescRspErrorOnce) {
+                nodeDescRspErrorOnce = false;
+                return {promise: new Promise((resolve, reject) => {reject('timeout')})}
+            }
+
             return {promise: {payload: {manufacturercode: payload.nwkaddr * 2, logicaltype_cmplxdescavai_userdescavai: payload.nwkaddr - 1}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.AF && command === 'dataConfirm') {
             const status = dataConfirmCode;
@@ -275,6 +294,8 @@ describe('zStackAdapter', () => {
         dataRequestExtCode = 0;
         networkOptions.networkKeyDistribute = false;
         dataConfirmCodeReset = false;
+        nodeDescRspErrorOnce = false;
+        mockSkipWait = true;
     });
 
     it('Is valid path', async () => {
@@ -2008,6 +2029,20 @@ describe('zStackAdapter', () => {
         expect(result).toStrictEqual({manufacturerCode: 10, type: 'Unknown'})
     });
 
+    it('Node descriptor fails, should retry after route discovery', async () => {
+        basicMocks();
+        await adapter.start();
+        nodeDescRspErrorOnce = true;
+        mockZnpRequest.mockClear();
+
+        const result = await adapter.nodeDescriptor(1);
+
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(1, 5, "nodeDescReq", {"dstaddr": 1, "nwkaddrofinterest": 1});
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 5, 'extRouteDisc', { dstAddr: 1, options: 0, radius: 30 });
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 5, "nodeDescReq", {"dstaddr": 1, "nwkaddrofinterest": 1});
+        expect(result).toStrictEqual({manufacturerCode: 2, type: 'Coordinator'})
+    });
+
     it('Active endpoints', async () => {
         basicMocks();
         await adapter.start();
@@ -2092,7 +2127,6 @@ describe('zStackAdapter', () => {
 
     it('Send zcl frame network address fails with 205 should rediscover route and try again', async () => {
         basicMocks();
-        jest.useFakeTimers();
         await adapter.start();
         dataConfirmCode = 205;
         mockZnpRequest.mockClear();
@@ -2100,8 +2134,6 @@ describe('zStackAdapter', () => {
         const response = adapter.sendZclFrameToEndpoint(2, 20, frame, 10000);
         let error;
         try {
-            await flushPromises();
-            jest.runAllTimers();
             await response;
         } catch (e) { error = e};
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
@@ -2272,6 +2304,7 @@ describe('zStackAdapter', () => {
     });
 
     it('Send zcl frame network address timeout should discover route and retry', async () => {
+        mockSkipWait = false;
         basicMocks();
         await adapter.start();
 
