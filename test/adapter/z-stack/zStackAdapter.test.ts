@@ -73,7 +73,6 @@ let znpReceived;
 let znpClose;
 let dataConfirmCode = 0;
 let dataConfirmCodeReset = false;
-let simpleDescRspErrorOnce = false;
 let dataRequestCode = 0;
 let dataRequestExtCode = 0;
 let lastStartIndex = 0;
@@ -198,11 +197,7 @@ const basicMocks = () => {
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return {promise: {payload: {}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'simpleDescRsp') {
-            if (simpleDescRspErrorOnce) {
-                simpleDescRspErrorOnce = false;
-                return {promise: () => {throw new Error('timeout')}}
-            }
-            else if (equals(payload, {endpoint: 1})) {
+            if (equals(payload, {endpoint: 1})) {
                 return {promise: {payload: {endpoint: 1, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]}}};
             } else if (equals(payload, {endpoint: 99})) {
                 return {promise: {payload: {endpoint: 99, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]}}};
@@ -280,7 +275,6 @@ describe('zStackAdapter', () => {
         dataRequestExtCode = 0;
         networkOptions.networkKeyDistribute = false;
         dataConfirmCodeReset = false;
-        simpleDescRspErrorOnce = false;
     });
 
     it('Is valid path', async () => {
@@ -2029,19 +2023,6 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.simpleDescriptor(1, 20);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(1);
-        expect(result).toStrictEqual({deviceID: 7, endpointID: 20, inputClusters: [8], outputClusters: [9], profileID: 124});
-    });
-
-    it('Simple descriptor fails, should retry after route discovery', async () => {
-        basicMocks();
-        await adapter.start();
-        simpleDescRspErrorOnce = true;
-        mockZnpRequest.mockClear();
-
-        const result = await adapter.simpleDescriptor(1, 20);
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(1, 5, "simpleDescReq", {"dstaddr": 1, "endpoint": 20, "nwkaddrofinterest": 1});
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 5, 'extRouteDisc', { dstAddr: 1, options: 0, radius: 30 });
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 5, "simpleDescReq", {"dstaddr": 1, "endpoint": 20, "nwkaddrofinterest": 1});
         expect(result).toStrictEqual({deviceID: 7, endpointID: 20, inputClusters: [8], outputClusters: [9], profileID: 124});
     });
 
