@@ -260,7 +260,7 @@ class Device extends Entity {
     private static loadFromDatabaseIfNecessary(): void {
         if (!Device.devices) {
             Device.devices = {};
-            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router']);
+            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router', 'GreenPower']);
             for (const entry of entries) {
                 const device = Device.fromDatabaseEntry(entry);
                 Device.devices[device.ieeeAddr] = device;
@@ -294,7 +294,8 @@ class Device extends Entity {
         powerSource: string, modelID: string,
         endpoints: {
             ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
-        }[]
+        }[],
+        interviewCompleted = false,
     ): Device {
         Device.loadFromDatabaseIfNecessary();
         if (Device.devices[ieeeAddr]) {
@@ -310,8 +311,8 @@ class Device extends Entity {
         const ID = Entity.database.newID();
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
-            powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false, {},
-            null,
+            powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
+            interviewCompleted, {}, null,
         );
 
         Entity.database.insert(device.toDatabaseEntry());
