@@ -75,7 +75,6 @@ class GreenPower extends events.EventEmitter {
     }
 
     public async permitJoin(time: number): Promise<void> {
-        // TODO: check if not comission works
         const payload = {
             options: 0x0b,
             commisioningWindow: time,
