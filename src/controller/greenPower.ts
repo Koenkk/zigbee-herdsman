@@ -61,7 +61,7 @@ class GreenPower extends events.EventEmitter {
                 null, ZclTransactionSequenceNumber.next(), 'pairing', 33, payload
             );
 
-            await this.adapter.sendZclFrameBroadcast(frame);
+            await this.adapter.sendZclFrameToAll(242, frame, 242);
 
             const eventData: GreenPowerDeviceJoinedPayload = {
                 sourceID: dataPayload.frame.Payload.srcID,
@@ -88,7 +88,7 @@ class GreenPower extends events.EventEmitter {
             null, ZclTransactionSequenceNumber.next(), 'commisioningMode', 33, payload
         );
 
-        await this.adapter.sendZclFrameBroadcast(frame);
+        await this.adapter.sendZclFrameToAll(242, frame, 242);
     }
 }
 

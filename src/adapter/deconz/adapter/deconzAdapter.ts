@@ -628,6 +628,10 @@ class DeconzAdapter extends Adapter {
         }
     }
 
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
+        // TODO: not implemented yet
+    }
+
     public async bind(
         destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number,
         clusterID: number, destinationAddressOrGroup: string | number, type: 'endpoint' | 'group',

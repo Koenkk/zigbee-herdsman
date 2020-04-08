@@ -328,12 +328,15 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameBroadcast(zclFrame: ZclFrame): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
         return this.queue.execute<void>(async () => {
-            await this.dataRequestExtended(Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFD, 242, 0, 242, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 6000, false, 0)
+            await this.dataRequestExtended(
+                Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFD, endpoint, 0, sourceEndpoint,
+                zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, false, 0
+            );
 
             /**
-             * As a group command is not confirmed and thus immidiately returns
+             * As a broadcast command is not confirmed and thus immidiately returns
              * (contrary to network address requests) we will give the
              * command some time to 'settle' in the network.
              */
