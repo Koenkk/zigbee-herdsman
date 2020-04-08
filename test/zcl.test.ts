@@ -485,7 +485,7 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer GDP', () => {
+    it('ZclFrame from buffer GDP commission', () => {
         const buffer = [0x11, 0x00, 0x04, 0x00, 0x00, 0xfe, 0xf4, 0x46, 0x00, 0xf9, 0x00, 0x00, 0x00, 0xe0, 0x1b, 0x02, 0x81, 0xf2, 0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab, 0xa4, 0x46, 0xd4, 0xd5, 0xf9, 0x01, 0x00, 0x00];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Buffer.from(buffer));
         const header = {
@@ -514,6 +514,34 @@ describe('Zcl', () => {
                 keyMic: 3587458724,
                 outgoingCounter: 505,
             },
+        };
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame from buffer GDP scene 0', () => {
+        const buffer = [0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 0,
+            frameControl: {
+                direction: 0,
+                disableDefaultResponse: true,
+                frameType: 1,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 0,
+        };
+
+        const payload = {
+            srcID: 4650238,
+            commandFrame: {},
+            commandID: 16,
+            frameCounter: 1253,
+            options: 5280,
+            payloadSize: 255,
         };
 
         expect(frame.Header).toStrictEqual(header);

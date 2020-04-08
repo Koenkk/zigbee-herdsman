@@ -241,6 +241,7 @@ const getCluster = (key) => {
 jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
     return jest.fn().mockImplementation(() => {
         return {
+            greenPowerGroup: 0x0b84,
             on: (event, handler) => mockAdapterEvents[event] = handler,
             removeAllListeners: (event) => delete mockAdapterEvents[event],
             start: mockAdapterStart,
@@ -999,6 +1000,7 @@ describe('Controller', () => {
 
     it('Receive raw data', async () => {
         await controller.start();
+        mocksendZclFrameToAll.mockClear();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['rawData']({
             clusterID: 9,
@@ -2717,5 +2719,62 @@ describe('Controller', () => {
         let error;
         try {await group.command('genOnOff', 'toggle', {})} catch (e) {error = e}
         expect(error).toStrictEqual(new Error(`Command 2 genOnOff.toggle({}) failed (timeout)`));
+    });
+
+    it('Green power device joins', async () => {
+        await controller.start();
+        const data = {
+            options: 0,
+            srcID: 0x0046f4fe,
+            frameCounter: 228,
+            commandID: 0xce,
+            payloadSize: 27,
+            commandFrame: {
+                deviceID: 0x02,
+                options: 0x81,
+                extendedOptions: 0xf2,
+                securityKey: Buffer.from([0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab]),
+                keyMic: 0xd5d446a4,
+                outgoingCounter: 0x000004e4,
+            },
+        };
+        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commisioningNotification', 33, data)
+        await mockAdapterEvents['zclData']({
+            address: 0x46f4fe,
+            frame,
+            endpoint: 242,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        const dataResponse = {
+            options: 0x00e548,
+            srcID: 0x0046f4fe,
+            sinkGroupID: 0x0b84,
+            deviceID: 2,
+            frameCounter: 1252,
+            gpdKey: [29, 213, 18, 52, 213, 52, 152, 88, 183, 49, 101, 110, 209, 248, 244, 140]
+        };
+        const frameResponse = mockZclFrame.create(1, 1, true, null, 2, 'pairing', 33, dataResponse);
+
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(frameResponse));
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
+
+        // When joins again, shouldnt emit duplicate event
+        await mockAdapterEvents['zclData']({
+            address: 0x46f4fe,
+            frame,
+            endpoint: 242,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.deviceJoined.length).toBe(1);
+        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_endpoints":[],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}}});
+        expect(events.deviceInterview.length).toBe(1);
+        expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status": "successful", "device":{"ID":2,"_endpoints":[],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}}});
+        expect((controller.getDeviceByIeeeAddr('0x000000000046f4fe')).networkAddress).toBe(0x46f4fe);
     });
 });
