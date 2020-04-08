@@ -457,7 +457,6 @@ class Controller extends events.EventEmitter {
 
         const device = typeof dataPayload.address === 'string' ?
             Device.byIeeeAddr(dataPayload.address) : Device.byNetworkAddress(dataPayload.address);
-
         if (!device) {
             debug.log(
                 `'${dataType}' data is from unknown device with address '${dataPayload.address}', ` +
