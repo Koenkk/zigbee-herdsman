@@ -513,12 +513,9 @@ class Endpoint extends Entity {
         };
     }
 
-    public async addToGroup(group: Group | number): Promise<void> {
-        const payload = {groupid: group instanceof Group ? group.groupID : group, groupname: ''};
-        await this.command('genGroups', 'add', payload);
-        if (group instanceof Group) {
-            group.addMember(this);
-        }
+    public async addToGroup(group: Group): Promise<void> {
+        await this.command('genGroups', 'add', {groupid: group.groupID, groupname: ''});
+        group.addMember(this);
     }
 
     /**
