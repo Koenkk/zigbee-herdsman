@@ -233,7 +233,7 @@ class BuffaloZcl extends Buffalo {
 
     private readGdpFrame(options: TsType.Options): TsType.Value {
         // Commisioning
-        if (options.message.commandID === 224) {
+        if (options.payload.commandID === 224) {
             return {
                 deviceID: this.readUInt8(),
                 options: this.readUInt8(),

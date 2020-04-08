@@ -227,11 +227,6 @@ class ZclFrame {
             }
 
             const typeStr = ZclFrame.getDataTypeString(parameter.type);
-
-            if (parameter.type === BuffaloZclDataType.GDP_FRAME) {
-                options.message = payload;
-            }
-
             payload[parameter.name] = buffalo.read(typeStr, options);
         }
 

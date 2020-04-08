@@ -139,7 +139,7 @@ class Controller extends events.EventEmitter {
             debug.log('No coordinator in database, querying...');
             Device.create(
                 'Coordinator', coordinator.ieeeAddr, coordinator.networkAddress, coordinator.manufacturerID,
-                undefined, undefined, undefined, coordinator.endpoints
+                undefined, undefined, undefined, true, coordinator.endpoints
             );
         }
 
@@ -361,7 +361,7 @@ class Controller extends events.EventEmitter {
             debug.log(`Creating device '${ieeeAddr}'`);
             device = Device.create(
                 'GreenPower', ieeeAddr, payload.networkAddress, null,
-                undefined, undefined, modelID, [], true
+                undefined, undefined, modelID, true, [],
             );
             device.save();
 
@@ -392,7 +392,7 @@ class Controller extends events.EventEmitter {
             debug.log(`Creating device '${payload.ieeeAddr}'`);
             device = Device.create(
                 undefined, payload.ieeeAddr, payload.networkAddress, undefined,
-                undefined, undefined, undefined, []
+                undefined, undefined, undefined, false, []
             );
 
             const eventData: Events.DeviceJoinedPayload = {device};

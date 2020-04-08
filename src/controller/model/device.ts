@@ -1,5 +1,5 @@
 import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
-import {TsType as AdapterTsType, Events as AdapterEvents} from '../../adapter';
+import {Events as AdapterEvents} from '../../adapter';
 import Endpoint from './endpoint';
 import Entity from './entity';
 import {ArraySplitChunks, Wait} from '../../utils';
@@ -289,13 +289,12 @@ class Device extends Entity {
     }
 
     public static create(
-        type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
+        type: DeviceType, ieeeAddr: string, networkAddress: number,
         manufacturerID: number, manufacturerName: string,
-        powerSource: string, modelID: string,
+        powerSource: string, modelID: string, interviewCompleted: boolean,
         endpoints: {
             ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
         }[],
-        interviewCompleted = false,
     ): Device {
         Device.loadFromDatabaseIfNecessary();
         if (Device.devices[ieeeAddr]) {

@@ -42,7 +42,8 @@ class GreenPower extends events.EventEmitter {
     }
 
     public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclDataPayload): Promise<void> {
-        if (dataPayload.frame.getCommand().name === 'commisioningNotification') {
+        if (dataPayload.frame.getCommand().name === 'commisioningNotification' &&
+            typeof dataPayload.address === 'number') {
             const key = this.encryptSecurityKey(
                 dataPayload.frame.Payload.srcID, dataPayload.frame.Payload.commandFrame.securityKey
             );
