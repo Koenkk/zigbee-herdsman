@@ -446,18 +446,17 @@ class Controller extends events.EventEmitter {
         }
         debug.log(`Received '${dataType}' data '${JSON.stringify(logDataPayload)}'`);
 
-        if (this.isZclDataPayload(dataPayload, 'zcl') && dataPayload.frame &&
-            dataPayload.frame.Cluster.name === 'touchlink') {
-            // This is handled by touchlink
-            return;
+        if (this.isZclDataPayload(dataPayload, 'zcl') && dataPayload.frame) {
+            if (dataPayload.frame.Cluster.name === 'touchlink') {
+                // This is handled by touchlink
+                return;
+            } else if (dataPayload.frame.Cluster.name === 'greenPower') {
+                this.greenPower.onZclGreenPowerData(dataPayload);
+            }
         }
 
         const device = typeof dataPayload.address === 'string' ?
             Device.byIeeeAddr(dataPayload.address) : Device.byNetworkAddress(dataPayload.address);
-
-        if (this.isZclDataPayload(dataPayload, 'zcl') && dataPayload.frame.Cluster.name === 'greenPower') {
-            this.greenPower.onZclGreenPowerData(dataPayload);
-        }
 
         if (!device) {
             debug.log(
