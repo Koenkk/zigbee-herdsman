@@ -17,12 +17,12 @@ class GreenPower extends events.EventEmitter {
         this.adapter = adapter;
     }
 
-    private encryptSecurityKey(srcID: number, securityKey: Buffer): Buffer {
-        const srcIDInBytes = Buffer.from([
-            (srcID & 0x000000ff),
-            (srcID & 0x0000ff00) >> 8,
-            (srcID & 0x00ff0000) >> 16,
-            (srcID & 0xff000000) >> 24]
+    private encryptSecurityKey(sourceID: number, securityKey: Buffer): Buffer {
+        const sourceIDInBytes = Buffer.from([
+            (sourceID & 0x000000ff),
+            (sourceID & 0x0000ff00) >> 8,
+            (sourceID & 0x00ff0000) >> 16,
+            (sourceID & 0xff000000) >> 24]
         );
 
 
@@ -31,7 +31,7 @@ class GreenPower extends events.EventEmitter {
         {
             for (let j = 0; j < 4; j++)
             {
-                nonce[4 * i + j] = srcIDInBytes[j];
+                nonce[4 * i + j] = sourceIDInBytes[j];
             }
         }
         nonce[12] = 0x05;
@@ -51,7 +51,7 @@ class GreenPower extends events.EventEmitter {
             const payload = {
                 options: 0x00e548,
                 srcID: dataPayload.frame.Payload.srcID,
-                sinkGroupID: 0x0b84,
+                sinkGroupID: this.adapter.greenPowerGroup,
                 deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
                 frameCounter: dataPayload.frame.Payload.commandFrame.outgoingCounter,
                 gpdKey: [...key],
@@ -75,9 +75,6 @@ class GreenPower extends events.EventEmitter {
     }
 
     public async permitJoin(time: number): Promise<void> {
-        // TODO move to adapter
-        //await this.adapter.znp.request(5, 'extAddGroup', {endpoint: 242, groupid: 0x0b84, namelen: 0, groupname:[]});
-
         // TODO: check if not comission works
         const payload = {
             options: 0x0b,

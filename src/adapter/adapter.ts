@@ -7,6 +7,7 @@ import Debug from "debug";
 const debug = Debug("zigbee-herdsman:adapter");
 
 abstract class Adapter extends events.EventEmitter {
+    public readonly greenPowerGroup = 0x0b84;
     protected networkOptions: TsType.NetworkOptions;
     protected adapterOptions: TsType.AdapterOptions;
     protected serialPortOptions: TsType.SerialPortOptions;

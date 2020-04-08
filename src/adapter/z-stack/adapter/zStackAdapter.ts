@@ -102,7 +102,7 @@ class ZStackAdapter extends Adapter {
 
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
 
-        return StartZnp(this.znp, this.version.product, this.networkOptions, this.backupPath);
+        return StartZnp(this.znp, this.version.product, this.networkOptions, this.greenPowerGroup, this.backupPath);
     }
 
     public async stop(): Promise<void> {
