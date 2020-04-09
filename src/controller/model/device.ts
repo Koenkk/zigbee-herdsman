@@ -2,7 +2,7 @@ import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
 import {TsType as AdapterTsType, Events as AdapterEvents} from '../../adapter';
 import Endpoint from './endpoint';
 import Entity from './entity';
-import {ArraySplitChunks, Wait} from '../../utils';
+import {Wait} from '../../utils';
 import Debug from "debug";
 import * as Zcl from '../../zcl';
 
