@@ -351,7 +351,7 @@ DeconzAdapter.isValidPath = mockDeconzAdapterIsValidPath;
 DeconzAdapter.autoDetectPath = mockDeconzAdapterAutoDetectPath;
 
 const mocksRestore = [
-    mockAdapterStart, mockAdapterPermitJoin, mockAdapterStop, mockAdapterRemoveDevice,
+    mockAdapterStart, mockAdapterPermitJoin, mockAdapterStop, mockAdapterRemoveDevice, mocksendZclFrameToAll,
     mockZStackAdapterIsValidPath, mockZStackAdapterAutoDetectPath, mockDeconzAdapterIsValidPath, mockDeconzAdapterAutoDetectPath,
 ];
 
@@ -720,12 +720,18 @@ describe('Controller', () => {
         expect(fs.existsSync(databaseBackupPath)).toBeTruthy();
     });
 
-    it('Controller permit joining', async () => {
+    it('onlythis Controller permit joining', async () => {
         jest.useFakeTimers();
         await controller.start();
         await controller.permitJoin(true);
         expect(mockAdapterPermitJoin).toBeCalledTimes(1);
         expect(mockAdapterPermitJoin.mock.calls[0][0]).toBe(254);
+
+        // Green power
+        const commisionFrameEnable = mockZclFrame.create(1, 1, true, null, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254});
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(commisionFrameEnable));
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
 
         // should call it again ever +- 200 seconds
         jest.advanceTimersByTime(210 * 1000);
@@ -744,6 +750,13 @@ describe('Controller', () => {
         expect(mockAdapterPermitJoin.mock.calls[3][0]).toBe(0);
         jest.advanceTimersByTime(210 * 1000);
         expect(mockAdapterPermitJoin).toBeCalledTimes(4);
+
+        // Green power
+        const commisionFrameDisable = mockZclFrame.create(1, 1, true, null, 5, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 0});
+        expect(mocksendZclFrameToAll.mock.calls[3][0]).toBe(242);
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[3][1])).toStrictEqual(deepClone(commisionFrameDisable));
+        expect(mocksendZclFrameToAll.mock.calls[3][2]).toBe(242);
+        expect(mocksendZclFrameToAll).toBeCalledTimes(4);
     });
 
     it('Controller permit joining through specific device', async () => {
@@ -2721,7 +2734,7 @@ describe('Controller', () => {
         expect(error).toStrictEqual(new Error(`Command 2 genOnOff.toggle({}) failed (timeout)`));
     });
 
-    it('Green power device joins', async () => {
+    it('Green power', async () => {
         await controller.start();
         const data = {
             options: 0,
@@ -2772,9 +2785,33 @@ describe('Controller', () => {
         });
 
         expect(events.deviceJoined.length).toBe(1);
-        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_endpoints":[],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}}});
+        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_endpoints":[{"inputClusters":[],"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}}});
         expect(events.deviceInterview.length).toBe(1);
-        expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status": "successful", "device":{"ID":2,"_endpoints":[],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}}});
+        expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status":"successful","device":{"ID":2,"_endpoints":[],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}}});
         expect((controller.getDeviceByIeeeAddr('0x000000000046f4fe')).networkAddress).toBe(0x46f4fe);
+
+        // Green power device send message
+        expect(events.message.length).toBe(0);
+        const dataToggle = {
+            options: 0,
+            srcID: 0x0046f4fe,
+            frameCounter: 228,
+            commandID: 0x22,
+            payloadSize: 255,
+            commandFrame: {
+            },
+        };
+        const frameToggle = mockZclFrame.create(1, 0, true, null, 10, 'notification', 33, dataToggle)
+        await mockAdapterEvents['zclData']({
+            address: 0x46f4fe,
+            frame: frameToggle,
+            endpoint: 242,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.message.length).toBe(1);
+        const expected = {"type":"commandNotification","device":{"ID":2,"_endpoints":[{"inputClusters":[],"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]},"data":{"options":0,"srcID":4650238,"frameCounter":228,"commandID":34,"payloadSize":255,"commandFrame":{}},"linkquality":50,"groupID":1,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
+        expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 });
