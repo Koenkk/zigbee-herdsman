@@ -127,7 +127,9 @@ class DeconzAdapter extends Adapter {
             debug("PERMIT_JOIN - " + seconds + " seconds");
         } catch (error) {
             debug("PERMIT_JOIN FAILED - " + error);
-            return Promise.reject();
+            // try again
+            this.permitJoin(seconds, networkAddress);
+            //return Promise.reject(); // do not reject
         }
     }
 
@@ -781,9 +783,89 @@ class DeconzAdapter extends Adapter {
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
         try {
-            const panid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
-            const expanid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.EXT_PAN_ID);
-            const channel: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
+            let panid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
+            let expanid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
+            let channel: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
+            let networkKey: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.NETWORK_KEY);
+
+            // check current channel against configuration.yaml
+            if (this.networkOptions.channelList[0] !== channel) {
+                debug("Channel in configuration.yaml (" + this.networkOptions.channelList[0] + ") differs from current channel (" + channel + "). Changing channel.");
+
+                let setChannelMask = 0;
+                switch (this.networkOptions.channelList[0]) {
+                    case 11:
+                        setChannelMask = 0x800;
+                        break;
+                    case 15:
+                        setChannelMask = 0x8000;
+                        break;
+                    case 20:
+                        setChannelMask = 0x100000;
+                        break;
+                    case 25:
+                        setChannelMask = 0x2000000;
+                        break;
+                    default:
+                        break;
+                }
+
+                try {
+                    await this.driver.writeParameterRequest(PARAM.PARAM.Network.CHANNEL_MASK, setChannelMask);
+                    await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
+                    await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
+                    await this.sleep(3000);
+                    channel = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
+                } catch (error) {
+                    debug("Could not set channel: " + error);
+                }
+            }
+
+            // check current panid against configuration.yaml
+            if (this.networkOptions.panID !== panid) {
+                debug("panid in configuration.yaml (" + this.networkOptions.panID + ") differs from current panid (" + panid + "). Changing panid.");
+
+                try {
+                    await this.driver.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, this.networkOptions.panID);
+                    await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
+                    await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
+                    await this.sleep(3000);
+                    panid = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
+                } catch (error) {
+                    debug("Could not set panid: " + error);
+                }
+            }
+
+            // check current extended_panid against configuration.yaml
+            if (this.driver.generalArrayToString(this.networkOptions.extendedPanID, 8) !== expanid) {
+
+                debug("extended panid in configuration.yaml (" + this.driver.macAddrArrayToString(this.networkOptions.extendedPanID) + ") differs from current extended panid (" + expanid + "). Changing extended panid.");
+
+                try {
+                    //await this.driver.writeParameterRequest(PARAM.PARAM.Network.USE_APS_EXT_PAN_ID, 1);
+                    await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID);
+                    await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
+                    await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
+                    await this.sleep(3000);
+                    expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
+                } catch (error) {
+                    debug("Could not set extended panid: " + error);
+                }
+            }
+
+            // check current network key against configuration.yaml
+            if (this.driver.generalArrayToString(this.networkOptions.networkKey, 16) !== networkKey) {
+                debug("network key in configuration.yaml (hidden) differs from current network key (" + networkKey + "). Changing network key.");
+
+                try {
+                    await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey);
+                    await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
+                    await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
+                    await this.sleep(3000);
+                } catch (error) {
+                    debug("Could not set network key: " + error);
+                }
+            }
 
             return {
                 panID: panid,
@@ -835,6 +917,10 @@ class DeconzAdapter extends Adapter {
     /**
      * Private methods
      */
+    private sleep(ms: number) : Promise<void>{
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     private waitForData(addr: number, profileId: number, clusterId: number) : Promise<ReceivedDataResponse> {
         return new Promise((resolve, reject): void => {
             const ts = Date.now();

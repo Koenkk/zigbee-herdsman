@@ -46,10 +46,10 @@ class Driver extends events.EventEmitter {
         this.seqNumber = 0;
 
         const that = this;
-        setInterval(() => { that.processQueue(); }, 300);
-        setInterval(() => { that.processBusyQueue(); }, 200);
-        setInterval(() => { that.processApsQueue(); }, 300);
-        setInterval(() => { that.processApsBusyQueue(); }, 200);
+        setInterval(() => { that.processQueue(); }, 50);  //300
+        setInterval(() => { that.processBusyQueue(); }, 10);  //200
+        setInterval(() => { that.processApsQueue(); }, 50);  //300
+        setInterval(() => { that.processApsBusyQueue(); }, 10);  //200
         setInterval(() => { that.deviceStateRequest()
                             .then(result => {})
                             .catch(error => {}); }, 10000);
@@ -57,7 +57,13 @@ class Driver extends events.EventEmitter {
         setInterval(() => {
             that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
                 .then(result => {})
-                .catch(error => {});
+                .catch(error => {
+                    //try again
+                    debug("try again to reset watchdog");
+                    that.writeParameterRequest(0x26, 600)
+                    .then(result => {})
+                    .catch(error => {debug("warning watchdog was not reset");});
+                });
              }, (1000 * 60 * 8)); // 8 minutes
 
         this.onParsed = this.onParsed.bind(this);
@@ -143,7 +149,12 @@ class Driver extends events.EventEmitter {
     private sendReadParameterRequest(parameterId: number, seqNumber: number) {
         /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id */
         const requestFrame = [PARAM.PARAM.FrameType.ReadParameter, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, parameterId];
-        this.sendRequest(requestFrame);
+        if (parameterId === PARAM.PARAM.Network.NETWORK_KEY) {
+            const requestFrame2= [PARAM.PARAM.FrameType.ReadParameter, seqNumber, 0x00, 0x09, 0x00, 0x02, 0x00, parameterId, 0x00];
+            this.sendRequest(requestFrame2);
+        } else {
+            this.sendRequest(requestFrame);
+        }
     }
 
     private sendWriteParameterRequest(parameterId: number, value: parameterT, seqNumber: number) {
@@ -160,8 +171,13 @@ class Driver extends events.EventEmitter {
         const pLength1 = payloadLength & 0xff;
         const pLength2 = payloadLength >> 8;
 
-        const requestframe = [PARAM.PARAM.FrameType.WriteParameter, seqNumber, 0x00, fLength1, fLength2, pLength1, pLength2, parameterId].concat(this.parameterBuffer(value, parameterLength));
-        this.sendRequest(requestframe);
+        if (parameterId === PARAM.PARAM.Network.NETWORK_KEY) {
+            const requestFrame2= [PARAM.PARAM.FrameType.WriteParameter, seqNumber, 0x00, 0x19, 0x00, 0x12, 0x00, parameterId, 0x00].concat(value);
+            this.sendRequest(requestFrame2);
+        } else {
+            const requestframe = [PARAM.PARAM.FrameType.WriteParameter, seqNumber, 0x00, fLength1, fLength2, pLength1, pLength2, parameterId].concat(this.parameterBuffer(value, parameterLength));
+            this.sendRequest(requestframe);
+        }
     }
 
     private getLengthOfParameter(parameterId: number) : number {
@@ -273,7 +289,7 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private changeNetworkStateRequest(networkState: number) : Promise<void> {
+    public changeNetworkStateRequest(networkState: number) : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //debug(`push change network state request to apsQueue. seqNr: ${seqNumber}`);
@@ -285,7 +301,7 @@ class Driver extends events.EventEmitter {
     }
 
     private sendChangeNetworkStateRequest(seqNumber: number, networkState: number) {
-        const requestFrame = [PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE, seqNumber, 0x00, 0x06, 0x00, 0x00, networkState];
+        const requestFrame = [PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE, seqNumber, 0x00, 0x06, 0x00, networkState];
         this.sendRequest(requestFrame);
     }
 
@@ -498,6 +514,24 @@ class Driver extends events.EventEmitter {
                 char = "0" + char;
             }
             result += char;
+        }
+        return result;
+    }
+
+    /**
+     *  generalArrayToString result is not reversed!
+     */
+    public generalArrayToString(key: Array<number>, length: number) : string{
+        let result: string = "0x";
+        let char = '';
+        let i = 0;
+        while (i < length) {
+            char = key[i].toString(16);
+            if (char.length < 2) {
+                char = "0" + char;
+            }
+            result += char;
+            i++;
         }
         return result;
     }

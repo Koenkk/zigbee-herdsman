@@ -6,11 +6,17 @@ const PARAM: {
     };
 } = {
     Network: {
+        NET_OFFLINE: 0x00,
+        NET_JOINING: 0x01,
+        NET_CONNECTED: 0x02,
+        NET_LEAVING: 0x03,
         MAC: 0x01,
         PAN_ID: 0x05,
         NWK_ADDRESS: 0x07,
         EXT_PAN_ID: 0x08,
+        APS_EXT_PAN_ID: 0x0b,
         CHANNEL_MASK: 0x0a,
+        NETWORK_KEY: 0x18,
         CHANNEL: 0x1c,
         PERMIT_JOIN: 0x21,
         WATCHDOG_TTL: 0x26
@@ -129,10 +135,11 @@ type ParamNwkAddr = number;
 type ParamChannel = number;
 type ParamChannelMask = number;
 type ParamPermitJoin = number;
+type ParamNetworkKey = string;
 
-type Command = ParamMac | ParamPanId | ParamNwkAddr | ParamExtPanId | ParamChannel | ParamChannelMask | ParamPermitJoin;
+type Command = ParamMac | ParamPanId | ParamNwkAddr | ParamExtPanId | ParamChannel | ParamChannelMask | ParamPermitJoin | ParamNetworkKey;
 type parameterT = number | number[];
 
-export { Request, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, parameterT , Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin };
+export { Request, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, parameterT , Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin, ParamNetworkKey };
 
 export default {PARAM};
