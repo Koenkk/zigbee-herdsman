@@ -160,6 +160,8 @@ const basicMocks = () => {
             return {};
         } else if (subsystem === Subsystem.SYS && command === 'resetReq') {
             return {};
+        } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+            return {payload: {status: 0}};
         } else if (subsystem === Subsystem.SYS && command === 'stackTune') {
             return {};
         } else if (subsystem === Subsystem.UTIL && command === 'ledControl') {
@@ -207,7 +209,7 @@ const basicMocks = () => {
         }
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47]}}};
+            return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return {promise: {payload: {}}};
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'simpleDescRsp') {
@@ -326,6 +328,8 @@ describe('zStackAdapter', () => {
                 return {payload: {product: 1}};
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
                 return {};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -462,7 +466,11 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[36][2].endpoint).toBe(47);
         expect(mockZnpRequest.mock.calls[36][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[36][2].appinclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(37);
+        expect(mockZnpRequest.mock.calls[37][2].endpoint).toBe(242);
+        expect(mockZnpRequest.mock.calls[37][2].appprofid).toBe(41440);
+        expect(mockZnpRequest.mock.calls[37][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[38][1]).toBe('extFindGroup');
+        expect(mockZnpRequest).toHaveBeenCalledTimes(39);
     });
 
     it('Start zStack 3.x.0 initialize fails because of state change timeout', async () => {
@@ -545,6 +553,8 @@ describe('zStackAdapter', () => {
                 return {payload: {product: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
                 return {};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -651,6 +661,8 @@ describe('zStackAdapter', () => {
                 return {payload: {product: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
                 return {};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, offset: 0})) {
                     return {payload: {value: Buffer.from([0x00])}};
@@ -743,6 +755,8 @@ describe('zStackAdapter', () => {
                 throw new Error('Not implemented');
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
                 return {};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, offset: 0})) {
                     return {payload: {value: Buffer.from([0x00])}};
@@ -802,6 +816,8 @@ describe('zStackAdapter', () => {
                 return {payload: {product: 2}};
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
                 return {};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -938,10 +954,14 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[36][2].endpoint).toBe(47);
         expect(mockZnpRequest.mock.calls[36][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[36][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(37);
+        expect(mockZnpRequest.mock.calls[37][2].endpoint).toBe(242);
+        expect(mockZnpRequest.mock.calls[37][2].appprofid).toBe(41440);
+        expect(mockZnpRequest.mock.calls[37][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[38][1]).toBe('extFindGroup');
+        expect(mockZnpRequest).toHaveBeenCalledTimes(39);
     });
 
-    it('Start zStack 3.x.0 resume', async () => {
+    it('Start zStack 3.x.0 resume and create green power group', async () => {
         mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
             const missing = () => {
                 const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
@@ -952,6 +972,10 @@ describe('zStackAdapter', () => {
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 1}};
+            } else if (subsystem === Subsystem.ZDO && command === 'extAddGroup') {
                 return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
@@ -1046,7 +1070,14 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[16][2].endpoint).toBe(47);
         expect(mockZnpRequest.mock.calls[16][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[16][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(17);
+        expect(mockZnpRequest.mock.calls[17][2].endpoint).toBe(242);
+        expect(mockZnpRequest.mock.calls[17][2].appprofid).toBe(41440);
+        expect(mockZnpRequest.mock.calls[17][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[18][1]).toBe('extFindGroup');
+        expect(mockZnpRequest.mock.calls[18][2]).toStrictEqual({"endpoint": 242, "groupid": 2948});
+        expect(mockZnpRequest.mock.calls[19][1]).toBe('extAddGroup');
+        expect(mockZnpRequest.mock.calls[19][2]).toStrictEqual({"endpoint": 242, "groupid": 2948, "groupname": [], "namelen": 0});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(20);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -1062,6 +1093,8 @@ describe('zStackAdapter', () => {
                 return {payload: {product: 1}};
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
                 return {};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -1155,7 +1188,11 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[16][2].endpoint).toBe(47);
         expect(mockZnpRequest.mock.calls[16][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[16][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(17);
+        expect(mockZnpRequest.mock.calls[17][2].endpoint).toBe(242);
+        expect(mockZnpRequest.mock.calls[17][2].appprofid).toBe(41440);
+        expect(mockZnpRequest.mock.calls[17][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[18][1]).toBe('extFindGroup');
+        expect(mockZnpRequest).toHaveBeenCalledTimes(19);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -1171,6 +1208,8 @@ describe('zStackAdapter', () => {
                 return {payload: {product: 1}};
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
                 return {};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -1242,6 +1281,8 @@ describe('zStackAdapter', () => {
                 return {payload: {product: 2}};
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
                 return {};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0])}};
@@ -1273,7 +1314,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {activeeplist: []}}};
             } else {
@@ -1325,9 +1366,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[19][1]).toBe('resetReq');
         expect(mockZnpRequest.mock.calls[20][1]).toBe('getDeviceInfo');
         expect(mockZnpRequest.mock.calls[21][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[22][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[22][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
-        expect(mockZnpRequest).toBeCalledTimes(23);
+        expect(mockZnpRequest.mock.calls[22][1]).toBe('extFindGroup');
+        expect(mockZnpRequest.mock.calls[23][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[23][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
+        expect(mockZnpRequest).toBeCalledTimes(24);
     });
 
     it('Start restore from backup zStack 3.x.0', async () => {
@@ -1340,6 +1382,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
                 return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
@@ -1375,7 +1419,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {activeeplist: []}}};
             } else {
@@ -1427,9 +1471,10 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[19][1]).toBe('resetReq');
         expect(mockZnpRequest.mock.calls[20][1]).toBe('getDeviceInfo');
         expect(mockZnpRequest.mock.calls[21][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[22][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[22][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
-        expect(mockZnpRequest).toBeCalledTimes(23);
+        expect(mockZnpRequest.mock.calls[22][1]).toBe('extFindGroup');
+        expect(mockZnpRequest.mock.calls[23][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[23][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
+        expect(mockZnpRequest).toBeCalledTimes(24);
     });
 
     it('Start restore from backup wrong zStack', async () => {
@@ -1596,6 +1641,8 @@ describe('zStackAdapter', () => {
                 return {payload: {product: 2}};
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
                 return {};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
                 if (equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
                     return {payload: {value: Buffer.from([0x55])}};
@@ -1651,7 +1698,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {}}};
             } else {
@@ -1678,6 +1725,8 @@ describe('zStackAdapter', () => {
 
             if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
                 return {payload: {product: 1}};
+            } else if (subsystem === Subsystem.ZDO && command === 'extFindGroup') {
+                return {payload: {status: 0}};
             } else if (subsystem === Subsystem.SYS && command === 'ping') {
                 return {};
             } else if (subsystem === Subsystem.SYS && command === 'osalNvRead') {
@@ -1743,7 +1792,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47]}}};
+                return {promise: {payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}}};
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return {promise: {payload: {}}};
             } else {
@@ -1912,6 +1961,17 @@ describe('zStackAdapter', () => {
                 "outputClusters":[
                    9
                 ]
+             },
+             {
+                "ID":242,
+                "profileID": 124,
+                "deviceID":7,
+                "inputClusters":[
+                   8
+                ],
+                "outputClusters":[
+                   9
+                ]
              }
             ]
          };
@@ -2049,7 +2109,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.activeEndpoints(3);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(3);
-        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,11,110,12, 13, 47]})
+        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,11,110,12, 13, 47, 242]})
     });
 
     it('Simple descriptor', async () => {
@@ -2167,6 +2227,18 @@ describe('zStackAdapter', () => {
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
         expect(mockZnpRequest).toBeCalledTimes(2);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 255, "dstaddr": "0x0000000000000019", "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1, "dstaddrmode": 1, "dstpanid": 0})
+    });
+
+    it('Send zcl frame to all', async () => {
+        basicMocks();
+        await adapter.start();
+
+        mockZnpRequest.mockClear();
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
+        await adapter.sendZclFrameToAll(242, frame, 250);
+        expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 242, "dstaddr": "0x000000000000fffd", "len": 5, "options": 0, "radius": 30, "srcendpoint": 250, "transid": 1, "dstaddrmode": 2, "dstpanid": 0})
     });
 
     it('Send zcl frame network address transaction number shouldnt go higher than 255', async () => {

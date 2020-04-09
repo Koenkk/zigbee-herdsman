@@ -60,6 +60,7 @@ const Endpoints = [
     // Insta/Jung/Gira: OTA fallback EP (since it's buggy in firmware 10023202 when it tries to find a matching EP for
     // OTA - it queries for ZLL profile, but then contacts with HA profile)
     {...EndpointDefaults, endpoint: 47, appprofid: 0x0104},
+    {...EndpointDefaults, endpoint: 242, appprofid: 0xa1e0},
 ];
 
 async function validateItem(
@@ -187,8 +188,15 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(version));
 }
 
+async function addToGroup(znp: Znp, endpoint: number, group: number): Promise<void> {
+    const result = await znp.request(5, 'extFindGroup', {endpoint, groupid: group}, [0, 1]);
+    if (result.payload.status === 1) {
+        await znp.request(5, 'extAddGroup', {endpoint, groupid: group, namelen: 0, groupname:[]});
+    }
+}
+
 export default async (
-    znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, backupPath?: string
+    znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, greenPowerGroup: number, backupPath?: string,
 ): Promise<TsType.StartResult> => {
     let result: TsType.StartResult = 'resumed';
     let hasConfigured = false;
@@ -221,6 +229,9 @@ export default async (
 
     await boot(znp);
     await registerEndpoints(znp);
+
+    // Add to required group to receive greenPower messages.
+    await addToGroup(znp, 242, greenPowerGroup);
 
     if (result === 'restored') {
         // Write channellist again, otherwise it doesnt seem to stick.

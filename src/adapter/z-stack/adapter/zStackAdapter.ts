@@ -102,7 +102,7 @@ class ZStackAdapter extends Adapter {
 
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
 
-        return StartZnp(this.znp, this.version.product, this.networkOptions, this.backupPath);
+        return StartZnp(this.znp, this.version.product, this.networkOptions, this.greenPowerGroup, this.backupPath);
     }
 
     public async stop(): Promise<void> {
@@ -321,6 +321,22 @@ class ZStackAdapter extends Adapter {
 
             /**
              * As a group command is not confirmed and thus immidiately returns
+             * (contrary to network address requests) we will give the
+             * command some time to 'settle' in the network.
+             */
+            await Wait(200);
+        });
+    }
+
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            await this.dataRequestExtended(
+                Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFD, endpoint, 0, sourceEndpoint,
+                zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, false, 0
+            );
+
+            /**
+             * As a broadcast command is not confirmed and thus immidiately returns
              * (contrary to network address requests) we will give the
              * command some time to 'settle' in the network.
              */

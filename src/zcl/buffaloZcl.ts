@@ -231,6 +231,22 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
+    private readGdpFrame(options: TsType.Options): TsType.Value {
+        // Commisioning
+        if (options.payload.commandID === 224) {
+            return {
+                deviceID: this.readUInt8(),
+                options: this.readUInt8(),
+                extendedOptions: this.readUInt8(),
+                securityKey: this.readBuffer(16),
+                keyMic: this.readUInt32(),
+                outgoingCounter: this.readUInt32(),
+            };
+        }
+
+        return {};
+    }
+
     private readUInt40(): TsType.Value {
         const lsb = this.readUInt32();
         const msb = this.readUInt8();
@@ -327,6 +343,8 @@ class BuffaloZcl extends Buffalo {
             return this.readListZoneInfo(options);
         } else if (type === 'LIST_THERMO_TRANSITIONS') {
             return this.readListThermoTransitions(options);
+        } else if (type === 'GDP_FRAME') {
+            return this.readGdpFrame(options);
         } else if (type === 'uint40') {
             return this.readUInt40();
         } else if (type === 'uint48') {

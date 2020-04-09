@@ -4,11 +4,12 @@ import {TsType as AdapterTsType, Adapter, Events as AdapterEvents} from '../adap
 import {Entity, Device} from './model';
 import {ZclFrameConverter} from './helpers';
 import * as Events from './events';
-import {KeyValue, DeviceType} from './tstype';
+import {KeyValue, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import Debug from "debug";
 import fs from 'fs';
 import {Utils as ZclUtils, FrameControl} from '../zcl';
 import Touchlink from './touchlink';
+import GreenPower from './greenPower';
 
 // @ts-ignore
 import mixin from 'mixin-deep';
@@ -62,6 +63,7 @@ class Controller extends events.EventEmitter {
     private options: Options;
     private database: Database;
     private adapter: Adapter;
+    private greenPower: GreenPower;
     // eslint-disable-next-line
     private permitJoinTimer: any;
     // eslint-disable-next-line
@@ -105,6 +107,9 @@ class Controller extends events.EventEmitter {
         Entity.injectAdapter(this.adapter);
         Entity.injectDatabase(this.database);
 
+        this.greenPower = new GreenPower(this.adapter);
+        this.greenPower.on(GreenPowerEvents.deviceJoined, this.onDeviceJoinedGreenPower.bind(this));
+
         // Register adapter events
         this.adapter.on(AdapterEvents.Events.deviceJoined, this.onDeviceJoined.bind(this));
         this.adapter.on(AdapterEvents.Events.zclData, (data) => this.onZclOrRawData('zcl', data));
@@ -134,7 +139,7 @@ class Controller extends events.EventEmitter {
             debug.log('No coordinator in database, querying...');
             Device.create(
                 'Coordinator', coordinator.ieeeAddr, coordinator.networkAddress, coordinator.manufacturerID,
-                undefined, undefined, undefined, coordinator.endpoints
+                undefined, undefined, undefined, true, coordinator.endpoints
             );
         }
 
@@ -161,16 +166,19 @@ class Controller extends events.EventEmitter {
         if (permit && !this.getPermitJoin()) {
             debug.log('Permit joining');
             await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
+            await this.greenPower.permitJoin(254);
 
             // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
             this.permitJoinTimer = setInterval(async (): Promise<void> => {
                 debug.log('Permit joining');
                 await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
+                await this.greenPower.permitJoin(254);
             }, 200 * 1000);
         } else if (permit && this.getPermitJoin()) {
             debug.log('Joining already permitted');
         } else {
             debug.log('Disable joining');
+            await this.greenPower.permitJoin(0);
             await this.adapter.permitJoin(0, null);
 
             if (this.permitJoinTimer) {
@@ -337,6 +345,34 @@ class Controller extends events.EventEmitter {
         this.emit(Events.Events.adapterDisconnected);
     }
 
+    private async onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): Promise<void> {
+        debug.log(`Green power device '${JSON.stringify(payload)}' joined`);
+
+        // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
+        let ieeeAddr = payload.sourceID.toString(16);
+        ieeeAddr = `0x${'0'.repeat(16 - ieeeAddr.length)}${ieeeAddr}`;
+
+        // Green power devices dont' have a modelID, create a modelID based on the deviceID (=type)
+        const modelID = `GreenPower_${payload.deviceID}`;
+
+        let device = Device.byIeeeAddr(ieeeAddr);
+        if (!device) {
+            debug.log(`New green power device '${ieeeAddr}' joined`);
+            debug.log(`Creating device '${ieeeAddr}'`);
+            device = Device.create(
+                'GreenPower', ieeeAddr, payload.networkAddress, null,
+                undefined, undefined, modelID, true, [],
+            );
+            device.save();
+
+            const deviceJoinedPayload: Events.DeviceJoinedPayload = {device};
+            this.emit(Events.Events.deviceJoined, deviceJoinedPayload);
+
+            const deviceInterviewPayload: Events.DeviceInterviewPayload = {status: 'successful', device};
+            this.emit(Events.Events.deviceInterview, deviceInterviewPayload);
+        }
+    }
+
     private async onDeviceJoined(payload: AdapterEvents.DeviceJoinedPayload): Promise<void> {
         debug.log(`Device '${payload.ieeeAddr}' joined`);
 
@@ -356,7 +392,7 @@ class Controller extends events.EventEmitter {
             debug.log(`Creating device '${payload.ieeeAddr}'`);
             device = Device.create(
                 undefined, payload.ieeeAddr, payload.networkAddress, undefined,
-                undefined, undefined, undefined, []
+                undefined, undefined, undefined, false, []
             );
 
             const eventData: Events.DeviceJoinedPayload = {device};
@@ -410,10 +446,13 @@ class Controller extends events.EventEmitter {
         }
         debug.log(`Received '${dataType}' data '${JSON.stringify(logDataPayload)}'`);
 
-        if (this.isZclDataPayload(dataPayload, 'zcl') && dataPayload.frame &&
-            dataPayload.frame.Cluster.name === 'touchlink') {
-            // This is handled by touchlink
-            return;
+        if (this.isZclDataPayload(dataPayload, dataType)) {
+            if (dataPayload.frame.Cluster.name === 'touchlink') {
+                // This is handled by touchlink
+                return;
+            } else if (dataPayload.frame.Cluster.name === 'greenPower') {
+                this.greenPower.onZclGreenPowerData(dataPayload);
+            }
         }
 
         const device = typeof dataPayload.address === 'string' ?

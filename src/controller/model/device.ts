@@ -1,5 +1,5 @@
 import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
-import {TsType as AdapterTsType, Events as AdapterEvents} from '../../adapter';
+import {Events as AdapterEvents} from '../../adapter';
 import Endpoint from './endpoint';
 import Entity from './entity';
 import {Wait} from '../../utils';
@@ -260,7 +260,7 @@ class Device extends Entity {
     private static loadFromDatabaseIfNecessary(): void {
         if (!Device.devices) {
             Device.devices = {};
-            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router']);
+            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router', 'GreenPower']);
             for (const entry of entries) {
                 const device = Device.fromDatabaseEntry(entry);
                 Device.devices[device.ieeeAddr] = device;
@@ -289,12 +289,12 @@ class Device extends Entity {
     }
 
     public static create(
-        type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
+        type: DeviceType, ieeeAddr: string, networkAddress: number,
         manufacturerID: number, manufacturerName: string,
-        powerSource: string, modelID: string,
+        powerSource: string, modelID: string, interviewCompleted: boolean,
         endpoints: {
             ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
-        }[]
+        }[],
     ): Device {
         Device.loadFromDatabaseIfNecessary();
         if (Device.devices[ieeeAddr]) {
@@ -310,8 +310,8 @@ class Device extends Entity {
         const ID = Entity.database.newID();
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
-            powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false, {},
-            null,
+            powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
+            interviewCompleted, {}, null,
         );
 
         Entity.database.insert(device.toDatabaseEntry());

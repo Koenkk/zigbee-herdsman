@@ -7,6 +7,7 @@ import Debug from "debug";
 const debug = Debug("zigbee-herdsman:adapter");
 
 abstract class Adapter extends events.EventEmitter {
+    public readonly greenPowerGroup = 0x0b84;
     protected networkOptions: TsType.NetworkOptions;
     protected adapterOptions: TsType.AdapterOptions;
     protected serialPortOptions: TsType.SerialPortOptions;
@@ -154,6 +155,8 @@ abstract class Adapter extends events.EventEmitter {
     ): Promise<ZclDataPayload>;
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void>;
+
+    public abstract sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void>;
 
     /**
      * InterPAN
