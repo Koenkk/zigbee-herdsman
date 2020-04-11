@@ -720,7 +720,7 @@ describe('Controller', () => {
         expect(fs.existsSync(databaseBackupPath)).toBeTruthy();
     });
 
-    it('onlythis Controller permit joining', async () => {
+    it('Controller permit joining', async () => {
         jest.useFakeTimers();
         await controller.start();
         await controller.permitJoin(true);

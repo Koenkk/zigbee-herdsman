@@ -65,7 +65,7 @@ const Endpoints = [
 
 async function validateItem(
     znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead'
-): Promise<void> {
+): Promise<boolean> {
     const result = await znp.request(subsystem, command, item);
 
     if (!equals(result.payload.value, item.value)) {
@@ -73,30 +73,35 @@ async function validateItem(
             `Item '${message}' is invalid, got '${JSON.stringify(result.payload.value)}', ` +
             `expected '${JSON.stringify(item.value)}'`
         );
-        throw new Error();
+        return false;
     } else {
         debug(`Item '${message}' is valid`);
+        return true;
     }
 }
 
 async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions): Promise<boolean> {
-    try {
-        await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured');
-        await validateItem(znp, Items.channelList(options.channelList), 'channelList');
-        await validateItem(znp, Items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute');
+    let valid = true;
 
-        if (version === ZnpVersion.zStack3x0) {
-            await validateItem(znp, Items.networkKey(options.networkKey), 'networkKey');
-        } else {
-            await validateItem(
-                znp, Items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'readConfiguration'
-            );
-        }
+    valid = valid && (await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured'));
+    valid = valid && (await validateItem(znp, Items.channelList(options.channelList), 'channelList'));
+    valid = valid && (await validateItem(
+        znp, Items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute'
+    ));
 
-        try {
-            await validateItem(znp, Items.panID(options.panID), 'panID');
-            await validateItem(znp, Items.extendedPanID(options.extendedPanID), 'extendedPanID');
-        } catch (error) {
+    if (version === ZnpVersion.zStack3x0) {
+        valid = valid && (await validateItem(znp, Items.networkKey(options.networkKey), 'networkKey'));
+    } else {
+        valid = valid && (await validateItem(
+            znp, Items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'readConfiguration'
+        ));
+    }
+
+    if (valid) {
+        valid = valid && (await validateItem(znp, Items.panID(options.panID), 'panID'));
+        valid = valid && (await validateItem(znp, Items.extendedPanID(options.extendedPanID), 'extendedPanID'));
+
+        if (!valid) {
             if (version === ZnpVersion.zStack30x || version === ZnpVersion.zStack3x0) {
                 // Zigbee-herdsman =< 0.6.5 didn't set the panID and extendedPanID on zStack 3.
                 // As we are now checking it, it would trigger a reinitialise which will cause users
@@ -105,19 +110,13 @@ async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsTy
                 const current = await znp.request(Subsystem.SYS, 'osalNvRead', Items.panID(options.panID));
                 if (Buffer.compare(current.payload.value, Buffer.from([0xFF, 0XFF])) === 0) {
                     debug('Skip enforcing panID because a random panID is used');
-                } else {
-                    throw error;
+                    valid = true;
                 }
-            } else {
-                throw error;
             }
         }
-
-        return false;
-    } catch (e) {
-        debug(`Error while validating items: '${e}'`);
-        return true;
     }
+
+    return !valid;
 }
 
 async function boot(znp: Znp): Promise<void> {
@@ -199,14 +198,7 @@ export default async (
     znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, greenPowerGroup: number, backupPath?: string,
 ): Promise<TsType.StartResult> => {
     let result: TsType.StartResult = 'resumed';
-    let hasConfigured = false;
-
-    try {
-        await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured');
-        hasConfigured = true;
-    } catch {
-        hasConfigured = false;
-    }
+    const hasConfigured = await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured');
 
     // Restore from backup when the coordinator has never been configured yet.
     if (backupPath && fs.existsSync(backupPath) && !hasConfigured) {
