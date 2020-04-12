@@ -368,6 +368,9 @@ class Device extends Entity {
             'TERNCY-PP01': {
                 type: 'EndDevice', manufacturerID: 4648, manufacturerName: 'TERNCY', powerSource: 'Battery'
             },
+            'XBEE': {
+                type: 'EndDevice', manufacturerID: 4126, manufacturerName: 'XBEE', powerSource: 'Mains (single phase)'
+            },
         };
 
         const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
