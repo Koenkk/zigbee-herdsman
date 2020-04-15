@@ -242,9 +242,11 @@ class BuffaloZcl extends Buffalo {
                 keyMic: this.readUInt32(),
                 outgoingCounter: this.readUInt32(),
             };
+        } else if (this.position != this.buffer.length) {
+            return {raw: this.buffer.slice(this.position)};
+        } else {
+            return {};
         }
-
-        return {};
     }
 
     private readUInt40(): TsType.Value {

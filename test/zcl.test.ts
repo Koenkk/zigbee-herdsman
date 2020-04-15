@@ -548,6 +548,34 @@ describe('Zcl', () => {
         expect(frame.Payload).toStrictEqual(payload);
     });
 
+    it('ZclFrame from buffer GDP with extra data', () => {
+        const buffer = [0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff, 0x01];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 0,
+            frameControl: {
+                direction: 0,
+                disableDefaultResponse: true,
+                frameType: 1,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 0,
+        };
+
+        const payload = {
+            srcID: 4650238,
+            commandFrame: {raw: Buffer.from([1])},
+            commandID: 16,
+            frameCounter: 1253,
+            options: 5280,
+            payloadSize: 255,
+        };
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
     it('ZclFrame from buffer readRsp alias type', () => {
         const buffer = [8, 1, 1, 1, 0, 0, 8, 3];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
