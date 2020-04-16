@@ -64,9 +64,10 @@ const Endpoints = [
 ];
 
 async function validateItem(
-    znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead'
+    znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead',
+    expectedStatus: number[] = [0]
 ): Promise<boolean> {
-    const result = await znp.request(subsystem, command, item);
+    const result = await znp.request(subsystem, command, item, expectedStatus);
 
     if (!equals(result.payload.value, item.value)) {
         debug(
@@ -83,7 +84,9 @@ async function validateItem(
 async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions): Promise<boolean> {
     let valid = true;
 
-    valid = valid && (await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured'));
+    valid = valid && (await validateItem(
+        znp, Items.znpHasConfigured(version), 'hasConfigured', Subsystem.SYS, 'osalNvRead', [0,2],
+    ));
     valid = valid && (await validateItem(znp, Items.channelList(options.channelList), 'channelList'));
     valid = valid && (await validateItem(
         znp, Items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute'
@@ -198,7 +201,9 @@ export default async (
     znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, greenPowerGroup: number, backupPath?: string,
 ): Promise<TsType.StartResult> => {
     let result: TsType.StartResult = 'resumed';
-    const hasConfigured = await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured');
+    const hasConfigured = await validateItem(
+        znp, Items.znpHasConfigured(version), 'hasConfigured', Subsystem.SYS, 'osalNvRead', [0,2]
+    );
 
     // Restore from backup when the coordinator has never been configured yet.
     if (backupPath && fs.existsSync(backupPath) && !hasConfigured) {
