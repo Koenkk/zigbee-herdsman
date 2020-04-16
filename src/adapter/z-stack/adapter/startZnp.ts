@@ -66,17 +66,22 @@ const Endpoints = [
 async function validateItem(
     znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead'
 ): Promise<boolean> {
-    const result = await znp.request(subsystem, command, item);
+    try {
+        const result = await znp.request(subsystem, command, item);
 
-    if (!equals(result.payload.value, item.value)) {
-        debug(
-            `Item '${message}' is invalid, got '${JSON.stringify(result.payload.value)}', ` +
-            `expected '${JSON.stringify(item.value)}'`
-        );
+        if (!equals(result.payload.value, item.value)) {
+            debug(
+                `Item '${message}' is invalid, got '${JSON.stringify(result.payload.value)}', ` +
+                `expected '${JSON.stringify(item.value)}'`
+            );
+            return false;
+        } else {
+            debug(`Item '${message}' is valid`);
+            return true;
+        }
+    } catch (error) {
+        debug(`Can not request item '${message}' from memory`);
         return false;
-    } else {
-        debug(`Item '${message}' is valid`);
-        return true;
     }
 }
 
