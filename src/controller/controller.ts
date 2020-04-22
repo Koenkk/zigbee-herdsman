@@ -86,7 +86,7 @@ class Controller extends events.EventEmitter {
             }
         }
 
-        if (this.options.network.networkKey.length !== 16) {
+        if (!Array.isArray(this.options.network.networkKey) || this.options.network.networkKey.length !== 16) {
             throw new Error(`Network key must be 16 digits long, got ${this.options.network.networkKey.length}.`);
         }
     }
