@@ -41,15 +41,15 @@ describe('Utils', () => {
         }
         const waitress = new Waitress<string, number>(validator, (_, timeout) => `Timedout '${timeout}'`);
 
-        const wait1 = waitress.waitFor(1, 10000);
+        const wait1 = waitress.waitFor(1, 10000).start();
         waitress.resolve('one');
         expect(await wait1.promise).toBe('one');
 
-        const wait2_1 = waitress.waitFor(2, 10000);
-        const wait2_2 = waitress.waitFor(2, 10000);
-        const wait2_3 = waitress.waitFor(2, 10000);
-        const wait2_4 = waitress.waitFor(2, 5000);
-        const wait2_5 = waitress.waitFor(2, 5000);
+        const wait2_1 = waitress.waitFor(2, 10000).start();
+        const wait2_2 = waitress.waitFor(2, 10000).start();
+        const wait2_3 = waitress.waitFor(2, 10000).start();
+        const wait2_4 = waitress.waitFor(2, 5000).start();
+        const wait2_5 = waitress.waitFor(2, 5000).start();
 
         waitress.remove(wait2_3.ID);
         jest.runTimersToTime(6000);

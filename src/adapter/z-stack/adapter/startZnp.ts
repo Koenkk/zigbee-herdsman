@@ -67,7 +67,7 @@ async function validateItem(
     znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead',
     expectedStatus: number[] = [0]
 ): Promise<boolean> {
-    const result = await znp.request(subsystem, command, item, expectedStatus);
+    const result = await znp.request(subsystem, command, item, null, expectedStatus);
 
     if (!equals(result.payload.value, item.value)) {
         debug(
@@ -128,8 +128,8 @@ async function boot(znp: Znp): Promise<void> {
     if (result.payload.devicestate !== Constants.COMMON.devStates.ZB_COORD) {
         debug('Start ZNP as coordinator...');
         const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
-        znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, [0, 1]);
-        await started.promise;
+        znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, null, [0, 1]);
+        await started.start().promise;
         debug('ZNP started as coordinator');
     } else {
         debug('ZNP is already started as coordinator');
@@ -139,7 +139,7 @@ async function boot(znp: Znp): Promise<void> {
 async function registerEndpoints(znp: Znp): Promise<void> {
     const activeEpResponse = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'activeEpRsp');
     znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: 0, nwkaddrofinterest: 0});
-    const activeEp = await activeEpResponse.promise;
+    const activeEp = await activeEpResponse.start().promise;
 
     for (const endpoint of Endpoints) {
         if (activeEp.payload.activeeplist.includes(endpoint.endpoint)) {
@@ -172,7 +172,7 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
         const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
         await znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x04});
         try {
-            await started.promise;
+            await started.start().promise;
         } catch (error) {
             throw new Error(
                 'Coordinator failed to start, probably the panID is already in use, try a different panID or channel'
@@ -186,12 +186,12 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
     }
 
     // expect status code 9 (= item created and initialized)
-    await znp.request(Subsystem.SYS, 'osalNvItemInit', Items.znpHasConfiguredInit(version), [0, 9]);
+    await znp.request(Subsystem.SYS, 'osalNvItemInit', Items.znpHasConfiguredInit(version), null, [0, 9]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(version));
 }
 
 async function addToGroup(znp: Znp, endpoint: number, group: number): Promise<void> {
-    const result = await znp.request(5, 'extFindGroup', {endpoint, groupid: group}, [0, 1]);
+    const result = await znp.request(5, 'extFindGroup', {endpoint, groupid: group}, null, [0, 1]);
     if (result.payload.status === 1) {
         await znp.request(5, 'extAddGroup', {endpoint, groupid: group, namelen: 0, groupname:[]});
     }
