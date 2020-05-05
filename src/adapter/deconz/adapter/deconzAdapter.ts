@@ -510,7 +510,7 @@ class DeconzAdapter extends Adapter {
         };
         const waiter = this.waitress.waitFor(payload, timeout);
         const cancel = (): void => this.waitress.remove(waiter.ID);
-        return {promise: waiter.promise, cancel};
+        return {promise: waiter.start().promise, cancel};
     }
 
     public async sendZclFrameToEndpoint(
