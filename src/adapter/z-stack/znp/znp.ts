@@ -256,7 +256,8 @@ class Znp extends events.EventEmitter {
     }
 
     public request(
-        subsystem: Subsystem, command: string, payload: ZpiObjectPayload, expectedStatus: number[] = [0]
+        subsystem: Subsystem, command: string, payload: ZpiObjectPayload, waiterID: number = null,
+        expectedStatus: number[] = [0]
     ): Promise<ZpiObject> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
@@ -277,9 +278,14 @@ class Znp extends events.EventEmitter {
                     {type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout
                 );
                 this.unpiWriter.writeFrame(frame);
-                const result = await waiter.promise;
+                const result = await waiter.start().promise;
                 if (result && result.payload.hasOwnProperty('status') &&
                     !expectedStatus.includes(result.payload.status)) {
+
+                    if (typeof waiterID === 'number') {
+                        this.waitress.remove(waiterID);
+                    }
+
                     throw new Error(
                         `SREQ '${message}' failed with status '${result.payload.status}' (expected '${expectedStatus}')`
                     );
@@ -292,7 +298,7 @@ class Znp extends events.EventEmitter {
                 );
                 this.queue.clear();
                 this.unpiWriter.writeFrame(frame);
-                return waiter.promise;
+                return waiter.start().promise;
             } else {
                 /* istanbul ignore else */
                 if (object.type === Type.AREQ) {
@@ -312,12 +318,8 @@ class Znp extends events.EventEmitter {
     public waitFor(
         type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload = {},
         timeout: number = timeouts.default
-    ): {promise: Promise<ZpiObject>; ID: number} {
+    ): {start: () => {promise: Promise<ZpiObject>; ID: number}; ID: number} {
         return this.waitress.waitFor({type, subsystem, command, payload}, timeout);
-    }
-
-    public removeWaitFor(ID: number): void {
-        this.waitress.remove(ID);
     }
 
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {

@@ -457,10 +457,47 @@ describe('ZNP', () => {
 
         await znp.open();
 
+        expect(znp.waitress.waiters.size).toBe(0);
+
         let error;
         try {
             await znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
         } catch (e) {
+            expect(znp.waitress.waiters.size).toBe(0);
+            error = e;
+        }
+
+        expect(error).toStrictEqual(new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '1' (expected '0')"));
+    });
+
+    it('znp request SREQ failed should cancel waiter when provided', async () => {
+        let parsedCb;
+        mockUnpiParserOn.mockImplementationOnce((event, cb) => {
+            if (event === 'parsed') {
+                parsedCb = cb;
+            }
+        });
+
+        mockUnpiWriterWriteFrame.mockImplementationOnce(() => {
+            parsedCb(new UnpiFrame(
+                UnpiConstants.Type.SRSP,
+                UnpiConstants.Subsystem.SYS,
+                0x08,
+                Buffer.from([0x01, 0x02, 0x01, 0x02])
+            ));
+        });
+
+        await znp.open();
+
+        expect(znp.waitress.waiters.size).toBe(0);
+        const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead');
+        expect(znp.waitress.waiters.size).toBe(1);
+
+        let error;
+        try {
+            await znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2}, waiter.ID);
+        } catch (e) {
+            expect(znp.waitress.waiters.size).toBe(0);
             error = e;
         }
 
@@ -685,7 +722,7 @@ describe('ZNP', () => {
             Buffer.from([0x00, 0x02, 0x01, 0x02])
         ));
 
-        const object = await waiter.promise;
+        const object = await waiter.start().promise;
         expect(object.payload).toStrictEqual({len: 2, status: 0, value: Buffer.from([1, 2])});
     });
 
@@ -709,11 +746,11 @@ describe('ZNP', () => {
             Buffer.from([0x00, 0x02, 0x01, 0x02])
         ));
 
-        const object = await waiter.promise;
+        const object = await waiter.start().promise;
         expect(object.payload).toStrictEqual({len: 2, status: 0, value: Buffer.from([1, 2])});
     });
 
-    it('znp request, waitfor with payload mismatch', async () => {
+    it('znp request, waitfor with payload mismatch', async (done) => {
         let parsedCb;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
@@ -734,25 +771,14 @@ describe('ZNP', () => {
             Buffer.from([0x00, 0x02, 0x01, 0x02])
         ));
 
+        waiter.start().promise
+            .then(() => done("Shouldn't end up here"))
+            .catch((e) => {
+                expect(e).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 10000ms"));
+                done();
+            });
+
         jest.runAllTimers();
-
-        let error;
-        try {
-            await waiter.promise;
-        } catch (e) {
-            error = e;
-        }
-
-
-        expect(error).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 10000ms"));
-    });
-
-    it('znp request, waitfor remove', async () => {
-        await znp.open();
-        jest.useFakeTimers();
-        const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 3, value: Buffer.from([1, 3])});
-        znp.removeWaitFor(waiter.ID);
-        expect(znp.waitress.waiters.length).toBe(0);
     });
 
     it('ZpiObject throw error on missing write parser', async () => {

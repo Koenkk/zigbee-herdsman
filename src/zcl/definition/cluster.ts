@@ -1158,6 +1158,55 @@ const Cluster: {
             },
         },
     },
+    greenPower: {
+        ID: 33,
+        attributes: {
+        },
+        commands: {
+            notification: {
+                ID: 0,
+                parameters: [
+                    {name: 'options', type: DataType.uint16},
+                    {name: 'srcID', type: DataType.uint32},
+                    {name: 'frameCounter', type: DataType.uint32},
+                    {name: 'commandID', type: DataType.uint8},
+                    {name: 'payloadSize', type: DataType.uint8},
+                    {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
+                ],
+            },
+            commisioningNotification: {
+                ID: 4,
+                parameters: [
+                    {name: 'options', type: DataType.uint16},
+                    {name: 'srcID', type: DataType.uint32},
+                    {name: 'frameCounter', type: DataType.uint32},
+                    {name: 'commandID', type: DataType.uint8},
+                    {name: 'payloadSize', type: DataType.uint8},
+                    {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
+                ],
+            },
+        },
+        commandsResponse: {
+            pairing: {
+                ID: 1,
+                parameters: [
+                    {name: 'options', type: DataType.uint24},
+                    {name: 'srcID', type: DataType.uint32},
+                    {name: 'sinkGroupID', type: DataType.uint16},
+                    {name: 'deviceID', type: DataType.uint8},
+                    {name: 'frameCounter', type: DataType.uint32},
+                    {name: 'gpdKey', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+            commisioningMode: {
+                ID: 2,
+                parameters: [
+                    {name: 'options', type: DataType.uint8},
+                    {name: 'commisioningWindow', type: DataType.uint16},
+                ],
+            },
+        },
+    },
     mobileDeviceCfg: {
         ID: 34,
         attributes: {

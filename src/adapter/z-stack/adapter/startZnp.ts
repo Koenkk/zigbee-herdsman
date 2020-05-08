@@ -60,42 +60,51 @@ const Endpoints = [
     // Insta/Jung/Gira: OTA fallback EP (since it's buggy in firmware 10023202 when it tries to find a matching EP for
     // OTA - it queries for ZLL profile, but then contacts with HA profile)
     {...EndpointDefaults, endpoint: 47, appprofid: 0x0104},
+    {...EndpointDefaults, endpoint: 242, appprofid: 0xa1e0},
 ];
 
 async function validateItem(
-    znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead'
-): Promise<void> {
-    const result = await znp.request(subsystem, command, item);
+    znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead',
+    expectedStatus: number[] = [0]
+): Promise<boolean> {
+    const result = await znp.request(subsystem, command, item, null, expectedStatus);
 
     if (!equals(result.payload.value, item.value)) {
         debug(
             `Item '${message}' is invalid, got '${JSON.stringify(result.payload.value)}', ` +
             `expected '${JSON.stringify(item.value)}'`
         );
-        throw new Error();
+        return false;
     } else {
         debug(`Item '${message}' is valid`);
+        return true;
     }
 }
 
 async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions): Promise<boolean> {
-    try {
-        await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured');
-        await validateItem(znp, Items.channelList(options.channelList), 'channelList');
-        await validateItem(znp, Items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute');
+    let valid = true;
 
-        if (version === ZnpVersion.zStack3x0) {
-            await validateItem(znp, Items.networkKey(options.networkKey), 'networkKey');
-        } else {
-            await validateItem(
-                znp, Items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'readConfiguration'
-            );
-        }
+    valid = valid && (await validateItem(
+        znp, Items.znpHasConfigured(version), 'hasConfigured', Subsystem.SYS, 'osalNvRead', [0,2],
+    ));
+    valid = valid && (await validateItem(znp, Items.channelList(options.channelList), 'channelList'));
+    valid = valid && (await validateItem(
+        znp, Items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute'
+    ));
 
-        try {
-            await validateItem(znp, Items.panID(options.panID), 'panID');
-            await validateItem(znp, Items.extendedPanID(options.extendedPanID), 'extendedPanID');
-        } catch (error) {
+    if (version === ZnpVersion.zStack3x0) {
+        valid = valid && (await validateItem(znp, Items.networkKey(options.networkKey), 'networkKey'));
+    } else {
+        valid = valid && (await validateItem(
+            znp, Items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'readConfiguration'
+        ));
+    }
+
+    if (valid) {
+        valid = valid && (await validateItem(znp, Items.panID(options.panID), 'panID'));
+        valid = valid && (await validateItem(znp, Items.extendedPanID(options.extendedPanID), 'extendedPanID'));
+
+        if (!valid) {
             if (version === ZnpVersion.zStack30x || version === ZnpVersion.zStack3x0) {
                 // Zigbee-herdsman =< 0.6.5 didn't set the panID and extendedPanID on zStack 3.
                 // As we are now checking it, it would trigger a reinitialise which will cause users
@@ -104,19 +113,13 @@ async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsTy
                 const current = await znp.request(Subsystem.SYS, 'osalNvRead', Items.panID(options.panID));
                 if (Buffer.compare(current.payload.value, Buffer.from([0xFF, 0XFF])) === 0) {
                     debug('Skip enforcing panID because a random panID is used');
-                } else {
-                    throw error;
+                    valid = true;
                 }
-            } else {
-                throw error;
             }
         }
-
-        return false;
-    } catch (e) {
-        debug(`Error while validating items: '${e}'`);
-        return true;
     }
+
+    return !valid;
 }
 
 async function boot(znp: Znp): Promise<void> {
@@ -125,8 +128,8 @@ async function boot(znp: Znp): Promise<void> {
     if (result.payload.devicestate !== Constants.COMMON.devStates.ZB_COORD) {
         debug('Start ZNP as coordinator...');
         const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
-        znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, [0, 1]);
-        await started.promise;
+        znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, null, [0, 1]);
+        await started.start().promise;
         debug('ZNP started as coordinator');
     } else {
         debug('ZNP is already started as coordinator');
@@ -136,7 +139,7 @@ async function boot(znp: Znp): Promise<void> {
 async function registerEndpoints(znp: Znp): Promise<void> {
     const activeEpResponse = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'activeEpRsp');
     znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: 0, nwkaddrofinterest: 0});
-    const activeEp = await activeEpResponse.promise;
+    const activeEp = await activeEpResponse.start().promise;
 
     for (const endpoint of Endpoints) {
         if (activeEp.payload.activeeplist.includes(endpoint.endpoint)) {
@@ -169,7 +172,7 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
         const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
         await znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x04});
         try {
-            await started.promise;
+            await started.start().promise;
         } catch (error) {
             throw new Error(
                 'Coordinator failed to start, probably the panID is already in use, try a different panID or channel'
@@ -183,22 +186,24 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
     }
 
     // expect status code 9 (= item created and initialized)
-    await znp.request(Subsystem.SYS, 'osalNvItemInit', Items.znpHasConfiguredInit(version), [0, 9]);
+    await znp.request(Subsystem.SYS, 'osalNvItemInit', Items.znpHasConfiguredInit(version), null, [0, 9]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(version));
 }
 
+async function addToGroup(znp: Znp, endpoint: number, group: number): Promise<void> {
+    const result = await znp.request(5, 'extFindGroup', {endpoint, groupid: group}, null, [0, 1]);
+    if (result.payload.status === 1) {
+        await znp.request(5, 'extAddGroup', {endpoint, groupid: group, namelen: 0, groupname:[]});
+    }
+}
+
 export default async (
-    znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, backupPath?: string
+    znp: Znp, version: ZnpVersion, options: TsType.NetworkOptions, greenPowerGroup: number, backupPath?: string,
 ): Promise<TsType.StartResult> => {
     let result: TsType.StartResult = 'resumed';
-    let hasConfigured = false;
-
-    try {
-        await validateItem(znp, Items.znpHasConfigured(version), 'hasConfigured');
-        hasConfigured = true;
-    } catch {
-        hasConfigured = false;
-    }
+    const hasConfigured = await validateItem(
+        znp, Items.znpHasConfigured(version), 'hasConfigured', Subsystem.SYS, 'osalNvRead', [0,2]
+    );
 
     // Restore from backup when the coordinator has never been configured yet.
     if (backupPath && fs.existsSync(backupPath) && !hasConfigured) {
@@ -221,6 +226,9 @@ export default async (
 
     await boot(znp);
     await registerEndpoints(znp);
+
+    // Add to required group to receive greenPower messages.
+    await addToGroup(znp, 242, greenPowerGroup);
 
     if (result === 'restored') {
         // Write channellist again, otherwise it doesnt seem to stick.

@@ -1,5 +1,5 @@
 import "regenerator-runtime/runtime";
-import {IsNumberArray, Wait, ArraySplitChunks, Queue, Waitress, AssertString} from '../src/utils';
+import {IsNumberArray, Wait, Queue, Waitress, AssertString} from '../src/utils';
 
 describe('Utils', () => {
     it('IsNumberArray valid', () => {
@@ -12,10 +12,6 @@ describe('Utils', () => {
 
     it('IsNumberArray with non array type', () => {
         expect(IsNumberArray('nonarray')).toBeFalsy();
-    });
-
-    it('Split array in chunks', () => {
-        expect(ArraySplitChunks([1, 2, 3, 4], 2)).toEqual([[1, 2], [3, 4]]);
     });
 
     it('Assert string true', () => {
@@ -45,15 +41,15 @@ describe('Utils', () => {
         }
         const waitress = new Waitress<string, number>(validator, (_, timeout) => `Timedout '${timeout}'`);
 
-        const wait1 = waitress.waitFor(1, 10000);
+        const wait1 = waitress.waitFor(1, 10000).start();
         waitress.resolve('one');
         expect(await wait1.promise).toBe('one');
 
-        const wait2_1 = waitress.waitFor(2, 10000);
-        const wait2_2 = waitress.waitFor(2, 10000);
-        const wait2_3 = waitress.waitFor(2, 10000);
-        const wait2_4 = waitress.waitFor(2, 5000);
-        const wait2_5 = waitress.waitFor(2, 5000);
+        const wait2_1 = waitress.waitFor(2, 10000).start();
+        const wait2_2 = waitress.waitFor(2, 10000).start();
+        const wait2_3 = waitress.waitFor(2, 10000).start();
+        const wait2_4 = waitress.waitFor(2, 5000).start();
+        const wait2_5 = waitress.waitFor(2, 5000).start();
 
         waitress.remove(wait2_3.ID);
         jest.runTimersToTime(6000);

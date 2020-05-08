@@ -1,8 +1,8 @@
 import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
-import {TsType as AdapterTsType, Events as AdapterEvents} from '../../adapter';
+import {Events as AdapterEvents} from '../../adapter';
 import Endpoint from './endpoint';
 import Entity from './entity';
-import {ArraySplitChunks, Wait} from '../../utils';
+import {Wait} from '../../utils';
 import Debug from "debug";
 import * as Zcl from '../../zcl';
 
@@ -260,7 +260,7 @@ class Device extends Entity {
     private static loadFromDatabaseIfNecessary(): void {
         if (!Device.devices) {
             Device.devices = {};
-            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router']);
+            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router', 'GreenPower']);
             for (const entry of entries) {
                 const device = Device.fromDatabaseEntry(entry);
                 Device.devices[device.ieeeAddr] = device;
@@ -289,12 +289,12 @@ class Device extends Entity {
     }
 
     public static create(
-        type: AdapterTsType.DeviceType, ieeeAddr: string, networkAddress: number,
+        type: DeviceType, ieeeAddr: string, networkAddress: number,
         manufacturerID: number, manufacturerName: string,
-        powerSource: string, modelID: string,
+        powerSource: string, modelID: string, interviewCompleted: boolean,
         endpoints: {
             ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
-        }[]
+        }[],
     ): Device {
         Device.loadFromDatabaseIfNecessary();
         if (Device.devices[ieeeAddr]) {
@@ -310,8 +310,8 @@ class Device extends Entity {
         const ID = Entity.database.newID();
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
-            powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined, false, {},
-            null,
+            powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
+            interviewCompleted, {}, null,
         );
 
         Entity.database.insert(device.toDatabaseEntry());
@@ -445,7 +445,6 @@ class Device extends Entity {
         this.save();
         debug.log(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
-        let readAttributes = false;
         for (const endpoint of this.endpoints) {
             const simpleDescriptor = await Entity.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
             endpoint.profileID = simpleDescriptor.profileID;
@@ -455,28 +454,23 @@ class Device extends Entity {
             debug.log(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`);
             this.save();
 
-            // Read attributes
-            if (endpoint.supportsInputCluster('genBasic') && !readAttributes) {
-                try {
-                    // Split into chunks of 2, otherwise some devices fail to respond.
-                    for (const chunk of ArraySplitChunks(Object.keys(Device.ReportablePropertiesMapping), 2)) {
-                        const result = await endpoint.read('genBasic', chunk);
-                        for (const [key, value] of Object.entries(result)) {
-                            Device.ReportablePropertiesMapping[key].set(value, this);
+            // Read attributes, nice to have but not required for succesfull pairing as most of the attributes
+            // are not mandatory in ZCL specification.
+            if (endpoint.supportsInputCluster('genBasic')) {
+                for (const [key, item] of Object.entries(Device.ReportablePropertiesMapping)) {
+                    if (!this[item.key]) {
+                        try {
+                            const result = await endpoint.read('genBasic', [key]);
+                            item.set(result[key], this);
+                            debug.log(`Interview - got '${item.key}' for device '${this.ieeeAddr}'`);
+                        } catch (error) {
+                            debug.log(
+                                `Failed to read attribute '${item.key}' from endpoint '${endpoint.ID}' (${error})`
+                            );
                         }
-
-                        debug.log(`Interview - got '${chunk}' for device '${this.ieeeAddr}'`);
-                        this.save();
                     }
-
-                    readAttributes = true;
-                } catch (error) {
-                    debug.log(`Failed to read attributes from endpoint '${endpoint.ID}' (${error})`);
                 }
             }
-        }
-        if (!readAttributes) {
-            throw new Error(`Interview failed because could not read attributes ('${this.ieeeAddr}')`);
         }
 
         // Enroll IAS device

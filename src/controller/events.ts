@@ -28,6 +28,7 @@ interface DeviceLeavePayload {
 }
 
 const CommandsLookup: {[s: string]: MessagePayloadType} = {
+    'notification': 'commandNotification',
     'on': 'commandOn',
     'offWithEffect': 'commandOffWithEffect',
     'step': 'commandStep',
@@ -65,6 +66,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'setDataResponse': 'commandSetDataResponse',
     'getWeeklyScheduleRsp': 'commandGetWeeklyScheduleRsp',
     'queryNextImageRequest': 'commandQueryNextImageRequest',
+    'alertsNotification': 'commandAlertsNotification',
 };
 
 type MessagePayloadType =
@@ -79,7 +81,8 @@ type MessagePayloadType =
     'commandRecall' | 'commandArm' | 'commandPanic' | 'commandEmergency' | 'commandColorLoopSet' |
     'commandOperationEventNotification' | 'commandStatusChangeNotification' | 'commandEnhancedMoveToHueAndSaturation' |
     'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandGetData' |
-    'commandSetDataResponse' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest';
+    'commandSetDataResponse' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
+    'commandAlertsNotification';
 
 interface MessagePayload {
     type: MessagePayloadType;
