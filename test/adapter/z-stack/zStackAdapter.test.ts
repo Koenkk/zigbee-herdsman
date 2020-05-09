@@ -448,7 +448,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[32][1]).toBe('register');
         expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([1280]);
+        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([1280,1282]);
         expect(mockZnpRequest.mock.calls[33][1]).toBe('register');
         expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(110);
         expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0x0104);
@@ -469,7 +469,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toHaveBeenCalledTimes(39);
     });
 
-    it('onlythis Start zStack 3.x.0 initialize fails because of state change timeout', async () => {
+    it('Start zStack 3.x.0 initialize fails because of state change timeout', async () => {
         mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
             const missing = () => {
                 const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
@@ -1025,7 +1025,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[32][1]).toBe('register');
         expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([1280]);
+        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([1280,1282]);
         expect(mockZnpRequest.mock.calls[33][1]).toBe('register');
         expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(110);
         expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0x0104);
@@ -1142,7 +1142,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[11][1]).toBe('activeEpReq');
         expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([1280]);
+        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([1280,1282]);
         expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(110);
         expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([]);
@@ -1260,7 +1260,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[11][1]).toBe('activeEpReq');
         expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([1280]);
+        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([1280,1282]);
         expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(110);
         expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([]);

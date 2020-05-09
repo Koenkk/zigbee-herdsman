@@ -44,8 +44,8 @@ const Endpoints = [
         endpoint: 11,
         appprofid: 0x0104,
         appdeviceid: 0x0400,
-        appnumoutclusters: 1,
-        appoutclusterlist: [Zcl.Utils.getCluster('ssIasZone').ID]
+        appnumoutclusters: 2,
+        appoutclusterlist: [Zcl.Utils.getCluster('ssIasZone').ID, Zcl.Utils.getCluster('ssIasWd').ID]
     },
     // TERNCY: https://github.com/Koenkk/zigbee-herdsman/issues/82
     {...EndpointDefaults, endpoint: 0x6E, appprofid: 0x0104},
