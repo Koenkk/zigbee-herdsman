@@ -495,8 +495,8 @@ class Device extends Entity {
                 // Therefore we don't have to do it here anymore.
                 // https://github.com/Koenkk/zigbee2mqtt/issues/3012
                 let enrolled = false;
-                for (let attempt = 0; attempt < 5; attempt++) {
-                    await Wait(300);
+                for (let attempt = 0; attempt < 20; attempt++) {
+                    await Wait(500);
                     const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState']);
                     debug.log(`Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`);
                     if (stateAfter.zoneState === 1) {
