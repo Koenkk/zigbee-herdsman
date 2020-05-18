@@ -1,6 +1,7 @@
 import {Znp} from '../znp';
 import {Constants as UnpiConstants} from '../unpi';
 import * as Constants from '../constants';
+import {ZnpCommandStatus} from "../constants/common";
 import equals from 'fast-deep-equal';
 import * as TsType from '../../tstype';
 import * as Zcl from '../../../zcl';
@@ -65,9 +66,9 @@ const Endpoints = [
 
 async function validateItem(
     znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead',
-    expectedStatus: number[] = [0]
+    expectedStatuses: ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS]
 ): Promise<boolean> {
-    const result = await znp.request(subsystem, command, item, null, expectedStatus);
+    const result = await znp.request(subsystem, command, item, null, expectedStatuses);
 
     if (!equals(result.payload.value, item.value)) {
         debug(
@@ -85,7 +86,8 @@ async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsTy
     let valid = true;
 
     valid = valid && (await validateItem(
-        znp, Items.znpHasConfigured(version), 'hasConfigured', Subsystem.SYS, 'osalNvRead', [0,2],
+        znp, Items.znpHasConfigured(version), 'hasConfigured', Subsystem.SYS, 'osalNvRead',
+        [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.INVALID_PARAM],
     ));
     valid = valid && (await validateItem(znp, Items.channelList(options.channelList), 'channelList'));
     valid = valid && (await validateItem(
@@ -128,7 +130,8 @@ async function boot(znp: Znp): Promise<void> {
     if (result.payload.devicestate !== Constants.COMMON.devStates.ZB_COORD) {
         debug('Start ZNP as coordinator...');
         const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
-        znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, null, [0, 1]);
+        znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, null,
+            [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.FAILURE]);
         await started.start().promise;
         debug('ZNP started as coordinator');
     } else {
@@ -185,14 +188,16 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
         await znp.request(Subsystem.SYS, 'osalNvWrite', Items.tcLinkKey());
     }
 
-    // expect status code 9 (= item created and initialized)
-    await znp.request(Subsystem.SYS, 'osalNvItemInit', Items.znpHasConfiguredInit(version), null, [0, 9]);
+    // expect status code NV_ITEM_UNINIT (= item created and initialized)
+    await znp.request(Subsystem.SYS, 'osalNvItemInit', Items.znpHasConfiguredInit(version), null,
+        [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_UNINIT]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(version));
 }
 
 async function addToGroup(znp: Znp, endpoint: number, group: number): Promise<void> {
-    const result = await znp.request(5, 'extFindGroup', {endpoint, groupid: group}, null, [0, 1]);
-    if (result.payload.status === 1) {
+    const result = await znp.request(5, 'extFindGroup', {endpoint, groupid: group}, null,
+        [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.FAILURE]);
+    if (result.payload.status === ZnpCommandStatus.FAILURE) {
         await znp.request(5, 'extAddGroup', {endpoint, groupid: group, namelen: 0, groupname:[]});
     }
 }
@@ -202,7 +207,8 @@ export default async (
 ): Promise<TsType.StartResult> => {
     let result: TsType.StartResult = 'resumed';
     const hasConfigured = await validateItem(
-        znp, Items.znpHasConfigured(version), 'hasConfigured', Subsystem.SYS, 'osalNvRead', [0,2]
+        znp, Items.znpHasConfigured(version), 'hasConfigured', Subsystem.SYS, 'osalNvRead',
+        [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.INVALID_PARAM]
     );
 
     // Restore from backup when the coordinator has never been configured yet.
