@@ -160,7 +160,7 @@ export enum ZnpCommandStatus {
     SUCCESS = 0x00,
     FAILURE = 0x01,
     INVALID_PARAM = 0x02,
-    NV_ITEM_UNINIT = 0x09,
+    NV_ITEM_INITIALIZED = 0x09,
     NV_OPER_FAILED = 0x0a,
     NV_BAD_ITEM_LEN = 0x0c,
     MEM_ERROR = 0x10,

@@ -190,7 +190,7 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
 
     // expect status code NV_ITEM_UNINIT (= item created and initialized)
     await znp.request(Subsystem.SYS, 'osalNvItemInit', Items.znpHasConfiguredInit(version), null,
-        [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_UNINIT]);
+        [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(version));
 }
 

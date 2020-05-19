@@ -181,7 +181,7 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
 
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_EXTADDR);
     await znp.request(Subsystem.SYS, 'osalNvItemInit', ZCD_NV_NIB, null,
-        [ZnpCommandStatus.NV_ITEM_UNINIT]);
+        [ZnpCommandStatus.NV_ITEM_INITIALIZED]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_PANID);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_EXTENDED_PAN_ID);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO);
@@ -202,10 +202,10 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
     }
 
     await znp.request(Subsystem.SYS, 'osalNvItemInit', Items.znpHasConfiguredInit(product), null,
-        [ZnpCommandStatus.NV_ITEM_UNINIT]);
+        [ZnpCommandStatus.NV_ITEM_INITIALIZED]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(product));
     await znp.request(Subsystem.SYS, 'osalNvItemInit', bdbNodeIsOnANetwork, null,
-        [ZnpCommandStatus.NV_ITEM_UNINIT]);
+        [ZnpCommandStatus.NV_ITEM_INITIALIZED]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', bdbNodeIsOnANetwork);
     await znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.SOFT});
 }
