@@ -12,13 +12,13 @@ import {Constants as UnpiConstants} from '../unpi';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import {Queue, Waitress, Wait} from '../../../utils';
 import * as Constants from '../constants';
-import {ZnpCommandStatus} from "../constants/common";
 import Debug from "debug";
 import {Backup} from './backup';
 
 const debug = Debug("zigbee-herdsman:adapter:zStack:adapter");
 const Subsystem = UnpiConstants.Subsystem;
 const Type = UnpiConstants.Type;
+const {ZnpCommandStatus, AddressMode} = Constants.COMMON;
 
 const DataConfirmErrorCodeLookup: {[k: number]: string} = {
     183: 'APS no ack',
@@ -319,7 +319,7 @@ class ZStackAdapter extends Adapter {
     public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
-                Constants.COMMON.addressMode.ADDR_GROUP, groupID, 0xFF, 0, 1, zclFrame.Cluster.ID,
+                AddressMode.ADDR_GROUP, groupID, 0xFF, 0, 1, zclFrame.Cluster.ID,
                 Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, true
             );
 
@@ -335,7 +335,7 @@ class ZStackAdapter extends Adapter {
     public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
-                Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFD, endpoint, 0, sourceEndpoint,
+                AddressMode.ADDR_16BIT, 0xFFFD, endpoint, 0, sourceEndpoint,
                 zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, false, 0
             );
 
@@ -452,7 +452,7 @@ class ZStackAdapter extends Adapter {
                 srcendpoint: sourceEndpoint,
                 clusterid: clusterID,
                 dstaddrmode: type === 'group' ?
-                    Constants.COMMON.addressMode.ADDR_GROUP : Constants.COMMON.addressMode.ADDR_64BIT,
+                    AddressMode.ADDR_GROUP : AddressMode.ADDR_64BIT,
                 dstaddress: this.toAddressString(destinationAddressOrGroup),
                 dstendpoint: type === 'group' ? 0xFF : destinationEndpoint,
             };
@@ -478,7 +478,7 @@ class ZStackAdapter extends Adapter {
                 srcendpoint: sourceEndpoint,
                 clusterid: clusterID,
                 dstaddrmode: type === 'group' ?
-                    Constants.COMMON.addressMode.ADDR_GROUP : Constants.COMMON.addressMode.ADDR_64BIT,
+                    AddressMode.ADDR_GROUP : AddressMode.ADDR_64BIT,
                 dstaddress: this.toAddressString(destinationAddressOrGroup),
                 dstendpoint: type === 'group' ? 0xFF : destinationEndpoint,
             };
@@ -606,7 +606,7 @@ class ZStackAdapter extends Adapter {
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
-                Constants.COMMON.addressMode.ADDR_64BIT, ieeeAddr, 0xFE, 0xFFFF,
+                AddressMode.ADDR_64BIT, ieeeAddr, 0xFE, 0xFFFF,
                 12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, false,
             );
         });
@@ -628,7 +628,7 @@ class ZStackAdapter extends Adapter {
 
             try {
                 await this.dataRequestExtended(
-                    Constants.COMMON.addressMode.ADDR_16BIT, 0xFFFF, 0xFE, 0xFFFF,
+                    AddressMode.ADDR_16BIT, 0xFFFF, 0xFE, 0xFFFF,
                     12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, false,
                 );
             } catch (error) {

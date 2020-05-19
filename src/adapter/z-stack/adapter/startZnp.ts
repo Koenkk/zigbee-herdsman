@@ -1,7 +1,6 @@
 import {Znp} from '../znp';
 import {Constants as UnpiConstants} from '../unpi';
 import * as Constants from '../constants';
-import {ZnpCommandStatus} from "../constants/common";
 import equals from 'fast-deep-equal';
 import * as TsType from '../../tstype';
 import * as Zcl from '../../../zcl';
@@ -13,6 +12,7 @@ import fs from 'fs';
 
 const debug = Debug('zigbee-herdsman:adapter:zStack:startZnp');
 const Subsystem = UnpiConstants.Subsystem;
+const {DevStates, ZnpCommandStatus} = Constants.COMMON;
 
 const EndpointDefaults: {
     appdeviceid: number;
@@ -66,7 +66,7 @@ const Endpoints = [
 
 async function validateItem(
     znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead',
-    expectedStatuses: ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS]
+    expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS]
 ): Promise<boolean> {
     const result = await znp.request(subsystem, command, item, null, expectedStatuses);
 
@@ -127,7 +127,7 @@ async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsTy
 async function boot(znp: Znp): Promise<void> {
     const result = await znp.request(Subsystem.UTIL, 'getDeviceInfo', {});
 
-    if (result.payload.devicestate !== Constants.COMMON.devStates.ZB_COORD) {
+    if (result.payload.devicestate !== DevStates.ZB_COORD) {
         debug('Start ZNP as coordinator...');
         const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
         znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, null,

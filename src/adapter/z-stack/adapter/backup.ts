@@ -1,5 +1,4 @@
 import * as Constants from '../constants';
-import {ZnpCommandStatus} from "../constants/common";
 import {Backup as BackupType, NetworkOptions} from '../../tstype';
 import {ZnpVersion} from './tstype';
 import {Znp} from '../znp';
@@ -8,7 +7,7 @@ import fs from 'fs';
 import equals from 'fast-deep-equal';
 import Items from './nvItems';
 
-const NvItemsIds = Constants.COMMON.nvItemIds;
+const {NvItemsIds, NvSystemIds, ZnpCommandStatus} = Constants.COMMON;
 
 const PRODUCT_ALL = -1;
 
@@ -80,7 +79,7 @@ const items = {
         osal: true,
     },
     ZCD_NV_EX_TCLK_TABLE: {
-        sysid: Constants.COMMON.nvSystemIds.ZSTACK,
+        sysid: NvSystemIds.ZSTACK,
         itemid: NvItemsIds.EX_TCLK_TABLE,
         subid: 0,
         product: ZnpVersion.zStack3x0,
@@ -94,7 +93,7 @@ const items = {
         osal: true,
     },
     ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE: {
-        sysid: Constants.COMMON.nvSystemIds.ZSTACK,
+        sysid: NvSystemIds.ZSTACK,
         itemid: NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE,
         subid: 0,
         product: ZnpVersion.zStack3x0,

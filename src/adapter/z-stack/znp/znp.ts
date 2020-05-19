@@ -9,8 +9,7 @@ import {Wait, Queue, Waitress, RealpathSync} from '../../../utils';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 
-import {ZnpCommandStatus} from "../constants/common";
-import {statusDescription} from "../constants/utils";
+import * as Constants from '../constants';
 
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
@@ -21,6 +20,8 @@ import net from 'net';
 import events from 'events';
 import Equals from 'fast-deep-equal';
 import Debug from "debug";
+
+const {COMMON: {ZnpCommandStatus}, Utils: {statusDescription}} = Constants;
 
 const timeouts = {
     SREQ: 6000,
@@ -260,7 +261,7 @@ class Znp extends events.EventEmitter {
 
     public request(
         subsystem: Subsystem, command: string, payload: ZpiObjectPayload, waiterID: number = null,
-        expectedStatuses: ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS]
+        expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS]
     ): Promise<ZpiObject> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
