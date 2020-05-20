@@ -205,7 +205,7 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
         [ZnpCommandStatus.NV_ITEM_INITIALIZED]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(product));
     await znp.request(Subsystem.SYS, 'osalNvItemInit', bdbNodeIsOnANetwork, null,
-        [ZnpCommandStatus.NV_ITEM_INITIALIZED]);
+        [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', bdbNodeIsOnANetwork);
     await znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.SOFT});
 }
