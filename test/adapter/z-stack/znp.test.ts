@@ -467,7 +467,7 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual(new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '1' (expected '0')"));
+        expect(error).toStrictEqual(new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"));
     });
 
     it('znp request SREQ failed should cancel waiter when provided', async () => {
@@ -501,7 +501,7 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual(new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '1' (expected '0')"));
+        expect(error).toStrictEqual(new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"));
     });
 
 

@@ -1,5 +1,5 @@
 import AF from './af';
-import COMMON from './common';
+import * as COMMON from './common';
 import DBG from './dbg';
 import MAC from './mac';
 import SAPI from './sapi';
