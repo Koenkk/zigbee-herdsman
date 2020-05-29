@@ -256,17 +256,18 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, sourceEndpoint?: number
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
             return this.sendZclFrameToEndpointInternal(
-                networkAddress, endpoint, zclFrame, timeout, true
+                networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, true
             );
         }, networkAddress);
     }
 
     private async sendZclFrameToEndpointInternal(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, firstAttempt: boolean,
+        networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame,
+        timeout: number, firstAttempt: boolean
     ): Promise<Events.ZclDataPayload> {
         let response = null;
         const command = zclFrame.getCommand();
@@ -285,8 +286,8 @@ class ZStackAdapter extends Adapter {
 
         try {
             await this.dataRequest(
-                networkAddress, endpoint, 1, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(),
-                timeout - 1000, 5
+                networkAddress, endpoint, sourceEndpoint, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS,
+                zclFrame.toBuffer(), timeout - 1000, 5
             );
         } catch (error) {
             if (response) {
@@ -305,7 +306,7 @@ class ZStackAdapter extends Adapter {
                     // Timeout could happen because of invalid route, rediscover and retry.
                     await this.discoverRoute(networkAddress);
                     return this.sendZclFrameToEndpointInternal(
-                        networkAddress, endpoint, zclFrame, timeout, false
+                        networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, false
                     );
                 } else {
                     throw error;
@@ -316,10 +317,10 @@ class ZStackAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, sourceEndpoint?: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
-                AddressMode.ADDR_GROUP, groupID, 0xFF, 0, 1, zclFrame.Cluster.ID,
+                AddressMode.ADDR_GROUP, groupID, 0xFF, 0, sourceEndpoint || 1, zclFrame.Cluster.ID,
                 Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, true
             );
 
@@ -612,9 +613,7 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPANBroadcast(
-        zclFrame: ZclFrame, timeout: number
-    ): Promise<Events.ZclDataPayload> {
+    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
             const command = zclFrame.getCommand();
             if (!command.hasOwnProperty('response')) {

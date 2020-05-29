@@ -107,6 +107,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 10,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
@@ -136,6 +137,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 7,
             frameControl: {
+                reservedBits: 0,
                 direction: 0,
                 disableDefaultResponse: false,
                 frameType: 1,
@@ -159,6 +161,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 2,
             frameControl: {
+                reservedBits: 0,
                 direction: 0,
                 disableDefaultResponse: true,
                 frameType: 1,
@@ -180,6 +183,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 3,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 1,
@@ -201,6 +205,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 10,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
@@ -222,6 +227,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 7,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
@@ -243,6 +249,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 7,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
@@ -264,6 +271,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 7,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
@@ -313,6 +321,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 7,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
@@ -334,6 +343,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 11,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
@@ -355,6 +365,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 10,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
@@ -376,6 +387,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 10,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
@@ -419,6 +431,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 13,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
@@ -449,6 +462,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 1,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
@@ -470,6 +484,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 1,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
@@ -491,6 +506,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 4,
             frameControl: {
+                reservedBits: 0,
                 direction: 0,
                 disableDefaultResponse: true,
                 frameType: 1,
@@ -526,6 +542,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 0,
             frameControl: {
+                reservedBits: 0,
                 direction: 0,
                 disableDefaultResponse: true,
                 frameType: 1,
@@ -554,6 +571,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 0,
             frameControl: {
+                reservedBits: 0,
                 direction: 0,
                 disableDefaultResponse: true,
                 frameType: 1,
@@ -582,6 +600,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 1,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
@@ -603,6 +622,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 6,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
@@ -624,6 +644,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 6,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
@@ -645,6 +666,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 6,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
@@ -666,6 +688,7 @@ describe('Zcl', () => {
         const header = {
             commandIdentifier: 1,
             frameControl: {
+                reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
@@ -703,6 +726,38 @@ describe('Zcl', () => {
         const buffer = Buffer.from([0x04, 0xf2, 0x10, 0x08, 0x01, 0x00, 0x00, 0x00, 0x20, 0x01])
         const frame = Zcl.ZclFrame.fromBuffer(0xfc00, buffer);
         expect(frame.Cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+    });
+
+    it('ZclFrame to buffer with reservered bits', () => {
+        const expected = Buffer.from([224,8,12,0,0,240]);
+        const payload = {startAttrId: 0, maxAttrIds: 240};
+        const frame = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, null, 8, 'discover', 0, payload, 7
+        );
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame from buffer with reservered bits', () => {
+        const buffer = Buffer.from([224,8,12,0,0,240]);
+        const frame = Zcl.ZclFrame.fromBuffer(0, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 12,
+            frameControl: {
+                reservedBits: 7,
+                direction: 0,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 8,
+        };
+
+        const payload = {startAttrId: 0, maxAttrIds: 240};
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
     });
 
     it('ZclFrame to buffer discover', () => {
