@@ -1723,7 +1723,7 @@ describe('Controller', () => {
                 "zclTransactionSequenceNumber": 3,
                 "manufacturerCode": 4447,
                 "frameControl": {
-                    "reservedBits": 0, 
+                    "reservedBits": 0,
                     "direction": 1,
                     "disableDefaultResponse": true,
                     "frameType": 0,
@@ -1970,7 +1970,7 @@ describe('Controller', () => {
         expect(deepClone(call[2])).toStrictEqual({
             "Header":{
                "frameControl":{
-                  "reservedBits": 0, 
+                  "reservedBits": 0,
                   "frameType":0,
                   "direction":0,
                   "disableDefaultResponse":true,
@@ -2013,7 +2013,7 @@ describe('Controller', () => {
         catch (e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"timeout":10000,"disableDefaultResponse":true,"direction":0,"srcEndpoint":1,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (Error: Status 'FAILURE')`));
+        expect(error).toStrictEqual(new Error(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"timeout":10000,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (Error: Status 'FAILURE')`));
     });
 
     it('Return group from databse when not in lookup', async () => {
@@ -2233,6 +2233,18 @@ describe('Controller', () => {
         let error;
         try {await endpoint.readResponse('genBasic', 99, {'UNKNOWN': {value: 0x000B, type: 0x19}}) } catch (e) {error = e}
         expect(error).toStrictEqual(new Error(`Unknown attribute 'UNKNOWN', specify either an existing attribute or a number`))
+        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
+    });
+
+    it('Read response to endpoint throw when transaction sequence number provided through options', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        mocksendZclFrameToEndpoint.mockClear();
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        let error;
+        try {await endpoint.readResponse('genBasic', 99, {'UNKNOWN': {value: 0x000B, type: 0x19}}, {transactionSequenceNumber: 5}) } catch (e) {error = e}
+        expect(error.message).toStrictEqual(`Use parameter`)
         expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
     });
 
@@ -2631,7 +2643,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce('timeout occurred');
         let error;
         try {await endpoint.command('genOnOff', 'toggle', {})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Command 0x129/1 genOnOff.toggle({}, {"timeout":10000,"disableDefaultResponse":false,"direction":0,"srcEndpoint":1,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Command 0x129/1 genOnOff.toggle({}, {"timeout":10000,"disableDefaultResponse":false,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
     });
 
     it('Endpoint commandResponse error', async () => {
@@ -2642,7 +2654,18 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce('timeout occurred');
         let error;
         try {await endpoint.commandResponse('genOta', 'imageNotify', {payloadType: 0, queryJitter: 1}, null, null)} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`CommandResponse 0x129/1 genOta.imageNotify({"payloadType":0,"queryJitter":1}, {"timeout":10000,"disableDefaultResponse":true,"direction":0,"srcEndpoint":1,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`CommandResponse 0x129/1 genOta.imageNotify({"payloadType":0,"queryJitter":1}, {"timeout":10000,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+    });
+
+    it('Endpoint commandResponse error when transactionSequenceNumber provided through options', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce('timeout occurred');
+        let error;
+        try {await endpoint.commandResponse('genOta', 'imageNotify', {payloadType: 0, queryJitter: 1}, {transactionSequenceNumber: 10}, null)} catch (e) {error = e}
+        expect(error.message).toStrictEqual(`Use parameter`);
     });
 
     it('ConfigureReporting error', async () => {
@@ -2653,7 +2676,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce('timeout occurred');
         let error;
         try {await endpoint.configureReporting('genOnOff', [{attribute: 'onOff', minimumReportInterval: 0, maximumReportInterval: 2, reportableChange: 10}])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ConfigureReporting 0x129/1 genOnOff([{"attribute":"onOff","minimumReportInterval":0,"maximumReportInterval":2,"reportableChange":10}], {"timeout":10000,"disableDefaultResponse":true,"direction":0,"srcEndpoint":1,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ConfigureReporting 0x129/1 genOnOff([{"attribute":"onOff","minimumReportInterval":0,"maximumReportInterval":2,"reportableChange":10}], {"timeout":10000,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
     });
 
     it('DefaultResponse error', async () => {
@@ -2664,7 +2687,18 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce('timeout occurred');
         let error;
         try {await endpoint.defaultResponse(1, 0, 1, 3)} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`DefaultResponse 0x129/1 1(1, {"timeout":10000,"disableDefaultResponse":true,"direction":0,"srcEndpoint":1,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`DefaultResponse 0x129/1 1(1, {"timeout":10000,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+    });
+
+    it('DefaultResponse error when transactionSequenceNumber provided through options', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce('timeout occurred');
+        let error;
+        try {await endpoint.defaultResponse(1, 0, 1, 3, {transactionSequenceNumber: 10})} catch (e) {error = e}
+        expect(error.message).toStrictEqual(`Use parameter`);
     });
 
     it('Unbind error', async () => {
@@ -2697,7 +2731,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce('timeout occurred');
         let error;
         try {await endpoint.readResponse('genOnOff', 1, [{onOff: 1}])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ReadResponse 0x129/1 genOnOff([{"onOff":1}], {"timeout":10000,"disableDefaultResponse":true,"direction":0,"srcEndpoint":1,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ReadResponse 0x129/1 genOnOff([{"onOff":1}], {"timeout":10000,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
     });
 
     it('Read error', async () => {
@@ -2708,7 +2742,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce('timeout occurred');
         let error;
         try {await endpoint.read('genOnOff', ['onOff'])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Read 0x129/1 genOnOff(["onOff"], {"timeout":10000,"disableDefaultResponse":true,"direction":0,"srcEndpoint":1,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Read 0x129/1 genOnOff(["onOff"], {"timeout":10000,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
     });
 
     it('Write error', async () => {
@@ -2719,7 +2753,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce('timeout occurred');
         let error;
         try {await endpoint.write('genOnOff', {onOff: 1})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Write 0x129/1 genOnOff({"onOff":1}, {"timeout":10000,"disableDefaultResponse":true,"direction":0,"srcEndpoint":1,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Write 0x129/1 genOnOff({"onOff":1}, {"timeout":10000,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
     });
 
     it('Group command error', async () => {
