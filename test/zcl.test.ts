@@ -728,6 +728,38 @@ describe('Zcl', () => {
         expect(frame.Cluster.name).toBe('manuSpecificUbisysDeviceSetup');
     });
 
+    it('ZclFrame to buffer with reservered bits', () => {
+        const expected = Buffer.from([224,8,12,0,0,240]);
+        const payload = {startAttrId: 0, maxAttrIds: 240};
+        const frame = Zcl.ZclFrame.create(
+            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, null, 8, 'discover', 0, payload, 7
+        );
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame from buffer with reservered bits', () => {
+        const buffer = Buffer.from([224,8,12,0,0,240]);
+        const frame = Zcl.ZclFrame.fromBuffer(0, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 12,
+            frameControl: {
+                reservedBits: 7,
+                direction: 0,
+                disableDefaultResponse: false,
+                frameType: 0,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 8,
+        };
+
+        const payload = {startAttrId: 0, maxAttrIds: 240};
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
     it('ZclFrame to buffer discover', () => {
         const expected = Buffer.from([0,8,12,0,0,240]);
         const payload = {startAttrId: 0, maxAttrIds: 240};
