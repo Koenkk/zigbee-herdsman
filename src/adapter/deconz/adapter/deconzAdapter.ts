@@ -514,7 +514,8 @@ class DeconzAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
+        disableResponse: boolean, sourceEndpoint?: number,
     ): Promise<Events.ZclDataPayload> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
@@ -531,7 +532,7 @@ class DeconzAdapter extends Adapter {
         request.destEndpoint = endpoint;
         request.profileId = 0x104;
         request.clusterId = zclFrame.Cluster.ID;
-        request.srcEndpoint = 1;
+        request.srcEndpoint = sourceEndpoint || 1;
         request.asduLength = pay.length;
         request.asduPayload = [... pay];
         request.txOptions = 0;
@@ -543,7 +544,7 @@ class DeconzAdapter extends Adapter {
         this.driver.enqueueSendDataRequest(request)
             .then(result => {
                 debug(`sendZclFrameToEndpoint - message send`);
-                if (!command.hasOwnProperty('response') || zclFrame.Header.frameControl.disableDefaultResponse) {
+                if (!command.hasOwnProperty('response') || zclFrame.Header.frameControl.disableDefaultResponse || !disableResponse) {
                     return Promise.resolve();
                 }
             })
@@ -553,7 +554,7 @@ class DeconzAdapter extends Adapter {
             });
         try {
                 let data = null;
-                if (command.hasOwnProperty('response')) {
+                if (command.hasOwnProperty('response') && !disableResponse) {
                     data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID);
                 } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
                     data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID);

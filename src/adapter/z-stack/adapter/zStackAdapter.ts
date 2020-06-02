@@ -256,22 +256,23 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, sourceEndpoint?: number
+        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, disableResponse: boolean,
+        sourceEndpoint?: number
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
             return this.sendZclFrameToEndpointInternal(
-                networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, true
+                networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse, true
             );
         }, networkAddress);
     }
 
     private async sendZclFrameToEndpointInternal(
         networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame,
-        timeout: number, firstAttempt: boolean
+        timeout: number, disableResponse: boolean, firstAttempt: boolean
     ): Promise<Events.ZclDataPayload> {
         let response = null;
         const command = zclFrame.getCommand();
-        if (command.hasOwnProperty('response')) {
+        if (command.hasOwnProperty('response') && disableResponse === false) {
             response = this.waitForInternal(
                 networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
                 zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
@@ -306,7 +307,7 @@ class ZStackAdapter extends Adapter {
                     // Timeout could happen because of invalid route, rediscover and retry.
                     await this.discoverRoute(networkAddress);
                     return this.sendZclFrameToEndpointInternal(
-                        networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, false
+                        networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, disableResponse, false
                     );
                 } else {
                     throw error;

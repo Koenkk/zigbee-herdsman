@@ -23,7 +23,7 @@ interface ConfigureReportingItem {
 interface Options {
     manufacturerCode?: number;
     disableDefaultResponse?: boolean;
-    response?: boolean;
+    disableResponse?: boolean;
     timeout?: number;
     direction?: Zcl.Direction;
     srcEndpoint?: number;
@@ -213,9 +213,12 @@ class Endpoint extends Entity {
                 'write', cluster.ID, payload, options.reservedBits
             );
             const result = await Entity.adapter.sendZclFrameToEndpoint(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.srcEndpoint
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.disableResponse, options.srcEndpoint
             );
-            this.checkStatus(result.frame.Payload);
+
+            if (!options.disableResponse) {
+                this.checkStatus(result.frame.Payload);
+            }
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -245,10 +248,15 @@ class Endpoint extends Entity {
 
         try {
             const result = await Entity.adapter.sendZclFrameToEndpoint(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.srcEndpoint
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.disableResponse, options.srcEndpoint
             );
-            this.checkStatus(result.frame.Payload);
-            return ZclFrameConverter.attributeKeyValue(result.frame);
+
+            if (!options.disableResponse) {
+                this.checkStatus(result.frame.Payload);
+                return ZclFrameConverter.attributeKeyValue(result.frame);
+            } else {
+                return null;
+            }
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -285,7 +293,7 @@ class Endpoint extends Entity {
 
         try {
             await Entity.adapter.sendZclFrameToEndpoint(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.srcEndpoint
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.disableResponse, options.srcEndpoint
             );
         } catch (error) {
             const message = `${log} failed (${error})`;
@@ -377,7 +385,7 @@ class Endpoint extends Entity {
 
         try {
             await Entity.adapter.sendZclFrameToEndpoint(this.deviceNetworkAddress, this.ID, frame,
-                options.timeout, options.srcEndpoint);
+                options.timeout, options.disableResponse, options.srcEndpoint);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -426,9 +434,12 @@ class Endpoint extends Entity {
 
         try {
             const result = await Entity.adapter.sendZclFrameToEndpoint(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.srcEndpoint
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.disableResponse, options.srcEndpoint
             );
-            this.checkStatus(result.frame.Payload);
+
+            if (!options.disableResponse) {
+                this.checkStatus(result.frame.Payload);
+            }
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -456,7 +467,7 @@ class Endpoint extends Entity {
 
         try {
             const result = await Entity.adapter.sendZclFrameToEndpoint(
-                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.srcEndpoint
+                this.deviceNetworkAddress, this.ID, frame, options.timeout, options.disableResponse, options.srcEndpoint
             );
 
             if (result) {
@@ -490,7 +501,7 @@ class Endpoint extends Entity {
 
         try {
             await Entity.adapter.sendZclFrameToEndpoint(this.deviceNetworkAddress, this.ID, frame,
-                options.timeout, options.srcEndpoint);
+                options.timeout, options.disableResponse, options.srcEndpoint);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
@@ -524,6 +535,7 @@ class Endpoint extends Entity {
         const providedOptions = options || {};
         return {
             timeout: 10000,
+            disableResponse: false,
             disableDefaultResponse,
             direction,
             srcEndpoint: null,
