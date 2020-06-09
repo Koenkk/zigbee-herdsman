@@ -9,6 +9,8 @@ import {Wait, Queue, Waitress, RealpathSync} from '../../../utils';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 
+import * as Constants from '../constants';
+
 import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
 import {Subsystem, Type} from '../unpi/constants';
@@ -18,6 +20,8 @@ import net from 'net';
 import events from 'events';
 import Equals from 'fast-deep-equal';
 import Debug from "debug";
+
+const {COMMON: {ZnpCommandStatus}, Utils: {statusDescription}} = Constants;
 
 const timeouts = {
     SREQ: 6000,
@@ -257,7 +261,7 @@ class Znp extends events.EventEmitter {
 
     public request(
         subsystem: Subsystem, command: string, payload: ZpiObjectPayload, waiterID: number = null,
-        expectedStatus: number[] = [0]
+        expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS]
     ): Promise<ZpiObject> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
@@ -280,14 +284,16 @@ class Znp extends events.EventEmitter {
                 this.unpiWriter.writeFrame(frame);
                 const result = await waiter.start().promise;
                 if (result && result.payload.hasOwnProperty('status') &&
-                    !expectedStatus.includes(result.payload.status)) {
+                    !expectedStatuses.includes(result.payload.status)) {
 
                     if (typeof waiterID === 'number') {
                         this.waitress.remove(waiterID);
                     }
 
                     throw new Error(
-                        `SREQ '${message}' failed with status '${result.payload.status}' (expected '${expectedStatus}')`
+                        `SREQ '${message}' failed with status '${
+                            statusDescription(result.payload.status)
+                        }' (expected '${expectedStatuses.map(statusDescription)}')`
                     );
                 } else {
                     return result;

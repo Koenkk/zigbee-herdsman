@@ -2148,8 +2148,7 @@ const Cluster: {
             colorLoopSet: {
                 ID: 68,
                 parameters: [
-                    {name: 'bits', type: DataType.uint8},
-                    {name: 'bytee', type: DataType.uint8},
+                    {name: 'updateflags', type: DataType.uint8},
                     {name: 'action', type: DataType.uint8},
                     {name: 'direction', type: DataType.uint8},
                     {name: 'time', type: DataType.uint16},

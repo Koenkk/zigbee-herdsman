@@ -12,6 +12,14 @@ const debug = {
     error: Debug('zigbee-herdsman:controller:group'),
 };
 
+interface Options {
+    manufacturerCode?: number;
+    direction?: Zcl.Direction;
+    srcEndpoint?: number;
+    reservedBits?: number;
+    transactionSequenceNumber?: number;
+}
+
 class Group extends Entity {
     private databaseID: number;
     public readonly groupID: number;
@@ -125,7 +133,10 @@ class Group extends Entity {
      * Zigbee functions
      */
 
-    public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue): Promise<void> {
+    public async command(
+        clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options
+    ): Promise<void> {
+        options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
 
@@ -134,15 +145,30 @@ class Group extends Entity {
 
         try {
             const frame = Zcl.ZclFrame.create(
-                Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, null, ZclTransactionSequenceNumber.next(),
-                command.ID, cluster.ID, payload
+                Zcl.FrameType.SPECIFIC, options.direction, true, options.manufacturerCode,
+                options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
+                command.ID, cluster.ID, payload, options.reservedBits
             );
-            await Entity.adapter.sendZclFrameToGroup(this.groupID, frame);
+            await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             const message = `${log} failed (${error})`;
             debug.error(message);
             throw Error(message);
         }
+    }
+
+    private getOptionsWithDefaults(
+        options: Options, direction: Zcl.Direction
+    ): Options {
+        const providedOptions = options || {};
+        return {
+            direction,
+            srcEndpoint: null,
+            reservedBits: 0,
+            manufacturerCode: null,
+            transactionSequenceNumber: null,
+            ...providedOptions
+        };
     }
 }
 

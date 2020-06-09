@@ -2,7 +2,7 @@ import {ZnpVersion} from './tstype';
 import * as Constants from '../constants';
 import {NvItem} from './tstype';
 
-const NvItemsIds = Constants.COMMON.nvItemIds;
+const {NvItemsIds} = Constants.COMMON;
 
 export default {
     znpHasConfiguredInit: (version: ZnpVersion): NvItem => {

@@ -41,7 +41,8 @@ class ZclFrame {
      */
     public static create(
         frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number,
-        transactionSequenceNumber: number, commandKey: number | string, clusterID: number, payload: ZclPayload
+        transactionSequenceNumber: number, commandKey: number | string, clusterID: number,
+        payload: ZclPayload, reservedBits = 0
     ): ZclFrame {
         const cluster = Utils.getCluster(clusterID, manufacturerCode != null ? manufacturerCode : null);
         let command: TsType.Command = null;
@@ -54,7 +55,7 @@ class ZclFrame {
 
         const header: ZclHeader = {
             frameControl: {
-                frameType, direction, disableDefaultResponse,
+                reservedBits, frameType, direction, disableDefaultResponse,
                 manufacturerSpecific: manufacturerCode !== null,
             },
             transactionSequenceNumber,
@@ -85,7 +86,8 @@ class ZclFrame {
             (this.Header.frameControl.frameType & 0x03) |
             (((this.Header.frameControl.manufacturerSpecific ? 1 : 0) << 2) & 0x04) |
             ((this.Header.frameControl.direction << 3) & 0x08) |
-            (((this.Header.frameControl.disableDefaultResponse ? 1 : 0) << 4) & 0x10)
+            (((this.Header.frameControl.disableDefaultResponse ? 1 : 0) << 4) & 0x10) |
+            ((this.Header.frameControl.reservedBits << 5) & 0xE0)
         );
 
         buffalo.writeUInt8(frameControl);
@@ -185,6 +187,7 @@ class ZclFrame {
             manufacturerSpecific: ((frameControlValue >> 2) & 0x01) === 1,
             direction: (frameControlValue >> 3) & 0x01,
             disableDefaultResponse: ((frameControlValue >> 4) & 0x01) === 1,
+            reservedBits: frameControlValue >> 5,
         };
 
         let manufacturerCode = null;
