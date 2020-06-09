@@ -118,7 +118,7 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
     response.status = view.getUint8(2);
 
     if (response.status != 0) {
-        debug("DATA_CONFIRM Response - rejected - seqNr.: " + response.seqNr + " status: " + response.status);
+        debug("DATA_CONFIRM RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
         return null;
     }
 
@@ -183,7 +183,7 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
     //remove from busyqueue
     apsBusyQueue.splice(i, 1);
 
-    debug("DATA_CONFIRM Response - destAddr: 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus + " new device state: " + newStatus);
+    debug("DATA_CONFIRM RESPONSE - destAddr: 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus);
     frameParserEvents.emit('receivedDataNotification', response.deviceState);
 /*
     const zclPayload: ZclDataPayload = {
@@ -206,7 +206,7 @@ function parseReadReceivedDataResponse(view : DataView) : object {
     response.status = view.getUint8(2);
 
     if (response.status != 0) {
-        debug("DATA_INDICATION Response - rejected - seqNr.: " + response.seqNr + " status: " + response.status);
+        debug("DATA_INDICATION RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
         return null;
     }
 
@@ -273,8 +273,8 @@ function parseReadReceivedDataResponse(view : DataView) : object {
         newStatus = "0" + newStatus;
     }
 
-    debug("DATA_INDICATION Response - seqNr. " + response.seqNr + " srcAddr: 0x" + srcAddr + " destAddr: 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16) + " new state: " + newStatus);
-    debug("payload: " + payload);
+    debug("DATA_INDICATION RESPONSE - seqNr. " + response.seqNr + " srcAddr: 0x" + srcAddr + " destAddr: 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16));
+    debug("response payload: " + payload);
     frameParserEvents.emit('receivedDataPayload', response);
     frameParserEvents.emit('receivedDataNotification', response.deviceState);
     return response;
@@ -284,7 +284,7 @@ function parseEnqueueSendDataResponse(view : DataView) : number {
     const status = view.getUint8(2);
     const requestId = view.getUint8(8);
     const deviceState = view.getUint8(7);
-    debug("DATA_REQUEST Response - status: " + status + " request id: " + requestId + " new device state: " + deviceState.toString(2));
+    debug("DATA_REQUEST RESPONSE - request id: " + requestId + " status: " + status);
     frameParserEvents.emit('receivedDataNotification', deviceState);
     return deviceState;
 }

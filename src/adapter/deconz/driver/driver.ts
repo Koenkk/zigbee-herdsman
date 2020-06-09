@@ -24,6 +24,7 @@ var queue: Array<object> = [];
 var busyQueue: Array<object> = [];
 var apsQueue: Array<object> = [];
 var apsBusyQueue: Array<object> = [];
+var timeoutCounter = 0;
 export { busyQueue, apsBusyQueue };
 
 var frameParser = require('./frameParser');
@@ -38,12 +39,14 @@ class Driver extends events.EventEmitter {
     private parser: Parser;
     private frameParserEvent = frameParser.frameParserEvents;
     private seqNumber: number;
+    private timeoutResetTimeout: any;
 
     public constructor(path: string) {
         super();
         this.path = path;
         this.initialized = false;
         this.seqNumber = 0;
+        this.timeoutResetTimeout = null;
 
         const that = this;
         setInterval(() => { that.processQueue(); }, 50);  //300
@@ -274,7 +277,7 @@ class Driver extends events.EventEmitter {
         busyQueue.push(req);
     }
 
-    private processBusyQueue() {
+    private async processBusyQueue() {
         let i = busyQueue.length;
         while (i--) {
             const req: Request = busyQueue[i];
@@ -284,7 +287,21 @@ class Driver extends events.EventEmitter {
                 debug(`Timeout for request - CMD: 0x${req.commandId.toString(16)} seqNr: ${req.seqNumber}`);
                 //remove from busyQueue
                 busyQueue.splice(i, 1);
+                timeoutCounter++;
+                // after a timeout the timeoutcounter will be reset after 1 min. If another timeout happen then the timeoutcounter
+                // will not be reset
+                clearTimeout(this.timeoutResetTimeout);
+                this.timeoutResetTimeout = null;
+                this.resetTimeoutCounterAfter1min();
                 req.reject("TIMEOUT");
+                if (timeoutCounter >= 3) {
+                    timeoutCounter = 0;
+                    debug("to many timeouts - restart serial connecion");
+                    if (this.serialPort.isOpen) {
+                        this.serialPort.close();
+                    }
+                    await this.open();
+                }
             }
         }
     }
@@ -440,8 +457,7 @@ class Driver extends events.EventEmitter {
             dest += request.destEndpoint;
         }
 
-        debug(`DATA_REQUEST - sending data request - destAddr: 0x${dest} SeqNr. ${seqNumber} request id: ${request.requestId}`);
-
+        debug(`DATA_REQUEST - destAddr: 0x${dest} SeqNr. ${seqNumber} request id: ${request.requestId}`);
         const requestFrame = [PARAM.PARAM.APS.DATA_REQUEST, seqNumber, 0x00, frameLength & 0xff, (frameLength >> 8) & 0xff,
             payloadLength & 0xff, (payloadLength >> 8) & 0xff,
             request.requestId, 0x00, request.destAddrMode].concat(
@@ -548,6 +564,15 @@ class Driver extends events.EventEmitter {
 
     private onParsed(frame: Uint8Array): void {
         this.emit('rxFrame', frame);
+    }
+    private resetTimeoutCounterAfter1min() {
+        if (this.timeoutResetTimeout === null) {
+            this.timeoutResetTimeout = setTimeout(function(){
+                console.log("reset timeoutcounter");
+                timeoutCounter = 0;
+                this.timeoutResetTimeout = null;
+            }, 60000);
+        }
     }
 }
 
