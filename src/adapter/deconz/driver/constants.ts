@@ -15,6 +15,7 @@ const PARAM: {
         NWK_ADDRESS: 0x07,
         EXT_PAN_ID: 0x08,
         CHANNEL_MASK: 0x0a,
+        APS_EXT_PAN_ID: 0x0b,
         NETWORK_KEY: 0x18,
         CHANNEL: 0x1c,
         PERMIT_JOIN: 0x21,

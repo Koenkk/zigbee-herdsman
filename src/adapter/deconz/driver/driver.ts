@@ -457,8 +457,7 @@ class Driver extends events.EventEmitter {
             dest += request.destEndpoint;
         }
 
-        debug(`DATA_REQUEST - sending data request - destAddr: 0x${dest} SeqNr. ${seqNumber} request id: ${request.requestId}`);
-
+        debug(`DATA_REQUEST - destAddr: 0x${dest} SeqNr. ${seqNumber} request id: ${request.requestId}`);
         const requestFrame = [PARAM.PARAM.APS.DATA_REQUEST, seqNumber, 0x00, frameLength & 0xff, (frameLength >> 8) & 0xff,
             payloadLength & 0xff, (payloadLength >> 8) & 0xff,
             request.requestId, 0x00, request.destAddrMode].concat(
