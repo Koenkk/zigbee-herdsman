@@ -678,7 +678,7 @@ class DeconzAdapter extends Adapter {
         request.srcEndpoint = 0;
         request.asduLength = zdpFrame.length;
         request.asduPayload = zdpFrame;
-        request.txOptions = 0;
+        request.txOptions = 0x04; // 0x04 use APS ACKS
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = 30;
 
@@ -728,7 +728,7 @@ class DeconzAdapter extends Adapter {
         request.srcEndpoint = 0;
         request.asduLength = zdpFrame.length;
         request.asduPayload = zdpFrame;
-        request.txOptions = 0;
+        request.txOptions = 0x04; // 0x04 use APS ACKS
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = 30;
 
