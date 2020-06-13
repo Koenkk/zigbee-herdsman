@@ -871,6 +871,36 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
+    it('ZclFrame from buffer ssIasAce arm command', () => {
+        const buffer = [1,87,0,0,6,49,50,51,52,53,54,0];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("ssIasAce").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 0,
+            frameControl: {
+                reservedBits: 0,
+                direction: 0,
+                disableDefaultResponse: false,
+                frameType: 1,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 87,
+        };
+
+        const payload = {
+            armmode: 0,
+            code: '123456',
+            zoneid: 0,
+        };
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.isGlobal()).toBe(false);
+        expect(frame.isSpecific()).toBe(true);
+        expect(frame.isCluster("ssIasAce")).toBe(true);
+        expect(frame.isCommand('arm')).toBe(true);
+    });
+
     it('ZclFrame to buffer discoverRsp', () => {
         const expected = Buffer.from([24,23,13,0,32,0,32,33,0,32,49,0,48,51,0,32,53,0,24]);
         const payload = {"discComplete":0,"attrInfos":[{"attrId":32,"dataType":32},{"attrId":33,"dataType":32},{"attrId":49,"dataType":48},{"attrId":51,"dataType":32},{"attrId":53,"dataType":24}]};

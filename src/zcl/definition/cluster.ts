@@ -2378,6 +2378,8 @@ const Cluster: {
                 ID: 0,
                 parameters: [
                     {name: 'armmode', type: DataType.uint8},
+                    {name: 'code', type: DataType.charStr},
+                    {name: 'zoneid', type: DataType.uint8},
                 ],
             },
             bypass: {
