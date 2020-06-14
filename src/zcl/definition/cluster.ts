@@ -2268,6 +2268,18 @@ const Cluster: {
         commandsResponse: {
         },
     },
+
+    kmpcilPressureMeasurement: {
+        ID: 1027,
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.uint16},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        },
+    },
+
     msFlowMeasurement: {
         ID: 1028,
         attributes: {
