@@ -48,6 +48,7 @@ interface WaitressMatcher {
 const autoDetectDefinitions = [
     {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16a8'}, // CC2531
     {manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'}, // CC1352P_2 and CC26X2R1
+    {manufacturer: 'Electrolama', vendorId: '0403', productId: '6015'}, // ZZH
 ];
 
 class Znp extends events.EventEmitter {
