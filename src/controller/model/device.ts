@@ -481,10 +481,10 @@ class Device extends Entity {
             debug.log(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`);
 
             // Do not enroll when device has already been enrolled
-            if (stateBefore.zoneState !== 1) {
+            const coordinator = Device.byType('Coordinator')[0];
+            if (stateBefore.zoneState !== 1 || stateBefore.iasCieAddr !== coordinator.ieeeAddr) {
                 debug.log(`Interview - IAS - not enrolled, enrolling`);
 
-                const coordinator = Device.byType('Coordinator')[0];
                 await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
                 debug.log(`Interview - IAS - wrote iasCieAddr`);
 
