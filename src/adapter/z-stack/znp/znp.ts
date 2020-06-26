@@ -55,6 +55,11 @@ class Znp extends events.EventEmitter {
     private path: string;
     private baudRate: number;
     private rtscts: boolean;
+    /**
+     * local copy of incoming serialPortOptions
+     * -> maybe use this object instead of single properties?
+     */
+    private do_not_invoke_bootloader: boolean;
 
     private portType: 'serial' | 'socket';
     private serialPort: SerialPort;
@@ -65,12 +70,19 @@ class Znp extends events.EventEmitter {
     private queue: Queue;
     private waitress: Waitress<ZpiObject, WaitressMatcher>;
 
-    public constructor(path: string, baudRate: number, rtscts: boolean) {
+    public constructor(path: string, baudRate: number, rtscts: boolean, do_not_invoke_bootloader: boolean = false) {
         super();
 
         this.path = path;
         this.baudRate = baudRate;
         this.rtscts = rtscts;
+        this.do_not_invoke_bootloader = do_not_invoke_bootloader == true;
+
+        // if we shell take care of devices bootloader, auto rts-handling MUST be turned off
+        if (this.do_not_invoke_bootloader === true) {
+            this.rtscts = false;
+        }
+
         this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
 
         this.initialized = false;
@@ -148,7 +160,17 @@ class Znp extends events.EventEmitter {
                     }
                 } else {
                     debug.log('Serialport opened');
+
+                    if (this.do_not_invoke_bootloader === true) {
+                        // set DTR first to false..
+                        this.serialPort.set({dtr: false}, () => {
+                            // .. and then both to be sure that the bootloader-enable pin has the right level!
+                            this.serialPort.set({dtr: false, rts: false}, () => { });
+                        });
+                    }
+
                     await this.skipBootloader();
+
                     this.serialPort.once('close', this.onPortClose);
                     this.serialPort.once('error', (error) => {
                         debug.error(`Serialport error: ${error}`);

@@ -11,6 +11,12 @@ interface SerialPortOptions {
     rtscts: boolean;
     path: string;
     adapter: 'zstack' | 'deconz';
+
+    /**
+     * Set to true will fore DTR and RTS to FALSE.
+     * This will ensure that devices Bootloader is NOT invoked.
+     */
+    do_not_invoke_bootloader?: boolean;
 };
 
 interface AdapterOptions {
