@@ -379,7 +379,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.start();
         expect(result).toBe('reset');
-        expect(Znp).toBeCalledWith("dummy", 800, false);
+        expect(Znp).toBeCalledWith("dummy", 800, false, true);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
         expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
@@ -606,7 +606,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.start();
         expect(result).toBe('reset');
-        expect(Znp).toBeCalledWith("dummy", 800, false);
+        expect(Znp).toBeCalledWith("dummy", 800, false, true);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
         expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
@@ -720,7 +720,7 @@ describe('zStackAdapter', () => {
         }
 
         expect(error).toStrictEqual(new Error('timeout'));
-        expect(Znp).toBeCalledWith("dummy", 800, false);
+        expect(Znp).toBeCalledWith("dummy", 800, false, true);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
         expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
@@ -794,7 +794,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.start();
         expect(result).toBe('restored');
-        expect(Znp).toBeCalledWith("dummy", 800, false);
+        expect(Znp).toBeCalledWith("dummy", 800, false, true);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
         expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
@@ -956,7 +956,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.start();
         expect(result).toBe('reset');
-        expect(Znp).toBeCalledWith("dummy", 800, false);
+        expect(Znp).toBeCalledWith("dummy", 800, false, true);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
         expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
@@ -1120,7 +1120,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.start();
         expect(result).toBe('resumed');
-        expect(Znp).toBeCalledWith("dummy", 800, false);
+        expect(Znp).toBeCalledWith("dummy", 800, false, true);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
         expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
@@ -1238,7 +1238,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.start();
         expect(result).toBe('resumed');
-        expect(Znp).toBeCalledWith("dummy", 800, false);
+        expect(Znp).toBeCalledWith("dummy", 800, false, true);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
         expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
@@ -1415,7 +1415,7 @@ describe('zStackAdapter', () => {
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
         const result = await adapter.start();
         expect(result).toBe('restored');
-        expect(Znp).toBeCalledWith("dummy", 800, false);
+        expect(Znp).toBeCalledWith("dummy", 800, false, true);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
         expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
@@ -1520,7 +1520,7 @@ describe('zStackAdapter', () => {
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
         const result = await adapter.start();
         expect(result).toBe('restored');
-        expect(Znp).toBeCalledWith("dummy", 800, false);
+        expect(Znp).toBeCalledWith("dummy", 800, false, true);
         expect(mockZnpOpen).toBeCalledTimes(1);
         expect(mockZnpRequest.mock.calls[0][1]).toBe('ping');
         expect(mockZnpRequest.mock.calls[1][1]).toBe('version');
