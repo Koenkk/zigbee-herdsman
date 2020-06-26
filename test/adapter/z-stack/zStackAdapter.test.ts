@@ -275,6 +275,7 @@ const serialPortOptions = {
     baudRate: 800,
     rtscts: false,
     path: 'dummy',
+    do_not_invoke_bootloader: true
 };
 
 Znp.isValidPath = jest.fn().mockReturnValue(true);
@@ -309,7 +310,7 @@ describe('zStackAdapter', () => {
     });
 
     it('Call znp constructor', async () => {
-       expect(Znp).toBeCalledWith("dummy", 800, false);
+       expect(Znp).toBeCalledWith("dummy", 800, false, true);
     });
 
     it('Start zStack 3.x.0 initialize', async () => {
