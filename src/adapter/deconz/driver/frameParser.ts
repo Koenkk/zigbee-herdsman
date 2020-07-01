@@ -98,6 +98,7 @@ function parseReadFirmwareResponse(view : DataView) : number[] {
 function parseDeviceStateResponse(view : DataView) : number {
     const flag = view.getUint8(5);
     debug("device state: " + flag.toString(2));
+    frameParserEvents.emit('receivedDataNotification', flag);
     return flag;
 }
 
