@@ -69,8 +69,8 @@ class Znp extends events.EventEmitter {
         super();
 
         this.path = path;
-        this.baudRate = baudRate;
-        this.rtscts = rtscts;
+        this.baudRate = typeof baudRate === 'number' ? baudRate : 115200;
+        this.rtscts = typeof rtscts === 'boolean' ? rtscts : false;
         this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
 
         this.initialized = false;

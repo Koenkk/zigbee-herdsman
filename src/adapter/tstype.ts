@@ -7,10 +7,10 @@ interface NetworkOptions {
 }
 
 interface SerialPortOptions {
-    baudRate: number;
-    rtscts: boolean;
-    path: string;
-    adapter: 'zstack' | 'deconz';
+    baudRate?: number;
+    rtscts?: boolean;
+    path?: string;
+    adapter?: 'zstack' | 'deconz';
 };
 
 interface AdapterOptions {
