@@ -38,12 +38,7 @@ const DefaultOptions: Options = {
         extendedPanID: [0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD],
         channelList: [11],
     },
-    serialPort: {
-        baudRate: 115200,
-        rtscts: true,
-        path: null,
-        adapter: null,
-    },
+    serialPort: {},
     databasePath: null,
     databaseBackupPath: null,
     backupPath: null,

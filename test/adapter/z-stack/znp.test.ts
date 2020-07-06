@@ -137,6 +137,22 @@ describe('ZNP', () => {
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
     });
 
+    it('Open with defaults', async () => {
+        znp = new Znp("/dev/ttyACM0", undefined, undefined);
+        await znp.open();
+
+        expect(SerialPort).toHaveBeenCalledTimes(1);
+        expect(SerialPort).toHaveBeenCalledWith(
+            "/dev/ttyACM0",
+            {"autoOpen": false, "baudRate": 115200, "rtscts": false},
+        );
+
+        expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
+    });
+
     it('Open autodetect port', async () => {
         mockSerialPortList.mockReturnValue([
             {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
