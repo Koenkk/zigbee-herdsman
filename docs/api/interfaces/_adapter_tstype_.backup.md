@@ -21,7 +21,7 @@
 
 • **adapterType**: *"zStack"*
 
-*Defined in [src/adapter/tstype.ts:79](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L79)*
+*Defined in [src/adapter/tstype.ts:82](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L82)*
 
 ___
 
@@ -29,7 +29,7 @@ ___
 
 • **data**: *any*
 
-*Defined in [src/adapter/tstype.ts:83](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L83)*
+*Defined in [src/adapter/tstype.ts:86](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L86)*
 
 ___
 
@@ -37,7 +37,7 @@ ___
 
 • **meta**: *object*
 
-*Defined in [src/adapter/tstype.ts:81](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L81)*
+*Defined in [src/adapter/tstype.ts:84](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L84)*
 
 #### Type declaration:
 
@@ -49,4 +49,4 @@ ___
 
 • **time**: *string*
 
-*Defined in [src/adapter/tstype.ts:80](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L80)*
+*Defined in [src/adapter/tstype.ts:83](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L83)*

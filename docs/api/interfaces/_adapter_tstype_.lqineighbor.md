@@ -22,7 +22,7 @@
 
 • **depth**: *number*
 
-*Defined in [src/adapter/tstype.ts:40](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L40)*
+*Defined in [src/adapter/tstype.ts:43](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L43)*
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 • **ieeeAddr**: *string*
 
-*Defined in [src/adapter/tstype.ts:36](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L36)*
+*Defined in [src/adapter/tstype.ts:39](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L39)*
 
 ___
 
@@ -38,7 +38,7 @@ ___
 
 • **linkquality**: *number*
 
-*Defined in [src/adapter/tstype.ts:38](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L38)*
+*Defined in [src/adapter/tstype.ts:41](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L41)*
 
 ___
 
@@ -46,7 +46,7 @@ ___
 
 • **networkAddress**: *number*
 
-*Defined in [src/adapter/tstype.ts:37](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L37)*
+*Defined in [src/adapter/tstype.ts:40](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L40)*
 
 ___
 
@@ -54,4 +54,4 @@ ___
 
 • **relationship**: *number*
 
-*Defined in [src/adapter/tstype.ts:39](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L39)*
+*Defined in [src/adapter/tstype.ts:42](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L42)*

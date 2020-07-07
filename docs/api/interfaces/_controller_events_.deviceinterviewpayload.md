@@ -19,7 +19,7 @@
 
 • **device**: *[Device](../classes/_controller_model_device_.device.md)*
 
-*Defined in [src/controller/events.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/events.ts#L19)*
+*Defined in [src/controller/events.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L19)*
 
 ___
 
@@ -27,4 +27,4 @@ ___
 
 • **status**: *"started" | "successful" | "failed"*
 
-*Defined in [src/controller/events.ts:18](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/events.ts#L18)*
+*Defined in [src/controller/events.ts:18](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L18)*
