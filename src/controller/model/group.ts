@@ -101,6 +101,14 @@ class Group extends Entity {
         return group;
     }
 
+    public async removeFromNetwork(): Promise<void> {
+        for (const endpoint of this._members) {
+            await endpoint.removeFromGroup(this);
+        }
+
+        this.removeFromDatabase();
+    }
+
     public removeFromDatabase(): void {
         Group.loadFromDatabaseIfNecessary();
 

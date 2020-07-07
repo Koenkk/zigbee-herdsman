@@ -1803,6 +1803,24 @@ describe('Controller', () => {
         await device.removeFromDatabase();
     });
 
+    it('Remove group from network', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const group = await controller.createGroup(4);
+        const endpoint = device.getEndpoint(1);
+        await endpoint.addToGroup(group);
+        mocksendZclFrameToEndpoint.mockClear();
+
+        await group.removeFromNetwork();
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe(129);
+        expect(call[1]).toBe(1);
+        expect(deepClone(call[2])).toStrictEqual({"Cluster": getCluster(4), "Header": {"commandIdentifier": 3, "frameControl": {"reservedBits": 0,"direction": 0, "disableDefaultResponse": true, "frameType": 1, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 12}, "Payload": {groupid: 4}});
+    });
+
     it('Remove group from database', async () => {
         await controller.start();
         const group = await controller.createGroup(4);
