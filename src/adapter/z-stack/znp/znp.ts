@@ -202,12 +202,31 @@ class Znp extends events.EventEmitter {
     }
 
     private async skipBootloader(): Promise<void> {
+        // Skip bootloader on some CC2652 devices (e.g. zzh-p)
+        if (this.serialPort) {
+            await this.setSerialPortOptions({dtr: false, rts: false});
+            await Wait(150);
+            await this.setSerialPortOptions({dtr: false, rts: true});
+            await Wait(150);
+            await this.setSerialPortOptions({dtr: false, rts: false});
+            await Wait(150);
+        }
+
+        // Skip bootloader on CC2530/CC2531
         // Send magic byte: https://github.com/Koenkk/zigbee2mqtt/issues/1343 to bootloader
         // and give ZNP 1 second to start.
         const buffer = Buffer.from([0xef]);
         debug.log('Writing skip bootloader payload');
         this.unpiWriter.writeBuffer(buffer);
         await Wait(1000);
+    }
+
+    private async setSerialPortOptions(options: {dtr?: boolean; rts?: boolean}): Promise<void> {
+        return new Promise((resolve): void => {
+            this.serialPort.set(options, () => {
+                resolve();
+            });
+        });
     }
 
     public static async isValidPath(path: string): Promise<boolean> {

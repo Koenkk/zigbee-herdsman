@@ -13,6 +13,7 @@ const mockSerialPortList = jest.fn().mockReturnValue([]);
 const mockSerialPortOpen = jest.fn().mockImplementation((cb) => cb());
 const mockSerialPortConstructor = jest.fn();
 const mockSerialPortOnce = jest.fn();
+const mockSerialPortSet = jest.fn().mockImplementation((opts, cb) => cb());
 const mockSerialPortWrite = jest.fn((buffer, cb) => cb());
 let mockSerialPortIsOpen = false;
 
@@ -30,6 +31,7 @@ jest.mock('serialport', () => {
             once: mockSerialPortOnce,
             open: mockSerialPortOpen,
             pipe: mockSerialPortPipe,
+            set: mockSerialPortSet,
             write: mockSerialPortWrite,
             flush: mockSerialPortFlush,
             isOpen: mockSerialPortIsOpen,
@@ -134,6 +136,7 @@ describe('ZNP', () => {
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
         expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
         expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortSet).toHaveBeenCalledTimes(3);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
     });
 

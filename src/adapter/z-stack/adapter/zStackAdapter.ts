@@ -79,10 +79,16 @@ class ZStackAdapter extends Adapter {
     public async start(): Promise<StartResult> {
         await this.znp.open();
 
-        try {
-            await this.znp.request(Subsystem.SYS, 'ping', {capabilities: 1});
-        } catch (e) {
-            throw new Error(`Failed to connect to the adapter (${e})`);
+        const attempts = 3;
+        for (let i = 0; i < attempts; i++) {
+            try {
+                await this.znp.request(Subsystem.SYS, 'ping', {capabilities: 1});
+                break;
+            } catch (e) {
+                if (attempts - 1 === i) {
+                    throw new Error(`Failed to connect to the adapter (${e})`);
+                }
+            }
         }
 
         // Old firmware did not support version, assume it's Z-Stack 1.2 for now.
