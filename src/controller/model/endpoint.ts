@@ -180,7 +180,7 @@ class Endpoint extends Entity {
     private checkStatus(payload: [{status: Zcl.Status}]): void {
         for (const item of payload) {
             if (item.status !== Zcl.Status.SUCCESS) {
-                throw new Error(`Status '${Zcl.Status[item.status]}'`);
+                throw new Zcl.ZclStatusError(item.status);
             }
         }
     }
@@ -220,9 +220,9 @@ class Endpoint extends Entity {
                 this.checkStatus(result.frame.Payload);
             }
         } catch (error) {
-            const message = `${log} failed (${error})`;
-            debug.error(message);
-            throw Error(message);
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
         }
     }
 
@@ -258,9 +258,9 @@ class Endpoint extends Entity {
                 return null;
             }
         } catch (error) {
-            const message = `${log} failed (${error})`;
-            debug.error(message);
-            throw Error(message);
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
         }
     }
 
@@ -296,9 +296,9 @@ class Endpoint extends Entity {
                 this.deviceNetworkAddress, this.ID, frame, options.timeout, options.disableResponse, options.srcEndpoint
             );
         } catch (error) {
-            const message = `${log} failed (${error})`;
-            debug.error(message);
-            throw Error(message);
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
         }
     }
 
@@ -333,9 +333,9 @@ class Endpoint extends Entity {
                 this.getDevice().save();
             }
         } catch (error) {
-            const message = `${log} failed (${error})`;
-            debug.error(message);
-            throw Error(message);
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
         }
     }
 
@@ -362,9 +362,9 @@ class Endpoint extends Entity {
                 this.getDevice().save();
             }
         } catch (error) {
-            const message = `${log} failed (${error})`;
-            debug.error(message);
-            throw Error(message);
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
         }
     }
 
@@ -387,9 +387,9 @@ class Endpoint extends Entity {
             await Entity.adapter.sendZclFrameToEndpoint(this.deviceNetworkAddress, this.ID, frame,
                 options.timeout, options.disableResponse, options.srcEndpoint);
         } catch (error) {
-            const message = `${log} failed (${error})`;
-            debug.error(message);
-            throw Error(message);
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
         }
     }
 
@@ -441,9 +441,9 @@ class Endpoint extends Entity {
                 this.checkStatus(result.frame.Payload);
             }
         } catch (error) {
-            const message = `${log} failed (${error})`;
-            debug.error(message);
-            throw Error(message);
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
         }
     }
 
@@ -474,9 +474,9 @@ class Endpoint extends Entity {
                 return result.frame.Payload;
             }
         } catch (error) {
-            const message = `${log} failed (${error})`;
-            debug.error(message);
-            throw Error(message);
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
         }
     }
 
@@ -503,9 +503,9 @@ class Endpoint extends Entity {
             await Entity.adapter.sendZclFrameToEndpoint(this.deviceNetworkAddress, this.ID, frame,
                 options.timeout, options.disableResponse, options.srcEndpoint);
         } catch (error) {
-            const message = `${log} failed (${error})`;
-            debug.error(message);
-            throw Error(message);
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
         }
     }
 
