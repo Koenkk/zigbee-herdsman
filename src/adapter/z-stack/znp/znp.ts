@@ -43,7 +43,7 @@ interface WaitressMatcher {
     subsystem: Subsystem;
     command: string;
     payload?: ZpiObjectPayload;
-};
+}
 
 const autoDetectDefinitions = [
     {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16a8'}, // CC2531
@@ -131,6 +131,7 @@ class Znp extends events.EventEmitter {
         this.serialPort = new SerialPort(this.path, options);
 
         this.unpiWriter = new UnpiWriter();
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         this.unpiWriter.pipe(this.serialPort);
 
@@ -139,7 +140,7 @@ class Znp extends events.EventEmitter {
         this.unpiParser.on('parsed', this.onUnpiParsed);
 
         return new Promise((resolve, reject): void => {
-            this.serialPort.open(async (error: object): Promise<void> => {
+            this.serialPort.open(async (error): Promise<void> => {
                 if (error) {
                     reject(new Error(`Error while opening serialport '${error}'`));
                     this.initialized = false;

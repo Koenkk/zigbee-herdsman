@@ -36,7 +36,7 @@ interface WaitressMatcher {
     clusterID: number;
     commandIdentifier: number;
     direction: number;
-};
+}
 
 class DataConfirmError extends Error {
     public code: number;
@@ -741,7 +741,7 @@ class ZStackAdapter extends Adapter {
         }
 
         return dataConfirm;
-    };
+    }
 
     private async dataRequestExtended(
         addressMode: number, destinationAddressOrGroupID: number | string, destinationEndpoint: number, panID: number,
@@ -787,7 +787,7 @@ class ZStackAdapter extends Adapter {
 
             return dataConfirm;
         }
-    };
+    }
 
     private nextTransactionID(): number {
         this.transactionID++;

@@ -49,9 +49,9 @@ class Device extends Entity {
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
-    set ieeeAddr(ieeeAddr) {this._ieeeAddr = ieeeAddr;}
+    set ieeeAddr(ieeeAddr: string) {this._ieeeAddr = ieeeAddr;}
     get applicationVersion(): number {return this._applicationVersion;}
-    set applicationVersion(applicationVersion) {this._applicationVersion = applicationVersion;}
+    set applicationVersion(applicationVersion: number) {this._applicationVersion = applicationVersion;}
     get endpoints(): Endpoint[] {return this._endpoints;}
     get interviewCompleted(): boolean {return this._interviewCompleted;}
     get interviewing(): boolean {return this._interviewing;}
@@ -59,30 +59,30 @@ class Device extends Entity {
     get manufacturerID(): number {return this._manufacturerID;}
     get type(): DeviceType {return this._type;}
     get dateCode(): string {return this._dateCode;}
-    set dateCode(dateCode) {this._dateCode = dateCode;}
-    set hardwareVersion(hardwareVersion) {this._hardwareVersion = hardwareVersion;}
+    set dateCode(dateCode: string) {this._dateCode = dateCode;}
+    set hardwareVersion(hardwareVersion: number) {this._hardwareVersion = hardwareVersion;}
     get hardwareVersion(): number {return this._hardwareVersion;}
     get manufacturerName(): string {return this._manufacturerName;}
-    set manufacturerName(manufacturerName) {this._manufacturerName = manufacturerName;}
-    set modelID(modelID) {this._modelID = modelID;}
+    set manufacturerName(manufacturerName: string) {this._manufacturerName = manufacturerName;}
+    set modelID(modelID: string) {this._modelID = modelID;}
     get modelID(): string {return this._modelID;}
     get networkAddress(): number {return this._networkAddress;}
-    set networkAddress(networkAddress) {
+    set networkAddress(networkAddress: number) {
         this._networkAddress = networkAddress;
         for (const endpoint of this._endpoints) {
             endpoint.deviceNetworkAddress = networkAddress;
         }
     }
     get powerSource(): string {return this._powerSource;}
-    set powerSource(powerSource) {
+    set powerSource(powerSource: string) {
         this._powerSource = typeof powerSource === 'number' ? Zcl.PowerSource[powerSource] : powerSource;
     }
     get softwareBuildID(): string {return this._softwareBuildID;}
-    set softwareBuildID(softwareBuildID) {this._softwareBuildID = softwareBuildID;}
+    set softwareBuildID(softwareBuildID: string) {this._softwareBuildID = softwareBuildID;}
     get stackVersion(): number {return this._stackVersion;}
-    set stackVersion(stackVersion) {this._stackVersion = stackVersion;}
+    set stackVersion(stackVersion: number) {this._stackVersion = stackVersion;}
     get zclVersion(): number {return this._zclVersion;}
-    set zclVersion(zclVersion) {this._zclVersion = zclVersion;}
+    set zclVersion(zclVersion: number) {this._zclVersion = zclVersion;}
 
     private meta: KeyValue;
 

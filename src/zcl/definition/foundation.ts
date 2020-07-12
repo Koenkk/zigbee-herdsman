@@ -11,7 +11,7 @@ interface FoundationDefinition {
     parseStrategy: 'repetitive' | 'flat' | 'oneof';
     parameters: ParameterDefinition[];
     response?: number;
-};
+}
 
 const Foundation: {
     [s: string]: FoundationDefinition;

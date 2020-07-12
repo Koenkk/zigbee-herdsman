@@ -11,11 +11,11 @@ interface SerialPortOptions {
     rtscts?: boolean;
     path?: string;
     adapter?: 'zstack' | 'deconz';
-};
+}
 
 interface AdapterOptions {
     concurrent: number;
-};
+}
 
 interface CoordinatorVersion {
     type: string;
@@ -51,7 +51,7 @@ interface RoutingTableEntry {
     destinationAddress: number;
     status: string;
     nextHop: number;
-};
+}
 
 interface RoutingTable {
     table: RoutingTableEntry[];

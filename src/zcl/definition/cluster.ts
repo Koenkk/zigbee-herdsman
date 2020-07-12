@@ -20,13 +20,13 @@ interface ClusterDefinition {
     commandsResponse: {
         [s: string]: CommandDefinition;
     };
-};
+}
 
 interface CommandDefinition {
     ID: number;
     parameters: ParameterDefinition[];
     response?: number;
-};
+}
 
 const Cluster: {
     [s: string]: ClusterDefinition;

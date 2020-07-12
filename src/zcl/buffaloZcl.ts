@@ -42,7 +42,7 @@ const aliases: {[s: string]: string} = {
     'set': 'array',
 };
 
-interface ThermoTransition {transitionTime: number; heatSetpoint?: number; coolSetpoint?: number};
+interface ThermoTransition {transitionTime: number; heatSetpoint?: number; coolSetpoint?: number}
 
 class BuffaloZcl extends Buffalo {
     private readUseDataType(options: BuffaloZclOptions): TsType.Value {

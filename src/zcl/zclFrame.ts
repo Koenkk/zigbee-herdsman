@@ -234,7 +234,7 @@ class ZclFrame {
         }
 
         return payload;
-    };
+    }
 
     private static parsePayloadGlobal(header: ZclHeader, buffalo: BuffaloZcl): ZclPayload {
         const command = Object.values(Foundation).find((c): boolean => c.ID === header.commandIdentifier);

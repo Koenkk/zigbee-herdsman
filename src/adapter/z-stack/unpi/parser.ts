@@ -13,7 +13,7 @@ class Parser extends stream.Transform {
         this.buffer = Buffer.from([]);
     }
 
-    public _transform(chunk: Buffer, _: string, cb: Function): void {
+    public _transform(chunk: Buffer, _: string, cb: () => void): void {
         debug(`<-- [${[...chunk]}]`);
         this.buffer = Buffer.concat([this.buffer, chunk]);
         this.parseNext();

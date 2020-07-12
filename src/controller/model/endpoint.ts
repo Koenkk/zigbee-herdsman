@@ -76,7 +76,7 @@ class Endpoint extends Entity {
 
             return {target, cluster: Zcl.Utils.getCluster(entry.cluster)};
         });
-    };
+    }
 
     private constructor(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
@@ -124,8 +124,10 @@ class Endpoint extends Entity {
     ): Endpoint {
         // Migrate attrs to attributes
         for (const entry of Object.values(record.clusters).filter((e) => e.hasOwnProperty('attrs'))) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             entry.attributes = entry.attrs;
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             delete entry.attrs;
         }

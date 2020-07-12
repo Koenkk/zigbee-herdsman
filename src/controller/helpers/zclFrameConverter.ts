@@ -1,6 +1,6 @@
 import {ZclFrame} from '../../zcl';
 
-interface KeyValue {[s: string]: number | string};
+interface KeyValue {[s: string]: number | string}
 
 function attributeKeyValue(frame: ZclFrame): KeyValue {
     const payload: KeyValue = {};
