@@ -14,14 +14,14 @@ class Parser extends stream.Transform {
     }
 
     public _transform(chunk: Buffer, _: string, cb: Function): void {
-        debug(`<-- [${chunk.toJSON().data}]`);
+        debug(`<-- [${[...chunk]}]`);
         this.buffer = Buffer.concat([this.buffer, chunk]);
         this.parseNext();
         cb();
     }
 
     private parseNext(): void {
-        debug(`--- parseNext [${this.buffer.toJSON().data}]`);
+        debug(`--- parseNext [${[...this.buffer]}]`);
 
         if (this.buffer.length !== 0 && this.buffer.readUInt8(0) !== SOF) {
             // Buffer doesn't start with SOF, skip till SOF.

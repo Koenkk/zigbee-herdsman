@@ -18,7 +18,7 @@ import {Subsystem, Type} from '../unpi/constants';
 import SerialPort from 'serialport';
 import net from 'net';
 import events from 'events';
-import Equals from 'fast-deep-equal';
+import Equals from 'fast-deep-equal/es6';
 import Debug from "debug";
 
 const {COMMON: {ZnpCommandStatus}, Utils: {statusDescription}} = Constants;

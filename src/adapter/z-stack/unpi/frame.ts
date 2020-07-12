@@ -60,8 +60,7 @@ class Frame {
     }
 
     public toString(): string {
-        return `${this.length} - ${this.type} - ${this.subsystem} - ${this.commandID} - `
-            + `[${this.data.toJSON().data}] - ${this.fcs}`;
+        return `${this.length} - ${this.type} - ${this.subsystem} - ${this.commandID} - [${[...this.data]}] - ${this.fcs}`;
     }
 }
 

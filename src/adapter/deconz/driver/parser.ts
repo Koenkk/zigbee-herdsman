@@ -35,9 +35,9 @@ class Parser extends stream.Transform {
     }
 
     public _transform(chunk: Buffer, _: string, cb: Function): void {
-        //debug(`<-- [${chunk.toJSON().data}]`);
+        //debug(`<-- [${[...chunk]}]`);
         this.decoder.decode(chunk);
-        //debug(`<-- [${chunk.toJSON().data}]`);
+        //debug(`<-- [${[...chunk]}]`);
         cb();
     }
 }

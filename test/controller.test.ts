@@ -2,7 +2,7 @@ import "regenerator-runtime/runtime";
 import {Controller} from '../src/controller';
 import {ZStackAdapter} from '../src/adapter/z-stack/adapter';
 import {DeconzAdapter} from '../src/adapter/deconz/adapter';
-import equals from 'fast-deep-equal';
+import equals from 'fast-deep-equal/es6';
 import fs from 'fs';
 import { ZclFrame } from "../src/zcl";
 import { Device, Group } from "../src/controller/model";
