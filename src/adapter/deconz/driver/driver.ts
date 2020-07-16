@@ -40,6 +40,7 @@ class Driver extends events.EventEmitter {
     private frameParserEvent = frameParser.frameParserEvents;
     private seqNumber: number;
     private timeoutResetTimeout: any;
+    private apsRequestFreeSlots: number;
 
     public constructor(path: string) {
         super();
@@ -47,6 +48,8 @@ class Driver extends events.EventEmitter {
         this.initialized = false;
         this.seqNumber = 0;
         this.timeoutResetTimeout = null;
+
+        this.apsRequestFreeSlots = 1;
 
         const that = this;
         setInterval(() => { that.processQueue(); }, 50);  //300
@@ -232,9 +235,14 @@ class Driver extends events.EventEmitter {
 
     private sendRequest(buffer: number[]) {
         const crc = this.calcCrc(Buffer.from(buffer));
-        const frame = Buffer.from([0xc0].concat(buffer).concat([crc[0], crc[1], 0xc0]));
-        //debug(frame);
-        this.serialPort.write(frame);
+        const frame = Buffer.from(buffer.concat([crc[0], crc[1]]));
+        const slipframe = slip.encode(frame);
+
+        this.serialPort.write(slipframe, function(err) {
+            if (err) {
+                console.log("Error writing serial Port: " + err.message);
+            }
+        });
     }
 
     private processQueue() {
@@ -393,6 +401,12 @@ class Driver extends events.EventEmitter {
 
     private processApsQueue() {
         if (apsQueue.length === 0) {
+            return;
+        }
+
+        if (this.apsRequestFreeSlots !== 1) {
+            debug("no free slots. Delay sending of APS Request");
+            this.sleep(1000);
             return;
         }
 
@@ -565,10 +579,14 @@ class Driver extends events.EventEmitter {
     private onParsed(frame: Uint8Array): void {
         this.emit('rxFrame', frame);
     }
+
+    private sleep(ms: number) : Promise<void>{
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     private resetTimeoutCounterAfter1min() {
         if (this.timeoutResetTimeout === null) {
             this.timeoutResetTimeout = setTimeout(function(){
-                console.log("reset timeoutcounter");
                 timeoutCounter = 0;
                 this.timeoutResetTimeout = null;
             }, 60000);
