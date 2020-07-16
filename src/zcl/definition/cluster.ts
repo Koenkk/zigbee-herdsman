@@ -1795,6 +1795,25 @@ const Cluster: {
         commandsResponse: {
         },
     },
+    closuresWindowCoveringZMCSW032D: {
+        ID: 258,
+        attributes: {},
+        commands: {
+            open: {
+                ID: 0,
+                parameters: [],
+            },
+            close: {
+                ID: 1,
+                parameters: [],
+            },
+            stop: {
+                ID: 2,
+                parameters: [],
+            }
+        },
+        commandsResponse: {},
+    },
     hvacPumpCfgCtrl: {
         ID: 512,
         attributes: {
