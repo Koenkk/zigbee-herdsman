@@ -101,6 +101,14 @@ class Group extends Entity {
         return group;
     }
 
+    public async removeFromNetwork(): Promise<void> {
+        for (const endpoint of this._members) {
+            await endpoint.removeFromGroup(this);
+        }
+
+        this.removeFromDatabase();
+    }
+
     public removeFromDatabase(): void {
         Group.loadFromDatabaseIfNecessary();
 
@@ -151,9 +159,9 @@ class Group extends Entity {
             );
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
-            const message = `${log} failed (${error})`;
-            debug.error(message);
-            throw Error(message);
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
         }
     }
 

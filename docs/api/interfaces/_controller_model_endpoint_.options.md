@@ -10,18 +10,38 @@
 
 ### Properties
 
+* [direction](_controller_model_endpoint_.options.md#optional-direction)
 * [disableDefaultResponse](_controller_model_endpoint_.options.md#optional-disabledefaultresponse)
+* [disableResponse](_controller_model_endpoint_.options.md#optional-disableresponse)
 * [manufacturerCode](_controller_model_endpoint_.options.md#optional-manufacturercode)
-* [response](_controller_model_endpoint_.options.md#optional-response)
+* [reservedBits](_controller_model_endpoint_.options.md#optional-reservedbits)
+* [srcEndpoint](_controller_model_endpoint_.options.md#optional-srcendpoint)
 * [timeout](_controller_model_endpoint_.options.md#optional-timeout)
+* [transactionSequenceNumber](_controller_model_endpoint_.options.md#optional-transactionsequencenumber)
 
 ## Properties
+
+### `Optional` direction
+
+• **direction**? : *Direction*
+
+*Defined in [src/controller/model/endpoint.ts:28](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L28)*
+
+___
 
 ### `Optional` disableDefaultResponse
 
 • **disableDefaultResponse**? : *boolean*
 
-*Defined in [src/controller/model/endpoint.ts:24](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L24)*
+*Defined in [src/controller/model/endpoint.ts:25](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L25)*
+
+___
+
+### `Optional` disableResponse
+
+• **disableResponse**? : *boolean*
+
+*Defined in [src/controller/model/endpoint.ts:26](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L26)*
 
 ___
 
@@ -29,15 +49,23 @@ ___
 
 • **manufacturerCode**? : *number*
 
-*Defined in [src/controller/model/endpoint.ts:23](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L23)*
+*Defined in [src/controller/model/endpoint.ts:24](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L24)*
 
 ___
 
-### `Optional` response
+### `Optional` reservedBits
 
-• **response**? : *boolean*
+• **reservedBits**? : *number*
 
-*Defined in [src/controller/model/endpoint.ts:25](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L25)*
+*Defined in [src/controller/model/endpoint.ts:30](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L30)*
+
+___
+
+### `Optional` srcEndpoint
+
+• **srcEndpoint**? : *number*
+
+*Defined in [src/controller/model/endpoint.ts:29](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L29)*
 
 ___
 
@@ -45,4 +73,12 @@ ___
 
 • **timeout**? : *number*
 
-*Defined in [src/controller/model/endpoint.ts:26](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L26)*
+*Defined in [src/controller/model/endpoint.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L27)*
+
+___
+
+### `Optional` transactionSequenceNumber
+
+• **transactionSequenceNumber**? : *number*
+
+*Defined in [src/controller/model/endpoint.ts:31](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L31)*

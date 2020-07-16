@@ -1,12 +1,16 @@
 [zigbee-herdsman](../README.md) › ["controller/model/group"](_controller_model_group_.md)
 
-# External module: "controller/model/group"
+# Module: "controller/model/group"
 
 ## Index
 
 ### Classes
 
 * [Group](../classes/_controller_model_group_.group.md)
+
+### Interfaces
+
+* [Options](../interfaces/_controller_model_group_.options.md)
 
 ### Object literals
 
@@ -18,16 +22,16 @@
 
 ### ▪ **debug**: *object*
 
-*Defined in [src/controller/model/group.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L10)*
+*Defined in [src/controller/model/group.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L10)*
 
 ###  error
 
 • **error**: *Debugger* = Debug('zigbee-herdsman:controller:group')
 
-*Defined in [src/controller/model/group.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L12)*
+*Defined in [src/controller/model/group.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L12)*
 
 ###  info
 
 • **info**: *Debugger* = Debug('zigbee-herdsman:controller:group')
 
-*Defined in [src/controller/model/group.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/group.ts#L11)*
+*Defined in [src/controller/model/group.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L11)*

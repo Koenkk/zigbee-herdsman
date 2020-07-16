@@ -22,7 +22,7 @@
 
 • **cluster**: *number*
 
-*Defined in [src/controller/model/endpoint.ts:36](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L36)*
+*Defined in [src/controller/model/endpoint.ts:41](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L41)*
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 • **deviceIeeeAddress**? : *string*
 
-*Defined in [src/controller/model/endpoint.ts:38](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L38)*
+*Defined in [src/controller/model/endpoint.ts:43](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L43)*
 
 ___
 
@@ -38,7 +38,7 @@ ___
 
 • **endpointID**? : *number*
 
-*Defined in [src/controller/model/endpoint.ts:39](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L39)*
+*Defined in [src/controller/model/endpoint.ts:44](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L44)*
 
 ___
 
@@ -46,7 +46,7 @@ ___
 
 • **groupID**? : *number*
 
-*Defined in [src/controller/model/endpoint.ts:40](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L40)*
+*Defined in [src/controller/model/endpoint.ts:45](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L45)*
 
 ___
 
@@ -54,4 +54,4 @@ ___
 
 • **type**: *"endpoint" | "group"*
 
-*Defined in [src/controller/model/endpoint.ts:37](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L37)*
+*Defined in [src/controller/model/endpoint.ts:42](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L42)*

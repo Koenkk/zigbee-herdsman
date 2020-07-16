@@ -4,7 +4,7 @@
 
 ## Index
 
-### External modules
+### Modules
 
 * ["adapter/tstype"](modules/_adapter_tstype_.md)
 * ["controller/controller"](modules/_controller_controller_.md)

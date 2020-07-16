@@ -1,13 +1,13 @@
 interface Waiter<TPayload, TMatcher> {
     ID: number;
     resolve: (payload: TPayload) => void;
-    reject: Function;
+    reject: (error: Error) => void;
     // eslint-disable-next-line
     timer?: any;
     resolved: boolean;
     timedout: boolean;
     matcher: TMatcher;
-};
+}
 
 type Validator<TPayload, TMatcher> = (payload: TPayload, matcher: TMatcher) => boolean;
 type TimeoutFormatter<TMatcher> = (matcher: TMatcher, timeout: number) => string;

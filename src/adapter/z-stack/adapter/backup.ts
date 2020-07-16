@@ -4,7 +4,7 @@ import {ZnpVersion} from './tstype';
 import {Znp} from '../znp';
 import {Subsystem} from '../unpi/constants';
 import fs from 'fs';
-import equals from 'fast-deep-equal';
+import equals from 'fast-deep-equal/es6';
 import Items from './nvItems';
 
 const {NvItemsIds, NvSystemIds, ZnpCommandStatus} = Constants.COMMON;
@@ -120,7 +120,7 @@ async function Backup(znp: Znp): Promise<BackupType> {
                 const len = (await znp.request(Subsystem.SYS, 'nvLength', entry)).payload.len;
                 result = await znp.request(Subsystem.SYS, 'nvRead', {...entry, len});
             }
-            data[key] = {...entry, value: result.payload.value.toJSON().data, len: result.payload.value.length};
+            data[key] = {...entry, value: [...result.payload.value], len: result.payload.value.length};
         }
     }
 

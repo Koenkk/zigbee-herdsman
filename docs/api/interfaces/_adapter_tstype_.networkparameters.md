@@ -20,7 +20,7 @@
 
 • **channel**: *number*
 
-*Defined in [src/adapter/tstype.ts:89](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L89)*
+*Defined in [src/adapter/tstype.ts:92](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L92)*
 
 ___
 
@@ -28,7 +28,7 @@ ___
 
 • **extendedPanID**: *number*
 
-*Defined in [src/adapter/tstype.ts:88](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L88)*
+*Defined in [src/adapter/tstype.ts:91](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L91)*
 
 ___
 
@@ -36,4 +36,4 @@ ___
 
 • **panID**: *number*
 
-*Defined in [src/adapter/tstype.ts:87](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L87)*
+*Defined in [src/adapter/tstype.ts:90](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L90)*

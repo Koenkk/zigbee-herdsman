@@ -1,4 +1,4 @@
-import Equals from 'fast-deep-equal';
+import Equals from 'fast-deep-equal/es6';
 
 // eslint-disable-next-line
 interface ObjectAny {[s: string]: any};

@@ -1,12 +1,13 @@
 [zigbee-herdsman](../README.md) › ["adapter/tstype"](_adapter_tstype_.md)
 
-# External module: "adapter/tstype"
+# Module: "adapter/tstype"
 
 ## Index
 
 ### Interfaces
 
 * [ActiveEndpoints](../interfaces/_adapter_tstype_.activeendpoints.md)
+* [AdapterOptions](../interfaces/_adapter_tstype_.adapteroptions.md)
 * [Backup](../interfaces/_adapter_tstype_.backup.md)
 * [Coordinator](../interfaces/_adapter_tstype_.coordinator.md)
 * [CoordinatorVersion](../interfaces/_adapter_tstype_.coordinatorversion.md)
@@ -31,7 +32,7 @@
 
 Ƭ **DeviceType**: *"Coordinator" | "EndDevice" | "Router" | "Unknown"*
 
-*Defined in [src/adapter/tstype.ts:22](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L22)*
+*Defined in [src/adapter/tstype.ts:25](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L25)*
 
 ___
 
@@ -39,4 +40,4 @@ ___
 
 Ƭ **StartResult**: *"resumed" | "reset" | "restored"*
 
-*Defined in [src/adapter/tstype.ts:24](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/adapter/tstype.ts#L24)*
+*Defined in [src/adapter/tstype.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L27)*

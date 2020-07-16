@@ -48,6 +48,7 @@ class Driver extends events.EventEmitter {
         this.initialized = false;
         this.seqNumber = 0;
         this.timeoutResetTimeout = null;
+
         this.apsRequestFreeSlots = 1;
 
         const that = this;

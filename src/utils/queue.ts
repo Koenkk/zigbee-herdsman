@@ -3,8 +3,9 @@ interface Job {
     // eslint-disable-next-line
     func: () => Promise<any>;
     running: boolean;
-    resolve: Function;
-    reject: Function;
+    // eslint-disable-next-line
+    resolve: (result: any) => void;
+    reject: (error: Error) => void;
 }
 
 class Queue {

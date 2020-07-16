@@ -18,7 +18,7 @@ import {Subsystem, Type} from '../unpi/constants';
 import SerialPort from 'serialport';
 import net from 'net';
 import events from 'events';
-import Equals from 'fast-deep-equal';
+import Equals from 'fast-deep-equal/es6';
 import Debug from "debug";
 
 const {COMMON: {ZnpCommandStatus}, Utils: {statusDescription}} = Constants;
@@ -43,11 +43,12 @@ interface WaitressMatcher {
     subsystem: Subsystem;
     command: string;
     payload?: ZpiObjectPayload;
-};
+}
 
 const autoDetectDefinitions = [
     {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16a8'}, // CC2531
     {manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'}, // CC1352P_2 and CC26X2R1
+    {manufacturer: 'Electrolama', vendorId: '0403', productId: '6015'}, // ZZH
 ];
 
 class Znp extends events.EventEmitter {
@@ -68,8 +69,8 @@ class Znp extends events.EventEmitter {
         super();
 
         this.path = path;
-        this.baudRate = baudRate;
-        this.rtscts = rtscts;
+        this.baudRate = typeof baudRate === 'number' ? baudRate : 115200;
+        this.rtscts = typeof rtscts === 'boolean' ? rtscts : false;
         this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
 
         this.initialized = false;
@@ -130,6 +131,7 @@ class Znp extends events.EventEmitter {
         this.serialPort = new SerialPort(this.path, options);
 
         this.unpiWriter = new UnpiWriter();
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         this.unpiWriter.pipe(this.serialPort);
 
@@ -138,7 +140,7 @@ class Znp extends events.EventEmitter {
         this.unpiParser.on('parsed', this.onUnpiParsed);
 
         return new Promise((resolve, reject): void => {
-            this.serialPort.open(async (error: object): Promise<void> => {
+            this.serialPort.open(async (error): Promise<void> => {
                 if (error) {
                     reject(new Error(`Error while opening serialport '${error}'`));
                     this.initialized = false;
@@ -201,12 +203,31 @@ class Znp extends events.EventEmitter {
     }
 
     private async skipBootloader(): Promise<void> {
+        // Skip bootloader on some CC2652 devices (e.g. zzh-p)
+        if (this.serialPort) {
+            await this.setSerialPortOptions({dtr: false, rts: false});
+            await Wait(150);
+            await this.setSerialPortOptions({dtr: false, rts: true});
+            await Wait(150);
+            await this.setSerialPortOptions({dtr: false, rts: false});
+            await Wait(150);
+        }
+
+        // Skip bootloader on CC2530/CC2531
         // Send magic byte: https://github.com/Koenkk/zigbee2mqtt/issues/1343 to bootloader
         // and give ZNP 1 second to start.
         const buffer = Buffer.from([0xef]);
         debug.log('Writing skip bootloader payload');
         this.unpiWriter.writeBuffer(buffer);
         await Wait(1000);
+    }
+
+    private async setSerialPortOptions(options: {dtr?: boolean; rts?: boolean}): Promise<void> {
+        return new Promise((resolve): void => {
+            this.serialPort.set(options, () => {
+                resolve();
+            });
+        });
     }
 
     public static async isValidPath(path: string): Promise<boolean> {

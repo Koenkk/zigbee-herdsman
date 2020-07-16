@@ -2,7 +2,7 @@ import "regenerator-runtime/runtime";
 import {Znp} from '../../../src/adapter/z-stack/znp';
 import {ZStackAdapter} from '../../../src/adapter/z-stack/adapter';
 import {Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
-import equals from 'fast-deep-equal';
+import equals from 'fast-deep-equal/es6';
 import * as Constants from '../../../src/adapter/z-stack/constants';
 import fs from 'fs';
 import path from 'path';

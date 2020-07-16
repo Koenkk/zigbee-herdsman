@@ -1,7 +1,7 @@
 import {Znp} from '../znp';
 import {Constants as UnpiConstants} from '../unpi';
 import * as Constants from '../constants';
-import equals from 'fast-deep-equal';
+import equals from 'fast-deep-equal/es6';
 import * as TsType from '../../tstype';
 import * as Zcl from '../../../zcl';
 import {ZnpVersion, NvItem} from './tstype';

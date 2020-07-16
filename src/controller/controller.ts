@@ -11,6 +11,7 @@ import {Utils as ZclUtils, FrameControl} from '../zcl';
 import Touchlink from './touchlink';
 import GreenPower from './greenPower';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import mixin from 'mixin-deep';
 import Group from './model/group';
@@ -28,7 +29,7 @@ interface Options {
      * try to remove the device from the network.
      */
     acceptJoiningDeviceHandler: (ieeeAddr: string) => Promise<boolean>;
-};
+}
 
 const DefaultOptions: Options = {
     network: {
@@ -38,12 +39,7 @@ const DefaultOptions: Options = {
         extendedPanID: [0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD],
         channelList: [11],
     },
-    serialPort: {
-        baudRate: 115200,
-        rtscts: true,
-        path: null,
-        adapter: null,
-    },
+    serialPort: {},
     databasePath: null,
     databaseBackupPath: null,
     backupPath: null,

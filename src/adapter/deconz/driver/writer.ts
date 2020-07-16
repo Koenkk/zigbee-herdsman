@@ -11,7 +11,7 @@ const debug = Debug('zigbee-herdsman:deconz:driver:writer');
 class Writer extends stream.Readable {
     public writeFrame(frame: Frame): void {
         const buffer = slip.encode(frame.toBuffer());
-        debug(`--> frame [${buffer.toJSON().data}]`);
+        debug(`--> frame [${[...buffer]}]`);
         this.push(buffer);
     }
 

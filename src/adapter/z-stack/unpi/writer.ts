@@ -7,12 +7,12 @@ const debug = Debug('zigbee-herdsman:adapter:zStack:unpi:writer');
 class Writer extends stream.Readable {
     public writeFrame(frame: Frame): void {
         const buffer = frame.toBuffer();
-        debug(`--> frame [${buffer.toJSON().data}]`);
+        debug(`--> frame [${[...buffer]}]`);
         this.push(buffer);
     }
 
     public writeBuffer(buffer: Buffer): void {
-        debug(`--> buffer [${buffer.toJSON().data}]`);
+        debug(`--> buffer [${[...buffer]}]`);
         this.push(buffer);
     }
 

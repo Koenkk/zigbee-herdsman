@@ -5,7 +5,7 @@ type MtType = number|number[]|string|Buffer|{[s: string]: number|string}[];
 interface MtParameter {
     name: string;
     parameterType: number;
-};
+}
 
 interface MtCmd {
     name: string;
@@ -13,7 +13,7 @@ interface MtCmd {
     type: number;
     request?: MtParameter[];
     response?: MtParameter[];
-};
+}
 
 // eslint-disable-next-line
 type ZpiObjectPayload = any;

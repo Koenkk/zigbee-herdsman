@@ -20,13 +20,13 @@ interface ClusterDefinition {
     commandsResponse: {
         [s: string]: CommandDefinition;
     };
-};
+}
 
 interface CommandDefinition {
     ID: number;
     parameters: ParameterDefinition[];
     response?: number;
-};
+}
 
 const Cluster: {
     [s: string]: ClusterDefinition;
@@ -2311,6 +2311,17 @@ const Cluster: {
         commandsResponse: {
         },
     },
+    pHMeasurement: {
+        ID: 1033,
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.uint16},
+            minMeasuredValue: {ID: 1, type: DataType.uint16},
+            maxMeasuredValue: {ID: 2, type: DataType.uint16},
+            tolerance: {ID: 3, type: DataType.uint16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     ssIasZone: {
         ID: 1280,
         attributes: {
@@ -2367,6 +2378,8 @@ const Cluster: {
                 ID: 0,
                 parameters: [
                     {name: 'armmode', type: DataType.uint8},
+                    {name: 'code', type: DataType.charStr},
+                    {name: 'zoneid', type: DataType.uint8},
                 ],
             },
             bypass: {

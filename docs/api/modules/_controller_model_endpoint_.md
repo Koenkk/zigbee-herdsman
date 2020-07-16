@@ -1,6 +1,6 @@
 [zigbee-herdsman](../README.md) › ["controller/model/endpoint"](_controller_model_endpoint_.md)
 
-# External module: "controller/model/endpoint"
+# Module: "controller/model/endpoint"
 
 ## Index
 
@@ -26,16 +26,16 @@
 
 ### ▪ **debug**: *object*
 
-*Defined in [src/controller/model/endpoint.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L10)*
+*Defined in [src/controller/model/endpoint.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L11)*
 
 ###  error
 
 • **error**: *Debugger* = Debug('zigbee-herdsman:controller:endpoint')
 
-*Defined in [src/controller/model/endpoint.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L12)*
+*Defined in [src/controller/model/endpoint.ts:13](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L13)*
 
 ###  info
 
 • **info**: *Debugger* = Debug('zigbee-herdsman:controller:endpoint')
 
-*Defined in [src/controller/model/endpoint.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/3a6811a/src/controller/model/endpoint.ts#L11)*
+*Defined in [src/controller/model/endpoint.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L12)*

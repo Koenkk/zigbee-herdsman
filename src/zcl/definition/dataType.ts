@@ -58,6 +58,6 @@ enum DataType {
     int56 = 46,
     int64 = 47,
     semiPrec = 56,
-};
+}
 
 export default DataType;
