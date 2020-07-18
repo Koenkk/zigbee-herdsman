@@ -194,6 +194,7 @@ class ZStackAdapter extends Adapter {
 
     private async discoverRoute(networkAddress: number): Promise<void> {
         const payload =  {dstAddr: networkAddress, options: 0, radius: Constants.AF.DEFAULT_RADIUS};
+        debug('Discovering route to %d', networkAddress);
         await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
         await Wait(3000);
     }
@@ -712,6 +713,7 @@ class ZStackAdapter extends Adapter {
 
         const dataConfirm = await response.start().promise;
         if (dataConfirm.payload.status !== ZnpCommandStatus.SUCCESS) {
+            debug('Data confirm error (%d, %d, %d)', destinationAddress, dataConfirm.payload.status, attemptsLeft);
             if ([ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE, ZnpCommandStatus.MAC_TRANSACTION_EXPIRED]
                 .includes(dataConfirm.payload.status) && attemptsLeft > 0
             ) {
