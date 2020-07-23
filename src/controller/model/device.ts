@@ -57,6 +57,7 @@ class Device extends Entity {
     get interviewing(): boolean {return this._interviewing;}
     get lastSeen(): number {return this._lastSeen;}
     get manufacturerID(): number {return this._manufacturerID;}
+    set type(type: DeviceType) {this._type = type;}
     get type(): DeviceType {return this._type;}
     get dateCode(): string {return this._dateCode;}
     set dateCode(dateCode: string) {this._dateCode = dateCode;}

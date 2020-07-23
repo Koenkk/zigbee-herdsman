@@ -1773,6 +1773,13 @@ describe('Controller', () => {
         expect(error).toStrictEqual(new Error("Device with ieeeAddr '0x129' already exists"));
     });
 
+    it('Should allow to set type', async () => {
+        await controller.start();
+        const device = await Device.create('Router', '0x129', 140, null, null, null, null, null, []);
+        device.type = "EndDevice";
+        expect(device.type).toStrictEqual("EndDevice");
+    });
+
     it('Return device from databse when not in lookup', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x129'});
