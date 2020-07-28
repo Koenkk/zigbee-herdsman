@@ -3782,6 +3782,20 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    manuSpecificSamsungAccelerometer: {
+        ID: 0xFC02,
+        manufacturerCode: ManufacturerCode.SmartThings,
+        attributes: {
+            motion_threshold_multiplier: {ID: 0, type: DataType.uint8},
+            motion_threshold: {ID: 2, type: DataType.uint16},
+            acceleration: {ID: 16, type: DataType.bitmap8},
+            x_axis: {ID:18, type: DataType.int16},
+            y_axis: {ID:19, type: DataType.int16},
+            z_axis: {ID:20, type: DataType.int16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
 };
 
 export default Cluster;
