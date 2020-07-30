@@ -424,7 +424,7 @@ ___
 
 ▸ **interview**(): *Promise‹void›*
 
-*Defined in [src/controller/model/device.ts:327](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L327)*
+*Defined in [src/controller/model/device.ts:328](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L328)*
 
 **Returns:** *Promise‹void›*
 
@@ -434,7 +434,7 @@ ___
 
 ▸ **lqi**(): *Promise‹[LQI](../interfaces/_src_adapter_tstype_.lqi.md)›*
 
-*Defined in [src/controller/model/device.ts:541](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L541)*
+*Defined in [src/controller/model/device.ts:542](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L542)*
 
 **Returns:** *Promise‹[LQI](../interfaces/_src_adapter_tstype_.lqi.md)›*
 
@@ -461,7 +461,7 @@ ___
 
 ▸ **ping**(): *Promise‹void›*
 
-*Defined in [src/controller/model/device.ts:549](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L549)*
+*Defined in [src/controller/model/device.ts:550](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L550)*
 
 **Returns:** *Promise‹void›*
 
@@ -471,7 +471,7 @@ ___
 
 ▸ **removeFromDatabase**(): *Promise‹void›*
 
-*Defined in [src/controller/model/device.ts:527](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L527)*
+*Defined in [src/controller/model/device.ts:528](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L528)*
 
 **Returns:** *Promise‹void›*
 
@@ -481,7 +481,7 @@ ___
 
 ▸ **removeFromNetwork**(): *Promise‹void›*
 
-*Defined in [src/controller/model/device.ts:522](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L522)*
+*Defined in [src/controller/model/device.ts:523](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L523)*
 
 **Returns:** *Promise‹void›*
 
@@ -491,7 +491,7 @@ ___
 
 ▸ **routingTable**(): *Promise‹[RoutingTable](../interfaces/_src_adapter_tstype_.routingtable.md)›*
 
-*Defined in [src/controller/model/device.ts:545](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L545)*
+*Defined in [src/controller/model/device.ts:546](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L546)*
 
 **Returns:** *Promise‹[RoutingTable](../interfaces/_src_adapter_tstype_.routingtable.md)›*
 
@@ -501,7 +501,7 @@ ___
 
 ▸ **save**(): *void*
 
-*Defined in [src/controller/model/device.ts:257](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L257)*
+*Defined in [src/controller/model/device.ts:258](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L258)*
 
 **Returns:** *void*
 
@@ -521,7 +521,7 @@ ___
 
 ▸ **all**(): *[Device](_src_controller_model_device_.device.md)[]*
 
-*Defined in [src/controller/model/device.ts:287](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L287)*
+*Defined in [src/controller/model/device.ts:288](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L288)*
 
 **Returns:** *[Device](_src_controller_model_device_.device.md)[]*
 
@@ -531,7 +531,7 @@ ___
 
 ▸ **byIeeeAddr**(`ieeeAddr`: string): *[Device](_src_controller_model_device_.device.md)*
 
-*Defined in [src/controller/model/device.ts:272](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L272)*
+*Defined in [src/controller/model/device.ts:273](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L273)*
 
 **Parameters:**
 
@@ -547,7 +547,7 @@ ___
 
 ▸ **byNetworkAddress**(`networkAddress`: number): *[Device](_src_controller_model_device_.device.md)*
 
-*Defined in [src/controller/model/device.ts:277](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L277)*
+*Defined in [src/controller/model/device.ts:278](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L278)*
 
 **Parameters:**
 
@@ -563,7 +563,7 @@ ___
 
 ▸ **byType**(`type`: [DeviceType](../modules/_src_adapter_tstype_.md#devicetype)): *[Device](_src_controller_model_device_.device.md)[]*
 
-*Defined in [src/controller/model/device.ts:282](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L282)*
+*Defined in [src/controller/model/device.ts:283](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L283)*
 
 **Parameters:**
 
@@ -579,7 +579,7 @@ ___
 
 ▸ **create**(`type`: [DeviceType](../modules/_src_adapter_tstype_.md#devicetype), `ieeeAddr`: string, `networkAddress`: number, `manufacturerID`: number, `manufacturerName`: string, `powerSource`: string, `modelID`: string, `interviewCompleted`: boolean, `endpoints`: object[]): *[Device](_src_controller_model_device_.device.md)*
 
-*Defined in [src/controller/model/device.ts:292](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L292)*
+*Defined in [src/controller/model/device.ts:293](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L293)*
 
 **Parameters:**
 
