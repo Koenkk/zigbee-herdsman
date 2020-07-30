@@ -178,7 +178,8 @@ class Device extends Entity {
             const values: KeyValue = {
                 timeStatus: 3, // Time-master + synchronised
                 time: time,
-                localTime: time - (new Date()).getTimezoneOffset() * 60
+                timeZone: ((new Date()).getTimezoneOffset() * -1) * 60,
+                localTime: time - (new Date()).getTimezoneOffset() * 60,
             };
 
             const cluster = Zcl.Utils.getCluster('genTime');
