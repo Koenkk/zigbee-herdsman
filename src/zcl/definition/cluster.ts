@@ -2376,6 +2376,7 @@ const Cluster: {
         commands: {
             arm: {
                 ID: 0,
+                response: 0,
                 parameters: [
                     {name: 'armmode', type: DataType.uint8},
                     {name: 'code', type: DataType.charStr},
