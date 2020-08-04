@@ -2407,17 +2407,20 @@ const Cluster: {
             },
             getZoneIDMap: {
                 ID: 5,
+                response: 1,
                 parameters: [
                 ],
             },
             getZoneInfo: {
                 ID: 6,
+                response: 2,
                 parameters: [
                     {name: 'zoneid', type: DataType.uint8},
                 ],
             },
             getPanelStatus: {
                 ID: 7,
+                response: 5,
                 parameters: [
                 ],
             },
@@ -2428,6 +2431,7 @@ const Cluster: {
             },
             getZoneStatus: {
                 ID: 9,
+                response: 8,
                 parameters: [
                     {name: 'startzoneid', type: DataType.uint8},
                     {name: 'maxnumzoneid', type: DataType.uint8},
