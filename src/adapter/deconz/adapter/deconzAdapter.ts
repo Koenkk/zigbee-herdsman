@@ -514,7 +514,7 @@ class DeconzAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
+        ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, sourceEndpoint?: number,
     ): Promise<Events.ZclDataPayload> {
         const transactionID = this.nextTransactionID();

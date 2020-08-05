@@ -1,6 +1,7 @@
 import {ZclFrame} from '../zcl';
 
 enum Events {
+    networkAddress = "networkAddress",
     deviceJoined = "deviceJoined",
     zclData = "zclData",
     rawData = "rawData",
@@ -15,6 +16,11 @@ interface DeviceJoinedPayload {
 }
 
 interface DeviceAnnouncePayload {
+    networkAddress: number;
+    ieeeAddr: string;
+}
+
+interface NetworkAddressPayload {
     networkAddress: number;
     ieeeAddr: string;
 }
@@ -42,5 +48,6 @@ interface RawDataPayload {
 }
 
 export {
-    Events, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload, DeviceLeavePayload, RawDataPayload,
+    Events, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload, NetworkAddressPayload, DeviceLeavePayload,
+    RawDataPayload,
 };

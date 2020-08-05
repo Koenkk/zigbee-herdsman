@@ -151,8 +151,8 @@ abstract class Adapter extends events.EventEmitter {
      */
 
     public abstract sendZclFrameToEndpoint(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, disableResponse: boolean,
-        sourceEndpoint?: number,
+        ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
+        disableResponse: boolean, sourceEndpoint?: number,
     ): Promise<ZclDataPayload>;
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, sourceEndpoint?: number): Promise<void>;
