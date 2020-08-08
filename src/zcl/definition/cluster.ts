@@ -492,6 +492,8 @@ const Cluster: {
         attributes: {
             currentLevel: {ID: 0, type: DataType.uint8},
             remainingTime: {ID: 1, type: DataType.uint16},
+            minLevel: {ID: 2, type: DataType.uint8},
+            maxLevel: {ID: 3, type: DataType.uint8},
             onOffTransitionTime: {ID: 16, type: DataType.uint16},
             onLevel: {ID: 17, type: DataType.uint8},
             onTransitionTime: {ID: 18, type: DataType.uint16},
