@@ -378,9 +378,7 @@ class ZStackAdapter extends Adapter {
                     try {
                         debug('assocRemove(%s)', ieeeAddr);
                         await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
-                    } catch {
-                        debug('assocRemove(%s) failed', ieeeAddr);
-                    }
+                    } catch {}
                 } else {
                     await Wait(2000);
                 }
@@ -400,6 +398,8 @@ class ZStackAdapter extends Adapter {
             } catch (error) {
                 debug('Response timeout (%s:%d,%d)', ieeeAddr, networkAddress, responseAttempt);
                 if (responseAttempt < 1) {
+                    // No response could be of invalid route, e.g. when message is send to wrong parent of end device.
+                    await this.discoverRoute(networkAddress);
                     return this.sendZclFrameToEndpointInternal(
                         ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, disableResponse,
                         responseAttempt + 1, dataRequestAttempt, checkedNetworkAddress, discoveredRoute, assocRemove

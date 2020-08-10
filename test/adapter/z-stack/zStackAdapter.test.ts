@@ -148,6 +148,8 @@ const basicMocks = () => {
             }
         } else if (subsystem === Subsystem.UTIL && command === 'getDeviceInfo') {
             return {payload: {devicestate: DevStates.ZB_COORD, ieeeaddr: '0x123'}};
+        } else if (subsystem === Subsystem.UTIL && command === 'assocRemove') {
+            return {payload: {}};
         } else if (subsystem === Subsystem.ZDO && command === 'activeEpReq') {
             return {};
         } else if (subsystem === Subsystem.ZDO && command === 'simpleDescReq') {
@@ -194,6 +196,8 @@ const basicMocks = () => {
             return {};
         } else if (subsystem === Subsystem.ZDO && command === 'extRouteDisc') {
             return {};
+        } else if (subsystem === Subsystem.ZDO && command === 'nwkAddrReq') {
+            return {};
         } else {
             missing();
         }
@@ -230,7 +234,12 @@ const basicMocks = () => {
             if (dataConfirmCodeReset) {
                 dataConfirmCode = 0;
             }
-            return waitForResult({payload: {status}}, 99);
+
+            if (status === 9999) {
+                return {start: () => {return {promise: new Promise((resolve, reject) => {reject('timeout after xx')})}}, ID: 99};
+            } else {
+                return waitForResult({payload: {status}}, 99);
+            }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 203})) {
             if (lastStartIndex === 0) {
                 return waitForResult({payload: {status: 0, neighbortableentries: 5, neighborlqilist: [{lqi: 10, nwkAddr: 2, extAddr: 3, relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 3, extAddr: 4, relationship: 2, depth: 5}]}});
@@ -257,6 +266,10 @@ const basicMocks = () => {
             return waitForResult({});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLeaveRsp' && equals(payload, {srcaddr: 401})) {
             return waitForResult({});
+        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nwkAddrRsp' && payload.ieeeaddr === '0x03') {
+            return waitForResult({payload: {nwkaddr: 3, ieeeaddr: '0x03'}});
+        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nwkAddrRsp' && payload.ieeeaddr === '0x02') {
+            return waitForResult({payload: {nwkaddr: 2, ieeeaddr: '0x02'}});
         } else {
             missing();
         }
@@ -2212,7 +2225,7 @@ describe('zStackAdapter', () => {
 
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
-        await adapter.sendZclFrameToEndpoint(2, 20, frame, 10000, false);
+        await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1}, 99)
@@ -2225,7 +2238,7 @@ describe('zStackAdapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
-        await adapter.sendZclFrameToEndpoint(2, 20, frame, 10000, false);
+        await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(mockZnpRequest).toBeCalledTimes(2);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1}, 99);
@@ -2238,7 +2251,7 @@ describe('zStackAdapter', () => {
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
         let error;
-        try {await adapter.sendZclFrameToEndpoint(2, 20, frame, 10000, false)} catch (e) {error = e;}
+        try {await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false)} catch (e) {error = e;}
         expect(error.message).toStrictEqual("Data request failed with error: 'undefined' (201)");
     });
 
@@ -2249,7 +2262,7 @@ describe('zStackAdapter', () => {
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: defaultReponse.toBuffer()}};
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
-        const request =  adapter.sendZclFrameToEndpoint(2, 20, frame, 10000, false);
+        const request =  adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false);
         znpReceived(object);
         await request;
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
@@ -2257,23 +2270,56 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1}, 99)
     });
 
-    it('Send zcl frame network address fails with 205 should rediscover route and try again', async () => {
+    it('Send zcl frame network address fails because network address changed, should retrieve new network address', async () => {
         basicMocks();
         await adapter.start();
         dataConfirmCode = 205;
+        dataConfirmCodeReset = true;
         mockZnpRequest.mockClear();
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
-        const response = adapter.sendZclFrameToEndpoint(2, 20, frame, 10000, false);
-        let error;
-        try {
-            await response;
-        } catch (e) { error = e};
-        expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
+        await adapter.sendZclFrameToEndpoint('0x03', 2, 20, frame, 10000, false);
         expect(mockZnpRequest).toBeCalledTimes(3);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(1, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1}, 99)
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 5, 'extRouteDisc', {dstAddr: 2, options: 0, radius: 30})
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 2}, 99)
-        expect(error.message).toStrictEqual("Data request failed with error: 'No network route' (205)");
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 5, 'nwkAddrReq', {ieeeaddr: '0x03', reqtype: 0, startindex: 0})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 3, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 2}, 99)
+    });
+
+    it('Send zcl frame network address fails because mac transaction expire, should retry', async () => {
+        basicMocks();
+        await adapter.start();
+        dataConfirmCode = 240;
+        mockZnpRequest.mockClear();
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
+        const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false);
+        let error;
+        try {await response} catch(e) {error = e;}
+
+        expect(error.message).toStrictEqual("Data request failed with error: 'MAC transaction expired' (240)");
+        expect(mockZnpRequest).toBeCalledTimes(9);
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(1, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 5, 'nwkAddrReq', {ieeeaddr: '0x02', reqtype: 0, startindex: 0})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 5, 'extRouteDisc', { dstAddr: 2, options: 0, radius: 30 })
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(4, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 2}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(5, 7, 'assocRemove', { ieeeadr: '0x02' })
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(6, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 3}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(7, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 4}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(8, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 5}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(9, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 6}, 99)
+    });
+
+    it('Send zcl frame network address should retry on dataconfirm timeout', async () => {
+        basicMocks();
+        await adapter.start();
+        dataConfirmCode = 9999;
+        dataConfirmCodeReset = true;
+        mockZnpRequest.mockClear();
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
+        const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false);
+        let error;
+        try {await response} catch(e) {error = e;}
+        expect(error.message).toStrictEqual("Data request failed with error: 'Timeout' (9999)");
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(1, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1}, 99)
     });
 
     it('Send zcl frame group', async () => {
@@ -2326,7 +2372,7 @@ describe('zStackAdapter', () => {
             }
 
             const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
-            await adapter.sendZclFrameToEndpoint(2, 20, frame, 10000, false);
+            await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false);
         }
 
         const got = []
@@ -2367,7 +2413,7 @@ describe('zStackAdapter', () => {
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()}};
         const objectMismatch = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()}};
-        const response = adapter.sendZclFrameToEndpoint(2, 20, frame, 10000, false);
+        const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false);
         znpReceived(objectMismatch);
         znpReceived(object);
         const result = await response;
@@ -2395,7 +2441,7 @@ describe('zStackAdapter', () => {
         const objectMismatch = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()}};
         const defaultReponse = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 100, 'defaultRsp', 0, {cmdId: 0, status: 0});
         const defaultObject = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: defaultReponse.toBuffer()}};
-        const response = adapter.sendZclFrameToEndpoint(2, 20, frame, 10000, false);
+        const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false);
         znpReceived(objectMismatch);
         znpReceived(defaultObject);
         znpReceived(object);
@@ -2417,7 +2463,7 @@ describe('zStackAdapter', () => {
         dataConfirmCode = 201;
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
-        try {await adapter.sendZclFrameToEndpoint(2, 20, frame, 10000, false)} catch (e) {error = e;}
+        try {await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false)} catch (e) {error = e;}
         expect(error.message).toStrictEqual("Data request failed with error: 'undefined' (201)");
     });
 
@@ -2427,7 +2473,7 @@ describe('zStackAdapter', () => {
         dataConfirmCode = 201;
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}]);
         let error;
-        try {await adapter.sendZclFrameToEndpoint(2, 20, frame, 10000, false)} catch (e) {error = e;}
+        try {await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false)} catch (e) {error = e;}
         expect(error.message).toStrictEqual("Data request failed with error: 'undefined' (201)");
     });
 
@@ -2442,7 +2488,7 @@ describe('zStackAdapter', () => {
         const objectMismatch = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()}};
         let error;
         try {
-            const response = adapter.sendZclFrameToEndpoint(2, 20, frame, 1, false);
+            const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 1, false);
             znpReceived(objectMismatch);
             await response;
         } catch (e) {
@@ -2465,7 +2511,7 @@ describe('zStackAdapter', () => {
         const responseFrame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 100, 'readRsp', 0, [{attrId: 0, attrData: 2, dataType: 32, status: 0}]);
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()}};
-        const response = adapter.sendZclFrameToEndpoint(2, 20, frame, 10000, false);
+        const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false);
         znpReceived(object);
 
         let error = null;
@@ -2658,6 +2704,16 @@ describe('zStackAdapter', () => {
         adapter.on("deviceAnnounce", (p) => {deviceAnnounce = p;})
         znpReceived(object);
         expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
+    });
+
+    it('Network address response', async () => {
+        basicMocks();
+        await adapter.start();
+        let networkAddress;
+        const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'nwkAddrRsp', payload: {nwkaddr: 124, ieeeaddr: '0x123'}};
+        adapter.on("networkAddress", (p) => {networkAddress = p;})
+        znpReceived(object);
+        expect(networkAddress).toStrictEqual({ieeeAddr: '0x123', networkAddress: 124});
     });
 
     it('Device leave', async () => {
