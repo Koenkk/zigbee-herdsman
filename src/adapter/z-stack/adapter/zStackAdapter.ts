@@ -20,7 +20,9 @@ const Subsystem = UnpiConstants.Subsystem;
 const Type = UnpiConstants.Type;
 const {ZnpCommandStatus, AddressMode} = Constants.COMMON;
 
+const DataConfirmTimeout = 9999; // Not an actual code
 const DataConfirmErrorCodeLookup: {[k: number]: string} = {
+    [DataConfirmTimeout]: 'Timeout',
     183: 'APS no ack',
     205: 'No network route',
     225: 'MAC channel access failure',
@@ -192,9 +194,21 @@ class ZStackAdapter extends Adapter {
         await this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: enabled ? 1 : 0});
     }
 
+    private async requestNetworkAddress(ieeeAddr: string): Promise<number> {
+        /**
+         * NOTE: There are cases where multiple nwkAddrRsp are recevied with different network addresses,
+         * this is currently not handled, the first nwkAddrRsp is taken.
+         */
+        debug("Request network address of '%s'", ieeeAddr);
+        const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'nwkAddrRsp', {ieeeaddr: ieeeAddr});
+        await this.znp.request(Subsystem.ZDO, 'nwkAddrReq', {ieeeaddr: ieeeAddr, reqtype: 0, startindex: 0});
+        const result = await response.start().promise;
+        return result.payload.nwkaddr;
+    }
+
     private async discoverRoute(networkAddress: number): Promise<void> {
-        const payload =  {dstAddr: networkAddress, options: 0, radius: Constants.AF.DEFAULT_RADIUS};
         debug('Discovering route to %d', networkAddress);
+        const payload =  {dstAddr: networkAddress, options: 0, radius: Constants.AF.DEFAULT_RADIUS};
         await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
         await Wait(3000);
     }
@@ -263,20 +277,24 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number, disableResponse: boolean,
-        sourceEndpoint?: number
+        ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
+        disableResponse: boolean, sourceEndpoint?: number
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
             return this.sendZclFrameToEndpointInternal(
-                networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse, true
+                ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
+                0, 0, false, false, false,
             );
         }, networkAddress);
     }
 
     private async sendZclFrameToEndpointInternal(
-        networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame,
-        timeout: number, disableResponse: boolean, firstAttempt: boolean
+        ieeeAddr: string, networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame,
+        timeout: number, disableResponse: boolean, responseAttempt: number, dataRequestAttempt: number,
+        checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
     ): Promise<Events.ZclDataPayload> {
+        debug('sendZclFrameToEndpointInternal %s:%i/%i (%i,%i)',
+            ieeeAddr, networkAddress, endpoint, responseAttempt, dataRequestAttempt);
         let response = null;
         const command = zclFrame.getCommand();
         if (command.hasOwnProperty('response') && disableResponse === false) {
@@ -292,17 +310,85 @@ class ZStackAdapter extends Adapter {
             );
         }
 
-        try {
-            await this.dataRequest(
-                networkAddress, endpoint, sourceEndpoint, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS,
-                zclFrame.toBuffer(), timeout - 1000, 5
-            );
-        } catch (error) {
-            if (response) {
-                response.cancel();
+        const dataConfirmResult = await this.dataRequest(
+            networkAddress, endpoint, sourceEndpoint, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS,
+            zclFrame.toBuffer(), timeout
+        );
+
+        if (dataConfirmResult !== ZnpCommandStatus.SUCCESS) {
+            // In case dataConfirm timesout (= null) or gives an error, try to recover
+            debug('Data confirm error (%s:%d,%d,%d)', ieeeAddr, networkAddress, dataConfirmResult, dataRequestAttempt);
+            if (response !== null) response.cancel();
+
+            const recoverableErrors = [
+                ZnpCommandStatus.NWK_NO_ROUTE, ZnpCommandStatus.MAC_NO_ACK, ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE,
+                ZnpCommandStatus.MAC_TRANSACTION_EXPIRED
+            ];
+
+            if (dataRequestAttempt >= 5 || !recoverableErrors.includes(dataConfirmResult)) {
+                throw new DataConfirmError(dataConfirmResult);
             }
 
-            throw error;
+            if (dataConfirmResult === ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE) {
+                /**
+                 * MAC_CHANNEL_ACCESS_FAILURE: When many commands at once are executed we can end up in a MAC
+                 * channel access failure error. This is because there is too much traffic on the network.
+                 * Retry this command once after a cooling down period.
+                 */
+                await Wait(2000);
+                return this.sendZclFrameToEndpointInternal(
+                    ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, disableResponse,
+                    responseAttempt, dataRequestAttempt + 1, checkedNetworkAddress, discoveredRoute, assocRemove
+                );
+            } else {
+                // NWK_NO_ROUTE: no network route => rediscover route
+                // MAC_NO_ACK: route may be corrupted
+                // MAC_TRANSACTION_EXPIRED: Mac layer is sleeping
+                if (!checkedNetworkAddress) {
+                    // Figure out once if the network address has been changed.
+                    try {
+                        checkedNetworkAddress = true;
+                        const actualNetworkAddress = await this.requestNetworkAddress(ieeeAddr);
+                        if (networkAddress !== actualNetworkAddress) {
+                            debug(`Failed because request was done with wrong network address`);
+                            return this.sendZclFrameToEndpointInternal(
+                                ieeeAddr, actualNetworkAddress, endpoint, sourceEndpoint, zclFrame, timeout,
+                                disableResponse, responseAttempt, dataRequestAttempt + 1, checkedNetworkAddress,
+                                discoveredRoute, assocRemove
+                            );
+                        } else {debug('Network address did not change');}
+                    } catch {}
+                }
+
+                if (!discoveredRoute) {
+                    discoveredRoute = true;
+                    await this.discoverRoute(networkAddress);
+                } else if (!assocRemove && dataConfirmResult === ZnpCommandStatus.MAC_TRANSACTION_EXPIRED) {
+                    /**
+                     * Since child aging is disabled on the firmware, when a end device is directly connected
+                     * to the coordinator and changes parent and the coordinator does not recevie this update,
+                     * it still thinks it's directly connected.
+                     * A discoverRoute() is not send out in this case, therefore remove it from the associated device
+                     * list and try again.
+                     * Note: assocRemove is a custom command, not available by default, only available on recent
+                     * z-stack-firmware firmware version. In case it's not supported by the coordinator we will
+                     * automatically timeout after 60000ms.
+                     */
+                    assocRemove = true;
+                    try {
+                        debug('assocRemove(%s)', ieeeAddr);
+                        await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
+                    } catch {}
+                } else {
+                    await Wait(2000);
+                }
+
+                return this.sendZclFrameToEndpointInternal(
+                    ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout,
+                    disableResponse, responseAttempt, dataRequestAttempt + 1, checkedNetworkAddress, discoveredRoute,
+                    assocRemove,
+                );
+            }
         }
 
         if (response !== null) {
@@ -310,11 +396,13 @@ class ZStackAdapter extends Adapter {
                 const result = await response.start().promise;
                 return result;
             } catch (error) {
-                if (firstAttempt) {
-                    // Timeout could happen because of invalid route, rediscover and retry.
+                debug('Response timeout (%s:%d,%d)', ieeeAddr, networkAddress, responseAttempt);
+                if (responseAttempt < 1) {
+                    // No response could be of invalid route, e.g. when message is send to wrong parent of end device.
                     await this.discoverRoute(networkAddress);
                     return this.sendZclFrameToEndpointInternal(
-                        networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, disableResponse, false
+                        ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, disableResponse,
+                        responseAttempt + 1, dataRequestAttempt, checkedNetworkAddress, discoveredRoute, assocRemove
                     );
                 } else {
                     throw error;
@@ -543,6 +631,13 @@ class ZStackAdapter extends Adapter {
                 };
 
                 this.emit(Events.Events.deviceAnnounce, payload);
+            } else if (object.command === 'nwkAddrRsp') {
+                const payload: Events.NetworkAddressPayload = {
+                    networkAddress: object.payload.nwkaddr,
+                    ieeeAddr: object.payload.ieeeaddr,
+                };
+
+                this.emit(Events.Events.networkAddress, payload);
             } else {
                 /* istanbul ignore else */
                 if (object.command === 'leaveInd') {
@@ -692,8 +787,8 @@ class ZStackAdapter extends Adapter {
      */
     private async dataRequest(
         destinationAddress: number, destinationEndpoint: number, sourceEndpoint: number, clusterID: number,
-        radius: number, data: Buffer, timeout: number, attemptsLeft: number,
-    ): Promise<ZpiObject> {
+        radius: number, data: Buffer, timeout: number,
+    ): Promise<number> {
         const transactionID = this.nextTransactionID();
         const response = this.znp.waitFor(
             Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout
@@ -705,44 +800,21 @@ class ZStackAdapter extends Adapter {
             srcendpoint: sourceEndpoint,
             clusterid: clusterID,
             transid: transactionID,
-            options: 0, // TODO: why was this here? Constants.AF.options.ACK_REQUEST | DISCV_ROUTE,
+            options: 0,
             radius: radius,
             len: data.length,
             data: data,
         }, response.ID);
 
-        const dataConfirm = await response.start().promise;
-        if (dataConfirm.payload.status !== ZnpCommandStatus.SUCCESS) {
-            debug('Data confirm error (%d, %d, %d)', destinationAddress, dataConfirm.payload.status, attemptsLeft);
-            if ([ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE, ZnpCommandStatus.MAC_TRANSACTION_EXPIRED]
-                .includes(dataConfirm.payload.status) && attemptsLeft > 0
-            ) {
-                /**
-                 * MAC_CHANNEL_ACCESS_FAILURE: When many commands at once are executed we can end up in a MAC
-                 * channel access failure error. This is because there is too much traffic on the network.
-                 * Retry this command once after a cooling down period.
-                 * MAC_TRANSACTION_EXPIRED: Mac layer is sleeping, try a few more times
-                 */
-                await Wait(2000);
-                return this.dataRequest(
-                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout,
-                    attemptsLeft - 1
-                );
-            } else if ([ZnpCommandStatus.NWK_NO_ROUTE, ZnpCommandStatus.MAC_NO_ACK]
-                .includes(dataConfirm.payload.status) && attemptsLeft > 0
-            ) {
-                // NWK_NO_ROUTE: no network route => rediscover route
-                // MAC_NO_ACK: route may be corrupted
-                await this.discoverRoute(destinationAddress);
-                return this.dataRequest(
-                    destinationAddress, destinationEndpoint, sourceEndpoint, clusterID, radius, data, timeout, 0
-                );
-            } else {
-                throw new DataConfirmError(dataConfirm.payload.status);
-            }
+        let result = null;
+        try {
+            const dataConfirm = await response.start().promise;
+            result = dataConfirm.payload.status;
+        } catch {
+            result = DataConfirmTimeout;
         }
 
-        return dataConfirm;
+        return result;
     }
 
     private async dataRequestExtended(

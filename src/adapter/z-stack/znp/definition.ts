@@ -2743,6 +2743,18 @@ const Definition: {
             ],
         },
         {
+            // Custom command
+            name: 'assocRemove',
+            ID: 99,
+            type: CommandType.SREQ,
+            request: [
+                {name: 'ieeeadr', parameterType: ParameterType.IEEEADDR},
+            ],
+            response: [
+                {name: 'status', parameterType: ParameterType.UINT8},
+            ],
+        },
+        {
             name: 'zclKeyEstInitEst',
             ID: 128,
             type: CommandType.SREQ,
