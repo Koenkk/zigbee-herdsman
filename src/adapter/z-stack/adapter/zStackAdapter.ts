@@ -322,18 +322,21 @@ class ZStackAdapter extends Adapter {
 
             const recoverableErrors = [
                 ZnpCommandStatus.NWK_NO_ROUTE, ZnpCommandStatus.MAC_NO_ACK, ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE,
-                ZnpCommandStatus.MAC_TRANSACTION_EXPIRED
+                ZnpCommandStatus.MAC_TRANSACTION_EXPIRED, ZnpCommandStatus.BUFFER_FULL
             ];
 
             if (dataRequestAttempt >= 5 || !recoverableErrors.includes(dataConfirmResult)) {
                 throw new DataConfirmError(dataConfirmResult);
             }
 
-            if (dataConfirmResult === ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE) {
+            if (dataConfirmResult === ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE ||
+                dataConfirmResult === ZnpCommandStatus.BUFFER_FULL) {
                 /**
                  * MAC_CHANNEL_ACCESS_FAILURE: When many commands at once are executed we can end up in a MAC
                  * channel access failure error. This is because there is too much traffic on the network.
                  * Retry this command once after a cooling down period.
+                 * BUFFER_FULL: When many commands are executed at once the buffer can get full, wait
+                 * some time and retry.
                  */
                 await Wait(2000);
                 return this.sendZclFrameToEndpointInternal(
@@ -843,7 +846,9 @@ class ZStackAdapter extends Adapter {
         if (confirmation) {
             const dataConfirm = await response.start().promise;
             if (dataConfirm.payload.status !== ZnpCommandStatus.SUCCESS) {
-                if (dataConfirm.payload.status === ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE && attemptsLeft > 0) {
+                if (attemptsLeft > 0 &&
+                    (dataConfirm.payload.status === ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE ||
+                        dataConfirm.payload.status === ZnpCommandStatus.BUFFER_FULL)) {
                     /**
                      * 225: When many commands at once are executed we can end up in a MAC channel access failure
                      * error. This is because there is too much traffic on the network.
