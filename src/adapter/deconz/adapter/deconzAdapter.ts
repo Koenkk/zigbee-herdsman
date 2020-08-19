@@ -815,14 +815,50 @@ class DeconzAdapter extends Adapter {
                     case 11:
                         setChannelMask = 0x800;
                         break;
+                    case 12:
+                        setChannelMask = 0x1000;
+                        break;
+                    case 13:
+                        setChannelMask = 0x2000;
+                        break;
+                    case 14:
+                        setChannelMask = 0x4000;
+                        break;
                     case 15:
                         setChannelMask = 0x8000;
+                        break;
+                    case 16:
+                        setChannelMask = 0x10000;
+                        break;
+                    case 17:
+                        setChannelMask = 0x20000;
+                        break;
+                    case 18:
+                        setChannelMask = 0x40000;
+                        break;
+                    case 19:
+                        setChannelMask = 0x80000;
                         break;
                     case 20:
                         setChannelMask = 0x100000;
                         break;
+                    case 21:
+                        setChannelMask = 0x200000;
+                        break;
+                    case 22:
+                        setChannelMask = 0x400000;
+                        break;
+                    case 23:
+                        setChannelMask = 0x800000;
+                        break;
+                    case 24:
+                        setChannelMask = 0x1000000;
+                        break;
                     case 25:
                         setChannelMask = 0x2000000;
+                        break;
+                    case 26:
+                        setChannelMask = 0x4000000;
                         break;
                     default:
                         break;
