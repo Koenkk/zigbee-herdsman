@@ -2324,6 +2324,16 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    msCO2: {
+        ID: 1037,
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.singlePrec},
+            minMeasuredValue: {ID: 1, type: DataType.singlePrec},
+            maxMeasuredValue: {ID: 2, type: DataType.singlePrec},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     ssIasZone: {
         ID: 1280,
         attributes: {
