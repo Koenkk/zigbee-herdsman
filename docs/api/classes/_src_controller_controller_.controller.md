@@ -19,6 +19,7 @@
 * [createGroup](_src_controller_controller_.controller.md#creategroup)
 * [getCoordinatorVersion](_src_controller_controller_.controller.md#getcoordinatorversion)
 * [getDeviceByIeeeAddr](_src_controller_controller_.controller.md#getdevicebyieeeaddr)
+* [getDeviceByNetworkAddress](_src_controller_controller_.controller.md#getdevicebynetworkaddress)
 * [getDevices](_src_controller_controller_.controller.md#getdevices)
 * [getDevicesByType](_src_controller_controller_.controller.md#getdevicesbytype)
 * [getGroupByID](_src_controller_controller_.controller.md#getgroupbyid)
@@ -62,7 +63,7 @@ Name | Type |
 
 ▸ **createGroup**(`groupID`: number): *[Group](_src_controller_model_group_.group.md)*
 
-*Defined in [src/controller/controller.ts:274](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L274)*
+*Defined in [src/controller/controller.ts:281](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L281)*
 
 Create a Group
 
@@ -104,6 +105,24 @@ Name | Type |
 
 ___
 
+###  getDeviceByNetworkAddress
+
+▸ **getDeviceByNetworkAddress**(`networkAddress`: number): *[Device](_src_controller_model_device_.device.md)*
+
+*Defined in [src/controller/controller.ts:260](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L260)*
+
+Get device by networkAddress
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`networkAddress` | number |
+
+**Returns:** *[Device](_src_controller_model_device_.device.md)*
+
+___
+
 ###  getDevices
 
 ▸ **getDevices**(): *[Device](_src_controller_model_device_.device.md)[]*
@@ -138,7 +157,7 @@ ___
 
 ▸ **getGroupByID**(`groupID`: number): *[Group](_src_controller_model_group_.group.md)*
 
-*Defined in [src/controller/controller.ts:260](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L260)*
+*Defined in [src/controller/controller.ts:267](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L267)*
 
 Get group by ID
 
@@ -156,7 +175,7 @@ ___
 
 ▸ **getGroups**(): *[Group](_src_controller_model_group_.group.md)[]*
 
-*Defined in [src/controller/controller.ts:267](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L267)*
+*Defined in [src/controller/controller.ts:274](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L274)*
 
 Get all groups
 
@@ -221,7 +240,7 @@ ___
 
 ▸ **setLED**(`enabled`: boolean): *Promise‹void›*
 
-*Defined in [src/controller/controller.ts:295](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L295)*
+*Defined in [src/controller/controller.ts:302](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L302)*
 
  Enable/Disable the LED
 
@@ -239,7 +258,7 @@ ___
 
 ▸ **setTransmitPower**(`value`: number): *Promise‹void›*
 
-*Defined in [src/controller/controller.ts:288](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L288)*
+*Defined in [src/controller/controller.ts:295](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L295)*
 
  Set transmit power of the adapter
 
@@ -279,7 +298,7 @@ ___
 
 ▸ **supportsLED**(): *Promise‹boolean›*
 
-*Defined in [src/controller/controller.ts:281](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L281)*
+*Defined in [src/controller/controller.ts:288](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L288)*
 
  Check if the adapters supports LED
 
