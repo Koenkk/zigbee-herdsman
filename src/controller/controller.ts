@@ -255,6 +255,13 @@ class Controller extends events.EventEmitter {
     }
 
     /**
+     * Get device by networkAddress
+     */
+    public getDeviceByNetworkAddress(networkAddress: number): Device {
+        return Device.byNetworkAddress(networkAddress);
+    }
+
+    /**
      * Get group by ID
      */
     public getGroupByID(groupID: number): Group {
