@@ -3799,6 +3799,18 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    manuSpecificSmartThingsArrivalSensor: {
+        ID: 0xFC01,
+        manufacturerCode: ManufacturerCode.SmartThings,
+        attributes: {},
+        commands: {},
+        commandsResponse: {
+            arrivalSensorNotify: {
+                ID: 1,
+                parameters: [],
+            },
+        },
+    },
     manuSpecificSamsungAccelerometer: {
         ID: 0xFC02,
         manufacturerCode: ManufacturerCode.SmartThings,
