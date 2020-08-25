@@ -25,7 +25,7 @@
 
 • **cluster**: *string | number*
 
-*Defined in [src/controller/events.ts:95](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L95)*
+*Defined in [src/controller/events.ts:97](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L97)*
 
 ___
 
@@ -33,7 +33,7 @@ ___
 
 • **data**: *[KeyValue](_src_controller_tstype_.keyvalue.md) | Array‹string | number›*
 
-*Defined in [src/controller/events.ts:96](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L96)*
+*Defined in [src/controller/events.ts:98](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L98)*
 
 ___
 
@@ -41,7 +41,7 @@ ___
 
 • **device**: *[Device](../classes/_src_controller_model_device_.device.md)*
 
-*Defined in [src/controller/events.ts:91](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L91)*
+*Defined in [src/controller/events.ts:93](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L93)*
 
 ___
 
@@ -49,7 +49,7 @@ ___
 
 • **endpoint**: *[Endpoint](../classes/_src_controller_model_endpoint_.endpoint.md)*
 
-*Defined in [src/controller/events.ts:92](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L92)*
+*Defined in [src/controller/events.ts:94](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L94)*
 
 ___
 
@@ -57,7 +57,7 @@ ___
 
 • **groupID**: *number*
 
-*Defined in [src/controller/events.ts:94](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L94)*
+*Defined in [src/controller/events.ts:96](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L96)*
 
 ___
 
@@ -65,7 +65,7 @@ ___
 
 • **linkquality**: *number*
 
-*Defined in [src/controller/events.ts:93](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L93)*
+*Defined in [src/controller/events.ts:95](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L95)*
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 • **meta**: *object*
 
-*Defined in [src/controller/events.ts:97](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L97)*
+*Defined in [src/controller/events.ts:99](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L99)*
 
 #### Type declaration:
 
@@ -85,4 +85,4 @@ ___
 
 • **type**: *[MessagePayloadType](../modules/_src_controller_events_.md#messagepayloadtype)*
 
-*Defined in [src/controller/events.ts:90](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L90)*
+*Defined in [src/controller/events.ts:92](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L92)*

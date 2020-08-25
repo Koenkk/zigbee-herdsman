@@ -28,9 +28,9 @@
 
 ###  MessagePayloadType
 
-Ƭ **MessagePayloadType**: *"attributeReport" | "readResponse" | "raw" | "read" | "write" | "commandOn" | "commandOffWithEffect" | "commandStep" | "commandStop" | "commandHueNotification" | "commandOff" | "commandStepColorTemp" | "commandMoveWithOnOff" | "commandMove" | "commandMoveHue" | "commandMoveToSaturation" | "commandStopWithOnOff" | "commandMoveToLevelWithOnOff" | "commandToggle" | "commandTradfriArrowSingle" | "commandTradfriArrowHold" | "commandTradfriArrowRelease" | "commandStepWithOnOff" | "commandMoveToColorTemp" | "commandMoveToColor" | "commandOnWithTimedOff" | "commandRecall" | "commandArm" | "commandPanic" | "commandEmergency" | "commandColorLoopSet" | "commandOperationEventNotification" | "commandStatusChangeNotification" | "commandEnhancedMoveToHueAndSaturation" | "commandUpOpen" | "commandDownClose" | "commandMoveToLevel" | "commandMoveColorTemp" | "commandGetData" | "commandSetDataResponse" | "commandGetWeeklyScheduleRsp" | "commandQueryNextImageRequest" | "commandNotification" | "commandAlertsNotification" | "commandProgrammingEventNotification" | "commandGetPinCodeRsp"*
+Ƭ **MessagePayloadType**: *"attributeReport" | "readResponse" | "raw" | "read" | "write" | "commandOn" | "commandOffWithEffect" | "commandStep" | "commandStop" | "commandHueNotification" | "commandOff" | "commandStepColorTemp" | "commandMoveWithOnOff" | "commandMove" | "commandMoveHue" | "commandMoveToSaturation" | "commandStopWithOnOff" | "commandMoveToLevelWithOnOff" | "commandToggle" | "commandTradfriArrowSingle" | "commandTradfriArrowHold" | "commandTradfriArrowRelease" | "commandStepWithOnOff" | "commandMoveToColorTemp" | "commandMoveToColor" | "commandOnWithTimedOff" | "commandRecall" | "commandArm" | "commandPanic" | "commandEmergency" | "commandColorLoopSet" | "commandOperationEventNotification" | "commandStatusChangeNotification" | "commandEnhancedMoveToHueAndSaturation" | "commandUpOpen" | "commandDownClose" | "commandMoveToLevel" | "commandMoveColorTemp" | "commandGetData" | "commandSetDataResponse" | "commandGetWeeklyScheduleRsp" | "commandQueryNextImageRequest" | "commandNotification" | "commandAlertsNotification" | "commandProgrammingEventNotification" | "commandGetPinCodeRsp" | "commandArrivalSensorNotify"*
 
-*Defined in [src/controller/events.ts:74](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L74)*
+*Defined in [src/controller/events.ts:75](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L75)*
 
 ## Object literals
 
@@ -51,6 +51,12 @@
 • **arm**: *"commandArm"* = "commandArm"
 
 *Defined in [src/controller/events.ts:56](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L56)*
+
+###  arrivalSensorNotify
+
+• **arrivalSensorNotify**: *"commandArrivalSensorNotify"* = "commandArrivalSensorNotify"
+
+*Defined in [src/controller/events.ts:72](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L72)*
 
 ###  colorLoopSet
 
