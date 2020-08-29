@@ -3812,7 +3812,7 @@ const Cluster: {
         },
     },
     manuSpecificSamsungAccelerometer: {
-        ID: 0xFC02,
+        ID: 0xFC05,
         manufacturerCode: ManufacturerCode.SmartThings,
         attributes: {
             motion_threshold_multiplier: {ID: 0, type: DataType.uint8},
