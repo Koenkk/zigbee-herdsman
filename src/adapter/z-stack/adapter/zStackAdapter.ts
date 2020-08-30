@@ -23,6 +23,7 @@ const {ZnpCommandStatus, AddressMode} = Constants.COMMON;
 const DataConfirmTimeout = 9999; // Not an actual code
 const DataConfirmErrorCodeLookup: {[k: number]: string} = {
     [DataConfirmTimeout]: 'Timeout',
+    26: 'MAC no resources',
     183: 'APS no ack',
     205: 'No network route',
     225: 'MAC channel access failure',
@@ -322,7 +323,8 @@ class ZStackAdapter extends Adapter {
 
             const recoverableErrors = [
                 ZnpCommandStatus.NWK_NO_ROUTE, ZnpCommandStatus.MAC_NO_ACK, ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE,
-                ZnpCommandStatus.MAC_TRANSACTION_EXPIRED, ZnpCommandStatus.BUFFER_FULL
+                ZnpCommandStatus.MAC_TRANSACTION_EXPIRED, ZnpCommandStatus.BUFFER_FULL,
+                ZnpCommandStatus.MAC_NO_RESOURCES,
             ];
 
             if (dataRequestAttempt >= 5 || !recoverableErrors.includes(dataConfirmResult)) {
@@ -330,13 +332,16 @@ class ZStackAdapter extends Adapter {
             }
 
             if (dataConfirmResult === ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE ||
-                dataConfirmResult === ZnpCommandStatus.BUFFER_FULL) {
+                dataConfirmResult === ZnpCommandStatus.BUFFER_FULL ||
+                dataConfirmResult === ZnpCommandStatus.MAC_NO_RESOURCES) {
                 /**
                  * MAC_CHANNEL_ACCESS_FAILURE: When many commands at once are executed we can end up in a MAC
                  * channel access failure error. This is because there is too much traffic on the network.
                  * Retry this command once after a cooling down period.
                  * BUFFER_FULL: When many commands are executed at once the buffer can get full, wait
                  * some time and retry.
+                 * MAC_NO_RESOURCES: Operation could not be completed because no memory resources are available,
+                 * wait some time and retry.
                  */
                 await Wait(2000);
                 return this.sendZclFrameToEndpointInternal(
