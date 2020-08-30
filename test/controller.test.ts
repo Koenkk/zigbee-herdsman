@@ -124,7 +124,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
     })
 }
 
-const mocksClear = [mocksendZclFrameToEndpoint, mockAdapterReset];
+const mocksClear = [mocksendZclFrameToEndpoint, mockAdapterReset, mocksendZclFrameToGroup];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const equalsPartial = (object, expected) => {
@@ -2232,6 +2232,37 @@ describe('Controller', () => {
         await controller.start();
         const expected = {"ID": 3, "_lastSeen": null, "_applicationVersion": 17, "_dateCode": "20170302", "_endpoints": [{"clusters": {}, "ID": 1, "deviceID": 2096, "_binds": [],"deviceIeeeAddress": "0x90fd9ffffe4b64ae", "deviceNetworkAddress": 19468, "inputClusters": [0, 1, 3, 9, 2821, 4096], "outputClusters": [3, 4, 5, 6, 8, 25, 4096], "profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x90fd9ffffe4b64ae", "_interviewCompleted": true, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {}, "_modelID": "TRADFRI remote control", "_networkAddress": 19468, "_powerSource": "Battery", "_softwareBuildID": "1.2.214", "_stackVersion": 87, "_type": "EndDevice", "_zclVersion": 1}
         expect(deepClone(controller.getDeviceByIeeeAddr("0x90fd9ffffe4b64ae"))).toStrictEqual(expected);
+    });
+
+    it('Write to group', async () => {
+        await controller.start();
+        const group = await controller.createGroup(2);
+        await group.write('genBasic', {0x0031: {value: 0x000B, type: 0x19}, deviceEnabled: true}, {});
+        expect(mocksendZclFrameToGroup).toBeCalledTimes(1);
+        expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(2);
+        expect(deepClone(mocksendZclFrameToGroup.mock.calls[0][1])).toStrictEqual(deepClone(ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 2, 'write', 0, [{"attrData": 11, "attrId": 49, "dataType": 25}, {"attrData": true, "attrId": 18, "dataType": 16}])));
+        expect(mocksendZclFrameToGroup.mock.calls[0][2]).toBe(null);
+    });
+
+    it('Write to group with unknown attribute should fail', async () => {
+        await controller.start();
+        const group = await controller.createGroup(2);
+        let error;
+        try {
+            await group.write('genBasic', {'UNKNOWN': {value: 0x000B, type: 0x19}, deviceEnabled: true}, {});
+        } catch (e) {error = e;}
+        expect(error).toStrictEqual(new Error(`Unknown attribute 'UNKNOWN', specify either an existing attribute or a number`));
+    });
+
+    it('Write to group fails', async () => {
+        await controller.start();
+        const group = await controller.createGroup(2);
+        mocksendZclFrameToGroup.mockRejectedValueOnce(new Error('timeout'));
+        let error;
+        try {
+            await group.write('genBasic', {0x0031: {value: 0x000B, type: 0x19}}, {});
+        } catch (e) {error = e;}
+        expect(error).toStrictEqual(new Error(`Write 2 genBasic({"49":{"value":11,"type":25}}, {"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout)`));
     });
 
     it('Write to endpoint custom attributes', async () => {
