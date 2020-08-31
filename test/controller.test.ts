@@ -203,7 +203,7 @@ const mockDevices = {
         nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
         activeEndpoints: {endpoints: [12,11,13]},
         simpleDescriptor: {
-            11: {endpointID: 11, deviceID: 0x0210, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
+            11: {endpointID: 11, deviceID: 0x0210, inputClusters: [0,3,4,5,6,8,768,912301], outputClusters: [2], profileID: 99},
             12: {endpointID: 12, deviceID: 0xe15e, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
             13: {endpointID: 13, deviceID: 0x0100, inputClusters: [0,3,4,5,6,8,768], outputClusters: [2], profileID: 99},
         },
@@ -2986,5 +2986,14 @@ describe('Controller', () => {
         expect(events.message.length).toBe(1);
         const expected = {"type":"commandNotification","device":{"ID":2,"_endpoints":[{"inputClusters":[],"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]},"data":{"options":0,"srcID":4650238,"frameCounter":228,"commandID":34,"payloadSize":255,"commandFrame":{}},"linkquality":50,"groupID":1,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
         expect(deepClone(events.message[0])).toStrictEqual(expected);
+    });
+
+    it('Get input/ouptut clusters', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 172, ieeeAddr: '0x172'});
+        const device = controller.getDeviceByIeeeAddr('0x172');
+        const endpoint = device.getEndpoint(11);
+        expect(endpoint.getInputClusters().map(c => c.name)).toStrictEqual(['genBasic', 'genIdentify', 'genGroups', 'genScenes', 'genOnOff', 'genLevelCtrl', 'lightingColorCtrl']);
+        expect(endpoint.getOutputClusters().map(c => c.name)).toStrictEqual(['genDeviceTempCfg']);
     });
 });
