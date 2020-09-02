@@ -1915,7 +1915,7 @@ describe('Controller', () => {
         expect(device.getEndpointByDeviceType('ZLLExtendedColorLight').ID).toBe(11);
     });
 
-    it('onlythis Endpoint bind', async () => {
+    it('Endpoint bind', async () => {
         await controller.start();
         skipWait = true;
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -1932,10 +1932,6 @@ describe('Controller', () => {
         await endpoint.bind('genBasic', target);
         expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(0), target}]));
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
-
-        // Shouldn't return bind when target is removed.
-        await controller.getDeviceByIeeeAddr('0x170').removeFromDatabase();
-        expect(endpoint.binds).toStrictEqual([]);
     });
 
     it('Endpoint get binds non-existing device', async () => {
@@ -1944,7 +1940,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         endpoint._binds.push({type: 'endpoint', deviceIeeeAddress: 'notexisting', endpointID: 1, cluster: 2});
-        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(2), target: null}]));
+        expect(endpoint.binds).toStrictEqual([]);
     });
 
     it('Group bind', async () => {
