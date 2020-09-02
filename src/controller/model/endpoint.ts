@@ -74,8 +74,12 @@ class Endpoint extends Entity {
                 target = Group.byGroupID(entry.groupID);
             }
 
-            return {target, cluster: Zcl.Utils.getCluster(entry.cluster)};
-        });
+            if (target) {
+                return {target, cluster: Zcl.Utils.getCluster(entry.cluster)};
+            } else {
+                return undefined;
+            }
+        }).filter(b => b !== undefined);
     }
 
     private constructor(
