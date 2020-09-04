@@ -656,13 +656,13 @@ class DeconzAdapter extends Adapter {
         const clid2 = (clusterID >> 8) & 0xff;
         const destAddrMode = (type === 'group') ? PARAM.PARAM.addressMode.GROUP_ADDR : PARAM.PARAM.addressMode.IEEE_ADDR;
         let destArray: number[];
+
         if (type === 'endpoint') {
             destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
             destArray = destArray.concat([destinationEndpoint]);
         } else {
             destArray = [destinationAddressOrGroup as number & 0xff, ((destinationAddressOrGroup as number) >> 8) & 0xff];
         }
-
         const request: ApsDataRequest = {};
         const zdpFrame = [transactionID].concat(this.driver.macAddrStringToArray(sourceIeeeAddress)).concat(
             [sourceEndpoint,clid1,clid2,destAddrMode]).concat(destArray);
@@ -707,12 +707,14 @@ class DeconzAdapter extends Adapter {
         const clid2 = (clusterID >> 8) & 0xff;
         const destAddrMode = (type === 'group') ? PARAM.PARAM.addressMode.GROUP_ADDR : PARAM.PARAM.addressMode.IEEE_ADDR;
         let destArray: number[];
+
         if (type === 'endpoint') {
             destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
-            destArray.concat([destinationEndpoint]);
+            destArray = destArray.concat([destinationEndpoint]);
         } else {
             destArray = [destinationAddressOrGroup as number & 0xff, ((destinationAddressOrGroup as number) >> 8) & 0xff];
         }
+
         const request: ApsDataRequest = {};
         const zdpFrame = [transactionID].concat(this.driver.macAddrStringToArray(sourceIeeeAddress)).concat(
             [sourceEndpoint,clid1,clid2,destAddrMode]).concat(destArray);
