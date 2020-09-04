@@ -4,12 +4,19 @@ const MIN_BUFFER_SIZE = 3;
 const littleEndian = true;
 import PARAM from './constants';
 import { busyQueue, apsBusyQueue } from './driver';
-import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin, ParamNetworkKey } from './constants';
+import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin, ParamNetworkKey, gpDataInd } from './constants';
 import * as Events from '../../events';
 import {ZclFrame} from '../../../zcl';
 import Debug from 'debug';
 const debug = Debug('zigbee-herdsman:deconz:frameParser');
 
+interface lastReceivedGpInd {
+    srcId: number;
+    commandId: number;
+    frameCounter: number;
+}
+
+var lastReceivedGpInd = {srcId: 0, commandId: 0, frameCounter: 0};
 var events = require('events');
 var frameParserEvents = new events.EventEmitter();
 module.exports.frameParserEvents = frameParserEvents;
@@ -303,6 +310,61 @@ function parseReceivedDataNotification(view : DataView) : number {
     return deviceState;
 }
 
+function parseGreenPowerDataIndication(view : DataView) : object {
+    const ind: gpDataInd = {};
+    ind.seqNr = view.getUint8(1);
+
+    console.log(view);
+    if (view.byteLength < 30) {
+        debug("GP data notification");
+        ind.id = 0x00; // 0 = notification, 4 = commissioning
+        ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
+        ind.options = 0; view.getUint16(7, littleEndian); // frame ctrl field(7) ext.fcf(8)
+        ind.srcId = view.getUint32(9, littleEndian);
+        ind.frameCounter = view.getUint32(13, littleEndian);
+        ind.commandId = view.getUint8(17);
+        ind.commandFrameSize = view.byteLength - 18 - 6; // cut 18 from begin and 4 (sec mic) and 2 from end (cfc)
+
+        let payload = [];
+        let i = 0;
+        for (let u = 18; u < (ind.commandFrameSize + 18); u++) {
+            payload[i] = view.getUint8(u);
+            i++;
+        }
+        ind.commandFrame = payload;
+    } else {
+        debug("GP commissioning notification");
+        ind.id = 0x04; // 0 = notification, 4 = commissioning
+        ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
+        ind.options = view.getUint16(14, littleEndian); // opt(14) ext.opt(15)
+        ind.srcId = view.getUint32(8, littleEndian);
+        ind.frameCounter = view.getUint32(36, littleEndian);
+        ind.commandId = view.getUint8(12);
+        ind.commandFrameSize = view.byteLength - 13 - 2; // cut 13 from begin and 2 from end (cfc)
+
+        let payload = [];
+        let i = 0;
+        for (let u = 13; u < (ind.commandFrameSize + 13); u++) {
+            payload[i] = view.getUint8(u);
+            i++;
+        }
+        ind.commandFrame = payload;
+    }
+
+    if (!(lastReceivedGpInd.srcId === ind.srcId &&
+          lastReceivedGpInd.commandId === ind.commandId &&
+          lastReceivedGpInd.frameCounter === ind.frameCounter)) {
+
+        lastReceivedGpInd.srcId = ind.srcId;
+        lastReceivedGpInd.commandId = ind.commandId;
+        lastReceivedGpInd.frameCounter = ind.frameCounter;
+        //debug(`GP_DATA_INDICATION - src id: ${ind.srcId} cmd id: ${ind.commandId} frameCounter: ${ind.frameCounter}`);
+        debug(`GP_DATA_INDICATION - src id: 0x${ind.srcId.toString(16)} cmd id: 0x${ind.commandId.toString(16)} frameCounter: 0x${ind.frameCounter.toString(16)}`);
+        frameParserEvents.emit('receivedGreenPowerIndication', ind);
+    }
+    return ind;
+}
+
 function parseMacPollCommand(view : DataView) : number {
     //debug("Received command MAC_POLL");
     return 28;
@@ -338,6 +400,8 @@ function getParserForCommandId(id: Number) : Function {
             return parseReceivedDataNotification;
         case PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE:
             return parseChangeNetworkStateResponse;
+        case PARAM.PARAM.FrameType.GreenPowerDataInd:
+            return parseGreenPowerDataIndication;
         case 28:
             return parseMacPollCommand;
         case 31:

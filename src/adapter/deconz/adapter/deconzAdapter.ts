@@ -12,10 +12,11 @@ import Driver from '../driver/driver';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
 import * as Zcl from '../../../zcl';
+import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from '../../../controller/tstype';
 import processFrame from '../driver/frameParser';
 import {Queue, Waitress, Wait} from '../../../utils';
 import PARAM from '../driver/constants';
-import { Command, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse } from '../driver/constants';
+import { Command, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, gpDataInd } from '../driver/constants';
 
 var frameParser = require('../driver/frameParser');
 
@@ -61,6 +62,7 @@ class DeconzAdapter extends Adapter {
         console.log('CREATED DECONZ ADAPTER');
 
         this.frameParserEvent.on('receivedDataPayload', (data: any) => {this.checkReceivedDataPayload(data)});
+        this.frameParserEvent.on('receivedGreenPowerIndication', (data: any) => {this.checkReceivedGreenPowerIndication(data)});
 
         const that = this;
         setInterval(() => { that.checkReceivedDataPayload(null); }, 1000);
@@ -616,19 +618,15 @@ class DeconzAdapter extends Adapter {
     }
 
     public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
-        return;
-        //TODO: does not work yet (e.g. after permit join)
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
         let pay = zclFrame.toBuffer();
 
         debug("zclFrame to all - zclFrame.payload:");
         debug(zclFrame.Payload);
-        //console.log("zclFramte.toBuffer:");
-        //console.log(pay);
 
         request.requestId = transactionID;
-        request.destAddrMode = PARAM.PARAM.addressMode.GROUP_ADDR;
+        request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
         request.destAddr16 = 0xFFFD;
         request.destEndpoint = endpoint;
         request.profileId = 0x104;
@@ -982,6 +980,27 @@ class DeconzAdapter extends Adapter {
             const req: WaitForDataRequest = {addr, profileId, clusterId, resolve, reject, ts};
             this.openRequestsQueue.push(req);
         });
+    }
+
+    private checkReceivedGreenPowerIndication(ind: gpDataInd) {
+        ind.clusterId = 0x21;
+
+        let gpFrame = [ind.rspId, ind.seqNr, ind.id, ind.options & 0xff, (ind.options >> 8) & 0xff,
+        ind.srcId & 0xff, (ind.srcId >> 8) & 0xff, (ind.srcId >> 16) & 0xff, (ind.srcId >> 24) & 0xff,
+        ind.frameCounter & 0xff, (ind.frameCounter >> 8) & 0xff, (ind.frameCounter >> 16) & 0xff, (ind.frameCounter >> 24) & 0xff,
+        ind.commandId, ind.commandFrameSize].concat(ind.commandFrame);
+
+        const payBuf = Buffer.from(gpFrame);
+        const payload: Events.ZclDataPayload = {
+            frame: ZclFrame.fromBuffer(ind.clusterId, payBuf),
+            address: ind.srcId,
+            endpoint: 242, // GP endpoint
+            linkquality: 127,
+            groupID: 0x0b84
+        };
+
+        this.waitress.resolve(payload);
+        this.emit(Events.Events.zclData, payload);
     }
 
     private checkReceivedDataPayload(resp: ReceivedDataResponse) {

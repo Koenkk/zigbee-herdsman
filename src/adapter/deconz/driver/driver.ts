@@ -347,7 +347,10 @@ class Driver extends events.EventEmitter {
         const apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
         const configChanged = (currentDeviceStatus >> 4) & 0x01;
         const apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
+        this.apsRequestFreeSlots = apsRequestFreeSlots;
 
+        debug("networkstate: " + networkState + " apsDataConfirm: " + apsDataConfirm + " apsDataIndication: " + apsDataIndication +
+            " configChanged: " + configChanged + " apsRequestFreeSlots: " + apsRequestFreeSlots);
         if (apsDataConfirm === 1) {
             try {
                 const x = await this.querySendDataStateRequest();
