@@ -70,12 +70,6 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'programmingEventNotification': 'commandProgrammingEventNotification',
     'getPinCodeRsp': 'commandGetPinCodeRsp',
     'arrivalSensorNotify': 'commandArrivalSensorNotify',
-    'addRsp': 'commandSceneAddRsp',
-    'viewRsp': 'commandSceneViewRsp',
-    'removeRsp': 'commandSceneRemoveRsp',
-    'removeAllRsp': 'commandSceneRemoveAllRsp',
-    'storeRsp': 'commandSceneStoreRsp',
-    'getSceneMembershipRsp': 'commandScenegetSceneMembershipRsp',
 };
 
 type MessagePayloadType =
