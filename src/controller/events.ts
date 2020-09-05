@@ -92,7 +92,7 @@ type MessagePayloadType =
     'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandGetData' |
     'commandSetDataResponse' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
-    "commandArrivalSensorNotify";
+    "commandArrivalSensorNotify" | 'commandSceneAddRsp' | 'commandSceneViewRsp' | 'commandSceneRemoveRsp' | 'commandSceneRemoveAllRsp' | 'commandSceneStoreRsp' | 'commandScenegetSceneMembershipRsp';
 
 interface MessagePayload {
     type: MessagePayloadType;
