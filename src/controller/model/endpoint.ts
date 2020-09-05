@@ -74,8 +74,12 @@ class Endpoint extends Entity {
                 target = Group.byGroupID(entry.groupID);
             }
 
-            return {target, cluster: Zcl.Utils.getCluster(entry.cluster)};
-        });
+            if (target) {
+                return {target, cluster: Zcl.Utils.getCluster(entry.cluster)};
+            } else {
+                return undefined;
+            }
+        }).filter(b => b !== undefined);
     }
 
     private constructor(
@@ -110,9 +114,37 @@ class Endpoint extends Entity {
         return this.inputClusters.includes(cluster.ID);
     }
 
+    /**
+     * @param {number|string} clusterKey
+     * @returns {boolean}
+     */
     public supportsOutputCluster(clusterKey: number | string, ): boolean {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         return this.outputClusters.includes(cluster.ID);
+    }
+
+    /**
+     * @returns {Zcl.TsType.Cluster[]}
+     */
+    public getInputClusters(): Zcl.TsType.Cluster[] {
+        return this.clusterNumbersToClusters(this.inputClusters);
+    }
+
+    /**
+     * @returns {Zcl.TsType.Cluster[]}
+     */
+    public getOutputClusters(): Zcl.TsType.Cluster[] {
+        return this.clusterNumbersToClusters(this.outputClusters);
+    }
+
+    private clusterNumbersToClusters(clusterNumbers: number[]): Zcl.TsType.Cluster[] {
+        return clusterNumbers.map((c) => {
+            try {
+                return Zcl.Utils.getCluster(c, this.getDevice().manufacturerID);
+            } catch {
+                return null;
+            }
+        }).filter((c) => c !== null);
     }
 
     /*

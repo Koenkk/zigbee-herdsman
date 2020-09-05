@@ -28,6 +28,7 @@
 * [removeFromNetwork](_src_controller_model_group_.group.md#removefromnetwork)
 * [removeMember](_src_controller_model_group_.group.md#removemember)
 * [save](_src_controller_model_group_.group.md#save)
+* [write](_src_controller_model_group_.group.md#write)
 * [all](_src_controller_model_group_.group.md#static-all)
 * [byGroupID](_src_controller_model_group_.group.md#static-bygroupid)
 * [create](_src_controller_model_group_.group.md#static-create)
@@ -82,7 +83,7 @@ ___
 
 ▸ **command**(`clusterKey`: number | string, `commandKey`: number | string, `payload`: [KeyValue](../interfaces/_src_controller_tstype_.keyvalue.md), `options?`: [Options](../interfaces/_src_controller_model_group_.options.md)): *Promise‹void›*
 
-*Defined in [src/controller/model/group.ts:144](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L144)*
+*Defined in [src/controller/model/group.ts:178](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L178)*
 
 **Parameters:**
 
@@ -156,6 +157,24 @@ ___
 *Defined in [src/controller/model/group.ts:122](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L122)*
 
 **Returns:** *void*
+
+___
+
+###  write
+
+▸ **write**(`clusterKey`: number | string, `attributes`: [KeyValue](../interfaces/_src_controller_tstype_.keyvalue.md), `options?`: [Options](../interfaces/_src_controller_model_group_.options.md)): *Promise‹void›*
+
+*Defined in [src/controller/model/group.ts:144](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L144)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`clusterKey` | number &#124; string |
+`attributes` | [KeyValue](../interfaces/_src_controller_tstype_.keyvalue.md) |
+`options?` | [Options](../interfaces/_src_controller_model_group_.options.md) |
+
+**Returns:** *Promise‹void›*
 
 ___
 
