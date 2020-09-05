@@ -141,6 +141,40 @@ class Group extends Entity {
      * Zigbee functions
      */
 
+    public async write(
+        clusterKey: number | string, attributes: KeyValue, options?: Options
+    ): Promise<void> {
+        options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
+        for (const [nameOrID, value] of Object.entries(attributes)) {
+            if (cluster.hasAttribute(nameOrID)) {
+                const attribute = cluster.getAttribute(nameOrID);
+                payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
+            } else if (!isNaN(Number(nameOrID))){
+                payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type});
+            } else {
+                throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
+            }
+        }
+
+        const log = `Write ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            const frame = Zcl.ZclFrame.create(
+                Zcl.FrameType.GLOBAL, options.direction, true,
+                options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+                'write', cluster.ID, payload, options.reservedBits
+            );
+            await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
+        } catch (error) {
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
+        }
+    }
+
     public async command(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options
     ): Promise<void> {

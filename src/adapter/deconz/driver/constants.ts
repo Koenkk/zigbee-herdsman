@@ -26,7 +26,8 @@ const PARAM: {
         ReadParameter: 0x0a,
         WriteParameter: 0x0b,
         ReadFirmwareVersion: 0x0d,
-        DeviceStateChanged: 0x0e
+        DeviceStateChanged: 0x0e,
+        GreenPowerDataInd: 0x19
     },
     APS: {
         DATA_CONFIRM: 0x04,
@@ -96,6 +97,19 @@ interface ReceivedDataResponse {
     rssi?: number;
 }
 
+interface gpDataInd {
+    rspId?: number;
+    seqNr?: number;
+    id?: number;
+    clusterId?: number;
+    options?: number;
+    srcId?: number;
+    frameCounter?: number;
+    commandId?: number;
+    commandFrameSize?: number;
+    commandFrame?: number[];
+}
+
 interface DataStateResponse {
     commandId?: number;
     seqNr?: number;
@@ -140,6 +154,6 @@ type ParamNetworkKey = string;
 type Command = ParamMac | ParamPanId | ParamNwkAddr | ParamExtPanId | ParamChannel | ParamChannelMask | ParamPermitJoin | ParamNetworkKey;
 type parameterT = number | number[];
 
-export { Request, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, parameterT , Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin, ParamNetworkKey };
+export { Request, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, parameterT , Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin, ParamNetworkKey, gpDataInd };
 
 export default {PARAM};
