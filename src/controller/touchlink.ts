@@ -13,7 +13,53 @@ class Touchlink {
         this.adapter = adapter;
     }
 
-    public async factoryReset(): Promise<boolean> {
+    public async scan(): Promise<{ieeeAddr: string; channel: number}[]> {
+        const result = [];
+
+        for (const channel of scanChannels) {
+            debug(`Set InterPAN channel to '${channel}'`);
+            await this.adapter.setChannelInterPAN(channel);
+
+            try {
+                const response = await this.adapter.sendZclFrameInterPANBroadcast(
+                    this.createScanRequestFrame(), 500
+                );
+                debug(`Got scan response on channel '${channel}'`);
+                AssertString(response.address);
+                result.push({ieeeAddr: response.address, channel});
+            } catch (error) {
+                debug(`Scan request failed or was not answered: '${error}'`);
+            }
+
+            debug(`Restore InterPAN channel`);
+            await this.adapter.restoreChannelInterPAN();
+        }
+
+        return result;
+    }
+
+    public async factoryReset(ieeeAddr: string, channel: number): Promise<boolean> {
+        debug(`Set InterPAN channel to '${channel}'`);
+        await this.adapter.setChannelInterPAN(channel);
+
+        await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(), 500);
+        debug(`Got scan response on channel '${channel}'`);
+
+        debug(`Identifying '${ieeeAddr}'`);
+        await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(), ieeeAddr);
+        await Wait(2000);
+
+        debug(`Reset to factory new '${ieeeAddr}'`);
+        await this.adapter.sendZclFrameInterPANToIeeeAddr(
+            this.createResetFactoryNewRequestFrame(), ieeeAddr
+        );
+
+        debug(`Restore InterPAN channel`);
+        await this.adapter.restoreChannelInterPAN();
+        return true;
+    }
+
+    public async factoryResetFirst(): Promise<boolean> {
         let done = false;
 
         for (const channel of scanChannels) {

@@ -18,6 +18,9 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 
 # Changelog
 
+## 0.13.0 breaking changes
+- `controller.touchlinkFactoryReset` has been renamed to `controller.touchlinkFactoryResetFirst()`
+
 ## 0.12.0 breaking changes
 - options.network.extenedPanID -> options.network.extendedPanID (typo fix)
 

@@ -155,8 +155,16 @@ class Controller extends events.EventEmitter {
         this.touchlink = new Touchlink(this.adapter);
     }
 
-    public async touchlinkFactoryReset(): Promise<boolean> {
-        return this.touchlink.factoryReset();
+    public async touchlinkScan(): Promise<{ieeeAddr: string; channel: number}[]> {
+        return this.touchlink.scan();
+    }
+
+    public async touchlinkFactoryReset(ieeeAddr: string, channel: number): Promise<boolean> {
+        return this.touchlink.factoryReset(ieeeAddr, channel);
+    }
+
+    public async touchlinkFactoryResetFirst(): Promise<boolean> {
+        return this.touchlink.factoryResetFirst();
     }
 
     public async permitJoin(permit: boolean, device?: Device): Promise<void> {
