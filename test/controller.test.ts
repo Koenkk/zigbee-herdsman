@@ -2913,7 +2913,7 @@ describe('Controller', () => {
             options: 0,
             srcID: 0x0046f4fe,
             frameCounter: 228,
-            commandID: 0xce,
+            commandID: 0xe0,
             payloadSize: 27,
             commandFrame: {
                 deviceID: 0x02,
@@ -2962,8 +2962,10 @@ describe('Controller', () => {
         expect(events.deviceInterview.length).toBe(1);
         expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status":"successful","device":{"ID":2,"_endpoints":[],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}}});
         expect((controller.getDeviceByIeeeAddr('0x000000000046f4fe')).networkAddress).toBe(0x46f4fe);
+        expect(events.message.length).toBe(1);
 
         // Green power device send message
+        events.message = [];
         expect(events.message.length).toBe(0);
         const dataToggle = {
             options: 0,
