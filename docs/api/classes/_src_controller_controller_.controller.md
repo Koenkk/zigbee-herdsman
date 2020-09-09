@@ -35,6 +35,7 @@
 * [supportsLED](_src_controller_controller_.controller.md#supportsled)
 * [touchlinkFactoryReset](_src_controller_controller_.controller.md#touchlinkfactoryreset)
 * [touchlinkFactoryResetFirst](_src_controller_controller_.controller.md#touchlinkfactoryresetfirst)
+* [touchlinkIdentify](_src_controller_controller_.controller.md#touchlinkidentify)
 * [touchlinkScan](_src_controller_controller_.controller.md#touchlinkscan)
 
 ## Constructors
@@ -65,7 +66,7 @@ Name | Type |
 
 ▸ **createGroup**(`groupID`: number): *[Group](_src_controller_model_group_.group.md)*
 
-*Defined in [src/controller/controller.ts:289](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L289)*
+*Defined in [src/controller/controller.ts:293](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L293)*
 
 Create a Group
 
@@ -83,7 +84,7 @@ ___
 
 ▸ **getCoordinatorVersion**(): *Promise‹[CoordinatorVersion](../interfaces/_src_adapter_tstype_.coordinatorversion.md)›*
 
-*Defined in [src/controller/controller.ts:236](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L236)*
+*Defined in [src/controller/controller.ts:240](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L240)*
 
 **Returns:** *Promise‹[CoordinatorVersion](../interfaces/_src_adapter_tstype_.coordinatorversion.md)›*
 
@@ -93,7 +94,7 @@ ___
 
 ▸ **getDeviceByIeeeAddr**(`ieeeAddr`: string): *[Device](_src_controller_model_device_.device.md)*
 
-*Defined in [src/controller/controller.ts:261](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L261)*
+*Defined in [src/controller/controller.ts:265](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L265)*
 
 Get device by ieeeAddr
 
@@ -111,7 +112,7 @@ ___
 
 ▸ **getDeviceByNetworkAddress**(`networkAddress`: number): *[Device](_src_controller_model_device_.device.md)*
 
-*Defined in [src/controller/controller.ts:268](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L268)*
+*Defined in [src/controller/controller.ts:272](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L272)*
 
 Get device by networkAddress
 
@@ -129,7 +130,7 @@ ___
 
 ▸ **getDevices**(): *[Device](_src_controller_model_device_.device.md)[]*
 
-*Defined in [src/controller/controller.ts:247](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L247)*
+*Defined in [src/controller/controller.ts:251](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L251)*
 
 Get all devices
 
@@ -141,7 +142,7 @@ ___
 
 ▸ **getDevicesByType**(`type`: [DeviceType](../modules/_src_adapter_tstype_.md#devicetype)): *[Device](_src_controller_model_device_.device.md)[]*
 
-*Defined in [src/controller/controller.ts:254](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L254)*
+*Defined in [src/controller/controller.ts:258](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L258)*
 
 Get all devices with a specific type
 
@@ -159,7 +160,7 @@ ___
 
 ▸ **getGroupByID**(`groupID`: number): *[Group](_src_controller_model_group_.group.md)*
 
-*Defined in [src/controller/controller.ts:275](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L275)*
+*Defined in [src/controller/controller.ts:279](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L279)*
 
 Get group by ID
 
@@ -177,7 +178,7 @@ ___
 
 ▸ **getGroups**(): *[Group](_src_controller_model_group_.group.md)[]*
 
-*Defined in [src/controller/controller.ts:282](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L282)*
+*Defined in [src/controller/controller.ts:286](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L286)*
 
 Get all groups
 
@@ -189,7 +190,7 @@ ___
 
 ▸ **getNetworkParameters**(): *Promise‹[NetworkParameters](../interfaces/_src_adapter_tstype_.networkparameters.md)›*
 
-*Defined in [src/controller/controller.ts:240](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L240)*
+*Defined in [src/controller/controller.ts:244](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L244)*
 
 **Returns:** *Promise‹[NetworkParameters](../interfaces/_src_adapter_tstype_.networkparameters.md)›*
 
@@ -199,7 +200,7 @@ ___
 
 ▸ **getPermitJoin**(): *boolean*
 
-*Defined in [src/controller/controller.ts:196](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L196)*
+*Defined in [src/controller/controller.ts:200](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L200)*
 
 **Returns:** *boolean*
 
@@ -209,7 +210,7 @@ ___
 
 ▸ **permitJoin**(`permit`: boolean, `device?`: [Device](_src_controller_model_device_.device.md)): *Promise‹void›*
 
-*Defined in [src/controller/controller.ts:170](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L170)*
+*Defined in [src/controller/controller.ts:174](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L174)*
 
 **Parameters:**
 
@@ -226,7 +227,7 @@ ___
 
 ▸ **reset**(`type`: "soft" | "hard"): *Promise‹void›*
 
-*Defined in [src/controller/controller.ts:232](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L232)*
+*Defined in [src/controller/controller.ts:236](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L236)*
 
 **Parameters:**
 
@@ -242,7 +243,7 @@ ___
 
 ▸ **setLED**(`enabled`: boolean): *Promise‹void›*
 
-*Defined in [src/controller/controller.ts:310](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L310)*
+*Defined in [src/controller/controller.ts:314](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L314)*
 
  Enable/Disable the LED
 
@@ -260,7 +261,7 @@ ___
 
 ▸ **setTransmitPower**(`value`: number): *Promise‹void›*
 
-*Defined in [src/controller/controller.ts:303](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L303)*
+*Defined in [src/controller/controller.ts:307](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L307)*
 
  Set transmit power of the adapter
 
@@ -290,7 +291,7 @@ ___
 
 ▸ **stop**(): *Promise‹void›*
 
-*Defined in [src/controller/controller.ts:200](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L200)*
+*Defined in [src/controller/controller.ts:204](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L204)*
 
 **Returns:** *Promise‹void›*
 
@@ -300,7 +301,7 @@ ___
 
 ▸ **supportsLED**(): *Promise‹boolean›*
 
-*Defined in [src/controller/controller.ts:296](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L296)*
+*Defined in [src/controller/controller.ts:300](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L300)*
 
  Check if the adapters supports LED
 
@@ -312,7 +313,7 @@ ___
 
 ▸ **touchlinkFactoryReset**(`ieeeAddr`: string, `channel`: number): *Promise‹boolean›*
 
-*Defined in [src/controller/controller.ts:162](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L162)*
+*Defined in [src/controller/controller.ts:166](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L166)*
 
 **Parameters:**
 
@@ -329,9 +330,26 @@ ___
 
 ▸ **touchlinkFactoryResetFirst**(): *Promise‹boolean›*
 
-*Defined in [src/controller/controller.ts:166](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L166)*
+*Defined in [src/controller/controller.ts:170](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L170)*
 
 **Returns:** *Promise‹boolean›*
+
+___
+
+###  touchlinkIdentify
+
+▸ **touchlinkIdentify**(`ieeeAddr`: string, `channel`: number): *Promise‹void›*
+
+*Defined in [src/controller/controller.ts:158](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L158)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`ieeeAddr` | string |
+`channel` | number |
+
+**Returns:** *Promise‹void›*
 
 ___
 
@@ -339,6 +357,6 @@ ___
 
 ▸ **touchlinkScan**(): *Promise‹object[]›*
 
-*Defined in [src/controller/controller.ts:158](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L158)*
+*Defined in [src/controller/controller.ts:162](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/controller.ts#L162)*
 
 **Returns:** *Promise‹object[]›*
