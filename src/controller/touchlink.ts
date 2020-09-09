@@ -38,6 +38,20 @@ class Touchlink {
         return result;
     }
 
+    public async identify(ieeeAddr: string, channel: number): Promise<void> {
+        debug(`Set InterPAN channel to '${channel}'`);
+        await this.adapter.setChannelInterPAN(channel);
+
+        await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(), 500);
+        debug(`Got scan response on channel '${channel}'`);
+
+        debug(`Identifying '${ieeeAddr}'`);
+        await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(), ieeeAddr);
+
+        debug(`Restore InterPAN channel`);
+        await this.adapter.restoreChannelInterPAN();
+    }
+
     public async factoryReset(ieeeAddr: string, channel: number): Promise<boolean> {
         debug(`Set InterPAN channel to '${channel}'`);
         await this.adapter.setChannelInterPAN(channel);

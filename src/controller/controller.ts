@@ -155,6 +155,10 @@ class Controller extends events.EventEmitter {
         this.touchlink = new Touchlink(this.adapter);
     }
 
+    public async touchlinkIdentify(ieeeAddr: string, channel: number): Promise<void> {
+        await this.touchlink.identify(ieeeAddr, channel);
+    }
+
     public async touchlinkScan(): Promise<{ieeeAddr: string; channel: number}[]> {
         return this.touchlink.scan();
     }
