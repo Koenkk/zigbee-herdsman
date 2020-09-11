@@ -582,8 +582,7 @@ class DeconzAdapter extends Adapter {
                 }
 
             } catch (error) {
-                debug(`no response received`);
-                return null;
+                throw new Error("no response received");
             }
     }
 
@@ -612,8 +611,9 @@ class DeconzAdapter extends Adapter {
             debug(`sendZclFrameToGroup - message send`);
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
-            debug(`sendZclFrameToGroup ERROR: ${error}`);
-            return Promise.reject();
+            //debug(`sendZclFrameToGroup ERROR: ${error}`);
+            //return Promise.reject();
+            throw new Error(error);
         }
     }
 
@@ -641,8 +641,9 @@ class DeconzAdapter extends Adapter {
             debug(`sendZclFrameToAll - message send`);
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
-            debug(`sendZclFrameToAll ERROR: ${error}`);
-            return Promise.reject();
+            //debug(`sendZclFrameToAll ERROR: ${error}`);
+            //return Promise.reject();
+            throw new Error(error);
         }
     }
 
@@ -689,11 +690,11 @@ class DeconzAdapter extends Adapter {
             const data = d.asduPayload;
             debug("BIND RESPONSE - addr: 0x" + destinationNetworkAddress.toString(16) + " status: " + data[1]);
             if (data[1] !== 0) {
-                return Promise.reject();
+                throw new Error("status: " + data[1]);
             }
         } catch (error) {
             debug("BIND FAILED - addr: 0x" + destinationNetworkAddress.toString(16) + " " + error);
-            return Promise.reject();
+            throw new Error(error);
         }
     }
 
@@ -741,11 +742,11 @@ class DeconzAdapter extends Adapter {
             const data = d.asduPayload;
             debug("UNBIND RESPONSE - addr: 0x" + destinationNetworkAddress.toString(16) + " status: " + data[1]);
             if (data[1] !== 0) {
-                return Promise.reject();
+                throw new Error("status: " + data[1]);
             }
         } catch (error) {
             debug("UNBIND FAILED - addr: 0x" + destinationNetworkAddress.toString(16) + " " + error);
-            return Promise.reject();
+            throw new Error(error);
         }
     }
 
@@ -782,12 +783,12 @@ class DeconzAdapter extends Adapter {
                 ieeeAddr: ieeeAddr,
             };
             if (data[1] !== 0) {
-                return Promise.reject();
+                throw new Error("status: " + data[1]);
             }
             this.emit(Events.Events.deviceLeave, payload);
         } catch (error) {
             debug("REMOVE_DEVICE FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-            return Promise.reject();
+            throw new Error(error);
         }
     }
 
