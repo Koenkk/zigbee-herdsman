@@ -2750,10 +2750,15 @@ describe('zStackAdapter', () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
-        const result = await adapter.setChannelInterPAN(14);
+        await adapter.setChannelInterPAN(14);
         expect(mockZnpRequest).toBeCalledTimes(2);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [14]});
         expect(mockZnpRequest).toBeCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 2, data: [12]});
+
+        mockZnpRequest.mockClear();
+        await adapter.setChannelInterPAN(15);
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [15]});
     });
 
     it('Restore interpan channel', async () => {
@@ -2842,5 +2847,24 @@ describe('zStackAdapter', () => {
         expect(result.linkquality).toStrictEqual(101);
         expect(result.address).toStrictEqual(2);
         expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
+    });
+
+    it('Command should fail when in interpan', async () => {
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
+        basicMocks();
+        await adapter.start();
+
+        await adapter.setChannelInterPAN(14);
+        mockZnpRequest.mockClear();
+        let error;
+        try {await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false)} catch (e) {error = e;}
+        expect(error).toStrictEqual(new Error('Cannot execute command, in Inter-PAN mode'));
+        expect(mockZnpRequest).toBeCalledTimes(0);
+
+        await adapter.restoreChannelInterPAN();
+        mockZnpRequest.mockClear();
+
+        await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false);
+        expect(mockZnpRequest).toBeCalledTimes(1);
     });
 });
