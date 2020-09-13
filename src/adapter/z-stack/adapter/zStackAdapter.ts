@@ -337,7 +337,7 @@ class ZStackAdapter extends Adapter {
                 ZnpCommandStatus.MAC_NO_RESOURCES,
             ];
 
-            if (dataRequestAttempt >= 5 || !recoverableErrors.includes(dataConfirmResult)) {
+            if (dataRequestAttempt >= 4 || !recoverableErrors.includes(dataConfirmResult)) {
                 throw new DataConfirmError(dataConfirmResult);
             }
 
@@ -362,26 +362,8 @@ class ZStackAdapter extends Adapter {
                 // NWK_NO_ROUTE: no network route => rediscover route
                 // MAC_NO_ACK: route may be corrupted
                 // MAC_TRANSACTION_EXPIRED: Mac layer is sleeping
-                if (!checkedNetworkAddress) {
-                    // Figure out once if the network address has been changed.
-                    try {
-                        checkedNetworkAddress = true;
-                        const actualNetworkAddress = await this.requestNetworkAddress(ieeeAddr);
-                        if (networkAddress !== actualNetworkAddress) {
-                            debug(`Failed because request was done with wrong network address`);
-                            return this.sendZclFrameToEndpointInternal(
-                                ieeeAddr, actualNetworkAddress, endpoint, sourceEndpoint, zclFrame, timeout,
-                                disableResponse, responseAttempt, dataRequestAttempt + 1, checkedNetworkAddress,
-                                discoveredRoute, assocRemove
-                            );
-                        } else {debug('Network address did not change');}
-                    } catch {}
-                }
-
-                if (!discoveredRoute) {
-                    discoveredRoute = true;
-                    await this.discoverRoute(networkAddress);
-                } else if (!assocRemove && dataConfirmResult === ZnpCommandStatus.MAC_TRANSACTION_EXPIRED) {
+                if (!assocRemove && dataConfirmResult === ZnpCommandStatus.MAC_TRANSACTION_EXPIRED &&
+                    dataRequestAttempt >= 2) {
                     /**
                      * Since child aging is disabled on the firmware, when a end device is directly connected
                      * to the coordinator and changes parent and the coordinator does not recevie this update,
@@ -396,6 +378,21 @@ class ZStackAdapter extends Adapter {
                     try {
                         debug('assocRemove(%s)', ieeeAddr);
                         await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
+                    } catch {}
+                } else if (!discoveredRoute && dataRequestAttempt >= 2) {
+                    discoveredRoute = true;
+                    await this.discoverRoute(networkAddress);
+                } else if (!checkedNetworkAddress && dataRequestAttempt >= 2) {
+                    // Figure out once if the network address has been changed.
+                    try {
+                        checkedNetworkAddress = true;
+                        const actualNetworkAddress = await this.requestNetworkAddress(ieeeAddr);
+                        if (networkAddress !== actualNetworkAddress) {
+                            debug(`Failed because request was done with wrong network address`);
+                            discoveredRoute = true;
+                            networkAddress = actualNetworkAddress;
+                            await this.discoverRoute(actualNetworkAddress);
+                        } else {debug('Network address did not change');}
                     } catch {}
                 } else {
                     await Wait(2000);
