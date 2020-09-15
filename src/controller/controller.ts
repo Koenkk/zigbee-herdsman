@@ -64,6 +64,8 @@ class Controller extends events.EventEmitter {
     private permitJoinTimer: any;
     // eslint-disable-next-line
     private backupTimer: any;
+    // eslint-disable-next-line
+    private databaseSaveTimer: any;
     private touchlink: Touchlink;
 
     /**
@@ -152,6 +154,9 @@ class Controller extends events.EventEmitter {
         await this.backup();
         this.backupTimer = setInterval(() => this.backup(), 86400000);
 
+        // Set database save timer to 1 hour.
+        this.databaseSaveTimer = setInterval(() => this.databaseSave(), 3600000);
+
         this.touchlink = new Touchlink(this.adapter);
     }
 
@@ -202,13 +207,7 @@ class Controller extends events.EventEmitter {
     }
 
     public async stop(): Promise<void> {
-        for (const device of Device.all()) {
-            device.save();
-        }
-
-        for (const group of Group.all()) {
-            group.save();
-        }
+        this.databaseSave();
 
         // Unregister adapter events
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceJoined);
@@ -220,8 +219,19 @@ class Controller extends events.EventEmitter {
 
         await this.permitJoin(false);
         clearInterval(this.backupTimer);
+        clearInterval(this.databaseSaveTimer);
         await this.backup();
         await this.adapter.stop();
+    }
+
+    private databaseSave(): void {
+        for (const device of Device.all()) {
+            device.save();
+        }
+
+        for (const group of Group.all()) {
+            group.save();
+        }
     }
 
     private async backup(): Promise<void> {
