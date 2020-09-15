@@ -69,6 +69,7 @@ interface WaitForDataRequest {
     addr?: number;
     profileId?: number;
     clusterId?: number;
+    transactionSequenceNumber?: number;
     resolve?: Function;
     reject?: Function;
     ts?: number;

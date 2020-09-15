@@ -542,10 +542,9 @@ class DeconzAdapter extends Adapter {
         request.timeout = timeout;
 
         const command = zclFrame.getCommand();
-
         this.driver.enqueueSendDataRequest(request)
             .then(result => {
-                debug(`sendZclFrameToEndpoint - message send`);
+                debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.Header.transactionSequenceNumber}`);
                 if (!command.hasOwnProperty('response') || zclFrame.Header.frameControl.disableDefaultResponse || !disableResponse) {
                     return Promise.resolve();
                 }
@@ -557,9 +556,9 @@ class DeconzAdapter extends Adapter {
         try {
                 let data = null;
                 if (command.hasOwnProperty('response') && !disableResponse) {
-                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID);
+                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber);
                 } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
-                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID);
+                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber);
                 }
 
                 if (data !== null) {
@@ -976,11 +975,11 @@ class DeconzAdapter extends Adapter {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    private waitForData(addr: number, profileId: number, clusterId: number) : Promise<ReceivedDataResponse> {
+    private waitForData(addr: number, profileId: number, clusterId: number, transactionSequenceNumber?: number) : Promise<ReceivedDataResponse> {
         return new Promise((resolve, reject): void => {
             const ts = Date.now();
             const commandId = PARAM.PARAM.APS.DATA_INDICATION;
-            const req: WaitForDataRequest = {addr, profileId, clusterId, resolve, reject, ts};
+            const req: WaitForDataRequest = {addr, profileId, clusterId, transactionSequenceNumber, resolve, reject, ts};
             this.openRequestsQueue.push(req);
         });
     }
@@ -1008,16 +1007,32 @@ class DeconzAdapter extends Adapter {
 
     private checkReceivedDataPayload(resp: ReceivedDataResponse) {
         let srcAddr: any = null;
+        let frame: ZclFrame = null;
         if (resp != null) {
             srcAddr = (resp.srcAddr16 != null) ? resp.srcAddr16 : resp.srcAddr64;
+            try {
+                frame = ZclFrame.fromBuffer(resp.clusterId, Buffer.from(resp.asduPayload));
+            } catch (error) {
+                debug("could not parse zclFrame: " + error);
+            }
         }
 
         let i = this.openRequestsQueue.length;
         while (i--) {
             const req: WaitForDataRequest = this.openRequestsQueue[i];
-            if (srcAddr != null && req.addr === srcAddr && req.clusterId === resp.clusterId && req.profileId === resp.profileId) {
-                this.openRequestsQueue.splice(i, 1);
-                req.resolve(resp);
+            if (srcAddr != null && req.addr === srcAddr && req.clusterId === resp.clusterId &&
+                req.profileId === resp.profileId) {
+                if (frame !== null && req.transactionSequenceNumber !== null && req.transactionSequenceNumber !== undefined) {
+                    if (req.transactionSequenceNumber === frame.Header.transactionSequenceNumber) {
+                        debug("resolve data request with transSeq Nr.: " + req.transactionSequenceNumber);
+                        this.openRequestsQueue.splice(i, 1);
+                        req.resolve(resp);
+                    }
+                } else {
+                    debug("resolve data request without a transSeq Nr.");
+                    this.openRequestsQueue.splice(i, 1);
+                    req.resolve(resp);
+                }
             }
 
             const now = Date.now();
@@ -1025,7 +1040,7 @@ class DeconzAdapter extends Adapter {
                 //debug("Timeout for request in openRequestsQueue addr: " + req.addr.toString(16) + " clusterId: " + req.clusterId.toString(16) + " profileId: " + req.profileId.toString(16));
                 //remove from busyQueue
                 this.openRequestsQueue.splice(i, 1);
-                req.reject("openRequest TIMEOUT");
+                req.reject("waiting for response TIMEOUT");
             }
         }
 
