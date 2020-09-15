@@ -551,7 +551,7 @@ class Device extends Entity {
         // Zigbee does not have an official pining mechamism. Use a read request
         // of a mandatory basic cluster attribute to keep it as lightweight as
         // possible.
-        await this.endpoints[0].read('genBasic', ['zclVersion']);
+        await this.endpoints[0].read('genBasic', ['zclVersion'], {disableRecovery: true});
     }
 }
 

@@ -288,21 +288,21 @@ class ZStackAdapter extends Adapter {
 
     public async sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
-        disableResponse: boolean, sourceEndpoint?: number
+        disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
             this.checkInterpanLock();
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
-                0, 0, false, false, false,
+                disableRecovery, 0, 0, false, false, false,
             );
         }, networkAddress);
     }
 
     private async sendZclFrameToEndpointInternal(
         ieeeAddr: string, networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame,
-        timeout: number, disableResponse: boolean, responseAttempt: number, dataRequestAttempt: number,
-        checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
+        timeout: number, disableResponse: boolean, disableRecovery: boolean, responseAttempt: number,
+        dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
     ): Promise<Events.ZclDataPayload> {
         debug('sendZclFrameToEndpointInternal %s:%i/%i (%i,%i)',
             ieeeAddr, networkAddress, endpoint, responseAttempt, dataRequestAttempt);
@@ -337,7 +337,7 @@ class ZStackAdapter extends Adapter {
                 ZnpCommandStatus.MAC_NO_RESOURCES,
             ];
 
-            if (dataRequestAttempt >= 4 || !recoverableErrors.includes(dataConfirmResult)) {
+            if (dataRequestAttempt >= 4 || !recoverableErrors.includes(dataConfirmResult) || disableRecovery) {
                 throw new DataConfirmError(dataConfirmResult);
             }
 
@@ -356,7 +356,8 @@ class ZStackAdapter extends Adapter {
                 await Wait(2000);
                 return this.sendZclFrameToEndpointInternal(
                     ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, disableResponse,
-                    responseAttempt, dataRequestAttempt + 1, checkedNetworkAddress, discoveredRoute, assocRemove
+                    disableRecovery, responseAttempt, dataRequestAttempt + 1, checkedNetworkAddress, discoveredRoute,
+                    assocRemove
                 );
             } else {
                 // NWK_NO_ROUTE: no network route => rediscover route
@@ -400,8 +401,8 @@ class ZStackAdapter extends Adapter {
 
                 return this.sendZclFrameToEndpointInternal(
                     ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout,
-                    disableResponse, responseAttempt, dataRequestAttempt + 1, checkedNetworkAddress, discoveredRoute,
-                    assocRemove,
+                    disableResponse, disableRecovery, responseAttempt, dataRequestAttempt + 1, checkedNetworkAddress,
+                    discoveredRoute, assocRemove,
                 );
             }
         }
@@ -412,12 +413,13 @@ class ZStackAdapter extends Adapter {
                 return result;
             } catch (error) {
                 debug('Response timeout (%s:%d,%d)', ieeeAddr, networkAddress, responseAttempt);
-                if (responseAttempt < 1) {
+                if (responseAttempt < 1 && !disableRecovery) {
                     // No response could be of invalid route, e.g. when message is send to wrong parent of end device.
                     await this.discoverRoute(networkAddress);
                     return this.sendZclFrameToEndpointInternal(
                         ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, disableResponse,
-                        responseAttempt + 1, dataRequestAttempt, checkedNetworkAddress, discoveredRoute, assocRemove
+                        disableRecovery, responseAttempt + 1, dataRequestAttempt, checkedNetworkAddress,
+                        discoveredRoute, assocRemove
                     );
                 } else {
                     throw error;

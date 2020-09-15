@@ -2334,6 +2334,20 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toHaveBeenNthCalledWith(8, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 3, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 5}, 99)
     });
 
+    it('Send zcl frame network address fails because mac no ack with network address change, without recovery', async () => {
+        basicMocks();
+        await adapter.start();
+        dataConfirmCode = 233;
+        mockZnpRequest.mockClear();
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
+        const response = adapter.sendZclFrameToEndpoint('0x03', 2, 20, frame, 10000, false, true, null);
+        let error;
+        try {await response} catch(e) {error = e;}
+
+        expect(error.message).toStrictEqual("Data request failed with error: 'MAC no ack' (233)");
+        expect(mockZnpRequest).toBeCalledTimes(1);
+    });
+
     it('Send zcl frame network address should retry on dataconfirm timeout', async () => {
         basicMocks();
         await adapter.start();

@@ -29,6 +29,7 @@ interface Options {
     srcEndpoint?: number;
     reservedBits?: number;
     transactionSequenceNumber?: number;
+    disableRecovery?: boolean;
 }
 
 interface Clusters {
@@ -252,7 +253,7 @@ class Endpoint extends Entity {
             );
             const result = await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                options.disableResponse, options.srcEndpoint,
+                options.disableResponse, options.disableRecovery, options.srcEndpoint,
             );
 
             if (!options.disableResponse) {
@@ -288,7 +289,7 @@ class Endpoint extends Entity {
         try {
             const result = await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                options.disableResponse, options.srcEndpoint,
+                options.disableResponse, options.disableRecovery, options.srcEndpoint,
             );
 
             if (!options.disableResponse) {
@@ -334,7 +335,7 @@ class Endpoint extends Entity {
         try {
             await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                options.disableResponse, options.srcEndpoint
+                options.disableResponse, options.disableRecovery, options.srcEndpoint
             );
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
@@ -431,7 +432,7 @@ class Endpoint extends Entity {
         try {
             await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                options.disableResponse, options.srcEndpoint
+                options.disableResponse, options.disableRecovery, options.srcEndpoint
             );
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
@@ -482,7 +483,7 @@ class Endpoint extends Entity {
         try {
             const result = await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                options.disableResponse, options.srcEndpoint
+                options.disableResponse, options.disableRecovery, options.srcEndpoint
             );
 
             if (!options.disableResponse) {
@@ -516,7 +517,7 @@ class Endpoint extends Entity {
         try {
             const result = await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                options.disableResponse, options.srcEndpoint
+                options.disableResponse, options.disableRecovery, options.srcEndpoint
             );
 
             if (result) {
@@ -551,7 +552,7 @@ class Endpoint extends Entity {
         try {
             await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                options.disableResponse, options.srcEndpoint
+                options.disableResponse, options.disableRecovery, options.srcEndpoint
             );
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
@@ -587,6 +588,7 @@ class Endpoint extends Entity {
         return {
             timeout: 10000,
             disableResponse: false,
+            disableRecovery: false,
             disableDefaultResponse,
             direction,
             srcEndpoint: null,
