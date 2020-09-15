@@ -126,5 +126,6 @@ describe('Utils', () => {
         job2Promise();
         await job2Result;
         expect(finished).toEqual([4, 1, 2, 3]);
+        expect(queue.count()).toBe(5);
     });
 });
