@@ -12,6 +12,7 @@
 
 * [direction](_src_controller_model_endpoint_.options.md#optional-direction)
 * [disableDefaultResponse](_src_controller_model_endpoint_.options.md#optional-disabledefaultresponse)
+* [disableRecovery](_src_controller_model_endpoint_.options.md#optional-disablerecovery)
 * [disableResponse](_src_controller_model_endpoint_.options.md#optional-disableresponse)
 * [manufacturerCode](_src_controller_model_endpoint_.options.md#optional-manufacturercode)
 * [reservedBits](_src_controller_model_endpoint_.options.md#optional-reservedbits)
@@ -34,6 +35,14 @@ ___
 • **disableDefaultResponse**? : *boolean*
 
 *Defined in [src/controller/model/endpoint.ts:25](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L25)*
+
+___
+
+### `Optional` disableRecovery
+
+• **disableRecovery**? : *boolean*
+
+*Defined in [src/controller/model/endpoint.ts:32](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L32)*
 
 ___
 
