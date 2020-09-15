@@ -304,8 +304,8 @@ class ZStackAdapter extends Adapter {
         timeout: number, disableResponse: boolean, disableRecovery: boolean, responseAttempt: number,
         dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
     ): Promise<Events.ZclDataPayload> {
-        debug('sendZclFrameToEndpointInternal %s:%i/%i (%i,%i)',
-            ieeeAddr, networkAddress, endpoint, responseAttempt, dataRequestAttempt);
+        debug('sendZclFrameToEndpointInternal %s:%i/%i (%i,%i,%i)',
+            ieeeAddr, networkAddress, endpoint, responseAttempt, dataRequestAttempt, this.queue.count());
         let response = null;
         const command = zclFrame.getCommand();
         if (command.hasOwnProperty('response') && disableResponse === false) {

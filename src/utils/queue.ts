@@ -62,6 +62,10 @@ class Queue {
     public clear(): void {
         this.jobs = [];
     }
+
+    public count(): number {
+        return this.jobs.length;
+    }
 }
 
 export default Queue;
