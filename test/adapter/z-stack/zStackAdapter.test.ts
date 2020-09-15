@@ -112,6 +112,7 @@ jest.mock('../../../src/utils/queue', () => {
     return jest.fn().mockImplementation(() => {
       return {
           execute: mockQueueExecute,
+          count: () => 1,
         };
     });
 });
