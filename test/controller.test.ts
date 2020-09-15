@@ -2,6 +2,7 @@ import "regenerator-runtime/runtime";
 import {Controller} from '../src/controller';
 import {ZStackAdapter} from '../src/adapter/z-stack/adapter';
 import {DeconzAdapter} from '../src/adapter/deconz/adapter';
+import {ZiGateAdapter} from "../src/adapter/zigate/adapter";
 import equals from 'fast-deep-equal/es6';
 import fs from 'fs';
 import { ZclFrame } from "../src/zcl";
@@ -330,6 +331,13 @@ jest.mock('../src/adapter/deconz/adapter/deconzAdapter', () => {
     });
 });
 
+jest.mock('../src/adapter/zigate/adapter/zigateAdapter', () => {
+    return jest.fn().mockImplementation(() => {
+        return {
+        };
+    });
+});
+
 const getTempFile = (filename) => {
     const tempPath = path.resolve('temp');
     if (!fs.existsSync(tempPath)){
@@ -350,9 +358,16 @@ const mockDeconzAdapterAutoDetectPath = jest.fn().mockReturnValue("/dev/autodete
 DeconzAdapter.isValidPath = mockDeconzAdapterIsValidPath;
 DeconzAdapter.autoDetectPath = mockDeconzAdapterAutoDetectPath;
 
+const mockZiGateAdapterIsValidPath = jest.fn().mockReturnValue(true);
+const mockZiGateAdapterAutoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
+ZiGateAdapter.isValidPath = mockZiGateAdapterIsValidPath;
+ZiGateAdapter.autoDetectPath = mockZiGateAdapterAutoDetectPath;
+
 const mocksRestore = [
     mockAdapterStart, mockAdapterPermitJoin, mockAdapterStop, mockAdapterRemoveDevice, mocksendZclFrameToAll,
-    mockZStackAdapterIsValidPath, mockZStackAdapterAutoDetectPath, mockDeconzAdapterIsValidPath, mockDeconzAdapterAutoDetectPath,
+    mockZStackAdapterIsValidPath, mockZStackAdapterAutoDetectPath,
+    mockDeconzAdapterIsValidPath, mockDeconzAdapterAutoDetectPath,
+    mockZiGateAdapterIsValidPath, mockZiGateAdapterAutoDetectPath,
 ];
 
 const events = {
@@ -2636,8 +2651,12 @@ describe('Controller', () => {
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         mockDeconzAdapterIsValidPath.mockReturnValueOnce(false);
         mockDeconzAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
+        mockZiGateAdapterIsValidPath.mockReturnValueOnce(false);
+        mockZiGateAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'deconz'}, null, null);
         expect(DeconzAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'deconz'}, null, null);
+        await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'zigate'}, null, null);
+        expect(ZiGateAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'zigate'}, null, null);
     });
 
     it('Adapter create should throw on uknown adapter', async () => {
@@ -2646,8 +2665,8 @@ describe('Controller', () => {
         mockDeconzAdapterIsValidPath.mockReturnValueOnce(false);
         mockDeconzAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         let error;
-        try {await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'zigate'}, null, null)} catch (e) {error = e;}
-        expect(error).toStrictEqual(new Error(`Adapter 'zigate' does not exists, possible options: zstack, deconz`));
+        try {await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'efr'}, null, null)} catch (e) {error = e;}
+        expect(error).toStrictEqual(new Error(`Adapter 'efr' does not exists, possible options: zstack, deconz, zigate`));
     });
 
     it('Emit read from device', async () => {

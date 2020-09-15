@@ -14,7 +14,7 @@ coverage
 
 #editor settings
 .vscode
+.idea
 
 #src
-src
 docs
