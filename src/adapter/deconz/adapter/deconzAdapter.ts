@@ -160,7 +160,7 @@ class DeconzAdapter extends Adapter {
                 const fw = await this.driver.readFirmwareVersionRequest();
                 const buf = Buffer.from(fw);
                 let fwString = "0x" + buf.readUInt32LE(0).toString(16);
-                const type: string = (fw[1] === 5) ? "RaspBee" : "ConBee2";
+                const type: string = (fw[1] === 5) ? "ConBee/RaspBee" : "ConBee2/RaspBee2";
                 const meta = {"transportrev":0, "product":0, "majorrel": fw[3], "minorrel": fw[2], "maintrel":0, "revision":fwString};
                 this.fwVersion = {type: type, meta: meta};
                 return {type: type, meta: meta};
