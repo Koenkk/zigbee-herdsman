@@ -364,7 +364,7 @@ class ZStackAdapter extends Adapter {
                 // MAC_NO_ACK: route may be corrupted
                 // MAC_TRANSACTION_EXPIRED: Mac layer is sleeping
                 if (!assocRemove && dataConfirmResult === ZnpCommandStatus.MAC_TRANSACTION_EXPIRED &&
-                    dataRequestAttempt >= 2) {
+                    dataRequestAttempt >= 1 && this.version.product === ZnpVersion.zStack3x0) {
                     /**
                      * Since child aging is disabled on the firmware, when a end device is directly connected
                      * to the coordinator and changes parent and the coordinator does not recevie this update,
@@ -380,10 +380,10 @@ class ZStackAdapter extends Adapter {
                         debug('assocRemove(%s)', ieeeAddr);
                         await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
                     } catch {}
-                } else if (!discoveredRoute && dataRequestAttempt >= 2) {
+                } else if (!discoveredRoute && dataRequestAttempt >= 1) {
                     discoveredRoute = true;
                     await this.discoverRoute(networkAddress);
-                } else if (!checkedNetworkAddress && dataRequestAttempt >= 2) {
+                } else if (!checkedNetworkAddress && dataRequestAttempt >= 1) {
                     // Figure out once if the network address has been changed.
                     try {
                         checkedNetworkAddress = true;
@@ -396,6 +396,7 @@ class ZStackAdapter extends Adapter {
                         } else {debug('Network address did not change');}
                     } catch {}
                 } else {
+                    debug('Wait 2000ms');
                     await Wait(2000);
                 }
 
