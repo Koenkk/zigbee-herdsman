@@ -3842,6 +3842,68 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    heimanSpecificPM25Measurement: {
+        // from HS2AQ-3.0海曼智能空气质量检测仪API文档-V01
+        ID: 0x042a,
+        attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.uint16},
+            measuredMinValue: {ID: 0x0001, type: DataType.uint16},
+            measuredMaxValue: {ID: 0x0002, type: DataType.uint16},
+            measuredTolerance: {ID: 0x0003, type: DataType.uint16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    heimanSpecificFormaldehydeMeasurement: {
+        // from HS2AQ-3.0海曼智能空气质量检测仪API文档-V01
+        ID: 0x042b,
+        attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.uint16},
+            measuredMinValue: {ID: 0x0001, type: DataType.uint16},
+            measuredMaxValue: {ID: 0x0002, type: DataType.uint16},
+            measuredTolerance: {ID: 0x0003, type: DataType.uint16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    heimanSpecificAirQuality: {
+        // from HS2AQ-3.0海曼智能空气质量检测仪API文档-V01
+        ID: 0xfc81,
+        attributes: {
+            language: {ID: 0xf000, type: DataType.uint8},
+            unitOfMeasure: {ID: 0xf001, type: DataType.uint8},
+            batteryState: {ID: 0xf002, type: DataType.uint8}, //  (0 is not charged, 1 is charging, 2 is fully charged)
+            pm10measuredValue: {ID: 0xf003, type: DataType.uint16},
+            tvocMeasuredValue: {ID: 0xf004, type: DataType.uint16},
+            aqiMeasuredValue: {ID: 0xf005, type: DataType.uint16},
+            temperatureMeasuredMax: {ID: 0xf006, type: DataType.int16},
+            temperatureMeasuredMin: {ID: 0xf007, type: DataType.int16},
+            humidityMeasuredMax: {ID: 0xf008, type: DataType.uint16},
+            humidityMeasuredMin: {ID: 0xf009, type: DataType.uint16},
+            alarmEnable: {ID: 0xf00a, type: DataType.uint16},
+        },
+        commands: {
+            setLanguage: {
+                ID: 0x011b,
+                parameters: [ // (1: English 0: Chinese)
+                    {name: 'languageCode', type: DataType.uint8},
+                ],
+            },
+            setUnitOfTemperature: {
+                ID: 0x011c,
+                parameters: [ // (0: ℉ 1: ℃)
+                    {name: 'unitsCode', type: DataType.uint8},
+                ],
+            },
+            getTime: {
+                ID: 0x011d,
+                parameters: [
+                ],
+            },
+        },
+        commandsResponse: {
+        },
+    },
 };
 
 export default Cluster;
