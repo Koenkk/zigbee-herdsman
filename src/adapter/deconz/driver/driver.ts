@@ -223,7 +223,8 @@ class Driver extends events.EventEmitter {
 
     private sendReadFirmwareVersionRequest(seqNumber: number) {
         /* command id, sequence number, 0, framelength(U16) */
-        const requestFrame = [PARAM.PARAM.FrameType.ReadFirmwareVersion, seqNumber, 0x00, 0x05, 0x00];
+        const requestFrame = [PARAM.PARAM.FrameType.ReadFirmwareVersion, seqNumber, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00];
+        //debug(requestFrame);
         this.sendRequest(requestFrame);
     }
 
