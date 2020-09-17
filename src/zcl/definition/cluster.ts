@@ -3845,6 +3845,7 @@ const Cluster: {
     heimanSpecificPM25Measurement: {
         // from HS2AQ-3.0海曼智能空气质量检测仪API文档-V01
         ID: 0x042a,
+        manufacturerCode: ManufacturerCode.Heiman,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.uint16},
             measuredMinValue: {ID: 0x0001, type: DataType.uint16},
@@ -3857,6 +3858,7 @@ const Cluster: {
     heimanSpecificFormaldehydeMeasurement: {
         // from HS2AQ-3.0海曼智能空气质量检测仪API文档-V01
         ID: 0x042b,
+        manufacturerCode: ManufacturerCode.Heiman,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.uint16},
             measuredMinValue: {ID: 0x0001, type: DataType.uint16},
@@ -3869,6 +3871,7 @@ const Cluster: {
     heimanSpecificAirQuality: {
         // from HS2AQ-3.0海曼智能空气质量检测仪API文档-V01
         ID: 0xfc81,
+        manufacturerCode: ManufacturerCode.Heiman,
         attributes: {
             language: {ID: 0xf000, type: DataType.uint8},
             unitOfMeasure: {ID: 0xf001, type: DataType.uint8},
