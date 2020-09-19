@@ -42,6 +42,12 @@ const aliases: {[s: string]: string} = {
     'set': 'array',
 };
 
+const extensionFieldSetsDateTypeLookup: {[key: number]: string[]} = {
+    6: ['uint8'],
+    8: ['uint8'],
+    768: ['uint16', 'uint16', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16', 'uint16'],
+};
+
 interface ThermoTransition {transitionTime: number; heatSetpoint?: number; coolSetpoint?: number}
 
 class BuffaloZcl extends Buffalo {
@@ -147,16 +153,19 @@ class BuffaloZcl extends Buffalo {
         this.writeBuffer(value, value.length);
     }
 
-    private readExtensionFielSets(): TsType.Value {
+    private readExtensionFieldSets(): TsType.Value {
         const value = [];
 
         while (this.position < this.buffer.length) {
             const clstId = this.readUInt16();
             const len = this.readUInt8();
+            const end = this.getPosition() + len;
 
+            let index = 0;
             const extField = [];
-            for (let k = 0; k < len; k++) {
-                extField.push(this.readUInt8());
+            while (this.getPosition() < end) {
+                extField.push(this.read(extensionFieldSetsDateTypeLookup[clstId][index], null));
+                index++;
             }
 
             value.push({extField, clstId, len});
@@ -169,10 +178,9 @@ class BuffaloZcl extends Buffalo {
         for (const value of values) {
             this.writeUInt16(value.clstId);
             this.writeUInt8(value.len);
-
-            for (const entry of value.extField) {
-                this.writeUInt8(entry);
-            }
+            value.extField.forEach((entry, index) => {
+                this.write(extensionFieldSetsDateTypeLookup[value.clstId][index], entry, null);
+            });
         }
     }
 
@@ -340,7 +348,7 @@ class BuffaloZcl extends Buffalo {
         if (type === 'USE_DATA_TYPE') {
             return this.readUseDataType(options);
         } else if (type === 'EXTENSION_FIELD_SETS') {
-            return this.readExtensionFielSets();
+            return this.readExtensionFieldSets();
         } else if (type === 'LIST_ZONEINFO') {
             return this.readListZoneInfo(options);
         } else if (type === 'LIST_THERMO_TRANSITIONS') {

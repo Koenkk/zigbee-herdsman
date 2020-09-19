@@ -988,11 +988,11 @@ describe('Zcl', () => {
     });
 
     it('BuffaloZcl read extensionFieldSets', () => {
-        const buffer = Buffer.from([5, 0, 3, 1, 2, 3]);
+        const buffer = Buffer.from([0, 3, 8, 1, 0, 2, 0, 3, 0, 4, 5]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(BuffaloZclDataType[BuffaloZclDataType.EXTENSION_FIELD_SETS], {});
-        expect(buffalo.getPosition()).toBe(6);
-        expect(value).toStrictEqual([{clstId: 5, len: 3, extField: [1, 2, 3]}]);
+        expect(buffalo.getPosition()).toBe(11);
+        expect(value).toStrictEqual([{clstId: 768, len: 8, extField: [1, 2, 3, 4, 5]}]);
     });
 
     it('BuffaloZcl read list zoneinfo', () => {
@@ -1058,12 +1058,12 @@ describe('Zcl', () => {
     });
 
     it('BuffaloZcl write extensionFieldSets', () => {
-        const payload = [{clstId: 5, len: 3, extField: [1, 2, 3]}];
-        const buffer = Buffer.alloc(6);
-        const expected = Buffer.from([5, 0, 3, 1, 2, 3]);
+        const payload = [{clstId: 768, len: 8, extField: [1, 2, 3, 4, 5]}];
+        const buffer = Buffer.alloc(12);
+        const expected = Buffer.from([0, 3, 8, 1, 0, 2, 0, 3, 0, 4, 5, 0]);
         const buffalo = new BuffaloZcl(buffer);
         buffalo.write(BuffaloZclDataType[BuffaloZclDataType.EXTENSION_FIELD_SETS], payload, {});
-        expect(buffalo.getPosition()).toBe(6);
+        expect(buffalo.getPosition()).toBe(11);
         expect(buffer).toStrictEqual(expected);
     });
 
