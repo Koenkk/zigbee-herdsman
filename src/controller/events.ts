@@ -76,7 +76,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'removeRsp': 'commandSceneRemoveRsp',
     'removeAllRsp': 'commandSceneRemoveAllRsp',
     'storeRsp': 'commandSceneStoreRsp',
-    'getSceneMembershipRsp': 'commandScenegetSceneMembershipRsp',
+    'getSceneMembershipRsp': 'commandSceneGetSceneMembershipRsp',
 };
 
 type MessagePayloadType =
@@ -92,8 +92,9 @@ type MessagePayloadType =
     'commandOperationEventNotification' | 'commandStatusChangeNotification' | 'commandEnhancedMoveToHueAndSaturation' |
     'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandGetData' |
     'commandSetDataResponse' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
-    'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
-    "commandArrivalSensorNotify" | 'commandCommisioningNotification';
+    'commandAlertsNotification' | 'commandProgrammingEventNotification' | 'commandGetPinCodeRsp' |
+    'commandArrivalSensorNotify' | 'commandCommisioningNotification' | 'commandSceneAddRsp' | 'commandSceneViewRsp' |
+    'commandSceneRemoveRsp' | 'commandSceneRemoveAllRsp' | 'commandSceneStoreRsp' | 'commandSceneGetSceneMembershipRsp';
 
 interface MessagePayload {
     type: MessagePayloadType;
