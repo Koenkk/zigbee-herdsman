@@ -3907,6 +3907,37 @@ const Cluster: {
         commandsResponse: {
         },
     },
+    heimanSpecificScenes: {
+        // from HS2SS-3.0海曼智能情景开关API文档-V01
+        ID: 0xfc80,
+        manufacturerCode: ManufacturerCode.Heiman,
+        attributes: {
+        },
+        commands: {
+            cinema: {
+                ID: 0xf0,
+                parameters: [],
+            },
+            atHome: {
+                ID: 0xf1,
+                parameters: [],
+            },
+            sleep: {
+                ID: 0xf2,
+                parameters: [],
+            },
+            goOut: {
+                ID: 0xf3,
+                parameters: [],
+            },
+            repast: {
+                ID: 0xf4,
+                parameters: [],
+            },
+        },
+        commandsResponse: {
+        },
+    },
 };
 
 export default Cluster;
