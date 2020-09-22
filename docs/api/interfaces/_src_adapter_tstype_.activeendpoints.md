@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) › [ActiveEndpoints](_src_adapter_tstype_.activeendpoints.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) / ActiveEndpoints
 
 # Interface: ActiveEndpoints
 
@@ -14,8 +16,8 @@
 
 ## Properties
 
-###  endpoints
+### endpoints
 
-• **endpoints**: *number[]*
+•  **endpoints**: number[]
 
 *Defined in [src/adapter/tstype.ts:35](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L35)*

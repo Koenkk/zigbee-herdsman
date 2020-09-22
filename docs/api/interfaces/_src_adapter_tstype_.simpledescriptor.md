@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) › [SimpleDescriptor](_src_adapter_tstype_.simpledescriptor.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) / SimpleDescriptor
 
 # Interface: SimpleDescriptor
 
@@ -18,40 +20,40 @@
 
 ## Properties
 
-###  deviceID
+### deviceID
 
-• **deviceID**: *number*
+•  **deviceID**: number
 
 *Defined in [src/adapter/tstype.ts:63](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L63)*
 
 ___
 
-###  endpointID
+### endpointID
 
-• **endpointID**: *number*
+•  **endpointID**: number
 
 *Defined in [src/adapter/tstype.ts:62](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L62)*
 
 ___
 
-###  inputClusters
+### inputClusters
 
-• **inputClusters**: *number[]*
+•  **inputClusters**: number[]
 
 *Defined in [src/adapter/tstype.ts:64](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L64)*
 
 ___
 
-###  outputClusters
+### outputClusters
 
-• **outputClusters**: *number[]*
+•  **outputClusters**: number[]
 
 *Defined in [src/adapter/tstype.ts:65](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L65)*
 
 ___
 
-###  profileID
+### profileID
 
-• **profileID**: *number*
+•  **profileID**: number
 
 *Defined in [src/adapter/tstype.ts:61](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L61)*

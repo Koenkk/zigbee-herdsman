@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/controller/events"](../modules/_src_controller_events_.md) › [DeviceJoinedPayload](_src_controller_events_.devicejoinedpayload.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / ["src/controller/events"](../modules/_src_controller_events_.md) / DeviceJoinedPayload
 
 # Interface: DeviceJoinedPayload
 
@@ -14,8 +16,8 @@
 
 ## Properties
 
-###  device
+### device
 
-• **device**: *[Device](../classes/_src_controller_model_device_.device.md)*
+•  **device**: [Device](../classes/_src_controller_model_device_.device.md)
 
 *Defined in [src/controller/events.ts:14](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L14)*

@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) › [Backup](_src_adapter_tstype_.backup.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) / Backup
 
 # Interface: Backup
 
@@ -17,36 +19,32 @@
 
 ## Properties
 
-###  adapterType
+### adapterType
 
-• **adapterType**: *"zStack"*
+•  **adapterType**: \"zStack\"
 
 *Defined in [src/adapter/tstype.ts:82](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L82)*
 
 ___
 
-###  data
+### data
 
-• **data**: *any*
+•  **data**: any
 
 *Defined in [src/adapter/tstype.ts:86](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L86)*
 
 ___
 
-###  meta
+### meta
 
-• **meta**: *object*
+•  **meta**: { [s:string]: number;  }
 
 *Defined in [src/adapter/tstype.ts:84](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L84)*
 
-#### Type declaration:
-
-* \[ **s**: *string*\]: number
-
 ___
 
-###  time
+### time
 
-• **time**: *string*
+•  **time**: string
 
 *Defined in [src/adapter/tstype.ts:83](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L83)*

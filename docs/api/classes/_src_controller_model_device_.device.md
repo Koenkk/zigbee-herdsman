@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/controller/model/device"](../modules/_src_controller_model_device_.md) › [Device](_src_controller_model_device_.device.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / ["src/controller/model/device"](../modules/_src_controller_model_device_.md) / Device
 
 # Class: Device
 
@@ -44,544 +46,544 @@
 * [routingTable](_src_controller_model_device_.device.md#routingtable)
 * [save](_src_controller_model_device_.device.md#save)
 * [updateLastSeen](_src_controller_model_device_.device.md#updatelastseen)
-* [all](_src_controller_model_device_.device.md#static-all)
-* [byIeeeAddr](_src_controller_model_device_.device.md#static-byieeeaddr)
-* [byNetworkAddress](_src_controller_model_device_.device.md#static-bynetworkaddress)
-* [byType](_src_controller_model_device_.device.md#static-bytype)
-* [create](_src_controller_model_device_.device.md#static-create)
-* [injectAdapter](_src_controller_model_device_.device.md#static-injectadapter)
-* [injectDatabase](_src_controller_model_device_.device.md#static-injectdatabase)
+* [all](_src_controller_model_device_.device.md#all)
+* [byIeeeAddr](_src_controller_model_device_.device.md#byieeeaddr)
+* [byNetworkAddress](_src_controller_model_device_.device.md#bynetworkaddress)
+* [byType](_src_controller_model_device_.device.md#bytype)
+* [create](_src_controller_model_device_.device.md#create)
+* [injectAdapter](_src_controller_model_device_.device.md#injectadapter)
+* [injectDatabase](_src_controller_model_device_.device.md#injectdatabase)
 
 ### Object literals
 
-* [ReportablePropertiesMapping](_src_controller_model_device_.device.md#static-readonly-reportablepropertiesmapping)
+* [ReportablePropertiesMapping](_src_controller_model_device_.device.md#reportablepropertiesmapping)
 
 ## Accessors
 
-###  applicationVersion
+### applicationVersion
 
-• **get applicationVersion**(): *number*
+• get **applicationVersion**(): number
 
 *Defined in [src/controller/model/device.ts:53](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L53)*
 
-**Returns:** *number*
+**Returns:** number
 
-• **set applicationVersion**(`applicationVersion`: number): *void*
+• set **applicationVersion**(`applicationVersion`: number): void
 
 *Defined in [src/controller/model/device.ts:54](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L54)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `applicationVersion` | number |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  dateCode
+### dateCode
 
-• **get dateCode**(): *string*
+• get **dateCode**(): string
 
 *Defined in [src/controller/model/device.ts:62](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L62)*
 
-**Returns:** *string*
+**Returns:** string
 
-• **set dateCode**(`dateCode`: string): *void*
+• set **dateCode**(`dateCode`: string): void
 
 *Defined in [src/controller/model/device.ts:63](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L63)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `dateCode` | string |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  endpoints
+### endpoints
 
-• **get endpoints**(): *[Endpoint](_src_controller_model_endpoint_.endpoint.md)[]*
+• get **endpoints**(): [Endpoint](_src_controller_model_endpoint_.endpoint.md)[]
 
 *Defined in [src/controller/model/device.ts:55](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L55)*
 
-**Returns:** *[Endpoint](_src_controller_model_endpoint_.endpoint.md)[]*
+**Returns:** [Endpoint](_src_controller_model_endpoint_.endpoint.md)[]
 
 ___
 
-###  hardwareVersion
+### hardwareVersion
 
-• **get hardwareVersion**(): *number*
+• get **hardwareVersion**(): number
 
 *Defined in [src/controller/model/device.ts:65](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L65)*
 
-**Returns:** *number*
+**Returns:** number
 
-• **set hardwareVersion**(`hardwareVersion`: number): *void*
+• set **hardwareVersion**(`hardwareVersion`: number): void
 
 *Defined in [src/controller/model/device.ts:64](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L64)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `hardwareVersion` | number |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  ieeeAddr
+### ieeeAddr
 
-• **get ieeeAddr**(): *string*
+• get **ieeeAddr**(): string
 
 *Defined in [src/controller/model/device.ts:51](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L51)*
 
-**Returns:** *string*
+**Returns:** string
 
-• **set ieeeAddr**(`ieeeAddr`: string): *void*
+• set **ieeeAddr**(`ieeeAddr`: string): void
 
 *Defined in [src/controller/model/device.ts:52](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L52)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `ieeeAddr` | string |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  interviewCompleted
+### interviewCompleted
 
-• **get interviewCompleted**(): *boolean*
+• get **interviewCompleted**(): boolean
 
 *Defined in [src/controller/model/device.ts:56](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L56)*
 
-**Returns:** *boolean*
+**Returns:** boolean
 
 ___
 
-###  interviewing
+### interviewing
 
-• **get interviewing**(): *boolean*
+• get **interviewing**(): boolean
 
 *Defined in [src/controller/model/device.ts:57](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L57)*
 
-**Returns:** *boolean*
+**Returns:** boolean
 
 ___
 
-###  lastSeen
+### lastSeen
 
-• **get lastSeen**(): *number*
+• get **lastSeen**(): number
 
 *Defined in [src/controller/model/device.ts:58](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L58)*
 
-**Returns:** *number*
+**Returns:** number
 
 ___
 
-###  manufacturerID
+### manufacturerID
 
-• **get manufacturerID**(): *number*
+• get **manufacturerID**(): number
 
 *Defined in [src/controller/model/device.ts:59](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L59)*
 
-**Returns:** *number*
+**Returns:** number
 
 ___
 
-###  manufacturerName
+### manufacturerName
 
-• **get manufacturerName**(): *string*
+• get **manufacturerName**(): string
 
 *Defined in [src/controller/model/device.ts:66](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L66)*
 
-**Returns:** *string*
+**Returns:** string
 
-• **set manufacturerName**(`manufacturerName`: string): *void*
+• set **manufacturerName**(`manufacturerName`: string): void
 
 *Defined in [src/controller/model/device.ts:67](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L67)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `manufacturerName` | string |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  modelID
+### modelID
 
-• **get modelID**(): *string*
+• get **modelID**(): string
 
 *Defined in [src/controller/model/device.ts:69](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L69)*
 
-**Returns:** *string*
+**Returns:** string
 
-• **set modelID**(`modelID`: string): *void*
+• set **modelID**(`modelID`: string): void
 
 *Defined in [src/controller/model/device.ts:68](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L68)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `modelID` | string |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  networkAddress
+### networkAddress
 
-• **get networkAddress**(): *number*
+• get **networkAddress**(): number
 
 *Defined in [src/controller/model/device.ts:70](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L70)*
 
-**Returns:** *number*
+**Returns:** number
 
-• **set networkAddress**(`networkAddress`: number): *void*
+• set **networkAddress**(`networkAddress`: number): void
 
 *Defined in [src/controller/model/device.ts:71](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L71)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `networkAddress` | number |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  powerSource
+### powerSource
 
-• **get powerSource**(): *string*
+• get **powerSource**(): string
 
 *Defined in [src/controller/model/device.ts:77](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L77)*
 
-**Returns:** *string*
+**Returns:** string
 
-• **set powerSource**(`powerSource`: string): *void*
+• set **powerSource**(`powerSource`: string): void
 
 *Defined in [src/controller/model/device.ts:78](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L78)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `powerSource` | string |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  softwareBuildID
+### softwareBuildID
 
-• **get softwareBuildID**(): *string*
+• get **softwareBuildID**(): string
 
 *Defined in [src/controller/model/device.ts:81](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L81)*
 
-**Returns:** *string*
+**Returns:** string
 
-• **set softwareBuildID**(`softwareBuildID`: string): *void*
+• set **softwareBuildID**(`softwareBuildID`: string): void
 
 *Defined in [src/controller/model/device.ts:82](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L82)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `softwareBuildID` | string |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  stackVersion
+### stackVersion
 
-• **get stackVersion**(): *number*
+• get **stackVersion**(): number
 
 *Defined in [src/controller/model/device.ts:83](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L83)*
 
-**Returns:** *number*
+**Returns:** number
 
-• **set stackVersion**(`stackVersion`: number): *void*
+• set **stackVersion**(`stackVersion`: number): void
 
 *Defined in [src/controller/model/device.ts:84](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L84)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `stackVersion` | number |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  type
+### type
 
-• **get type**(): *[DeviceType](../modules/_src_adapter_tstype_.md#devicetype)*
+• get **type**(): [DeviceType](../modules/_src_adapter_tstype_.md#devicetype)
 
 *Defined in [src/controller/model/device.ts:61](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L61)*
 
-**Returns:** *[DeviceType](../modules/_src_adapter_tstype_.md#devicetype)*
+**Returns:** [DeviceType](../modules/_src_adapter_tstype_.md#devicetype)
 
-• **set type**(`type`: [DeviceType](../modules/_src_adapter_tstype_.md#devicetype)): *void*
+• set **type**(`type`: [DeviceType](../modules/_src_adapter_tstype_.md#devicetype)): void
 
 *Defined in [src/controller/model/device.ts:60](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L60)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `type` | [DeviceType](../modules/_src_adapter_tstype_.md#devicetype) |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  zclVersion
+### zclVersion
 
-• **get zclVersion**(): *number*
+• get **zclVersion**(): number
 
 *Defined in [src/controller/model/device.ts:85](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L85)*
 
-**Returns:** *number*
+**Returns:** number
 
-• **set zclVersion**(`zclVersion`: number): *void*
+• set **zclVersion**(`zclVersion`: number): void
 
 *Defined in [src/controller/model/device.ts:86](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L86)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `zclVersion` | number |
 
-**Returns:** *void*
+**Returns:** void
 
 ## Methods
 
-###  createEndpoint
+### createEndpoint
 
-▸ **createEndpoint**(`ID`: number): *Promise‹[Endpoint](_src_controller_model_endpoint_.endpoint.md)›*
+▸ **createEndpoint**(`ID`: number): Promise\<[Endpoint](_src_controller_model_endpoint_.endpoint.md)>
 
 *Defined in [src/controller/model/device.ts:139](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L139)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `ID` | number |
 
-**Returns:** *Promise‹[Endpoint](_src_controller_model_endpoint_.endpoint.md)›*
+**Returns:** Promise\<[Endpoint](_src_controller_model_endpoint_.endpoint.md)>
 
 ___
 
-###  getEndpoint
+### getEndpoint
 
-▸ **getEndpoint**(`ID`: number): *[Endpoint](_src_controller_model_endpoint_.endpoint.md)*
+▸ **getEndpoint**(`ID`: number): [Endpoint](_src_controller_model_endpoint_.endpoint.md)
 
 *Defined in [src/controller/model/device.ts:150](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L150)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `ID` | number |
 
-**Returns:** *[Endpoint](_src_controller_model_endpoint_.endpoint.md)*
+**Returns:** [Endpoint](_src_controller_model_endpoint_.endpoint.md)
 
 ___
 
-###  getEndpointByDeviceType
+### getEndpointByDeviceType
 
-▸ **getEndpointByDeviceType**(`deviceType`: string): *[Endpoint](_src_controller_model_endpoint_.endpoint.md)*
+▸ **getEndpointByDeviceType**(`deviceType`: string): [Endpoint](_src_controller_model_endpoint_.endpoint.md)
 
 *Defined in [src/controller/model/device.ts:155](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L155)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `deviceType` | string |
 
-**Returns:** *[Endpoint](_src_controller_model_endpoint_.endpoint.md)*
+**Returns:** [Endpoint](_src_controller_model_endpoint_.endpoint.md)
 
 ___
 
-###  interview
+### interview
 
-▸ **interview**(): *Promise‹void›*
+▸ **interview**(): Promise\<void>
 
 *Defined in [src/controller/model/device.ts:328](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L328)*
 
-**Returns:** *Promise‹void›*
+**Returns:** Promise\<void>
 
 ___
 
-###  lqi
+### lqi
 
-▸ **lqi**(): *Promise‹[LQI](../interfaces/_src_adapter_tstype_.lqi.md)›*
+▸ **lqi**(): Promise\<[LQI](../interfaces/_src_adapter_tstype_.lqi.md)>
 
 *Defined in [src/controller/model/device.ts:542](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L542)*
 
-**Returns:** *Promise‹[LQI](../interfaces/_src_adapter_tstype_.lqi.md)›*
+**Returns:** Promise\<[LQI](../interfaces/_src_adapter_tstype_.lqi.md)>
 
 ___
 
-###  onZclData
+### onZclData
 
-▸ **onZclData**(`dataPayload`: ZclDataPayload, `endpoint`: [Endpoint](_src_controller_model_endpoint_.endpoint.md)): *Promise‹void›*
+▸ **onZclData**(`dataPayload`: ZclDataPayload, `endpoint`: [Endpoint](_src_controller_model_endpoint_.endpoint.md)): Promise\<void>
 
 *Defined in [src/controller/model/device.ts:164](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L164)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `dataPayload` | ZclDataPayload |
 `endpoint` | [Endpoint](_src_controller_model_endpoint_.endpoint.md) |
 
-**Returns:** *Promise‹void›*
+**Returns:** Promise\<void>
 
 ___
 
-###  ping
+### ping
 
-▸ **ping**(): *Promise‹void›*
+▸ **ping**(): Promise\<void>
 
 *Defined in [src/controller/model/device.ts:550](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L550)*
 
-**Returns:** *Promise‹void›*
+**Returns:** Promise\<void>
 
 ___
 
-###  removeFromDatabase
+### removeFromDatabase
 
-▸ **removeFromDatabase**(): *Promise‹void›*
+▸ **removeFromDatabase**(): Promise\<void>
 
 *Defined in [src/controller/model/device.ts:528](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L528)*
 
-**Returns:** *Promise‹void›*
+**Returns:** Promise\<void>
 
 ___
 
-###  removeFromNetwork
+### removeFromNetwork
 
-▸ **removeFromNetwork**(): *Promise‹void›*
+▸ **removeFromNetwork**(): Promise\<void>
 
 *Defined in [src/controller/model/device.ts:523](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L523)*
 
-**Returns:** *Promise‹void›*
+**Returns:** Promise\<void>
 
 ___
 
-###  routingTable
+### routingTable
 
-▸ **routingTable**(): *Promise‹[RoutingTable](../interfaces/_src_adapter_tstype_.routingtable.md)›*
+▸ **routingTable**(): Promise\<[RoutingTable](../interfaces/_src_adapter_tstype_.routingtable.md)>
 
 *Defined in [src/controller/model/device.ts:546](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L546)*
 
-**Returns:** *Promise‹[RoutingTable](../interfaces/_src_adapter_tstype_.routingtable.md)›*
+**Returns:** Promise\<[RoutingTable](../interfaces/_src_adapter_tstype_.routingtable.md)>
 
 ___
 
-###  save
+### save
 
-▸ **save**(): *void*
+▸ **save**(): void
 
 *Defined in [src/controller/model/device.ts:258](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L258)*
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  updateLastSeen
+### updateLastSeen
 
-▸ **updateLastSeen**(): *void*
+▸ **updateLastSeen**(): void
 
 *Defined in [src/controller/model/device.ts:160](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L160)*
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-### `Static` all
+### all
 
-▸ **all**(): *[Device](_src_controller_model_device_.device.md)[]*
+▸ `Static`**all**(): [Device](_src_controller_model_device_.device.md)[]
 
 *Defined in [src/controller/model/device.ts:288](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L288)*
 
-**Returns:** *[Device](_src_controller_model_device_.device.md)[]*
+**Returns:** [Device](_src_controller_model_device_.device.md)[]
 
 ___
 
-### `Static` byIeeeAddr
+### byIeeeAddr
 
-▸ **byIeeeAddr**(`ieeeAddr`: string): *[Device](_src_controller_model_device_.device.md)*
+▸ `Static`**byIeeeAddr**(`ieeeAddr`: string): [Device](_src_controller_model_device_.device.md)
 
 *Defined in [src/controller/model/device.ts:273](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L273)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `ieeeAddr` | string |
 
-**Returns:** *[Device](_src_controller_model_device_.device.md)*
+**Returns:** [Device](_src_controller_model_device_.device.md)
 
 ___
 
-### `Static` byNetworkAddress
+### byNetworkAddress
 
-▸ **byNetworkAddress**(`networkAddress`: number): *[Device](_src_controller_model_device_.device.md)*
+▸ `Static`**byNetworkAddress**(`networkAddress`: number): [Device](_src_controller_model_device_.device.md)
 
 *Defined in [src/controller/model/device.ts:278](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L278)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `networkAddress` | number |
 
-**Returns:** *[Device](_src_controller_model_device_.device.md)*
+**Returns:** [Device](_src_controller_model_device_.device.md)
 
 ___
 
-### `Static` byType
+### byType
 
-▸ **byType**(`type`: [DeviceType](../modules/_src_adapter_tstype_.md#devicetype)): *[Device](_src_controller_model_device_.device.md)[]*
+▸ `Static`**byType**(`type`: [DeviceType](../modules/_src_adapter_tstype_.md#devicetype)): [Device](_src_controller_model_device_.device.md)[]
 
 *Defined in [src/controller/model/device.ts:283](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L283)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `type` | [DeviceType](../modules/_src_adapter_tstype_.md#devicetype) |
 
-**Returns:** *[Device](_src_controller_model_device_.device.md)[]*
+**Returns:** [Device](_src_controller_model_device_.device.md)[]
 
 ___
 
-### `Static` create
+### create
 
-▸ **create**(`type`: [DeviceType](../modules/_src_adapter_tstype_.md#devicetype), `ieeeAddr`: string, `networkAddress`: number, `manufacturerID`: number, `manufacturerName`: string, `powerSource`: string, `modelID`: string, `interviewCompleted`: boolean, `endpoints`: object[]): *[Device](_src_controller_model_device_.device.md)*
+▸ `Static`**create**(`type`: [DeviceType](../modules/_src_adapter_tstype_.md#devicetype), `ieeeAddr`: string, `networkAddress`: number, `manufacturerID`: number, `manufacturerName`: string, `powerSource`: string, `modelID`: string, `interviewCompleted`: boolean, `endpoints`: { ID: number ; deviceID: number ; inputClusters: number[] ; outputClusters: number[] ; profileID: number  }[]): [Device](_src_controller_model_device_.device.md)
 
 *Defined in [src/controller/model/device.ts:293](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L293)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
@@ -593,122 +595,64 @@ Name | Type |
 `powerSource` | string |
 `modelID` | string |
 `interviewCompleted` | boolean |
-`endpoints` | object[] |
+`endpoints` | { ID: number ; deviceID: number ; inputClusters: number[] ; outputClusters: number[] ; profileID: number  }[] |
 
-**Returns:** *[Device](_src_controller_model_device_.device.md)*
+**Returns:** [Device](_src_controller_model_device_.device.md)
 
 ___
 
-### `Static` injectAdapter
+### injectAdapter
 
-▸ **injectAdapter**(`adapter`: Adapter): *void*
+▸ `Static`**injectAdapter**(`adapter`: Adapter): void
 
-*Inherited from [Group](_src_controller_model_group_.group.md).[injectAdapter](_src_controller_model_group_.group.md#static-injectadapter)*
+*Inherited from [Group](_src_controller_model_group_.group.md).[injectAdapter](_src_controller_model_group_.group.md#injectadapter)*
 
 *Defined in [src/controller/model/entity.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/entity.ts#L12)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `adapter` | Adapter |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-### `Static` injectDatabase
+### injectDatabase
 
-▸ **injectDatabase**(`database`: Database): *void*
+▸ `Static`**injectDatabase**(`database`: Database): void
 
-*Inherited from [Group](_src_controller_model_group_.group.md).[injectDatabase](_src_controller_model_group_.group.md#static-injectdatabase)*
+*Inherited from [Group](_src_controller_model_group_.group.md).[injectDatabase](_src_controller_model_group_.group.md#injectdatabase)*
 
 *Defined in [src/controller/model/entity.ts:8](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/entity.ts#L8)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `database` | Database |
 
-**Returns:** *void*
+**Returns:** void
 
 ## Object literals
 
-### `Static` `Readonly` ReportablePropertiesMapping
+### ReportablePropertiesMapping
 
-### ▪ **ReportablePropertiesMapping**: *object*
+▪ `Static` `Readonly` **ReportablePropertiesMapping**: object
 
 *Defined in [src/controller/model/device.ts:94](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L94)*
 
-▪ **appVersion**: *object*
+#### Properties:
 
-*Defined in [src/controller/model/device.ts:103](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L103)*
-
-* **key**: *"applicationVersion"* = "applicationVersion"
-
-* **set**(`v`: number, `d`: [Device](_src_controller_model_device_.device.md)): *void*
-
-▪ **dateCode**: *object*
-
-*Defined in [src/controller/model/device.ts:106](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L106)*
-
-* **key**: *"dateCode"* = "dateCode"
-
-* **set**(`v`: string, `d`: [Device](_src_controller_model_device_.device.md)): *void*
-
-▪ **hwVersion**: *object*
-
-*Defined in [src/controller/model/device.ts:105](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L105)*
-
-* **key**: *"hardwareVersion"* = "hardwareVersion"
-
-* **set**(`v`: number, `d`: [Device](_src_controller_model_device_.device.md)): *void*
-
-▪ **manufacturerName**: *object*
-
-*Defined in [src/controller/model/device.ts:100](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L100)*
-
-* **key**: *"manufacturerName"* = "manufacturerName"
-
-* **set**(`v`: string, `d`: [Device](_src_controller_model_device_.device.md)): *void*
-
-▪ **modelId**: *object*
-
-*Defined in [src/controller/model/device.ts:99](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L99)*
-
-* **key**: *"modelID"* = "modelID"
-
-* **set**(`v`: string, `d`: [Device](_src_controller_model_device_.device.md)): *void*
-
-▪ **powerSource**: *object*
-
-*Defined in [src/controller/model/device.ts:101](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L101)*
-
-* **key**: *"powerSource"* = "powerSource"
-
-* **set**(`v`: string, `d`: [Device](_src_controller_model_device_.device.md)): *void*
-
-▪ **stackVersion**: *object*
-
-*Defined in [src/controller/model/device.ts:104](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L104)*
-
-* **key**: *"stackVersion"* = "stackVersion"
-
-* **set**(`v`: number, `d`: [Device](_src_controller_model_device_.device.md)): *void*
-
-▪ **swBuildId**: *object*
-
-*Defined in [src/controller/model/device.ts:107](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L107)*
-
-* **key**: *"softwareBuildID"* = "softwareBuildID"
-
-* **set**(`v`: string, `d`: [Device](_src_controller_model_device_.device.md)): *void*
-
-▪ **zclVersion**: *object*
-
-*Defined in [src/controller/model/device.ts:102](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L102)*
-
-* **key**: *"zclVersion"* = "zclVersion"
-
-* **set**(`v`: number, `d`: [Device](_src_controller_model_device_.device.md)): *void*
+Name | Type | Value |
+------ | ------ | ------ |
+`appVersion` | object | { key: \"applicationVersion\" = "applicationVersion"; set: (v: number,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
+`dateCode` | object | { key: \"dateCode\" = "dateCode"; set: (v: string,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
+`hwVersion` | object | { key: \"hardwareVersion\" = "hardwareVersion"; set: (v: number,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
+`manufacturerName` | object | { key: \"manufacturerName\" = "manufacturerName"; set: (v: string,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
+`modelId` | object | { key: \"modelID\" = "modelID"; set: (v: string,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
+`powerSource` | object | { key: \"powerSource\" = "powerSource"; set: (v: string,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
+`stackVersion` | object | { key: \"stackVersion\" = "stackVersion"; set: (v: number,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
+`swBuildId` | object | { key: \"softwareBuildID\" = "softwareBuildID"; set: (v: string,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
+`zclVersion` | object | { key: \"zclVersion\" = "zclVersion"; set: (v: number,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |

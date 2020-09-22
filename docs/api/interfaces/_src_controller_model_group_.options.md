@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/controller/model/group"](../modules/_src_controller_model_group_.md) › [Options](_src_controller_model_group_.options.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / ["src/controller/model/group"](../modules/_src_controller_model_group_.md) / Options
 
 # Interface: Options
 
@@ -10,48 +12,48 @@
 
 ### Properties
 
-* [direction](_src_controller_model_group_.options.md#optional-direction)
-* [manufacturerCode](_src_controller_model_group_.options.md#optional-manufacturercode)
-* [reservedBits](_src_controller_model_group_.options.md#optional-reservedbits)
-* [srcEndpoint](_src_controller_model_group_.options.md#optional-srcendpoint)
-* [transactionSequenceNumber](_src_controller_model_group_.options.md#optional-transactionsequencenumber)
+* [direction](_src_controller_model_group_.options.md#direction)
+* [manufacturerCode](_src_controller_model_group_.options.md#manufacturercode)
+* [reservedBits](_src_controller_model_group_.options.md#reservedbits)
+* [srcEndpoint](_src_controller_model_group_.options.md#srcendpoint)
+* [transactionSequenceNumber](_src_controller_model_group_.options.md#transactionsequencenumber)
 
 ## Properties
 
-### `Optional` direction
+### direction
 
-• **direction**? : *Direction*
+• `Optional` **direction**: Direction
 
 *Defined in [src/controller/model/group.ts:17](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L17)*
 
 ___
 
-### `Optional` manufacturerCode
+### manufacturerCode
 
-• **manufacturerCode**? : *number*
+• `Optional` **manufacturerCode**: number
 
 *Defined in [src/controller/model/group.ts:16](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L16)*
 
 ___
 
-### `Optional` reservedBits
+### reservedBits
 
-• **reservedBits**? : *number*
+• `Optional` **reservedBits**: number
 
 *Defined in [src/controller/model/group.ts:19](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L19)*
 
 ___
 
-### `Optional` srcEndpoint
+### srcEndpoint
 
-• **srcEndpoint**? : *number*
+• `Optional` **srcEndpoint**: number
 
 *Defined in [src/controller/model/group.ts:18](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L18)*
 
 ___
 
-### `Optional` transactionSequenceNumber
+### transactionSequenceNumber
 
-• **transactionSequenceNumber**? : *number*
+• `Optional` **transactionSequenceNumber**: number
 
 *Defined in [src/controller/model/group.ts:20](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L20)*

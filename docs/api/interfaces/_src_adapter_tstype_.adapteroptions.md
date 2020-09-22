@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) › [AdapterOptions](_src_adapter_tstype_.adapteroptions.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) / AdapterOptions
 
 # Interface: AdapterOptions
 
@@ -14,8 +16,8 @@
 
 ## Properties
 
-###  concurrent
+### concurrent
 
-• **concurrent**: *number*
+•  **concurrent**: number
 
 *Defined in [src/adapter/tstype.ts:17](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L17)*

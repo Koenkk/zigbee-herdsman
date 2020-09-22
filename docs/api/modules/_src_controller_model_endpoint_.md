@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/controller/model/endpoint"](_src_controller_model_endpoint_.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / "src/controller/model/endpoint"
 
 # Module: "src/controller/model/endpoint"
 
@@ -18,24 +20,19 @@
 
 ### Object literals
 
-* [debug](_src_controller_model_endpoint_.md#const-debug)
+* [debug](_src_controller_model_endpoint_.md#debug)
 
 ## Object literals
 
-### `Const` debug
+### debug
 
-### ▪ **debug**: *object*
+▪ `Const` **debug**: object
 
 *Defined in [src/controller/model/endpoint.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L11)*
 
-###  error
+#### Properties:
 
-• **error**: *Debugger* = Debug('zigbee-herdsman:controller:endpoint')
-
-*Defined in [src/controller/model/endpoint.ts:13](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L13)*
-
-###  info
-
-• **info**: *Debugger* = Debug('zigbee-herdsman:controller:endpoint')
-
-*Defined in [src/controller/model/endpoint.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/endpoint.ts#L12)*
+Name | Type | Value |
+------ | ------ | ------ |
+`error` | Debugger | Debug('zigbee-herdsman:controller:endpoint') |
+`info` | Debugger | Debug('zigbee-herdsman:controller:endpoint') |

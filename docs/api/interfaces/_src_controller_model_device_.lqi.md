@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/controller/model/device"](../modules/_src_controller_model_device_.md) › [LQI](_src_controller_model_device_.lqi.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / ["src/controller/model/device"](../modules/_src_controller_model_device_.md) / LQI
 
 # Interface: LQI
 
@@ -14,8 +16,8 @@
 
 ## Properties
 
-###  neighbors
+### neighbors
 
-• **neighbors**: *object[]*
+•  **neighbors**: { depth: number ; ieeeAddr: string ; linkquality: number ; networkAddress: number ; relationship: number  }[]
 
 *Defined in [src/controller/model/device.ts:20](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L20)*

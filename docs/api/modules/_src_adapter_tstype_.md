@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/adapter/tstype"](_src_adapter_tstype_.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / "src/adapter/tstype"
 
 # Module: "src/adapter/tstype"
 
@@ -28,16 +30,16 @@
 
 ## Type aliases
 
-###  DeviceType
+### DeviceType
 
-Ƭ **DeviceType**: *"Coordinator" | "EndDevice" | "Router" | "Unknown"*
+Ƭ  **DeviceType**: \"Coordinator\" \| \"EndDevice\" \| \"Router\" \| \"Unknown\"
 
 *Defined in [src/adapter/tstype.ts:25](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L25)*
 
 ___
 
-###  StartResult
+### StartResult
 
-Ƭ **StartResult**: *"resumed" | "reset" | "restored"*
+Ƭ  **StartResult**: \"resumed\" \| \"reset\" \| \"restored\"
 
 *Defined in [src/adapter/tstype.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L27)*

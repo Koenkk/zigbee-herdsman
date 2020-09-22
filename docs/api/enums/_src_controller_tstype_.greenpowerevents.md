@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/controller/tstype"](../modules/_src_controller_tstype_.md) › [GreenPowerEvents](_src_controller_tstype_.greenpowerevents.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / ["src/controller/tstype"](../modules/_src_controller_tstype_.md) / GreenPowerEvents
 
 # Enumeration: GreenPowerEvents
 
@@ -10,8 +12,8 @@
 
 ## Enumeration members
 
-###  deviceJoined
+### deviceJoined
 
-• **deviceJoined**: = "deviceJoined"
+•  **deviceJoined**: {} = "deviceJoined"
 
 *Defined in [src/controller/tstype.ts:16](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/tstype.ts#L16)*

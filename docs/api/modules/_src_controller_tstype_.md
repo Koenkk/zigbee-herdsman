@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/controller/tstype"](_src_controller_tstype_.md)
+**zigbee-herdsman**
+
+> [Globals](../README.md) / "src/controller/tstype"
 
 # Module: "src/controller/tstype"
 
@@ -21,16 +23,16 @@
 
 ## Type aliases
 
-###  DeviceType
+### DeviceType
 
-Ƭ **DeviceType**: *"Coordinator" | "Router" | "EndDevice" | "Unknown" | "GreenPower"*
+Ƭ  **DeviceType**: \"Coordinator\" \| \"Router\" \| \"EndDevice\" \| \"Unknown\" \| \"GreenPower\"
 
 *Defined in [src/controller/tstype.ts:4](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/tstype.ts#L4)*
 
 ___
 
-###  EntityType
+### EntityType
 
-Ƭ **EntityType**: *[DeviceType](_src_controller_tstype_.md#devicetype) | "Group"*
+Ƭ  **EntityType**: [DeviceType](_src_controller_tstype_.md#devicetype) \| \"Group\"
 
 *Defined in [src/controller/tstype.ts:6](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/tstype.ts#L6)*
