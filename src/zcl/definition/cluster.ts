@@ -3938,6 +3938,86 @@ const Cluster: {
         commandsResponse: {
         },
     },
+    heimanSpecificInfraRedRemote: {
+        // from HS2IRC-3.0海曼智能红外转发控制器API-V01文档
+        ID: 0xfc82,
+        manufacturerCode: ManufacturerCode.Heiman,
+        attributes: {},
+        commands: {
+            sendKey: {
+                ID: 0xf0,
+                parameters: [
+                    {name: 'id', type: DataType.uint8},
+                    {name: 'keyCode', type: DataType.uint8},
+                ],
+            },
+            studyKey: {
+                // Total we can have 30 keycode for each device ID (1..30).
+                ID: 0xf1,
+                // response: 0xf2,
+                parameters: [
+                    {name: 'id', type: DataType.uint8},
+                    {name: 'keyCode', type: DataType.uint8},
+                ],
+            },
+            deleteKey: {
+                ID: 0xf3,
+                parameters: [
+                    // 1-15 - Delete specific ID, >= 16 - Delete All
+                    {name: 'id', type: DataType.uint8},
+                    // 1-30 - Delete specific keycode, >= 31 - Delete All keycodes for the ID
+                    {name: 'keyCode', type: DataType.uint8},
+                ],
+            },
+            createId: {
+                // Total we can have 15 device IDs (1..15).
+                ID: 0xf4,
+                // response: 0xf5,
+                parameters: [
+                    {name: 'modelType', type: DataType.uint8},
+                ],
+            },
+            getIdAndKeyCodeList: {
+                ID: 0xf6,
+                // response: 0xf7,
+                parameters: [],
+            },
+        },
+        commandsResponse: {
+            studyKeyRsp: {
+                ID: 0xf2,
+                parameters: [
+                    {name: 'id', type: DataType.uint8},
+                    {name: 'keyCode', type: DataType.uint8},
+                    {name: 'result', type: DataType.uint8}, // 0 - success, 1 - fail
+                ],
+            },
+            createIdRsp: {
+                ID: 0xf5,
+                parameters: [
+                    {name: 'id', type: DataType.uint8}, // 0xFF - create failed
+                    {name: 'modelType', type: DataType.uint8},
+                ],
+            },
+            getIdAndKeyCodeListRsp: {
+                ID: 0xf7,
+                parameters: [
+                    {name: 'packetsTotal', type: DataType.uint8},
+                    {name: 'packetNumber', type: DataType.uint8},
+                    {name: 'packetLength', type: DataType.uint8}, // Max length is 70 bytes
+                    // HELP for learnedDevicesList data structure:
+                    //   struct structPacketPayload {
+                    //     uint8_t ID;
+                    //     uint8_t ModeType;
+                    //     uint8_t KeyNum;
+                    //     uint8_t KeyCode[KeyNum];
+                    //   } arayPacketPayload[CurentPacketLenght];
+                    // }
+                    {name: 'learnedDevicesList', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+        },
+    },    
 };
 
 export default Cluster;

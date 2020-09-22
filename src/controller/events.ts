@@ -78,6 +78,11 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'cinema': 'commandCinema',
     'repast': 'commandRepast',
     'sleep': 'commandSleep',
+
+    // HEIMAN IR remote cluster
+    'studyKeyRsp': 'commandStudyKeyRsp',
+    'createIdRsp': 'commandCreateIdRsp',
+    'getIdAndKeyCodeListRsp': 'commandGetIdAndKeyCodeListRsp',
 };
 
 type MessagePayloadType =
@@ -95,7 +100,8 @@ type MessagePayloadType =
     'commandSetDataResponse' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
     "commandArrivalSensorNotify" | 'commandCommisioningNotification' |
-    'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep';
+    'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
+    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp';
 
 interface MessagePayload {
     type: MessagePayloadType;
