@@ -1854,6 +1854,20 @@ const Definition: {
             ],
         },
         {
+            name: 'mgmtNWKUpdateNotify',
+            ID: 184,
+            type: CommandType.AREQ,
+            request: [
+                {name: 'srcaddr', parameterType: ParameterType.UINT16},
+                {name: 'status', parameterType: ParameterType.UINT8},
+                {name: 'scannedchannels', parameterType: ParameterType.UINT32},
+                {name: 'totaltrans', parameterType: ParameterType.UINT16},
+                {name: 'transFails', parameterType: ParameterType.UINT16},
+                {name: 'energylenght', parameterType: ParameterType.UINT8},
+                {name: 'energyvalues', parameterType: ParameterType.LIST_UINT8},
+            ],
+        },
+        {
             name: 'stateChangeInd',
             ID: 192,
             type: CommandType.AREQ,
