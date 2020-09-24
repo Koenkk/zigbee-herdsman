@@ -71,6 +71,18 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'programmingEventNotification': 'commandProgrammingEventNotification',
     'getPinCodeRsp': 'commandGetPinCodeRsp',
     'arrivalSensorNotify': 'commandArrivalSensorNotify',
+
+    // HEIMAN scenes cluster
+    'atHome': 'commandAtHome',
+    'goOut': 'commandGoOut',
+    'cinema': 'commandCinema',
+    'repast': 'commandRepast',
+    'sleep': 'commandSleep',
+
+    // HEIMAN IR remote cluster
+    'studyKeyRsp': 'commandStudyKeyRsp',
+    'createIdRsp': 'commandCreateIdRsp',
+    'getIdAndKeyCodeListRsp': 'commandGetIdAndKeyCodeListRsp',
 };
 
 type MessagePayloadType =
@@ -87,7 +99,9 @@ type MessagePayloadType =
     'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandGetData' |
     'commandSetDataResponse' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
-    "commandArrivalSensorNotify" | 'commandCommisioningNotification';
+    "commandArrivalSensorNotify" | 'commandCommisioningNotification' |
+    'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
+    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp';
 
 interface MessagePayload {
     type: MessagePayloadType;
