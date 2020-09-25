@@ -1854,7 +1854,7 @@ const Definition: {
             ],
         },
         {
-            name: 'mgmtNWKUpdateNotify',
+            name: 'mgmtNwkUpdateNotify',
             ID: 184,
             type: CommandType.AREQ,
             request: [
@@ -1862,8 +1862,8 @@ const Definition: {
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'scannedchannels', parameterType: ParameterType.UINT32},
                 {name: 'totaltrans', parameterType: ParameterType.UINT16},
-                {name: 'transFails', parameterType: ParameterType.UINT16},
-                {name: 'energylenght', parameterType: ParameterType.UINT8},
+                {name: 'transfails', parameterType: ParameterType.UINT16},
+                {name: 'energylength', parameterType: ParameterType.UINT8},
                 {name: 'energyvalues', parameterType: ParameterType.LIST_UINT8},
             ],
         },
