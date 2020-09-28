@@ -30,9 +30,9 @@
 
 ### MessagePayloadType
 
-Ƭ  **MessagePayloadType**: \"attributeReport\" \| \"readResponse\" \| \"raw\" \| \"read\" \| \"write\" \| \"commandOn\" \| \"commandOffWithEffect\" \| \"commandStep\" \| \"commandStop\" \| \"commandHueNotification\" \| \"commandOff\" \| \"commandStepColorTemp\" \| \"commandMoveWithOnOff\" \| \"commandMove\" \| \"commandMoveHue\" \| \"commandMoveToSaturation\" \| \"commandStopWithOnOff\" \| \"commandMoveToLevelWithOnOff\" \| \"commandToggle\" \| \"commandTradfriArrowSingle\" \| \"commandTradfriArrowHold\" \| \"commandTradfriArrowRelease\" \| \"commandStepWithOnOff\" \| \"commandMoveToColorTemp\" \| \"commandMoveToColor\" \| \"commandOnWithTimedOff\" \| \"commandRecall\" \| \"commandArm\" \| \"commandPanic\" \| \"commandEmergency\" \| \"commandColorLoopSet\" \| \"commandOperationEventNotification\" \| \"commandStatusChangeNotification\" \| \"commandEnhancedMoveToHueAndSaturation\" \| \"commandUpOpen\" \| \"commandDownClose\" \| \"commandMoveToLevel\" \| \"commandMoveColorTemp\" \| \"commandGetData\" \| \"commandSetDataResponse\" \| \"commandGetWeeklyScheduleRsp\" \| \"commandQueryNextImageRequest\" \| \"commandNotification\" \| \"commandAlertsNotification\" \| \"commandProgrammingEventNotification\" \| \"commandGetPinCodeRsp\" \| \"commandArrivalSensorNotify\" \| \"commandCommisioningNotification\"
+Ƭ  **MessagePayloadType**: \"attributeReport\" \| \"readResponse\" \| \"raw\" \| \"read\" \| \"write\" \| \"commandOn\" \| \"commandOffWithEffect\" \| \"commandStep\" \| \"commandStop\" \| \"commandHueNotification\" \| \"commandOff\" \| \"commandStepColorTemp\" \| \"commandMoveWithOnOff\" \| \"commandMove\" \| \"commandMoveHue\" \| \"commandMoveToSaturation\" \| \"commandStopWithOnOff\" \| \"commandMoveToLevelWithOnOff\" \| \"commandToggle\" \| \"commandTradfriArrowSingle\" \| \"commandTradfriArrowHold\" \| \"commandTradfriArrowRelease\" \| \"commandStepWithOnOff\" \| \"commandMoveToColorTemp\" \| \"commandMoveToColor\" \| \"commandOnWithTimedOff\" \| \"commandRecall\" \| \"commandArm\" \| \"commandPanic\" \| \"commandEmergency\" \| \"commandColorLoopSet\" \| \"commandOperationEventNotification\" \| \"commandStatusChangeNotification\" \| \"commandEnhancedMoveToHueAndSaturation\" \| \"commandUpOpen\" \| \"commandDownClose\" \| \"commandMoveToLevel\" \| \"commandMoveColorTemp\" \| \"commandGetData\" \| \"commandSetDataResponse\" \| \"commandGetWeeklyScheduleRsp\" \| \"commandQueryNextImageRequest\" \| \"commandNotification\" \| \"commandAlertsNotification\" \| \"commandProgrammingEventNotification\" \| \"commandGetPinCodeRsp\" \| \"commandArrivalSensorNotify\" \| \"commandCommisioningNotification\" \| \"commandAtHome\" \| \"commandGoOut\" \| \"commandCinema\" \| \"commandRepast\" \| \"commandSleep\" \| \"commandStudyKeyRsp\" \| \"commandCreateIdRsp\" \| \"commandGetIdAndKeyCodeListRsp\"
 
-*Defined in [src/controller/events.ts:76](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L76)*
+*Defined in [src/controller/events.ts:88](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L88)*
 
 ## Object literals
 
@@ -49,14 +49,19 @@ Name | Type | Value |
 `alertsNotification` | \"commandAlertsNotification\" | "commandAlertsNotification" |
 `arm` | \"commandArm\" | "commandArm" |
 `arrivalSensorNotify` | \"commandArrivalSensorNotify\" | "commandArrivalSensorNotify" |
+`atHome` | \"commandAtHome\" | "commandAtHome" |
+`cinema` | \"commandCinema\" | "commandCinema" |
 `colorLoopSet` | \"commandColorLoopSet\" | "commandColorLoopSet" |
 `commisioningNotification` | \"commandCommisioningNotification\" | "commandCommisioningNotification" |
+`createIdRsp` | \"commandCreateIdRsp\" | "commandCreateIdRsp" |
 `downClose` | \"commandDownClose\" | "commandDownClose" |
 `emergency` | \"commandEmergency\" | "commandEmergency" |
 `enhancedMoveToHueAndSaturation` | \"commandEnhancedMoveToHueAndSaturation\" | "commandEnhancedMoveToHueAndSaturation" |
 `getData` | \"commandGetData\" | "commandGetData" |
+`getIdAndKeyCodeListRsp` | \"commandGetIdAndKeyCodeListRsp\" | "commandGetIdAndKeyCodeListRsp" |
 `getPinCodeRsp` | \"commandGetPinCodeRsp\" | "commandGetPinCodeRsp" |
 `getWeeklyScheduleRsp` | \"commandGetWeeklyScheduleRsp\" | "commandGetWeeklyScheduleRsp" |
+`goOut` | \"commandGoOut\" | "commandGoOut" |
 `hueNotification` | \"commandHueNotification\" | "commandHueNotification" |
 `move` | \"commandMove\" | "commandMove" |
 `moveColorTemp` | \"commandMoveColorTemp\" | "commandMoveColorTemp" |
@@ -77,13 +82,16 @@ Name | Type | Value |
 `programmingEventNotification` | \"commandProgrammingEventNotification\" | "commandProgrammingEventNotification" |
 `queryNextImageRequest` | \"commandQueryNextImageRequest\" | "commandQueryNextImageRequest" |
 `recall` | \"commandRecall\" | "commandRecall" |
+`repast` | \"commandRepast\" | "commandRepast" |
 `setDataResponse` | \"commandSetDataResponse\" | "commandSetDataResponse" |
+`sleep` | \"commandSleep\" | "commandSleep" |
 `statusChangeNotification` | \"commandStatusChangeNotification\" | "commandStatusChangeNotification" |
 `step` | \"commandStep\" | "commandStep" |
 `stepColorTemp` | \"commandStepColorTemp\" | "commandStepColorTemp" |
 `stepWithOnOff` | \"commandStepWithOnOff\" | "commandStepWithOnOff" |
 `stop` | \"commandStop\" | "commandStop" |
 `stopWithOnOff` | \"commandStopWithOnOff\" | "commandStopWithOnOff" |
+`studyKeyRsp` | \"commandStudyKeyRsp\" | "commandStudyKeyRsp" |
 `toggle` | \"commandToggle\" | "commandToggle" |
 `tradfriArrowHold` | \"commandTradfriArrowHold\" | "commandTradfriArrowHold" |
 `tradfriArrowRelease` | \"commandTradfriArrowRelease\" | "commandTradfriArrowRelease" |
