@@ -83,6 +83,8 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'studyKeyRsp': 'commandStudyKeyRsp',
     'createIdRsp': 'commandCreateIdRsp',
     'getIdAndKeyCodeListRsp': 'commandGetIdAndKeyCodeListRsp',
+
+    'setTimeRequest': 'commandSetTimeRequest', // Tuya time sync
 };
 
 type MessagePayloadType =
@@ -101,7 +103,7 @@ type MessagePayloadType =
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
     "commandArrivalSensorNotify" | 'commandCommisioningNotification' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
-    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp';
+    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest';
 
 interface MessagePayload {
     type: MessagePayloadType;
