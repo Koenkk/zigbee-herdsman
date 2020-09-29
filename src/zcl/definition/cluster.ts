@@ -3772,6 +3772,24 @@ const Cluster: {
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
+            // Time sync command (It's transparent beetween MCU and server)
+            // Time request device -> server
+            //   payloadSize = 0
+            // Set time, server -> device
+            //   payloadSize, should be always 8
+            //   payload[0-3] - UTC timestamp (big endian)
+            //   payload[4-7] - Local timestamp (big endian)
+            //
+            // Zigbee payload is very similar to the UART payload which is described here: https://developer.tuya.com/en/docs/iot/device-development/access-mode-mcu/zigbee-general-solution/tuya-zigbee-module-uart-communication-protocol/tuya-zigbee-module-uart-communication-protocol?id=K9ear5khsqoty#title-10-Time%20synchronization
+            //
+            // NOTE: You need to wait for time request before setting it. You can't set time without request.
+            setTime: {
+                ID: 0x24,
+                parameters: [
+                    {name: 'payloadSize', type: DataType.uint16},
+                    {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
+                ]
+            }
         },
         commandsResponse: {
             getData: {
@@ -3797,6 +3815,13 @@ const Cluster: {
                     {name: 'data', type: DataType.octetStr},
                 ],
             },
+            setTimeRequest: {
+                ID: 0x24,
+                parameters: [
+                    {name: 'payloadSize', type: DataType.uint16}, // Should be always 0
+                    {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
+                ]
+            }
         },
     },
     aqaraOpple: {
