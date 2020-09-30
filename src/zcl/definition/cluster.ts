@@ -2322,6 +2322,19 @@ const Cluster: {
         commandsResponse: {
         },
     },
+    msSoilMoisture: {
+        ID: 1032,
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.uint16},
+            minMeasuredValue: {ID: 1, type: DataType.uint16},
+            maxMeasuredValue: {ID: 2, type: DataType.uint16},
+            tolerance: {ID: 3, type: DataType.uint16},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        },
+    },
     pHMeasurement: {
         ID: 1033,
         attributes: {
