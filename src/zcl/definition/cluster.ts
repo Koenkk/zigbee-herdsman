@@ -2273,6 +2273,11 @@ const Cluster: {
             minMeasuredValue: {ID: 1, type: DataType.int16},
             maxMeasuredValue: {ID: 2, type: DataType.int16},
             tolerance: {ID: 3, type: DataType.uint16},
+            scaledValue: {ID: 0x0010, type: DataType.int16},
+            minScaledValue: {ID: 0x0011, type: DataType.int16},
+            maxScaledValue: {ID: 0x0012, type: DataType.int16},
+            scaledTolerance: {ID: 0x0013, type: DataType.uint16},
+            scale: {ID: 0x0014, type: DataType.int8},
         },
         commands: {
         },
