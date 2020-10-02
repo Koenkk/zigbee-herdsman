@@ -433,7 +433,7 @@ class Controller extends events.EventEmitter {
             debug.log(`New device '${payload.ieeeAddr}' joined`);
             debug.log(`Creating device '${payload.ieeeAddr}'`);
             device = Device.create(
-                undefined, payload.ieeeAddr, payload.networkAddress, undefined,
+                'Unknown', payload.ieeeAddr, payload.networkAddress, undefined,
                 undefined, undefined, undefined, false, []
             );
 

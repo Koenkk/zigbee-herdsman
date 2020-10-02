@@ -262,7 +262,7 @@ class Device extends Entity {
     private static loadFromDatabaseIfNecessary(): void {
         if (!Device.devices) {
             Device.devices = {};
-            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router', 'GreenPower']);
+            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router', 'GreenPower', 'Unknown']);
             for (const entry of entries) {
                 const device = Device.fromDatabaseEntry(entry);
                 Device.devices[device.ieeeAddr] = device;

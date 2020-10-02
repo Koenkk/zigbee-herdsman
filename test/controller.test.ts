@@ -931,6 +931,7 @@ describe('Controller', () => {
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x140')
         expect(events.deviceInterview[1].status).toBe('failed')
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x140')
+        expect(controller.getDeviceByIeeeAddr('0x140').type).toStrictEqual('Unknown');
     });
 
     it('Device joins with endpoints [4,1], should read modelID from 1', async () => {
