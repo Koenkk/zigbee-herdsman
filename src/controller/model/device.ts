@@ -376,7 +376,7 @@ class Device extends Entity {
         if (match) {
             const info = lookup[match];
             debug.log(`Interview procedure failed but got modelID matching '${match}', assuming interview succeeded`);
-            this._type = this._type || info.type;
+            this._type = this._type === 'Unknown' ? info.type : this._type;
             this._manufacturerID = this._manufacturerID || info.manufacturerID;
             this._manufacturerName = this._manufacturerName || info.manufacturerName;
             this._powerSource = this._powerSource || info.powerSource;
