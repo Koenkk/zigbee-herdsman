@@ -2333,6 +2333,27 @@ describe('Controller', () => {
         expect(deepClone(controller.getDeviceByIeeeAddr("0x90fd9ffffe4b64ae"))).toStrictEqual(expected);
     });
 
+    it('Read from group', async () => {
+        await controller.start();
+        const group = await controller.createGroup(2);
+        await group.read('genBasic', ['modelId', 0x01], {});
+        expect(mocksendZclFrameToGroup).toBeCalledTimes(1);
+        expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(2);
+        expect(deepClone(mocksendZclFrameToGroup.mock.calls[0][1])).toStrictEqual(deepClone(ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 2, 'read', 0, [{"attrId": 5}, {"attrId": 1}])));
+        expect(mocksendZclFrameToGroup.mock.calls[0][2]).toBe(null);
+    });
+
+    it('Read from group fails', async () => {
+        await controller.start();
+        const group = await controller.createGroup(2);
+        mocksendZclFrameToGroup.mockRejectedValueOnce(new Error('timeout'));
+        let error;
+        try {
+            await group.read('genBasic', ['modelId', 0x01], {});
+        } catch (e) { error = e; }
+        expect(error).toStrictEqual(new Error(`Read 2 genBasic(["modelId",1], {"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout)`));
+    });
+
     it('Write to group', async () => {
         await controller.start();
         const group = await controller.createGroup(2);

@@ -175,6 +175,34 @@ class Group extends Entity {
         }
     }
 
+    public async read(
+        clusterKey: number | string, attributes: string[] | number [], options?: Options
+    ): Promise<void> {
+        options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const payload: {attrId: number}[] = [];
+        for (const attribute of attributes) {
+            payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
+        }
+
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.GLOBAL, options.direction, true,
+            options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(), 'read',
+            cluster.ID, payload, options.reservedBits
+        );
+
+        const log = `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
+        } catch (error) {
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
+        }
+    }
+
     public async command(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options
     ): Promise<void> {
