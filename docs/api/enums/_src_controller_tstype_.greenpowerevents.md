@@ -1,4 +1,4 @@
-**zigbee-herdsman**
+**[zigbee-herdsman](../README.md)**
 
 > [Globals](../README.md) / ["src/controller/tstype"](../modules/_src_controller_tstype_.md) / GreenPowerEvents
 

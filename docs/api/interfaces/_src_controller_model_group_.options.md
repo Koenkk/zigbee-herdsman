@@ -1,4 +1,4 @@
-**zigbee-herdsman**
+**[zigbee-herdsman](../README.md)**
 
 > [Globals](../README.md) / ["src/controller/model/group"](../modules/_src_controller_model_group_.md) / Options
 

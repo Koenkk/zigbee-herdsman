@@ -1,4 +1,4 @@
-**zigbee-herdsman**
+**[zigbee-herdsman](../README.md)**
 
 > [Globals](../README.md) / ["src/controller/model/device"](../modules/_src_controller_model_device_.md) / RoutingTable
 

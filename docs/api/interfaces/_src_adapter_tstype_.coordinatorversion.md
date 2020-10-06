@@ -1,4 +1,4 @@
-**zigbee-herdsman**
+**[zigbee-herdsman](../README.md)**
 
 > [Globals](../README.md) / ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) / CoordinatorVersion
 
