@@ -141,7 +141,7 @@ export enum NvItemsIds {
     SAS_CURR_NWK_KEY = 210,
     SAS_CURR_PRECFG_LINK_KEY = 211,
     TCLK_SEED = 257,
-    LEGACY_TCLK_TABLE_START = 511, // Valid for <= Z-Stack 3.0.x
+    LEGACY_TCLK_TABLE_START = 273, // Valid for <= Z-Stack 3.0.x
     EX_TCLK_TABLE = 4, // Valid for >= Z-Stack 3.0.x
     APS_LINK_KEY_DATA_START = 513,
     APS_LINK_KEY_DATA_END = 767,
