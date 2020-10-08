@@ -2050,13 +2050,15 @@ describe('Controller', () => {
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 1, 4, "group", null);
     });
 
-    it('Group bind by number', async () => {
+    it('Group bind by number (should create group)', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(Group.byGroupID(11)).toBeUndefined();
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         await endpoint.bind('genPowerCfg', 11);
-        expect(deepClone(endpoint.binds)).toStrictEqual([]);
+        const group = Group.byGroupID(11);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(1), target: group}]));
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 1, 11, "group", null);
     });
 

@@ -347,9 +347,11 @@ class Endpoint extends Entity {
     public async bind(clusterKey: number | string, target: Endpoint | Group | number): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
+        if (typeof target === 'number') {
+            target = Group.byGroupID(target) || Group.create(target);
+        }
 
-        const destinationAddress =
-            target instanceof Endpoint ? target.deviceIeeeAddress : (target instanceof Group ? target.groupID : target);
+        const destinationAddress = target instanceof Endpoint ? target.deviceIeeeAddress : target.groupID;
 
         const log = `Bind ${this.deviceIeeeAddress}/${this.ID} ${cluster.name} from ` +
             `'${target instanceof Endpoint ? `${destinationAddress}/${target.ID}` : destinationAddress}'`;
@@ -361,11 +363,10 @@ class Endpoint extends Entity {
                 target instanceof Endpoint ? target.ID : null,
             );
 
-            // NOTE: In case the bind is done by group number, it won't be saved to the database
             if (!this.binds.find((b) => b.cluster.ID === cluster.ID && b.target === target)) {
                 if (target instanceof Group) {
                     this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
-                } else if (target instanceof Endpoint) {
+                } else {
                     this._binds.push({
                         cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress,
                         endpointID: target.ID
