@@ -41,6 +41,9 @@ class Driver extends events.EventEmitter {
     private seqNumber: number;
     private timeoutResetTimeout: any;
     private apsRequestFreeSlots: number;
+	private apsDataConfirm: number;
+    private apsDataIndication: number;
+    private configChanged: number;
 
     public constructor(path: string) {
         super();
@@ -50,15 +53,22 @@ class Driver extends events.EventEmitter {
         this.timeoutResetTimeout = null;
 
         this.apsRequestFreeSlots = 1;
+		this.apsDataConfirm = 0;
+        this.apsDataIndication = 0;
+        this.configChanged = 0;
 
         const that = this;
-        setInterval(() => { that.processQueue(); }, 50);  //300
-        setInterval(() => { that.processBusyQueue(); }, 10);  //200
-        setInterval(() => { that.processApsQueue(); }, 50);  //300
-        setInterval(() => { that.processApsBusyQueue(); }, 10);  //200
+        setInterval(() => { that.processQueue(); }, 200);  //50
+        setInterval(() => { that.processBusyQueue(); }, 1000);  //10
+        setInterval(() => { that.processApsQueue(); }, 200);  // fire aps request, indications and confirms
+        setInterval(() => { that.processApsBusyQueue(); }, 1000);  // check timeouts for all open aps requests
         setInterval(() => { that.deviceStateRequest()
                             .then(result => {})
                             .catch(error => {}); }, 10000);
+
+		setInterval(() => { that.handleDeviceStatus()
+                            .then(result => {})
+                            .catch(error => {}); }, 1000); // query confirm and indication requests
 
         setInterval(() => {
             that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
@@ -303,7 +313,7 @@ class Driver extends events.EventEmitter {
                 this.timeoutResetTimeout = null;
                 this.resetTimeoutCounterAfter1min();
                 req.reject("TIMEOUT");
-                if (timeoutCounter >= 3) {
+                if (timeoutCounter >= 2) {
                     timeoutCounter = 0;
                     debug("to many timeouts - restart serial connecion");
                     if (this.serialPort.isOpen) {
@@ -341,7 +351,7 @@ class Driver extends events.EventEmitter {
             queue.push(req);
         });
     }
-
+/*
     private async checkDeviceStatus(currentDeviceStatus: number) {
         const networkState = currentDeviceStatus & 0x03;
         const apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
@@ -365,6 +375,41 @@ class Driver extends events.EventEmitter {
                 //debug("APS Error - data indication");
             }
         } else if (configChanged === 1) {
+            // when network settings changed
+        }
+    }
+*/
+	private checkDeviceStatus(currentDeviceStatus: number) {
+        const networkState = currentDeviceStatus & 0x03;
+        this.apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
+        this.apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
+        this.configChanged = (currentDeviceStatus >> 4) & 0x01;
+        this.apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
+
+        debug("networkstate: " + networkState + " apsDataConfirm: " + this.apsDataConfirm + " apsDataIndication: " + this.apsDataIndication +
+            " configChanged: " + this.configChanged + " apsRequestFreeSlots: " + this.apsRequestFreeSlots);
+    }
+
+    private async handleDeviceStatus() {
+        if (this.apsDataConfirm === 1) {
+            try {
+                console.log("query aps data confirm");
+                this.apsDataConfirm = 0;
+                const x = await this.querySendDataStateRequest();
+            } catch {
+                //debug("APS Error - data confirm");
+            }
+        }
+        if (this.apsDataIndication === 1) {
+            try {
+                console.log("query aps data indication");
+                this.apsDataIndication = 0;
+                const x = await this.readReceivedDataRequest();
+            } catch {
+                //debug("APS Error - data indication");
+            }
+        }
+        if (this.configChanged === 1) {
             // when network settings changed
         }
     }
@@ -403,14 +448,14 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private processApsQueue() {
+    private async processApsQueue() {
         if (apsQueue.length === 0) {
             return;
         }
 
         if (this.apsRequestFreeSlots !== 1) {
             debug("no free slots. Delay sending of APS Request");
-            this.sleep(1000);
+            await this.sleep(1000);
             return;
         }
 
@@ -422,15 +467,15 @@ class Driver extends events.EventEmitter {
         switch (req.commandId) {
             case PARAM.PARAM.APS.DATA_INDICATION:
                 //debug(`read received data request. seqNr: ${req.seqNumber}`);
-                this.sendReadReceivedDataRequest(req.seqNumber);
+                await this.sendReadReceivedDataRequest(req.seqNumber);
                 break;
             case PARAM.PARAM.APS.DATA_CONFIRM:
                 //debug(`query send data state request. seqNr: ${req.seqNumber}`);
-                this.sendQueryDataStateRequest(req.seqNumber);
+                await this.sendQueryDataStateRequest(req.seqNumber);
                 break;
             case PARAM.PARAM.APS.DATA_REQUEST:
                 //debug(`send data request. seqNr: ${req.seqNumber}`);
-                this.sendEnqueueSendDataRequest(req.request, req.seqNumber);
+                await this.sendEnqueueSendDataRequest(req.request, req.seqNumber);
                 break;
             default:
                 throw new Error("process APS queue - unknown command id");

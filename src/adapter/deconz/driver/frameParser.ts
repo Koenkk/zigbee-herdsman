@@ -169,13 +169,6 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
         return;
     }
 
-    let string = "";
-    for (let u = 0; u < apsBusyQueue.length; u++) {
-        const re: Request = apsBusyQueue[u];
-        string += re.seqNumber;
-        string += ",";
-    }
-
     const req: Request = apsBusyQueue[i];
 
     // TODO timeout (at driver.ts)
@@ -193,14 +186,7 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
 
     debug("DATA_CONFIRM RESPONSE - destAddr: 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus);
     frameParserEvents.emit('receivedDataNotification', response.deviceState);
-/*
-    const zclPayload: ZclDataPayload = {
-        frame: ZclFrame;
-        endpoint: number;
-        linkquality: number;
-        groupID: number;
-    }
-*/
+
     return response;
 }
 
