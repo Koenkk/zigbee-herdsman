@@ -1794,7 +1794,6 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledTimes(25);
     });
 
-
     it('Start restore from backup wrong adapter type', async () => {
         mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
             if (subsystem === Subsystem.SYS && command === 'osalNvRead' && equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, offset: 0})) {
