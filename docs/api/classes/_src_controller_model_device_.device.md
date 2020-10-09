@@ -436,7 +436,7 @@ ___
 
 ▸ **lqi**(): Promise\<[LQI](../interfaces/_src_adapter_tstype_.lqi.md)>
 
-*Defined in [src/controller/model/device.ts:542](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L542)*
+*Defined in [src/controller/model/device.ts:547](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L547)*
 
 **Returns:** Promise\<[LQI](../interfaces/_src_adapter_tstype_.lqi.md)>
 
@@ -463,7 +463,7 @@ ___
 
 ▸ **ping**(): Promise\<void>
 
-*Defined in [src/controller/model/device.ts:550](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L550)*
+*Defined in [src/controller/model/device.ts:555](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L555)*
 
 **Returns:** Promise\<void>
 
@@ -473,7 +473,7 @@ ___
 
 ▸ **removeFromDatabase**(): Promise\<void>
 
-*Defined in [src/controller/model/device.ts:528](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L528)*
+*Defined in [src/controller/model/device.ts:533](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L533)*
 
 **Returns:** Promise\<void>
 
@@ -483,7 +483,7 @@ ___
 
 ▸ **removeFromNetwork**(): Promise\<void>
 
-*Defined in [src/controller/model/device.ts:523](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L523)*
+*Defined in [src/controller/model/device.ts:528](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L528)*
 
 **Returns:** Promise\<void>
 
@@ -493,7 +493,7 @@ ___
 
 ▸ **routingTable**(): Promise\<[RoutingTable](../interfaces/_src_adapter_tstype_.routingtable.md)>
 
-*Defined in [src/controller/model/device.ts:546](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L546)*
+*Defined in [src/controller/model/device.ts:551](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/device.ts#L551)*
 
 **Returns:** Promise\<[RoutingTable](../interfaces/_src_adapter_tstype_.routingtable.md)>
 
