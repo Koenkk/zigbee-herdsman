@@ -72,12 +72,6 @@ const items = {
         osal: true,
         product: PRODUCT_ALL,
     },
-    ZCD_NV_TCLK_SEED: {
-        id: NvItemsIds.TCLK_SEED,
-        product: PRODUCT_ALL,
-        offset: 0x00,
-        osal: true,
-    },
     ZCD_NV_LEGACY_TCLK_TABLE_START: {
         id: NvItemsIds.LEGACY_TCLK_TABLE_START,
         product: ZnpVersion.zStack30x,
@@ -195,7 +189,6 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_APS_USE_EXT_PANID);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_PRECFGKEY);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_PRECFGKEY_ENABLE);
-    await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_TCLK_SEED);
 
     if (product === ZnpVersion.zStack30x) {
         await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_LEGACY_TCLK_TABLE_START);

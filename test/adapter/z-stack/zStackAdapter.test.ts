@@ -1455,24 +1455,22 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[12][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[12][2]).toStrictEqual(backup.data.ZCD_NV_PRECFGKEY_ENABLE);
         expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[13][2]).toStrictEqual(backup.data.ZCD_NV_TCLK_SEED);
+        expect(mockZnpRequest.mock.calls[13][2]).toStrictEqual(backup.data.ZCD_NV_LEGACY_TCLK_TABLE_START);
         expect(mockZnpRequest.mock.calls[14][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[14][2]).toStrictEqual(backup.data.ZCD_NV_LEGACY_TCLK_TABLE_START);
-        expect(mockZnpRequest.mock.calls[15][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[15][2]).toStrictEqual(backup.data.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START);
+        expect(mockZnpRequest.mock.calls[14][2]).toStrictEqual(backup.data.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START);
+        expect(mockZnpRequest.mock.calls[15][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
         expect(mockZnpRequest.mock.calls[16][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[17][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[18][1]).toBe('osalNvItemInit');
-        expect(mockZnpRequest.mock.calls[18][2].initvalue).toStrictEqual([1]);
-        expect(mockZnpRequest.mock.calls[19][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[19][2].value).toStrictEqual([1]);
-        expect(mockZnpRequest.mock.calls[20][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[21][1]).toBe('getDeviceInfo');
-        expect(mockZnpRequest.mock.calls[22][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[23][1]).toBe('extFindGroup');
-        expect(mockZnpRequest.mock.calls[24][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[24][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
-        expect(mockZnpRequest).toBeCalledTimes(25);
+        expect(mockZnpRequest.mock.calls[17][1]).toBe('osalNvItemInit');
+        expect(mockZnpRequest.mock.calls[17][2].initvalue).toStrictEqual([1]);
+        expect(mockZnpRequest.mock.calls[18][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[18][2].value).toStrictEqual([1]);
+        expect(mockZnpRequest.mock.calls[19][1]).toBe('resetReq');
+        expect(mockZnpRequest.mock.calls[20][1]).toBe('getDeviceInfo');
+        expect(mockZnpRequest.mock.calls[21][1]).toBe('activeEpReq');
+        expect(mockZnpRequest.mock.calls[22][1]).toBe('extFindGroup');
+        expect(mockZnpRequest.mock.calls[23][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[23][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
+        expect(mockZnpRequest).toBeCalledTimes(24);
     });
 
     it('Start restore from backup zStack 3.x.0', async () => {
@@ -1561,25 +1559,23 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[11][2]).toStrictEqual(backup.data.ZCD_NV_PRECFGKEY);
         expect(mockZnpRequest.mock.calls[12][1]).toBe('osalNvWrite');
         expect(mockZnpRequest.mock.calls[12][2]).toStrictEqual(backup.data.ZCD_NV_PRECFGKEY_ENABLE);
-        expect(mockZnpRequest.mock.calls[13][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[13][2]).toStrictEqual(backup.data.ZCD_NV_TCLK_SEED);
+        expect(mockZnpRequest.mock.calls[13][1]).toBe('nvWrite');
+        expect(mockZnpRequest.mock.calls[13][2]).toStrictEqual(backup.data.ZCD_NV_EX_TCLK_TABLE);
         expect(mockZnpRequest.mock.calls[14][1]).toBe('nvWrite');
-        expect(mockZnpRequest.mock.calls[14][2]).toStrictEqual(backup.data.ZCD_NV_EX_TCLK_TABLE);
-        expect(mockZnpRequest.mock.calls[15][1]).toBe('nvWrite');
-        expect(mockZnpRequest.mock.calls[15][2]).toStrictEqual(backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE);
+        expect(mockZnpRequest.mock.calls[14][2]).toStrictEqual(backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE);
+        expect(mockZnpRequest.mock.calls[15][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
         expect(mockZnpRequest.mock.calls[16][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[17][2].id).toBe(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3);
-        expect(mockZnpRequest.mock.calls[18][1]).toBe('osalNvItemInit');
-        expect(mockZnpRequest.mock.calls[18][2].initvalue).toStrictEqual([1]);
-        expect(mockZnpRequest.mock.calls[19][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[19][2].value).toStrictEqual([1]);
-        expect(mockZnpRequest.mock.calls[20][1]).toBe('resetReq');
-        expect(mockZnpRequest.mock.calls[21][1]).toBe('getDeviceInfo');
-        expect(mockZnpRequest.mock.calls[22][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[23][1]).toBe('extFindGroup');
-        expect(mockZnpRequest.mock.calls[24][1]).toBe('osalNvWrite');
-        expect(mockZnpRequest.mock.calls[24][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
-        expect(mockZnpRequest).toBeCalledTimes(25);
+        expect(mockZnpRequest.mock.calls[17][1]).toBe('osalNvItemInit');
+        expect(mockZnpRequest.mock.calls[17][2].initvalue).toStrictEqual([1]);
+        expect(mockZnpRequest.mock.calls[18][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[18][2].value).toStrictEqual([1]);
+        expect(mockZnpRequest.mock.calls[19][1]).toBe('resetReq');
+        expect(mockZnpRequest.mock.calls[20][1]).toBe('getDeviceInfo');
+        expect(mockZnpRequest.mock.calls[21][1]).toBe('activeEpReq');
+        expect(mockZnpRequest.mock.calls[22][1]).toBe('extFindGroup');
+        expect(mockZnpRequest.mock.calls[23][1]).toBe('osalNvWrite');
+        expect(mockZnpRequest.mock.calls[23][2].value).toStrictEqual(Buffer.from([0, 8, 0, 0]));
+        expect(mockZnpRequest).toBeCalledTimes(24);
     });
 
     it('Start restore from backup wrong zStack', async () => {
@@ -1733,7 +1729,7 @@ describe('zStackAdapter', () => {
     });
 
     it('Create backup zStack 3.0.x', async () => {
-        const backup = {"adapterType":"zStack","meta":{"product":2},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"osal":true,"product":-1,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"osal":true,"product":-1,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_PANID":{"id":131,"offset":0,"osal":true,"product":-1,"value":[123,0],"len":2},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"osal":true,"product":-1,"value":[1,2,3],"len":3},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"osal":true,"product":-1,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"osal":true,"product":-1,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"osal":true,"product":-1,"value":[0],"len":1},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"osal":true,"product":-1,"value":[0,8,0,0],"len":4},"ZCD_NV_TCLK_SEED":{"id":257,"product":-1,"offset":0,"osal":true,"value":[182,178,180,181,55,183,151,118,239,70,205,82,150,93,172,153],"len":16},"ZCD_NV_LEGACY_TCLK_TABLE_START":{"id":273,"product":2,"offset":0,"osal":true,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"product":2,"offset":0,"osal":true,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
+        const backup = {"adapterType":"zStack","meta":{"product":2},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"osal":true,"product":-1,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"osal":true,"product":-1,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_PANID":{"id":131,"offset":0,"osal":true,"product":-1,"value":[123,0],"len":2},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"osal":true,"product":-1,"value":[1,2,3],"len":3},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"osal":true,"product":-1,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"osal":true,"product":-1,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"osal":true,"product":-1,"value":[0],"len":1},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"osal":true,"product":-1,"value":[0,8,0,0],"len":4},"ZCD_NV_LEGACY_TCLK_TABLE_START":{"id":273,"product":2,"offset":0,"osal":true,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"product":2,"offset":0,"osal":true,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
 
         mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
             const missing = () => {
@@ -1773,8 +1769,6 @@ describe('zStackAdapter', () => {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_PRECFGKEY.value)}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.PRECFGKEY_ENABLE, offset: 0})) {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_PRECFGKEY_ENABLE.value)}};
-                } else if (equalsPartial(payload, {id: NvItemsIds.TCLK_SEED, offset: 0})) {
-                    return {payload: {value: Buffer.from(backup.data.ZCD_NV_TCLK_SEED.value)}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.LEGACY_TCLK_TABLE_START, offset: 0})) {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_LEGACY_TCLK_TABLE_START.value)}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.CHANLIST, offset: 0})) {
@@ -1821,7 +1815,7 @@ describe('zStackAdapter', () => {
     });
 
     it('Create backup zStack 3.x.0', async () => {
-        const backup = {"adapterType":"zStack","time":"Sat, 12 Oct 2019 11:44:30 GMT","meta":{"product":1},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"osal":true,"product":-1,"value":[71,98,161,28,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"osal":true,"product":-1,"value":[153,5,2,0,20,0,0,30,0,0,0,1,5,1,143,0,7,0,2,5,30,0,254,255,0,0,254,255,0,0,0,0,0,0,0,0,255,255,0,0,0,0,0,0,15,15,0,0,0,0,0,0,0,0,0,0,0,221,221,221,221,221,221,221,221,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15,3,0,1,120,10,1,0,0,0,0,0,0,0],"len":116},"ZCD_NV_PANID":{"id":131,"offset":0,"osal":true,"product":-1,"value":[123,0],"len":2},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"osal":true,"product":-1,"value":[1,2,3],"len":3},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"osal":true,"product":-1,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"osal":true,"product":-1,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"osal":true,"product":-1,"value":[0],"len":1},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"osal":true,"product":-1,"value":[0,8,0,0],"len":4},"ZCD_NV_TCLK_SEED":{"id":257,"product":-1,"offset":0,"osal":true,"value":[182,178,180,181,55,183,151,118,239,70,205,82,150,93,172,153],"len":16},"ZCD_NV_EX_TCLK_TABLE":{"sysid":1,"itemid":4,"subid":0,"product":1,"osal":false,"offset":0,"value":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,255,0,0,0],"len":20},"ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE":{"sysid":1,"itemid":7,"subid":0,"product":1,"osal":false,"offset":0,"value":[1,0,0,0,221,221,221,221,221,221,221,221],"len":12}}};
+        const backup = {"adapterType":"zStack","time":"Sat, 12 Oct 2019 11:44:30 GMT","meta":{"product":1},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"osal":true,"product":-1,"value":[71,98,161,28,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"osal":true,"product":-1,"value":[153,5,2,0,20,0,0,30,0,0,0,1,5,1,143,0,7,0,2,5,30,0,254,255,0,0,254,255,0,0,0,0,0,0,0,0,255,255,0,0,0,0,0,0,15,15,0,0,0,0,0,0,0,0,0,0,0,221,221,221,221,221,221,221,221,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15,3,0,1,120,10,1,0,0,0,0,0,0,0],"len":116},"ZCD_NV_PANID":{"id":131,"offset":0,"osal":true,"product":-1,"value":[123,0],"len":2},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"osal":true,"product":-1,"value":[1,2,3],"len":3},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"osal":true,"product":-1,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"osal":true,"product":-1,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"osal":true,"product":-1,"value":[0],"len":1},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"osal":true,"product":-1,"value":[0,8,0,0],"len":4},"ZCD_NV_EX_TCLK_TABLE":{"sysid":1,"itemid":4,"subid":0,"product":1,"osal":false,"offset":0,"value":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,255,0,0,0],"len":20},"ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE":{"sysid":1,"itemid":7,"subid":0,"product":1,"osal":false,"offset":0,"value":[1,0,0,0,221,221,221,221,221,221,221,221],"len":12}}};
 
         mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
             const missing = () => {
@@ -1865,8 +1859,6 @@ describe('zStackAdapter', () => {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_CHANLIST.value)}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.PANID, offset: 0})) {
                     return {payload: {value: Buffer.from([networkOptions.panID, 0])}};
-                } else if (equalsPartial(payload, {id: NvItemsIds.TCLK_SEED, offset: 0})) {
-                    return {payload: {value: Buffer.from(backup.data.ZCD_NV_TCLK_SEED.value)}};
                 } else {
                     missing();
                 }
