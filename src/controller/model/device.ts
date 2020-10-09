@@ -490,12 +490,17 @@ class Device extends Entity {
                 await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
                 debug.log(`Interview - IAS - wrote iasCieAddr`);
 
-                // According to the ZCL, after the iasCieAddr is written, the device will do an
-                // enroll request. This should be responded with an enroll response.
-                // As some devices send these enroll requests randomly (while the iasCieAddr has not been written yet)
-                // we always respond to these enroll requests in the onZclData() function.
-                // Therefore we don't have to do it here anymore.
-                // https://github.com/Koenkk/zigbee2mqtt/issues/3012
+                // There are 2 enrollment procedures:
+                // - Auto enroll: coordinator has to send enrollResponse without receiving an enroll request
+                //                this case is handled below.
+                // - Manual enroll: coordinator replies to enroll request with an enroll response.
+                //                  this case in hanled in onZclData().
+                // https://github.com/Koenkk/zigbee2mqtt/issues/4569#issuecomment-706075676
+                await Wait(500);
+                debug.log(`IAS - '${this.ieeeAddr}' sending enroll response (auto enroll)`);
+                const payload = {enrollrspcode: 0, zoneid: 23};
+                await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
+
                 let enrolled = false;
                 for (let attempt = 0; attempt < 20; attempt++) {
                     await Wait(500);
