@@ -89,9 +89,9 @@ export default {
             value: Buffer.from([0x01]),
         };
     },
-    tcLinkKey: (): NvItem => {
+    tcLinkKey12: (): NvItem => {
         return {
-            id: NvItemsIds.LEGACY_TCLK_TABLE_START,
+            id: NvItemsIds.LEGACY_TCLK_TABLE_START_12,
             offset: 0x00,
             len: 0x20,
             // ZigBee Alliance Pre-configured TC Link Key - 'ZigBeeAlliance09'
