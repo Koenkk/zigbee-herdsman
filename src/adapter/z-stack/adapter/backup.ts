@@ -142,7 +142,8 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
         throw new Error(`Cannot restore backup, backup is for '${backup.adapterType}', current is 'zStack'`);
     }
 
-    if (product !== ZnpVersion.zStack30x && product !== ZnpVersion.zStack3x0) {
+    if ((product !== ZnpVersion.zStack30x && product !== ZnpVersion.zStack3x0)
+        || (backup.meta.product !== ZnpVersion.zStack30x && backup.meta.product !== ZnpVersion.zStack3x0 )) {
         throw new Error('Backup is only supported for Z-Stack 3');
     }
 
