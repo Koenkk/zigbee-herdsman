@@ -6,7 +6,9 @@ import {Subsystem} from '../unpi/constants';
 import fs from 'fs';
 import equals from 'fast-deep-equal/es6';
 import Items from './nvItems';
-import debug from "debug";
+import Debug from "debug";
+
+const debug = Debug('zigbee-herdsman:adapter:zStack:backup');
 
 const {NvItemsIds, NvSystemIds, ZnpCommandStatus} = Constants.COMMON;
 
@@ -211,6 +213,8 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
         initlen: 0x01,
         initvalue: [0x01]
     };
+
+    debug("Restoring backup");
 
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_EXTADDR);
     await znp.request(Subsystem.SYS, 'osalNvItemInit', ZCD_NV_NIB, null,
