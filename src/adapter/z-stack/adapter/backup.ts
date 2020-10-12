@@ -141,6 +141,11 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
     if (backup.adapterType !== 'zStack') {
         throw new Error(`Cannot restore backup, backup is for '${backup.adapterType}', current is 'zStack'`);
     }
+
+    if (product !== ZnpVersion.zStack30x && product !== ZnpVersion.zStack3x0) {
+        throw new Error('Backup is only supported for Z-Stack 3');
+    }
+
     // 3.0                                                    3.x
     // (0x0111)ZCD_NV_LEGACY_TCLK_TABLE_START              -> (0x0004)ZCD_NV_EX_TCLK_TABLE
     // (0x0075)ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START  -> (0x0007)ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE
@@ -173,12 +178,6 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
             value: backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE.value,
             len: backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE.len,
         };
-
-    } else if (backup.meta.product != product) {
-        throw new Error(
-            `Cannot restore backup, backup is for '${ZnpVersion[backup.meta.product]}', ` +
-            `current is '${ZnpVersion[product]}'`
-        );
     }
 
     if (!equals(backup.data.ZCD_NV_CHANLIST.value, Constants.Utils.getChannelMask(options.channelList))) {

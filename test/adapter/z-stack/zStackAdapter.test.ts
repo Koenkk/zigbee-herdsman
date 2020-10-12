@@ -2108,6 +2108,31 @@ describe('zStackAdapter', () => {
         expect(error).toStrictEqual(new Error('Backup is only supported for Z-Stack 3'));
     });
 
+    it('Restore backup for zStack 1.2 error', async () => {
+        mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
+            if (subsystem === Subsystem.SYS && command === 'osalNvRead' && equalsPartial(payload, {id: NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, offset: 0})) {
+                return {payload: {value: Buffer.from([0])}};
+            }
+            else if (subsystem === Subsystem.SYS && command === 'version' && equals(payload, {})) {
+                return {payload: {product: 0}};
+            }
+            else if (subsystem === Subsystem.SYS && command === 'ping') {
+                return {};
+            }
+
+            throw new Error('missing');
+        });
+
+        const backup = {"adapterType":"zStack","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":0}};
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
+
+        let error;
+        try {await adapter.start()} catch (e) {error = e};
+        expect(error).toStrictEqual(new Error('Backup is only supported for Z-Stack 3'));
+    });
+
     it('Close adapter', async () => {
         basicMocks();
         await adapter.start();
