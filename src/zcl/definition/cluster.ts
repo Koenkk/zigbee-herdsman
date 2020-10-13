@@ -2040,6 +2040,8 @@ const Cluster: {
             colorCapabilities: {ID: 16394, type: DataType.uint16},
             colorTempPhysicalMin: {ID: 16395, type: DataType.uint16},
             colorTempPhysicalMax: {ID: 16396, type: DataType.uint16},
+            tuyaBrightness: { ID: 61441, type: DataType.uint16 },
+            tuyaRgbMode: { ID: 61440, type: DataType.uint16 }
         },
         commands: {
             moveToHue: {
@@ -2085,6 +2087,15 @@ const Cluster: {
                     {name: 'stepmode', type: DataType.uint8},
                     {name: 'stepsize', type: DataType.uint8},
                     {name: 'transtime', type: DataType.uint8},
+                ],
+            },
+            moveToHueAndSaturationBrightness: {
+                ID: 6,
+                parameters: [
+                    { name: 'hue', type: DataType.uint8 },
+                    { name: 'saturation', type: DataType.uint8 },
+                    { name: 'transtime', type: DataType.uint16 },
+                    { name: 'brightness', type: DataType.uint8 }
                 ],
             },
             moveToHueAndSaturation: {
@@ -2195,6 +2206,12 @@ const Cluster: {
                     {name: 'minimum', type: DataType.uint16},
                     {name: 'maximum', type: DataType.uint16},
                 ],
+            },
+            tuyaRgbMode: {
+                ID: 240,
+                parameters: [
+                    { name: 'enable', type: DataType.uint8 }
+                ]
             },
         },
         commandsResponse: {
