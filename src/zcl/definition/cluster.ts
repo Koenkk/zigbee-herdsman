@@ -2089,6 +2089,14 @@ const Cluster: {
                     {name: 'transtime', type: DataType.uint8},
                 ],
             },
+            moveToHueAndSaturation: {
+                ID: 6,
+                parameters: [
+                    {name: 'hue', type: DataType.uint8},
+                    {name: 'saturation', type: DataType.uint8},
+                    {name: 'transtime', type: DataType.uint16},
+                ],
+            },
             tuyaMoveToHueAndSaturationBrightness: {
                 ID: 6,
                 parameters: [
@@ -2096,14 +2104,6 @@ const Cluster: {
                     {name: 'saturation', type: DataType.uint8},
                     {name: 'transtime', type: DataType.uint16},
                     {name: 'brightness', type: DataType.uint8},
-                ],
-            },
-            moveToHueAndSaturation: {
-                ID: 6,
-                parameters: [
-                    {name: 'hue', type: DataType.uint8},
-                    {name: 'saturation', type: DataType.uint8},
-                    {name: 'transtime', type: DataType.uint16},
                 ],
             },
             moveToColor: {
