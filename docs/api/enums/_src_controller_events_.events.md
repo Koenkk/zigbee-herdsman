@@ -19,7 +19,7 @@
 
 ### adapterDisconnected
 
-•  **adapterDisconnected**: {} = "adapterDisconnected"
+•  **adapterDisconnected**:  = "adapterDisconnected"
 
 *Defined in [src/controller/events.ts:6](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L6)*
 
@@ -27,7 +27,7 @@ ___
 
 ### deviceAnnounce
 
-•  **deviceAnnounce**: {} = "deviceAnnounce"
+•  **deviceAnnounce**:  = "deviceAnnounce"
 
 *Defined in [src/controller/events.ts:9](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L9)*
 
@@ -35,7 +35,7 @@ ___
 
 ### deviceInterview
 
-•  **deviceInterview**: {} = "deviceInterview"
+•  **deviceInterview**:  = "deviceInterview"
 
 *Defined in [src/controller/events.ts:8](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L8)*
 
@@ -43,7 +43,7 @@ ___
 
 ### deviceJoined
 
-•  **deviceJoined**: {} = "deviceJoined"
+•  **deviceJoined**:  = "deviceJoined"
 
 *Defined in [src/controller/events.ts:7](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L7)*
 
@@ -51,7 +51,7 @@ ___
 
 ### deviceLeave
 
-•  **deviceLeave**: {} = "deviceLeave"
+•  **deviceLeave**:  = "deviceLeave"
 
 *Defined in [src/controller/events.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L10)*
 
@@ -59,6 +59,6 @@ ___
 
 ### message
 
-•  **message**: {} = "message"
+•  **message**:  = "message"
 
 *Defined in [src/controller/events.ts:5](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/events.ts#L5)*
