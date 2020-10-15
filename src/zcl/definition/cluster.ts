@@ -2089,7 +2089,7 @@ const Cluster: {
                     {name: 'transtime', type: DataType.uint8},
                 ],
             },
-            moveToHueAndSaturationBrightness: {
+            tuyaMoveToHueAndSaturationBrightness: {
                 ID: 6,
                 parameters: [
                     {name: 'hue', type: DataType.uint8},
