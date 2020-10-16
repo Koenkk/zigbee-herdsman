@@ -2372,15 +2372,6 @@ describe('zStackAdapter', () => {
         expect(await adapter.supportsLED()).toBeFalsy();
     });
 
-    it('Route discovery', async () => {
-        basicMocks();
-        await adapter.start();
-        mockZnpRequest.mockClear();
-        await adapter.discoverRoute(1239);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 1239, options: 0, radius: 30});
-    });
-
     it('Node descriptor', async () => {
         basicMocks();
         let result;
@@ -2962,10 +2953,19 @@ describe('zStackAdapter', () => {
         basicMocks();
         await adapter.start();
         let deviceAnnounce;
+        mockZnpRequest.mockClear();
         const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'endDeviceAnnceInd', payload: {nwkaddr: 123, ieeeaddr: '0x123'}};
         adapter.on("deviceAnnounce", (p) => {deviceAnnounce = p;})
         znpReceived(object);
         expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 123, options: 0, radius: 30});
+
+        // Should debounce route discovery.
+        znpReceived(object);
+        expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
+        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 123, options: 0, radius: 30});
     });
 
     it('Network address response', async () => {

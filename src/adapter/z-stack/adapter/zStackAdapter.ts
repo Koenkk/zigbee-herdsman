@@ -14,6 +14,7 @@ import {Queue, Waitress, Wait} from '../../../utils';
 import * as Constants from '../constants';
 import Debug from "debug";
 import {Backup} from './backup';
+import debounce from 'debounce';
 
 const debug = Debug("zigbee-herdsman:adapter:zStack:adapter");
 const Subsystem = UnpiConstants.Subsystem;
@@ -51,6 +52,7 @@ class DataConfirmError extends Error {
 }
 
 class ZStackAdapter extends Adapter {
+    private deviceAnnounceRouteDiscoveryDebouncers : Map<number, () => void>;
     private znp: Znp;
     private transactionID: number;
     private version: {
@@ -69,6 +71,7 @@ class ZStackAdapter extends Adapter {
         this.znp = new Znp(this.serialPortOptions.path, this.serialPortOptions.baudRate, this.serialPortOptions.rtscts);
 
         this.transactionID = 0;
+        this.deviceAnnounceRouteDiscoveryDebouncers = new Map();
         this.interpanLock = false;
         this.interpanEndpointRegistered = false;
         this.closing = false;
@@ -213,11 +216,14 @@ class ZStackAdapter extends Adapter {
         return result.payload.nwkaddr;
     }
 
-    private async discoverRoute(networkAddress: number): Promise<void> {
+    private async discoverRoute(networkAddress: number, wait=true): Promise<void> {
         debug('Discovering route to %d', networkAddress);
         const payload =  {dstAddr: networkAddress, options: 0, radius: Constants.AF.DEFAULT_RADIUS};
         await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
-        await Wait(3000);
+
+        if (wait) {
+            await Wait(3000);
+        }
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
@@ -655,6 +661,18 @@ class ZStackAdapter extends Adapter {
                     ieeeAddr: object.payload.ieeeaddr,
                 };
 
+                if (!this.deviceAnnounceRouteDiscoveryDebouncers.has(payload.networkAddress)) {
+                    // If a device announces multiple times in a very short time, it makes no sense
+                    // to rediscover the route every time.
+                    const debouncer = debounce(() => {
+                        this.queue.execute<void>(async () => {
+                            await this.discoverRoute(payload.networkAddress, false);
+                        }, payload.networkAddress);
+                    }, 60 * 1000, true);
+                    this.deviceAnnounceRouteDiscoveryDebouncers.set(payload.networkAddress, debouncer);
+                }
+
+                this.deviceAnnounceRouteDiscoveryDebouncers.get(payload.networkAddress)();
                 this.emit(Events.Events.deviceAnnounce, payload);
             } else if (object.command === 'nwkAddrRsp') {
                 const payload: Events.NetworkAddressPayload = {
