@@ -647,12 +647,12 @@ Name | Type |
 
 Name | Type | Value |
 ------ | ------ | ------ |
-`appVersion` | object | { key: \"applicationVersion\" = "applicationVersion"; set: (v: number,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
-`dateCode` | object | { key: \"dateCode\" = "dateCode"; set: (v: string,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
-`hwVersion` | object | { key: \"hardwareVersion\" = "hardwareVersion"; set: (v: number,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
-`manufacturerName` | object | { key: \"manufacturerName\" = "manufacturerName"; set: (v: string,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
-`modelId` | object | { key: \"modelID\" = "modelID"; set: (v: string,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
-`powerSource` | object | { key: \"powerSource\" = "powerSource"; set: (v: string,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
-`stackVersion` | object | { key: \"stackVersion\" = "stackVersion"; set: (v: number,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
-`swBuildId` | object | { key: \"softwareBuildID\" = "softwareBuildID"; set: (v: string,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
-`zclVersion` | object | { key: \"zclVersion\" = "zclVersion"; set: (v: number,d: [Device](\_src\_controller\_model\_device\_.device.md)) => void  } |
+`appVersion` | object | { key: \"applicationVersion\" = "applicationVersion"; set: (v: number, d: [Device](_src_controller_model_device_.device.md)) => void  } |
+`dateCode` | object | { key: \"dateCode\" = "dateCode"; set: (v: string, d: [Device](_src_controller_model_device_.device.md)) => void  } |
+`hwVersion` | object | { key: \"hardwareVersion\" = "hardwareVersion"; set: (v: number, d: [Device](_src_controller_model_device_.device.md)) => void  } |
+`manufacturerName` | object | { key: \"manufacturerName\" = "manufacturerName"; set: (v: string, d: [Device](_src_controller_model_device_.device.md)) => void  } |
+`modelId` | object | { key: \"modelID\" = "modelID"; set: (v: string, d: [Device](_src_controller_model_device_.device.md)) => void  } |
+`powerSource` | object | { key: \"powerSource\" = "powerSource"; set: (v: string, d: [Device](_src_controller_model_device_.device.md)) => void  } |
+`stackVersion` | object | { key: \"stackVersion\" = "stackVersion"; set: (v: number, d: [Device](_src_controller_model_device_.device.md)) => void  } |
+`swBuildId` | object | { key: \"softwareBuildID\" = "softwareBuildID"; set: (v: string, d: [Device](_src_controller_model_device_.device.md)) => void  } |
+`zclVersion` | object | { key: \"zclVersion\" = "zclVersion"; set: (v: number, d: [Device](_src_controller_model_device_.device.md)) => void  } |
