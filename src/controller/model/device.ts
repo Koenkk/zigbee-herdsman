@@ -370,7 +370,8 @@ class Device extends Entity {
             'TERNCY-PP01': {
                 type: 'EndDevice', manufacturerID: 4648, manufacturerName: 'TERNCY', powerSource: 'Battery'
             },
-            // Device does not change zoneState after enroll (event with original gateway), below prevents interview from failing
+            // Device does not change zoneState after enroll (event with original gateway);['''''
+            // below prevents interview from failing
             // https://github.com/Koenkk/zigbee2mqtt/issues/4655
             'TS0216': {},
         };
