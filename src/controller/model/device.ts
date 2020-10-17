@@ -362,7 +362,7 @@ class Device extends Entity {
         // report it's modelID trough a readResponse. The readResponse is received by the controller and set
         // on the device.
         const lookup: {[s: string]: {
-            type: DeviceType; manufacturerID: number; manufacturerName: string; powerSource: string;
+            type?: DeviceType; manufacturerID?: number; manufacturerName?: string; powerSource?: string;
         };} = {
             'lumi\..*': {
                 type: 'EndDevice', manufacturerID: 4151, manufacturerName: 'LUMI', powerSource: 'Battery'
@@ -370,6 +370,10 @@ class Device extends Entity {
             'TERNCY-PP01': {
                 type: 'EndDevice', manufacturerID: 4648, manufacturerName: 'TERNCY', powerSource: 'Battery'
             },
+            // Device does not change zoneState after enroll (event with original gateway);['''''
+            // below prevents interview from failing
+            // https://github.com/Koenkk/zigbee2mqtt/issues/4655
+            'TS0216': {},
         };
 
         const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
