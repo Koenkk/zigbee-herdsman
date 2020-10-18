@@ -134,7 +134,7 @@ class ZiGateAdapter extends Adapter {
             await this.driver.sendCommand(ZiGateCommandCode.RawMode, {enabled: 0x01});
             await this.initNetwork();
         } catch(error) {
-            throw new Error("failed to connect to zigate adapter\n %o", error);
+            throw new Error("failed to connect to zigate adapter " + error.message);
         }
 
         return startResult; // 'resumed' | 'reset' | 'restored'
