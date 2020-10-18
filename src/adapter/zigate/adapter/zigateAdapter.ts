@@ -118,8 +118,8 @@ class ZiGateAdapter extends Adapter {
         debug.log('start', arguments)
         let startResult: TsType.StartResult = 'resumed';
         try {
-            await this.driver.open();
-            debug.log("well connected to zigate key.", arguments);
+            debug.log("connected to zigate adapter successfully.", arguments);
+            await this.driver.sendCommand(ZiGateCommandCode.SetDeviceType, {deviceType: 0});
 
             const resetResponse = await this.driver.sendCommand(ZiGateCommandCode.Reset, {}, 5000)
             if (resetResponse.code === ZiGateMessageCode.RestartNonFactoryNew) {
@@ -133,9 +133,8 @@ class ZiGateAdapter extends Adapter {
             });
             await this.driver.sendCommand(ZiGateCommandCode.RawMode, {enabled: 0x01});
             await this.initNetwork();
-        } catch (error) {
-            debug.error('%o', error);
-            throw new Error("don't connected to zigate key");
+        } catch(error) {
+            throw new Error("failed to connect to zigate adapter\n %o", error);
         }
 
         return startResult; // 'resumed' | 'reset' | 'restored'
