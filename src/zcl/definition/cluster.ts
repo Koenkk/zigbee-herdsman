@@ -1762,9 +1762,9 @@ const Cluster: {
             ubisysAdditionalSteps: {ID: 0x1005, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
             ubisysInactivePowerThreshold: {ID: 0x1006, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
             ubisysStartupSteps: {ID: 0x1007, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
-			tuyaMovingState: {ID: 0xf000, type: DataType.enum8},
-			tuyaCalibration: {ID: 0xf001, type: DataType.enum8},
-			tuyaMotorReversal: {ID: 0xf002, type: DataType.enum8},            
+            tuyaMovingState: {ID: 0xf000, type: DataType.enum8},
+            tuyaCalibration: {ID: 0xf001, type: DataType.enum8},
+            tuyaMotorReversal: {ID: 0xf002, type: DataType.enum8},            
         },
         commands: {
             upOpen: {
