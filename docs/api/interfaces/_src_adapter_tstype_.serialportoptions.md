@@ -21,7 +21,7 @@
 
 ### adapter
 
-• `Optional` **adapter**: \"zstack\" \| \"deconz\"
+• `Optional` **adapter**: \"zstack\" \| \"deconz\" \| \"zigate\"
 
 *Defined in [src/adapter/tstype.ts:13](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L13)*
 
