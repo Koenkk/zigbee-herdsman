@@ -18,6 +18,7 @@ import {
 import {RawAPSDataRequestPayload} from "../driver/commandType";
 import ZiGateObject from "../driver/ziGateObject";
 import BuffaloZiGate from "../driver/buffaloZiGate";
+import { Buffalo } from "../../../buffalo";
 
 const debug = Debug('adapter');
 
@@ -255,7 +256,7 @@ class ZiGateAdapter extends Adapter {
                 neighbors.push({
                     linkquality: entry.readUInt8(21),
                     networkAddress: entry.readUInt16LE(16),
-                    ieeeAddr: BuffaloZiGate.addressBufferToStringBE(extAddr),
+                    ieeeAddr: new Buffalo(extAddr).readIeeeAddr(),
                     relationship: (relationByte >> 1) & ((1 << 3) - 1),
                     depth: entry.readUInt8(20)
                 });
@@ -322,7 +323,7 @@ class ZiGateAdapter extends Adapter {
     // @TODO
     public routingTable(networkAddress: number): Promise<TsType.RoutingTable> {
         debug.log('RoutingTable, %o', arguments)
-        return Promise.reject();
+        return;
     };
 
     public async nodeDescriptor(networkAddress: number): Promise<TsType.NodeDescriptor> {
