@@ -118,6 +118,7 @@ class ZiGateAdapter extends Adapter {
         debug.log('start', arguments)
         let startResult: TsType.StartResult = 'resumed';
         try {
+            await this.driver.open();
             debug.log("connected to zigate adapter successfully.", arguments);
             await this.driver.sendCommand(ZiGateCommandCode.SetDeviceType, {deviceType: 0});
 
