@@ -508,6 +508,7 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
+        device.linkquality = dataPayload.linkquality;
 
         let endpoint = device.getEndpoint(dataPayload.endpoint);
         if (!endpoint) {

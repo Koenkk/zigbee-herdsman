@@ -1041,6 +1041,7 @@ describe('Controller', () => {
                 "_ieeeAddr":"0x129",
                 "_networkAddress":129,
                 "_lastSeen": deepClone(Date.now()),
+                "_linkquality":50,
                 "_endpoints":[
                     {
                     "ID":1,
@@ -1117,6 +1118,7 @@ describe('Controller', () => {
             },
          };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
+        expect(controller.getDeviceByIeeeAddr("0x129").linkquality).toEqual(50);
     });
 
     it('Receive raw data', async () => {
@@ -1142,6 +1144,7 @@ describe('Controller', () => {
                 "_ieeeAddr":"0x129",
                 "_networkAddress":129,
                 "_lastSeen": deepClone(Date.now()),
+                "_linkquality":50,
                 "_endpoints":[
                     {
                     "ID":1,
@@ -1221,6 +1224,7 @@ describe('Controller', () => {
                 "_ieeeAddr":"0x129",
                 "_networkAddress":129,
                 "_lastSeen": deepClone(Date.now()),
+                "_linkquality":50,
                 "_endpoints":[
                     {
                     "ID":1,
@@ -1311,6 +1315,7 @@ describe('Controller', () => {
                "ID":2,
                "_ieeeAddr":"0x129",
                "_lastSeen": deepClone(Date.now()),
+               "_linkquality":52,
                "_networkAddress":129,
                "_endpoints":[
                   {
@@ -1424,6 +1429,7 @@ describe('Controller', () => {
             "device":{
                "ID":2,
                "_lastSeen": deepClone(Date.now()),
+               "_linkquality":19,
                "_ieeeAddr":"0x129",
                "_networkAddress":129,
                "_endpoints":[
@@ -1653,6 +1659,7 @@ describe('Controller', () => {
                 "_ieeeAddr":"0x150",
                 "_networkAddress":150,
                 "_lastSeen": deepClone(Date.now()),
+                "_linkquality":50,
                 "_endpoints":[
                    {
                       "ID":1,
@@ -1700,6 +1707,7 @@ describe('Controller', () => {
                 "_ieeeAddr":"0x151",
                 "_networkAddress":151,
                 "_lastSeen": deepClone(Date.now()),
+                "_linkquality":50,
                 "_endpoints":[
                    {
                       "ID":1,
@@ -1752,6 +1760,7 @@ describe('Controller', () => {
             "type":"attributeReport",
             "device":{
                 "_lastSeen": deepClone(Date.now()),
+                "_linkquality":50,
                 "ID":2,
                 "_ieeeAddr":"0x129",
                 "_networkAddress":129,
@@ -2737,6 +2746,7 @@ describe('Controller', () => {
                 "_interviewCompleted":true,
                 "_interviewing":false,
                 "_lastSeen":150,
+                "_linkquality":19,
                 "_manufacturerID":1212,
                 "_manufacturerName":"KoenAndCo",
                 "_modelID":"myModelID",
@@ -2839,6 +2849,7 @@ describe('Controller', () => {
                 "_interviewCompleted":true,
                 "_interviewing":false,
                 "_lastSeen":150,
+                "_linkquality":19,
                 "_manufacturerID":1212,
                 "_manufacturerName":"KoenAndCo",
                 "_modelID":"myModelID",
@@ -3097,7 +3108,7 @@ describe('Controller', () => {
         });
 
         expect(events.deviceJoined.length).toBe(1);
-        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_endpoints":[{"inputClusters":[],"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[],"meta":{}}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}}});
+        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_endpoints":[{"inputClusters":[],"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[],"meta":{}}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}}});
         expect(events.deviceInterview.length).toBe(1);
         expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status":"successful","device":{"ID":2,"_endpoints":[],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}}});
         expect((controller.getDeviceByIeeeAddr('0x000000000046f4fe')).networkAddress).toBe(0x46f4fe);
@@ -3125,7 +3136,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {"type":"commandNotification","device":{"ID":2,"_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]},"data":{"options":0,"srcID":4650238,"frameCounter":228,"commandID":34,"payloadSize":255,"commandFrame":{}},"linkquality":50,"groupID":1,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
+        const expected = {"type":"commandNotification","device":{"ID":2,"_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]},"data":{"options":0,"srcID":4650238,"frameCounter":228,"commandID":34,"payloadSize":255,"commandFrame":{}},"linkquality":50,"groupID":1,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 

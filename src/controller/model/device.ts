@@ -46,6 +46,7 @@ class Device extends Entity {
     private _stackVersion?: number;
     private _type?: DeviceType;
     private _zclVersion?: number;
+    private _linkquality?: number;
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -84,6 +85,8 @@ class Device extends Entity {
     set stackVersion(stackVersion: number) {this._stackVersion = stackVersion;}
     get zclVersion(): number {return this._zclVersion;}
     set zclVersion(zclVersion: number) {this._zclVersion = zclVersion;}
+    get linkquality(): number {return this._linkquality;}
+    set linkquality(linkquality: number) {this._linkquality = linkquality;}
 
     private meta: KeyValue;
 
