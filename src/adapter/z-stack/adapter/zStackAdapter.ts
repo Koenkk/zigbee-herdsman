@@ -216,6 +216,14 @@ class ZStackAdapter extends Adapter {
         return result.payload.nwkaddr;
     }
 
+    private supportsAssocRemove(): boolean {
+        return this.version.product === ZnpVersion.zStack3x0 && parseInt(this.version.revision) >= 20200805;
+    }
+
+    private supportsAssocAdd(): boolean {
+        return this.version.product === ZnpVersion.zStack3x0 && parseInt(this.version.revision) >= 20201026;
+    }
+
     private async discoverRoute(networkAddress: number, wait=true): Promise<void> {
         debug('Discovering route to %d', networkAddress);
         const payload =  {dstAddr: networkAddress, options: 0, radius: Constants.AF.DEFAULT_RADIUS};
@@ -300,7 +308,7 @@ class ZStackAdapter extends Adapter {
             this.checkInterpanLock();
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
-                disableRecovery, 0, 0, false, false, false,
+                disableRecovery, 0, 0, false, false, false, null
             );
         }, networkAddress);
     }
@@ -309,6 +317,7 @@ class ZStackAdapter extends Adapter {
         ieeeAddr: string, networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame,
         timeout: number, disableResponse: boolean, disableRecovery: boolean, responseAttempt: number,
         dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
+        assocRestore: {ieeeadr: string, nwkaddr: number, noderelation: number}
     ): Promise<Events.ZclDataPayload> {
         debug('sendZclFrameToEndpointInternal %s:%i/%i (%i,%i,%i)',
             ieeeAddr, networkAddress, endpoint, responseAttempt, dataRequestAttempt, this.queue.count());
@@ -337,6 +346,17 @@ class ZStackAdapter extends Adapter {
             debug('Data confirm error (%s:%d,%d,%d)', ieeeAddr, networkAddress, dataConfirmResult, dataRequestAttempt);
             if (response !== null) response.cancel();
 
+            /**
+             * In case we did an assocRemove in the previous attempt and it still fails after this, assume that the
+             * coordinator is still the parent of the device (but for some reason the device is not available now).
+             * Re-add the device to the assoc table, otherwise we will never be able to reach it anymore.
+             */
+            if (assocRemove && assocRestore && this.supportsAssocAdd()) {
+                debug('assocAdd(%s)', assocRestore.ieeeadr);
+                await this.znp.request(Subsystem.UTIL, 'assocAdd', assocRestore);
+                assocRestore = null;
+            }
+
             const recoverableErrors = [
                 ZnpCommandStatus.NWK_NO_ROUTE, ZnpCommandStatus.MAC_NO_ACK, ZnpCommandStatus.MAC_CHANNEL_ACCESS_FAILURE,
                 ZnpCommandStatus.MAC_TRANSACTION_EXPIRED, ZnpCommandStatus.BUFFER_FULL,
@@ -363,14 +383,29 @@ class ZStackAdapter extends Adapter {
                 return this.sendZclFrameToEndpointInternal(
                     ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, disableResponse,
                     disableRecovery, responseAttempt, dataRequestAttempt + 1, checkedNetworkAddress, discoveredRoute,
-                    assocRemove
+                    assocRemove, assocRestore,
                 );
             } else {
+                let doAssocRemove = false;
+                if (!assocRemove && dataConfirmResult === ZnpCommandStatus.MAC_TRANSACTION_EXPIRED &&
+                    dataRequestAttempt >= 1 && this.supportsAssocRemove()) {
+                    const match =  await this.znp.request(
+                        Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
+                    );
+
+                    if (match.payload.noderelation !== 255) {
+                        doAssocRemove = true;
+                        assocRestore =
+                            {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation};
+                    }
+
+                    assocRemove = true;
+                }
+
                 // NWK_NO_ROUTE: no network route => rediscover route
                 // MAC_NO_ACK: route may be corrupted
                 // MAC_TRANSACTION_EXPIRED: Mac layer is sleeping
-                if (!assocRemove && dataConfirmResult === ZnpCommandStatus.MAC_TRANSACTION_EXPIRED &&
-                    dataRequestAttempt >= 1 && this.version.product === ZnpVersion.zStack3x0) {
+                if (doAssocRemove) {
                     /**
                      * Since child aging is disabled on the firmware, when a end device is directly connected
                      * to the coordinator and changes parent and the coordinator does not recevie this update,
@@ -381,11 +416,8 @@ class ZStackAdapter extends Adapter {
                      * z-stack-firmware firmware version. In case it's not supported by the coordinator we will
                      * automatically timeout after 60000ms.
                      */
-                    assocRemove = true;
-                    try {
-                        debug('assocRemove(%s)', ieeeAddr);
-                        await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
-                    } catch {}
+                    debug('assocRemove(%s)', ieeeAddr);
+                    await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
                 } else if (!discoveredRoute && dataRequestAttempt >= 1) {
                     discoveredRoute = true;
                     await this.discoverRoute(networkAddress);
@@ -409,7 +441,7 @@ class ZStackAdapter extends Adapter {
                 return this.sendZclFrameToEndpointInternal(
                     ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout,
                     disableResponse, disableRecovery, responseAttempt, dataRequestAttempt + 1, checkedNetworkAddress,
-                    discoveredRoute, assocRemove,
+                    discoveredRoute, assocRemove, assocRestore,
                 );
             }
         }
@@ -426,7 +458,7 @@ class ZStackAdapter extends Adapter {
                     return this.sendZclFrameToEndpointInternal(
                         ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, disableResponse,
                         disableRecovery, responseAttempt + 1, dataRequestAttempt, checkedNetworkAddress,
-                        discoveredRoute, assocRemove
+                        discoveredRoute, assocRemove, assocRestore,
                     );
                 } else {
                     throw error;

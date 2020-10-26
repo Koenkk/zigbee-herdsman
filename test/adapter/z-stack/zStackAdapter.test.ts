@@ -118,6 +118,7 @@ jest.mock('../../../src/utils/queue', () => {
 });
 
 let sysVersionResponse;
+let assocGetWithAddressNodeRelation;
 
 const basicMocks = () => {
     mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
@@ -152,6 +153,10 @@ const basicMocks = () => {
         } else if (subsystem === Subsystem.UTIL && command === 'getDeviceInfo') {
             return {payload: {devicestate: DevStates.ZB_COORD, ieeeaddr: '0x123'}};
         } else if (subsystem === Subsystem.UTIL && command === 'assocRemove') {
+            return {payload: {}};
+        } else if (subsystem === Subsystem.UTIL && command === 'assocGetWithAddress') {
+            return {payload: {noderelation: assocGetWithAddressNodeRelation}};
+        } else if (subsystem === Subsystem.UTIL && command === 'assocAdd') {
             return {payload: {}};
         } else if (subsystem === Subsystem.ZDO && command === 'activeEpReq') {
             return {};
@@ -300,13 +305,14 @@ describe('zStackAdapter', () => {
     let adapter;
 
     beforeEach(() => {
-        sysVersionResponse = {payload: {product: 1, revision: "20190425"}};
+        sysVersionResponse = {payload: {product: 1, revision: "20201026"}};
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {concurrent: 3});
         mocks.forEach((m) => m.mockRestore());
         mockQueueExecute.mockClear();
         dataConfirmCode = 0;
         dataRequestCode = 0;
         dataRequestExtCode = 0;
+        assocGetWithAddressNodeRelation = 1;
         networkOptions.networkKeyDistribute = false;
         dataConfirmCodeReset = false;
         nodeDescRspErrorOnce = false;
@@ -2100,7 +2106,7 @@ describe('zStackAdapter', () => {
     });
 
     it('Create backup for zStack 1.2 error', async () => {
-        sysVersionResponse = {payload: {product: 0, revision: "20190425"}};
+        sysVersionResponse = {payload: {product: 0, revision: "20201026"}};
         basicMocks();
         await adapter.start();
         let error;
@@ -2318,7 +2324,7 @@ describe('zStackAdapter', () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
-        expect(await adapter.getCoordinatorVersion()).toStrictEqual({type: 'zStack3x0', meta: {revision: '20190425', product: 1}})
+        expect(await adapter.getCoordinatorVersion()).toStrictEqual({type: 'zStack3x0', meta: {revision: '20201026', product: 1}})
     });
 
     it('Soft reset', async () => {
@@ -2492,14 +2498,39 @@ describe('zStackAdapter', () => {
         try {await response} catch(e) {error = e;}
 
         expect(error.message).toStrictEqual("Data request failed with error: 'MAC transaction expired' (240)");
+        expect(mockZnpRequest).toBeCalledTimes(10);
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(1, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 2}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 7, 'assocGetWithAddress', { extaddr: '0x02', nwkaddr: 2})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(4, 7, 'assocRemove', { ieeeadr: '0x02' })
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(5, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 3}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(6, 7, 'assocAdd', { ieeeadr: "0x02", noderelation: 1, nwkaddr: 2 })
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(7, 5, 'extRouteDisc', { dstAddr: 2, options: 0, radius: 30 })
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(8, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 4}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(9, 5, 'nwkAddrReq', {ieeeaddr: '0x02', reqtype: 0, startindex: 0})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(10, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 5}, 99)
+    });
+
+    it('Send zcl frame network address fails because mac transaction expire when not being a parent, should retry', async () => {
+        basicMocks();
+        await adapter.start();
+        dataConfirmCode = 240;
+        assocGetWithAddressNodeRelation = 255;
+        mockZnpRequest.mockClear();
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'writeNoRsp', 0, [{attrId: 0, dataType:0, attrData: null}]);
+        const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false);
+        let error;
+        try {await response} catch(e) {error = e;}
+
+        expect(error.message).toStrictEqual("Data request failed with error: 'MAC transaction expired' (240)");
         expect(mockZnpRequest).toBeCalledTimes(8);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(1, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1}, 99)
         expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 2}, 99)
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 7, 'assocRemove', { ieeeadr: '0x02' })
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(4, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 3}, 99)
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(5, 5, 'extRouteDisc', { dstAddr: 2, options: 0, radius: 30 })
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(6, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 4}, 99)
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(7, 5, 'nwkAddrReq', {ieeeaddr: '0x02', reqtype: 0, startindex: 0})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 7, 'assocGetWithAddress', { extaddr: '0x02', nwkaddr: 2})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(4, 5, 'extRouteDisc', { dstAddr: 2, options: 0, radius: 30 })
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(5, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 3}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(6, 5, 'nwkAddrReq', {ieeeaddr: '0x02', reqtype: 0, startindex: 0})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(7, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 4}, 99)
         expect(mockZnpRequest).toHaveBeenNthCalledWith(8, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 6, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 5}, 99)
     });
 

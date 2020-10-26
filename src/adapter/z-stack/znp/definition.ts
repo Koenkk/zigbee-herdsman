@@ -2742,7 +2742,10 @@ const Definition: {
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
             ],
             response: [
-                {name: 'device', parameterType: ParameterType.BUFFER18},
+                {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+                {name: 'addridx', parameterType: ParameterType.UINT16},
+                {name: 'noderelation', parameterType: ParameterType.UINT8},
+                // NOTE: this commmand returns more.
             ],
         },
         {
@@ -2763,6 +2766,20 @@ const Definition: {
             type: CommandType.SREQ,
             request: [
                 {name: 'ieeeadr', parameterType: ParameterType.IEEEADDR},
+            ],
+            response: [
+                {name: 'status', parameterType: ParameterType.UINT8},
+            ],
+        },
+        {
+            // Custom command
+            name: 'assocAdd',
+            ID: 100,
+            type: CommandType.SREQ,
+            request: [
+                {name: 'ieeeadr', parameterType: ParameterType.IEEEADDR},
+                {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+                {name: 'noderelation', parameterType: ParameterType.UINT8},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},
