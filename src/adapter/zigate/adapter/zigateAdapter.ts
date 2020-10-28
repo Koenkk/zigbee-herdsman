@@ -502,15 +502,15 @@ class ZiGateAdapter extends Adapter {
         }
     };
 
-    public removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
+    public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
         const payload = {
-            targetShortAddress: networkAddress,
+            targetAddress: ieeeAddr,
             extendedAddress: ieeeAddr
         };
 
         // @TODO test
-        return this.driver.sendCommand(ZiGateCommandCode.RemoveDevice, payload)
-            .then(() => Promise.resolve()).catch(() => Promise.reject());
+        await this.driver.sendCommand(ZiGateCommandCode.RemoveDevice, payload);
+        return Promise.resolve();
     };
 
     /**
@@ -543,7 +543,8 @@ class ZiGateAdapter extends Adapter {
         try {
             const result = await this.driver.sendCommand(
                 ZiGateCommandCode.RawAPSDataRequest, payload,
-                undefined, extraParameters
+                undefined, extraParameters,
+                disableResponse=(disableResponse || zclFrame.Header.frameControl.disableDefaultResponse),
             );
 
             if (result !== null) {
