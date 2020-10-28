@@ -6,9 +6,11 @@ import SerialPort from 'serialport';
 import Writer from './writer';
 import Parser from './parser';
 import Frame from './frame';
+import PARAM from './constants';
 import * as Events from '../../events';
 import SerialPortUtils from '../../serialPortUtils';
-import PARAM from './constants';
+import SocketPortUtils from '../../socketPortUtils';
+import net from 'net';
 import { Command, Request, parameterT, ApsDataRequest, ReceivedDataResponse, DataStateResponse } from './constants';
 
 // @ts-ignore
@@ -58,6 +60,8 @@ class Driver extends events.EventEmitter {
     private apsDataConfirm: number;
     private apsDataIndication: number;
     private configChanged: number;
+    private portType: 'serial' | 'socket';
+    private socketPort: net.Socket;
 
     public constructor(path: string) {
         super();
@@ -65,9 +69,10 @@ class Driver extends events.EventEmitter {
         this.initialized = false;
         this.seqNumber = 0;
         this.timeoutResetTimeout = null;
+        this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
 
         this.apsRequestFreeSlots = 1;
-		this.apsDataConfirm = 0;
+        this.apsDataConfirm = 0;
         this.apsDataIndication = 0;
         this.configChanged = 0;
 
@@ -81,7 +86,7 @@ class Driver extends events.EventEmitter {
                             .then(result => {})
                             .catch(error => {}); }, 10000);
 
-		setInterval(() => { that.handleDeviceStatus()
+        setInterval(() => { that.handleDeviceStatus()
                             .then(result => {})
                             .catch(error => {}); }, 200); // query confirm and indication requests
 
@@ -110,7 +115,17 @@ class Driver extends events.EventEmitter {
         return paths.length > 0 ? paths[0] : null;
     }
 
-    public open(): Promise<void> {
+    private onPortClose(): void {
+        debug('Port closed');
+        this.initialized = false;
+        this.emit('close');
+    }
+
+    public async open(): Promise<void> {
+        return this.portType === 'serial' ? this.openSerialPort() : this.openSocketPort();
+    }
+
+    public openSerialPort(): Promise<void> {
         debug(`Opening with ${this.path}`);
         this.serialPort = new SerialPort(this.path, {baudRate: 38400, autoOpen: false});
 
@@ -121,7 +136,6 @@ class Driver extends events.EventEmitter {
         this.parser = new Parser();
         this.serialPort.pipe(this.parser);
         this.parser.on('parsed', this.onParsed);
-        //this.unpiParser.on('error', this.onUnpiParsedError);
 
         return new Promise((resolve, reject): void => {
             this.serialPort.open(async (error: object): Promise<void> => {
@@ -140,8 +154,68 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public close(): void {
-        this.serialPort.close();
+    private async openSocketPort(): Promise<void> {
+        const info = SocketPortUtils.parseTcpPath(this.path);
+        debug(`Opening TCP socket with ${info.host}:${info.port}`);
+        this.socketPort = new net.Socket();
+        this.socketPort.setNoDelay(true);
+        this.socketPort.setKeepAlive(true, 15000);
+
+        this.writer = new Writer();
+        this.writer.pipe(this.socketPort);
+
+        this.parser = new Parser();
+        this.socketPort.pipe(this.parser);
+        this.parser.on('parsed', this.onParsed);
+
+        return new Promise((resolve, reject): void => {
+            this.socketPort.on('connect', function() {
+                debug('Socket connected');
+            });
+
+            // eslint-disable-next-line
+            const self = this;
+            this.socketPort.on('ready', async function() {
+                debug('Socket ready');
+                self.initialized = true;
+                resolve();
+            });
+
+            this.socketPort.once('close', this.onPortClose);
+
+            this.socketPort.on('error', function () {
+                debug('Socket error');
+                reject(new Error(`Error while opening socket`));
+                self.initialized = false;
+            });
+
+            this.socketPort.connect(info.port, info.host);
+        });
+    }
+
+    public close(): Promise<void> {
+        return new Promise((resolve, reject): void => {
+            if (this.initialized) {
+                if (this.portType === 'serial') {
+                    this.serialPort.flush((): void => {
+                        this.serialPort.close((error): void => {
+                            this.initialized = false;
+                            error == null ?
+                                resolve() :
+                                reject(new Error(`Error while closing serialport '${error}'`));
+                            this.emit('close');
+                        });
+                    });
+                } else {
+                    this.socketPort.destroy();
+                    resolve();
+                }
+            } else {
+                resolve();
+                this.emit('close');
+            }
+        });
+
     }
 
     public readParameterRequest(parameterId: number) : Promise<Command> {
@@ -264,11 +338,19 @@ class Driver extends events.EventEmitter {
         const frame = Buffer.from(buffer.concat([crc[0], crc[1]]));
         const slipframe = slip.encode(frame);
 
-        this.serialPort.write(slipframe, function(err) {
-            if (err) {
-                debug("Error writing serial Port: " + err.message);
-            }
-        });
+        if ( this.portType === 'serial') {
+            this.serialPort.write(slipframe, function(err) {
+                if (err) {
+                    debug("Error writing serial Port: " + err.message);
+                }
+            });
+        } else {
+            this.socketPort.write(slipframe, function(err) {
+                if (err) {
+                    debug("Error writing socket Port: " + err.message);
+                }
+            });
+        }
     }
 
     private processQueue() {
@@ -276,7 +358,6 @@ class Driver extends events.EventEmitter {
             return;
         }
         if (busyQueue.length > 0) {
- //           debug("don't process queue. Request pending");
             return;
         }
         const req: Request = queue.shift();
@@ -366,35 +447,8 @@ class Driver extends events.EventEmitter {
             queue.push(req);
         });
     }
-/*
-    private async checkDeviceStatus(currentDeviceStatus: number) {
-        const networkState = currentDeviceStatus & 0x03;
-        const apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
-        const apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
-        const configChanged = (currentDeviceStatus >> 4) & 0x01;
-        const apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
-        this.apsRequestFreeSlots = apsRequestFreeSlots;
 
-        debug("networkstate: " + networkState + " apsDataConfirm: " + apsDataConfirm + " apsDataIndication: " + apsDataIndication +
-            " configChanged: " + configChanged + " apsRequestFreeSlots: " + apsRequestFreeSlots);
-        if (apsDataConfirm === 1) {
-            try {
-                const x = await this.querySendDataStateRequest();
-            } catch {
-                //debug("APS Error - data confirm");
-            }
-        } else if (apsDataIndication === 1) {
-            try {
-                const x = await this.readReceivedDataRequest();
-            } catch {
-                //debug("APS Error - data indication");
-            }
-        } else if (configChanged === 1) {
-            // when network settings changed
-        }
-    }
-*/
-	private checkDeviceStatus(currentDeviceStatus: number) {
+    private checkDeviceStatus(currentDeviceStatus: number) {
         const networkState = currentDeviceStatus & 0x03;
         this.apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
         this.apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
@@ -433,7 +487,7 @@ class Driver extends events.EventEmitter {
         }
     }
 
-	// DATA_IND
+    // DATA_IND
     private readReceivedDataRequest() : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
@@ -445,7 +499,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-	// DATA_REQ
+    // DATA_REQ
     public enqueueSendDataRequest(request: ApsDataRequest) : Promise<void | ReceivedDataResponse> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
@@ -458,7 +512,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-	// DATA_CONF
+    // DATA_CONF
     private querySendDataStateRequest() : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
@@ -503,7 +557,7 @@ class Driver extends events.EventEmitter {
         }
     }
 
-	private async processApsConfirmIndQueue() {
+    private async processApsConfirmIndQueue() {
         if (apsConfirmIndQueue.length === 0) {
             return;
         }
