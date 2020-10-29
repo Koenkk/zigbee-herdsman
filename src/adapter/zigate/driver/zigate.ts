@@ -79,7 +79,8 @@ export default class ZiGate extends EventEmitter {
         code: ZiGateCommandCode,
         payload?: ZiGateObjectPayload,
         timeout?: number,
-        extraParameters?: object
+        extraParameters?: object,
+        disableResponse: boolean = false
     ): Promise<ZiGateObject> {
 
         const waiters: Promise<ZiGateObject>[] = [];
@@ -98,9 +99,9 @@ export default class ZiGate extends EventEmitter {
 
                 const sendBuffer = frame.toBuffer();
                 debug.log('<-- send command ', sendBuffer);
+                debug.log(`DisableResponse: ${disableResponse}`);
 
-
-                if (Array.isArray(ziGateObject.command.response)) {
+                if (!disableResponse && Array.isArray(ziGateObject.command.response)) {
                     ziGateObject.command.response.forEach((rules) => {
                         waiters.push(
                             this.waitress.waitFor(

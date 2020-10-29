@@ -184,7 +184,7 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     },
     [ZiGateCommandCode.RemoveDevice]: {
         request: [
-            {name: 'targetShortAddress', parameterType: 'UINT16BE'}, // <target short address: uint64_t>
+            {name: 'targetAddress', parameterType: 'IEEEADDR'}, // <target address: uint64_t>
             {name: 'extendedAddress', parameterType: 'IEEEADDR'}, // <extended address: uint64_t>
         ],
         response: [
@@ -261,12 +261,12 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
                 {
                     receivedProperty: 'payload.sourceEndpoint',
                     matcher: equal,
-                    expectedProperty: 'payload.sourceEndpoint'
+                    expectedProperty: 'payload.destinationEndpoint'
                 },
                 {
                     receivedProperty: 'payload.destinationEndpoint',
                     matcher: equal,
-                    expectedProperty: 'payload.destinationEndpoint'
+                    expectedProperty: 'payload.sourceEndpoint'
                 },
                 {
                     receivedProperty: 'payload.profileID',
