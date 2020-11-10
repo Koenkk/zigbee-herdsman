@@ -3796,7 +3796,7 @@ const Cluster: {
         commands: {},
         commandsResponse: {}
     },
-    manuSpecificTuyaDimmer: {
+    manuSpecificTuya: {
         ID: 0xEF00,  // 61184
         attributes: {
         },
@@ -3806,8 +3806,10 @@ const Cluster: {
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                     {name: 'transid', type: DataType.uint8},
-                    {name: 'dp', type: DataType.uint16},
-                    {name: 'fn', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint8},
+                    {name: 'datatype', type: DataType.uint8},
+                    {name: 'length_hi', type: DataType.uint8},
+                    {name: 'length_lo', type: DataType.uint8},
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
@@ -3836,7 +3838,8 @@ const Cluster: {
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                     {name: 'transid', type: DataType.uint8},
-                    {name: 'dp', type: DataType.uint16},
+                    {name: 'dp', type: DataType.uint8},
+                    {name: 'datatype', type: DataType.uint8},
                     {name: 'fn', type: DataType.uint8},
                     {name: 'data', type: DataType.octetStr},
                 ],
@@ -3849,7 +3852,8 @@ const Cluster: {
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                     {name: 'transid', type: DataType.uint8},
-                    {name: 'dp', type: DataType.uint16},
+                    {name: 'dp', type: DataType.uint8},
+                    {name: 'datatype', type: DataType.uint8},
                     {name: 'fn', type: DataType.uint8},
                     {name: 'data', type: DataType.octetStr},
                 ],
