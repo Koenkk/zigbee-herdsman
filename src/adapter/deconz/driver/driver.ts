@@ -29,16 +29,17 @@ var apsBusyQueue: Array<object> = [];
 var apsConfirmIndQueue: Array<object> = [];
 var timeoutCounter = 0;
 var readyToSend: boolean = true;
+
 function enableRTS() {
     if (readyToSend === false) {
         readyToSend = true;
     }
 }
+
 function disableRTS() {
     readyToSend = false;
 }
 
-//setInterval(() => { enableRTS(); }, 1000); // enable ReadyTo Send after 1 sec if a data_confirm get lost
 var enableRtsTimeout: ReturnType<typeof setTimeout> = null;
 
 export { busyQueue, apsBusyQueue, readyToSend, enableRTS, disableRTS, enableRtsTimeout };
@@ -62,6 +63,7 @@ class Driver extends events.EventEmitter {
     private configChanged: number;
     private portType: 'serial' | 'socket';
     private socketPort: net.Socket;
+    private READY_TO_SEND_TIMEOUT: number;
 
     public constructor(path: string) {
         super();
@@ -75,11 +77,12 @@ class Driver extends events.EventEmitter {
         this.apsDataConfirm = 0;
         this.apsDataIndication = 0;
         this.configChanged = 0;
+        this.READY_TO_SEND_TIMEOUT = 500;
 
         const that = this;
-        setInterval(() => { that.processQueue(); }, 100);
+        setInterval(() => { that.processQueue(); }, 100);  // fire non aps requests
         setInterval(() => { that.processBusyQueue(); }, 1000); // check timeouts for non aps requests
-        setInterval(() => { that.processApsQueue(); }, 200);  // fire aps request
+        setInterval(() => { that.processApsQueue(); }, 100);  // fire aps request
         setInterval(() => { that.processApsBusyQueue(); }, 1000);  // check timeouts for all open aps requests
         setInterval(() => { that.processApsConfirmIndQueue(); }, 100);  // fire aps indications and confirms
         setInterval(() => { that.deviceStateRequest()
@@ -88,7 +91,7 @@ class Driver extends events.EventEmitter {
 
         setInterval(() => { that.handleDeviceStatus()
                             .then(result => {})
-                            .catch(error => {}); }, 200); // query confirm and indication requests
+                            .catch(error => {}); }, 50); // query confirm and indication requests
 
         setInterval(() => {
             that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
@@ -540,13 +543,14 @@ class Driver extends events.EventEmitter {
 
         switch (req.commandId) {
             case PARAM.PARAM.APS.DATA_REQUEST:
-                if (readyToSend === false) { // wait until last request was confirmed
+
+                if (readyToSend === false) { // wait until last request was confirmed or given time elapsed
                     debug("delay sending of APS Request");
                     apsQueue.unshift(req);
                     break;
                 } else {
                     disableRTS();
-                    enableRtsTimeout = setTimeout(function(){enableRTS();}, 1000);
+                    enableRtsTimeout = setTimeout(function(){enableRTS();}, this.READY_TO_SEND_TIMEOUT);
                     apsBusyQueue.push(req);
                     this.sendEnqueueSendDataRequest(req.request, req.seqNumber);
                     break;
