@@ -2113,17 +2113,26 @@ describe('Controller', () => {
         const group = await controller.createGroup(5);
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
+        expect(endpoint.binds.length).toBe(0);
+        await endpoint.bind('genPowerCfg', group);
+        expect(endpoint.binds.length).toBe(1);
         await endpoint.unbind('genPowerCfg', group);
         expect(mockAdapterUnbind).toBeCalledWith(129, "0x129", 1, 1, 5, "group", null);
+        expect(endpoint.binds.length).toBe(0);
     });
 
     it('Group unbind by number', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
+        const group = await controller.createGroup(5);
         const endpoint = device.getEndpoint(1);
-        await endpoint.unbind('genPowerCfg', 9);
-        expect(mockAdapterUnbind).toBeCalledWith(129, "0x129", 1, 1, 9, "group", null);
+        expect(endpoint.binds.length).toBe(0);
+        await endpoint.bind('genPowerCfg', group);
+        expect(endpoint.binds.length).toBe(1);
+        await endpoint.unbind('genPowerCfg', 5);
+        expect(mockAdapterUnbind).toBeCalledWith(129, "0x129", 1, 1, 5, "group", null);
+        expect(endpoint.binds.length).toBe(0);
     });
 
     it('Endpoint configure reporting', async () => {

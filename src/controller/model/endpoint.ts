@@ -403,6 +403,10 @@ class Endpoint extends Entity {
                 target instanceof Endpoint ? target.ID : null,
             );
 
+            if (typeof target === 'number' && Group.byGroupID(target)) {
+                target = Group.byGroupID(target);
+            }
+
             const index = this.binds.findIndex((b) => b.cluster.ID === cluster.ID && b.target === target);
             if (index !== -1) {
                 this._binds.splice(index, 1);
