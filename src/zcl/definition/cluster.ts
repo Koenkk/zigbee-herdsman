@@ -1764,7 +1764,7 @@ const Cluster: {
             ubisysStartupSteps: {ID: 0x1007, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
             tuyaMovingState: {ID: 0xf000, type: DataType.enum8},
             tuyaCalibration: {ID: 0xf001, type: DataType.enum8},
-            tuyaMotorReversal: {ID: 0xf002, type: DataType.enum8},            
+            tuyaMotorReversal: {ID: 0xf002, type: DataType.enum8},
         },
         commands: {
             upOpen: {
@@ -4085,7 +4085,18 @@ const Cluster: {
                 ],
             },
         },
-    },    
+    },
+    develcoSpecificAirQuality: {
+        ID: 0xFC03,
+        attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.uint16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.uint16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.uint16},
+            resolution: {ID: 0x0003, type: DataType.uint16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
 };
 
 export default Cluster;
