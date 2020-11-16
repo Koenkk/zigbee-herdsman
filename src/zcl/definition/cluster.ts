@@ -4088,6 +4088,7 @@ const Cluster: {
     },
     develcoSpecificAirQuality: {
         ID: 0xFC03,
+        manufacturerCode: ManufacturerCode.Develco,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.uint16},
             minMeasuredValue: {ID: 0x0001, type: DataType.uint16},

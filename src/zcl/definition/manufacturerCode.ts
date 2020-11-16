@@ -6,5 +6,6 @@ export default {
     Ubisys: 0x10f2,
     LegrandNetatmo: 0x1021,
     SmartThings: 0x110a,
-    Heiman: 0x120b
+    Heiman: 0x120b,
+    Develco: 0x1015,
 };
