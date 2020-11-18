@@ -14,7 +14,8 @@ interface SerialPortOptions {
 }
 
 interface AdapterOptions {
-    concurrent: number;
+    concurrent?: number;
+    delay?: number
 }
 
 interface CoordinatorVersion {

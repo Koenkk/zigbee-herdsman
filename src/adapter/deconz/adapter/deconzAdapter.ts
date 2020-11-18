@@ -48,6 +48,10 @@ class DeconzAdapter extends Adapter {
         const concurrent = this.adapterOptions && this.adapterOptions.concurrent ?
             this.adapterOptions.concurrent : 2;
 
+        // TODO: https://github.com/Koenkk/zigbee2mqtt/issues/4884#issuecomment-728903121
+        const delay = this.adapterOptions && typeof this.adapterOptions.delay === 'number' ?
+            this.adapterOptions.delay : 1000;
+
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
