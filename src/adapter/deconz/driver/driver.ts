@@ -77,7 +77,7 @@ class Driver extends events.EventEmitter {
         this.apsDataConfirm = 0;
         this.apsDataIndication = 0;
         this.configChanged = 0;
-        this.READY_TO_SEND_TIMEOUT = 500;
+        this.READY_TO_SEND_TIMEOUT = 300;
 
         const that = this;
         setInterval(() => { that.processQueue(); }, 100);  // fire non aps requests
@@ -91,7 +91,7 @@ class Driver extends events.EventEmitter {
 
         setInterval(() => { that.handleDeviceStatus()
                             .then(result => {})
-                            .catch(error => {}); }, 50); // query confirm and indication requests
+                            .catch(error => {}); }, 100); // query confirm and indication requests
 
         setInterval(() => {
             that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
@@ -108,6 +108,16 @@ class Driver extends events.EventEmitter {
         this.onParsed = this.onParsed.bind(this);
         this.frameParserEvent.on('receivedDataNotification', (data: number) => {this.checkDeviceStatus(data)});
     }
+
+    public setDelay(delay: number): void {
+		if (delay < 50) {
+			this.READY_TO_SEND_TIMEOUT = 50;
+		} else if (delay > 1200) {
+			this.READY_TO_SEND_TIMEOUT = 1200;
+		} else {
+			this.READY_TO_SEND_TIMEOUT = delay;
+		}
+	}
 
     public static async isValidPath(path: string): Promise<boolean> {
         return SerialPortUtils.is(path, autoDetectDefinitions);

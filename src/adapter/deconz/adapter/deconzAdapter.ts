@@ -50,13 +50,14 @@ class DeconzAdapter extends Adapter {
 
         // TODO: https://github.com/Koenkk/zigbee2mqtt/issues/4884#issuecomment-728903121
         const delay = this.adapterOptions && typeof this.adapterOptions.delay === 'number' ?
-            this.adapterOptions.delay : 1000;
+            this.adapterOptions.delay : 300;
 
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
 
         this.driver = new Driver(serialPortOptions.path);
+        this.driver.setDelay(delay);
         this.driver.on('rxFrame', (frame) => {processFrame(frame)});
         this.queue = new Queue(concurrent);
         this.transactionID = 0;
