@@ -20,4 +20,4 @@
 
 •  **endpoints**: number[]
 
-*Defined in [src/adapter/tstype.ts:35](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L35)*
+*Defined in [src/adapter/tstype.ts:36](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L36)*

@@ -21,7 +21,7 @@
 
 •  **meta**: { [s:string]: number \| string;  }
 
-*Defined in [src/adapter/tstype.ts:22](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L22)*
+*Defined in [src/adapter/tstype.ts:23](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L23)*
 
 ___
 
@@ -29,4 +29,4 @@ ___
 
 •  **type**: string
 
-*Defined in [src/adapter/tstype.ts:21](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L21)*
+*Defined in [src/adapter/tstype.ts:22](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L22)*

@@ -20,4 +20,4 @@
 
 •  **table**: [RoutingTableEntry](_src_adapter_tstype_.routingtableentry.md)[]
 
-*Defined in [src/adapter/tstype.ts:57](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L57)*
+*Defined in [src/adapter/tstype.ts:58](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L58)*

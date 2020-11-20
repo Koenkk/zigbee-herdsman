@@ -34,7 +34,7 @@
 
 Ƭ  **DeviceType**: \"Coordinator\" \| \"EndDevice\" \| \"Router\" \| \"Unknown\"
 
-*Defined in [src/adapter/tstype.ts:25](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L25)*
+*Defined in [src/adapter/tstype.ts:26](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L26)*
 
 ___
 
@@ -42,4 +42,4 @@ ___
 
 Ƭ  **StartResult**: \"resumed\" \| \"reset\" \| \"restored\"
 
-*Defined in [src/adapter/tstype.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L27)*
+*Defined in [src/adapter/tstype.ts:28](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L28)*
