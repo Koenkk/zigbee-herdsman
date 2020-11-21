@@ -2054,6 +2054,22 @@ describe('Controller', () => {
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
     });
 
+    it('Endpoint addBinding', async () => {
+        await controller.start();
+        skipWait = true;
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const target = controller.getDeviceByIeeeAddr('0x170').getEndpoint(1);
+        const endpoint = device.getEndpoint(1);
+        endpoint.addBinding('genPowerCfg', target);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(1), target}]));
+
+        // Should bind another time but not add it to the binds
+        endpoint.addBinding('genPowerCfg', target);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(1), target}]));
+    });
+
     it('Endpoint get binds non-existing device', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -2074,6 +2090,16 @@ describe('Controller', () => {
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 1, 4, "group", null);
     });
 
+    it('Group addBinding', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const group = await controller.createGroup(4);
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        endpoint.addBinding('genBasic', group);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(0), target: group}]));
+    });
+
     it('Group bind by number (should create group)', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -2084,6 +2110,17 @@ describe('Controller', () => {
         const group = Group.byGroupID(11);
         expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(1), target: group}]));
         expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 1, 11, "group", null);
+    });
+
+    it('Group addBinding by number (should create group)', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(Group.byGroupID(11)).toBeUndefined();
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        endpoint.addBinding('genBasic', 11);
+        const group = Group.byGroupID(11);
+        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(0), target: group}]));
     });
 
     it('Endpoint unbind', async () => {
