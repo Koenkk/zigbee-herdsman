@@ -344,6 +344,26 @@ class Endpoint extends Entity {
         }
     }
 
+    public addBinding(clusterKey: number | string, target: Endpoint | Group | number): void {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        if (typeof target === 'number') {
+            target = Group.byGroupID(target) || Group.create(target);
+        }
+
+        if (!this.binds.find((b) => b.cluster.ID === cluster.ID && b.target === target)) {
+            if (target instanceof Group) {
+                this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
+            } else {
+                this._binds.push({
+                    cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress,
+                    endpointID: target.ID
+                });
+            }
+
+            this.save();
+        }
+    }
+
     public async bind(clusterKey: number | string, target: Endpoint | Group | number): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
@@ -363,18 +383,7 @@ class Endpoint extends Entity {
                 target instanceof Endpoint ? target.ID : null,
             );
 
-            if (!this.binds.find((b) => b.cluster.ID === cluster.ID && b.target === target)) {
-                if (target instanceof Group) {
-                    this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
-                } else {
-                    this._binds.push({
-                        cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress,
-                        endpointID: target.ID
-                    });
-                }
-
-                this.save();
-            }
+            this.addBinding(clusterKey, target);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
