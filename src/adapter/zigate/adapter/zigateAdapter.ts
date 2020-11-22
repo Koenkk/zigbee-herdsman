@@ -170,11 +170,26 @@ class ZiGateAdapter extends Adapter {
         return this.driver.sendCommand(ZiGateCommandCode.GetVersion, {})
             .then((result) => {
                 const formattedVersion = parseInt(<string>result.payload.installerVersion).toString(16);
+                const fw = /(\d)(\d+)(\w)/g.exec(formattedVersion);
+                let majorrel = 0;
+                let minorrel = 0;
+                let maintrel = '';
+                if (fw) {
+                    majorrel = parseInt(fw[1]);
+                    minorrel = parseInt(fw[2]);
+                    maintrel = fw[3];
+                }
+                const meta = {
+                    "transportrev":0,
+                    "product":0,
+                    majorrel,
+                    minorrel,
+                    maintrel,
+                    "revision": formattedVersion,
+                };
                 const version: TsType.CoordinatorVersion = {
                     type: 'zigate',
-                    meta: {
-                        'major': formattedVersion
-                    }
+                    meta: meta,
                 };
                 return Promise.resolve(version)
             }).catch(() => Promise.reject());
