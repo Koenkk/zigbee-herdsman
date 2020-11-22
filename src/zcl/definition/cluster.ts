@@ -443,6 +443,7 @@ const Cluster: {
             globalSceneCtrl: {ID: 16384, type: DataType.boolean},
             onTime: {ID: 16385, type: DataType.uint16},
             offWaitTime: {ID: 16386, type: DataType.uint16},
+            startUpOnOff: {ID: 16387, type: DataType.enum8},
             tuyaBacklightMode: {ID: 0x8001, type: DataType.enum8},
         },
         commands: {
