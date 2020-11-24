@@ -64,6 +64,8 @@ class Driver extends events.EventEmitter {
     private portType: 'serial' | 'socket';
     private socketPort: net.Socket;
     private READY_TO_SEND_TIMEOUT: number;
+    private HANDLE_DEVICE_STATUS_DELAY: number;
+    private PROCESS_APS_QUEUES_DELAY: number;
 
     public constructor(path: string) {
         super();
@@ -78,20 +80,22 @@ class Driver extends events.EventEmitter {
         this.apsDataIndication = 0;
         this.configChanged = 0;
         this.READY_TO_SEND_TIMEOUT = 300;
+        this.HANDLE_DEVICE_STATUS_DELAY = 100;
+        this.PROCESS_APS_QUEUES_DELAY = 100;
 
         const that = this;
         setInterval(() => { that.processQueue(); }, 100);  // fire non aps requests
         setInterval(() => { that.processBusyQueue(); }, 1000); // check timeouts for non aps requests
-        setInterval(() => { that.processApsQueue(); }, 100);  // fire aps request
+        setInterval(() => { that.processApsQueue(); }, this.PROCESS_APS_QUEUES_DELAY);  // fire aps request
         setInterval(() => { that.processApsBusyQueue(); }, 1000);  // check timeouts for all open aps requests
-        setInterval(() => { that.processApsConfirmIndQueue(); }, 100);  // fire aps indications and confirms
+        setInterval(() => { that.processApsConfirmIndQueue(); }, this.PROCESS_APS_QUEUES_DELAY);  // fire aps indications and confirms
         setInterval(() => { that.deviceStateRequest()
                             .then(result => {})
                             .catch(error => {}); }, 10000);
 
         setInterval(() => { that.handleDeviceStatus()
                             .then(result => {})
-                            .catch(error => {}); }, 100); // query confirm and indication requests
+                            .catch(error => {}); }, this.HANDLE_DEVICE_STATUS_DELAY); // query confirm and indication requests
 
         setInterval(() => {
             that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
@@ -110,7 +114,10 @@ class Driver extends events.EventEmitter {
     }
 
     public setDelay(delay: number): void {
-		if (delay < 50) {
+		if (delay === 0) {
+			this.HANDLE_DEVICE_STATUS_DELAY = 10;
+			this.PROCESS_APS_QUEUES_DELAY = 50;
+		} else if (delay < 50) {
 			this.READY_TO_SEND_TIMEOUT = 50;
 		} else if (delay > 1200) {
 			this.READY_TO_SEND_TIMEOUT = 1200;
