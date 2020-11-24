@@ -117,6 +117,7 @@ class Driver extends events.EventEmitter {
 		if (delay === 0) {
 			this.HANDLE_DEVICE_STATUS_DELAY = 10;
 			this.PROCESS_APS_QUEUES_DELAY = 50;
+			this.READY_TO_SEND_TIMEOUT = 50;
 		} else if (delay < 50) {
 			this.READY_TO_SEND_TIMEOUT = 50;
 		} else if (delay > 1200) {
