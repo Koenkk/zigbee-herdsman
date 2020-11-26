@@ -442,12 +442,20 @@ describe('Controller', () => {
         }).toThrowError("'10' is an invalid channel, use a channel between 11 - 26.");
     });
 
-    it('Call controller constructor error on invalid channel', async () => {
+    it('Call controller constructor error when network key too small', async () => {
         const newOptions = deepClone(options);
         newOptions.network.networkKey = [1,2,3];
         expect(() => {
             new Controller(newOptions);
         }).toThrowError('Network key must be 16 digits long, got 3.');
+    });
+
+    it('Call controller constructor error when extendedPanID is too long', async () => {
+        const newOptions = deepClone(options);
+        newOptions.network.extendedPanID = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
+        expect(() => {
+            new Controller(newOptions);
+        }).toThrowError('ExtendedPanID must be 8 digits long, got 16.');
     });
 
     it('Controller start', async () => {

@@ -87,6 +87,10 @@ class Controller extends events.EventEmitter {
         if (!Array.isArray(this.options.network.networkKey) || this.options.network.networkKey.length !== 16) {
             throw new Error(`Network key must be 16 digits long, got ${this.options.network.networkKey.length}.`);
         }
+
+        if (!Array.isArray(this.options.network.extendedPanID) || this.options.network.extendedPanID.length !== 8) {
+            throw new Error(`ExtendedPanID must be 8 digits long, got ${this.options.network.extendedPanID.length}.`);
+        }
     }
 
     /**
