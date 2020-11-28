@@ -71,6 +71,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'programmingEventNotification': 'commandProgrammingEventNotification',
     'getPinCodeRsp': 'commandGetPinCodeRsp',
     'arrivalSensorNotify': 'commandArrivalSensorNotify',
+    'getPanelStatus': 'commandGetPanelStatus',
 
     // HEIMAN scenes cluster
     'atHome': 'commandAtHome',
@@ -103,7 +104,8 @@ type MessagePayloadType =
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
     "commandArrivalSensorNotify" | 'commandCommisioningNotification' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
-    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest';
+    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest' | 
+    'commandGetPanelStatus';
 
 interface MessagePayload {
     type: MessagePayloadType;
