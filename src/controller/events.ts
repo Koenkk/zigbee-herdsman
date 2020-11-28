@@ -104,7 +104,8 @@ type MessagePayloadType =
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
     "commandArrivalSensorNotify" | 'commandCommisioningNotification' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
-    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest' | 'commandGetPanelStatus';
+    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest' | 
+    'commandGetPanelStatus';
 
 interface MessagePayload {
     type: MessagePayloadType;
