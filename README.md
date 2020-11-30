@@ -2,10 +2,9 @@
 
 ![npm](https://img.shields.io/npm/v/zigbee-herdsman)
 
-An open source ZigBee gateway solution with node.js, forked from zigbee-shepherd.
+zigbee-herdsman is an open source Zigbee gateway solution with Node.js JavaScript runtime back-end.
 
-The goal is to refactor zigbee-shepherd to improve maintainability.
-
+It was originally forked from zigbee-shepherd with the goal to refactor it to improve maintainability.
 
 # API Documentation
 
@@ -40,3 +39,13 @@ The goal is to refactor zigbee-shepherd to improve maintainability.
 - Removed device/endpoint.get() -> directly get properties now (e.g. device.modelID)
 - Removed group.getMembers() -> use group.members now
 - Removed endpoint.deviceIeeeAddress -> use endpoint.getDevice().ieeeAddr
+
+# Related projects
+
+## Zigbee2MQTT
+
+[Zigbee2MQTT](https://github.com/Koenkk/zigbee2mqtt) is a Zigbee to MQTT gateway. It bridges events and allows you to control your Zigbee devices via MQTT. Allows you to use your Zigbee devices without the vendors or propritary and closed sources bridges or gateways. Zigbee2MQTT also keeps track of the state of the system and the capabilities of connected devices. It uses zigbee-herdsman as a module to handle low-level core Zigbee communication. 
+
+## ioBroker
+
+[ioBroker](https://github.com/ioBroker) is an home automation integration platform that is focused on Building Automation, Smart Metering, Ambient Assisted Living, Process Automation, Visualization and Data Logging. It uses zigbee-herdsman for its Zigbee integration.
