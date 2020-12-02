@@ -219,7 +219,7 @@ const basicMocks = () => {
         }
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}});
+            return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 10, 11, 110, 12, 13, 47, 242]}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return waitForResult({payload: {}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'simpleDescRsp') {
@@ -468,27 +468,31 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[31][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[31][2].appoutclusterlist).toStrictEqual([]);
         expect(mockZnpRequest.mock.calls[32][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(11);
+        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(10);
         expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([1280,1282]);
+        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([]);
         expect(mockZnpRequest.mock.calls[33][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[33][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[34][2].endpoint).toBe(12);
-        expect(mockZnpRequest.mock.calls[34][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[33][2].appoutclusterlist).toStrictEqual([1280,1282]);
+        expect(mockZnpRequest.mock.calls[34][1]).toBe('register');
+        expect(mockZnpRequest.mock.calls[34][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[34][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[34][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[35][2].endpoint).toBe(13);
-        expect(mockZnpRequest.mock.calls[35][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[35][2].appinclusterlist).toStrictEqual([25]);
-        expect(mockZnpRequest.mock.calls[36][2].endpoint).toBe(47);
+        expect(mockZnpRequest.mock.calls[35][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[35][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[35][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[36][2].endpoint).toBe(13);
         expect(mockZnpRequest.mock.calls[36][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[36][2].appinclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[37][2].endpoint).toBe(242);
-        expect(mockZnpRequest.mock.calls[37][2].appprofid).toBe(41440);
-        expect(mockZnpRequest.mock.calls[37][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[38][1]).toBe('extFindGroup');
-        expect(mockZnpRequest).toHaveBeenCalledTimes(39);
+        expect(mockZnpRequest.mock.calls[36][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest.mock.calls[37][2].endpoint).toBe(47);
+        expect(mockZnpRequest.mock.calls[37][2].appprofid).toBe(0x0104);
+        expect(mockZnpRequest.mock.calls[37][2].appinclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[38][2].endpoint).toBe(242);
+        expect(mockZnpRequest.mock.calls[38][2].appprofid).toBe(41440);
+        expect(mockZnpRequest.mock.calls[38][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[39][1]).toBe('extFindGroup');
+        expect(mockZnpRequest).toHaveBeenCalledTimes(40);
     });
 
     it('Start zStack 3.x.0 initialize fails because of state change timeout', async () => {
@@ -1045,27 +1049,31 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[31][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[31][2].appoutclusterlist).toStrictEqual([]);
         expect(mockZnpRequest.mock.calls[32][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(11);
+        expect(mockZnpRequest.mock.calls[32][2].endpoint).toBe(10);
         expect(mockZnpRequest.mock.calls[32][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([1280,1282]);
+        expect(mockZnpRequest.mock.calls[32][2].appoutclusterlist).toStrictEqual([]);
         expect(mockZnpRequest.mock.calls[33][1]).toBe('register');
-        expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[33][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[33][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[33][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[34][2].endpoint).toBe(12);
-        expect(mockZnpRequest.mock.calls[34][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[33][2].appoutclusterlist).toStrictEqual([1280,1282]);
+        expect(mockZnpRequest.mock.calls[34][1]).toBe('register');
+        expect(mockZnpRequest.mock.calls[34][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[34][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[34][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[35][2].endpoint).toBe(13);
-        expect(mockZnpRequest.mock.calls[35][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[35][2].appinclusterlist).toStrictEqual([25]);
-        expect(mockZnpRequest.mock.calls[36][2].endpoint).toBe(47);
+        expect(mockZnpRequest.mock.calls[35][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[35][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[35][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[36][2].endpoint).toBe(13);
         expect(mockZnpRequest.mock.calls[36][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[36][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[37][2].endpoint).toBe(242);
-        expect(mockZnpRequest.mock.calls[37][2].appprofid).toBe(41440);
+        expect(mockZnpRequest.mock.calls[36][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest.mock.calls[37][2].endpoint).toBe(47);
+        expect(mockZnpRequest.mock.calls[37][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[37][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[38][1]).toBe('extFindGroup');
-        expect(mockZnpRequest).toHaveBeenCalledTimes(39);
+        expect(mockZnpRequest.mock.calls[38][2].endpoint).toBe(242);
+        expect(mockZnpRequest.mock.calls[38][2].appprofid).toBe(41440);
+        expect(mockZnpRequest.mock.calls[38][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[39][1]).toBe('extFindGroup');
+        expect(mockZnpRequest).toHaveBeenCalledTimes(40);
     });
 
     it('Start zStack 3.x.0 resume and create green power group', async () => {
@@ -1162,29 +1170,32 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[10][1]).toBe('startupFromApp');
         expect(mockZnpWaitfor.mock.calls[1][2]).toBe('activeEpRsp');
         expect(mockZnpRequest.mock.calls[11][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(11);
+        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(10);
         expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([1280,1282]);
-        expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[14][2].endpoint).toBe(12);
-        expect(mockZnpRequest.mock.calls[14][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([1280,1282]);
+        expect(mockZnpRequest.mock.calls[14][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[14][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[14][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[15][2].endpoint).toBe(13);
-        expect(mockZnpRequest.mock.calls[15][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[15][2].appinclusterlist).toStrictEqual([25]);
-        expect(mockZnpRequest.mock.calls[16][2].endpoint).toBe(47);
+        expect(mockZnpRequest.mock.calls[15][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[15][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[15][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[16][2].endpoint).toBe(13);
         expect(mockZnpRequest.mock.calls[16][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[16][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[17][2].endpoint).toBe(242);
-        expect(mockZnpRequest.mock.calls[17][2].appprofid).toBe(41440);
+        expect(mockZnpRequest.mock.calls[16][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest.mock.calls[17][2].endpoint).toBe(47);
+        expect(mockZnpRequest.mock.calls[17][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[17][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[18][1]).toBe('extFindGroup');
-        expect(mockZnpRequest.mock.calls[18][2]).toStrictEqual({"endpoint": 242, "groupid": 2948});
-        expect(mockZnpRequest.mock.calls[19][1]).toBe('extAddGroup');
-        expect(mockZnpRequest.mock.calls[19][2]).toStrictEqual({"endpoint": 242, "groupid": 2948, "groupname": [], "namelen": 0});
-        expect(mockZnpRequest).toHaveBeenCalledTimes(20);
+        expect(mockZnpRequest.mock.calls[18][2].endpoint).toBe(242);
+        expect(mockZnpRequest.mock.calls[18][2].appprofid).toBe(41440);
+        expect(mockZnpRequest.mock.calls[18][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[19][1]).toBe('extFindGroup');
+        expect(mockZnpRequest.mock.calls[19][2]).toStrictEqual({"endpoint": 242, "groupid": 2948});
+        expect(mockZnpRequest.mock.calls[20][1]).toBe('extAddGroup');
+        expect(mockZnpRequest.mock.calls[20][2]).toStrictEqual({"endpoint": 242, "groupid": 2948, "groupname": [], "namelen": 0});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(21);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -1280,26 +1291,29 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest.mock.calls[10][1]).toBe('startupFromApp');
         expect(mockZnpWaitfor.mock.calls[1][2]).toBe('activeEpRsp');
         expect(mockZnpRequest.mock.calls[11][1]).toBe('activeEpReq');
-        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(11);
+        expect(mockZnpRequest.mock.calls[12][2].endpoint).toBe(10);
         expect(mockZnpRequest.mock.calls[12][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([1280,1282]);
-        expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[12][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[13][2].endpoint).toBe(11);
         expect(mockZnpRequest.mock.calls[13][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[14][2].endpoint).toBe(12);
-        expect(mockZnpRequest.mock.calls[14][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[13][2].appoutclusterlist).toStrictEqual([1280,1282]);
+        expect(mockZnpRequest.mock.calls[14][2].endpoint).toBe(110);
+        expect(mockZnpRequest.mock.calls[14][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[14][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[15][2].endpoint).toBe(13);
-        expect(mockZnpRequest.mock.calls[15][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[15][2].appinclusterlist).toStrictEqual([25]);
-        expect(mockZnpRequest.mock.calls[16][2].endpoint).toBe(47);
+        expect(mockZnpRequest.mock.calls[15][2].endpoint).toBe(12);
+        expect(mockZnpRequest.mock.calls[15][2].appprofid).toBe(0xc05e);
+        expect(mockZnpRequest.mock.calls[15][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[16][2].endpoint).toBe(13);
         expect(mockZnpRequest.mock.calls[16][2].appprofid).toBe(0x0104);
-        expect(mockZnpRequest.mock.calls[16][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[17][2].endpoint).toBe(242);
-        expect(mockZnpRequest.mock.calls[17][2].appprofid).toBe(41440);
+        expect(mockZnpRequest.mock.calls[16][2].appinclusterlist).toStrictEqual([25]);
+        expect(mockZnpRequest.mock.calls[17][2].endpoint).toBe(47);
+        expect(mockZnpRequest.mock.calls[17][2].appprofid).toBe(0x0104);
         expect(mockZnpRequest.mock.calls[17][2].appoutclusterlist).toStrictEqual([]);
-        expect(mockZnpRequest.mock.calls[18][1]).toBe('extFindGroup');
-        expect(mockZnpRequest).toHaveBeenCalledTimes(19);
+        expect(mockZnpRequest.mock.calls[18][2].endpoint).toBe(242);
+        expect(mockZnpRequest.mock.calls[18][2].appprofid).toBe(41440);
+        expect(mockZnpRequest.mock.calls[18][2].appoutclusterlist).toStrictEqual([]);
+        expect(mockZnpRequest.mock.calls[19][1]).toBe('extFindGroup');
+        expect(mockZnpRequest).toHaveBeenCalledTimes(20);
         expect(mockZnpWaitfor).toHaveBeenCalledTimes(2);
     });
 
@@ -1421,7 +1435,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}});
+                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 10, 11, 110, 12, 13, 47, 242]}});
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return waitForResult({payload: {activeeplist: []}});
             } else {
@@ -1528,7 +1542,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}});
+                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 10, 11, 110, 12, 13, 47, 242]}});
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return waitForResult({payload: {activeeplist: []}});
             } else {
@@ -1635,7 +1649,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}});
+                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 10, 11, 110, 12, 13, 47, 242]}});
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return waitForResult({payload: {activeeplist: []}});
             } else {
@@ -1740,7 +1754,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}});
+                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 10, 11, 110, 12, 13, 47, 242]}});
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return waitForResult({payload: {activeeplist: []}});
             } else {
@@ -1996,7 +2010,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}});
+                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 10, 11, 110, 12, 13, 47, 242]}});
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return waitForResult({payload: {}});
             } else {
@@ -2090,7 +2104,7 @@ describe('zStackAdapter', () => {
             }
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 11, 110, 12, 13, 47, 242]}});
+                return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 10, 11, 110, 12, 13, 47, 242]}});
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return waitForResult({payload: {}});
             } else {
@@ -2222,6 +2236,17 @@ describe('zStackAdapter', () => {
                },
                {
                 "ID":8,
+                "profileID":124,
+                "deviceID":7,
+                "inputClusters":[
+                   8
+                ],
+                "outputClusters":[
+                   9
+                ]
+             },
+             {
+                "ID":10,
                 "profileID":124,
                 "deviceID":7,
                 "inputClusters":[
@@ -2424,7 +2449,7 @@ describe('zStackAdapter', () => {
 
         const result = await adapter.activeEndpoints(3);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(3);
-        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,11,110,12, 13, 47, 242]})
+        expect(result).toStrictEqual({endpoints: [1,2,3,4,5,6,8,10,11,110,12, 13, 47, 242]})
     });
 
     it('Simple descriptor', async () => {
