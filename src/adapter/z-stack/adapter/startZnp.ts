@@ -40,6 +40,7 @@ const Endpoints = [
     {...EndpointDefaults, endpoint: 5, appprofid: 0x0108},
     {...EndpointDefaults, endpoint: 6, appprofid: 0x0109},
     {...EndpointDefaults, endpoint: 8, appprofid: 0x0104},
+    {...EndpointDefaults, endpoint: 10, appprofid: 0x0104},
     {
         ...EndpointDefaults,
         endpoint: 11,
