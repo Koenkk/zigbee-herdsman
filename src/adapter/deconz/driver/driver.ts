@@ -114,6 +114,7 @@ class Driver extends events.EventEmitter {
     }
 
     public setDelay(delay: number): void {
+        debug(`Set delay to ${delay}`);
 		if (delay === 0) {
 			this.HANDLE_DEVICE_STATUS_DELAY = 10;
 			this.PROCESS_APS_QUEUES_DELAY = 50;
