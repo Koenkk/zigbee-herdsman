@@ -164,7 +164,7 @@ class Group extends Entity {
         try {
             const frame = Zcl.ZclFrame.create(
                 Zcl.FrameType.GLOBAL, options.direction, true,
-                options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+                options.manufacturerCode, options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
                 'write', cluster.ID, payload, options.reservedBits
             );
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
@@ -176,7 +176,7 @@ class Group extends Entity {
     }
 
     public async read(
-        clusterKey: number | string, attributes: string[] | number [], options?: Options
+        clusterKey: number | string, attributes: string[] | number []| [string, number], options?: Options
     ): Promise<void> {
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const cluster = Zcl.Utils.getCluster(clusterKey);
@@ -187,7 +187,7 @@ class Group extends Entity {
 
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.GLOBAL, options.direction, true,
-            options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(), 'read',
+            options.manufacturerCode, options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(), 'read',
             cluster.ID, payload, options.reservedBits
         );
 

@@ -1,5 +1,5 @@
-function duplicateArray (amount, value) {
-    let result = [];
+function duplicateArray (amount: number, value: any) {
+    let result: unknown[] = [];
     for (let i = 0; i < amount; i++) {
         result = result.concat(value);
     }

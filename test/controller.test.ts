@@ -12,9 +12,13 @@ import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransacti
 import {Adapter} from '../src/adapter';
 import path  from 'path';
 import {Wait} from '../src/utils';
+import { SupportedAdapter } from "../src/adapter/tstype";
+import { KeyValue } from "../src/controller/tstype";
+import { Options } from "../src/controller/controller";
 
 let skipWait = false;
-Wait.mockImplementation((milliseconds) => {
+// @ts-ignore
+Wait.mockImplementation((milliseconds: number) => {
     if (!skipWait) {
         return new Promise((resolve): void => {
             setTimeout((): void => resolve(), milliseconds);
@@ -26,7 +30,7 @@ Date.now = jest.fn()
 // @ts-ignore
 Date.now.mockReturnValue(150);
 
-const mockAdapterEvents = {};
+const mockAdapterEvents: {[k: string]: (...args: any[]) => Promise<void>} = {};
 const mockAdapterWaitFor = jest.fn();
 const mockAdapterSupportsDiscoverRoute = jest.fn();
 const mockSetChannelInterPAN = jest.fn();
@@ -126,9 +130,9 @@ const restoreMocksendZclFrameToEndpoint = () => {
 }
 
 const mocksClear = [mocksendZclFrameToEndpoint, mockAdapterReset, mocksendZclFrameToGroup, mockSetChannelInterPAN, mocksendZclFrameInterPANToIeeeAddr, mocksendZclFrameInterPANBroadcast, mockRestoreChannelInterPAN];
-const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+const deepClone = (obj: number | KeyValue) => JSON.parse(JSON.stringify(obj));
 
-const equalsPartial = (object, expected) => {
+const equalsPartial = (object: KeyValue, expected: KeyValue | ArrayLike<unknown>) => {
     for (const [key, value] of Object.entries(expected)) {
         if (!equals(object[key], value)) {
             return false;
@@ -138,7 +142,7 @@ const equalsPartial = (object, expected) => {
     return true;
 }
 
-const mockDevices = {
+const mockDevices: KeyValue = {
     129: {
         nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
         activeEndpoints: {endpoints: [1]},
@@ -229,7 +233,7 @@ jest.mock('../src/utils/wait', () => {
     });
 });
 
-const getCluster = (key) => {
+const getCluster = (key: number) => {
     const cluster = Zcl.Utils.getCluster(key);
     delete cluster.getAttribute;
     delete cluster.getCommand;
@@ -243,8 +247,8 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
     return jest.fn().mockImplementation(() => {
         return {
             greenPowerGroup: 0x0b84,
-            on: (event, handler) => mockAdapterEvents[event] = handler,
-            removeAllListeners: (event) => delete mockAdapterEvents[event],
+            on: (event: string | number, handler: (...args: any[]) => Promise<void>) => mockAdapterEvents[event] = handler,
+            removeAllListeners: (event: string | number) => delete mockAdapterEvents[event],
             start: mockAdapterStart,
             getCoordinator: mockAdapterGetCoordinator,
             reset: mockAdapterReset,
@@ -256,7 +260,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             supportsLED: mockAdapterSupportsLED,
             waitFor: mockAdapterWaitFor,
             setTransmitPower: mockAdapterSetTransmitPower,
-            nodeDescriptor: async (networkAddress) => {
+            nodeDescriptor: async (networkAddress: string | number) => {
                 const descriptor = mockDevices[networkAddress].nodeDescriptor;
                 if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
                     await mockAdapterEvents['zclData']({
@@ -276,14 +280,14 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
                     return descriptor;
                 }
             },
-            activeEndpoints: (networkAddress) => {
+            activeEndpoints: (networkAddress: string | number) => {
                 if (mockDevices[networkAddress].activeEndpoints === 'error') {
                     throw new Error('timeout');
                 } else {
                     return mockDevices[networkAddress].activeEndpoints;
                 }
             },
-            simpleDescriptor: (networkAddress, endpoint) => {
+            simpleDescriptor: (networkAddress: string | number, endpoint: string | number) => {
                 if (mockDevices[networkAddress].simpleDescriptor[endpoint] === undefined) {
                     throw new Error('Simple descriptor failed');
                 }
@@ -298,7 +302,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             discoverRoute: mockDiscoverRoute,
             stop: mockAdapterStop,
             removeDevice: mockAdapterRemoveDevice,
-            lqi: (networkAddress) => {
+            lqi: (networkAddress: number) => {
                 if (networkAddress === 140) {
                     return {neighbors: [
                         {ieeeAddr: '0x160', networkAddress: 160, linkquality: 20, relationship: 2, depth: 5},
@@ -306,7 +310,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
                     ]}
                 }
             },
-            routingTable: (networkAddress) => {
+            routingTable: (networkAddress: number) => {
                 if (networkAddress === 140) {
                     return {table: [
                         {destinationAddress: 120, status: 'SUCCESS', nextHop: 1},
@@ -338,7 +342,7 @@ jest.mock('../src/adapter/zigate/adapter/zigateAdapter', () => {
     });
 });
 
-const getTempFile = (filename) => {
+const getTempFile = (filename: string) => {
     const tempPath = path.resolve('temp');
     if (!fs.existsSync(tempPath)){
         fs.mkdirSync(tempPath);
@@ -370,7 +374,7 @@ const mocksRestore = [
     mockZiGateAdapterIsValidPath, mockZiGateAdapterAutoDetectPath,
 ];
 
-const events = {
+const events: KeyValue = {
     deviceJoined: [],
     deviceInterview: [],
     adapterDisconnected: [],
@@ -381,7 +385,7 @@ const events = {
 
 const backupPath = getTempFile('backup');
 
-const options = {
+const options: Options = {
     network: {
         panID: 0x1a63,
         channelList: [15],
@@ -390,18 +394,26 @@ const options = {
         baudRate: 115200,
         rtscts: true,
         path: '/dummy/conbee',
-        adapter: null,
+        adapter: null
     },
     databasePath: getTempFile('database'),
     databaseBackupPath: null,
     backupPath,
     acceptJoiningDeviceHandler: null,
+    adapter: {}
 }
 
 const databaseContents = () => fs.readFileSync(options.databasePath).toString();
 
 describe('Controller', () => {
-    let controller;
+    let controller: Controller;
+    afterEach(async () => {
+        // @ts-ignore
+        clearInterval(controller.backupTimer);
+        // @ts-ignore
+        clearInterval(controller.databaseSaveTimer);
+        // await controller.stop();
+    });
 
     beforeEach(async () => {
         // @ts-ignore
@@ -432,12 +444,13 @@ describe('Controller', () => {
 
     it('Call controller constructor options mixed with default options', async () => {
         await controller.start();
-        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, null);
+        expect(ZStackAdapter).toBeCalledWith({ "networkKeyDistribute": false, "networkKey": [1, 3, 5, 7, 9, 11, 13, 15, 0, 2, 4, 6, 8, 10, 12, 13], "panID": 6755, "extendedPanID": [221, 221, 221, 221, 221, 221, 221, 221], "channelList": [15] }, { "baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null }, backupPath, {});
     });
 
     it('Call controller constructor error on invalid channel', async () => {
         options.network.channelList = [10];
         expect(() => {
+            // @ts-ignore
             new Controller(options);
         }).toThrowError("'10' is an invalid channel, use a channel between 11 - 26.");
     });
@@ -576,7 +589,7 @@ describe('Controller', () => {
 
     it('Touchlink lock', async () => {
         await controller.start();
-        let resolve;
+        let resolve: () => void;
         mockSetChannelInterPAN.mockImplementationOnce(() => {
             return new Promise((r) => {
                 resolve = r;
@@ -680,7 +693,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
         expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "_lastSeen": deepClone(Date.now()), "ID":2,"_endpoints":[],"_type":"Unknown","_ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129},"status":"started"});
-        const device = {"ID":2,"_lastSeen": deepClone(Date.now()),"_type":"Unknown","_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"clusters": {}, "ID":1,"inputClusters":[0,1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [],"meta":{},"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
+        const device: KeyValue = {"ID":2,"_lastSeen": deepClone(Date.now()),"_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"clusters": {}, "ID":1,"inputClusters":[0,1],"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [],"meta":{},"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
         expect(deepClone(controller.getDeviceByNetworkAddress(129))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
@@ -690,6 +703,7 @@ describe('Controller', () => {
 
     it('Join a device and explictly accept it', async () => {
         const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(true);
+        // @ts-ignore
         controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
         controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
         controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
@@ -698,7 +712,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
         expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "_lastSeen": deepClone(Date.now()), "ID":2,"_endpoints":[],"_ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129,"_type":"Unknown"},"status":"started"});
-        const device = {"ID":2,"_lastSeen": deepClone(Date.now()),"_type":"Unknown","_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"clusters": {}, "ID":1,"inputClusters":[0,1],"meta":{},"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
+        const device: KeyValue = {"ID":2,"_lastSeen": deepClone(Date.now()),"_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"clusters": {}, "ID":1,"inputClusters":[0,1],"meta":{},"outputClusters":[2],"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
         expect(deepClone(controller.getDeviceByIeeeAddr('0x129'))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
@@ -708,6 +722,7 @@ describe('Controller', () => {
 
     it('Join a device and explictly refuse it', async () => {
         const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(false);
+        // @ts-ignore
         controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
         controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
         controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
@@ -829,6 +844,7 @@ describe('Controller', () => {
     it('Should create backup of databse before clearing when datbaseBackupPath is provided', async () => {
         const databaseBackupPath = getTempFile('database.backup');
         if (fs.existsSync(databaseBackupPath)) fs.unlinkSync(databaseBackupPath);
+        // @ts-ignore
         controller = new Controller({...options, databaseBackupPath});
         expect(fs.existsSync(databaseBackupPath)).toBeFalsy();
         await controller.start();
@@ -1041,7 +1057,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {
+        const expected: KeyValue = {
             "cluster": "msOccupancySensing",
             "type":"attributeReport",
             "device":{
@@ -1144,7 +1160,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {
+        const expected: KeyValue = {
             "cluster": "genAlarms",
             "type":"raw",
             "device":{
@@ -1224,7 +1240,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {
+        const expected: KeyValue = {
             "cluster": 99999999,
             "type":"raw",
             "device":{
@@ -1316,7 +1332,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {
+        const expected: KeyValue = {
             "cluster": "genBasic",
             "type":"readResponse",
             "device":{
@@ -1431,7 +1447,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {
+        const expected: KeyValue = {
             "cluster": "genScenes",
             "type":"commandTradfriArrowSingle",
             "device":{
@@ -1763,7 +1779,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {
+        const expected: KeyValue = {
             "cluster": 'genBasic',
             "type":"attributeReport",
             "device":{
@@ -1919,7 +1935,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x129'});
         let error;
-        try {await Device.create('Router', '0x129', 140, null, null, null, null, null)} catch (e) {error = e}
+        try {await Device.create('Router', '0x129', 140, null, null, null, null, null, null)} catch (e) {error = e}
         expect(error).toStrictEqual(new Error("Device with ieeeAddr '0x129' already exists"));
     });
 
@@ -1933,7 +1949,6 @@ describe('Controller', () => {
     it('Return device from databse when not in lookup', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x129'});
-        Device['lookup'] = {};
         expect(controller.getDeviceByIeeeAddr('0x129')).toBeInstanceOf(Device);
     });
 
@@ -2083,6 +2098,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
+        // @ts-ignore
         endpoint._binds.push({type: 'endpoint', deviceIeeeAddress: 'notexisting', endpointID: 1, cluster: 2});
         expect(endpoint.binds).toStrictEqual([]);
     });
@@ -2273,7 +2289,6 @@ describe('Controller', () => {
     it('Return group from databse when not in lookup', async () => {
         await controller.start();
         await controller.createGroup(2);
-        Group['lookup'] = {};
         expect(controller.getGroupByID(2)).toBeInstanceOf(Group);
     });
 
@@ -2352,7 +2367,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe('0x129');
         expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
-        const expected = {"Header":{"frameControl":{"reservedBits": 0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":100,"commandIdentifier":0},"Payload":{},"Cluster":getCluster(6)};
+        const expected: KeyValue = {"Header":{"frameControl":{"reservedBits": 0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":100,"commandIdentifier":0},"Payload":{},"Cluster":getCluster(6)};
         expect(deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3])).toStrictEqual(expected);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][4]).toBe(10000);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][5]).toBe(false);
@@ -2370,7 +2385,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe('0x129');
         expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
-        const expected = {"Header":{"frameControl":{"reservedBits": 0,"frameType":1,"direction":1,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":11,"manufacturerCode":null,"commandIdentifier":0},"Payload":{payloadType: 0, queryJitter: 1},"Cluster":getCluster(25)};
+        const expected: KeyValue = {"Header":{"frameControl":{"reservedBits": 0,"frameType":1,"direction":1,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":11,"manufacturerCode":null,"commandIdentifier":0},"Payload":{payloadType: 0, queryJitter: 1},"Cluster":getCluster(25)};
         expect(deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3])).toStrictEqual(expected);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][4]).toBe(10000);
     });
@@ -2405,11 +2420,10 @@ describe('Controller', () => {
     });
 
     it('Device without meta should set meta to {}', async () => {
-        Device['lookup'] = {};
         const line = JSON.stringify({"id":3,"type":"EndDevice","ieeeAddr":"0x90fd9ffffe4b64ae","nwkAddr":19468,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Battery","modelId":"TRADFRI remote control","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0,1,3,9,2821,4096],"outClusterList":[3,4,5,6,8,25,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170302","swBuildId":"1.2.214","zclVersion":1,"interviewCompleted":true,"_id":"fJ5pmjqKRYbNvslK"});
         fs.writeFileSync(options.databasePath, line + "\n");
         await controller.start();
-        const expected = {"ID": 3, "_lastSeen": null, "_applicationVersion": 17, "_dateCode": "20170302", "_endpoints": [{"meta":{},"clusters": {}, "ID": 1, "deviceID": 2096, "_binds": [],"deviceIeeeAddress": "0x90fd9ffffe4b64ae", "deviceNetworkAddress": 19468, "inputClusters": [0, 1, 3, 9, 2821, 4096], "outputClusters": [3, 4, 5, 6, 8, 25, 4096], "profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x90fd9ffffe4b64ae", "_interviewCompleted": true, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {}, "_modelID": "TRADFRI remote control", "_networkAddress": 19468, "_powerSource": "Battery", "_softwareBuildID": "1.2.214", "_stackVersion": 87, "_type": "EndDevice", "_zclVersion": 1}
+        const expected: KeyValue = {"ID": 3, "_lastSeen": null, "_applicationVersion": 17, "_dateCode": "20170302", "_endpoints": [{"meta":{},"clusters": {}, "ID": 1, "deviceID": 2096, "_binds": [],"deviceIeeeAddress": "0x90fd9ffffe4b64ae", "deviceNetworkAddress": 19468, "inputClusters": [0, 1, 3, 9, 2821, 4096], "outputClusters": [3, 4, 5, 6, 8, 25, 4096], "profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x90fd9ffffe4b64ae", "_interviewCompleted": true, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {}, "_modelID": "TRADFRI remote control", "_networkAddress": 19468, "_powerSource": "Battery", "_softwareBuildID": "1.2.214", "_stackVersion": 87, "_type": "EndDevice", "_zclVersion": 1}
         expect(deepClone(controller.getDeviceByIeeeAddr("0x90fd9ffffe4b64ae"))).toStrictEqual(expected);
     });
 
@@ -2632,12 +2646,14 @@ describe('Controller', () => {
         expect(deepClone(controller.getDeviceByIeeeAddr('0x123'))).toStrictEqual({"ID": 1, "_lastSeen": null, "_endpoints": [{"meta":{},"_binds": [], "clusters": {}, "ID": 1, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 260}, {"meta":{},"_binds": [], "clusters": {}, "ID": 2, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 257}, {"meta":{},"_binds": [], "clusters": {}, "ID": 3, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 261}, {"meta":{},"_binds": [], "clusters": {}, "ID": 4, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 263}, {"meta":{},"_binds": [], "clusters": {}, "ID": 5, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 264}, {"meta":{},"_binds": [], "clusters": {}, "ID": 6, "deviceID": 5, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [], "profileID": 265}, {"meta":{},"_binds": [], "clusters": {}, "ID": 11, "deviceID": 1024, "deviceIeeeAddress": "0x123", "deviceNetworkAddress": 0, "inputClusters": [], "outputClusters": [1280], "profileID": 260}], "_ieeeAddr": "0x123", "_interviewCompleted": false, "_interviewing": false, "_manufacturerID": 0, "meta": {}, "_networkAddress": 0, "_type": "Coordinator"});
         expect(deepClone(controller.getDeviceByIeeeAddr('0x000b57fffec6a5b2'))).toStrictEqual({"ID": 3, "_lastSeen": null,  "_applicationVersion": 17, "_dateCode": "20170331", "_endpoints": [{"meta":{},"_binds": [], "clusters": {}, "ID": 1, "deviceID": 544, "deviceIeeeAddress": "0x000b57fffec6a5b2", "deviceNetworkAddress": 40369, "inputClusters": [0, 3, 4, 5, 6, 8, 768, 2821, 4096], "outputClusters": [5, 25, 32, 4096], "profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x000b57fffec6a5b2", "_interviewCompleted": true, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {"reporting": 1}, "_modelID": "TRADFRI bulb E27 WS opal 980lm", "_networkAddress": 40369, "_powerSource": "Mains (single phase)", "_softwareBuildID": "1.2.217", "_stackVersion": 87, "_type": "Router", "_zclVersion": 1});
         expect(deepClone(controller.getDeviceByIeeeAddr('0x0017880104e45517'))).toStrictEqual({"ID": 4, "_lastSeen": 123,  "_applicationVersion": 2, "_dateCode": "20160302", "_endpoints": [{"_binds": [{type: 'endpoint', endpointID: 1, deviceIeeeAddr: '0x000b57fffec6a5b2'}], "clusters": {"genBasic": {"dir": {"value": 3}, "attributes": {"modelId": "RWL021"}}}, "ID": 1, "deviceID": 2096, "deviceIeeeAddress": "0x0017880104e45517","meta":{}, "deviceNetworkAddress": 6538, "inputClusters": [0], "outputClusters": [0, 3, 4, 6, 8, 5], "profileID": 49246}, {"meta":{},"_binds": [], "clusters": {}, "ID": 2, "deviceID": 12, "deviceIeeeAddress": "0x0017880104e45517", "deviceNetworkAddress": 6538, "inputClusters": [0, 1, 3, 15, 64512], "outputClusters": [25], "profileID": 260}], "_hardwareVersion": 1, "_ieeeAddr": "0x0017880104e45517", "_interviewCompleted": true, "_interviewing": false, "_manufacturerID": 4107, "_manufacturerName": "Philips", "meta": {"configured": 1}, "_modelID": "RWL021", "_networkAddress": 6538, "_powerSource": "Battery", "_softwareBuildID": "5.45.1.17846", "_stackVersion": 1, "_type": "EndDevice", "_zclVersion": 1});
-        expect((await controller.getGroups({})).length).toBe(2);
+        expect((await controller.getGroups()).length).toBe(2);
 
         const group1 = controller.getGroupByID(1);
+        // @ts-ignore
         group1._members = Array.from(group1._members);
         expect(deepClone(group1)).toStrictEqual({"databaseID": 2, "groupID": 1, "_members": [], "meta": {}});
         const group2 = controller.getGroupByID(2);
+        // @ts-ignore
         group2._members = Array.from(group2._members);
         expect(deepClone(group2)).toStrictEqual({"databaseID": 5, "groupID": 2, "_members": [{"meta":{},"_binds": [], "clusters": {}, "ID": 1, "deviceID": 544, "deviceIeeeAddress": "0x000b57fffec6a5b2", "deviceNetworkAddress": 40369, "inputClusters": [0, 3, 4, 5, 6, 8, 768, 2821, 4096], "outputClusters": [5, 25, 32, 4096], "profileID": 49246}], "meta": {}});
     });
@@ -2653,14 +2669,17 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(() => {
+            // @ts-ignore
             controller.database.insert({id: 2})
         }).toThrowError(`DatabaseEntry with ID '2' already exists`);
 
         expect(() => {
+            // @ts-ignore
             controller.database.remove(3)
         }).toThrowError(`DatabaseEntry with ID '3' does not exist`);
 
         expect(() => {
+            // @ts-ignore
             controller.database.update({id: 3})
         }).toThrowError(`DatabaseEntry with ID '3' does not exist`);
     });
@@ -2752,7 +2771,7 @@ describe('Controller', () => {
         mockDeconzAdapterIsValidPath.mockReturnValueOnce(false);
         mockDeconzAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         let error;
-        try {await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'efr'}, null, null)} catch (e) {error = e;}
+        try {await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'efr' as SupportedAdapter}, null, null)} catch (e) {error = e;}
         expect(error).toStrictEqual(new Error(`Adapter 'efr' does not exists, possible options: zstack, deconz, zigate`));
     });
 
@@ -2768,7 +2787,7 @@ describe('Controller', () => {
             groupID: 10,
         });
 
-        const expected = {
+        const expected: unknown = {
             "type":"read",
             "device":{
                 "ID":2,
@@ -2869,7 +2888,7 @@ describe('Controller', () => {
             groupID: 10,
         });
 
-        const expected = {
+        const expected: unknown = {
             "type":"write",
             "device":{
                 "ID":2,
@@ -3190,7 +3209,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {"type":"commandNotification","device":{"ID":2,"_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]},"data":{"options":0,"srcID":4650238,"frameCounter":228,"commandID":34,"payloadSize":255,"commandFrame":{}},"linkquality":50,"groupID":1,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
+        const expected: unknown = {"type":"commandNotification","device":{"ID":2,"_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":4650238,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":4650238,"_binds":[]},"data":{"options":0,"srcID":4650238,"frameCounter":228,"commandID":34,"payloadSize":255,"commandFrame":{}},"linkquality":50,"groupID":1,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 

@@ -16,7 +16,7 @@ const mockSerialPortOnce = jest.fn();
 const mockSerialPortSet = jest.fn().mockImplementation((opts, cb) => cb());
 const mockSerialPortWrite = jest.fn((buffer, cb) => cb());
 let mockSerialPortIsOpen = false;
-
+type ParsedCB = (frame: UnpiFrame) => void;
 jest.mock('../../../src/utils/wait', () => {
     return jest.fn();
 });
@@ -43,7 +43,7 @@ const mockSocketSetNoDelay = jest.fn();
 const mockSocketSetKeepAlive = jest.fn();
 const mockSocketPipe = jest.fn();
 const mockSocketOnce = jest.fn();
-const mockSocketCallbacks = {};
+const mockSocketCallbacks: {[k: string]: () => void} = {};
 const mockSocketConnect = jest.fn().mockImplementation(() => {
     mockSocketCallbacks['connect']();
     mockSocketCallbacks['ready']();
@@ -57,7 +57,7 @@ jest.mock('net', () => {
                 setNoDelay: mockSocketSetNoDelay,
                 pipe: mockSocketPipe,
                 connect: mockSocketConnect,
-                on: (event, cb) => mockSocketCallbacks[event] = cb,
+                on: (event: string | number, cb: () => void) => mockSocketCallbacks[event] = cb,
                 once: mockSocketOnce,
                 destroy: mockSocketDestroy,
                 setKeepAlive: mockSocketSetKeepAlive,
@@ -110,7 +110,7 @@ const mocks = [
 ];
 
 describe('ZNP', () => {
-    let znp;
+    let znp: Znp;
 
     beforeEach(() => {
         for (let mock of mocks) {
@@ -340,7 +340,7 @@ describe('ZNP', () => {
     });
 
     it('Open and close by serialport event', async () => {
-        let closeCb;
+        let closeCb: () => void;
 
         mockSerialPortOnce.mockImplementation(((event, cb) => {
             if (event === 'close') {
@@ -357,7 +357,7 @@ describe('ZNP', () => {
     });
 
     it('Serialport error (do nothing)', async () => {
-        let errorCb;
+        let errorCb: () => void;
 
         mockSerialPortOnce.mockImplementation(((event, cb) => {
             if (event === 'error') {
@@ -370,7 +370,7 @@ describe('ZNP', () => {
     });
 
     it('znp receive', async () => {
-        let parsedCb;
+        let parsedCb: ParsedCB;
         const received = jest.fn();
 
         znp.on('received', received);
@@ -400,7 +400,7 @@ describe('ZNP', () => {
     });
 
     it('znp receive malformed', async () => {
-        let parsedCb;
+        let parsedCb: ParsedCB;
         const received = jest.fn();
 
         znp.on('received', received);
@@ -423,7 +423,7 @@ describe('ZNP', () => {
     });
 
     it('znp request SREQ', async () => {
-        let parsedCb;
+        let parsedCb: ParsedCB;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
                 parsedCb = cb;
@@ -458,7 +458,7 @@ describe('ZNP', () => {
     });
 
     it('znp request SREQ failed', async () => {
-        let parsedCb;
+        let parsedCb: ParsedCB;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
                 parsedCb = cb;
@@ -475,13 +475,14 @@ describe('ZNP', () => {
         });
 
         await znp.open();
-
+        //@ts-ignore
         expect(znp.waitress.waiters.size).toBe(0);
 
         let error;
         try {
             await znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
         } catch (e) {
+            //@ts-ignore
             expect(znp.waitress.waiters.size).toBe(0);
             error = e;
         }
@@ -490,7 +491,7 @@ describe('ZNP', () => {
     });
 
     it('znp request SREQ failed should cancel waiter when provided', async () => {
-        let parsedCb;
+        let parsedCb: ParsedCB;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
                 parsedCb = cb;
@@ -507,15 +508,17 @@ describe('ZNP', () => {
         });
 
         await znp.open();
-
+        //@ts-ignore
         expect(znp.waitress.waiters.size).toBe(0);
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead');
+        //@ts-ignore
         expect(znp.waitress.waiters.size).toBe(1);
 
         let error;
         try {
             await znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2}, waiter.ID);
         } catch (e) {
+            //@ts-ignore
             expect(znp.waitress.waiters.size).toBe(0);
             error = e;
         }
@@ -525,7 +528,7 @@ describe('ZNP', () => {
 
 
     it('znp request SREQ with parsed in between', async () => {
-        let parsedCb;
+        let parsedCb: ParsedCB;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
                 parsedCb = cb;
@@ -567,7 +570,7 @@ describe('ZNP', () => {
     });
 
     it('znp request AREQ reset', async () => {
-        let parsedCb;
+        let parsedCb: ParsedCB;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
                 parsedCb = cb;
@@ -691,7 +694,7 @@ describe('ZNP', () => {
     });
 
     it('znp request, responses comes after timeout', async () => {
-        let parsedCb;
+        let parsedCb: ParsedCB;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
                 parsedCb = cb;
@@ -713,7 +716,7 @@ describe('ZNP', () => {
 
         let error;
         try {
-            result = await result;
+            await result;
         } catch (e) {
             error = e;
         }
@@ -722,7 +725,7 @@ describe('ZNP', () => {
     });
 
     it('znp request, waitfor', async () => {
-        let parsedCb;
+        let parsedCb: ParsedCB;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
                 parsedCb = cb;
@@ -746,7 +749,7 @@ describe('ZNP', () => {
     });
 
     it('znp request, waitfor with payload', async () => {
-        let parsedCb;
+        let parsedCb: ParsedCB;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
                 parsedCb = cb;
@@ -770,7 +773,7 @@ describe('ZNP', () => {
     });
 
     it('znp request, waitfor with payload mismatch', async (done) => {
-        let parsedCb;
+        let parsedCb: (frame: UnpiFrame) => void;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
                 parsedCb = cb;
@@ -792,7 +795,7 @@ describe('ZNP', () => {
 
         waiter.start().promise
             .then(() => done("Shouldn't end up here"))
-            .catch((e) => {
+            .catch((e: Error) => {
                 expect(e).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 10000ms"));
                 done();
             });

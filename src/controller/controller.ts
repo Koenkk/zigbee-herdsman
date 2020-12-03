@@ -16,7 +16,7 @@ import GreenPower from './greenPower';
 import mixin from 'mixin-deep';
 import Group from './model/group';
 
-interface Options {
+export interface Options {
     network: AdapterTsType.NetworkOptions;
     serialPort: AdapterTsType.SerialPortOptions;
     databasePath: string;

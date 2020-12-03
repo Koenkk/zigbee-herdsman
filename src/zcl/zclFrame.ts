@@ -4,6 +4,7 @@ import BuffaloZcl from './buffaloZcl';
 import {TsType as BuffaloTsType} from '../buffalo';
 import * as TsType from './tstype';
 import {TsType as DefinitionTsType, FrameType} from './definition';
+import {ClustersList} from './definition/cluster';
 
 const MINIMAL_FRAME_LENGTH = 3;
 
@@ -356,14 +357,13 @@ class ZclFrame {
         return this.Header.frameControl.frameType === FrameType.GLOBAL;
     }
 
-    // List of clusters is not completed, feel free to add more.
-    public isCluster(clusterName: 'genTime' | 'genAnalogInput' | 'genBasic' | 'genGroups' | 'ssIasZone'): boolean {
+    public isCluster<N extends keyof ClustersList>(clusterName: N): boolean {
         return this.Cluster.name === clusterName;
     }
 
     // List of commands is not completed, feel free to add more.
     public isCommand(
-        commandName: 'read' | 'report' | 'readRsp' | 'remove' | 'add' | 'write' | 'enrollReq' | 'configReport'
+        commandName: 'read' | 'report' | 'readRsp' | 'remove' | 'add' | 'write' | 'enrollReq' | 'configReport' | 'arm'
     ): boolean {
         return this.getCommand().name === commandName;
     }

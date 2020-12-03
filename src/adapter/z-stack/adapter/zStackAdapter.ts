@@ -302,7 +302,7 @@ class ZStackAdapter extends Adapter {
 
     public async sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
-        disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
+        disableResponse: boolean, disableRecovery?: boolean, sourceEndpoint?: number,
     ): Promise<Events.ZclDataPayload> {
         return this.queue.execute<Events.ZclDataPayload>(async () => {
             this.checkInterpanLock();

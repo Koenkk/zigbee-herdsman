@@ -7,9 +7,11 @@ import * as Constants from '../../../src/adapter/z-stack/constants';
 import fs from 'fs';
 import path from 'path';
 import * as Zcl from '../../../src/zcl';
+import { KeyValue } from "../../../src/controller/tstype";
+import { Coordinator, LQI } from "../../../src/adapter/tstype";
 
 
-const waitForResult = (payload, ID = null) => {
+const waitForResult = (payload: unknown, ID: number = null) => {
     ID = ID || 1;
     return {start: () => {return {promise: payload, ID}}, ID};
 };
@@ -25,7 +27,7 @@ function flushPromises() {
     return new Promise(resolve => setImmediate(resolve));
   }
 
-function getRandomArbitrary(min, max) {
+function getRandomArbitrary(min: number, max: number) {
     return Math.random() * (max - min) + min;
   }
 
@@ -46,6 +48,7 @@ const mockZnpRequest = jest.fn().mockReturnValue({payload: {}});
 const mockZnpWaitfor = jest.fn();
 const mockZnpOpen = jest.fn();
 const mockZnpClose = jest.fn();
+const mockZnpOpenSocketPort = jest.fn();
 const mockQueueExecute = jest.fn().mockImplementation(async (func) => await func());
 
 const touchlinkScanRequest = Zcl.ZclFrame.create(
@@ -69,9 +72,9 @@ const touchlinkIdentifyRequest = Zcl.ZclFrame.create(
 );
 
 const mocks = [mockZnpOpen, mockZnpWaitfor, mockZnpRequest, mockZnpClose];
-const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+const deepClone = (obj: KeyValue) => JSON.parse(JSON.stringify(obj));
 
-const equalsPartial = (object, expected) => {
+const equalsPartial = (object: KeyValue, expected: KeyValue | ArrayLike<unknown>) => {
     for (const [key, value] of Object.entries(expected)) {
         if (!equals(object[key], value)) {
             return false;
@@ -81,8 +84,8 @@ const equalsPartial = (object, expected) => {
     return true;
 }
 
-let znpReceived;
-let znpClose;
+let znpReceived: (arg1: any) => void;
+let znpClose: () => void;
 let dataConfirmCode = 0;
 let dataConfirmCodeReset = false;
 let nodeDescRspErrorOnce = false;
@@ -93,7 +96,7 @@ let lastStartIndex = 0;
 jest.mock('../../../src/adapter/z-stack/znp/znp', () => {
     return jest.fn().mockImplementation(() => {
         return {
-            on: (event, handler) => {
+            on: (event: string, handler: { (arg1: any): void; (): void; }) => {
                 if (event === 'received') {
                     znpReceived = handler;
                 } else if (event === 'close') {
@@ -104,6 +107,7 @@ jest.mock('../../../src/adapter/z-stack/znp/znp', () => {
             request: mockZnpRequest,
             waitFor: mockZnpWaitfor,
             close: mockZnpClose,
+            openSocketPort: mockZnpOpenSocketPort
         };
     });
 });
@@ -117,8 +121,8 @@ jest.mock('../../../src/utils/queue', () => {
     });
 });
 
-let sysVersionResponse;
-let assocGetWithAddressNodeRelation;
+let sysVersionResponse: unknown;
+let assocGetWithAddressNodeRelation: unknown;
 
 const basicMocks = () => {
     mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
@@ -302,7 +306,7 @@ Znp.isValidPath = jest.fn().mockReturnValue(true);
 Znp.autoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
 
 describe('zStackAdapter', () => {
-    let adapter;
+    let adapter: ZStackAdapter;
 
     beforeEach(() => {
         sysVersionResponse = {payload: {product: 1, revision: "20201026"}};
@@ -563,7 +567,7 @@ describe('zStackAdapter', () => {
 
     it('Start zStack 1.2 initialize - already configured; extended pan id mismatch -> should be reset', async () => {
         networkOptions.networkKeyDistribute = true;
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {});
         mockZnpRequest.mockImplementation(async (subsystem, command, payload, expectedStatus) => {
             const missing = () => {
                 const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
@@ -671,7 +675,7 @@ describe('zStackAdapter', () => {
 
     it('Start zStack 1.2 initialize - throw error on timeout and dont initialize', async () => {
         networkOptions.networkKeyDistribute = true;
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {});
         mockZnpRequest.mockImplementation(async (subsystem, command, payload, expectedStatus) => {
             const missing = () => {
                 const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
@@ -760,7 +764,7 @@ describe('zStackAdapter', () => {
 
     it('Start zStack 1.2 initialize - not configured; -> should be restored', async () => {
         networkOptions.networkKeyDistribute = true;
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {});
         mockZnpRequest.mockImplementation(async (subsystem, command, payload, expectedStatus) => {
             const missing = () => {
                 const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
@@ -854,7 +858,7 @@ describe('zStackAdapter', () => {
     it('Start zStack 1.2 when it doesnt support version call (on old firmwares)', async () => {
         // https://github.com/Koenkk/zigbee-herdsman/issues/129
         networkOptions.networkKeyDistribute = true;
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json');
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {});
         mockZnpRequest.mockImplementation(async (subsystem, command, payload, expectedStatus) => {
             const missing = () => {
                 const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
@@ -1447,7 +1451,7 @@ describe('zStackAdapter', () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
 
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {});
         const result = await adapter.start();
         expect(result).toBe('restored');
         expect(Znp).toBeCalledWith("dummy", 800, false);
@@ -1554,7 +1558,7 @@ describe('zStackAdapter', () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
 
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {});
         const result = await adapter.start();
         expect(result).toBe('restored');
         expect(Znp).toBeCalledWith("dummy", 800, false);
@@ -1661,7 +1665,7 @@ describe('zStackAdapter', () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
 
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {});
         const result = await adapter.start();
         expect(result).toBe('restored');
         expect(Znp).toBeCalledWith("dummy", 800, false);
@@ -1766,7 +1770,7 @@ describe('zStackAdapter', () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
 
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {});
         const result = await adapter.start();
         expect(result).toBe('restored');
         expect(Znp).toBeCalledWith("dummy", 800, false);
@@ -1832,7 +1836,7 @@ describe('zStackAdapter', () => {
         const backup = {"adapterType":"conbee","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":1},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"value":[0],"len":1},"ZCD_NV_TCLK_TABLE_START":{"id":273,"offset":0,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"value":[0,8,0,0],"len":4},"ZCD_NV_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"offset":0,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {});
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -1857,7 +1861,7 @@ describe('zStackAdapter', () => {
         const backup = {"adapterType":"zStack","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":1},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"value":[0],"len":1},"ZCD_NV_TCLK_TABLE_START":{"id":273,"offset":0,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"value":[0,9,0,0],"len":4},"ZCD_NV_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"offset":0,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {});
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -1882,7 +1886,7 @@ describe('zStackAdapter', () => {
         const backup = {"adapterType":"zStack","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":1},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"value":[1,3,5,8,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"value":[0],"len":1},"ZCD_NV_TCLK_TABLE_START":{"id":273,"offset":0,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"value":[0,8,0,0],"len":4},"ZCD_NV_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"offset":0,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {});
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -1907,7 +1911,7 @@ describe('zStackAdapter', () => {
         const backup = {"adapterType":"zStack","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":1},"data":{"ZCD_NV_PANID":{"id": 131,"offset": 0,"value": [123,1],"len": 2},"ZCD_NV_EXTADDR":{"id":1,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"value":[0],"len":1},"ZCD_NV_TCLK_TABLE_START":{"id":273,"offset":0,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"value":[0,8,0,0],"len":4},"ZCD_NV_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"offset":0,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {});
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -1932,7 +1936,7 @@ describe('zStackAdapter', () => {
         const backup = {"adapterType":"zStack","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":1},"data":{"ZCD_NV_PANID":{"id": 131,"offset": 0,"value": [123,0],"len": 2},"ZCD_NV_EXTADDR":{"id":1,"offset":0,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"value":[175,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"value":[0],"len":1},"ZCD_NV_TCLK_TABLE_START":{"id":273,"offset":0,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"value":[0,8,0,0],"len":4},"ZCD_NV_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"offset":0,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {});
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -1940,7 +1944,7 @@ describe('zStackAdapter', () => {
     });
 
     it('Create backup zStack 3.0.x', async () => {
-        const backup = {"adapterType":"zStack","meta":{"product":2},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"osal":true,"product":-1,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"osal":true,"product":-1,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_PANID":{"id":131,"offset":0,"osal":true,"product":-1,"value":[123,0],"len":2},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"osal":true,"product":-1,"value":[1,2,3],"len":3},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"osal":true,"product":-1,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"osal":true,"product":-1,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"osal":true,"product":-1,"value":[0],"len":1},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"osal":true,"product":-1,"value":[0,8,0,0],"len":4},"ZCD_NV_LEGACY_TCLK_TABLE_START":{"id":273,"product":2,"offset":0,"osal":true,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"product":2,"offset":0,"osal":true,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
+        const backup: KeyValue = {"adapterType":"zStack","meta":{"product":2},"data":{"ZCD_NV_EXTADDR":{"id":1,"offset":0,"osal":true,"product":-1,"value":[174,68,1,18,0,75,18,0],"len":8},"ZCD_NV_NIB":{"id":33,"offset":0,"osal":true,"product":-1,"value":[230,5,2,16,20,16,0,20,0,0,0,1,5,1,143,7,0,2,5,30,0,0,14,0,0,0,0,0,0,0,0,0,0,114,60,8,0,64,0,0,15,15,4,0,1,0,0,0,1,0,0,0,0,174,68,1,18,0,75,18,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,60,3,0,1,120,10,1,0,0,65,0,0],"len":110},"ZCD_NV_PANID":{"id":131,"offset":0,"osal":true,"product":-1,"value":[123,0],"len":2},"ZCD_NV_EXTENDED_PAN_ID":{"id":45,"offset":0,"osal":true,"product":-1,"value":[1,2,3],"len":3},"ZCD_NV_NWK_ACTIVE_KEY_INFO":{"id":58,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_NWK_ALTERN_KEY_INFO":{"id":59,"offset":0,"osal":true,"product":-1,"value":[0,1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":17},"ZCD_NV_APS_USE_EXT_PANID":{"id":71,"offset":0,"osal":true,"product":-1,"value":[0,0,0,0,0,0,0,0],"len":8},"ZCD_NV_PRECFGKEY":{"id":98,"offset":0,"osal":true,"product":-1,"value":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"len":16},"ZCD_NV_PRECFGKEY_ENABLE":{"id":99,"offset":0,"osal":true,"product":-1,"value":[0],"len":1},"ZCD_NV_CHANLIST":{"id":132,"offset":0,"osal":true,"product":-1,"value":[0,8,0,0],"len":4},"ZCD_NV_LEGACY_TCLK_TABLE_START":{"id":273,"product":2,"offset":0,"osal":true,"value":[94,15,57,228,82,11,124,39,162,90,56,187,81,51,252,149],"len":16},"ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START":{"id":117,"product":2,"offset":0,"osal":true,"value":[123,63,0,0,174,68,1,18,0,75,18,0],"len":12}}};
 
         mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
             const missing = () => {
@@ -1978,7 +1982,7 @@ describe('zStackAdapter', () => {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_APS_USE_EXT_PANID.value)}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.PRECFGKEY, offset: 0})) {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_PRECFGKEY.value)}};
-                } else if (equalsPartial(payload, {id: NvItemsIds.PRECFGKEY_ENABLE, offset: 0})) {
+                } else if (equalsPartial(payload, {id: NvItemsIds.PRECFGKEYS_ENABLE, offset: 0})) {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_PRECFGKEY_ENABLE.value)}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.LEGACY_TCLK_TABLE_START, offset: 0})) {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_LEGACY_TCLK_TABLE_START.value)}};
@@ -2064,7 +2068,7 @@ describe('zStackAdapter', () => {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_APS_USE_EXT_PANID.value)}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.PRECFGKEY, offset: 0})) {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_PRECFGKEY.value)}};
-                } else if (equalsPartial(payload, {id: NvItemsIds.PRECFGKEY_ENABLE, offset: 0})) {
+                } else if (equalsPartial(payload, {id: NvItemsIds.PRECFGKEYS_ENABLE, offset: 0})) {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_PRECFGKEY_ENABLE.value)}};
                 } else if (equalsPartial(payload, {id: NvItemsIds.CHANLIST, offset: 0})) {
                     return {payload: {value: Buffer.from(backup.data.ZCD_NV_CHANLIST.value)}};
@@ -2146,7 +2150,7 @@ describe('zStackAdapter', () => {
         const backup = {"adapterType":"zStack","time":"Mon, 19 Aug 2019 16:21:55 GMT","meta":{"product":0}};
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backup), 'utf8');
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {});
 
         let error;
         try {await adapter.start()} catch (e) {error = e};
@@ -2164,7 +2168,7 @@ describe('zStackAdapter', () => {
         basicMocks();
         await adapter.start();
         const info = await adapter.getCoordinator();
-        const expected = {
+        const expected: Coordinator = {
             "networkAddress":0,
             "manufacturerID":0,
             "ieeeAddr":"0x123",
@@ -2847,8 +2851,9 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledTimes(3);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 0}, 1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 2}, 1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 4}, 1);
-        expect(result).toStrictEqual({"neighbors":[{"linkquality":10,"networkAddress":2,"ieeeAddr":3,"relationship":3,"depth":1},{"linkquality":15,"networkAddress":3,"ieeeAddr":4,"relationship":2,"depth":5},{"linkquality":10,"networkAddress":2,"ieeeAddr":3,"relationship":3,"depth":1},{"linkquality":15,"networkAddress":3,"ieeeAddr":4,"relationship":2,"depth":5},{"linkquality":10,"networkAddress":5,"ieeeAddr":6,"relationship":3,"depth":1},{"linkquality":15,"networkAddress":7,"ieeeAddr":8,"relationship":2,"depth":5}]});
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', { dstaddr: 203, startindex: 4 }, 1);
+        const expected: LQI = { "neighbors": [{ "linkquality": 10, "networkAddress": 2, "ieeeAddr": "3", "relationship": 3, "depth": 1 }, { "linkquality": 15, "networkAddress": 3, "ieeeAddr": "4", "relationship": 2, "depth": 5 }, { "linkquality": 10, "networkAddress": 2, "ieeeAddr": "3", "relationship": 3, "depth": 1 }, { "linkquality": 15, "networkAddress": 3, "ieeeAddr": "4", "relationship": 2, "depth": 5 }, { "linkquality": 10, "networkAddress": 5, "ieeeAddr": "6", "relationship": 3, "depth": 1 }, { "linkquality": 15, "networkAddress": 7, "ieeeAddr": "8", "relationship": 2, "depth": 5 }] };
+        expect(result).toStrictEqual(expected);
     });
 
     it('LQI fails', async () => {
@@ -2949,7 +2954,7 @@ describe('zStackAdapter', () => {
     it('Incoming message extended', async () => {
         basicMocks();
         await adapter.start();
-        let zclData;
+        let zclData: {[k: string]: unknown};
         const responseFrame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 100, 'readRsp', 0, [{attrId: 0, attrData: 2, dataType: 32, status: 0}]);
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsgExt', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()}};
         adapter.on("zclData", (p) => {zclData = p;})
@@ -2964,7 +2969,7 @@ describe('zStackAdapter', () => {
     it('Incoming message raw (not ZCL)', async () => {
         basicMocks();
         await adapter.start();
-        let rawData;
+        let rawData: {[k: string]: unknown};
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 1, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: Buffer.from([0x0, 0x1])}};
         adapter.on("rawData", (p) => {rawData = p;})
         znpReceived(object);
@@ -2998,7 +3003,7 @@ describe('zStackAdapter', () => {
     it('Device joined', async () => {
         basicMocks();
         await adapter.start();
-        let deviceJoin;
+        let deviceJoin: unknown;
         const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'tcDeviceInd', payload: {nwkaddr: 123, extaddr: '0x123'}};
         adapter.on("deviceJoined", (p) => {deviceJoin = p;})
         znpReceived(object);
@@ -3008,7 +3013,7 @@ describe('zStackAdapter', () => {
     it('Device announce', async () => {
         basicMocks();
         await adapter.start();
-        let deviceAnnounce;
+        let deviceAnnounce: unknown;
         mockZnpRequest.mockClear();
         const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'endDeviceAnnceInd', payload: {nwkaddr: 123, ieeeaddr: '0x123'}};
         adapter.on("deviceAnnounce", (p) => {deviceAnnounce = p;})
@@ -3027,7 +3032,7 @@ describe('zStackAdapter', () => {
     it('Network address response', async () => {
         basicMocks();
         await adapter.start();
-        let networkAddress;
+        let networkAddress: unknown;
         const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'nwkAddrRsp', payload: {nwkaddr: 124, ieeeaddr: '0x123'}};
         adapter.on("networkAddress", (p) => {networkAddress = p;})
         znpReceived(object);
@@ -3037,7 +3042,7 @@ describe('zStackAdapter', () => {
     it('Device leave', async () => {
         basicMocks();
         await adapter.start();
-        let deviceAnnounce;
+        let deviceAnnounce: unknown;
         const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'leaveInd', payload: {srcaddr: 123, extaddr: '0x123'}};
         adapter.on("deviceLeave", (p) => {deviceAnnounce = p;})
         znpReceived(object);
@@ -3105,11 +3110,11 @@ describe('zStackAdapter', () => {
 
         let result = adapter.sendZclFrameInterPANBroadcast(touchlinkScanRequest, 1000);
         znpReceived(object);
-        result = await result;
+        const res = await result;
 
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 4096, "data": touchlinkScanRequest.toBuffer(), "destendpoint": 254, "dstaddr": "0x000000000000ffff", "len": 9, "options": 0, "radius": 30, "srcendpoint": 12, "transid": 1, "dstaddrmode": 2, "dstpanid": 65535}, null);
-        expect(deepClone(result)).toStrictEqual({"frame":{"Header":{"frameControl":{"frameType":1,"manufacturerSpecific":false,"direction":1,"disableDefaultResponse":false,"reservedBits":0},"transactionSequenceNumber":12,"manufacturerCode":null,"commandIdentifier":1},"Payload":{"transactionID":1,"rssiCorrection":10,"zigbeeInformation":5,"touchlinkInformation":6,"keyBitmask":12,"responseID":11,"extendedPanID":"0x0017210104d9cd33","networkUpdateID":1,"logicalChannel":12,"panID":13,"networkAddress":5,"numberOfSubDevices":10,"totalGroupIdentifiers":5,"endpointID":1,"profileID":99,"deviceID":101,"version":3,"groupIdentifierCount":8},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}},"address":12394,"endpoint":254,"linkquality":101,"groupID":0});
+        expect(deepClone(res)).toStrictEqual({"frame":{"Header":{"frameControl":{"frameType":1,"manufacturerSpecific":false,"direction":1,"disableDefaultResponse":false,"reservedBits":0},"transactionSequenceNumber":12,"manufacturerCode":null,"commandIdentifier":1},"Payload":{"transactionID":1,"rssiCorrection":10,"zigbeeInformation":5,"touchlinkInformation":6,"keyBitmask":12,"responseID":11,"extendedPanID":"0x0017210104d9cd33","networkUpdateID":1,"logicalChannel":12,"panID":13,"networkAddress":5,"numberOfSubDevices":10,"totalGroupIdentifiers":5,"endpointID":1,"profileID":99,"deviceID":101,"version":3,"groupIdentifierCount":8},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32},{"name":"endpointID","type":32},{"name":"profileID","type":33},{"name":"deviceID","type":33},{"name":"version","type":32},{"name":"groupIdentifierCount","type":32}],"name":"scanResponse"}}}},"address":12394,"endpoint":254,"linkquality":101,"groupID":0});
     });
 
     it('Send zcl frame interpan throw exception when command has no response', async () => {

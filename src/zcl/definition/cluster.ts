@@ -27,11 +27,17 @@ interface CommandDefinition {
     parameters: ParameterDefinition[];
     response?: number;
 }
+export type ClustersList = {
+    genTime: ClusterDefinition;
+    genAnalogInput: ClusterDefinition;
+    genBasic: ClusterDefinition;
+    genGroups: ClusterDefinition;
+    ssIasZone: ClusterDefinition;
+    ssIasAce: ClusterDefinition;
+    [k: string]: ClusterDefinition;
+};
 
-const Cluster: {
-    [s: string]: ClusterDefinition;
-}
-= {
+const Cluster: ClustersList = {
     genBasic: {
         ID: 0,
         attributes: {

@@ -1,11 +1,13 @@
 #tests
 test
 coverage
+temp
 
 #build tools
 .travis.yml
 .jenkins.yml
 .codeclimate.yml
+.github
 
 #linters
 .jscsrc
@@ -19,3 +21,7 @@ coverage
 #src
 src
 docs
+tsconfig.json
+typedoc-tsconfig.json
+.babelrc.js
+.eslintignore

@@ -4,4 +4,5 @@
         "javascript",
         "typescript",
     ],
+    "standard.enable": false,
 }

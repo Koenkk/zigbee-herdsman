@@ -71,9 +71,9 @@ describe('Utils', () => {
 
     it('Test queue', async () => {
         const queue = new Queue(4);
-        const finished = [];
-
-        let job1Promise, job2Promise, job3Promise;
+        const finished: number[] = [];
+        type Resolve = (value?: unknown) => void;
+        let job1Promise: Resolve, job2Promise: Resolve;
         const job1 = new Promise((resolve) => job1Promise = resolve);
         const job2 = new Promise((resolve) => job2Promise = resolve);
         const job5 = new Promise((resolve) => {});

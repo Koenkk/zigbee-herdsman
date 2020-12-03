@@ -1,8 +1,9 @@
 import {Parser, Constants, Frame, Writer} from '../../../src/adapter/z-stack/unpi';
+import { KeyValue } from '../../../src/controller/tstype';
 
 describe('Parser', () => {
-    let parser;
-    let parsed = [];
+    let parser: Parser;
+    let parsed: KeyValue[] = [];
 
     beforeEach(() => {
         parser = new Parser();
@@ -141,7 +142,7 @@ describe('Frame', () => {
 });
 
 describe('Writer', () => {
-    let writer;
+    let writer: Writer;
 
     beforeEach(() => {
         writer = new Writer();

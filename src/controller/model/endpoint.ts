@@ -248,7 +248,7 @@ class Endpoint extends Entity {
         try {
             const frame = Zcl.ZclFrame.create(
                 Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
-                options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+                options.manufacturerCode, options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
                 'write', cluster.ID, payload, options.reservedBits
             );
             const result = await Entity.adapter.sendZclFrameToEndpoint(
@@ -278,7 +278,7 @@ class Endpoint extends Entity {
 
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
-            options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(), 'read',
+            options.manufacturerCode, options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(), 'read',
             cluster.ID, payload, options.reservedBits
         );
 
@@ -486,7 +486,7 @@ class Endpoint extends Entity {
 
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
-            options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+            options.manufacturerCode, options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
             'configReport', cluster.ID, payload, options.reservedBits
         );
 
@@ -520,7 +520,7 @@ class Endpoint extends Entity {
 
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, options.direction, options.disableDefaultResponse,
-            options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+            options.manufacturerCode, options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
             command.ID, cluster.ID, payload, options.reservedBits
         );
 

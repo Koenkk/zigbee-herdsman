@@ -284,7 +284,7 @@ describe('helloworld', () => {
 
     it('EMPTY write', () => {
         const buffalo = new Buffalo(Buffer.alloc(2));
-        const payload = null;
+        const payload: unknown = null;
         buffalo.write('EMPTY', payload, {});
         expect(buffalo.getPosition()).toStrictEqual(0);
         expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00]));

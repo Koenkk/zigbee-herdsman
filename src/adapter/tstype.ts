@@ -6,11 +6,13 @@ interface NetworkOptions {
     networkKeyDistribute?: boolean;
 }
 
+export type SupportedAdapter = 'zstack' | 'deconz' | 'zigate';
+
 interface SerialPortOptions {
     baudRate?: number;
     rtscts?: boolean;
     path?: string;
-    adapter?: 'zstack' | 'deconz' | 'zigate';
+    adapter?: SupportedAdapter;
 }
 
 interface AdapterOptions {
