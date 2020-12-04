@@ -194,7 +194,7 @@ describe('ZNP', () => {
 
         znp = new Znp("tcp://localhost:666", 100, false);
 
-        let error = false;
+        let error: Error;
         try {
             await znp.open();
         } catch (e) {
