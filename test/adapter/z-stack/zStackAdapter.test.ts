@@ -254,11 +254,11 @@ const basicMocks = () => {
             }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 203})) {
             if (lastStartIndex === 0) {
-                return waitForResult({payload: {status: 0, neighbortableentries: 5, neighborlqilist: [{lqi: 10, nwkAddr: 2, extAddr: 3, relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 3, extAddr: 4, relationship: 2, depth: 5}]}});
+                return waitForResult({payload: {status: 0, neighbortableentries: 5, neighborlqilist: [{lqi: 10, nwkAddr: 2, extAddr: "3", relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 3, extAddr: "4", relationship: 2, depth: 5}]}});
             } else if (lastStartIndex === 2) {
-                return waitForResult({payload: {status: 0, neighbortableentries: 5, neighborlqilist: [{lqi: 10, nwkAddr: 5, extAddr: 6, relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 7, extAddr: 8, relationship: 2, depth: 5}]}});
+                return waitForResult({payload: {status: 0, neighbortableentries: 5, neighborlqilist: [{lqi: 10, nwkAddr: 5, extAddr: "6", relationship: 3, depth: 1}, {lqi: 15, nwkAddr: 7, extAddr: "8", relationship: 2, depth: 5}]}});
             } else if (lastStartIndex === 4) {
-                return waitForResult({payload: {status: 0, neighbortableentries: 5, neighborlqilist: [{lqi: 10, nwkAddr: 9, extAddr: 10, relationship: 3, depth: 1}]}});
+                return waitForResult({payload: {status: 0, neighbortableentries: 5, neighborlqilist: [{lqi: 10, nwkAddr: 9, extAddr: "10", relationship: 3, depth: 1}]}});
             }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 204})) {
             return waitForResult({payload: {status: 1}});
