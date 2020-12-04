@@ -3,6 +3,7 @@ import * as Zcl from '../src/zcl';
 import {Direction, FrameType, DataType, BuffaloZclDataType} from '../src/zcl/definition';
 import BuffaloZcl from '../src/zcl/buffaloZcl';
 import { KeyValue } from "../src/controller/tstype";
+import { ZclHeader } from "../src/zcl/zclFrame";
 
 describe('Zcl', () => {
 
@@ -105,7 +106,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer report', () => {
         const buffer = [0x18, 0x4a, 0x0a, 0x55, 0x00, 0x39, 0x00, 0x00, 0x00, 0x00];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genAnalogInput").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 10,
             frameControl: {
                 reservedBits: 0,
@@ -135,7 +136,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer tradfriArrowSingle', () => {
         const buffer = [0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genScenes").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 7,
             frameControl: {
                 reservedBits: 0,
@@ -159,7 +160,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer genGroups getMembership', () => {
         const buffer = [0x11, 0x7c, 0x02, 2, 10, 0, 20, 0];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genGroups").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 2,
             frameControl: {
                 reservedBits: 0,
@@ -181,7 +182,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer genGroups getMembership', () => {
         const buffer = [0x19, 0x7c, 0x03, 0, 10, 0];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genGroups").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 3,
             frameControl: {
                 reservedBits: 0,
@@ -203,7 +204,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer occupancy report', () => {
         const buffer = [24,169,10,0,0,24,1];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 10,
             frameControl: {
                 reservedBits: 0,
@@ -225,7 +226,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer configReportRsp - short', () => {
         const buffer = [0x08, 0x01, 0x07, 0x00];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 7,
             frameControl: {
                 reservedBits: 0,
@@ -247,7 +248,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer configReportRsp - long', () => {
         const buffer = [0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 7,
             frameControl: {
                 reservedBits: 0,
@@ -269,7 +270,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer configReportRsp (hvacThermostat)', () => {
         const buffer = [0x18, 0x03, 0x07, 0x00, 0x00, 0x12, 0x00];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 7,
             frameControl: {
                 reservedBits: 0,
@@ -319,7 +320,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer configReportRsp failed', () => {
         const buffer = [0x08, 0x01, 0x07, 0x02, 0x01, 0x01, 0x01];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 7,
             frameControl: {
                 reservedBits: 0,
@@ -341,7 +342,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer defaultRsp', () => {
         const buffer = [0x18, 0x04, 0x0b, 0x0c, 0x82];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 11,
             frameControl: {
                 reservedBits: 0,
@@ -363,7 +364,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer xiaomiStruct', () => {
         const buffer = [28,95,17,3,10,5,0,66,21,108,117,109,105,46,115,101,110,115,111,114,95,119,108,101,97,107,46,97,113,49,1,255,66,34,1,33,213,12,3,40,33,4,33,168,19,5,33,43,0,6,36,0,0,5,0,0,8,33,4,2,10,33,0,0,100,16,0];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 10,
             frameControl: {
                 reservedBits: 0,
@@ -385,7 +386,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer struct', () => {
         const buffer = [28,52,18,194,10,2,255,76,6,0,16,1,33,206,11,33,168,67,36,1,0,0,0,0,33,48,2,32,86];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 10,
             frameControl: {
                 reservedBits: 0,
@@ -429,7 +430,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer discoverRsp', () => {
         const buffer = [24,23,13,0,32,0,32,33,0,32,49,0,48,51,0,32,53,0,24];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 13,
             frameControl: {
                 reservedBits: 0,
@@ -460,7 +461,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer readRsp failed', () => {
         const buffer = [8, 1, 1, 1, 0, 2];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 1,
             frameControl: {
                 reservedBits: 0,
@@ -482,7 +483,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer readRsp success', () => {
         const buffer = [8, 1, 1, 1, 0, 0, 32, 3];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 1,
             frameControl: {
                 reservedBits: 0,
@@ -504,7 +505,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer GDP commission', () => {
         const buffer = [0x11, 0x00, 0x04, 0x00, 0x00, 0xfe, 0xf4, 0x46, 0x00, 0xf9, 0x00, 0x00, 0x00, 0xe0, 0x1b, 0x02, 0x81, 0xf2, 0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab, 0xa4, 0x46, 0xd4, 0xd5, 0xf9, 0x01, 0x00, 0x00];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 4,
             frameControl: {
                 reservedBits: 0,
@@ -540,7 +541,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer GDP scene 0', () => {
         const buffer = [0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 0,
             frameControl: {
                 reservedBits: 0,
@@ -569,7 +570,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer GDP with extra data', () => {
         const buffer = [0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff, 0x01];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 0,
             frameControl: {
                 reservedBits: 0,
@@ -598,7 +599,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer readRsp alias type', () => {
         const buffer = [8, 1, 1, 1, 0, 0, 8, 3];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 1,
             frameControl: {
                 reservedBits: 0,
@@ -620,7 +621,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer configReportRsp server to client', () => {
         const buffer = [8, 1, 6, 1, 1, 0, 10, 10];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 6,
             frameControl: {
                 reservedBits: 0,
@@ -642,7 +643,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer configReportRsp client to server analog', () => {
         const buffer = [8, 1, 6, 0, 0, 1, 32, 1, 0, 10, 0, 20];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 6,
             frameControl: {
                 reservedBits: 0,
@@ -664,7 +665,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer configReportRsp client to server analog', () => {
         const buffer = [8, 1, 6, 0, 0, 1, 8, 1, 0, 10, 0];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 6,
             frameControl: {
                 reservedBits: 0,
@@ -686,7 +687,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer readRsp', () => {
         const buffer = [24,7,1,5,0,0,66,30,84,82,65,68,70,82,73,32,98,117,108,98,32,69,50,55,32,87,83,32,111,112,97,108,32,57,56,48,108,109,6,0,0,66,8,50,48,49,55,48,51,51,49,7,0,0,48,1,10,0,0,65,15,76,69,68,49,53,52,53,71,49,50,69,50,55,69,85];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 1,
             frameControl: {
                 reservedBits: 0,
@@ -742,7 +743,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer with reservered bits', () => {
         const buffer = Buffer.from([224,8,12,0,0,240]);
         const frame = Zcl.ZclFrame.fromBuffer(0, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 12,
             frameControl: {
                 reservedBits: 7,
@@ -875,7 +876,7 @@ describe('Zcl', () => {
     it('ZclFrame from buffer ssIasAce arm command', () => {
         const buffer = [1,87,0,0,6,49,50,51,52,53,54,0];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("ssIasAce").ID, Buffer.from(buffer));
-        const header: KeyValue = {
+        const header: ZclHeader = {
             commandIdentifier: 0,
             frameControl: {
                 reservedBits: 0,

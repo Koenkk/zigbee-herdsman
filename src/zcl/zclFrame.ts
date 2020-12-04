@@ -11,7 +11,7 @@ const MINIMAL_FRAME_LENGTH = 3;
 // eslint-disable-next-line
 type ZclPayload = any;
 
-interface ZclHeader {
+export interface ZclHeader {
     frameControl: FrameControl;
     manufacturerCode: number;
     transactionSequenceNumber: number;
