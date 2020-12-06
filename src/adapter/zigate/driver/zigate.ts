@@ -165,7 +165,7 @@ export default class ZiGate extends EventEmitter {
         return this.portType === 'serial' ? this.openSerialPort() : this.openSocketPort();
     }
 
-    public close(): Promise<boolean> {
+    public close(): Promise<void> {
         debug.info('close');
         return new Promise((resolve, reject) => {
             if (this.initialized) {
