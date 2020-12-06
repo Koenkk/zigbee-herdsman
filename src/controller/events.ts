@@ -95,7 +95,8 @@ type MessagePayloadType =
     'attributeReport' | 'readResponse' | 'raw' | 'read' | 'write' |
     // Specific
     'commandOn' | 'commandOffWithEffect' | 'commandStep' | 'commandStop' | 'commandHueNotification' |
-    'commandOff' | 'commandStepColorTemp' | 'commandMoveWithOnOff' | 'commandMove' | 'commandMoveHue' | 'commandStepHue' | 'commandStepSaturation' |
+    'commandOff' | 'commandStepColorTemp' | 'commandMoveWithOnOff' |
+    'commandMove' | 'commandMoveHue' | 'commandStepHue' | 'commandStepSaturation' |
     'commandMoveToSaturation' | 'commandStopWithOnOff' | 'commandMoveToLevelWithOnOff' | 'commandToggle' |
     'commandTradfriArrowSingle' | 'commandTradfriArrowHold' | 'commandTradfriArrowRelease' |
     'commandStepWithOnOff' | 'commandMoveToColorTemp' | 'commandMoveToColor' | 'commandOnWithTimedOff' |
