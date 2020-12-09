@@ -32,8 +32,8 @@ jobs:
         git config --local user.name "github-actions[bot]"
     - name: Bump version
       run: "npm version ${{ github.event.inputs.type }}"
-    - name: Generate docs
-      run: npm run docs && git add -A && git commit --amend --no-edit
+    # - name: Generate docs
+    #   run: npm run docs && git add -A && git commit --amend --no-edit
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
