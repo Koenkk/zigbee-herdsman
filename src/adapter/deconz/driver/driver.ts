@@ -63,6 +63,7 @@ class Driver extends events.EventEmitter {
     private configChanged: number;
     private portType: 'serial' | 'socket';
     private socketPort: net.Socket;
+    private DELAY: number;
     private READY_TO_SEND_TIMEOUT: number;
     private HANDLE_DEVICE_STATUS_DELAY: number;
     private PROCESS_APS_QUEUES_DELAY: number;
@@ -79,6 +80,7 @@ class Driver extends events.EventEmitter {
         this.apsDataConfirm = 0;
         this.apsDataIndication = 0;
         this.configChanged = 0;
+        this.DELAY = 100;
         this.READY_TO_SEND_TIMEOUT = 300;
         this.HANDLE_DEVICE_STATUS_DELAY = 100;
         this.PROCESS_APS_QUEUES_DELAY = 100;
@@ -114,19 +116,22 @@ class Driver extends events.EventEmitter {
     }
 
     public setDelay(delay: number): void {
-        debug(`Set delay to ${delay}`);
-		if (delay === 0) {
-			this.HANDLE_DEVICE_STATUS_DELAY = 10;
-			this.PROCESS_APS_QUEUES_DELAY = 50;
-			this.READY_TO_SEND_TIMEOUT = 50;
-		} else if (delay < 50) {
-			this.READY_TO_SEND_TIMEOUT = 50;
-		} else if (delay > 1200) {
-			this.READY_TO_SEND_TIMEOUT = 1200;
-		} else {
-			this.READY_TO_SEND_TIMEOUT = delay;
-		}
-	}
+    debug(`Set delay to ${delay}`);
+    this.DELAY = delay;
+        if (delay === 0) {
+            this.HANDLE_DEVICE_STATUS_DELAY = 100000; // device status will be handelt immediately in handler function
+            this.PROCESS_APS_QUEUES_DELAY = 50;
+            this.READY_TO_SEND_TIMEOUT = 50;
+        } else if (delay <= 50) {
+            this.READY_TO_SEND_TIMEOUT = 50;
+            this.PROCESS_APS_QUEUES_DELAY = 50;
+            this.HANDLE_DEVICE_STATUS_DELAY = 10;
+        } else if (delay > 1200) {
+            this.READY_TO_SEND_TIMEOUT = 1200;
+        } else {
+            this.READY_TO_SEND_TIMEOUT = delay;
+        }
+    }
 
     public static async isValidPath(path: string): Promise<boolean> {
         return SerialPortUtils.is(path, autoDetectDefinitions);
@@ -470,7 +475,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private checkDeviceStatus(currentDeviceStatus: number) {
+    private async checkDeviceStatus(currentDeviceStatus: number) {
         const networkState = currentDeviceStatus & 0x03;
         this.apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
         this.apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
@@ -479,9 +484,39 @@ class Driver extends events.EventEmitter {
 
         debug("networkstate: " + networkState + " apsDataConfirm: " + this.apsDataConfirm + " apsDataIndication: " + this.apsDataIndication +
             " configChanged: " + this.configChanged + " apsRequestFreeSlots: " + this.apsRequestFreeSlots);
+
+        // fast mode
+        if (this.DELAY === 0) {
+            if (this.apsDataConfirm === 1) {
+                debug("query aps data confirm");
+                try {
+                    const x = await this.querySendDataStateRequest();
+                } catch (e) {
+                    if (e.status === 5) {
+                        this.apsDataConfirm = 0;
+                    }
+                }
+            }
+            if (this.apsDataIndication === 1) {
+                debug("query aps data indication");
+                try {
+                    const x = await this.readReceivedDataRequest();
+                } catch (e) {
+                    if (e.status === 5) {
+                        this.apsDataConfirm = 0;
+                    }
+                }
+            }
+            if (this.configChanged === 1) {
+                // when network settings changed
+            }
+        }
     }
 
     private async handleDeviceStatus() {
+        if (this.DELAY === 0) {
+            return;
+        }
         if (this.apsDataConfirm === 1) {
             try {
                 debug("query aps data confirm");
@@ -593,11 +628,19 @@ class Driver extends events.EventEmitter {
         switch (req.commandId) {
             case PARAM.PARAM.APS.DATA_INDICATION:
                 //debug(`read received data request. seqNr: ${req.seqNumber}`);
-                await this.sendReadReceivedDataRequest(req.seqNumber);
+                if (this.DELAY === 0) {
+                    this.sendReadReceivedDataRequest(req.seqNumber);
+                } else {
+                    await this.sendReadReceivedDataRequest(req.seqNumber);
+                }
                 break;
             case PARAM.PARAM.APS.DATA_CONFIRM:
                 //debug(`query send data state request. seqNr: ${req.seqNumber}`);
-                await this.sendQueryDataStateRequest(req.seqNumber);
+                if (this.DELAY === 0) {
+                    this.sendQueryDataStateRequest(req.seqNumber);
+                } else {
+                    await this.sendQueryDataStateRequest(req.seqNumber);
+                }
                 break;
             default:
                 throw new Error("process APS Confirm/Ind queue - unknown command id");
