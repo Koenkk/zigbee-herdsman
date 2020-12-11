@@ -121,7 +121,7 @@ class Driver extends events.EventEmitter {
         if (delay === 0) {
             this.HANDLE_DEVICE_STATUS_DELAY = 100000; // device status will be handelt immediately in handler function
             this.PROCESS_APS_QUEUES_DELAY = 50;
-            this.READY_TO_SEND_TIMEOUT = 50;
+            this.READY_TO_SEND_TIMEOUT = 10;
         } else if (delay <= 50) {
             this.READY_TO_SEND_TIMEOUT = 50;
             this.PROCESS_APS_QUEUES_DELAY = 50;
