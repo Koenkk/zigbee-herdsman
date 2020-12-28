@@ -3778,6 +3778,19 @@ const Cluster: {
         commandsResponse: {
         }
     },
+    manuSpecificUbisysDimmerSetup: {
+        ID: 0xfc01,
+        manufacturerCode: ManufacturerCode.Ubisys,
+        attributes: {
+            capabilities: {ID: 0x0000, type: DataType.bitmap8},
+            status: {ID: 0x0001, type: DataType.bitmap8},
+            mode: {ID: 0x0002, type: DataType.bitmap8},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
+    },
     manuSpecificLegrandDevices: {
         ID: 0xfc01,
         manufacturerCode: ManufacturerCode.LegrandNetatmo,
