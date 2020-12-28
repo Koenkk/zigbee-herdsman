@@ -542,10 +542,12 @@ class Endpoint extends Entity {
             }
 
             for (const entry of payload) {
-                this._configuredReportings.push({
-                    cluster: cluster.ID, attrId: entry.attrId, minRepIntval: entry.minRepIntval,
-                    maxRepIntval: entry.maxRepIntval, repChange: entry.repChange,
-                });
+                if (entry.maxRepIntval !== 0xFFFF) {
+                    this._configuredReportings.push({
+                        cluster: cluster.ID, attrId: entry.attrId, minRepIntval: entry.minRepIntval,
+                        maxRepIntval: entry.maxRepIntval, repChange: entry.repChange,
+                    });
+                }
             }
 
             this.save();

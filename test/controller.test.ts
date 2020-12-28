@@ -2270,6 +2270,13 @@ describe('Controller', () => {
             {cluster: deepClone(genPowerCfg), attribute: genPowerCfg.getAttribute('mainsFrequency'), minimumReportInterval: 3, maximumReportInterval: 100, reportableChange: 2},
             {cluster: deepClone(msOccupancySensing), attribute: msOccupancySensing.getAttribute('occupancy'), minimumReportInterval: 3, maximumReportInterval: 100, reportableChange: 2}
         ]);
+
+        await endpoint.configureReporting('msOccupancySensing', [
+            {attribute: 'occupancy', minimumReportInterval: 3, maximumReportInterval: 0xFFFF, reportableChange: 2},
+        ]);
+        expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
+            {cluster: deepClone(genPowerCfg), attribute: genPowerCfg.getAttribute('mainsFrequency'), minimumReportInterval: 3, maximumReportInterval: 100, reportableChange: 2},
+        ]);
     });
 
     it('Endpoint configure reporting fails when status code is not 0', async () => {
