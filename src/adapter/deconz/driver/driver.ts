@@ -67,6 +67,9 @@ class Driver extends events.EventEmitter {
     private READY_TO_SEND_TIMEOUT: number;
     private HANDLE_DEVICE_STATUS_DELAY: number;
     private PROCESS_APS_QUEUES_DELAY: number;
+    private intervalProcessApsQueue: NodeJS.Timeout;
+    private intervalProcessApsConfirmIndQueue: NodeJS.Timeout;
+    private intervalHandleDeviceStatus: NodeJS.Timeout;
 
     public constructor(path: string) {
         super();
@@ -88,16 +91,10 @@ class Driver extends events.EventEmitter {
         const that = this;
         setInterval(() => { that.processQueue(); }, 100);  // fire non aps requests
         setInterval(() => { that.processBusyQueue(); }, 1000); // check timeouts for non aps requests
-        setInterval(() => { that.processApsQueue(); }, this.PROCESS_APS_QUEUES_DELAY);  // fire aps request
         setInterval(() => { that.processApsBusyQueue(); }, 1000);  // check timeouts for all open aps requests
-        setInterval(() => { that.processApsConfirmIndQueue(); }, this.PROCESS_APS_QUEUES_DELAY);  // fire aps indications and confirms
         setInterval(() => { that.deviceStateRequest()
                             .then(result => {})
                             .catch(error => {}); }, 10000);
-
-        setInterval(() => { that.handleDeviceStatus()
-                            .then(result => {})
-                            .catch(error => {}); }, this.HANDLE_DEVICE_STATUS_DELAY); // query confirm and indication requests
 
         setInterval(() => {
             that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
@@ -111,13 +108,15 @@ class Driver extends events.EventEmitter {
                 });
              }, (1000 * 60 * 8)); // 8 minutes
 
+        this.setupIntervals();
+
         this.onParsed = this.onParsed.bind(this);
         this.frameParserEvent.on('receivedDataNotification', (data: number) => {this.checkDeviceStatus(data)});
     }
 
     public setDelay(delay: number): void {
-    debug(`Set delay to ${delay}`);
-    this.DELAY = delay;
+        debug(`Set delay to ${delay}`);
+        this.DELAY = delay;
         if (delay === 0) {
             this.HANDLE_DEVICE_STATUS_DELAY = 100000; // device status will be handelt immediately in handler function
             this.PROCESS_APS_QUEUES_DELAY = 50;
@@ -131,6 +130,27 @@ class Driver extends events.EventEmitter {
         } else {
             this.READY_TO_SEND_TIMEOUT = delay;
         }
+        this.setupIntervals();
+    }
+
+    private setupIntervals() {
+        const that = this;
+        if (typeof this.intervalProcessApsQueue != "undefined") {
+            clearInterval(this.intervalProcessApsQueue);
+        }
+        this.intervalProcessApsQueue = setInterval(() => { that.processApsQueue(); }, this.PROCESS_APS_QUEUES_DELAY);  // fire aps request
+        
+        if (typeof this.intervalProcessApsConfirmIndQueue != "undefined") {
+            clearInterval(this.intervalProcessApsConfirmIndQueue);
+        }
+        this.intervalProcessApsConfirmIndQueue = setInterval(() => { that.processApsConfirmIndQueue(); }, this.PROCESS_APS_QUEUES_DELAY);  // fire aps indications and confirms
+        
+        if (typeof this.intervalHandleDeviceStatus != "undefined") {
+            clearInterval(this.intervalHandleDeviceStatus);
+        }
+        this.intervalHandleDeviceStatus = setInterval(() => { that.handleDeviceStatus()
+            .then(result => {})
+            .catch(error => {}); }, this.HANDLE_DEVICE_STATUS_DELAY); // query confirm and indication requests
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
