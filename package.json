@@ -81,7 +81,7 @@
     "eslint": "node_modules/.bin/eslint . --ext .ts",
     "docs": "typedoc --tsconfig typedoc-tsconfig.json"
   },
-  "version": "0.13.44",
+  "version": "0.13.45",
   "jest": {
     "coverageThreshold": {
       "global": {
