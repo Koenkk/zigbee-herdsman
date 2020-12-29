@@ -693,18 +693,23 @@ class ZStackAdapter extends Adapter {
                     ieeeAddr: object.payload.ieeeaddr,
                 };
 
-                if (!this.deviceAnnounceRouteDiscoveryDebouncers.has(payload.networkAddress)) {
-                    // If a device announces multiple times in a very short time, it makes no sense
-                    // to rediscover the route every time.
-                    const debouncer = debounce(() => {
-                        this.queue.execute<void>(async () => {
-                            await this.discoverRoute(payload.networkAddress, false);
-                        }, payload.networkAddress);
-                    }, 60 * 1000, true);
-                    this.deviceAnnounceRouteDiscoveryDebouncers.set(payload.networkAddress, debouncer);
+                // Only discover routes to end devices, if bit 1 of capabilities === 0 it's an end device.
+                const isEndDevice = (object.payload.capabilities & 1<<1) === 0;
+                if (isEndDevice) {
+                    if (!this.deviceAnnounceRouteDiscoveryDebouncers.has(payload.networkAddress)) {
+                        // If a device announces multiple times in a very short time, it makes no sense
+                        // to rediscover the route every time.
+                        const debouncer = debounce(() => {
+                            this.queue.execute<void>(async () => {
+                                await this.discoverRoute(payload.networkAddress, false);
+                            }, payload.networkAddress);
+                        }, 60 * 1000, true);
+                        this.deviceAnnounceRouteDiscoveryDebouncers.set(payload.networkAddress, debouncer);
+                    }
+
+                    this.deviceAnnounceRouteDiscoveryDebouncers.get(payload.networkAddress)();
                 }
 
-                this.deviceAnnounceRouteDiscoveryDebouncers.get(payload.networkAddress)();
                 this.emit(Events.Events.deviceAnnounce, payload);
             } else if (object.command === 'nwkAddrRsp') {
                 const payload: Events.NetworkAddressPayload = {

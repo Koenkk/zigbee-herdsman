@@ -3010,7 +3010,19 @@ describe('zStackAdapter', () => {
         await adapter.start();
         let deviceAnnounce;
         mockZnpRequest.mockClear();
-        const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'endDeviceAnnceInd', payload: {nwkaddr: 123, ieeeaddr: '0x123'}};
+        const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'endDeviceAnnceInd', payload: {nwkaddr: 123, ieeeaddr: '0x123', capabilities: 142}};
+        adapter.on("deviceAnnounce", (p) => {deviceAnnounce = p;})
+        znpReceived(object);
+        expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
+        expect(mockZnpRequest).toBeCalledTimes(0);
+    });
+
+    it('Device announce should disocver route to end devices', async () => {
+        basicMocks();
+        await adapter.start();
+        let deviceAnnounce;
+        mockZnpRequest.mockClear();
+        const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'endDeviceAnnceInd', payload: {nwkaddr: 123, ieeeaddr: '0x123', capabilities: 4}};
         adapter.on("deviceAnnounce", (p) => {deviceAnnounce = p;})
         znpReceived(object);
         expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
