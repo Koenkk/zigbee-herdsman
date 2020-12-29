@@ -536,9 +536,11 @@ class Endpoint extends Entity {
                 this.checkStatus(result.frame.Payload);
             }
 
-            for (const entry of payload) {
-                this._configuredReportings =
-                    this._configuredReportings.filter(c => c.attrId !== entry.attrId && c.cluster !== cluster.ID);
+            for (const e of payload) {
+                const match = this._configuredReportings.find(c => c.attrId === e.attrId && c.cluster === cluster.ID);
+                if (match) {
+                    this._configuredReportings.splice(this._configuredReportings.indexOf(match), 1);
+                }
             }
 
             for (const entry of payload) {
