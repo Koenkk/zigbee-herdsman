@@ -3017,7 +3017,7 @@ describe('zStackAdapter', () => {
         expect(mockZnpRequest).toBeCalledTimes(0);
     });
 
-    it('Device announce should disocver route to end devices', async () => {
+    it('Device announce should discover route to end devices', async () => {
         basicMocks();
         await adapter.start();
         let deviceAnnounce;
