@@ -8,6 +8,7 @@ enum Events {
     deviceInterview = "deviceInterview",
     deviceAnnounce = "deviceAnnounce",
     deviceLeave = "deviceLeave",
+    permitJoinChanged = "permitJoinChanged",
 }
 
 interface DeviceJoinedPayload {
@@ -25,6 +26,10 @@ interface DeviceAnnouncePayload {
 
 interface DeviceLeavePayload {
     ieeeAddr: string;
+}
+
+interface PermitJoinChangedPayload {
+    permitted: boolean, reason: 'timer_expired' | 'manual'
 }
 
 const CommandsLookup: {[s: string]: MessagePayloadType} = {
@@ -125,5 +130,5 @@ interface MessagePayload {
 
 export {
     Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload,
-    DeviceLeavePayload, DeviceJoinedPayload,
+    DeviceLeavePayload, DeviceJoinedPayload, PermitJoinChangedPayload,
 };

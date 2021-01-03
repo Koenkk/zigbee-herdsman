@@ -12,6 +12,7 @@ import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransacti
 import {Adapter} from '../src/adapter';
 import path  from 'path';
 import {Wait} from '../src/utils';
+const flushPromises = () => new Promise(setImmediate);
 
 let skipWait = false;
 Wait.mockImplementation((milliseconds) => {
@@ -377,6 +378,7 @@ const events = {
     deviceAnnounce: [],
     deviceLeave: [],
     message: [],
+    permitJoinChanged: [],
 }
 
 const backupPath = getTempFile('backup');
@@ -418,6 +420,7 @@ describe('Controller', () => {
             fs.unlinkSync(options.databasePath);
         }
         controller = new Controller(options);
+        controller.on('permitJoinChanged', (p) => events.permitJoinChanged.push(p));
         controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
         controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
         controller.on('adapterDisconnected', () => events.adapterDisconnected.push(1));
@@ -848,8 +851,12 @@ describe('Controller', () => {
         await controller.permitJoin(true);
         expect(mockAdapterPermitJoin).toBeCalledTimes(1);
         expect(mockAdapterPermitJoin.mock.calls[0][0]).toBe(254);
+        expect(events.permitJoinChanged.length).toBe(1);
+        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual'});
+        expect(controller.getPermitJoin()).toBe(true);
 
         // Green power
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         const commisionFrameEnable = mockZclFrame.create(1, 1, true, null, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254});
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(commisionFrameEnable));
@@ -857,23 +864,30 @@ describe('Controller', () => {
 
         // should call it again ever +- 200 seconds
         jest.advanceTimersByTime(210 * 1000);
+        await flushPromises();
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(2);
         expect(mockAdapterPermitJoin).toBeCalledTimes(2);
         expect(mockAdapterPermitJoin.mock.calls[1][0]).toBe(254);
         jest.advanceTimersByTime(210 * 1000);
+        await flushPromises();
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(3);
         expect(mockAdapterPermitJoin).toBeCalledTimes(3);
         expect(mockAdapterPermitJoin.mock.calls[2][0]).toBe(254);
+        expect(events.permitJoinChanged.length).toBe(1);
+        expect(controller.getPermitJoin()).toBe(true);
 
-        // calling again shouldn't eanble it again.
-        await controller.permitJoin(true);
-        expect(mockAdapterPermitJoin).toBeCalledTimes(3);
-
+        // Disable
         await controller.permitJoin(false);
         expect(mockAdapterPermitJoin).toBeCalledTimes(4);
         expect(mockAdapterPermitJoin.mock.calls[3][0]).toBe(0);
         jest.advanceTimersByTime(210 * 1000);
         expect(mockAdapterPermitJoin).toBeCalledTimes(4);
+        expect(events.permitJoinChanged.length).toBe(2);
+        expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false, reason: 'manual'});
+        expect(controller.getPermitJoin()).toBe(false);
 
         // Green power
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(4);
         const commisionFrameDisable = mockZclFrame.create(1, 1, true, null, 5, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 0});
         expect(mocksendZclFrameToAll.mock.calls[3][0]).toBe(242);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[3][1])).toStrictEqual(deepClone(commisionFrameDisable));
@@ -894,6 +908,24 @@ describe('Controller', () => {
         expect(mockAdapterPermitJoin).toBeCalledTimes(2);
         expect(mockAdapterPermitJoin.mock.calls[1][0]).toBe(254);
         expect(mockAdapterPermitJoin.mock.calls[1][1]).toBe(129);
+    });
+
+    it('Controller permit joining for specific time', async () => {
+        jest.useFakeTimers();
+        await controller.start();
+        await controller.permitJoin(true, null, 10);
+        expect(mockAdapterPermitJoin).toBeCalledTimes(1);
+        expect(mockAdapterPermitJoin.mock.calls[0][0]).toBe(254);
+        expect(events.permitJoinChanged.length).toBe(1);
+        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual'});
+
+        // Timer ends
+        jest.advanceTimersByTime(12 * 1000);
+        await flushPromises();
+        expect(mockAdapterPermitJoin).toBeCalledTimes(2);
+        expect(mockAdapterPermitJoin.mock.calls[1][0]).toBe(0);
+        expect(events.permitJoinChanged.length).toBe(2);
+        expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false, reason: 'timer_expired'});
     });
 
     it('Shouldnt create backup when adapter doesnt support it', async () => {
