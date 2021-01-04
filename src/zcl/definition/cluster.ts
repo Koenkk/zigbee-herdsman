@@ -2045,6 +2045,8 @@ const Cluster: {
             colorCapabilities: {ID: 16394, type: DataType.uint16},
             colorTempPhysicalMin: {ID: 16395, type: DataType.uint16},
             colorTempPhysicalMax: {ID: 16396, type: DataType.uint16},
+            coupleColorTempToLevelMin: {ID: 16397, type: DataType.uint16},
+            startUpColorTemperature: {ID: 16400, type: DataType.uint16},
             tuyaBrightness: {ID: 61441, type: DataType.uint16},
             tuyaRgbMode: {ID: 61440, type: DataType.uint16},
         },
