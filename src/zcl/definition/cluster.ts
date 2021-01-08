@@ -510,6 +510,7 @@ const Cluster: {
             onTransitionTime: {ID: 18, type: DataType.uint16},
             offTransitionTime: {ID: 19, type: DataType.uint16},
             defaultMoveRate: {ID: 20, type: DataType.uint16},
+            startUpCurrentLevel: {ID: 16384, type: DataType.uint8},
         },
         commands: {
             moveToLevel: {
