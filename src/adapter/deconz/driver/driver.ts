@@ -6,9 +6,11 @@ import SerialPort from 'serialport';
 import Writer from './writer';
 import Parser from './parser';
 import Frame from './frame';
+import PARAM from './constants';
 import * as Events from '../../events';
 import SerialPortUtils from '../../serialPortUtils';
-import PARAM from './constants';
+import SocketPortUtils from '../../socketPortUtils';
+import net from 'net';
 import { Command, Request, parameterT, ApsDataRequest, ReceivedDataResponse, DataStateResponse } from './constants';
 
 // @ts-ignore
@@ -24,8 +26,23 @@ var queue: Array<object> = [];
 var busyQueue: Array<object> = [];
 var apsQueue: Array<object> = [];
 var apsBusyQueue: Array<object> = [];
+var apsConfirmIndQueue: Array<object> = [];
 var timeoutCounter = 0;
-export { busyQueue, apsBusyQueue };
+var readyToSend: boolean = true;
+
+function enableRTS() {
+    if (readyToSend === false) {
+        readyToSend = true;
+    }
+}
+
+function disableRTS() {
+    readyToSend = false;
+}
+
+var enableRtsTimeout: ReturnType<typeof setTimeout> = null;
+
+export { busyQueue, apsBusyQueue, readyToSend, enableRTS, disableRTS, enableRtsTimeout };
 
 var frameParser = require('./frameParser');
 
@@ -41,6 +58,15 @@ class Driver extends events.EventEmitter {
     private seqNumber: number;
     private timeoutResetTimeout: any;
     private apsRequestFreeSlots: number;
+    private apsDataConfirm: number;
+    private apsDataIndication: number;
+    private configChanged: number;
+    private portType: 'serial' | 'socket';
+    private socketPort: net.Socket;
+    private DELAY: number;
+    private READY_TO_SEND_TIMEOUT: number;
+    private HANDLE_DEVICE_STATUS_DELAY: number;
+    private PROCESS_APS_QUEUES_DELAY: number;
 
     public constructor(path: string) {
         super();
@@ -48,17 +74,30 @@ class Driver extends events.EventEmitter {
         this.initialized = false;
         this.seqNumber = 0;
         this.timeoutResetTimeout = null;
+        this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
 
         this.apsRequestFreeSlots = 1;
+        this.apsDataConfirm = 0;
+        this.apsDataIndication = 0;
+        this.configChanged = 0;
+        this.DELAY = 100;
+        this.READY_TO_SEND_TIMEOUT = 300;
+        this.HANDLE_DEVICE_STATUS_DELAY = 100;
+        this.PROCESS_APS_QUEUES_DELAY = 100;
 
         const that = this;
-        setInterval(() => { that.processQueue(); }, 50);  //300
-        setInterval(() => { that.processBusyQueue(); }, 10);  //200
-        setInterval(() => { that.processApsQueue(); }, 50);  //300
-        setInterval(() => { that.processApsBusyQueue(); }, 10);  //200
+        setInterval(() => { that.processQueue(); }, 100);  // fire non aps requests
+        setInterval(() => { that.processBusyQueue(); }, 1000); // check timeouts for non aps requests
+        setInterval(() => { that.processApsQueue(); }, this.PROCESS_APS_QUEUES_DELAY);  // fire aps request
+        setInterval(() => { that.processApsBusyQueue(); }, 1000);  // check timeouts for all open aps requests
+        setInterval(() => { that.processApsConfirmIndQueue(); }, this.PROCESS_APS_QUEUES_DELAY);  // fire aps indications and confirms
         setInterval(() => { that.deviceStateRequest()
                             .then(result => {})
                             .catch(error => {}); }, 10000);
+
+        setInterval(() => { that.handleDeviceStatus()
+                            .then(result => {})
+                            .catch(error => {}); }, this.HANDLE_DEVICE_STATUS_DELAY); // query confirm and indication requests
 
         setInterval(() => {
             that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
@@ -76,6 +115,24 @@ class Driver extends events.EventEmitter {
         this.frameParserEvent.on('receivedDataNotification', (data: number) => {this.checkDeviceStatus(data)});
     }
 
+    public setDelay(delay: number): void {
+    debug(`Set delay to ${delay}`);
+    this.DELAY = delay;
+        if (delay === 0) {
+            this.HANDLE_DEVICE_STATUS_DELAY = 100000; // device status will be handelt immediately in handler function
+            this.PROCESS_APS_QUEUES_DELAY = 50;
+            this.READY_TO_SEND_TIMEOUT = 10;
+        } else if (delay <= 50) {
+            this.READY_TO_SEND_TIMEOUT = 50;
+            this.PROCESS_APS_QUEUES_DELAY = 50;
+            this.HANDLE_DEVICE_STATUS_DELAY = 10;
+        } else if (delay > 1200) {
+            this.READY_TO_SEND_TIMEOUT = 1200;
+        } else {
+            this.READY_TO_SEND_TIMEOUT = delay;
+        }
+    }
+
     public static async isValidPath(path: string): Promise<boolean> {
         return SerialPortUtils.is(path, autoDetectDefinitions);
     }
@@ -85,7 +142,17 @@ class Driver extends events.EventEmitter {
         return paths.length > 0 ? paths[0] : null;
     }
 
-    public open(): Promise<void> {
+    private onPortClose(): void {
+        debug('Port closed');
+        this.initialized = false;
+        this.emit('close');
+    }
+
+    public async open(): Promise<void> {
+        return this.portType === 'serial' ? this.openSerialPort() : this.openSocketPort();
+    }
+
+    public openSerialPort(): Promise<void> {
         debug(`Opening with ${this.path}`);
         this.serialPort = new SerialPort(this.path, {baudRate: 38400, autoOpen: false});
 
@@ -96,7 +163,6 @@ class Driver extends events.EventEmitter {
         this.parser = new Parser();
         this.serialPort.pipe(this.parser);
         this.parser.on('parsed', this.onParsed);
-        //this.unpiParser.on('error', this.onUnpiParsedError);
 
         return new Promise((resolve, reject): void => {
             this.serialPort.open(async (error: object): Promise<void> => {
@@ -115,8 +181,68 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public close(): void {
-        this.serialPort.close();
+    private async openSocketPort(): Promise<void> {
+        const info = SocketPortUtils.parseTcpPath(this.path);
+        debug(`Opening TCP socket with ${info.host}:${info.port}`);
+        this.socketPort = new net.Socket();
+        this.socketPort.setNoDelay(true);
+        this.socketPort.setKeepAlive(true, 15000);
+
+        this.writer = new Writer();
+        this.writer.pipe(this.socketPort);
+
+        this.parser = new Parser();
+        this.socketPort.pipe(this.parser);
+        this.parser.on('parsed', this.onParsed);
+
+        return new Promise((resolve, reject): void => {
+            this.socketPort.on('connect', function() {
+                debug('Socket connected');
+            });
+
+            // eslint-disable-next-line
+            const self = this;
+            this.socketPort.on('ready', async function() {
+                debug('Socket ready');
+                self.initialized = true;
+                resolve();
+            });
+
+            this.socketPort.once('close', this.onPortClose);
+
+            this.socketPort.on('error', function () {
+                debug('Socket error');
+                reject(new Error(`Error while opening socket`));
+                self.initialized = false;
+            });
+
+            this.socketPort.connect(info.port, info.host);
+        });
+    }
+
+    public close(): Promise<void> {
+        return new Promise((resolve, reject): void => {
+            if (this.initialized) {
+                if (this.portType === 'serial') {
+                    this.serialPort.flush((): void => {
+                        this.serialPort.close((error): void => {
+                            this.initialized = false;
+                            error == null ?
+                                resolve() :
+                                reject(new Error(`Error while closing serialport '${error}'`));
+                            this.emit('close');
+                        });
+                    });
+                } else {
+                    this.socketPort.destroy();
+                    resolve();
+                }
+            } else {
+                resolve();
+                this.emit('close');
+            }
+        });
+
     }
 
     public readParameterRequest(parameterId: number) : Promise<Command> {
@@ -239,11 +365,19 @@ class Driver extends events.EventEmitter {
         const frame = Buffer.from(buffer.concat([crc[0], crc[1]]));
         const slipframe = slip.encode(frame);
 
-        this.serialPort.write(slipframe, function(err) {
-            if (err) {
-                console.log("Error writing serial Port: " + err.message);
-            }
-        });
+        if ( this.portType === 'serial') {
+            this.serialPort.write(slipframe, function(err) {
+                if (err) {
+                    debug("Error writing serial Port: " + err.message);
+                }
+            });
+        } else {
+            this.socketPort.write(slipframe, function(err) {
+                if (err) {
+                    debug("Error writing socket Port: " + err.message);
+                }
+            });
+        }
     }
 
     private processQueue() {
@@ -251,7 +385,6 @@ class Driver extends events.EventEmitter {
             return;
         }
         if (busyQueue.length > 0) {
- //           debug("don't process queue. Request pending");
             return;
         }
         const req: Request = queue.shift();
@@ -303,7 +436,7 @@ class Driver extends events.EventEmitter {
                 this.timeoutResetTimeout = null;
                 this.resetTimeoutCounterAfter1min();
                 req.reject("TIMEOUT");
-                if (timeoutCounter >= 3) {
+                if (timeoutCounter >= 2) {
                     timeoutCounter = 0;
                     debug("to many timeouts - restart serial connecion");
                     if (this.serialPort.isOpen) {
@@ -344,31 +477,74 @@ class Driver extends events.EventEmitter {
 
     private async checkDeviceStatus(currentDeviceStatus: number) {
         const networkState = currentDeviceStatus & 0x03;
-        const apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
-        const apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
-        const configChanged = (currentDeviceStatus >> 4) & 0x01;
-        const apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
-        this.apsRequestFreeSlots = apsRequestFreeSlots;
+        this.apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
+        this.apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
+        this.configChanged = (currentDeviceStatus >> 4) & 0x01;
+        this.apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
 
-        debug("networkstate: " + networkState + " apsDataConfirm: " + apsDataConfirm + " apsDataIndication: " + apsDataIndication +
-            " configChanged: " + configChanged + " apsRequestFreeSlots: " + apsRequestFreeSlots);
-        if (apsDataConfirm === 1) {
+        debug("networkstate: " + networkState + " apsDataConfirm: " + this.apsDataConfirm + " apsDataIndication: " + this.apsDataIndication +
+            " configChanged: " + this.configChanged + " apsRequestFreeSlots: " + this.apsRequestFreeSlots);
+
+        // fast mode
+        if (this.DELAY === 0) {
+            if (this.apsDataConfirm === 1) {
+                debug("query aps data confirm");
+                try {
+                    const x = await this.querySendDataStateRequest();
+                } catch (e) {
+                    if (e.status === 5) {
+                        this.apsDataConfirm = 0;
+                    }
+                }
+            }
+            if (this.apsDataIndication === 1) {
+                debug("query aps data indication");
+                try {
+                    const x = await this.readReceivedDataRequest();
+                } catch (e) {
+                    if (e.status === 5) {
+                        this.apsDataConfirm = 0;
+                    }
+                }
+            }
+            if (this.configChanged === 1) {
+                // when network settings changed
+            }
+        }
+    }
+
+    private async handleDeviceStatus() {
+        if (this.DELAY === 0) {
+            return;
+        }
+        if (this.apsDataConfirm === 1) {
             try {
+                debug("query aps data confirm");
+                this.apsDataConfirm = 0;
                 const x = await this.querySendDataStateRequest();
-            } catch {
-                //debug("APS Error - data confirm");
+            } catch (e) {
+                if (e.status === 5) {
+                    this.apsDataConfirm = 0;
+                }
             }
-        } else if (apsDataIndication === 1) {
+        }
+        if (this.apsDataIndication === 1) {
             try {
+                debug("query aps data indication");
+                this.apsDataIndication = 0;
                 const x = await this.readReceivedDataRequest();
-            } catch {
-                //debug("APS Error - data indication");
+            } catch (e) {
+                if (e.status === 5) {
+                    this.apsDataIndication = 0;
+                }
             }
-        } else if (configChanged === 1) {
+        }
+        if (this.configChanged === 1) {
             // when network settings changed
         }
     }
 
+    // DATA_IND
     private readReceivedDataRequest() : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
@@ -376,10 +552,11 @@ class Driver extends events.EventEmitter {
             const ts = 0;
             const commandId = PARAM.PARAM.APS.DATA_INDICATION;
             const req: Request = {commandId, seqNumber, resolve, reject, ts};
-            apsQueue.push(req);
+            apsConfirmIndQueue.push(req);
         });
     }
 
+    // DATA_REQ
     public enqueueSendDataRequest(request: ApsDataRequest) : Promise<void | ReceivedDataResponse> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
@@ -392,6 +569,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
+    // DATA_CONF
     private querySendDataStateRequest() : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
@@ -399,22 +577,50 @@ class Driver extends events.EventEmitter {
             const ts = 0;
             const commandId = PARAM.PARAM.APS.DATA_CONFIRM;
             const req: Request = {commandId, seqNumber, resolve, reject, ts};
-            apsQueue.push(req);
+            apsConfirmIndQueue.push(req);
         });
     }
 
-    private processApsQueue() {
+    private async processApsQueue() {
         if (apsQueue.length === 0) {
             return;
         }
 
         if (this.apsRequestFreeSlots !== 1) {
             debug("no free slots. Delay sending of APS Request");
-            this.sleep(1000);
+            await this.sleep(1000);
             return;
         }
 
         const req: Request = apsQueue.shift();
+        req.ts = Date.now();
+
+        switch (req.commandId) {
+            case PARAM.PARAM.APS.DATA_REQUEST:
+
+                if (readyToSend === false) { // wait until last request was confirmed or given time elapsed
+                    debug("delay sending of APS Request");
+                    apsQueue.unshift(req);
+                    break;
+                } else {
+                    disableRTS();
+                    enableRtsTimeout = setTimeout(function(){enableRTS();}, this.READY_TO_SEND_TIMEOUT);
+                    apsBusyQueue.push(req);
+                    this.sendEnqueueSendDataRequest(req.request, req.seqNumber);
+                    break;
+                }
+            default:
+                throw new Error("process APS queue - unknown command id");
+                break;
+        }
+    }
+
+    private async processApsConfirmIndQueue() {
+        if (apsConfirmIndQueue.length === 0) {
+            return;
+        }
+
+        const req: Request = apsConfirmIndQueue.shift();
         req.ts = Date.now();
 
         apsBusyQueue.push(req);
@@ -422,18 +628,22 @@ class Driver extends events.EventEmitter {
         switch (req.commandId) {
             case PARAM.PARAM.APS.DATA_INDICATION:
                 //debug(`read received data request. seqNr: ${req.seqNumber}`);
-                this.sendReadReceivedDataRequest(req.seqNumber);
+                if (this.DELAY === 0) {
+                    this.sendReadReceivedDataRequest(req.seqNumber);
+                } else {
+                    await this.sendReadReceivedDataRequest(req.seqNumber);
+                }
                 break;
             case PARAM.PARAM.APS.DATA_CONFIRM:
                 //debug(`query send data state request. seqNr: ${req.seqNumber}`);
-                this.sendQueryDataStateRequest(req.seqNumber);
-                break;
-            case PARAM.PARAM.APS.DATA_REQUEST:
-                //debug(`send data request. seqNr: ${req.seqNumber}`);
-                this.sendEnqueueSendDataRequest(req.request, req.seqNumber);
+                if (this.DELAY === 0) {
+                    this.sendQueryDataStateRequest(req.seqNumber);
+                } else {
+                    await this.sendQueryDataStateRequest(req.seqNumber);
+                }
                 break;
             default:
-                throw new Error("process APS queue - unknown command id");
+                throw new Error("process APS Confirm/Ind queue - unknown command id");
                 break;
         }
     }
@@ -495,7 +705,6 @@ class Driver extends events.EventEmitter {
             if (req.request != null && req.request.timeout != null) {
                 timeout = req.request.timeout * 1000; // seconds * 1000 = milliseconds
             }
-
             if ((now - req.ts) > timeout) {
                 debug(`Timeout for aps request CMD: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`);
                 //remove from busyQueue

@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/controller/tstype"](../modules/_src_controller_tstype_.md) › [DatabaseEntry](_src_controller_tstype_.databaseentry.md)
+**[zigbee-herdsman](../README.md)**
+
+> [Globals](../README.md) / ["src/controller/tstype"](../modules/_src_controller_tstype_.md) / DatabaseEntry
 
 # Interface: DatabaseEntry
 
@@ -8,7 +10,7 @@
 
 ## Indexable
 
-* \[ **s**: *string*\]: any
+▪ [s: string]: any
 
 ## Index
 
@@ -19,16 +21,16 @@
 
 ## Properties
 
-###  id
+### id
 
-• **id**: *number*
+•  **id**: number
 
 *Defined in [src/controller/tstype.ts:9](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/tstype.ts#L9)*
 
 ___
 
-###  type
+### type
 
-• **type**: *[EntityType](../modules/_src_controller_tstype_.md#entitytype)*
+•  **type**: [EntityType](../modules/_src_controller_tstype_.md#entitytype)
 
 *Defined in [src/controller/tstype.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/tstype.ts#L10)*

@@ -51,6 +51,22 @@ interface Bind {
     target: Endpoint | Group;
 }
 
+interface ConfiguredReportingInternal {
+    cluster: number;
+    attrId: number,
+    minRepIntval: number,
+    maxRepIntval: number,
+    repChange: number,
+}
+
+interface ConfiguredReporting {
+    cluster: Zcl.TsType.Cluster;
+    attribute: Zcl.TsType.Attribute,
+    minimumReportInterval: number,
+    maximumReportInterval: number,
+    reportableChange: number,
+}
+
 class Endpoint extends Entity {
     public deviceID?: number;
     public inputClusters: number[];
@@ -61,6 +77,7 @@ class Endpoint extends Entity {
     private readonly deviceIeeeAddress: string;
     public deviceNetworkAddress: number;
     private _binds: BindInternal[];
+    private _configuredReportings: ConfiguredReportingInternal[];
     private meta: KeyValue;
 
     // Getters/setters
@@ -84,9 +101,23 @@ class Endpoint extends Entity {
         }).filter(b => b !== undefined);
     }
 
+    get configuredReportings(): ConfiguredReporting[] {
+        return this._configuredReportings.map((entry) => {
+            const cluster = Zcl.Utils.getCluster(entry.cluster);
+            return {
+                cluster,
+                attribute: cluster.getAttribute(entry.attrId),
+                minimumReportInterval: entry.minRepIntval,
+                maximumReportInterval: entry.maxRepIntval,
+                reportableChange: entry.repChange,
+            };
+        });
+    }
+
     private constructor(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
         deviceNetworkAddress: number, deviceIeeeAddress: string, clusters: Clusters, binds: BindInternal[],
+        configuredReportings: ConfiguredReportingInternal[],
         meta: KeyValue,
     ) {
         super();
@@ -99,6 +130,7 @@ class Endpoint extends Entity {
         this.deviceIeeeAddress = deviceIeeeAddress;
         this.clusters = clusters;
         this._binds = binds;
+        this._configuredReportings = configuredReportings;
         this.meta = meta;
     }
 
@@ -168,10 +200,10 @@ class Endpoint extends Entity {
             delete entry.attrs;
         }
 
-        const meta = record.meta ? record.meta : {};
         return new Endpoint(
-            record.epId, record.profId, record.devId, record.inClusterList, record.outClusterList,
-            deviceNetworkAddress, deviceIeeeAddress, record.clusters, record.binds || [], meta
+            record.epId, record.profId, record.devId, record.inClusterList, record.outClusterList, deviceNetworkAddress,
+            deviceIeeeAddress, record.clusters, record.binds || [], record.configuredReportings || [],
+            record.meta || {},
         );
     }
 
@@ -179,7 +211,7 @@ class Endpoint extends Entity {
         return {
             profId: this.profileID, epId: this.ID, devId: this.deviceID,
             inClusterList: this.inputClusters, outClusterList: this.outputClusters, clusters: this.clusters,
-            binds: this._binds, meta: this.meta,
+            binds: this._binds, configuredReportings: this._configuredReportings, meta: this.meta,
         };
     }
 
@@ -189,7 +221,7 @@ class Endpoint extends Entity {
     ): Endpoint {
         return new Endpoint(
             ID, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress,
-            deviceIeeeAddress, {}, [], {},
+            deviceIeeeAddress, {}, [], [], {},
         );
     }
 
@@ -344,12 +376,34 @@ class Endpoint extends Entity {
         }
     }
 
+    public addBinding(clusterKey: number | string, target: Endpoint | Group | number): void {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        if (typeof target === 'number') {
+            target = Group.byGroupID(target) || Group.create(target);
+        }
+
+        if (!this.binds.find((b) => b.cluster.ID === cluster.ID && b.target === target)) {
+            if (target instanceof Group) {
+                this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
+            } else {
+                this._binds.push({
+                    cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress,
+                    endpointID: target.ID
+                });
+            }
+
+            this.save();
+        }
+    }
+
     public async bind(clusterKey: number | string, target: Endpoint | Group | number): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const type = target instanceof Endpoint ? 'endpoint' : 'group';
+        if (typeof target === 'number') {
+            target = Group.byGroupID(target) || Group.create(target);
+        }
 
-        const destinationAddress =
-            target instanceof Endpoint ? target.deviceIeeeAddress : (target instanceof Group ? target.groupID : target);
+        const destinationAddress = target instanceof Endpoint ? target.deviceIeeeAddress : target.groupID;
 
         const log = `Bind ${this.deviceIeeeAddress}/${this.ID} ${cluster.name} from ` +
             `'${target instanceof Endpoint ? `${destinationAddress}/${target.ID}` : destinationAddress}'`;
@@ -361,19 +415,7 @@ class Endpoint extends Entity {
                 target instanceof Endpoint ? target.ID : null,
             );
 
-            // NOTE: In case the bind is done by group number, it won't be saved to the database
-            if (!this.binds.find((b) => b.cluster.ID === cluster.ID && b.target === target)) {
-                if (target instanceof Group) {
-                    this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
-                } else if (target instanceof Endpoint) {
-                    this._binds.push({
-                        cluster: cluster.ID, type: 'endpoint', deviceIeeeAddress: target.deviceIeeeAddress,
-                        endpointID: target.ID
-                    });
-                }
-
-                this.save();
-            }
+            this.addBinding(clusterKey, target);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -401,6 +443,10 @@ class Endpoint extends Entity {
                 this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID, destinationAddress, type,
                 target instanceof Endpoint ? target.ID : null,
             );
+
+            if (typeof target === 'number' && Group.byGroupID(target)) {
+                target = Group.byGroupID(target);
+            }
 
             const index = this.binds.findIndex((b) => b.cluster.ID === cluster.ID && b.target === target);
             if (index !== -1) {
@@ -489,6 +535,24 @@ class Endpoint extends Entity {
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
             }
+
+            for (const e of payload) {
+                const match = this._configuredReportings.find(c => c.attrId === e.attrId && c.cluster === cluster.ID);
+                if (match) {
+                    this._configuredReportings.splice(this._configuredReportings.indexOf(match), 1);
+                }
+            }
+
+            for (const entry of payload) {
+                if (entry.maxRepIntval !== 0xFFFF) {
+                    this._configuredReportings.push({
+                        cluster: cluster.ID, attrId: entry.attrId, minRepIntval: entry.minRepIntval,
+                        maxRepIntval: entry.maxRepIntval, repChange: entry.repChange,
+                    });
+                }
+            }
+
+            this.save();
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);

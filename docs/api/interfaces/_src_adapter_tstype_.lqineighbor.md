@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) › [LQINeighbor](_src_adapter_tstype_.lqineighbor.md)
+**[zigbee-herdsman](../README.md)**
+
+> [Globals](../README.md) / ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) / LQINeighbor
 
 # Interface: LQINeighbor
 
@@ -18,40 +20,40 @@
 
 ## Properties
 
-###  depth
+### depth
 
-• **depth**: *number*
+•  **depth**: number
 
-*Defined in [src/adapter/tstype.ts:43](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L43)*
-
-___
-
-###  ieeeAddr
-
-• **ieeeAddr**: *string*
-
-*Defined in [src/adapter/tstype.ts:39](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L39)*
+*Defined in [src/adapter/tstype.ts:44](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L44)*
 
 ___
 
-###  linkquality
+### ieeeAddr
 
-• **linkquality**: *number*
-
-*Defined in [src/adapter/tstype.ts:41](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L41)*
-
-___
-
-###  networkAddress
-
-• **networkAddress**: *number*
+•  **ieeeAddr**: string
 
 *Defined in [src/adapter/tstype.ts:40](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L40)*
 
 ___
 
-###  relationship
+### linkquality
 
-• **relationship**: *number*
+•  **linkquality**: number
 
 *Defined in [src/adapter/tstype.ts:42](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L42)*
+
+___
+
+### networkAddress
+
+•  **networkAddress**: number
+
+*Defined in [src/adapter/tstype.ts:41](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L41)*
+
+___
+
+### relationship
+
+•  **relationship**: number
+
+*Defined in [src/adapter/tstype.ts:43](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L43)*

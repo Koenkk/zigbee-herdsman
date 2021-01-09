@@ -1,4 +1,6 @@
-[zigbee-herdsman](README.md)
+**[zigbee-herdsman](README.md)**
+
+> Globals
 
 # zigbee-herdsman
 

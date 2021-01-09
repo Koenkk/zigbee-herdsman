@@ -48,11 +48,16 @@ class DeconzAdapter extends Adapter {
         const concurrent = this.adapterOptions && this.adapterOptions.concurrent ?
             this.adapterOptions.concurrent : 2;
 
+        // TODO: https://github.com/Koenkk/zigbee2mqtt/issues/4884#issuecomment-728903121
+        const delay = this.adapterOptions && typeof this.adapterOptions.delay === 'number' ?
+            this.adapterOptions.delay : 300;
+
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
 
         this.driver = new Driver(serialPortOptions.path);
+        this.driver.setDelay(delay);
         this.driver.on('rxFrame', (frame) => {processFrame(frame)});
         this.queue = new Queue(concurrent);
         this.transactionID = 0;
@@ -1008,12 +1013,15 @@ class DeconzAdapter extends Adapter {
     private checkReceivedDataPayload(resp: ReceivedDataResponse) {
         let srcAddr: any = null;
         let frame: ZclFrame = null;
+
         if (resp != null) {
             srcAddr = (resp.srcAddr16 != null) ? resp.srcAddr16 : resp.srcAddr64;
-            try {
-                frame = ZclFrame.fromBuffer(resp.clusterId, Buffer.from(resp.asduPayload));
-            } catch (error) {
-                debug("could not parse zclFrame: " + error);
+            if (resp.profileId != 0x00) {
+                try {
+                    frame = ZclFrame.fromBuffer(resp.clusterId, Buffer.from(resp.asduPayload));
+                } catch (error) {
+                    debug("could not parse zclFrame: " + error);
+                }
             }
         }
 

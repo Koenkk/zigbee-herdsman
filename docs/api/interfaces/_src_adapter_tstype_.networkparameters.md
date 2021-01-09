@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) › [NetworkParameters](_src_adapter_tstype_.networkparameters.md)
+**[zigbee-herdsman](../README.md)**
+
+> [Globals](../README.md) / ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) / NetworkParameters
 
 # Interface: NetworkParameters
 
@@ -16,24 +18,24 @@
 
 ## Properties
 
-###  channel
+### channel
 
-• **channel**: *number*
+•  **channel**: number
+
+*Defined in [src/adapter/tstype.ts:93](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L93)*
+
+___
+
+### extendedPanID
+
+•  **extendedPanID**: number
 
 *Defined in [src/adapter/tstype.ts:92](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L92)*
 
 ___
 
-###  extendedPanID
+### panID
 
-• **extendedPanID**: *number*
+•  **panID**: number
 
 *Defined in [src/adapter/tstype.ts:91](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L91)*
-
-___
-
-###  panID
-
-• **panID**: *number*
-
-*Defined in [src/adapter/tstype.ts:90](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L90)*

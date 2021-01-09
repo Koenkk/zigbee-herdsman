@@ -8,6 +8,7 @@ enum Events {
     deviceInterview = "deviceInterview",
     deviceAnnounce = "deviceAnnounce",
     deviceLeave = "deviceLeave",
+    permitJoinChanged = "permitJoinChanged",
 }
 
 interface DeviceJoinedPayload {
@@ -27,6 +28,10 @@ interface DeviceLeavePayload {
     ieeeAddr: string;
 }
 
+interface PermitJoinChangedPayload {
+    permitted: boolean, reason: 'timer_expired' | 'manual'
+}
+
 const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'notification': 'commandNotification',
     'commisioningNotification': 'commandCommisioningNotification',
@@ -37,6 +42,8 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'hueNotification': 'commandHueNotification',
     'off': 'commandOff',
     'stepColorTemp': 'commandStepColorTemp',
+    'stepHue': 'commandStepHue',
+    'stepSaturation': 'commandStepSaturation',
     'moveWithOnOff': 'commandMoveWithOnOff',
     'move': 'commandMove',
     'moveColorTemp': 'commandMoveColorTemp',
@@ -71,6 +78,21 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'programmingEventNotification': 'commandProgrammingEventNotification',
     'getPinCodeRsp': 'commandGetPinCodeRsp',
     'arrivalSensorNotify': 'commandArrivalSensorNotify',
+    'getPanelStatus': 'commandGetPanelStatus',
+
+    // HEIMAN scenes cluster
+    'atHome': 'commandAtHome',
+    'goOut': 'commandGoOut',
+    'cinema': 'commandCinema',
+    'repast': 'commandRepast',
+    'sleep': 'commandSleep',
+
+    // HEIMAN IR remote cluster
+    'studyKeyRsp': 'commandStudyKeyRsp',
+    'createIdRsp': 'commandCreateIdRsp',
+    'getIdAndKeyCodeListRsp': 'commandGetIdAndKeyCodeListRsp',
+
+    'setTimeRequest': 'commandSetTimeRequest', // Tuya time sync
 };
 
 type MessagePayloadType =
@@ -78,7 +100,8 @@ type MessagePayloadType =
     'attributeReport' | 'readResponse' | 'raw' | 'read' | 'write' |
     // Specific
     'commandOn' | 'commandOffWithEffect' | 'commandStep' | 'commandStop' | 'commandHueNotification' |
-    'commandOff' | 'commandStepColorTemp' | 'commandMoveWithOnOff' | 'commandMove' | 'commandMoveHue' |
+    'commandOff' | 'commandStepColorTemp' | 'commandMoveWithOnOff' |
+    'commandMove' | 'commandMoveHue' | 'commandStepHue' | 'commandStepSaturation' |
     'commandMoveToSaturation' | 'commandStopWithOnOff' | 'commandMoveToLevelWithOnOff' | 'commandToggle' |
     'commandTradfriArrowSingle' | 'commandTradfriArrowHold' | 'commandTradfriArrowRelease' |
     'commandStepWithOnOff' | 'commandMoveToColorTemp' | 'commandMoveToColor' | 'commandOnWithTimedOff' |
@@ -87,7 +110,10 @@ type MessagePayloadType =
     'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandGetData' |
     'commandSetDataResponse' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
-    "commandArrivalSensorNotify" | 'commandCommisioningNotification';
+    "commandArrivalSensorNotify" | 'commandCommisioningNotification' |
+    'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
+    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest' |
+    'commandGetPanelStatus';
 
 interface MessagePayload {
     type: MessagePayloadType;
@@ -104,5 +130,5 @@ interface MessagePayload {
 
 export {
     Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload,
-    DeviceLeavePayload, DeviceJoinedPayload,
+    DeviceLeavePayload, DeviceJoinedPayload, PermitJoinChangedPayload,
 };

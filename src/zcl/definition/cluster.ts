@@ -443,6 +443,8 @@ const Cluster: {
             globalSceneCtrl: {ID: 16384, type: DataType.boolean},
             onTime: {ID: 16385, type: DataType.uint16},
             offWaitTime: {ID: 16386, type: DataType.uint16},
+            startUpOnOff: {ID: 16387, type: DataType.enum8},
+            tuyaBacklightMode: {ID: 0x8001, type: DataType.enum8},
         },
         commands: {
             off: {
@@ -508,6 +510,7 @@ const Cluster: {
             onTransitionTime: {ID: 18, type: DataType.uint16},
             offTransitionTime: {ID: 19, type: DataType.uint16},
             defaultMoveRate: {ID: 20, type: DataType.uint16},
+            startUpCurrentLevel: {ID: 16384, type: DataType.uint8},
         },
         commands: {
             moveToLevel: {
@@ -1761,6 +1764,9 @@ const Cluster: {
             ubisysAdditionalSteps: {ID: 0x1005, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
             ubisysInactivePowerThreshold: {ID: 0x1006, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
             ubisysStartupSteps: {ID: 0x1007, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
+            tuyaMovingState: {ID: 0xf000, type: DataType.enum8},
+            tuyaCalibration: {ID: 0xf001, type: DataType.enum8},
+            tuyaMotorReversal: {ID: 0xf002, type: DataType.enum8},
         },
         commands: {
             upOpen: {
@@ -2040,6 +2046,10 @@ const Cluster: {
             colorCapabilities: {ID: 16394, type: DataType.uint16},
             colorTempPhysicalMin: {ID: 16395, type: DataType.uint16},
             colorTempPhysicalMax: {ID: 16396, type: DataType.uint16},
+            coupleColorTempToLevelMin: {ID: 16397, type: DataType.uint16},
+            startUpColorTemperature: {ID: 16400, type: DataType.uint16},
+            tuyaBrightness: {ID: 61441, type: DataType.uint16},
+            tuyaRgbMode: {ID: 61440, type: DataType.uint16},
         },
         commands: {
             moveToHue: {
@@ -2093,6 +2103,15 @@ const Cluster: {
                     {name: 'hue', type: DataType.uint8},
                     {name: 'saturation', type: DataType.uint8},
                     {name: 'transtime', type: DataType.uint16},
+                ],
+            },
+            tuyaMoveToHueAndSaturationBrightness: {
+                ID: 6,
+                parameters: [
+                    {name: 'hue', type: DataType.uint8},
+                    {name: 'saturation', type: DataType.uint8},
+                    {name: 'transtime', type: DataType.uint16},
+                    {name: 'brightness', type: DataType.uint8},
                 ],
             },
             moveToColor: {
@@ -2196,6 +2215,12 @@ const Cluster: {
                     {name: 'maximum', type: DataType.uint16},
                 ],
             },
+            tuyaRgbMode: {
+                ID: 240,
+                parameters: [
+                    {name: 'enable', type: DataType.uint8},
+                ]
+            },
         },
         commandsResponse: {
         },
@@ -2273,6 +2298,11 @@ const Cluster: {
             minMeasuredValue: {ID: 1, type: DataType.int16},
             maxMeasuredValue: {ID: 2, type: DataType.int16},
             tolerance: {ID: 3, type: DataType.uint16},
+            scaledValue: {ID: 0x0010, type: DataType.int16},
+            minScaledValue: {ID: 0x0011, type: DataType.int16},
+            maxScaledValue: {ID: 0x0012, type: DataType.int16},
+            scaledTolerance: {ID: 0x0013, type: DataType.uint16},
+            scale: {ID: 0x0014, type: DataType.int8},
         },
         commands: {
         },
@@ -2316,6 +2346,19 @@ const Cluster: {
             ultrasonicOToUDelay: {ID: 32, type: DataType.uint16},
             ultrasonicUToODelay: {ID: 33, type: DataType.uint16},
             ultrasonicUToOThreshold: {ID: 34, type: DataType.uint8},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        },
+    },
+    msSoilMoisture: {
+        ID: 1032,
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.uint16},
+            minMeasuredValue: {ID: 1, type: DataType.uint16},
+            maxMeasuredValue: {ID: 2, type: DataType.uint16},
+            tolerance: {ID: 3, type: DataType.uint16},
         },
         commands: {
         },
@@ -3738,6 +3781,19 @@ const Cluster: {
         commandsResponse: {
         }
     },
+    manuSpecificUbisysDimmerSetup: {
+        ID: 0xfc01,
+        manufacturerCode: ManufacturerCode.Ubisys,
+        attributes: {
+            capabilities: {ID: 0x0000, type: DataType.bitmap8},
+            status: {ID: 0x0001, type: DataType.bitmap8},
+            mode: {ID: 0x0002, type: DataType.bitmap8},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
+    },
     manuSpecificLegrandDevices: {
         ID: 0xfc01,
         manufacturerCode: ManufacturerCode.LegrandNetatmo,
@@ -3757,7 +3813,7 @@ const Cluster: {
         commands: {},
         commandsResponse: {}
     },
-    manuSpecificTuyaDimmer: {
+    manuSpecificTuya: {
         ID: 0xEF00,  // 61184
         attributes: {
         },
@@ -3767,11 +3823,31 @@ const Cluster: {
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                     {name: 'transid', type: DataType.uint8},
-                    {name: 'dp', type: DataType.uint16},
-                    {name: 'fn', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint8},
+                    {name: 'datatype', type: DataType.uint8},
+                    {name: 'length_hi', type: DataType.uint8},
+                    {name: 'length_lo', type: DataType.uint8},
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
+            // Time sync command (It's transparent beetween MCU and server)
+            // Time request device -> server
+            //   payloadSize = 0
+            // Set time, server -> device
+            //   payloadSize, should be always 8
+            //   payload[0-3] - UTC timestamp (big endian)
+            //   payload[4-7] - Local timestamp (big endian)
+            //
+            // Zigbee payload is very similar to the UART payload which is described here: https://developer.tuya.com/en/docs/iot/device-development/access-mode-mcu/zigbee-general-solution/tuya-zigbee-module-uart-communication-protocol/tuya-zigbee-module-uart-communication-protocol?id=K9ear5khsqoty#title-10-Time%20synchronization
+            //
+            // NOTE: You need to wait for time request before setting it. You can't set time without request.
+            setTime: {
+                ID: 0x24,
+                parameters: [
+                    {name: 'payloadSize', type: DataType.uint16},
+                    {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
+                ]
+            }
         },
         commandsResponse: {
             getData: {
@@ -3779,7 +3855,8 @@ const Cluster: {
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                     {name: 'transid', type: DataType.uint8},
-                    {name: 'dp', type: DataType.uint16},
+                    {name: 'dp', type: DataType.uint8},
+                    {name: 'datatype', type: DataType.uint8},
                     {name: 'fn', type: DataType.uint8},
                     {name: 'data', type: DataType.octetStr},
                 ],
@@ -3792,11 +3869,19 @@ const Cluster: {
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                     {name: 'transid', type: DataType.uint8},
-                    {name: 'dp', type: DataType.uint16},
+                    {name: 'dp', type: DataType.uint8},
+                    {name: 'datatype', type: DataType.uint8},
                     {name: 'fn', type: DataType.uint8},
                     {name: 'data', type: DataType.octetStr},
                 ],
             },
+            setTimeRequest: {
+                ID: 0x24,
+                parameters: [
+                    {name: 'payloadSize', type: DataType.uint16}, // Should be always 0
+                    {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
+                ]
+            }
         },
     },
     aqaraOpple: {
@@ -3906,6 +3991,129 @@ const Cluster: {
         },
         commandsResponse: {
         },
+    },
+    heimanSpecificScenes: {
+        // from HS2SS-3.0海曼智能情景开关API文档-V01
+        ID: 0xfc80,
+        manufacturerCode: ManufacturerCode.Heiman,
+        attributes: {
+        },
+        commands: {
+            cinema: {
+                ID: 0xf0,
+                parameters: [],
+            },
+            atHome: {
+                ID: 0xf1,
+                parameters: [],
+            },
+            sleep: {
+                ID: 0xf2,
+                parameters: [],
+            },
+            goOut: {
+                ID: 0xf3,
+                parameters: [],
+            },
+            repast: {
+                ID: 0xf4,
+                parameters: [],
+            },
+        },
+        commandsResponse: {
+        },
+    },
+    heimanSpecificInfraRedRemote: {
+        // from HS2IRC-3.0海曼智能红外转发控制器API-V01文档
+        ID: 0xfc82,
+        manufacturerCode: ManufacturerCode.Heiman,
+        attributes: {},
+        commands: {
+            sendKey: {
+                ID: 0xf0,
+                parameters: [
+                    {name: 'id', type: DataType.uint8},
+                    {name: 'keyCode', type: DataType.uint8},
+                ],
+            },
+            studyKey: {
+                // Total we can have 30 keycode for each device ID (1..30).
+                ID: 0xf1,
+                // response: 0xf2,
+                parameters: [
+                    {name: 'id', type: DataType.uint8},
+                    {name: 'keyCode', type: DataType.uint8},
+                ],
+            },
+            deleteKey: {
+                ID: 0xf3,
+                parameters: [
+                    // 1-15 - Delete specific ID, >= 16 - Delete All
+                    {name: 'id', type: DataType.uint8},
+                    // 1-30 - Delete specific keycode, >= 31 - Delete All keycodes for the ID
+                    {name: 'keyCode', type: DataType.uint8},
+                ],
+            },
+            createId: {
+                // Total we can have 15 device IDs (1..15).
+                ID: 0xf4,
+                // response: 0xf5,
+                parameters: [
+                    {name: 'modelType', type: DataType.uint8},
+                ],
+            },
+            getIdAndKeyCodeList: {
+                ID: 0xf6,
+                // response: 0xf7,
+                parameters: [],
+            },
+        },
+        commandsResponse: {
+            studyKeyRsp: {
+                ID: 0xf2,
+                parameters: [
+                    {name: 'id', type: DataType.uint8},
+                    {name: 'keyCode', type: DataType.uint8},
+                    {name: 'result', type: DataType.uint8}, // 0 - success, 1 - fail
+                ],
+            },
+            createIdRsp: {
+                ID: 0xf5,
+                parameters: [
+                    {name: 'id', type: DataType.uint8}, // 0xFF - create failed
+                    {name: 'modelType', type: DataType.uint8},
+                ],
+            },
+            getIdAndKeyCodeListRsp: {
+                ID: 0xf7,
+                parameters: [
+                    {name: 'packetsTotal', type: DataType.uint8},
+                    {name: 'packetNumber', type: DataType.uint8},
+                    {name: 'packetLength', type: DataType.uint8}, // Max length is 70 bytes
+                    // HELP for learnedDevicesList data structure:
+                    //   struct structPacketPayload {
+                    //     uint8_t ID;
+                    //     uint8_t ModeType;
+                    //     uint8_t KeyNum;
+                    //     uint8_t KeyCode[KeyNum];
+                    //   } arayPacketPayload[CurentPacketLenght];
+                    // }
+                    {name: 'learnedDevicesList', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+        },
+    },
+    develcoSpecificAirQuality: {
+        ID: 0xFC03,
+        manufacturerCode: ManufacturerCode.Develco,
+        attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.uint16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.uint16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.uint16},
+            resolution: {ID: 0x0003, type: DataType.uint16},
+        },
+        commands: {},
+        commandsResponse: {},
     },
 };
 

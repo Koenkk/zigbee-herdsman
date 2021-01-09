@@ -6,6 +6,9 @@ import {Subsystem} from '../unpi/constants';
 import fs from 'fs';
 import equals from 'fast-deep-equal/es6';
 import Items from './nvItems';
+import Debug from "debug";
+
+const debug = Debug('zigbee-herdsman:adapter:zStack:backup');
 
 const {NvItemsIds, NvSystemIds, ZnpCommandStatus} = Constants.COMMON;
 
@@ -141,11 +144,43 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
         throw new Error(`Cannot restore backup, backup is for '${backup.adapterType}', current is 'zStack'`);
     }
 
-    if (backup.meta.product != product) {
-        throw new Error(
-            `Cannot restore backup, backup is for '${ZnpVersion[backup.meta.product]}', ` +
-            `current is '${ZnpVersion[product]}'`
-        );
+    if ((product !== ZnpVersion.zStack30x && product !== ZnpVersion.zStack3x0)
+        || (backup.meta.product !== ZnpVersion.zStack30x && backup.meta.product !== ZnpVersion.zStack3x0 )) {
+        throw new Error('Backup is only supported for Z-Stack 3');
+    }
+
+    // 3.0                                                    3.x
+    // (0x0111)ZCD_NV_LEGACY_TCLK_TABLE_START              -> (0x0004)ZCD_NV_EX_TCLK_TABLE
+    // (0x0075)ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START  -> (0x0007)ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE
+    if (backup.meta.product == ZnpVersion.zStack30x && product == ZnpVersion.zStack3x0) {
+        debug(`Migrate '${ZnpVersion[backup.meta.product]}' -> '${ZnpVersion[product]}'`);
+
+        backup.data.ZCD_NV_EX_TCLK_TABLE = {
+            ...items.ZCD_NV_EX_TCLK_TABLE,
+            value: backup.data.ZCD_NV_LEGACY_TCLK_TABLE_START.value,
+            len: backup.data.ZCD_NV_LEGACY_TCLK_TABLE_START.len,
+        };
+
+        backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE = {
+            ...items.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE,
+            value: backup.data.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START.value,
+            len: backup.data.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START.len,
+        };
+
+    } else if (backup.meta.product == ZnpVersion.zStack3x0 &&  product == ZnpVersion.zStack30x) {
+        debug(`Migrate '${ZnpVersion[backup.meta.product]}' -> '${ZnpVersion[product]}'`);
+
+        backup.data.ZCD_NV_LEGACY_TCLK_TABLE_START = {
+            ...items.ZCD_NV_LEGACY_TCLK_TABLE_START,
+            value: backup.data.ZCD_NV_EX_TCLK_TABLE.value,
+            len: backup.data.ZCD_NV_EX_TCLK_TABLE.len,
+        };
+
+        backup.data.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START = {
+            ...items.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START,
+            value: backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE.value,
+            len: backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE.len,
+        };
     }
 
     if (!equals(backup.data.ZCD_NV_CHANLIST.value, Constants.Utils.getChannelMask(options.channelList))) {
@@ -179,9 +214,12 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
         initvalue: [0x01]
     };
 
+    debug("Restoring backup");
+
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_EXTADDR);
     await znp.request(Subsystem.SYS, 'osalNvItemInit', ZCD_NV_NIB, null,
-        [ZnpCommandStatus.NV_ITEM_INITIALIZED]);
+        [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]);
+    await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_NIB);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_PANID);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_EXTENDED_PAN_ID);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO);
@@ -202,7 +240,7 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
     }
 
     await znp.request(Subsystem.SYS, 'osalNvItemInit', Items.znpHasConfiguredInit(product), null,
-        [ZnpCommandStatus.NV_ITEM_INITIALIZED]);
+        [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(product));
     await znp.request(Subsystem.SYS, 'osalNvItemInit', bdbNodeIsOnANetwork, null,
         [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]);

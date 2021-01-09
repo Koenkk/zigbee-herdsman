@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) › [CoordinatorVersion](_src_adapter_tstype_.coordinatorversion.md)
+**[zigbee-herdsman](../README.md)**
+
+> [Globals](../README.md) / ["src/adapter/tstype"](../modules/_src_adapter_tstype_.md) / CoordinatorVersion
 
 # Interface: CoordinatorVersion
 
@@ -15,20 +17,16 @@
 
 ## Properties
 
-###  meta
+### meta
 
-• **meta**: *object*
+•  **meta**: { [s:string]: number \| string;  }
 
-*Defined in [src/adapter/tstype.ts:22](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L22)*
-
-#### Type declaration:
-
-* \[ **s**: *string*\]: number | string
+*Defined in [src/adapter/tstype.ts:23](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L23)*
 
 ___
 
-###  type
+### type
 
-• **type**: *string*
+•  **type**: string
 
-*Defined in [src/adapter/tstype.ts:21](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L21)*
+*Defined in [src/adapter/tstype.ts:22](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/adapter/tstype.ts#L22)*

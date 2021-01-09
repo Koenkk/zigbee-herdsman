@@ -10,11 +10,12 @@ interface SerialPortOptions {
     baudRate?: number;
     rtscts?: boolean;
     path?: string;
-    adapter?: 'zstack' | 'deconz';
+    adapter?: 'zstack' | 'deconz' | 'zigate';
 }
 
 interface AdapterOptions {
-    concurrent: number;
+    concurrent?: number;
+    delay?: number
 }
 
 interface CoordinatorVersion {

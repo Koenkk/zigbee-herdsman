@@ -3,7 +3,7 @@
 const MIN_BUFFER_SIZE = 3;
 const littleEndian = true;
 import PARAM from './constants';
-import { busyQueue, apsBusyQueue } from './driver';
+import { busyQueue, apsBusyQueue, readyToSend, enableRTS, disableRTS, enableRtsTimeout } from './driver';
 import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin, ParamNetworkKey, gpDataInd } from './constants';
 import * as Events from '../../events';
 import {ZclFrame} from '../../../zcl';
@@ -168,14 +168,8 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
     if (i < 0) {
         return;
     }
-
-    let string = "";
-    for (let u = 0; u < apsBusyQueue.length; u++) {
-        const re: Request = apsBusyQueue[u];
-        string += re.seqNumber;
-        string += ",";
-    }
-
+    clearTimeout(enableRtsTimeout);
+    enableRTS(); // enable ReadyToSend because confirm received
     const req: Request = apsBusyQueue[i];
 
     // TODO timeout (at driver.ts)
@@ -193,14 +187,7 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
 
     debug("DATA_CONFIRM RESPONSE - destAddr: 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus);
     frameParserEvents.emit('receivedDataNotification', response.deviceState);
-/*
-    const zclPayload: ZclDataPayload = {
-        frame: ZclFrame;
-        endpoint: number;
-        linkquality: number;
-        groupID: number;
-    }
-*/
+
     return response;
 }
 
@@ -314,7 +301,6 @@ function parseGreenPowerDataIndication(view : DataView) : object {
     const ind: gpDataInd = {};
     ind.seqNr = view.getUint8(1);
 
-    console.log(view);
     if (view.byteLength < 30) {
         debug("GP data notification");
         ind.id = 0x00; // 0 = notification, 4 = commissioning
@@ -439,6 +425,8 @@ async function processFrame(frame: Uint8Array) : Promise<void> {
         //}
     }
 
+    //remove from busyqueue
+    queue.splice(i, 1);
     if (status !== 0) {
         // reject if status is not SUCCESS
         //debug("REJECT REQUEST");
@@ -447,8 +435,6 @@ async function processFrame(frame: Uint8Array) : Promise<void> {
         //debug("RESOLVE REQUEST");
         req.resolve(command);
     }
-    //remove from busyqueue
-    queue.splice(i, 1);
 }
 
 function parseFrame(frame: Uint8Array) : [number, number, Command, number] {

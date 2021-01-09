@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/controller/tstype"](../modules/_src_controller_tstype_.md) › [KeyValue](_src_controller_tstype_.keyvalue.md)
+**[zigbee-herdsman](../README.md)**
+
+> [Globals](../README.md) / ["src/controller/tstype"](../modules/_src_controller_tstype_.md) / KeyValue
 
 # Interface: KeyValue
 
@@ -8,4 +10,4 @@
 
 ## Indexable
 
-* \[ **s**: *string*\]: any
+▪ [s: string]: any

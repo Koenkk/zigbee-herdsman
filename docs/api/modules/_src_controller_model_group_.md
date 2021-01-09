@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/controller/model/group"](_src_controller_model_group_.md)
+**[zigbee-herdsman](../README.md)**
+
+> [Globals](../README.md) / "src/controller/model/group"
 
 # Module: "src/controller/model/group"
 
@@ -14,24 +16,19 @@
 
 ### Object literals
 
-* [debug](_src_controller_model_group_.md#const-debug)
+* [debug](_src_controller_model_group_.md#debug)
 
 ## Object literals
 
-### `Const` debug
+### debug
 
-### ▪ **debug**: *object*
+▪ `Const` **debug**: object
 
 *Defined in [src/controller/model/group.ts:10](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L10)*
 
-###  error
+#### Properties:
 
-• **error**: *Debugger* = Debug('zigbee-herdsman:controller:group')
-
-*Defined in [src/controller/model/group.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L12)*
-
-###  info
-
-• **info**: *Debugger* = Debug('zigbee-herdsman:controller:group')
-
-*Defined in [src/controller/model/group.ts:11](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L11)*
+Name | Type | Value |
+------ | ------ | ------ |
+`error` | Debugger | Debug('zigbee-herdsman:controller:group') |
+`info` | Debugger | Debug('zigbee-herdsman:controller:group') |

@@ -1854,6 +1854,20 @@ const Definition: {
             ],
         },
         {
+            name: 'mgmtNwkUpdateNotify',
+            ID: 184,
+            type: CommandType.AREQ,
+            request: [
+                {name: 'srcaddr', parameterType: ParameterType.UINT16},
+                {name: 'status', parameterType: ParameterType.UINT8},
+                {name: 'scannedchannels', parameterType: ParameterType.UINT32},
+                {name: 'totaltrans', parameterType: ParameterType.UINT16},
+                {name: 'transfails', parameterType: ParameterType.UINT16},
+                {name: 'energylength', parameterType: ParameterType.UINT8},
+                {name: 'energyvalues', parameterType: ParameterType.LIST_UINT8},
+            ],
+        },
+        {
             name: 'stateChangeInd',
             ID: 192,
             type: CommandType.AREQ,
@@ -2728,7 +2742,10 @@ const Definition: {
                 {name: 'nwkaddr', parameterType: ParameterType.UINT16},
             ],
             response: [
-                {name: 'device', parameterType: ParameterType.BUFFER18},
+                {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+                {name: 'addridx', parameterType: ParameterType.UINT16},
+                {name: 'noderelation', parameterType: ParameterType.UINT8},
+                // NOTE: this commmand returns more.
             ],
         },
         {
@@ -2749,6 +2766,20 @@ const Definition: {
             type: CommandType.SREQ,
             request: [
                 {name: 'ieeeadr', parameterType: ParameterType.IEEEADDR},
+            ],
+            response: [
+                {name: 'status', parameterType: ParameterType.UINT8},
+            ],
+        },
+        {
+            // Custom command
+            name: 'assocAdd',
+            ID: 100,
+            type: CommandType.SREQ,
+            request: [
+                {name: 'ieeeadr', parameterType: ParameterType.IEEEADDR},
+                {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+                {name: 'noderelation', parameterType: ParameterType.UINT8},
             ],
             response: [
                 {name: 'status', parameterType: ParameterType.UINT8},

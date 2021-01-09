@@ -46,6 +46,7 @@ class Device extends Entity {
     private _stackVersion?: number;
     private _type?: DeviceType;
     private _zclVersion?: number;
+    private _linkquality?: number;
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -84,6 +85,8 @@ class Device extends Entity {
     set stackVersion(stackVersion: number) {this._stackVersion = stackVersion;}
     get zclVersion(): number {return this._zclVersion;}
     set zclVersion(zclVersion: number) {this._zclVersion = zclVersion;}
+    get linkquality(): number {return this._linkquality;}
+    set linkquality(linkquality: number) {this._linkquality = linkquality;}
 
     private meta: KeyValue;
 
@@ -262,7 +265,7 @@ class Device extends Entity {
     private static loadFromDatabaseIfNecessary(): void {
         if (!Device.devices) {
             Device.devices = {};
-            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router', 'GreenPower']);
+            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router', 'GreenPower', 'Unknown']);
             for (const entry of entries) {
                 const device = Device.fromDatabaseEntry(entry);
                 Device.devices[device.ieeeAddr] = device;
@@ -362,7 +365,7 @@ class Device extends Entity {
         // report it's modelID trough a readResponse. The readResponse is received by the controller and set
         // on the device.
         const lookup: {[s: string]: {
-            type: DeviceType; manufacturerID: number; manufacturerName: string; powerSource: string;
+            type?: DeviceType; manufacturerID?: number; manufacturerName?: string; powerSource?: string;
         };} = {
             'lumi\..*': {
                 type: 'EndDevice', manufacturerID: 4151, manufacturerName: 'LUMI', powerSource: 'Battery'
@@ -370,13 +373,17 @@ class Device extends Entity {
             'TERNCY-PP01': {
                 type: 'EndDevice', manufacturerID: 4648, manufacturerName: 'TERNCY', powerSource: 'Battery'
             },
+            // Device does not change zoneState after enroll (event with original gateway);['''''
+            // below prevents interview from failing
+            // https://github.com/Koenkk/zigbee2mqtt/issues/4655
+            'TS0216': {},
         };
 
         const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
         if (match) {
             const info = lookup[match];
             debug.log(`Interview procedure failed but got modelID matching '${match}', assuming interview succeeded`);
-            this._type = this._type || info.type;
+            this._type = this._type === 'Unknown' ? info.type : this._type;
             this._manufacturerID = this._manufacturerID || info.manufacturerID;
             this._manufacturerName = this._manufacturerName || info.manufacturerName;
             this._powerSource = this._powerSource || info.powerSource;
@@ -490,12 +497,17 @@ class Device extends Entity {
                 await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr});
                 debug.log(`Interview - IAS - wrote iasCieAddr`);
 
-                // According to the ZCL, after the iasCieAddr is written, the device will do an
-                // enroll request. This should be responded with an enroll response.
-                // As some devices send these enroll requests randomly (while the iasCieAddr has not been written yet)
-                // we always respond to these enroll requests in the onZclData() function.
-                // Therefore we don't have to do it here anymore.
-                // https://github.com/Koenkk/zigbee2mqtt/issues/3012
+                // There are 2 enrollment procedures:
+                // - Auto enroll: coordinator has to send enrollResponse without receiving an enroll request
+                //                this case is handled below.
+                // - Manual enroll: coordinator replies to enroll request with an enroll response.
+                //                  this case in hanled in onZclData().
+                // https://github.com/Koenkk/zigbee2mqtt/issues/4569#issuecomment-706075676
+                await Wait(500);
+                debug.log(`IAS - '${this.ieeeAddr}' sending enroll response (auto enroll)`);
+                const payload = {enrollrspcode: 0, zoneid: 23};
+                await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
+
                 let enrolled = false;
                 for (let attempt = 0; attempt < 20; attempt++) {
                     await Wait(500);

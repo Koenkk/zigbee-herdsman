@@ -1,4 +1,6 @@
-[zigbee-herdsman](../README.md) › ["src/controller/model/group"](../modules/_src_controller_model_group_.md) › [Group](_src_controller_model_group_.group.md)
+**[zigbee-herdsman](../README.md)**
+
+> [Globals](../README.md) / ["src/controller/model/group"](../modules/_src_controller_model_group_.md) / Group
 
 # Class: Group
 
@@ -12,8 +14,8 @@
 
 ### Properties
 
-* [groupID](_src_controller_model_group_.group.md#readonly-groupid)
-* [meta](_src_controller_model_group_.group.md#readonly-meta)
+* [groupID](_src_controller_model_group_.group.md#groupid)
+* [meta](_src_controller_model_group_.group.md#meta)
 
 ### Accessors
 
@@ -24,232 +26,251 @@
 * [addMember](_src_controller_model_group_.group.md#addmember)
 * [command](_src_controller_model_group_.group.md#command)
 * [hasMember](_src_controller_model_group_.group.md#hasmember)
+* [read](_src_controller_model_group_.group.md#read)
 * [removeFromDatabase](_src_controller_model_group_.group.md#removefromdatabase)
 * [removeFromNetwork](_src_controller_model_group_.group.md#removefromnetwork)
 * [removeMember](_src_controller_model_group_.group.md#removemember)
 * [save](_src_controller_model_group_.group.md#save)
 * [write](_src_controller_model_group_.group.md#write)
-* [all](_src_controller_model_group_.group.md#static-all)
-* [byGroupID](_src_controller_model_group_.group.md#static-bygroupid)
-* [create](_src_controller_model_group_.group.md#static-create)
-* [injectAdapter](_src_controller_model_group_.group.md#static-injectadapter)
-* [injectDatabase](_src_controller_model_group_.group.md#static-injectdatabase)
+* [all](_src_controller_model_group_.group.md#all)
+* [byGroupID](_src_controller_model_group_.group.md#bygroupid)
+* [create](_src_controller_model_group_.group.md#create)
+* [injectAdapter](_src_controller_model_group_.group.md#injectadapter)
+* [injectDatabase](_src_controller_model_group_.group.md#injectdatabase)
 
 ## Properties
 
-### `Readonly` groupID
+### groupID
 
-• **groupID**: *number*
+• `Readonly` **groupID**: number
 
 *Defined in [src/controller/model/group.ts:25](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L25)*
 
 ___
 
-### `Readonly` meta
+### meta
 
-• **meta**: *[KeyValue](../interfaces/_src_controller_tstype_.keyvalue.md)*
+• `Readonly` **meta**: [KeyValue](../interfaces/_src_controller_tstype_.keyvalue.md)
 
 *Defined in [src/controller/model/group.ts:29](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L29)*
 
 ## Accessors
 
-###  members
+### members
 
-• **get members**(): *[Endpoint](_src_controller_model_endpoint_.endpoint.md)[]*
+• get **members**(): [Endpoint](_src_controller_model_endpoint_.endpoint.md)[]
 
 *Defined in [src/controller/model/group.ts:27](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L27)*
 
-**Returns:** *[Endpoint](_src_controller_model_endpoint_.endpoint.md)[]*
+**Returns:** [Endpoint](_src_controller_model_endpoint_.endpoint.md)[]
 
 ## Methods
 
-###  addMember
+### addMember
 
-▸ **addMember**(`endpoint`: [Endpoint](_src_controller_model_endpoint_.endpoint.md)): *void*
+▸ **addMember**(`endpoint`: [Endpoint](_src_controller_model_endpoint_.endpoint.md)): void
 
 *Defined in [src/controller/model/group.ts:126](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L126)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `endpoint` | [Endpoint](_src_controller_model_endpoint_.endpoint.md) |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  command
+### command
 
-▸ **command**(`clusterKey`: number | string, `commandKey`: number | string, `payload`: [KeyValue](../interfaces/_src_controller_tstype_.keyvalue.md), `options?`: [Options](../interfaces/_src_controller_model_group_.options.md)): *Promise‹void›*
+▸ **command**(`clusterKey`: number \| string, `commandKey`: number \| string, `payload`: [KeyValue](../interfaces/_src_controller_tstype_.keyvalue.md), `options?`: [Options](../interfaces/_src_controller_model_group_.options.md)): Promise\<void>
 
-*Defined in [src/controller/model/group.ts:178](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L178)*
+*Defined in [src/controller/model/group.ts:206](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L206)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
-`clusterKey` | number &#124; string |
-`commandKey` | number &#124; string |
+`clusterKey` | number \| string |
+`commandKey` | number \| string |
 `payload` | [KeyValue](../interfaces/_src_controller_tstype_.keyvalue.md) |
 `options?` | [Options](../interfaces/_src_controller_model_group_.options.md) |
 
-**Returns:** *Promise‹void›*
+**Returns:** Promise\<void>
 
 ___
 
-###  hasMember
+### hasMember
 
-▸ **hasMember**(`endpoint`: [Endpoint](_src_controller_model_endpoint_.endpoint.md)): *boolean*
+▸ **hasMember**(`endpoint`: [Endpoint](_src_controller_model_endpoint_.endpoint.md)): boolean
 
 *Defined in [src/controller/model/group.ts:136](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L136)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `endpoint` | [Endpoint](_src_controller_model_endpoint_.endpoint.md) |
 
-**Returns:** *boolean*
+**Returns:** boolean
 
 ___
 
-###  removeFromDatabase
+### read
 
-▸ **removeFromDatabase**(): *void*
+▸ **read**(`clusterKey`: number \| string, `attributes`: string[] \| number[], `options?`: [Options](../interfaces/_src_controller_model_group_.options.md)): Promise\<void>
+
+*Defined in [src/controller/model/group.ts:178](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L178)*
+
+#### Parameters:
+
+Name | Type |
+------ | ------ |
+`clusterKey` | number \| string |
+`attributes` | string[] \| number[] |
+`options?` | [Options](../interfaces/_src_controller_model_group_.options.md) |
+
+**Returns:** Promise\<void>
+
+___
+
+### removeFromDatabase
+
+▸ **removeFromDatabase**(): void
 
 *Defined in [src/controller/model/group.ts:112](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L112)*
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  removeFromNetwork
+### removeFromNetwork
 
-▸ **removeFromNetwork**(): *Promise‹void›*
+▸ **removeFromNetwork**(): Promise\<void>
 
 *Defined in [src/controller/model/group.ts:104](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L104)*
 
-**Returns:** *Promise‹void›*
+**Returns:** Promise\<void>
 
 ___
 
-###  removeMember
+### removeMember
 
-▸ **removeMember**(`endpoint`: [Endpoint](_src_controller_model_endpoint_.endpoint.md)): *void*
+▸ **removeMember**(`endpoint`: [Endpoint](_src_controller_model_endpoint_.endpoint.md)): void
 
 *Defined in [src/controller/model/group.ts:131](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L131)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `endpoint` | [Endpoint](_src_controller_model_endpoint_.endpoint.md) |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  save
+### save
 
-▸ **save**(): *void*
+▸ **save**(): void
 
 *Defined in [src/controller/model/group.ts:122](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L122)*
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  write
+### write
 
-▸ **write**(`clusterKey`: number | string, `attributes`: [KeyValue](../interfaces/_src_controller_tstype_.keyvalue.md), `options?`: [Options](../interfaces/_src_controller_model_group_.options.md)): *Promise‹void›*
+▸ **write**(`clusterKey`: number \| string, `attributes`: [KeyValue](../interfaces/_src_controller_tstype_.keyvalue.md), `options?`: [Options](../interfaces/_src_controller_model_group_.options.md)): Promise\<void>
 
 *Defined in [src/controller/model/group.ts:144](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L144)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
-`clusterKey` | number &#124; string |
+`clusterKey` | number \| string |
 `attributes` | [KeyValue](../interfaces/_src_controller_tstype_.keyvalue.md) |
 `options?` | [Options](../interfaces/_src_controller_model_group_.options.md) |
 
-**Returns:** *Promise‹void›*
+**Returns:** Promise\<void>
 
 ___
 
-### `Static` all
+### all
 
-▸ **all**(): *[Group](_src_controller_model_group_.group.md)[]*
+▸ `Static`**all**(): [Group](_src_controller_model_group_.group.md)[]
 
 *Defined in [src/controller/model/group.ts:84](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L84)*
 
-**Returns:** *[Group](_src_controller_model_group_.group.md)[]*
+**Returns:** [Group](_src_controller_model_group_.group.md)[]
 
 ___
 
-### `Static` byGroupID
+### byGroupID
 
-▸ **byGroupID**(`groupID`: number): *[Group](_src_controller_model_group_.group.md)*
+▸ `Static`**byGroupID**(`groupID`: number): [Group](_src_controller_model_group_.group.md)
 
 *Defined in [src/controller/model/group.ts:79](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L79)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `groupID` | number |
 
-**Returns:** *[Group](_src_controller_model_group_.group.md)*
+**Returns:** [Group](_src_controller_model_group_.group.md)
 
 ___
 
-### `Static` create
+### create
 
-▸ **create**(`groupID`: number): *[Group](_src_controller_model_group_.group.md)*
+▸ `Static`**create**(`groupID`: number): [Group](_src_controller_model_group_.group.md)
 
 *Defined in [src/controller/model/group.ts:89](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/group.ts#L89)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `groupID` | number |
 
-**Returns:** *[Group](_src_controller_model_group_.group.md)*
+**Returns:** [Group](_src_controller_model_group_.group.md)
 
 ___
 
-### `Static` injectAdapter
+### injectAdapter
 
-▸ **injectAdapter**(`adapter`: Adapter): *void*
+▸ `Static`**injectAdapter**(`adapter`: Adapter): void
 
-*Inherited from [Group](_src_controller_model_group_.group.md).[injectAdapter](_src_controller_model_group_.group.md#static-injectadapter)*
+*Inherited from [Group](_src_controller_model_group_.group.md).[injectAdapter](_src_controller_model_group_.group.md#injectadapter)*
 
 *Defined in [src/controller/model/entity.ts:12](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/entity.ts#L12)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `adapter` | Adapter |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-### `Static` injectDatabase
+### injectDatabase
 
-▸ **injectDatabase**(`database`: Database): *void*
+▸ `Static`**injectDatabase**(`database`: Database): void
 
-*Inherited from [Group](_src_controller_model_group_.group.md).[injectDatabase](_src_controller_model_group_.group.md#static-injectdatabase)*
+*Inherited from [Group](_src_controller_model_group_.group.md).[injectDatabase](_src_controller_model_group_.group.md#injectdatabase)*
 
 *Defined in [src/controller/model/entity.ts:8](https://github.com/Koenkk/zigbee-herdsman/blob/master/src/src/controller/model/entity.ts#L8)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `database` | Database |
 
-**Returns:** *void*
+**Returns:** void
