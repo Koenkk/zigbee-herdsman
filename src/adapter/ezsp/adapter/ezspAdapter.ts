@@ -35,13 +35,55 @@ class EZSPAdapter extends Adapter {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         this.port = serialPortOptions;
         this.driver = new Driver();
+        this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
+        this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
+        this.driver.on('incomingMessage', this.processMessage.bind(this));
+    }
+
+    private async processMessage(frame: any) {
+        // todo
+        if (!frame.senderEui64) {
+            frame.senderEui64 = await this.driver.networkIdToEUI64(frame.sender)
+        }
+        this.emit('event', frame);
+    }
+
+    private handleDeviceJoin(arr: any[]) {
+        // todo
+        let [nwk, ieee] = arr;
+        debug('Device join request received: %s %s', nwk, ieee);
+        // let devices = this.getDevices();
+        // if (!devices.some(d => d.nodeId === nwk || d.eui64 === ieee.toString())) {
+        //     devices.push({ nodeId: nwk, eui64: ieee.toString() });
+        //     writeFileSync(deviceDbPath, JSON.stringify(devices), 'utf8');
+        //     log.info('Added device to DB: %s %s', nwk, ieee)
+        // }
+    }
+
+    private handleDeviceLeft(arr: any[]) {
+        // todo
+        let [nwk, ieee] = arr;
+        debug('Device left network request received: %s %s', nwk, ieee);
+        // let devices = this.getDevices();
+
+        // let idx = devices.findIndex(d => d.nodeId === nwk && d.eui64 === ieee.toString());
+        // if (idx >= 0) {
+        //     devices = devices.splice(idx, 1);
+        //     writeFileSync(deviceDbPath, JSON.stringify(devices), 'utf8');
+        // }
     }
 
     /**
      * Adapter methods
      */
     public async start(): Promise<StartResult> {
-        await this.driver.startup(this.port.path, {}, debug);
+        await this.driver.startup(this.port.path, {
+            baudRate: this.port.baudRate || 115200,
+            parity: 'none',
+            stopBits: 1,
+            xon: true,
+            xoff: true
+        }, debug).then(()=>this.driver.getNetworkParameters());
         return "resumed";
     }
 

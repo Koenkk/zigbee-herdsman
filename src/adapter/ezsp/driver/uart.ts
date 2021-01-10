@@ -7,7 +7,9 @@ const XON = 0x11  // Resume transmission
 const XOFF = 0x13  // Stop transmission
 const SUBSTITUTE = 0x18
 const CANCEL = 0x1A  // Terminates a frame in progress
-
+const STUFF = 0x20
+const RANDOMIZE_START = 0x42
+const RANDOMIZE_SEQ = 0xB8
 const RESERVED = [FLAG, ESCAPE, XON, XOFF, SUBSTITUTE, CANCEL]
 
 class Terminator {
@@ -57,11 +59,11 @@ export class UartProtocol implements AsyncIterable<Buffer> {
         /* Callback when there is data received from the uart */
         var frame;
         if (data.indexOf(CANCEL) >= 0) {
-            this._buffer = new Buffer([]);
+            this._buffer = Buffer.alloc(0);
             data = data.slice((data.lastIndexOf(CANCEL) + 1));
         }
         if (data.indexOf(SUBSTITUTE) >= 0) {
-            this._buffer = new Buffer([]);
+            this._buffer = Buffer.alloc(0);
             data = data.slice((data.indexOf(FLAG) + 1));
         }
         if (this._buffer) {
@@ -82,9 +84,9 @@ export class UartProtocol implements AsyncIterable<Buffer> {
 
     _extract_frame(data: Buffer) {
         /* Extract a frame from the data buffer */
-        var place;
-        if (data.indexOf(FLAG) >= 0) {
-            place = data.indexOf(FLAG);
+        const place = data.indexOf(FLAG);
+        if (place >= 0) {
+            // todo: check crc data
             return [this._unstuff(data.slice(0, (place + 1))), data.slice((place + 1))];
         }
         return [null, data];
@@ -293,13 +295,13 @@ export class UartProtocol implements AsyncIterable<Buffer> {
         /*XOR s with a pseudo-random sequence for transmission
         Used only in data frames
         */
-        let rand = 66;
-        let out = new Buffer(s.length);
+        let rand = RANDOMIZE_START;
+        let out = Buffer.alloc(s.length);
         let outIdx = 0;
         for (let c of s){
             out.writeUInt8(c ^ rand, outIdx++);
             if ((rand % 2)) {
-                rand = ((rand >> 1) ^ 0xB8);
+                rand = ((rand >> 1) ^ RANDOMIZE_SEQ);
             } else {
                 rand = (rand >> 1);
             }
@@ -314,7 +316,7 @@ export class UartProtocol implements AsyncIterable<Buffer> {
         for (const c of s) {
             if (RESERVED.includes(c)) {
                 out.writeUInt8(ESCAPE, outIdx++);
-                out.writeUInt8(c ^ 0x20, outIdx++);
+                out.writeUInt8(c ^ STUFF, outIdx++);
             } else {
                 out.writeUInt8(c, outIdx++);
             }
@@ -325,15 +327,15 @@ export class UartProtocol implements AsyncIterable<Buffer> {
     _unstuff(s: Buffer) {
         /* Unstuff (unescape) a string after receipt */
         let escaped = false;
-        let out = new Buffer(s.length);
+        let out = Buffer.alloc(s.length);
         let outIdx = 0;
         for (let idx = 0; idx < s.length; idx += 1) {
             const c = s[idx];
             if (escaped) {
-                out.writeUInt8(c ^ 0x20, outIdx++);
+                out.writeUInt8(c ^ STUFF, outIdx++);
                 escaped = false;
             } else {
-                if ((c === 0x7D)) {
+                if ((c === ESCAPE)) {
                     escaped = true;
                 } else {
                     out.writeUInt8(c, outIdx++);

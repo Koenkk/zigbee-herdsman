@@ -242,7 +242,8 @@ export class Driver extends EventEmitter {
     public async getNetworkParameters() : Promise<{nodeType: number, networkParams: EmberNetworkParameters}> {
         let [status, nodeType, networkParams] = await this.ezsp.execCommand('getNetworkParameters');
         // kirov 0x93 NOT_JOINED
-        if (status != 0 && status != 0x93)
+        //if (status != 0 && status != 0x93)
+        if (status != 0)
             throw new Error('Unable to obtain network parameters');
         return {nodeType, networkParams}
     }
