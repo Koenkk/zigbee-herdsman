@@ -2673,6 +2673,11 @@ describe('Controller', () => {
         expect(call[2]).toBe(1);
         expect(deepClone(call[3])).toStrictEqual( {"Header":{"frameControl":{"reservedBits": 0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":11,"manufacturerCode":null,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":16387,"dataType":41,"minRepIntval":0,"maxRepIntval":3600,"repChange":25}],"Cluster":getCluster(513)});
         expect(call[4]).toBe(10000);
+
+        const hvacThermostat = Zcl.Utils.getCluster('hvacThermostat');
+        expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
+            {cluster: deepClone(hvacThermostat), attribute: {ID: 0x4003}, minimumReportInterval: 0, maximumReportInterval: 3600, reportableChange: 25}
+        ]);
     });
 
     it('Remove endpoint from all groups', async () => {
