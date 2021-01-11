@@ -299,7 +299,7 @@ class Znp extends events.EventEmitter {
 
             if (object.type === Type.SREQ) {
                 const timeout = object.command === 'bdbStartCommissioning' || object.command === 'startupFromApp' ?
-                    20000 : timeouts.SREQ;
+                    40000 : timeouts.SREQ;
                 const waiter = this.waitress.waitFor(
                     {type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout
                 );

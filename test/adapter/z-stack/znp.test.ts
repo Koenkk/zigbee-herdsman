@@ -677,7 +677,7 @@ describe('ZNP', () => {
 
         jest.useFakeTimers();
         let result = znp.request(UnpiConstants.Subsystem.ZDO, 'startupFromApp', {startdelay: 100});
-        jest.advanceTimersByTime(10000);
+        jest.advanceTimersByTime(30000);
 
         let error;
         try {
@@ -687,7 +687,7 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual(new Error("SRSP - ZDO - startupFromApp after 20000ms"));
+        expect(error).toStrictEqual(new Error("SRSP - ZDO - startupFromApp after 40000ms"));
     });
 
     it('znp request, responses comes after timeout', async () => {
