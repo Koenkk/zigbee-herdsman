@@ -677,7 +677,7 @@ describe('ZNP', () => {
 
         jest.useFakeTimers();
         let result = znp.request(UnpiConstants.Subsystem.ZDO, 'startupFromApp', {startdelay: 100});
-        jest.advanceTimersByTime(10000);
+        jest.advanceTimersByTime(50000);
 
         let error;
         try {
