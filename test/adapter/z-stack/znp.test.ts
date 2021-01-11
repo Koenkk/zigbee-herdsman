@@ -687,7 +687,7 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual(new Error("SRSP - ZDO - startupFromApp after 20000ms"));
+        expect(error).toStrictEqual(new Error("SRSP - ZDO - startupFromApp after 60000ms"));
     });
 
     it('znp request, responses comes after timeout', async () => {
