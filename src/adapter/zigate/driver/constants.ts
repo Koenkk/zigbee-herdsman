@@ -216,6 +216,7 @@ export enum ZiGateCommandCode {
     IEEEAddress = 0x0041,
     LED = 0x0018,
     SetTXpower = 0x0806,
+    ManagementLeaveRequest = 0x0047,
     ManagementLQI = 0x004E,
     SetSecurityStateKey = 0x0022,
 }
@@ -236,6 +237,7 @@ export enum ZiGateMessageCode {
     PermitJoinStatus = 0x8014,
     GetTimeServer = 0x8017,
     ManagementLQIResponse = 0x804E,
+    ManagementLeaveResponse = 0x8047,
     PDMEvent = 0x8035,
     RestartNonFactoryNew = 0x8006,
     RestartFactoryNew = 0x8007,
