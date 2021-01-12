@@ -120,8 +120,14 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
     },
     [ZiGateMessageCode.LeaveIndication]: {
         response: [
-            {name: 'extendedAddress', parameterType:'IEEEADDR'}, // <extended address: uint64_t>
-            {name: 'rejoin', parameterType:'UINT8'}, // <rejoin status: uint8_t>
+            {name: 'extendedAddress', parameterType: 'IEEEADDR'}, // <extended address: uint64_t>
+            {name: 'rejoin', parameterType: 'UINT8'}, // <rejoin status: uint8_t>
+        ]
+    },
+    [ZiGateMessageCode.ManagementLeaveResponse]: {
+        response: [
+            {name: 'sqn', parameterType: 'UINT8'},
+            {name: 'status', parameterType: 'UINT8'}, // <status: uint8_t>
         ]
     },
     [ZiGateMessageCode.RouterDiscoveryConfirm]: {

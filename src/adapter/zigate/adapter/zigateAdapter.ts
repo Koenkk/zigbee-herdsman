@@ -519,13 +519,17 @@ class ZiGateAdapter extends Adapter {
 
     public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
         const payload = {
-            targetAddress: ieeeAddr,
-            extendedAddress: ieeeAddr
+            shortAddress: networkAddress,
+            extendedAddress: ieeeAddr,
+            rejoin: 0,
+            removeChildren: 0
         };
 
-        // @TODO test
-        await this.driver.sendCommand(ZiGateCommandCode.RemoveDevice, payload);
-        return Promise.resolve();
+
+        return this.driver.sendCommand(ZiGateCommandCode.ManagementLeaveRequest, payload)
+            .then((Response) => {
+                return Promise.resolve()
+            }).catch(() => Promise.reject());
     };
 
     /**
