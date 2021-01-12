@@ -3830,6 +3830,18 @@ const Cluster: {
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
+            sendData: {
+                ID: 4,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'transid', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint8},
+                    {name: 'datatype', type: DataType.uint8},
+                    {name: 'length_hi', type: DataType.uint8},
+                    {name: 'length_lo', type: DataType.uint8},
+                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
             // Time sync command (It's transparent beetween MCU and server)
             // Time request device -> server
             //   payloadSize = 0
