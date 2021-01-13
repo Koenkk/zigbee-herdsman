@@ -87,7 +87,7 @@ export default class ZiGate extends EventEmitter {
         const statusResponse: ZiGateObject | void = await this.queue.execute(async () => {
             try {
                 debug.log(
-                    'Send command \x1b[42m>>>> '
+                    'Send command \x1b[32m>>>> '
                     + ZiGateCommandCode[code]
                     + ' 0x' + zeroPad(code)
                     + ' <<<<\x1b[0m \nPayload: %o',

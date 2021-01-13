@@ -229,18 +229,21 @@ export enum ZiGateMessageCode {
     ActiveEndpointResponse = 0x8005,
     NetworkState = 0x8009,
     VersionList = 0x8010,
-    APSDataConfirm = 0x8011, // 0x8012 ??
+    APSDataACK = 0x8011,
+    APSDataConfirm = 0x8012,
+    APSDataConfirmFailed = 0x8702,
     NetworkJoined = 0x8024,
     LeaveIndication = 0x8048,
     RouterDiscoveryConfirm = 0x8701,
-    APSDataConfirmFail = 0x8702,
     PermitJoinStatus = 0x8014,
     GetTimeServer = 0x8017,
     ManagementLQIResponse = 0x804E,
     ManagementLeaveResponse = 0x8047,
     PDMEvent = 0x8035,
+    PDMLoaded = 0x0302,
     RestartNonFactoryNew = 0x8006,
     RestartFactoryNew = 0x8007,
+    ExtendedStatusCallBack = 0x9999,
 }
 
 interface ZiGateOpjectDefaultPayload {
