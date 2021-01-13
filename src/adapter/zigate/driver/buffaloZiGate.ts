@@ -19,7 +19,7 @@ class BuffaloZiGate extends Buffalo {
             this.writeUInt32BE(value);
         } else if (type === 'IEEADDR') {
             return this.readIeeeAddr();
-        }else if (type === 'ADDRESS_WITH_TYPE_DEPENDENCY') {
+        } else if (type === 'ADDRESS_WITH_TYPE_DEPENDENCY') {
             const addressMode = this.buffer.readUInt8(this.position - 1);
             return addressMode == 3 ? this.writeIeeeAddr(value) : this.writeUInt16BE(value);
         } else if (type === 'BUFFER' && (Buffer.isBuffer(value) || IsNumberArray(value))) {
@@ -82,6 +82,8 @@ class BuffaloZiGate extends Buffalo {
             const buffer = this.buffer.slice(this.position);
             this.position += buffer.length;
             return buffer;
+        } else if (type === 'MAYBE_UINT8') {
+            if (this.isMore()) return this.readUInt8();
         } else {
             return super.read(type, options);
         }
@@ -121,6 +123,9 @@ class BuffaloZiGate extends Buffalo {
         this.position += 4;
     }
 
+    public isMore(): boolean {
+        return this.position < this.buffer.length;
+    }
 }
 
 export default BuffaloZiGate;

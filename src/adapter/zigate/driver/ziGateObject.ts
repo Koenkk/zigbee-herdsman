@@ -118,6 +118,16 @@ class ZiGateObject {
                 debug.error(e.stack);
             }
         }
+
+        if (buffalo.isMore()) {
+            let bufferString = buffalo.getBuffer().toString('hex');
+            debug.error(
+                "Last bytes of data were not parsed \x1b[32m%s\x1b[31m%s",
+                bufferString.slice(0, (buffalo.getPosition() * 2)).replace(/../g, "$& "),
+                bufferString.slice(buffalo.getPosition() * 2).replace(/../g, "$& ")
+            )
+        }
+
         return result;
     }
 
