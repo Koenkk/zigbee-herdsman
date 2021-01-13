@@ -70,7 +70,7 @@ abstract class Adapter extends events.EventEmitter {
         if (!serialPortOptions.path) {
             debug('No path provided, auto detecting path');
             for (const candidate of adapters) {
-                const path = await candidate?.autoDetectPath();
+                const path = await candidate.autoDetectPath?.();
                 if (path) {
                     debug(`Auto detected path '${path}' from adapter '${candidate.name}'`);
                     serialPortOptions.path = path;
@@ -86,7 +86,7 @@ abstract class Adapter extends events.EventEmitter {
             try {
                 // Determine adapter to use
                 for (const candidate of adapters) {
-                    if (await candidate?.isValidPath(serialPortOptions.path)) {
+                    if (await candidate.isValidPath?.(serialPortOptions.path)) {
                         debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
                         adapter = candidate;
                         break;
