@@ -37,11 +37,19 @@ abstract class Adapter extends events.EventEmitter {
         const {ZStackAdapter} = await import('./z-stack/adapter');
         const {DeconzAdapter} = await import('./deconz/adapter');
         const {ZiGateAdapter} = await import('./zigate/adapter');
-        type AdapterImplementation = typeof ZStackAdapter | typeof DeconzAdapter | typeof ZiGateAdapter;
+        type AdapterImplementation = (
+            | typeof ZStackAdapter
+            | typeof DeconzAdapter
+            | typeof ZiGateAdapter
+            | typeof Adapter
+        ) & {
+            autoDetectPath?: () => Promise<string>,
+            isValidPath?: (path: string) => Promise<boolean>
+        };
 
         let adapters: AdapterImplementation[];
         const adapterLookup = {zstack: ZStackAdapter, deconz: DeconzAdapter, zigate: ZiGateAdapter};
-        if (serialPortOptions.adapter) {
+        if (typeof serialPortOptions.adapter === 'string') {
             if (adapterLookup.hasOwnProperty(serialPortOptions.adapter)) {
                 adapters = [adapterLookup[serialPortOptions.adapter]];
             } else {
@@ -50,6 +58,8 @@ abstract class Adapter extends events.EventEmitter {
                     `options: ${Object.keys(adapterLookup).join(', ')}`
                 );
             }
+        } else if (serialPortOptions.adapter) {
+            adapters = [serialPortOptions.adapter as AdapterImplementation, ...Object.values(adapterLookup)];
         } else {
             adapters = Object.values(adapterLookup);
         }
@@ -60,7 +70,7 @@ abstract class Adapter extends events.EventEmitter {
         if (!serialPortOptions.path) {
             debug('No path provided, auto detecting path');
             for (const candidate of adapters) {
-                const path = await candidate.autoDetectPath();
+                const path = await candidate?.autoDetectPath();
                 if (path) {
                     debug(`Auto detected path '${path}' from adapter '${candidate.name}'`);
                     serialPortOptions.path = path;
@@ -76,7 +86,7 @@ abstract class Adapter extends events.EventEmitter {
             try {
                 // Determine adapter to use
                 for (const candidate of adapters) {
-                    if (await candidate.isValidPath(serialPortOptions.path)) {
+                    if (await candidate?.isValidPath(serialPortOptions.path)) {
                         debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
                         adapter = candidate;
                         break;

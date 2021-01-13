@@ -1,3 +1,5 @@
+import Adapter from "./adapter";
+
 interface NetworkOptions {
     panID: number;
     extendedPanID?: number[];
@@ -10,7 +12,7 @@ interface SerialPortOptions {
     baudRate?: number;
     rtscts?: boolean;
     path?: string;
-    adapter?: 'zstack' | 'deconz' | 'zigate';
+    adapter?: 'zstack' | 'deconz' | 'zigate' | typeof Adapter;
 }
 
 interface AdapterOptions {
