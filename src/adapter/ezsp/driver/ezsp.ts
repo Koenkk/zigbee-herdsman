@@ -6,6 +6,7 @@ import { Deferred } from './utils';
 import { EmberStatus, EmberOutgoingMessageType } from './types/named';
 import { EventEmitter } from 'events';
 import { EmberApsFrame } from './types/struct';
+import { int_t } from 'zigbee-herdsman/src/adapter/ezsp/driver/types/basic';
 
 export class Ezsp extends EventEmitter {
     ezsp_version = 4;
@@ -66,8 +67,23 @@ export class Ezsp extends EventEmitter {
     async setConfigurationValue(configId: number, value: any) {
         let ret;
         [ret] = await this.execCommand('setConfigurationValue', configId, value);
-        console.assert(ret === 0);
+        console.assert(ret === EmberStatus.SUCCESS);
         this.logger('Set %s = %s', configId, value);
+    }
+
+    async getConfigurationValue(configId: number) {
+        let ret, value;
+        [ret, value] = await this.execCommand('getConfigurationValue', configId);
+        console.assert(ret === EmberStatus.SUCCESS);
+        this.logger('Get %s = %s', configId, value);
+        return [ret, value];
+    }
+
+    async getMulticastTableEntry(index: number) {
+        let ret, value;
+        [ret, value] = await this.execCommand('getMulticastTableEntry', index);
+        console.assert(ret === EmberStatus.SUCCESS);
+        return [ret, value];
     }
 
     close() {

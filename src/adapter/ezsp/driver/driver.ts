@@ -4,13 +4,15 @@ import { EventEmitter } from "events";
 import { EmberApsFrame, EmberNetworkParameters } from './types/struct';
 import { Deferred } from './utils';
 import { EmberOutgoingMessageType, EmberEUI64, EmberDeviceUpdate } from './types/named';
-
+import { Multicast } from './multicast';
 
 export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT
     private ezsp: Ezsp;
     private eui64ToNodeId = new Map<string, number>();
     private pending = new Map<number, Array<Deferred<any>>>();
+    private logger: any;
+    private _multicast: Multicast;
 
     constructor(nodeInfo?:Iterable<{nodeId:number, eui64: string | EmberEUI64}>){
         super();
@@ -24,7 +26,8 @@ export class Driver extends EventEmitter {
     }
 
     public async startup(port: string, options: {}, logger: any) {
-        let ezsp = this.ezsp = new Ezsp(logger);
+        this.logger = logger;
+        let ezsp = this.ezsp = new Ezsp(this.logger);
         await ezsp.connect(port, options);
         const version = await ezsp.version();
         console.log('Got version', version);
@@ -45,6 +48,10 @@ export class Driver extends EventEmitter {
             const state = await ezsp.execCommand('networkState');
             console.log('Network state', state);
         }
+        const [status, count] = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
+        this.logger("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
+        this._multicast = new Multicast(ezsp, logger);
+        await this._multicast.initialize();
     }
 
     private handleFrame(frameName: string, ...args: any[]) {

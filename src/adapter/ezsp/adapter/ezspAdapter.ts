@@ -83,7 +83,8 @@ class EZSPAdapter extends Adapter {
             stopBits: 1,
             xon: true,
             xoff: true
-        }, debug).then(()=>this.driver.getNetworkParameters());
+        }, debug);
+        await this.driver.getNetworkParameters();
         return "resumed";
     }
 
