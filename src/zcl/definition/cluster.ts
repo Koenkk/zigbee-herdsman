@@ -3898,6 +3898,7 @@ const Cluster: {
     },
     aqaraOpple: {
         ID: 0xFCC0,
+        manufacturerCode: ManufacturerCode.LUMI_UNITED_TECH,
         attributes: {
             mode: {ID: 9, type: DataType.uint8},
             illuminance: {ID: 0x0112, type: DataType.uint32}
