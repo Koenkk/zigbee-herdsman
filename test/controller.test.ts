@@ -466,12 +466,12 @@ describe('Controller', () => {
         newOptions.network.panID = 0xFFFF;
         expect(() => {
             new Controller(newOptions);
-        }).toThrowError('PanID must be between 0x0000 (0) and 0xFFFF (65535), got 65535.');
+        }).toThrowError('PanID must have a value of 0x0001 (1) - 0xFFFE (65534), got 65535.');
 
         newOptions.network.panID = 0;
         expect(() => {
             new Controller(newOptions);
-        }).toThrowError('PanID must be between 0x0000 (0) and 0xFFFF (65535), got 0.');
+        }).toThrowError('PanID must have a value of 0x0001 (1) - 0xFFFE (65534), got 0.');
     });
 
     it('Controller start', async () => {

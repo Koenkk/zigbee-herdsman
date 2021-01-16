@@ -95,7 +95,7 @@ class Controller extends events.EventEmitter {
         }
 
         if (this.options.network.panID >= 0xFFFF || this.options.network.panID <= 0) {
-            throw new Error(`PanID must be between 0x0000 (0) and 0xFFFF (65535), ` +
+            throw new Error(`PanID must have a value of 0x0001 (1) - 0xFFFE (65534), ` +
                 `got ${this.options.network.panID}.`);
         }
     }
