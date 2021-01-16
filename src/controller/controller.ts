@@ -93,6 +93,11 @@ class Controller extends events.EventEmitter {
         if (!Array.isArray(this.options.network.extendedPanID) || this.options.network.extendedPanID.length !== 8) {
             throw new Error(`ExtendedPanID must be 8 digits long, got ${this.options.network.extendedPanID.length}.`);
         }
+
+        if (this.options.network.panID >= 0xFFFF || this.options.network.panID <= 0) {
+            throw new Error(`PanID must be between 0x0000 (0) and 0xFFFF (65535), ` +
+                `got ${this.options.network.panID}.`);
+        }
     }
 
     /**
