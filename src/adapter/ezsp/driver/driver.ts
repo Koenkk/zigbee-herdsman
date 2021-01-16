@@ -1,14 +1,16 @@
+import * as TsType from './../../tstype';
 import { Ezsp } from './ezsp';
 import { EzspConfigId, EmberZdoConfigurationFlags } from './types';
 import { EventEmitter } from "events";
 import { EmberApsFrame, EmberNetworkParameters } from './types/struct';
 import { Deferred } from './utils';
-import { EmberOutgoingMessageType, EmberEUI64, EmberDeviceUpdate } from './types/named';
+import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId } from './types/named';
 import { Multicast } from './multicast';
 
 export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT
-    private ezsp: Ezsp;
+    private _ezsp: Ezsp;
+    private _nwkOpt: TsType.NetworkOptions;
     private eui64ToNodeId = new Map<string, number>();
     private pending = new Map<number, Array<Deferred<any>>>();
     private logger: any;
@@ -25,10 +27,11 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async startup(port: string, options: {}, logger: any) {
+    public async startup(port: string, serialOpt: {}, nwkOpt: TsType.NetworkOptions, logger: any) {
         this.logger = logger;
-        let ezsp = this.ezsp = new Ezsp(this.logger);
-        await ezsp.connect(port, options);
+        this._nwkOpt = nwkOpt;
+        let ezsp = this._ezsp = new Ezsp(this.logger);
+        await ezsp.connect(port, serialOpt);
         const version = await ezsp.version();
         console.log('Got version', version);
 
@@ -45,13 +48,38 @@ export class Driver extends EventEmitter {
             console.log('Network ready');
             ezsp.on('frame', this.handleFrame.bind(this))
         } else {
+            await this.form_network();
             const state = await ezsp.execCommand('networkState');
             console.log('Network state', state);
         }
         const [status, count] = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
         this.logger("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
         this._multicast = new Multicast(ezsp, logger);
-        await this._multicast.initialize();
+        await this._multicast.startup([]);
+    }
+
+    private async form_network() {
+        const panID = this._nwkOpt.panID;
+        const extendedPanID = this._nwkOpt.extendedPanID;
+        const hashed_tclk = this._ezsp.ezsp_version > 4;
+        // const initial_security_state = bellows.zigbee.util.zha_security(
+        //     nwk, controller=True, hashed_tclk=hashed_tclk
+        // )
+        // const [status] = await this._ezsp.setInitialSecurityState(initial_security_state);
+        const parameters:EmberNetworkParameters = new EmberNetworkParameters();
+        parameters.panId = panID;
+        parameters.extendedPanId = extendedPanID;
+        parameters.radioTxPower = 8;
+        parameters.radioChannel = 15;
+        parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
+        parameters.nwkManagerId = 0;
+        parameters.nwkUpdateId = 0;
+        parameters.channels = 0x07FFF800;
+
+        await this._ezsp.formNetwork(parameters);
+        await this._ezsp.setValue(
+            EzspValueId.VALUE_STACK_TOKEN_WRITING, 1
+        );
     }
 
     private handleFrame(frameName: string, ...args: any[]) {
@@ -150,7 +178,7 @@ export class Driver extends EventEmitter {
                 let strEui64 = eui64.toString();
                 let nodeId = this.eui64ToNodeId.get(strEui64);
                 if (nodeId === undefined) {
-                    nodeId = await this.ezsp.execCommand('lookupNodeIdByEui64', eui64).then(arr => arr[0]);
+                    nodeId = await this._ezsp.execCommand('lookupNodeIdByEui64', eui64).then(arr => arr[0]);
                     if (nodeId && nodeId !== 0xFFFF) {
                         this.eui64ToNodeId.set(strEui64, nodeId);
                     } else {
@@ -160,7 +188,7 @@ export class Driver extends EventEmitter {
                 nwk = nodeId;
             }
 
-            let v = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
+            let v = await this._ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             console.log('unicast message sent, waiting for reply');
             if (v[0] != 0) {
                 this.pending.delete(seq);
@@ -220,11 +248,11 @@ export class Driver extends EventEmitter {
     }
 
     public stop() {
-        return this.ezsp.close();
+        return this._ezsp.close();
     }
 
     public getLocalEUI64(): Promise<EmberEUI64> {
-        return this.ezsp.execCommand('getEui64')
+        return this._ezsp.execCommand('getEui64')
             .then(ret => new EmberEUI64(ret[0] as any));
     }
 
@@ -232,7 +260,7 @@ export class Driver extends EventEmitter {
         for (let [eUI64, value] of this.eui64ToNodeId) {
             if (value === nwk) return new EmberEUI64(eUI64);
         }
-        let value = await this.ezsp.execCommand('lookupEui64ByNodeId', nwk);
+        let value = await this._ezsp.execCommand('lookupEui64ByNodeId', nwk);
         if (value[0] === 0) {
             let eUI64 = new EmberEUI64(value[1] as any);
             this.eui64ToNodeId.set(eUI64.toString(), nwk);
@@ -243,15 +271,15 @@ export class Driver extends EventEmitter {
     }
 
     public permitJoining(seconds:number){
-        return this.ezsp.execCommand('permitJoining', seconds);
+        return this._ezsp.execCommand('permitJoining', seconds);
     }
 
-    public async getNetworkParameters() : Promise<{nodeType: number, networkParams: EmberNetworkParameters}> {
-        let [status, nodeType, networkParams] = await this.ezsp.execCommand('getNetworkParameters');
-        // kirov 0x93 NOT_JOINED
-        //if (status != 0 && status != 0x93)
-        if (status != 0)
-            throw new Error('Unable to obtain network parameters');
-        return {nodeType, networkParams}
-    }
+    // public async getNetworkParameters() : Promise<{nodeType: number, networkParams: EmberNetworkParameters}> {
+    //     let [status, nodeType, networkParams] = await this._ezsp.execCommand('getNetworkParameters');
+    //     // kirov 0x93 NOT_JOINED
+    //     //if (status != 0 && status != 0x93)
+    //     if (status != 0)
+    //         throw new Error('Unable to obtain network parameters');
+    //     return {nodeType, networkParams};
+    // }
 }

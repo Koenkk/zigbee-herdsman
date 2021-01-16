@@ -98,7 +98,7 @@ export class LVBytes {
 export abstract class List {
     static serialize(cls: any, value: any[]) {
         console.assert(((cls._length === null) || (cls.length === cls._length)));
-        return value.map(i => i.serialize(cls, i));
+        return Buffer.from(value.map(i => i.serialize(cls, i)));
     }
     static deserialize(cls: any, data: Buffer): (any[] | Buffer)[] {
         var item;
@@ -116,7 +116,7 @@ class _LVList extends List {
         var data, head;
         head = [cls.length];
         data = super.serialize(cls, value);
-        return head.concat(data);
+        return Buffer.from(head.concat(data));
     }
     static deserialize(cls: any, data: Buffer) {
         var item, length;
@@ -144,6 +144,12 @@ export function LVList(itemtype: any) : List {
 }
 
 class _FixedList extends List {
+    static serialize(cls: any, value: any[]) {
+        var data, head;
+        head = [cls._length];
+        data = value.map(i => cls._itemtype.serialize(cls._itemtype, i)[0]);
+        return Buffer.from(head.concat(data));
+    }
     static deserialize(cls: any, data: Buffer) {
         let item;
         let r: any[] = [];

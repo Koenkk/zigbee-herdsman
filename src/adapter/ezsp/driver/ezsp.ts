@@ -85,6 +85,20 @@ export class Ezsp extends EventEmitter {
         console.assert(ret === EmberStatus.SUCCESS);
         return [ret, value];
     }
+    
+    async setMulticastTableEntry(index: number, entry: t.EmberMulticastTableEntry) {
+        let ret;
+        [ret] = await this.execCommand('setMulticastTableEntry', index, entry);
+        console.assert(ret === EmberStatus.SUCCESS);
+        return [ret];
+    }
+
+    async setValue(valueId: t.EzspValueId, value: any) {
+        let ret;
+        [ret] = await this.execCommand('setValue', valueId, value);
+        console.assert(ret === EmberStatus.SUCCESS);
+        return [ret];
+    }
 
     close() {
         return this._port.close();
@@ -163,10 +177,12 @@ export class Ezsp extends EventEmitter {
         })
         v = await this._command("formNetwork", parameters);
         if ((v[0] !== 0)) {
+            this.logger("Failure forming network:" + v);
             throw new Error(("Failure forming network:" + v));
         }
         v = await fut.promise;
         if ((v[0] !== 0x90 /*EmberStatus.NETWORK_UP*/)) {
+            this.logger("Failure forming network:" + v);
             throw new Error(("Failure forming network:" + v));
         }
         return v;

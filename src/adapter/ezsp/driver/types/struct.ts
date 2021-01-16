@@ -25,18 +25,18 @@ export class EzspStruct {
         }
         return [r, data]
     }
-
-    /*toString() {
-        //r = '<%s ' % (self.__class__.__name__, )
-        //r += ' '.join(
-        //    ['%s=%s' % (f[0], getattr(self, f[0], None)) for f in self._fields]
-        //)
-        //r += '>'
-        //return r
-    }*/
 }
 
 export class EmberNetworkParameters extends EzspStruct {
+    public extendedPanId: number[];
+    public panId: number;
+    public radioTxPower: number;
+    public radioChannel: number;
+    public joinMethod: named.EmberJoinMethod;
+    public nwkManagerId: named.EmberNodeId;
+    public nwkUpdateId: number;
+    public channels: number;
+
     static _fields = [
         // The network's extended PAN identifier.
         ['extendedPanId', basic.fixed_list(8, basic.uint8_t)],
@@ -137,6 +137,9 @@ export class EmberBindingTableEntry extends EzspStruct {
 }
 
 export class EmberMulticastTableEntry extends EzspStruct {
+    public multicastId: number;
+    public endpoint: number;
+    public networkIndex: number;
     // A multicast table entry indicates that a particular endpoint is a member
     // of a particular multicast group.Only devices with an endpoint in a
     // multicast group will receive messages sent to that multicast group.
