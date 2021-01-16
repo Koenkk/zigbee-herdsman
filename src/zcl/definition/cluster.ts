@@ -3,7 +3,6 @@ import DataType from './dataType';
 import {ParameterDefinition} from './tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
 import ManufacturerCode from './manufacturerCode';
-import { Z_DEFAULT_STRATEGY } from 'zlib';
 
 interface AttributeDefinition {
     ID: number;
