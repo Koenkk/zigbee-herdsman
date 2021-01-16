@@ -3,6 +3,7 @@ import DataType from './dataType';
 import {ParameterDefinition} from './tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
 import ManufacturerCode from './manufacturerCode';
+import { Z_DEFAULT_STRATEGY } from 'zlib';
 
 interface AttributeDefinition {
     ID: number;
@@ -3900,6 +3901,7 @@ const Cluster: {
         ID: 0xFCC0,
         attributes: {
             mode: {ID: 9, type: DataType.uint8},
+            illuminance: {ID: 0x0112, type: DataType.uint32}
         },
         commands: {},
         commandsResponse: {}
