@@ -1,6 +1,6 @@
 import * as TsType from './../../tstype';
 import { Ezsp } from './ezsp';
-import { EzspConfigId, EmberZdoConfigurationFlags } from './types';
+import { EzspConfigId, EmberZdoConfigurationFlags, EmberStatus, EmberNodeType, EmberNodeId } from './types';
 import { EventEmitter } from "events";
 import { EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState } from './types/struct';
 import { Deferred, ember_security } from './utils';
@@ -11,9 +11,12 @@ export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT
     private _ezsp: Ezsp;
     private _nwkOpt: TsType.NetworkOptions;
+    public networkParams: EmberNetworkParameters;
     private eui64ToNodeId = new Map<string, number>();
     private pending = new Map<number, Array<Deferred<any>>>();
     private logger: any;
+    private _nwk: EmberNodeId;
+    private _ieee: EmberEUI64;
     private _multicast: Multicast;
 
     constructor(nodeInfo?:Iterable<{nodeId:number, eui64: string | EmberEUI64}>){
@@ -52,16 +55,36 @@ export class Driver extends EventEmitter {
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 16);
 
-        if (await ezsp.networkInit()) {
-            console.log('Network ready');
-            ezsp.on('frame', this.handleFrame.bind(this))
-        } else {
+        if (!await ezsp.networkInit()) {
             await this.form_network();
             const state = await ezsp.execCommand('networkState');
             console.log('Network state', state);
         }
-        const [status, count] = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
-        this.logger("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
+        let [status, nodeType, networkParams] = await ezsp.execCommand('getNetworkParameters');
+        console.assert(status == EmberStatus.SUCCESS);
+        if (nodeType != EmberNodeType.COORDINATOR) {
+            this.logger(`Leaving current network as ${nodeType} and forming new network`);
+            const [st] = await this._ezsp.leaveNetwork();
+            console.assert(st == EmberStatus.NETWORK_DOWN);
+            await this.form_network();
+            [status, nodeType, networkParams] = await ezsp.execCommand('getNetworkParameters');
+            console.assert(status == EmberStatus.SUCCESS);
+        }
+        this.networkParams = networkParams;
+        this.logger("Node type: %s, Network parameters: %s", nodeType, networkParams);
+
+        await ezsp.updatePolicies({});
+
+        const [nwk] = await ezsp.execCommand('getNodeId');
+        this._nwk = nwk;
+        this._ieee = await this.getLocalEUI64();
+        // this.handle_join(this.nwk, this.ieee, 0);
+        console.log('Network ready');
+        ezsp.on('frame', this.handleFrame.bind(this))
+        this.logger(`EZSP nwk=${this._nwk}, IEEE=${this._ieee}`);
+
+        // const [status, count] = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
+        // this.logger("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
         this._multicast = new Multicast(ezsp, logger);
         await this._multicast.startup([]);
     }
@@ -76,11 +99,11 @@ export class Driver extends EventEmitter {
         parameters.panId = panID;
         parameters.extendedPanId = extendedPanID;
         parameters.radioTxPower = 8;
-        parameters.radioChannel = 15;
+        parameters.radioChannel = this._nwkOpt.channelList[0];
         parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
         parameters.nwkManagerId = 0;
         parameters.nwkUpdateId = 0;
-        parameters.channels = 34635776; //0x07FFF800;
+        parameters.channels = 0x07FFF800; // all channels
         
         await this._ezsp.formNetwork(parameters);
         await this._ezsp.setValue(EzspValueId.VALUE_STACK_TOKEN_WRITING, 1);
@@ -182,7 +205,7 @@ export class Driver extends EventEmitter {
                 let strEui64 = eui64.toString();
                 let nodeId = this.eui64ToNodeId.get(strEui64);
                 if (nodeId === undefined) {
-                    nodeId = await this._ezsp.execCommand('lookupNodeIdByEui64', eui64).then(arr => arr[0]);
+                    nodeId = await this._ezsp.execCommand('lookupNodeIdByEui64', eui64);
                     if (nodeId && nodeId !== 0xFFFF) {
                         this.eui64ToNodeId.set(strEui64, nodeId);
                     } else {
@@ -256,8 +279,7 @@ export class Driver extends EventEmitter {
     }
 
     public getLocalEUI64(): Promise<EmberEUI64> {
-        return this._ezsp.execCommand('getEui64')
-            .then(ret => new EmberEUI64(ret[0] as any));
+        return this._ezsp.execCommand('getEui64');
     }
 
     public async networkIdToEUI64(nwk: number): Promise<EmberEUI64> {
@@ -265,7 +287,7 @@ export class Driver extends EventEmitter {
             if (value === nwk) return new EmberEUI64(eUI64);
         }
         let value = await this._ezsp.execCommand('lookupEui64ByNodeId', nwk);
-        if (value[0] === 0) {
+        if (value[0] === EmberStatus.SUCCESS) {
             let eUI64 = new EmberEUI64(value[1] as any);
             this.eui64ToNodeId.set(eUI64.toString(), nwk);
             return eUI64;
@@ -277,13 +299,4 @@ export class Driver extends EventEmitter {
     public permitJoining(seconds:number){
         return this._ezsp.execCommand('permitJoining', seconds);
     }
-
-    // public async getNetworkParameters() : Promise<{nodeType: number, networkParams: EmberNetworkParameters}> {
-    //     let [status, nodeType, networkParams] = await this._ezsp.execCommand('getNetworkParameters');
-    //     // kirov 0x93 NOT_JOINED
-    //     //if (status != 0 && status != 0x93)
-    //     if (status != 0)
-    //         throw new Error('Unable to obtain network parameters');
-    //     return {nodeType, networkParams};
-    // }
 }

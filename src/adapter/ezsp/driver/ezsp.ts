@@ -13,6 +13,7 @@ export class Ezsp extends EventEmitter {
     _gw: UartProtocol;
     _port : any;
     _seq = 0;
+    _tc_policy: any;
     _awaiting = new Map<number, { expectedId: number, schema: any, deferred: Deferred<Buffer> }>();
     COMMANDS_BY_ID = new Map<number, { name: string, inArgs: any[], outArgs: any[] }>();
     _cbCounter = 0;
@@ -62,6 +63,27 @@ export class Ezsp extends EventEmitter {
         [result] = await this._command("networkInit");
         console.log('network init result', result);
         return result === EmberStatus.SUCCESS;
+    }
+
+    async leaveNetwork() {
+        var fut: Deferred<any>, v, st;
+        fut = new Deferred();
+        this.on('frame', (frameName: string, response: any) => {
+            if ((frameName === "stackStatusHandler")) {
+                fut.resolve(response);
+            }
+        })
+        v = await this._command("leaveNetwork");
+        if ((v[0] !== EmberStatus.SUCCESS)) {
+            this.logger("Failure to leave network:" + v);
+            throw new Error(("Failure to leave network:" + v));
+        }
+        v = await fut.promise;
+        if ((v !== EmberStatus.NETWORK_DOWN)) {
+            this.logger("Failure to leave network:" + v);
+            throw new Error(("Failure to leave network:" + v));
+        }
+        return v;
     }
 
     async setConfigurationValue(configId: number, value: any) {
@@ -114,6 +136,16 @@ export class Ezsp extends EventEmitter {
         return [ret];
     }
 
+    async updatePolicies(zigpy_config: {}) {
+        // Set up the policies for what the NCP should do.
+        // policies = self.SCHEMAS[CONF_EZSP_POLICIES](zigpy_config[CONF_EZSP_POLICIES])
+        // this.tc_policy = policies[EzspPolicyId.TRUST_CENTER_POLICY];
+
+        // for policy, value in policies.items():
+        // [status] = await this.setPolicy(EzspPolicyId[policy], value);
+        // console.assert(status == EmberStatus.SUCCESS);
+    }
+
     close() {
         return this._port.close();
     }
@@ -158,19 +190,19 @@ export class Ezsp extends EventEmitter {
             }
         })
         v = await this._command("formNetwork", parameters);
-        if ((v[0] !== 0)) {
+        if ((v[0] !== EmberStatus.SUCCESS)) {
             this.logger("Failure forming network:" + v);
             throw new Error(("Failure forming network:" + v));
         }
         v = await fut.promise;
-        if ((v !== 0x90 /*EmberStatus.NETWORK_UP*/)) {
+        if ((v !== EmberStatus.NETWORK_UP)) {
             this.logger("Failure forming network:" + v);
             throw new Error(("Failure forming network:" + v));
         }
         return v;
     }
 
-    execCommand(name: string, ...args: any[]) {
+    execCommand(name: string, ...args: any[]): any {
         if (Object.keys(COMMANDS).indexOf(name) < 0) {
             throw new Error('Unknown command: ' + name);
         }

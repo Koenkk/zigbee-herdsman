@@ -84,8 +84,7 @@ class EZSPAdapter extends Adapter {
             xon: true,
             xoff: true
         }, this.networkOptions, debug);
-        // await this.driver.getNetworkParameters();
-        return "resumed";
+        return Promise.resolve("resumed");
     }
 
     public async stop(): Promise<void> {
@@ -208,8 +207,11 @@ class EZSPAdapter extends Adapter {
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
-        // todo
-        return Promise.reject();
+        return {
+            panID: this.driver.networkParams.panId,
+            extendedPanID: this.driver.networkParams.extendedPanId[0],
+            channel: this.driver.networkParams.radioChannel
+        };
     }
 
     public async supportsBackup(): Promise<boolean> {
