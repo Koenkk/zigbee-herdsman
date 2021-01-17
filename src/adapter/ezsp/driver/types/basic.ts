@@ -145,10 +145,8 @@ export function LVList(itemtype: any) : List {
 
 class _FixedList extends List {
     static serialize(cls: any, value: any[]) {
-        var data, head;
-        head = [cls._length];
-        data = value.map(i => cls._itemtype.serialize(cls._itemtype, i)[0]);
-        return Buffer.from(head.concat(data));
+        const data = value.map(i => cls._itemtype.serialize(cls._itemtype, i)[0]);
+        return Buffer.from(data);
     }
     static deserialize(cls: any, data: Buffer) {
         let item;

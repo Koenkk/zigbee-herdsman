@@ -61,7 +61,8 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
             value = (value as EmberEUI64).value as number[];
         }
         console.assert(cls._length === value.length);
-        return (value as any[]).reverse().map(i => basic.uint8_t.serialize(basic.uint8_t, i));
+        const val = (value as any[]).reverse().map(i => basic.uint8_t.serialize(basic.uint8_t, i));
+        return Buffer.from(val as any[]);
     }
 
     public get value() {
@@ -253,6 +254,14 @@ export class EzspConfigId extends basic.uint8_t {
     // again on the trust center. The default value is 300 seconds, i.e., 5
     // minutes.
     static CONFIG_TRANSIENT_KEY_TIMEOUT_S = 0x36
+    // The number of passive acknowledgements to record from neighbors before we stop
+    // re-transmitting broadcasts
+    static CONFIG_BROADCAST_MIN_ACKS_NEEDED = 0x37
+    // The length of time, in seconds, that a trust center will allow a Trust Center
+    // (insecure) rejoin for a device that is using the well-known link key. This timeout
+    // takes effect once rejoins using the well-known key has been allowed. This command
+    // updates the emAllowTcRejoinsUsingWellKnownKeyTimeoutSec value.
+    static CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S = 0x38
 }
 
 

@@ -93,6 +93,20 @@ export class Ezsp extends EventEmitter {
         return [ret];
     }
 
+    async setInitialSecurityState(entry: t.EmberInitialSecurityState) {
+        let ret;
+        [ret] = await this.execCommand('setInitialSecurityState', entry);
+        console.assert(ret === EmberStatus.SUCCESS);
+        return [ret];
+    }
+
+    async getCurrentSecurityState(){
+        let ret, res;
+        [ret, res] = await this.execCommand('getCurrentSecurityState');
+        console.assert(ret === EmberStatus.SUCCESS);
+        return [ret, res];
+    }
+
     async setValue(valueId: t.EzspValueId, value: any) {
         let ret;
         [ret] = await this.execCommand('setValue', valueId, value);
@@ -109,7 +123,6 @@ export class Ezsp extends EventEmitter {
         c = (<any>COMMANDS)[name];
         data = t.serialize(args, c[1]);
         frame = [(this._seq & 255)];
-        // kirov
         if ((this.ezsp_version < 8)) {
             if ((this.ezsp_version >= 5)) {
                 frame.push(0x00, 0xFF, 0x00, c[0]);
@@ -125,8 +138,9 @@ export class Ezsp extends EventEmitter {
 
     private _command(name: string, ...args: any[]): Promise<Buffer> {
         var c, data, deferred;
-        this.logger("Send command %s", name);
+        this.logger(`Send command ${name}: (${args})`);
         data = this._ezsp_frame(name, ...args);
+        this.logger(`Send  data  ${name}: (${data.toString('hex')})`);
         this._gw.data(data);
         c = (<any>COMMANDS)[name];
         deferred = new Deferred<Buffer>();
@@ -135,40 +149,8 @@ export class Ezsp extends EventEmitter {
         return deferred.promise;
     }
 
-    /* private async _list_command(name: string, item_frames: Array<string>, completion_frame: any, spos: number, ...args: any[]) {
-        // Run a command, returning result callbacks as a list
-        var cbid, fut: Deferred<Buffer>, v;
-        var cb;
-        fut = new Deferred();
-        let results: any[] = [];
-        cb = (frameName: string, response: any) => {
-            if (item_frames.indexOf(frameName) >= 0) {
-                results.push(response);
-            } else {
-                if ((frameName === completion_frame)) {
-                    fut.resolve(response);
-                }
-            }
-        };
-        cbid = this.add_callback(cb);
-        try {
-            v = await this._command(name, ...args);
-            if ((v[0] !== 0)) {
-                throw new Error(v);
-            }
-            v = await fut.promise;
-            if ((v[spos] !== 0)) {
-                throw new Error(v);
-            }
-        } finally {
-            this.remove_callback(cbid);
-        }
-        return results;
-    }*/
-
-
     async formNetwork(parameters: {}) {
-        var fut: Deferred<Buffer>, v;
+        var fut: Deferred<any>, v, st;
         fut = new Deferred();
         this.on('frame', (frameName: string, response: any) => {
             if ((frameName === "stackStatusHandler")) {
@@ -181,7 +163,7 @@ export class Ezsp extends EventEmitter {
             throw new Error(("Failure forming network:" + v));
         }
         v = await fut.promise;
-        if ((v[0] !== 0x90 /*EmberStatus.NETWORK_UP*/)) {
+        if ((v !== 0x90 /*EmberStatus.NETWORK_UP*/)) {
             this.logger("Failure forming network:" + v);
             throw new Error(("Failure forming network:" + v));
         }
@@ -203,7 +185,6 @@ export class Ezsp extends EventEmitter {
         data randomization removed.
         */
         var frame_id: number, result, schema, sequence;
-        // kirov
         if ((this.ezsp_version < 8)) {
             [sequence, frame_id, data] = [data[0], data[2], data.slice(3)];
         } else {
@@ -227,12 +208,14 @@ export class Ezsp extends EventEmitter {
             if (entry) {
                 console.assert(entry.expectedId === frame_id);
                 [result, data] = t.deserialize(data, entry.schema);
+                this.logger(`Application frame ${frame_id} (${frameName}): ${result}`);
                 entry.deferred.resolve(result);
             }
         } else {
             schema = cmd.outArgs;
             frameName = cmd.name;
             [result, data] = t.deserialize(data, schema);
+            this.logger(`Application frame ${frame_id} (${frameName}): ${result}`);
             super.emit('frame', frameName, ...result);
         }
         if ((frame_id === 0)) {

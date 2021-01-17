@@ -2,8 +2,8 @@ import * as TsType from './../../tstype';
 import { Ezsp } from './ezsp';
 import { EzspConfigId, EmberZdoConfigurationFlags } from './types';
 import { EventEmitter } from "events";
-import { EmberApsFrame, EmberNetworkParameters } from './types/struct';
-import { Deferred } from './utils';
+import { EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState } from './types/struct';
+import { Deferred, ember_security } from './utils';
 import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId } from './types/named';
 import { Multicast } from './multicast';
 
@@ -35,7 +35,12 @@ export class Driver extends EventEmitter {
         const version = await ezsp.version();
         console.log('Got version', version);
 
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 2);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_STACK_PROFILE, 2);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 32);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 7680);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE, 16);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SECURITY_LEVEL, 5);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_APPLICATION_ZDO_FLAGS,
@@ -43,6 +48,9 @@ export class Driver extends EventEmitter {
             | EmberZdoConfigurationFlags.APP_HANDLES_UNSUPPORTED_ZDO_REQUESTS);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 2);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 0xff);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 8);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 16);
 
         if (await ezsp.networkInit()) {
             console.log('Network ready');
@@ -62,10 +70,8 @@ export class Driver extends EventEmitter {
         const panID = this._nwkOpt.panID;
         const extendedPanID = this._nwkOpt.extendedPanID;
         const hashed_tclk = this._ezsp.ezsp_version > 4;
-        // const initial_security_state = bellows.zigbee.util.zha_security(
-        //     nwk, controller=True, hashed_tclk=hashed_tclk
-        // )
-        // const [status] = await this._ezsp.setInitialSecurityState(initial_security_state);
+        const initial_security_state:EmberInitialSecurityState = ember_security(this._nwkOpt, true, hashed_tclk);
+        const [status] = await this._ezsp.setInitialSecurityState(initial_security_state);
         const parameters:EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;
         parameters.extendedPanId = extendedPanID;
@@ -74,12 +80,10 @@ export class Driver extends EventEmitter {
         parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
         parameters.nwkManagerId = 0;
         parameters.nwkUpdateId = 0;
-        parameters.channels = 0x07FFF800;
-
+        parameters.channels = 34635776; //0x07FFF800;
+        
         await this._ezsp.formNetwork(parameters);
-        await this._ezsp.setValue(
-            EzspValueId.VALUE_STACK_TOKEN_WRITING, 1
-        );
+        await this._ezsp.setValue(EzspValueId.VALUE_STACK_TOKEN_WRITING, 1);
     }
 
     private handleFrame(frameName: string, ...args: any[]) {

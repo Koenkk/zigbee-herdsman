@@ -2,12 +2,6 @@ import * as basic from './basic';
 import * as named from './named';
 
 export class EzspStruct {
-    constructor(...args: any[]) {
-        // if len(args) == 1 and isinstance(args[0], self.__class__):
-        //    # copy constructor
-        //    for field in self._fields:
-        //        setattr(self, field[0], getattr(args[0], field[0]))
-    }
     static serialize(cls: any, obj: any) {
         return Buffer.concat(cls._fields.map( (field:any[]) => {
             let value = obj[field[0]];
@@ -24,6 +18,10 @@ export class EzspStruct {
             r[field_name] = v;
         }
         return [r, data]
+    }
+
+    public toString():string {
+        return `${this.constructor.name}: ${JSON.stringify(this)}`;
     }
 }
 
@@ -83,7 +81,6 @@ export class EmberZigbeeNetwork extends EzspStruct {
 }
 
 export class EmberApsFrame extends EzspStruct {
-
     public profileId: number;
     public sequence: number;
     public clusterId: number;
@@ -155,6 +152,7 @@ export class EmberMulticastTableEntry extends EzspStruct {
 }
 
 export class EmberKeyData extends EzspStruct {
+    public contents: Buffer;
     // A 128- bit key.
     static _fields = [
         // The key data.
@@ -163,7 +161,7 @@ export class EmberKeyData extends EzspStruct {
 }
 
 export class EmberCertificateData extends EzspStruct {
-
+    public contents: Buffer;
     // The implicit certificate used in CBKE.
     static _fields = [
         // The certificate data.
@@ -173,6 +171,7 @@ export class EmberCertificateData extends EzspStruct {
 }
 
 export class EmberPublicKeyData extends EzspStruct {
+    public contents: Buffer;
     // The public key data used in CBKE.
     static _fields = [
         // The public key data.
@@ -181,6 +180,7 @@ export class EmberPublicKeyData extends EzspStruct {
 }
 
 export class EmberPrivateKeyData extends EzspStruct {
+    public contents: Buffer;
     // The private key data used in CBKE.
     static _fields = [
         // The private key data.
@@ -306,6 +306,12 @@ export class EmberRouteTableEntry extends EzspStruct {
 }
 
 export class EmberInitialSecurityState extends EzspStruct {
+    public bitmask: number;
+    public preconfiguredKey: EmberKeyData;
+    public networkKey: EmberKeyData;
+    public networkKeySequenceNumber: number;
+    public preconfiguredTrustCenterEui64: named.EmberEUI64;
+
     // The security data used to set the configuration for the stack, or the
     // retrieved configuration currently in use.
     static _fields = [

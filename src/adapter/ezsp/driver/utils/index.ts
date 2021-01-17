@@ -1,3 +1,7 @@
+import crc16ccitt from './crc16ccitt';
+import { EmberInitialSecurityState, EmberKeyData } from '../types/struct';
+import { EmberInitialSecurityBitmask, EmberEUI64 } from '../types/named';
+
 if (!Symbol.asyncIterator){
     (<any>Symbol).asyncIterator = Symbol.for("Symbol.asyncIterator");
 }
@@ -129,5 +133,28 @@ export class AsyncQueue<T> {
     }
 }
 
-import crc16ccitt from './crc16ccitt';
-export {crc16ccitt};
+
+function ember_security(config: any, controller: boolean = false, hashed_tclk: boolean = true):EmberInitialSecurityState {
+    const isc: EmberInitialSecurityState = new EmberInitialSecurityState();
+    isc.bitmask = (EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY | EmberInitialSecurityBitmask.REQUIRE_ENCRYPTED_KEY);
+    isc.preconfiguredKey = new EmberKeyData();
+    isc.preconfiguredKey.contents = Buffer.from("ZigBeeAlliance09");
+    isc.networkKey = new EmberKeyData();
+    isc.networkKey.contents = config.networkKey;
+    isc.networkKeySequenceNumber = 0;
+    isc.preconfiguredTrustCenterEui64 = new EmberEUI64([0, 0, 0, 0, 0, 0, 0, 0]);
+
+    if (controller) {
+        isc.bitmask |= (
+            EmberInitialSecurityBitmask.TRUST_CENTER_GLOBAL_LINK_KEY | EmberInitialSecurityBitmask.HAVE_NETWORK_KEY
+        )
+        if (hashed_tclk) {
+            isc.preconfiguredKey = new EmberKeyData();
+            isc.preconfiguredKey.contents = Buffer.from("ZigBeeAlliance09");
+            isc.bitmask |= EmberInitialSecurityBitmask.TRUST_CENTER_USES_HASHED_LINK_KEY;
+        }
+    }
+    return isc;
+}
+
+export {crc16ccitt, ember_security};
