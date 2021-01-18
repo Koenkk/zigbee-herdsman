@@ -1,5 +1,8 @@
-import * as SerialPort from 'serialport'
+import SerialPort from 'serialport';
+import net from "net";
 import { Deferred, AsyncQueue, crc16ccitt } from './utils';
+import SerialPortUtils from "../../serialPortUtils";
+import SocketPortUtils from "../../socketPortUtils";
 
 const FLAG = 0x7E  // Marks end of frame
 const ESCAPE = 0x7D
@@ -37,12 +40,12 @@ export class UartProtocol implements AsyncIterable<Buffer> {
     _sendq: AsyncQueue<{ data: Buffer, seq: number }>
     _connected_future: Function | undefined
     _readq: AsyncQueue<Buffer>;
-    _transport: SerialPort;
+    // _transport: SerialPort | net.Socket;
     _nextIterator: { next: Function };
     _dataFrameReceived: { next: Function };
     logger: any;
 
-    constructor(private writeCb: (data: Buffer) => Promise<void>, logger: any) {
+    constructor(private writeCb: (data: Buffer) => Promise<void>, private closeCb: () => void, logger: any) {
         this.logger = logger;
         this._pending = [(- 1), null];
         this._sendq = new AsyncQueue<{ data: Buffer, seq: number }>((iter: { next: Function }) => {
@@ -189,12 +192,18 @@ export class UartProtocol implements AsyncIterable<Buffer> {
 
     reset() {
         /* Sends a reset frame */
+        this.logger('uart reseting');
         if ((this._reset_deferred)) {
             throw new TypeError("reset can only be called on a new connection");
         }
         this.write(this._rst_frame());
         this._reset_deferred = new Deferred<void>();
         return this._reset_deferred.promise;
+    }
+
+    close() {
+        this.logger('uart closing');
+        return this.closeCb();
     }
 
     private sleep(ms: number) {
@@ -345,42 +354,88 @@ export class UartProtocol implements AsyncIterable<Buffer> {
         return out;
     }
 
-    static connect(portAddress: string, connectionOptions: {}, logger: any): Promise<[UartProtocol, SerialPort]> {
-        const SerialPort = require('serialport');
-        const port = new SerialPort(portAddress, connectionOptions);
-        const protocol = new UartProtocol((data: Buffer) => {
-                //console.log('Writing to port', portAddress, data.toString('hex'));
-                return new Promise<void>((resolve, reject) => {
-                    port.write(data, (err: Error) => {
-                        if (!err) {
-                            resolve();
-                        } else {
-                            reject(err)
+    static connect(portAddress: string, connectionOptions: {}, logger: any): Promise<UartProtocol> {
+        const portType = SocketPortUtils.isTcpPath(portAddress) ? 'socket' : 'serial';
+        let protocol: UartProtocol;
+        if (portType == 'serial') {
+            const port = new SerialPort(portAddress, connectionOptions);
+            protocol = new UartProtocol((data: Buffer) => {
+                    return new Promise<void>((resolve, reject) => {
+                        port.write(data, (err: Error) => {
+                            if (!err) {
+                                resolve();
+                            } else {
+                                reject(err)
+                            }
+                        });
+                    })
+                },
+                () => {
+                    return port.close();
+                },
+                logger
+            );
+
+            port.on('data', (data: any) => protocol.data_received(data));
+
+            return new Promise((resolve, reject) => {
+                port.on('open', () => {
+                    logger('port open. resetting');
+                    protocol.reset().then(
+                        () => {
+                            logger('successfully reset');
+                            resolve(protocol);
+                        }, (err) => {
+                            logger(err); 
+                            reject()
                         }
-                    });
-                })
-            },
-            logger
-        );
-
-        port.on('data', (data: any) => protocol.data_received(data))
-
-        return new Promise((resolve, reject) => {
-            port.on('open', () => {
-                logger('port open. resetting');
-                protocol.reset().then(
-                    () => {
-                        logger('successfully reset');
-                        resolve([protocol, port]);
-                    }, (err) => {
-                        logger(err); 
-                        reject()
-                    }
-                );
-            }, (err: any) => {
-                logger(err);
-                reject()
+                    );
+                });
+                port.on('error', (err: any) => {
+                    logger(err);
+                    reject();
+                });
             });
-        })
+        } else { // socket
+            const info = SocketPortUtils.parseTcpPath(portAddress);
+            logger(`Opening TCP socket with ${info.host}:${info.port}`);
+            const socketPort = new net.Socket();
+            socketPort.setNoDelay(true);
+            socketPort.setKeepAlive(true, 15000);
+            protocol = new UartProtocol((data: Buffer) => {
+                    return new Promise<void>((resolve, reject) => {
+                        socketPort.write(data, (err: Error) => {
+                            if (!err) {
+                                resolve();
+                            } else {
+                                reject(err)
+                            }
+                        });
+                    })
+                },
+                () => {
+                    return socketPort.emit('close');
+                },
+                logger
+            );
+            // const parser = socketPort.pipe(
+            //     new SerialPort.parsers.ByteLength({length: 1}),
+            // );
+            socketPort.on('data', (data: any) => protocol.data_received(data));
+            return new Promise((resolve, reject) => {
+                socketPort.on('connect', function () {
+                    logger('Socket connected');
+                });
+                socketPort.on('ready', () => {
+                    logger('socket open');
+                    resolve(protocol);
+                });
+                socketPort.on('error', (err: any) => {
+                    logger(err);
+                    reject();
+                });
+                socketPort.connect(info.port, info.host);
+            });
+        }
     }
 }

@@ -11,7 +11,6 @@ import { int_t } from 'zigbee-herdsman/src/adapter/ezsp/driver/types/basic';
 export class Ezsp extends EventEmitter {
     ezsp_version = 4;
     _gw: UartProtocol;
-    _port : any;
     _seq = 0;
     _tc_policy: any;
     _awaiting = new Map<number, { expectedId: number, schema: any, deferred: Deferred<Buffer> }>();
@@ -30,7 +29,7 @@ export class Ezsp extends EventEmitter {
 
     async connect(device: string, options: {}) {
         console.assert(!this._gw);
-        [this._gw, this._port] = await UartProtocol.connect(device, options, this.logger);
+        this._gw = await UartProtocol.connect(device, options, this.logger);
         this.startReadQueue();
     }
 
@@ -147,7 +146,7 @@ export class Ezsp extends EventEmitter {
     }
 
     close() {
-        return this._port.close();
+        return this._gw.close();
     }
 
     private _ezsp_frame(name: string, ...args: any[]) {
