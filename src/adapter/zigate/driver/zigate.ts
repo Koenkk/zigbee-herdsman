@@ -64,7 +64,7 @@ export default class ZiGate extends EventEmitter {
     public constructor(path: string, serialPortOptions: SerialPortOptions) {
         super();
         this.path = path;
-        this.baudRate = typeof serialPortOptions.baudRate === 'number' ? serialPortOptions.baudRate : 1000000;
+        this.baudRate = typeof serialPortOptions.baudRate === 'number' ? serialPortOptions.baudRate : 115200;
         this.rtscts = typeof serialPortOptions.rtscts === 'boolean' ? serialPortOptions.rtscts : false;
         this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
         this.initialized = false;
