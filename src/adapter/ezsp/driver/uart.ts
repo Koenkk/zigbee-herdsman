@@ -428,7 +428,15 @@ export class UartProtocol implements AsyncIterable<Buffer> {
                 });
                 socketPort.on('ready', () => {
                     logger('socket open');
-                    resolve(protocol);
+                    protocol.reset().then(
+                        () => {
+                            logger('successfully reset');
+                            resolve(protocol);
+                        }, (err) => {
+                            logger(err); 
+                            reject()
+                        }
+                    );
                 });
                 socketPort.on('error', (err: any) => {
                     logger(err);
