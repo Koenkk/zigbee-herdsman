@@ -52,6 +52,12 @@ class EZSPAdapter extends Adapter {
         // todo
         let [nwk, ieee] = arr;
         debug('Device join request received: %s %s', nwk, ieee);
+        const payload: Events.DeviceJoinedPayload = {
+            networkAddress: nwk,
+            ieeeAddr: ieee,
+        };
+
+        this.emit(Events.Events.deviceJoined, payload);
         // let devices = this.getDevices();
         // if (!devices.some(d => d.nodeId === nwk || d.eui64 === ieee.toString())) {
         //     devices.push({ nodeId: nwk, eui64: ieee.toString() });
@@ -113,6 +119,8 @@ class EZSPAdapter extends Adapter {
 
     public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
         // todo
+        await this.driver.permitJoining(seconds);
+        return Promise.resolve();
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
@@ -144,8 +152,42 @@ class EZSPAdapter extends Adapter {
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
         // todo
+        // return this.queue.execute<NodeDescriptor>(async () => {
+        //     this.checkInterpanLock();
+        //     try {
+        //         const result = await this.nodeDescriptorInternal(networkAddress);
+        //         return result;
+        //     } catch (error) {
+        //         debug(`Node descriptor request for '${networkAddress}' failed (${error}), retry`);
+        //         // Doing a route discovery after simple descriptor request fails makes it succeed sometimes.
+        //         // https://github.com/Koenkk/zigbee2mqtt/issues/3276
+        //         await this.discoverRoute(networkAddress);
+        //         const result = await this.nodeDescriptorInternal(networkAddress);
+        //         return result;
+        //     }
+        // }, networkAddress);
         return Promise.reject();
     }
+
+    // private async nodeDescriptorInternal(networkAddress: number): Promise<NodeDescriptor> {
+    //     const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'nodeDescRsp', {nwkaddr: networkAddress});
+    //     const payload = {dstaddr: networkAddress, nwkaddrofinterest: networkAddress};
+    //     await this.znp.request(Subsystem.ZDO, 'nodeDescReq', payload, response.ID);
+    //     const descriptor = await response.start().promise;
+
+    //     let type: DeviceType = 'Unknown';
+    //     const logicalType = descriptor.payload.logicaltype_cmplxdescavai_userdescavai & 0x07;
+    //     for (const [key, value] of Object.entries(Constants.ZDO.deviceLogicalType)) {
+    //         if (value === logicalType) {
+    //             if (key === 'COORDINATOR') type = 'Coordinator';
+    //             else if (key === 'ROUTER') type = 'Router';
+    //             else if (key === 'ENDDEVICE') type = 'EndDevice';
+    //             break;
+    //         }
+    //     }
+
+    //     return {manufacturerCode: descriptor.payload.manufacturercode, type};
+    // }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
         // todo
@@ -180,7 +222,7 @@ class EZSPAdapter extends Adapter {
 
     public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
         // todo
-        return Promise.reject();
+        return Promise.resolve();
     }
 
     public async bind(
