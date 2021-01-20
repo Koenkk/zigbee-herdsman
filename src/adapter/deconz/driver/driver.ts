@@ -291,7 +291,13 @@ class Driver extends events.EventEmitter {
 
     private sendWriteParameterRequest(parameterId: number, value: parameterT, seqNumber: number) {
         /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, pameter */
-        const parameterLength = this.getLengthOfParameter(parameterId);
+        let parameterLength = 0;
+        if (parameterId === PARAM.PARAM.STK.Endpoint) {
+            let arrayParameterValue = value as number[];
+            parameterLength = arrayParameterValue.length;
+        } else {
+            parameterLength = this.getLengthOfParameter(parameterId);
+        }
         //debug("SEND WRITE_PARAMETER Request - parameter id: " + parameterId + " value: " + value.toString(16) + " length: " + parameterLength);
 
         const payloadLength = 1 + parameterLength;

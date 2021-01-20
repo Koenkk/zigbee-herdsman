@@ -71,6 +71,7 @@ class DeconzAdapter extends Adapter {
 
         const that = this;
         setInterval(() => { that.checkReceivedDataPayload(null); }, 1000);
+        setTimeout(() => {that.checkCoordinatorSimpleDescriptor(false);}, 3000);
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
@@ -101,8 +102,8 @@ class DeconzAdapter extends Adapter {
                     ID: 0x01,
                     profileID: 0x0104,
                     deviceID: 0x0005,
-                    inputClusters: [0x0019, 0x000A],
-                    outputClusters: [0x0500]
+                    inputClusters: [0x0000, 0x000A, 0x0019],
+                    outputClusters: [0x0001, 0x0020, 0x0500]
                 },
                 {
                     ID: 0xF2,
@@ -499,12 +500,63 @@ class DeconzAdapter extends Adapter {
                 inputClusters: inClusters,
                 outputClusters: outClusters
             }
-            debug("RECEIVING SIMPLE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " EP:" + endpointID + " inClusters: " + inClusters + " outClusters: " + outClusters);
+            debug("RECEIVING SIMPLE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " EP:" + simpleDesc.endpointID + " inClusters: " + inClusters + " outClusters: " + outClusters);
             return simpleDesc;
         } catch (error) {
-            debug("RECEIVING SIMPLE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " EP:" + endpointID + " " + error);
+            debug("RECEIVING SIMPLE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
             return Promise.reject();
         }
+    }
+
+    private async checkCoordinatorSimpleDescriptor(skip: boolean): Promise<void> {
+        debug("checking coordinator simple descriptor");
+        var simpleDesc: any = null;
+        if (skip === false) {
+            try {
+                simpleDesc = await this.simpleDescriptor(0x0, 1);
+            } catch (error) {
+            }
+
+            if (simpleDesc === null) {
+                this.checkCoordinatorSimpleDescriptor(false);
+                return;
+            }
+            debug("EP: " + simpleDesc.endpointID);
+            debug("profile ID: " + simpleDesc.profileID);
+            debug("device ID: " + simpleDesc.deviceID);
+            for (let i = 0; i < simpleDesc.inputClusters.length; i++) {
+                debug("input cluster: 0x" + simpleDesc.inputClusters[i].toString(16));
+            }
+
+            for (let o = 0; o < simpleDesc.outputClusters.length; o++) {
+                debug("output cluster: 0x" + simpleDesc.outputClusters[o].toString(16));
+            }
+
+            let ok = true;
+            if (simpleDesc.endpointID === 0x1) {
+                if (!simpleDesc.inputClusters.includes(0x0) || !simpleDesc.inputClusters.includes(0x0A) || !simpleDesc.inputClusters.includes(0x19) ||
+                    !simpleDesc.outputClusters.includes(0x01) || !simpleDesc.outputClusters.includes(0x20) || !simpleDesc.outputClusters.includes(0x500)) {
+                    debug("missing cluster");
+                    ok = false;
+                }
+
+                if (ok === true) {
+                    return;
+                }
+            }
+        }
+
+        debug("setting new simple descriptor");
+        try {        //[ sd1   ep    proId       devId       vers  #inCl iCl1        iCl2        iCl3        #outC oCl1        oCl2        oCl3      ]
+            const sd = [ 0x00, 0x01, 0x04, 0x01, 0x05, 0x00, 0x01, 0x03, 0x00, 0x00, 0x0A, 0x00, 0x19, 0x00, 0x03, 0x01, 0x00, 0x20, 0x00, 0x00, 0x05];
+            const sd1 = sd.reverse();
+            await this.driver.writeParameterRequest(PARAM.PARAM.STK.Endpoint, sd1);
+        } catch (error) {
+            debug("error setting simple descriptor - try again");
+            this.checkCoordinatorSimpleDescriptor(true);
+            return;
+        }
+        debug("success setting simple descriptor");
     }
 
     public waitFor(

@@ -21,6 +21,9 @@ const PARAM: {
         PERMIT_JOIN: 0x21,
         WATCHDOG_TTL: 0x26
     },
+    STK: {
+        Endpoint: 0x13
+    },
     FrameType: {
         ReadDeviceState: 0x07,
         ReadParameter: 0x0a,
