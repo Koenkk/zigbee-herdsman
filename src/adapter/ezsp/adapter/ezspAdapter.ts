@@ -9,6 +9,8 @@ import Debug from "debug";
 import Adapter from '../../adapter';
 const debug = Debug("zigbee-herdsman:ezsp:adapter");
 import {Ezsp, Driver} from '../driver';
+import { EmberApsFrame } from '../driver/types/struct';
+import { EmberZDOCmd, EmberApsOption } from '../driver/types/named';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
 import * as Zcl from '../../../zcl';
@@ -29,15 +31,27 @@ interface WaitressMatcher {
 class EZSPAdapter extends Adapter {
     private driver: Driver;
     private port: SerialPortOptions;
+    private transactionID: number;
     
     public constructor(networkOptions: NetworkOptions,
         serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        this.transactionID = 1;
         this.port = serialPortOptions;
         this.driver = new Driver();
         this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
         this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
         this.driver.on('incomingMessage', this.processMessage.bind(this));
+    }
+
+    private nextTransactionID(): number {
+        this.transactionID++;
+
+        if (this.transactionID > 255) {
+            this.transactionID = 1;
+        }
+
+        return this.transactionID;
     }
 
     private async processMessage(frame: any) {
@@ -152,42 +166,45 @@ class EZSPAdapter extends Adapter {
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
         // todo
-        // return this.queue.execute<NodeDescriptor>(async () => {
-        //     this.checkInterpanLock();
-        //     try {
-        //         const result = await this.nodeDescriptorInternal(networkAddress);
-        //         return result;
-        //     } catch (error) {
-        //         debug(`Node descriptor request for '${networkAddress}' failed (${error}), retry`);
-        //         // Doing a route discovery after simple descriptor request fails makes it succeed sometimes.
-        //         // https://github.com/Koenkk/zigbee2mqtt/issues/3276
-        //         await this.discoverRoute(networkAddress);
-        //         const result = await this.nodeDescriptorInternal(networkAddress);
-        //         return result;
-        //     }
-        // }, networkAddress);
-        return Promise.reject();
+        try {
+            debug(`Request Node descriptor for '${networkAddress}'`);
+            const result = await this.nodeDescriptorInternal(networkAddress);
+            return result;
+        } catch (error) {
+            debug(`Node descriptor request for '${networkAddress}' failed (${error}), retry`);
+            throw error;
+        }
     }
 
-    // private async nodeDescriptorInternal(networkAddress: number): Promise<NodeDescriptor> {
-    //     const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'nodeDescRsp', {nwkaddr: networkAddress});
-    //     const payload = {dstaddr: networkAddress, nwkaddrofinterest: networkAddress};
-    //     await this.znp.request(Subsystem.ZDO, 'nodeDescReq', payload, response.ID);
-    //     const descriptor = await response.start().promise;
+    private async nodeDescriptorInternal(networkAddress: number): Promise<NodeDescriptor> {
+        //const response = this.driver.waitFor(Type.AREQ, Subsystem.ZDO, 'nodeDescRsp', {nwkaddr: networkAddress});
+        //const payload = {dstaddr: networkAddress, nwkaddrofinterest: networkAddress};
+        const frame = new EmberApsFrame();
+        frame.clusterId = EmberZDOCmd.Node_Desc_req;
+        frame.profileId = 0;
+        frame.sequence = this.nextTransactionID();
+        frame.sourceEndpoint = 0;
+        frame.destinationEndpoint = 0;
+        frame.groupId = 0;
+        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+        const payload = this.driver.make_zdo_frame("Node_Desc_req", frame.sequence, networkAddress);
 
-    //     let type: DeviceType = 'Unknown';
-    //     const logicalType = descriptor.payload.logicaltype_cmplxdescavai_userdescavai & 0x07;
-    //     for (const [key, value] of Object.entries(Constants.ZDO.deviceLogicalType)) {
-    //         if (value === logicalType) {
-    //             if (key === 'COORDINATOR') type = 'Coordinator';
-    //             else if (key === 'ROUTER') type = 'Router';
-    //             else if (key === 'ENDDEVICE') type = 'EndDevice';
-    //             break;
-    //         }
-    //     }
+        await this.driver.request(networkAddress, frame, payload);
+        //const descriptor = await response.start().promise;
 
-    //     return {manufacturerCode: descriptor.payload.manufacturercode, type};
-    // }
+        // let type: DeviceType = 'Unknown';
+        // const logicalType = descriptor.payload.logicaltype_cmplxdescavai_userdescavai & 0x07;
+        // for (const [key, value] of Object.entries(Constants.ZDO.deviceLogicalType)) {
+        //     if (value === logicalType) {
+        //         if (key === 'COORDINATOR') type = 'Coordinator';
+        //         else if (key === 'ROUTER') type = 'Router';
+        //         else if (key === 'ENDDEVICE') type = 'EndDevice';
+        //         break;
+        //     }
+        // }
+
+        return {manufacturerCode: 0, type: 'EndDevice'};
+    }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
         // todo

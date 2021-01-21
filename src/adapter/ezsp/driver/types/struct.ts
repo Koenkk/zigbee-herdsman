@@ -594,4 +594,17 @@ export class EmberGpSinkListEntry extends EzspStruct {
     ]
 }
 
+export class EmberNodeDescriptor extends EzspStruct {
+    static _fields = [
+        ['byte1', basic.uint8_t],
+        ['byte2', basic.uint8_t],
+        ['mac_capability_flags', basic.uint8_t],
+        ['manufacturer_code', basic.uint16_t],
+        ['maximum_buffer_size', basic.uint8_t],
+        ['maximum_incoming_transfer_size', basic.uint16_t],
+        ['server_mask', basic.uint16_t],
+        ['maximum_outgoing_transfer_size', basic.uint16_t],
+        ['descriptor_capability_field', basic.uint8_t],
+    ]
+}
 

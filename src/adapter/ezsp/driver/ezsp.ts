@@ -149,6 +149,12 @@ export class Ezsp extends EventEmitter {
         return this._gw.close();
     }
 
+    public make_zdo_frame(name: string, ...args: any[]): Buffer {
+        var c, data, frame, cmd_id;
+        c = (<any>COMMANDS)[name];
+        data = t.serialize(args, c[1]);
+        return data;
+    }
     private _ezsp_frame(name: string, ...args: any[]) {
         var c, data, frame, cmd_id;
         c = (<any>COMMANDS)[name];

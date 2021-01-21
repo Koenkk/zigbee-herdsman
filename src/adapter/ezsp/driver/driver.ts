@@ -184,13 +184,14 @@ export class Driver extends EventEmitter {
 
     public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
 
-        let seq = apsFrame.sequence;
+        let seq = apsFrame.sequence+1;
         console.assert(!this.pending.has(seq));
         let sendDeferred = new Deferred<boolean>();
         let replyDeferred = new Deferred<boolean>();
         this.pending.set(seq, [sendDeferred, replyDeferred]);
 
         let handle;
+        let eui64, st;
         try {
 
             if (timeout > 0) {
@@ -201,7 +202,7 @@ export class Driver extends EventEmitter {
 
 
             if (typeof nwk !== 'number') {
-                let eui64 = nwk as EmberEUI64;
+                eui64 = nwk as EmberEUI64;
                 let strEui64 = eui64.toString();
                 let nodeId = this.eui64ToNodeId.get(strEui64);
                 if (nodeId === undefined) {
@@ -213,7 +214,10 @@ export class Driver extends EventEmitter {
                     }
                 }
                 nwk = nodeId;
+            } else {
+                [st, eui64] = await this._ezsp.execCommand('lookupEui64ByNodeId', nwk);
             }
+            await this._ezsp.execCommand('setExtendedTimeout', eui64, true);
 
             let v = await this._ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             console.log('unicast message sent, waiting for reply');
@@ -298,5 +302,9 @@ export class Driver extends EventEmitter {
 
     public permitJoining(seconds:number){
         return this._ezsp.execCommand('permitJoining', seconds);
+    }
+
+    public make_zdo_frame(name: string, ...args: any[]) {
+        return this._ezsp.make_zdo_frame(name, ...args);
     }
 }

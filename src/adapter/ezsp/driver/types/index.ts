@@ -30,7 +30,8 @@ import {
     EmberAesMmoHashContext, EmberNeighborTableEntry, EmberRouteTableEntry, EmberInitialSecurityState, EmberCurrentSecurityState,
     EmberKeyStruct, EmberNetworkInitStruct, EmberZllSecurityAlgorithmData, EmberZllNetwork, EmberZllInitialSecurityState,
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
-    EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry
+    EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
+    EmberNodeDescriptor,
 } from './struct'
 
 export function deserialize(payload: any, schema: any[]) {
@@ -78,5 +79,6 @@ export {
     EmberAesMmoHashContext, EmberNeighborTableEntry, EmberRouteTableEntry, EmberInitialSecurityState, EmberCurrentSecurityState,
     EmberKeyStruct, EmberNetworkInitStruct, EmberZllSecurityAlgorithmData, EmberZllNetwork, EmberZllInitialSecurityState,
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
-    EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry
+    EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
+    EmberNodeDescriptor
 }

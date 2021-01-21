@@ -24,7 +24,8 @@ import {/* Basic Types */
     EmberAesMmoHashContext, EmberNeighborTableEntry, EmberRouteTableEntry, EmberInitialSecurityState, EmberCurrentSecurityState,
     EmberKeyStruct, EmberNetworkInitStruct,  EmberZllNetwork, EmberZllInitialSecurityState,
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
-    EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry
+    EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
+    EmberNodeDescriptor,
 } from './types';
 
 export const COMMANDS = {
@@ -675,7 +676,10 @@ export const COMMANDS = {
     ],
     "gpepIncomingMessageHandler": [197, [],
         [EmberStatus, uint8_t, uint8_t, EmberGpAddress, EmberGpSecurityLevel, EmberGpKeyType, Bool, Bool, uint32_t, uint8_t, uint32_t, EmberGpSinkListEntry, LVBytes]
-    ]
+    ],
+    // EmberZDOCmd
+    "Node_Desc_req": [2, [uint8_t, EmberNodeId], [EmberStatus]],
+    "Node_Desc_rsp": [0x8002, [EmberStatus,EmberNodeId, EmberNodeDescriptor], []],
 };
 
 //# sourceMappingURL=commands.js.map

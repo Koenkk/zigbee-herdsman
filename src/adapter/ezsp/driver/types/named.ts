@@ -1654,3 +1654,80 @@ export class EmberNetworkInitBitmask extends basic.uint16_t {
     // and restore on reboot.
     static NETWORK_INIT_PARENT_INFO_IN_TOKEN = 0x0001
 }
+
+export class EmberZDOCmd extends basic.uint16_t {
+    // Device and Service Discovery Server Requests
+    static NWK_addr_req = 0x0000
+    static IEEE_addr_req = 0x0001
+    static Node_Desc_req = 0x0002
+    static Power_Desc_req = 0x0003
+    static Simple_Desc_req = 0x0004
+    static Active_EP_req = 0x0005
+    static Match_Desc_req = 0x0006
+    static Complex_Desc_req = 0x0010
+    static User_Desc_req = 0x0011
+    static Discovery_Cache_req = 0x0012
+    static Device_annce = 0x0013
+    static User_Desc_set = 0x0014
+    static System_Server_Discovery_req = 0x0015
+    static Discovery_store_req = 0x0016
+    static Node_Desc_store_req = 0x0017
+    static Active_EP_store_req = 0x0019
+    static Simple_Desc_store_req = 0x001A
+    static Remove_node_cache_req = 0x001B
+    static Find_node_cache_req = 0x001C
+    static Extended_Simple_Desc_req = 0x001D
+    static Extended_Active_EP_req = 0x001E
+    static Parent_annce = 0x001F
+    //  Bind Management Server Services Responses
+    static End_Device_Bind_req = 0x0020
+    static Bind_req = 0x0021
+    static Unbind_req = 0x0022
+    // Network Management Server Services Requests
+    // ... TODO optional stuff ...
+    static Mgmt_Lqi_req = 0x0031
+    static Mgmt_Rtg_req = 0x0032
+    // ... TODO optional stuff ...
+    static Mgmt_Leave_req = 0x0034
+    static Mgmt_Permit_Joining_req = 0x0036
+    static Mgmt_NWK_Update_req = 0x0038
+    // ... TODO optional stuff ...
+
+    // Responses
+    // Device and Service Discovery Server Responses
+    static NWK_addr_rsp = 0x8000
+    static IEEE_addr_rsp = 0x8001
+    static Node_Desc_rsp = 0x8002
+    static Power_Desc_rsp = 0x8003
+    static Simple_Desc_rsp = 0x8004
+    static Active_EP_rsp = 0x8005
+    static Match_Desc_rsp = 0x8006
+    static Complex_Desc_rsp = 0x8010
+    static User_Desc_rsp = 0x8011
+    static Discovery_Cache_rsp = 0x8012
+    static User_Desc_conf = 0x8014
+    static System_Server_Discovery_rsp = 0x8015
+    static Discovery_Store_rsp = 0x8016
+    static Node_Desc_store_rsp = 0x8017
+    static Power_Desc_store_rsp = 0x8018
+    static Active_EP_store_rsp = 0x8019
+    static Simple_Desc_store_rsp = 0x801A
+    static Remove_node_cache_rsp = 0x801B
+    static Find_node_cache_rsp = 0x801C
+    static Extended_Simple_Desc_rsp = 0x801D
+    static Extended_Active_EP_rsp = 0x801E
+    static Parent_annce_rsp = 0x801F
+    //  Bind Management Server Services Responses
+    static End_Device_Bind_rsp = 0x8020
+    static Bind_rsp = 0x8021
+    static Unbind_rsp = 0x8022
+    // ... TODO optional stuff ...
+    // Network Management Server Services Responses
+    static Mgmt_Lqi_rsp = 0x8031
+    static Mgmt_Rtg_rsp = 0x8032
+    // ... TODO optional stuff ...
+    static Mgmt_Leave_rsp = 0x8034
+    static Mgmt_Permit_Joining_rsp = 0x8036
+    // ... TODO optional stuff ...
+    static Mgmt_NWK_Update_rsp = 0x8038
+}
