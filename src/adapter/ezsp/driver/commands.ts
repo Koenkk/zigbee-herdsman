@@ -6,6 +6,7 @@ import {/* Basic Types */
     uint32_t,
     LVBytes,
     fixed_list,
+    WordList,
 
     /* Named Types */
     EmberRf4ceTxOption, EmberRf4ceNodeCapabilities, EmberNodeId,
@@ -37,6 +38,18 @@ export const COMMANDS = {
     ],
     "setConfigurationValue": [83, [EzspConfigId, uint16_t],
         [EzspStatus]
+    ],
+    "addEndpoint": [0x0002, [
+            uint8_t,
+            uint16_t,
+            uint16_t,
+            uint8_t,
+            uint8_t,
+            uint8_t,
+            WordList,
+            WordList,
+        ],
+        [EzspStatus],
     ],
     "setPolicy": [85, [EzspPolicyId, EzspDecisionId],
         [EzspStatus]

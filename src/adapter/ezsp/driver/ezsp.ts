@@ -3,7 +3,7 @@ import { UartProtocol } from './uart';
 import { COMMANDS } from './commands';
 
 import { Deferred } from './utils';
-import { EmberStatus, EmberOutgoingMessageType } from './types/named';
+import { EmberStatus, EmberOutgoingMessageType, EzspPolicyId, EzspDecisionId, EzspDecisionBitmask } from './types/named';
 import { EventEmitter } from 'events';
 import { EmberApsFrame } from './types/struct';
 import { int_t } from 'zigbee-herdsman/src/adapter/ezsp/driver/types/basic';
@@ -137,12 +137,16 @@ export class Ezsp extends EventEmitter {
 
     async updatePolicies(zigpy_config: {}) {
         // Set up the policies for what the NCP should do.
-        // policies = self.SCHEMAS[CONF_EZSP_POLICIES](zigpy_config[CONF_EZSP_POLICIES])
-        // this.tc_policy = policies[EzspPolicyId.TRUST_CENTER_POLICY];
+        const policies = [
+            [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
+            [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
+            [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS],
+        ];
 
-        // for policy, value in policies.items():
-        // [status] = await this.setPolicy(EzspPolicyId[policy], value);
-        // console.assert(status == EmberStatus.SUCCESS);
+        for (let [policy, value] of policies) {
+            const [status] = await this.execCommand('setPolicy', policy, value);
+            console.assert(status == EmberStatus.SUCCESS);
+        }
     }
 
     close() {

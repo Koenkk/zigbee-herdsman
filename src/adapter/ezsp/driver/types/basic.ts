@@ -143,6 +143,13 @@ export function LVList(itemtype: any) : List {
     return LVList;
 }
 
+export class WordList extends List {
+    static serialize(cls: any, value: any[]) {
+        const data = value.map(i => Buffer.from(uint16_t.serialize(uint16_t, i)));
+        return Buffer.concat(data);
+    }
+}
+
 class _FixedList extends List {
     static serialize(cls: any, value: any[]) {
         const data = value.map(i => cls._itemtype.serialize(cls._itemtype, i)[0]);

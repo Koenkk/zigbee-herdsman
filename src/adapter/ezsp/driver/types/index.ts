@@ -9,7 +9,8 @@ import {
     LVBytes,
     list,
     LVList,
-    fixed_list
+    fixed_list,
+    WordList,
 } from './basic';
 
 import {
@@ -61,6 +62,7 @@ export {
     list,
     LVList,
     fixed_list,
+    WordList,
 
     /* Named Types */
     NcpResetCode, EmberRf4ceTxOption, EmberRf4ceNodeCapabilities, EmberRf4ceApplicationCapabilities, EmberNodeId,

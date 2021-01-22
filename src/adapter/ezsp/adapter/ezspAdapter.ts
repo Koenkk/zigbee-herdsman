@@ -167,7 +167,7 @@ class EZSPAdapter extends Adapter {
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
         // todo
         try {
-            debug(`Request Node descriptor for '${networkAddress}'`);
+            debug(`Requesting 'Node Descriptor' for '${networkAddress}'`);
             const result = await this.nodeDescriptorInternal(networkAddress);
             return result;
         } catch (error) {

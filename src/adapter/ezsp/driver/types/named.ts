@@ -62,7 +62,7 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
         }
         console.assert(cls._length === value.length);
         const val = (value as any[]).reverse().map(i => basic.uint8_t.serialize(basic.uint8_t, i));
-        return Buffer.from(val as any[]);
+        return Buffer.concat(val);
     }
 
     public get value() {
@@ -452,7 +452,7 @@ export class EzspPolicyId extends basic.uint8_t {
 }
 
 
-export class EzspDecisionId extends basic.uint8_t {
+export class EzspDecisionId extends basic.uint16_t {
     // Identifies a policy decision.
 
     // Send the network key in the clear to all joining and rejoining devices.
@@ -1730,4 +1730,23 @@ export class EmberZDOCmd extends basic.uint16_t {
     static Mgmt_Permit_Joining_rsp = 0x8036
     // ... TODO optional stuff ...
     static Mgmt_NWK_Update_rsp = 0x8038
+}
+
+export class EzspDecisionBitmask extends basic.uint16_t {
+    // EZSP Decision bitmask.
+
+    // Disallow joins and rejoins.
+    static DEFAULT_CONFIGURATION = 0x0000
+    // Send the network key to all joining devices.
+    static ALLOW_JOINS = 0x0001
+    // Send the network key to all rejoining devices.
+    static ALLOW_UNSECURED_REJOINS = 0x0002
+    // Send the network key in the clear.
+    static SEND_KEY_IN_CLEAR = 0x0004
+    // Do nothing for unsecured rejoins.
+    static IGNORE_UNSECURED_REJOINS = 0x0008
+    // Allow joins if there is an entry in the transient key table.
+    static JOINS_USE_INSTALL_CODE_KEY = 0x0010
+    // Delay sending the network key to a new joining device.
+    DEFER_JOINS = 0x0020
 }

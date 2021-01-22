@@ -7,6 +7,15 @@ import { Deferred, ember_security } from './utils';
 import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId } from './types/named';
 import { Multicast } from './multicast';
 
+interface AddEndpointParameters {
+    endpoint?: number,
+    profileId?: number, 
+    deviceId?: number,
+    appFlags?: number,
+    inputClusters?: number[],
+    outputClusters?: number[],
+};
+
 export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT
     private _ezsp: Ezsp;
@@ -55,11 +64,14 @@ export class Driver extends EventEmitter {
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 16);
 
+        await this.addEndpoint({outputClusters: [0x0500]});
+
         if (!await ezsp.networkInit()) {
             await this.form_network();
             const state = await ezsp.execCommand('networkState');
             console.log('Network state', state);
         }
+
         let [status, nodeType, networkParams] = await ezsp.execCommand('getNetworkParameters');
         console.assert(status == EmberStatus.SUCCESS);
         if (nodeType != EmberNodeType.COORDINATOR) {
@@ -306,5 +318,19 @@ export class Driver extends EventEmitter {
 
     public make_zdo_frame(name: string, ...args: any[]) {
         return this._ezsp.make_zdo_frame(name, ...args);
+    }
+
+    public async addEndpoint({endpoint=1, profileId=260, deviceId=0xBEEF, appFlags=0, inputClusters=[], outputClusters=[]}: AddEndpointParameters) {
+        const res = await this._ezsp.execCommand('addEndpoint',
+            endpoint,
+            profileId,
+            deviceId,
+            appFlags,
+            inputClusters.length,
+            outputClusters.length,
+            inputClusters,
+            outputClusters,
+        );
+        this.logger("Ezsp adding endpoint: %s", res);
     }
 }
