@@ -279,36 +279,6 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
             {name: 'dataLength', parameterType: 'UINT8'}, // <data length: uint8_t>
             {name: 'data', parameterType: 'BUFFER'}, // <data: auint8_t>
         ],
-        response: [
-            [
-                {receivedProperty: 'code', matcher: equal, value: ZiGateMessageCode.DataIndication},
-                {
-                    receivedProperty: 'payload.sourceAddress',
-                    matcher: equal,
-                    expectedProperty: 'payload.targetShortAddress'
-                },
-                {
-                    receivedProperty: 'payload.clusterID',
-                    matcher: equal,
-                    expectedProperty: 'payload.clusterID'
-                },
-                {
-                    receivedProperty: 'payload.sourceEndpoint',
-                    matcher: equal,
-                    expectedProperty: 'payload.destinationEndpoint'
-                },
-                {
-                    receivedProperty: 'payload.destinationEndpoint',
-                    matcher: equal,
-                    expectedProperty: 'payload.sourceEndpoint'
-                },
-                {
-                    receivedProperty: 'payload.profileID',
-                    matcher: equal,
-                    expectedProperty: 'payload.profileID'
-                },
-            ],
-        ]
     },
     [ZiGateCommandCode.NodeDescriptor]: {
         request: [
@@ -353,7 +323,7 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
                 {
                     receivedProperty: 'payload.clusterID',
                     matcher: equal,
-                    value: ZiGateMessageCode.ActiveEndpointResponse
+                    value: 0x8005
                 }
             ],
         ]

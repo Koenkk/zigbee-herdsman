@@ -1,17 +1,18 @@
 /* istanbul ignore file */
+
 /* eslint-disable */
 
 export enum ADDRESS_MODE {
-    bound = 0, //Use one or more bound nodes/endpoints, with acknowledgements
-    group = 1, //Use a pre-defined group address, with acknowledgements
-    short = 2, //Use a 16-bit network address, with acknowledgements
-    ieee = 3, //Use a 64-bit IEEE/MAC address, with acknowledgements
-    broadcast = 4, //Perform a broadcast
-    no_transmit = 5, //Do not transmit
-    bound_no_ack = 6, //Perform a bound transmission, with no acknowledgements
-    short_no_ack = 7, //Perform a transmission using a 16-bit network address, with no acknowledgements
-    ieee_no_ack = 8, //Perform a transmission using a 64-bit IEEE/MAC address, with no acknowledgements
-    bound_non_blocking = 9, //Perform a non-blocking bound transmission, with acknowledgements
+    bound = 0x00, //Use one or more bound nodes/endpoints, with acknowledgements
+    group = 0x01, //Use a pre-defined group address, with acknowledgements
+    short = 0x02, //Use a 16-bit network address, with acknowledgements
+    ieee = 0x03, //Use a 64-bit IEEE/MAC address, with acknowledgements
+    broadcast = 0x04, //Perform a broadcast
+    no_transmit = 0x05, //Do not transmit
+    bound_no_ack = 0x06, //Perform a bound transmission, with no acknowledgements
+    short_no_ack = 0x07, //Perform a transmission using a 16-bit network address, with no acknowledgements
+    ieee_no_ack = 0x08, //Perform a transmission using a 64-bit IEEE/MAC address, with no acknowledgements
+    bound_non_blocking = 0x09, //Perform a non-blocking bound transmission, with acknowledgements
     bound_non_blocking_no_ack = 10, //Perform a non-blocking bound transmission, with no acknowledgements
 }
 
@@ -26,19 +27,30 @@ export enum BOOLEAN {
     true = 0x01,
 }
 
+export enum LOG_LEVEL {
+    "EMERG",
+    "ALERT",
+    "CRIT ",
+    "ERROR",
+    "WARN ",
+    "NOT  ",
+    "INFO ",
+    "DEBUG"
+}
+
 export enum NODE_LOGICAL_TYPE {
     coordinator = 0x00,
     router = 0x01,
     end_device = 0x02,
 }
 
+
 export enum STATUS {
-    success = 0,
-    invalid_params = 1,
-    unhandled_command = 2,
-    command_failed = 3,
-    busy = 4, //Node is carrying out a lengthy operation and is currently unable to handle the incoming command
-    stack_already_started = 5, //Stack already started (no new configuration accepted)
+    E_SL_MSG_STATUS_SUCCESS,
+    E_SL_MSG_STATUS_INCORRECT_PARAMETERS,
+    E_SL_MSG_STATUS_UNHANDLED_COMMAND,
+    E_SL_MSG_STATUS_BUSY,
+    E_SL_MSG_STATUS_STACK_ALREADY_STARTED,
 }
 
 export enum PERMIT_JOIN_STATUS {
@@ -225,8 +237,12 @@ export enum ZiGateCommandCode {
 export enum ZiGateMessageCode {
     DeviceAnnounce = 0x004D,
     Status = 0x8000,
+    LOG = 0x8001,
     DataIndication = 0x8002,
-    ActiveEndpointResponse = 0x8005,
+    NodeClusterList = 0x8003,
+    NodeAttributeList = 0x8004,
+    NodeCommandIDList = 0x8005,
+    SimpleDescriptorResponse = 0x8043,
     NetworkState = 0x8009,
     VersionList = 0x8010,
     APSDataACK = 0x8011,
@@ -246,11 +262,8 @@ export enum ZiGateMessageCode {
     ExtendedStatusCallBack = 0x9999,
 }
 
-interface ZiGateOpjectDefaultPayload {
-    [key: string]: string | number | number[] | boolean | Buffer
-}
-
-export type ZiGateObjectPayload = ZiGateOpjectDefaultPayload;
+// eslint-disable-next-line
+export type ZiGateObjectPayload = any;
 
 
 export enum ZPSNwkKeyState {
@@ -266,7 +279,7 @@ export enum ZPSNwkKeyType {
 }
 
 export enum PDMEventType {
-    E_PDM_SYSTEM_EVENT_WEAR_COUNT_TRIGGER_VALUE_REACHED=0,
+    E_PDM_SYSTEM_EVENT_WEAR_COUNT_TRIGGER_VALUE_REACHED = 0,
     E_PDM_SYSTEM_EVENT_DESCRIPTOR_SAVE_FAILED,
     E_PDM_SYSTEM_EVENT_PDM_NOT_ENOUGH_SPACE,
     E_PDM_SYSTEM_EVENT_LARGEST_RECORD_FULL_SAVE_NO_LONGER_POSSIBLE,
@@ -285,7 +298,7 @@ export enum PDMEventType {
 }
 
 
-const coordinatorEndpoints: any  = [
+const coordinatorEndpoints: any = [
     {
         ID: 0x01,
         profileID: 0x0104,

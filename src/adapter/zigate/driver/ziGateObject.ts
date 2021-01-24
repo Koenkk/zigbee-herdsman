@@ -87,10 +87,6 @@ class ZiGateObject {
 
         const payload = this.readParameters(buffer, parameters);
 
-        if (code !== ZiGateMessageCode.Status || payload.status !== 0) {
-            debug.info(`--> frame to object %o`, payload);
-        }
-
         return new ZiGateObject(code, payload, parameters, frame);
     }
 
@@ -122,7 +118,7 @@ class ZiGateObject {
         if (buffalo.isMore()) {
             let bufferString = buffalo.getBuffer().toString('hex');
             debug.error(
-                "Last bytes of data were not parsed \x1b[32m%s\x1b[31m%s",
+                "Last bytes of data were not parsed \x1b[32m%s\x1b[31m%s\x1b[0m ",
                 bufferString.slice(0, (buffalo.getPosition() * 2)).replace(/../g, "$& "),
                 bufferString.slice(buffalo.getPosition() * 2).replace(/../g, "$& ")
             )
