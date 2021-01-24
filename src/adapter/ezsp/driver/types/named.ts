@@ -61,8 +61,8 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
             value = (value as EmberEUI64).value as number[];
         }
         console.assert(cls._length === value.length);
-        const val = (value as any[]).reverse().map(i => basic.uint8_t.serialize(basic.uint8_t, i));
-        return Buffer.concat(val);
+        const val = (value as any[]).reverse().map(i => basic.uint8_t.serialize(basic.uint8_t, i)[0]);
+        return Buffer.from(val);
     }
 
     public get value() {

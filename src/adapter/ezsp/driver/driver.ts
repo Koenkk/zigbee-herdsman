@@ -6,6 +6,7 @@ import { EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState } from
 import { Deferred, ember_security } from './utils';
 import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId } from './types/named';
 import { Multicast } from './multicast';
+import Waitress from "../../../utils/waitress";
 
 interface AddEndpointParameters {
     endpoint?: number,
@@ -27,6 +28,7 @@ export class Driver extends EventEmitter {
     private _nwk: EmberNodeId;
     private _ieee: EmberEUI64;
     private _multicast: Multicast;
+    //private waitress: Waitress<ZiGateObject, WaitressMatcher>;
 
     constructor(nodeInfo?:Iterable<{nodeId:number, eui64: string | EmberEUI64}>){
         super();
@@ -203,7 +205,7 @@ export class Driver extends EventEmitter {
         this.pending.set(seq, [sendDeferred, replyDeferred]);
 
         let handle;
-        let eui64, st;
+        let eui64: EmberEUI64;
         try {
 
             if (timeout > 0) {
@@ -227,7 +229,7 @@ export class Driver extends EventEmitter {
                 }
                 nwk = nodeId;
             } else {
-                [st, eui64] = await this._ezsp.execCommand('lookupEui64ByNodeId', nwk);
+                eui64 = await this.networkIdToEUI64(nwk);
             }
             await this._ezsp.execCommand('setExtendedTimeout', eui64, true);
 
@@ -333,4 +335,11 @@ export class Driver extends EventEmitter {
         );
         this.logger("Ezsp adding endpoint: %s", res);
     }
+
+    // public waitFor(
+    //     type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload = {},
+    //     timeout: number = timeouts.default
+    // ): {start: () => {promise: Promise<ZpiObject>; ID: number}; ID: number} {
+    //     return this.waitress.waitFor({type, subsystem, command, payload}, timeout);
+    // }
 }
