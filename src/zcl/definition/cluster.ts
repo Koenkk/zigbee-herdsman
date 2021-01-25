@@ -445,6 +445,7 @@ const Cluster: {
             offWaitTime: {ID: 16386, type: DataType.uint16},
             startUpOnOff: {ID: 16387, type: DataType.enum8},
             tuyaBacklightMode: {ID: 0x8001, type: DataType.enum8},
+            moesStartUpOnOff: { ID: 0x8002, type: DataType.enum8 }, //For Moes MS-104BZ 
         },
         commands: {
             off: {
