@@ -21,7 +21,7 @@ import {
     EmberNetworkStatus, EmberIncomingMessageType, EmberOutgoingMessageType, EmberMacPassthroughType, EmberBindingType, EmberApsOption,
     EzspNetworkScanType, EmberJoinDecision, EmberInitialSecurityBitmask, EmberCurrentSecurityBitmask, EmberKeyType, EmberKeyStructBitmask,
     EmberDeviceUpdate, EmberKeyStatus, EmberCounterType, EmberJoinMethod, EmberZdoConfigurationFlags, EmberConcentratorType, EmberZllState,
-    EmberZllKeyIndex, EzspZllNetworkOperation, EzspSourceRouteOverheadInformation, EmberNetworkInitBitmask
+    EmberZllKeyIndex, EzspZllNetworkOperation, EzspSourceRouteOverheadInformation, EmberNetworkInitBitmask, EmberZDOCmd,
 } from './named';
 
 import {
@@ -72,7 +72,7 @@ export {
     EmberNetworkStatus, EmberIncomingMessageType, EmberOutgoingMessageType, EmberMacPassthroughType, EmberBindingType, EmberApsOption,
     EzspNetworkScanType, EmberJoinDecision, EmberInitialSecurityBitmask, EmberCurrentSecurityBitmask, EmberKeyType, EmberKeyStructBitmask,
     EmberDeviceUpdate, EmberKeyStatus, EmberCounterType, EmberJoinMethod, EmberZdoConfigurationFlags, EmberConcentratorType, EmberZllState,
-    EmberZllKeyIndex, EzspZllNetworkOperation, EzspSourceRouteOverheadInformation, EmberNetworkInitBitmask,
+    EmberZllKeyIndex, EzspZllNetworkOperation, EzspSourceRouteOverheadInformation, EmberNetworkInitBitmask, EmberZDOCmd,
 
     /* Structs */
     EzspStruct, EmberNetworkParameters, EmberZigbeeNetwork, EmberApsFrame, EmberBindingTableEntry, EmberMulticastTableEntry,

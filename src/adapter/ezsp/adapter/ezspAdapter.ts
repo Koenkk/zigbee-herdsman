@@ -10,7 +10,7 @@ import Adapter from '../../adapter';
 const debug = Debug("zigbee-herdsman:ezsp:adapter");
 import {Ezsp, Driver} from '../driver';
 import { EmberApsFrame } from '../driver/types/struct';
-import { EmberZDOCmd, EmberApsOption } from '../driver/types/named';
+import { EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64 } from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
 import * as Zcl from '../../../zcl';
@@ -56,8 +56,15 @@ class EZSPAdapter extends Adapter {
 
     private async processMessage(frame: any) {
         // todo
+        debug(`processMessage: ${JSON.stringify(frame)}`);
         if (!frame.senderEui64) {
             frame.senderEui64 = await this.driver.networkIdToEUI64(frame.sender)
+        }
+        if (frame.apsFrame.clusterId == EmberZDOCmd.Device_annce && frame.apsFrame.destinationEndpoint == 0) {
+            const [nwk, rest] = uint16_t.deserialize(uint16_t, frame.message.slice(1));
+            const [ieee] = EmberEUI64.deserialize(EmberEUI64, rest as Buffer);
+            debug("ZDO Device announce: 0x%04x, %s", nwk, ieee);
+            this.handleDeviceJoin([nwk, ieee, 0]);
         }
         this.emit('event', frame);
     }

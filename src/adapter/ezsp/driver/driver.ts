@@ -4,7 +4,7 @@ import { EzspConfigId, EmberZdoConfigurationFlags, EmberStatus, EmberNodeType, E
 import { EventEmitter } from "events";
 import { EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState } from './types/struct';
 import { Deferred, ember_security } from './utils';
-import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId } from './types/named';
+import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask } from './types/named';
 import { Multicast } from './multicast';
 import Waitress from "../../../utils/waitress";
 
@@ -95,6 +95,8 @@ export class Driver extends EventEmitter {
         // this.handle_join(this.nwk, this.ieee, 0);
         console.log('Network ready');
         ezsp.on('frame', this.handleFrame.bind(this))
+
+        //this.emit('deviceJoined', [nwk, this._ieee]);
         this.logger(`EZSP nwk=${this._nwk}, IEEE=${this._ieee}`);
 
         // const [status, count] = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
@@ -314,8 +316,10 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public permitJoining(seconds:number){
-        return this._ezsp.execCommand('permitJoining', seconds);
+    public async permitJoining(seconds:number){
+        const [status] = await this._ezsp.execCommand('setPolicy', EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
+        console.assert(status == EmberStatus.SUCCESS);
+        return await this._ezsp.execCommand('permitJoining', seconds);
     }
 
     public make_zdo_frame(name: string, ...args: any[]) {
