@@ -690,9 +690,13 @@ export const COMMANDS = {
     "gpepIncomingMessageHandler": [197, [],
         [EmberStatus, uint8_t, uint8_t, EmberGpAddress, EmberGpSecurityLevel, EmberGpKeyType, Bool, Bool, uint32_t, uint8_t, uint32_t, EmberGpSinkListEntry, LVBytes]
     ],
+    "changeSourceRouteHandler": [196, [], [EmberNodeId, EmberNodeId]], //Bool
 };
+
 //// EmberZDOCmd
-//"Node_Desc_req": [2, [uint8_t, EmberNodeId], [EmberStatus]],
-//"Node_Desc_rsp": [0x8002, [EmberStatus,EmberNodeId, EmberNodeDescriptor], []],
+export const ZDO_COMMANDS = {
+    "Node_Desc_req": [2, [uint8_t, EmberNodeId], [EmberStatus]],
+    "Node_Desc_rsp": [0x8002, [EmberStatus,EmberNodeId, EmberNodeDescriptor], []],
+}
 
 //# sourceMappingURL=commands.js.map

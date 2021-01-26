@@ -1,6 +1,6 @@
 import * as t from './types';
 import { UartProtocol } from './uart';
-import { COMMANDS } from './commands';
+import { COMMANDS, ZDO_COMMANDS } from './commands';
 
 import { Deferred } from './utils';
 import { EmberStatus, EmberOutgoingMessageType, EzspPolicyId, EzspDecisionId, EzspDecisionBitmask } from './types/named';
@@ -162,7 +162,7 @@ export class Ezsp extends EventEmitter {
 
     public make_zdo_frame(name: string, ...args: any[]): Buffer {
         var c, data, frame, cmd_id;
-        c = (<any>COMMANDS)[name];
+        c = (<any>ZDO_COMMANDS)[name];
         data = t.serialize(args, c[1]);
         return data;
     }
@@ -249,14 +249,14 @@ export class Ezsp extends EventEmitter {
         let cmd = this.COMMANDS_BY_ID.get(frame_id);
         if (!cmd) throw new Error('Unrecognized command from FrameID' + frame_id);
         let frameName = cmd.name;
-        this.logger("Application frame %s (%s) received", frame_id, frameName);
+        this.logger("Application frame %s (%s) received: %s", frame_id, frameName, data.toString('hex'));
         if (this._awaiting.has(sequence)) {
             let entry = this._awaiting.get(sequence);
             this._awaiting.delete(sequence);
             if (entry) {
                 console.assert(entry.expectedId === frame_id);
                 [result, data] = t.deserialize(data, entry.schema);
-                this.logger(`Application frame ${frame_id} (${frameName}): ${result}`);
+                this.logger(`Application frame ${frame_id} (${frameName})   parsed: ${result}`);
                 entry.deferred.resolve(result);
             }
         } else {
