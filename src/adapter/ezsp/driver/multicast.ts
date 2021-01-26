@@ -20,10 +20,9 @@ export class Multicast {
     }
 
     private async _initialize() {
-        const [status, size] = await this._ezsp.getConfigurationValue(
+        const size = await this._ezsp.getConfigurationValue(
             EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE
         );
-        if (status !== EmberStatus.SUCCESS) return;
         for (let i = 0; i < size; i++) {
             let st: any, entry: any;
             [st, entry] = await this._ezsp.getMulticastTableEntry(i);

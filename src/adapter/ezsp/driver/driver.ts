@@ -1,10 +1,10 @@
 import * as TsType from './../../tstype';
 import { Ezsp } from './ezsp';
-import { EzspConfigId, EmberZdoConfigurationFlags, EmberStatus, EmberNodeType, EmberNodeId } from './types';
+import { EzspConfigId, EmberZdoConfigurationFlags, EmberStatus, EmberNodeType, EmberNodeId, uint16_t, uint8_t } from './types';
 import { EventEmitter } from "events";
 import { EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState } from './types/struct';
 import { Deferred, ember_security } from './utils';
-import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask } from './types/named';
+import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask, EzspMfgTokenId } from './types/named';
 import { Multicast } from './multicast';
 import Waitress from "../../../utils/waitress";
 
@@ -49,24 +49,40 @@ export class Driver extends EventEmitter {
         const version = await ezsp.version();
         console.log('Got version', version);
 
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 2);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_STACK_PROFILE, 2);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 32);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 7680);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE, 16);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SECURITY_LEVEL, 5);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 16);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 2);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_APPLICATION_ZDO_FLAGS,
             EmberZdoConfigurationFlags.APP_RECEIVES_SUPPORTED_ZDO_REQUESTS
             | EmberZdoConfigurationFlags.APP_HANDLES_UNSUPPORTED_ZDO_REQUESTS);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 2);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 0xff);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SECURITY_LEVEL, 5);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 8);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 16);
-
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 2);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 32);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_STACK_PROFILE, 2);
+        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 0xff);
+        const count = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
+        this.logger("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
+        
         await this.addEndpoint({outputClusters: [0x0500]});
+
+        // getting MFG_STRING token
+        const mfgName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_STRING);
+        // getting MFG_BOARD_NAME token
+        const boardName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_BOARD_NAME);
+        let verInfo = await ezsp.getValue(EzspValueId.VALUE_VERSION_INFO);
+        let build, major, minor, patch, special;
+        [build, verInfo] = uint16_t.deserialize(uint16_t, verInfo);
+        [major, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
+        [minor, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
+        [patch, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
+        [special, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
+        const vers = `${major}.${minor}.${patch}.${special} build ${build}`;
+        this.logger(`EmberZNet version: ${vers}`);
 
         if (!await ezsp.networkInit()) {
             await this.form_network();
@@ -87,7 +103,7 @@ export class Driver extends EventEmitter {
         this.networkParams = networkParams;
         this.logger("Node type: %s, Network parameters: %s", nodeType, networkParams);
 
-        await ezsp.updatePolicies({});
+        await ezsp.updatePolicies();
 
         const [nwk] = await ezsp.execCommand('getNodeId');
         this._nwk = nwk;
@@ -99,8 +115,6 @@ export class Driver extends EventEmitter {
         //this.emit('deviceJoined', [nwk, this._ieee]);
         this.logger(`EZSP nwk=${this._nwk}, IEEE=${this._ieee}`);
 
-        // const [status, count] = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
-        // this.logger("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
         this._multicast = new Multicast(ezsp, logger);
         await this._multicast.startup([]);
     }

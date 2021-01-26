@@ -1748,5 +1748,5 @@ export class EzspDecisionBitmask extends basic.uint16_t {
     // Allow joins if there is an entry in the transient key table.
     static JOINS_USE_INSTALL_CODE_KEY = 0x0010
     // Delay sending the network key to a new joining device.
-    DEFER_JOINS = 0x0020
+    static DEFER_JOINS = 0x0020
 }

@@ -97,7 +97,7 @@ export class Ezsp extends EventEmitter {
         [ret, value] = await this.execCommand('getConfigurationValue', configId);
         console.assert(ret === EmberStatus.SUCCESS);
         this.logger('Get %s = %s', configId, value);
-        return [ret, value];
+        return value;
     }
 
     async getMulticastTableEntry(index: number) {
@@ -135,12 +135,19 @@ export class Ezsp extends EventEmitter {
         return [ret];
     }
 
-    async updatePolicies(zigpy_config: {}) {
+    async getValue(valueId: t.EzspValueId) {
+        let ret, value;
+        [ret, value] = await this.execCommand('getValue', valueId);
+        console.assert(ret === EmberStatus.SUCCESS);
+        return value;
+    }
+
+    async updatePolicies() {
         // Set up the policies for what the NCP should do.
         const policies = [
             [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
-            [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
             [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS],
+            [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
         ];
 
         for (let [policy, value] of policies) {
