@@ -78,13 +78,11 @@ class EZSPAdapter extends Adapter {
             ieeeAddr: ieee,
         };
 
-        this.emit(Events.Events.deviceJoined, payload);
-        // let devices = this.getDevices();
-        // if (!devices.some(d => d.nodeId === nwk || d.eui64 === ieee.toString())) {
-        //     devices.push({ nodeId: nwk, eui64: ieee.toString() });
-        //     writeFileSync(deviceDbPath, JSON.stringify(devices), 'utf8');
-        //     log.info('Added device to DB: %s %s', nwk, ieee)
-        // }
+        if (nwk == 0) {
+            const nd = this.nodeDescriptor(nwk);
+        } else {
+            this.emit(Events.Events.deviceJoined, payload);
+        }
     }
 
     private handleDeviceLeft(arr: any[]) {

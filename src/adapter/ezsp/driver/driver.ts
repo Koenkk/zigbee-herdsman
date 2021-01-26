@@ -107,12 +107,13 @@ export class Driver extends EventEmitter {
 
         const [nwk] = await ezsp.execCommand('getNodeId');
         this._nwk = nwk;
-        this._ieee = await this.getLocalEUI64();
-        // this.handle_join(this.nwk, this.ieee, 0);
+        const [ieee] = await this._ezsp.execCommand('getEui64');
+        this._ieee = ieee;
         console.log('Network ready');
         ezsp.on('frame', this.handleFrame.bind(this))
 
-        //this.emit('deviceJoined', [nwk, this._ieee]);
+        await this.handleNodeJoined(nwk, this._ieee, {}, {}, {});
+
         this.logger(`EZSP nwk=${this._nwk}, IEEE=${this._ieee}`);
 
         this._multicast = new Multicast(ezsp, logger);
@@ -247,7 +248,7 @@ export class Driver extends EventEmitter {
             } else {
                 eui64 = await this.networkIdToEUI64(nwk);
             }
-            await this._ezsp.execCommand('setExtendedTimeout', eui64, true);
+            //await this._ezsp.execCommand('setExtendedTimeout', eui64, true);
 
             let v = await this._ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             console.log('unicast message sent, waiting for reply');
