@@ -186,9 +186,9 @@ export class Ezsp extends EventEmitter {
 
     private _command(name: string, ...args: any[]): Promise<Buffer> {
         var c, data, deferred;
-        this.logger(`Send command ${name}: (${args})`);
+        this.logger(`---> Send command ${name}: (${args})`);
         data = this._ezsp_frame(name, ...args);
-        this.logger(`Send  data  ${name}: (${data.toString('hex')})`);
+        this.logger(`---> Send  data  ${name}: (${data.toString('hex')})`);
         this._gw.data(data);
         c = (<any>COMMANDS)[name];
         deferred = new Deferred<Buffer>();
@@ -249,26 +249,35 @@ export class Ezsp extends EventEmitter {
         let cmd = this.COMMANDS_BY_ID.get(frame_id);
         if (!cmd) throw new Error('Unrecognized command from FrameID' + frame_id);
         let frameName = cmd.name;
-        this.logger("Application frame %s (%s) received: %s", frame_id, frameName, data.toString('hex'));
+        this.logger("<=== Application frame %s (%s) received: %s", frame_id, frameName, data.toString('hex'));
         if (this._awaiting.has(sequence)) {
             let entry = this._awaiting.get(sequence);
             this._awaiting.delete(sequence);
             if (entry) {
                 console.assert(entry.expectedId === frame_id);
                 [result, data] = t.deserialize(data, entry.schema);
-                this.logger(`Application frame ${frame_id} (${frameName})   parsed: ${result}`);
+                this.logger(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
                 entry.deferred.resolve(result);
             }
         } else {
             schema = cmd.outArgs;
             frameName = cmd.name;
             [result, data] = t.deserialize(data, schema);
-            this.logger(`Application frame ${frame_id} (${frameName}): ${result}`);
+            this.logger(`<=== Application frame ${frame_id} (${frameName}): ${result}`);
             super.emit('frame', frameName, ...result);
         }
         if ((frame_id === 0)) {
             this.ezsp_version = result[0];
         }
+    }
+
+    public parse_frame_payload(name: string, data: Buffer) {
+        if (Object.keys(ZDO_COMMANDS).indexOf(name) < 0) {
+            throw new Error('Unknown ZDO command: ' + name);
+        }
+        const c = (<any>ZDO_COMMANDS)[name];
+        const result = t.deserialize(data, c[1])[0];
+        return result;
     }
 
     public sendUnicast(direct: EmberOutgoingMessageType, nwk: number, apsFrame: EmberApsFrame, seq: number, data: Buffer) {

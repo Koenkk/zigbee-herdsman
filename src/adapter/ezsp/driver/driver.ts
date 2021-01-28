@@ -3,6 +3,7 @@ import { Ezsp } from './ezsp';
 import { EzspConfigId, EmberZdoConfigurationFlags, EmberStatus, EmberNodeType, EmberNodeId, uint16_t, uint8_t } from './types';
 import { EventEmitter } from "events";
 import { EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState } from './types/struct';
+import { EmberObject } from './types/emberObj';
 import { Deferred, ember_security } from './utils';
 import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask, EzspMfgTokenId } from './types/named';
 import { Multicast } from './multicast';
@@ -17,6 +18,14 @@ interface AddEndpointParameters {
     outputClusters?: number[],
 };
 
+type EmberObjectPayload = any;
+
+type EmberWaitressMatcher = {
+    address: number,
+    clusterId: number
+};
+
+
 export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT
     private _ezsp: Ezsp;
@@ -28,17 +37,20 @@ export class Driver extends EventEmitter {
     private _nwk: EmberNodeId;
     private _ieee: EmberEUI64;
     private _multicast: Multicast;
-    //private waitress: Waitress<ZiGateObject, WaitressMatcher>;
+    private waitress: Waitress<EmberObject, EmberWaitressMatcher>;
 
     constructor(nodeInfo?:Iterable<{nodeId:number, eui64: string | EmberEUI64}>){
         super();
 
-        if (!nodeInfo) return;
+        // if (!nodeInfo) return;
 
-        for(let node of nodeInfo){
-            let eui64 = node.eui64 instanceof EmberEUI64 ? node.eui64 : new EmberEUI64(node.eui64);
-            this.eui64ToNodeId.set(eui64.toString(), node.nodeId);
-        }
+        // for(let node of nodeInfo){
+        //     let eui64 = node.eui64 instanceof EmberEUI64 ? node.eui64 : new EmberEUI64(node.eui64);
+        //     this.eui64ToNodeId.set(eui64.toString(), node.nodeId);
+        // }
+
+        this.waitress = new Waitress<EmberObject, EmberWaitressMatcher>(
+            this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
     public async startup(port: string, serialOpt: {}, nwkOpt: TsType.NetworkOptions, logger: any) {
@@ -112,7 +124,7 @@ export class Driver extends EventEmitter {
         console.log('Network ready');
         ezsp.on('frame', this.handleFrame.bind(this))
 
-        await this.handleNodeJoined(nwk, this._ieee, {}, {}, {});
+        this.handleNodeJoined(nwk, this._ieee, {}, {}, {});
 
         this.logger(`EZSP nwk=${this._nwk}, IEEE=${this._ieee}`);
 
@@ -151,6 +163,9 @@ export class Driver extends EventEmitter {
                     break;
                 }
             }
+
+            this.waitress.resolve({address: sender, payload: message, frame: apsFrame} as EmberObject);
+
             super.emit('incomingMessage', {
                 messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message,
                 senderEui64: eui64
@@ -191,7 +206,7 @@ export class Driver extends EventEmitter {
             ieee = new EmberEUI64(ieee);
         }
         this.eui64ToNodeId.set(ieee.toString(), nwk);
-        this.emit('deviceJoined', [nwk, ieee])
+        this.emit('deviceJoined', [nwk, ieee]);
     }
 
     private handleReply(sender: number, apsFrame: EmberApsFrame, tsn: number, commandId: number, ...args: any[]) {
@@ -214,24 +229,9 @@ export class Driver extends EventEmitter {
     }
 
     public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
-
-        let seq = apsFrame.sequence+1;
-        console.assert(!this.pending.has(seq));
-        let sendDeferred = new Deferred<boolean>();
-        let replyDeferred = new Deferred<boolean>();
-        this.pending.set(seq, [sendDeferred, replyDeferred]);
-
-        let handle;
-        let eui64: EmberEUI64;
         try {
-
-            if (timeout > 0) {
-                handle = setTimeout(() => {
-                    throw new Error('Timeout while waiting for reply');
-                }, timeout);
-            }
-
-
+            let seq = apsFrame.sequence+1;
+            let eui64: EmberEUI64;
             if (typeof nwk !== 'number') {
                 eui64 = nwk as EmberEUI64;
                 let strEui64 = eui64.toString();
@@ -248,30 +248,74 @@ export class Driver extends EventEmitter {
             } else {
                 eui64 = await this.networkIdToEUI64(nwk);
             }
-            //await this._ezsp.execCommand('setExtendedTimeout', eui64, true);
+            await this._ezsp.execCommand('setExtendedTimeout', eui64, true);
 
             let v = await this._ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             console.log('unicast message sent, waiting for reply');
-            if (v[0] != 0) {
-                this.pending.delete(seq);
-                sendDeferred.reject(false);
-                replyDeferred.reject(false);
-                throw new Error(`Message send failure ${v[0]}`)
-            }
-
-            await sendDeferred.promise;
-            if (timeout > 0) {
-                await replyDeferred.promise;
-            } else {
-                this.pending.delete(seq);
-            }
             return true;
         } catch (e) {
             return false;
-        } finally {
-            if (handle)
-                clearTimeout(handle);
         }
+        // let seq = apsFrame.sequence+1;
+
+        // console.assert(!this.pending.has(seq));
+
+        
+        // let sendDeferred = new Deferred<boolean>();
+        // let replyDeferred = new Deferred<boolean>();
+        // this.pending.set(seq, [sendDeferred, replyDeferred]);
+
+        // let handle;
+        // let eui64: EmberEUI64;
+        // try {
+
+        //     if (timeout > 0) {
+        //         handle = setTimeout(() => {
+        //             throw new Error('Timeout while waiting for reply');
+        //         }, timeout);
+        //     }
+
+
+        //     if (typeof nwk !== 'number') {
+        //         eui64 = nwk as EmberEUI64;
+        //         let strEui64 = eui64.toString();
+        //         let nodeId = this.eui64ToNodeId.get(strEui64);
+        //         if (nodeId === undefined) {
+        //             nodeId = await this._ezsp.execCommand('lookupNodeIdByEui64', eui64);
+        //             if (nodeId && nodeId !== 0xFFFF) {
+        //                 this.eui64ToNodeId.set(strEui64, nodeId);
+        //             } else {
+        //                 throw new Error('Unknown EUI64:' + strEui64);
+        //             }
+        //         }
+        //         nwk = nodeId;
+        //     } else {
+        //         eui64 = await this.networkIdToEUI64(nwk);
+        //     }
+        //     //await this._ezsp.execCommand('setExtendedTimeout', eui64, true);
+
+        //     let v = await this._ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
+        //     console.log('unicast message sent, waiting for reply');
+        //     if (v[0] != 0) {
+        //         this.pending.delete(seq);
+        //         sendDeferred.reject(false);
+        //         replyDeferred.reject(false);
+        //         throw new Error(`Message send failure ${v[0]}`)
+        //     }
+
+        //     await sendDeferred.promise;
+        //     if (timeout > 0) {
+        //         await replyDeferred.promise;
+        //     } else {
+        //         this.pending.delete(seq);
+        //     }
+        //     return true;
+        // } catch (e) {
+        //     return false;
+        // } finally {
+        //     if (handle)
+        //         clearTimeout(handle);
+        // }
     }
 
     private handleFrameFailure(messageType: number, destination: number, apsFrame: EmberApsFrame, messageTag: number, status: number, message: Buffer) {
@@ -341,6 +385,10 @@ export class Driver extends EventEmitter {
         return this._ezsp.make_zdo_frame(name, ...args);
     }
 
+    public parse_frame_payload(name: string, obj: Buffer) {
+        return this._ezsp.parse_frame_payload(name, obj);
+    }
+
     public async addEndpoint({endpoint=1, profileId=260, deviceId=0xBEEF, appFlags=0, inputClusters=[], outputClusters=[]}: AddEndpointParameters) {
         const res = await this._ezsp.execCommand('addEndpoint',
             endpoint,
@@ -355,10 +403,18 @@ export class Driver extends EventEmitter {
         this.logger("Ezsp adding endpoint: %s", res);
     }
 
-    // public waitFor(
-    //     type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload = {},
-    //     timeout: number = timeouts.default
-    // ): {start: () => {promise: Promise<ZpiObject>; ID: number}; ID: number} {
-    //     return this.waitress.waitFor({type, subsystem, command, payload}, timeout);
-    // }
+    public waitFor(address: number, clusterId: number, timeout: number = 30000)
+           : {start: () => {promise: Promise<EmberObject>; ID: number}; ID: number} {
+        return this.waitress.waitFor({address, clusterId}, timeout);
+    }
+
+    private waitressTimeoutFormatter(matcher: EmberWaitressMatcher, timeout: number): string {
+        return `${matcher} after ${timeout}ms`;
+    }
+
+    private waitressValidator(payload: EmberObject, matcher: EmberWaitressMatcher): boolean {
+        const transactionSequenceNumber = payload.frame.sequence;
+        return (!matcher.address || payload.address === matcher.address) &&
+            payload.frame.clusterId === matcher.clusterId;
+    }
 }

@@ -182,8 +182,6 @@ class EZSPAdapter extends Adapter {
     }
 
     private async nodeDescriptorInternal(networkAddress: number): Promise<NodeDescriptor> {
-        //const response = this.driver.waitFor(Type.AREQ, Subsystem.ZDO, 'nodeDescRsp', {nwkaddr: networkAddress});
-        //const payload = {dstaddr: networkAddress, nwkaddrofinterest: networkAddress};
         const frame = new EmberApsFrame();
         frame.clusterId = EmberZDOCmd.Node_Desc_req;
         frame.profileId = 0;
@@ -192,23 +190,14 @@ class EZSPAdapter extends Adapter {
         frame.destinationEndpoint = 0;
         frame.groupId = 0;
         frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+        const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Node_Desc_rsp);
         const payload = this.driver.make_zdo_frame("Node_Desc_req", frame.sequence, networkAddress);
-
         await this.driver.request(networkAddress, frame, payload);
-        //const descriptor = await response.start().promise;
-
-        // let type: DeviceType = 'Unknown';
-        // const logicalType = descriptor.payload.logicaltype_cmplxdescavai_userdescavai & 0x07;
-        // for (const [key, value] of Object.entries(Constants.ZDO.deviceLogicalType)) {
-        //     if (value === logicalType) {
-        //         if (key === 'COORDINATOR') type = 'Coordinator';
-        //         else if (key === 'ROUTER') type = 'Router';
-        //         else if (key === 'ENDDEVICE') type = 'EndDevice';
-        //         break;
-        //     }
-        // }
-
-        return {manufacturerCode: 0, type: 'EndDevice'};
+        const descriptor = await response.start().promise;
+        debug(`nodeDescriptorInternal got descriptor payload: ${JSON.stringify(descriptor.payload)}`);
+        const message = this.driver.parse_frame_payload("Node_Desc_rsp", descriptor.payload);
+        debug(`nodeDescriptorInternal got descriptor  parsed: ${message}`);
+        return {manufacturerCode: message[2].manufacturer_code, type: (message[1] == 0) ? 'Coordinator' : 'EndDevice'};
     }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {

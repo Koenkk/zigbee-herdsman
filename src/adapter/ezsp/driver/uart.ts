@@ -58,7 +58,7 @@ export class UartProtocol implements AsyncIterable<Buffer> {
     }
 
     data_received(data: Buffer) {
-        //console.log('data_received', data.toString('hex'))
+        this.logger(`<===== data    : ${data.toString('hex')}`);
         /* Callback when there is data received from the uart */
         var frame;
         if (data.indexOf(CANCEL) >= 0) {
@@ -96,6 +96,7 @@ export class UartProtocol implements AsyncIterable<Buffer> {
     }
 
     frame_received(data: Buffer) {
+        this.logger(`<===== frame   : ${data.toString('hex')}`);
         /* Frame receive handler */
         if (((data[0] & 128) === 0)) {
             this.data_frame_received(data);
@@ -127,7 +128,7 @@ export class UartProtocol implements AsyncIterable<Buffer> {
     data_frame_received(data: Buffer) {
         /* Data frame receive handler */
         var seq;
-        this.logger("Data frame: %s", data.toString('hex'));
+        this.logger("<===== Received:", data.toString('hex'));
         seq = ((data[0] & 112) >> 4);
         this._rec_seq = ((seq + 1) % 8);
         this.write(this._ack_frame());
@@ -186,7 +187,7 @@ export class UartProtocol implements AsyncIterable<Buffer> {
 
     write(data: Buffer) {
         /* Send data to the uart */
-        this.logger("Sending:", data.toString('hex'));
+        this.logger("-----> Sending :", data.toString('hex'));
         return this.writeCb(data);
     }
 
