@@ -79,7 +79,7 @@ class EZSPAdapter extends Adapter {
         };
 
         if (nwk == 0) {
-            const nd = this.nodeDescriptor(nwk);
+            //const nd = this.nodeDescriptor(nwk);
         } else {
             this.emit(Events.Events.deviceJoined, payload);
         }
