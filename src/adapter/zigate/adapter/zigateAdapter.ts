@@ -591,7 +591,7 @@ class ZiGateAdapter extends Adapter {
                 targetShortAddress: 0xFFFD,
                 sourceEndpoint: sourceEndpoint,
                 destinationEndpoint: endpoint,
-                profileID: sourceEndpoint === 242 ? 0xa1e0 : 0x0104,
+                profileID: /*sourceEndpoint === 242 ? 0xa1e0 :*/ 0x0104,
                 clusterID: zclFrame.Cluster.ID,
                 securityMode: 0x02,
                 radius: 30,
