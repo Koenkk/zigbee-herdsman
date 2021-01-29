@@ -34,7 +34,6 @@ const RANDOMIZE_SEQ = 0xB8;
 
 export class Ezsp extends EventEmitter {
     ezsp_version = 4;
-    //_gw: UartProtocol;
     _seq = 0;
     send_seq = 0;
     recv_seq = 0;
@@ -43,7 +42,6 @@ export class Ezsp extends EventEmitter {
     COMMANDS_BY_ID = new Map<number, { name: string, inArgs: any[], outArgs: any[] }>();
     _cbCounter = 0;
     reset_deferred: Deferred<any>;
-    logger: any;
     private portType: 'serial' | 'socket';
     private serialPort: SerialPort;
     private socketPort: net.Socket;
@@ -51,10 +49,9 @@ export class Ezsp extends EventEmitter {
     private parser: Parser;
     private initialized: boolean;
 
-    constructor(logger: any) {
+    constructor() {
         super();
         this.initialized = false;
-        this.logger = logger;
         for (let name in COMMANDS) {
             let details = (<any>COMMANDS)[name];
             this.COMMANDS_BY_ID.set(details[0], { name, inArgs: details[1], outArgs: details[2] });
@@ -153,12 +150,12 @@ export class Ezsp extends EventEmitter {
         } catch (e) {
             code = NcpResetCode.ERROR_UNKNOWN_EM3XX_ERROR;
         }
-        this.logger("RSTACK Version: %d Reason: %s frame: %s", data[1], code.toString(), data.toString('hex'));
+        debug.log("RSTACK Version: %d Reason: %s frame: %s", data[1], code.toString(), data.toString('hex'));
         if (NcpResetCode[<any>code].toString() !== NcpResetCode.RESET_SOFTWARE.toString()) {
             return;
         }
         if ((!this.reset_deferred)) {
-            this.logger("Reset future is None");
+            debug.log("Reset future is None");
             return;
         }
         this.reset_deferred.resolve(true);
@@ -211,10 +208,7 @@ export class Ezsp extends EventEmitter {
     }
 
     async connect(path: string, options: {}) {
-        //console.assert(!this._gw);
         this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
-        //this._gw = await UartProtocol.connect(device, options, this.logger);
-        //this.startReadQueue();
         this.portType === 'serial' ? await this.openSerialPort(path, options) : await this.openSocketPort(path, options);
     }
 
@@ -322,16 +316,6 @@ export class Ezsp extends EventEmitter {
         return this.make_frame([control], this.randomize(data));
     }
 
-    // private async startReadQueue() {
-    //     for await (let frame of this._gw) {
-    //         try {
-    //             this.frame_received(frame);
-    //         } catch (e) {
-    //             this.logger('Error handling frame', e);
-    //         }
-    //     }
-    // }
-
     async reset() {
         // return this._gw.reset();
         debug.log('uart reseting');
@@ -350,7 +334,7 @@ export class Ezsp extends EventEmitter {
         let version = this.ezsp_version;
         let result = await this._command("version", version);
         if ((result[0] !== version)) {
-            this.logger("Switching to eszp version %d", result[0]);
+            debug.log("Switching to eszp version %d", result[0]);
             await this._command("version", result[0]);
         }
         return result[0];
@@ -373,12 +357,12 @@ export class Ezsp extends EventEmitter {
         })
         v = await this._command("leaveNetwork");
         if ((v[0] !== EmberStatus.SUCCESS)) {
-            this.logger("Failure to leave network:" + v);
+            debug.log("Failure to leave network:" + v);
             throw new Error(("Failure to leave network:" + v));
         }
         v = await fut.promise;
         if ((v !== EmberStatus.NETWORK_DOWN)) {
-            this.logger("Failure to leave network:" + v);
+            debug.log("Failure to leave network:" + v);
             throw new Error(("Failure to leave network:" + v));
         }
         return v;
@@ -388,14 +372,14 @@ export class Ezsp extends EventEmitter {
         let ret;
         [ret] = await this.execCommand('setConfigurationValue', configId, value);
         console.assert(ret === EmberStatus.SUCCESS);
-        this.logger('Set %s = %s', configId, value);
+        debug.log('Set %s = %s', configId, value);
     }
 
     async getConfigurationValue(configId: number) {
         let ret, value;
         [ret, value] = await this.execCommand('getConfigurationValue', configId);
         console.assert(ret === EmberStatus.SUCCESS);
-        this.logger('Get %s = %s', configId, value);
+        debug.log('Get %s = %s', configId, value);
         return value;
     }
 
@@ -530,12 +514,12 @@ export class Ezsp extends EventEmitter {
         })
         v = await this._command("formNetwork", parameters);
         if ((v[0] !== EmberStatus.SUCCESS)) {
-            this.logger("Failure forming network:" + v);
+            debug.log("Failure forming network:" + v);
             throw new Error(("Failure forming network:" + v));
         }
         v = await fut.promise;
         if ((v !== EmberStatus.NETWORK_UP)) {
-            this.logger("Failure forming network:" + v);
+            debug.log("Failure forming network:" + v);
             throw new Error(("Failure forming network:" + v));
         }
         return v;
@@ -587,7 +571,7 @@ export class Ezsp extends EventEmitter {
             schema = cmd.outArgs;
             frameName = cmd.name;
             [result, data] = t.deserialize(data, schema);
-            this.logger(`<=== Application frame ${frame_id} (${frameName}): ${result}`);
+            debug.log(`<=== Application frame ${frame_id} (${frameName}): ${result}`);
             super.emit('frame', frameName, ...result);
         }
         if ((frame_id === 0)) {

@@ -69,7 +69,7 @@ class EZSPAdapter extends Adapter {
         this.emit('event', frame);
     }
 
-    private handleDeviceJoin(arr: any[]) {
+    private async handleDeviceJoin(arr: any[]) {
         // todo
         let [nwk, ieee] = arr;
         debug('Device join request received: %s %s', nwk, ieee);
@@ -79,7 +79,7 @@ class EZSPAdapter extends Adapter {
         };
 
         if (nwk == 0) {
-            //const nd = this.nodeDescriptor(nwk);
+            const nd = await this.nodeDescriptor(nwk);
         } else {
             this.emit(Events.Events.deviceJoined, payload);
         }

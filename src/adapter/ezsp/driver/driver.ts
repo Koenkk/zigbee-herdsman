@@ -28,7 +28,7 @@ type EmberWaitressMatcher = {
 
 export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT
-    private _ezsp: Ezsp;
+    private ezsp: Ezsp;
     private _nwkOpt: TsType.NetworkOptions;
     public networkParams: EmberNetworkParameters;
     private eui64ToNodeId = new Map<string, number>();
@@ -56,7 +56,7 @@ export class Driver extends EventEmitter {
     public async startup(port: string, serialOpt: {}, nwkOpt: TsType.NetworkOptions, logger: any) {
         this.logger = logger;
         this._nwkOpt = nwkOpt;
-        let ezsp = this._ezsp = new Ezsp(this.logger);
+        let ezsp = this.ezsp = new Ezsp();
         await ezsp.connect(port, serialOpt);
         const version = await ezsp.version();
         console.log('Got version', version);
@@ -106,7 +106,7 @@ export class Driver extends EventEmitter {
         console.assert(status == EmberStatus.SUCCESS);
         if (nodeType != EmberNodeType.COORDINATOR) {
             this.logger(`Leaving current network as ${nodeType} and forming new network`);
-            const [st] = await this._ezsp.leaveNetwork();
+            const [st] = await this.ezsp.leaveNetwork();
             console.assert(st == EmberStatus.NETWORK_DOWN);
             await this.form_network();
             [status, nodeType, networkParams] = await ezsp.execCommand('getNetworkParameters');
@@ -119,25 +119,24 @@ export class Driver extends EventEmitter {
 
         const [nwk] = await ezsp.execCommand('getNodeId');
         this._nwk = nwk;
-        const [ieee] = await this._ezsp.execCommand('getEui64');
+        const [ieee] = await this.ezsp.execCommand('getEui64');
         this._ieee = ieee;
         console.log('Network ready');
         ezsp.on('frame', this.handleFrame.bind(this))
-
-        this.handleNodeJoined(nwk, this._ieee, {}, {}, {});
 
         this.logger(`EZSP nwk=${this._nwk}, IEEE=${this._ieee}`);
 
         this._multicast = new Multicast(ezsp, logger);
         await this._multicast.startup([]);
+        // this.handleNodeJoined(nwk, this._ieee, {}, {}, {});
     }
 
     private async form_network() {
         const panID = this._nwkOpt.panID;
         const extendedPanID = this._nwkOpt.extendedPanID;
-        const hashed_tclk = this._ezsp.ezsp_version > 4;
+        const hashed_tclk = this.ezsp.ezsp_version > 4;
         const initial_security_state:EmberInitialSecurityState = ember_security(this._nwkOpt, true, hashed_tclk);
-        const [status] = await this._ezsp.setInitialSecurityState(initial_security_state);
+        const [status] = await this.ezsp.setInitialSecurityState(initial_security_state);
         const parameters:EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;
         parameters.extendedPanId = extendedPanID;
@@ -148,8 +147,8 @@ export class Driver extends EventEmitter {
         parameters.nwkUpdateId = 0;
         parameters.channels = 0x07FFF800; // all channels
         
-        await this._ezsp.formNetwork(parameters);
-        await this._ezsp.setValue(EzspValueId.VALUE_STACK_TOKEN_WRITING, 1);
+        await this.ezsp.formNetwork(parameters);
+        await this.ezsp.setValue(EzspValueId.VALUE_STACK_TOKEN_WRITING, 1);
     }
 
     private handleFrame(frameName: string, ...args: any[]) {
@@ -237,7 +236,7 @@ export class Driver extends EventEmitter {
                 let strEui64 = eui64.toString();
                 let nodeId = this.eui64ToNodeId.get(strEui64);
                 if (nodeId === undefined) {
-                    nodeId = await this._ezsp.execCommand('lookupNodeIdByEui64', eui64);
+                    nodeId = await this.ezsp.execCommand('lookupNodeIdByEui64', eui64);
                     if (nodeId && nodeId !== 0xFFFF) {
                         this.eui64ToNodeId.set(strEui64, nodeId);
                     } else {
@@ -248,9 +247,9 @@ export class Driver extends EventEmitter {
             } else {
                 eui64 = await this.networkIdToEUI64(nwk);
             }
-            await this._ezsp.execCommand('setExtendedTimeout', eui64, true);
+            await this.ezsp.execCommand('setExtendedTimeout', eui64, true);
 
-            let v = await this._ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
+            let v = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             console.log('unicast message sent, waiting for reply');
             return true;
         } catch (e) {
@@ -281,7 +280,7 @@ export class Driver extends EventEmitter {
         //         let strEui64 = eui64.toString();
         //         let nodeId = this.eui64ToNodeId.get(strEui64);
         //         if (nodeId === undefined) {
-        //             nodeId = await this._ezsp.execCommand('lookupNodeIdByEui64', eui64);
+        //             nodeId = await this.ezsp.execCommand('lookupNodeIdByEui64', eui64);
         //             if (nodeId && nodeId !== 0xFFFF) {
         //                 this.eui64ToNodeId.set(strEui64, nodeId);
         //             } else {
@@ -292,9 +291,9 @@ export class Driver extends EventEmitter {
         //     } else {
         //         eui64 = await this.networkIdToEUI64(nwk);
         //     }
-        //     //await this._ezsp.execCommand('setExtendedTimeout', eui64, true);
+        //     //await this.ezsp.execCommand('setExtendedTimeout', eui64, true);
 
-        //     let v = await this._ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
+        //     let v = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
         //     console.log('unicast message sent, waiting for reply');
         //     if (v[0] != 0) {
         //         this.pending.delete(seq);
@@ -354,18 +353,18 @@ export class Driver extends EventEmitter {
     }
 
     public stop() {
-        return this._ezsp.close();
+        return this.ezsp.close();
     }
 
     public getLocalEUI64(): Promise<EmberEUI64> {
-        return this._ezsp.execCommand('getEui64');
+        return this.ezsp.execCommand('getEui64');
     }
 
     public async networkIdToEUI64(nwk: number): Promise<EmberEUI64> {
         for (let [eUI64, value] of this.eui64ToNodeId) {
             if (value === nwk) return new EmberEUI64(eUI64);
         }
-        let value = await this._ezsp.execCommand('lookupEui64ByNodeId', nwk);
+        let value = await this.ezsp.execCommand('lookupEui64ByNodeId', nwk);
         if (value[0] === EmberStatus.SUCCESS) {
             let eUI64 = new EmberEUI64(value[1] as any);
             this.eui64ToNodeId.set(eUI64.toString(), nwk);
@@ -376,21 +375,21 @@ export class Driver extends EventEmitter {
     }
 
     public async permitJoining(seconds:number){
-        const [status] = await this._ezsp.execCommand('setPolicy', EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
+        const [status] = await this.ezsp.execCommand('setPolicy', EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
         console.assert(status == EmberStatus.SUCCESS);
-        return await this._ezsp.execCommand('permitJoining', seconds);
+        return await this.ezsp.execCommand('permitJoining', seconds);
     }
 
     public make_zdo_frame(name: string, ...args: any[]) {
-        return this._ezsp.make_zdo_frame(name, ...args);
+        return this.ezsp.make_zdo_frame(name, ...args);
     }
 
     public parse_frame_payload(name: string, obj: Buffer) {
-        return this._ezsp.parse_frame_payload(name, obj);
+        return this.ezsp.parse_frame_payload(name, obj);
     }
 
     public async addEndpoint({endpoint=1, profileId=260, deviceId=0xBEEF, appFlags=0, inputClusters=[], outputClusters=[]}: AddEndpointParameters) {
-        const res = await this._ezsp.execCommand('addEndpoint',
+        const res = await this.ezsp.execCommand('addEndpoint',
             endpoint,
             profileId,
             deviceId,
