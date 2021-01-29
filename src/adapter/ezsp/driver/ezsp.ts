@@ -1,17 +1,13 @@
 import * as t from './types';
-//import { UartProtocol } from './uart';
-import { Writer, Parser } from './uart';
+import { Writer, Parser, FLAG, CANCEL } from './uart';
 import { COMMANDS, ZDO_COMMANDS } from './commands';
 
 import { Deferred, crc16ccitt } from './utils';
 import { EmberStatus, EmberOutgoingMessageType, EzspPolicyId, EzspDecisionId, EzspDecisionBitmask } from './types/named';
 import { EventEmitter } from 'events';
 import { EmberApsFrame } from './types/struct';
-import { int_t } from 'zigbee-herdsman/src/adapter/ezsp/driver/types/basic';
 import SerialPort from 'serialport';
 import net from 'net';
-
-import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import Debug from "debug";
 
@@ -19,17 +15,6 @@ const debug = {
     error: Debug('zigbee-herdsman:adapter:ezsp:error'),
     log: Debug('zigbee-herdsman:adapter:ezsp:log'),
 };
-
-const FLAG = 0x7E  // Marks end of frame
-const ESCAPE = 0x7D
-const XON = 0x11  // Resume transmission
-const XOFF = 0x13  // Stop transmission
-const SUBSTITUTE = 0x18
-const CANCEL = 0x1A  // Terminates a frame in progress
-const STUFF = 0x20
-const RANDOMIZE_START = 0x42
-const RANDOMIZE_SEQ = 0xB8
-const RESERVED = [FLAG, ESCAPE, XON, XOFF, SUBSTITUTE, CANCEL]
 
 enum NcpResetCode {
     RESET_UNKNOWN_REASON = 0x00,
@@ -42,6 +27,9 @@ enum NcpResetCode {
     ERROR_EXCEEDED_MAXIMUM_ACK_TIMEOUT_COUNT = 0x51,
     ERROR_UNKNOWN_EM3XX_ERROR = 0x80,
 }
+
+const RANDOMIZE_START = 0x42;
+const RANDOMIZE_SEQ = 0xB8;
 
 
 export class Ezsp extends EventEmitter {
@@ -83,7 +71,7 @@ export class Ezsp extends EventEmitter {
             // this.log(object.type, message);
             // this.waitress.resolve(object);
             // this.emit('received', object);
-            debug.log(`<===== frame   : ${data.toString('hex')}`);
+            //debug.log(`<===== frame   : ${data.toString('hex')}`);
             /* Frame receive handler */
             switch (true) {
                 case ((data[0] & 128) === 0):
@@ -127,12 +115,14 @@ export class Ezsp extends EventEmitter {
         var seq;
         seq = ((data[0] & 112) >> 4);
         this.recv_seq = ((seq + 1) % 8);
+        debug.log('send ACK');
         this.writer.writeBuffer(this.make_ack_frame());
         this.handle_ack(data[0]);
         data = data.slice(1, (- 3));
-        debug.log(data);
         //this.waitress.resolve(data);
-        this.emit('received', this.randomize(data));
+        //this.emit('received', this.randomize(data));
+        const frame = this.randomize(data);
+        this.frame_received(frame);
     }
 
     private handle_ack(control: number) {
@@ -189,7 +179,7 @@ export class Ezsp extends EventEmitter {
 
         let crc = crc16ccitt(Buffer.from(sum), 65535);
         let crcArr = [(crc >> 8), (crc % 256)];
-        return Buffer.concat([this.stuff(sum.concat(crcArr)), Buffer.from([FLAG])]);
+        return Buffer.concat([this.writer.stuff(sum.concat(crcArr)), Buffer.from([FLAG])]);
     }
 
     private randomize(s: Buffer): Buffer {
@@ -208,21 +198,6 @@ export class Ezsp extends EventEmitter {
             }
         }
         return out;
-    }
-
-    private stuff(s: Iterable<number>): Buffer {
-        /* Byte stuff (escape) a string for transmission */
-        let out = Buffer.alloc(256);
-        let outIdx = 0;
-        for (const c of s) {
-            if (RESERVED.includes(c)) {
-                out.writeUInt8(ESCAPE, outIdx++);
-                out.writeUInt8(c ^ STUFF, outIdx++);
-            } else {
-                out.writeUInt8(c, outIdx++);
-            }
-        }
-        return out.slice(0, outIdx);
     }
 
     public isInitialized(): boolean {
@@ -580,6 +555,7 @@ export class Ezsp extends EventEmitter {
         just have EZSP application stuff here, with all escaping/stuffing and
         data randomization removed.
         */
+        debug.log(`<=== Frame: ${data.toString('hex')}`);
         var frame_id: number, result, schema, sequence;
         if ((this.ezsp_version < 8)) {
             [sequence, frame_id, data] = [data[0], data[2], data.slice(3)];
@@ -597,14 +573,14 @@ export class Ezsp extends EventEmitter {
         let cmd = this.COMMANDS_BY_ID.get(frame_id);
         if (!cmd) throw new Error('Unrecognized command from FrameID' + frame_id);
         let frameName = cmd.name;
-        this.logger("<=== Application frame %s (%s) received: %s", frame_id, frameName, data.toString('hex'));
+        debug.log("<=== Application frame %s (%s) received: %s", frame_id, frameName, data.toString('hex'));
         if (this._awaiting.has(sequence)) {
             let entry = this._awaiting.get(sequence);
             this._awaiting.delete(sequence);
             if (entry) {
                 console.assert(entry.expectedId === frame_id);
                 [result, data] = t.deserialize(data, entry.schema);
-                this.logger(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
+                debug.log(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
                 entry.deferred.resolve(result);
             }
         } else {
