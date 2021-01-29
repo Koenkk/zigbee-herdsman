@@ -7,7 +7,7 @@ import {
 } from '../../tstype';
 import Debug from "debug";
 import Adapter from '../../adapter';
-const debug = Debug("zigbee-herdsman:ezsp:adapter");
+const debug = Debug("zigbee-herdsman:adapter:ezsp");
 import {Ezsp, Driver} from '../driver';
 import { EmberApsFrame } from '../driver/types/struct';
 import { EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64 } from '../driver/types';
