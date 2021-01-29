@@ -3,6 +3,7 @@
 import {Buffalo, TsType as BuffaloTsType, TsType} from '../../../buffalo';
 import {Options, Value} from "../../../buffalo/tstype";
 import {IsNumberArray} from "../../../utils";
+import {LOG_LEVEL} from "./constants";
 
 export interface BuffaloZiGateOptions extends BuffaloTsType.Options {
     startIndex?: number;
@@ -82,6 +83,12 @@ class BuffaloZiGate extends Buffalo {
             const buffer = this.buffer.slice(this.position);
             this.position += buffer.length;
             return buffer;
+        } else if (type === 'LOG_LEVEL') {
+            return LOG_LEVEL[this.readUInt8()];
+        } else if (type === 'STRING') {
+            const buffer = this.buffer.slice(this.position);
+            this.position += buffer.length;
+            return unescape(buffer.toString());
         } else if (type === 'MAYBE_UINT8') {
             if (this.isMore()) return this.readUInt8();
         } else {
@@ -99,6 +106,16 @@ class BuffaloZiGate extends Buffalo {
         const value = this.buffer.slice(this.position, this.position + length);
         this.position += length;
         return BuffaloZiGate.addressBufferToStringBE(value);
+    }
+
+
+    public readListUInt16BE(options: Options): Value {
+        const value = [];
+        for (let i = 0; i < options.length; i++) {
+            value.push(this.readUInt16BE());
+        }
+
+        return value;
     }
 
     public readUInt16BE(): Value {
