@@ -695,8 +695,10 @@ export const COMMANDS = {
 
 //// EmberZDOCmd
 export const ZDO_COMMANDS = {
-    "Node_Desc_req": [2, [uint8_t, EmberNodeId], [EmberStatus]],
+    "Node_Desc_req": [0x0002, [uint8_t, EmberNodeId], [EmberStatus]],
     "Node_Desc_rsp": [0x8002, [EmberStatus,EmberNodeId, EmberNodeDescriptor], []],
+    "Active_EP_req": [0x0005, [uint8_t, EmberNodeId], [EmberStatus]],
+    "Active_EP_rsp": [0x8005, [EmberStatus, uint8_t, EmberNodeId, LVBytes], []],
 }
 
 //# sourceMappingURL=commands.js.map

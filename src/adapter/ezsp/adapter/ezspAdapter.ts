@@ -60,11 +60,40 @@ class EZSPAdapter extends Adapter {
         if (!frame.senderEui64) {
             frame.senderEui64 = await this.driver.networkIdToEUI64(frame.sender)
         }
-        if (frame.apsFrame.clusterId == EmberZDOCmd.Device_annce && frame.apsFrame.destinationEndpoint == 0) {
-            const [nwk, rest] = uint16_t.deserialize(uint16_t, frame.message.slice(1));
-            const [ieee] = EmberEUI64.deserialize(EmberEUI64, rest as Buffer);
-            debug("ZDO Device announce: 0x%04x, %s", nwk, ieee);
-            this.handleDeviceJoin([nwk, ieee, 0]);
+        if (frame.apsFrame.profileId == 0) {
+            if (
+                frame.apsFrame.clusterId == EmberZDOCmd.Device_annce && 
+                frame.apsFrame.destinationEndpoint == 0) {
+                let nwk, ieee;
+                [nwk, ieee] = uint16_t.deserialize(uint16_t, frame.message.slice(1));
+                //const [ieee] = EmberEUI64.deserialize(EmberEUI64, rest as Buffer);
+                debug("ZDO Device announce: 0x%04x, %s", nwk, ieee);
+                this.handleDeviceJoin([nwk, ieee]);
+            }
+        } else if (frame.apsFrame.profileId == 260) {
+            try {
+                const payload: Events.ZclDataPayload = {
+                    frame: ZclFrame.fromBuffer(frame.apsFrame.clusterId, frame.message),
+                    address: frame.sender,
+                    endpoint: frame.apsFrame.sourceEndpoint,
+                    linkquality: frame.lqi,
+                    groupID: frame.apsFrame.groupId,
+                };
+
+                //this.waitress.resolve(payload);
+                this.emit(Events.Events.zclData, payload);
+            } catch (error) {
+                const payload: Events.RawDataPayload = {
+                    clusterID: frame.apsFrame.clusterId,
+                    data: frame.message,
+                    address: frame.sender,
+                    endpoint: frame.apsFrame.sourceEndpoint,
+                    linkquality: frame.lqi,
+                    groupID: frame.apsFrame.groupId,
+                };
+
+                this.emit(Events.Events.rawData, payload);
+            }
         }
         this.emit('event', frame);
     }
@@ -72,10 +101,10 @@ class EZSPAdapter extends Adapter {
     private async handleDeviceJoin(arr: any[]) {
         // todo
         let [nwk, ieee] = arr;
-        debug('Device join request received: %s %s', nwk, ieee);
+        debug('Device join request received: %s %s', nwk, ieee.toString('hex'));
         const payload: Events.DeviceJoinedPayload = {
             networkAddress: nwk,
-            ieeeAddr: ieee,
+            ieeeAddr: `0x${ieee.toString('hex')}`,
         };
 
         if (nwk == 0) {
@@ -191,8 +220,8 @@ class EZSPAdapter extends Adapter {
             frame.destinationEndpoint = 0;
             frame.groupId = 0;
             frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Node_Desc_rsp);
             const payload = this.driver.make_zdo_frame("Node_Desc_req", frame.sequence, networkAddress);
+            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Node_Desc_rsp);
             await this.driver.request(networkAddress, frame, payload);
             const descriptor = await response.start().promise;
             debug(`nodeDescriptorInternal got descriptor payload: ${JSON.stringify(descriptor.payload)}`);
@@ -204,7 +233,25 @@ class EZSPAdapter extends Adapter {
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
         // todo
-        return Promise.reject();
+        debug(`Requesting 'Active endpoints' for '${networkAddress}'`);
+        return this.driver.queue.execute<ActiveEndpoints>(async () => {
+            const frame = new EmberApsFrame();
+            frame.clusterId = EmberZDOCmd.Active_EP_req;
+            frame.profileId = 0;
+            frame.sequence = this.nextTransactionID();
+            frame.sourceEndpoint = 0;
+            frame.destinationEndpoint = 0;
+            frame.groupId = 0;
+            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+            const payload = this.driver.make_zdo_frame("Active_EP_req", frame.sequence, networkAddress);
+            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Active_EP_rsp);
+            await this.driver.request(networkAddress, frame, payload);
+            const activeEp = await response.start().promise;
+            debug(`activeEndpoints got active endpoints payload: ${JSON.stringify(activeEp.payload)}`);
+            const message = this.driver.parse_frame_payload("Active_EP_rsp", activeEp.payload);
+            debug(`activeEndpoints got active endpoints  parsed: ${JSON.stringify(message)}`);
+            return {endpoints: [...message[3]]};
+        }, networkAddress);
     }
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
