@@ -182,22 +182,24 @@ class EZSPAdapter extends Adapter {
     }
 
     private async nodeDescriptorInternal(networkAddress: number): Promise<NodeDescriptor> {
-        const frame = new EmberApsFrame();
-        frame.clusterId = EmberZDOCmd.Node_Desc_req;
-        frame.profileId = 0;
-        frame.sequence = this.nextTransactionID();
-        frame.sourceEndpoint = 0;
-        frame.destinationEndpoint = 0;
-        frame.groupId = 0;
-        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-        const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Node_Desc_rsp);
-        const payload = this.driver.make_zdo_frame("Node_Desc_req", frame.sequence, networkAddress);
-        await this.driver.request(networkAddress, frame, payload);
-        const descriptor = await response.start().promise;
-        debug(`nodeDescriptorInternal got descriptor payload: ${JSON.stringify(descriptor.payload)}`);
-        const message = this.driver.parse_frame_payload("Node_Desc_rsp", descriptor.payload);
-        debug(`nodeDescriptorInternal got descriptor  parsed: ${message}`);
-        return {manufacturerCode: message[2].manufacturer_code, type: (message[1] == 0) ? 'Coordinator' : 'EndDevice'};
+        return this.driver.queue.execute<NodeDescriptor>(async () => {
+            const frame = new EmberApsFrame();
+            frame.clusterId = EmberZDOCmd.Node_Desc_req;
+            frame.profileId = 0;
+            frame.sequence = this.nextTransactionID();
+            frame.sourceEndpoint = 0;
+            frame.destinationEndpoint = 0;
+            frame.groupId = 0;
+            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Node_Desc_rsp);
+            const payload = this.driver.make_zdo_frame("Node_Desc_req", frame.sequence, networkAddress);
+            await this.driver.request(networkAddress, frame, payload);
+            const descriptor = await response.start().promise;
+            debug(`nodeDescriptorInternal got descriptor payload: ${JSON.stringify(descriptor.payload)}`);
+            const message = this.driver.parse_frame_payload("Node_Desc_rsp", descriptor.payload);
+            debug(`nodeDescriptorInternal got descriptor  parsed: ${message}`);
+            return {manufacturerCode: message[2].manufacturer_code, type: (message[1] == 0) ? 'Coordinator' : 'EndDevice'};
+        });
     }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {

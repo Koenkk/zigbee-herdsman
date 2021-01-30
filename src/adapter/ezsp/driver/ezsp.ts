@@ -56,9 +56,12 @@ export class Ezsp extends EventEmitter {
             let details = (<any>COMMANDS)[name];
             this.COMMANDS_BY_ID.set(details[0], { name, inArgs: details[1], outArgs: details[2] });
         }
+
         this.onParsed = this.onParsed.bind(this);
         this.onPortClose = this.onPortClose.bind(this);
     }
+    
+    //////////////////////// serial routines ////////////////////////
 
     private onParsed(data: Buffer): void {
         try {
@@ -330,6 +333,79 @@ export class Ezsp extends EventEmitter {
         return this.reset_deferred.promise;
     }
 
+    public close(): Promise<void> {
+        return new Promise((resolve, reject): void => {
+            if (this.initialized) {
+                if (this.portType === 'serial') {
+                    this.serialPort.flush((): void => {
+                        this.serialPort.close((error): void => {
+                            this.initialized = false;
+                            error == null ?
+                                resolve() :
+                                reject(new Error(`Error while closing serialport '${error}'`));
+                            this.emit('close');
+                        });
+                    });
+                } else {
+                    this.socketPort.destroy();
+                    resolve();
+                }
+            } else {
+                resolve();
+                this.emit('close');
+            }
+        });
+    }
+
+    //////////////////////// command routines ////////////////////////
+
+    private frame_received(data: Buffer) {
+        /*Handle a received EZSP frame
+
+        The protocol has taken care of UART specific framing etc, so we should
+        just have EZSP application stuff here, with all escaping/stuffing and
+        data randomization removed.
+        */
+        debug.log(`<=== Frame: ${data.toString('hex')}`);
+        var frame_id: number, result, schema, sequence;
+        if ((this.ezsp_version < 8)) {
+            [sequence, frame_id, data] = [data[0], data[2], data.slice(3)];
+        } else {
+            sequence = data[0];
+            [[frame_id], data] = t.deserialize(data.slice(3), [t.uint16_t]);
+        }
+        if ((frame_id === 255)) {
+            frame_id = 0;
+            if ((data.length > 1)) {
+                frame_id = data[1];
+                data = data.slice(2);
+            }
+        }
+        let cmd = this.COMMANDS_BY_ID.get(frame_id);
+        if (!cmd) throw new Error('Unrecognized command from FrameID' + frame_id);
+        let frameName = cmd.name;
+        debug.log("<=== Application frame %s (%s) received: %s", frame_id, frameName, data.toString('hex'));
+        if (this._awaiting.has(sequence)) {
+            let entry = this._awaiting.get(sequence);
+            this._awaiting.delete(sequence);
+            if (entry) {
+                console.assert(entry.expectedId === frame_id);
+                [result, data] = t.deserialize(data, entry.schema);
+                debug.log(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
+                entry.deferred.resolve(result);
+            }
+        } else {
+            schema = cmd.outArgs;
+            frameName = cmd.name;
+            [result, data] = t.deserialize(data, schema);
+            debug.log(`<=== Application frame ${frame_id} (${frameName}): ${result}`);
+            super.emit('frame', frameName, ...result);
+        }
+        if ((frame_id === 0)) {
+            this.ezsp_version = result[0];
+        }
+    }
+
     async version() {
         let version = this.ezsp_version;
         let result = await this._command("version", version);
@@ -438,40 +514,14 @@ export class Ezsp extends EventEmitter {
             console.assert(status == EmberStatus.SUCCESS);
         }
     }
-
-    // close() {
-    //     return this._gw.close();
-    // }
-    public close(): Promise<void> {
-        return new Promise((resolve, reject): void => {
-            if (this.initialized) {
-                if (this.portType === 'serial') {
-                    this.serialPort.flush((): void => {
-                        this.serialPort.close((error): void => {
-                            this.initialized = false;
-                            error == null ?
-                                resolve() :
-                                reject(new Error(`Error while closing serialport '${error}'`));
-                            this.emit('close');
-                        });
-                    });
-                } else {
-                    this.socketPort.destroy();
-                    resolve();
-                }
-            } else {
-                resolve();
-                this.emit('close');
-            }
-        });
-    }
-
+   
     public make_zdo_frame(name: string, ...args: any[]): Buffer {
         var c, data, frame, cmd_id;
         c = (<any>ZDO_COMMANDS)[name];
         data = t.serialize(args, c[1]);
         return data;
     }
+
     private _ezsp_frame(name: string, ...args: any[]) {
         var c, data, frame, cmd_id;
         c = (<any>COMMANDS)[name];
@@ -530,53 +580,6 @@ export class Ezsp extends EventEmitter {
             throw new Error('Unknown command: ' + name);
         }
         return this._command(name, ...args);
-    }
-
-    frame_received(data: Buffer) {
-        /*Handle a received EZSP frame
-
-        The protocol has taken care of UART specific framing etc, so we should
-        just have EZSP application stuff here, with all escaping/stuffing and
-        data randomization removed.
-        */
-        debug.log(`<=== Frame: ${data.toString('hex')}`);
-        var frame_id: number, result, schema, sequence;
-        if ((this.ezsp_version < 8)) {
-            [sequence, frame_id, data] = [data[0], data[2], data.slice(3)];
-        } else {
-            sequence = data[0];
-            [[frame_id], data] = t.deserialize(data.slice(3), [t.uint16_t]);
-        }
-        if ((frame_id === 255)) {
-            frame_id = 0;
-            if ((data.length > 1)) {
-                frame_id = data[1];
-                data = data.slice(2);
-            }
-        }
-        let cmd = this.COMMANDS_BY_ID.get(frame_id);
-        if (!cmd) throw new Error('Unrecognized command from FrameID' + frame_id);
-        let frameName = cmd.name;
-        debug.log("<=== Application frame %s (%s) received: %s", frame_id, frameName, data.toString('hex'));
-        if (this._awaiting.has(sequence)) {
-            let entry = this._awaiting.get(sequence);
-            this._awaiting.delete(sequence);
-            if (entry) {
-                console.assert(entry.expectedId === frame_id);
-                [result, data] = t.deserialize(data, entry.schema);
-                debug.log(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
-                entry.deferred.resolve(result);
-            }
-        } else {
-            schema = cmd.outArgs;
-            frameName = cmd.name;
-            [result, data] = t.deserialize(data, schema);
-            debug.log(`<=== Application frame ${frame_id} (${frameName}): ${result}`);
-            super.emit('frame', frameName, ...result);
-        }
-        if ((frame_id === 0)) {
-            this.ezsp_version = result[0];
-        }
     }
 
     public parse_frame_payload(name: string, data: Buffer) {

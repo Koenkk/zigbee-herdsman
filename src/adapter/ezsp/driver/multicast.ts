@@ -1,4 +1,4 @@
-import { Ezsp } from './ezsp';
+import { Driver } from './driver';
 import { EzspConfigId, EmberZdoConfigurationFlags } from './types';
 import * as t from './types/basic';
 import { EmberStatus, EmberOutgoingMessageType, EmberMulticastId } from './types/named';
@@ -7,25 +7,25 @@ import { EmberMulticastTableEntry } from './types/struct';
 
 export class Multicast {
     TABLE_SIZE = 16;
-    private _ezsp: Ezsp;
+    private driver: Driver;
     private logger: any;
     private _multicast: any;
     private _available: Array<any>;
 
-    constructor(ezsp: Ezsp, logger: any){
-        this._ezsp = ezsp;
+    constructor(driver: Driver, logger: any){
+        this.driver = driver;
         this.logger = logger;
         this._multicast = {};
         this._available = [];
     }
 
     private async _initialize() {
-        const size = await this._ezsp.getConfigurationValue(
+        const size = await this.driver.ezsp.getConfigurationValue(
             EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE
         );
         for (let i = 0; i < size; i++) {
             let st: any, entry: any;
-            [st, entry] = await this._ezsp.getMulticastTableEntry(i);
+            [st, entry] = await this.driver.ezsp.getMulticastTableEntry(i);
             if (st !== EmberStatus.SUCCESS) {
                 this.logger("Couldn't get MulticastTableEntry #%s: %s", i, st);
                 continue;
@@ -40,13 +40,15 @@ export class Multicast {
     }
 
     async startup(enpoints: Array<any>) {
-        await this._initialize();
-        for (let ep of enpoints) {
-            if (!ep.id) continue;
-            for (let group_id of ep.member_of) {
-                await this.subscribe(group_id);
+        return this.driver.queue.execute<void>(async () => {
+            await this._initialize();
+            for (let ep of enpoints) {
+                if (!ep.id) continue;
+                for (let group_id of ep.member_of) {
+                    await this.subscribe(group_id);
+                }
             }
-        }
+        });
     }
 
     async subscribe(group_id: number):Promise<EmberStatus> {
@@ -61,7 +63,7 @@ export class Multicast {
             entry.endpoint = 1;
             entry.multicastId = group_id;
             entry.networkIndex = 0;
-            const [status] = await this._ezsp.setMulticastTableEntry(idx, entry);
+            const [status] = await this.driver.ezsp.setMulticastTableEntry(idx, entry);
             if (status !== EmberStatus.SUCCESS) {
                 this.logger(
                     "Set MulticastTableEntry #%s for %s multicast id: %s",

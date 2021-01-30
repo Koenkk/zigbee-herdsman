@@ -7,7 +7,7 @@ import { EmberObject } from './types/emberObj';
 import { Deferred, ember_security } from './utils';
 import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask, EzspMfgTokenId } from './types/named';
 import { Multicast } from './multicast';
-import Waitress from "../../../utils/waitress";
+import {Queue, Waitress, Wait} from '../../../utils';
 
 interface AddEndpointParameters {
     endpoint?: number,
@@ -28,7 +28,7 @@ type EmberWaitressMatcher = {
 
 export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT
-    private ezsp: Ezsp;
+    public ezsp: Ezsp;
     private _nwkOpt: TsType.NetworkOptions;
     public networkParams: EmberNetworkParameters;
     private eui64ToNodeId = new Map<string, number>();
@@ -38,8 +38,9 @@ export class Driver extends EventEmitter {
     private _ieee: EmberEUI64;
     private _multicast: Multicast;
     private waitress: Waitress<EmberObject, EmberWaitressMatcher>;
+    public queue: Queue;
 
-    constructor(nodeInfo?:Iterable<{nodeId:number, eui64: string | EmberEUI64}>){
+    constructor(){
         super();
 
         // if (!nodeInfo) return;
@@ -48,6 +49,7 @@ export class Driver extends EventEmitter {
         //     let eui64 = node.eui64 instanceof EmberEUI64 ? node.eui64 : new EmberEUI64(node.eui64);
         //     this.eui64ToNodeId.set(eui64.toString(), node.nodeId);
         // }
+        this.queue = new Queue();
 
         this.waitress = new Waitress<EmberObject, EmberWaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
@@ -123,12 +125,11 @@ export class Driver extends EventEmitter {
         this._ieee = ieee;
         console.log('Network ready');
         ezsp.on('frame', this.handleFrame.bind(this))
-
+        this.handleNodeJoined(nwk, this._ieee, {}, {}, {});
         this.logger(`EZSP nwk=${this._nwk}, IEEE=${this._ieee}`);
 
-        this._multicast = new Multicast(ezsp, logger);
+        this._multicast = new Multicast(this, logger);
         await this._multicast.startup([]);
-        // this.handleNodeJoined(nwk, this._ieee, {}, {}, {});
     }
 
     private async form_network() {
