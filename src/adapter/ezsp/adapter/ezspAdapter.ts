@@ -108,7 +108,7 @@ class EZSPAdapter extends Adapter {
             stopBits: 1,
             xon: true,
             xoff: true
-        }, this.networkOptions, debug);
+        }, this.networkOptions);
         return Promise.resolve("resumed");
     }
 

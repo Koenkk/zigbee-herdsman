@@ -8,6 +8,12 @@ import { Deferred, ember_security } from './utils';
 import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask, EzspMfgTokenId } from './types/named';
 import { Multicast } from './multicast';
 import {Queue, Waitress, Wait} from '../../../utils';
+import Debug from "debug";
+
+const debug = {
+    error: Debug('zigbee-herdsman:adapter:driver:error'),
+    log: Debug('zigbee-herdsman:adapter:driver:log'),
+};
 
 interface AddEndpointParameters {
     endpoint?: number,
@@ -33,7 +39,6 @@ export class Driver extends EventEmitter {
     public networkParams: EmberNetworkParameters;
     private eui64ToNodeId = new Map<string, number>();
     private pending = new Map<number, Array<Deferred<any>>>();
-    private logger: any;
     private _nwk: EmberNodeId;
     private _ieee: EmberEUI64;
     private _multicast: Multicast;
@@ -55,8 +60,7 @@ export class Driver extends EventEmitter {
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
-    public async startup(port: string, serialOpt: {}, nwkOpt: TsType.NetworkOptions, logger: any) {
-        this.logger = logger;
+    public async startup(port: string, serialOpt: {}, nwkOpt: TsType.NetworkOptions) {
         this._nwkOpt = nwkOpt;
         let ezsp = this.ezsp = new Ezsp();
         await ezsp.connect(port, serialOpt);
@@ -80,7 +84,7 @@ export class Driver extends EventEmitter {
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_STACK_PROFILE, 2);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 0xff);
         const count = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
-        this.logger("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
+        debug.log("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
         
         await this.addEndpoint({outputClusters: [0x0500]});
 
@@ -96,7 +100,7 @@ export class Driver extends EventEmitter {
         [patch, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         [special, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         const vers = `${major}.${minor}.${patch}.${special} build ${build}`;
-        this.logger(`EmberZNet version: ${vers}`);
+        debug.log(`EmberZNet version: ${vers}`);
 
         if (!await ezsp.networkInit()) {
             await this.form_network();
@@ -107,7 +111,7 @@ export class Driver extends EventEmitter {
         let [status, nodeType, networkParams] = await ezsp.execCommand('getNetworkParameters');
         console.assert(status == EmberStatus.SUCCESS);
         if (nodeType != EmberNodeType.COORDINATOR) {
-            this.logger(`Leaving current network as ${nodeType} and forming new network`);
+            debug.log(`Leaving current network as ${nodeType} and forming new network`);
             const [st] = await this.ezsp.leaveNetwork();
             console.assert(st == EmberStatus.NETWORK_DOWN);
             await this.form_network();
@@ -115,7 +119,7 @@ export class Driver extends EventEmitter {
             console.assert(status == EmberStatus.SUCCESS);
         }
         this.networkParams = networkParams;
-        this.logger("Node type: %s, Network parameters: %s", nodeType, networkParams);
+        debug.log("Node type: %s, Network parameters: %s", nodeType, networkParams);
 
         await ezsp.updatePolicies();
 
@@ -123,12 +127,12 @@ export class Driver extends EventEmitter {
         this._nwk = nwk;
         const [ieee] = await this.ezsp.execCommand('getEui64');
         this._ieee = ieee;
-        console.log('Network ready');
+        debug.log('Network ready');
         ezsp.on('frame', this.handleFrame.bind(this))
         this.handleNodeJoined(nwk, this._ieee, {}, {}, {});
-        this.logger(`EZSP nwk=${this._nwk}, IEEE=${this._ieee}`);
+        debug.log(`EZSP nwk=${this._nwk}, IEEE=${this._ieee}`);
 
-        this._multicast = new Multicast(this, logger);
+        this._multicast = new Multicast(this);
         await this._multicast.startup([]);
     }
 
@@ -213,7 +217,7 @@ export class Driver extends EventEmitter {
         try {
             var arr = this.pending.get(tsn);
             if (!arr) {
-                console.log('Unexpected reponse TSN=', tsn, 'command=', commandId, args)
+                debug.log('Unexpected reponse TSN=', tsn, 'command=', commandId, args)
                 return;
             };
             let [sendDeferred, replyDeferred] = arr;
@@ -223,7 +227,7 @@ export class Driver extends EventEmitter {
             replyDeferred.resolve(args);
             return;
         } catch (e) {
-            console.log(e);
+            debug.log(e);
             return;
         }
     }
@@ -251,7 +255,7 @@ export class Driver extends EventEmitter {
             await this.ezsp.execCommand('setExtendedTimeout', eui64, true);
 
             let v = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
-            console.log('unicast message sent, waiting for reply');
+            debug.log('unicast message sent, waiting for reply');
             return true;
         } catch (e) {
             return false;
@@ -400,7 +404,7 @@ export class Driver extends EventEmitter {
             inputClusters,
             outputClusters,
         );
-        this.logger("Ezsp adding endpoint: %s", res);
+        debug.log("Ezsp adding endpoint: %s", res);
     }
 
     public waitFor(address: number, clusterId: number, timeout: number = 30000)

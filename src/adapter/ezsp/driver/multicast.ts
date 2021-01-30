@@ -3,18 +3,21 @@ import { EzspConfigId, EmberZdoConfigurationFlags } from './types';
 import * as t from './types/basic';
 import { EmberStatus, EmberOutgoingMessageType, EmberMulticastId } from './types/named';
 import { EmberMulticastTableEntry } from './types/struct';
+import Debug from "debug";
+
+const debug = {
+    log: Debug('zigbee-herdsman:adapter:ezsp:multicast'),
+};
 
 
 export class Multicast {
     TABLE_SIZE = 16;
     private driver: Driver;
-    private logger: any;
     private _multicast: any;
     private _available: Array<any>;
 
-    constructor(driver: Driver, logger: any){
+    constructor(driver: Driver){
         this.driver = driver;
-        this.logger = logger;
         this._multicast = {};
         this._available = [];
     }
@@ -27,10 +30,10 @@ export class Multicast {
             let st: any, entry: any;
             [st, entry] = await this.driver.ezsp.getMulticastTableEntry(i);
             if (st !== EmberStatus.SUCCESS) {
-                this.logger("Couldn't get MulticastTableEntry #%s: %s", i, st);
+                debug.log("Couldn't get MulticastTableEntry #%s: %s", i, st);
                 continue;
             }
-            this.logger("MulticastTableEntry[%s] = %s", i, entry);
+            debug.log("MulticastTableEntry[%s] = %s", i, entry);
             if (entry.endpoint !== 0) {
                 this._multicast[entry.multicastId] = [entry, i];
             } else {
@@ -53,7 +56,7 @@ export class Multicast {
 
     async subscribe(group_id: number):Promise<EmberStatus> {
         if (this._multicast.indexOf(group_id) >= 0) {
-            this.logger("%s is already subscribed", group_id);
+            debug.log("%s is already subscribed", group_id);
             return EmberStatus.SUCCESS;
         }
 
@@ -65,7 +68,7 @@ export class Multicast {
             entry.networkIndex = 0;
             const [status] = await this.driver.ezsp.setMulticastTableEntry(idx, entry);
             if (status !== EmberStatus.SUCCESS) {
-                this.logger(
+                debug.log(
                     "Set MulticastTableEntry #%s for %s multicast id: %s",
                     idx,
                     entry.multicastId,
@@ -76,7 +79,7 @@ export class Multicast {
             }
 
             this._multicast[entry.multicastId] = [entry, idx];
-            this.logger(
+            debug.log(
                 "Set MulticastTableEntry #%s for %s multicast id: %s",
                 idx,
                 entry.multicastId,
@@ -84,7 +87,7 @@ export class Multicast {
             )
             return status;
         } catch (e) {
-            this.logger("No more available slots MulticastId subscription");
+            debug.log("No more available slots MulticastId subscription");
             return EmberStatus.INDEX_OUT_OF_RANGE;
         }
     }

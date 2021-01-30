@@ -276,7 +276,7 @@ export class Ezsp extends EventEmitter {
 
             // eslint-disable-next-line
             const self = this;
-            this.socketPort.on('ready', async function() {
+            this.socketPort.on('ready', async (error): Promise<void> => {
                 debug.log('Socket ready');
                 // reset
                 await this.reset();
