@@ -54,6 +54,8 @@ class ZiGateAdapter extends Adapter {
 
         super(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
 
+        debug.log('construct', arguments);
+
         this.joinPermitted = false;
         this.driver = new Driver(serialPortOptions.path, serialPortOptions);
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
