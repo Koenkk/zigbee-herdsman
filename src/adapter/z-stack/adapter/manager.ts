@@ -119,6 +119,7 @@ export class ZnpAdapterManager {
             this.nwkOptions.networkKey.equals(alternateKeyInfo.key) &&
             this.nwkOptions.networkKey.equals(preconfiguredKey.key)
         );
+        //console.log(configMatchesAdapter, Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList), this.nwkOptions.channelList, Utils.unpackChannelList(nib.channelList), this.nwkOptions.panId, nib.nwkPanId, this.nwkOptions.networkKey, activeKeyInfo.key, alternateKeyInfo.key, preconfiguredKey.key);
 
         const backupMatchesAdapter = (
             backup &&
@@ -205,6 +206,27 @@ export class ZnpAdapterManager {
 
         /* commission provisioning network */
         await this.beginCommissioning(provisioningNwkOptions, false, false);
+
+        /* fetch provisioning NIB */
+        const rawNib = await this.nv.readItem(NvItemsIds.NIB, 0);
+        const nib = Structs.nvNIB(rawNib);
+
+        /* reset adapter */
+        await this.resetAdapter();
+
+        /* update NIB with desired nwk config */
+        nib.nwkPanId = backup.networkOptions.panId;
+        nib.channelList = Utils.packChannelList(backup.networkOptions.channelList);
+        nib.nwkLogicalChannel = backup.networkOptions.channelList[0];
+        nib.extendedPANID = backup.networkOptions.extendedPanId;
+        if (![null, undefined].includes(backup.securityLevel)) {
+            nib.SecurityLevel = backup.securityLevel;
+        }
+        if (![null, undefined].includes(backup.networkUpdateId)) {
+            nib.nwkUpdateId = backup.networkUpdateId;
+        }
+        await this.nv.writeItem(NvItemsIds.NIB, rawNib.length === 110 ? nib.getUnaligned() : nib.getAligned());
+        await Wait(500);
         
         /* perform NV restore */
         await this.backup.restoreBackup(backup);
@@ -212,7 +234,47 @@ export class ZnpAdapterManager {
         /* update commissioning NV items with desired nwk configuration */
         await this.updateCommissioningNvItems(this.nwkOptions);
         
-        /* settle & reset adapter */
+        /* update keys */
+        const keyDescriptor = Structs.nwkKeyDescriptor();
+        keyDescriptor.keySeqNum = 0;
+        keyDescriptor.key = backup.networkOptions.networkKey;
+        await this.nv.updateItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, keyDescriptor.getRaw());
+        await this.nv.updateItem(NvItemsIds.NWK_ALTERN_KEY_INFO, keyDescriptor.getRaw());
+
+        /* clear target frame counters */
+        const emptySecurityMaterialDescriptor = Structs.nwkSecMaterialDescriptor();
+        emptySecurityMaterialDescriptor.extendedPanID = Buffer.alloc(8, 0x00);
+        emptySecurityMaterialDescriptor.FrameCounter = 0;
+        for (let i = 0; i < 10; i++) {
+            if (this.options.version === ZnpVersion.zStack3x0) {
+                const currentItem = await this.nv.readExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i);
+                if (currentItem) {
+                    await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i, emptySecurityMaterialDescriptor.getRaw());
+                }
+            } else {
+                const currentItem = await this.nv.readItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i);
+                if (currentItem) {
+                    await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, emptySecurityMaterialDescriptor.getRaw());
+                }
+            }
+        }
+
+        /* restore frame counters */
+        for (const [index, frameCounter] of backup.frameCounters.entries()) {
+            const secMaterialDesc = Structs.nwkSecMaterialDescriptor();
+            secMaterialDesc.extendedPanID = frameCounter.extendedPanId;
+            secMaterialDesc.FrameCounter = frameCounter.value + 1250;
+            if (this.options.version === ZnpVersion.zStack30x) {
+                if (index > 10) {
+                    throw new Error(`Too many frame counter entries in backup (failedIndex=${index})`);
+                }
+                await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + index, secMaterialDesc.getRaw());
+            } else if (this.options.version === ZnpVersion.zStack3x0) {
+                await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, index, secMaterialDesc.getRaw());
+            }
+        }
+
+        /* settle NV */
         await Wait(1000);
         await this.resetAdapter();
 
@@ -282,14 +344,14 @@ export class ZnpAdapterManager {
 
         this.debug.commissioning(`setting network commissioning parameters`);
 
+        this.debug.commissioning(`setting network commissioning parameters`);
+
         await this.nv.updateItem(NvItemsIds.LOGICAL_TYPE, Buffer.from([ZnpConstants.ZDO.deviceLogicalType.COORDINATOR]));
         await this.nv.updateItem(NvItemsIds.PRECFGKEYS_ENABLE, Buffer.from([options.networkKeyDistribute ? 0x01 : 0x00]));
         await this.nv.updateItem(NvItemsIds.ZDO_DIRECT_CB, Buffer.from([0x01]));
-        await this.nv.updateItem(NvItemsIds.CHANLIST, channelList.serialize());
-        await this.nv.updateItem(NvItemsIds.PANID, nwkPanId.serialize());
-        await this.nv.updateItem(NvItemsIds.EXTENDED_PAN_ID, extendedPanIdReversed);
-        await this.nv.updateItem(NvItemsIds.APS_USE_EXT_PANID, extendedPanIdReversed);
-
+        await this.nv.updateItem(NvItemsIds.CHANLIST, channelList.getRaw());
+        await this.nv.updateItem(NvItemsIds.PANID, nwkPanId.getRaw());
+        await this.nv.updateItem(NvItemsIds.EXTENDED_PAN_ID, options.extendedPanId.reverse());
         if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
             await this.nv.updateItem(NvItemsIds.PRECFGKEY, options.networkKey);
         } else {
@@ -310,6 +372,10 @@ export class ZnpAdapterManager {
                 ])
             );
         }
+
+        /* settle the NV (give it a bit of time and flush by SW reset) */
+        await Wait(1000);
+        await this.resetAdapter();
     }
 
     private async registerEndpoints(): Promise<void> {
