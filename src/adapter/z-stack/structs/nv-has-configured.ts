@@ -7,7 +7,7 @@ import {Struct} from "./struct";
  * 
  * @param data Data to initialize structure with.
  */
-export const nvHasConfigured = Struct.new()
+export const nvHasConfigured = (data?: Buffer) => Struct.new()
     .member("uint8", "hasConfigured")
     .method("isConfigured", Boolean.prototype, struct => struct.hasConfigured === 0x55)
-    .factory();
+    .build(data);
