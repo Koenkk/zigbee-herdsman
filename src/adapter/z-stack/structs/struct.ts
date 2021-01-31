@@ -1,3 +1,5 @@
+import {runInThisContext} from "vm";
+
 /* Helper Types */
 type StructMemberType = "uint8" | "uint16" | "uint32" | "uint8array" | "uint8array-reversed" | "struct";
 type StructBuildOmitKeys = "member" | "method" | "build" | "factory";
@@ -43,6 +45,16 @@ export class Struct {
      */
     public getLength(): number {
         return this.length;
+    }
+
+    /**
+     * Returns structure contents in JS object format.
+     */
+    // eslint-disable-next-line max-len
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types,@typescript-eslint/explicit-function-return-type
+    public toJSON() {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return this.members.reduce((a, c) => { a[c.key] = (this as any)[c.key]; return a; }, {} as any);
     }
 
     /**
