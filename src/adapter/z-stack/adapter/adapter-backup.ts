@@ -111,7 +111,7 @@ export class AdapterBackup {
             channel_list: backup.networkOptions.channelList,
             coordinator_ieee: backup.coordinatorIeeeAddress?.toString("hex") || null,
             network_key: backup.networkOptions.networkKey.toString("hex"),
-            nwk_update_id: backup.networkUpdateId || null,
+            nwk_update_id: backup.networkUpdateId || 0,
             security_level: backup.securityLevel || null,
             frame_counters: backup.frameCounters.map(counter => ({
                 extended_pan_id: counter.extendedPanId.toString("hex"),
@@ -129,6 +129,9 @@ export class AdapterBackup {
                 networkKey: Buffer.from(backup.network_key, "hex"),
                 networkKeyDistribute: false
             },
+            coordinatorIeeeAddress: backup.coordinator_ieee ? Buffer.from(backup.coordinator_ieee, "hex") : null,
+            securityLevel: backup.security_level || null,
+            networkUpdateId: backup.nwk_update_id || null,
             frameCounters: backup.frame_counters.map(counter => ({extendedPanId: Buffer.from(counter.extended_pan_id,"hex"), value: counter.value}))
         };
     }
