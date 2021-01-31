@@ -41,6 +41,13 @@ export class ZnpAdapterManager {
     }
 
     public async start(): Promise<TsType.StartResult> {
+        /*
+        const dl = await this.nv.readItem(NvItemsIds.ADDRMGR);
+        console.log(dl.toString("hex"));
+        */
+        // console.log((await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nvNIB)).toJSON());
+        // process.exit(1);
+
         this.debug.startup(`beginning znp startup`);
         await this.nv.init();
         
@@ -351,7 +358,9 @@ export class ZnpAdapterManager {
         await this.nv.updateItem(NvItemsIds.ZDO_DIRECT_CB, Buffer.from([0x01]));
         await this.nv.updateItem(NvItemsIds.CHANLIST, channelList.getRaw());
         await this.nv.updateItem(NvItemsIds.PANID, nwkPanId.getRaw());
-        await this.nv.updateItem(NvItemsIds.EXTENDED_PAN_ID, options.extendedPanId.reverse());
+        await this.nv.updateItem(NvItemsIds.EXTENDED_PAN_ID, options.extendedPanId.slice().reverse());
+        await this.nv.updateItem(NvItemsIds.APS_USE_EXT_PANID, options.extendedPanId);
+
         if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
             await this.nv.updateItem(NvItemsIds.PRECFGKEY, options.networkKey);
         } else {
