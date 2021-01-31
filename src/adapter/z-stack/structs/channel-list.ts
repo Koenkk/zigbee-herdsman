@@ -7,6 +7,6 @@ import {Struct} from "./struct";
  * 
  * @param data Data to initialize structure with.
  */
-export const channelList = Struct.new()
+export const channelList = (data?: Buffer) => Struct.new()
     .member("uint32", "channelList")
-    .factory();
+    .build(data);

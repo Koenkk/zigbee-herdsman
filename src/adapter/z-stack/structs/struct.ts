@@ -1,8 +1,6 @@
-import {runInThisContext} from "vm";
-
 /* Helper Types */
 type StructMemberType = "uint8" | "uint16" | "uint32" | "uint8array" | "uint8array-reversed" | "struct";
-type StructBuildOmitKeys = "member" | "method" | "build" | "factory";
+type StructBuildOmitKeys = "member" | "method" | "build";
 type StructChild = { offset:number, struct: Struct };
 export type BuiltStruct<T = Struct> = Omit<T, StructBuildOmitKeys>;
 export type StructFactorySignature<T = Struct> = (data?: Buffer) => T;
@@ -208,12 +206,5 @@ export class Struct {
             this.buffer = Buffer.alloc(this.length);
         }
         return this;
-    }
-
-    /**
-     * Creates a struct factory - a function with optional data buffer input returning built and loaded structure.
-     */
-    public factory(): StructFactorySignature<BuiltStruct<this>> {
-        return (data?: Buffer): BuiltStruct<this> => this.build(data);
     }
 }

@@ -12,7 +12,7 @@ import {Struct} from "./struct";
  * 
  * @param data Data to initialize structure with.
  */
-export const nwkSecMaterialDescriptor = Struct.new()
+export const nwkSecMaterialDescriptor = (data?: Buffer) => Struct.new()
     .member("uint32", "FrameCounter")
     .member("uint8array-reversed", "extendedPanID", 8)
-    .factory();
+    .build(data);
