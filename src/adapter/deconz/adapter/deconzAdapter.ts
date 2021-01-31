@@ -17,6 +17,7 @@ import processFrame from '../driver/frameParser';
 import {Queue, Waitress, Wait} from '../../../utils';
 import PARAM from '../driver/constants';
 import { Command, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, gpDataInd } from '../driver/constants';
+import {LoggerStub} from "../../../controller/logger-stub";
 
 var frameParser = require('../driver/frameParser');
 
@@ -41,9 +42,9 @@ class DeconzAdapter extends Adapter {
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
 
     public constructor(networkOptions: NetworkOptions,
-        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
+        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions, logger?: LoggerStub) {
 
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        super(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
 
         const concurrent = this.adapterOptions && this.adapterOptions.concurrent ?
             this.adapterOptions.concurrent : 2;
@@ -853,7 +854,7 @@ class DeconzAdapter extends Adapter {
         return false;
     }
 
-    public async backup(): Promise<BackupType> {
+    public async backup(): Promise<any> {
         return Promise.reject();
     }
 
