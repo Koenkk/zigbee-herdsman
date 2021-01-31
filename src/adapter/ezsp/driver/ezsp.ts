@@ -3,7 +3,7 @@ import { Writer, Parser, FLAG, CANCEL } from './uart';
 import { COMMANDS, ZDO_COMMANDS } from './commands';
 
 import { Deferred, crc16ccitt } from './utils';
-import { EmberStatus, EmberOutgoingMessageType, EzspPolicyId, EzspDecisionId, EzspDecisionBitmask } from './types/named';
+import { EmberStatus, EmberOutgoingMessageType, EzspPolicyId, EzspDecisionId, EzspDecisionBitmask, EmberConcentratorType } from './types/named';
 import { EventEmitter } from 'events';
 import { EmberApsFrame } from './types/struct';
 import SerialPort from 'serialport';
@@ -30,7 +30,10 @@ enum NcpResetCode {
 
 const RANDOMIZE_START = 0x42;
 const RANDOMIZE_SEQ = 0xB8;
-
+const MTOR_MIN_INTERVAL = 10;
+const MTOR_MAX_INTERVAL = 90;
+const MTOR_ROUTE_ERROR_THRESHOLD = 4;
+const MTOR_DELIVERY_FAIL_THRESHOLD = 3;
 
 export class Ezsp extends EventEmitter {
     ezsp_version = 4;
@@ -593,5 +596,22 @@ export class Ezsp extends EventEmitter {
 
     public sendUnicast(direct: EmberOutgoingMessageType, nwk: number, apsFrame: EmberApsFrame, seq: number, data: Buffer) {
         return this.execCommand('sendUnicast', direct, nwk, apsFrame, seq, data);
+    }
+
+    public async setSourceRouting() {
+        const [res] = await this.execCommand('setConcentrator', 
+            true,
+            EmberConcentratorType.HIGH_RAM_CONCENTRATOR,
+            MTOR_MIN_INTERVAL,
+            MTOR_MAX_INTERVAL,
+            MTOR_ROUTE_ERROR_THRESHOLD,
+            MTOR_DELIVERY_FAIL_THRESHOLD,
+            0,
+        )
+        debug.log("Set concentrator type: %s", res);
+        if (res != EmberStatus.SUCCESS) {
+            debug.log("Couldn't set concentrator type %s: %s", true, res);
+        }
+        await this.execCommand('setSourceRouteDiscoveryMode', 1);
     }
 }

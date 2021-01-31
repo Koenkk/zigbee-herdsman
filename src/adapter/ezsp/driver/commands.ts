@@ -691,6 +691,7 @@ export const COMMANDS = {
         [EmberStatus, uint8_t, uint8_t, EmberGpAddress, EmberGpSecurityLevel, EmberGpKeyType, Bool, Bool, uint32_t, uint8_t, uint32_t, EmberGpSinkListEntry, LVBytes]
     ],
     "changeSourceRouteHandler": [196, [], [EmberNodeId, EmberNodeId]], //Bool
+    "setSourceRouteDiscoveryMode": [0x005A, [uint8_t,], [uint32_t,]],
 };
 
 //// EmberZDOCmd

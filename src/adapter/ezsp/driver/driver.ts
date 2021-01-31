@@ -83,6 +83,9 @@ export class Driver extends EventEmitter {
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 32);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_STACK_PROFILE, 2);
         await ezsp.setConfigurationValue(EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 0xff);
+
+        await ezsp.setSourceRouting();
+
         const count = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
         debug.log("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
         
