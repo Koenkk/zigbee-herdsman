@@ -110,15 +110,18 @@ export class ZnpAdapterManager {
         };
 
         const configMatchesAdapter = (
+            nib &&
             Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList) &&
             this.nwkOptions.panId === nib.nwkPanId &&
             this.nwkOptions.networkKey.equals(activeKeyInfo.key) &&
             this.nwkOptions.networkKey.equals(alternateKeyInfo.key) &&
             this.nwkOptions.networkKey.equals(preconfiguredKey.key)
         );
+        //console.log(configMatchesAdapter, Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList), this.nwkOptions.channelList, Utils.unpackChannelList(nib.channelList), this.nwkOptions.panId, nib.nwkPanId, this.nwkOptions.networkKey, activeKeyInfo.key, alternateKeyInfo.key, preconfiguredKey.key);
 
         const backupMatchesAdapter = (
             backup &&
+            nib &&
             backup.networkOptions.panId === nib.nwkPanId &&
             Utils.compareChannelLists(backup.networkOptions.channelList, nib.channelList) &&
             backup.networkOptions.networkKey.equals(activeKeyInfo.key)
@@ -204,7 +207,7 @@ export class ZnpAdapterManager {
         }
 
         /* commission provisioning network */
-        await this.beginCommissioning(provisioningNwkOptions, false);
+        await this.beginCommissioning(provisioningNwkOptions, false, false);
 
         /* fetch provisioning NIB */
         const rawNib = await this.nv.readItem(NvItemsIds.NIB, 0);
@@ -218,6 +221,12 @@ export class ZnpAdapterManager {
         nib.channelList = Utils.packChannelList(backup.networkOptions.channelList);
         nib.nwkLogicalChannel = backup.networkOptions.channelList[0];
         nib.extendedPANID = backup.networkOptions.extendedPanId;
+        if (![null, undefined].includes(backup.securityLevel)) {
+            nib.SecurityLevel = backup.securityLevel;
+        }
+        if (![null, undefined].includes(backup.networkUpdateId)) {
+            nib.nwkUpdateId = backup.networkUpdateId;
+        }
         await this.nv.writeItem(NvItemsIds.NIB, rawNib.length === 110 ? nib.getUnaligned() : nib.getAligned());
         await Wait(500);
         
@@ -231,6 +240,24 @@ export class ZnpAdapterManager {
         await this.nv.updateItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, keyDescriptor.getRaw());
         await this.nv.updateItem(NvItemsIds.NWK_ALTERN_KEY_INFO, keyDescriptor.getRaw());
 
+        /* clear target frame counters */
+        const emptySecurityMaterialDescriptor = Structs.nwkSecMaterialDescriptor();
+        emptySecurityMaterialDescriptor.extendedPanID = Buffer.alloc(8, 0x00);
+        emptySecurityMaterialDescriptor.FrameCounter = 0;
+        for (let i = 0; i < 10; i++) {
+            if (this.options.version === ZnpVersion.zStack3x0) {
+                const currentItem = await this.nv.readExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i);
+                if (currentItem) {
+                    await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i, emptySecurityMaterialDescriptor.getRaw());
+                }
+            } else {
+                const currentItem = await this.nv.readItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i);
+                if (currentItem) {
+                    await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, emptySecurityMaterialDescriptor.getRaw());
+                }
+            }
+        }
+
         /* restore frame counters */
         for (const [index, frameCounter] of backup.frameCounters.entries()) {
             const secMaterialDesc = Structs.nwkSecMaterialDescriptor();
@@ -240,11 +267,15 @@ export class ZnpAdapterManager {
                 if (index > 10) {
                     throw new Error(`Too many frame counter entries in backup (failedIndex=${index})`);
                 }
-                await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + index, secMaterialDesc.getRaw(), 0, true);
+                await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + index, secMaterialDesc.getRaw());
             } else if (this.options.version === ZnpVersion.zStack3x0) {
                 await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, index, secMaterialDesc.getRaw());
             }
         }
+
+        /* settle NV */
+        await Wait(1000);
+        await this.resetAdapter();
 
         /* startup with restored adapter */
         await this.beginStartup();
@@ -253,7 +284,7 @@ export class ZnpAdapterManager {
         await this.writeConfigurationFlag();
     }
 
-    private async beginCommissioning(nwkOptions: Models.NetworkOptions, failOnCollision = true): Promise<void> {
+    private async beginCommissioning(nwkOptions: Models.NetworkOptions, failOnCollision = true, writeConfiguredFlag = true): Promise<void> {
         if (nwkOptions.panId === 65535) {
             throw new Error(`network commissioning failed - cannot use pan id 65535`);
         }
@@ -263,11 +294,19 @@ export class ZnpAdapterManager {
         await this.resetAdapter();
 
         /* commission the network as per parameters */
-        this.debug.commissioning("beginning network commissioning");
         await this.updateCommissioningNvItems(nwkOptions);
+        this.debug.commissioning("beginning network commissioning");
+        if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
+            await this.znp.request(Subsystem.APP_CNF, "bdbSetChannel", {isPrimary: 0x1, channel: Utils.packChannelList(nwkOptions.channelList)});
+            await this.znp.request(Subsystem.APP_CNF, "bdbSetChannel", {isPrimary: 0x0, channel: 0x0});
+        }
         const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, "stateChangeInd", {state: 9}, 60000);
         await this.znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x04});
-        await started.start().promise;
+        try {
+            await started.start().promise;
+        } catch (error) {
+            throw new Error(`network commissioning timed out - most likely network with the same panId or extendedPanId already exists nearby`);
+        }
         this.debug.commissioning("network commissioned");
 
         /* wait for NIB to settle (takes different amount of time of different platforms */
@@ -290,7 +329,9 @@ export class ZnpAdapterManager {
         }
 
         /* write configuration flag */
-        await this.writeConfigurationFlag();
+        if (writeConfiguredFlag) {
+            await this.writeConfigurationFlag();
+        }
     }
 
     private async updateCommissioningNvItems(options: Models.NetworkOptions): Promise<void> {
@@ -299,23 +340,26 @@ export class ZnpAdapterManager {
         const channelList = Structs.channelList();
         channelList.channelList = Utils.packChannelList(options.channelList);
 
+        this.debug.commissioning(`setting network commissioning parameters`);
+
         await this.nv.updateItem(NvItemsIds.LOGICAL_TYPE, Buffer.from([ZnpConstants.ZDO.deviceLogicalType.COORDINATOR]));
         await this.nv.updateItem(NvItemsIds.PRECFGKEYS_ENABLE, Buffer.from([options.networkKeyDistribute ? 0x01 : 0x00]));
         await this.nv.updateItem(NvItemsIds.ZDO_DIRECT_CB, Buffer.from([0x01]));
         await this.nv.updateItem(NvItemsIds.CHANLIST, channelList.getRaw());
         await this.nv.updateItem(NvItemsIds.PANID, nwkPanId.getRaw());
-        await this.nv.updateItem(NvItemsIds.EXTENDED_PAN_ID, options.extendedPanId);
+        await this.nv.updateItem(NvItemsIds.EXTENDED_PAN_ID, options.extendedPanId.reverse());
         if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
             await this.nv.updateItem(NvItemsIds.PRECFGKEY, options.networkKey);
         } else {
             await this.znp.request(
                 Subsystem.SAPI,
-                'writeConfiguration',
+                "writeConfiguration",
                 {
                     configid: NvItemsIds.PRECFGKEY,
                     len: options.networkKey.length,
                     value: options.networkKey
-                });
+                }
+            );
             await this.nv.writeItem(
                 NvItemsIds.LEGACY_TCLK_TABLE_START_12,
                 Buffer.from([
@@ -324,7 +368,10 @@ export class ZnpAdapterManager {
                 ])
             );
         }
+
+        /* settle the NV (give it a bit of time and flush by SW reset) */
         await Wait(1000);
+        await this.resetAdapter();
     }
 
     private async registerEndpoints(): Promise<void> {
