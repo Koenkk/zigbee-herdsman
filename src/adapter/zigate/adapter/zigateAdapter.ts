@@ -19,6 +19,7 @@ import {RawAPSDataRequestPayload} from "../driver/commandType";
 import ZiGateObject from "../driver/ziGateObject";
 import BuffaloZiGate from "../driver/buffaloZiGate";
 import { Buffalo } from "../../../buffalo";
+import {LoggerStub} from "../../../controller/logger-stub";
 
 const debug = Debug('adapter');
 
@@ -46,10 +47,11 @@ class ZiGateAdapter extends Adapter {
     public constructor(networkOptions: TsType.NetworkOptions,
                        serialPortOptions: TsType.SerialPortOptions,
                        backupPath: string,
-                       adapterOptions: TsType.AdapterOptions
+                       adapterOptions: TsType.AdapterOptions,
+                       logger?: LoggerStub
     ) {
 
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        super(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
 
         debug.log('construct', arguments);
 
@@ -237,7 +239,7 @@ class ZiGateAdapter extends Adapter {
         return false;
     };
 
-    public async backup(): Promise<TsType.Backup> {
+    public async backup(): Promise<any> {
         return Promise.reject();
     };
 
