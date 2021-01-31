@@ -15,6 +15,7 @@ import GreenPower from './greenPower';
 // @ts-ignore
 import mixin from 'mixin-deep';
 import Group from './model/group';
+import {LoggerStub} from "./logger-stub";
 
 interface Options {
     network: AdapterTsType.NetworkOptions;
@@ -69,15 +70,17 @@ class Controller extends events.EventEmitter {
     // eslint-disable-next-line
     private databaseSaveTimer: any;
     private touchlink: Touchlink;
+    private logger?: LoggerStub;
 
     /**
      * Create a controller
      *
      * To auto detect the port provide `null` for `options.serialPort.path`
      */
-    public constructor(options: Options) {
+    public constructor(options: Options, logger?: LoggerStub) {
         super();
         this.options = mixin(JSON.parse(JSON.stringify(DefaultOptions)), options);
+        this.logger = logger;
 
         // Validate options
         for (const channel of this.options.network.channelList) {
@@ -105,7 +108,7 @@ class Controller extends events.EventEmitter {
      */
     public async start(): Promise<void> {
         this.adapter = await Adapter.create(this.options.network,
-            this.options.serialPort, this.options.backupPath, this.options.adapter);
+            this.options.serialPort, this.options.backupPath, this.options.adapter, this.logger);
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
         this.database = Database.open(this.options.databasePath);
         const startResult = await this.adapter.start();
