@@ -7,6 +7,6 @@ import {Struct} from "./struct";
  * 
  * @param data Data to initialize structure with.
  */
-export const nwkPanId = Struct.new()
+export const nwkPanId = (data?: Buffer) => Struct.new()
     .member("uint16", "panId")
-    .factory();
+    .build(data);
