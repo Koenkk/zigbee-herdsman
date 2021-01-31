@@ -167,12 +167,12 @@ export class AdapterBackup {
                 networkKey: activeKeyInfo.key,
                 networkKeyDistribute: preconfiguredKeyEnabled
             },
-            frameCounters: [
-                {extendedPanId: nwkSecMaterialEntry.extendedPanID, value: nwkSecMaterialEntry.FrameCounter}
-            ],
             coordinatorIeeeAddress: ieeeAddress,
             securityLevel: nib.SecurityLevel,
             networkUpdateId: nib.nwkUpdateId,
+            frameCounters: [
+                {extendedPanId: nwkSecMaterialEntry.extendedPanID, value: nwkSecMaterialEntry.FrameCounter}
+            ],
             tcLinkKeyTable: [
                 tcLinkKeyEntry
             ]
