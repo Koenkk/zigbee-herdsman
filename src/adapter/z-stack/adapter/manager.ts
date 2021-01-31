@@ -126,7 +126,6 @@ export class ZnpAdapterManager {
             this.nwkOptions.networkKey.equals(alternateKeyInfo.key) &&
             this.nwkOptions.networkKey.equals(preconfiguredKey.key)
         );
-        //console.log(configMatchesAdapter, Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList), this.nwkOptions.channelList, Utils.unpackChannelList(nib.channelList), this.nwkOptions.panId, nib.nwkPanId, this.nwkOptions.networkKey, activeKeyInfo.key, alternateKeyInfo.key, preconfiguredKey.key);
 
         const backupMatchesAdapter = (
             backup &&
@@ -381,10 +380,6 @@ export class ZnpAdapterManager {
                 ])
             );
         }
-
-        /* settle the NV (give it a bit of time and flush by SW reset) */
-        await Wait(1000);
-        await this.resetAdapter();
     }
 
     private async registerEndpoints(): Promise<void> {
