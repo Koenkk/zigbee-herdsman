@@ -61,7 +61,7 @@ export const nvNIB = (data?: Buffer) => {
         .member("uint16", "nwkDevAddress")
         .member("uint8", "nwkLogicalChannel")
         .member("uint16", "nwkCoordAddress")
-        .member("uint8array", "nwkCoordExtAddress", 8)
+        .member("uint8array-reversed", "nwkCoordExtAddress", 8)
         .member("uint16", "nwkPanId")
         .member("uint8", "nwkState")
         .member("uint32", "channelList")
