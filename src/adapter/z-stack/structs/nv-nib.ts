@@ -24,7 +24,6 @@ const NIB_16BIT_ALIGNMENT_OFFSETS = [15, 21, 25, 39, 109, 115];
  */
 export const nvNIB = (data?: Buffer) => {
     if (data && data.length === 116) {
-        data = data.slice();
         if (data.length === 116) {
             const slices: Buffer[] = [];
             for (const [i, offset] of NIB_16BIT_ALIGNMENT_OFFSETS.entries()) {
@@ -90,7 +89,7 @@ export const nvNIB = (data?: Buffer) => {
         .member("uint8", "nwkUpdateId")
         .method("getUnaligned", Buffer.prototype, nib => nib.getRaw())
         .method("getAligned", Buffer.prototype, nib => {
-            let alignedBuffer = nib.getRaw().slice();
+            let alignedBuffer = nib.getRaw();
             for (const offset of NIB_16BIT_ALIGNMENT_OFFSETS) {
                 alignedBuffer = Buffer.concat([
                     alignedBuffer.slice(0, offset),
