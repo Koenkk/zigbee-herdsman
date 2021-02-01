@@ -1,3 +1,5 @@
+import * as Utils from "../utils";
+
 /* Helper Types */
 type StructMemberType = "uint8" | "uint16" | "uint32" | "uint8array" | "uint8array-reversed" | "struct";
 type StructBuildOmitKeys = "member" | "method" | "build";
@@ -34,7 +36,7 @@ export class Struct {
             const child = this.childStructs[key];
             this.buffer.set(child.struct.getRaw(), child.offset);
         }
-        return this.buffer.slice();
+        return Utils.cloneBuffer(this.buffer);
     }
 
     /**
@@ -131,19 +133,19 @@ export class Struct {
         case "uint8array":
         case "uint8array-reversed": {
             if (!length) {
-                throw new Error("Struct builder requires length for `uint8array` type");
+                throw new Error("Struct builder requires length for `uint8array` and `uint8array-reversed` type");
             }
             Object.defineProperty(this, name,{
                 enumerable: true,
                 get: () => type === "uint8array-reversed" ?
-                    this.buffer.slice(offset, offset + length).reverse() : 
-                    this.buffer.slice(offset, offset + length),
+                    Utils.cloneBuffer(this.buffer.slice(offset, offset + length)).reverse() : 
+                    Utils.cloneBuffer(this.buffer.slice(offset, offset + length)),
                 set: (value: Buffer) => {
                     if (value.length !== length) {
                         throw new Error(`Invalid length for member ${name} (expected=${length}, got=${value.length})`);
                     }
                     if (type === "uint8array-reversed") {
-                        value = value.slice().reverse();
+                        value = Utils.cloneBuffer(value).reverse();
                     }
                     for (let i = 0; i < length; i++) {
                         this.buffer[offset + i] = value[i];
@@ -197,7 +199,7 @@ export class Struct {
             if (data.length !== this.length) {
                 throw new Error(`Struct length mismatch (expected=${this.length}, got=${data.length})`);
             }
-            this.buffer = data.slice();
+            this.buffer = Utils.cloneBuffer(data);
             for (const key of Object.keys(this.childStructs)) {
                 const child = this.childStructs[key];
                 child.struct.build(this.buffer.slice(child.offset, child.offset + child.struct.length));

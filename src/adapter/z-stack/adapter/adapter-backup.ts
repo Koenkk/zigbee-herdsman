@@ -8,7 +8,6 @@ import {AdapterNvMemory} from "./adapter-nv-memory";
 import {NvItemsIds, NvSystemIds} from "../constants/common";
 import {Subsystem} from "../unpi/constants";
 import {ZnpVersion} from "./tstype";
-import {nwkSecMaterialDescriptor} from "../structs";
 
 export class AdapterBackup {
 
@@ -44,7 +43,8 @@ export class AdapterBackup {
         if (version === ZnpVersion.zStack12) {
             throw new Error("Backup is not supported for Z-Stack 1.2");
         }
-
+        
+        /* get required data */
         const ieeeAddressResponse = await this.znp.request(Subsystem.SYS, "getExtAddr", {});
         if (!ieeeAddressResponse || !ieeeAddressResponse.payload.extaddress || !ieeeAddressResponse.payload.extaddress.startsWith("0x")) {
             throw new Error("Failed to read adapter IEEE address");
@@ -58,30 +58,43 @@ export class AdapterBackup {
         } else if (!activeKeyInfo) {
             throw new Error("Cannot backup - missing active key info");
         }
-        const frameCounters: Models.Backup["frameCounters"][0][] = [];
+
+        /* examine network security material table */
+        const secMaterialTable: ReturnType<typeof Structs.nwkSecMaterialDescriptor>[] = [];
         if (version === ZnpVersion.zStack30x) {
-            const tableStart = NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START;
-            const tableEnd = 0x0080;
-            for (let i = tableStart; i <= tableEnd; i++) {
-                const materialDescriptor = await this.nv.readItem(i, 0, nwkSecMaterialDescriptor);
-                if (materialDescriptor && materialDescriptor.extendedPanID.compare(Buffer.alloc(8, 0x00)) !== 0) {
-                    frameCounters.push({
-                        extendedPanId: materialDescriptor.extendedPanID,
-                        value: materialDescriptor.FrameCounter
-                    });
+            for (let i = NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START; i <= 0x0080; i++) {
+                const descriptor =  await this.nv.readItem(i, 0, Structs.nwkSecMaterialDescriptor);
+                if (descriptor && !descriptor.extendedPanID.equals(Buffer.alloc(8, 0x00))) {
+                    secMaterialTable.push(descriptor);
                 }
             }
         } else if (version === ZnpVersion.zStack3x0) {
-            for (let i = 0; i < 10; i++) {
-                const materialDescriptor = await this.nv.readExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i, 0, Structs.nwkSecMaterialDescriptor);
-                if (materialDescriptor && materialDescriptor.extendedPanID.compare(Buffer.alloc(8, 0x00)) !== 0) {
-                    frameCounters.push({
-                        extendedPanId: materialDescriptor.extendedPanID,
-                        value: materialDescriptor.FrameCounter
-                    });
+            for (let i = 0; i < 11; i++) {
+                const descriptor = await this.nv.readExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i, 0, Structs.nwkSecMaterialDescriptor);
+                if (descriptor && !descriptor.extendedPanID.equals(Buffer.alloc(8, 0x00))) {
+                    secMaterialTable.push(descriptor);
                 }
             }
         }
+
+        const genericExtendedPanId = Buffer.alloc(8, 0xff);
+        let secMaterialDescriptor: ReturnType<typeof Structs.nwkSecMaterialDescriptor> = null;
+        for (const entry of secMaterialTable) {
+            if (entry.extendedPanID.equals(nib.extendedPANID)) {
+                secMaterialDescriptor = entry;
+                break;
+            } else if (!secMaterialDescriptor && entry.extendedPanID.equals(genericExtendedPanId)) {
+                secMaterialDescriptor = entry;
+            }
+        }
+
+        if (!secMaterialDescriptor) {
+            secMaterialDescriptor = Structs.nwkSecMaterialDescriptor();
+            secMaterialDescriptor.extendedPanID = nib.extendedPANID;
+            secMaterialDescriptor.FrameCounter = 1250;
+        }
+
+        /* return backup structure */
         return {
             networkOptions: {
                 panId: nib.nwkPanId,
@@ -90,7 +103,10 @@ export class AdapterBackup {
                 networkKey: activeKeyInfo.key,
                 networkKeyDistribute: preconfiguredKeyEnabled && preconfiguredKeyEnabled[0] === 0x01
             },
-            frameCounters,
+            networkKeyInfo: {
+                sequenceNumber: activeKeyInfo.keySeqNum,
+                frameCounter: secMaterialDescriptor.FrameCounter
+            },
             securityLevel: nib.SecurityLevel,
             networkUpdateId: nib.nwkUpdateId,
             coordinatorIeeeAddress: ieeeAddress
@@ -106,17 +122,17 @@ export class AdapterBackup {
                     zhFormat: 2
                 }
             },
+            coordinator_ieee: backup.coordinatorIeeeAddress?.toString("hex") || null,
             pan_id: backup.networkOptions.panId,
             extended_pan_id: backup.networkOptions.extendedPanId.toString("hex"),
-            channel_list: backup.networkOptions.channelList,
-            coordinator_ieee: backup.coordinatorIeeeAddress?.toString("hex") || null,
-            network_key: backup.networkOptions.networkKey.toString("hex"),
             nwk_update_id: backup.networkUpdateId || 0,
             security_level: backup.securityLevel || null,
-            frame_counters: backup.frameCounters.map(counter => ({
-                extended_pan_id: counter.extendedPanId.toString("hex"),
-                value: counter.value
-            }))
+            channel_list: backup.networkOptions.channelList,
+            network_key: {
+                key: backup.networkOptions.networkKey.toString("hex"),
+                sequence_number: backup.networkKeyInfo.sequenceNumber,
+                frame_counter: backup.networkKeyInfo.frameCounter
+            }
         };
     }
 
@@ -126,13 +142,16 @@ export class AdapterBackup {
                 panId: backup.pan_id,
                 extendedPanId: Buffer.from(backup.extended_pan_id, "hex"),
                 channelList: backup.channel_list,
-                networkKey: Buffer.from(backup.network_key, "hex"),
+                networkKey: Buffer.from(backup.network_key.key, "hex"),
                 networkKeyDistribute: false
+            },
+            networkKeyInfo: {
+                sequenceNumber: backup.network_key.sequence_number,
+                frameCounter: backup.network_key.frame_counter
             },
             coordinatorIeeeAddress: backup.coordinator_ieee ? Buffer.from(backup.coordinator_ieee, "hex") : null,
             securityLevel: backup.security_level || null,
-            networkUpdateId: backup.nwk_update_id || null,
-            frameCounters: backup.frame_counters.map(counter => ({extendedPanId: Buffer.from(counter.extended_pan_id,"hex"), value: counter.value}))
+            networkUpdateId: backup.nwk_update_id || null
         };
     }
 
@@ -167,12 +186,13 @@ export class AdapterBackup {
                 networkKey: activeKeyInfo.key,
                 networkKeyDistribute: preconfiguredKeyEnabled
             },
+            networkKeyInfo: {
+                sequenceNumber: activeKeyInfo.keySeqNum,
+                frameCounter: nwkSecMaterialEntry.FrameCounter
+            },
             coordinatorIeeeAddress: ieeeAddress,
             securityLevel: nib.SecurityLevel,
             networkUpdateId: nib.nwkUpdateId,
-            frameCounters: [
-                {extendedPanId: nwkSecMaterialEntry.extendedPanID, value: nwkSecMaterialEntry.FrameCounter}
-            ],
             tcLinkKeyTable: [
                 tcLinkKeyEntry
             ]

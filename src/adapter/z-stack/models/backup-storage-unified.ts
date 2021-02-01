@@ -14,11 +14,11 @@ export interface UnifiedBackupStorage {
     nwk_update_id: number;
     security_level: number;
     channel_list: number[];
-    network_key: string;
-    frame_counters: {
-        extended_pan_id: string;
-        value: number;
-    }[];
+    network_key: {
+        key: string;
+        sequence_number: number;
+        frame_counter: number;
+    };
     tc_link_key_table?: {
         extended_address: string;
         tx_frame_counter: number;
