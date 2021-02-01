@@ -3,12 +3,12 @@ import {NetworkOptions} from "./network-options";
 
 export interface Backup {
     networkOptions: NetworkOptions;
-    frameCounters: {
-        extendedPanId: Buffer;
-        value: number;
-    }[];
-    securityLevel?: number;
-    networkUpdateId?: number;
-    coordinatorIeeeAddress?: Buffer;
+    networkKeyInfo: {
+        sequenceNumber: number;
+        frameCounter: number;
+    };
+    securityLevel: number;
+    networkUpdateId: number;
+    coordinatorIeeeAddress: Buffer;
     tcLinkKeyTable?: ReturnType<typeof apsmeTcLinkKeyEntry>[];
 }

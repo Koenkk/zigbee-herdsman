@@ -41,13 +41,6 @@ export class ZnpAdapterManager {
     }
 
     public async start(): Promise<TsType.StartResult> {
-        /*
-        const dl = await this.nv.readItem(NvItemsIds.ADDRMGR);
-        console.log(dl.toString("hex"));
-        */
-        // console.log((await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nvNIB)).toJSON());
-        // process.exit(1);
-
         this.debug.startup(`beginning znp startup`);
 
         /* determine startup strategy */
@@ -229,12 +222,8 @@ export class ZnpAdapterManager {
         nib.channelList = Utils.packChannelList(backup.networkOptions.channelList);
         nib.nwkLogicalChannel = backup.networkOptions.channelList[0];
         nib.extendedPANID = backup.networkOptions.extendedPanId;
-        if (![null, undefined].includes(backup.securityLevel)) {
-            nib.SecurityLevel = backup.securityLevel;
-        }
-        if (![null, undefined].includes(backup.networkUpdateId)) {
-            nib.nwkUpdateId = backup.networkUpdateId;
-        }
+        nib.SecurityLevel = backup.securityLevel;
+        nib.nwkUpdateId = backup.networkUpdateId;
         await this.nv.writeItem(NvItemsIds.NIB, rawNib.length === 110 ? nib.getUnaligned() : nib.getAligned());
         await Wait(500);
         
@@ -243,42 +232,50 @@ export class ZnpAdapterManager {
         
         /* update keys */
         const keyDescriptor = Structs.nwkKeyDescriptor();
-        keyDescriptor.keySeqNum = 0;
+        keyDescriptor.keySeqNum = backup.networkKeyInfo.sequenceNumber || 0;
         keyDescriptor.key = backup.networkOptions.networkKey;
         await this.nv.updateItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, keyDescriptor.getRaw());
         await this.nv.updateItem(NvItemsIds.NWK_ALTERN_KEY_INFO, keyDescriptor.getRaw());
 
-        /* clear target frame counters */
-        const emptySecurityMaterialDescriptor = Structs.nwkSecMaterialDescriptor();
-        emptySecurityMaterialDescriptor.extendedPanID = Buffer.alloc(8, 0x00);
-        emptySecurityMaterialDescriptor.FrameCounter = 0;
-        for (let i = 0; i < 10; i++) {
+        /* clear frame counters */
+        let secMaterialEntryCount = 0;
+        const emptySecMaterialDesc = Structs.nwkSecMaterialDescriptor();
+        emptySecMaterialDesc.extendedPanID = Buffer.alloc(8, 0x00);
+        emptySecMaterialDesc.FrameCounter = 0;
+        for (let i = 0; i < 11; i++) {
             if (this.options.version === ZnpVersion.zStack3x0) {
                 const currentItem = await this.nv.readExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i);
                 if (currentItem) {
-                    await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i, emptySecurityMaterialDescriptor.getRaw());
+                    secMaterialEntryCount++;
+                    await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i, emptySecMaterialDesc.getRaw());
                 }
             } else {
                 const currentItem = await this.nv.readItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i);
                 if (currentItem) {
-                    await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, emptySecurityMaterialDescriptor.getRaw());
+                    secMaterialEntryCount++;
+                    await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, emptySecMaterialDesc.getRaw());
                 }
             }
         }
 
-        /* restore frame counters */
-        for (const [index, frameCounter] of backup.frameCounters.entries()) {
-            const secMaterialDesc = Structs.nwkSecMaterialDescriptor();
-            secMaterialDesc.extendedPanID = frameCounter.extendedPanId;
-            secMaterialDesc.FrameCounter = frameCounter.value + 1250;
-            if (this.options.version === ZnpVersion.zStack30x) {
-                if (index > 10) {
-                    throw new Error(`Too many frame counter entries in backup (failedIndex=${index})`);
-                }
-                await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + index, secMaterialDesc.getRaw());
-            } else if (this.options.version === ZnpVersion.zStack3x0) {
-                await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, index, secMaterialDesc.getRaw());
-            }
+        /*
+         * restore frame counters
+         * - create `desiredSecMaterialDesc` having frame counter for the actual extended PAN ID
+         * - create `genericSecMaterialDesc` having the same frame counter for generic address (used by Z-Stack in some cases)
+         * - write the same frame counter value for bot specific and generic extended PAN ID
+         * - ensure the generic entry is the last writable entry in the table
+         */
+        const desiredSecMaterialDesc = Structs.nwkSecMaterialDescriptor();
+        desiredSecMaterialDesc.extendedPanID = nib.extendedPANID;
+        desiredSecMaterialDesc.FrameCounter = backup.networkKeyInfo.frameCounter + 2500;
+        const genericSecMaterialDesc = Structs.nwkSecMaterialDescriptor(desiredSecMaterialDesc.getRaw());
+        genericSecMaterialDesc.extendedPanID = Buffer.alloc(8, 0xff);
+        if (this.options.version === ZnpVersion.zStack30x) {
+            await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, desiredSecMaterialDesc.getRaw());
+            await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + secMaterialEntryCount - 1, genericSecMaterialDesc.getRaw());
+        } else if (this.options.version === ZnpVersion.zStack3x0) {
+            await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, 0, desiredSecMaterialDesc.getRaw());
+            await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, secMaterialEntryCount - 1, genericSecMaterialDesc.getRaw());
         }
 
         /* settle NV */
@@ -347,6 +344,7 @@ export class ZnpAdapterManager {
         nwkPanId.panId = options.panId;
         const channelList = Structs.channelList();
         channelList.channelList = Utils.packChannelList(options.channelList);
+        const extendedPanIdReversed = Utils.cloneBuffer(options.extendedPanId).reverse();
 
         this.debug.commissioning(`setting network commissioning parameters`);
 
@@ -355,8 +353,8 @@ export class ZnpAdapterManager {
         await this.nv.updateItem(NvItemsIds.ZDO_DIRECT_CB, Buffer.from([0x01]));
         await this.nv.updateItem(NvItemsIds.CHANLIST, channelList.getRaw());
         await this.nv.updateItem(NvItemsIds.PANID, nwkPanId.getRaw());
-        await this.nv.updateItem(NvItemsIds.EXTENDED_PAN_ID, options.extendedPanId.slice().reverse());
-        await this.nv.updateItem(NvItemsIds.APS_USE_EXT_PANID, options.extendedPanId);
+        await this.nv.updateItem(NvItemsIds.EXTENDED_PAN_ID, extendedPanIdReversed);
+        await this.nv.updateItem(NvItemsIds.APS_USE_EXT_PANID, extendedPanIdReversed);
 
         if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
             await this.nv.updateItem(NvItemsIds.PRECFGKEY, options.networkKey);
@@ -412,7 +410,7 @@ export class ZnpAdapterManager {
      * @param options Source Z2M network options.
      */
     private parseConfigNetworkOptions(options: TsType.NetworkOptions): Models.NetworkOptions {
-        const channelList = options.channelList.slice();
+        const channelList = options.channelList;
         channelList.sort((c1, c2) => c1 < c2 ? -1 : c1 > c2 ? 1 : 0);
         return {
             channelList: channelList,

@@ -121,7 +121,7 @@ export class AdapterNvMemory {
             if (useStruct) {
                 return useStruct(readResponse.payload.value);
             } else {
-                return readResponse.payload.value.slice();
+                return readResponse.payload.value;
             }
         }
         return null;
