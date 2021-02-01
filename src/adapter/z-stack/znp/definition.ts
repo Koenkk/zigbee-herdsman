@@ -3019,6 +3019,17 @@ const Definition: {
                 {name: 'status', parameterType: ParameterType.UINT8},
             ],
         },
+        {
+            name: 'setNwkFrameCounter',
+            ID: 255,
+            type: CommandType.SREQ,
+            request: [
+                {name: 'value', parameterType: ParameterType.UINT32}
+            ],
+            response: [
+                {name: 'status', parameterType: ParameterType.UINT8}
+            ]
+        },
     ],
     [Subsystem.GREENPOWER]: [
         {
