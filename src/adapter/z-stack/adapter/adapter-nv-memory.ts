@@ -40,7 +40,7 @@ export class AdapterNvMemory {
             if (readResponse.payload.status !== 0) {
                 throw new Error(`Received non-success status while reading NV (id=${id}, offset=${offset}, status=${readResponse.payload.status})`);
             }
-            buffer.set(readResponse.payload.value);
+            buffer.set(readResponse.payload.value, offset);
             offset += readResponse.payload.value.length;
         }
         if (useStruct) {
@@ -75,7 +75,7 @@ export class AdapterNvMemory {
             const writeLength = remaining > 246 ? 246 : remaining;
             const dataOffset = data.length - remaining;
             const writeData = data.slice(dataOffset, dataOffset + writeLength);
-            const writeResponse = await this.znp.request(Subsystem.SYS, "osalNvWriteExt", {id, offset, len: writeLength, value: writeData});
+            const writeResponse = await this.znp.request(Subsystem.SYS, "osalNvWriteExt", {id, offset: dataOffset, len: writeLength, value: writeData});
             if (writeResponse.payload.status !== 0) {
                 throw new Error(`Received non-success status while writing NV (id=${id}, offset=${offset}, status=${writeResponse.payload.status})`);
             }
