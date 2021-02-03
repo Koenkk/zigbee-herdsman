@@ -5,10 +5,11 @@ import { EventEmitter } from "events";
 import { EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState } from './types/struct';
 import { EmberObject } from './types/emberObj';
 import { Deferred, ember_security } from './utils';
-import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask, EzspMfgTokenId } from './types/named';
+import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask, EzspMfgTokenId, EmberNetworkStatus, EmberKeyType } from './types/named';
 import { Multicast } from './multicast';
 import {Queue, Waitress, Wait} from '../../../utils';
 import Debug from "debug";
+import equals from 'fast-deep-equal/es6';
 
 const debug = {
     error: Debug('zigbee-herdsman:adapter:driver:error'),
@@ -105,22 +106,21 @@ export class Driver extends EventEmitter {
         const vers = `${major}.${minor}.${patch}.${special} build ${build}`;
         debug.log(`EmberZNet version: ${vers}`);
 
-        if (!await ezsp.networkInit()) {
+        if (await this.needsToBeInitialised(nwkOpt)) {
+            const currentState = await ezsp.execCommand('networkState');
+            console.log('Network state', currentState);
+            if (currentState == EmberNetworkStatus.JOINED_NETWORK) {
+                debug.log(`Leaving current network and forming new network`);
+                const st = await this.ezsp.leaveNetwork();
+                console.assert(st == EmberStatus.NETWORK_DOWN);
+            }
             await this.form_network();
             const state = await ezsp.execCommand('networkState');
-            console.log('Network state', state);
+            debug.log('Network state', state);
         }
 
         let [status, nodeType, networkParams] = await ezsp.execCommand('getNetworkParameters');
         console.assert(status == EmberStatus.SUCCESS);
-        if (nodeType != EmberNodeType.COORDINATOR) {
-            debug.log(`Leaving current network as ${nodeType} and forming new network`);
-            const [st] = await this.ezsp.leaveNetwork();
-            console.assert(st == EmberStatus.NETWORK_DOWN);
-            await this.form_network();
-            [status, nodeType, networkParams] = await ezsp.execCommand('getNetworkParameters');
-            console.assert(status == EmberStatus.SUCCESS);
-        }
         this.networkParams = networkParams;
         debug.log("Node type: %s, Network parameters: %s", nodeType, networkParams);
 
@@ -139,16 +139,34 @@ export class Driver extends EventEmitter {
         await this._multicast.startup([]);
     }
 
+    
+    private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
+        let valid = true;
+        valid = valid && (await this.ezsp.networkInit());
+        let [status, nodeType, networkParams] = await this.ezsp.execCommand('getNetworkParameters');
+        debug.log("Current Node type: %s, Network parameters: %s", nodeType, networkParams);
+        valid = valid && (status == EmberStatus.SUCCESS);
+        valid = valid && (nodeType == EmberNodeType.COORDINATOR);
+        valid = valid && (options.panID == networkParams.panId);
+        valid = valid && (options.channelList.includes(networkParams.radioChannel));
+        valid = valid && (equals(options.extendedPanID, networkParams.extendedPanId));
+        return !valid;
+    }
+
     private async form_network() {
+        let status;
+        [status] = await this.ezsp.execCommand('clearKeyTable');
+        console.assert(status == EmberStatus.SUCCESS);
+
         const panID = this._nwkOpt.panID;
         const extendedPanID = this._nwkOpt.extendedPanID;
         const hashed_tclk = this.ezsp.ezsp_version > 4;
         const initial_security_state:EmberInitialSecurityState = ember_security(this._nwkOpt, true, hashed_tclk);
-        const [status] = await this.ezsp.setInitialSecurityState(initial_security_state);
+        [status] = await this.ezsp.setInitialSecurityState(initial_security_state);
         const parameters:EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;
         parameters.extendedPanId = extendedPanID;
-        parameters.radioTxPower = 8;
+        parameters.radioTxPower = 20;
         parameters.radioChannel = this._nwkOpt.channelList[0];
         parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
         parameters.nwkManagerId = 0;
@@ -157,6 +175,9 @@ export class Driver extends EventEmitter {
         
         await this.ezsp.formNetwork(parameters);
         await this.ezsp.setValue(EzspValueId.VALUE_STACK_TOKEN_WRITING, 1);
+
+        await this.ezsp.execCommand('getKey', EmberKeyType.TRUST_CENTER_LINK_KEY);
+        await this.ezsp.execCommand('getKey', EmberKeyType.CURRENT_NETWORK_KEY);
     }
 
     private handleFrame(frameName: string, ...args: any[]) {
