@@ -2344,7 +2344,7 @@ describe('Controller', () => {
             error = e;
         }
         expect(error instanceof Zcl.ZclStatusError).toBeTruthy();
-        expect(error.message).toStrictEqual(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (Status 'FAILURE')`);
+        expect(error.message).toStrictEqual(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"commandKey":null}) failed (Status 'FAILURE')`);
         expect(error.code).toBe(1);
     });
 
@@ -3072,7 +3072,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.command('genOnOff', 'toggle', {})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Command 0x129/1 genOnOff.toggle({}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":false,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Command 0x129/1 genOnOff.toggle({}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":false,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"commandKey":null}) failed (timeout occurred)`));
     });
 
     it('Endpoint commandResponse error', async () => {
@@ -3083,7 +3083,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.commandResponse('genOta', 'imageNotify', {payloadType: 0, queryJitter: 1}, null, null)} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`CommandResponse 0x129/1 genOta.imageNotify({"payloadType":0,"queryJitter":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`CommandResponse 0x129/1 genOta.imageNotify({"payloadType":0,"queryJitter":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"commandKey":null}) failed (timeout occurred)`));
     });
 
     it('Endpoint commandResponse error when transactionSequenceNumber provided through options', async () => {
@@ -3105,7 +3105,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.configureReporting('genOnOff', [{attribute: 'onOff', minimumReportInterval: 0, maximumReportInterval: 2, reportableChange: 10}])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ConfigureReporting 0x129/1 genOnOff([{"attribute":"onOff","minimumReportInterval":0,"maximumReportInterval":2,"reportableChange":10}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ConfigureReporting 0x129/1 genOnOff([{"attribute":"onOff","minimumReportInterval":0,"maximumReportInterval":2,"reportableChange":10}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"commandKey":null}) failed (timeout occurred)`));
     });
 
     it('DefaultResponse error', async () => {
@@ -3116,7 +3116,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.defaultResponse(1, 0, 1, 3)} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`DefaultResponse 0x129/1 1(1, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`DefaultResponse 0x129/1 1(1, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"commandKey":null}) failed (timeout occurred)`));
     });
 
     it('DefaultResponse error when transactionSequenceNumber provided through options', async () => {
@@ -3160,7 +3160,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.readResponse('genOnOff', 1, [{onOff: 1}])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ReadResponse 0x129/1 genOnOff([{"onOff":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ReadResponse 0x129/1 genOnOff([{"onOff":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"commandKey":null}) failed (timeout occurred)`));
     });
 
     it('Read error', async () => {
@@ -3171,7 +3171,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.read('genOnOff', ['onOff'])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Read 0x129/1 genOnOff(["onOff"], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Read 0x129/1 genOnOff(["onOff"], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"commandKey":null}) failed (timeout occurred)`));
     });
 
     it('Read with disable response', async () => {
@@ -3193,7 +3193,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.write('genOnOff', {onOff: 1})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Write 0x129/1 genOnOff({"onOff":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Write 0x129/1 genOnOff({"onOff":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"commandKey":null}) failed (timeout occurred)`));
     });
 
     it('Write with disable response', async () => {
