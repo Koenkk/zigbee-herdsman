@@ -66,32 +66,33 @@ export class Driver extends EventEmitter {
         let ezsp = this.ezsp = new Ezsp();
         await ezsp.connect(port, serialOpt);
         const version = await ezsp.version();
-        console.log('Got version', version);
+        // console.log('Got version', version);
+        
+        await ezsp.updateConfig();
 
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 7680);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE, 16);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 16);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 2);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_APPLICATION_ZDO_FLAGS,
-            EmberZdoConfigurationFlags.APP_RECEIVES_SUPPORTED_ZDO_REQUESTS
-            | EmberZdoConfigurationFlags.APP_HANDLES_UNSUPPORTED_ZDO_REQUESTS);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_SECURITY_LEVEL, 5);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 8);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 2);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 32);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_STACK_PROFILE, 2);
-        await ezsp.setConfigurationValue(EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 0xff);
+        await ezsp.updatePolicies();
+
+        await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_OUTGOING_TRANSFER_SIZE, 82);
+        await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_INCOMING_TRANSFER_SIZE, 82);
+        await this.ezsp.setValue(EzspValueId.VALUE_END_DEVICE_KEEP_ALIVE_SUPPORT_MODE, 3);
 
         await ezsp.setSourceRouting();
 
-        const count = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
-        debug.log("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
+        //const count = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
+        //debug.log("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
         
-        await this.addEndpoint({outputClusters: [0x0500]});
-
+        //await this.addEndpoint({outputClusters: [0x0500]});
+        await this.addEndpoint({
+            inputClusters: [0x0000, 0x0003, 0x0006, 0x000A, 0x0019, 0x001A, 0x0300], 
+            outputClusters: [0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0020, 
+                0x0300, 0x0400, 0x0402, 0x0405, 0x0406, 0x0500, 0x0B01, 0x0B03, 
+                0x0B04, 0x0702, 0x1000, 0xFC01, 0xFC02]
+        });
+        await this.addEndpoint({
+            endpoint: 242, profileId: 0xA10E, deviceId: 0x61,
+            outputClusters: [0x0021]
+        });
+        
         // getting MFG_STRING token
         const mfgName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_STRING);
         // getting MFG_BOARD_NAME token
@@ -123,8 +124,6 @@ export class Driver extends EventEmitter {
         console.assert(status == EmberStatus.SUCCESS);
         this.networkParams = networkParams;
         debug.log("Node type: %s, Network parameters: %s", nodeType, networkParams);
-
-        await ezsp.updatePolicies();
 
         const [nwk] = await ezsp.execCommand('getNodeId');
         this._nwk = nwk;

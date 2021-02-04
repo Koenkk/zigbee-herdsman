@@ -376,6 +376,8 @@ export class EzspValueId extends basic.uint8_t {
     static VALUE_PTA_OPTIONS = 0x32
     // Configure manufacturing library options(0-non-CSMA transmits,1-CSMA transmits).
     static VALUE_MFGLIB_OPTIONS = 0x33
+
+    static VALUE_END_DEVICE_KEEP_ALIVE_SUPPORT_MODE = 0x3F;
 }
 
 export class EzspExtendedValueId extends basic.uint8_t {
@@ -449,6 +451,8 @@ export class EzspPolicyId extends basic.uint8_t {
     static PACKET_VALIDATE_LIBRARY_POLICY = 0x07
     // Controls whether the stack will process ZLL messages.
     static ZLL_POLICY = 0x08
+
+    static TC_REJOINS_USING_WELL_KNOWN_KEY_POLICY = 0x09
 }
 
 
