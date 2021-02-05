@@ -2253,6 +2253,26 @@ describe('Controller', () => {
         expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":11,"manufacturerCode":null,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":1,"dataType":32,"minRepIntval":1,"maxRepIntval":10,"repChange":1}],"Cluster":{"ID":1,"attributes":{"mainsVoltage":{"ID":0,"type":33,"name":"mainsVoltage"},"mainsFrequency":{"ID":1,"type":32,"name":"mainsFrequency"},"mainsAlarmMask":{"ID":16,"type":24,"name":"mainsAlarmMask"},"mainsVoltMinThres":{"ID":17,"type":33,"name":"mainsVoltMinThres"},"mainsVoltMaxThres":{"ID":18,"type":33,"name":"mainsVoltMaxThres"},"mainsVoltageDwellTripPoint":{"ID":19,"type":33,"name":"mainsVoltageDwellTripPoint"},"batteryVoltage":{"ID":32,"type":32,"name":"batteryVoltage"},"batteryPercentageRemaining":{"ID":33,"type":32,"name":"batteryPercentageRemaining"},"batteryManufacturer":{"ID":48,"type":66,"name":"batteryManufacturer"},"batterySize":{"ID":49,"type":48,"name":"batterySize"},"batteryAHrRating":{"ID":50,"type":33,"name":"batteryAHrRating"},"batteryQuantity":{"ID":51,"type":32,"name":"batteryQuantity"},"batteryRatedVoltage":{"ID":52,"type":32,"name":"batteryRatedVoltage"},"batteryAlarmMask":{"ID":53,"type":24,"name":"batteryAlarmMask"},"batteryVoltMinThres":{"ID":54,"type":32,"name":"batteryVoltMinThres"},"batteryVoltThres1":{"ID":55,"type":32,"name":"batteryVoltThres1"},"batteryVoltThres2":{"ID":56,"type":32,"name":"batteryVoltThres2"},"batteryVoltThres3":{"ID":57,"type":32,"name":"batteryVoltThres3"},"batteryPercentMinThres":{"ID":58,"type":32,"name":"batteryPercentMinThres"},"batteryPercentThres1":{"ID":59,"type":32,"name":"batteryPercentThres1"},"batteryPercentThres2":{"ID":60,"type":32,"name":"batteryPercentThres2"},"batteryPercentThres3":{"ID":61,"type":32,"name":"batteryPercentThres3"},"batteryAlarmState":{"ID":62,"type":27,"name":"batteryAlarmState"}},"name":"genPowerCfg","commands":{},"commandsResponse":{}},"Command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"name":"dataType","type":32,"conditions":[{"type":"directionEquals","value":0}]},{"name":"minRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"maxRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"repChange","type":1000,"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}]},{"name":"timeout","type":33,"conditions":[{"type":"directionEquals","value":1}]}],"response":7}});
     });
 
+    it('Endpoint configure reporting for manufacturer specific cluster', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockClear();
+        await endpoint.configureReporting('manuSpecificSamsungAccelerometer', [{
+            attribute: 'acceleration',
+            minimumReportInterval: 1,
+            maximumReportInterval: 10,
+            reportableChange: 1,
+        }])
+
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe('0x129');
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1)
+        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4362,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":16,"dataType":24,"minRepIntval":1,"maxRepIntval":10,"repChange":1}],"Cluster":{"ID":64514,"attributes":{"motion_threshold_multiplier":{"ID":0,"type":32,"name":"motion_threshold_multiplier"},"motion_threshold":{"ID":2,"type":33,"name":"motion_threshold"},"acceleration":{"ID":16,"type":24,"name":"acceleration"},"x_axis":{"ID":18,"type":41,"name":"x_axis"},"y_axis":{"ID":19,"type":41,"name":"y_axis"},"z_axis":{"ID":20,"type":41,"name":"z_axis"}},"manufacturerCode":4362,"name":"manuSpecificSamsungAccelerometer","commands":{},"commandsResponse":{}},"Command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"name":"dataType","type":32,"conditions":[{"type":"directionEquals","value":0}]},{"name":"minRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"maxRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"repChange","type":1000,"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}]},{"name":"timeout","type":33,"conditions":[{"type":"directionEquals","value":1}]}],"response":7}});
+    });
+
     it('Save endpoint configure reporting', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});

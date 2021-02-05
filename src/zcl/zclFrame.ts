@@ -58,7 +58,7 @@ class ZclFrame {
         const header: ZclHeader = {
             frameControl: {
                 reservedBits, frameType, direction, disableDefaultResponse,
-                manufacturerSpecific: manufacturerCode !== null,
+                manufacturerSpecific: manufacturerCode != null,
             },
             transactionSequenceNumber,
             manufacturerCode,
@@ -338,7 +338,7 @@ class ZclFrame {
                     return entry.status === condition.value;
                 } else if (condition.type == 'directionEquals') {
                     return entry.direction !== condition.value;
-                } else if (remainingBufferBytes !== null && condition.type == 'minimumRemainingBufferBytes') {
+                } else if (remainingBufferBytes != null && condition.type == 'minimumRemainingBufferBytes') {
                     return remainingBufferBytes < condition.value;
                 } else  {
                     /* istanbul ignore else */

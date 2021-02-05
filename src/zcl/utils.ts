@@ -140,6 +140,7 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
     return {
         ID: cluster.ID,
         attributes,
+        manufacturerCode: cluster.manufacturerCode,
         name,
         commands,
         // eslint-disable-next-line
