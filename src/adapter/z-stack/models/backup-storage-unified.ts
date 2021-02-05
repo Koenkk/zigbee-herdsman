@@ -8,23 +8,30 @@ export interface UnifiedBackupStorage {
             [key: string]: any;
         };
     };
+    stack_specific?: {
+        zstack?: {
+            tclk_seed?: string;
+        };
+    };
     coordinator_ieee: string;
     pan_id: number;
     extended_pan_id: string;
     nwk_update_id: number;
     security_level: number;
-    channel_list: number[];
+    channel: number;
+    channel_mask: number[];
     network_key: {
         key: string;
         sequence_number: number;
         frame_counter: number;
     };
-    tc_link_key_table?: {
-        extended_address: string;
-        tx_frame_counter: number;
-        rx_frame_counter: number;
-        key_attributes?: number;
-        key_type?: number;
-        seed_shift?: number;
+    devices: {
+        nwk_address: number;
+        ieee_address: string;
+        link_key: {
+            key: string;
+            rx_counter: number;
+            tx_counter: number;
+        } | null;
     }[];
 }
