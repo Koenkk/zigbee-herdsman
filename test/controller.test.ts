@@ -519,6 +519,7 @@ describe('Controller', () => {
     it('Controller stop, should create backup', async () => {
         await controller.start();
         if (fs.existsSync(options.backupPath)) fs.unlinkSync(options.backupPath);
+        expect(controller.isStopping()).toBeFalsy();
         await controller.stop();
         expect(mockAdapterPermitJoin).toBeCalledWith(0, null);
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual({version: 'dummybackup'});

@@ -69,6 +69,7 @@ class Controller extends events.EventEmitter {
     // eslint-disable-next-line
     private databaseSaveTimer: any;
     private touchlink: Touchlink;
+    private stopping: boolean;
 
     /**
      * Create a controller
@@ -77,6 +78,7 @@ class Controller extends events.EventEmitter {
      */
     public constructor(options: Options) {
         super();
+        this.stopping = false;
         this.options = mixin(JSON.parse(JSON.stringify(DefaultOptions)), options);
 
         // Validate options
@@ -228,7 +230,12 @@ class Controller extends events.EventEmitter {
         return this.permitJoinNetworkClosedTimer != null;
     }
 
+    public isStopping(): boolean {
+        return this.stopping;
+    }
+
     public async stop(): Promise<void> {
+        this.stopping = true;
         this.databaseSave();
 
         // Unregister adapter events
