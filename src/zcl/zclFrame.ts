@@ -29,11 +29,13 @@ class ZclFrame {
     public readonly Header: ZclHeader;
     public readonly Payload: ZclPayload;
     public readonly Cluster: TsType.Cluster;
+    private readonly Command: TsType.Command;
 
-    private constructor(header: ZclHeader, payload: ZclPayload, cluster: TsType.Cluster) {
+    private constructor(header: ZclHeader, payload: ZclPayload, cluster: TsType.Cluster, command: TsType.Command) {
         this.Header = header;
         this.Payload = payload;
         this.Cluster = cluster;
+        this.Command = command;
     }
 
     /**
@@ -63,7 +65,7 @@ class ZclFrame {
             commandIdentifier: command.ID,
         };
 
-        return new ZclFrame(header, payload, cluster);
+        return new ZclFrame(header, payload, cluster, command);
     }
 
     public toBuffer(): Buffer {
@@ -101,7 +103,7 @@ class ZclFrame {
     }
 
     private writePayloadGlobal(buffalo: BuffaloZcl): void {
-        const command = Object.values(Foundation).find((c): boolean => c.ID === this.Header.commandIdentifier);
+        const command = Object.values(Foundation).find((c): boolean => c.ID === this.Command.ID);
 
         if (command.parseStrategy === 'repetitive') {
             for (const entry of this.Payload) {
@@ -143,11 +145,7 @@ class ZclFrame {
     }
 
     private writePayloadCluster(buffalo: BuffaloZcl): void {
-        const command = this.Header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
-            this.Cluster.getCommand(this.Header.commandIdentifier) :
-            this.Cluster.getCommandResponse(this.Header.commandIdentifier);
-
-        for (const parameter of command.parameters) {
+        for (const parameter of this.Command.parameters) {
             if (!ZclFrame.conditionsValid(parameter, this.Payload, null)) {
                 continue;
             }
@@ -171,13 +169,23 @@ class ZclFrame {
 
         const buffalo = new BuffaloZcl(buffer);
         const header = this.parseHeader(buffalo);
+
+        let command: TsType.Command = null;
+        if (header.frameControl.frameType === FrameType.GLOBAL) {
+            command = Utils.getGlobalCommand(header.commandIdentifier);
+        } else {
+            const cluster = Utils.getCluster(clusterID, header.manufacturerCode);
+            command = header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
+                cluster.getCommand(header.commandIdentifier) : cluster.getCommandResponse(header.commandIdentifier);
+        }
+
         const cluster = Utils.getCluster(
             clusterID,
             header.frameControl.manufacturerSpecific ? header.manufacturerCode : null
         );
         const payload = this.parsePayload(header, cluster, buffalo);
 
-        return new ZclFrame(header, payload, cluster);
+        return new ZclFrame(header, payload, cluster, command);
     }
 
     private static parseHeader(buffalo: BuffaloZcl): ZclHeader {
