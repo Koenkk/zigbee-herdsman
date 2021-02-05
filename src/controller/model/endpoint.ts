@@ -30,7 +30,7 @@ interface Options {
     reservedBits?: number;
     transactionSequenceNumber?: number;
     disableRecovery?: boolean;
-    commandKey?: number | string;
+    writeUndiv?: boolean;
 }
 
 interface Clusters {
@@ -294,7 +294,7 @@ class Endpoint extends Entity {
             const frame = Zcl.ZclFrame.create(
                 Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
                 options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-                options.commandKey ?? "write", cluster.ID, payload, options.reservedBits
+                options.writeUndiv ? "writeUndiv" : "write", cluster.ID, payload, options.reservedBits
             );
             const result = await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
@@ -672,7 +672,7 @@ class Endpoint extends Entity {
             reservedBits: 0,
             manufacturerCode: null,
             transactionSequenceNumber: null,
-            commandKey: null,
+            writeUndiv: false,
             ...providedOptions
         };
     }
