@@ -3,12 +3,24 @@ import {NvItemsIds, NvSystemIds, ZnpCommandStatus} from "../constants/common";
 import {Subsystem} from "../unpi/constants";
 import {Znp} from "../znp";
 import * as Structs from "../structs";
+import {InlineTable} from "../structs";
 
 export class AdapterNvMemory {
+    public memoryAlignment: Structs.StructMemoryAlignment = null;
+    
     private znp: Znp;
 
     public constructor(znp: Znp) {
         this.znp = znp;
+    }
+
+    /**
+     * Initialize NV memory driver by examining target and determining memory alignment.
+     */
+    public async init(): Promise<void> {
+        /* use `ZCD_NV_NWKKEY` to determine if target platform uses memory alignment (length 21 = unaligned, length 24 = aligned) */
+        const rawNwkKey = await this.readItem(NvItemsIds.NWKKEY);
+        this.memoryAlignment = rawNwkKey.length === 21 ? "unaligned" : "aligned";
     }
 
     /**
@@ -26,9 +38,12 @@ export class AdapterNvMemory {
      * @param offset Desired data offset to read from.
      * @param useStruct Struct factory to use to wrap the data in.
      */
-    public async readItem<T extends Structs.BuiltStruct>(id: NvItemsIds, offset?: number, useStruct?: Structs.StructFactorySignature<T>): Promise<T>;
+    public async readItem<R extends Structs.BuiltStruct, T extends R | Structs.BuiltInlineTable<R>>(id: NvItemsIds, offset?: number, useStruct?: Structs.MemoryObjectFactory<T>): Promise<T>;
 
-    public async readItem<T extends Structs.BuiltStruct>(id: NvItemsIds, offset = 0, useStruct?: Structs.StructFactorySignature<T>): Promise<Buffer | T> {
+    public async readItem<R extends Structs.BuiltStruct, T extends R | Structs.BuiltInlineTable<R>>(id: NvItemsIds, offset = 0, useStruct?: Structs.MemoryObjectFactory<T>): Promise<Buffer | T> {
+        if (this.memoryAlignment === null && useStruct) {
+            throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
+        }
         const lengthResponse = await this.znp.request(Subsystem.SYS, "osalNvLength", {id});
         if (!lengthResponse.payload.length || lengthResponse.payload.length === 0) {
             return null;
@@ -44,7 +59,8 @@ export class AdapterNvMemory {
             offset += readResponse.payload.value.length;
         }
         if (useStruct) {
-            return useStruct(buffer) as T;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (useStruct as any)(buffer, this.memoryAlignment) as T;
         }
         return buffer;
     }
@@ -57,7 +73,12 @@ export class AdapterNvMemory {
      * @param offset Offset within NV item to write the data.
      * @param autoInit Whether NV item should be automatically initialized if not present.
      */
-    public async writeItem(id: NvItemsIds, data: Buffer, offset =0, autoInit = true): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public async writeItem(id: NvItemsIds, data: Buffer | Structs.SerializableMemoryObject, offset =0, autoInit = true): Promise<void> {
+        if (this.memoryAlignment === null) {
+            throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
+        }
+        data = Buffer.isBuffer(data) ? data : data.serialize(this.memoryAlignment);
         const lengthResponse = await this.znp.request(Subsystem.SYS, "osalNvLength", {id});
         const exists = lengthResponse.payload.length && lengthResponse.payload.length > 0;
         if (!exists) {
@@ -72,7 +93,7 @@ export class AdapterNvMemory {
         }
         let remaining = data.length;
         while (remaining > 0) {
-            const writeLength = remaining > 246 ? 246 : remaining;
+            const writeLength = remaining > 240 ? 240 : remaining;
             const dataOffset = data.length - remaining;
             const writeData = data.slice(dataOffset, dataOffset + writeLength);
             const writeResponse = await this.znp.request(Subsystem.SYS, "osalNvWriteExt", {id, offset: dataOffset, len: writeLength, value: writeData});
@@ -91,13 +112,24 @@ export class AdapterNvMemory {
      * @param autoInit Whether NV item should be automatically initialized if not present.
      */
     public async updateItem(id: NvItemsIds, data: Buffer, autoInit = true): Promise<void> {
+        if (this.memoryAlignment === null) {
+            throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
+        }
         const current = await this.readItem(id);
         if (!current || !current.equals(data)) {
             await this.writeItem(id, data, 0, autoInit);
         }
     }
 
+    /**
+     * Deletes an NV memory item.
+     * 
+     * @param id NV item identifier.
+     */
     public async deleteItem(id: NvItemsIds): Promise<void> {
+        if (this.memoryAlignment === null) {
+            throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
+        }
         const lengthResponse = await this.znp.request(Subsystem.SYS, "osalNvLength", {id});
         const exists = lengthResponse.payload.length && lengthResponse.payload.length > 0;
         if (exists) {
@@ -108,9 +140,21 @@ export class AdapterNvMemory {
         }
     }
 
+    /**
+     * Reads extended table entry (used by Z-Stack 3.x+). NV tables within newer Z-Stack releases include 16-bit `subId`
+     * identifying table entries.
+     * 
+     * @param sysId SimpleLink system identifier.
+     * @param id NV item identifier.
+     * @param subId Entry index.
+     * @param offset Data offset to read from.
+     */
     public async readExtendedTableEntry(sysId: NvSystemIds, id: NvItemsIds, subId: number, offset?: number): Promise<Buffer>;
-    public async readExtendedTableEntry<T extends Structs.BuiltStruct>(sysId: NvSystemIds, id: NvItemsIds, subId: number, offset?: number, useStruct?: Structs.StructFactorySignature<T>): Promise<T>;
-    public async readExtendedTableEntry<T extends Structs.BuiltStruct>(sysId: NvSystemIds, id: NvItemsIds, subId: number, offset?: number, useStruct?: Structs.StructFactorySignature<T>): Promise<Buffer | T> {
+    public async readExtendedTableEntry<T extends Structs.BuiltStruct>(sysId: NvSystemIds, id: NvItemsIds, subId: number, offset?: number, useStruct?: Structs.MemoryObjectFactory<T>): Promise<T>;
+    public async readExtendedTableEntry<T extends Structs.BuiltStruct>(sysId: NvSystemIds, id: NvItemsIds, subId: number, offset?: number, useStruct?: Structs.MemoryObjectFactory<T>): Promise<Buffer | T> {
+        if (this.memoryAlignment === null) {
+            throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
+        }
         const lengthResponse = await this.znp.request(Subsystem.SYS, "nvLength", {sysid: sysId, itemid: id, subid: subId});
         const exists = lengthResponse.payload.len && lengthResponse.payload.len > 0;
         if (exists) {
@@ -127,7 +171,21 @@ export class AdapterNvMemory {
         return null;
     }
 
+    /**
+     * Writes extended table entry (user by Z-Stack 3.x+). NV tables within newer Z-Stack releases include 16-bit `subId`
+     * identifying table tnreis.
+     * 
+     * @param sysId SimpleLink system identifier.
+     * @param id NV item identifier.
+     * @param subId Entry index.
+     * @param data Data to write to the table.
+     * @param offset Offset to write at.
+     * @param autoInit Whether non-existent entry should be automatically initialized.
+     */
     public async writeExtendedTableEntry(sysId: NvSystemIds, id: NvItemsIds, subId: number, data: Buffer, offset?: number, autoInit=true): Promise<void> {
+        if (this.memoryAlignment === null) {
+            throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
+        }
         const lengthResponse = await this.znp.request(Subsystem.SYS, "nvLength", {sysid: sysId, itemid: id, subid: subId});
         const exists = lengthResponse.payload.len && lengthResponse.payload.len > 0;
         if (!exists) {
@@ -144,4 +202,42 @@ export class AdapterNvMemory {
             throw new Error(`Received non-success status while writing NV extended table idem (sudId=${sysId}, id=${id}, subId=${subId}, offset=${offset}, status=${writeResponse.payload.status})`);
         }
     }
+
+    public async readTable(mode: "legacy", id: NvItemsIds, maxLength: number): Promise<Buffer[]>;
+
+    public async readTable<T extends Structs.BuiltStruct>(mode: "legacy", id: NvItemsIds, maxLength: number, useStruct?: Structs.MemoryObjectFactory<T>): Promise<T[]>;
+
+    public async readTable(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, maxLength?: number): Promise<Buffer[]>;
+
+    public async readTable<T extends Structs.BuiltStruct>(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, maxLength?: number, useStruct?: Structs.MemoryObjectFactory<T>): Promise<T[]>;
+
+    public async readTable<T extends Structs.BuiltStruct>(mode: "legacy" | "extended", p1: NvSystemIds | NvItemsIds, p2: NvItemsIds | number, p3?: Structs.MemoryObjectFactory<T> | number, p4?: Structs.MemoryObjectFactory<T>): Promise<Buffer[] | T[]> {
+        const sysId = (mode === "legacy") ? undefined : p1 as NvSystemIds;
+        const id = (mode === "legacy" ? p1 : p2) as NvItemsIds;
+        const maxLength = (mode === "legacy" ? p2 : p3) as number;
+        const useStruct = (mode === "legacy" ? p3 : p4) as Structs.MemoryObjectFactory<T>;
+
+        const rawEntries: Buffer[] = [];
+        let entryOffset = 0;
+        let rawEntry = null;
+        if (mode === "legacy") {
+            do {
+                rawEntry = await this.readItem(id + (entryOffset++));
+                console.log(entryOffset - 1, rawEntry);
+                if (rawEntry) {
+                    rawEntries.push(rawEntry);
+                }
+            } while (rawEntry !== null && entryOffset < maxLength);
+        } else {
+            do {
+                rawEntry = await this.readExtendedTableEntry(sysId, id, entryOffset++);
+                console.log(entryOffset - 1, rawEntry);
+                if (rawEntry) {
+                    rawEntries.push(rawEntry);
+                }
+            } while (rawEntry !== null && (!maxLength || entryOffset < maxLength));
+        }
+
+        return useStruct ? rawEntries.map(e => useStruct(e)) : rawEntries;
+    }   
 }

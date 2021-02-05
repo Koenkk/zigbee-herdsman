@@ -4,14 +4,6 @@ import {nwkKeyDescriptor} from "./nwk-key-descriptor";
 import {Struct} from "./struct";
 
 /**
- * Due to platform memory alignment NIB size may differ. For 8-bit platforms (CC2530, CC2531) the NIB length
- * is 110 bytes (which is the actual struct size). For newer platforms (CC2538, CC1352, CC2652) which use 16-bit
- * addressing the size is 116 bytes due to memory alignment. These are offsets on which an extra 0x00 byte needs
- * to be added to apply padding equivalent to newer platforms padding - bumping the structure to 116 bytes.
- */
-const NIB_16BIT_ALIGNMENT_OFFSETS = [15, 21, 25, 39, 109, 115];
-
-/**
  * Creates a NIB (Network Information Base) struct.
  * 
  * Struct provides 2 custom methods for aligned and unaligned data fetch.
@@ -23,20 +15,6 @@ const NIB_16BIT_ALIGNMENT_OFFSETS = [15, 21, 25, 39, 109, 115];
  * @param data Data to initialize structure with.
  */
 export const nvNIB = (data?: Buffer) => {
-    if (data && data.length === 116) {
-        if (data.length === 116) {
-            const slices: Buffer[] = [];
-            for (const [i, offset] of NIB_16BIT_ALIGNMENT_OFFSETS.entries()) {
-                slices.push(
-                    data.slice(
-                        i === 0 ? 0 : NIB_16BIT_ALIGNMENT_OFFSETS[i - 1] + 1,
-                        i === 0 ? offset : i === NIB_16BIT_ALIGNMENT_OFFSETS.length - 1 ? data.length - 1 : offset
-                    )
-                );
-            }
-            data = Buffer.concat(slices);
-        }
-    }
     return Struct.new()
         .member("uint8", "SequenceNum")
         .member("uint8", "PassiveAckTimeout")
@@ -87,17 +65,5 @@ export const nvNIB = (data?: Buffer) => {
         .member("uint16", "nwkManagerAddr")
         .member("uint16", "nwkTotalTransmissions")
         .member("uint8", "nwkUpdateId")
-        .method("getUnaligned", Buffer.prototype, nib => nib.getRaw())
-        .method("getAligned", Buffer.prototype, nib => {
-            let alignedBuffer = nib.getRaw();
-            for (const offset of NIB_16BIT_ALIGNMENT_OFFSETS) {
-                alignedBuffer = Buffer.concat([
-                    alignedBuffer.slice(0, offset),
-                    Buffer.from([0x00]),
-                    alignedBuffer.slice(offset)
-                ]);
-            }
-            return alignedBuffer;
-        })
         .build(data);
 };
