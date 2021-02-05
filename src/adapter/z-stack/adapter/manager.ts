@@ -15,6 +15,8 @@ import * as UnpiConstants from "../unpi/constants";
 import * as crypto from "crypto";
 import {Wait} from "../../../utils";
 import {Endpoints} from "./endpoints";
+import nvItems from "./nvItems";
+import {AddressManagerUser, SecurityManagerAuthenticationOption} from "../structs";
 
 type StartupStrategy = "startup" | "restoreBackup" | "startCommissioning";
 
@@ -36,12 +38,13 @@ export class ZnpAdapterManager {
         this.znp = znp;
         this.options = options;
         this.nwkOptions = this.parseConfigNetworkOptions(this.options.networkOptions);
-        this.backup = new AdapterBackup(this.znp, this.options.backupPath);
         this.nv = new AdapterNvMemory(this.znp);
+        this.backup = new AdapterBackup(this.znp, this.nv, this.options.backupPath);
     }
 
     public async start(): Promise<TsType.StartResult> {
         this.debug.startup(`beginning znp startup`);
+        await this.nv.init();
 
         /* determine startup strategy */
         const strategy = await this.determineStrategy();
@@ -224,7 +227,7 @@ export class ZnpAdapterManager {
         nib.extendedPANID = backup.networkOptions.extendedPanId;
         nib.SecurityLevel = backup.securityLevel;
         nib.nwkUpdateId = backup.networkUpdateId;
-        await this.nv.writeItem(NvItemsIds.NIB, rawNib.length === 110 ? nib.getUnaligned() : nib.getAligned());
+        await this.nv.writeItem(NvItemsIds.NIB, nib);
         await Wait(500);
         
         /* update commissioning NV items with desired nwk configuration */
@@ -234,8 +237,8 @@ export class ZnpAdapterManager {
         const keyDescriptor = Structs.nwkKeyDescriptor();
         keyDescriptor.keySeqNum = backup.networkKeyInfo.sequenceNumber || 0;
         keyDescriptor.key = backup.networkOptions.networkKey;
-        await this.nv.updateItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, keyDescriptor.getRaw());
-        await this.nv.updateItem(NvItemsIds.NWK_ALTERN_KEY_INFO, keyDescriptor.getRaw());
+        await this.nv.updateItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, keyDescriptor.serialize());
+        await this.nv.updateItem(NvItemsIds.NWK_ALTERN_KEY_INFO, keyDescriptor.serialize());
 
         /* clear frame counters */
         let secMaterialEntryCount = 0;
@@ -247,13 +250,13 @@ export class ZnpAdapterManager {
                 const currentItem = await this.nv.readExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i);
                 if (currentItem) {
                     secMaterialEntryCount++;
-                    await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i, emptySecMaterialDesc.getRaw());
+                    await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i, emptySecMaterialDesc.serialize());
                 }
             } else {
                 const currentItem = await this.nv.readItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i);
                 if (currentItem) {
                     secMaterialEntryCount++;
-                    await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, emptySecMaterialDesc.getRaw());
+                    await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, emptySecMaterialDesc.serialize());
                 }
             }
         }
@@ -268,14 +271,14 @@ export class ZnpAdapterManager {
         const desiredSecMaterialDesc = Structs.nwkSecMaterialDescriptor();
         desiredSecMaterialDesc.extendedPanID = nib.extendedPANID;
         desiredSecMaterialDesc.FrameCounter = backup.networkKeyInfo.frameCounter + 2500;
-        const genericSecMaterialDesc = Structs.nwkSecMaterialDescriptor(desiredSecMaterialDesc.getRaw());
+        const genericSecMaterialDesc = Structs.nwkSecMaterialDescriptor(desiredSecMaterialDesc.serialize());
         genericSecMaterialDesc.extendedPanID = Buffer.alloc(8, 0xff);
         if (this.options.version === ZnpVersion.zStack30x) {
-            await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, desiredSecMaterialDesc.getRaw());
-            await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + secMaterialEntryCount - 1, genericSecMaterialDesc.getRaw());
+            await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, desiredSecMaterialDesc.serialize());
+            await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + secMaterialEntryCount - 1, genericSecMaterialDesc.serialize());
         } else if (this.options.version === ZnpVersion.zStack3x0) {
-            await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, 0, desiredSecMaterialDesc.getRaw());
-            await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, secMaterialEntryCount - 1, genericSecMaterialDesc.getRaw());
+            await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, 0, desiredSecMaterialDesc.serialize());
+            await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, secMaterialEntryCount - 1, genericSecMaterialDesc.serialize());
         }
 
         /* settle NV */
@@ -344,15 +347,15 @@ export class ZnpAdapterManager {
         nwkPanId.panId = options.panId;
         const channelList = Structs.channelList();
         channelList.channelList = Utils.packChannelList(options.channelList);
-        const extendedPanIdReversed = Utils.cloneBuffer(options.extendedPanId).reverse();
+        const extendedPanIdReversed = Buffer.from(options.extendedPanId).reverse();
 
         this.debug.commissioning(`setting network commissioning parameters`);
 
         await this.nv.updateItem(NvItemsIds.LOGICAL_TYPE, Buffer.from([ZnpConstants.ZDO.deviceLogicalType.COORDINATOR]));
         await this.nv.updateItem(NvItemsIds.PRECFGKEYS_ENABLE, Buffer.from([options.networkKeyDistribute ? 0x01 : 0x00]));
         await this.nv.updateItem(NvItemsIds.ZDO_DIRECT_CB, Buffer.from([0x01]));
-        await this.nv.updateItem(NvItemsIds.CHANLIST, channelList.getRaw());
-        await this.nv.updateItem(NvItemsIds.PANID, nwkPanId.getRaw());
+        await this.nv.updateItem(NvItemsIds.CHANLIST, channelList.serialize());
+        await this.nv.updateItem(NvItemsIds.PANID, nwkPanId.serialize());
         await this.nv.updateItem(NvItemsIds.EXTENDED_PAN_ID, extendedPanIdReversed);
         await this.nv.updateItem(NvItemsIds.APS_USE_EXT_PANID, extendedPanIdReversed);
 

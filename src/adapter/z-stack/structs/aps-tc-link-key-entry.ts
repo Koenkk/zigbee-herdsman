@@ -9,10 +9,7 @@ import {Struct} from "./struct";
  * 
  * @param data Data to initialize structure with.
  */
-export const apsmeTcLinkKeyEntry = (data?: Buffer) => {
-    if (data && data.length === 20) {
-        data = data.slice(0, 19);
-    }
+export const apsTcLinkKeyEntry = (data?: Buffer) => {
     return Struct.new()
         .member("uint32", "txFrmCntr")
         .member("uint32", "rxFrmCntr")
@@ -20,9 +17,5 @@ export const apsmeTcLinkKeyEntry = (data?: Buffer) => {
         .member("uint8", "keyAttributes")
         .member("uint8", "keyType")
         .member("uint8", "SeedShift_IcIndex")
-        .method("getUnaligned", Buffer.prototype, struct => struct.getRaw())
-        .method("getAligned", Buffer.prototype, struct => {
-            return Buffer.concat([struct.getRaw(), Buffer.from([0x00])]);
-        })
         .build(data);
 };

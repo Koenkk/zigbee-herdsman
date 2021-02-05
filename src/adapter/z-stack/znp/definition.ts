@@ -3009,6 +3009,17 @@ const Definition: {
             ],
         },
         {
+            name: 'bdbSetTcRequireKeyExchange',
+            ID: 9,
+            type: CommandType.SREQ,
+            request: [
+                {name: 'value', parameterType: ParameterType.UINT8},
+            ],
+            response: [
+                {name: 'status', parameterType: ParameterType.UINT8},
+            ]
+        },
+        {
             name: 'bdbComissioningNotifcation',
             ID: 128,
             type: CommandType.AREQ,
