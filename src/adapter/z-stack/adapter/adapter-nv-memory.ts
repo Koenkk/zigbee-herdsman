@@ -44,14 +44,14 @@ export class AdapterNvMemory {
         if (this.memoryAlignment === null && useStruct) {
             throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
         }
-        const lengthResponse = await this.znp.request(Subsystem.SYS, "osalNvLength", {id});
+        const lengthResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvLength", {id}));
         if (!lengthResponse.payload.length || lengthResponse.payload.length === 0) {
             return null;
         }
         const length = lengthResponse.payload.length;
         const buffer = Buffer.alloc(length);
         while (offset < length) {
-            const readResponse = await this.znp.request(Subsystem.SYS, "osalNvReadExt", {id, offset});
+            const readResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvReadExt", {id, offset}));
             if (readResponse.payload.status !== 0) {
                 throw new Error(`Received non-success status while reading NV (id=${id}, offset=${offset}, status=${readResponse.payload.status})`);
             }
@@ -78,25 +78,25 @@ export class AdapterNvMemory {
         if (this.memoryAlignment === null) {
             throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
         }
-        data = Buffer.isBuffer(data) ? data : data.serialize(this.memoryAlignment);
-        const lengthResponse = await this.znp.request(Subsystem.SYS, "osalNvLength", {id});
+        const buffer = Buffer.isBuffer(data) ? data : data.serialize(this.memoryAlignment);
+        const lengthResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvLength", {id}));
         const exists = lengthResponse.payload.length && lengthResponse.payload.length > 0;
         if (!exists) {
-            const initLength = data.length > 240 ? 240 : data.length;
+            const initLength = buffer.length > 240 ? 240 : buffer.length;
             if (!autoInit) {
                 throw new Error(`Cannot write NV memory item which does not exist (id=${id})`);
             }
-            const initResponse = await this.znp.request(Subsystem.SYS, "osalNvItemInit", {id, len: data.length, initlen: initLength, initvalue: data.slice(0, initLength)}, undefined, [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]);
+            const initResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvItemInit", {id, len: buffer.length, initlen: initLength, initvalue: buffer.slice(0, initLength)}, undefined, [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]));
             if (initResponse.payload.status !== 0x09) {
-                throw new Error(`Failed to initialize NV memory item (id=${id}, name=${NvItemsIds[id]}, len=${data.length}, status=${initResponse.payload.status})`);
+                throw new Error(`Failed to initialize NV memory item (id=${id}, name=${NvItemsIds[id]}, len=${buffer.length}, status=${initResponse.payload.status})`);
             }
         }
-        let remaining = data.length;
+        let remaining = buffer.length;
         while (remaining > 0) {
             const writeLength = remaining > 240 ? 240 : remaining;
-            const dataOffset = data.length - remaining;
-            const writeData = data.slice(dataOffset, dataOffset + writeLength);
-            const writeResponse = await this.znp.request(Subsystem.SYS, "osalNvWriteExt", {id, offset: dataOffset, len: writeLength, value: writeData});
+            const dataOffset = buffer.length - remaining;
+            const writeData = buffer.slice(dataOffset, dataOffset + writeLength);
+            const writeResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvWriteExt", {id, offset: dataOffset, len: writeLength, value: writeData}));
             if (writeResponse.payload.status !== 0) {
                 throw new Error(`Received non-success status while writing NV (id=${id}, offset=${offset}, status=${writeResponse.payload.status})`);
             }
@@ -130,10 +130,10 @@ export class AdapterNvMemory {
         if (this.memoryAlignment === null) {
             throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
         }
-        const lengthResponse = await this.znp.request(Subsystem.SYS, "osalNvLength", {id});
+        const lengthResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvLength", {id}));
         const exists = lengthResponse.payload.length && lengthResponse.payload.length > 0;
         if (exists) {
-            const deleteResponse = await this.znp.request(Subsystem.SYS, "osalNvDelete", {id, len:lengthResponse.payload.length});
+            const deleteResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvDelete", {id, len:lengthResponse.payload.length}));
             if (!deleteResponse || ![ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED].includes(deleteResponse.payload.status)) {
                 throw new Error(`Received non-success status while deleting NV (id=${id}, status=${deleteResponse.payload.status})`);
             }
@@ -155,10 +155,10 @@ export class AdapterNvMemory {
         if (this.memoryAlignment === null) {
             throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
         }
-        const lengthResponse = await this.znp.request(Subsystem.SYS, "nvLength", {sysid: sysId, itemid: id, subid: subId});
+        const lengthResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "nvLength", {sysid: sysId, itemid: id, subid: subId}));
         const exists = lengthResponse.payload.len && lengthResponse.payload.len > 0;
         if (exists) {
-            const readResponse = await this.znp.request(Subsystem.SYS, "nvRead", {sysid: sysId, itemid: id, subid: subId, offset: offset || 0, len: lengthResponse.payload.len});
+            const readResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "nvRead", {sysid: sysId, itemid: id, subid: subId, offset: offset || 0, len: lengthResponse.payload.len}));
             if (readResponse.payload.status !== 0) {
                 throw new Error(`Received non-success status while reading NV extended table entry (sysId=${sysId}, id=${id}, subId=${subId}, offset=${offset}, status=${readResponse.payload.status})`);
             }
@@ -186,18 +186,18 @@ export class AdapterNvMemory {
         if (this.memoryAlignment === null) {
             throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
         }
-        const lengthResponse = await this.znp.request(Subsystem.SYS, "nvLength", {sysid: sysId, itemid: id, subid: subId});
+        const lengthResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "nvLength", {sysid: sysId, itemid: id, subid: subId}));
         const exists = lengthResponse.payload.len && lengthResponse.payload.len > 0;
         if (!exists) {
             if (!autoInit) {
                 throw new Error(`Cannot write NV memory extended table item which does not exist (sudId=${sysId}, id=${id}, subId=${subId})`);
             }
-            const createResponse = await this.znp.request(Subsystem.SYS, "nvCreate", {sysid: sysId, itemid: id, subid: subId, len: data.length});
+            const createResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "nvCreate", {sysid: sysId, itemid: id, subid: subId, len: data.length}));
             if (!createResponse || createResponse.payload.status !== ZnpCommandStatus.SUCCESS) {
                 throw new Error(`Failed to crate NV memory extended table item with status (sudId=${sysId}, id=${id}, subId=${subId})`);
             }
         }
-        const writeResponse = await this.znp.request(Subsystem.SYS, "nvWrite", {sysid: sysId, itemid: id, subid: subId, offset: offset || 0, len: data.length, value: data});
+        const writeResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "nvWrite", {sysid: sysId, itemid: id, subid: subId, offset: offset || 0, len: data.length, value: data}));
         if (writeResponse.payload.status !== 0) {
             throw new Error(`Received non-success status while writing NV extended table idem (sudId=${sysId}, id=${id}, subId=${subId}, offset=${offset}, status=${writeResponse.payload.status})`);
         }
@@ -223,7 +223,7 @@ export class AdapterNvMemory {
         if (mode === "legacy") {
             do {
                 rawEntry = await this.readItem(id + (entryOffset++));
-                console.log(entryOffset - 1, rawEntry);
+                console.log(new Date().getTime(), entryOffset - 1, rawEntry);
                 if (rawEntry) {
                     rawEntries.push(rawEntry);
                 }
@@ -231,7 +231,7 @@ export class AdapterNvMemory {
         } else {
             do {
                 rawEntry = await this.readExtendedTableEntry(sysId, id, entryOffset++);
-                console.log(entryOffset - 1, rawEntry);
+                console.log(new Date().getTime(), entryOffset - 1, rawEntry);
                 if (rawEntry) {
                     rawEntries.push(rawEntry);
                 }
@@ -239,5 +239,20 @@ export class AdapterNvMemory {
         }
 
         return useStruct ? rawEntries.map(e => useStruct(e)) : rawEntries;
-    }   
+    }
+
+    private async retry<R>(fn: (() => Promise<R>), retries = 3): Promise<R> {
+        let i = 0;
+        while (i < retries) {
+            try {
+                const result = await fn();
+                return result;
+            } catch (error) {
+                if (i >= retries) {
+                    throw error;
+                }
+            }
+            i++;
+        }
+    }
 }
