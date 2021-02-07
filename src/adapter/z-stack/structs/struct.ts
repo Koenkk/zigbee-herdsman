@@ -319,7 +319,7 @@ export class Struct implements SerializableMemoryObject {
                     }
                 }
             } else {
-                const expectedLengths = `${this.getLength("unaligned")/this.getLength("aligned")}`;
+                const expectedLengths = `${this.getLength("unaligned")}/${this.getLength("aligned")}`;
                 throw new Error(`Struct length mismatch (expected=${expectedLengths}, got=${data.length})`);
             }
         } else {

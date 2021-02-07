@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {nwkKeyDescriptor} from "./nwk-key-descriptor";
-import {Struct} from "./struct";
+import {Struct} from "../struct";
 
 /**
  * Creates a NIB (Network Information Base) struct.
@@ -14,7 +14,7 @@ import {Struct} from "./struct";
  * 
  * @param data Data to initialize structure with.
  */
-export const nvNIB = (data?: Buffer) => {
+export const nib = (data?: Buffer) => {
     return Struct.new()
         .member("uint8", "SequenceNum")
         .member("uint8", "PassiveAckTimeout")
