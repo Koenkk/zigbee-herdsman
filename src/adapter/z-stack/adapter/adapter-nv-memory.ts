@@ -3,7 +3,7 @@ import {NvItemsIds, NvSystemIds, ZnpCommandStatus} from "../constants/common";
 import {Subsystem} from "../unpi/constants";
 import {Znp} from "../znp";
 import * as Structs from "../structs";
-import {InlineTable} from "../structs";
+import {BuiltTable} from "../structs";
 
 export class AdapterNvMemory {
     public memoryAlignment: Structs.StructMemoryAlignment = null;
@@ -38,9 +38,9 @@ export class AdapterNvMemory {
      * @param offset Desired data offset to read from.
      * @param useStruct Struct factory to use to wrap the data in.
      */
-    public async readItem<R extends Structs.BuiltStruct, T extends R | Structs.BuiltInlineTable<R>>(id: NvItemsIds, offset?: number, useStruct?: Structs.MemoryObjectFactory<T>): Promise<T>;
+    public async readItem<R extends Structs.BuiltStruct, T extends R | Structs.BuiltTable<R>>(id: NvItemsIds, offset?: number, useStruct?: Structs.MemoryObjectFactory<T>): Promise<T>;
 
-    public async readItem<R extends Structs.BuiltStruct, T extends R | Structs.BuiltInlineTable<R>>(id: NvItemsIds, offset = 0, useStruct?: Structs.MemoryObjectFactory<T>): Promise<Buffer | T> {
+    public async readItem<R extends Structs.BuiltStruct, T extends R | Structs.BuiltTable<R>>(id: NvItemsIds, offset = 0, useStruct?: Structs.MemoryObjectFactory<T>): Promise<Buffer | T> {
         if (this.memoryAlignment === null && useStruct) {
             throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
         }
@@ -205,17 +205,17 @@ export class AdapterNvMemory {
 
     public async readTable(mode: "legacy", id: NvItemsIds, maxLength: number): Promise<Buffer[]>;
 
-    public async readTable<T extends Structs.BuiltStruct>(mode: "legacy", id: NvItemsIds, maxLength: number, useStruct?: Structs.MemoryObjectFactory<T>): Promise<T[]>;
+    public async readTable<R extends Structs.BuiltStruct, T extends Structs.BuiltTable<R>>(mode: "legacy", id: NvItemsIds, maxLength: number, useTable?: Structs.MemoryObjectFactory<T>): Promise<T>;
 
     public async readTable(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, maxLength?: number): Promise<Buffer[]>;
 
-    public async readTable<T extends Structs.BuiltStruct>(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, maxLength?: number, useStruct?: Structs.MemoryObjectFactory<T>): Promise<T[]>;
+    public async readTable<R extends Structs.BuiltStruct, T extends Structs.BuiltTable<R>>(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, maxLength?: number, useTable?: Structs.MemoryObjectFactory<T>): Promise<T>;
 
-    public async readTable<T extends Structs.BuiltStruct>(mode: "legacy" | "extended", p1: NvSystemIds | NvItemsIds, p2: NvItemsIds | number, p3?: Structs.MemoryObjectFactory<T> | number, p4?: Structs.MemoryObjectFactory<T>): Promise<Buffer[] | T[]> {
-        const sysId = (mode === "legacy") ? undefined : p1 as NvSystemIds;
+    public async readTable<R extends Structs.BuiltStruct, T extends Structs.BuiltTable<R>>(mode: "legacy" | "extended", p1: NvSystemIds | NvItemsIds, p2: NvItemsIds | number, p3?: Structs.MemoryObjectFactory<T> | number, p4?: Structs.MemoryObjectFactory<T>): Promise<Buffer[] | T> {
+        const sysId = mode === "legacy" ? undefined : p1 as NvSystemIds;
         const id = (mode === "legacy" ? p1 : p2) as NvItemsIds;
         const maxLength = (mode === "legacy" ? p2 : p3) as number;
-        const useStruct = (mode === "legacy" ? p3 : p4) as Structs.MemoryObjectFactory<T>;
+        const useTable = (mode === "legacy" ? p3 : p4) as Structs.MemoryObjectFactory<T>;
 
         const rawEntries: Buffer[] = [];
         let entryOffset = 0;
@@ -223,7 +223,6 @@ export class AdapterNvMemory {
         if (mode === "legacy") {
             do {
                 rawEntry = await this.readItem(id + (entryOffset++));
-                console.log(new Date().getTime(), entryOffset - 1, rawEntry);
                 if (rawEntry) {
                     rawEntries.push(rawEntry);
                 }
@@ -231,14 +230,33 @@ export class AdapterNvMemory {
         } else {
             do {
                 rawEntry = await this.readExtendedTableEntry(sysId, id, entryOffset++);
-                console.log(new Date().getTime(), entryOffset - 1, rawEntry);
                 if (rawEntry) {
                     rawEntries.push(rawEntry);
                 }
             } while (rawEntry !== null && (!maxLength || entryOffset < maxLength));
         }
 
-        return useStruct ? rawEntries.map(e => useStruct(e)) : rawEntries;
+        return useTable ? useTable(rawEntries) : rawEntries;
+    }
+
+    public async writeTable<R extends Structs.BuiltStruct>(mode: "legacy", id: NvItemsIds, table: BuiltTable<R>): Promise<void>;
+
+    public async writeTable<R extends Structs.BuiltStruct>(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, table: BuiltTable<R>): Promise<void>;
+    
+    public async writeTable<R extends Structs.BuiltStruct>(mode: "extended" | "legacy", p1: NvSystemIds | NvItemsIds, p2: NvItemsIds | BuiltTable<R>, p3?: BuiltTable<R>): Promise<void> {
+        const sysId = mode === "legacy" ? undefined : p1 as NvSystemIds;
+        const id = (mode === "legacy" ? p1 : p2) as NvItemsIds;
+        const table = (mode === "legacy" ? p2 : p3) as BuiltTable<R>;
+
+        if (mode === "legacy") {
+            for (const [index, entry] of table.entries.entries()) {
+                await this.writeItem(id + index, entry.serialize(this.memoryAlignment));
+            } 
+        } else {
+            for (const [index, entry] of table.entries.entries()) {
+                await this.writeExtendedTableEntry(sysId, id, index, entry.serialize(this.memoryAlignment));
+            }
+        }
     }
 
     private async retry<R>(fn: (() => Promise<R>), retries = 3): Promise<R> {

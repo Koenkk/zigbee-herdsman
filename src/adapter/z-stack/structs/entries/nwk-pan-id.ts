@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import {Struct} from "./struct";
+import {Struct} from "../struct";
 
 /**
- * Creates a channel list struct.
+ * Creates a network PAN ID struct.
  * 
  * @param data Data to initialize structure with.
  */
-export const channelList = (data?: Buffer) => Struct.new()
-    .member("uint32", "channelList")
+export const nwkPanId = (data?: Buffer) => Struct.new()
+    .member("uint16", "panId")
     .build(data);

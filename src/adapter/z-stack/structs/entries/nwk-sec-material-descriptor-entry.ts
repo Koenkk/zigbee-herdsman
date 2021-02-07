@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import {Struct} from "./struct";
+import {Struct} from "../struct";
 
 const emptyExtendedPanId = Buffer.alloc(8, 0x00);
 
@@ -14,7 +14,7 @@ const emptyExtendedPanId = Buffer.alloc(8, 0x00);
  * 
  * @param data Data to initialize structure with.
  */
-export const nwkSecMaterialDescriptor = (data?: Buffer) => Struct.new()
+export const nwkSecMaterialDescriptorEntry = (data?: Buffer) => Struct.new()
     .member("uint32", "FrameCounter")
     .member("uint8array-reversed", "extendedPanID", 8)
     .method("isSet", Boolean.prototype, struct => !struct.extendedPanID.equals(emptyExtendedPanId))

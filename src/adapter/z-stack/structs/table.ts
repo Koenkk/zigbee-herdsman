@@ -2,27 +2,27 @@
 import {SerializableMemoryObject} from "./serializable-memory-object";
 import {BuiltStruct, StructFactorySignature, StructMemoryAlignment} from "./struct";
 
-type InlineTableBuildOmitKeys = "struct" | "header" | "occupancy" | "load" | "build";
-export type BuiltInlineTable<R extends BuiltStruct, T = InlineTable<R>> = Omit<T, InlineTableBuildOmitKeys>;
-export type InlineTableFactorySignature<R extends BuiltStruct, T = InlineTable<R>> = (data?: Buffer) => T;
+type TableBuildOmitKeys = "struct" | "header" | "occupancy" | "load" | "build";
+export type BuiltTable<R extends BuiltStruct, T = Table<R>> = Omit<T, TableBuildOmitKeys>;
+export type TableFactorySignature<R extends BuiltStruct, T = Table<R>> = (data?: Buffer) => T;
 
 /**
- * Inline table structure wraps `Struct`-based entries for inline tables present within ZNP NV memory.
+ * Table structure wraps `Struct`-based entries for tables present within ZNP NV memory.
  */
-export class InlineTable<R extends BuiltStruct> implements SerializableMemoryObject {
+export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
 
     /**
-     * Create a new inline table builder.
+     * Create a new table builder.
      */
-    public static new<R extends BuiltStruct>(): InlineTable<R> {
-        return new InlineTable();
+    public static new<R extends BuiltStruct>(): Table<R> {
+        return new Table();
     }
 
     private data: R[];
+    private emptyEntry: R;
+    private hasInlineLengthHeader = false;
     private entryStructFactory: StructFactorySignature<R>;
     private entryOccupancyFunction: (entry: R) => boolean = null;
-    private emptyEntry: R;
-    private hasLengthHeader = false;
 
     private constructor() {}
 
@@ -45,7 +45,7 @@ export class InlineTable<R extends BuiltStruct> implements SerializableMemoryObj
      */
     public get used(): R[] {
         if (!this.entryOccupancyFunction) {
-            throw new Error("Inline table usage cannot be determined without occupancy function when header is not present.");
+            throw new Error("Table usage cannot be determined without occupancy function when header is not present.");
         }
         return this.entries.filter(e => this.entryOccupancyFunction(e));
     }
@@ -55,7 +55,7 @@ export class InlineTable<R extends BuiltStruct> implements SerializableMemoryObj
      */
     public get free(): R[] {
         if (!this.entryOccupancyFunction) {
-            throw new Error("Inline table usage cannot be determined without occupancy function when header is not present.");
+            throw new Error("Table usage cannot be determined without occupancy function when header is not present.");
         }
         return this.entries.filter(e => !this.entryOccupancyFunction(e));
     }
@@ -82,7 +82,7 @@ export class InlineTable<R extends BuiltStruct> implements SerializableMemoryObj
     }
 
     /**
-     * Returns index of element in inline table
+     * Returns index of element in table.
      * 
      * @param entry Entry to resolve index for.
      */
@@ -91,15 +91,15 @@ export class InlineTable<R extends BuiltStruct> implements SerializableMemoryObj
     }
 
     /**
-     * Export the inline table in target platform format.
+     * Export the table in target platform format.
      * 
      * @param alignment Memory alignment to use for export.
      */
     public serialize(alignment: StructMemoryAlignment = "unaligned"): Buffer {
         const entryLength = this.emptyEntry.getLength(alignment);
-        const output = Buffer.alloc((this.hasLengthHeader ? 2 : 0) + (this.capacity * entryLength), 0x00);
+        const output = Buffer.alloc((this.hasInlineLengthHeader ? 2 : 0) + (this.capacity * entryLength), 0x00);
         let offset = 0;
-        if (this.hasLengthHeader) {
+        if (this.hasInlineLengthHeader) {
             output.writeUInt16LE(this.usedCount);
             offset += 2;
         }
@@ -133,47 +133,58 @@ export class InlineTable<R extends BuiltStruct> implements SerializableMemoryObj
     }
 
     /**
-     * Sets whether the inline table has a table header containing a 16-bit unsigned used table length.
+     * Sets whether the table has a table header containing a 16-bit unsigned used table length.
      * 
-     * @param hasHeader Sets whether table has record count header.
+     * @param hasInlineHeader Sets whether table has record count header.
      */
-    public header(hasHeader = true): this {
-        this.hasLengthHeader = hasHeader;
+    public inlineHeder(hasInlineHeader = true): this {
+        this.hasInlineLengthHeader = hasInlineHeader;
         return this;
     }
 
     /**
-     * Builds the inline table from existing buffer.
+     * Builds the table from existing buffer or buffers representing entries.
      * 
      * @param data Buffer to populate table from.
      * @param alignment Memory alignment of the source platform.
      */
-    public build(data: Buffer, alignment: StructMemoryAlignment): BuiltInlineTable<R>;
+    public build(data: Buffer | Buffer[], alignment?: StructMemoryAlignment): BuiltTable<R>;
 
     /**
      * Creates an empty table with set capacity.
      * 
      * @param capacity Capacity to create the table with.
      */
-    public build(capacity: number): BuiltInlineTable<R>;
+    public build(capacity: number): BuiltTable<R>;
 
-    public build(dataOrCapacity: Buffer | number, alignment: StructMemoryAlignment = "unaligned"): BuiltInlineTable<R> {
+    public build(dataOrCapacity: Buffer | Buffer[] | number, alignment: StructMemoryAlignment = "unaligned"): BuiltTable<R> {
         if (!this.entryStructFactory) {
-            throw new Error("Inline table requires an entry struct factory.");
+            throw new Error("Table requires an entry struct factory.");
         }
-        if (typeof dataOrCapacity === "number") {
-            const capacity = dataOrCapacity;
-            this.data = [...Array(capacity)].map(_ => this.entryStructFactory());
-        } else {
+        if (Array.isArray(dataOrCapacity) && dataOrCapacity.every(e => Buffer.isBuffer(e))) {
+            /* create table from given entries */
+            const data = dataOrCapacity;
+            if (!data.every(e => e.length === data[0].length)) {
+                throw new Error("All table entries need to be the same length");
+            }
+            this.data = data.map(buffer => this.entryStructFactory(buffer));
+        } else if (Buffer.isBuffer(dataOrCapacity)) {
+            /* create table from inline structure */
             const data = dataOrCapacity;
             const entryLength = this.emptyEntry.getLength(alignment);
-            const dataLength = this.hasLengthHeader ? data.length - 2 : data.length;
+            const dataLength = this.hasInlineLengthHeader ? data.length - 2 : data.length;
             if (dataLength % entryLength !== 0) {
-                throw new Error(`Inline table length not divisible by entry length (alignment=${alignment}, data_length=${data.length}, entry_length=${entryLength})`);
+                throw new Error(`Table length not divisible by entry length (alignment=${alignment}, data_length=${data.length}, entry_length=${entryLength})`);
             }
             const capacity = dataLength / entryLength;
-            const entriesStart = this.hasLengthHeader ? data.slice(2, data.length) : data.slice();
+            const entriesStart = this.hasInlineLengthHeader ? data.slice(2, data.length) : data.slice();
             this.data = [...Array(capacity)].map((_, i) => this.entryStructFactory(entriesStart.slice(i * entryLength, i * entryLength + entryLength)));
+        } else if (typeof dataOrCapacity === "number") {
+            /* create empty table of given capacity */
+            const capacity = dataOrCapacity;
+            this.data = [...Array(capacity)].map(() => this.entryStructFactory());
+        } else {
+            throw new Error("Unsupported table data source");
         }
         return this;
     }
