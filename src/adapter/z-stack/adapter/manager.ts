@@ -15,8 +15,6 @@ import * as UnpiConstants from "../unpi/constants";
 import * as crypto from "crypto";
 import {Wait} from "../../../utils";
 import {Endpoints} from "./endpoints";
-import nvItems from "./nvItems";
-import {AddressManagerUser, SecurityManagerAuthenticationOption} from "../structs";
 
 type StartupStrategy = "startup" | "restoreBackup" | "startCommissioning";
 
@@ -45,7 +43,7 @@ export class ZnpAdapterManager {
     public async start(): Promise<TsType.StartResult> {
         this.debug.startup(`beginning znp startup`);
         await this.nv.init();
-
+        
         /* determine startup strategy */
         const strategy = await this.determineStrategy();
         this.debug.startup(`determined startup strategy: ${strategy}`);
@@ -84,8 +82,8 @@ export class ZnpAdapterManager {
 
         /* acquire data from adapter */
         const hasConfiguredNvId = this.options.version === ZnpVersion.zStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3;
-        const hasConfigured = await this.nv.readItem(hasConfiguredNvId, 0, Structs.nvHasConfigured);
-        const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nvNIB);
+        const hasConfigured = await this.nv.readItem(hasConfiguredNvId, 0, Structs.hasConfigured);
+        const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
         const activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
         const alternateKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ALTERN_KEY_INFO, 0, Structs.nwkKeyDescriptor);
         const preconfiguredKey = await this.nv.readItem(NvItemsIds.PRECFGKEY, 0, Structs.nwkKey);
@@ -198,90 +196,23 @@ export class ZnpAdapterManager {
 
         /* generate random provisioning network parameters */
         const provisioningNwkOptions: Models.NetworkOptions = {
-            panId: 1 + Math.round(Math.random() * 65534),
+            panId: 1 + Math.round(Math.random() * 65532),
             extendedPanId: crypto.randomBytes(8),
             channelList: [11 + Math.round((Math.random() * (29 - 11)))],
             networkKey: crypto.randomBytes(16),
             networkKeyDistribute: false
         };
 
-        /* make sure provisioning pan id is not 65535 */
-        while (provisioningNwkOptions.panId >= 65535) {
-            provisioningNwkOptions.panId = 1 + Math.round(Math.random() * 65534);
-        }
-
         /* commission provisioning network */
         await this.beginCommissioning(provisioningNwkOptions, false, false);
-
-        /* fetch provisioning NIB */
-        const rawNib = await this.nv.readItem(NvItemsIds.NIB, 0);
-        const nib = Structs.nvNIB(rawNib);
-
-        /* reset adapter */
-        await this.resetAdapter();
-
-        /* update NIB with desired nwk config */
-        nib.nwkPanId = backup.networkOptions.panId;
-        nib.channelList = Utils.packChannelList(backup.networkOptions.channelList);
-        nib.nwkLogicalChannel = backup.networkOptions.channelList[0];
-        nib.extendedPANID = backup.networkOptions.extendedPanId;
-        nib.SecurityLevel = backup.securityLevel;
-        nib.nwkUpdateId = backup.networkUpdateId;
-        await this.nv.writeItem(NvItemsIds.NIB, nib);
-        await Wait(500);
         
+        /* perform NV restore */
+        await this.backup.restoreBackup(backup);
+
         /* update commissioning NV items with desired nwk configuration */
         await this.updateCommissioningNvItems(this.nwkOptions);
         
-        /* update keys */
-        const keyDescriptor = Structs.nwkKeyDescriptor();
-        keyDescriptor.keySeqNum = backup.networkKeyInfo.sequenceNumber || 0;
-        keyDescriptor.key = backup.networkOptions.networkKey;
-        await this.nv.updateItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, keyDescriptor.serialize());
-        await this.nv.updateItem(NvItemsIds.NWK_ALTERN_KEY_INFO, keyDescriptor.serialize());
-
-        /* clear frame counters */
-        let secMaterialEntryCount = 0;
-        const emptySecMaterialDesc = Structs.nwkSecMaterialDescriptor();
-        emptySecMaterialDesc.extendedPanID = Buffer.alloc(8, 0x00);
-        emptySecMaterialDesc.FrameCounter = 0;
-        for (let i = 0; i < 11; i++) {
-            if (this.options.version === ZnpVersion.zStack3x0) {
-                const currentItem = await this.nv.readExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i);
-                if (currentItem) {
-                    secMaterialEntryCount++;
-                    await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i, emptySecMaterialDesc.serialize());
-                }
-            } else {
-                const currentItem = await this.nv.readItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i);
-                if (currentItem) {
-                    secMaterialEntryCount++;
-                    await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, emptySecMaterialDesc.serialize());
-                }
-            }
-        }
-
-        /*
-         * restore frame counters
-         * - create `desiredSecMaterialDesc` having frame counter for the actual extended PAN ID
-         * - create `genericSecMaterialDesc` having the same frame counter for generic address (used by Z-Stack in some cases)
-         * - write the same frame counter value for bot specific and generic extended PAN ID
-         * - ensure the generic entry is the last writable entry in the table
-         */
-        const desiredSecMaterialDesc = Structs.nwkSecMaterialDescriptor();
-        desiredSecMaterialDesc.extendedPanID = nib.extendedPANID;
-        desiredSecMaterialDesc.FrameCounter = backup.networkKeyInfo.frameCounter + 2500;
-        const genericSecMaterialDesc = Structs.nwkSecMaterialDescriptor(desiredSecMaterialDesc.serialize());
-        genericSecMaterialDesc.extendedPanID = Buffer.alloc(8, 0xff);
-        if (this.options.version === ZnpVersion.zStack30x) {
-            await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, desiredSecMaterialDesc.serialize());
-            await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + secMaterialEntryCount - 1, genericSecMaterialDesc.serialize());
-        } else if (this.options.version === ZnpVersion.zStack3x0) {
-            await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, 0, desiredSecMaterialDesc.serialize());
-            await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, secMaterialEntryCount - 1, genericSecMaterialDesc.serialize());
-        }
-
-        /* settle NV */
+        /* settle & reset adapter */
         await Wait(1000);
         await this.resetAdapter();
 
@@ -320,10 +251,10 @@ export class ZnpAdapterManager {
         /* wait for NIB to settle (takes different amount of time of different platforms */
         this.debug.commissioning("waiting for NIB to settle");
         let reads = 0;
-        let nib: ReturnType<typeof Structs.nvNIB> = null;
+        let nib: ReturnType<typeof Structs.nib> = null;
         do {
             await Wait(3000);
-            nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nvNIB);
+            nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
             reads++;
         } while ((!nib || nib.nwkPanId === 65535 || nib.nwkLogicalChannel === 0) && reads < 10);
         if (!nib || nib.nwkPanId === 65535 || nib.nwkLogicalChannel === 0) {

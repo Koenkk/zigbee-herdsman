@@ -1,6 +1,7 @@
+/* eslint-disable max-len */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import {Struct} from "./struct";
+import {Struct} from "../struct";
 
 /**
  * Address manager entry flags present in `user` field.
@@ -24,6 +25,8 @@ export enum AddressManagerUser {
     Private1 = 0x08
 }
 
+const emptyAddress1 = Buffer.alloc(8, 0x00);
+const emptyAddress2 = Buffer.alloc(8, 0xff);
 
 /**
  * Creates an address manager entry.
@@ -38,6 +41,7 @@ export const addressManagerEntry = (data?: Buffer) => {
         .member("uint8", "user")
         .member("uint16", "nwkAddr")
         .member("uint8array-reversed", "extAddr", 8)
+        .method("isSet", Boolean.prototype, e => e.user !== 0x00 && !e.extAddr.equals(emptyAddress1) && !e.extAddr.equals(emptyAddress2))
         .padding(0xff)
         .build(data);
 };

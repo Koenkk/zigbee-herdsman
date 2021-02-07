@@ -4,4 +4,4 @@ export interface SerializableMemoryObject {
     serialize(alignment?: StructMemoryAlignment): Buffer;
 }
 
-export type MemoryObjectFactory<T> = (data?: Buffer) => T;
+export type MemoryObjectFactory<T> = (data?: Buffer | Buffer[]) => T;
