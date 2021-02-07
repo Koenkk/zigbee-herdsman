@@ -15,8 +15,6 @@ import * as UnpiConstants from "../unpi/constants";
 import * as crypto from "crypto";
 import {Wait} from "../../../utils";
 import {Endpoints} from "./endpoints";
-import nvItems from "./nvItems";
-import {AddressManagerUser, SecurityManagerAuthenticationOption} from "../structs";
 
 type StartupStrategy = "startup" | "restoreBackup" | "startCommissioning";
 
@@ -207,23 +205,6 @@ export class ZnpAdapterManager {
 
         /* commission provisioning network */
         await this.beginCommissioning(provisioningNwkOptions, false, false);
-
-        /* fetch provisioning NIB */
-        const rawNib = await this.nv.readItem(NvItemsIds.NIB, 0);
-        const nib = Structs.nvNIB(rawNib);
-
-        /* reset adapter */
-        await this.resetAdapter();
-
-        /* update NIB with desired nwk config */
-        nib.nwkPanId = backup.networkOptions.panId;
-        nib.channelList = Utils.packChannelList(backup.networkOptions.channelList);
-        nib.nwkLogicalChannel = backup.networkOptions.channelList[0];
-        nib.extendedPANID = backup.networkOptions.extendedPanId;
-        nib.SecurityLevel = backup.securityLevel;
-        nib.nwkUpdateId = backup.networkUpdateId;
-        await this.nv.writeItem(NvItemsIds.NIB, nib);
-        await Wait(500);
         
         /* perform NV restore */
         await this.backup.restoreBackup(backup);
@@ -231,55 +212,7 @@ export class ZnpAdapterManager {
         /* update commissioning NV items with desired nwk configuration */
         await this.updateCommissioningNvItems(this.nwkOptions);
         
-        /* update keys */
-        const keyDescriptor = Structs.nwkKeyDescriptor();
-        keyDescriptor.keySeqNum = backup.networkKeyInfo.sequenceNumber || 0;
-        keyDescriptor.key = backup.networkOptions.networkKey;
-        await this.nv.updateItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, keyDescriptor.serialize());
-        await this.nv.updateItem(NvItemsIds.NWK_ALTERN_KEY_INFO, keyDescriptor.serialize());
-
-        /* clear frame counters */
-        let secMaterialEntryCount = 0;
-        const emptySecMaterialDesc = Structs.nwkSecMaterialDescriptor();
-        emptySecMaterialDesc.extendedPanID = Buffer.alloc(8, 0x00);
-        emptySecMaterialDesc.FrameCounter = 0;
-        for (let i = 0; i < 11; i++) {
-            if (this.options.version === ZnpVersion.zStack3x0) {
-                const currentItem = await this.nv.readExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i);
-                if (currentItem) {
-                    secMaterialEntryCount++;
-                    await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i, emptySecMaterialDesc.serialize());
-                }
-            } else {
-                const currentItem = await this.nv.readItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i);
-                if (currentItem) {
-                    secMaterialEntryCount++;
-                    await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, emptySecMaterialDesc.serialize());
-                }
-            }
-        }
-
-        /*
-         * restore frame counters
-         * - create `desiredSecMaterialDesc` having frame counter for the actual extended PAN ID
-         * - create `genericSecMaterialDesc` having the same frame counter for generic address (used by Z-Stack in some cases)
-         * - write the same frame counter value for bot specific and generic extended PAN ID
-         * - ensure the generic entry is the last writable entry in the table
-         */
-        const desiredSecMaterialDesc = Structs.nwkSecMaterialDescriptor();
-        desiredSecMaterialDesc.extendedPanID = nib.extendedPANID;
-        desiredSecMaterialDesc.FrameCounter = backup.networkKeyInfo.frameCounter + 2500;
-        const genericSecMaterialDesc = Structs.nwkSecMaterialDescriptor(desiredSecMaterialDesc.serialize());
-        genericSecMaterialDesc.extendedPanID = Buffer.alloc(8, 0xff);
-        if (this.options.version === ZnpVersion.zStack30x) {
-            await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, desiredSecMaterialDesc.serialize());
-            await this.nv.writeItem(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + secMaterialEntryCount - 1, genericSecMaterialDesc.serialize());
-        } else if (this.options.version === ZnpVersion.zStack3x0) {
-            await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, 0, desiredSecMaterialDesc.serialize());
-            await this.nv.writeExtendedTableEntry(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, secMaterialEntryCount - 1, genericSecMaterialDesc.serialize());
-        }
-
-        /* settle NV */
+        /* settle & reset adapter */
         await Wait(1000);
         await this.resetAdapter();
 
