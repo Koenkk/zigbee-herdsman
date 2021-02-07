@@ -183,7 +183,7 @@ const mockDevices = {
         },
     },
     170: {
-        nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
+        nodeDescriptor: {type: 'EndDevice', manufacturerCode: 4619},
         activeEndpoints: {endpoints: [1]},
         simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [0, 1280], outputClusters: [2], profileID: 99}},
         attributes: {
