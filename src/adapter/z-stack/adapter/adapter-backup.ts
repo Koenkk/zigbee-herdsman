@@ -333,7 +333,7 @@ export class AdapterBackup {
     public toUnifiedBackup(backup: Models.Backup): Models.UnifiedBackupStorage {
         return {
             metadata: {
-                version: [0, 1],
+                version: 1,
                 source: "zigbee2mqtt",
                 internal: {
                     zhFormat: 2

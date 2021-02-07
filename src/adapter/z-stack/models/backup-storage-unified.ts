@@ -1,6 +1,6 @@
 export interface UnifiedBackupStorage {
     metadata: {
-        version: [0, 1];
+        version: 1;
         source: string;
         internal: {
             zhFormat: 2;
