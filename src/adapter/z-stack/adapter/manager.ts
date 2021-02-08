@@ -342,6 +342,9 @@ export class ZnpAdapterManager {
     /**
      * Transforms Z2M number-based network options to local Buffer-based options.
      * 
+     * This function also takes care of `dd:dd:dd:dd:dd:dd:dd:dd` extended PAN ID
+     * and replaces it with adapter IEEE address.
+     * 
      * @param options Source Z2M network options.
      */
     private async parseConfigNetworkOptions(options: TsType.NetworkOptions): Promise<Models.NetworkOptions> {
@@ -357,7 +360,7 @@ export class ZnpAdapterManager {
         };
         if (parsed.extendedPanId.equals(Buffer.alloc(8, 0xdd))) {
             const adapterIeeeAddressResponse = await this.znp.request(Subsystem.SYS, "getExtAddr", {});
-            parsed.extendedPanId = Buffer.from(adapterIeeeAddressResponse.payload.extaddress.split("0x"), "hex");
+            parsed.extendedPanId = Buffer.from(adapterIeeeAddressResponse.payload.extaddress.split("0x")[1], "hex");
         }
         return parsed;
     }
