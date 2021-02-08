@@ -1,3 +1,9 @@
+/**
+ * Unified configuration storage model based on
+ * [zigpy/open-coordinator-backup](https://github.com/zigpy/open-coordinator-backup).
+ * 
+ * This format should allow for seamless migration between adapter types or event vendors.
+ */
 export interface UnifiedBackupStorage {
     metadata: {
         format: "zigpy/open-coordinator-backup";

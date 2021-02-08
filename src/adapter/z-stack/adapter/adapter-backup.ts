@@ -12,6 +12,9 @@ import {Subsystem} from "../unpi/constants";
 import {ZnpVersion} from "./tstype";
 import {AddressManagerUser, SecurityManagerAuthenticationOption} from "../structs";
 
+/**
+ * Class providing ZNP adapter backup and restore procedures based mostly on NV memory manipulation.
+ */
 export class AdapterBackup {
 
     private znp: Znp;
@@ -25,6 +28,9 @@ export class AdapterBackup {
         this.defaultPath = path;
     }
 
+    /**
+     * Loads currently stored backup and returns it in internal backup model.
+     */
     public async getStoredBackup(): Promise<Models.Backup> {
         try {
             await fs.access(this.defaultPath);
@@ -44,6 +50,9 @@ export class AdapterBackup {
         }
     }
 
+    /**
+     * Creates a new backup from connected ZNP adapter and returns it in internal backup model format.
+     */
     public async createBackup(): Promise<Models.Backup> {
         this.debug("creating backup");
         const version: ZnpVersion = await this.getAdapterVersion();
@@ -168,6 +177,11 @@ export class AdapterBackup {
         };
     }
 
+    /**
+     * Restores a structure in internal backup format to connected ZNP adapter.
+     * 
+     * @param backup Backup to restore to connected adapter.
+     */
     public async restoreBackup(backup: Models.Backup): Promise<void> {
         this.debug("restoring backup");
         const version: ZnpVersion = await this.getAdapterVersion();
@@ -336,6 +350,12 @@ export class AdapterBackup {
         }
     }
 
+    /**
+     * Acquires ZNP version internal to `zigbee-herdsman` from controller.
+     * 
+     * *If Z-Stack 1.2 controller is detected an error is thrown, since Z-Stack 1.2 backup
+     * and restore procedures are not supported.*
+     */
     private async getAdapterVersion(): Promise<ZnpVersion> {
         const versionResponse = await this.znp.request(Subsystem.SYS, "version", {});
         const version: ZnpVersion = versionResponse.payload.product;
@@ -345,6 +365,11 @@ export class AdapterBackup {
         return version;
     }
 
+    /**
+     * Internal method to retrieve address manager table.
+     * 
+     * @param version ZNP stack version the adapter is running.
+     */
     private async getAddressManagerTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.addressManagerTable>> {
         if (version === ZnpVersion.zStack3x0) {
             return this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, undefined, Structs.addressManagerTable);
@@ -353,10 +378,18 @@ export class AdapterBackup {
         }
     }
 
+    /**
+     * Internal method to retrieve security manager table. Also referred to as APS Link Key Table.
+     */
     private async getSecurityManagerTable(): Promise<ReturnType<typeof Structs.securityManagerTable>> {
         return this.nv.readItem(NvItemsIds.APS_LINK_KEY_TABLE, 0, Structs.securityManagerTable);
     }
 
+    /**
+     * Internal method to retrieve APS Link Key Data Table containing arbitrary APS link keys.
+     * 
+     * @param version ZNP stack version the adapter is running.
+     */
     private async getApsLinkKeyDataTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsLinkKeyDataTable>> {
         if (version === ZnpVersion.zStack3x0) {
             return this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE, undefined, Structs.apsLinkKeyDataTable);
@@ -365,6 +398,11 @@ export class AdapterBackup {
         }
     }
 
+    /**
+     * Internal method to retrieve Trust Center Link Key table which describes seed-based APS link keys for devices.
+     * 
+     * @param version ZNP stack version the adapter is running.
+     */
     private async getTclkTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsTcLinkKeyTable>> {
         if (version === ZnpVersion.zStack3x0) {
             return this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, undefined, Structs.apsTcLinkKeyTable);
@@ -373,6 +411,11 @@ export class AdapterBackup {
         } 
     }
 
+    /**
+     * Internal method to retrieve network security material table, which contains network key frame counter.
+     * 
+     * @param version ZNP stack version the adapter is running.
+     */
     private async getNetworkSecurityMaterialTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.nwkSecMaterialDescriptorTable>> {
         if (version === ZnpVersion.zStack3x0) {
             return this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, undefined, Structs.nwkSecMaterialDescriptorTable);

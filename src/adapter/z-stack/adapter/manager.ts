@@ -17,8 +17,15 @@ import * as crypto from "crypto";
 import {Wait} from "../../../utils";
 import {Endpoints} from "./endpoints";
 
+/**
+ * Startup strategy is internally used to determine required startup method.
+ */
 type StartupStrategy = "startup" | "restoreBackup" | "startCommissioning";
 
+/**
+ * ZNP Adapter Manager is responsible for handling adapter startup, network commissioning,
+ * configuration backup and restore.
+ */
 export class ZnpAdapterManager {
 
     public nv: AdapterNvMemory;
@@ -40,6 +47,10 @@ export class ZnpAdapterManager {
         this.backup = new AdapterBackup(this.znp, this.nv, this.options.backupPath);
     }
 
+    /**
+     * Performs ZNP adapter startup. After this method returns the adapter is configured, endpoints are registered
+     * and network is ready to process frames.
+     */
     public async start(): Promise<TsType.StartResult> {
         this.debug.startup(`beginning znp startup`);
         this.nwkOptions = await this.parseConfigNetworkOptions(this.options.networkOptions);
@@ -78,6 +89,10 @@ export class ZnpAdapterManager {
         return result;
     }
 
+    /**
+     * Internal function to determine startup strategy. The strategy determination flow is described in
+     * [this GitHub issue comment](https://github.com/Koenkk/zigbee-herdsman/issues/286#issuecomment-761029689).
+     */
     private async determineStrategy(): Promise<StartupStrategy> {
         this.debug.strategy("determining znp startup strategy");
 
@@ -176,6 +191,9 @@ export class ZnpAdapterManager {
         }
     }
 
+    /**
+     * Internal method to perform regular adapter startup in coordinator mode.
+     */
     private async beginStartup(): Promise<void> {
         const deviceInfo = await this.znp.request(Subsystem.UTIL, 'getDeviceInfo', {});
         if (deviceInfo.payload.devicestate !== DevStates.ZB_COORD) {
@@ -189,6 +207,9 @@ export class ZnpAdapterManager {
         }
     }
 
+    /**
+     * Internal method to perform adapter restore.
+     */
     private async beginRestore(): Promise<void> {
         const backup = await this.backup.getStoredBackup();
         if (!backup) {
@@ -224,6 +245,14 @@ export class ZnpAdapterManager {
         await this.writeConfigurationFlag();
     }
 
+    /**
+     * Internal method to perform new network commissioning. Network commissioning creates a new ZigBee
+     * network using the adapter.
+     * 
+     * @param nwkOptions Options to configure the new network with.
+     * @param failOnCollision Whether process should throw an error if PAN ID collision is detected.
+     * @param writeConfiguredFlag Whether Z2M `hasConfigured` flag should be written to NV.
+     */
     private async beginCommissioning(nwkOptions: Models.NetworkOptions, failOnCollision = true, writeConfiguredFlag = true): Promise<void> {
         if (nwkOptions.panId === 65535) {
             throw new Error(`network commissioning failed - cannot use pan id 65535`);
@@ -274,6 +303,12 @@ export class ZnpAdapterManager {
         }
     }
 
+    /**
+     * Updates commissioning NV memory parameters in connected controller. This method should be invoked
+     * to configure network commissioning parameters or update the controller after restore.
+     * 
+     * @param options Network options to set in NV memory.
+     */
     private async updateCommissioningNvItems(options: Models.NetworkOptions): Promise<void> {
         const nwkPanId = Structs.nwkPanId();
         nwkPanId.panId = options.panId;
@@ -315,6 +350,9 @@ export class ZnpAdapterManager {
         }
     }
 
+    /**
+     * Registers endpoints before beginning normal operation.
+     */
     private async registerEndpoints(): Promise<void> {
         const activeEpResponse = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'activeEpRsp');
         this.znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: 0, nwkaddrofinterest: 0});
@@ -330,6 +368,12 @@ export class ZnpAdapterManager {
         }
     }
 
+    /**
+     * Adds endpoint to group.
+     * 
+     * @param endpoint Endpoint index to add.
+     * @param group Target group index.
+     */
     private async addToGroup(endpoint: number, group: number): Promise<void> {
         const result = await this.znp.request(5, 'extFindGroup', {endpoint, groupid: group}, null, [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.FAILURE]);
         if (result.payload.status === ZnpCommandStatus.FAILURE) {
@@ -337,6 +381,9 @@ export class ZnpAdapterManager {
         }
     }
 
+    /**
+     * Internal method to reset the adapter.
+     */
     private async resetAdapter(): Promise<void> {
         await this.znp.request(Subsystem.SYS, 'resetReq', {type: ZnpConstants.SYS.resetType.SOFT});
     }
@@ -367,6 +414,9 @@ export class ZnpAdapterManager {
         return parsed;
     }
 
+    /**
+     * Writes ZNP `hasConfigured` flag to NV memory. This flag indicates the adapter has been configured.
+     */
     private async writeConfigurationFlag(): Promise<void> {
         this.debug.commissioning("writing configuration flag to adapter NV memory");
         await this.nv.writeItem(this.options.version === ZnpVersion.zStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, Buffer.from([0x55]));

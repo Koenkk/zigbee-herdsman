@@ -21,6 +21,9 @@ type LegacyNvItemKey =
     "ZCD_NV_EX_TCLK_TABLE" |
     "ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE";
 
+/**
+ * Legacy backup format to allow for backup migration.
+ */
 export interface LegacyBackupStorage {
     adapterType: "zStack",
     time: string,

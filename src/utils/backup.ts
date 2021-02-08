@@ -5,6 +5,12 @@ import * as ZStackUtils from "../adapter/z-stack/utils";
 import {fs} from "mz";
 import * as path from "path";
 
+/**
+ * Converts internal backup format to unified backup storage format as described by
+ * [zigpy/open-coordinator-backup](https://github.com/zigpy/open-coordinator-backup).
+ * 
+ * @param backup Backup to create unified backup format from.
+ */
 export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.UnifiedBackupStorage> => {
     const panIdBuffer = Buffer.alloc(2);
     panIdBuffer.writeUInt16BE(backup.networkOptions.panId);
@@ -54,6 +60,11 @@ export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.Uni
     };
 };
 
+/**
+ * Converts unified backup storage format to internal backup format.
+ * 
+ * @param backup Unified format to convert to internal backup format.
+ */
 export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.Backup => {
     const tclkSeedString = backup.stack_specific?.zstack?.tclk_seed || null;
     return {
@@ -88,6 +99,11 @@ export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.B
     };
 };
 
+/**
+ * Converts legacy Zigbee2MQTT format to internal backup format.
+ * 
+ * @param backup Legacy format to convert.
+ */
 export const fromLegacyBackup = (backup: Models.LegacyBackupStorage): Models.Backup => {
     if (!backup.data.ZCD_NV_NIB) {
         throw new Error("Backup corrupted - missing NIB");
