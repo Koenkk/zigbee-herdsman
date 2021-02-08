@@ -9,8 +9,7 @@ import {AdapterNvMemory} from "./adapter-nv-memory";
 import {NvItemsIds, NvSystemIds} from "../constants/common";
 import {Subsystem} from "../unpi/constants";
 import {ZnpVersion} from "./tstype";
-import {AddressManagerUser, SecurityManagerAuthenticationOption, Struct} from "../structs";
-import {setMaxListeners} from "process";
+import {AddressManagerUser, SecurityManagerAuthenticationOption} from "../structs";
 
 export class AdapterBackup {
 
@@ -32,7 +31,10 @@ export class AdapterBackup {
             return null;
         }
         const data = JSON.parse((await fs.readFile(this.defaultPath)).toString());
-        if (data.metadata?.internal?.zhFormat === 2) {
+        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
+            if (data.metadata?.version !== 1) {
+                throw new Error(`Unsupported open coordinator backup version version=${data.metadata?.version}`);
+            }
             return this.fromUnifiedBackup(data as Models.UnifiedBackupStorage);
         } else if (data.adapterType === "zStack") {
             return this.fromLegacyBackup(data as Models.LegacyBackupStorage);
@@ -331,13 +333,14 @@ export class AdapterBackup {
     }
 
     public toUnifiedBackup(backup: Models.Backup): Models.UnifiedBackupStorage {
+        const panIdBuffer = Buffer.alloc(2);
+        panIdBuffer.writeUInt16BE(backup.networkOptions.panId);
         return {
             metadata: {
+                format: "zigpy/open-coordinator-backup",
                 version: 1,
                 source: "zigbee2mqtt",
-                internal: {
-                    zhFormat: 2
-                }
+                internal: {}
             },
             stack_specific: {
                 zstack: {
@@ -345,7 +348,7 @@ export class AdapterBackup {
                 }
             },
             coordinator_ieee: backup.coordinatorIeeeAddress?.toString("hex") || null,
-            pan_id: backup.networkOptions.panId,
+            pan_id: panIdBuffer.toString("hex"),
             extended_pan_id: backup.networkOptions.extendedPanId.toString("hex"),
             nwk_update_id: backup.networkUpdateId || 0,
             security_level: backup.securityLevel || null,
@@ -356,15 +359,19 @@ export class AdapterBackup {
                 sequence_number: backup.networkKeyInfo.sequenceNumber,
                 frame_counter: backup.networkKeyInfo.frameCounter
             },
-            devices: backup.devices.map(device => ({
-                nwk_address: device.networkAddress,
-                ieee_address: device.ieeeAddress.toString("hex"),
-                link_key: !device.linkKey ? undefined : {
-                    key: device.linkKey.key.toString("hex"),
-                    rx_counter: device.linkKey.rxCounter,
-                    tx_counter: device.linkKey.txCounter
-                }
-            }))
+            devices: backup.devices.map(device => {
+                const nwkAddressBuffer = Buffer.alloc(2);
+                nwkAddressBuffer.writeUInt16BE(device.networkAddress);
+                return {
+                    nwk_address: nwkAddressBuffer.toString("hex"),
+                    ieee_address: device.ieeeAddress.toString("hex"),
+                    link_key: !device.linkKey ? undefined : {
+                        key: device.linkKey.key.toString("hex"),
+                        rx_counter: device.linkKey.rxCounter,
+                        tx_counter: device.linkKey.txCounter
+                    }
+                };
+            }),
         };
     }
 
@@ -372,7 +379,7 @@ export class AdapterBackup {
         const tclkSeedString = backup.stack_specific?.zstack?.tclk_seed || null;
         return {
             networkOptions: {
-                panId: backup.pan_id,
+                panId: Buffer.from(backup.pan_id, "hex").readUInt16BE(),
                 extendedPanId: Buffer.from(backup.extended_pan_id, "hex"),
                 channelList: backup.channel_mask,
                 networkKey: Buffer.from(backup.network_key.key, "hex"),
@@ -388,7 +395,7 @@ export class AdapterBackup {
             networkUpdateId: backup.nwk_update_id || null,
             trustCenterLinkKeySeed: tclkSeedString ? Buffer.from(tclkSeedString, "hex") : undefined,
             devices: backup.devices.map(device => ({
-                networkAddress: device.nwk_address,
+                networkAddress: Buffer.from(device.nwk_address, "hex").readUInt16BE(),
                 ieeeAddress: Buffer.from(device.ieee_address, "hex"),
                 linkKey: !device.link_key ? undefined : {
                     key: Buffer.from(device.link_key.key, "hex"),
