@@ -125,8 +125,10 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
     response.seqNr = view.getUint8(1);
     response.status = view.getUint8(2);
 
-    if (response.status != 0) {
-        debug("DATA_CONFIRM RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
+    if (response.status !== 0) {
+        if (response.status !== 5) {
+            debug("DATA_CONFIRM RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
+        }
         return null;
     }
 
@@ -201,7 +203,9 @@ function parseReadReceivedDataResponse(view : DataView) : object {
     response.status = view.getUint8(2);
 
     if (response.status != 0) {
-        debug("DATA_INDICATION RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
+        if (response.status !== 5) {
+            debug("DATA_INDICATION RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
+        }
         return null;
     }
 
