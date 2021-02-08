@@ -66,7 +66,7 @@ class Driver extends events.EventEmitter {
     private DELAY: number;
     private READY_TO_SEND_TIMEOUT: number;
     private HANDLE_DEVICE_STATUS_DELAY: number;
-    private PROCESS_APS_QUEUES_DELAY: number;
+    private PROCESS_QUEUES: number;
 
     public constructor(path: string) {
         super();
@@ -80,17 +80,17 @@ class Driver extends events.EventEmitter {
         this.apsDataConfirm = 0;
         this.apsDataIndication = 0;
         this.configChanged = 0;
-        this.DELAY = 100;
-        this.READY_TO_SEND_TIMEOUT = 300;
-        this.HANDLE_DEVICE_STATUS_DELAY = 100;
-        this.PROCESS_APS_QUEUES_DELAY = 100;
+        this.DELAY = 0;
+        this.READY_TO_SEND_TIMEOUT = 1;
+        this.HANDLE_DEVICE_STATUS_DELAY = 5;
+        this.PROCESS_QUEUES = 5;
 
         const that = this;
-        setInterval(() => { that.processQueue(); }, 100);  // fire non aps requests
-        setInterval(() => { that.processBusyQueue(); }, 1000); // check timeouts for non aps requests
-        setInterval(() => { that.processApsQueue(); }, this.PROCESS_APS_QUEUES_DELAY);  // fire aps request
-        setInterval(() => { that.processApsBusyQueue(); }, 1000);  // check timeouts for all open aps requests
-        setInterval(() => { that.processApsConfirmIndQueue(); }, this.PROCESS_APS_QUEUES_DELAY);  // fire aps indications and confirms
+        setInterval(() => { that.processQueue(); }, this.PROCESS_QUEUES);  // fire non aps requests
+        setInterval(() => { that.processBusyQueue(); }, this.PROCESS_QUEUES); // check timeouts for non aps requests
+        setInterval(() => { that.processApsQueue(); }, this.PROCESS_QUEUES);  // fire aps request
+        setInterval(() => { that.processApsBusyQueue(); }, this.PROCESS_QUEUES);  // check timeouts for all open aps requests
+        setInterval(() => { that.processApsConfirmIndQueue(); }, this.PROCESS_QUEUES);  // fire aps indications and confirms
         setInterval(() => { that.deviceStateRequest()
                             .then(result => {})
                             .catch(error => {}); }, 10000);
@@ -116,20 +116,25 @@ class Driver extends events.EventEmitter {
     }
 
     public setDelay(delay: number): void {
-    debug(`Set delay to ${delay}`);
-    this.DELAY = delay;
-        if (delay === 0) {
-            this.HANDLE_DEVICE_STATUS_DELAY = 100000; // device status will be handelt immediately in handler function
-            this.PROCESS_APS_QUEUES_DELAY = 5;
+        debug(`Set delay to ${delay}`);
+        this.DELAY = delay;
+        this.READY_TO_SEND_TIMEOUT = delay;
+        if (this.READY_TO_SEND_TIMEOUT === 0) {
             this.READY_TO_SEND_TIMEOUT = 1;
-        } else if (delay <= 50) {
-            this.READY_TO_SEND_TIMEOUT = 50;
-            this.PROCESS_APS_QUEUES_DELAY = 50;
-            this.HANDLE_DEVICE_STATUS_DELAY = 10;
-        } else if (delay > 1200) {
-            this.READY_TO_SEND_TIMEOUT = 1200;
-        } else {
-            this.READY_TO_SEND_TIMEOUT = delay;
+        }
+
+        if (delay > 0 && delay < 50) {
+            this.PROCESS_QUEUES = delay;
+            if (this.PROCESS_QUEUES < 5) {
+                this.PROCESS_QUEUES = 5;
+            }
+            this.HANDLE_DEVICE_STATUS_DELAY = delay;
+            if (this.HANDLE_DEVICE_STATUS_DELAY < 5) {
+                this.HANDLE_DEVICE_STATUS_DELAY = 5;
+            }
+        } else if (delay >= 50) {
+            this.PROCESS_QUEUES = 50;
+            this.HANDLE_DEVICE_STATUS_DELAY = 50;
         }
     }
 
@@ -490,33 +495,6 @@ class Driver extends events.EventEmitter {
 
         debug("networkstate: " + networkState + " apsDataConfirm: " + this.apsDataConfirm + " apsDataIndication: " + this.apsDataIndication +
             " configChanged: " + this.configChanged + " apsRequestFreeSlots: " + this.apsRequestFreeSlots);
-
-        // fast mode
-        if (this.DELAY === 0) {
-            if (this.apsDataConfirm === 1) {
-                debug("query aps data confirm");
-                try {
-                    const x = await this.querySendDataStateRequest();
-                } catch (e) {
-                    if (e.status === 5) {
-                        this.apsDataConfirm = 0;
-                    }
-                }
-            }
-            if (this.apsDataIndication === 1) {
-                debug("query aps data indication");
-                try {
-                    const x = await this.readReceivedDataRequest();
-                } catch (e) {
-                    if (e.status === 5) {
-                        this.apsDataConfirm = 0;
-                    }
-                }
-            }
-            if (this.configChanged === 1) {
-                // when network settings changed
-            }
-        }
     }
 
     private async handleDeviceStatus() {
