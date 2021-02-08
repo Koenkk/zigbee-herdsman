@@ -18,6 +18,7 @@ import {Queue, Waitress, Wait} from '../../../utils';
 import PARAM from '../driver/constants';
 import { Command, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, gpDataInd } from '../driver/constants';
 import {LoggerStub} from "../../../controller/logger-stub";
+import * as Models from "../../../models";
 
 var frameParser = require('../driver/frameParser');
 
@@ -853,8 +854,8 @@ class DeconzAdapter extends Adapter {
         return false;
     }
 
-    public async backup(): Promise<any> {
-        return Promise.reject();
+    public async backup(): Promise<Models.Backup> {
+        throw new Error("This adapter does not support backup");
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {

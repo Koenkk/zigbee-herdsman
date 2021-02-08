@@ -15,7 +15,7 @@ import Debug from "debug";
 import debounce from 'debounce';
 import {LoggerStub} from "../../../controller/logger-stub";
 import {ZnpAdapterManager} from "./manager";
-import * as Models from "../models";
+import * as Models from "../../../models";
 
 const debug = Debug("zigbee-herdsman:adapter:zStack:adapter");
 const Subsystem = UnpiConstants.Subsystem;
@@ -784,9 +784,8 @@ class ZStackAdapter extends Adapter {
         return this.version.product !== ZnpVersion.zStack12;
     }
 
-    public async backup(): Promise<any> {
-        const backup = await this.adapterManager.backup.createBackup();
-        return this.adapterManager.backup.toUnifiedBackup(backup);
+    public async backup(): Promise<Models.Backup> {
+        return this.adapterManager.backup.createBackup();
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {
@@ -896,7 +895,7 @@ class ZStackAdapter extends Adapter {
             srcendpoint: sourceEndpoint,
             clusterid: clusterID,
             transid: transactionID,
-            options: 0,
+            options: Constants.AF.options.EN_SECURITY, //0,
             radius: radius,
             len: data.length,
             data: data,
@@ -930,7 +929,7 @@ class ZStackAdapter extends Adapter {
             srcendpoint: sourceEndpoint,
             clusterid: clusterID,
             transid: transactionID,
-            options: 0, // TODO: why was this here? Constants.AF.options.DISCV_ROUTE,
+            options: Constants.AF.options.EN_SECURITY, //0, // TODO: why was this here? Constants.AF.options.DISCV_ROUTE,
             radius,
             len: data.length,
             data: data,

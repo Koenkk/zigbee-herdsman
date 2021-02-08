@@ -1,4 +1,4 @@
-import * as Models from "../models";
+import * as Models from "../../../models";
 import {compareChannelLists} from "./channel-list";
 
 export const compareNetworkOptions = (opts1: Models.NetworkOptions, opts2: Models.NetworkOptions): boolean => {

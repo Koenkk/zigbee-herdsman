@@ -1,5 +1,5 @@
-import {NvSystemIds} from "../constants/common";
-import {ZnpVersion} from "../adapter/tstype";
+import {ZnpVersion} from "../adapter/z-stack/adapter/tstype";
+import {NvSystemIds} from "../adapter/z-stack/constants/common";
 
 type LegacyNvItemKey = 
     "ZCD_NV_EXTADDR" |

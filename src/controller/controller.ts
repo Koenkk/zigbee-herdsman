@@ -10,6 +10,7 @@ import fs from 'fs';
 import {Utils as ZclUtils, FrameControl} from '../zcl';
 import Touchlink from './touchlink';
 import GreenPower from './greenPower';
+import {BackupUtils} from "../utils";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -270,7 +271,8 @@ class Controller extends events.EventEmitter {
         if (this.options.backupPath && await this.adapter.supportsBackup()) {
             debug.log('Creating coordinator backup');
             const backup = await this.adapter.backup();
-            fs.writeFileSync(this.options.backupPath, JSON.stringify(backup, null, 2));
+            const unifiedBackup = await BackupUtils.toUnifiedBackup(backup);
+            fs.writeFileSync(this.options.backupPath, JSON.stringify(unifiedBackup, null, 2));
             debug.log(`Wrote coordinator backup to '${this.options.backupPath}'`);
         }
     }

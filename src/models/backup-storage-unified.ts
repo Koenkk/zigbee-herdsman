@@ -4,6 +4,10 @@ export interface UnifiedBackupStorage {
         version: 1;
         source: string;
         internal: {
+            /* zigbee-herdsman specific data */
+            date: string;
+            znpVersion: number;
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             [key: string]: any;
         };
