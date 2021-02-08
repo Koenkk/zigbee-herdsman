@@ -16,6 +16,7 @@ import * as UnpiConstants from "../unpi/constants";
 import * as crypto from "crypto";
 import {Wait} from "../../../utils";
 import {Endpoints} from "./endpoints";
+import {LoggerStub} from "../../../controller/logger-stub";
 
 /**
  * Startup strategy is internally used to determine required startup method.
@@ -34,17 +35,19 @@ export class ZnpAdapterManager {
     private znp: Znp;
     private options: ZStackModels.StartupOptions;
     private nwkOptions: Models.NetworkOptions;
+    private logger: LoggerStub;
     private debug = {
         startup: Debug("zigbee-herdsman:adapter:zStack:startup"),
         strategy: Debug("zigbee-herdsman:adapter:zStack:startup:strategy"),
         commissioning: Debug("zigbee-herdsman:adapter:zStack:startup:commissioning")
     };
 
-    public constructor(znp: Znp, options: ZStackModels.StartupOptions) {
+    public constructor(znp: Znp, options: ZStackModels.StartupOptions, logger: LoggerStub) {
         this.znp = znp;
         this.options = options;
         this.nv = new AdapterNvMemory(this.znp);
         this.backup = new AdapterBackup(this.znp, this.nv, this.options.backupPath);
+        this.logger = logger;
     }
 
     /**
@@ -107,25 +110,6 @@ export class ZnpAdapterManager {
         /* get backup if available */
         const backup = await this.backup.getStoredBackup();
 
-        /**
-         * Reusable block used in multiple situations.
-         */
-        const determineRestoreOrCommissioning = (): StartupStrategy => {
-            if (backup && Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions)) {
-                /* Adapter backup is available and matches configuration */
-                this.debug.strategy("configuration matches backup");
-                return "restoreBackup";
-            } else {
-                /* Adapter backup is either not available or does not match configuration */
-                if (!backup) {
-                    this.debug.strategy("adapter backup does not exist");
-                } else {
-                    this.debug.strategy("configuration does not match backup");
-                }
-                return "startCommissioning";
-            }
-        };
-
         const configMatchesAdapter = (
             nib &&
             Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList) &&
@@ -148,43 +132,62 @@ export class ZnpAdapterManager {
         /* Determine startup strategy */
         if (!hasConfigured || !hasConfigured.isConfigured() || !nib) {
             /* Adapter is not configured or not commissioned */
-            this.debug.strategy("adapter is not configured / not commissioned");
-            return determineRestoreOrCommissioning();
+            this.debug.strategy("(stage-1) adapter is not configured / not commissioned");
+            if (backup && Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions)) {
+                /* Adapter backup is available and matches configuration */
+                this.debug.strategy("(stage-2) configuration matches backup");
+                return "restoreBackup";
+            } else {
+                /* Adapter backup is either not available or does not match configuration */
+                if (!backup) {
+                    this.debug.strategy("(stage-2) adapter backup does not exist");
+                } else {
+                    this.debug.strategy("(stage-2) configuration does not match backup");
+                }
+                return "startCommissioning";
+            }
         } else {
             /* Adapter is configured and commissioned */
-            this.debug.strategy("adapter is configured");
+            this.debug.strategy("(stage-1) adapter is configured");
 
             if (configMatchesAdapter) {
                 /* Configuration matches adapter state - regular startup */
-                this.debug.strategy("adapter state matches configuration");
+                this.debug.strategy("(stage-2) adapter state matches configuration");
                 return "startup";
             } else {
                 /* Configuration does not match adapter state */
-                this.debug.strategy("adapter state does not match configuration");
+                this.debug.strategy("(stage-2) adapter state does not match configuration");
                 if (backup) {
                     /* Backup is present */
-                    this.debug.strategy("got adapter backup");
+                    this.debug.strategy("(stage-3) got adapter backup");
                     if (backupMatchesAdapter) {
                         /* Backup matches adapter state */
-                        this.debug.strategy("adapter state matches backup");
-                        console.log("WARNING! (config inconsistent, remove backup to re-commission)");
+                        this.debug.strategy("(stage-4) adapter state matches backup");
+                        this.logger.warn(`Configuration is not consistent with adapter state/backup!`);
+                        this.logger.warn(`- PAN ID: configured=${this.nwkOptions.panId}, adapter=${nib.nwkPanId}`);
+                        this.logger.warn(`- Extended PAN ID: configured=${this.nwkOptions.extendedPanId.toString("hex")}, adapter=${nib.extendedPANID.toString("hex")}`);
+                        this.logger.warn(`- Network Key: configured=${this.nwkOptions.networkKey.toString("hex")}, adapter=${activeKeyInfo.key.toString("hex")}`);
+                        this.logger.warn(`- Channel List: configured=${this.nwkOptions.channelList.toString()}, adapter=${Utils.unpackChannelList(nib.channelList).toString()}`);
+                        this.logger.warn(`Please update configuration to prevent further issues.`);
+                        this.logger.warn(`If you wish to re-commission your network, please remove coordinator backup at ${this.options.backupPath}.`);
+                        this.logger.warn(`Re-commissioning your network will require re-pairing of all devices!`);
                         return "startup";
                     } else {
                         /* Backup does not match adapter state */
-                        this.debug.strategy("adapter state does not match backup");
+                        this.debug.strategy("(stage-4) adapter state does not match backup");
                         if (backup && Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions)) {
                             /* Adapter backup matches configuration */
-                            this.debug.strategy("adapter backup matches configuration");
+                            this.debug.strategy("(stage-5) adapter backup matches configuration");
                             return "restoreBackup";
                         } else {
                             /* Adapter backup does not match configuration */
-                            this.debug.strategy("adapter backup does not match configuration");
+                            this.debug.strategy("(stage-5) adapter backup does not match configuration");
                             return "startCommissioning";
                         }
                     }
                 } else {
                     /* Configuration mismatches adapter and no backup is available */
-                    this.debug.strategy("configuration-adapter mismatch (no backup)");
+                    this.debug.strategy("(stage-3) configuration-adapter mismatch (no backup)");
                     return "startCommissioning";
                 }
             }
