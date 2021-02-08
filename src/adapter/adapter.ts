@@ -4,7 +4,7 @@ import events from 'events';
 import {ZclFrame, FrameType, Direction} from '../zcl';
 import Debug from "debug";
 import {LoggerStub} from "../controller/logger-stub";
-import * as Models from "./z-stack/models";
+import * as Models from "../models";
 
 const debug = Debug("zigbee-herdsman:adapter");
 
@@ -114,7 +114,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract supportsBackup(): Promise<boolean>;
 
-    public abstract backup(): Promise<any>;
+    public abstract backup(): Promise<Models.Backup>;
 
     public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
 

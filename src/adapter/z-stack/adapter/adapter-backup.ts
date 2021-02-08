@@ -1,9 +1,10 @@
 /* eslint-disable max-len */
 import Debug from "debug";
 import {Znp} from "../znp";
-import * as Models from "../models";
+import * as Models from "../../../models";
 import * as Structs from "../structs";
 import * as Utils from "../utils";
+import {BackupUtils} from "../../../utils";
 import {fs} from "mz";
 import {AdapterNvMemory} from "./adapter-nv-memory";
 import {NvItemsIds, NvSystemIds} from "../constants/common";
@@ -35,9 +36,9 @@ export class AdapterBackup {
             if (data.metadata?.version !== 1) {
                 throw new Error(`Unsupported open coordinator backup version version=${data.metadata?.version}`);
             }
-            return this.fromUnifiedBackup(data as Models.UnifiedBackupStorage);
+            return BackupUtils.fromUnifiedBackup(data as Models.UnifiedBackupStorage);
         } else if (data.adapterType === "zStack") {
-            return this.fromLegacyBackup(data as Models.LegacyBackupStorage);
+            return BackupUtils.fromLegacyBackup(data as Models.LegacyBackupStorage);
         } else {
             throw new Error("Unknown backup format");
         }
@@ -105,6 +106,10 @@ export class AdapterBackup {
 
         /* return backup structure */
         return {
+            znp: {
+                version: version,
+                trustCenterLinkKeySeed: tclkSeed.key
+            },
             networkOptions: {
                 panId: nib.nwkPanId,
                 extendedPanId: nib.extendedPANID,
@@ -113,7 +118,6 @@ export class AdapterBackup {
                 networkKeyDistribute: preconfiguredKeyEnabled && preconfiguredKeyEnabled[0] === 0x01
             },
             logicalChannel: nib.nwkLogicalChannel,
-            trustCenterLinkKeySeed: tclkSeed.key,
             networkKeyInfo: {
                 sequenceNumber: activeKeyInfo.keySeqNum,
                 frameCounter: secMaterialDescriptor.FrameCounter
@@ -221,8 +225,8 @@ export class AdapterBackup {
             if (device.linkKey) {
                 let linkKeyProcessed = false;
                 /* attempt to recover tclk seed parameters (if available) */
-                if (backup.trustCenterLinkKeySeed) {
-                    const tclkSeed = backup.trustCenterLinkKeySeed;
+                if (backup.znp?.trustCenterLinkKeySeed) {
+                    const tclkSeed = backup.znp.trustCenterLinkKeySeed;
                     const extAddrReversed = Buffer.from(ame.extAddr).reverse();
                     const extAddrRepeated = Buffer.concat([extAddrReversed, extAddrReversed]);
                     const recoveredKey = Buffer.alloc(16);
@@ -296,8 +300,8 @@ export class AdapterBackup {
         await this.nv.updateItem(NvItemsIds.NWK_ALTERN_KEY_INFO, keyDescriptor.serialize());
 
         /* write tclk seed if present */
-        if (backup.trustCenterLinkKeySeed) {
-            await this.nv.writeItem(NvItemsIds.TCLK_SEED, backup.trustCenterLinkKeySeed);
+        if (backup.znp?.trustCenterLinkKeySeed) {
+            await this.nv.writeItem(NvItemsIds.TCLK_SEED, backup.znp.trustCenterLinkKeySeed);
         }
 
         /* write network security material table (nwk frame counters) */
@@ -330,119 +334,6 @@ export class AdapterBackup {
         } else {
             await this.nv.writeTable("legacy", NvItemsIds.LEGACY_TCLK_TABLE_START, tclkTable);
         }
-    }
-
-    public toUnifiedBackup(backup: Models.Backup): Models.UnifiedBackupStorage {
-        const panIdBuffer = Buffer.alloc(2);
-        panIdBuffer.writeUInt16BE(backup.networkOptions.panId);
-        return {
-            metadata: {
-                format: "zigpy/open-coordinator-backup",
-                version: 1,
-                source: "zigbee2mqtt",
-                internal: {}
-            },
-            stack_specific: {
-                zstack: {
-                    tclk_seed: backup.trustCenterLinkKeySeed?.toString("hex") || undefined
-                }
-            },
-            coordinator_ieee: backup.coordinatorIeeeAddress?.toString("hex") || null,
-            pan_id: panIdBuffer.toString("hex"),
-            extended_pan_id: backup.networkOptions.extendedPanId.toString("hex"),
-            nwk_update_id: backup.networkUpdateId || 0,
-            security_level: backup.securityLevel || null,
-            channel: backup.logicalChannel,
-            channel_mask: backup.networkOptions.channelList,
-            network_key: {
-                key: backup.networkOptions.networkKey.toString("hex"),
-                sequence_number: backup.networkKeyInfo.sequenceNumber,
-                frame_counter: backup.networkKeyInfo.frameCounter
-            },
-            devices: backup.devices.map(device => {
-                const nwkAddressBuffer = Buffer.alloc(2);
-                nwkAddressBuffer.writeUInt16BE(device.networkAddress);
-                return {
-                    nwk_address: nwkAddressBuffer.toString("hex"),
-                    ieee_address: device.ieeeAddress.toString("hex"),
-                    link_key: !device.linkKey ? undefined : {
-                        key: device.linkKey.key.toString("hex"),
-                        rx_counter: device.linkKey.rxCounter,
-                        tx_counter: device.linkKey.txCounter
-                    }
-                };
-            }),
-        };
-    }
-
-    public fromUnifiedBackup(backup: Models.UnifiedBackupStorage): Models.Backup {
-        const tclkSeedString = backup.stack_specific?.zstack?.tclk_seed || null;
-        return {
-            networkOptions: {
-                panId: Buffer.from(backup.pan_id, "hex").readUInt16BE(),
-                extendedPanId: Buffer.from(backup.extended_pan_id, "hex"),
-                channelList: backup.channel_mask,
-                networkKey: Buffer.from(backup.network_key.key, "hex"),
-                networkKeyDistribute: false
-            },
-            logicalChannel: backup.channel,
-            networkKeyInfo: {
-                sequenceNumber: backup.network_key.sequence_number,
-                frameCounter: backup.network_key.frame_counter
-            },
-            coordinatorIeeeAddress: backup.coordinator_ieee ? Buffer.from(backup.coordinator_ieee, "hex") : null,
-            securityLevel: backup.security_level || null,
-            networkUpdateId: backup.nwk_update_id || null,
-            trustCenterLinkKeySeed: tclkSeedString ? Buffer.from(tclkSeedString, "hex") : undefined,
-            devices: backup.devices.map(device => ({
-                networkAddress: Buffer.from(device.nwk_address, "hex").readUInt16BE(),
-                ieeeAddress: Buffer.from(device.ieee_address, "hex"),
-                linkKey: !device.link_key ? undefined : {
-                    key: Buffer.from(device.link_key.key, "hex"),
-                    rxCounter: device.link_key.rx_counter,
-                    txCounter: device.link_key.tx_counter
-                }
-            }))
-        };
-    }
-
-    public fromLegacyBackup(backup: Models.LegacyBackupStorage): Models.Backup {
-        if (!backup.data.ZCD_NV_NIB) {
-            throw new Error("Backup corrupted - missing NIB");
-        } else if (!backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO) {
-            throw new Error("Backup corrupted - missing active key info");
-        } else if (!backup.data.ZCD_NV_PRECFGKEY_ENABLE) {
-            throw new Error("Backup corrupted - missing pre-configured key enable attribute");
-        } else if (!backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE && !backup.data.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START) {
-            throw new Error("Backup corrupted - missing network security material table");
-        } else if (!backup.data.ZCD_NV_EXTADDR) {
-            throw new Error("Backup corrupted - missing adapter IEEE address NV entry"); 
-        }
-        const ieeeAddress = Buffer.from(backup.data.ZCD_NV_EXTADDR.value).reverse();
-        const nib = Structs.nib(Buffer.from(backup.data.ZCD_NV_NIB.value));
-        const activeKeyInfo = Structs.nwkKeyDescriptor(Buffer.from(backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO.value));
-        const preconfiguredKeyEnabled = backup.data.ZCD_NV_PRECFGKEY_ENABLE.value[0] !== 0x00;
-        const nwkSecMaterialSource = backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE || backup.data.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START;
-        const nwkSecMaterialEntry = Structs.nwkSecMaterialDescriptorEntry(Buffer.from(nwkSecMaterialSource.value));
-
-        return {
-            networkOptions: {
-                panId: nib.nwkPanId,
-                extendedPanId: nib.extendedPANID,
-                channelList: Utils.unpackChannelList(nib.channelList),
-                networkKey: activeKeyInfo.key,
-                networkKeyDistribute: preconfiguredKeyEnabled
-            },
-            logicalChannel: nib.nwkLogicalChannel,
-            networkKeyInfo: {
-                sequenceNumber: activeKeyInfo.keySeqNum,
-                frameCounter: nwkSecMaterialEntry.FrameCounter
-            },
-            coordinatorIeeeAddress: ieeeAddress,
-            securityLevel: nib.SecurityLevel,
-            networkUpdateId: nib.nwkUpdateId,
-            devices: []
-        };
     }
 
     private async getAdapterVersion(): Promise<ZnpVersion> {

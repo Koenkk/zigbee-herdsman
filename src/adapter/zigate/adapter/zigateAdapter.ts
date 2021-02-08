@@ -20,6 +20,7 @@ import {RawAPSDataRequestPayload} from "../driver/commandType";
 import ZiGateObject from "../driver/ziGateObject";
 import { Buffalo } from "../../../buffalo";
 import {LoggerStub} from "../../../controller/logger-stub";
+import * as Models from "../../../models";
 
 const debug = Debug('adapter');
 
@@ -196,8 +197,8 @@ class ZiGateAdapter extends Adapter {
         return false;
     };
 
-    public async backup(): Promise<any> {
-        return Promise.reject();
+    public async backup(): Promise<Models.Backup> {
+        throw new Error("This adapter does not support backup");
     };
 
     public async setTransmitPower(value: number): Promise<void> {

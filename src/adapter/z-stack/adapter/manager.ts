@@ -3,9 +3,10 @@ import {Znp} from "../znp";
 import Debug from "debug";
 import {ZnpVersion} from "./tstype";
 import {TsType} from "../../";
-import {DevStates, NvItemsIds, NvSystemIds, ZnpCommandStatus} from "../constants/common";
+import {DevStates, NvItemsIds, ZnpCommandStatus} from "../constants/common";
 import * as Structs from "../structs";
-import * as Models from "../models";
+import * as Models from "../../../models";
+import * as ZStackModels from "../models";
 import * as Utils from "../utils";
 import * as ZnpConstants from "../constants";
 import {AdapterBackup} from "./adapter-backup";
@@ -24,7 +25,7 @@ export class ZnpAdapterManager {
     public backup: AdapterBackup;
 
     private znp: Znp;
-    private options: Models.StartupOptions;
+    private options: ZStackModels.StartupOptions;
     private nwkOptions: Models.NetworkOptions;
     private debug = {
         startup: Debug("zigbee-herdsman:adapter:zStack:startup"),
@@ -32,7 +33,7 @@ export class ZnpAdapterManager {
         commissioning: Debug("zigbee-herdsman:adapter:zStack:startup:commissioning")
     };
 
-    public constructor(znp: Znp, options: Models.StartupOptions) {
+    public constructor(znp: Znp, options: ZStackModels.StartupOptions) {
         this.znp = znp;
         this.options = options;
         this.nwkOptions = this.parseConfigNetworkOptions(this.options.networkOptions);
