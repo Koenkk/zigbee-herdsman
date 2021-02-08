@@ -1,9 +1,9 @@
 export interface UnifiedBackupStorage {
     metadata: {
+        format: "zigpy/open-coordinator-backup";
         version: 1;
         source: string;
         internal: {
-            zhFormat: 2;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             [key: string]: any;
         };
@@ -14,10 +14,10 @@ export interface UnifiedBackupStorage {
         };
     };
     coordinator_ieee: string;
-    pan_id: number;
+    pan_id: string;
     extended_pan_id: string;
-    nwk_update_id: number;
     security_level: number;
+    nwk_update_id: number;
     channel: number;
     channel_mask: number[];
     network_key: {
@@ -26,7 +26,7 @@ export interface UnifiedBackupStorage {
         frame_counter: number;
     };
     devices: {
-        nwk_address: number;
+        nwk_address: string;
         ieee_address: string;
         link_key: {
             key: string;
