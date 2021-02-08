@@ -36,13 +36,13 @@ export class ZnpAdapterManager {
     public constructor(znp: Znp, options: ZStackModels.StartupOptions) {
         this.znp = znp;
         this.options = options;
-        this.nwkOptions = this.parseConfigNetworkOptions(this.options.networkOptions);
         this.nv = new AdapterNvMemory(this.znp);
         this.backup = new AdapterBackup(this.znp, this.nv, this.options.backupPath);
     }
 
     public async start(): Promise<TsType.StartResult> {
         this.debug.startup(`beginning znp startup`);
+        this.nwkOptions = await this.parseConfigNetworkOptions(this.options.networkOptions);
         await this.nv.init();
         
         /* determine startup strategy */
@@ -103,7 +103,7 @@ export class ZnpAdapterManager {
             } else {
                 /* Adapter backup is either not available or does not match configuration */
                 if (!backup) {
-                    this.debug.strategy("configuration does not exist");
+                    this.debug.strategy("adapter backup does not exist");
                 } else {
                     this.debug.strategy("configuration does not match backup");
                 }
@@ -344,16 +344,22 @@ export class ZnpAdapterManager {
      * 
      * @param options Source Z2M network options.
      */
-    private parseConfigNetworkOptions(options: TsType.NetworkOptions): Models.NetworkOptions {
+    private async parseConfigNetworkOptions(options: TsType.NetworkOptions): Promise<Models.NetworkOptions> {
         const channelList = options.channelList;
         channelList.sort((c1, c2) => c1 < c2 ? -1 : c1 > c2 ? 1 : 0);
-        return {
+
+        const parsed: Models.NetworkOptions = {
             channelList: channelList,
             panId: options.panID,
             extendedPanId: Buffer.from(options.extendedPanID),
             networkKey: Buffer.from(options.networkKey),
             networkKeyDistribute: options.networkKeyDistribute
         };
+        if (parsed.extendedPanId.equals(Buffer.alloc(8, 0xdd))) {
+            const adapterIeeeAddressResponse = await this.znp.request(Subsystem.SYS, "getExtAddr", {});
+            parsed.extendedPanId = Buffer.from(adapterIeeeAddressResponse.payload.extaddress.split("0x"), "hex");
+        }
+        return parsed;
     }
 
     private async writeConfigurationFlag(): Promise<void> {
