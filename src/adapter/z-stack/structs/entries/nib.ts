@@ -5,10 +5,6 @@ import {Struct} from "../struct";
 
 /**
  * Creates a NIB (Network Information Base) struct.
- * 
- * Struct provides 2 custom methods for aligned and unaligned data fetch.
- * `getUnaligned()` returns the raw structure (suitable for 8-bit MCUs - CC2530/CC2531).
- * `getAligned()` method returns the data aligned for 16-bit memory addressing.
  *
  * *Definition from Z-Stack 3.0.2 `nwk.h`*
  * 

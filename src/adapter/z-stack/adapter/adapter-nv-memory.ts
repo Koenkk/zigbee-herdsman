@@ -5,6 +5,11 @@ import {Znp} from "../znp";
 import * as Structs from "../structs";
 import {BuiltTable} from "../structs";
 
+/**
+ * Adapter non-volatile memory instrumentation. This class provides interface to interact
+ * with ZNP adapter's NV memory. Provided functionality covers basic operations from reading,
+ * writing and deleting keys to extended table manipulation.
+ */
 export class AdapterNvMemory {
     public memoryAlignment: Structs.StructMemoryAlignment = null;
     
@@ -203,12 +208,48 @@ export class AdapterNvMemory {
         }
     }
 
+    /**
+     * Reads a legacy NV table at defined index into raw `Buffer` object array. Providing maximum
+     * length is necessary in order to prevent invalid memory access.
+     * 
+     * @param mode Only legacy mode is supported with this signature.
+     * @param id The item index at which the table starts.
+     * @param maxLength Maximum number of items the table may contain.
+     */
     public async readTable(mode: "legacy", id: NvItemsIds, maxLength: number): Promise<Buffer[]>;
 
+    /**
+     * Reads a legacy table at defined index into a table structure covering struct entries.
+     * Providing maximum length is necessary in order to prevent invalid memory access.
+     * 
+     * @param mode Only legacy mode is supported with this signature.
+     * @param id The item index at which the table starts.
+     * @param maxLength Maximum number of items the table may contain.
+     * @param useTable Table factory to spawn a table and populate with retrieved data.
+     */
     public async readTable<R extends Structs.BuiltStruct, T extends Structs.BuiltTable<R>>(mode: "legacy", id: NvItemsIds, maxLength: number, useTable?: Structs.MemoryObjectFactory<T>): Promise<T>;
 
+    /**
+     * Reads an extended (Z-Stack 3.x.0+) table into raw `Buffer` object array.
+     * Maximum length is optional since the table boundary can be detected automatically.
+     * 
+     * @param mode Only extended mode is supported with this signature.
+     * @param sysId SimpleLink system identifier.
+     * @param id Extended table NV index.
+     * @param maxLength Maximum number of entries to load from the table.
+     */
     public async readTable(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, maxLength?: number): Promise<Buffer[]>;
 
+    /**
+     * Reads an extended (Z-Stack 3.x.0+) table into a table structure covering struct entries.
+     * Maximum length is optional since the table boundary can be detected automatically.
+     * 
+     * @param mode Only extended mode is supported with this signature.
+     * @param sysId SimpleLink system identifier.
+     * @param id Extended table NV index.
+     * @param maxLength Maximum number of entries to load from the table.
+     * @param useTable Table factory to spawn a table and populate with retrieved data.
+     */
     public async readTable<R extends Structs.BuiltStruct, T extends Structs.BuiltTable<R>>(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, maxLength?: number, useTable?: Structs.MemoryObjectFactory<T>): Promise<T>;
 
     public async readTable<R extends Structs.BuiltStruct, T extends Structs.BuiltTable<R>>(mode: "legacy" | "extended", p1: NvSystemIds | NvItemsIds, p2: NvItemsIds | number, p3?: Structs.MemoryObjectFactory<T> | number, p4?: Structs.MemoryObjectFactory<T>): Promise<Buffer[] | T> {
@@ -239,8 +280,23 @@ export class AdapterNvMemory {
         return useTable ? useTable(rawEntries) : rawEntries;
     }
 
+    /**
+     * Writes a struct-based table structure into a legacy NV memory position.
+     * 
+     * @param mode Only legacy mode is supported with this signature.
+     * @param id Start NV item index.
+     * @param table Table structure to write to NV memory.
+     */
     public async writeTable<R extends Structs.BuiltStruct>(mode: "legacy", id: NvItemsIds, table: BuiltTable<R>): Promise<void>;
 
+    /**
+     * Writes a struct-based table structure into an extended NV memory position.
+     * 
+     * @param mode Only extended mode is supported with this signature.
+     * @param sysId SimpleLink system identifier.
+     * @param id Extended table NV item index.
+     * @param table Table structure to write to NV memory.
+     */
     public async writeTable<R extends Structs.BuiltStruct>(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, table: BuiltTable<R>): Promise<void>;
     
     public async writeTable<R extends Structs.BuiltStruct>(mode: "extended" | "legacy", p1: NvSystemIds | NvItemsIds, p2: NvItemsIds | BuiltTable<R>, p3?: BuiltTable<R>): Promise<void> {
@@ -259,6 +315,14 @@ export class AdapterNvMemory {
         }
     }
 
+    /**
+     * Internal function to prevent occasional ZNP request failures.
+     * 
+     * *Some timeouts were present when working with SimpleLink Z-Stack 3.x.0+.*
+     * 
+     * @param fn Function to retry.
+     * @param retries Maximum number of retries.
+     */
     private async retry<R>(fn: (() => Promise<R>), retries = 3): Promise<R> {
         let i = 0;
         while (i < retries) {

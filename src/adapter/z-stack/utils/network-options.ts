@@ -1,6 +1,12 @@
 import * as Models from "../../../models";
 import {compareChannelLists} from "./channel-list";
 
+/**
+ * Checks if two network options models match.
+ * 
+ * @param opts1 First network options struct to check.
+ * @param opts2 Second network options struct to check.
+ */
 export const compareNetworkOptions = (opts1: Models.NetworkOptions, opts2: Models.NetworkOptions): boolean => {
     return (
         opts1.panId === opts2.panId &&

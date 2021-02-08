@@ -1,3 +1,6 @@
+/**
+ * Buffer-oriented structure representing network configuration.
+ */
 export interface NetworkOptions {
     panId: number;
     extendedPanId: Buffer;
