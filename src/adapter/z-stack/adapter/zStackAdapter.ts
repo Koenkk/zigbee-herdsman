@@ -127,7 +127,8 @@ class ZStackAdapter extends Adapter {
                 version: this.version.product,
                 greenPowerGroup: this.greenPowerGroup,
                 networkOptions: this.networkOptions
-            }
+            },
+            this.logger
         );
         return this.adapterManager.start();
     }
