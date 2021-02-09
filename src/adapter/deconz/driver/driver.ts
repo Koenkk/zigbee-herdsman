@@ -498,9 +498,6 @@ class Driver extends events.EventEmitter {
     }
 
     private async handleDeviceStatus() {
-        if (this.DELAY === 0) {
-            return;
-        }
         if (this.apsDataConfirm === 1) {
             try {
                 debug("query aps data confirm");
