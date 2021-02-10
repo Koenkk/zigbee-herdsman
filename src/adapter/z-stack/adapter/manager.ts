@@ -77,8 +77,15 @@ export class ZnpAdapterManager {
             break;
         }
         case "startCommissioning": {
-            await this.beginCommissioning(this.nwkOptions);
-            result = "reset";
+            if (this.options.version === ZnpVersion.zStack12) {
+                const hasConfigured = await this.nv.readItem(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, 0, Structs.hasConfigured);
+                await this.beginCommissioning(this.nwkOptions);
+                await this.beginStartup();
+                result = hasConfigured && hasConfigured.isConfigured() ? "reset" : "restored";
+            } else {
+                await this.beginCommissioning(this.nwkOptions);
+                result = "reset";
+            }
             break;
         }
         }
@@ -105,19 +112,21 @@ export class ZnpAdapterManager {
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
         const activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
         const alternateKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ALTERN_KEY_INFO, 0, Structs.nwkKeyDescriptor);
-        const preconfiguredKey = await this.nv.readItem(NvItemsIds.PRECFGKEY, 0, Structs.nwkKey);
+        const preconfiguredKey = this.options.version === ZnpVersion.zStack12 ?
+            Structs.nwkKey((await this.znp.request(Subsystem.SAPI, "readConfiguration", {configid: NvItemsIds.PRECFGKEY})).payload.value) :
+            await this.nv.readItem(NvItemsIds.PRECFGKEY, 0, Structs.nwkKey);
 
-        /* get backup if available */
-        const backup = await this.backup.getStoredBackup();
+        /* get backup if available and supported by target */
+        const backup = this.options.version === ZnpVersion.zStack12 ? undefined : await this.backup.getStoredBackup();
 
         const configMatchesAdapter = (
             nib &&
             Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList) &&
             this.nwkOptions.panId === nib.nwkPanId &&
             this.nwkOptions.extendedPanId.equals(nib.extendedPANID) &&
-            this.nwkOptions.networkKey.equals(activeKeyInfo.key) &&
-            this.nwkOptions.networkKey.equals(alternateKeyInfo.key) &&
-            this.nwkOptions.networkKey.equals(preconfiguredKey.key)
+            this.nwkOptions.networkKey.equals(preconfiguredKey.key) &&
+            (this.options.version === ZnpVersion.zStack12 || this.nwkOptions.networkKey.equals(activeKeyInfo.key)) &&
+            (this.options.version === ZnpVersion.zStack12 || this.nwkOptions.networkKey.equals(alternateKeyInfo.key))
         );
 
         const backupMatchesAdapter = (
@@ -269,17 +278,22 @@ export class ZnpAdapterManager {
         await this.updateCommissioningNvItems(nwkOptions);
         this.debug.commissioning("beginning network commissioning");
         if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
+            /* configure channel */
             await this.znp.request(Subsystem.APP_CNF, "bdbSetChannel", {isPrimary: 0x1, channel: Utils.packChannelList(nwkOptions.channelList)});
             await this.znp.request(Subsystem.APP_CNF, "bdbSetChannel", {isPrimary: 0x0, channel: 0x0});
+
+            /* perform bdb commissioning */
+            const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, "stateChangeInd", {state: 9}, 60000);
+            await this.znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x04});
+            try {
+                await started.start().promise;
+            } catch (error) {
+                throw new Error(`network commissioning timed out - most likely network with the same panId or extendedPanId already exists nearby`);
+            }
+        } else {
+            /* Z-Stack 1.2 requires startup to be performed instead of BDB commissioning */
+            await this.beginStartup();
         }
-        const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, "stateChangeInd", {state: 9}, 60000);
-        await this.znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x04});
-        try {
-            await started.start().promise;
-        } catch (error) {
-            throw new Error(`network commissioning timed out - most likely network with the same panId or extendedPanId already exists nearby`);
-        }
-        this.debug.commissioning("network commissioned");
 
         /* wait for NIB to settle (takes different amount of time of different platforms */
         this.debug.commissioning("waiting for NIB to settle");
@@ -293,12 +307,14 @@ export class ZnpAdapterManager {
         if (!nib || nib.nwkPanId === 65535 || nib.nwkLogicalChannel === 0) {
             throw new Error(`network commissioning failed - timed out waiting for nib to settle`);
         }
-
+    
         /* validate provisioned PAN ID */
         const extNwkInfo = await this.znp.request(Subsystem.ZDO, 'extNwkInfo', {});
         if (extNwkInfo.payload.panid !== nwkOptions.panId && failOnCollision) {
             throw new Error(`network commissioning failed - panId collision detected (expected=${nwkOptions.panId}, actual=${extNwkInfo.payload.panid})`);
         }
+
+        this.debug.commissioning("network commissioned");
 
         /* write configuration flag */
         if (writeConfiguredFlag) {
@@ -323,6 +339,7 @@ export class ZnpAdapterManager {
 
         this.debug.commissioning(`setting network commissioning parameters`);
 
+        await this.nv.updateItem(NvItemsIds.STARTUP_OPTION, Buffer.from([0x02]));
         await this.nv.updateItem(NvItemsIds.LOGICAL_TYPE, Buffer.from([ZnpConstants.ZDO.deviceLogicalType.COORDINATOR]));
         await this.nv.updateItem(NvItemsIds.PRECFGKEYS_ENABLE, Buffer.from([options.networkKeyDistribute ? 0x01 : 0x00]));
         await this.nv.updateItem(NvItemsIds.ZDO_DIRECT_CB, Buffer.from([0x01]));
