@@ -50,14 +50,17 @@ export class AdapterNvMemory {
             throw new Error("adapter memory alignment unknown - was nv memory driver initialized?");
         }
         const lengthResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvLength", {id}));
-        if (!lengthResponse.payload.length || lengthResponse.payload.length === 0) {
+        if (!lengthResponse?.payload?.length || lengthResponse?.payload?.length === 0) {
             return null;
         }
         const length = lengthResponse.payload.length;
         const buffer = Buffer.alloc(length);
         while (offset < length) {
             const readResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvReadExt", {id, offset}));
-            if (readResponse.payload.status !== 0) {
+            if (!readResponse) {
+                return null;
+            }
+            if (readResponse.payload?.status !== 0) {
                 throw new Error(`Received non-success status while reading NV (id=${id}, offset=${offset}, status=${readResponse.payload.status})`);
             }
             buffer.set(readResponse.payload.value, offset);
