@@ -99,6 +99,7 @@ class Touchlink {
     }
 
     public async factoryResetFirst(): Promise<boolean> {
+        this.lock(true);
         let done = false;
 
         try {
