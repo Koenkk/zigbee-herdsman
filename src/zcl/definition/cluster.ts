@@ -2007,6 +2007,7 @@ const Cluster: {
             compensationText: {ID: 6, type: DataType.charStr},
             colorTemperature: {ID: 7, type: DataType.uint16},
             colorMode: {ID: 8, type: DataType.enum8},
+            options: {ID: 15, type: DataType.bitmap8},       
             numPrimaries: {ID: 16, type: DataType.uint8},
             primary1X: {ID: 17, type: DataType.uint16},
             primary1Y: {ID: 18, type: DataType.uint16},
