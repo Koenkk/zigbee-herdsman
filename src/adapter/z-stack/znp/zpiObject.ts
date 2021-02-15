@@ -45,6 +45,8 @@ class ZpiObject {
             throw new Error(`Command '${command}' from subsystem '${subsystem}' not found`);
         }
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         return new ZpiObject(cmd.type, subsystem, command, cmd.ID, payload, cmd.request);
     }
 

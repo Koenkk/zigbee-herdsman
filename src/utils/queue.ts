@@ -17,6 +17,8 @@ class Queue {
         this.concurrent = concurrent;
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     public execute<T>(func: () => Promise<T>, key: string | number = null): Promise<T> {
         return new Promise((resolve, reject): void =>  {
             this.jobs.push({key, func, running: false, resolve, reject});
@@ -45,6 +47,8 @@ class Queue {
 
     private getNext(): Job {
         if (this.jobs.filter((j) => j.running).length > (this.concurrent - 1)) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             return null;
         }
 
@@ -56,6 +60,8 @@ class Queue {
             }
         }
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         return null;
     }
 

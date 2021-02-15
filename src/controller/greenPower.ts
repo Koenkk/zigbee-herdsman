@@ -58,6 +58,8 @@ class GreenPower extends events.EventEmitter {
 
             const frame = Zcl.ZclFrame.create(
                 Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 null, ZclTransactionSequenceNumber.next(), 'pairing', 33, payload
             );
 
@@ -81,6 +83,8 @@ class GreenPower extends events.EventEmitter {
 
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             null, ZclTransactionSequenceNumber.next(), 'commisioningMode', 33, payload
         );
 

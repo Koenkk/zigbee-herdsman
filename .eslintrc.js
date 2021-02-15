@@ -15,8 +15,8 @@ module.exports = {
         "@typescript-eslint/semi": ["error"],
         "array-bracket-spacing": ["error", "never"],
         "indent": ["error", 4],
-        "max-len": ["error", { "code": 120 }],
+        "max-len": ["error", {"code": 120}],
         "no-return-await": "error",
-        "object-curly-spacing": ["error", "never"],
+        "object-curly-spacing": ["error", "never"]
     }
-}
+};

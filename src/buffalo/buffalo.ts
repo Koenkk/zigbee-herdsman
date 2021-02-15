@@ -196,6 +196,8 @@ class Buffalo {
 
     public readListUInt8(options: Options): Value {
         const value = [];
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         for (let i = 0; i < options.length; i++) {
             value.push(this.readUInt8());
         }
@@ -211,6 +213,8 @@ class Buffalo {
 
     public readListUInt16(options: Options): Value {
         const value = [];
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         for (let i = 0; i < options.length; i++) {
             value.push(this.readUInt16());
         }
@@ -226,6 +230,8 @@ class Buffalo {
 
     public readListUInt24(options: Options): Value {
         const value = [];
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         for (let i = 0; i < options.length; i++) {
             value.push(this.readUInt24());
         }
@@ -241,6 +247,8 @@ class Buffalo {
 
     public readListUInt32(options: Options): Value {
         const value = [];
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         for (let i = 0; i < options.length; i++) {
             value.push(this.readUInt32());
         }
@@ -303,6 +311,8 @@ class Buffalo {
             return this.readIeeeAddr();
         } else if (type.startsWith('BUFFER')) {
             let length = Number(type.replace('BUFFER', ''));
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             length = length != 0 ? length : options.length;
             return this.readBuffer(length);
         } else if (type === 'INT8') {

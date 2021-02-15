@@ -191,6 +191,8 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
         throw new Error(`Cannot restore backup, networkKey of backup is different`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     if (!equals(backup.data.ZCD_NV_PANID.value, Array.from(Items.panID(options.panID).value))) {
         throw new Error(`Cannot restore backup, panID of backup is different`);
     }
@@ -217,6 +219,8 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
     debug("Restoring backup");
 
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_EXTADDR);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     await znp.request(Subsystem.SYS, 'osalNvItemInit', ZCD_NV_NIB, null,
         [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', backup.data.ZCD_NV_NIB);
@@ -239,9 +243,13 @@ async function Restore(znp: Znp, backupPath: string, options: NetworkOptions): P
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     await znp.request(Subsystem.SYS, 'osalNvItemInit', Items.znpHasConfiguredInit(product), null,
         [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(product));
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     await znp.request(Subsystem.SYS, 'osalNvItemInit', bdbNodeIsOnANetwork, null,
         [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', bdbNodeIsOnANetwork);

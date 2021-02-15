@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import {Direction, Foundation, DataType, BuffaloZclDataType, FrameControl} from './definition';
 import * as Utils from './utils';
 import BuffaloZcl from './buffaloZcl';
@@ -46,7 +47,9 @@ class ZclFrame {
         transactionSequenceNumber: number, commandKey: number | string, clusterID: number,
         payload: ZclPayload, reservedBits = 0
     ): ZclFrame {
+        // @ts-ignore
         const cluster = Utils.getCluster(clusterID, manufacturerCode != null ? manufacturerCode : null);
+        // @ts-ignore
         let command: TsType.Command = null;
         if (frameType === FrameType.GLOBAL) {
             command = Utils.getGlobalCommand(commandKey);
@@ -105,11 +108,14 @@ class ZclFrame {
     private writePayloadGlobal(buffalo: BuffaloZcl): void {
         const command = Object.values(Foundation).find((c): boolean => c.ID === this.Command.ID);
 
+        // @ts-ignore
         if (command.parseStrategy === 'repetitive') {
             for (const entry of this.Payload) {
+                // @ts-ignore
                 for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
 
+                    // @ts-ignore
                     if (!ZclFrame.conditionsValid(parameter, entry, null)) {
                         continue;
                     }
@@ -123,12 +129,15 @@ class ZclFrame {
                     buffalo.write(typeStr, entry[parameter.name], options);
                 }
             }
+            // @ts-ignore
         } else if (command.parseStrategy === 'flat') {
+            // @ts-ignore
             for (const parameter of command.parameters) {
                 buffalo.write(DataType[parameter.type], this.Payload[parameter.name], {});
             }
         } else {
             /* istanbul ignore else */
+            // @ts-ignore
             if (command.parseStrategy === 'oneof') {
                 /* istanbul ignore else */
                 if (command === Foundation.discoverRsp) {
@@ -146,6 +155,7 @@ class ZclFrame {
 
     private writePayloadCluster(buffalo: BuffaloZcl): void {
         for (const parameter of this.Command.parameters) {
+            // @ts-ignore
             if (!ZclFrame.conditionsValid(parameter, this.Payload, null)) {
                 continue;
             }
@@ -170,6 +180,7 @@ class ZclFrame {
         const buffalo = new BuffaloZcl(buffer);
         const header = this.parseHeader(buffalo);
 
+        // @ts-ignore
         let command: TsType.Command = null;
         if (header.frameControl.frameType === FrameType.GLOBAL) {
             command = Utils.getGlobalCommand(header.commandIdentifier);
@@ -181,6 +192,7 @@ class ZclFrame {
 
         const cluster = Utils.getCluster(
             clusterID,
+            // @ts-ignore
             header.frameControl.manufacturerSpecific ? header.manufacturerCode : null
         );
         const payload = this.parsePayload(header, cluster, buffalo);
@@ -247,12 +259,14 @@ class ZclFrame {
     private static parsePayloadGlobal(header: ZclHeader, buffalo: BuffaloZcl): ZclPayload {
         const command = Object.values(Foundation).find((c): boolean => c.ID === header.commandIdentifier);
 
+        // @ts-ignore
         if (command.parseStrategy === 'repetitive') {
             const payload = [];
 
             while (buffalo.getPosition() < buffalo.getBuffer().length) {
                 const entry: {[s: string]: BuffaloTsType.Value} = {};
 
+                // @ts-ignore
                 for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
 
@@ -285,9 +299,11 @@ class ZclFrame {
             }
 
             return payload;
+            // @ts-ignore
         } else if (command.parseStrategy === 'flat') {
             const payload: {[s: string]: BuffaloTsType.Value} = {};
 
+            // @ts-ignore
             for (const parameter of command.parameters) {
                 payload[parameter.name] = buffalo.read(DataType[parameter.type], {});
             }
@@ -295,6 +311,7 @@ class ZclFrame {
             return payload;
         } else {
             /* istanbul ignore else */
+            // @ts-ignore
             if (command.parseStrategy === 'oneof') {
                 /* istanbul ignore else */
                 if (command === Foundation.discoverRsp) {
@@ -331,6 +348,7 @@ class ZclFrame {
         remainingBufferBytes: number
     ): boolean {
         if (parameter.conditions) {
+            // @ts-ignore
             const failedCondition = parameter.conditions.find((condition): boolean => {
                 if (condition.type === 'statusEquals') {
                     return entry.status !== condition.value;
@@ -339,6 +357,7 @@ class ZclFrame {
                 } else if (condition.type == 'directionEquals') {
                     return entry.direction !== condition.value;
                 } else if (remainingBufferBytes != null && condition.type == 'minimumRemainingBufferBytes') {
+                    // @ts-ignore
                     return remainingBufferBytes < condition.value;
                 } else  {
                     /* istanbul ignore else */
@@ -377,6 +396,7 @@ class ZclFrame {
     }
 
     public getCommand(): TsType.Command {
+        // @ts-ignore
         let command: TsType.Command = null;
         if (this.Header.frameControl.frameType === FrameType.GLOBAL) {
             command = Utils.getGlobalCommand(this.Header.commandIdentifier);

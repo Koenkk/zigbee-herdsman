@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import {Buffalo, TsType} from '../buffalo';
 import {DataType} from './definition';
@@ -52,10 +53,12 @@ interface ThermoTransition {transitionTime: number; heatSetpoint?: number; coolS
 
 class BuffaloZcl extends Buffalo {
     private readUseDataType(options: BuffaloZclOptions): TsType.Value {
+        // @ts-ignore
         return this.read(options.dataType, options);
     }
 
     private writeUseDataType(value: string, options: BuffaloZclOptions): void {
+        // @ts-ignore
         return this.write(options.dataType, value, options);
     }
 
@@ -164,6 +167,7 @@ class BuffaloZcl extends Buffalo {
             let index = 0;
             const extField = [];
             while (this.getPosition() < end) {
+                // @ts-ignore
                 extField.push(this.read(extensionFieldSetsDateTypeLookup[clstId][index], null));
                 index++;
             }
@@ -179,6 +183,7 @@ class BuffaloZcl extends Buffalo {
             this.writeUInt16(value.clstId);
             this.writeUInt8(value.len);
             value.extField.forEach((entry, index) => {
+                // @ts-ignore
                 this.write(extensionFieldSetsDateTypeLookup[value.clstId][index], entry, null);
             });
         }
@@ -193,6 +198,7 @@ class BuffaloZcl extends Buffalo {
 
     private readListZoneInfo(options: TsType.Options): TsType.Value {
         const value = [];
+        // @ts-ignore
         for (let i = 0; i < options.length; i++) {
             value.push({
                 zoneID: this.readUInt8(),
@@ -204,10 +210,13 @@ class BuffaloZcl extends Buffalo {
     }
 
     private readListThermoTransitions(options: TsType.Options): TsType.Value {
+        // @ts-ignore
         const heat = options.payload['mode'] & 1;
+        // @ts-ignore
         const cool = options.payload['mode'] & 2;
         const result = [];
 
+        // @ts-ignore
         for (let i = 0; i < options.payload.numoftrans; i++) {
             const entry: ThermoTransition = {transitionTime: this.readUInt16()};
 
@@ -230,10 +239,12 @@ class BuffaloZcl extends Buffalo {
             this.writeUInt16(entry.transitionTime);
 
             if (entry.hasOwnProperty('heatSetpoint')) {
+                // @ts-ignore
                 this.writeUInt16(entry.heatSetpoint);
             }
 
             if (entry.hasOwnProperty('coolSetpoint')) {
+                // @ts-ignore
                 this.writeUInt16(entry.coolSetpoint);
             }
         }
@@ -241,6 +252,7 @@ class BuffaloZcl extends Buffalo {
 
     private readGdpFrame(options: TsType.Options): TsType.Value {
         // Commisioning
+        // @ts-ignore
         if (options.payload.commandID === 224) {
             return {
                 deviceID: this.readUInt8(),

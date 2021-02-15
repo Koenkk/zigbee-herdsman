@@ -68,6 +68,8 @@ class ZStackAdapter extends Adapter {
         serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
 
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         this.znp = new Znp(this.serialPortOptions.path, this.serialPortOptions.baudRate, this.serialPortOptions.rtscts);
 
         this.transactionID = 0;
@@ -308,6 +310,8 @@ class ZStackAdapter extends Adapter {
             this.checkInterpanLock();
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 disableRecovery, 0, 0, false, false, false, null
             );
         }, networkAddress);
@@ -326,6 +330,8 @@ class ZStackAdapter extends Adapter {
         if (command.hasOwnProperty('response') && disableResponse === false) {
             response = this.waitForInternal(
                 networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
             );
         } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
@@ -354,6 +360,8 @@ class ZStackAdapter extends Adapter {
             if (assocRemove && assocRestore && this.supportsAssocAdd()) {
                 debug('assocAdd(%s)', assocRestore.ieeeadr);
                 await this.znp.request(Subsystem.UTIL, 'assocAdd', assocRestore);
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 assocRestore = null;
             }
 
@@ -465,6 +473,8 @@ class ZStackAdapter extends Adapter {
                 }
             }
         } else {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             return null;
         }
     }
@@ -707,6 +717,8 @@ class ZStackAdapter extends Adapter {
                         this.deviceAnnounceRouteDiscoveryDebouncers.set(payload.networkAddress, debouncer);
                     }
 
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
                     this.deviceAnnounceRouteDiscoveryDebouncers.get(payload.networkAddress)();
                 }
 
@@ -808,6 +820,8 @@ class ZStackAdapter extends Adapter {
             }
 
             const response = this.waitForInternal(
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 null, 0xFE, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT, null,
                 zclFrame.Cluster.ID, command.response, timeout
             );
@@ -906,6 +920,8 @@ class ZStackAdapter extends Adapter {
         addressMode: number, destinationAddressOrGroupID: number | string, destinationEndpoint: number, panID: number,
         sourceEndpoint: number, clusterID: number, radius: number, data: Buffer, timeout: number, confirmation: boolean,
         attemptsLeft = 5,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
     ): Promise<ZpiObject> {
         const transactionID = this.nextTransactionID();
         const response = confirmation ?
@@ -923,9 +939,13 @@ class ZStackAdapter extends Adapter {
             radius,
             len: data.length,
             data: data,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
         }, response ? response.ID : null);
 
         if (confirmation) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             const dataConfirm = await response.start().promise;
             if (dataConfirm.payload.status !== ZnpCommandStatus.SUCCESS) {
                 if (attemptsLeft > 0 &&

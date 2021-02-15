@@ -132,6 +132,7 @@ export default class ZiGate extends EventEmitter {
                 this.portWrite.write(sendBuffer);
 
                 if (ziGateObject.command.waitStatus !== false) {
+                    // @ts-ignore
                     let statusResponse: ZiGateObject = await resultPromise;
                     if (statusResponse.payload.status !== STATUS.E_SL_MSG_STATUS_SUCCESS) {
                         waitersId.map((id) => this.waitress.remove(id));
@@ -156,6 +157,7 @@ export default class ZiGate extends EventEmitter {
 
     public static async autoDetectPath(): Promise<string> {
         const paths = await SerialPortUtils.find(autoDetectDefinitions);
+        // @ts-ignore
         return paths.length > 0 ? paths[0] : null;
     }
 
@@ -168,10 +170,12 @@ export default class ZiGate extends EventEmitter {
         return new Promise((resolve, reject) => {
             if (this.initialized) {
                 this.initialized = false;
+                // @ts-ignore
                 this.portWrite = null;
                 if (this.portType === 'serial') {
                     this.serialPort.flush((): void => {
                         this.serialPort.close((error): void => {
+                            // @ts-ignore
                             this.serialPort = null;
                             error == null ?
                                 resolve() :
@@ -182,6 +186,7 @@ export default class ZiGate extends EventEmitter {
                 } else {
                     // @ts-ignore
                     this.socketPort.destroy((error?: Error): void => {
+                        // @ts-ignore
                         this.socketPort = null;
                         error == null ?
                             resolve() :
@@ -221,8 +226,11 @@ export default class ZiGate extends EventEmitter {
         return new Promise((resolve, reject): void => {
             this.serialPort.open(async (err: unknown): Promise<void> => {
                 if (err) {
+                    // @ts-ignore
                     this.serialPort = null;
+                    // @ts-ignore
                     this.parser = null;
+                    // @ts-ignore
                     this.path = null;
                     this.initialized = false;
                     const error = `Error while opening serialPort '${err}'`;
@@ -367,8 +375,10 @@ export default class ZiGate extends EventEmitter {
                 if (typeof rule.value === "undefined" && typeof rule.expectedProperty !== "undefined") {
                     expectedValue = resolve(rule.expectedProperty, matcher.ziGateObject);
                 } else if (typeof rule.value === "undefined" && typeof rule.expectedExtraParameter !== "undefined") {
+                    // @ts-ignore
                     expectedValue = resolve(rule.expectedExtraParameter, matcher.extraParameters);
                 } else {
+                    // @ts-ignore
                     expectedValue = rule.value;
                 }
                 const receivedValue = resolve(rule.receivedProperty, ziGateObject);

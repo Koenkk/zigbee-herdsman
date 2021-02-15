@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
 import {Events as AdapterEvents} from '../../adapter';
 import Endpoint from './endpoint';
@@ -52,22 +53,29 @@ class Device extends Entity {
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
     set ieeeAddr(ieeeAddr: string) {this._ieeeAddr = ieeeAddr;}
+    // @ts-ignore
     get applicationVersion(): number {return this._applicationVersion;}
     set applicationVersion(applicationVersion: number) {this._applicationVersion = applicationVersion;}
     get endpoints(): Endpoint[] {return this._endpoints;}
     get interviewCompleted(): boolean {return this._interviewCompleted;}
     get interviewing(): boolean {return this._interviewing;}
     get lastSeen(): number {return this._lastSeen;}
+    // @ts-ignore
     get manufacturerID(): number {return this._manufacturerID;}
     set type(type: DeviceType) {this._type = type;}
+    // @ts-ignore
     get type(): DeviceType {return this._type;}
+    // @ts-ignore
     get dateCode(): string {return this._dateCode;}
     set dateCode(dateCode: string) {this._dateCode = dateCode;}
     set hardwareVersion(hardwareVersion: number) {this._hardwareVersion = hardwareVersion;}
+    // @ts-ignore
     get hardwareVersion(): number {return this._hardwareVersion;}
+    // @ts-ignore
     get manufacturerName(): string {return this._manufacturerName;}
     set manufacturerName(manufacturerName: string) {this._manufacturerName = manufacturerName;}
     set modelID(modelID: string) {this._modelID = modelID;}
+    // @ts-ignore
     get modelID(): string {return this._modelID;}
     get networkAddress(): number {return this._networkAddress;}
     set networkAddress(networkAddress: number) {
@@ -76,16 +84,21 @@ class Device extends Entity {
             endpoint.deviceNetworkAddress = networkAddress;
         }
     }
+    // @ts-ignore
     get powerSource(): string {return this._powerSource;}
     set powerSource(powerSource: string) {
         this._powerSource = typeof powerSource === 'number' ? Zcl.PowerSource[powerSource] : powerSource;
     }
+    // @ts-ignore
     get softwareBuildID(): string {return this._softwareBuildID;}
     set softwareBuildID(softwareBuildID: string) {this._softwareBuildID = softwareBuildID;}
+    // @ts-ignore
     get stackVersion(): number {return this._stackVersion;}
     set stackVersion(stackVersion: number) {this._stackVersion = stackVersion;}
+    // @ts-ignore
     get zclVersion(): number {return this._zclVersion;}
     set zclVersion(zclVersion: number) {this._zclVersion = zclVersion;}
+    // @ts-ignore
     get linkquality(): number {return this._linkquality;}
     set linkquality(linkquality: number) {this._linkquality = linkquality;}
     get skipDefaultResponse(): boolean {return this._skipDefaultResponse;}
@@ -95,6 +108,7 @@ class Device extends Entity {
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
+    // @ts-ignore
     private static devices: {[ieeeAddr: string]: Device} = null;
 
     public static readonly ReportablePropertiesMapping: {[s: string]: {
@@ -148,6 +162,7 @@ class Device extends Entity {
             throw new Error(`Device '${this.ieeeAddr}' already has an endpoint '${ID}'`);
         }
 
+        // @ts-ignore
         const endpoint = Endpoint.create(ID, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         this.endpoints.push(endpoint);
         this.save();
@@ -155,12 +170,14 @@ class Device extends Entity {
     }
 
     public getEndpoint(ID: number): Endpoint {
+        // @ts-ignore
         return this.endpoints.find((e): boolean => e.ID === ID);
     }
 
     // There might be multiple endpoints with same DeviceId but it is not supported and first endpoint is returned
     public getEndpointByDeviceType(deviceType: string): Endpoint {
         const deviceID = Zcl.EndpointDeviceType[deviceType];
+        // @ts-ignore
         return this.endpoints.find((d): boolean => d.deviceID === deviceID);
     }
 
@@ -229,6 +246,7 @@ class Device extends Entity {
         const networkAddress = entry.nwkAddr;
         const ieeeAddr = entry.ieeeAddr;
         const endpoints = Object.values(entry.endpoints).map((e): Endpoint => {
+            // @ts-ignore
             return Endpoint.fromDatabaseRecord(e, networkAddress, ieeeAddr);
         });
 
@@ -285,6 +303,7 @@ class Device extends Entity {
 
     public static byNetworkAddress(networkAddress: number): Device {
         Device.loadFromDatabaseIfNecessary();
+        // @ts-ignore
         return Object.values(Device.devices).find(d => d.networkAddress === networkAddress);
     }
 
@@ -320,6 +339,7 @@ class Device extends Entity {
         const ID = Entity.database.newID();
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
+            // @ts-ignore
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
             interviewCompleted, {}, null,
         );
@@ -461,6 +481,7 @@ class Device extends Entity {
         // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
         // into an error. Therefore we filter it, more info: https://github.com/Koenkk/zigbee-herdsman/issues/82
         this._endpoints = activeEndpoints.endpoints.filter((e) => e !== 0).map((e): Endpoint => {
+            // @ts-ignore
             return Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         });
         this.save();

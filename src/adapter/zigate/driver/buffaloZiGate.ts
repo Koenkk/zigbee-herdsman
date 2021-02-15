@@ -111,6 +111,7 @@ class BuffaloZiGate extends Buffalo {
 
     public readListUInt16BE(options: Options): Value {
         const value = [];
+        // @ts-ignore
         for (let i = 0; i < options.length; i++) {
             value.push(this.readUInt16BE());
         }

@@ -52,6 +52,7 @@ class ZiGateAdapter extends Adapter {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
 
         this.joinPermitted = false;
+        // @ts-ignore
         this.driver = new Driver(serialPortOptions.path, serialPortOptions);
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
@@ -283,6 +284,7 @@ class ZiGateAdapter extends Adapter {
     // @TODO
     public routingTable(networkAddress: number): Promise<TsType.RoutingTable> {
         debug.log('RoutingTable, %o', arguments)
+        // @ts-ignore
         return;
     };
 
@@ -357,6 +359,7 @@ class ZiGateAdapter extends Adapter {
     };
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor> {
+        // @ts-ignore
         return this.queue.execute<SimpleDescriptor>(async () => {
             debug.log('SimpleDescriptor request: %o', arguments)
 
@@ -425,6 +428,7 @@ class ZiGateAdapter extends Adapter {
                 payload['destinationEndpoint'] = destinationEndpoint
             }
             const result = await this.driver.sendCommand(ZiGateCommandCode.Bind, payload,
+                // @ts-ignore
                 null, {destinationNetworkAddress}
             );
 
@@ -459,6 +463,7 @@ class ZiGateAdapter extends Adapter {
                 payload['destinationEndpoint'] = destinationEndpoint
             }
             const result = await this.driver.sendCommand(ZiGateCommandCode.UnBind, payload,
+                // @ts-ignore
                 null,
                 {destinationNetworkAddress});
 
@@ -529,6 +534,7 @@ class ZiGateAdapter extends Adapter {
         if (command.hasOwnProperty('response') && disableResponse === false) {
             response = this.waitFor(
                 networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
+                // @ts-ignore
                 zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
             );
         } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
@@ -574,6 +580,7 @@ class ZiGateAdapter extends Adapter {
                 }
             }
         } else {
+            // @ts-ignore
             return null;
         }
     }
@@ -735,6 +742,7 @@ class ZiGateAdapter extends Adapter {
                 frame: data.zclFrame,
                 endpoint: <number>data.ziGateObject.payload.sourceEndpoint,
                 linkquality: data.ziGateObject.frame.readRSSI(),
+                // @ts-ignore
                 groupID: null, // @todo
             };
             this.waitress.resolve(payload);
@@ -751,6 +759,7 @@ class ZiGateAdapter extends Adapter {
             address: <number>data.ziGateObject.payload.sourceAddress,
             endpoint: <number>data.ziGateObject.payload.sourceEndpoint,
             linkquality: data.ziGateObject.frame.readRSSI(),
+            // @ts-ignore
             groupID: null
         };
 

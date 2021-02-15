@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import {Znp} from '../znp';
 import {Constants as UnpiConstants} from '../unpi';
 import * as Constants from '../constants';
@@ -72,6 +73,7 @@ async function validateItem(
     znp: Znp, item: NvItem, message: string, subsystem = Subsystem.SYS, command = 'osalNvRead',
     expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS]
 ): Promise<boolean> {
+    // @ts-ignore
     const result = await znp.request(subsystem, command, item, null, expectedStatuses);
 
     if (!equals(result.payload.value, item.value)) {
@@ -95,19 +97,23 @@ async function needsToBeInitialised(znp: Znp, version: ZnpVersion, options: TsTy
     ));
     valid = valid && (await validateItem(znp, Items.channelList(options.channelList), 'channelList'));
     valid = valid && (await validateItem(
+        // @ts-ignore
         znp, Items.networkKeyDistribute(options.networkKeyDistribute), 'networkKeyDistribute'
     ));
 
     if (version === ZnpVersion.zStack3x0) {
+        // @ts-ignore
         valid = valid && (await validateItem(znp, Items.networkKey(options.networkKey), 'networkKey'));
     } else {
         valid = valid && (await validateItem(
+            // @ts-ignore
             znp, Items.networkKey(options.networkKey), 'networkKey', Subsystem.SAPI, 'readConfiguration'
         ));
     }
 
     if (valid) {
         valid = valid && (await validateItem(znp, Items.panID(options.panID), 'panID'));
+        // @ts-ignore
         valid = valid && (await validateItem(znp, Items.extendedPanID(options.extendedPanID), 'extendedPanID'));
 
         if (!valid) {
@@ -134,6 +140,7 @@ async function boot(znp: Znp): Promise<void> {
     if (result.payload.devicestate !== DevStates.ZB_COORD) {
         debug('Start ZNP as coordinator...');
         const started = znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
+        // @ts-ignore
         znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, null,
             [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.FAILURE]);
         await started.start().promise;
@@ -164,13 +171,16 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.startupOption(0x02));
     await znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.SOFT});
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.logicalType(Constants.ZDO.deviceLogicalType.COORDINATOR));
+    // @ts-ignore
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.networkKeyDistribute(options.networkKeyDistribute));
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.zdoDirectCb());
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.channelList(options.channelList));
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.panID(options.panID));
+    // @ts-ignore
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.extendedPanID(options.extendedPanID));
 
     if (version === ZnpVersion.zStack30x || version === ZnpVersion.zStack3x0) {
+        // @ts-ignore
         await znp.request(Subsystem.SYS, 'osalNvWrite', Items.networkKey(options.networkKey));
         // Default link key is already OK for Z-Stack 3 ('ZigBeeAlliance09')
         const channelMask = Buffer.from(Constants.Utils.getChannelMask(options.channelList)).readUInt32LE(0);
@@ -188,17 +198,20 @@ async function initialise(znp: Znp, version: ZnpVersion, options: TsType.Network
 
         await znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x02});
     } else {
+        // @ts-ignore
         await znp.request(Subsystem.SAPI, 'writeConfiguration', Items.networkKey(options.networkKey));
         await znp.request(Subsystem.SYS, 'osalNvWrite', Items.tcLinkKey12());
     }
 
     // expect status code NV_ITEM_UNINIT (= item created and initialized)
+    // @ts-ignore
     await znp.request(Subsystem.SYS, 'osalNvItemInit', Items.znpHasConfiguredInit(version), null,
         [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]);
     await znp.request(Subsystem.SYS, 'osalNvWrite', Items.znpHasConfigured(version));
 }
 
 async function addToGroup(znp: Znp, endpoint: number, group: number): Promise<void> {
+    // @ts-ignore
     const result = await znp.request(5, 'extFindGroup', {endpoint, groupid: group}, null,
         [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.FAILURE]);
     if (result.payload.status === ZnpCommandStatus.FAILURE) {

@@ -56,6 +56,7 @@ class DeconzAdapter extends Adapter {
             this.waitressValidator, this.waitressTimeoutFormatter
         );
 
+        // @ts-ignore
         this.driver = new Driver(serialPortOptions.path);
         this.driver.setDelay(delay);
         this.driver.on('rxFrame', (frame) => {processFrame(frame)});
@@ -63,6 +64,7 @@ class DeconzAdapter extends Adapter {
         this.transactionID = 0;
         this.openRequestsQueue = [];
         this.joinPermitted = false;
+        // @ts-ignore
         this.fwVersion = null;
         console.log('CREATED DECONZ ADAPTER');
 
@@ -70,6 +72,7 @@ class DeconzAdapter extends Adapter {
         this.frameParserEvent.on('receivedGreenPowerIndication', (data: any) => {this.checkReceivedGreenPowerIndication(data)});
 
         const that = this;
+        // @ts-ignore
         setInterval(() => { that.checkReceivedDataPayload(null); }, 1000);
         setTimeout(() => {that.checkCoordinatorSimpleDescriptor(false);}, 3000);
     }
@@ -157,6 +160,7 @@ class DeconzAdapter extends Adapter {
         }
     }
 
+    // @ts-ignore
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
         // product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string;
         if (this.fwVersion != null) {
@@ -228,14 +232,19 @@ class DeconzAdapter extends Adapter {
                     const d = await this.waitForData(networkAddress, 0, 0x8031);
                     const data = d.asduPayload;
 
+                    // @ts-ignore
                     if (data[1] !== 0) { // status
                         throw new Error(`LQI for '${networkAddress}' failed`);
                     }
                     const tableList: Buffer[] = [];
                     const response = {
+                        // @ts-ignore
                         status: data[1],
+                        // @ts-ignore
                         tableEntrys: data[2],
+                        // @ts-ignore
                         startIndex: data[3],
+                        // @ts-ignore
                         tableListCount: data[4],
                         tableList: tableList
                     }
@@ -243,6 +252,7 @@ class DeconzAdapter extends Adapter {
                     let tableEntry: number[] = [];
                     let counter = 0;
                     for (let i = 5; i < ((response.tableListCount * 22) + 5); i++) { // one tableentry = 22 bytes
+                        // @ts-ignore
                         tableEntry.push(data[i]);
                         counter++;
                         if (counter === 22) {
@@ -321,14 +331,19 @@ class DeconzAdapter extends Adapter {
                     const d = await this.waitForData(networkAddress, 0, 0x8032);
                     const data = d.asduPayload;
 
+                    // @ts-ignore
                     if (data[1] !== 0) { // status
                         throw new Error(`Routingtables for '${networkAddress}' failed`);
                     }
                     const tableList: Buffer[] = [];
                     const response = {
+                        // @ts-ignore
                         status: data[1],
+                        // @ts-ignore
                         tableEntrys: data[2],
+                        // @ts-ignore
                         startIndex: data[3],
+                        // @ts-ignore
                         tableListCount: data[4],
                         tableList: tableList
                     }
@@ -336,6 +351,7 @@ class DeconzAdapter extends Adapter {
                     let tableEntry: number[] = [];
                     let counter = 0;
                     for (let i = 5; i < ((response.tableListCount * 5) + 5); i++) { // one tableentry = 5 bytes
+                        // @ts-ignore
                         tableEntry.push(data[i]);
                         counter++;
                         if (counter === 5) {
@@ -394,7 +410,9 @@ class DeconzAdapter extends Adapter {
             const d = await this.waitForData(networkAddress, 0, 0x8002);
             const data = d.asduPayload;
 
+            // @ts-ignore
             const buf = Buffer.from(data);
+            // @ts-ignore
             const logicaltype = (data[4] & 7);
             const type: DeviceType = (logicaltype === 1) ? 'Router' : (logicaltype === 2) ? 'EndDevice' : (logicaltype === 0) ? 'Coordinator' : 'Unknown';
             const manufacturer = buf.readUInt16LE(7);
@@ -435,6 +453,7 @@ class DeconzAdapter extends Adapter {
             const d = await this.waitForData(networkAddress, 0, 0x8005);
             const data = d.asduPayload;
 
+            // @ts-ignore
             const buf = Buffer.from(data);
             const epCount = buf.readUInt8(4);
             const epList = [];
@@ -477,6 +496,7 @@ class DeconzAdapter extends Adapter {
             const d = await this.waitForData(networkAddress, 0, 0x8004);
             const data = d.asduPayload;
 
+            // @ts-ignore
             const buf = Buffer.from(data);
             const inCount = buf.readUInt8(11);
             const inClusters = [];
@@ -620,20 +640,26 @@ class DeconzAdapter extends Adapter {
 
                 if (data !== null) {
                     const asdu = data.asduPayload;
+                    // @ts-ignore
                     const buffer = Buffer.from(asdu);
                     const frame: ZclFrame = ZclFrame.fromBuffer(zclFrame.Cluster.ID, buffer);
 
                     const response: Events.ZclDataPayload = {
+                        // @ts-ignore
                         address: (data.srcAddrMode === 0x02) ? data.srcAddr16 : null,
                         frame: frame,
+                        // @ts-ignore
                         endpoint: data.srcEndpoint,
+                        // @ts-ignore
                         linkquality: data.lqi,
+                        // @ts-ignore
                         groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null
                     };
                     debug(`response received`);
                     return response;
                 } else {
                     debug(`no response expected`);
+                    // @ts-ignore
                     return null;
                 }
 
@@ -716,6 +742,7 @@ class DeconzAdapter extends Adapter {
 
         if (type === 'endpoint') {
             destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
+            // @ts-ignore
             destArray = destArray.concat([destinationEndpoint]);
         } else {
             destArray = [destinationAddressOrGroup as number & 0xff, ((destinationAddressOrGroup as number) >> 8) & 0xff];
@@ -744,8 +771,11 @@ class DeconzAdapter extends Adapter {
         try {
             const d = await this.waitForData(destinationNetworkAddress, 0, 0x8021);
             const data = d.asduPayload;
+            // @ts-ignore
             debug("BIND RESPONSE - addr: 0x" + destinationNetworkAddress.toString(16) + " status: " + data[1]);
+            // @ts-ignore
             if (data[1] !== 0) {
+                // @ts-ignore
                 throw new Error("status: " + data[1]);
             }
         } catch (error) {
@@ -796,8 +826,11 @@ class DeconzAdapter extends Adapter {
         try {
             const d = await this.waitForData(destinationNetworkAddress, 0, 0x8022);
             const data = d.asduPayload;
+            // @ts-ignore
             debug("UNBIND RESPONSE - addr: 0x" + destinationNetworkAddress.toString(16) + " status: " + data[1]);
+            // @ts-ignore
             if (data[1] !== 0) {
+                // @ts-ignore
                 throw new Error("status: " + data[1]);
             }
         } catch (error) {
@@ -833,12 +866,15 @@ class DeconzAdapter extends Adapter {
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8034);
             const data = d.asduPayload;
+            // @ts-ignore
             debug("REMOVE_DEVICE - addr: 0x" + networkAddress.toString(16) + " status: " + data[1]);
             const payload: Events.DeviceLeavePayload = {
                 networkAddress: networkAddress,
                 ieeeAddr: ieeeAddr,
             };
+            // @ts-ignore
             if (data[1] !== 0) {
+                // @ts-ignore
                 throw new Error("status: " + data[1]);
             }
             this.emit(Events.Events.deviceLeave, payload);
@@ -948,12 +984,15 @@ class DeconzAdapter extends Adapter {
             }
 
             // check current extended_panid against configuration.yaml
+            // @ts-ignore
             if (this.driver.generalArrayToString(this.networkOptions.extendedPanID, 8) !== expanid) {
 
+                // @ts-ignore
                 debug("extended panid in configuration.yaml (" + this.driver.macAddrArrayToString(this.networkOptions.extendedPanID) + ") differs from current extended panid (" + expanid + "). Changing extended panid.");
 
                 try {
                     //await this.driver.writeParameterRequest(PARAM.PARAM.Network.USE_APS_EXT_PAN_ID, 1);
+                    // @ts-ignore
                     await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID);
                     await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
                     await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
@@ -965,10 +1004,12 @@ class DeconzAdapter extends Adapter {
             }
 
             // check current network key against configuration.yaml
+            // @ts-ignore
             if (this.driver.generalArrayToString(this.networkOptions.networkKey, 16) !== networkKey) {
                 debug("network key in configuration.yaml (hidden) differs from current network key (" + networkKey + "). Changing network key.");
 
                 try {
+                    // @ts-ignore
                     await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey);
                     await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
                     await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
@@ -1044,14 +1085,20 @@ class DeconzAdapter extends Adapter {
     private checkReceivedGreenPowerIndication(ind: gpDataInd) {
         ind.clusterId = 0x21;
 
+        // @ts-ignore
         let gpFrame = [ind.rspId, ind.seqNr, ind.id, ind.options & 0xff, (ind.options >> 8) & 0xff,
+            // @ts-ignore
         ind.srcId & 0xff, (ind.srcId >> 8) & 0xff, (ind.srcId >> 16) & 0xff, (ind.srcId >> 24) & 0xff,
+            // @ts-ignore
         ind.frameCounter & 0xff, (ind.frameCounter >> 8) & 0xff, (ind.frameCounter >> 16) & 0xff, (ind.frameCounter >> 24) & 0xff,
+            // @ts-ignore
         ind.commandId, ind.commandFrameSize].concat(ind.commandFrame);
 
+        // @ts-ignore
         const payBuf = Buffer.from(gpFrame);
         const payload: Events.ZclDataPayload = {
             frame: ZclFrame.fromBuffer(ind.clusterId, payBuf),
+            // @ts-ignore
             address: ind.srcId,
             endpoint: 242, // GP endpoint
             linkquality: 127,
@@ -1064,12 +1111,14 @@ class DeconzAdapter extends Adapter {
 
     private checkReceivedDataPayload(resp: ReceivedDataResponse) {
         let srcAddr: any = null;
+        // @ts-ignore
         let frame: ZclFrame = null;
 
         if (resp != null) {
             srcAddr = (resp.srcAddr16 != null) ? resp.srcAddr16 : resp.srcAddr64;
             if (resp.profileId != 0x00) {
                 try {
+                    // @ts-ignore
                     frame = ZclFrame.fromBuffer(resp.clusterId, Buffer.from(resp.asduPayload));
                 } catch (error) {
                     debug("could not parse zclFrame: " + error);
@@ -1086,20 +1135,24 @@ class DeconzAdapter extends Adapter {
                     if (req.transactionSequenceNumber === frame.Header.transactionSequenceNumber) {
                         debug("resolve data request with transSeq Nr.: " + req.transactionSequenceNumber);
                         this.openRequestsQueue.splice(i, 1);
+                        // @ts-ignore
                         req.resolve(resp);
                     }
                 } else {
                     debug("resolve data request without a transSeq Nr.");
                     this.openRequestsQueue.splice(i, 1);
+                    // @ts-ignore
                     req.resolve(resp);
                 }
             }
 
             const now = Date.now();
+            // @ts-ignore
             if ((now - req.ts) > 60000) { // 60 seconds
                 //debug("Timeout for request in openRequestsQueue addr: " + req.addr.toString(16) + " clusterId: " + req.clusterId.toString(16) + " profileId: " + req.profileId.toString(16));
                 //remove from busyQueue
                 this.openRequestsQueue.splice(i, 1);
+                // @ts-ignore
                 req.reject("waiting for response TIMEOUT");
             }
         }
@@ -1107,9 +1160,11 @@ class DeconzAdapter extends Adapter {
         // check unattended incomming messages
         if (resp != null && resp.profileId === 0x00 && resp.clusterId === 0x13) {
             // device Annce
+            // @ts-ignore
             const payBuf = Buffer.from(resp.asduPayload);
             const payload: Events.DeviceJoinedPayload = {
                 networkAddress: payBuf.readUInt16LE(1),
+                // @ts-ignore
                 ieeeAddr: this.driver.macAddrArrayToString(resp.asduPayload.slice(3,11)),
             };
             if (this.joinPermitted === true) {
@@ -1120,13 +1175,19 @@ class DeconzAdapter extends Adapter {
         }
 
         if (resp != null && resp.profileId != 0x00) {
+            // @ts-ignore
             const payBuf = Buffer.from(resp.asduPayload);
             try {
                 const payload: Events.ZclDataPayload = {
+                    // @ts-ignore
                     frame: ZclFrame.fromBuffer(resp.clusterId, payBuf),
+                    // @ts-ignore
                     address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
+                    // @ts-ignore
                     endpoint: resp.srcEndpoint,
+                    // @ts-ignore
                     linkquality: resp.lqi,
+                    // @ts-ignore
                     groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null
                 };
 
@@ -1134,11 +1195,16 @@ class DeconzAdapter extends Adapter {
                 this.emit(Events.Events.zclData, payload);
             } catch (error) {
                 const payload: Events.RawDataPayload = {
+                    // @ts-ignore
                     clusterID: resp.clusterId,
                     data: payBuf,
+                    // @ts-ignore
                     address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
+                    // @ts-ignore
                     endpoint: resp.srcEndpoint,
+                    // @ts-ignore
                     linkquality: resp.lqi,
+                    // @ts-ignore
                     groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null
                 };
 

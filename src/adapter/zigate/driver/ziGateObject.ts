@@ -36,6 +36,7 @@ class ZiGateObject {
         this._code = code;
         this._payload = payload;
         this._parameters = parameters;
+        // @ts-ignore
         this._frame = frame;
     }
 

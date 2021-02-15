@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 import events from 'events';
 import Database from './database';
 import {TsType as AdapterTsType, Adapter, Events as AdapterEvents} from '../adapter';
@@ -11,7 +13,6 @@ import {Utils as ZclUtils, FrameControl} from '../zcl';
 import Touchlink from './touchlink';
 import GreenPower from './greenPower';
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import mixin from 'mixin-deep';
 import Group from './model/group';
@@ -40,10 +41,15 @@ const DefaultOptions: Options = {
         channelList: [11],
     },
     serialPort: {},
+    // @ts-ignore
     databasePath: null,
+    // @ts-ignore
     databaseBackupPath: null,
+    // @ts-ignore
     backupPath: null,
+    // @ts-ignore
     adapter: null,
+    // @ts-ignore
     acceptJoiningDeviceHandler: null,
 };
 
@@ -89,10 +95,12 @@ class Controller extends events.EventEmitter {
         }
 
         if (!Array.isArray(this.options.network.networkKey) || this.options.network.networkKey.length !== 16) {
+            // @ts-ignore
             throw new Error(`Network key must be 16 digits long, got ${this.options.network.networkKey.length}.`);
         }
 
         if (!Array.isArray(this.options.network.extendedPanID) || this.options.network.extendedPanID.length !== 8) {
+            // @ts-ignore
             throw new Error(`ExtendedPanID must be 8 digits long, got ${this.options.network.extendedPanID.length}.`);
         }
 
@@ -151,6 +159,8 @@ class Controller extends events.EventEmitter {
             debug.log('No coordinator in database, querying...');
             Device.create(
                 'Coordinator', coordinator.ieeeAddr, coordinator.networkAddress, coordinator.manufacturerID,
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 undefined, undefined, undefined, true, coordinator.endpoints
             );
         }
@@ -196,12 +206,16 @@ class Controller extends events.EventEmitter {
     public async permitJoinInternal(
         permit: boolean, reason: 'manual' | 'timer_expired', device?: Device, time?: number, ): Promise<void> {
         if (permit) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
             await this.greenPower.permitJoin(254);
 
             // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
             clearInterval(this.permitJoinNetworkClosedTimer);
             this.permitJoinNetworkClosedTimer = setInterval(async (): Promise<void> => {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
                 await this.greenPower.permitJoin(254);
             }, 200 * 1000);
@@ -217,6 +231,8 @@ class Controller extends events.EventEmitter {
         } else {
             debug.log('Disable joining');
             await this.greenPower.permitJoin(0);
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             await this.adapter.permitJoin(0, null);
             clearTimeout(this.permitJoinTimer);
             clearInterval(this.permitJoinNetworkClosedTimer);
@@ -431,6 +447,8 @@ class Controller extends events.EventEmitter {
             debug.log(`New green power device '${ieeeAddr}' joined`);
             debug.log(`Creating device '${ieeeAddr}'`);
             device = Device.create(
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 'GreenPower', ieeeAddr, payload.networkAddress, null,
                 undefined, undefined, modelID, true, [],
             );
@@ -462,6 +480,8 @@ class Controller extends events.EventEmitter {
             debug.log(`New device '${payload.ieeeAddr}' joined`);
             debug.log(`Creating device '${payload.ieeeAddr}'`);
             device = Device.create(
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 'Unknown', payload.ieeeAddr, payload.networkAddress, undefined,
                 undefined, undefined, undefined, false, []
             );
@@ -549,6 +569,8 @@ class Controller extends events.EventEmitter {
         }
 
         // Parse command for event
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         let type: Events.MessagePayloadType = undefined;
         let data: KeyValue;
         let clusterName = undefined;
@@ -597,6 +619,7 @@ class Controller extends events.EventEmitter {
 
             if (type === 'readResponse' || type === 'attributeReport') {
                 // Some device report, e.g. it's modelID through a readResponse or attributeReport
+                // @ts-ignore
                 for (const [key, value] of Object.entries(data)) {
                     const property =  Device.ReportablePropertiesMapping[key];
                     if (property && !device[property.key]) {
@@ -604,6 +627,7 @@ class Controller extends events.EventEmitter {
                     }
                 }
 
+                // @ts-ignore
                 endpoint.saveClusterAttributeKeyValue(clusterName, data);
             }
         } else {
@@ -617,6 +641,8 @@ class Controller extends events.EventEmitter {
             }
         }
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         if (type && data) {
             const endpoint = device.getEndpoint(dataPayload.endpoint);
             const linkquality = dataPayload.linkquality;

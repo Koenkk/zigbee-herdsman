@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import {DataType, Cluster, Foundation} from './definition';
 import * as TsType from './tstype';
@@ -31,6 +32,7 @@ function IsDataTypeAnalogOrDiscrete(dataType: DataType): 'ANALOG' | 'DISCRETE' {
     }
 }
 
+// @ts-ignore
 function getCluster(key: string | number, manufacturerCode: number = null): TsType.Cluster {
     let name: string;
 
@@ -44,6 +46,7 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
             }
         }
 
+        // @ts-ignore
         if (!name) {
             for (const [clusterName, cluster] of Object.entries(Cluster)) {
                 if (cluster.ID === key) {
@@ -56,6 +59,7 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
         name = key;
     }
 
+    // @ts-ignore
     const cluster = Cluster[name];
 
     if (!cluster) {
@@ -70,19 +74,23 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
     const commandsResponse: {[s: string]: TsType.Command} = Object.assign({}, ...Object.entries(cluster.commandsResponse).map(([k, v]): any => ({[k]: {...v, name: k}})));
 
     const getAttribute = (key: number | string): TsType.Attribute => {
+        // @ts-ignore
         let result: TsType.Attribute = null;
 
         if (typeof key === 'number') {
             if (manufacturerCode) {
+                // @ts-ignore
                 result = Object.values(attributes).find((a): boolean => {
                     return a.ID === key && a.manufacturerCode === manufacturerCode;
                 });
             }
 
             if (!result) {
+                // @ts-ignore
                 result = Object.values(attributes).find((a): boolean => a.ID === key);
             }
         } else {
+            // @ts-ignore
             result = Object.values(attributes).find((a): boolean => a.name === key);
         }
 
@@ -94,11 +102,14 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
     };
 
     const hasAttribute = (key: number | string): boolean => {
+        // @ts-ignore
         let result: TsType.Attribute = null;
 
         if (typeof key === 'number') {
+            // @ts-ignore
             result = Object.values(attributes).find((a): boolean => a.ID === key);
         } else {
+            // @ts-ignore
             result = Object.values(attributes).find((a): boolean => a.name === key);
         }
 
@@ -106,11 +117,14 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
     };
 
     const getCommand = (key: number | string): TsType.Command => {
+        // @ts-ignore
         let result: TsType.Command = null;
 
         if (typeof key === 'number') {
+            // @ts-ignore
             result = Object.values(commands).find((a): boolean => a.ID === key);
         } else {
+            // @ts-ignore
             result = Object.values(commands).find((a): boolean => a.name === key);
         }
 
@@ -122,11 +136,14 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
     };
 
     const getCommandResponse = (key: number | string): TsType.Command => {
+        // @ts-ignore
         let result: TsType.Command = null;
 
         if (typeof key === 'number') {
+            // @ts-ignore
             result = Object.values(commandsResponse).find((a): boolean => a.ID === key);
         } else {
+            // @ts-ignore
             result = Object.values(commandsResponse).find((a): boolean => a.name === key);
         }
 
@@ -141,6 +158,7 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
         ID: cluster.ID,
         attributes,
         manufacturerCode: cluster.manufacturerCode,
+        // @ts-ignore
         name,
         commands,
         // eslint-disable-next-line
@@ -166,6 +184,7 @@ function getGlobalCommand(key: number | string): TsType.Command {
         name = key;
     }
 
+    // @ts-ignore
     const command = Foundation[name];
 
     if (!command) {
@@ -174,6 +193,7 @@ function getGlobalCommand(key: number | string): TsType.Command {
 
     const result: TsType.Command = {
         ID: command.ID,
+        // @ts-ignore
         name,
         parameters: command.parameters,
     };

@@ -145,6 +145,8 @@ class Touchlink {
     private createScanRequestFrame(): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             null, 0, 'scanRequest', Zcl.Utils.getCluster('touchlink').ID,
             {transactionID: 1, zigbeeInformation: 4, touchlinkInformation: 18}
         );
@@ -153,6 +155,8 @@ class Touchlink {
     private createIdentifyRequestFrame(): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             null, 0, 'identifyRequest', Zcl.Utils.getCluster('touchlink').ID,
             {transactionID: 1, duration: 65535}
         );
@@ -161,6 +165,8 @@ class Touchlink {
     private createResetFactoryNewRequestFrame(): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             null, 0, 'resetToFactoryNew', Zcl.Utils.getCluster('touchlink').ID,
             {transactionID: 1}
         );

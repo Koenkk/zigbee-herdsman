@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import Entity from './entity';
 import {KeyValue} from '../tstype';
 import * as Zcl from '../../zcl';
@@ -83,14 +84,19 @@ class Endpoint extends Entity {
 
     // Getters/setters
     get binds(): Bind[] {
+        // @ts-ignore
         return this._binds.map((entry) => {
+            // @ts-ignore
             let target: Group | Endpoint = null;
             if (entry.type === 'endpoint') {
+                // @ts-ignore
                 const device = Device.byIeeeAddr(entry.deviceIeeeAddress);
                 if (device) {
+                    // @ts-ignore
                     target = device.getEndpoint(entry.endpointID);
                 }
             } else {
+                // @ts-ignore
                 target = Group.byGroupID(entry.groupID);
             }
 
@@ -112,7 +118,9 @@ class Endpoint extends Entity {
             } else {
                 attribute = {
                     ID: entry.attrId,
+                    // @ts-ignore
                     name: undefined,
+                    // @ts-ignore
                     type: undefined,
                     manufacturerCode: undefined
                 };
@@ -187,6 +195,7 @@ class Endpoint extends Entity {
     }
 
     private clusterNumbersToClusters(clusterNumbers: number[]): Zcl.TsType.Cluster[] {
+        // @ts-ignore
         return clusterNumbers.map((c) => {
             try {
                 return Zcl.Utils.getCluster(c, this.getDevice().manufacturerID);
@@ -204,6 +213,7 @@ class Endpoint extends Entity {
         record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string
     ): Endpoint {
         // Migrate attrs to attributes
+        // @ts-ignore
         for (const entry of Object.values(record.clusters).filter((e) => e.hasOwnProperty('attrs'))) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
@@ -254,6 +264,7 @@ class Endpoint extends Entity {
             return this.clusters[cluster.name].attributes[attribute.name];
         }
 
+        // @ts-ignore
         return null;
     }
 
@@ -273,6 +284,7 @@ class Endpoint extends Entity {
         clusterKey: number | string, attributes: KeyValue, options?: Options
     ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
+        // @ts-ignore
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
@@ -292,11 +304,13 @@ class Endpoint extends Entity {
 
         try {
             const frame = Zcl.ZclFrame.create(
+                // @ts-ignore
                 Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
                 options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
                 options.writeUndiv ? "writeUndiv" : "write", cluster.ID, payload, options.reservedBits
             );
             const result = await Entity.adapter.sendZclFrameToEndpoint(
+                // @ts-ignore
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                 options.disableResponse, options.disableRecovery, options.srcEndpoint,
             );
@@ -315,6 +329,7 @@ class Endpoint extends Entity {
         clusterKey: number | string, attributes: string[] | number [], options?: Options
     ): Promise<KeyValue> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
+        // @ts-ignore
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const payload: {attrId: number}[] = [];
         for (const attribute of attributes) {
@@ -322,6 +337,7 @@ class Endpoint extends Entity {
         }
 
         const frame = Zcl.ZclFrame.create(
+            // @ts-ignore
             Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
             options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(), 'read',
             cluster.ID, payload, options.reservedBits
@@ -333,6 +349,7 @@ class Endpoint extends Entity {
 
         try {
             const result = await Entity.adapter.sendZclFrameToEndpoint(
+                // @ts-ignore
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                 options.disableResponse, options.disableRecovery, options.srcEndpoint,
             );
@@ -341,6 +358,7 @@ class Endpoint extends Entity {
                 this.checkStatus(result.frame.Payload);
                 return ZclFrameConverter.attributeKeyValue(result.frame);
             } else {
+                // @ts-ignore
                 return null;
             }
         } catch (error) {
@@ -355,6 +373,7 @@ class Endpoint extends Entity {
     ): Promise<void> {
         assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
         const cluster = Zcl.Utils.getCluster(clusterKey);
+        // @ts-ignore
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
         const payload: {attrId: number; status: number; dataType: number; attrData: number | string}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
@@ -369,6 +388,7 @@ class Endpoint extends Entity {
         }
 
         const frame = Zcl.ZclFrame.create(
+            // @ts-ignore
             Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
             options.manufacturerCode, transactionSequenceNumber, 'readRsp', cluster.ID, payload, options.reservedBits
         );
@@ -379,6 +399,7 @@ class Endpoint extends Entity {
 
         try {
             await Entity.adapter.sendZclFrameToEndpoint(
+                // @ts-ignore
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                 options.disableResponse, options.disableRecovery, options.srcEndpoint
             );
@@ -425,6 +446,7 @@ class Endpoint extends Entity {
         try {
             await Entity.adapter.bind(
                 this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID, destinationAddress, type,
+                // @ts-ignore
                 target instanceof Endpoint ? target.ID : null,
             );
 
@@ -454,6 +476,7 @@ class Endpoint extends Entity {
         try {
             await Entity.adapter.unbind(
                 this.deviceNetworkAddress, this.deviceIeeeAddress, this.ID, cluster.ID, destinationAddress, type,
+                // @ts-ignore
                 target instanceof Endpoint ? target.ID : null,
             );
 
@@ -477,9 +500,11 @@ class Endpoint extends Entity {
         commandID: number, status: number, clusterID: number, transactionSequenceNumber: number, options?: Options
     ): Promise<void> {
         assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
+        // @ts-ignore
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, null);
         const payload = {cmdId: commandID, statusCode: status};
         const frame = Zcl.ZclFrame.create(
+            // @ts-ignore
             Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
             options.manufacturerCode, transactionSequenceNumber, 'defaultRsp', clusterID, payload, options.reservedBits
         );
@@ -490,6 +515,7 @@ class Endpoint extends Entity {
 
         try {
             await Entity.adapter.sendZclFrameToEndpoint(
+                // @ts-ignore
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                 options.disableResponse, options.disableRecovery, options.srcEndpoint
             );
@@ -504,6 +530,7 @@ class Endpoint extends Entity {
         clusterKey: number | string, items: ConfigureReportingItem[], options?: Options
     ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
+        // @ts-ignore
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const payload = items.map((item): KeyValue => {
             let dataType, attrId;
@@ -530,6 +557,7 @@ class Endpoint extends Entity {
         });
 
         const frame = Zcl.ZclFrame.create(
+            // @ts-ignore
             Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
             options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
             'configReport', cluster.ID, payload, options.reservedBits
@@ -541,6 +569,7 @@ class Endpoint extends Entity {
 
         try {
             const result = await Entity.adapter.sendZclFrameToEndpoint(
+                // @ts-ignore
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                 options.disableResponse, options.disableRecovery, options.srcEndpoint
             );
@@ -580,9 +609,11 @@ class Endpoint extends Entity {
         const command = cluster.getCommand(commandKey);
         const hasResponse = command.hasOwnProperty('response');
         options = this.getOptionsWithDefaults(
+            // @ts-ignore
             options, hasResponse, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
 
         const frame = Zcl.ZclFrame.create(
+            // @ts-ignore
             Zcl.FrameType.SPECIFIC, options.direction, options.disableDefaultResponse,
             options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
             command.name, cluster.ID, payload, options.reservedBits
@@ -594,6 +625,7 @@ class Endpoint extends Entity {
 
         try {
             const result = await Entity.adapter.sendZclFrameToEndpoint(
+                // @ts-ignore
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                 options.disableResponse, options.disableRecovery, options.srcEndpoint
             );
@@ -616,9 +648,11 @@ class Endpoint extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommandResponse(commandKey);
         transactionSequenceNumber = transactionSequenceNumber || ZclTransactionSequenceNumber.next();
+        // @ts-ignore
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
 
         const frame = Zcl.ZclFrame.create(
+            // @ts-ignore
             Zcl.FrameType.SPECIFIC, options.direction, options.disableDefaultResponse,
             options.manufacturerCode, transactionSequenceNumber, command.ID, cluster.ID, payload, options.reservedBits
         );
@@ -629,6 +663,7 @@ class Endpoint extends Entity {
 
         try {
             await Entity.adapter.sendZclFrameToEndpoint(
+                // @ts-ignore
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                 options.disableResponse, options.disableRecovery, options.srcEndpoint
             );
@@ -669,9 +704,12 @@ class Endpoint extends Entity {
             disableRecovery: false,
             disableDefaultResponse,
             direction,
+            // @ts-ignore
             srcEndpoint: null,
             reservedBits: 0,
+            // @ts-ignore
             manufacturerCode: manufacturerCode ? manufacturerCode : null,
+            // @ts-ignore
             transactionSequenceNumber: null,
             writeUndiv: false,
             ...providedOptions

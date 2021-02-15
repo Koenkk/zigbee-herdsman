@@ -92,6 +92,7 @@ function parseReadParameterResponse(view: DataView) : Command {
         default:
             //throw new Error(`unknown parameter id ${parameterId}`);
             debug(`unknown parameter id ${parameterId}`);
+            // @ts-ignore
             return null;
     }
 }
@@ -129,6 +130,7 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
         if (response.status !== 5) {
             debug("DATA_CONFIRM RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
         }
+        // @ts-ignore
         return null;
     }
 
@@ -168,6 +170,7 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
     // resolve send data request promise
     const i = apsBusyQueue.findIndex((r: Request) => (r.request && r.request.requestId === response.requestId));
     if (i < 0) {
+        // @ts-ignore
         return;
     }
     clearTimeout(enableRtsTimeout);
@@ -178,9 +181,11 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
     if (response.confirmStatus !== 0) {
         // reject if status is not SUCCESS
         //debug("REJECT APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
+        // @ts-ignore
         req.reject(response.confirmStatus);
     } else {
         //debug("RESOLVE APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
+        // @ts-ignore
         req.resolve(response.confirmStatus);
     }
 
@@ -206,6 +211,7 @@ function parseReadReceivedDataResponse(view : DataView) : object {
         if (response.status !== 5) {
             debug("DATA_INDICATION RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
         }
+        // @ts-ignore
         return null;
     }
 
@@ -250,6 +256,7 @@ function parseReadReceivedDataResponse(view : DataView) : object {
         srcAddr = response.srcAddr64;
     }
 
+    // @ts-ignore
     view = new DataView(buf3);
     response.srcEndpoint = view.getUint8(0);
     response.profileId = view.getUint16(1, littleEndian);
@@ -434,9 +441,11 @@ async function processFrame(frame: Uint8Array) : Promise<void> {
     if (status !== 0) {
         // reject if status is not SUCCESS
         //debug("REJECT REQUEST");
+        // @ts-ignore
         req.reject({status});
     } else {
         //debug("RESOLVE REQUEST");
+        // @ts-ignore
         req.resolve(command);
     }
 }

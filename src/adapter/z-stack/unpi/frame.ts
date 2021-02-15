@@ -11,6 +11,8 @@ class Frame {
 
     public constructor(
         type: Type, subsystem: Subsystem, commandID: number, data: Buffer,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         length: number = null, fcs: number = null,
     ) {
         this.type = type;

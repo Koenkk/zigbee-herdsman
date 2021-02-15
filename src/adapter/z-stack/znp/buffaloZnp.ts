@@ -12,6 +12,8 @@ class BuffaloZnp extends Buffalo {
         };
 
         const value = [];
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         for (let i = 0; i < options.length; i++) {
             value.push({
                 'destNwkAddr': this.readUInt16(),
@@ -26,6 +28,8 @@ class BuffaloZnp extends Buffalo {
     private readListBindTable(options: TsType.Options): TsType.Value {
         const value = [];
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         for (let i = 0; i < options.length; i++) {
             const item: {[s: string]: number|string} = {};
 
@@ -47,6 +51,8 @@ class BuffaloZnp extends Buffalo {
 
     private readListNeighborLqi(options: TsType.Options): TsType.Value {
         const value = [];
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         for (let i = 0; i < options.length; i++) {
             const item: {[s: string]: number|string} = {};
 
@@ -71,6 +77,8 @@ class BuffaloZnp extends Buffalo {
 
     private  readListNetwork(options: TsType.Options): TsType.Value {
         const value = [];
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         for (let i = 0; i < options.length; i++) {
             const item: {[s: string]: number|string} = {};
 
@@ -95,6 +103,8 @@ class BuffaloZnp extends Buffalo {
 
     private readListAssocDev(options: BuffaloZnpOptions): TsType.Value {
         const value = [];
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         const listLength = options.length - options.startIndex;
 
         for (let i = 0; i < listLength; i++) {

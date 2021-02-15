@@ -40,6 +40,7 @@ function disableRTS() {
     readyToSend = false;
 }
 
+// @ts-ignore
 var enableRtsTimeout: ReturnType<typeof setTimeout> = null;
 
 export { busyQueue, apsBusyQueue, readyToSend, enableRTS, disableRTS, enableRtsTimeout };
@@ -144,6 +145,7 @@ class Driver extends events.EventEmitter {
 
     public static async autoDetectPath(): Promise<string> {
         const paths = await SerialPortUtils.find(autoDetectDefinitions);
+        // @ts-ignore
         return paths.length > 0 ? paths[0] : null;
     }
 
@@ -170,6 +172,7 @@ class Driver extends events.EventEmitter {
         this.parser.on('parsed', this.onParsed);
 
         return new Promise((resolve, reject): void => {
+            // @ts-ignore
             this.serialPort.open(async (error: object): Promise<void> => {
                 if (error) {
                     reject(new Error(`Error while opening serialport '${error}'`));
@@ -398,28 +401,34 @@ class Driver extends events.EventEmitter {
         if (busyQueue.length > 0) {
             return;
         }
+        // @ts-ignore
         const req: Request = queue.shift();
         req.ts = Date.now();
 
         switch (req.commandId) {
             case PARAM.PARAM.FrameType.ReadParameter:
                 debug(`send read parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId}`);
+                // @ts-ignore
                 this.sendReadParameterRequest(req.parameterId, req.seqNumber);
                 break;
             case PARAM.PARAM.FrameType.WriteParameter:
                 debug(`send write parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId} param: ${req.parameter}`);
+                // @ts-ignore
                 this.sendWriteParameterRequest(req.parameterId, req.parameter, req.seqNumber);
                 break;
             case PARAM.PARAM.FrameType.ReadFirmwareVersion:
                 debug(`send read firmware version request from queue. seqNr: ${req.seqNumber}`);
+                // @ts-ignore
                 this.sendReadFirmwareVersionRequest(req.seqNumber);
                 break;
             case PARAM.PARAM.FrameType.ReadDeviceState:
                 debug(`send read device state from queue. seqNr: ${req.seqNumber}`);
+                // @ts-ignore
                 this.sendReadDeviceStateRequest(req.seqNumber);
                 break;
             case PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE:
                 debug(`send change network state request from queue. seqNr: ${req.seqNumber}`);
+                // @ts-ignore
                 this.sendChangeNetworkStateRequest(req.seqNumber, req.networkState);
                 break;
             default:
@@ -436,7 +445,9 @@ class Driver extends events.EventEmitter {
             const req: Request = busyQueue[i];
             const now = Date.now();
 
+            // @ts-ignore
             if ((now - req.ts) > 10000) {
+                // @ts-ignore
                 debug(`Timeout for request - CMD: 0x${req.commandId.toString(16)} seqNr: ${req.seqNumber}`);
                 //remove from busyQueue
                 busyQueue.splice(i, 1);
@@ -446,6 +457,7 @@ class Driver extends events.EventEmitter {
                 clearTimeout(this.timeoutResetTimeout);
                 this.timeoutResetTimeout = null;
                 this.resetTimeoutCounterAfter1min();
+                // @ts-ignore
                 req.reject("TIMEOUT");
                 if (timeoutCounter >= 2) {
                     timeoutCounter = 0;
@@ -573,6 +585,7 @@ class Driver extends events.EventEmitter {
             return;
         }
 
+        // @ts-ignore
         const req: Request = apsQueue.shift();
         req.ts = Date.now();
 
@@ -587,6 +600,7 @@ class Driver extends events.EventEmitter {
                     disableRTS();
                     enableRtsTimeout = setTimeout(function(){enableRTS();}, this.READY_TO_SEND_TIMEOUT);
                     apsBusyQueue.push(req);
+                    // @ts-ignore
                     this.sendEnqueueSendDataRequest(req.request, req.seqNumber);
                     break;
                 }
@@ -601,6 +615,7 @@ class Driver extends events.EventEmitter {
             return;
         }
 
+        // @ts-ignore
         const req: Request = apsConfirmIndQueue.shift();
         req.ts = Date.now();
 
@@ -610,16 +625,20 @@ class Driver extends events.EventEmitter {
             case PARAM.PARAM.APS.DATA_INDICATION:
                 //debug(`read received data request. seqNr: ${req.seqNumber}`);
                 if (this.DELAY === 0) {
+                    // @ts-ignore
                     this.sendReadReceivedDataRequest(req.seqNumber);
                 } else {
+                    // @ts-ignore
                     await this.sendReadReceivedDataRequest(req.seqNumber);
                 }
                 break;
             case PARAM.PARAM.APS.DATA_CONFIRM:
                 //debug(`query send data state request. seqNr: ${req.seqNumber}`);
                 if (this.DELAY === 0) {
+                    // @ts-ignore
                     this.sendQueryDataStateRequest(req.seqNumber);
                 } else {
+                    // @ts-ignore
                     await this.sendQueryDataStateRequest(req.seqNumber);
                 }
                 break;
@@ -643,11 +662,16 @@ class Driver extends events.EventEmitter {
     }
 
     private sendEnqueueSendDataRequest(request: ApsDataRequest, seqNumber: number) {
+        // @ts-ignore
         const payloadLength = 12 + ((request.destAddrMode === 0x01) ? 2 : (request.destAddrMode === 0x02) ? 3 : 9) + request.asduLength;
         const frameLength = 7 + payloadLength;
+        // @ts-ignore
         const cid1 = request.clusterId & 0xff;
+        // @ts-ignore
         const cid2 = (request.clusterId >> 8) & 0xff;
+        // @ts-ignore
         const asdul1 = request.asduLength & 0xff;
+        // @ts-ignore
         const asdul2 = (request.asduLength >> 8) & 0xff;
         let destArray: Array<number> = [];
         let dest = "";
@@ -670,10 +694,12 @@ class Driver extends events.EventEmitter {
         const requestFrame = [PARAM.PARAM.APS.DATA_REQUEST, seqNumber, 0x00, frameLength & 0xff, (frameLength >> 8) & 0xff,
             payloadLength & 0xff, (payloadLength >> 8) & 0xff,
             request.requestId, 0x00, request.destAddrMode].concat(
+            // @ts-ignore
             destArray).concat([request.profileId & 0xff, (request.profileId >> 8) & 0xff,
             cid1, cid2, request.srcEndpoint, asdul1, asdul2]).concat(
             request.asduPayload).concat([request.txOptions, request.radius]);
 
+        // @ts-ignore
         this.sendRequest(requestFrame);
     }
 
@@ -686,10 +712,13 @@ class Driver extends events.EventEmitter {
             if (req.request != null && req.request.timeout != null) {
                 timeout = req.request.timeout * 1000; // seconds * 1000 = milliseconds
             }
+            // @ts-ignore
             if ((now - req.ts) > timeout) {
+                // @ts-ignore
                 debug(`Timeout for aps request CMD: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`);
                 //remove from busyQueue
                 apsBusyQueue.splice(i, 1);
+                // @ts-ignore
                 req.reject("APS TIMEOUT");
             }
         }

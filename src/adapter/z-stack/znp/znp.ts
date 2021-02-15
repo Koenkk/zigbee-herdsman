@@ -253,6 +253,8 @@ class Znp extends events.EventEmitter {
         // The chip is always exposed on the first one after alphabetical sorting.
         paths.sort((a, b) => (a < b) ? -1 : 1);
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         return paths.length > 0 ? paths[0] : null;
     }
 
@@ -282,6 +284,8 @@ class Znp extends events.EventEmitter {
     }
 
     public request(
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         subsystem: Subsystem, command: string, payload: ZpiObjectPayload, waiterID: number = null,
         expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS]
     ): Promise<ZpiObject> {
@@ -331,6 +335,8 @@ class Znp extends events.EventEmitter {
                 /* istanbul ignore else */
                 if (object.type === Type.AREQ) {
                     this.unpiWriter.writeFrame(frame);
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
                     return undefined;
                 } else {
                     throw new Error(`Unknown type '${object.type}'`);

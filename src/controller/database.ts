@@ -61,6 +61,8 @@ class Database {
         return this.entries.hasOwnProperty(ID);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     public newID(): number {
         for (let i = 1; i < 100000; i++) {
             if (!this.entries[i]) {

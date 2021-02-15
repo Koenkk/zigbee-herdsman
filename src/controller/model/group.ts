@@ -30,6 +30,8 @@ class Group extends Entity {
 
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     private static groups: {[groupID: number]: Group} = null;
 
     private constructor(databaseID: number, groupID: number, members: Set<Endpoint>, meta: KeyValue) {
@@ -144,6 +146,8 @@ class Group extends Entity {
     public async write(
         clusterKey: number | string, attributes: KeyValue, options?: Options
     ): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
@@ -163,6 +167,8 @@ class Group extends Entity {
 
         try {
             const frame = Zcl.ZclFrame.create(
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 Zcl.FrameType.GLOBAL, options.direction, true,
                 options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
                 'write', cluster.ID, payload, options.reservedBits
@@ -178,6 +184,8 @@ class Group extends Entity {
     public async read(
         clusterKey: number | string, attributes: string[] | number [], options?: Options
     ): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const payload: {attrId: number}[] = [];
@@ -186,6 +194,8 @@ class Group extends Entity {
         }
 
         const frame = Zcl.ZclFrame.create(
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             Zcl.FrameType.GLOBAL, options.direction, true,
             options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(), 'read',
             cluster.ID, payload, options.reservedBits
@@ -206,6 +216,8 @@ class Group extends Entity {
     public async command(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options
     ): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
@@ -215,6 +227,8 @@ class Group extends Entity {
 
         try {
             const frame = Zcl.ZclFrame.create(
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 Zcl.FrameType.SPECIFIC, options.direction, true, options.manufacturerCode,
                 options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
                 command.ID, cluster.ID, payload, options.reservedBits
@@ -233,9 +247,15 @@ class Group extends Entity {
         const providedOptions = options || {};
         return {
             direction,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             srcEndpoint: null,
             reservedBits: 0,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             manufacturerCode: null,
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             transactionSequenceNumber: null,
             ...providedOptions
         };
