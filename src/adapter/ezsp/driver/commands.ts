@@ -26,7 +26,7 @@ import {/* Basic Types */
     EmberKeyStruct, EmberNetworkInitStruct,  EmberZllNetwork, EmberZllInitialSecurityState,
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
     EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
-    EmberNodeDescriptor,
+    EmberNodeDescriptor, EmberSimpleDescriptor
 } from './types';
 
 export const COMMANDS = {
@@ -697,7 +697,9 @@ export const COMMANDS = {
 //// EmberZDOCmd
 export const ZDO_COMMANDS = {
     "Node_Desc_req": [0x0002, [uint8_t, EmberNodeId], [EmberStatus]],
-    "Node_Desc_rsp": [0x8002, [EmberStatus,EmberNodeId, EmberNodeDescriptor], []],
+    "Node_Desc_rsp": [0x8002, [EmberStatus, EmberNodeId, EmberNodeDescriptor], []],
+    "Simple_Desc_req": [0x0004, [uint8_t, EmberNodeId, uint8_t], [EmberStatus]],
+    "Simple_Desc_rsp": [0x8004, [EmberStatus, EmberNodeId, EmberSimpleDescriptor], []],
     "Active_EP_req": [0x0005, [uint8_t, EmberNodeId], [EmberStatus]],
     "Active_EP_rsp": [0x8005, [EmberStatus, uint8_t, EmberNodeId, LVBytes], []],
 }

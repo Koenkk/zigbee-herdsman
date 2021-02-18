@@ -608,3 +608,15 @@ export class EmberNodeDescriptor extends EzspStruct {
     ]
 }
 
+
+export class EmberSimpleDescriptor extends EzspStruct {
+    static _fields = [
+        ['endpoint', basic.uint8_t],
+        ['profileid', basic.uint16_t],
+        ['deviceType', basic.uint16_t],
+        ['deviceVersion', basic.uint8_t],
+        ['inclusterlist', basic.WordList],
+        ['outclusterlist', basic.WordList],
+    ]
+}
+

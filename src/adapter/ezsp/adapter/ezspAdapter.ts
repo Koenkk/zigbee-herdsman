@@ -257,7 +257,31 @@ class EZSPAdapter extends Adapter {
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
         // todo
-        return Promise.reject();
+        debug(`Requesting 'Simple Descriptor' for '${networkAddress}' endpoint ${endpointID}`);
+        return this.driver.queue.execute<SimpleDescriptor>(async () => {
+            const frame = new EmberApsFrame();
+            frame.clusterId = EmberZDOCmd.Simple_Desc_req;
+            frame.profileId = 0;
+            frame.sequence = this.nextTransactionID();
+            frame.sourceEndpoint = 0;
+            frame.destinationEndpoint = endpointID;
+            frame.groupId = 0;
+            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+            const payload = this.driver.make_zdo_frame("Simple_Desc_req", frame.sequence, networkAddress);
+            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Simple_Desc_rsp);
+            await this.driver.request(networkAddress, frame, payload);
+            const message = await response.start().promise;
+            debug(`activeEndpoints got Simple Descriptor payload: ${JSON.stringify(message.payload)}`);
+            const descriptor = this.driver.parse_frame_payload("Simple_Desc_rsp", message.payload);
+            debug(`activeEndpoints got Simple Descriptor  parsed: ${JSON.stringify(descriptor)}`);
+            return {
+                profileID: descriptor.payload.profileid,
+                endpointID: descriptor.payload.endpoint,
+                deviceID: descriptor.sender,
+                inputClusters: descriptor.payload.inclusterlist,
+                outputClusters: descriptor.payload.outclusterlist,
+            };
+        }, networkAddress);
     }
 
     public waitFor(
