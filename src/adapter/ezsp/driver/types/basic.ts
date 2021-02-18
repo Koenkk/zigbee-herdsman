@@ -14,6 +14,16 @@ export class int_t {
     static deserialize(cls: any, data: Buffer) {
         return [cls._signed ? data.readIntLE(0, cls._size) : data.readUIntLE(0, cls._size), data.slice(cls._size)]
     }
+
+    static valueToName(cls: any, value: any) {
+        for (let prop of Object.getOwnPropertyNames(cls)) {
+            const desc = Object.getOwnPropertyDescriptor(cls, prop);
+            if (desc !== undefined && desc.enumerable && desc.writable && value == desc.value) {
+                return `${cls.name}.${prop}`;
+            }
+        };
+        return '';
+    }
 }
 
 export class int8s extends int_t {

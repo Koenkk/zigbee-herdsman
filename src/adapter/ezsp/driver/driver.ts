@@ -159,8 +159,7 @@ export class Driver extends EventEmitter {
 
         const panID = this._nwkOpt.panID;
         const extendedPanID = this._nwkOpt.extendedPanID;
-        const hashed_tclk = this.ezsp.ezsp_version > 4;
-        const initial_security_state:EmberInitialSecurityState = ember_security(this._nwkOpt, true, hashed_tclk);
+        const initial_security_state:EmberInitialSecurityState = ember_security(this._nwkOpt);
         [status] = await this.ezsp.setInitialSecurityState(initial_security_state);
         const parameters:EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;
@@ -403,8 +402,7 @@ export class Driver extends EventEmitter {
     }
 
     public async permitJoining(seconds:number){
-        const [status] = await this.ezsp.execCommand('setPolicy', EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
-        console.assert(status == EmberStatus.SUCCESS);
+        await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
         return await this.ezsp.execCommand('permitJoining', seconds);
     }
 

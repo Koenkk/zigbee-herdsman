@@ -134,16 +134,17 @@ export class Ezsp extends EventEmitter {
 
     async setConfigurationValue(configId: number, value: any) {
         let ret;
+        debug.log('Set %s = %s', EzspConfigId.valueToName(EzspConfigId, configId), value);
         [ret] = await this.execCommand('setConfigurationValue', configId, value);
         console.assert(ret === EmberStatus.SUCCESS);
-        debug.log('Set %s = %s', configId, value);
     }
 
     async getConfigurationValue(configId: number) {
         let ret, value;
+        debug.log('Get %s', EzspConfigId.valueToName(EzspConfigId, configId));
         [ret, value] = await this.execCommand('getConfigurationValue', configId);
         console.assert(ret === EmberStatus.SUCCESS);
-        debug.log('Get %s = %s', configId, value);
+        debug.log('Got %s = %s', EzspConfigId.valueToName(EzspConfigId, configId), value);
         return value;
     }
 
@@ -177,6 +178,7 @@ export class Ezsp extends EventEmitter {
 
     async setValue(valueId: t.EzspValueId, value: any) {
         let ret;
+        debug.log('Set %s = %s', t.EzspValueId.valueToName(t.EzspValueId, valueId), value);
         [ret] = await this.execCommand('setValue', valueId, value);
         console.assert(ret === EmberStatus.SUCCESS);
         return [ret];
@@ -184,9 +186,19 @@ export class Ezsp extends EventEmitter {
 
     async getValue(valueId: t.EzspValueId) {
         let ret, value;
+        debug.log('Get %s', t.EzspValueId.valueToName(t.EzspValueId, valueId));
         [ret, value] = await this.execCommand('getValue', valueId);
         console.assert(ret === EmberStatus.SUCCESS);
+        debug.log('Got %s = %s', t.EzspValueId.valueToName(t.EzspValueId, valueId), value);
         return value;
+    }
+
+    async setPolicy(policyId: EzspPolicyId, value: any) {
+        let ret;
+        debug.log('Set %s = %s', EzspPolicyId.valueToName(EzspPolicyId, policyId), value);
+        [ret] = await this.execCommand('setPolicy', policyId, value);
+        console.assert(ret === EmberStatus.SUCCESS);
+        return [ret];
     }
 
     async updateConfig() {
@@ -246,8 +258,7 @@ export class Ezsp extends EventEmitter {
         ];
 
         for (let [policy, value] of policies) {
-            const [status] = await this.execCommand('setPolicy', policy, value);
-            console.assert(status == EmberStatus.SUCCESS);
+            await this.setPolicy(policy, value);
         }
     }
    
