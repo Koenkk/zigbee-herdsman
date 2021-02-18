@@ -1,19 +1,40 @@
+import { EventEmitter } from 'events';
+import SerialPort from 'serialport';
+import net from 'net';
+import SocketPortUtils from '../../socketPortUtils';
+import { Deferred, crc16ccitt } from './utils';
 import * as stream from 'stream';
 import Debug from "debug";
 
 const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
 
-export const FLAG = 0x7E  // Marks end of frame
-export const ESCAPE = 0x7D
-export const CANCEL = 0x1A  // Terminates a frame in progress
+
+const FLAG = 0x7E  // Marks end of frame
+const ESCAPE = 0x7D  // Indicates that the following byte is escaped
+const CANCEL = 0x1A  // Terminates a frame in progress
 const XON = 0x11  // Resume transmission
 const XOFF = 0x13  // Stop transmission
-const SUBSTITUTE = 0x18
+const SUBSTITUTE = 0x18  // Replaces a byte received with a low-level communication error
 const STUFF = 0x20
-export const RESERVED = [FLAG, ESCAPE, XON, XOFF, SUBSTITUTE, CANCEL]
+const RESERVED = [FLAG, ESCAPE, XON, XOFF, SUBSTITUTE, CANCEL]
+const RANDOMIZE_START = 0x42;
+const RANDOMIZE_SEQ = 0xB8;
 
 
-export class Parser extends stream.Transform {
+enum NcpResetCode {
+    RESET_UNKNOWN_REASON = 0x00,
+    RESET_EXTERNAL = 0x01,
+    RESET_POWER_ON = 0x02,
+    RESET_WATCHDOG = 0x03,
+    RESET_ASSERT = 0x06,
+    RESET_BOOTLOADER = 0x09,
+    RESET_SOFTWARE = 0x0B,
+    ERROR_EXCEEDED_MAXIMUM_ACK_TIMEOUT_COUNT = 0x51,
+    ERROR_UNKNOWN_EM3XX_ERROR = 0x80,
+}
+
+
+class Parser extends stream.Transform {
     private buffer: Buffer;
 
     public constructor() {
@@ -42,7 +63,6 @@ export class Parser extends stream.Transform {
             debug(`<-- [${this.buffer.toString('hex')}] [${[...this.buffer]}]`);
             try {
                 const frame = this.extract_frame();
-                debug(`<-- parsed ${frame.toString('hex')}`);
                 if (frame) {
                     this.emit('parsed', frame);
                 }
@@ -88,7 +108,7 @@ export class Parser extends stream.Transform {
     }
 }
 
-export class Writer extends stream.Readable {
+class Writer extends stream.Readable {
     public writeBuffer(buffer: Buffer): void {
         debug(`--> [${buffer.toString('hex')}] [${[...buffer]}]`);
         this.push(buffer);
@@ -109,5 +129,322 @@ export class Writer extends stream.Readable {
             }
         }
         return out.slice(0, outIdx);
+    }
+}
+
+
+export class SerialDriver extends EventEmitter {
+    private serialPort: SerialPort;
+    private socketPort: net.Socket;
+    private writer: Writer;
+    private parser: Parser;
+    private initialized: boolean;
+    private resetDeferred: Deferred<any>;
+    private portType: 'serial' | 'socket';
+    private sendSeq: number = 0; // next frame number to send
+    private recvSeq: number = 0; // next frame number to receive
+    private ackSeq: number = 0;  // next number after the last accepted frame
+
+    constructor(){
+        super();
+        this.initialized = false;
+    }
+
+    async connect(path: string, options: {}) {
+        this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
+        if (this.portType === 'serial') {
+            await this.openSerialPort(path, options);
+        } else {
+            await this.openSocketPort(path, options);
+        }
+    }
+
+    private async openSerialPort(path: string, opt: {}): Promise<void> {
+        // @ts-ignore
+        const options = {baudRate: opt.baudRate, rtscts: false, autoOpen: false};
+
+        debug(`Opening SerialPort with ${path} and ${JSON.stringify(options)}`);
+        this.serialPort = new SerialPort(path, options);
+
+        this.writer = new Writer();
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.writer.pipe(this.serialPort);
+
+        this.parser = new Parser();
+        this.serialPort.pipe(this.parser);
+        this.parser.on('parsed', this.onParsed.bind(this));
+
+        return new Promise((resolve, reject): void => {
+            this.serialPort.open(async (error): Promise<void> => {
+                if (error) {
+                    reject(new Error(`Error while opening serialport '${error}'`));
+                    this.initialized = false;
+                    if (this.serialPort.isOpen) {
+                        this.serialPort.close();
+                    }
+                } else {
+                    debug('Serialport opened');
+                    this.serialPort.once('close', this.onPortClose.bind(this));
+                    this.serialPort.once('error', (error) => {
+                        debug(`Serialport error: ${error}`);
+                    });
+                    // reset
+                    await this.reset();
+                    this.initialized = true;
+                    resolve();
+                }
+            });
+        });
+    }
+
+    private async openSocketPort(path: string, options: {}): Promise<void> {
+        const info = SocketPortUtils.parseTcpPath(path);
+        debug(`Opening TCP socket with ${info.host}:${info.port}`);
+
+        this.socketPort = new net.Socket();
+        this.socketPort.setNoDelay(true);
+        this.socketPort.setKeepAlive(true, 15000);
+
+        this.writer = new Writer();
+        this.writer.pipe(this.socketPort);
+
+        this.parser = new Parser();
+        this.socketPort.pipe(this.parser);
+        this.parser.on('parsed', this.onParsed.bind(this));
+
+        return new Promise((resolve, reject): void => {
+            this.socketPort.on('connect', function() {
+                debug('Socket connected');
+            });
+
+            // eslint-disable-next-line
+            const self = this;
+            this.socketPort.on('ready', async (error): Promise<void> => {
+                debug('Socket ready');
+                // reset
+                await this.reset();
+                self.initialized = true;
+                resolve();
+            });
+
+            this.socketPort.once('close', this.onPortClose.bind(this));
+
+            this.socketPort.on('error', function () {
+                debug('Socket error');
+                reject(new Error(`Error while opening socket`));
+                self.initialized = false;
+            });
+
+            this.socketPort.connect(info.port, info.host);
+        });
+    }
+
+    // private showCounters(frmNum?: number, ackNum?: number) {
+    //     //debug.log(`send [${this.sendSeq}:${(frmNum==undefined) ? ' ' : frmNum}][${this.recvSeq}:${(ackNum==undefined) ? ' ' : ackNum}] recv `);
+    //     debug(`[${this.sendSeq}:${this.ackSeq}|${this.recvSeq}]`);
+    // }
+
+    private onParsed(data: Buffer): void {
+        try {
+            /* Frame receive handler */
+            switch (true) {
+                case ((data[0] & 0x80) === 0):
+                    debug(`Data frame  : ${data.toString('hex')}`);
+                    this.data_frame_received(data);
+                    break;
+            
+                case ((data[0] & 0xE0) === 0x80):
+                    debug(`ACK frame   : ${data.toString('hex')}`);
+                    this.handle_ack(data[0]);
+                    break;
+
+                case ((data[0] & 0xE0) === 0xA0):
+                    debug(`NAK frame   : ${data.toString('hex')}`);
+                    this.handle_nak(data[0]);
+                    break;
+
+                case (data[0] === 0xC0):
+                    debug(`RST frame   : ${data.toString('hex')}`);
+                    break;
+                
+                case (data[0] === 0xC1):
+                    debug(`RSTACK frame: ${data.toString('hex')}`);
+                    this.rstack_frame_received(data);
+                    break;
+
+                case (data[0] === 0xC2):
+                    debug(`Error frame : ${data.toString('hex')}`);
+                    break;
+                default:
+                    debug("UNKNOWN FRAME RECEIVED: %r", data);
+            }
+            
+        } catch (error) {
+            debug(`Error while parsing to ZpiObject '${error.stack}'`);
+        }
+    }
+
+    private data_frame_received(data: Buffer) {
+        /* Data frame receive handler */
+        const seq = ((data[0] & 0x70) >> 4);
+        // if (seq !== this.recvSeq) {
+        //     debug('NAK-NAK');
+        // }
+        this.recvSeq = (seq + 1) & 7; // next
+        const ack_frame = this.make_ack_frame();
+        this.handle_ack(data[0]);
+        
+        debug(`Write ack`);
+        this.writer.writeBuffer(ack_frame);
+
+        data = data.slice(1, (- 3));
+        const frame = this.randomize(data);
+        this.emit('received', frame);
+    }
+
+    private handle_ack(control: number) {
+        /* Handle an acknowledgement frame */
+        // next number after the last accepted frame
+        this.ackSeq = control & 7;
+        // var ack, pending;
+        // ack = (((control & 7) - 1) % 8);
+        // if ((ack === this._pending[0])) {
+        //     [pending, this._pending] = [this._pending, [(- 1), null]];
+        //     pending[1].set_result(true);
+        // }
+    }
+
+    private handle_nak(control: number) {
+        /* Handle negative acknowledgment frame */
+        // let nak = (control & 7);
+        // if ((nak === this._pending[0])) {
+        //     this._pending[1].set_result(false);
+        // }
+    }
+
+    private rstack_frame_received(data: Buffer) {
+        /* Reset acknowledgement frame receive handler */
+        var code;
+        this.sendSeq = 0;
+        this.recvSeq = 0;
+        try {
+            code = NcpResetCode[data[2]];
+        } catch (e) {
+            code = NcpResetCode.ERROR_UNKNOWN_EM3XX_ERROR;
+        }
+        debug("RSTACK Version: %d Reason: %s frame: %s", data[1], code.toString(), data.toString('hex'));
+        if (NcpResetCode[<any>code].toString() !== NcpResetCode.RESET_SOFTWARE.toString()) {
+            return;
+        }
+        if ((!this.resetDeferred)) {
+            debug("Reset future is None");
+            return;
+        }
+        this.resetDeferred.resolve(true);
+    }
+
+    private make_ack_frame(): Buffer {
+        /* Construct a acknowledgement frame */
+        return this.make_frame([(0b10000000 | this.recvSeq)]);
+    }
+
+    private make_frame(control: ArrayLike<number>, data?: ArrayLike<number>): Buffer {
+        /* Construct a frame */
+        const ctrlArr: Array<number> = Array.from(control);
+        const dataArr: Array<number> = (data && Array.from(data)) || [];
+
+        const sum = ctrlArr.concat(dataArr);
+
+        let crc = crc16ccitt(Buffer.from(sum), 65535);
+        let crcArr = [(crc >> 8), (crc % 256)];
+        return Buffer.concat([this.writer.stuff(sum.concat(crcArr)), Buffer.from([FLAG])]);
+    }
+
+    private randomize(s: Buffer): Buffer {
+        /*XOR s with a pseudo-random sequence for transmission
+        Used only in data frames
+        */
+        let rand = RANDOMIZE_START;
+        let out = Buffer.alloc(s.length);
+        let outIdx = 0;
+        for (let c of s){
+            out.writeUInt8(c ^ rand, outIdx++);
+            if ((rand % 2)) {
+                rand = ((rand >> 1) ^ RANDOMIZE_SEQ);
+            } else {
+                rand = (rand >> 1);
+            }
+        }
+        return out;
+    }
+
+    private data_frame(data: Buffer, seq: number, rxmit: number) {
+        /* Construct a data frame */
+        const control = (((seq << 4) | (rxmit << 3)) | this.recvSeq);
+        return this.make_frame([control], this.randomize(data));
+    }
+
+    async reset() {
+        // return this._gw.reset();
+        debug('uart reseting');
+        if ((this.resetDeferred)) {
+            throw new TypeError("reset can only be called on a new connection");
+        }
+        /* Construct a reset frame */
+        const rst_frame = Buffer.concat([Buffer.from([CANCEL]), this.make_frame([0xC0])]);
+        debug(`Write reset`);
+        this.writer.writeBuffer(rst_frame);
+        this.resetDeferred = new Deferred<void>();
+        return this.resetDeferred.promise;
+    }
+
+    public close(): Promise<void> {
+        return new Promise((resolve, reject): void => {
+            if (this.initialized) {
+                if (this.portType === 'serial') {
+                    this.serialPort.flush((): void => {
+                        this.serialPort.close((error): void => {
+                            this.initialized = false;
+                            error == null ?
+                                resolve() :
+                                reject(new Error(`Error while closing serialport '${error}'`));
+                            this.emit('close');
+                        });
+                    });
+                } else {
+                    this.socketPort.destroy();
+                    resolve();
+                }
+            } else {
+                resolve();
+                this.emit('close');
+            }
+        });
+    }
+
+    private onPortClose(): void {
+        debug('Port closed');
+        this.initialized = false;
+        this.emit('close');
+    }
+    
+    public isInitialized(): boolean {
+        return this.initialized;
+    }
+
+    
+    public send(data: Buffer) {
+        let seq = this.sendSeq;
+        this.sendSeq = ((seq + 1) % 8);  // next
+        debug(`Write frame (${seq}): ${data.toString('hex')}`);
+        let pack;
+        try {
+            pack = this.data_frame(data, seq, 0);
+            this.writer.writeBuffer(pack);
+        } catch (e) {
+            pack = this.data_frame(data, seq, 1);
+            this.writer.writeBuffer(pack);
+        }
     }
 }
