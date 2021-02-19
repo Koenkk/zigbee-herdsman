@@ -263,10 +263,11 @@ class EZSPAdapter extends Adapter {
             frame.profileId = 0;
             frame.sequence = this.nextTransactionID();
             frame.sourceEndpoint = 0;
-            frame.destinationEndpoint = endpointID;
+            frame.destinationEndpoint = 0;
             frame.groupId = 0;
             frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-            const payload = this.driver.make_zdo_frame("Simple_Desc_req", frame.sequence, networkAddress);
+            debug('frame %o',frame);
+            const payload = this.driver.make_zdo_frame("Simple_Desc_req", frame.sequence, networkAddress, endpointID);
             const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Simple_Desc_rsp);
             await this.driver.request(networkAddress, frame, payload);
             const message = await response.start().promise;
