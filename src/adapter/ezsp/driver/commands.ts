@@ -1,4 +1,3 @@
-import { array } from 'zigbee-herdsman/node_modules/@types/yargs';
 import {/* Basic Types */
     int8s,
     uint8_t,
@@ -11,12 +10,12 @@ import {/* Basic Types */
     /* Named Types */
     EmberRf4ceTxOption, EmberRf4ceNodeCapabilities, EmberNodeId,
     EmberPanId, EmberEUI64, EmberLibraryStatus, SecureEzspSecurityType, SecureEzspSecurityLevel, EmberGpSecurityLevel,
-    EmberGpKeyType, SecureEzspRandomNumber,  Bool, EzspConfigId, EzspValueId, EzspExtendedValueId, 
+    EmberGpKeyType, SecureEzspRandomNumber,  Bool, EzspConfigId, EzspValueId, EzspExtendedValueId,
      EzspPolicyId, EzspDecisionId, EzspMfgTokenId, EzspStatus, EmberStatus, EmberEventUnits, EmberNodeType,
-    EmberNetworkStatus, EmberIncomingMessageType, EmberOutgoingMessageType, EmberMacPassthroughType,  
-    EzspNetworkScanType, EmberJoinDecision,   EmberKeyType, 
-    EmberDeviceUpdate, EmberKeyStatus, EmberCounterType,    
-     EzspZllNetworkOperation,  
+    EmberNetworkStatus, EmberIncomingMessageType, EmberOutgoingMessageType, EmberMacPassthroughType,
+    EzspNetworkScanType, EmberJoinDecision,   EmberKeyType,
+    EmberDeviceUpdate, EmberKeyStatus, EmberCounterType,
+     EzspZllNetworkOperation,
 
     /* Structs */
     EmberNetworkParameters, EmberZigbeeNetwork, EmberApsFrame, EmberBindingTableEntry, EmberMulticastTableEntry,
