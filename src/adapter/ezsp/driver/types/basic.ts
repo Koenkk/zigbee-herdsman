@@ -114,7 +114,7 @@ export abstract class List {
         var item;
         var r: any[] = [];
         while (data) {
-            [item, data] = (<any>r)._itemtype.deserialize((<any>r)._itemtype, data);
+            [item, data] = cls.itemtype.deserialize(cls.itemtype, data);
             r.push(item);
         }
         return [r, data];
@@ -133,7 +133,7 @@ class _LVList extends List {
         var r: any[] = [];
         [length, data] = [data[0], data.slice(1)];
         for (var i = 0; i < length; i++) {
-            [item, data] = (<any>r)._itemtype.deserialize((<any>r)._itemtype, data);
+            [item, data] = cls.itemtype.deserialize(cls.itemtype, data);
             r.push(item);
         }
         return [r, data];
@@ -141,15 +141,15 @@ class _LVList extends List {
 }
 export function list(itemtype: any) : List {
     class ConreteList extends List {
+        static itemtype = itemtype
     }
-    (<any>LVList.prototype)['_itemtype'] = itemtype;
     return ConreteList;
 }
 
 export function LVList(itemtype: any) : List {
     class LVList extends _LVList {
+        static itemtype = itemtype
     }
-    (<any>LVList.prototype)['itemtype'] = itemtype;
     return LVList;
 }
 
@@ -162,14 +162,14 @@ export class WordList extends List {
 
 class _FixedList extends List {
     static serialize(cls: any, value: any[]) {
-        const data = value.map(i => cls._itemtype.serialize(cls._itemtype, i)[0]);
+        const data = value.map(i => cls.itemtype.serialize(cls.itemtype, i)[0]);
         return Buffer.from(data);
     }
     static deserialize(cls: any, data: Buffer) {
         let item;
         let r: any[] = [];
         for (var i = 0; i < cls._length; i++) {
-            [item, data] = cls._itemtype.deserialize(cls._itemtype, data);
+            [item, data] = cls.itemtype.deserialize(cls.itemtype, data);
             r.push(item);
         }
         return [r, data];
@@ -181,7 +181,7 @@ export function fixed_list(length: number, itemtype: any) : {
     deserialize(cls : any, data : Buffer) : any;
 } {
     class FixedList extends _FixedList  {
-        static _itemtype = itemtype;
+        static itemtype = itemtype;
         static _length = length;
     }
     return FixedList;

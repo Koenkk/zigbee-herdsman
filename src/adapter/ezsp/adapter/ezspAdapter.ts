@@ -124,7 +124,7 @@ class EZSPAdapter extends Adapter {
             networkAddress: nwk,
             ieeeAddr: `0x${ieee.toString('hex')}`,
         };
-        this.emit(Events.Events.deviceLeave, payload)
+        this.emit(Events.Events.deviceLeave, payload);
     }
 
     /**
@@ -265,21 +265,20 @@ class EZSPAdapter extends Adapter {
             frame.sourceEndpoint = 0;
             frame.destinationEndpoint = 0;
             frame.groupId = 0;
-            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-            debug('frame %o',frame);
+            frame.options = EmberApsOption.APS_OPTION_NONE;
             const payload = this.driver.make_zdo_frame("Simple_Desc_req", frame.sequence, networkAddress, endpointID);
             const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Simple_Desc_rsp);
             await this.driver.request(networkAddress, frame, payload);
             const message = await response.start().promise;
-            debug(`activeEndpoints got Simple Descriptor payload: ${JSON.stringify(message.payload)}`);
+            debug(`simpleDescriptor got Simple Descriptor payload: ${JSON.stringify(message.payload)}`);
             const descriptor = this.driver.parse_frame_payload("Simple_Desc_rsp", message.payload);
-            debug(`activeEndpoints got Simple Descriptor  parsed: ${JSON.stringify(descriptor)}`);
+            debug(`simpleDescriptor got Simple Descriptor  parsed: ${JSON.stringify(descriptor)}`);
             return {
-                profileID: descriptor.payload.profileid,
-                endpointID: descriptor.payload.endpoint,
-                deviceID: descriptor.sender,
-                inputClusters: descriptor.payload.inclusterlist,
-                outputClusters: descriptor.payload.outclusterlist,
+                profileID: descriptor[2].profileid,
+                endpointID: descriptor[2].endpoint,
+                deviceID: descriptor[2].deviceid,
+                inputClusters: descriptor[2].inclusterlist,
+                outputClusters: descriptor[2].outclusterlist,
             };
         }, networkAddress);
     }
