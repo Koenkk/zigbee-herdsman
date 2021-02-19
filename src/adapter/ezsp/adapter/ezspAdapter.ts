@@ -295,8 +295,19 @@ class EZSPAdapter extends Adapter {
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
     ): Promise<Events.ZclDataPayload> {
-        // todo
-        return Promise.reject();
+        return this.driver.queue.execute<Events.ZclDataPayload>(async () => {
+            const frame = new EmberApsFrame();
+            frame.clusterId = zclFrame.Cluster.ID;
+            frame.profileId = 0x0104;
+            frame.sequence = this.nextTransactionID();
+            frame.sourceEndpoint = sourceEndpoint || 0x01;
+            frame.destinationEndpoint = endpoint;
+            frame.groupId = 0;
+            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+            // const response = this.driver.waitFor(networkAddress, );
+            await this.driver.request(networkAddress, frame, zclFrame.toBuffer());
+            return Promise.reject();
+        }, networkAddress);
     }
 
     public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
