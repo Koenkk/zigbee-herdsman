@@ -32,7 +32,7 @@ class EZSPAdapter extends Adapter {
     private driver: Driver;
     private port: SerialPortOptions;
     private transactionID: number;
-    
+
     public constructor(networkOptions: NetworkOptions,
         serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
@@ -62,7 +62,7 @@ class EZSPAdapter extends Adapter {
         }
         if (frame.apsFrame.profileId == 0) {
             if (
-                frame.apsFrame.clusterId == EmberZDOCmd.Device_annce && 
+                frame.apsFrame.clusterId == EmberZDOCmd.Device_annce &&
                 frame.apsFrame.destinationEndpoint == 0) {
                 let nwk, rst, ieee;
                 [nwk, rst] = uint16_t.deserialize(uint16_t, frame.message.slice(1));
@@ -270,15 +270,15 @@ class EZSPAdapter extends Adapter {
             const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Simple_Desc_rsp);
             await this.driver.request(networkAddress, frame, payload);
             const message = await response.start().promise;
-            debug(`simpleDescriptor got Simple Descriptor payload: ${JSON.stringify(message.payload)}`);
+            debug('simpleDescriptor got Simple Descriptor payload %O:', message.payload);
             const descriptor = this.driver.parse_frame_payload("Simple_Desc_rsp", message.payload);
-            debug(`simpleDescriptor got Simple Descriptor  parsed: ${JSON.stringify(descriptor)}`);
+            debug('simpleDescriptor got Simple Descriptor  parsed: %O',descriptor);
             return {
-                profileID: descriptor[2].profileid,
-                endpointID: descriptor[2].endpoint,
-                deviceID: descriptor[2].deviceid,
-                inputClusters: descriptor[2].inclusterlist,
-                outputClusters: descriptor[2].outclusterlist,
+                profileID: descriptor[4].profileid,
+                endpointID: descriptor[4].endpoint,
+                deviceID: descriptor[4].deviceid,
+                inputClusters: descriptor[4].inclusterlist,
+                outputClusters: descriptor[4].outclusterlist,
             };
         }, networkAddress);
     }
