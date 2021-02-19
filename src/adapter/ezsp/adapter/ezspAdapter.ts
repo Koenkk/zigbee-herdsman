@@ -119,13 +119,12 @@ class EZSPAdapter extends Adapter {
         // todo
         let [nwk, ieee] = arr;
         debug('Device left network request received: %s %s', nwk, ieee);
-        // let devices = this.getDevices();
 
-        // let idx = devices.findIndex(d => d.nodeId === nwk && d.eui64 === ieee.toString());
-        // if (idx >= 0) {
-        //     devices = devices.splice(idx, 1);
-        //     writeFileSync(deviceDbPath, JSON.stringify(devices), 'utf8');
-        // }
+        const payload: Events.DeviceLeavePayload = {
+            networkAddress: nwk,
+            ieeeAddr: `0x${ieee.toString('hex')}`,
+        };
+        this.emit(Events.Events.deviceLeave, payload)
     }
 
     /**
