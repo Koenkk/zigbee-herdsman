@@ -41,7 +41,7 @@ export class Driver extends EventEmitter {
     private eui64ToNodeId = new Map<string, number>();
     private pending = new Map<number, Array<Deferred<any>>>();
     private _nwk: EmberNodeId;
-    private _ieee: EmberEUI64;
+    public ieee: EmberEUI64;
     private _multicast: Multicast;
     private waitress: Waitress<EmberObject, EmberWaitressMatcher>;
     public queue: Queue;
@@ -128,11 +128,11 @@ export class Driver extends EventEmitter {
         const [nwk] = await ezsp.execCommand('getNodeId');
         this._nwk = nwk;
         const [ieee] = await this.ezsp.execCommand('getEui64');
-        this._ieee = ieee;
+        this.ieee = ieee;
         debug.log('Network ready');
         ezsp.on('frame', this.handleFrame.bind(this))
-        this.handleNodeJoined(nwk, this._ieee, {}, {}, {});
-        debug.log(`EZSP nwk=${this._nwk}, IEEE=${this._ieee}`);
+        this.handleNodeJoined(nwk, this.ieee, {}, {}, {});
+        debug.log(`EZSP nwk=${this._nwk}, IEEE=${this.ieee}`);
 
         this._multicast = new Multicast(this);
         await this._multicast.startup([]);

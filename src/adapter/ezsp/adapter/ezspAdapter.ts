@@ -158,13 +158,58 @@ class EZSPAdapter extends Adapter {
     }
 
     public async getCoordinator(): Promise<Coordinator> {
-        // todo
-        return {
-            networkAddress: 0x0000,
-            manufacturerID: 0x1135,
-            ieeeAddr: '',
-            endpoints: [],
-        };
+        return this.driver.queue.execute<Coordinator>(async () => {
+            const networkAddress = 0x0000;
+            const frame = new EmberApsFrame();
+            frame.clusterId = EmberZDOCmd.Active_EP_req;
+            frame.profileId = 0;
+            frame.sequence = this.nextTransactionID();
+            frame.sourceEndpoint = 0;
+            frame.destinationEndpoint = 0;
+            frame.groupId = 0;
+            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+            const payload = this.driver.make_zdo_frame("Active_EP_req", frame.sequence, networkAddress);
+            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Active_EP_rsp);
+            await this.driver.request(networkAddress, frame, payload);
+            const activeEp = await response.start().promise;
+            debug(`activeEndpoints got active endpoints payload: ${JSON.stringify(activeEp.payload)}`);
+            const message = this.driver.parse_frame_payload("Active_EP_rsp", activeEp.payload);
+            debug(`activeEndpoints got active endpoints  parsed: ${JSON.stringify(message)}`);
+            const activeEndpoints = [...message[3]];
+
+            const endpoints = [];
+            for (const endpoint of activeEndpoints) {
+                const frame = new EmberApsFrame();
+                frame.clusterId = EmberZDOCmd.Simple_Desc_req;
+                frame.profileId = 0;
+                frame.sequence = this.nextTransactionID();
+                frame.sourceEndpoint = 0;
+                frame.destinationEndpoint = 0;
+                frame.groupId = 0;
+                frame.options = EmberApsOption.APS_OPTION_NONE;
+                const payload = this.driver.make_zdo_frame("Simple_Desc_req", frame.sequence, networkAddress, endpoint);
+                const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Simple_Desc_rsp);
+                await this.driver.request(networkAddress, frame, payload);
+                const message = await response.start().promise;
+                debug('simpleDescriptor got Simple Descriptor payload %O:', message.payload);
+                const descriptor = this.driver.parse_frame_payload("Simple_Desc_rsp", message.payload);
+                debug('simpleDescriptor got Simple Descriptor  parsed: %O',descriptor);
+                endpoints.push({
+                    profileID: descriptor[4].profileid,
+                    ID: descriptor[4].endpoint,
+                    deviceID: descriptor[4].deviceid,
+                    inputClusters: descriptor[4].inclusterlist,
+                    outputClusters: descriptor[4].outclusterlist,
+                });
+            }
+
+            return {
+                networkAddress: networkAddress,
+                manufacturerID: 0,
+                ieeeAddr: this.driver.ieee.toString(),
+                endpoints,
+            };
+        });
     }
 
     public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
@@ -201,7 +246,6 @@ class EZSPAdapter extends Adapter {
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
-        // todo
         try {
             debug(`Requesting 'Node Descriptor' for '${networkAddress}'`);
             const result = await this.nodeDescriptorInternal(networkAddress);
