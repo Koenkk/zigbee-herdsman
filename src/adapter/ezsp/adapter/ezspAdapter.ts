@@ -22,22 +22,24 @@ interface WaitressMatcher {
     address: number | string;
     endpoint: number;
     transactionSequenceNumber?: number;
-    frameType: FrameType;
     clusterID: number;
     commandIdentifier: number;
-    direction: number;
 }
 
 class EZSPAdapter extends Adapter {
     private driver: Driver;
     private port: SerialPortOptions;
     private transactionID: number;
+    private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
 
     public constructor(networkOptions: NetworkOptions,
         serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         this.transactionID = 1;
         this.port = serialPortOptions;
+        this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
+            this.waitressValidator, this.waitressTimeoutFormatter
+        );
         this.driver = new Driver();
         this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
         this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
@@ -81,7 +83,7 @@ class EZSPAdapter extends Adapter {
                     groupID: frame.apsFrame.groupId,
                 };
 
-                //this.waitress.resolve(payload);
+                this.waitress.resolve(payload);
                 this.emit(Events.Events.zclData, payload);
             } catch (error) {
                 const payload: Events.RawDataPayload = {
@@ -283,31 +285,71 @@ class EZSPAdapter extends Adapter {
         }, networkAddress);
     }
 
-    public waitFor(
-        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
-        transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): {promise: Promise<Events.ZclDataPayload>; cancel: () => void} {
-        // todo
-        return {cancel: undefined, promise: undefined};
-    }
-
     public async sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
     ): Promise<Events.ZclDataPayload> {
         return this.driver.queue.execute<Events.ZclDataPayload>(async () => {
-            const frame = new EmberApsFrame();
-            frame.clusterId = zclFrame.Cluster.ID;
-            frame.profileId = 0x0104;
-            frame.sequence = this.nextTransactionID();
-            frame.sourceEndpoint = sourceEndpoint || 0x01;
-            frame.destinationEndpoint = endpoint;
-            frame.groupId = 0;
-            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-            // const response = this.driver.waitFor(networkAddress, );
-            await this.driver.request(networkAddress, frame, zclFrame.toBuffer());
-            return Promise.reject();
+            return this.sendZclFrameToEndpointInternal(
+                ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
+                disableRecovery, 0, 0, false, false, false, null
+            );
         }, networkAddress);
+    }
+
+    private async sendZclFrameToEndpointInternal(
+        ieeeAddr: string, networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame,
+        timeout: number, disableResponse: boolean, disableRecovery: boolean, responseAttempt: number,
+        dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
+        assocRestore: {ieeeadr: string, nwkaddr: number, noderelation: number}
+    ): Promise<Events.ZclDataPayload> {
+        debug('sendZclFrameToEndpointInternal %s:%i/%i (%i,%i,%i)',
+            ieeeAddr, networkAddress, endpoint, responseAttempt, dataRequestAttempt, this.driver.queue.count());
+        let response = null;
+        const command = zclFrame.getCommand();
+        if (command.hasOwnProperty('response') && disableResponse === false) {
+            response = this.waitForInternal(
+                networkAddress, endpoint,
+                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
+            );
+        } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
+            response = this.waitForInternal(
+                networkAddress, endpoint,
+                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
+                timeout,
+            );
+        }
+
+        const frame = new EmberApsFrame();
+        frame.clusterId = zclFrame.Cluster.ID;
+        frame.profileId = 0x0104;
+        frame.sequence = this.nextTransactionID();
+        frame.sourceEndpoint = sourceEndpoint || 0x01;
+        frame.destinationEndpoint = endpoint;
+        frame.groupId = 0;
+        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+        // const response = this.driver.waitFor(networkAddress, );
+        const dataConfirmResult = await this.driver.request(networkAddress, frame, zclFrame.toBuffer());
+
+        if (response !== null) {
+            try {
+                const result = await response.start().promise;
+                return result;
+            } catch (error) {
+                debug('Response timeout (%s:%d,%d)', ieeeAddr, networkAddress, responseAttempt);
+                if (responseAttempt < 1 && !disableRecovery) {
+                    return this.sendZclFrameToEndpointInternal(
+                        ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, disableResponse,
+                        disableRecovery, responseAttempt + 1, dataRequestAttempt, checkedNetworkAddress,
+                        discoveredRoute, assocRemove, assocRestore,
+                    );
+                } else {
+                    throw error;
+                }
+            }
+        } else {
+            return null;
+        }
     }
 
     public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
@@ -394,6 +436,46 @@ class EZSPAdapter extends Adapter {
 
     public async setChannelInterPAN(channel: number): Promise<void> {
         //todo
+    }
+
+    private waitForInternal(
+        networkAddress: number, endpoint: number, transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
+    ): {start: () => {promise: Promise<Events.ZclDataPayload>}; cancel: () => void} {
+        const payload = {
+            address: networkAddress, endpoint, clusterID, commandIdentifier,
+            transactionSequenceNumber,
+        };
+
+        const waiter = this.waitress.waitFor(payload, timeout);
+        const cancel = (): void => this.waitress.remove(waiter.ID);
+        return {start: waiter.start, cancel};
+    }
+
+    public waitFor(
+        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
+        transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
+    ): {promise: Promise<Events.ZclDataPayload>; cancel: () => void} {
+        const waiter = this.waitForInternal(
+            networkAddress, endpoint, transactionSequenceNumber, clusterID,
+            commandIdentifier, timeout,
+        );
+
+        return {cancel: waiter.cancel, promise: waiter.start().promise};
+    }
+
+    private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
+        return `Timeout - ${matcher.address} - ${matcher.endpoint}` +
+            ` - ${matcher.transactionSequenceNumber} - ${matcher.clusterID}` +
+            ` - ${matcher.commandIdentifier} after ${timeout}ms`;
+    }
+
+    private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
+        const transactionSequenceNumber = payload.frame.Header.transactionSequenceNumber;
+        return (!matcher.address || payload.address === matcher.address) &&
+            payload.endpoint === matcher.endpoint &&
+            (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+            payload.frame.Cluster.ID === matcher.clusterID &&
+            matcher.commandIdentifier === payload.frame.Header.commandIdentifier;
     }
 }
 
