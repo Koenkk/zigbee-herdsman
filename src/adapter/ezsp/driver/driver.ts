@@ -128,11 +128,11 @@ export class Driver extends EventEmitter {
         const [nwk] = await ezsp.execCommand('getNodeId');
         this._nwk = nwk;
         const [ieee] = await this.ezsp.execCommand('getEui64');
-        this.ieee = ieee;
+        this.ieee = new EmberEUI64(ieee);
         debug.log('Network ready');
         ezsp.on('frame', this.handleFrame.bind(this))
         this.handleNodeJoined(nwk, this.ieee, {}, {}, {});
-        debug.log(`EZSP nwk=${this._nwk}, IEEE=${this.ieee}`);
+        debug.log(`EZSP nwk=${this._nwk}, IEEE=0x${this.ieee}`);
 
         this._multicast = new Multicast(this);
         await this._multicast.startup([]);

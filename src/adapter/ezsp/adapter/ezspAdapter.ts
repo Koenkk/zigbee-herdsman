@@ -3,13 +3,13 @@
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
-    StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions,
+    StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions
 } from '../../tstype';
 import Debug from "debug";
 import Adapter from '../../adapter';
 const debug = Debug("zigbee-herdsman:adapter:ezsp");
 import {Ezsp, Driver} from '../driver';
-import { EmberApsFrame } from '../driver/types/struct';
+import { EmberApsFrame, EmberMultiAddress } from '../driver/types/struct';
 import { EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64 } from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
@@ -206,7 +206,7 @@ class EZSPAdapter extends Adapter {
             return {
                 networkAddress: networkAddress,
                 manufacturerID: 0,
-                ieeeAddr: this.driver.ieee.toString(),
+                ieeeAddr: `0x${this.driver.ieee.toString()}`,
                 endpoints,
             };
         });
@@ -411,8 +411,26 @@ class EZSPAdapter extends Adapter {
         clusterID: number, destinationAddressOrGroup: string | number, type: 'endpoint' | 'group',
         destinationEndpoint?: number
     ): Promise<void> {
-        // todo
-        return Promise.reject();
+        return this.driver.queue.execute<void>(async () => {
+            const frame = new EmberApsFrame();
+            frame.clusterId = EmberZDOCmd.Bind_req;
+            frame.profileId = 0;
+            frame.sequence = this.nextTransactionID();
+            frame.sourceEndpoint = 0;
+            frame.destinationEndpoint = 0;
+            frame.groupId = 0;
+            frame.options = EmberApsOption.APS_OPTION_NONE;
+            const ieee = new EmberEUI64(sourceIeeeAddress);
+            const payload = this.driver.make_zdo_frame("Bind_req", frame.sequence, 
+                ieee, sourceEndpoint, clusterID, 
+                {addrmode: 0x03, nwk: destinationNetworkAddress, endpoint: destinationEndpoint}
+            );
+            debug('bind send frame %O:', payload);
+            const response = this.driver.waitFor(destinationNetworkAddress, EmberZDOCmd.Bind_rsp);
+            await this.driver.request(destinationNetworkAddress, frame, payload);
+            const message = await response.start().promise;
+            debug('bind got payload %O:', message);
+        }, destinationNetworkAddress);
     }
 
     public async unbind(

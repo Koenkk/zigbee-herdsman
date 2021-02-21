@@ -31,21 +31,20 @@ export class EmberMulticastId extends basic.uint8_t {
 
 export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
 
-    private _str: string;
-
     constructor(private _value: ArrayLike<number> | string) {
         super()
         if (typeof (_value) === 'string') {
-             if ((_value as string).length !== 16) {
+            if (_value.startsWith('0x'))
+                _value = _value.slice(2);
+            if ((_value as string).length !== 16) {
                 throw new Error('Incorrect value passed');
             }
-            this._str = _value;
             this._value = Buffer.from(_value, 'hex');
         } else {
             if (_value.length !== 8) {
                 throw new Error('Incorrect value passed');
             }
-            this._str = Buffer.from(_value as any).toString('hex');
+            this._value = _value;
         }
     }
 
@@ -70,7 +69,7 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
     }
 
     public toString() {
-        return this._str
+        return Buffer.from(this._value as any).toString('hex');
     }
 
     /*

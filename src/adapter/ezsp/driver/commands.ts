@@ -25,7 +25,7 @@ import {/* Basic Types */
     EmberKeyStruct, EmberNetworkInitStruct,  EmberZllNetwork, EmberZllInitialSecurityState,
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
     EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
-    EmberNodeDescriptor, EmberSimpleDescriptor
+    EmberNodeDescriptor, EmberSimpleDescriptor, EmberMultiAddress,
 } from './types';
 
 export const COMMANDS = {
@@ -701,6 +701,10 @@ export const ZDO_COMMANDS = {
     "Simple_Desc_rsp": [0x8004, [uint8_t, EmberStatus, EmberNodeId, uint8_t, EmberSimpleDescriptor], []],
     "Active_EP_req": [0x0005, [uint8_t, EmberNodeId], [EmberStatus]],
     "Active_EP_rsp": [0x8005, [EmberStatus, uint8_t, EmberNodeId, LVBytes], []],
+    "Bind_req": [0x0021, [uint8_t, EmberEUI64, uint8_t, uint16_t, EmberMultiAddress], [EmberStatus]],
+    "Bind_rsp": [0x8021, [EmberStatus], []],
+    "Unbind_req": [0x0022, [EmberNodeId, uint8_t, uint16_t, EmberMultiAddress], [EmberStatus]],
+    "Unbind_rsp": [0x8022, [EmberStatus], []],
 }
 
 //# sourceMappingURL=commands.js.map

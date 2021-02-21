@@ -21,7 +21,7 @@ import {
     EmberNetworkStatus, EmberIncomingMessageType, EmberOutgoingMessageType, EmberMacPassthroughType, EmberBindingType, EmberApsOption,
     EzspNetworkScanType, EmberJoinDecision, EmberInitialSecurityBitmask, EmberCurrentSecurityBitmask, EmberKeyType, EmberKeyStructBitmask,
     EmberDeviceUpdate, EmberKeyStatus, EmberCounterType, EmberJoinMethod, EmberZdoConfigurationFlags, EmberConcentratorType, EmberZllState,
-    EmberZllKeyIndex, EzspZllNetworkOperation, EzspSourceRouteOverheadInformation, EmberNetworkInitBitmask, EmberZDOCmd,
+    EmberZllKeyIndex, EzspZllNetworkOperation, EzspSourceRouteOverheadInformation, EmberNetworkInitBitmask, EmberZDOCmd, 
 } from './named';
 
 import {
@@ -32,7 +32,7 @@ import {
     EmberKeyStruct, EmberNetworkInitStruct, EmberZllSecurityAlgorithmData, EmberZllNetwork, EmberZllInitialSecurityState,
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
     EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
-    EmberNodeDescriptor, EmberSimpleDescriptor,
+    EmberNodeDescriptor, EmberSimpleDescriptor, EmberMultiAddress,
 } from './struct'
 
 export function deserialize(payload: any, schema: any[]) {
@@ -82,5 +82,5 @@ export {
     EmberKeyStruct, EmberNetworkInitStruct, EmberZllSecurityAlgorithmData, EmberZllNetwork, EmberZllInitialSecurityState,
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
     EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
-    EmberNodeDescriptor, EmberSimpleDescriptor,
+    EmberNodeDescriptor, EmberSimpleDescriptor, EmberMultiAddress,
 }
