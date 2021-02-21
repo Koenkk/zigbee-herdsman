@@ -703,8 +703,10 @@ export const ZDO_COMMANDS = {
     "Active_EP_rsp": [0x8005, [EmberStatus, uint8_t, EmberNodeId, LVBytes], []],
     "Bind_req": [0x0021, [uint8_t, EmberEUI64, uint8_t, uint16_t, EmberMultiAddress], [EmberStatus]],
     "Bind_rsp": [0x8021, [EmberStatus], []],
-    "Unbind_req": [0x0022, [EmberNodeId, uint8_t, uint16_t, EmberMultiAddress], [EmberStatus]],
+    "Unbind_req": [0x0022, [uint8_t, EmberEUI64, uint8_t, uint16_t, EmberMultiAddress], [EmberStatus]],
     "Unbind_rsp": [0x8022, [EmberStatus], []],
+    "Mgmt_Leave_req": [0x0034, [uint8_t, EmberEUI64, uint8_t], [EmberStatus]],
+    "Mgmt_Leave_rsp": [0x8034, [EmberStatus], []],
 }
 
 //# sourceMappingURL=commands.js.map

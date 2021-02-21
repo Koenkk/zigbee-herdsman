@@ -442,9 +442,23 @@ class EZSPAdapter extends Adapter {
         return Promise.reject();
     }
 
-    public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
-        // todo
-        return Promise.reject();
+    public removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
+        return this.driver.queue.execute<void>(async () => {
+            const frame = new EmberApsFrame();
+            frame.clusterId = EmberZDOCmd.Mgmt_Leave_req;
+            frame.profileId = 0;
+            frame.sequence = this.nextTransactionID();
+            frame.sourceEndpoint = 0;
+            frame.destinationEndpoint = 0;
+            frame.groupId = 0;
+            frame.options = EmberApsOption.APS_OPTION_NONE;
+            const ieee = new EmberEUI64(ieeeAddr);
+            const payload = this.driver.make_zdo_frame("Mgmt_Leave_req", frame.sequence, ieee, 0x00);
+            debug('removeDevice send frame %O:', payload);
+            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Mgmt_Leave_rsp);
+            await this.driver.request(networkAddress, frame, payload);
+            await response.start().promise;
+        }, networkAddress);
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
