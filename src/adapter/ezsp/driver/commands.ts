@@ -25,7 +25,7 @@ import {/* Basic Types */
     EmberKeyStruct, EmberNetworkInitStruct,  EmberZllNetwork, EmberZllInitialSecurityState,
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
     EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
-    EmberNodeDescriptor, EmberSimpleDescriptor, EmberMultiAddress,
+    EmberNodeDescriptor, EmberSimpleDescriptor, EmberMultiAddress, EmberNeighbors,
 } from './types';
 
 export const COMMANDS = {
@@ -707,6 +707,8 @@ export const ZDO_COMMANDS = {
     "Unbind_rsp": [0x8022, [EmberStatus], []],
     "Mgmt_Leave_req": [0x0034, [uint8_t, EmberEUI64, uint8_t], [EmberStatus]],
     "Mgmt_Leave_rsp": [0x8034, [EmberStatus], []],
+    "Mgmt_Lqi_req": [0x0031, [uint8_t, uint8_t], [EmberStatus]],
+    "Mgmt_Lqi_rsp": [0x8031, [uint8_t, EmberStatus, EmberNeighbors], [EmberStatus]],
 }
 
 //# sourceMappingURL=commands.js.map

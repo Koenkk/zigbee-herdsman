@@ -627,3 +627,23 @@ export class EmberMultiAddress extends EzspStruct {
         ['endpoint', basic.uint8_t],
     ]
 }
+
+export class EmberNeighbor extends EzspStruct {
+    static _fields = [
+        ['extendedpanid', basic.fixed_list(8, basic.uint8_t)],
+        ['ieee', named.EmberEUI64],
+        ['nodeid', named.EmberNodeId],
+        ['packed', basic.uint8_t],
+        ['permitjoining', basic.uint8_t],
+        ['depth', basic.uint8_t],
+        ['lqi', basic.uint8_t],
+    ]
+}
+
+export class EmberNeighbors extends EzspStruct {
+    static _fields = [
+        ['entries', basic.uint8_t],
+        ['startindex', basic.uint8_t],
+        ['neighbors', basic.LVList(EmberNeighbor)],
+    ]
+}

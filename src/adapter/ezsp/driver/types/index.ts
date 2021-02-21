@@ -32,7 +32,7 @@ import {
     EmberKeyStruct, EmberNetworkInitStruct, EmberZllSecurityAlgorithmData, EmberZllNetwork, EmberZllInitialSecurityState,
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
     EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
-    EmberNodeDescriptor, EmberSimpleDescriptor, EmberMultiAddress,
+    EmberNodeDescriptor, EmberSimpleDescriptor, EmberMultiAddress, EmberNeighbors,
 } from './struct'
 
 export function deserialize(payload: any, schema: any[]) {
@@ -82,5 +82,5 @@ export {
     EmberKeyStruct, EmberNetworkInitStruct, EmberZllSecurityAlgorithmData, EmberZllNetwork, EmberZllInitialSecurityState,
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
     EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
-    EmberNodeDescriptor, EmberSimpleDescriptor, EmberMultiAddress,
+    EmberNodeDescriptor, EmberSimpleDescriptor, EmberMultiAddress, EmberNeighbors,
 }

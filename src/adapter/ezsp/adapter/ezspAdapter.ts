@@ -10,7 +10,7 @@ import Adapter from '../../adapter';
 const debug = Debug("zigbee-herdsman:adapter:ezsp");
 import {Ezsp, Driver} from '../driver';
 import { EmberApsFrame, EmberMultiAddress } from '../driver/types/struct';
-import { EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64 } from '../driver/types';
+import { EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus } from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
 import * as Zcl from '../../../zcl';
@@ -236,8 +236,61 @@ class EZSPAdapter extends Adapter {
     }
 
     public async lqi(networkAddress: number): Promise<LQI> {
-        // todo
-        return Promise.reject();
+        return this.driver.queue.execute<LQI>(async (): Promise<LQI> => {
+            const neighbors: LQINeighbor[] = [];
+
+            const frame = new EmberApsFrame();
+            frame.clusterId = EmberZDOCmd.Mgmt_Lqi_req;
+            frame.profileId = 0;
+            frame.sequence = this.nextTransactionID();
+            frame.sourceEndpoint = 0;
+            frame.destinationEndpoint = 0;
+            frame.groupId = 0;
+            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+            const request = async (startIndex: number): Promise<any> => {
+                frame.sequence = this.nextTransactionID();
+                const payload = this.driver.make_zdo_frame("Mgmt_Lqi_req", frame.sequence, startIndex);
+                const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Mgmt_Lqi_rsp);
+                await this.driver.request(networkAddress, frame, payload);
+                const message = await response.start().promise;
+                debug(`lqi got payload: ${JSON.stringify(message.payload)}`);
+                const result = this.driver.parse_frame_payload("Mgmt_Lqi_rsp", message.payload);
+                debug(`lqi got  parsed: ${JSON.stringify(result)}`);
+
+                if (result[1] !== EmberStatus.SUCCESS) {
+                    throw new Error(`LQI for '${networkAddress}' failed`);
+                }
+
+                return result;
+            };
+
+
+            // eslint-disable-next-line
+            const add = (list: any) => {
+                for (const entry of list) {
+                    neighbors.push({
+                        linkquality: entry.lqi,
+                        networkAddress: entry.nodeid,
+                        ieeeAddr: `0x${new EmberEUI64(entry.ieee).toString()}`,
+                        relationship: (entry.packed >> 4) & 0x7,
+                        depth: entry.depth,
+                    });
+                }
+            };
+
+            let response = await request(0);
+            add(response[2].neighbors);
+            const size = response[2].entries;
+            let nextStartIndex = response[2].neighbors;
+
+            while (neighbors.length < size) {
+                response = await request(nextStartIndex);
+                add(response[2].neighbors);
+                nextStartIndex += response[2].neighbors.length;
+            }
+
+            return {neighbors};
+        }, networkAddress);
     }
 
     public async routingTable(networkAddress: number): Promise<RoutingTable> {
