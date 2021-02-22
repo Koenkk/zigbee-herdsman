@@ -491,8 +491,26 @@ class EZSPAdapter extends Adapter {
         clusterID: number, destinationAddressOrGroup: string | number, type: 'endpoint' | 'group',
         destinationEndpoint: number
     ): Promise<void> {
-        // todo
-        return Promise.reject();
+        return this.driver.queue.execute<void>(async () => {
+            const frame = new EmberApsFrame();
+            frame.clusterId = EmberZDOCmd.Unbind_req;
+            frame.profileId = 0;
+            frame.sequence = this.nextTransactionID();
+            frame.sourceEndpoint = 0;
+            frame.destinationEndpoint = 0;
+            frame.groupId = 0;
+            frame.options = EmberApsOption.APS_OPTION_NONE;
+            const ieee = new EmberEUI64(sourceIeeeAddress);
+            const payload = this.driver.make_zdo_frame("Unbind_req", frame.sequence, 
+                ieee, sourceEndpoint, clusterID, 
+                {addrmode: 0x03, nwk: destinationNetworkAddress, endpoint: destinationEndpoint}
+            );
+            debug('Unbind send frame %O:', payload);
+            const response = this.driver.waitFor(destinationNetworkAddress, EmberZDOCmd.Unbind_rsp);
+            await this.driver.request(destinationNetworkAddress, frame, payload);
+            const message = await response.start().promise;
+            debug('Unbind got payload %O:', message);
+        }, destinationNetworkAddress);
     }
 
     public removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
