@@ -103,7 +103,7 @@ export class Driver extends EventEmitter {
         [special, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         const vers = `${major}.${minor}.${patch}.${special} build ${build}`;
         debug.log(`EmberZNet version: ${vers}`);
-        this.version = {product: this.ezsp.ezsp_version, majorrel: `${major}`, minorrel: `${minor}`, maintrel: `${patch} `, revision: vers};
+        this.version = {product: this.ezsp.ezspV, majorrel: `${major}`, minorrel: `${minor}`, maintrel: `${patch} `, revision: vers};
 
         if (await this.needsToBeInitialised(nwkOpt)) {
             const currentState = await ezsp.execCommand('networkState');
@@ -303,7 +303,7 @@ export class Driver extends EventEmitter {
         const responseName = EmberZDOCmd.valueName(EmberZDOCmd, responseCmd);
         debug.log(`${requestName} params: ${[...args]}`);
         const frame = this.makeApsFrame(requestCmd as number);
-        const payload = this.make_zdo_frame(requestName, frame.sequence, ...args);
+        const payload = this.makeZDOframe(requestName, frame.sequence, ...args);
         debug.log(`${requestName}  frame: ${payload}`);
         const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence);
         await this.request(networkAddress, frame, payload);
@@ -376,8 +376,8 @@ export class Driver extends EventEmitter {
         return await this.ezsp.execCommand('permitJoining', seconds);
     }
 
-    public make_zdo_frame(name: string, ...args: any[]) {
-        return this.ezsp.make_zdo_frame(name, ...args);
+    public makeZDOframe(name: string, ...args: any[]) {
+        return this.ezsp.makeZDOframe(name, ...args);
     }
 
     public parse_frame_payload(name: string, obj: Buffer) {

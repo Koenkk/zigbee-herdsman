@@ -6,6 +6,7 @@ import { Deferred } from './utils';
 import { EmberStatus, EmberOutgoingMessageType, EzspPolicyId, EzspDecisionId, EzspDecisionBitmask, EmberConcentratorType, EzspConfigId, EmberZdoConfigurationFlags } from './types/named';
 import { EventEmitter } from 'events';
 import { EmberApsFrame } from './types/struct';
+import { Queue, Waitress } from '../../../utils';
 import Debug from "debug";
 
 const debug = {
@@ -19,14 +20,25 @@ const MTOR_MAX_INTERVAL = 90;
 const MTOR_ROUTE_ERROR_THRESHOLD = 4;
 const MTOR_DELIVERY_FAIL_THRESHOLD = 3;
 
+type EZSPFrame = {
+    sequence: number,
+    frameId: number,
+    frameName: string,
+    payload: any
+};
+
+type EZSPWaitressMatcher = {
+    sequence: number,
+    frameId: number
+};
+
 export class Ezsp extends EventEmitter {
-    ezsp_version = 4;
-    // command sequence
-    cmdSeq = 0;
-    _awaiting = new Map<number, { expectedId: number, schema: any, deferred: Deferred<Buffer> }>();
+    ezspV = 4;
+    cmdSeq = 0;  // command sequence
     COMMANDS_BY_ID = new Map<number, { name: string, inArgs: any[], outArgs: any[] }>();
-    _cbCounter = 0;
     private serialDriver: SerialDriver;
+    private waitress: Waitress<EZSPFrame, EZSPWaitressMatcher>;
+    private queue: Queue;
 
     constructor() {
         super();
@@ -34,6 +46,9 @@ export class Ezsp extends EventEmitter {
             let details = (<any>COMMANDS)[name];
             this.COMMANDS_BY_ID.set(details[0], { name, inArgs: details[1], outArgs: details[2] });
         }
+        this.queue = new Queue();
+        this.waitress = new Waitress<EZSPFrame, EZSPWaitressMatcher>(
+            this.waitressValidator, this.waitressTimeoutFormatter);
         
         this.serialDriver = new SerialDriver();
         this.serialDriver.on('received', this.onFrameReceived.bind(this));
@@ -56,7 +71,7 @@ export class Ezsp extends EventEmitter {
         */
         debug.log(`<=== Frame: ${data.toString('hex')}`);
         var frame_id: number, result, schema, sequence;
-        if ((this.ezsp_version < 8)) {
+        if ((this.ezspV < 8)) {
             [sequence, frame_id, data] = [data[0], data[2], data.slice(3)];
         } else {
             sequence = data[0];
@@ -69,44 +84,35 @@ export class Ezsp extends EventEmitter {
                 data = data.slice(2);
             }
         }
-        let cmd = this.COMMANDS_BY_ID.get(frame_id);
+        const cmd = this.COMMANDS_BY_ID.get(frame_id);
         if (!cmd) throw new Error('Unrecognized command from FrameID' + frame_id);
-        let frameName = cmd.name;
+        const frameName = cmd.name;
         debug.log("<=== Application frame %s (%s) received: %s", frame_id, frameName, data.toString('hex'));
-        if (this._awaiting.has(sequence)) {
-            let entry = this._awaiting.get(sequence);
-            this._awaiting.delete(sequence);
-            if (entry) {
-                console.assert(entry.expectedId === frame_id);
-                [result, data] = t.deserialize(data, entry.schema);
-                debug.log(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
-                entry.deferred.resolve(result);
-            }
-        } else {
-            schema = cmd.outArgs;
-            frameName = cmd.name;
-            [result, data] = t.deserialize(data, schema);
-            debug.log(`<=== Application frame ${frame_id} (${frameName}): ${result}`);
-            super.emit('frame', frameName, ...result);
-        }
+        schema = cmd.outArgs;
+        [result, data] = t.deserialize(data, schema);
+        debug.log(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
+        this.waitress.resolve({frameId: frame_id, frameName: frameName, sequence: sequence, payload: result});
+
+        this.emit('frame', frameName, ...result);
+        
         if ((frame_id === 0)) {
-            this.ezsp_version = result[0];
+            this.ezspV = result[0];
         }
     }
 
     async version() {
-        let version = this.ezsp_version;
-        let result = await this._command("version", version);
+        let version = this.ezspV;
+        let result = await this.command("version", version);
         if ((result[0] !== version)) {
             debug.log("Switching to eszp version %d", result[0]);
-            await this._command("version", result[0]);
+            await this.command("version", result[0]);
         }
         return result[0];
     }
 
     async networkInit() {
         let result;
-        [result] = await this._command("networkInit");
+        [result] = await this.command("networkInit");
         console.log('network init result', result);
         return result === EmberStatus.SUCCESS;
     }
@@ -119,7 +125,7 @@ export class Ezsp extends EventEmitter {
                 fut.resolve(response);
             }
         })
-        v = await this._command("leaveNetwork");
+        v = await this.command("leaveNetwork");
         if ((v[0] !== EmberStatus.SUCCESS)) {
             debug.log("Failure to leave network:" + v);
             throw new Error(("Failure to leave network:" + v));
@@ -262,20 +268,20 @@ export class Ezsp extends EventEmitter {
         }
     }
    
-    public make_zdo_frame(name: string, ...args: any[]): Buffer {
+    public makeZDOframe(name: string, ...args: any[]): Buffer {
         var c, data, frame, cmd_id;
         c = (<any>ZDO_COMMANDS)[name];
         data = t.serialize(args, c[1]);
         return data;
     }
 
-    private _ezsp_frame(name: string, ...args: any[]) {
+    private makeFrame(name: string, ...args: any[]) {
         var c, data, frame, cmd_id;
         c = (<any>COMMANDS)[name];
         data = t.serialize(args, c[1]);
         frame = [(this.cmdSeq & 255)];
-        if ((this.ezsp_version < 8)) {
-            if ((this.ezsp_version >= 5)) {
+        if ((this.ezspV < 8)) {
+            if ((this.ezspV >= 5)) {
                 frame.push(0x00, 0xFF, 0x00, c[0]);
             } else {
                 frame.push(0x00, c[0]);
@@ -287,17 +293,18 @@ export class Ezsp extends EventEmitter {
         return Buffer.concat([Buffer.from(frame), data]);
     }
 
-    private _command(name: string, ...args: any[]): Promise<Buffer> {
-        var c, data, deferred;
+    private command(name: string, ...args: any[]): Promise<Buffer> {
         debug.log(`===> Send command ${name}: (${args})`);
-        data = this._ezsp_frame(name, ...args);
-        debug.log(`===> Send data    ${name}: (${data.toString('hex')})`);
-        this.serialDriver.send(data);
-        c = (<any>COMMANDS)[name];
-        deferred = new Deferred<Buffer>();
-        this._awaiting.set(this.cmdSeq, { expectedId: c[0], schema: c[2], deferred });
-        this.cmdSeq = (this.cmdSeq + 1 % 256);
-        return deferred.promise;
+        return this.queue.execute<Buffer>(async (): Promise<Buffer> => {
+            const data = this.makeFrame(name, ...args);
+            debug.log(`===> Send data    ${name}: (${data.toString('hex')})`);
+            const c = (<any>COMMANDS)[name];
+            const waiter = this.waitFor(c[0], this.cmdSeq);
+            this.cmdSeq = (this.cmdSeq + 1 % 256);
+            this.serialDriver.send(data);
+            const response = await waiter.start().promise;
+            return response.payload;
+        });
     }
 
     async formNetwork(parameters: {}) {
@@ -308,7 +315,7 @@ export class Ezsp extends EventEmitter {
                 fut.resolve(response);
             }
         })
-        v = await this._command("formNetwork", parameters);
+        v = await this.command("formNetwork", parameters);
         if ((v[0] !== EmberStatus.SUCCESS)) {
             debug.log("Failure forming network:" + v);
             throw new Error(("Failure forming network:" + v));
@@ -325,7 +332,7 @@ export class Ezsp extends EventEmitter {
         if (Object.keys(COMMANDS).indexOf(name) < 0) {
             throw new Error('Unknown command: ' + name);
         }
-        return this._command(name, ...args);
+        return this.command(name, ...args);
     }
 
     public parse_frame_payload(name: string, data: Buffer) {
@@ -356,5 +363,19 @@ export class Ezsp extends EventEmitter {
             debug.log("Couldn't set concentrator type %s: %s", true, res);
         }
         await this.execCommand('setSourceRouteDiscoveryMode', 1);
+    }
+    
+    public waitFor(frameId: number, sequence: number, timeout: number = 30000)
+           : {start: () => {promise: Promise<EZSPFrame>; ID: number}; ID: number} {
+        return this.waitress.waitFor({frameId, sequence}, timeout);
+    }
+
+    private waitressTimeoutFormatter(matcher: EZSPWaitressMatcher, timeout: number): string {
+        return `${JSON.stringify(matcher)} after ${timeout}ms`;
+    }
+
+    private waitressValidator(payload: EZSPFrame, matcher: EZSPWaitressMatcher): boolean {
+        return (payload.sequence === matcher.sequence &&
+            payload.frameId === matcher.frameId);
     }
 }
