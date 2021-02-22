@@ -8,14 +8,11 @@ import {
 import Debug from "debug";
 import Adapter from '../../adapter';
 const debug = Debug("zigbee-herdsman:adapter:ezsp");
-import {Ezsp, Driver} from '../driver';
-import { EmberApsFrame, EmberMultiAddress } from '../driver/types/struct';
+import {Driver} from '../driver';
 import { EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus } from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
-import * as Zcl from '../../../zcl';
-import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from '../../../controller/tstype';
-import {Queue, Waitress, Wait} from '../../../utils';
+import {Waitress} from '../../../utils';
 
 
 interface WaitressMatcher {
@@ -29,13 +26,11 @@ interface WaitressMatcher {
 class EZSPAdapter extends Adapter {
     private driver: Driver;
     private port: SerialPortOptions;
-    private transactionID: number;
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
 
     public constructor(networkOptions: NetworkOptions,
         serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
-        this.transactionID = 1;
         this.port = serialPortOptions;
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
@@ -44,16 +39,6 @@ class EZSPAdapter extends Adapter {
         this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
         this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
         this.driver.on('incomingMessage', this.processMessage.bind(this));
-    }
-
-    private nextTransactionID(): number {
-        this.transactionID++;
-
-        if (this.transactionID > 255) {
-            this.transactionID = 1;
-        }
-
-        return this.transactionID;
     }
 
     private async processMessage(frame: any) {
@@ -160,40 +145,18 @@ class EZSPAdapter extends Adapter {
     public async getCoordinator(): Promise<Coordinator> {
         return this.driver.queue.execute<Coordinator>(async () => {
             const networkAddress = 0x0000;
-            const frame = new EmberApsFrame();
-            frame.clusterId = EmberZDOCmd.Active_EP_req;
-            frame.profileId = 0;
-            frame.sequence = this.nextTransactionID();
-            frame.sourceEndpoint = 0;
-            frame.destinationEndpoint = 0;
-            frame.groupId = 0;
-            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-            const payload = this.driver.make_zdo_frame("Active_EP_req", frame.sequence, networkAddress);
-            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Active_EP_rsp);
-            await this.driver.request(networkAddress, frame, payload);
-            const activeEp = await response.start().promise;
-            debug(`activeEndpoints got active endpoints payload: ${JSON.stringify(activeEp.payload)}`);
-            const message = this.driver.parse_frame_payload("Active_EP_rsp", activeEp.payload);
-            debug(`activeEndpoints got active endpoints  parsed: ${JSON.stringify(message)}`);
+            const message = await this.driver.zdoRequest(
+                networkAddress, EmberZDOCmd.Active_EP_req, EmberZDOCmd.Active_EP_rsp,
+                networkAddress
+            );
             const activeEndpoints = [...message[3]];
 
             const endpoints = [];
             for (const endpoint of activeEndpoints) {
-                const frame = new EmberApsFrame();
-                frame.clusterId = EmberZDOCmd.Simple_Desc_req;
-                frame.profileId = 0;
-                frame.sequence = this.nextTransactionID();
-                frame.sourceEndpoint = 0;
-                frame.destinationEndpoint = 0;
-                frame.groupId = 0;
-                frame.options = EmberApsOption.APS_OPTION_NONE;
-                const payload = this.driver.make_zdo_frame("Simple_Desc_req", frame.sequence, networkAddress, endpoint);
-                const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Simple_Desc_rsp);
-                await this.driver.request(networkAddress, frame, payload);
-                const message = await response.start().promise;
-                debug('simpleDescriptor got Simple Descriptor payload %O:', message.payload);
-                const descriptor = this.driver.parse_frame_payload("Simple_Desc_rsp", message.payload);
-                debug('simpleDescriptor got Simple Descriptor  parsed: %O',descriptor);
+                const descriptor = await this.driver.zdoRequest(
+                    networkAddress, EmberZDOCmd.Simple_Desc_req, EmberZDOCmd.Simple_Desc_rsp,
+                    networkAddress, endpoint
+                );
                 endpoints.push({
                     profileID: descriptor[4].profileid,
                     ID: descriptor[4].endpoint,
@@ -239,24 +202,11 @@ class EZSPAdapter extends Adapter {
         return this.driver.queue.execute<LQI>(async (): Promise<LQI> => {
             const neighbors: LQINeighbor[] = [];
 
-            const frame = new EmberApsFrame();
-            frame.clusterId = EmberZDOCmd.Mgmt_Lqi_req;
-            frame.profileId = 0;
-            frame.sequence = this.nextTransactionID();
-            frame.sourceEndpoint = 0;
-            frame.destinationEndpoint = 0;
-            frame.groupId = 0;
-            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
             const request = async (startIndex: number): Promise<any> => {
-                frame.sequence = this.nextTransactionID();
-                const payload = this.driver.make_zdo_frame("Mgmt_Lqi_req", frame.sequence, startIndex);
-                const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Mgmt_Lqi_rsp);
-                await this.driver.request(networkAddress, frame, payload);
-                const message = await response.start().promise;
-                debug(`lqi got payload: ${JSON.stringify(message.payload)}`);
-                const result = this.driver.parse_frame_payload("Mgmt_Lqi_rsp", message.payload);
-                debug(`lqi got  parsed: ${JSON.stringify(result)}`);
-
+                const result = await this.driver.zdoRequest(
+                    networkAddress, EmberZDOCmd.Mgmt_Lqi_req, EmberZDOCmd.Mgmt_Lqi_rsp,
+                    startIndex
+                );
                 if (result[1] !== EmberStatus.SUCCESS) {
                     throw new Error(`LQI for '${networkAddress}' failed`);
                 }
@@ -310,45 +260,22 @@ class EZSPAdapter extends Adapter {
 
     private async nodeDescriptorInternal(networkAddress: number): Promise<NodeDescriptor> {
         return this.driver.queue.execute<NodeDescriptor>(async () => {
-            const frame = new EmberApsFrame();
-            frame.clusterId = EmberZDOCmd.Node_Desc_req;
-            frame.profileId = 0;
-            frame.sequence = this.nextTransactionID();
-            frame.sourceEndpoint = 0;
-            frame.destinationEndpoint = 0;
-            frame.groupId = 0;
-            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-            const payload = this.driver.make_zdo_frame("Node_Desc_req", frame.sequence, networkAddress);
-            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Node_Desc_rsp);
-            await this.driver.request(networkAddress, frame, payload);
-            const descriptor = await response.start().promise;
-            debug(`nodeDescriptorInternal got descriptor payload: ${JSON.stringify(descriptor.payload)}`);
-            const message = this.driver.parse_frame_payload("Node_Desc_rsp", descriptor.payload);
-            debug(`nodeDescriptorInternal got descriptor  parsed: ${message}`);
-            return {manufacturerCode: message[2].manufacturer_code, type: (message[1] == 0) ? 'Coordinator' : 'EndDevice'};
+            const descriptor = await this.driver.zdoRequest(
+                networkAddress, EmberZDOCmd.Node_Desc_req, EmberZDOCmd.Node_Desc_rsp,
+                networkAddress
+            );
+            return {manufacturerCode: descriptor[2].manufacturer_code, type: (descriptor[1] == 0) ? 'Coordinator' : 'EndDevice'};
         });
     }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
-        // todo
         debug(`Requesting 'Active endpoints' for '${networkAddress}'`);
         return this.driver.queue.execute<ActiveEndpoints>(async () => {
-            const frame = new EmberApsFrame();
-            frame.clusterId = EmberZDOCmd.Active_EP_req;
-            frame.profileId = 0;
-            frame.sequence = this.nextTransactionID();
-            frame.sourceEndpoint = 0;
-            frame.destinationEndpoint = 0;
-            frame.groupId = 0;
-            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-            const payload = this.driver.make_zdo_frame("Active_EP_req", frame.sequence, networkAddress);
-            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Active_EP_rsp);
-            await this.driver.request(networkAddress, frame, payload);
-            const activeEp = await response.start().promise;
-            debug(`activeEndpoints got active endpoints payload: ${JSON.stringify(activeEp.payload)}`);
-            const message = this.driver.parse_frame_payload("Active_EP_rsp", activeEp.payload);
-            debug(`activeEndpoints got active endpoints  parsed: ${JSON.stringify(message)}`);
-            return {endpoints: [...message[3]]};
+            const endpoints = await this.driver.zdoRequest(
+                networkAddress, EmberZDOCmd.Active_EP_req, EmberZDOCmd.Active_EP_rsp,
+                networkAddress
+            );
+            return {endpoints: [...endpoints[3]]};
         }, networkAddress);
     }
 
@@ -356,21 +283,10 @@ class EZSPAdapter extends Adapter {
         // todo
         debug(`Requesting 'Simple Descriptor' for '${networkAddress}' endpoint ${endpointID}`);
         return this.driver.queue.execute<SimpleDescriptor>(async () => {
-            const frame = new EmberApsFrame();
-            frame.clusterId = EmberZDOCmd.Simple_Desc_req;
-            frame.profileId = 0;
-            frame.sequence = this.nextTransactionID();
-            frame.sourceEndpoint = 0;
-            frame.destinationEndpoint = 0;
-            frame.groupId = 0;
-            frame.options = EmberApsOption.APS_OPTION_NONE;
-            const payload = this.driver.make_zdo_frame("Simple_Desc_req", frame.sequence, networkAddress, endpointID);
-            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Simple_Desc_rsp);
-            await this.driver.request(networkAddress, frame, payload);
-            const message = await response.start().promise;
-            debug('simpleDescriptor got Simple Descriptor payload %O:', message.payload);
-            const descriptor = this.driver.parse_frame_payload("Simple_Desc_rsp", message.payload);
-            debug('simpleDescriptor got Simple Descriptor  parsed: %O',descriptor);
+            const descriptor = await this.driver.zdoRequest(
+                networkAddress, EmberZDOCmd.Simple_Desc_req, EmberZDOCmd.Simple_Desc_rsp,
+                networkAddress, endpointID
+            );
             return {
                 profileID: descriptor[4].profileid,
                 endpointID: descriptor[4].endpoint,
@@ -416,15 +332,13 @@ class EZSPAdapter extends Adapter {
             );
         }
 
-        const frame = new EmberApsFrame();
-        frame.clusterId = zclFrame.Cluster.ID;
+        const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID);
         frame.profileId = 0x0104;
-        frame.sequence = this.nextTransactionID();
         frame.sourceEndpoint = sourceEndpoint || 0x01;
         frame.destinationEndpoint = endpoint;
         frame.groupId = 0;
         frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-        // const response = this.driver.waitFor(networkAddress, );
+        
         const dataConfirmResult = await this.driver.request(networkAddress, frame, zclFrame.toBuffer());
 
         if (response !== null) {
@@ -464,25 +378,13 @@ class EZSPAdapter extends Adapter {
         destinationEndpoint?: number
     ): Promise<void> {
         return this.driver.queue.execute<void>(async () => {
-            const frame = new EmberApsFrame();
-            frame.clusterId = EmberZDOCmd.Bind_req;
-            frame.profileId = 0;
-            frame.sequence = this.nextTransactionID();
-            frame.sourceEndpoint = 0;
-            frame.destinationEndpoint = 0;
-            frame.groupId = 0;
-            frame.options = EmberApsOption.APS_OPTION_NONE;
             const ieee = new EmberEUI64(sourceIeeeAddress);
             const ieeeDst = new EmberEUI64(destinationAddressOrGroup as string);
-            const payload = this.driver.make_zdo_frame("Bind_req", frame.sequence, 
+            await this.driver.zdoRequest(
+                destinationNetworkAddress, EmberZDOCmd.Bind_req, EmberZDOCmd.Bind_rsp,
                 ieee, sourceEndpoint, clusterID, 
                 {addrmode: 0x03, ieee: ieeeDst, endpoint: destinationEndpoint}
             );
-            debug('bind send frame %O:', payload);
-            const response = this.driver.waitFor(destinationNetworkAddress, EmberZDOCmd.Bind_rsp);
-            await this.driver.request(destinationNetworkAddress, frame, payload);
-            const message = await response.start().promise;
-            debug('bind got payload %O:', message);
         }, destinationNetworkAddress);
     }
 
@@ -492,44 +394,23 @@ class EZSPAdapter extends Adapter {
         destinationEndpoint: number
     ): Promise<void> {
         return this.driver.queue.execute<void>(async () => {
-            const frame = new EmberApsFrame();
-            frame.clusterId = EmberZDOCmd.Unbind_req;
-            frame.profileId = 0;
-            frame.sequence = this.nextTransactionID();
-            frame.sourceEndpoint = 0;
-            frame.destinationEndpoint = 0;
-            frame.groupId = 0;
-            frame.options = EmberApsOption.APS_OPTION_NONE;
             const ieee = new EmberEUI64(sourceIeeeAddress);
             const ieeeDst = new EmberEUI64(destinationAddressOrGroup as string);
-            const payload = this.driver.make_zdo_frame("Unbind_req", frame.sequence, 
+            await this.driver.zdoRequest(
+                destinationNetworkAddress, EmberZDOCmd.Unbind_req, EmberZDOCmd.Unbind_rsp,
                 ieee, sourceEndpoint, clusterID, 
                 {addrmode: 0x03, ieee: ieeeDst, endpoint: destinationEndpoint}
             );
-            debug('Unbind send frame %O:', payload);
-            const response = this.driver.waitFor(destinationNetworkAddress, EmberZDOCmd.Unbind_rsp);
-            await this.driver.request(destinationNetworkAddress, frame, payload);
-            const message = await response.start().promise;
-            debug('Unbind got payload %O:', message);
         }, destinationNetworkAddress);
     }
 
     public removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
         return this.driver.queue.execute<void>(async () => {
-            const frame = new EmberApsFrame();
-            frame.clusterId = EmberZDOCmd.Mgmt_Leave_req;
-            frame.profileId = 0;
-            frame.sequence = this.nextTransactionID();
-            frame.sourceEndpoint = 0;
-            frame.destinationEndpoint = 0;
-            frame.groupId = 0;
-            frame.options = EmberApsOption.APS_OPTION_NONE;
             const ieee = new EmberEUI64(ieeeAddr);
-            const payload = this.driver.make_zdo_frame("Mgmt_Leave_req", frame.sequence, ieee, 0x00);
-            debug('removeDevice send frame %O:', payload);
-            const response = this.driver.waitFor(networkAddress, EmberZDOCmd.Mgmt_Leave_rsp);
-            await this.driver.request(networkAddress, frame, payload);
-            await response.start().promise;
+            await this.driver.zdoRequest(
+                networkAddress, EmberZDOCmd.Mgmt_Leave_req, EmberZDOCmd.Mgmt_Leave_rsp,
+                ieee, 0x00
+            );
         }, networkAddress);
     }
 

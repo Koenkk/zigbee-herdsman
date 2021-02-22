@@ -1,13 +1,13 @@
 import * as TsType from './../../tstype';
 import { Ezsp } from './ezsp';
-import { EzspConfigId, EmberZdoConfigurationFlags, EmberStatus, EmberNodeType, EmberNodeId, uint16_t, uint8_t } from './types';
+import { EmberStatus, EmberNodeType, EmberNodeId, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption } from './types';
 import { EventEmitter } from "events";
 import { EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState } from './types/struct';
 import { EmberObject } from './types/emberObj';
 import { Deferred, ember_security } from './utils';
 import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask, EzspMfgTokenId, EmberNetworkStatus, EmberKeyType } from './types/named';
 import { Multicast } from './multicast';
-import {Queue, Waitress, Wait} from '../../../utils';
+import { Queue, Waitress } from '../../../utils';
 import Debug from "debug";
 import equals from 'fast-deep-equal/es6';
 
@@ -48,16 +48,11 @@ export class Driver extends EventEmitter {
     private _multicast: Multicast;
     private waitress: Waitress<EmberObject, EmberWaitressMatcher>;
     public queue: Queue;
+    private transactionID: number;
 
-    constructor(){
+    constructor() {
         super();
-
-        // if (!nodeInfo) return;
-
-        // for(let node of nodeInfo){
-        //     let eui64 = node.eui64 instanceof EmberEUI64 ? node.eui64 : new EmberEUI64(node.eui64);
-        //     this.eui64ToNodeId.set(eui64.toString(), node.nodeId);
-        // }
+        this.transactionID = 1;
         this.queue = new Queue();
 
         this.waitress = new Waitress<EmberObject, EmberWaitressMatcher>(
@@ -286,66 +281,40 @@ export class Driver extends EventEmitter {
         } catch (e) {
             return false;
         }
-        // let seq = apsFrame.sequence+1;
+    }
+    
+    private nextTransactionID(): number {
+        this.transactionID = (this.transactionID+1) & 0xFF;
+        return this.transactionID;
+    }
 
-        // console.assert(!this.pending.has(seq));
+    public makeApsFrame(clusterId: number) {
+        const frame = new EmberApsFrame();
+        frame.clusterId = clusterId;
+        frame.profileId = 0;
+        frame.sequence = this.nextTransactionID();
+        frame.sourceEndpoint = 0;
+        frame.destinationEndpoint = 0;
+        frame.groupId = 0;
+        //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+        frame.options = EmberApsOption.APS_OPTION_NONE;
+        return frame;
+    }
 
-        
-        // let sendDeferred = new Deferred<boolean>();
-        // let replyDeferred = new Deferred<boolean>();
-        // this.pending.set(seq, [sendDeferred, replyDeferred]);
-
-        // let handle;
-        // let eui64: EmberEUI64;
-        // try {
-
-        //     if (timeout > 0) {
-        //         handle = setTimeout(() => {
-        //             throw new Error('Timeout while waiting for reply');
-        //         }, timeout);
-        //     }
-
-
-        //     if (typeof nwk !== 'number') {
-        //         eui64 = nwk as EmberEUI64;
-        //         let strEui64 = eui64.toString();
-        //         let nodeId = this.eui64ToNodeId.get(strEui64);
-        //         if (nodeId === undefined) {
-        //             nodeId = await this.ezsp.execCommand('lookupNodeIdByEui64', eui64);
-        //             if (nodeId && nodeId !== 0xFFFF) {
-        //                 this.eui64ToNodeId.set(strEui64, nodeId);
-        //             } else {
-        //                 throw new Error('Unknown EUI64:' + strEui64);
-        //             }
-        //         }
-        //         nwk = nodeId;
-        //     } else {
-        //         eui64 = await this.networkIdToEUI64(nwk);
-        //     }
-        //     //await this.ezsp.execCommand('setExtendedTimeout', eui64, true);
-
-        //     let v = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
-        //     console.log('unicast message sent, waiting for reply');
-        //     if (v[0] != 0) {
-        //         this.pending.delete(seq);
-        //         sendDeferred.reject(false);
-        //         replyDeferred.reject(false);
-        //         throw new Error(`Message send failure ${v[0]}`)
-        //     }
-
-        //     await sendDeferred.promise;
-        //     if (timeout > 0) {
-        //         await replyDeferred.promise;
-        //     } else {
-        //         this.pending.delete(seq);
-        //     }
-        //     return true;
-        // } catch (e) {
-        //     return false;
-        // } finally {
-        //     if (handle)
-        //         clearTimeout(handle);
-        // }
+    public async zdoRequest(networkAddress: number, requestCmd: EmberZDOCmd, responseCmd: EmberZDOCmd, ...args: any[]): Promise<any> {
+        const requestName = EmberZDOCmd.valueName(EmberZDOCmd, requestCmd);
+        const responseName = EmberZDOCmd.valueName(EmberZDOCmd, responseCmd);
+        debug.log(`${requestName} params: ${[...args]}`);
+        const frame = this.makeApsFrame(requestCmd as number);
+        const payload = this.make_zdo_frame(requestName, frame.sequence, ...args);
+        debug.log(`${requestName}  frame: ${payload}`);
+        const response = this.waitFor(networkAddress, responseCmd as number);
+        await this.request(networkAddress, frame, payload);
+        const message = await response.start().promise;
+        debug.log(`${responseName}  frame: ${JSON.stringify(message.payload)}`);
+        const result = this.parse_frame_payload(responseName, message.payload);
+        debug.log(`${responseName} parsed: ${JSON.stringify(result)}`);
+        return result;
     }
 
     private handleFrameFailure(messageType: number, destination: number, apsFrame: EmberApsFrame, messageTag: number, status: number, message: Buffer) {

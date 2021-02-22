@@ -24,6 +24,16 @@ export class int_t {
         };
         return '';
     }
+
+    static valueName(cls: any, value: any) {
+        for (let prop of Object.getOwnPropertyNames(cls)) {
+            const desc = Object.getOwnPropertyDescriptor(cls, prop);
+            if (desc !== undefined && desc.enumerable && desc.writable && value == desc.value) {
+                return `${prop}`;
+            }
+        };
+        return '';
+    }
 }
 
 export class int8s extends int_t {
