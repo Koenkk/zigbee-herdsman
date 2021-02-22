@@ -474,9 +474,10 @@ class EZSPAdapter extends Adapter {
             frame.groupId = 0;
             frame.options = EmberApsOption.APS_OPTION_NONE;
             const ieee = new EmberEUI64(sourceIeeeAddress);
+            const ieeeDst = new EmberEUI64(destinationAddressOrGroup as string);
             const payload = this.driver.make_zdo_frame("Bind_req", frame.sequence, 
                 ieee, sourceEndpoint, clusterID, 
-                {addrmode: 0x03, nwk: destinationNetworkAddress, endpoint: destinationEndpoint}
+                {addrmode: 0x03, ieee: ieeeDst, endpoint: destinationEndpoint}
             );
             debug('bind send frame %O:', payload);
             const response = this.driver.waitFor(destinationNetworkAddress, EmberZDOCmd.Bind_rsp);
@@ -501,9 +502,10 @@ class EZSPAdapter extends Adapter {
             frame.groupId = 0;
             frame.options = EmberApsOption.APS_OPTION_NONE;
             const ieee = new EmberEUI64(sourceIeeeAddress);
+            const ieeeDst = new EmberEUI64(destinationAddressOrGroup as string);
             const payload = this.driver.make_zdo_frame("Unbind_req", frame.sequence, 
                 ieee, sourceEndpoint, clusterID, 
-                {addrmode: 0x03, nwk: destinationNetworkAddress, endpoint: destinationEndpoint}
+                {addrmode: 0x03, ieee: ieeeDst, endpoint: destinationEndpoint}
             );
             debug('Unbind send frame %O:', payload);
             const response = this.driver.waitFor(destinationNetworkAddress, EmberZDOCmd.Unbind_rsp);

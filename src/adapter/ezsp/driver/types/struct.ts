@@ -623,7 +623,7 @@ export class EmberSimpleDescriptor extends EzspStruct {
 export class EmberMultiAddress extends EzspStruct {
     static _fields = [
         ['addrmode', basic.uint8_t], // 0x3
-        ['nwk', named.EmberNodeId],
+        ['ieee', named.EmberEUI64],
         ['endpoint', basic.uint8_t],
     ]
 }
