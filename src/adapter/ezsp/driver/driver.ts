@@ -38,6 +38,9 @@ export class Driver extends EventEmitter {
     public ezsp: Ezsp;
     private _nwkOpt: TsType.NetworkOptions;
     public networkParams: EmberNetworkParameters;
+    public version: {
+        product: number; majorrel: string; minorrel: string; maintrel: string; revision: string;
+    };
     private eui64ToNodeId = new Map<string, number>();
     private pending = new Map<number, Array<Deferred<any>>>();
     private _nwk: EmberNodeId;
@@ -106,6 +109,7 @@ export class Driver extends EventEmitter {
         [special, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         const vers = `${major}.${minor}.${patch}.${special} build ${build}`;
         debug.log(`EmberZNet version: ${vers}`);
+        this.version = {product: this.ezsp.ezsp_version, majorrel: `${major}`, minorrel: `${minor}`, maintrel: `${patch} `, revision: vers};
 
         if (await this.needsToBeInitialised(nwkOpt)) {
             const currentState = await ezsp.execCommand('networkState');

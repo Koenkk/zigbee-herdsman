@@ -220,7 +220,7 @@ class EZSPAdapter extends Adapter {
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
         // todo
-        return {type: '', meta: {}};
+        return {type: 'EmberZNet', meta: this.driver.version};
     }
 
     public async reset(type: 'soft' | 'hard'): Promise<void> {
@@ -263,7 +263,6 @@ class EZSPAdapter extends Adapter {
 
                 return result;
             };
-
 
             // eslint-disable-next-line
             const add = (list: any) => {
