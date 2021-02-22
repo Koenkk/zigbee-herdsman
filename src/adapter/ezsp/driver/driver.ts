@@ -3,7 +3,6 @@ import { Ezsp } from './ezsp';
 import { EmberStatus, EmberNodeType, EmberNodeId, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption } from './types';
 import { EventEmitter } from "events";
 import { EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState } from './types/struct';
-import { EmberObject } from './types/emberObj';
 import { Deferred, ember_security } from './utils';
 import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask, EzspMfgTokenId, EmberNetworkStatus, EmberKeyType } from './types/named';
 import { Multicast } from './multicast';
@@ -25,14 +24,17 @@ interface AddEndpointParameters {
     outputClusters?: number[],
 };
 
-type EmberObjectPayload = any;
+type EmberFrame = {
+    address: number;
+    payload: Buffer;
+    frame: EmberApsFrame;
+}
 
 type EmberWaitressMatcher = {
     address: number,
     clusterId: number,
     sequence: number
 };
-
 
 export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT
@@ -46,7 +48,7 @@ export class Driver extends EventEmitter {
     private pending = new Map<number, Array<Deferred<any>>>();
     public ieee: EmberEUI64;
     private multicast: Multicast;
-    private waitress: Waitress<EmberObject, EmberWaitressMatcher>;
+    private waitress: Waitress<EmberFrame, EmberWaitressMatcher>;
     public queue: Queue;
     private transactionID: number;
 
@@ -55,7 +57,7 @@ export class Driver extends EventEmitter {
         this.transactionID = 1;
         this.queue = new Queue();
 
-        this.waitress = new Waitress<EmberObject, EmberWaitressMatcher>(
+        this.waitress = new Waitress<EmberFrame, EmberWaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
@@ -186,7 +188,7 @@ export class Driver extends EventEmitter {
                 }
             }
 
-            this.waitress.resolve({address: sender, payload: message, frame: apsFrame} as EmberObject);
+            this.waitress.resolve({address: sender, payload: message, frame: apsFrame});
 
             super.emit('incomingMessage', {
                 messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message,
@@ -399,7 +401,7 @@ export class Driver extends EventEmitter {
     }
 
     public waitFor(address: number, clusterId: number, sequence: number, timeout: number = 30000)
-           : {start: () => {promise: Promise<EmberObject>; ID: number}; ID: number} {
+           : {start: () => {promise: Promise<EmberFrame>; ID: number}; ID: number} {
         return this.waitress.waitFor({address, clusterId, sequence}, timeout);
     }
 
@@ -407,7 +409,7 @@ export class Driver extends EventEmitter {
         return `${JSON.stringify(matcher)} after ${timeout}ms`;
     }
 
-    private waitressValidator(payload: EmberObject, matcher: EmberWaitressMatcher): boolean {
+    private waitressValidator(payload: EmberFrame, matcher: EmberWaitressMatcher): boolean {
         return (!matcher.address || payload.address === matcher.address) &&
             payload.frame.clusterId === matcher.clusterId && 
             payload.payload[0] === matcher.sequence;
