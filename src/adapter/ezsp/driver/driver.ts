@@ -29,23 +29,23 @@ type EmberObjectPayload = any;
 
 type EmberWaitressMatcher = {
     address: number,
-    clusterId: number
+    clusterId: number,
+    sequence: number
 };
 
 
 export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT
     public ezsp: Ezsp;
-    private _nwkOpt: TsType.NetworkOptions;
+    private nwkOpt: TsType.NetworkOptions;
     public networkParams: EmberNetworkParameters;
     public version: {
         product: number; majorrel: string; minorrel: string; maintrel: string; revision: string;
     };
     private eui64ToNodeId = new Map<string, number>();
     private pending = new Map<number, Array<Deferred<any>>>();
-    private _nwk: EmberNodeId;
     public ieee: EmberEUI64;
-    private _multicast: Multicast;
+    private multicast: Multicast;
     private waitress: Waitress<EmberObject, EmberWaitressMatcher>;
     public queue: Queue;
     private transactionID: number;
@@ -60,11 +60,10 @@ export class Driver extends EventEmitter {
     }
 
     public async startup(port: string, serialOpt: {}, nwkOpt: TsType.NetworkOptions) {
-        this._nwkOpt = nwkOpt;
+        this.nwkOpt = nwkOpt;
         let ezsp = this.ezsp = new Ezsp();
         await ezsp.connect(port, serialOpt);
         const version = await ezsp.version();
-        // console.log('Got version', version);
         
         await ezsp.updateConfig();
 
@@ -108,7 +107,7 @@ export class Driver extends EventEmitter {
 
         if (await this.needsToBeInitialised(nwkOpt)) {
             const currentState = await ezsp.execCommand('networkState');
-            console.log('Network state', currentState);
+            //console.log('Network state', currentState);
             if (currentState == EmberNetworkStatus.JOINED_NETWORK) {
                 debug.log(`Leaving current network and forming new network`);
                 const st = await this.ezsp.leaveNetwork();
@@ -125,18 +124,16 @@ export class Driver extends EventEmitter {
         debug.log("Node type: %s, Network parameters: %s", nodeType, networkParams);
 
         const [nwk] = await ezsp.execCommand('getNodeId');
-        this._nwk = nwk;
         const [ieee] = await this.ezsp.execCommand('getEui64');
         this.ieee = new EmberEUI64(ieee);
         debug.log('Network ready');
         ezsp.on('frame', this.handleFrame.bind(this))
         this.handleNodeJoined(nwk, this.ieee, {}, {}, {});
-        debug.log(`EZSP nwk=${this._nwk}, IEEE=0x${this.ieee}`);
+        debug.log(`EZSP nwk=${nwk}, IEEE=0x${this.ieee}`);
 
-        this._multicast = new Multicast(this);
-        await this._multicast.startup([]);
+        this.multicast = new Multicast(this);
+        await this.multicast.startup([]);
     }
-
     
     private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
         let valid = true;
@@ -156,15 +153,15 @@ export class Driver extends EventEmitter {
         [status] = await this.ezsp.execCommand('clearKeyTable');
         console.assert(status == EmberStatus.SUCCESS);
 
-        const panID = this._nwkOpt.panID;
-        const extendedPanID = this._nwkOpt.extendedPanID;
-        const initial_security_state:EmberInitialSecurityState = ember_security(this._nwkOpt);
+        const panID = this.nwkOpt.panID;
+        const extendedPanID = this.nwkOpt.extendedPanID;
+        const initial_security_state:EmberInitialSecurityState = ember_security(this.nwkOpt);
         [status] = await this.ezsp.setInitialSecurityState(initial_security_state);
         const parameters:EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;
         parameters.extendedPanId = extendedPanID;
         parameters.radioTxPower = 20;
-        parameters.radioChannel = this._nwkOpt.channelList[0];
+        parameters.radioChannel = this.nwkOpt.channelList[0];
         parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
         parameters.nwkManagerId = 0;
         parameters.nwkUpdateId = 0;
@@ -308,7 +305,7 @@ export class Driver extends EventEmitter {
         const frame = this.makeApsFrame(requestCmd as number);
         const payload = this.make_zdo_frame(requestName, frame.sequence, ...args);
         debug.log(`${requestName}  frame: ${payload}`);
-        const response = this.waitFor(networkAddress, responseCmd as number);
+        const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence);
         await this.request(networkAddress, frame, payload);
         const message = await response.start().promise;
         debug.log(`${responseName}  frame: ${JSON.stringify(message.payload)}`);
@@ -401,18 +398,18 @@ export class Driver extends EventEmitter {
         debug.log("Ezsp adding endpoint: %s", res);
     }
 
-    public waitFor(address: number, clusterId: number, timeout: number = 30000)
+    public waitFor(address: number, clusterId: number, sequence: number, timeout: number = 30000)
            : {start: () => {promise: Promise<EmberObject>; ID: number}; ID: number} {
-        return this.waitress.waitFor({address, clusterId}, timeout);
+        return this.waitress.waitFor({address, clusterId, sequence}, timeout);
     }
 
     private waitressTimeoutFormatter(matcher: EmberWaitressMatcher, timeout: number): string {
-        return `${matcher} after ${timeout}ms`;
+        return `${JSON.stringify(matcher)} after ${timeout}ms`;
     }
 
     private waitressValidator(payload: EmberObject, matcher: EmberWaitressMatcher): boolean {
-        const transactionSequenceNumber = payload.frame.sequence;
         return (!matcher.address || payload.address === matcher.address) &&
-            payload.frame.clusterId === matcher.clusterId;
+            payload.frame.clusterId === matcher.clusterId && 
+            payload.payload[0] === matcher.sequence;
     }
 }
