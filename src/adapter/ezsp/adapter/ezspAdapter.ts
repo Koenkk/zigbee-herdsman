@@ -280,7 +280,7 @@ class EZSPAdapter extends Adapter {
             let response = await request(0);
             add(response[2].neighbors);
             const size = response[2].entries;
-            let nextStartIndex = response[2].neighbors;
+            let nextStartIndex = response[2].neighbors.length;
 
             while (neighbors.length < size) {
                 response = await request(nextStartIndex);
