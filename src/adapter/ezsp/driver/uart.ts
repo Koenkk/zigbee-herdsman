@@ -240,32 +240,27 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    // private showCounters(frmNum?: number, ackNum?: number) {
-    //     //debug.log(`send [${this.sendSeq}:${(frmNum==undefined) ? ' ' : frmNum}][${this.recvSeq}:${(ackNum==undefined) ? ' ' : ackNum}] recv `);
-    //     debug(`[${this.sendSeq}:${this.ackSeq}|${this.recvSeq}]`);
-    // }
-
     private onParsed(data: Buffer): void {
         try {
             /* Frame receive handler */
             switch (true) {
                 case ((data[0] & 0x80) === 0):
-                    debug(`Data frame  : ${data.toString('hex')}`);
-                    this.data_frame_received(data);
+                    debug(`Recv DATA frame (${(data[0] & 0x70) >> 4},${data[0] & 0x07},${(data[0] & 0x08) >> 3}): ${data.toString('hex')}`);
+                    this.handleDATA(data);
                     break;
             
                 case ((data[0] & 0xE0) === 0x80):
-                    debug(`ACK frame   : ${data.toString('hex')}`);
-                    this.handle_ack(data[0]);
+                    debug(`Recv ACK  frame (${data[0] & 0x07}): ${data.toString('hex')}`);
+                    this.handleACK(data[0]);
                     break;
 
                 case ((data[0] & 0xE0) === 0xA0):
-                    debug(`NAK frame   : ${data.toString('hex')}`);
-                    this.handle_nak(data[0]);
+                    debug(`Recv NAK  frame (${data[0] & 0x07}): ${data.toString('hex')}`);
+                    this.handleNAK(data[0]);
                     break;
 
                 case (data[0] === 0xC0):
-                    debug(`RST frame   : ${data.toString('hex')}`);
+                    debug(`Recv RST  frame: ${data.toString('hex')}`);
                     break;
                 
                 case (data[0] === 0xC1):
@@ -285,28 +280,26 @@ export class SerialDriver extends EventEmitter {
         }
     }
 
-    private data_frame_received(data: Buffer) {
+    private handleDATA(data: Buffer) {
         /* Data frame receive handler */
-        const seq = ((data[0] & 0x70) >> 4);
+        const frmNum = (data[0] & 0x70) >> 4;
+        const ackNum = data[0] & 0x07;
+        const reTx = (data[0] & 0x08) >> 3;
         // if (seq !== this.recvSeq) {
         //     debug('NAK-NAK');
         // }
-        this.recvSeq = (seq + 1) & 7; // next
-        const ack_frame = this.make_ack_frame();
-        this.handle_ack(data[0]);
-        
-        debug(`Write ack`);
-        this.writer.writeBuffer(ack_frame);
-
+        this.recvSeq = (frmNum + 1) & 7; // next
+        this.sendACK(this.recvSeq);
+        this.handleACK(data[0]);
         data = data.slice(1, (- 3));
         const frame = this.randomize(data);
         this.emit('received', frame);
     }
 
-    private handle_ack(control: number) {
+    private handleACK(control: number) {
         /* Handle an acknowledgement frame */
         // next number after the last accepted frame
-        this.ackSeq = control & 7;
+        this.ackSeq = control & 0x07;
         // var ack, pending;
         // ack = (((control & 7) - 1) % 8);
         // if ((ack === this._pending[0])) {
@@ -315,9 +308,9 @@ export class SerialDriver extends EventEmitter {
         // }
     }
 
-    private handle_nak(control: number) {
+    private handleNAK(control: number) {
         /* Handle negative acknowledgment frame */
-        // let nak = (control & 7);
+        const nakNum = control & 0x07;
         // if ((nak === this._pending[0])) {
         //     this._pending[1].set_result(false);
         // }
@@ -342,11 +335,6 @@ export class SerialDriver extends EventEmitter {
             return;
         }
         this.resetDeferred.resolve(true);
-    }
-
-    private make_ack_frame(): Buffer {
-        /* Construct a acknowledgement frame */
-        return this.make_frame([(0b10000000 | this.recvSeq)]);
     }
 
     private make_frame(control: ArrayLike<number>, data?: ArrayLike<number>): Buffer {
@@ -433,16 +421,23 @@ export class SerialDriver extends EventEmitter {
         return this.initialized;
     }
 
-    
-    public send(data: Buffer) {
+    private sendACK(ackNum: number) {
+        /* Construct a acknowledgement frame */
+        const ackFrame = this.make_frame([(0b10000000 | ackNum)]);
+        debug(`Send ACK  frame (${ackNum})`);
+        this.writer.writeBuffer(ackFrame);
+    }
+   
+    public sendDATA(data: Buffer) {
         let seq = this.sendSeq;
         this.sendSeq = ((seq + 1) % 8);  // next
-        debug(`Write frame (${seq}): ${data.toString('hex')}`);
         let pack;
         try {
+            debug(`Send DATA frame (${seq},${this.recvSeq},0): ${data.toString('hex')}`);
             pack = this.data_frame(data, seq, 0);
             this.writer.writeBuffer(pack);
         } catch (e) {
+            debug(`Send DATA frame (${seq},${this.recvSeq},1): ${data.toString('hex')}`);
             pack = this.data_frame(data, seq, 1);
             this.writer.writeBuffer(pack);
         }

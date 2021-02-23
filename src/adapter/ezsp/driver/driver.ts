@@ -45,7 +45,7 @@ export class Driver extends EventEmitter {
         product: number; majorrel: string; minorrel: string; maintrel: string; revision: string;
     };
     private eui64ToNodeId = new Map<string, number>();
-    private pending = new Map<number, Array<Deferred<any>>>();
+    private eui64ToRelays = new Map<string, number>();
     public ieee: EmberEUI64;
     private multicast: Multicast;
     private waitress: Waitress<EmberFrame, EmberWaitressMatcher>;
@@ -109,16 +109,16 @@ export class Driver extends EventEmitter {
 
         if (await this.needsToBeInitialised(nwkOpt)) {
             const currentState = await ezsp.execCommand('networkState');
-            //console.log('Network state', currentState);
+            debug.log('Network state', currentState);
             if (currentState == EmberNetworkStatus.JOINED_NETWORK) {
                 debug.log(`Leaving current network and forming new network`);
                 const st = await this.ezsp.leaveNetwork();
                 console.assert(st == EmberStatus.NETWORK_DOWN);
             }
             await this.form_network();
-            const state = await ezsp.execCommand('networkState');
-            debug.log('Network state', state);
         }
+        const state = await ezsp.execCommand('networkState');
+        debug.log('Network state', state);
 
         let [status, nodeType, networkParams] = await ezsp.execCommand('getNetworkParameters');
         console.assert(status == EmberStatus.SUCCESS);
@@ -177,44 +177,66 @@ export class Driver extends EventEmitter {
     }
 
     private handleFrame(frameName: string, ...args: any[]) {
-
-        if (frameName === 'incomingMessageHandler') {
-            let [messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message] = args;
-            let eui64;
-            for(let [k,v] of this.eui64ToNodeId){
-                if (v === sender){
-                    eui64 = k;
-                    break;
+        switch (true) {
+            case (frameName === 'incomingMessageHandler'): {
+                let [messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message] = args;
+                let eui64;
+                for(let [k,v] of this.eui64ToNodeId){
+                    if (v === sender){
+                        eui64 = k;
+                        break;
+                    }
                 }
-            }
 
-            this.waitress.resolve({address: sender, payload: message, frame: apsFrame});
+                this.waitress.resolve({address: sender, payload: message, frame: apsFrame});
 
-            super.emit('incomingMessage', {
-                messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message,
-                senderEui64: eui64
-            });
-
-            let isReply = false;
-            let tsn = -1;
-            let commandId = 0;
-            if (isReply) {
-                this.handleReply(sender, apsFrame, tsn, commandId, args);
+                super.emit('incomingMessage', {
+                    messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message,
+                    senderEui64: eui64
+                });
+                break;
             }
-        } else if (frameName === 'messageSentHandler') {
-            if (args[4] != 0) {
-                this.handleFrameFailure.apply(this, args);
-            } else {
-                this.handleFrameSent.apply(this, args);
+            case (frameName === 'trustCenterJoinHandler'): {
+                if (args[2] === EmberDeviceUpdate.DEVICE_LEFT) {
+                    this.handleNodeLeft.apply(this, args);
+                } else {
+                    this.handleNodeJoined.apply(this, args);
+                }
+                break;
             }
-        } else if (frameName === 'trustCenterJoinHandler') {
-            if (args[2] === EmberDeviceUpdate.DEVICE_LEFT) {
-                this.handleNodeLeft.apply(this, args);
-            } else {
-                this.handleNodeJoined.apply(this, args);
+            case (frameName === 'incomingRouteRecordHandler'): {
+                const [nwk, ieee, lqi, rssi, relays] = args;
+                this.handleRouteRecord(nwk, ieee, lqi, rssi, relays);
+                break;
             }
+            case (frameName === 'incomingRouteErrorHandler'): {
+                const [status, nwk] = args;
+                this.handleRouteError(status, nwk);
+                break;
+            }
+            case (frameName === 'messageSentHandler'): {
+                // todo
+                const status = args[4];
+                if (status != 0) {
+                    // send failure
+                } else {
+                    // send success
+                }
+                break;
+            }
+            default:
+                debug.log(`Unhandled frame ${frameName}`);
         }
+    }
 
+    private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number, relays: any) {
+        debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
+        // todo
+    }
+
+    private handleRouteError(status: EmberStatus, nwk: number) {
+        debug.log(`handleRouteError: number=${status}, nwk=${nwk}`);
+        // todo
     }
 
     private handleNodeLeft(nwk: number, ieee: EmberEUI64 | number[], ...args: any[]) {
@@ -231,25 +253,6 @@ export class Driver extends EventEmitter {
         }
         this.eui64ToNodeId.set(ieee.toString(), nwk);
         this.emit('deviceJoined', [nwk, ieee]);
-    }
-
-    private handleReply(sender: number, apsFrame: EmberApsFrame, tsn: number, commandId: number, ...args: any[]) {
-        try {
-            var arr = this.pending.get(tsn);
-            if (!arr) {
-                debug.log('Unexpected reponse TSN=', tsn, 'command=', commandId, args)
-                return;
-            };
-            let [sendDeferred, replyDeferred] = arr;
-            if (sendDeferred.isFullfilled) {
-                this.pending.delete(tsn);
-            }
-            replyDeferred.resolve(args);
-            return;
-        } catch (e) {
-            debug.log(e);
-            return;
-        }
     }
 
     public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
@@ -314,41 +317,6 @@ export class Driver extends EventEmitter {
         const result = this.parse_frame_payload(responseName, message.payload);
         debug.log(`${responseName} parsed: ${JSON.stringify(result)}`);
         return result;
-    }
-
-    private handleFrameFailure(messageType: number, destination: number, apsFrame: EmberApsFrame, messageTag: number, status: number, message: Buffer) {
-        try {
-            var arr = this.pending.get(messageTag);
-            if (!arr) {
-                console.log("Unexpected message send failure");
-                return;
-            }
-            this.pending.delete(messageTag);
-            let [sendDeferred,] = arr;
-            let e = new Error('Message send failure:' + status);
-            console.log(e);
-            sendDeferred.reject(e);
-            //replyDeferred.reject(e);
-        } catch (e) {
-            console.log(e);
-        }
-    }
-
-    private handleFrameSent(messageType: number, destination: number, apsFrame: EmberApsFrame, messageTag: number, status: number, message: Buffer) {
-        try {
-            var arr = this.pending.get(messageTag);
-            if (!arr) {
-                console.log("Unexpected message send notification");
-                return;
-            }
-            let [sendDeferred, replyDeferred] = arr;
-            if (replyDeferred.isFullfilled) {
-                this.pending.delete(messageTag);
-            }
-            sendDeferred.resolve(true);
-        } catch (e) {
-            console.log(e);
-        }
     }
 
     public stop() {

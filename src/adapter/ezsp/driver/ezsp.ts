@@ -301,7 +301,7 @@ export class Ezsp extends EventEmitter {
             const c = (<any>COMMANDS)[name];
             const waiter = this.waitFor(c[0], this.cmdSeq);
             this.cmdSeq = (this.cmdSeq + 1 % 256);
-            this.serialDriver.send(data);
+            this.serialDriver.sendDATA(data);
             const response = await waiter.start().promise;
             return response.payload;
         });
