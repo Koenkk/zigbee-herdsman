@@ -24,6 +24,7 @@ interface Command {
 interface Cluster {
     ID: number;
     name: string;
+    manufacturerCode?: number;
     attributes: {[s: string]: Attribute};
     commands: {
         [s: string]: Command;

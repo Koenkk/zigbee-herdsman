@@ -182,9 +182,43 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
             {name: 'channelMask', parameterType: 'UINT32BE'}, //<channel mask:uint32_t>
         ]
     },
+
+    [ZiGateCommandCode.ManagementLeaveRequest]: {
+        request: [
+            {name: 'shortAddress', parameterType: 'UINT16BE'},
+            {name: 'extendedAddress', parameterType: 'IEEEADDR'}, // <extended address: uint64_t>
+            {name: 'rejoin', parameterType: 'UINT8'},
+            {name: 'removeChildren', parameterType: 'UINT8'}, // <Remove Children: uint8_t>
+        ],
+        response: [
+            [
+                {
+                    receivedProperty: 'code',
+                    matcher: equal,
+                    value: ZiGateMessageCode.LeaveIndication
+                },
+                {
+                    receivedProperty: 'payload.extendedAddress', matcher: equal,
+                    expectedProperty: 'payload.extendedAddress'
+                },
+            ],
+            [
+                {
+                    receivedProperty: 'code',
+                    matcher: equal,
+                    value: ZiGateMessageCode.ManagementLeaveResponse
+                },
+                {
+                    receivedProperty: 'payload.sqn', matcher: equal,
+                    expectedProperty: 'status.seqApsNum'
+                },
+            ],
+        ]
+    },
+
     [ZiGateCommandCode.RemoveDevice]: {
         request: [
-            {name: 'targetAddress', parameterType: 'IEEEADDR'}, // <target address: uint64_t>
+            {name: 'parentAddress', parameterType: 'IEEEADDR'}, // <parent address: uint64_t>
             {name: 'extendedAddress', parameterType: 'IEEEADDR'}, // <extended address: uint64_t>
         ],
         response: [
@@ -245,36 +279,6 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
             {name: 'dataLength', parameterType: 'UINT8'}, // <data length: uint8_t>
             {name: 'data', parameterType: 'BUFFER'}, // <data: auint8_t>
         ],
-        response: [
-            [
-                {receivedProperty: 'code', matcher: equal, value: ZiGateMessageCode.DataIndication},
-                {
-                    receivedProperty: 'payload.sourceAddress',
-                    matcher: equal,
-                    expectedProperty: 'payload.targetShortAddress'
-                },
-                {
-                    receivedProperty: 'payload.clusterID',
-                    matcher: equal,
-                    expectedProperty: 'payload.clusterID'
-                },
-                {
-                    receivedProperty: 'payload.sourceEndpoint',
-                    matcher: equal,
-                    expectedProperty: 'payload.destinationEndpoint'
-                },
-                {
-                    receivedProperty: 'payload.destinationEndpoint',
-                    matcher: equal,
-                    expectedProperty: 'payload.sourceEndpoint'
-                },
-                {
-                    receivedProperty: 'payload.profileID',
-                    matcher: equal,
-                    expectedProperty: 'payload.profileID'
-                },
-            ],
-        ]
     },
     [ZiGateCommandCode.NodeDescriptor]: {
         request: [
@@ -319,7 +323,7 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
                 {
                     receivedProperty: 'payload.clusterID',
                     matcher: equal,
-                    value: ZiGateMessageCode.ActiveEndpointResponse
+                    value: 0x8005
                 }
             ],
         ]

@@ -79,7 +79,7 @@ export default class ZiGateFrame {
     constructor(frame?: Buffer) {
         if (frame !== undefined) {
             const decodedFrame = decodeFrame(frame);
-            debug.log(`decoded frame >>> %o`, decodedFrame);
+            // debug.log(`decoded frame >>> %o`, decodedFrame);
             // Due to ZiGate incoming frames with erroneous msg length
             this.msgLengthOffset = -1;
 
@@ -91,7 +91,8 @@ export default class ZiGateFrame {
             this.buildChunks(decodedFrame);
 
             try {
-                debug.log(`%o`, this);
+                if(this.readMsgCode() !== 0x8001)
+                    debug.log(`%o`, this);
             } catch (e) {
                 debug.error(e)
             }

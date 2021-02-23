@@ -1,16 +1,8 @@
 import Equals from 'fast-deep-equal/es6';
 
-// eslint-disable-next-line
-interface ObjectAny {[s: string]: any};
-
-function equalsPartial(object: ObjectAny, expected: ObjectAny): boolean {
-    for (const [key, value] of Object.entries(expected)) {
-        if (!Equals(object[key], value)) {
-            return false;
-        }
-    }
-
-    return true;
+function equalsPartial<T>(object: T, expected: Partial<T>): boolean {
+    const entries = Object.entries(expected) as [keyof T, unknown][];
+    return entries.every(([key, value]) => Equals(object[key], value));
 }
 
 export default equalsPartial;

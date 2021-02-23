@@ -445,6 +445,7 @@ const Cluster: {
             offWaitTime: {ID: 16386, type: DataType.uint16},
             startUpOnOff: {ID: 16387, type: DataType.enum8},
             tuyaBacklightMode: {ID: 0x8001, type: DataType.enum8},
+            moesStartUpOnOff: {ID: 0x8002, type: DataType.enum8},
         },
         commands: {
             off: {
@@ -2006,6 +2007,7 @@ const Cluster: {
             compensationText: {ID: 6, type: DataType.charStr},
             colorTemperature: {ID: 7, type: DataType.uint16},
             colorMode: {ID: 8, type: DataType.enum8},
+            options: {ID: 15, type: DataType.bitmap8},       
             numPrimaries: {ID: 16, type: DataType.uint8},
             primary1X: {ID: 17, type: DataType.uint16},
             primary1Y: {ID: 18, type: DataType.uint16},
@@ -3830,6 +3832,18 @@ const Cluster: {
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
+            sendData: {
+                ID: 4,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'transid', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint8},
+                    {name: 'datatype', type: DataType.uint8},
+                    {name: 'length_hi', type: DataType.uint8},
+                    {name: 'length_lo', type: DataType.uint8},
+                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
             // Time sync command (It's transparent beetween MCU and server)
             // Time request device -> server
             //   payloadSize = 0
@@ -3886,8 +3900,10 @@ const Cluster: {
     },
     aqaraOpple: {
         ID: 0xFCC0,
+        manufacturerCode: ManufacturerCode.LUMI_UNITED_TECH,
         attributes: {
             mode: {ID: 9, type: DataType.uint8},
+            illuminance: {ID: 0x0112, type: DataType.uint32}
         },
         commands: {},
         commandsResponse: {}

@@ -69,6 +69,7 @@ class Controller extends events.EventEmitter {
     // eslint-disable-next-line
     private databaseSaveTimer: any;
     private touchlink: Touchlink;
+    private stopping: boolean;
 
     /**
      * Create a controller
@@ -77,6 +78,7 @@ class Controller extends events.EventEmitter {
      */
     public constructor(options: Options) {
         super();
+        this.stopping = false;
         this.options = mixin(JSON.parse(JSON.stringify(DefaultOptions)), options);
 
         // Validate options
@@ -92,6 +94,11 @@ class Controller extends events.EventEmitter {
 
         if (!Array.isArray(this.options.network.extendedPanID) || this.options.network.extendedPanID.length !== 8) {
             throw new Error(`ExtendedPanID must be 8 digits long, got ${this.options.network.extendedPanID.length}.`);
+        }
+
+        if (this.options.network.panID >= 0xFFFF || this.options.network.panID <= 0) {
+            throw new Error(`PanID must have a value of 0x0001 (1) - 0xFFFE (65534), ` +
+                `got ${this.options.network.panID}.`);
         }
     }
 
@@ -223,7 +230,12 @@ class Controller extends events.EventEmitter {
         return this.permitJoinNetworkClosedTimer != null;
     }
 
+    public isStopping(): boolean {
+        return this.stopping;
+    }
+
     public async stop(): Promise<void> {
+        this.stopping = true;
         this.databaseSave();
 
         // Unregister adapter events

@@ -1,5 +1,4 @@
-import {default as Controller} from './controller/controller';
+import Controller from './controller/controller';
 import * as Zcl from './zcl';
 
-export {Controller};
-export {Zcl};
+export {Zcl, Controller};
