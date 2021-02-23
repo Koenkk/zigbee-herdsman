@@ -180,20 +180,15 @@ export class Driver extends EventEmitter {
         switch (true) {
             case (frameName === 'incomingMessageHandler'): {
                 let [messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message] = args;
-                let eui64;
-                for(let [k,v] of this.eui64ToNodeId){
-                    if (v === sender){
-                        eui64 = k;
-                        break;
-                    }
+                const eui64 = this.eui64ToNodeId.get(sender);
+
+                const handled = this.waitress.resolve({address: sender, payload: message, frame: apsFrame});
+                if (!handled) {
+                    this.emit('incomingMessage', {
+                        messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message,
+                        senderEui64: eui64
+                    });
                 }
-
-                this.waitress.resolve({address: sender, payload: message, frame: apsFrame});
-
-                super.emit('incomingMessage', {
-                    messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message,
-                    senderEui64: eui64
-                });
                 break;
             }
             case (frameName === 'trustCenterJoinHandler'): {
@@ -278,7 +273,6 @@ export class Driver extends EventEmitter {
             await this.ezsp.execCommand('setExtendedTimeout', eui64, true);
 
             let v = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
-            debug.log('unicast message sent, waiting for reply');
             return true;
         } catch (e) {
             return false;

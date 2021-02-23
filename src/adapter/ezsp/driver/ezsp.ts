@@ -91,9 +91,9 @@ export class Ezsp extends EventEmitter {
         schema = cmd.outArgs;
         [result, data] = t.deserialize(data, schema);
         debug.log(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
-        this.waitress.resolve({frameId: frame_id, frameName: frameName, sequence: sequence, payload: result});
+        const handled = this.waitress.resolve({frameId: frame_id, frameName: frameName, sequence: sequence, payload: result});
 
-        this.emit('frame', frameName, ...result);
+        if (!handled) this.emit('frame', frameName, ...result);
         
         if ((frame_id === 0)) {
             this.ezspV = result[0];
