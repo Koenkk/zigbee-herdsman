@@ -4,6 +4,7 @@ import net from 'net';
 import SocketPortUtils from '../../socketPortUtils';
 import { Deferred, crc16ccitt } from './utils';
 import * as stream from 'stream';
+import { Queue, Waitress } from '../../../utils';
 import Debug from "debug";
 
 const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
@@ -132,6 +133,14 @@ class Writer extends stream.Readable {
     }
 }
 
+type EZSPPacket = {
+    sequence: number
+};
+
+type EZSPPacketMatcher = {
+    sequence: number
+};
+
 
 export class SerialDriver extends EventEmitter {
     private serialPort: SerialPort;
@@ -144,10 +153,15 @@ export class SerialDriver extends EventEmitter {
     private sendSeq: number = 0; // next frame number to send
     private recvSeq: number = 0; // next frame number to receive
     private ackSeq: number = 0;  // next number after the last accepted frame
+    private waitress: Waitress<EZSPPacket, EZSPPacketMatcher>;
+    private queue: Queue;
 
     constructor(){
         super();
         this.initialized = false;
+        this.queue = new Queue();
+        this.waitress = new Waitress<EZSPPacket, EZSPPacketMatcher>(
+            this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
     async connect(path: string, options: {}) {
@@ -300,6 +314,12 @@ export class SerialDriver extends EventEmitter {
         /* Handle an acknowledgement frame */
         // next number after the last accepted frame
         this.ackSeq = control & 0x07;
+        const handled = this.waitress.resolve({sequence: this.ackSeq});
+        if (!handled) {
+            debug(`Unexpected packet sequence ${this.ackSeq}`);
+        } else {
+            debug(`Expected packet sequence ${this.ackSeq}`);
+        }
         // var ack, pending;
         // ack = (((control & 7) - 1) % 8);
         // if ((ack === this._pending[0])) {
@@ -311,6 +331,13 @@ export class SerialDriver extends EventEmitter {
     private handleNAK(control: number) {
         /* Handle negative acknowledgment frame */
         const nakNum = control & 0x07;
+        const handled = this.waitress.reject({sequence: nakNum}, 'Recv NAK frame');
+        if (!handled) {
+            // send NAK
+            debug(`NAK Unexpected packet sequence ${nakNum}`);
+        } else {
+            debug(`NAK Expected packet sequence ${nakNum}`);
+        }
         // if ((nak === this._pending[0])) {
         //     this._pending[1].set_result(false);
         // }
@@ -367,9 +394,9 @@ export class SerialDriver extends EventEmitter {
         return out;
     }
 
-    private data_frame(data: Buffer, seq: number, rxmit: number) {
+    private makeDataFrame(data: Buffer, seq: number, rxmit: number, ackSeq: number) {
         /* Construct a data frame */
-        const control = (((seq << 4) | (rxmit << 3)) | this.recvSeq);
+        const control = (((seq << 4) | (rxmit << 3)) | ackSeq);
         return this.make_frame([control], this.randomize(data));
     }
 
@@ -431,15 +458,56 @@ export class SerialDriver extends EventEmitter {
     public sendDATA(data: Buffer) {
         let seq = this.sendSeq;
         this.sendSeq = ((seq + 1) % 8);  // next
+        const nextSeq = this.sendSeq;
+        const ackSeq = this.recvSeq;
         let pack;
-        try {
-            debug(`Send DATA frame (${seq},${this.recvSeq},0): ${data.toString('hex')}`);
-            pack = this.data_frame(data, seq, 0);
+
+        return this.queue.execute<void>(async (): Promise<void> => {
+            debug(`Send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
+            pack = this.makeDataFrame(data, seq, 0, ackSeq);
+            const waiter = this.waitFor(nextSeq);
+            debug(`waiting (${nextSeq})`);
             this.writer.writeBuffer(pack);
-        } catch (e) {
-            debug(`Send DATA frame (${seq},${this.recvSeq},1): ${data.toString('hex')}`);
-            pack = this.data_frame(data, seq, 1);
-            this.writer.writeBuffer(pack);
-        }
+            await waiter.start().promise.catch(async (e) => {
+                debug(`break waiting (${nextSeq})`);
+                debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
+                debug(`Resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
+                pack = this.makeDataFrame(data, seq, 1, ackSeq);
+                const waiter = this.waitFor(nextSeq);
+                debug(`rewaiting (${nextSeq})`);
+                this.writer.writeBuffer(pack);
+                await waiter.start().promise.catch((e) => {
+                    debug(`break rewaiting (${nextSeq})`);
+                    debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
+                    throw new Error(`sendDATA error: ${e}`);
+                });
+                debug(`rewaiting (${nextSeq}) success`);
+            });
+            debug(`waiting (${nextSeq}) success`);
+        });
+
+
+        // try {
+        //     debug(`Send DATA frame (${seq},${this.recvSeq},0): ${data.toString('hex')}`);
+        //     pack = this.data_frame(data, seq, 0);
+        //     this.writer.writeBuffer(pack);
+        // } catch (e) {
+        //     debug(`Send DATA frame (${seq},${this.recvSeq},1): ${data.toString('hex')}`);
+        //     pack = this.data_frame(data, seq, 1);
+        //     this.writer.writeBuffer(pack);
+        // }
+    }
+
+    public waitFor(sequence: number, timeout: number = 10000)
+           : {start: () => {promise: Promise<EZSPPacket>; ID: number}; ID: number} {
+        return this.waitress.waitFor({sequence}, timeout);
+    }
+
+    private waitressTimeoutFormatter(matcher: EZSPPacketMatcher, timeout: number): string {
+        return `${JSON.stringify(matcher)} after ${timeout}ms`;
+    }
+
+    private waitressValidator(payload: EZSPPacket, matcher: EZSPPacketMatcher): boolean {
+        return (payload.sequence === matcher.sequence);
     }
 }
