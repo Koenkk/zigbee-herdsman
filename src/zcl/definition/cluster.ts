@@ -1896,6 +1896,16 @@ const Cluster: {
             SinopeBacklight: {ID: 1026, type: DataType.enum8, manufacturerCode: ManufacturerCode.Sinope},
             StelproSystemMode: {ID: 0x401c, type: DataType.enum8},
             StelproOutdoorTemp: {ID: 0x4001, type: DataType.int16, manufacturerCode: ManufacturerCode.Stelpro},
+            viessmannCustom0: {ID: 0x4000, type: DataType.enum8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom1: {ID: 0x4001, type: DataType.int16, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom2: {ID: 0x4002, type: DataType.int16, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom3: {ID: 0x4008, type: DataType.uint16, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom4: {ID: 0x4009, type: DataType.uint16, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom5: {ID: 0x4010, type: DataType.enum8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom6: {ID: 0x4011, type: DataType.uint16, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom7: {ID: 0x4012, type: DataType.boolean, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom8: {ID: 0x4020, type: DataType.uint8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom9: {ID: 0x404b, type: DataType.int8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
         },
         commands: {
             setpointRaiseLower: {
@@ -1989,6 +1999,7 @@ const Cluster: {
             tempDisplayMode: {ID: 0, type: DataType.enum8},
             keypadLockout: {ID: 1, type: DataType.enum8},
             programmingVisibility: {ID: 2, type: DataType.enum8},
+            viessmannCustom10: {ID: 0x4000, type: DataType.enum8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
         },
         commands: {
         },
