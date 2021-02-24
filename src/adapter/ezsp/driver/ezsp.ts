@@ -111,10 +111,22 @@ export class Ezsp extends EventEmitter {
     }
 
     async networkInit() {
-        let result;
-        [result] = await this.command("networkInit");
-        console.log('network init result', result);
-        return result === EmberStatus.SUCCESS;
+        var fut: Deferred<any>, v, st;
+        fut = new Deferred();
+        this.on('frame', (frameName: string, response: any) => {
+            if ((frameName === "stackStatusHandler")) {
+                fut.resolve(response);
+            }
+        })
+
+        const [result] = await this.command("networkInit");
+        debug.log('network init result', result);
+        if ((result !== EmberStatus.SUCCESS)) {
+            debug.log("Failure to init network:" + result);
+            throw new Error(("Failure to init network:" + result));
+        }
+        v = await fut.promise;
+        return (v === EmberStatus.NETWORK_UP);
     }
 
     async leaveNetwork() {
