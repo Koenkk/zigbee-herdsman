@@ -123,7 +123,7 @@ export class Ezsp extends EventEmitter {
         debug.log('network init result', result);
         if ((result !== EmberStatus.SUCCESS)) {
             debug.log("Failure to init network:" + result);
-            throw new Error(("Failure to init network:" + result));
+            return false;
         }
         v = await fut.promise;
         return (v === EmberStatus.NETWORK_UP);
