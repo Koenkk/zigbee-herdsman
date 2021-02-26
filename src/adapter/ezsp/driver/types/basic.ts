@@ -1,8 +1,8 @@
 export class int_t {
-    static _signed = true
+    static _signed = true;
 
     static serialize(cls: any, value: number) {
-        let buffer = Buffer.alloc(cls._size, 0);
+        const buffer = Buffer.alloc(cls._size, 0);
         if (cls._signed) {
             buffer.writeIntLE(value, 0, cls._size);
         } else {
@@ -12,72 +12,72 @@ export class int_t {
     }
 
     static deserialize(cls: any, data: Buffer) {
-        return [cls._signed ? data.readIntLE(0, cls._size) : data.readUIntLE(0, cls._size), data.slice(cls._size)]
+        return [cls._signed ? data.readIntLE(0, cls._size) : data.readUIntLE(0, cls._size), data.slice(cls._size)];
     }
 
     static valueToName(cls: any, value: any) {
-        for (let prop of Object.getOwnPropertyNames(cls)) {
+        for (const prop of Object.getOwnPropertyNames(cls)) {
             const desc = Object.getOwnPropertyDescriptor(cls, prop);
             if (desc !== undefined && desc.enumerable && desc.writable && value == desc.value) {
                 return `${cls.name}.${prop}`;
             }
-        };
+        }
         return '';
     }
 
     static valueName(cls: any, value: any) {
-        for (let prop of Object.getOwnPropertyNames(cls)) {
+        for (const prop of Object.getOwnPropertyNames(cls)) {
             const desc = Object.getOwnPropertyDescriptor(cls, prop);
             if (desc !== undefined && desc.enumerable && desc.writable && value == desc.value) {
                 return `${prop}`;
             }
-        };
+        }
         return '';
     }
 }
 
 export class int8s extends int_t {
-    static _size = 1
+    static _size = 1;
 }
 
 export class int16s extends int_t {
-    static _size = 2
+    static _size = 2;
 }
 
 export class int24s extends int_t {
-    static _size = 3
+    static _size = 3;
 }
 
 export class int32s extends int_t {
-    static _size = 4
+    static _size = 4;
 }
 
 export class int64s extends int_t {
-    static _size = 8
+    static _size = 8;
 }
 
 export class uint_t extends int_t {
-    static _signed = false
+    static _signed = false;
 }
 
 export class uint8_t extends uint_t {
-    static _size = 1
+    static _size = 1;
 }
 
 export class uint16_t extends uint_t {
-    static _size = 2
+    static _size = 2;
 }
 
 export class uint24_t extends uint_t {
-    static _size = 3
+    static _size = 3;
 }
 
 export class uint32_t extends uint_t {
-    static _size = 4
+    static _size = 4;
 }
 
 export class uint64_t extends uint_t {
-    static _size = 8
+    static _size = 8;
 }
 
 /*
@@ -101,14 +101,14 @@ export  class Double extends number {
 export class LVBytes {
     static serialize(cls: any, value: any[]) {
         if (Buffer.isBuffer(value)) {
-            var ret = Buffer.alloc(1);
+            const ret = Buffer.alloc(1);
             ret.writeUInt8(value.length, 0);
             return Buffer.concat([ret, value]);
         }
         return Buffer.from([value.length].concat(value));
     }
     static deserialize(cls: any, data: Buffer) {
-        var l, s;
+        let l, s;
         l = data.readIntLE(0, 1);
         s = data.slice(1, (l + 1));
         return [s, data.slice((l + 1))];
@@ -121,8 +121,8 @@ export abstract class List {
         return Buffer.from(value.map(i => i.serialize(cls, i)));
     }
     static deserialize(cls: any, data: Buffer): (any[] | Buffer)[] {
-        var item;
-        var r: any[] = [];
+        let item;
+        const r: any[] = [];
         while (data) {
             [item, data] = cls.itemtype.deserialize(cls.itemtype, data);
             r.push(item);
@@ -133,16 +133,16 @@ export abstract class List {
 
 class _LVList extends List {
     static serialize(cls: any, value: any[]) {
-        var data, head;
+        let data, head;
         head = [cls.length];
         data = super.serialize(cls, value);
         return Buffer.from(head.concat(data));
     }
     static deserialize(cls: any, data: Buffer) {
-        var item, length;
-        var r: any[] = [];
+        let item, length;
+        const r: any[] = [];
         [length, data] = [data[0], data.slice(1)];
-        for (var i = 0; i < length; i++) {
+        for (let i = 0; i < length; i++) {
             [item, data] = cls.itemtype.deserialize(cls.itemtype, data);
             r.push(item);
         }
@@ -151,14 +151,14 @@ class _LVList extends List {
 }
 export function list(itemtype: any) : List {
     class ConreteList extends List {
-        static itemtype = itemtype
+        static itemtype = itemtype;
     }
     return ConreteList;
 }
 
 export function LVList(itemtype: any) : List {
     class LVList extends _LVList {
-        static itemtype = itemtype
+        static itemtype = itemtype;
     }
     return LVList;
 }
@@ -177,8 +177,8 @@ class _FixedList extends List {
     }
     static deserialize(cls: any, data: Buffer) {
         let item;
-        let r: any[] = [];
-        for (var i = 0; i < cls._length; i++) {
+        const r: any[] = [];
+        for (let i = 0; i < cls._length; i++) {
             [item, data] = cls.itemtype.deserialize(cls.itemtype, data);
             r.push(item);
         }

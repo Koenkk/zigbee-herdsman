@@ -1,3 +1,3 @@
-import { Ezsp } from './ezsp';
-import { Driver } from './driver';
-export { Ezsp, Driver }
+import {Ezsp} from './ezsp';
+import {Driver} from './driver';
+export {Ezsp, Driver};

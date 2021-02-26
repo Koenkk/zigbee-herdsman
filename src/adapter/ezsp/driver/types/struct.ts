@@ -4,20 +4,20 @@ import * as named from './named';
 export class EzspStruct {
     static serialize(cls: any, obj: any) {
         return Buffer.concat(cls._fields.map( (field:any[]) => {
-            let value = obj[field[0]];
-            console.assert(field[1])
+            const value = obj[field[0]];
+            console.assert(field[1]);
             return field[1].serialize(field[1], value);
-        }))
+        }));
     }
 
     static deserialize(cls: any, data: Buffer) {
-        var r = new cls();
-        for (let [field_name, field_type] of cls._fields) {
+        const r = new cls();
+        for (const [field_name, field_type] of cls._fields) {
             let v;
-            [v, data] = field_type.deserialize(field_type, data)
+            [v, data] = field_type.deserialize(field_type, data);
             r[field_name] = v;
         }
-        return [r, data]
+        return [r, data];
     }
 
     public toString():string {
@@ -60,7 +60,7 @@ export class EmberNetworkParameters extends EzspStruct {
         // only be set at joining when using USE_NWK_COMMISSIONING as the join
         // method.
         ['channels', basic.uint32_t],
-    ]
+    ];
 }
 export class EmberZigbeeNetwork extends EzspStruct {
     // The parameters of a ZigBee network.
@@ -77,7 +77,7 @@ export class EmberZigbeeNetwork extends EzspStruct {
         ['stackProfile', basic.uint8_t],
         // The instance of the Network.
         ['nwkUpdateId', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberApsFrame extends EzspStruct {
@@ -106,7 +106,7 @@ export class EmberApsFrame extends EzspStruct {
         ['groupId', basic.uint16_t],
         // The sequence number.
         ['sequence', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberBindingTableEntry extends EzspStruct {
@@ -130,7 +130,7 @@ export class EmberBindingTableEntry extends EzspStruct {
         ['identifier', named.EmberEUI64],
         // The index of the network the binding belongs to.
         ['networkIndex', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberMulticastTableEntry extends EzspStruct {
@@ -148,7 +148,7 @@ export class EmberMulticastTableEntry extends EzspStruct {
         ['endpoint', basic.uint8_t],
         // The network index of the network the entry is related to.
         ['networkIndex', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberKeyData extends EzspStruct {
@@ -157,7 +157,7 @@ export class EmberKeyData extends EzspStruct {
     static _fields = [
         // The key data.
         ['contents', basic.fixed_list(16, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberCertificateData extends EzspStruct {
@@ -166,7 +166,7 @@ export class EmberCertificateData extends EzspStruct {
     static _fields = [
         // The certificate data.
         ['contents', basic.fixed_list(48, basic.uint8_t)],
-    ]
+    ];
 
 }
 
@@ -176,7 +176,7 @@ export class EmberPublicKeyData extends EzspStruct {
     static _fields = [
         // The public key data.
         ['contents', basic.fixed_list(22, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberPrivateKeyData extends EzspStruct {
@@ -185,7 +185,7 @@ export class EmberPrivateKeyData extends EzspStruct {
     static _fields = [
         // The private key data.
         ['contents', basic.fixed_list(21, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberSmacData extends EzspStruct {
@@ -193,7 +193,7 @@ export class EmberSmacData extends EzspStruct {
     static _fields = [
         // The Shared Message Authentication Code data.
         ['contents', basic.fixed_list(16, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberSignatureData extends EzspStruct {
@@ -201,7 +201,7 @@ export class EmberSignatureData extends EzspStruct {
     static _fields = [
         // The signature data.
         ['contents', basic.fixed_list(42, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberCertificate283k1Data extends EzspStruct {
@@ -209,7 +209,7 @@ export class EmberCertificate283k1Data extends EzspStruct {
     static _fields = [
         // The 283k1 certificate data.
         ['contents', basic.fixed_list(74, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberPublicKey283k1Data extends EzspStruct {
@@ -217,7 +217,7 @@ export class EmberPublicKey283k1Data extends EzspStruct {
     static _fields = [
         // The 283k1 public key data.
         ['contents', basic.fixed_list(37, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberPrivateKey283k1Data extends EzspStruct {
@@ -225,7 +225,7 @@ export class EmberPrivateKey283k1Data extends EzspStruct {
     static _fields = [
         // The 283k1 private key data.
         ['contents', basic.fixed_list(36, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberSignature283k1Data extends EzspStruct {
@@ -233,7 +233,7 @@ export class EmberSignature283k1Data extends EzspStruct {
     static _fields = [
         // The 283k1 signature data.
         ['contents', basic.fixed_list(72, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberMessageDigest extends EzspStruct {
@@ -241,7 +241,7 @@ export class EmberMessageDigest extends EzspStruct {
     static _fields = [
         // The calculated digest of a message.
         ['contents', basic.fixed_list(16, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberAesMmoHashContext extends EzspStruct {
@@ -251,7 +251,7 @@ export class EmberAesMmoHashContext extends EzspStruct {
         ['result', basic.fixed_list(16, basic.uint8_t)],
         // The total length of the data that has been hashed so far.
         ['length', basic.uint32_t],
-    ]
+    ];
 }
 
 export class EmberNeighborTableEntry extends EzspStruct {
@@ -277,7 +277,7 @@ export class EmberNeighborTableEntry extends EzspStruct {
         ['age', basic.uint8_t],
         // The 8 byte EUI64 of the neighbor.
         ['longId', named.EmberEUI64],
-    ]
+    ];
 }
 
 export class EmberRouteTableEntry extends EzspStruct {
@@ -302,7 +302,7 @@ export class EmberRouteTableEntry extends EzspStruct {
         // needed [2], has been sent [1], or is no long needed [0] because a
         // source routed message from the concentrator has been received.
         ['routeRecordState', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberInitialSecurityState extends EzspStruct {
@@ -340,7 +340,7 @@ export class EmberInitialSecurityState extends EzspStruct {
         // bit and leave this field alone. This field must be set when using
         // commissioning mode.
         ['preconfiguredTrustCenterEui64', named.EmberEUI64],
-    ]
+    ];
 }
 
 export class EmberCurrentSecurityState extends EzspStruct {
@@ -351,7 +351,7 @@ export class EmberCurrentSecurityState extends EzspStruct {
         ['bitmask', named.EmberCurrentSecurityBitmask],
         // The IEEE Address of the Trust Center device.
         ['trustCenterLongAddress', named.EmberEUI64],
-    ]
+    ];
 }
 
 export class EmberKeyStruct extends EzspStruct {
@@ -372,7 +372,7 @@ export class EmberKeyStruct extends EzspStruct {
         ['sequenceNumber', basic.uint8_t],
         // The IEEE address of the partner device also in possession of the key.
         ['partnerEUI64', named.EmberEUI64],
-    ]
+    ];
 }
 
 export class EmberNetworkInitStruct extends EzspStruct {
@@ -380,7 +380,7 @@ export class EmberNetworkInitStruct extends EzspStruct {
     static _fields = [
         // Configuration options for network init.
         ['bitmask', named.EmberNetworkInitBitmask],
-    ]
+    ];
 }
 
 export class EmberZllSecurityAlgorithmData extends EzspStruct {
@@ -392,7 +392,7 @@ export class EmberZllSecurityAlgorithmData extends EzspStruct {
         ['responseId', basic.uint32_t],
         // Bitmask.
         ['bitmask', basic.uint16_t],
-    ]
+    ];
 }
 
 export class EmberZllNetwork extends EzspStruct {
@@ -416,7 +416,7 @@ export class EmberZllNetwork extends EzspStruct {
         ['totalGroupIdentifiers', basic.uint8_t],
         // RSSI correction value.
         ['rssiCorrection', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberZllInitialSecurityState extends EzspStruct {
@@ -432,7 +432,7 @@ export class EmberZllInitialSecurityState extends EzspStruct {
         // The pre-configured link key used during classical ZigBee
         // commissioning.
         ['preconfiguredKey', EmberKeyData],
-    ]
+    ];
 }
 
 export class EmberZllDeviceInfoRecord extends EzspStruct {
@@ -450,7 +450,7 @@ export class EmberZllDeviceInfoRecord extends EzspStruct {
         ['version', basic.uint8_t],
         // Number of relevant group ids.
         ['groupIdCount', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberZllAddressAssignment extends EzspStruct {
@@ -470,7 +470,7 @@ export class EmberZllAddressAssignment extends EzspStruct {
         ['freeGroupIdMin', named.EmberMulticastId],
         // Maximum free group id.
         ['freeGroupIdMax', named.EmberMulticastId],
-    ]
+    ];
 }
 
 export class EmberTokTypeStackZllData extends EzspStruct {
@@ -490,7 +490,7 @@ export class EmberTokTypeStackZllData extends EzspStruct {
         ['freeGroupIdMax', basic.uint16_t],
         // RSSI correction value.
         ['rssiCorrection', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberTokTypeStackZllSecurity extends EzspStruct {
@@ -504,7 +504,7 @@ export class EmberTokTypeStackZllSecurity extends EzspStruct {
         ['encryptionKey', basic.fixed_list(16, basic.uint8_t)],
         // Preconfigured key.
         ['preconfiguredKey', basic.fixed_list(16, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberRf4ceVendorInfo extends EzspStruct {
@@ -515,7 +515,7 @@ export class EmberRf4ceVendorInfo extends EzspStruct {
         ['vendorId', basic.uint16_t],
         // The vendor string field shall contain the vendor string of the node.
         ['vendorString', basic.fixed_list(7, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberRf4ceApplicationInfo extends EzspStruct {
@@ -533,7 +533,7 @@ export class EmberRf4ceApplicationInfo extends EzspStruct {
         // The profile ID list field shall contain the list of profile
         // identifiers disclosed as supported by the node.
         ['profileIdList', basic.fixed_list(7, basic.uint8_t)],
-    ]
+    ];
 }
 
 export class EmberRf4cePairingTableEntry extends EzspStruct {
@@ -565,7 +565,7 @@ export class EmberRf4cePairingTableEntry extends EzspStruct {
         ['capabilities', basic.uint8_t],
         // Last MAC sequence number seen on this pairing link.
         ['lastSeqn', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberGpAddress extends EzspStruct {
@@ -579,7 +579,7 @@ export class EmberGpAddress extends EzspStruct {
         ['applicationId', basic.uint8_t],
         // The GPD endpoint.
         ['endpoint', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberGpSinkListEntry extends EzspStruct {
@@ -591,7 +591,7 @@ export class EmberGpSinkListEntry extends EzspStruct {
         ['sinkEUI', named.EmberEUI64],
         // The short address of the target sink.
         ['sinkNodeId', named.EmberNodeId],
-    ]
+    ];
 }
 
 export class EmberNodeDescriptor extends EzspStruct {
@@ -605,7 +605,7 @@ export class EmberNodeDescriptor extends EzspStruct {
         ['server_mask', basic.uint16_t],
         ['maximum_outgoing_transfer_size', basic.uint16_t],
         ['descriptor_capability_field', basic.uint8_t],
-    ]
+    ];
 }
 
 
@@ -617,7 +617,7 @@ export class EmberSimpleDescriptor extends EzspStruct {
         ['deviceversion', basic.uint8_t],
         ['inclusterlist', basic.LVList(basic.uint16_t)],
         ['outclusterlist', basic.LVList(basic.uint16_t)],
-    ]
+    ];
 }
 
 export class EmberMultiAddress extends EzspStruct {
@@ -625,7 +625,7 @@ export class EmberMultiAddress extends EzspStruct {
         ['addrmode', basic.uint8_t], // 0x3
         ['ieee', named.EmberEUI64],
         ['endpoint', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberNeighbor extends EzspStruct {
@@ -637,7 +637,7 @@ export class EmberNeighbor extends EzspStruct {
         ['permitjoining', basic.uint8_t],
         ['depth', basic.uint8_t],
         ['lqi', basic.uint8_t],
-    ]
+    ];
 }
 
 export class EmberNeighbors extends EzspStruct {
@@ -645,5 +645,5 @@ export class EmberNeighbors extends EzspStruct {
         ['entries', basic.uint8_t],
         ['startindex', basic.uint8_t],
         ['neighbors', basic.LVList(EmberNeighbor)],
-    ]
+    ];
 }

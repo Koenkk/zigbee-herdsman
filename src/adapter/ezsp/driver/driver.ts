@@ -1,12 +1,12 @@
 import * as TsType from './../../tstype';
-import { Ezsp } from './ezsp';
-import { EmberStatus, EmberNodeType, EmberNodeId, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption } from './types';
-import { EventEmitter } from "events";
-import { EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState } from './types/struct';
-import { Deferred, ember_security } from './utils';
-import { EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask, EzspMfgTokenId, EmberNetworkStatus, EmberKeyType } from './types/named';
-import { Multicast } from './multicast';
-import { Queue, Waitress } from '../../../utils';
+import {Ezsp} from './ezsp';
+import {EmberStatus, EmberNodeType, EmberNodeId, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption} from './types';
+import {EventEmitter} from "events";
+import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState} from './types/struct';
+import {Deferred, ember_security} from './utils';
+import {EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask, EzspMfgTokenId, EmberNetworkStatus, EmberKeyType} from './types/named';
+import {Multicast} from './multicast';
+import {Queue, Waitress} from '../../../utils';
 import Debug from "debug";
 import equals from 'fast-deep-equal/es6';
 
@@ -22,13 +22,13 @@ interface AddEndpointParameters {
     appFlags?: number,
     inputClusters?: number[],
     outputClusters?: number[],
-};
+}
 
 type EmberFrame = {
     address: number;
     payload: Buffer;
     frame: EmberApsFrame;
-}
+};
 
 type EmberWaitressMatcher = {
     address: number,
@@ -37,7 +37,7 @@ type EmberWaitressMatcher = {
 };
 
 export class Driver extends EventEmitter {
-    private direct = EmberOutgoingMessageType.OUTGOING_DIRECT
+    private direct = EmberOutgoingMessageType.OUTGOING_DIRECT;
     public ezsp: Ezsp;
     private nwkOpt: TsType.NetworkOptions;
     public networkParams: EmberNetworkParameters;
@@ -63,7 +63,7 @@ export class Driver extends EventEmitter {
 
     public async startup(port: string, serialOpt: {}, nwkOpt: TsType.NetworkOptions) {
         this.nwkOpt = nwkOpt;
-        let ezsp = this.ezsp = new Ezsp();
+        const ezsp = this.ezsp = new Ezsp();
         await ezsp.connect(port, serialOpt);
         const version = await ezsp.version();
         
@@ -120,7 +120,7 @@ export class Driver extends EventEmitter {
         const state = await ezsp.execCommand('networkState');
         debug.log('Network state', state);
 
-        let [status, nodeType, networkParams] = await ezsp.execCommand('getNetworkParameters');
+        const [status, nodeType, networkParams] = await ezsp.execCommand('getNetworkParameters');
         console.assert(status == EmberStatus.SUCCESS);
         this.networkParams = networkParams;
         debug.log("Node type: %s, Network parameters: %s", nodeType, networkParams);
@@ -129,7 +129,7 @@ export class Driver extends EventEmitter {
         const [ieee] = await this.ezsp.execCommand('getEui64');
         this.ieee = new EmberEUI64(ieee);
         debug.log('Network ready');
-        ezsp.on('frame', this.handleFrame.bind(this))
+        ezsp.on('frame', this.handleFrame.bind(this));
         this.handleNodeJoined(nwk, this.ieee, {}, {}, {});
         debug.log(`EZSP nwk=${nwk}, IEEE=0x${this.ieee}`);
 
@@ -140,7 +140,7 @@ export class Driver extends EventEmitter {
     private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
         let valid = true;
         valid = valid && (await this.ezsp.networkInit());
-        let [status, nodeType, networkParams] = await this.ezsp.execCommand('getNetworkParameters');
+        const [status, nodeType, networkParams] = await this.ezsp.execCommand('getNetworkParameters');
         debug.log("Current Node type: %s, Network parameters: %s", nodeType, networkParams);
         valid = valid && (status == EmberStatus.SUCCESS);
         valid = valid && (nodeType == EmberNodeType.COORDINATOR);
@@ -178,49 +178,49 @@ export class Driver extends EventEmitter {
 
     private handleFrame(frameName: string, ...args: any[]) {
         switch (true) {
-            case (frameName === 'incomingMessageHandler'): {
-                let [messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message] = args;
-                const eui64 = this.eui64ToNodeId.get(sender);
+        case (frameName === 'incomingMessageHandler'): {
+            const [messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message] = args;
+            const eui64 = this.eui64ToNodeId.get(sender);
 
-                const handled = this.waitress.resolve({address: sender, payload: message, frame: apsFrame});
-                if (!handled) {
-                    this.emit('incomingMessage', {
-                        messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message,
-                        senderEui64: eui64
-                    });
-                }
-                break;
+            const handled = this.waitress.resolve({address: sender, payload: message, frame: apsFrame});
+            if (!handled) {
+                this.emit('incomingMessage', {
+                    messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message,
+                    senderEui64: eui64
+                });
             }
-            case (frameName === 'trustCenterJoinHandler'): {
-                if (args[2] === EmberDeviceUpdate.DEVICE_LEFT) {
-                    this.handleNodeLeft.apply(this, args);
-                } else {
-                    this.handleNodeJoined.apply(this, args);
-                }
-                break;
+            break;
+        }
+        case (frameName === 'trustCenterJoinHandler'): {
+            if (args[2] === EmberDeviceUpdate.DEVICE_LEFT) {
+                this.handleNodeLeft.apply(this, args);
+            } else {
+                this.handleNodeJoined.apply(this, args);
             }
-            case (frameName === 'incomingRouteRecordHandler'): {
-                const [nwk, ieee, lqi, rssi, relays] = args;
-                this.handleRouteRecord(nwk, ieee, lqi, rssi, relays);
-                break;
+            break;
+        }
+        case (frameName === 'incomingRouteRecordHandler'): {
+            const [nwk, ieee, lqi, rssi, relays] = args;
+            this.handleRouteRecord(nwk, ieee, lqi, rssi, relays);
+            break;
+        }
+        case (frameName === 'incomingRouteErrorHandler'): {
+            const [status, nwk] = args;
+            this.handleRouteError(status, nwk);
+            break;
+        }
+        case (frameName === 'messageSentHandler'): {
+            // todo
+            const status = args[4];
+            if (status != 0) {
+                // send failure
+            } else {
+                // send success
             }
-            case (frameName === 'incomingRouteErrorHandler'): {
-                const [status, nwk] = args;
-                this.handleRouteError(status, nwk);
-                break;
-            }
-            case (frameName === 'messageSentHandler'): {
-                // todo
-                const status = args[4];
-                if (status != 0) {
-                    // send failure
-                } else {
-                    // send success
-                }
-                break;
-            }
-            default:
-                debug.log(`Unhandled frame ${frameName}`);
+            break;
+        }
+        default:
+            debug.log(`Unhandled frame ${frameName}`);
         }
     }
 
@@ -239,7 +239,7 @@ export class Driver extends EventEmitter {
             ieee = new EmberEUI64(ieee);
         }
         this.eui64ToNodeId.delete(ieee.toString());
-        this.emit('deviceLeft', [nwk, ieee])
+        this.emit('deviceLeft', [nwk, ieee]);
     }
 
     private handleNodeJoined(nwk: number, ieee: EmberEUI64 | number[], deviceUpdate: any, joinDec: any, parentNwk: any) {
@@ -252,11 +252,11 @@ export class Driver extends EventEmitter {
 
     public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
         try {
-            let seq = apsFrame.sequence+1;
+            const seq = apsFrame.sequence+1;
             let eui64: EmberEUI64;
             if (typeof nwk !== 'number') {
                 eui64 = nwk as EmberEUI64;
-                let strEui64 = eui64.toString();
+                const strEui64 = eui64.toString();
                 let nodeId = this.eui64ToNodeId.get(strEui64);
                 if (nodeId === undefined) {
                     nodeId = await this.ezsp.execCommand('lookupNodeIdByEui64', eui64);
@@ -272,7 +272,7 @@ export class Driver extends EventEmitter {
             }
             await this.ezsp.execCommand('setExtendedTimeout', eui64, true);
 
-            let v = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
+            const v = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             return true;
         } catch (e) {
             return false;
@@ -322,16 +322,16 @@ export class Driver extends EventEmitter {
     }
 
     public async networkIdToEUI64(nwk: number): Promise<EmberEUI64> {
-        for (let [eUI64, value] of this.eui64ToNodeId) {
+        for (const [eUI64, value] of this.eui64ToNodeId) {
             if (value === nwk) return new EmberEUI64(eUI64);
         }
-        let value = await this.ezsp.execCommand('lookupEui64ByNodeId', nwk);
+        const value = await this.ezsp.execCommand('lookupEui64ByNodeId', nwk);
         if (value[0] === EmberStatus.SUCCESS) {
-            let eUI64 = new EmberEUI64(value[1] as any);
+            const eUI64 = new EmberEUI64(value[1] as any);
             this.eui64ToNodeId.set(eUI64.toString(), nwk);
             return eUI64;
         } else {
-            throw new Error('Unrecognized nodeId:' + nwk)
+            throw new Error('Unrecognized nodeId:' + nwk);
         }
     }
 
@@ -362,7 +362,7 @@ export class Driver extends EventEmitter {
         debug.log("Ezsp adding endpoint: %s", res);
     }
 
-    public waitFor(address: number, clusterId: number, sequence: number, timeout: number = 30000)
+    public waitFor(address: number, clusterId: number, sequence: number, timeout = 30000)
            : {start: () => {promise: Promise<EmberFrame>; ID: number}; ID: number} {
         return this.waitress.waitFor({address, clusterId, sequence}, timeout);
     }

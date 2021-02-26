@@ -33,14 +33,14 @@ import {
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
     EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
     EmberNodeDescriptor, EmberSimpleDescriptor, EmberMultiAddress, EmberNeighbors,
-} from './struct'
+} from './struct';
 
 export function deserialize(payload: any, schema: any[]) {
-    let result = [];
+    const result = [];
     let value, data = payload;
-    for (let type of schema) {
-        [value, data] = type.deserialize(type, data)
-        result.push(value)
+    for (const type of schema) {
+        [value, data] = type.deserialize(type, data);
+        result.push(value);
     }
     return [result, data];
 }
@@ -83,4 +83,4 @@ export {
     EmberZllDeviceInfoRecord, EmberZllAddressAssignment, EmberTokTypeStackZllData, EmberTokTypeStackZllSecurity,
     EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, EmberRf4cePairingTableEntry, EmberGpAddress, EmberGpSinkListEntry,
     EmberNodeDescriptor, EmberSimpleDescriptor, EmberMultiAddress, EmberNeighbors,
-}
+};

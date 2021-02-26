@@ -1,8 +1,8 @@
-import { Driver } from './driver';
-import { EzspConfigId, EmberZdoConfigurationFlags } from './types';
+import {Driver} from './driver';
+import {EzspConfigId, EmberZdoConfigurationFlags} from './types';
 import * as t from './types/basic';
-import { EmberStatus, EmberOutgoingMessageType, EmberMulticastId } from './types/named';
-import { EmberMulticastTableEntry } from './types/struct';
+import {EmberStatus, EmberOutgoingMessageType, EmberMulticastId} from './types/named';
+import {EmberMulticastTableEntry} from './types/struct';
 import Debug from "debug";
 
 const debug = {
@@ -45,9 +45,9 @@ export class Multicast {
     async startup(enpoints: Array<any>) {
         return this.driver.queue.execute<void>(async () => {
             await this._initialize();
-            for (let ep of enpoints) {
+            for (const ep of enpoints) {
                 if (!ep.id) continue;
-                for (let group_id of ep.member_of) {
+                for (const group_id of ep.member_of) {
                     await this.subscribe(group_id);
                 }
             }
@@ -73,7 +73,7 @@ export class Multicast {
                     idx,
                     entry.multicastId,
                     status,
-                )
+                );
                 this._available.push(idx);
                 return status;
             }
@@ -84,7 +84,7 @@ export class Multicast {
                 idx,
                 entry.multicastId,
                 status,
-            )
+            );
             return status;
         } catch (e) {
             debug.log("No more available slots MulticastId subscription");

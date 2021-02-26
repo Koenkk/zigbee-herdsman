@@ -11,11 +11,11 @@ import {/* Basic Types */
     EmberRf4ceTxOption, EmberRf4ceNodeCapabilities, EmberNodeId,
     EmberPanId, EmberEUI64, EmberLibraryStatus, SecureEzspSecurityType, SecureEzspSecurityLevel, EmberGpSecurityLevel,
     EmberGpKeyType, SecureEzspRandomNumber,  Bool, EzspConfigId, EzspValueId, EzspExtendedValueId,
-     EzspPolicyId, EzspDecisionId, EzspMfgTokenId, EzspStatus, EmberStatus, EmberEventUnits, EmberNodeType,
+    EzspPolicyId, EzspDecisionId, EzspMfgTokenId, EzspStatus, EmberStatus, EmberEventUnits, EmberNodeType,
     EmberNetworkStatus, EmberIncomingMessageType, EmberOutgoingMessageType, EmberMacPassthroughType,
     EzspNetworkScanType, EmberJoinDecision,   EmberKeyType,
     EmberDeviceUpdate, EmberKeyStatus, EmberCounterType,
-     EzspZllNetworkOperation,
+    EzspZllNetworkOperation,
 
     /* Structs */
     EmberNetworkParameters, EmberZigbeeNetwork, EmberApsFrame, EmberBindingTableEntry, EmberMulticastTableEntry,
@@ -39,16 +39,16 @@ export const COMMANDS = {
         [EzspStatus]
     ],
     "addEndpoint": [0x0002, [
-            uint8_t,
-            uint16_t,
-            uint16_t,
-            uint8_t,
-            uint8_t,
-            uint8_t,
-            WordList,
-            WordList,
-        ],
-        [EzspStatus],
+        uint8_t,
+        uint16_t,
+        uint16_t,
+        uint8_t,
+        uint8_t,
+        uint8_t,
+        WordList,
+        WordList,
+    ],
+    [EzspStatus],
     ],
     "setPolicy": [85, [EzspPolicyId, EzspDecisionId],
         [EzspStatus]
@@ -83,7 +83,7 @@ export const COMMANDS = {
     "setChannelMap": [247, [uint8_t, uint8_t],
         []
     ],
-    "nop": [5, Array(),
+    "nop": [5, [],
         []
     ],
     "echo": [129, [LVBytes],
@@ -92,10 +92,10 @@ export const COMMANDS = {
     "invalidCommand": [88, [],
         [EzspStatus]
     ],
-    "callback": [6, Array(),
+    "callback": [6, [],
         []
     ],
-    "noCallbacks": [7, Array(),
+    "noCallbacks": [7, [],
         []
     ],
     "setToken": [9, [uint8_t, fixed_list(8, uint8_t)],
@@ -404,7 +404,7 @@ export const COMMANDS = {
     "addTransientLinkKey": [175, [EmberEUI64, EmberKeyData],
         [EmberStatus]
     ],
-    "clearTransientLinkKeys": [107, Array(),
+    "clearTransientLinkKeys": [107, [],
         []
     ],
     "setSecurityKey": [202, [EmberKeyData, SecureEzspSecurityType],
@@ -590,7 +590,7 @@ export const COMMANDS = {
     "zllSetDataToken": [189, [EmberTokTypeStackZllData],
         []
     ],
-    "zllSetNonZllNetwork": [191, Array(),
+    "zllSetNonZllNetwork": [191, [],
         []
     ],
     "isZllNetwork": [190, [],
@@ -709,6 +709,6 @@ export const ZDO_COMMANDS = {
     "Mgmt_Leave_rsp": [0x8034, [EmberStatus], []],
     "Mgmt_Lqi_req": [0x0031, [uint8_t, uint8_t], [EmberStatus]],
     "Mgmt_Lqi_rsp": [0x8031, [uint8_t, EmberStatus, EmberNeighbors], [EmberStatus]],
-}
+};
 
 //# sourceMappingURL=commands.js.map

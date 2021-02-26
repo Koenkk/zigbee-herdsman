@@ -1,12 +1,12 @@
 import * as t from './types';
-import { SerialDriver } from './uart';
-import { COMMANDS, ZDO_COMMANDS } from './commands';
+import {SerialDriver} from './uart';
+import {COMMANDS, ZDO_COMMANDS} from './commands';
 
-import { Deferred } from './utils';
-import { EmberStatus, EmberOutgoingMessageType, EzspPolicyId, EzspDecisionId, EzspDecisionBitmask, EmberConcentratorType, EzspConfigId, EmberZdoConfigurationFlags } from './types/named';
-import { EventEmitter } from 'events';
-import { EmberApsFrame } from './types/struct';
-import { Queue, Waitress } from '../../../utils';
+import {Deferred} from './utils';
+import {EmberStatus, EmberOutgoingMessageType, EzspPolicyId, EzspDecisionId, EzspDecisionBitmask, EmberConcentratorType, EzspConfigId, EmberZdoConfigurationFlags} from './types/named';
+import {EventEmitter} from 'events';
+import {EmberApsFrame} from './types/struct';
+import {Queue, Waitress} from '../../../utils';
 import Debug from "debug";
 
 const debug = {
@@ -42,9 +42,9 @@ export class Ezsp extends EventEmitter {
 
     constructor() {
         super();
-        for (let name in COMMANDS) {
-            let details = (<any>COMMANDS)[name];
-            this.COMMANDS_BY_ID.set(details[0], { name, inArgs: details[1], outArgs: details[2] });
+        for (const name in COMMANDS) {
+            const details = (<any>COMMANDS)[name];
+            this.COMMANDS_BY_ID.set(details[0], {name, inArgs: details[1], outArgs: details[2]});
         }
         this.queue = new Queue();
         this.waitress = new Waitress<EZSPFrame, EZSPWaitressMatcher>(
@@ -70,7 +70,7 @@ export class Ezsp extends EventEmitter {
         data randomization removed.
         */
         debug.log(`<=== Frame: ${data.toString('hex')}`);
-        var frame_id: number, result, schema, sequence;
+        let frame_id: number, result, schema, sequence;
         if ((this.ezspV < 8)) {
             [sequence, frame_id, data] = [data[0], data[2], data.slice(3)];
         } else {
@@ -101,8 +101,8 @@ export class Ezsp extends EventEmitter {
     }
 
     async version() {
-        let version = this.ezspV;
-        let result = await this.command("version", version);
+        const version = this.ezspV;
+        const result = await this.command("version", version);
         if ((result[0] !== version)) {
             debug.log("Switching to eszp version %d", result[0]);
             await this.command("version", result[0]);
@@ -111,13 +111,13 @@ export class Ezsp extends EventEmitter {
     }
 
     async networkInit() {
-        var fut: Deferred<any>, v, st;
+        let fut: Deferred<any>, v, st;
         fut = new Deferred();
         this.on('frame', (frameName: string, response: any) => {
             if ((frameName === "stackStatusHandler")) {
                 fut.resolve(response);
             }
-        })
+        });
 
         const [result] = await this.command("networkInit");
         debug.log('network init result', result);
@@ -130,13 +130,13 @@ export class Ezsp extends EventEmitter {
     }
 
     async leaveNetwork() {
-        var fut: Deferred<any>, v, st;
+        let fut: Deferred<any>, v, st;
         fut = new Deferred();
         this.on('frame', (frameName: string, response: any) => {
             if ((frameName === "stackStatusHandler")) {
                 fut.resolve(response);
             }
-        })
+        });
         v = await this.command("leaveNetwork");
         if ((v[0] !== EmberStatus.SUCCESS)) {
             debug.log("Failure to leave network:" + v);
@@ -254,7 +254,7 @@ export class Ezsp extends EventEmitter {
             [EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 255],
         ];
 
-        for (let [confName, value] of config) {
+        for (const [confName, value] of config) {
             await this.setConfigurationValue(confName, value);
         }
     }
@@ -275,20 +275,20 @@ export class Ezsp extends EventEmitter {
             [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
         ];
 
-        for (let [policy, value] of policies) {
+        for (const [policy, value] of policies) {
             await this.setPolicy(policy, value);
         }
     }
    
     public makeZDOframe(name: string, ...args: any[]): Buffer {
-        var c, data, frame, cmd_id;
+        let c, data, frame, cmd_id;
         c = (<any>ZDO_COMMANDS)[name];
         data = t.serialize(args, c[1]);
         return data;
     }
 
     private makeFrame(name: string, ...args: any[]) {
-        var c, data, frame, cmd_id;
+        let c, data, frame, cmd_id;
         c = (<any>COMMANDS)[name];
         data = t.serialize(args, c[1]);
         frame = [(this.cmdSeq & 255)];
@@ -320,13 +320,13 @@ export class Ezsp extends EventEmitter {
     }
 
     async formNetwork(parameters: {}) {
-        var fut: Deferred<any>, v, st;
+        let fut: Deferred<any>, v, st;
         fut = new Deferred();
         this.on('frame', (frameName: string, response: any) => {
             if ((frameName === "stackStatusHandler")) {
                 fut.resolve(response);
             }
-        })
+        });
         v = await this.command("formNetwork", parameters);
         if ((v[0] !== EmberStatus.SUCCESS)) {
             debug.log("Failure forming network:" + v);
@@ -369,7 +369,7 @@ export class Ezsp extends EventEmitter {
             MTOR_ROUTE_ERROR_THRESHOLD,
             MTOR_DELIVERY_FAIL_THRESHOLD,
             0,
-        )
+        );
         debug.log("Set concentrator type: %s", res);
         if (res != EmberStatus.SUCCESS) {
             debug.log("Couldn't set concentrator type %s: %s", true, res);
@@ -377,7 +377,7 @@ export class Ezsp extends EventEmitter {
         await this.execCommand('setSourceRouteDiscoveryMode', 1);
     }
     
-    public waitFor(frameId: number, sequence: number, timeout: number = 30000)
+    public waitFor(frameId: number, sequence: number, timeout = 30000)
            : {start: () => {promise: Promise<EZSPFrame>; ID: number}; ID: number} {
         return this.waitress.waitFor({frameId, sequence}, timeout);
     }
