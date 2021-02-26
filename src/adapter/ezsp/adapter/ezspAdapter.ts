@@ -7,9 +7,10 @@ import {
 } from '../../tstype';
 import Debug from "debug";
 import Adapter from '../../adapter';
+
 const debug = Debug("zigbee-herdsman:adapter:ezsp");
 import {Driver} from '../driver';
-import { EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus } from '../driver/types';
+import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
 import {Waitress} from '../../../utils';
@@ -29,7 +30,7 @@ class EZSPAdapter extends Adapter {
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
 
     public constructor(networkOptions: NetworkOptions,
-        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
+                       serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         this.port = serialPortOptions;
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
@@ -264,7 +265,10 @@ class EZSPAdapter extends Adapter {
                 networkAddress, EmberZDOCmd.Node_Desc_req, EmberZDOCmd.Node_Desc_rsp,
                 networkAddress
             );
-            return {manufacturerCode: descriptor[2].manufacturer_code, type: (descriptor[1] == 0) ? 'Coordinator' : 'EndDevice'};
+            return {
+                manufacturerCode: descriptor[2].manufacturer_code,
+                type: (descriptor[1] == 0) ? 'Coordinator' : 'EndDevice'
+            };
         });
     }
 
@@ -313,7 +317,7 @@ class EZSPAdapter extends Adapter {
         ieeeAddr: string, networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame,
         timeout: number, disableResponse: boolean, disableRecovery: boolean, responseAttempt: number,
         dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
-        assocRestore: {ieeeadr: string, nwkaddr: number, noderelation: number}
+        assocRestore: { ieeeadr: string, nwkaddr: number, noderelation: number }
     ): Promise<Events.ZclDataPayload> {
         debug('sendZclFrameToEndpointInternal %s:%i/%i (%i,%i,%i)',
             ieeeAddr, networkAddress, endpoint, responseAttempt, dataRequestAttempt, this.driver.queue.count());
@@ -337,8 +341,8 @@ class EZSPAdapter extends Adapter {
         frame.sourceEndpoint = sourceEndpoint || 0x01;
         frame.destinationEndpoint = endpoint;
         frame.groupId = 0;
-        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-        
+        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
+
         const dataConfirmResult = await this.driver.request(networkAddress, frame, zclFrame.toBuffer());
 
         if (response !== null) {
@@ -382,7 +386,7 @@ class EZSPAdapter extends Adapter {
             const ieeeDst = new EmberEUI64(destinationAddressOrGroup as string);
             await this.driver.zdoRequest(
                 destinationNetworkAddress, EmberZDOCmd.Bind_req, EmberZDOCmd.Bind_rsp,
-                ieee, sourceEndpoint, clusterID, 
+                ieee, sourceEndpoint, clusterID,
                 {addrmode: 0x03, ieee: ieeeDst, endpoint: destinationEndpoint}
             );
         }, destinationNetworkAddress);
@@ -398,7 +402,7 @@ class EZSPAdapter extends Adapter {
             const ieeeDst = new EmberEUI64(destinationAddressOrGroup as string);
             await this.driver.zdoRequest(
                 destinationNetworkAddress, EmberZDOCmd.Unbind_req, EmberZDOCmd.Unbind_rsp,
-                ieee, sourceEndpoint, clusterID, 
+                ieee, sourceEndpoint, clusterID,
                 {addrmode: 0x03, ieee: ieeeDst, endpoint: destinationEndpoint}
             );
         }, destinationNetworkAddress);
@@ -469,7 +473,7 @@ class EZSPAdapter extends Adapter {
 
     private waitForInternal(
         networkAddress: number, endpoint: number, transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): {start: () => {promise: Promise<Events.ZclDataPayload>}; cancel: () => void} {
+    ): { start: () => { promise: Promise<Events.ZclDataPayload> }; cancel: () => void } {
         const payload = {
             address: networkAddress, endpoint, clusterID, commandIdentifier,
             transactionSequenceNumber,
@@ -483,7 +487,7 @@ class EZSPAdapter extends Adapter {
     public waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): {promise: Promise<Events.ZclDataPayload>; cancel: () => void} {
+    ): { promise: Promise<Events.ZclDataPayload>; cancel: () => void } {
         const waiter = this.waitForInternal(
             networkAddress, endpoint, transactionSequenceNumber, clusterID,
             commandIdentifier, timeout,

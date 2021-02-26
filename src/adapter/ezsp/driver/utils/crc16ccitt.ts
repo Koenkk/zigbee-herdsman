@@ -1,8 +1,8 @@
 import {Buffer} from 'buffer';
 
 const createBuffer =
-    Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow 
-        ? Buffer.from 
+    Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow
+        ? Buffer.from
         : // support for Node < 5.10
         (val: any) => Buffer.from(val);
 
@@ -55,7 +55,7 @@ const TABLE: number[] = [
 
 //if (typeof Int32Array !== 'undefined') TABLE = new Int32Array(TABLE);
 
-const crc16ccitt = defineCrc('ccitt', function(buf: any, previous: any) {
+const crc16ccitt = defineCrc('ccitt', function (buf: any, previous: any) {
     if (!Buffer.isBuffer(buf)) buf = createBuffer(buf);
 
     let crc = typeof previous !== 'undefined' ? ~~previous : 0xffff;

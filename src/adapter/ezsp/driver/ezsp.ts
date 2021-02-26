@@ -3,7 +3,16 @@ import {SerialDriver} from './uart';
 import {COMMANDS, ZDO_COMMANDS} from './commands';
 
 import {Deferred} from './utils';
-import {EmberStatus, EmberOutgoingMessageType, EzspPolicyId, EzspDecisionId, EzspDecisionBitmask, EmberConcentratorType, EzspConfigId, EmberZdoConfigurationFlags} from './types/named';
+import {
+    EmberStatus,
+    EmberOutgoingMessageType,
+    EzspPolicyId,
+    EzspDecisionId,
+    EzspDecisionBitmask,
+    EmberConcentratorType,
+    EzspConfigId,
+    EmberZdoConfigurationFlags
+} from './types/named';
 import {EventEmitter} from 'events';
 import {EmberApsFrame} from './types/struct';
 import {Queue, Waitress} from '../../../utils';
@@ -49,7 +58,7 @@ export class Ezsp extends EventEmitter {
         this.queue = new Queue();
         this.waitress = new Waitress<EZSPFrame, EZSPWaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
-        
+
         this.serialDriver = new SerialDriver();
         this.serialDriver.on('received', this.onFrameReceived.bind(this));
     }
@@ -91,10 +100,15 @@ export class Ezsp extends EventEmitter {
         schema = cmd.outArgs;
         [result, data] = t.deserialize(data, schema);
         debug.log(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
-        const handled = this.waitress.resolve({frameId: frame_id, frameName: frameName, sequence: sequence, payload: result});
+        const handled = this.waitress.resolve({
+            frameId: frame_id,
+            frameName: frameName,
+            sequence: sequence,
+            payload: result
+        });
 
         if (!handled) this.emit('frame', frameName, ...result);
-        
+
         if ((frame_id === 0)) {
             this.ezspV = result[0];
         }
@@ -172,7 +186,7 @@ export class Ezsp extends EventEmitter {
         console.assert(ret === EmberStatus.SUCCESS);
         return [ret, value];
     }
-    
+
     async setMulticastTableEntry(index: number, entry: t.EmberMulticastTableEntry) {
         let ret;
         [ret] = await this.execCommand('setMulticastTableEntry', index, entry);
@@ -187,7 +201,7 @@ export class Ezsp extends EventEmitter {
         return [ret];
     }
 
-    async getCurrentSecurityState(){
+    async getCurrentSecurityState() {
         let ret, res;
         [ret, res] = await this.execCommand('getCurrentSecurityState');
         console.assert(ret === EmberStatus.SUCCESS);
@@ -238,7 +252,7 @@ export class Ezsp extends EventEmitter {
 
             [EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 7680], // 30000
             [EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16], // 61
-            [EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE, 16], 
+            [EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE, 16],
             [EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 16], // 8
             [EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 2],
             [EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1],
@@ -279,7 +293,7 @@ export class Ezsp extends EventEmitter {
             await this.setPolicy(policy, value);
         }
     }
-   
+
     public makeZDOframe(name: string, ...args: any[]): Buffer {
         let c, data, frame, cmd_id;
         c = (<any>ZDO_COMMANDS)[name];
@@ -361,7 +375,7 @@ export class Ezsp extends EventEmitter {
     }
 
     public async setSourceRouting() {
-        const [res] = await this.execCommand('setConcentrator', 
+        const [res] = await this.execCommand('setConcentrator',
             true,
             EmberConcentratorType.HIGH_RAM_CONCENTRATOR,
             MTOR_MIN_INTERVAL,
@@ -376,9 +390,9 @@ export class Ezsp extends EventEmitter {
         }
         await this.execCommand('setSourceRouteDiscoveryMode', 1);
     }
-    
+
     public waitFor(frameId: number, sequence: number, timeout = 30000)
-           : {start: () => {promise: Promise<EZSPFrame>; ID: number}; ID: number} {
+        : { start: () => { promise: Promise<EZSPFrame>; ID: number }; ID: number } {
         return this.waitress.waitFor({frameId, sequence}, timeout);
     }
 

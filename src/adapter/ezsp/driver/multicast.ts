@@ -16,7 +16,7 @@ export class Multicast {
     private _multicast: any;
     private _available: Array<any>;
 
-    constructor(driver: Driver){
+    constructor(driver: Driver) {
         this.driver = driver;
         this._multicast = {};
         this._available = [];
@@ -54,7 +54,7 @@ export class Multicast {
         });
     }
 
-    async subscribe(group_id: number):Promise<EmberStatus> {
+    async subscribe(group_id: number): Promise<EmberStatus> {
         if (this._multicast.indexOf(group_id) >= 0) {
             debug.log("%s is already subscribed", group_id);
             return EmberStatus.SUCCESS;
@@ -62,7 +62,7 @@ export class Multicast {
 
         try {
             const idx = this._available.pop();
-            const entry:EmberMulticastTableEntry = new EmberMulticastTableEntry();
+            const entry: EmberMulticastTableEntry = new EmberMulticastTableEntry();
             entry.endpoint = 1;
             entry.multicastId = group_id;
             entry.networkIndex = 0;

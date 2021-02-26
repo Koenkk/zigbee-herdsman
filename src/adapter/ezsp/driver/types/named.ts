@@ -18,14 +18,19 @@ export class NcpResetCode extends basic.uint8_t {
 
 export class EmberRf4ceTxOption extends basic.uint8_t {
 }
+
 export class EmberRf4ceNodeCapabilities extends basic.uint8_t {
 }
+
 export class EmberRf4ceApplicationCapabilities extends basic.uint8_t {
 }
+
 export class EmberNodeId extends basic.uint16_t {
 }
+
 export class EmberPanId extends basic.uint16_t {
 }
+
 export class EmberMulticastId extends basic.uint8_t {
 }
 
@@ -55,8 +60,9 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
         data = arr[1] as Buffer;
         return [(r as number[]).reverse(), data];
     }
+
     static serialize(cls: any, value: number[] | EmberEUI64) {
-        if (value instanceof EmberEUI64){
+        if (value instanceof EmberEUI64) {
             value = (value as EmberEUI64).value as number[];
         }
         console.assert(cls._length === value.length);
@@ -73,25 +79,33 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
     }
 
     /*
-    
+
         __hash__() {
             return hash(repr(this));
         }*/
 }
+
 export class EmberLibraryStatus extends basic.uint8_t {
 }
+
 export class SecureEzspSecurityType extends basic.uint32_t {
 }
+
 export class SecureEzspSecurityLevel extends basic.uint8_t {
 }
+
 export class EmberGpSecurityLevel extends basic.uint8_t {
 }
+
 export class EmberGpKeyType extends basic.uint8_t {
 }
+
 export class SecureEzspRandomNumber extends basic.uint64_t {
 }
+
 export class SecureEzspSessionId extends basic.uint64_t {
 }
+
 export class Bool extends basic.uint8_t {
     static false = 0x00;  // An alias for zero, used for clarity.
     static true = 0x01;  // An alias for one, used for clarity.

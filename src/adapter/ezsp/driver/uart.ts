@@ -115,7 +115,8 @@ class Writer extends stream.Readable {
         this.push(buffer);
     }
 
-    public _read(): void {}
+    public _read(): void {
+    }
 
     public stuff(s: Iterable<number>): Buffer {
         /* Byte stuff (escape) a string for transmission */
@@ -156,7 +157,7 @@ export class SerialDriver extends EventEmitter {
     private waitress: Waitress<EZSPPacket, EZSPPacketMatcher>;
     private queue: Queue;
 
-    constructor(){
+    constructor() {
         super();
         this.initialized = false;
         this.queue = new Queue();
@@ -228,7 +229,7 @@ export class SerialDriver extends EventEmitter {
         this.parser.on('parsed', this.onParsed.bind(this));
 
         return new Promise((resolve, reject): void => {
-            this.socketPort.on('connect', function() {
+            this.socketPort.on('connect', function () {
                 debug('Socket connected');
             });
 
@@ -262,7 +263,7 @@ export class SerialDriver extends EventEmitter {
                 debug(`Recv DATA frame (${(data[0] & 0x70) >> 4},${data[0] & 0x07},${(data[0] & 0x08) >> 3}): ${data.toString('hex')}`);
                 this.handleDATA(data);
                 break;
-            
+
             case ((data[0] & 0xE0) === 0x80):
                 debug(`Recv ACK  frame (${data[0] & 0x07}): ${data.toString('hex')}`);
                 this.handleACK(data[0]);
@@ -276,7 +277,7 @@ export class SerialDriver extends EventEmitter {
             case (data[0] === 0xC0):
                 debug(`Recv RST  frame: ${data.toString('hex')}`);
                 break;
-                
+
             case (data[0] === 0xC1):
                 debug(`RSTACK frame: ${data.toString('hex')}`);
                 this.rstack_frame_received(data);
@@ -288,7 +289,7 @@ export class SerialDriver extends EventEmitter {
             default:
                 debug("UNKNOWN FRAME RECEIVED: %r", data);
             }
-            
+
         } catch (error) {
             debug(`Error while parsing to ZpiObject '${error.stack}'`);
         }
@@ -305,7 +306,7 @@ export class SerialDriver extends EventEmitter {
         this.recvSeq = (frmNum + 1) & 7; // next
         this.sendACK(this.recvSeq);
         this.handleACK(data[0]);
-        data = data.slice(1, (- 3));
+        data = data.slice(1, (-3));
         const frame = this.randomize(data);
         this.emit('received', frame);
     }
@@ -383,7 +384,7 @@ export class SerialDriver extends EventEmitter {
         let rand = RANDOMIZE_START;
         const out = Buffer.alloc(s.length);
         let outIdx = 0;
-        for (const c of s){
+        for (const c of s) {
             out.writeUInt8(c ^ rand, outIdx++);
             if ((rand % 2)) {
                 rand = ((rand >> 1) ^ RANDOMIZE_SEQ);
@@ -443,7 +444,7 @@ export class SerialDriver extends EventEmitter {
         this.initialized = false;
         this.emit('close');
     }
-    
+
     public isInitialized(): boolean {
         return this.initialized;
     }
@@ -454,7 +455,7 @@ export class SerialDriver extends EventEmitter {
         debug(`Send ACK  frame (${ackNum})`);
         this.writer.writeBuffer(ackFrame);
     }
-   
+
     public sendDATA(data: Buffer) {
         const seq = this.sendSeq;
         this.sendSeq = ((seq + 1) % 8);  // next
@@ -499,7 +500,7 @@ export class SerialDriver extends EventEmitter {
     }
 
     public waitFor(sequence: number, timeout = 10000)
-           : {start: () => {promise: Promise<EZSPPacket>; ID: number}; ID: number} {
+        : { start: () => { promise: Promise<EZSPPacket>; ID: number }; ID: number } {
         return this.waitress.waitFor({sequence}, timeout);
     }
 

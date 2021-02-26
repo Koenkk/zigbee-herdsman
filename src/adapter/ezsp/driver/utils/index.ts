@@ -2,7 +2,7 @@ import crc16ccitt from './crc16ccitt';
 import {EmberInitialSecurityState, EmberKeyData} from '../types/struct';
 import {EmberInitialSecurityBitmask, EmberEUI64} from '../types/named';
 
-if (!Symbol.asyncIterator){
+if (!Symbol.asyncIterator) {
     (<any>Symbol).asyncIterator = Symbol.for("Symbol.asyncIterator");
 }
 
@@ -21,25 +21,25 @@ export class Deferred<T> {
         });
     }
 
-    public resolve(value:T){
+    public resolve(value: T) {
         this._isResolved = true;
         this._resolve(value);
     }
 
-    public reject(value:T){
+    public reject(value: T) {
         this._isResolved = true;
         this.reject(value);
     }
 
-    get isResolved(){
+    get isResolved() {
         return this._isResolved;
     }
 
-    get isRejected(){
+    get isRejected() {
         return this._isRejected;
     }
 
-    get isFullfilled(){
+    get isFullfilled() {
         return this._isResolved || this._isRejected;
     }
 }
@@ -97,12 +97,12 @@ export class AsyncQueue<T> {
         });
     }
 
-    next(): Promise<IteratorResult<T>>{
+    next(): Promise<IteratorResult<T>> {
         if (this.queue.length > 1) {
             // If there are items available then simply put them
             // into the queue
             const item = this.queue.shift();
-            if (!item){
+            if (!item) {
                 throw new Error('Working around TS strictNullCheck');
             }
             if (item.type === 'return') {
@@ -128,17 +128,17 @@ export class AsyncQueue<T> {
         }
     }
 
-    [Symbol.asyncIterator] = () =>  {
+    [Symbol.asyncIterator] = () => {
         return this;
     };
 }
 
 
-function ember_security(config: any):EmberInitialSecurityState {
+function ember_security(config: any): EmberInitialSecurityState {
     const isc: EmberInitialSecurityState = new EmberInitialSecurityState();
-    isc.bitmask = (EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY | 
-        EmberInitialSecurityBitmask.TRUST_CENTER_GLOBAL_LINK_KEY | 
-        EmberInitialSecurityBitmask.HAVE_NETWORK_KEY | 
+    isc.bitmask = (EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY |
+        EmberInitialSecurityBitmask.TRUST_CENTER_GLOBAL_LINK_KEY |
+        EmberInitialSecurityBitmask.HAVE_NETWORK_KEY |
         EmberInitialSecurityBitmask.PRECONFIGURED_NETWORK_KEY_MODE);
     isc.preconfiguredKey = new EmberKeyData();
     isc.preconfiguredKey.contents = Buffer.from("ZigBeeAlliance09");

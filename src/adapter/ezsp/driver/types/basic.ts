@@ -107,6 +107,7 @@ export class LVBytes {
         }
         return Buffer.from([value.length].concat(value));
     }
+
     static deserialize(cls: any, data: Buffer) {
         let l, s;
         l = data.readIntLE(0, 1);
@@ -120,6 +121,7 @@ export abstract class List {
         console.assert(((cls._length === null) || (cls.length === cls._length)));
         return Buffer.from(value.map(i => i.serialize(cls, i)));
     }
+
     static deserialize(cls: any, data: Buffer): (any[] | Buffer)[] {
         let item;
         const r: any[] = [];
@@ -138,6 +140,7 @@ class _LVList extends List {
         data = super.serialize(cls, value);
         return Buffer.from(head.concat(data));
     }
+
     static deserialize(cls: any, data: Buffer) {
         let item, length;
         const r: any[] = [];
@@ -149,17 +152,20 @@ class _LVList extends List {
         return [r, data];
     }
 }
-export function list(itemtype: any) : List {
+
+export function list(itemtype: any): List {
     class ConreteList extends List {
         static itemtype = itemtype;
     }
+
     return ConreteList;
 }
 
-export function LVList(itemtype: any) : List {
+export function LVList(itemtype: any): List {
     class LVList extends _LVList {
         static itemtype = itemtype;
     }
+
     return LVList;
 }
 
@@ -175,6 +181,7 @@ class _FixedList extends List {
         const data = value.map(i => cls.itemtype.serialize(cls.itemtype, i)[0]);
         return Buffer.from(data);
     }
+
     static deserialize(cls: any, data: Buffer) {
         let item;
         const r: any[] = [];
@@ -186,13 +193,14 @@ class _FixedList extends List {
     }
 }
 
-export function fixed_list(length: number, itemtype: any) : {
+export function fixed_list(length: number, itemtype: any): {
     new(): any;
-    deserialize(cls : any, data : Buffer) : any;
+    deserialize(cls: any, data: Buffer): any;
 } {
-    class FixedList extends _FixedList  {
+    class FixedList extends _FixedList {
         static itemtype = itemtype;
         static _length = length;
     }
+
     return FixedList;
 }

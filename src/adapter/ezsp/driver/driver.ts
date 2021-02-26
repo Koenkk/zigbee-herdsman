@@ -4,7 +4,18 @@ import {EmberStatus, EmberNodeType, EmberNodeId, uint16_t, uint8_t, EmberZDOCmd,
 import {EventEmitter} from "events";
 import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState} from './types/struct';
 import {Deferred, ember_security} from './utils';
-import {EmberOutgoingMessageType, EmberEUI64, EmberJoinMethod, EmberDeviceUpdate, EzspValueId, EzspPolicyId, EzspDecisionBitmask, EzspMfgTokenId, EmberNetworkStatus, EmberKeyType} from './types/named';
+import {
+    EmberOutgoingMessageType,
+    EmberEUI64,
+    EmberJoinMethod,
+    EmberDeviceUpdate,
+    EzspValueId,
+    EzspPolicyId,
+    EzspDecisionBitmask,
+    EzspMfgTokenId,
+    EmberNetworkStatus,
+    EmberKeyType
+} from './types/named';
 import {Multicast} from './multicast';
 import {Queue, Waitress} from '../../../utils';
 import Debug from "debug";
@@ -17,7 +28,7 @@ const debug = {
 
 interface AddEndpointParameters {
     endpoint?: number,
-    profileId?: number, 
+    profileId?: number,
     deviceId?: number,
     appFlags?: number,
     inputClusters?: number[],
@@ -66,7 +77,7 @@ export class Driver extends EventEmitter {
         const ezsp = this.ezsp = new Ezsp();
         await ezsp.connect(port, serialOpt);
         const version = await ezsp.version();
-        
+
         await ezsp.updateConfig();
 
         await ezsp.updatePolicies();
@@ -79,19 +90,19 @@ export class Driver extends EventEmitter {
 
         //const count = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
         //debug.log("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
-        
+
         //await this.addEndpoint({outputClusters: [0x0500]});
         await this.addEndpoint({
-            inputClusters: [0x0000, 0x0003, 0x0006, 0x000A, 0x0019, 0x001A, 0x0300], 
-            outputClusters: [0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0020, 
-                0x0300, 0x0400, 0x0402, 0x0405, 0x0406, 0x0500, 0x0B01, 0x0B03, 
+            inputClusters: [0x0000, 0x0003, 0x0006, 0x000A, 0x0019, 0x001A, 0x0300],
+            outputClusters: [0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0020,
+                0x0300, 0x0400, 0x0402, 0x0405, 0x0406, 0x0500, 0x0B01, 0x0B03,
                 0x0B04, 0x0702, 0x1000, 0xFC01, 0xFC02]
         });
         await this.addEndpoint({
             endpoint: 242, profileId: 0xA10E, deviceId: 0x61,
             outputClusters: [0x0021]
         });
-        
+
         // getting MFG_STRING token
         const mfgName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_STRING);
         // getting MFG_BOARD_NAME token
@@ -105,7 +116,13 @@ export class Driver extends EventEmitter {
         [special, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         const vers = `${major}.${minor}.${patch}.${special} build ${build}`;
         debug.log(`EmberZNet version: ${vers}`);
-        this.version = {product: this.ezsp.ezspV, majorrel: `${major}`, minorrel: `${minor}`, maintrel: `${patch} `, revision: vers};
+        this.version = {
+            product: this.ezsp.ezspV,
+            majorrel: `${major}`,
+            minorrel: `${minor}`,
+            maintrel: `${patch} `,
+            revision: vers
+        };
 
         if (await this.needsToBeInitialised(nwkOpt)) {
             const currentState = await ezsp.execCommand('networkState');
@@ -136,7 +153,7 @@ export class Driver extends EventEmitter {
         this.multicast = new Multicast(this);
         await this.multicast.startup([]);
     }
-    
+
     private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
         let valid = true;
         valid = valid && (await this.ezsp.networkInit());
@@ -157,9 +174,9 @@ export class Driver extends EventEmitter {
 
         const panID = this.nwkOpt.panID;
         const extendedPanID = this.nwkOpt.extendedPanID;
-        const initial_security_state:EmberInitialSecurityState = ember_security(this.nwkOpt);
+        const initial_security_state: EmberInitialSecurityState = ember_security(this.nwkOpt);
         [status] = await this.ezsp.setInitialSecurityState(initial_security_state);
-        const parameters:EmberNetworkParameters = new EmberNetworkParameters();
+        const parameters: EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;
         parameters.extendedPanId = extendedPanID;
         parameters.radioTxPower = 20;
@@ -168,7 +185,7 @@ export class Driver extends EventEmitter {
         parameters.nwkManagerId = 0;
         parameters.nwkUpdateId = 0;
         parameters.channels = 0x07FFF800; // all channels
-        
+
         await this.ezsp.formNetwork(parameters);
         await this.ezsp.setValue(EzspValueId.VALUE_STACK_TOKEN_WRITING, 1);
 
@@ -252,7 +269,7 @@ export class Driver extends EventEmitter {
 
     public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
         try {
-            const seq = apsFrame.sequence+1;
+            const seq = apsFrame.sequence + 1;
             let eui64: EmberEUI64;
             if (typeof nwk !== 'number') {
                 eui64 = nwk as EmberEUI64;
@@ -278,9 +295,9 @@ export class Driver extends EventEmitter {
             return false;
         }
     }
-    
+
     private nextTransactionID(): number {
-        this.transactionID = (this.transactionID+1) & 0xFF;
+        this.transactionID = (this.transactionID + 1) & 0xFF;
         return this.transactionID;
     }
 
@@ -335,7 +352,7 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async permitJoining(seconds:number){
+    public async permitJoining(seconds: number) {
         await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
         return await this.ezsp.execCommand('permitJoining', seconds);
     }
@@ -348,7 +365,14 @@ export class Driver extends EventEmitter {
         return this.ezsp.parse_frame_payload(name, obj);
     }
 
-    public async addEndpoint({endpoint=1, profileId=260, deviceId=0xBEEF, appFlags=0, inputClusters=[], outputClusters=[]}: AddEndpointParameters) {
+    public async addEndpoint({
+        endpoint = 1,
+        profileId = 260,
+        deviceId = 0xBEEF,
+        appFlags = 0,
+        inputClusters = [],
+        outputClusters = []
+    }: AddEndpointParameters) {
         const res = await this.ezsp.execCommand('addEndpoint',
             endpoint,
             profileId,
@@ -363,7 +387,7 @@ export class Driver extends EventEmitter {
     }
 
     public waitFor(address: number, clusterId: number, sequence: number, timeout = 30000)
-           : {start: () => {promise: Promise<EmberFrame>; ID: number}; ID: number} {
+        : { start: () => { promise: Promise<EmberFrame>; ID: number }; ID: number } {
         return this.waitress.waitFor({address, clusterId, sequence}, timeout);
     }
 
@@ -373,7 +397,7 @@ export class Driver extends EventEmitter {
 
     private waitressValidator(payload: EmberFrame, matcher: EmberWaitressMatcher): boolean {
         return (!matcher.address || payload.address === matcher.address) &&
-            payload.frame.clusterId === matcher.clusterId && 
+            payload.frame.clusterId === matcher.clusterId &&
             payload.payload[0] === matcher.sequence;
     }
 }

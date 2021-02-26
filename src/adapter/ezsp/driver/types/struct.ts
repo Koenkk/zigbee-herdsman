@@ -3,7 +3,7 @@ import * as named from './named';
 
 export class EzspStruct {
     static serialize(cls: any, obj: any) {
-        return Buffer.concat(cls._fields.map( (field:any[]) => {
+        return Buffer.concat(cls._fields.map((field: any[]) => {
             const value = obj[field[0]];
             console.assert(field[1]);
             return field[1].serialize(field[1], value);
@@ -20,7 +20,7 @@ export class EzspStruct {
         return [r, data];
     }
 
-    public toString():string {
+    public toString(): string {
         return `${this.constructor.name}: ${JSON.stringify(this)}`;
     }
 }
@@ -62,6 +62,7 @@ export class EmberNetworkParameters extends EzspStruct {
         ['channels', basic.uint32_t],
     ];
 }
+
 export class EmberZigbeeNetwork extends EzspStruct {
     // The parameters of a ZigBee network.
     static _fields = [
