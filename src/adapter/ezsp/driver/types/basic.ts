@@ -1,7 +1,8 @@
 export class int_t {
     static _signed = true;
 
-    static serialize(cls: any, value: number) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static serialize(cls: any, value: number): Buffer {
         const buffer = Buffer.alloc(cls._size, 0);
         if (cls._signed) {
             buffer.writeIntLE(value, 0, cls._size);
@@ -11,11 +12,13 @@ export class int_t {
         return buffer;
     }
 
-    static deserialize(cls: any, data: Buffer) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static deserialize(cls: any, data: Buffer): any[] {
         return [cls._signed ? data.readIntLE(0, cls._size) : data.readUIntLE(0, cls._size), data.slice(cls._size)];
     }
 
-    static valueToName(cls: any, value: any) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static valueToName(cls: any, value: any): string {
         for (const prop of Object.getOwnPropertyNames(cls)) {
             const desc = Object.getOwnPropertyDescriptor(cls, prop);
             if (desc !== undefined && desc.enumerable && desc.writable && value == desc.value) {
@@ -25,7 +28,8 @@ export class int_t {
         return '';
     }
 
-    static valueName(cls: any, value: any) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static valueName(cls: any, value: any): string {
         for (const prop of Object.getOwnPropertyNames(cls)) {
             const desc = Object.getOwnPropertyDescriptor(cls, prop);
             if (desc !== undefined && desc.enumerable && desc.writable && value == desc.value) {
@@ -80,26 +84,9 @@ export class uint64_t extends uint_t {
     static _size = 8;
 }
 
-/*
-export class Single extends number {
-    serialize() {
-        return struct.pack("<f", this);
-    }
-    static deserialize(cls, data) {
-        return [struct.unpack("<f", data)[0], data.slice(4)];
-    }
-}
-export  class Double extends number {
-    serialize() {
-        return struct.pack("<d", this);
-    }
-    static deserialize(cls, data) {
-        return [struct.unpack("<d", data)[0], data.slice(8)];
-    }
-}*/
-
 export class LVBytes {
-    static serialize(cls: any, value: any[]) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static serialize(cls: any, value: any[]): Buffer {
         if (Buffer.isBuffer(value)) {
             const ret = Buffer.alloc(1);
             ret.writeUInt8(value.length, 0);
@@ -108,22 +95,25 @@ export class LVBytes {
         return Buffer.from([value.length].concat(value));
     }
 
-    static deserialize(cls: any, data: Buffer) {
-        let l, s;
-        l = data.readIntLE(0, 1);
-        s = data.slice(1, (l + 1));
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static deserialize(cls: any, data: Buffer): any[] {
+        const l = data.readIntLE(0, 1);
+        const s = data.slice(1, (l + 1));
         return [s, data.slice((l + 1))];
     }
 }
 
 export abstract class List {
-    static serialize(cls: any, value: any[]) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static serialize(cls: any, value: any[]): Buffer {
         console.assert(((cls._length === null) || (cls.length === cls._length)));
         return Buffer.from(value.map(i => i.serialize(cls, i)));
     }
 
-    static deserialize(cls: any, data: Buffer): (any[] | Buffer)[] {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static deserialize(cls: any, data: Buffer): any[] {
         let item;
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const r: any[] = [];
         while (data) {
             [item, data] = cls.itemtype.deserialize(cls.itemtype, data);
@@ -134,15 +124,17 @@ export abstract class List {
 }
 
 class _LVList extends List {
-    static serialize(cls: any, value: any[]) {
-        let data, head;
-        head = [cls.length];
-        data = super.serialize(cls, value);
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static serialize(cls: any, value: any[]): Buffer {
+        const head = [cls.length];
+        const data = super.serialize(cls, value);
         return Buffer.from(head.concat(data));
     }
 
-    static deserialize(cls: any, data: Buffer) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static deserialize(cls: any, data: Buffer): any[] {
         let item, length;
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const r: any[] = [];
         [length, data] = [data[0], data.slice(1)];
         for (let i = 0; i < length; i++) {
@@ -153,6 +145,7 @@ class _LVList extends List {
     }
 }
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 export function list(itemtype: any): List {
     class ConreteList extends List {
         static itemtype = itemtype;
@@ -161,6 +154,7 @@ export function list(itemtype: any): List {
     return ConreteList;
 }
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 export function LVList(itemtype: any): List {
     class LVList extends _LVList {
         static itemtype = itemtype;
@@ -170,20 +164,24 @@ export function LVList(itemtype: any): List {
 }
 
 export class WordList extends List {
-    static serialize(cls: any, value: any[]) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static serialize(cls: any, value: any[]): Buffer {
         const data = value.map(i => Buffer.from(uint16_t.serialize(uint16_t, i)));
         return Buffer.concat(data);
     }
 }
 
 class _FixedList extends List {
-    static serialize(cls: any, value: any[]) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static serialize(cls: any, value: any[]): Buffer {
         const data = value.map(i => cls.itemtype.serialize(cls.itemtype, i)[0]);
         return Buffer.from(data);
     }
 
-    static deserialize(cls: any, data: Buffer) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static deserialize(cls: any, data: Buffer): any[] {
         let item;
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const r: any[] = [];
         for (let i = 0; i < cls._length; i++) {
             [item, data] = cls.itemtype.deserialize(cls.itemtype, data);
@@ -193,6 +191,7 @@ class _FixedList extends List {
     }
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any*/
 export function fixed_list(length: number, itemtype: any): {
     new(): any;
     deserialize(cls: any, data: Buffer): any;
@@ -204,3 +203,4 @@ export function fixed_list(length: number, itemtype: any): {
 
     return FixedList;
 }
+/* eslint-enable @typescript-eslint/no-explicit-any*/

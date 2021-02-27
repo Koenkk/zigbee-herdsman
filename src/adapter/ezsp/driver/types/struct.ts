@@ -2,7 +2,9 @@ import * as basic from './basic';
 import * as named from './named';
 
 export class EzspStruct {
-    static serialize(cls: any, obj: any) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static serialize(cls: any, obj: any): Buffer {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         return Buffer.concat(cls._fields.map((field: any[]) => {
             const value = obj[field[0]];
             console.assert(field[1]);
@@ -10,7 +12,8 @@ export class EzspStruct {
         }));
     }
 
-    static deserialize(cls: any, data: Buffer) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static deserialize(cls: any, data: Buffer): any[] {
         const r = new cls();
         for (const [field_name, field_type] of cls._fields) {
             let v;

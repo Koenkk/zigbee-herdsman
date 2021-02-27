@@ -149,6 +149,7 @@ export class SerialDriver extends EventEmitter {
     private writer: Writer;
     private parser: Parser;
     private initialized: boolean;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private resetDeferred: Deferred<any>;
     private portType: 'serial' | 'socket';
     private sendSeq = 0; // next frame number to send
@@ -165,17 +166,16 @@ export class SerialDriver extends EventEmitter {
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
-    async connect(path: string, options: {}) {
+    async connect(path: string, options: Record<string, number>): Promise<void> {
         this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
         if (this.portType === 'serial') {
             await this.openSerialPort(path, options);
         } else {
-            await this.openSocketPort(path, options);
+            await this.openSocketPort(path);
         }
     }
 
-    private async openSerialPort(path: string, opt: {}): Promise<void> {
-        // @ts-ignore
+    private async openSerialPort(path: string, opt: Record<string, number>): Promise<void> {
         const options = {baudRate: opt.baudRate, rtscts: false, autoOpen: false};
 
         debug(`Opening SerialPort with ${path} and ${JSON.stringify(options)}`);
@@ -213,7 +213,7 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    private async openSocketPort(path: string, options: {}): Promise<void> {
+    private async openSocketPort(path: string): Promise<void> {
         const info = SocketPortUtils.parseTcpPath(path);
         debug(`Opening TCP socket with ${info.host}:${info.port}`);
 
@@ -235,7 +235,7 @@ export class SerialDriver extends EventEmitter {
 
             // eslint-disable-next-line
             const self = this;
-            this.socketPort.on('ready', async (error): Promise<void> => {
+            this.socketPort.on('ready', async (): Promise<void> => {
                 debug('Socket ready');
                 // reset
                 await this.reset();
@@ -260,7 +260,8 @@ export class SerialDriver extends EventEmitter {
             /* Frame receive handler */
             switch (true) {
             case ((data[0] & 0x80) === 0):
-                debug(`Recv DATA frame (${(data[0] & 0x70) >> 4},${data[0] & 0x07},${(data[0] & 0x08) >> 3}): ${data.toString('hex')}`);
+                debug(`Recv DATA frame (${(data[0] & 0x70) >> 4},
+                    ${data[0] & 0x07},${(data[0] & 0x08) >> 3}): ${data.toString('hex')}`);
                 this.handleDATA(data);
                 break;
 
@@ -295,11 +296,11 @@ export class SerialDriver extends EventEmitter {
         }
     }
 
-    private handleDATA(data: Buffer) {
+    private handleDATA(data: Buffer): void {
         /* Data frame receive handler */
         const frmNum = (data[0] & 0x70) >> 4;
-        const ackNum = data[0] & 0x07;
-        const reTx = (data[0] & 0x08) >> 3;
+        //const ackNum = data[0] & 0x07;
+        //const reTx = (data[0] & 0x08) >> 3;
         // if (seq !== this.recvSeq) {
         //     debug('NAK-NAK');
         // }
@@ -311,7 +312,7 @@ export class SerialDriver extends EventEmitter {
         this.emit('received', frame);
     }
 
-    private handleACK(control: number) {
+    private handleACK(control: number): void {
         /* Handle an acknowledgement frame */
         // next number after the last accepted frame
         this.ackSeq = control & 0x07;
@@ -329,7 +330,7 @@ export class SerialDriver extends EventEmitter {
         // }
     }
 
-    private handleNAK(control: number) {
+    private handleNAK(control: number): void {
         /* Handle negative acknowledgment frame */
         const nakNum = control & 0x07;
         const handled = this.waitress.reject({sequence: nakNum}, 'Recv NAK frame');
@@ -344,7 +345,7 @@ export class SerialDriver extends EventEmitter {
         // }
     }
 
-    private rstack_frame_received(data: Buffer) {
+    private rstack_frame_received(data: Buffer): void {
         /* Reset acknowledgement frame receive handler */
         let code;
         this.sendSeq = 0;
@@ -355,6 +356,7 @@ export class SerialDriver extends EventEmitter {
             code = NcpResetCode.ERROR_UNKNOWN_EM3XX_ERROR;
         }
         debug("RSTACK Version: %d Reason: %s frame: %s", data[1], code.toString(), data.toString('hex'));
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         if (NcpResetCode[<any>code].toString() !== NcpResetCode.RESET_SOFTWARE.toString()) {
             return;
         }
@@ -395,13 +397,13 @@ export class SerialDriver extends EventEmitter {
         return out;
     }
 
-    private makeDataFrame(data: Buffer, seq: number, rxmit: number, ackSeq: number) {
+    private makeDataFrame(data: Buffer, seq: number, rxmit: number, ackSeq: number): Buffer {
         /* Construct a data frame */
         const control = (((seq << 4) | (rxmit << 3)) | ackSeq);
         return this.make_frame([control], this.randomize(data));
     }
 
-    async reset() {
+    async reset(): Promise<void> {
         // return this._gw.reset();
         debug('uart reseting');
         if ((this.resetDeferred)) {
@@ -449,14 +451,14 @@ export class SerialDriver extends EventEmitter {
         return this.initialized;
     }
 
-    private sendACK(ackNum: number) {
+    private sendACK(ackNum: number): void {
         /* Construct a acknowledgement frame */
         const ackFrame = this.make_frame([(0b10000000 | ackNum)]);
         debug(`Send ACK  frame (${ackNum})`);
         this.writer.writeBuffer(ackFrame);
     }
 
-    public sendDATA(data: Buffer) {
+    public async sendDATA(data: Buffer): Promise<void> {
         const seq = this.sendSeq;
         this.sendSeq = ((seq + 1) % 8);  // next
         const nextSeq = this.sendSeq;
@@ -469,7 +471,7 @@ export class SerialDriver extends EventEmitter {
             const waiter = this.waitFor(nextSeq);
             debug(`waiting (${nextSeq})`);
             this.writer.writeBuffer(pack);
-            await waiter.start().promise.catch(async (e) => {
+            await waiter.start().promise.catch(async () => {
                 debug(`break waiting (${nextSeq})`);
                 debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
                 debug(`Resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);

@@ -1,14 +1,8 @@
 import {Buffer} from 'buffer';
-
-const createBuffer =
-    Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow
-        ? Buffer.from
-        : // support for Node < 5.10
-        (val: any) => Buffer.from(val);
-
-
-function defineCrc(model: string, calc: Function) {
-    const fn = (buf: any, previous: any) => calc(buf, previous) >>> 0;
+/* eslint-disable-next-line @typescript-eslint/ban-types*/
+function defineCrc(model: string, calc: Function): Function {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    const fn = (buf: any, previous: any): number => calc(buf, previous) >>> 0;
     fn.signed = calc;
     fn.unsigned = fn;
     fn.model = model;
@@ -53,10 +47,9 @@ const TABLE: number[] = [
     0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0
 ];
 
-//if (typeof Int32Array !== 'undefined') TABLE = new Int32Array(TABLE);
-
-const crc16ccitt = defineCrc('ccitt', function (buf: any, previous: any) {
-    if (!Buffer.isBuffer(buf)) buf = createBuffer(buf);
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+const crc16ccitt = defineCrc('ccitt', function (buf: any, previous: any): number {
+    if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
 
     let crc = typeof previous !== 'undefined' ? ~~previous : 0xffff;
 

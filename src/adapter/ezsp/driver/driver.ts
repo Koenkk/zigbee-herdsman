@@ -1,9 +1,9 @@
 import * as TsType from './../../tstype';
 import {Ezsp} from './ezsp';
-import {EmberStatus, EmberNodeType, EmberNodeId, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption} from './types';
+import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption} from './types';
 import {EventEmitter} from "events";
 import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState} from './types/struct';
-import {Deferred, ember_security} from './utils';
+import {ember_security} from './utils';
 import {
     EmberOutgoingMessageType,
     EmberEUI64,
@@ -12,7 +12,6 @@ import {
     EzspValueId,
     EzspPolicyId,
     EzspDecisionBitmask,
-    EzspMfgTokenId,
     EmberNetworkStatus,
     EmberKeyType
 } from './types/named';
@@ -72,11 +71,12 @@ export class Driver extends EventEmitter {
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
-    public async startup(port: string, serialOpt: {}, nwkOpt: TsType.NetworkOptions) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    public async startup(port: string, serialOpt: Record<string, any>, nwkOpt: TsType.NetworkOptions): Promise<void> {
         this.nwkOpt = nwkOpt;
         const ezsp = this.ezsp = new Ezsp();
         await ezsp.connect(port, serialOpt);
-        const version = await ezsp.version();
+        await ezsp.version();
 
         await ezsp.updateConfig();
 
@@ -104,9 +104,10 @@ export class Driver extends EventEmitter {
         });
 
         // getting MFG_STRING token
-        const mfgName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_STRING);
+        //const mfgName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_STRING);
         // getting MFG_BOARD_NAME token
-        const boardName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_BOARD_NAME);
+        //const boardName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_BOARD_NAME);
+        /* eslint-disable prefer-const */
         let verInfo = await ezsp.getValue(EzspValueId.VALUE_VERSION_INFO);
         let build, major, minor, patch, special;
         [build, verInfo] = uint16_t.deserialize(uint16_t, verInfo);
@@ -114,6 +115,7 @@ export class Driver extends EventEmitter {
         [minor, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         [patch, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         [special, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
+        /* eslint-enable prefer-const */
         const vers = `${major}.${minor}.${patch}.${special} build ${build}`;
         debug.log(`EmberZNet version: ${vers}`);
         this.version = {
@@ -147,7 +149,7 @@ export class Driver extends EventEmitter {
         this.ieee = new EmberEUI64(ieee);
         debug.log('Network ready');
         ezsp.on('frame', this.handleFrame.bind(this));
-        this.handleNodeJoined(nwk, this.ieee, {}, {}, {});
+        this.handleNodeJoined(nwk, this.ieee);
         debug.log(`EZSP nwk=${nwk}, IEEE=0x${this.ieee}`);
 
         this.multicast = new Multicast(this);
@@ -167,7 +169,7 @@ export class Driver extends EventEmitter {
         return !valid;
     }
 
-    private async form_network() {
+    private async form_network(): Promise<void> {
         let status;
         [status] = await this.ezsp.execCommand('clearKeyTable');
         console.assert(status == EmberStatus.SUCCESS);
@@ -193,7 +195,8 @@ export class Driver extends EventEmitter {
         await this.ezsp.execCommand('getKey', EmberKeyType.CURRENT_NETWORK_KEY);
     }
 
-    private handleFrame(frameName: string, ...args: any[]) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    private handleFrame(frameName: string, ...args: any[]): void {
         switch (true) {
         case (frameName === 'incomingMessageHandler'): {
             const [messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message] = args;
@@ -209,10 +212,12 @@ export class Driver extends EventEmitter {
             break;
         }
         case (frameName === 'trustCenterJoinHandler'): {
-            if (args[2] === EmberDeviceUpdate.DEVICE_LEFT) {
-                this.handleNodeLeft.apply(this, args);
+            /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+            const [nwk, ieee, devUpdate, joinDecision, parent] = args;
+            if (devUpdate === EmberDeviceUpdate.DEVICE_LEFT) {
+                this.handleNodeLeft(nwk, ieee);
             } else {
-                this.handleNodeJoined.apply(this, args);
+                this.handleNodeJoined(nwk, ieee);
             }
             break;
         }
@@ -241,17 +246,20 @@ export class Driver extends EventEmitter {
         }
     }
 
-    private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number, relays: any) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+    private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number, relays: any): void {
         debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
         // todo
     }
 
-    private handleRouteError(status: EmberStatus, nwk: number) {
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+    private handleRouteError(status: EmberStatus, nwk: number): void {
         debug.log(`handleRouteError: number=${status}, nwk=${nwk}`);
         // todo
     }
 
-    private handleNodeLeft(nwk: number, ieee: EmberEUI64 | number[], ...args: any[]) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    private handleNodeLeft(nwk: number, ieee: EmberEUI64 | number[]): void {
         if (ieee && !(ieee instanceof EmberEUI64)) {
             ieee = new EmberEUI64(ieee);
         }
@@ -259,7 +267,8 @@ export class Driver extends EventEmitter {
         this.emit('deviceLeft', [nwk, ieee]);
     }
 
-    private handleNodeJoined(nwk: number, ieee: EmberEUI64 | number[], deviceUpdate: any, joinDec: any, parentNwk: any) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    private handleNodeJoined(nwk: number, ieee: EmberEUI64 | number[]): void {
         if (ieee && !(ieee instanceof EmberEUI64)) {
             ieee = new EmberEUI64(ieee);
         }
@@ -267,7 +276,9 @@ export class Driver extends EventEmitter {
         this.emit('deviceJoined', [nwk, ieee]);
     }
 
-    public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
+    public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, 
+        /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+        data: Buffer, timeout = 30000): Promise<boolean> {
         try {
             const seq = apsFrame.sequence + 1;
             let eui64: EmberEUI64;
@@ -289,7 +300,7 @@ export class Driver extends EventEmitter {
             }
             await this.ezsp.execCommand('setExtendedTimeout', eui64, true);
 
-            const v = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
+            await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             return true;
         } catch (e) {
             return false;
@@ -301,7 +312,7 @@ export class Driver extends EventEmitter {
         return this.transactionID;
     }
 
-    public makeApsFrame(clusterId: number) {
+    public makeApsFrame(clusterId: number): EmberApsFrame {
         const frame = new EmberApsFrame();
         frame.clusterId = clusterId;
         frame.profileId = 0;
@@ -314,7 +325,9 @@ export class Driver extends EventEmitter {
         return frame;
     }
 
-    public async zdoRequest(networkAddress: number, requestCmd: EmberZDOCmd, responseCmd: EmberZDOCmd, ...args: any[]): Promise<any> {
+    public async zdoRequest(networkAddress: number, requestCmd: EmberZDOCmd,
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+        responseCmd: EmberZDOCmd, ...args: any[]): Promise<any> {
         const requestName = EmberZDOCmd.valueName(EmberZDOCmd, requestCmd);
         const responseName = EmberZDOCmd.valueName(EmberZDOCmd, responseCmd);
         debug.log(`${requestName} params: ${[...args]}`);
@@ -330,7 +343,7 @@ export class Driver extends EventEmitter {
         return result;
     }
 
-    public stop() {
+    public async stop(): Promise<void> {
         return this.ezsp.close();
     }
 
@@ -344,6 +357,7 @@ export class Driver extends EventEmitter {
         }
         const value = await this.ezsp.execCommand('lookupEui64ByNodeId', nwk);
         if (value[0] === EmberStatus.SUCCESS) {
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
             const eUI64 = new EmberEUI64(value[1] as any);
             this.eui64ToNodeId.set(eUI64.toString(), nwk);
             return eUI64;
@@ -352,16 +366,20 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async permitJoining(seconds: number) {
-        await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
-        return await this.ezsp.execCommand('permitJoining', seconds);
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    public async permitJoining(seconds: number): Promise<any> {
+        await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
+            EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
+        return this.ezsp.execCommand('permitJoining', seconds);
     }
 
-    public makeZDOframe(name: string, ...args: any[]) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    public makeZDOframe(name: string, ...args: any[]): Buffer {
         return this.ezsp.makeZDOframe(name, ...args);
     }
 
-    public parse_frame_payload(name: string, obj: Buffer) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    public parse_frame_payload(name: string, obj: Buffer): any[] {
         return this.ezsp.parse_frame_payload(name, obj);
     }
 
@@ -372,7 +390,7 @@ export class Driver extends EventEmitter {
         appFlags = 0,
         inputClusters = [],
         outputClusters = []
-    }: AddEndpointParameters) {
+    }: AddEndpointParameters): Promise<void> {
         const res = await this.ezsp.execCommand('addEndpoint',
             endpoint,
             profileId,

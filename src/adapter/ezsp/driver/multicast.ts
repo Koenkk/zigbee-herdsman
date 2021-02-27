@@ -1,7 +1,6 @@
 import {Driver} from './driver';
-import {EzspConfigId, EmberZdoConfigurationFlags} from './types';
-import * as t from './types/basic';
-import {EmberStatus, EmberOutgoingMessageType, EmberMulticastId} from './types/named';
+import {EzspConfigId} from './types';
+import {EmberStatus} from './types/named';
 import {EmberMulticastTableEntry} from './types/struct';
 import Debug from "debug";
 
@@ -13,7 +12,9 @@ const debug = {
 export class Multicast {
     TABLE_SIZE = 16;
     private driver: Driver;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private _multicast: any;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private _available: Array<any>;
 
     constructor(driver: Driver) {
@@ -22,13 +23,12 @@ export class Multicast {
         this._available = [];
     }
 
-    private async _initialize() {
+    private async _initialize(): Promise<void> {
         const size = await this.driver.ezsp.getConfigurationValue(
             EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE
         );
         for (let i = 0; i < size; i++) {
-            let st: any, entry: any;
-            [st, entry] = await this.driver.ezsp.getMulticastTableEntry(i);
+            const [st, entry] = await this.driver.ezsp.getMulticastTableEntry(i);
             if (st !== EmberStatus.SUCCESS) {
                 debug.log("Couldn't get MulticastTableEntry #%s: %s", i, st);
                 continue;
@@ -42,7 +42,8 @@ export class Multicast {
         }
     }
 
-    async startup(enpoints: Array<any>) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    async startup(enpoints: Array<any>): Promise<void> {
         return this.driver.queue.execute<void>(async () => {
             await this._initialize();
             for (const ep of enpoints) {

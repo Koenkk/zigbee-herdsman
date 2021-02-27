@@ -18,6 +18,7 @@ import {EmberApsFrame} from './types/struct';
 import {Queue, Waitress} from '../../../utils';
 import Debug from "debug";
 
+
 const debug = {
     error: Debug('zigbee-herdsman:adapter:ezsp:error'),
     log: Debug('zigbee-herdsman:adapter:ezsp:log'),
@@ -33,6 +34,7 @@ type EZSPFrame = {
     sequence: number,
     frameId: number,
     frameName: string,
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     payload: any
 };
 
@@ -44,6 +46,7 @@ type EZSPWaitressMatcher = {
 export class Ezsp extends EventEmitter {
     ezspV = 4;
     cmdSeq = 0;  // command sequence
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     COMMANDS_BY_ID = new Map<number, { name: string, inArgs: any[], outArgs: any[] }>();
     private serialDriver: SerialDriver;
     private waitress: Waitress<EZSPFrame, EZSPWaitressMatcher>;
@@ -52,7 +55,7 @@ export class Ezsp extends EventEmitter {
     constructor() {
         super();
         for (const name in COMMANDS) {
-            const details = (<any>COMMANDS)[name];
+            const details = COMMANDS[name];
             this.COMMANDS_BY_ID.set(details[0], {name, inArgs: details[1], outArgs: details[2]});
         }
         this.queue = new Queue();
@@ -63,7 +66,7 @@ export class Ezsp extends EventEmitter {
         this.serialDriver.on('received', this.onFrameReceived.bind(this));
     }
 
-    public async connect(path: string, options: {}) {
+    public async connect(path: string, options: Record<string, number>): Promise<void> {
         await this.serialDriver.connect(path, options);
     }
 
@@ -71,7 +74,7 @@ export class Ezsp extends EventEmitter {
         return this.serialDriver.close();
     }
 
-    private onFrameReceived(data: Buffer) {
+    private onFrameReceived(data: Buffer): void {
         /*Handle a received EZSP frame
 
         The protocol has taken care of UART specific framing etc, so we should
@@ -79,7 +82,7 @@ export class Ezsp extends EventEmitter {
         data randomization removed.
         */
         debug.log(`<=== Frame: ${data.toString('hex')}`);
-        let frame_id: number, result, schema, sequence;
+        let frame_id: number, result, sequence;
         if ((this.ezspV < 8)) {
             [sequence, frame_id, data] = [data[0], data[2], data.slice(3)];
         } else {
@@ -97,7 +100,7 @@ export class Ezsp extends EventEmitter {
         if (!cmd) throw new Error('Unrecognized command from FrameID' + frame_id);
         const frameName = cmd.name;
         debug.log("<=== Application frame %s (%s) received: %s", frame_id, frameName, data.toString('hex'));
-        schema = cmd.outArgs;
+        const schema = cmd.outArgs;
         [result, data] = t.deserialize(data, schema);
         debug.log(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
         const handled = this.waitress.resolve({
@@ -114,7 +117,7 @@ export class Ezsp extends EventEmitter {
         }
     }
 
-    async version() {
+    async version(): Promise<number> {
         const version = this.ezspV;
         const result = await this.command("version", version);
         if ((result[0] !== version)) {
@@ -124,9 +127,9 @@ export class Ezsp extends EventEmitter {
         return result[0];
     }
 
-    async networkInit() {
-        let fut: Deferred<any>, v, st;
-        fut = new Deferred();
+    async networkInit(): Promise<boolean> {
+        const fut = new Deferred();
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         this.on('frame', (frameName: string, response: any) => {
             if ((frameName === "stackStatusHandler")) {
                 fut.resolve(response);
@@ -139,13 +142,15 @@ export class Ezsp extends EventEmitter {
             debug.log("Failure to init network:" + result);
             return false;
         }
-        v = await fut.promise;
+        const v = await fut.promise;
         return (v === EmberStatus.NETWORK_UP);
     }
 
-    async leaveNetwork() {
-        let fut: Deferred<any>, v, st;
-        fut = new Deferred();
+    async leaveNetwork(): Promise<number> {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+        let v;
+        const fut = new Deferred();
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         this.on('frame', (frameName: string, response: any) => {
             if ((frameName === "stackStatusHandler")) {
                 fut.resolve(response);
@@ -164,76 +169,72 @@ export class Ezsp extends EventEmitter {
         return v;
     }
 
-    async setConfigurationValue(configId: number, value: any) {
-        let ret;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    async setConfigurationValue(configId: number, value: any): Promise<void> {
         debug.log('Set %s = %s', EzspConfigId.valueToName(EzspConfigId, configId), value);
-        [ret] = await this.execCommand('setConfigurationValue', configId, value);
+        const [ret] = await this.execCommand('setConfigurationValue', configId, value);
         console.assert(ret === EmberStatus.SUCCESS);
     }
 
-    async getConfigurationValue(configId: number) {
-        let ret, value;
+    async getConfigurationValue(configId: number): Promise<number> {
         debug.log('Get %s', EzspConfigId.valueToName(EzspConfigId, configId));
-        [ret, value] = await this.execCommand('getConfigurationValue', configId);
+        const [ret, value] = await this.execCommand('getConfigurationValue', configId);
         console.assert(ret === EmberStatus.SUCCESS);
         debug.log('Got %s = %s', EzspConfigId.valueToName(EzspConfigId, configId), value);
         return value;
     }
 
-    async getMulticastTableEntry(index: number) {
-        let ret, value;
-        [ret, value] = await this.execCommand('getMulticastTableEntry', index);
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    async getMulticastTableEntry(index: number): Promise<any[]> {
+        const [ret, value] = await this.execCommand('getMulticastTableEntry', index);
         console.assert(ret === EmberStatus.SUCCESS);
         return [ret, value];
     }
 
-    async setMulticastTableEntry(index: number, entry: t.EmberMulticastTableEntry) {
-        let ret;
-        [ret] = await this.execCommand('setMulticastTableEntry', index, entry);
+    async setMulticastTableEntry(index: number, entry: t.EmberMulticastTableEntry): Promise<number[]> {
+        const [ret] = await this.execCommand('setMulticastTableEntry', index, entry);
         console.assert(ret === EmberStatus.SUCCESS);
         return [ret];
     }
 
-    async setInitialSecurityState(entry: t.EmberInitialSecurityState) {
-        let ret;
-        [ret] = await this.execCommand('setInitialSecurityState', entry);
+    async setInitialSecurityState(entry: t.EmberInitialSecurityState): Promise<number[]>{
+        const [ret] = await this.execCommand('setInitialSecurityState', entry);
         console.assert(ret === EmberStatus.SUCCESS);
         return [ret];
     }
 
-    async getCurrentSecurityState() {
-        let ret, res;
-        [ret, res] = await this.execCommand('getCurrentSecurityState');
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    async getCurrentSecurityState(): Promise<any[]> {
+        const [ret, res] = await this.execCommand('getCurrentSecurityState');
         console.assert(ret === EmberStatus.SUCCESS);
         return [ret, res];
     }
 
-    async setValue(valueId: t.EzspValueId, value: any) {
-        let ret;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    async setValue(valueId: t.EzspValueId, value: any): Promise<number[]> {
         debug.log('Set %s = %s', t.EzspValueId.valueToName(t.EzspValueId, valueId), value);
-        [ret] = await this.execCommand('setValue', valueId, value);
+        const [ret] = await this.execCommand('setValue', valueId, value);
         console.assert(ret === EmberStatus.SUCCESS);
         return [ret];
     }
 
-    async getValue(valueId: t.EzspValueId) {
-        let ret, value;
+    async getValue(valueId: t.EzspValueId): Promise<Buffer> {
         debug.log('Get %s', t.EzspValueId.valueToName(t.EzspValueId, valueId));
-        [ret, value] = await this.execCommand('getValue', valueId);
+        const [ret, value] = await this.execCommand('getValue', valueId);
         console.assert(ret === EmberStatus.SUCCESS);
         debug.log('Got %s = %s', t.EzspValueId.valueToName(t.EzspValueId, valueId), value);
         return value;
     }
 
-    async setPolicy(policyId: EzspPolicyId, value: any) {
-        let ret;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    async setPolicy(policyId: EzspPolicyId, value: any): Promise<number[]> {
         debug.log('Set %s = %s', EzspPolicyId.valueToName(EzspPolicyId, policyId), value);
-        [ret] = await this.execCommand('setPolicy', policyId, value);
+        const [ret] = await this.execCommand('setPolicy', policyId, value);
         console.assert(ret === EmberStatus.SUCCESS);
         return [ret];
     }
 
-    async updateConfig() {
+    async updateConfig(): Promise<void> {
         const config = [
             [EzspConfigId.CONFIG_FRAGMENT_DELAY_MS, 50],
             [EzspConfigId.CONFIG_TX_POWER_MODE, 3],
@@ -273,19 +274,23 @@ export class Ezsp extends EventEmitter {
         }
     }
 
-    async updatePolicies() {
+    async updatePolicies(): Promise<void> {
         // Set up the policies for what the NCP should do.
         const policies = [
-            [EzspPolicyId.BINDING_MODIFICATION_POLICY, EzspDecisionId.CHECK_BINDING_MODIFICATIONS_ARE_VALID_ENDPOINT_CLUSTERS],
+            [EzspPolicyId.BINDING_MODIFICATION_POLICY, 
+                EzspDecisionId.CHECK_BINDING_MODIFICATIONS_ARE_VALID_ENDPOINT_CLUSTERS],
             [EzspPolicyId.UNICAST_REPLIES_POLICY, EzspDecisionId.HOST_WILL_NOT_SUPPLY_REPLY],
             [EzspPolicyId.POLL_HANDLER_POLICY, EzspDecisionId.POLL_HANDLER_IGNORE],
-            [EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY, EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK],
-            [EzspPolicyId.PACKET_VALIDATE_LIBRARY_POLICY, EzspDecisionId.PACKET_VALIDATE_LIBRARY_CHECKS_ENABLED],
+            [EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY, 
+                EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK],
+            [EzspPolicyId.PACKET_VALIDATE_LIBRARY_POLICY, 
+                EzspDecisionId.PACKET_VALIDATE_LIBRARY_CHECKS_ENABLED],
             [EzspPolicyId.ZLL_POLICY, EzspDecisionId.ALLOW_JOINS],
             [EzspPolicyId.TC_REJOINS_USING_WELL_KNOWN_KEY_POLICY, EzspDecisionId.ALLOW_JOINS],
 
             [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
-            [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS],
+            [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS 
+                | EzspDecisionBitmask.ALLOW_JOINS],
             [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
         ];
 
@@ -294,18 +299,18 @@ export class Ezsp extends EventEmitter {
         }
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     public makeZDOframe(name: string, ...args: any[]): Buffer {
-        let c, data, frame, cmd_id;
-        c = (<any>ZDO_COMMANDS)[name];
-        data = t.serialize(args, c[1]);
+        const c = ZDO_COMMANDS[name];
+        const data = t.serialize(args, c[1]);
         return data;
     }
 
-    private makeFrame(name: string, ...args: any[]) {
-        let c, data, frame, cmd_id;
-        c = (<any>COMMANDS)[name];
-        data = t.serialize(args, c[1]);
-        frame = [(this.cmdSeq & 255)];
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    private makeFrame(name: string, ...args: any[]): Buffer {
+        const c = COMMANDS[name];
+        const data = t.serialize(args, c[1]);
+        const frame = [(this.cmdSeq & 255)];
         if ((this.ezspV < 8)) {
             if ((this.ezspV >= 5)) {
                 frame.push(0x00, 0xFF, 0x00, c[0]);
@@ -313,18 +318,20 @@ export class Ezsp extends EventEmitter {
                 frame.push(0x00, c[0]);
             }
         } else {
-            cmd_id = t.serialize([c[0]], [t.uint16_t]);
+            const cmd_id = t.serialize([c[0]], [t.uint16_t]);
             frame.push(0x00, 0x01, ...cmd_id);
         }
         return Buffer.concat([Buffer.from(frame), data]);
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private command(name: string, ...args: any[]): Promise<Buffer> {
         debug.log(`===> Send command ${name}: (${args})`);
         return this.queue.execute<Buffer>(async (): Promise<Buffer> => {
             const data = this.makeFrame(name, ...args);
             debug.log(`===> Send data    ${name}: (${data.toString('hex')})`);
-            const c = (<any>COMMANDS)[name];
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+            const c = COMMANDS[name];
             const waiter = this.waitFor(c[0], this.cmdSeq);
             this.cmdSeq = (this.cmdSeq + 1 % 256);
             this.serialDriver.sendDATA(data);
@@ -333,15 +340,17 @@ export class Ezsp extends EventEmitter {
         });
     }
 
-    async formNetwork(parameters: {}) {
-        let fut: Deferred<any>, v, st;
-        fut = new Deferred();
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    async formNetwork(...args: any[]): Promise<number> {
+        let v;
+        const fut = new Deferred();
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         this.on('frame', (frameName: string, response: any) => {
             if ((frameName === "stackStatusHandler")) {
                 fut.resolve(response);
             }
         });
-        v = await this.command("formNetwork", parameters);
+        v = await this.command("formNetwork", ...args);
         if ((v[0] !== EmberStatus.SUCCESS)) {
             debug.log("Failure forming network:" + v);
             throw new Error(("Failure forming network:" + v));
@@ -354,6 +363,7 @@ export class Ezsp extends EventEmitter {
         return v;
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     execCommand(name: string, ...args: any[]): any {
         if (Object.keys(COMMANDS).indexOf(name) < 0) {
             throw new Error('Unknown command: ' + name);
@@ -361,20 +371,25 @@ export class Ezsp extends EventEmitter {
         return this.command(name, ...args);
     }
 
-    public parse_frame_payload(name: string, data: Buffer) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    public parse_frame_payload(name: string, data: Buffer): any[] {
         if (Object.keys(ZDO_COMMANDS).indexOf(name) < 0) {
             throw new Error('Unknown ZDO command: ' + name);
         }
-        const c = (<any>ZDO_COMMANDS)[name];
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+        const c = ZDO_COMMANDS[name];
         const result = t.deserialize(data, c[1])[0];
         return result;
     }
 
-    public sendUnicast(direct: EmberOutgoingMessageType, nwk: number, apsFrame: EmberApsFrame, seq: number, data: Buffer) {
+    /* eslint-disable @typescript-eslint/no-explicit-any*/
+    public sendUnicast(direct: EmberOutgoingMessageType, nwk: number, apsFrame: 
+            EmberApsFrame, seq: number, data: Buffer): any {
         return this.execCommand('sendUnicast', direct, nwk, apsFrame, seq, data);
     }
+    /* eslint-enable @typescript-eslint/no-explicit-any*/
 
-    public async setSourceRouting() {
+    public async setSourceRouting(): Promise<void> {
         const [res] = await this.execCommand('setConcentrator',
             true,
             EmberConcentratorType.HIGH_RAM_CONCENTRATOR,

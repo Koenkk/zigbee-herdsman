@@ -83,6 +83,7 @@ import {/* Basic Types */
     EmberNeighbors,
 } from './types';
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 export const COMMANDS: { [key: string]: [number, any[], any[]] } = {
     "version": [0, [uint8_t],
         [uint8_t, uint8_t, uint16_t]
@@ -549,7 +550,8 @@ export const COMMANDS: { [key: string]: [number, any[], any[]] } = {
     "setPreinstalledCbkeData": [162, [EmberPublicKeyData, EmberCertificateData, EmberPrivateKeyData],
         [EmberStatus]
     ],
-    "setPreinstalledCbkeData283k1": [237, [EmberPublicKey283k1Data, EmberCertificate283k1Data, EmberPrivateKey283k1Data],
+    "setPreinstalledCbkeData283k1": [237, 
+        [EmberPublicKey283k1Data, EmberCertificate283k1Data, EmberPrivateKey283k1Data],
         [EmberStatus]
     ],
     "mfglibStart": [131, [Bool],
@@ -688,7 +690,8 @@ export const COMMANDS: { [key: string]: [number, any[], any[]] } = {
         [EmberEUI64, uint8_t, EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, uint8_t, uint8_t]
     ],
     "rf4ceDiscoveryResponseHandler": [220, [],
-        [Bool, uint8_t, EmberPanId, EmberEUI64, uint8_t, EmberRf4ceVendorInfo, EmberRf4ceApplicationInfo, uint8_t, uint8_t]
+        [Bool, uint8_t, EmberPanId, EmberEUI64, uint8_t, EmberRf4ceVendorInfo, 
+            EmberRf4ceApplicationInfo, uint8_t, uint8_t]
     ],
     "rf4ceEnableAutoDiscoveryResponse": [221, [uint16_t],
         [EmberStatus]
@@ -732,7 +735,9 @@ export const COMMANDS: { [key: string]: [number, any[], any[]] } = {
     "rf4ceGetNetworkParameters": [244, [],
         [EmberStatus, EmberNodeType, EmberNetworkParameters]
     ],
-    "gpProxyTableProcessGpPairing": [201, [uint32_t, EmberGpAddress, uint8_t, uint16_t, uint16_t, uint16_t, fixed_list(8, uint8_t), EmberKeyData],
+    "gpProxyTableProcessGpPairing": [201, 
+        [uint32_t, EmberGpAddress, uint8_t, uint16_t, uint16_t, uint16_t, 
+            fixed_list(8, uint8_t), EmberKeyData],
         []
     ],
     "dGpSend": [198, [Bool, Bool, EmberGpAddress, uint8_t, LVBytes, uint8_t, uint16_t],
@@ -742,14 +747,16 @@ export const COMMANDS: { [key: string]: [number, any[], any[]] } = {
         [EmberStatus, uint8_t]
     ],
     "gpepIncomingMessageHandler": [197, [],
-        [EmberStatus, uint8_t, uint8_t, EmberGpAddress, EmberGpSecurityLevel, EmberGpKeyType, Bool, Bool, uint32_t, uint8_t, uint32_t, EmberGpSinkListEntry, LVBytes]
+        [EmberStatus, uint8_t, uint8_t, EmberGpAddress, EmberGpSecurityLevel, EmberGpKeyType, 
+            Bool, Bool, uint32_t, uint8_t, uint32_t, EmberGpSinkListEntry, LVBytes]
     ],
     "changeSourceRouteHandler": [196, [], [EmberNodeId, EmberNodeId]], //Bool
     "setSourceRouteDiscoveryMode": [0x005A, [uint8_t,], [uint32_t,]],
 };
 
 //// EmberZDOCmd
-export const ZDO_COMMANDS = {
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+export const ZDO_COMMANDS: { [key: string]: [number, any[], any[]] } = {
     "Node_Desc_req": [0x0002, [uint8_t, EmberNodeId], [EmberStatus]],
     "Node_Desc_rsp": [0x8002, [EmberStatus, EmberNodeId, EmberNodeDescriptor], []],
     "Simple_Desc_req": [0x0004, [uint8_t, EmberNodeId, uint8_t], [EmberStatus]],
@@ -765,5 +772,3 @@ export const ZDO_COMMANDS = {
     "Mgmt_Lqi_req": [0x0031, [uint8_t, uint8_t], [EmberStatus]],
     "Mgmt_Lqi_rsp": [0x8031, [uint8_t, EmberStatus, EmberNeighbors], [EmberStatus]],
 };
-
-//# sourceMappingURL=commands.js.map

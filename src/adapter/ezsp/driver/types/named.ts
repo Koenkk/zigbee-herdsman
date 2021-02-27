@@ -53,36 +53,34 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
         }
     }
 
-    static deserialize(cls: any, data: Buffer) {
-        let r;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static deserialize(cls: any, data: Buffer): any[] {
         const arr = super.deserialize(cls, data);
-        r = arr[0];
+        const r = arr[0];
         data = arr[1] as Buffer;
         return [(r as number[]).reverse(), data];
     }
 
-    static serialize(cls: any, value: number[] | EmberEUI64) {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static serialize(cls: any, value: number[] | EmberEUI64): Buffer {
         if (value instanceof EmberEUI64) {
             value = (value as EmberEUI64).value as number[];
         }
         console.assert(cls._length === value.length);
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const val = (value as any[]).reverse().map(i => basic.uint8_t.serialize(basic.uint8_t, i)[0]);
         return Buffer.from(val);
     }
 
-    public get value() {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    public get value(): any {
         return this._value;
     }
 
-    public toString() {
+    public toString(): string {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         return Buffer.from(this._value as any).toString('hex');
     }
-
-    /*
-
-        __hash__() {
-            return hash(repr(this));
-        }*/
 }
 
 export class EmberLibraryStatus extends basic.uint8_t {
