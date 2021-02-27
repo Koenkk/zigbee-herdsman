@@ -83,7 +83,7 @@ import {/* Basic Types */
     EmberNeighbors,
 } from './types';
 
-export const COMMANDS = {
+export const COMMANDS: { [key: string]: [number, any[], any[]] } = {
     "version": [0, [uint8_t],
         [uint8_t, uint8_t, uint16_t]
     ],
