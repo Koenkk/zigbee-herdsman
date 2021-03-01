@@ -135,7 +135,7 @@ class EZSPAdapter extends Adapter {
 
     public static async isValidPath(path: string): Promise<boolean> {
         // todo
-        return true;
+        return false;
     }
 
     public static async autoDetectPath(): Promise<string> {
