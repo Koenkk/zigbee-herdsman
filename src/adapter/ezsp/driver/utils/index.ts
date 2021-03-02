@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import crc16ccitt from './crc16ccitt';
 import {EmberInitialSecurityState, EmberKeyData} from '../types/struct';
 import {EmberInitialSecurityBitmask, EmberEUI64} from '../types/named';

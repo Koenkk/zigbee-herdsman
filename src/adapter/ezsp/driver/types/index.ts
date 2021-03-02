@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import {
     int8s,
     uint_t,

@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import {Driver} from './driver';
 import {EzspConfigId} from './types';
 import {EmberStatus} from './types/named';

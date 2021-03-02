@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import {/* Basic Types */
     int8s,
     uint8_t,

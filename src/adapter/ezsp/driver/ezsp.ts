@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import * as t from './types';
 import {SerialDriver} from './uart';
 import {COMMANDS, ZDO_COMMANDS} from './commands';

@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import {EventEmitter} from 'events';
 import SerialPort from 'serialport';
 import net from 'net';

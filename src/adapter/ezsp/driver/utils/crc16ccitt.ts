@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import {Buffer} from 'buffer';
 /* eslint-disable-next-line @typescript-eslint/ban-types*/
 function defineCrc(model: string, calc: Function): Function {

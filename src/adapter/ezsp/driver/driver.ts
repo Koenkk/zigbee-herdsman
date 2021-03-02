@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import * as TsType from './../../tstype';
 import {Ezsp} from './ezsp';
 import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption} from './types';

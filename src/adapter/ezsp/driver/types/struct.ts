@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import * as basic from './basic';
 import * as named from './named';
 

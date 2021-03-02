@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 export class int_t {
     static _signed = true;
 
