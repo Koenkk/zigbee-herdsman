@@ -1837,16 +1837,16 @@
       }
     },
     "@serialport/bindings": {
-      "version": "9.0.7",
-      "resolved": "https://registry.npmjs.org/@serialport/bindings/-/bindings-9.0.7.tgz",
-      "integrity": "sha512-cNWaxnEbbpLoSJ6GMb0ZeCpaciczm8XRE4jgBqe/BflWZb+wyiTYIocbsySxpS40WT3kJ0sNTFag77uSmQ6ftg==",
+      "version": "9.0.4",
+      "resolved": "https://registry.npmjs.org/@serialport/bindings/-/bindings-9.0.4.tgz",
+      "integrity": "sha512-6dlE1vm5c1xk667f1Zm7D+msbHJ9jdnUr9l8DResKpj2iCBzbCNsW+yCYq26WxzXWc1L2HUaS3/aL+k0wm5amg==",
       "requires": {
-        "@serialport/binding-abstract": "^9.0.7",
-        "@serialport/parser-readline": "^9.0.7",
+        "@serialport/binding-abstract": "^9.0.2",
+        "@serialport/parser-readline": "^9.0.1",
         "bindings": "^1.5.0",
         "debug": "^4.3.1",
         "nan": "^2.14.2",
-        "prebuild-install": "^6.0.1"
+        "prebuild-install": "^6.0.0"
       }
     },
     "@serialport/parser-byte-length": {
@@ -7749,21 +7749,21 @@
       "integrity": "sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ=="
     },
     "serialport": {
-      "version": "9.0.7",
-      "resolved": "https://registry.npmjs.org/serialport/-/serialport-9.0.7.tgz",
-      "integrity": "sha512-NeDfVks3JAJ7s8cXDopx1iUUgC/7TaltE7iQGiSewIWMZaK7oStiz3VJzcuKgor7F+U/y6zbAnj4i6eHq0on+g==",
+      "version": "9.0.6",
+      "resolved": "https://registry.npmjs.org/serialport/-/serialport-9.0.6.tgz",
+      "integrity": "sha512-T9eY4HFzQij0Hd/RsPcZySdeuAqzV5iGICHz8FXUSKVn2SvGT5zjfz/H+pRwI86k+3iFVOyddEyy8gbVNVbW7A==",
       "requires": {
-        "@serialport/binding-mock": "^9.0.7",
-        "@serialport/bindings": "^9.0.7",
-        "@serialport/parser-byte-length": "^9.0.7",
-        "@serialport/parser-cctalk": "^9.0.7",
-        "@serialport/parser-delimiter": "^9.0.7",
-        "@serialport/parser-inter-byte-timeout": "^9.0.7",
-        "@serialport/parser-readline": "^9.0.7",
-        "@serialport/parser-ready": "^9.0.7",
-        "@serialport/parser-regex": "^9.0.7",
-        "@serialport/stream": "^9.0.7",
-        "debug": "^4.3.1"
+        "@serialport/binding-mock": "^9.0.2",
+        "@serialport/bindings": "^9.0.4",
+        "@serialport/parser-byte-length": "^9.0.1",
+        "@serialport/parser-cctalk": "^9.0.1",
+        "@serialport/parser-delimiter": "^9.0.1",
+        "@serialport/parser-inter-byte-timeout": "^9.0.1",
+        "@serialport/parser-readline": "^9.0.1",
+        "@serialport/parser-ready": "^9.0.1",
+        "@serialport/parser-regex": "^9.0.1",
+        "@serialport/stream": "^9.0.2",
+        "debug": "^4.1.1"
       }
     },
     "set-blocking": {
