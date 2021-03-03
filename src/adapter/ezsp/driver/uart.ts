@@ -208,6 +208,7 @@ export class SerialDriver extends EventEmitter {
                     // reset
                     await this.reset();
                     this.initialized = true;
+                    this.emit('connected');
                     resolve();
                 }
             });
@@ -241,6 +242,7 @@ export class SerialDriver extends EventEmitter {
                 // reset
                 await this.reset();
                 self.initialized = true;
+                this.emit('connected');
                 resolve();
             });
 
@@ -444,6 +446,7 @@ export class SerialDriver extends EventEmitter {
 
     private onPortClose(): void {
         debug('Port closed');
+        this.resetDeferred = undefined;
         this.initialized = false;
         this.emit('close');
     }
