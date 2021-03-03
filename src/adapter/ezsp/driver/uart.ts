@@ -261,8 +261,8 @@ export class SerialDriver extends EventEmitter {
             /* Frame receive handler */
             switch (true) {
             case ((data[0] & 0x80) === 0):
-                debug(`Recv DATA frame (${(data[0] & 0x70) >> 4},
-                    ${data[0] & 0x07},${(data[0] & 0x08) >> 3}): ${data.toString('hex')}`);
+                debug(`Recv DATA frame (${(data[0] & 0x70) >> 4},`+
+                    `${data[0] & 0x07},${(data[0] & 0x08) >> 3}): ${data.toString('hex')}`);
                 this.handleDATA(data);
                 break;
 
