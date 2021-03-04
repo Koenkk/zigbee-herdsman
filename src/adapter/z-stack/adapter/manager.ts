@@ -224,6 +224,7 @@ export class ZnpAdapterManager {
      */
     private async beginRestore(): Promise<void> {
         const backup = await this.backup.getStoredBackup();
+        /* istanbul ignore next */
         if (!backup) {
             throw Error("Cannot restore backup - none is available");
         }
@@ -339,12 +340,13 @@ export class ZnpAdapterManager {
 
         await this.nv.updateItem(NvItemsIds.STARTUP_OPTION, Buffer.from([0x02]));
         await this.nv.updateItem(NvItemsIds.LOGICAL_TYPE, Buffer.from([ZnpConstants.ZDO.deviceLogicalType.COORDINATOR]));
-        await this.nv.updateItem(NvItemsIds.PRECFGKEYS_ENABLE, Buffer.from([options.networkKeyDistribute ? 0x01 : 0x00]));
         await this.nv.updateItem(NvItemsIds.ZDO_DIRECT_CB, Buffer.from([0x01]));
         await this.nv.updateItem(NvItemsIds.CHANLIST, channelList.serialize());
         await this.nv.updateItem(NvItemsIds.PANID, nwkPanId.serialize());
         await this.nv.updateItem(NvItemsIds.EXTENDED_PAN_ID, extendedPanIdReversed);
         await this.nv.updateItem(NvItemsIds.APS_USE_EXT_PANID, extendedPanIdReversed);
+        /* istanbul ignore next */
+        await this.nv.updateItem(NvItemsIds.PRECFGKEYS_ENABLE, Buffer.from([options.networkKeyDistribute ? 0x01 : 0x00]));
 
         if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
             await this.nv.updateItem(NvItemsIds.PRECFGKEY, options.networkKey);
@@ -416,6 +418,7 @@ export class ZnpAdapterManager {
      */
     private async parseConfigNetworkOptions(options: TsType.NetworkOptions): Promise<Models.NetworkOptions> {
         const channelList = options.channelList;
+        /* istanbul ignore next */
         channelList.sort((c1, c2) => c1 < c2 ? -1 : c1 > c2 ? 1 : 0);
 
         const parsed: Models.NetworkOptions = {
