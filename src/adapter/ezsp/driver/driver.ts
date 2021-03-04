@@ -61,8 +61,9 @@ export class Driver extends EventEmitter {
     private multicast: Multicast;
     private waitress: Waitress<EmberFrame, EmberWaitressMatcher>;
     public queue: Queue;
-    private transactionID: number = 1;
+    private transactionID = 1;
     private port: string;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private serialOpt: Record<string, any>;
 
     constructor() {

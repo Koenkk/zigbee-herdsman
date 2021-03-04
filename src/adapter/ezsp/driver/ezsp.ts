@@ -16,7 +16,7 @@ import {
 } from './types/named';
 import {EventEmitter} from 'events';
 import {EmberApsFrame} from './types/struct';
-import {Queue, Waitress, Wait} from '../../../utils';
+import {Queue, Waitress} from '../../../utils';
 import Debug from "debug";
 
 
@@ -31,9 +31,9 @@ const MTOR_MAX_INTERVAL = 90;
 const MTOR_ROUTE_ERROR_THRESHOLD = 4;
 const MTOR_DELIVERY_FAIL_THRESHOLD = 3;
 const MAX_WATCHDOG_FAILURES = 4;
-const RESET_ATTEMPT_BACKOFF_TIME = 5;
+//const RESET_ATTEMPT_BACKOFF_TIME = 5;
 const WATCHDOG_WAKE_PERIOD = 10;  // in sec
-const EZSP_COUNTER_CLEAR_INTERVAL = 180;  // Clear counters every n * WATCHDOG_WAKE_PERIOD
+//const EZSP_COUNTER_CLEAR_INTERVAL = 180;  // Clear counters every n * WATCHDOG_WAKE_PERIOD
 
 
 type EZSPFrame = {
@@ -58,7 +58,7 @@ export class Ezsp extends EventEmitter {
     private waitress: Waitress<EZSPFrame, EZSPWaitressMatcher>;
     private queue: Queue;
     private watchdogTimer: NodeJS.Timeout;
-    private failures: number = 0;
+    private failures = 0;
 
     constructor() {
         super();
