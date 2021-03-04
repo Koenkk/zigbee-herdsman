@@ -261,16 +261,21 @@ export class Driver extends EventEmitter {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number, relays: any): void {
-        debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
         // todo
+        debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
+        if (ieee && !(ieee instanceof EmberEUI64)) {
+            ieee = new EmberEUI64(ieee);
+        }
+        this.eui64ToRelays.set(ieee.toString(), relays);
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-    private handleRouteError(status: EmberStatus, nwk: number): void {
-        debug.log(`handleRouteError: number=${status}, nwk=${nwk}`);
+    private async handleRouteError(status: EmberStatus, nwk: number): Promise<void> {
         // todo
+        debug.log(`handleRouteError: nwk=${nwk}, status=${status}`);
+        const ieee = await this.networkIdToEUI64(nwk);
+        this.eui64ToRelays.set(ieee.toString(), null);
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -314,7 +319,11 @@ export class Driver extends EventEmitter {
                 eui64 = await this.networkIdToEUI64(nwk);
             }
             await this.ezsp.execCommand('setExtendedTimeout', eui64, true);
-
+            // for old emberznet < 8
+            // const route = this.eui64ToRelays.get(eui64.toString());
+            // if (route) {
+            //     const [status] = await this.ezsp.execCommand('setSourceRoute', eui64, );
+            // }
             await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             return true;
         } catch (e) {
@@ -335,8 +344,8 @@ export class Driver extends EventEmitter {
         frame.sourceEndpoint = 0;
         frame.destinationEndpoint = 0;
         frame.groupId = 0;
-        //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-        frame.options = EmberApsOption.APS_OPTION_NONE;
+        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+        //frame.options = EmberApsOption.APS_OPTION_NONE;
         return frame;
     }
 
