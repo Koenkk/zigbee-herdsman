@@ -472,18 +472,18 @@ export class SerialDriver extends EventEmitter {
         return this.queue.execute<void>(async (): Promise<void> => {
             debug(`Send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
             pack = this.makeDataFrame(data, seq, 0, ackSeq);
-            const waiter = this.waitFor(nextSeq);
+            const waiter = this.waitFor(nextSeq).start();
             debug(`waiting (${nextSeq})`);
             this.writer.writeBuffer(pack);
-            await waiter.start().promise.catch(async () => {
+            await waiter.promise.catch(async () => {
                 debug(`break waiting (${nextSeq})`);
                 debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
                 debug(`Resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
                 pack = this.makeDataFrame(data, seq, 1, ackSeq);
-                const waiter = this.waitFor(nextSeq);
+                const waiter = this.waitFor(nextSeq).start();
                 debug(`rewaiting (${nextSeq})`);
                 this.writer.writeBuffer(pack);
-                await waiter.start().promise.catch((e) => {
+                await waiter.promise.catch((e) => {
                     debug(`break rewaiting (${nextSeq})`);
                     debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
                     throw new Error(`sendDATA error: ${e}`);

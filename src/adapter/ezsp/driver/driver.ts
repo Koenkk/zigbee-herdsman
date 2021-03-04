@@ -359,9 +359,9 @@ export class Driver extends EventEmitter {
         const frame = this.makeApsFrame(requestCmd as number);
         const payload = this.makeZDOframe(requestName, frame.sequence, ...args);
         debug.log(`${requestName}  frame: ${payload}`);
-        const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence);
+        const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
         await this.request(networkAddress, frame, payload);
-        const message = await response.start().promise;
+        const message = await response.promise;
         debug.log(`${responseName}  frame: ${JSON.stringify(message.payload)}`);
         const result = this.parse_frame_payload(responseName, message.payload);
         debug.log(`${responseName} parsed: ${JSON.stringify(result)}`);
