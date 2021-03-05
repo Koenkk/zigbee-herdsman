@@ -319,12 +319,12 @@ export class SerialDriver extends EventEmitter {
         /* Handle an acknowledgement frame */
         // next number after the last accepted frame
         this.ackSeq = control & 0x07;
-        const handled = this.waitress.resolve({sequence: this.ackSeq});
-        if (!handled) {
-            debug(`Unexpected packet sequence ${this.ackSeq}`);
-        } else {
-            debug(`Expected packet sequence ${this.ackSeq}`);
-        }
+        // const handled = this.waitress.resolve({sequence: this.ackSeq});
+        // if (!handled) {
+        //     debug(`Unexpected packet sequence ${this.ackSeq}`);
+        // } else {
+        //     debug(`Expected packet sequence ${this.ackSeq}`);
+        // }
         // var ack, pending;
         // ack = (((control & 7) - 1) % 8);
         // if ((ack === this._pending[0])) {
@@ -472,24 +472,24 @@ export class SerialDriver extends EventEmitter {
         return this.queue.execute<void>(async (): Promise<void> => {
             debug(`Send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
             pack = this.makeDataFrame(data, seq, 0, ackSeq);
-            const waiter = this.waitFor(nextSeq).start();
+            // const waiter = this.waitFor(nextSeq).start();
             debug(`waiting (${nextSeq})`);
             this.writer.writeBuffer(pack);
-            await waiter.promise.catch(async () => {
-                debug(`break waiting (${nextSeq})`);
-                debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
-                debug(`Resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
-                pack = this.makeDataFrame(data, seq, 1, ackSeq);
-                const waiter = this.waitFor(nextSeq).start();
-                debug(`rewaiting (${nextSeq})`);
-                this.writer.writeBuffer(pack);
-                await waiter.promise.catch((e) => {
-                    debug(`break rewaiting (${nextSeq})`);
-                    debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
-                    throw new Error(`sendDATA error: ${e}`);
-                });
-                debug(`rewaiting (${nextSeq}) success`);
-            });
+            // await waiter.promise.catch(async () => {
+            //     debug(`break waiting (${nextSeq})`);
+            //     debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
+            //     debug(`Resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
+            //     pack = this.makeDataFrame(data, seq, 1, ackSeq);
+            //     const waiter = this.waitFor(nextSeq).start();
+            //     debug(`rewaiting (${nextSeq})`);
+            //     this.writer.writeBuffer(pack);
+            //     await waiter.promise.catch((e) => {
+            //         debug(`break rewaiting (${nextSeq})`);
+            //         debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
+            //         throw new Error(`sendDATA error: ${e}`);
+            //     });
+            //     debug(`rewaiting (${nextSeq}) success`);
+            // });
             debug(`waiting (${nextSeq}) success`);
         });
 
