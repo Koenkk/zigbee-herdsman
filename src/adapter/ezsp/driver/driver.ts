@@ -75,11 +75,27 @@ export class Driver extends EventEmitter {
     }
     
     private async onReset(): Promise<void> {
-        debug.log('Reset connection');
-        await this.stop();
-        this.ezsp = undefined;
-        Wait(5000);
-        await this.startup(this.port, this.serialOpt, this.nwkOpt);
+        let attempts = 0;
+        const pauses = [10, 30, 60];
+        let pause = 0;
+        while (true) {
+            debug.log(`Reset connection. Try ${attempts}`);
+            try {
+                await this.stop();
+                this.ezsp = undefined;
+                await Wait(1000);
+                await this.startup(this.port, this.serialOpt, this.nwkOpt);
+                break;
+            } catch (e) {
+                debug.error(`Reset error ${e.stack}`);
+                attempts += 1;
+                if (pauses.length) {
+                    pause = pauses.shift();
+                }
+                debug.log(`Pause ${pause}sec before try ${attempts}`);
+                await Wait(pause*1000);
+            }
+        }
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -369,8 +385,10 @@ export class Driver extends EventEmitter {
     }
 
     public async stop(): Promise<void> {
-        debug.log('Stop driver');
-        return this.ezsp.close();
+        if (this.ezsp) {
+            debug.log('Stop driver');
+            return this.ezsp.close();
+        }
     }
 
     public getLocalEUI64(): Promise<EmberEUI64> {
