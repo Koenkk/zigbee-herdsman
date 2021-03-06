@@ -17,7 +17,7 @@ import {
     EmberKeyType
 } from './types/named';
 import {Multicast} from './multicast';
-import {Queue, Waitress} from '../../../utils';
+import {Queue, Waitress, Wait} from '../../../utils';
 import Debug from "debug";
 import equals from 'fast-deep-equal/es6';
 
@@ -61,33 +61,64 @@ export class Driver extends EventEmitter {
     private multicast: Multicast;
     private waitress: Waitress<EmberFrame, EmberWaitressMatcher>;
     public queue: Queue;
-    private transactionID: number;
+    private transactionID = 1;
+    private port: string;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    private serialOpt: Record<string, any>;
 
     constructor() {
         super();
-        this.transactionID = 1;
         this.queue = new Queue();
 
         this.waitress = new Waitress<EmberFrame, EmberWaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
+    
+    private async onReset(): Promise<void> {
+        let attempts = 0;
+        const pauses = [10, 30, 60];
+        let pause = 0;
+        while (true) {
+            debug.log(`Reset connection. Try ${attempts}`);
+            try {
+                await this.stop();
+                this.ezsp = undefined;
+                await Wait(1000);
+                await this.startup(this.port, this.serialOpt, this.nwkOpt);
+                break;
+            } catch (e) {
+                debug.error(`Reset error ${e.stack}`);
+                attempts += 1;
+                if (pauses.length) {
+                    pause = pauses.shift();
+                }
+                debug.log(`Pause ${pause}sec before try ${attempts}`);
+                await Wait(pause*1000);
+            }
+        }
+    }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     public async startup(port: string, serialOpt: Record<string, any>, nwkOpt: TsType.NetworkOptions): Promise<void> {
         this.nwkOpt = nwkOpt;
-        const ezsp = this.ezsp = new Ezsp();
-        await ezsp.connect(port, serialOpt);
-        await ezsp.version();
+        this.port = port;
+        this.serialOpt = serialOpt;
+        this.transactionID = 1;
+        this.ezsp = new Ezsp();
+        this.ezsp.on('reset', this.onReset.bind(this));
+    
+        await this.ezsp.connect(port, serialOpt);
+        await this.ezsp.version();
 
-        await ezsp.updateConfig();
+        await this.ezsp.updateConfig();
 
-        await ezsp.updatePolicies();
+        await this.ezsp.updatePolicies();
 
         await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_OUTGOING_TRANSFER_SIZE, 82);
         await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_INCOMING_TRANSFER_SIZE, 82);
         await this.ezsp.setValue(EzspValueId.VALUE_END_DEVICE_KEEP_ALIVE_SUPPORT_MODE, 3);
 
-        await ezsp.setSourceRouting();
+        await this.ezsp.setSourceRouting();
 
         //const count = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
         //debug.log("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
@@ -109,7 +140,7 @@ export class Driver extends EventEmitter {
         // getting MFG_BOARD_NAME token
         //const boardName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_BOARD_NAME);
         /* eslint-disable prefer-const */
-        let verInfo = await ezsp.getValue(EzspValueId.VALUE_VERSION_INFO);
+        let verInfo = await this.ezsp.getValue(EzspValueId.VALUE_VERSION_INFO);
         let build, major, minor, patch, special;
         [build, verInfo] = uint16_t.deserialize(uint16_t, verInfo);
         [major, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
@@ -128,7 +159,7 @@ export class Driver extends EventEmitter {
         };
 
         if (await this.needsToBeInitialised(nwkOpt)) {
-            const currentState = await ezsp.execCommand('networkState');
+            const currentState = await this.ezsp.execCommand('networkState');
             debug.log('Network state', currentState);
             if (currentState == EmberNetworkStatus.JOINED_NETWORK) {
                 debug.log(`Leaving current network and forming new network`);
@@ -137,19 +168,19 @@ export class Driver extends EventEmitter {
             }
             await this.form_network();
         }
-        const state = await ezsp.execCommand('networkState');
+        const state = await this.ezsp.execCommand('networkState');
         debug.log('Network state', state);
 
-        const [status, nodeType, networkParams] = await ezsp.execCommand('getNetworkParameters');
+        const [status, nodeType, networkParams] = await this.ezsp.execCommand('getNetworkParameters');
         console.assert(status == EmberStatus.SUCCESS);
         this.networkParams = networkParams;
         debug.log("Node type: %s, Network parameters: %s", nodeType, networkParams);
 
-        const [nwk] = await ezsp.execCommand('getNodeId');
+        const [nwk] = await this.ezsp.execCommand('getNodeId');
         const [ieee] = await this.ezsp.execCommand('getEui64');
         this.ieee = new EmberEUI64(ieee);
         debug.log('Network ready');
-        ezsp.on('frame', this.handleFrame.bind(this));
+        this.ezsp.on('frame', this.handleFrame.bind(this));
         this.handleNodeJoined(nwk, this.ieee);
         debug.log(`EZSP nwk=${nwk}, IEEE=0x${this.ieee}`);
 
@@ -247,16 +278,21 @@ export class Driver extends EventEmitter {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number, relays: any): void {
-        debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
         // todo
+        debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
+        if (ieee && !(ieee instanceof EmberEUI64)) {
+            ieee = new EmberEUI64(ieee);
+        }
+        this.eui64ToRelays.set(ieee.toString(), relays);
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-    private handleRouteError(status: EmberStatus, nwk: number): void {
-        debug.log(`handleRouteError: number=${status}, nwk=${nwk}`);
+    private async handleRouteError(status: EmberStatus, nwk: number): Promise<void> {
         // todo
+        debug.log(`handleRouteError: nwk=${nwk}, status=${status}`);
+        const ieee = await this.networkIdToEUI64(nwk);
+        this.eui64ToRelays.set(ieee.toString(), null);
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -300,7 +336,11 @@ export class Driver extends EventEmitter {
                 eui64 = await this.networkIdToEUI64(nwk);
             }
             await this.ezsp.execCommand('setExtendedTimeout', eui64, true);
-
+            // for old emberznet < 8
+            // const route = this.eui64ToRelays.get(eui64.toString());
+            // if (route) {
+            //     const [status] = await this.ezsp.execCommand('setSourceRoute', eui64, );
+            // }
             await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             return true;
         } catch (e) {
@@ -321,8 +361,8 @@ export class Driver extends EventEmitter {
         frame.sourceEndpoint = 0;
         frame.destinationEndpoint = 0;
         frame.groupId = 0;
-        //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-        frame.options = EmberApsOption.APS_OPTION_NONE;
+        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+        //frame.options = EmberApsOption.APS_OPTION_NONE;
         return frame;
     }
 
@@ -335,9 +375,9 @@ export class Driver extends EventEmitter {
         const frame = this.makeApsFrame(requestCmd as number);
         const payload = this.makeZDOframe(requestName, frame.sequence, ...args);
         debug.log(`${requestName}  frame: ${payload}`);
-        const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence);
+        const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
         await this.request(networkAddress, frame, payload);
-        const message = await response.start().promise;
+        const message = await response.promise;
         debug.log(`${responseName}  frame: ${JSON.stringify(message.payload)}`);
         const result = this.parse_frame_payload(responseName, message.payload);
         debug.log(`${responseName} parsed: ${JSON.stringify(result)}`);
@@ -345,7 +385,10 @@ export class Driver extends EventEmitter {
     }
 
     public async stop(): Promise<void> {
-        return this.ezsp.close();
+        if (this.ezsp) {
+            debug.log('Stop driver');
+            return this.ezsp.close();
+        }
     }
 
     public getLocalEUI64(): Promise<EmberEUI64> {

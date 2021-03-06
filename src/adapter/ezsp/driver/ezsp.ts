@@ -30,6 +30,11 @@ const MTOR_MIN_INTERVAL = 10;
 const MTOR_MAX_INTERVAL = 90;
 const MTOR_ROUTE_ERROR_THRESHOLD = 4;
 const MTOR_DELIVERY_FAIL_THRESHOLD = 3;
+const MAX_WATCHDOG_FAILURES = 4;
+//const RESET_ATTEMPT_BACKOFF_TIME = 5;
+const WATCHDOG_WAKE_PERIOD = 10;  // in sec
+//const EZSP_COUNTER_CLEAR_INTERVAL = 180;  // Clear counters every n * WATCHDOG_WAKE_PERIOD
+
 
 type EZSPFrame = {
     sequence: number,
@@ -52,6 +57,8 @@ export class Ezsp extends EventEmitter {
     private serialDriver: SerialDriver;
     private waitress: Waitress<EZSPFrame, EZSPWaitressMatcher>;
     private queue: Queue;
+    private watchdogTimer: NodeJS.Timeout;
+    private failures = 0;
 
     constructor() {
         super();
@@ -69,10 +76,16 @@ export class Ezsp extends EventEmitter {
 
     public async connect(path: string, options: Record<string, number>): Promise<void> {
         await this.serialDriver.connect(path, options);
+        this.watchdogTimer = setInterval(
+            this.watchdogHandler.bind(this),
+            WATCHDOG_WAKE_PERIOD*1000
+        );
     }
 
-    public close(): Promise<void> {
-        return this.serialDriver.close();
+    public async close(): Promise<void> {
+        debug.log('Stop ezsp');
+        clearTimeout(this.watchdogTimer);
+        await this.serialDriver.close();
     }
 
     private onFrameReceived(data: Buffer): void {
@@ -333,10 +346,10 @@ export class Ezsp extends EventEmitter {
             debug.log(`===> Send data    ${name}: (${data.toString('hex')})`);
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
             const c = COMMANDS[name];
-            const waiter = this.waitFor(c[0], this.cmdSeq);
+            const waiter = this.waitFor(c[0], this.cmdSeq).start();
             this.cmdSeq = (this.cmdSeq + 1 % 256);
             this.serialDriver.sendDATA(data);
-            const response = await waiter.start().promise;
+            const response = await waiter.promise;
             return response.payload;
         });
     }
@@ -407,7 +420,7 @@ export class Ezsp extends EventEmitter {
         await this.execCommand('setSourceRouteDiscoveryMode', 1);
     }
 
-    public waitFor(frameId: number, sequence: number, timeout = 30000)
+    public waitFor(frameId: number, sequence: number, timeout = 10000)
         : { start: () => { promise: Promise<EZSPFrame>; ID: number }; ID: number } {
         return this.waitress.waitFor({frameId, sequence}, timeout);
     }
@@ -419,5 +432,19 @@ export class Ezsp extends EventEmitter {
     private waitressValidator(payload: EZSPFrame, matcher: EZSPWaitressMatcher): boolean {
         return (payload.sequence === matcher.sequence &&
             payload.frameId === matcher.frameId);
+    }
+
+    private async watchdogHandler(): Promise<void> {
+        debug.log(`Time to watchdog ... ${this.failures}`);
+        try {
+            await this.execCommand('nop');
+        } catch (error) {
+            debug.error(`Watchdog heartbeat timeout ${error.stack}`);
+            this.failures += 1;
+            if (this.failures > MAX_WATCHDOG_FAILURES) {
+                this.failures = 0;
+                this.emit('reset');
+            }
+        }
     }
 }
