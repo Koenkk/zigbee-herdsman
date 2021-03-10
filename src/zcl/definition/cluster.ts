@@ -1999,7 +1999,6 @@ const Cluster: {
             tempDisplayMode: {ID: 0, type: DataType.enum8},
             keypadLockout: {ID: 1, type: DataType.enum8},
             programmingVisibility: {ID: 2, type: DataType.enum8},
-            viessmannCustom10: {ID: 0x4000, type: DataType.enum8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
         },
         commands: {
         },
@@ -2018,7 +2017,7 @@ const Cluster: {
             compensationText: {ID: 6, type: DataType.charStr},
             colorTemperature: {ID: 7, type: DataType.uint16},
             colorMode: {ID: 8, type: DataType.enum8},
-            options: {ID: 15, type: DataType.bitmap8},       
+            options: {ID: 15, type: DataType.bitmap8},
             numPrimaries: {ID: 16, type: DataType.uint8},
             primary1X: {ID: 17, type: DataType.uint16},
             primary1Y: {ID: 18, type: DataType.uint16},
