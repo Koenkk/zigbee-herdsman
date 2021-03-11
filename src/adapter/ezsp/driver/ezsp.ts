@@ -256,12 +256,12 @@ export class Ezsp extends EventEmitter {
             //[EzspConfigId.CONFIG_BEACON_JITTER_DURATION, 0],
             [EzspConfigId.CONFIG_NEIGHBOR_TABLE_SIZE, 16],
             [EzspConfigId.CONFIG_ROUTE_TABLE_SIZE, 16],
-            [EzspConfigId.CONFIG_BINDING_TABLE_SIZE, 0],
+            [EzspConfigId.CONFIG_BINDING_TABLE_SIZE, 32],
             [EzspConfigId.CONFIG_KEY_TABLE_SIZE, 12],
             [EzspConfigId.CONFIG_ZLL_GROUP_ADDRESSES, 0],
             [EzspConfigId.CONFIG_ZLL_RSSI_THRESHOLD, 215], // -40
-            [EzspConfigId.CONFIG_TRANSIENT_KEY_TIMEOUT_S, 180],
-            [EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT, 15],
+            [EzspConfigId.CONFIG_TRANSIENT_KEY_TIMEOUT_S, 300],
+            [EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT, 255],
             [EzspConfigId.CONFIG_BROADCAST_TABLE_SIZE, 15],
             [EzspConfigId.CONFIG_MAX_HOPS, 30],
 
@@ -298,12 +298,12 @@ export class Ezsp extends EventEmitter {
             [EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY, 
                 EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK],
             [EzspPolicyId.PACKET_VALIDATE_LIBRARY_POLICY, 
-                EzspDecisionId.PACKET_VALIDATE_LIBRARY_CHECKS_ENABLED],
+                EzspDecisionId.PACKET_VALIDATE_LIBRARY_CHECKS_DISABLED],
             [EzspPolicyId.ZLL_POLICY, EzspDecisionId.ALLOW_JOINS],
             [EzspPolicyId.TC_REJOINS_USING_WELL_KNOWN_KEY_POLICY, EzspDecisionId.ALLOW_JOINS],
 
             [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
-            [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS 
+            [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS 
                 | EzspDecisionBitmask.ALLOW_JOINS],
             [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
         ];
