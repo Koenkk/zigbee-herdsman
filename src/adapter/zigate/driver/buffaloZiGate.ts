@@ -19,7 +19,7 @@ class BuffaloZiGate extends Buffalo {
         } else if (type === 'UINT32BE') {
             this.writeUInt32BE(value);
         } else if (type === 'IEEADDR') {
-            this.readIeeeAddr(); /* TODO: probably a bug? */
+            this.readIeeeAddr();
         } else if (type === 'ADDRESS_WITH_TYPE_DEPENDENCY') {
             const addressMode = this.buffer.readUInt8(this.position - 1);
             if (addressMode == 3) {
