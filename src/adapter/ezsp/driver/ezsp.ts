@@ -407,7 +407,8 @@ export class Ezsp extends EventEmitter {
 
     /* eslint-disable @typescript-eslint/no-explicit-any*/
     public sendMulticast(apsFrame: EmberApsFrame, seq: number, data: Buffer): any {
-        return this.execCommand('sendMulticast', apsFrame, EZSP_DEFAULT_RADIUS, EZSP_MULTICAST_NON_MEMBER_RADIUS, seq, data);
+        return this.execCommand('sendMulticast', apsFrame, EZSP_DEFAULT_RADIUS, 
+            EZSP_MULTICAST_NON_MEMBER_RADIUS, seq, data);
     }
     /* eslint-enable @typescript-eslint/no-explicit-any*/
 
