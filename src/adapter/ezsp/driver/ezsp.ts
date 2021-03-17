@@ -34,6 +34,8 @@ const MAX_WATCHDOG_FAILURES = 4;
 //const RESET_ATTEMPT_BACKOFF_TIME = 5;
 const WATCHDOG_WAKE_PERIOD = 10;  // in sec
 //const EZSP_COUNTER_CLEAR_INTERVAL = 180;  // Clear counters every n * WATCHDOG_WAKE_PERIOD
+const EZSP_DEFAULT_RADIUS = 0;
+const EZSP_MULTICAST_NON_MEMBER_RADIUS = 3;
 
 
 type EZSPFrame = {
@@ -403,6 +405,13 @@ export class Ezsp extends EventEmitter {
     }
     /* eslint-enable @typescript-eslint/no-explicit-any*/
 
+    /* eslint-disable @typescript-eslint/no-explicit-any*/
+    public sendMulticast(apsFrame: EmberApsFrame, seq: number, data: Buffer): any {
+        return this.execCommand('sendMulticast', apsFrame, EZSP_DEFAULT_RADIUS, 
+            EZSP_MULTICAST_NON_MEMBER_RADIUS, seq, data);
+    }
+    /* eslint-enable @typescript-eslint/no-explicit-any*/
+
     public async setSourceRouting(): Promise<void> {
         const [res] = await this.execCommand('setConcentrator',
             true,
@@ -417,7 +426,7 @@ export class Ezsp extends EventEmitter {
         if (res != EmberStatus.SUCCESS) {
             debug.log("Couldn't set concentrator type %s: %s", true, res);
         }
-        await this.execCommand('setSourceRouteDiscoveryMode', 1);
+        // await this.execCommand('setSourceRouteDiscoveryMode', 1);
     }
 
     public waitFor(frameId: number, sequence: number, timeout = 10000)

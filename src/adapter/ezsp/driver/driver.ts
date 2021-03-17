@@ -348,6 +348,17 @@ export class Driver extends EventEmitter {
         }
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+    public async mrequest(apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
+        try {
+            const seq = apsFrame.sequence + 1;
+            await this.ezsp.sendMulticast(apsFrame, seq, data);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
     private nextTransactionID(): number {
         this.transactionID = (this.transactionID + 1) & 0xFF;
         return this.transactionID;
