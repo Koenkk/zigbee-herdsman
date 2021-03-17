@@ -13,7 +13,7 @@ import {Driver} from '../driver';
 import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
-import {Waitress} from '../../../utils';
+import {Waitress, Wait} from '../../../utils';
 
 
 interface WaitressMatcher {
@@ -368,7 +368,6 @@ class EZSPAdapter extends Adapter {
 
     public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         return this.driver.queue.execute<void>(async () => {
-            this.checkInterpanLock();
             const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID);
             frame.profileId = 0x0104;
             frame.sourceEndpoint =  0x01;
