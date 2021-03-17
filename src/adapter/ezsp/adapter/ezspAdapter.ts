@@ -367,8 +367,22 @@ class EZSPAdapter extends Adapter {
     }
 
     public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
-        // todo
-        return Promise.reject();
+        return this.driver.queue.execute<void>(async () => {
+            this.checkInterpanLock();
+            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID);
+            frame.profileId = 0x0104;
+            frame.sourceEndpoint =  0x01;
+            frame.destinationEndpoint = 0x01;
+            frame.groupId = groupID;
+            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
+            const dataConfirmResult = await this.driver.mrequest(frame, zclFrame.toBuffer());
+            /**
+             * As a group command is not confirmed and thus immidiately returns
+             * (contrary to network address requests) we will give the
+             * command some time to 'settle' in the network.
+             */
+            await Wait(200);
+        });
     }
 
     public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
