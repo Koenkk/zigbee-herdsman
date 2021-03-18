@@ -121,6 +121,7 @@ class EZSPAdapter extends Adapter {
     public async start(): Promise<StartResult> {
         await this.driver.startup(this.port.path, {
             baudRate: this.port.baudRate || 115200,
+            rtscts: this.port.rtscts,
             parity: 'none',
             stopBits: 1,
             xon: true,
