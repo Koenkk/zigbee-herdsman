@@ -185,7 +185,7 @@ class EZSPAdapter extends Adapter {
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
         // todo
-        return {type: 'EmberZNet', meta: this.driver.version};
+        return {type: `EZSP v${this.driver.version.product}`, meta: this.driver.version};
     }
 
     public async reset(type: 'soft' | 'hard'): Promise<void> {
@@ -266,9 +266,10 @@ class EZSPAdapter extends Adapter {
                 networkAddress, EmberZDOCmd.Node_Desc_req, EmberZDOCmd.Node_Desc_rsp,
                 networkAddress
             );
+            const logicaltype = descriptor[2].byte1 & 0x07;
             return {
                 manufacturerCode: descriptor[2].manufacturer_code,
-                type: (descriptor[1] == 0) ? 'Coordinator' : 'EndDevice'
+                type: (logicaltype == 0) ? 'Coordinator' : (logicaltype == 1) ? 'Router' : 'EndDevice'
             };
         });
     }
