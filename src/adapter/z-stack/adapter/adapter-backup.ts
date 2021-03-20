@@ -40,7 +40,7 @@ export class AdapterBackup {
         const data = JSON.parse((await fs.readFile(this.defaultPath)).toString());
         if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
-                throw new Error(`Unsupported open coordinator backup version version=${data.metadata?.version}`);
+                throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
             }
             return BackupUtils.fromUnifiedBackup(data as Models.UnifiedBackupStorage);
         } else if (data.adapterType === "zStack") {
@@ -117,7 +117,7 @@ export class AdapterBackup {
         return {
             znp: {
                 version: version,
-                trustCenterLinkKeySeed: tclkSeed.key
+                trustCenterLinkKeySeed: tclkSeed?.key || undefined
             },
             networkOptions: {
                 panId: nib.nwkPanId,
@@ -137,6 +137,7 @@ export class AdapterBackup {
             devices: addressManagerTable && addressManagerTable.used.map((ame, ami) => {
                 /* take all entries of assoc and/or security type */
                 if (!ame.isSet() || (ame.user & (AddressManagerUser.Assoc | AddressManagerUser.Security)) === 0) {
+                    /* istanbul ignore next */
                     return null;
                 }
                 let linkKeyInfo: { key: Buffer, rxCounter: number, txCounter: number } = null;
@@ -360,6 +361,7 @@ export class AdapterBackup {
         const versionResponse = await this.znp.request(Subsystem.SYS, "version", {});
         const version: ZnpVersion = versionResponse.payload.product;
         if (version === ZnpVersion.zStack12) {
+            /* istanbul ignore next */
             throw new Error("Backup is not supported for Z-Stack 1.2");
         }
         return version;
