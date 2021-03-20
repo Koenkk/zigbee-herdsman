@@ -1,6 +1,6 @@
 import "regenerator-runtime/runtime";
 import {ZStackAdapter} from '../../../src/adapter/z-stack/adapter';
-import {DevStates, NvItemsIds, ZnpCommandStatus} from "../../../src/adapter/z-stack/constants/common";
+import {DevStates, NvItemsIds, NvSystemIds, ZnpCommandStatus} from "../../../src/adapter/z-stack/constants/common";
 import {Subsystem, Type} from "../../../src/adapter/z-stack/unpi/constants";
 import equals from "fast-deep-equal/es6";
 import {ZnpVersion} from "../../../src/adapter/z-stack/adapter/tstype";
@@ -11,6 +11,7 @@ import {LoggerStub} from "../../../src/controller/logger-stub";
 import * as Zcl from '../../../src/zcl';
 import * as Constants from '../../../src/adapter/z-stack/constants';
 import {ZclDataPayload} from "../../../src/adapter/events";
+import {UnifiedBackupStorage} from "../../../src/models";
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
@@ -135,6 +136,15 @@ const backupMatchingConfig = JSON.parse(`
           "key": "55ba1e31fcd8171f9f0b63459effbca5",
           "rx_counter": 0,
           "tx_counter": 44
+        }
+      },
+      {
+        "nwk_address": "4286",
+        "ieee_address": "00158d00024f810e",
+        "link_key": {
+          "key": "55ba1e31fcd8171fee0b63459effeea5",
+          "rx_counter": 24,
+          "tx_counter": 91
         }
       }
     ]
@@ -571,19 +581,20 @@ class ZnpRequestMockBuilder {
 
     public responders: {subsystem: Subsystem, command: string, exec: (payload: any, handler?: ZnpRequestMockBuilder) => any}[] = [];
     public nvItems: {id: NvItemsIds, value?: Buffer}[] = [];
+    public nvExtendedItems: {sysId: NvSystemIds, id: NvItemsIds, subId: number, value?: Buffer}[] = [];
 
     constructor() {
-        const handleNvRead = (payload, handler) => {
+        const handleOsalNvRead = (payload, handler) => {
             if (payload.offset !== undefined && payload.offset !== 0) {
                 throw new Error("osalNvLength offset not supported");
             }
             const item = handler.nvItems.find(e => e.id === payload.id);
             return { payload: { status: item && item.value ? 0 : 1, value: item && item.value ? item.value : undefined } };
         };
-        this.handle(Subsystem.SYS, "osalNvRead", handleNvRead);
-        this.handle(Subsystem.SYS, "osalNvReadExt", handleNvRead);
+        this.handle(Subsystem.SYS, "osalNvRead", handleOsalNvRead);
+        this.handle(Subsystem.SYS, "osalNvReadExt", handleOsalNvRead);
 
-        const handleNvWrite = (payload, handler) => {
+        const handleOsalNvWrite = (payload, handler) => {
             if (payload.offset !== undefined && payload.offset !== 0) {
                 throw new Error("osalNvLength offset not supported");
             }
@@ -595,8 +606,8 @@ class ZnpRequestMockBuilder {
                 return { payload: { status: 1 } };
             }
         };
-        this.handle(Subsystem.SYS, "osalNvWrite", handleNvWrite);
-        this.handle(Subsystem.SYS, "osalNvWriteExt", handleNvWrite);
+        this.handle(Subsystem.SYS, "osalNvWrite", handleOsalNvWrite);
+        this.handle(Subsystem.SYS, "osalNvWriteExt", handleOsalNvWrite);
 
         this.handle(Subsystem.SYS, "osalNvItemInit", (payload, handler) => {
             const item = handler.nvItems.find(e => e.id === payload.id);
@@ -634,6 +645,66 @@ class ZnpRequestMockBuilder {
                 return { payload: { status: 0x09 } };
             }
         });
+
+        this.handle(Subsystem.SYS, "nvRead", (payload, handler: ZnpRequestMockBuilder) => {
+            if (payload.offset !== undefined && payload.offset !== 0) {
+                throw new Error("nvRead offset not supported");
+            }
+            const item = handler.nvExtendedItems.find(e => e.sysId === payload.sysid && e.id === payload.itemid && e.subId === payload.subid);
+            return { payload: { status: item && item.value ? 0 : 1, value: item && item.value ? item.value : undefined, len: item?.value && item.value.length || undefined } };
+        });
+
+        this.handle(Subsystem.SYS, "nvWrite", (payload, handler: ZnpRequestMockBuilder) => {
+            if (payload.offset !== undefined && payload.offset !== 0) {
+                throw new Error("nwWrite offset not supported");
+            }
+            const item = handler.nvExtendedItems.find(e => e.sysId === payload.sysid && e.id === payload.itemid && e.subId === payload.subid);
+            if (item) {
+                item.value = payload.value;
+                return { payload: { status: 0 } };
+            } else {
+                return { payload: { status: 1 } };
+            }
+        });
+
+        this.handle(Subsystem.SYS, "nvCreate", (payload, handler: ZnpRequestMockBuilder) => {
+            const item = handler.nvExtendedItems.find(e => e.sysId === payload.sysid && e.id === payload.itemid && e.subId === payload.subid);
+            if (item) {
+                if (item.value && item.value.length !== payload.len) {
+                    return { payload: { status: 0x0a } };
+                }
+                return { payload: { status: 0x00 } };
+            } else {
+                const item = {
+                    sysId: payload.sysid,
+                    id: payload.itemid,
+                    subId: payload.subid,
+                    value: null
+                };
+                handler.nvExtendedItems.push(item);
+                return { payload: { status: 0x09 } };
+            }
+        });
+        this.handle(Subsystem.SYS, "nvLength", (payload, handler) => {
+            if (payload.offset !== undefined && payload.offset !== 0) {
+                throw new Error("nvLength offset not supported");
+            }
+            const item = handler.nvExtendedItems.find(e => e.sysId === payload.sysid && e.id === payload.itemid && e.subId === payload.subid);
+            return { payload: { len: item && item.value ? item.value.length : 0 } };
+        });
+        this.handle(Subsystem.SYS, "nvDelete", (payload, handler) => {
+            const item = handler.nvExtendedItems.find(e => e.sysId === payload.sysid && e.id === payload.itemid && e.subId === payload.subid);
+            if (item) {
+                if (item.value && item.value.length !== payload.len) {
+                    return { payload: { status: 0x0a } };
+                }
+                const itemIndex = handler.nvItems.indexOf(item);
+                handler.nvItems.splice(itemIndex, 1);
+                return { payload: { status: 0x00 } };
+            } else {
+                return { payload: { status: 0x09 } };
+            }
+        });
     }
 
     public handle(subsystem: Subsystem, command: string, exec?: (payload: any, handler?: ZnpRequestMockBuilder) => any) {
@@ -650,7 +721,20 @@ class ZnpRequestMockBuilder {
         if (index > -1) {
             this.nvItems.splice(index, 1);
         }
-        this.nvItems.push({ id, value: value || null });
+        if (value){
+            this.nvItems.push({ id, value: value || null });
+        }
+        return this;
+    }
+
+    public nvExtended(sysId: NvSystemIds, id: NvItemsIds, subId: number, value?: Buffer) {
+        const index = this.nvExtendedItems.findIndex(e => e.sysId === sysId && e.id === id && e.subId === subId);
+        if (index > -1) {
+            this.nvExtendedItems.splice(index, 1);
+        }
+        if (value){
+            this.nvExtendedItems.push({ sysId, id, subId, value: value || null });
+        }
         return this;
     }
 
@@ -669,7 +753,8 @@ class ZnpRequestMockBuilder {
     public clone(): ZnpRequestMockBuilder {
         const newBuilder = new ZnpRequestMockBuilder();
         newBuilder.responders = this.responders.map(responder => ({ ...responder }));
-        newBuilder.nvItems = this.nvItems.map(item => ({ id: item.id, value: Buffer.from(item.value) }));
+        newBuilder.nvItems = this.nvItems.map(item => ({ ...item, value: Buffer.from(item.value) }));
+        newBuilder.nvExtendedItems = this.nvExtendedItems.map(item => ({ ...item, value: Buffer.from(item.value) }));
         return newBuilder;
     }
 }
@@ -756,12 +841,23 @@ const commissioned3AlignedRequestMock = empty3AlignedRequestMock.clone()
     .nv(NvItemsIds.PRECFGKEY, Buffer.from("01030507090b0d0f00020406080a0c0d", "hex"))
     .nv(NvItemsIds.NWK_ACTIVE_KEY_INFO, Buffer.from("0001030507090b0d0f00020406080a0c0d00", "hex"))
     .nv(NvItemsIds.NWK_ALTERN_KEY_INFO, Buffer.from("0001030507090b0d0f00020406080a0c0d00", "hex"))
-    .nv(NvItemsIds.NIB, Buffer.from("fb050279147900640000000105018f000700020d1e0000001500000000000000000000007b000800000020000f0f0400010000000100000000779fd609004b1200010000000000000000000000000000000000000000000000000000000000000000000000003c0c0001780a0100000006020000", "hex"));
+    .nv(NvItemsIds.NIB, Buffer.from("fb050279147900640000000105018f000700020d1e0000001500000000000000000000007b000800000020000f0f0400010000000100000000779fd609004b1200010000000000000000000000000000000000000000000000000000000000000000000000003c0c0001780a0100000006020000", "hex"))
+    .nv(NvItemsIds.ADDRMGR, Buffer.from("01ff4f3a080000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff0000000000000000000000ff00000000000000000000", "hex"));
 
 const commissioned3AlignedConfigMistmachRequestMock = commissioned3AlignedRequestMock.clone()
     .nv(NvItemsIds.NWK_ACTIVE_KEY_INFO, Buffer.from("0001030507090b0d0f00020406080a0c0d00", "hex"))
     .nv(NvItemsIds.NWK_ALTERN_KEY_INFO, Buffer.from("0001030507090b0d0f00020406080a0c0d00", "hex"))
     .nv(NvItemsIds.NIB, Buffer.from("fb050279147900640000000105018f000700020d1e0000001500000000000000000000007e000800000020000f0f0400010000000100000000779fd609004b1200010000000000000000000000000000000000000000000000000000000000000000000000003c0c0001780a0100000006020000", "hex"));
+
+const empty3x0AlignedRequestMock = baseZnpRequestMock.clone()
+    .handle(Subsystem.SYS, "version", payload => equals(payload, {}) ? { payload: { product: ZnpVersion.zStack3x0, revision: "20201026" } } : undefined)
+    .nv(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, Buffer.from([0x00]))
+    .nv(NvItemsIds.NIB, Buffer.from("fb050279147900640000000105018f000700020d1e000000150000000000000000000000ffff0800000020000f0f0400010000000100000000779fd609004b1200010000000000000000000000000000000000000000000000000000000000000000000000003c0c0001780a0100000006020000", "hex"))
+    .nv(NvItemsIds.APS_LINK_KEY_TABLE, Buffer.from("0000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000", "hex"));
+    for (let i = 0; i < 16; i++) { empty3x0AlignedRequestMock.nvExtended(NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, i, Buffer.from("00ff00000000000000000000", "hex")); }
+    for (let i = 0; i < 4; i++) { empty3x0AlignedRequestMock.nvExtended(NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, i, Buffer.from("000000000000000000000000", "hex")); }
+    for (let i = 0; i < 16; i++) { empty3x0AlignedRequestMock.nvExtended(NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, i, Buffer.from("0000000000000000000000000000000000000000", "hex")); }
+    for (let i = 0; i < 16; i++) { empty3x0AlignedRequestMock.nvExtended(NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE, i, Buffer.from("000000000000000000000000000000000000000000000000", "hex")); }
 
 const empty12UnalignedRequestMock = baseZnpRequestMock.clone()
     .handle(Subsystem.SYS, "version", payload => equals(payload, {}) ? { payload: { product: ZnpVersion.zStack12 } } : undefined)
@@ -1090,7 +1186,151 @@ describe("zstack-adapter", () => {
         const result = await adapter.start();
         expect(result).toBe("restored");
 
+        await adapter.backup();
+    });
+
+    it("should restore unified backup with 3.x.0 adapter and create backup - empty", async () => {
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3x0AlignedRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("restored");
+
+        await adapter.backup();
+    });
+
+    it("should create backup with 3.0.x adapter - default security material table entry", async () => {
+        const builder = commissioned3AlignedRequestMock.clone();
+        mockZnpRequestWith(builder);
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+        for (let i = 0; i < 4; i++) { builder.nv(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, Buffer.from("000000000000000000000000", "hex")); }
+
+        const secMaterialTableEntry = Structs.nwkSecMaterialDescriptorEntry();
+        secMaterialTableEntry.extendedPanID = Buffer.alloc(8, 0xff);
+        secMaterialTableEntry.FrameCounter = 2800;
+        builder.nv(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + 0, secMaterialTableEntry.serialize("aligned"));
+        mockZnpRequestWith(builder);
+
         const backup = await adapter.backup();
+        expect(backup.networkKeyInfo.frameCounter).toBe(2800);
+    });
+
+    it("should create backup with 3.0.x adapter - emnpty security material table", async () => {
+        const builder = commissioned3AlignedRequestMock.clone();
+        mockZnpRequestWith(builder);
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+        for (let i = 0; i < 4; i++) { builder.nv(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, Buffer.from("000000000000000000000000", "hex")); }
+        mockZnpRequestWith(builder);
+
+        const backup = await adapter.backup();
+        expect(backup.networkKeyInfo.frameCounter).toBe(1250);
+    });
+
+    it("should fail to restore unified backup with 3.0.x adapter - invalid open coordinator backup version", async () => {
+        const backupFile = getTempFile();
+        let backupData: UnifiedBackupStorage = JSON.parse(JSON.stringify(backupMatchingConfig));
+        backupData = {
+            ...backupData,
+            metadata: {
+                ...backupData.metadata,
+                version: 99 as any
+            }
+        };
+        
+        fs.writeFileSync(backupFile, JSON.stringify(backupData), "utf8");
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3AlignedRequestMock);
+        await expect(adapter.start()).rejects.toThrowError("Unsupported open coordinator backup version (version=99)");
+    });
+
+    it("should fail to restore (unified) backup with 3.0.x adapter - unsupported backup format", async () => {
+        const backupFile = getTempFile();
+        let backupData: UnifiedBackupStorage = JSON.parse(JSON.stringify(backupMatchingConfig));
+        backupData = {
+            ...backupData,
+            metadata: {
+                ...backupData.metadata,
+                version: undefined
+            }
+        };
+        
+        fs.writeFileSync(backupFile, JSON.stringify(backupData), "utf8");
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3AlignedRequestMock);
+        await expect(adapter.start()).rejects.toThrowError("Unknown backup format");
+    });
+
+    it("should fail to restore unified backup with 3.0.x adapter - insufficient tclk table size", async () => {
+        const backupFile = getTempFile();
+        let backupData: UnifiedBackupStorage = JSON.parse(JSON.stringify(backupMatchingConfig));
+        fs.writeFileSync(backupFile, JSON.stringify(backupData), "utf8");
+
+        const builder = empty3AlignedRequestMock.clone();
+        for (let i = 0; i < 16; i++) { builder.nv(NvItemsIds.LEGACY_TCLK_TABLE_START + i, null); }
+        builder.nv(NvItemsIds.LEGACY_TCLK_TABLE_START + 0, Buffer.from("0000000000000000000000000000000000000000", "hex"));
+        mockZnpRequestWith(builder);
+
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
+        await expect(adapter.start()).rejects.toThrowError("target adapter tclk table size insufficient (size=1)");
+    });
+
+    it("should fail to restore unified backup with 3.0.x adapter - insufficient aps link key data table size", async () => {
+        const backupFile = getTempFile();
+        let backupData: UnifiedBackupStorage = JSON.parse(JSON.stringify(backupMatchingConfig));
+        fs.writeFileSync(backupFile, JSON.stringify(backupData), "utf8");
+
+        const builder = empty3AlignedRequestMock.clone();
+        for (let i = 0; i < 16; i++) { builder.nv(NvItemsIds.APS_LINK_KEY_DATA_START + i, null); }
+        builder.nv(NvItemsIds.APS_LINK_KEY_DATA_START + 0, Buffer.from("000000000000000000000000000000000000000000000000", "hex"));
+        mockZnpRequestWith(builder);
+
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
+        await expect(adapter.start()).rejects.toThrowError("target adapter aps link key data table size insufficient (size=1)");
+    });
+
+    it("should fail to restore unified backup with 3.0.x adapter - insufficient security manager table size", async () => {
+        const backupFile = getTempFile();
+        let backupData: UnifiedBackupStorage = JSON.parse(JSON.stringify(backupMatchingConfig));
+        fs.writeFileSync(backupFile, JSON.stringify(backupData), "utf8");
+
+        const builder = empty3AlignedRequestMock.clone();
+        builder.nv(NvItemsIds.APS_LINK_KEY_TABLE, Buffer.from("0000feff00000000", "hex"));
+        mockZnpRequestWith(builder);
+
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
+        await expect(adapter.start()).rejects.toThrowError("target adapter security manager table size insufficient (size=1)");
+    });
+
+    it("should fail to create backup with 3.0.x adapter - unable to read ieee address", async () => {
+        mockZnpRequestWith(commissioned3AlignedRequestMock.clone()
+            .handle(Subsystem.SYS, "getExtAddr", () => ({ payload: {} }))
+        );
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+        await expect(adapter.backup()).rejects.toThrowError("Failed to read adapter IEEE address");
+    });
+
+    it("should fail to create backup with 3.0.x adapter - adapter not commissioned - missing nib", async () => {
+        const builder = empty3AlignedRequestMock.clone();
+        mockZnpRequestWith(builder);
+        const result = await adapter.start();
+        expect(result).toBe("reset");
+        builder.nv(NvItemsIds.NIB, null);
+        mockZnpRequestWith(builder);
+        await expect(adapter.backup()).rejects.toThrowError("Cannot backup - adapter not commissioned");
+    });
+
+    it("should fail to create backup with 3.0.x adapter - missing active key info", async () => {
+        const builder = empty3AlignedRequestMock.clone();
+        mockZnpRequestWith(builder);
+        const result = await adapter.start();
+        expect(result).toBe("reset");
+        builder.nv(NvItemsIds.NWK_ACTIVE_KEY_INFO, null);
+        mockZnpRequestWith(builder);
+        await expect(adapter.backup()).rejects.toThrowError("Cannot backup - missing active key info");
     });
 
     it("should restore legacy backup with 3.0.x adapter - empty", async () => {
