@@ -150,6 +150,16 @@ const Foundation: {
             {name: 'dataType', type: DataType.uint8},
         ],
     },
+    writeStruct: {
+        ID: 15,
+        parseStrategy: 'repetitive',
+        parameters: [
+            {name: 'attrId', type: DataType.uint16},
+            {name: 'selector', type: BuffaloZclDataType.STRUCTURED_SELECTOR},
+            {name: 'dataType', type: DataType.uint8},
+            {name: 'elementData', type: BuffaloZclDataType.USE_DATA_TYPE},
+        ]
+    },
 
     /**
      * TODO: not all commands are supported yet, missing:

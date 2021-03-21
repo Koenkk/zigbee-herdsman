@@ -1,7 +1,6 @@
-
 import {Buffalo, TsType} from '../buffalo';
 import {DataType} from './definition';
-import {BuffaloZclOptions, ZclArray} from './tstype';
+import {BuffaloZclOptions, StructuredIndicatorType, StructuredSelector, ZclArray} from './tstype';
 
 const aliases: {[s: string]: string} = {
     'boolean': 'uint8',
@@ -330,6 +329,20 @@ class BuffaloZcl extends Buffalo {
         this.writeUInt32(msb);
     }
 
+    private writeStructuredSelector(
+        value: StructuredSelector,
+    ): void {
+        if (value != null) {
+            const indexes = value.indexes || [];
+            const indicatorType = value.indicatorType || StructuredIndicatorType.WriteWhole;
+            const indicator = indexes.length + indicatorType;
+            this.writeUInt8(indicator);
+            for (const index of indexes) {
+                this.writeUInt16(index);
+            }
+        }
+    }
+
     public write(type: string, value: TsType.Value, options: BuffaloZclOptions): void {
         // TODO: write for the following is missing: struct
         type = aliases[type] || type;
@@ -358,6 +371,8 @@ class BuffaloZcl extends Buffalo {
             return this.writeArray(value);
         } else if (type === 'USE_DATA_TYPE') {
             return this.writeUseDataType(value, options);
+        } else if (type == 'STRUCTURED_SELECTOR') {
+            return this.writeStructuredSelector(value);
         } else {
             // In case the type is undefined, write it as a buffer to easily allow for custom types
             // e.g. for https://github.com/Koenkk/zigbee-herdsman/issues/127
