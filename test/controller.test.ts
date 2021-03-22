@@ -867,7 +867,7 @@ describe('Controller', () => {
         expect(mockAdapterPermitJoin).toBeCalledTimes(1);
         expect(mockAdapterPermitJoin.mock.calls[0][0]).toBe(254);
         expect(events.permitJoinChanged.length).toBe(1);
-        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual'});
+        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual', timeout: undefined});
         expect(controller.getPermitJoin()).toBe(true);
 
         // Green power
@@ -898,7 +898,7 @@ describe('Controller', () => {
         jest.advanceTimersByTime(210 * 1000);
         expect(mockAdapterPermitJoin).toBeCalledTimes(4);
         expect(events.permitJoinChanged.length).toBe(2);
-        expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false, reason: 'manual'});
+        expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false, reason: 'manual', timeout: undefined});
         expect(controller.getPermitJoin()).toBe(false);
 
         // Green power
@@ -932,15 +932,19 @@ describe('Controller', () => {
         expect(mockAdapterPermitJoin).toBeCalledTimes(1);
         expect(mockAdapterPermitJoin.mock.calls[0][0]).toBe(254);
         expect(events.permitJoinChanged.length).toBe(1);
-        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual'});
+        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual', timeout: 10});
 
         // Timer ends
-        jest.advanceTimersByTime(12 * 1000);
+        jest.advanceTimersByTime(5 * 1000);
+        await flushPromises();
+        expect(controller.getPermitJoinTimeout()).toBe(5);
+        jest.advanceTimersByTime(7 * 1000);
         await flushPromises();
         expect(mockAdapterPermitJoin).toBeCalledTimes(2);
         expect(mockAdapterPermitJoin.mock.calls[1][0]).toBe(0);
-        expect(events.permitJoinChanged.length).toBe(2);
-        expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false, reason: 'timer_expired'});
+        expect(events.permitJoinChanged.length).toBe(11);
+        expect(events.permitJoinChanged[5]).toStrictEqual({permitted: true, reason: 'manual', timeout: 5});
+        expect(events.permitJoinChanged[10]).toStrictEqual({permitted: false, reason: 'timer_expired', timeout: undefined});
     });
 
     it('Shouldnt create backup when adapter doesnt support it', async () => {
