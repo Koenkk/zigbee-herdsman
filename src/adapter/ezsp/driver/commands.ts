@@ -759,7 +759,7 @@ export const COMMANDS: { [key: string]: [number, any[], any[]] } = {
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 export const ZDO_COMMANDS: { [key: string]: [number, any[], any[]] } = {
     "Node_Desc_req": [0x0002, [uint8_t, EmberNodeId], [EmberStatus]],
-    "Node_Desc_rsp": [0x8002, [EmberStatus, EmberNodeId, EmberNodeDescriptor], []],
+    "Node_Desc_rsp": [0x8002, [uint8_t, EmberStatus, EmberNodeId, EmberNodeDescriptor], []],
     "Simple_Desc_req": [0x0004, [uint8_t, EmberNodeId, uint8_t], [EmberStatus]],
     "Simple_Desc_rsp": [0x8004, [uint8_t, EmberStatus, EmberNodeId, uint8_t, EmberSimpleDescriptor], []],
     "Active_EP_req": [0x0005, [uint8_t, EmberNodeId], [EmberStatus]],

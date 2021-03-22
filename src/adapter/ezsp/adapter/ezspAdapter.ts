@@ -121,6 +121,7 @@ class EZSPAdapter extends Adapter {
     public async start(): Promise<StartResult> {
         await this.driver.startup(this.port.path, {
             baudRate: this.port.baudRate || 115200,
+            rtscts: this.port.rtscts,
             parity: 'none',
             stopBits: 1,
             xon: true,
@@ -184,7 +185,7 @@ class EZSPAdapter extends Adapter {
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
         // todo
-        return {type: 'EmberZNet', meta: this.driver.version};
+        return {type: `EZSP v${this.driver.version.product}`, meta: this.driver.version};
     }
 
     public async reset(type: 'soft' | 'hard'): Promise<void> {
@@ -265,9 +266,10 @@ class EZSPAdapter extends Adapter {
                 networkAddress, EmberZDOCmd.Node_Desc_req, EmberZDOCmd.Node_Desc_rsp,
                 networkAddress
             );
+            const logicaltype = descriptor[3].byte1 & 0x07;
             return {
-                manufacturerCode: descriptor[2].manufacturer_code,
-                type: (descriptor[1] == 0) ? 'Coordinator' : 'EndDevice'
+                manufacturerCode: descriptor[3].manufacturer_code,
+                type: (logicaltype == 0) ? 'Coordinator' : (logicaltype == 1) ? 'Router' : 'EndDevice'
             };
         });
     }
@@ -396,11 +398,13 @@ class EZSPAdapter extends Adapter {
     ): Promise<void> {
         return this.driver.queue.execute<void>(async () => {
             const ieee = new EmberEUI64(sourceIeeeAddress);
-            const ieeeDst = new EmberEUI64(destinationAddressOrGroup as string);
+            const addrmode = (type === 'group') ? 1 : 3;
+            const ieeeDst = (type === 'group') ? destinationAddressOrGroup : 
+                new EmberEUI64(destinationAddressOrGroup as string);
             await this.driver.zdoRequest(
                 destinationNetworkAddress, EmberZDOCmd.Bind_req, EmberZDOCmd.Bind_rsp,
                 ieee, sourceEndpoint, clusterID,
-                {addrmode: 0x03, ieee: ieeeDst, endpoint: destinationEndpoint}
+                {addrmode: addrmode, ieee: ieeeDst, endpoint: destinationEndpoint}
             );
         }, destinationNetworkAddress);
     }
@@ -412,11 +416,13 @@ class EZSPAdapter extends Adapter {
     ): Promise<void> {
         return this.driver.queue.execute<void>(async () => {
             const ieee = new EmberEUI64(sourceIeeeAddress);
-            const ieeeDst = new EmberEUI64(destinationAddressOrGroup as string);
+            const addrmode = (type === 'group') ? 1 : 3;
+            const ieeeDst = (type === 'group') ? destinationAddressOrGroup : 
+                new EmberEUI64(destinationAddressOrGroup as string);
             await this.driver.zdoRequest(
                 destinationNetworkAddress, EmberZDOCmd.Unbind_req, EmberZDOCmd.Unbind_rsp,
                 ieee, sourceEndpoint, clusterID,
-                {addrmode: 0x03, ieee: ieeeDst, endpoint: destinationEndpoint}
+                {addrmode: addrmode, ieee: ieeeDst, endpoint: destinationEndpoint}
             );
         }, destinationNetworkAddress);
     }

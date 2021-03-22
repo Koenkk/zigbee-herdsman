@@ -76,7 +76,7 @@ export class Ezsp extends EventEmitter {
         this.serialDriver.on('received', this.onFrameReceived.bind(this));
     }
 
-    public async connect(path: string, options: Record<string, number>): Promise<void> {
+    public async connect(path: string, options: Record<string, number|boolean>): Promise<void> {
         await this.serialDriver.connect(path, options);
         this.watchdogTimer = setInterval(
             this.watchdogHandler.bind(this),

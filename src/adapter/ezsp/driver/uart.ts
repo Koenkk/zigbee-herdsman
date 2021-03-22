@@ -167,7 +167,7 @@ export class SerialDriver extends EventEmitter {
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
-    async connect(path: string, options: Record<string, number>): Promise<void> {
+    async connect(path: string, options: Record<string, number|boolean>): Promise<void> {
         this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
         if (this.portType === 'serial') {
             await this.openSerialPort(path, options);
@@ -176,8 +176,12 @@ export class SerialDriver extends EventEmitter {
         }
     }
 
-    private async openSerialPort(path: string, opt: Record<string, number>): Promise<void> {
-        const options = {baudRate: opt.baudRate, rtscts: false, autoOpen: false};
+    private async openSerialPort(path: string, opt: Record<string, number|boolean>): Promise<void> {
+        const options = {
+            baudRate: typeof opt.baudRate === 'number' ? opt.baudRate : 115200, 
+            rtscts: typeof opt.rtscts === 'boolean' ? opt.rtscts : false,
+            autoOpen: false
+        };
 
         debug(`Opening SerialPort with ${path} and ${JSON.stringify(options)}`);
         this.serialPort = new SerialPort(path, options);
@@ -415,8 +419,8 @@ export class SerialDriver extends EventEmitter {
         /* Construct a reset frame */
         const rst_frame = Buffer.concat([Buffer.from([CANCEL]), this.make_frame([0xC0])]);
         debug(`Write reset`);
-        this.writer.writeBuffer(rst_frame);
         this.resetDeferred = new Deferred<void>();
+        this.writer.writeBuffer(rst_frame);
         return this.resetDeferred.promise;
     }
 

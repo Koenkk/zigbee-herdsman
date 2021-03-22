@@ -626,11 +626,27 @@ export class EmberSimpleDescriptor extends EzspStruct {
 }
 
 export class EmberMultiAddress extends EzspStruct {
-    static _fields = [
-        ['addrmode', basic.uint8_t], // 0x3
+    static fields3 = [
+        ['addrmode', basic.uint8_t],
         ['ieee', named.EmberEUI64],
         ['endpoint', basic.uint8_t],
     ];
+    static fields1 = [
+        ['addrmode', basic.uint8_t],
+        ['nwk', named.EmberNodeId],
+    ];
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static serialize(cls: any, obj: any): Buffer {
+        const addrmode = obj['addrmode'];
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+        const fields = (addrmode == 3) ? cls.fields3 : cls.fields1;
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+        return Buffer.concat(fields.map((field: any[]) => {
+            const value = obj[field[0]];
+            console.assert(field[1]);
+            return field[1].serialize(field[1], value);
+        }));
+    }
 }
 
 export class EmberNeighbor extends EzspStruct {

@@ -22,8 +22,8 @@ import Debug from "debug";
 import equals from 'fast-deep-equal/es6';
 
 const debug = {
-    error: Debug('zigbee-herdsman:adapter:driver:error'),
-    log: Debug('zigbee-herdsman:adapter:driver:log'),
+    error: Debug('zigbee-herdsman:adapter:ezsp:driver:error'),
+    log: Debug('zigbee-herdsman:adapter:ezsp:driver'),
 };
 
 interface AddEndpointParameters {
@@ -372,8 +372,9 @@ export class Driver extends EventEmitter {
         frame.sourceEndpoint = 0;
         frame.destinationEndpoint = 0;
         frame.groupId = 0;
-        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-        //frame.options = EmberApsOption.APS_OPTION_NONE;
+        //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY;
+        //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
+        frame.options = EmberApsOption.APS_OPTION_NONE;
         return frame;
     }
 
