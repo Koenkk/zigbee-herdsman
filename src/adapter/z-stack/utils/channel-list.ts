@@ -16,6 +16,7 @@ export const unpackChannelList = (packedList: number): number[] => {
 export const packChannelList = (channelList: number[]): number => {
     const invalidChannel = channelList.find(c => c < 11 || c > 29);
     if (invalidChannel !== undefined) {
+        /* istanbul ignore next */
         throw new Error(`Cannot pack channel list - unsupported channel ${invalidChannel}`);
     }
     return channelList.reduce((a, c) => a + (1 << c) ,0);
