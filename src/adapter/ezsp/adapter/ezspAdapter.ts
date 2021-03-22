@@ -266,9 +266,9 @@ class EZSPAdapter extends Adapter {
                 networkAddress, EmberZDOCmd.Node_Desc_req, EmberZDOCmd.Node_Desc_rsp,
                 networkAddress
             );
-            const logicaltype = descriptor[2].byte1 & 0x07;
+            const logicaltype = descriptor[3].byte1 & 0x07;
             return {
-                manufacturerCode: descriptor[2].manufacturer_code,
+                manufacturerCode: descriptor[3].manufacturer_code,
                 type: (logicaltype == 0) ? 'Coordinator' : (logicaltype == 1) ? 'Router' : 'EndDevice'
             };
         });
