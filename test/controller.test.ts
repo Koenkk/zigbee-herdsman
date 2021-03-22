@@ -52,6 +52,8 @@ const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
         {ID: 2, profileID: 3, deviceID: 5, inputClusters: [1], outputClusters: [0]},
     ]
 });
+
+const mockAdapterGetNetworkParameters = jest.fn().mockReturnValue({panID: 1, extendedPanID: 3, channel: 15});
 const mockAdapterBind = jest.fn();
 const mocksendZclFrameToGroup = jest.fn();
 const mocksendZclFrameToAll = jest.fn();
@@ -252,7 +254,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             supportsBackup: mockAdapterSupportsBackup,
             backup: () => {return {version: 'dummybackup'}},
             getCoordinatorVersion: () => {return {type: 'zStack', meta: {version: 1}}},
-            getNetworkParameters: () => {return {panID: 1, extendedPanID: 3, channel: 15}},
+            getNetworkParameters: mockAdapterGetNetworkParameters,
             setLED: mockAdapterSetLED,
             supportsLED: mockAdapterSupportsLED,
             waitFor: mockAdapterWaitFor,
@@ -692,6 +694,8 @@ describe('Controller', () => {
     it('Get network parameters', async () => {
         await controller.start();
         expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
+        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
     });
 
     it('Join a device', async () => {

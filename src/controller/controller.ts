@@ -71,6 +71,7 @@ class Controller extends events.EventEmitter {
     private databaseSaveTimer: any;
     private touchlink: Touchlink;
     private stopping: boolean;
+    private networkParametersCached: AdapterTsType.NetworkParameters;
 
     /**
      * Create a controller
@@ -296,7 +297,12 @@ class Controller extends events.EventEmitter {
     }
 
     public async getNetworkParameters(): Promise<AdapterTsType.NetworkParameters> {
-        return this.adapter.getNetworkParameters();
+        // Cache network parameters as they don't change anymore after start.
+        if (!this.networkParametersCached) {
+            this.networkParametersCached = await this.adapter.getNetworkParameters();
+        }
+
+        return this.networkParametersCached;
     }
 
     /**
