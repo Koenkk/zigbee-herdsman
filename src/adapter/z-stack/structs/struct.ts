@@ -39,6 +39,7 @@ export class Struct implements SerializableMemoryObject {
     public serialize(alignment: StructMemoryAlignment = "unaligned", padLength = true, parentOffset = 0): Buffer {
         if (alignment === "unaligned") {
             /* update child struct values and return as-is (unaligned) */
+            /* istanbul ignore next */
             for (const key of Object.keys(this.childStructs)) {
                 const child = this.childStructs[key];
                 this.buffer.set(child.struct.serialize(alignment), child.offset);
@@ -194,6 +195,7 @@ export class Struct implements SerializableMemoryObject {
         case "uint8array":
         case "uint8array-reversed": {
             if (!length) {
+                /* istanbul ignore next */
                 throw new Error("Struct builder requires length for `uint8array` and `uint8array-reversed` type");
             }
             Object.defineProperty(this, name,{
@@ -218,7 +220,7 @@ export class Struct implements SerializableMemoryObject {
         }
         case "struct": {
             this.childStructs[name] = {offset, struct: structFactory() as unknown as Struct};
-            Object.defineProperty(this, name,{
+            Object.defineProperty(this, name, {
                 enumerable: true,
                 get: () => this.childStructs[name].struct
             });
@@ -256,6 +258,7 @@ export class Struct implements SerializableMemoryObject {
      */
     public default(data: Buffer): this {
         if (data.length !== this.length) {
+            /* istanbul ignore next */
             throw new Error("Default value needs to have the length of unaligned structure.");
         }
         this.defaultData = Buffer.from(data);

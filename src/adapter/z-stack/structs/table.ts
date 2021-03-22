@@ -44,6 +44,7 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      * Returns all used entries.
      */
     public get used(): R[] {
+        /* istanbul ignore next */
         if (!this.entryOccupancyFunction) {
             throw new Error("Table usage cannot be determined without occupancy function when header is not present.");
         }
@@ -54,6 +55,7 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      * Returns all unused entries.
      */
     public get free(): R[] {
+        /* istanbul ignore next */
         if (!this.entryOccupancyFunction) {
             throw new Error("Table usage cannot be determined without occupancy function when header is not present.");
         }
@@ -64,6 +66,7 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      * Return number of records marked as free.
      */
     public get freeCount(): number {
+        /* istanbul ignore next */
         return this.free.length;
     }
 
@@ -158,6 +161,7 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
     public build(capacity: number): BuiltTable<R>;
 
     public build(dataOrCapacity: Buffer | Buffer[] | number, alignment: StructMemoryAlignment = "unaligned"): BuiltTable<R> {
+        /* istanbul ignore next */
         if (!this.entryStructFactory) {
             throw new Error("Table requires an entry struct factory.");
         }
