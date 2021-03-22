@@ -164,7 +164,6 @@ const Foundation: {
     /**
      * TODO: not all commands are supported yet, missing:
      * - 14: readStruct
-     * - 15: writeStruct
      * - 16: writeStructRsp
      * - 17: discoverCommandsReceived
      * - 18: discoverCommandsReceivedResponse
