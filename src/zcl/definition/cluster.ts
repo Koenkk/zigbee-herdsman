@@ -3905,11 +3905,21 @@ const Cluster: {
                     {name: 'data', type: DataType.octetStr},
                 ],
             },
+            activeStatusReport: {
+                ID: 6,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'transid', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint8},
+                    {name: 'datatype', type: DataType.uint8},
+                    {name: 'fn', type: DataType.uint8},
+                    {name: 'data', type: DataType.octetStr},
+                ],
+            },
             setTimeRequest: {
                 ID: 0x24,
                 parameters: [
-                    {name: 'payloadSize', type: DataType.uint16}, // Should be always 0
-                    {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
+                    {name: 'payloadSize', type: DataType.uint16}
                 ]
             }
         },
