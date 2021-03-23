@@ -573,7 +573,7 @@ class Endpoint extends Entity {
         }
     }
 
-    public async writeStruct(clusterKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
+    public async writeStructured(clusterKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(
             options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
@@ -581,10 +581,10 @@ class Endpoint extends Entity {
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
             options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-            `writeStruct`, cluster.ID, payload, options.reservedBits
+            `writeStructured`, cluster.ID, payload, options.reservedBits
         );
 
-        const log = `WriteStruct ${this.deviceIeeeAddress}/${this.ID} ` +
+        const log = `WriteStructured ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
         debug.info(log);
 

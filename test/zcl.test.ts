@@ -874,7 +874,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStruct single element', () => {
+    it('ZclFrame to buffer writeStructured single element', () => {
         const expected = Buffer.from([0x10, 0x02, 0x0f, 0x01, 0x00, 0x01, 0x02, 0x00, 0x20, 0x03]);
         const payload = [{attrId: 0x0001, selector: {indexes: [2]}, dataType: Zcl.DataType.uint8, elementData: 3}];
         const frame = Zcl.ZclFrame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, null, 2, 0x0f, 0, payload);
@@ -882,7 +882,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStruct multiple elements', () => {
+    it('ZclFrame to buffer writeStructured multiple elements', () => {
         const expected = Buffer.from([0x10, 0x02, 0x0f, 0x02, 0x00, 0x02, 0x03, 0x00, 0x04, 0x00, 0x42, 0x03, 0x66, 0x6f, 0x6f, 0x05, 0x00, 0x03, 0x06, 0x00, 0x07, 0x00, 0x08, 0x00, 0x42, 0x03, 0x62, 0x61, 0x72]);
         const payload = [
             {attrId: 0x0002, selector: {indexes: [3, 4]}, dataType: Zcl.DataType.charStr, elementData: 'foo'},
@@ -893,7 +893,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStruct whole attribute', () => {
+    it('ZclFrame to buffer writeStructured whole attribute', () => {
         const expected = Buffer.from([0x10, 0x02, 0x0f, 0x09, 0x00, 0x00, 0x48, 0x20, 0x03, 0x00, 0x0a, 0x0b, 0x0c]);
         const payload = [
             {attrId: 0x0009, selector: {}, dataType: Zcl.DataType.array, elementData: {elementType: 'uint8', elements: [10, 11, 12]}},
@@ -903,7 +903,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStruct add element into set/bag', () => {
+    it('ZclFrame to buffer writeStructured add element into set/bag', () => {
         const expected = Buffer.from([0x10, 0x02, 0x0f, 0x0d, 0x00, 0x10, 0x42, 0x03, 0x66, 0x6f, 0x6f]);
         const payload = [
             {attrId: 0x000d, selector: {indicatorType: StructuredIndicatorType.Add}, dataType: Zcl.DataType.charStr, elementData: 'foo'},
@@ -913,7 +913,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStruct remove element from set/bag', () => {
+    it('ZclFrame to buffer writeStructured remove element from set/bag', () => {
         const expected = Buffer.from([0x10, 0x02, 0x0f, 0x0e, 0x00, 0x20, 0x42, 0x03, 0x62, 0x61, 0x72]);
         const payload = [
             {attrId: 0x000e, selector: {indicatorType: StructuredIndicatorType.Remove}, dataType: Zcl.DataType.charStr, elementData: 'bar'},
@@ -923,7 +923,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStruct Livolo malformed', () => {
+    it('ZclFrame to buffer writeStructured Livolo malformed', () => {
         const expected = Buffer.from([0x7c, 0xd2, 0x1a, 0xe9, 0x0f, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
         const payload = [
             {attrId: 0x0000, selector: null, elementData: [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]},

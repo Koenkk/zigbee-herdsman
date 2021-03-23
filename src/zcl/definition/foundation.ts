@@ -150,7 +150,7 @@ const Foundation: {
             {name: 'dataType', type: DataType.uint8},
         ],
     },
-    writeStruct: {
+    writeStructured: {
         ID: 15,
         parseStrategy: 'repetitive',
         parameters: [
