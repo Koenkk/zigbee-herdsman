@@ -3905,6 +3905,17 @@ const Cluster: {
                     {name: 'data', type: DataType.octetStr},
                 ],
             },
+            activeStatusReport: {
+                ID: 6,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'transid', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint8},
+                    {name: 'datatype', type: DataType.uint8},
+                    {name: 'fn', type: DataType.uint8},
+                    {name: 'data', type: DataType.octetStr},
+                ],
+            },
             setTimeRequest: {
                 ID: 0x24,
                 parameters: [
