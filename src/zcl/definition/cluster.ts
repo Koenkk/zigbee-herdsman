@@ -3919,8 +3919,7 @@ const Cluster: {
             setTimeRequest: {
                 ID: 0x24,
                 parameters: [
-                    {name: 'payloadSize', type: DataType.uint16}, // Should be always 0
-                    {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
+                    {name: 'payloadSize', type: DataType.uint16}
                 ]
             }
         },
