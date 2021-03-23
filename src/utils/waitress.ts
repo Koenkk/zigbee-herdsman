@@ -25,7 +25,8 @@ class Waitress<TPayload, TMatcher> {
         this.currentID = 0;
     }
 
-    public resolve(payload: TPayload): void {
+    public resolve(payload: TPayload): boolean {
+        let result = false;
         for (const entry of this.waiters.entries()) {
             const index = entry[0];
             const waiter = entry[1];
@@ -36,8 +37,10 @@ class Waitress<TPayload, TMatcher> {
                 waiter.resolved = true;
                 waiter.resolve(payload);
                 this.waiters.delete(index);
+                result = true;
             }
         }
+        return result;
     }
 
     public remove(ID: number): void {
@@ -49,6 +52,24 @@ class Waitress<TPayload, TMatcher> {
 
             this.waiters.delete(ID);
         }
+    }
+
+    public reject(payload: TPayload, message: string): boolean {
+        let result = false;
+        for (const entry of this.waiters.entries()) {
+            const index = entry[0];
+            const waiter = entry[1];
+            if (waiter.timedout) {
+                this.waiters.delete(index);
+            } else if (this.validator(payload, waiter.matcher)) {
+                clearTimeout(waiter.timer);
+                waiter.resolved = true;
+                this.waiters.delete(index);
+                waiter.reject(new Error(message));
+                result = true;
+            }
+        }
+        return result;
     }
 
     public waitFor(

@@ -67,6 +67,25 @@ describe('Utils', () => {
         expect(error3).toStrictEqual(new Error("Timedout '5000'"));
 
         jest.useRealTimers();
+
+        // reject test
+        const wait1_ = waitress.waitFor(1, 5000).start();
+        let error1_;
+        Wait(1000).then(() => {waitress.reject('one', 'drop');});
+        try {await wait1_.promise} catch (e) { error1_ = e};
+        expect(error1_).toStrictEqual(new Error("drop"));
+
+        jest.useFakeTimers();
+        const wait2_ = waitress.waitFor(2, 5000).start();
+        let handled1 = waitress.reject('tree', 'drop');
+        expect(handled1).toBe(false);
+        let error2_;
+        jest.runTimersToTime(6000);
+        try {await wait2_.promise} catch (e) { error2_ = e};
+        expect(error2_).toStrictEqual(new Error("Timedout '5000'"));
+        let handled2 = waitress.reject('two', 'drop');
+        expect(handled2).toBe(false);
+        jest.useRealTimers();        
     });
 
     it('Test queue', async () => {

@@ -1896,6 +1896,22 @@ const Cluster: {
             SinopeBacklight: {ID: 1026, type: DataType.enum8, manufacturerCode: ManufacturerCode.Sinope},
             StelproSystemMode: {ID: 0x401c, type: DataType.enum8},
             StelproOutdoorTemp: {ID: 0x4001, type: DataType.int16, manufacturerCode: ManufacturerCode.Stelpro},
+            viessmannCustom0: {ID: 0x4000, type: DataType.enum8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom1: {ID: 0x4001, type: DataType.int16, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom2: {ID: 0x4002, type: DataType.int16, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannWindowOpenForce: {ID: 0x4003, type: DataType.boolean, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom4: {ID: 0x4007, type: DataType.boolean, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom5: {ID: 0x4008, type: DataType.uint16, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom6: {ID: 0x4009, type: DataType.uint16, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom7: {ID: 0x4010, type: DataType.enum8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom8: {ID: 0x4011, type: DataType.uint16, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannAssemblyMode: {ID: 0x4012, type: DataType.boolean, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom10: {ID: 0x4020, type: DataType.uint8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom11: {ID: 0x4021, type: DataType.uint16, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom12: {ID: 0x404b, type: DataType.int8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom13: {ID: 0x404c, type: DataType.enum8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom14: {ID: 0x404d, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            viessmannCustom15: {ID: 0x404e, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
         },
         commands: {
             setpointRaiseLower: {
@@ -2007,7 +2023,7 @@ const Cluster: {
             compensationText: {ID: 6, type: DataType.charStr},
             colorTemperature: {ID: 7, type: DataType.uint16},
             colorMode: {ID: 8, type: DataType.enum8},
-            options: {ID: 15, type: DataType.bitmap8},       
+            options: {ID: 15, type: DataType.bitmap8},
             numPrimaries: {ID: 16, type: DataType.uint8},
             primary1X: {ID: 17, type: DataType.uint16},
             primary1Y: {ID: 18, type: DataType.uint16},
@@ -3889,11 +3905,21 @@ const Cluster: {
                     {name: 'data', type: DataType.octetStr},
                 ],
             },
+            activeStatusReport: {
+                ID: 6,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'transid', type: DataType.uint8},
+                    {name: 'dp', type: DataType.uint8},
+                    {name: 'datatype', type: DataType.uint8},
+                    {name: 'fn', type: DataType.uint8},
+                    {name: 'data', type: DataType.octetStr},
+                ],
+            },
             setTimeRequest: {
                 ID: 0x24,
                 parameters: [
-                    {name: 'payloadSize', type: DataType.uint16}, // Should be always 0
-                    {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
+                    {name: 'payloadSize', type: DataType.uint16}
                 ]
             }
         },

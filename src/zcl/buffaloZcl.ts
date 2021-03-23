@@ -48,7 +48,31 @@ const extensionFieldSetsDateTypeLookup: {[key: number]: string[]} = {
     768: ['uint16', 'uint16', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16', 'uint16'],
 };
 
-interface ThermoTransition {transitionTime: number; heatSetpoint?: number; coolSetpoint?: number}
+interface ThermoTransition {
+    transitionTime: number;
+    heatSetpoint?: number;
+    coolSetpoint?: number;
+}
+
+interface Struct {
+    elmType: number;
+    elmVal: TsType.Value;
+}
+
+interface Gdp {
+    deviceID: number;
+    options: number;
+    extendedOptions: number;
+    securityKey: Buffer;
+    keyMic: number;
+    outgoingCounter: number;
+}
+
+interface ExtensionFieldSet {
+    clstId: number;
+    len: number;
+    extField: TsType.Value[];
+}
 
 class BuffaloZcl extends Buffalo {
     private readUseDataType(options: BuffaloZclOptions): TsType.Value {
@@ -56,10 +80,10 @@ class BuffaloZcl extends Buffalo {
     }
 
     private writeUseDataType(value: string, options: BuffaloZclOptions): void {
-        return this.write(options.dataType, value, options);
+        this.write(options.dataType, value, options);
     }
 
-    private readArray(): TsType.Value {
+    private readArray(): TsType.Value[] {
         const values: TsType.Value = [];
 
         const elementType = DataType[this.readUInt8()];
@@ -82,8 +106,8 @@ class BuffaloZcl extends Buffalo {
         });
     }
 
-    private readStruct(): TsType.Value {
-        const values: TsType.Value = [];
+    private readStruct(): Struct[] {
+        const values = [];
         const numberOfElements = this.readUInt16();
 
         for (let i = 0; i < numberOfElements; i++) {
@@ -95,18 +119,18 @@ class BuffaloZcl extends Buffalo {
         return values;
     }
 
-    private readOctetStr(): TsType.Value {
+    private readOctetStr(): Buffer {
         const length = this.readUInt8();
         const value = this.buffer.slice(this.position, this.position + length);
         this.position += length;
         return value;
     }
 
-    private readCharStr(options: BuffaloZclOptions): TsType.Value {
+    private readCharStr(options: BuffaloZclOptions): Record<number, number | number[]> | string {
         const length = this.readUInt8();
 
         if (options.attrId === 65281) {
-            const value: {[i: number]: number|number[]} = {};
+            const value: Record<number, number | number[]> = {};
 
             // Xiaomi struct parsing
             for (let i = 0; i < length; i++) {
@@ -136,7 +160,7 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
-    private readLongCharStr(): TsType.Value {
+    private readLongCharStr(): string {
         const length = this.readUInt16();
         const value = this.buffer.toString('utf8', this.position, this.position + length);
         this.position += length;
@@ -153,7 +177,7 @@ class BuffaloZcl extends Buffalo {
         this.writeBuffer(value, value.length);
     }
 
-    private readExtensionFieldSets(): TsType.Value {
+    private readExtensionFieldSets(): ExtensionFieldSet[] {
         const value = [];
 
         while (this.position < this.buffer.length) {
@@ -191,7 +215,7 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
-    private readListZoneInfo(options: TsType.Options): TsType.Value {
+    private readListZoneInfo(options: TsType.Options): {zoneID: number, zoneStatus: number}[] {
         const value = [];
         for (let i = 0; i < options.length; i++) {
             value.push({
@@ -203,13 +227,15 @@ class BuffaloZcl extends Buffalo {
         return value;
     }
 
-    private readListThermoTransitions(options: TsType.Options): TsType.Value {
+    private readListThermoTransitions(options: TsType.Options): ThermoTransition[] {
         const heat = options.payload['mode'] & 1;
         const cool = options.payload['mode'] & 2;
         const result = [];
 
         for (let i = 0; i < options.payload.numoftrans; i++) {
-            const entry: ThermoTransition = {transitionTime: this.readUInt16()};
+            const entry: ThermoTransition = {
+                transitionTime: this.readUInt16()
+            };
 
             if (heat) {
                 entry.heatSetpoint = this.readUInt16();
@@ -239,7 +265,7 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
-    private readGdpFrame(options: TsType.Options): TsType.Value {
+    private readGdpFrame(options: TsType.Options): Gdp | {raw: Buffer} | Record<string, never> {
         // Commisioning
         if (options.payload.commandID === 224) {
             return {
@@ -257,7 +283,7 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
-    private readUInt40(): TsType.Value {
+    private readUInt40(): [number, number] {
         const lsb = this.readUInt32();
         const msb = this.readUInt8();
         return [msb, lsb];
@@ -268,7 +294,7 @@ class BuffaloZcl extends Buffalo {
         this.writeUInt8(value[0]);
     }
 
-    private readUInt48(): TsType.Value {
+    private readUInt48(): [number, number] {
         const lsb = this.readUInt32();
         const msb = this.readUInt16();
         return [msb, lsb];
@@ -279,7 +305,7 @@ class BuffaloZcl extends Buffalo {
         this.writeUInt16(value[0]);
     }
 
-    private readUInt56(): TsType.Value {
+    private readUInt56(): [number, number, number] {
         const lsb = this.readUInt32();
         const xsb = this.readUInt16();
         const msb = this.readUInt8();
@@ -293,7 +319,7 @@ class BuffaloZcl extends Buffalo {
         this.writeBuffer(temp.slice(0, 7), 7);
     }
 
-    private readUInt64(): TsType.Value {
+    private readUInt64(): string {
         return this.readIeeeAddr();
     }
 

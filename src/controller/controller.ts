@@ -63,13 +63,15 @@ class Controller extends events.EventEmitter {
     // eslint-disable-next-line
     private permitJoinNetworkClosedTimer: any;
     // eslint-disable-next-line
-    private permitJoinTimer: any;
+    private permitJoinTimeoutTimer: any;
+    private permitJoinTimeout: number;
     // eslint-disable-next-line
     private backupTimer: any;
     // eslint-disable-next-line
     private databaseSaveTimer: any;
     private touchlink: Touchlink;
     private stopping: boolean;
+    private networkParametersCached: AdapterTsType.NetworkParameters;
 
     /**
      * Create a controller
@@ -194,40 +196,54 @@ class Controller extends events.EventEmitter {
     }
 
     public async permitJoinInternal(
-        permit: boolean, reason: 'manual' | 'timer_expired', device?: Device, time?: number, ): Promise<void> {
+        permit: boolean, reason: 'manual' | 'timer_expired', device?: Device, time?: number): Promise<void> {
+        clearInterval(this.permitJoinNetworkClosedTimer);
+        clearInterval(this.permitJoinTimeoutTimer);
+        this.permitJoinNetworkClosedTimer = null;
+        this.permitJoinTimeoutTimer = null;
+        this.permitJoinTimeout = undefined;
+
         if (permit) {
             await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
             await this.greenPower.permitJoin(254);
 
             // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
-            clearInterval(this.permitJoinNetworkClosedTimer);
             this.permitJoinNetworkClosedTimer = setInterval(async (): Promise<void> => {
                 await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
                 await this.greenPower.permitJoin(254);
             }, 200 * 1000);
 
             if (typeof time === 'number') {
-                this.permitJoinTimer = setTimeout(async (): Promise<void> => {
-                    await this.permitJoinInternal(false, 'timer_expired');
-                }, time * 1000);
+                this.permitJoinTimeout = time;
+                this.permitJoinTimeoutTimer = setInterval(async (): Promise<void> => {
+                    this.permitJoinTimeout--;
+                    if (this.permitJoinTimeout <= 0) {
+                        await this.permitJoinInternal(false, 'timer_expired');
+                    } else {
+                        const data: Events.PermitJoinChangedPayload =
+                            {permitted: true, timeout: this.permitJoinTimeout, reason};
+                        this.emit(Events.Events.permitJoinChanged, data);
+                    }
+                }, 1000);
             }
 
-            const data: Events.PermitJoinChangedPayload = {permitted: true, reason};
+            const data: Events.PermitJoinChangedPayload = {permitted: true, reason, timeout: this.permitJoinTimeout};
             this.emit(Events.Events.permitJoinChanged, data);
         } else {
             debug.log('Disable joining');
             await this.greenPower.permitJoin(0);
             await this.adapter.permitJoin(0, null);
-            clearTimeout(this.permitJoinTimer);
-            clearInterval(this.permitJoinNetworkClosedTimer);
-            this.permitJoinNetworkClosedTimer = null;
-            const data: Events.PermitJoinChangedPayload = {permitted: false, reason};
+            const data: Events.PermitJoinChangedPayload = {permitted: false, reason, timeout: this.permitJoinTimeout};
             this.emit(Events.Events.permitJoinChanged, data);
         }
     }
 
     public getPermitJoin(): boolean {
         return this.permitJoinNetworkClosedTimer != null;
+    }
+
+    public getPermitJoinTimeout(): number {
+        return this.permitJoinTimeout;
     }
 
     public isStopping(): boolean {
@@ -281,7 +297,12 @@ class Controller extends events.EventEmitter {
     }
 
     public async getNetworkParameters(): Promise<AdapterTsType.NetworkParameters> {
-        return this.adapter.getNetworkParameters();
+        // Cache network parameters as they don't change anymore after start.
+        if (!this.networkParametersCached) {
+            this.networkParametersCached = await this.adapter.getNetworkParameters();
+        }
+
+        return this.networkParametersCached;
     }
 
     /**
