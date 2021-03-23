@@ -569,7 +569,7 @@ class Endpoint extends Entity {
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
-            throw error;
+//            throw error;
         }
     }
 
