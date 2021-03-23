@@ -29,11 +29,7 @@ export class Multicast {
             EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE
         );
         for (let i = 0; i < size; i++) {
-            const [st, entry] = await this.driver.ezsp.getMulticastTableEntry(i);
-            if (st !== EmberStatus.SUCCESS) {
-                debug.log("Couldn't get MulticastTableEntry #%s: %s", i, st);
-                continue;
-            }
+            const entry = await this.driver.ezsp.getMulticastTableEntry(i);
             debug.log("MulticastTableEntry[%s] = %s", i, entry);
             if (entry.endpoint !== 0) {
                 this._multicast[entry.multicastId] = [entry, i];
@@ -50,14 +46,14 @@ export class Multicast {
             for (const ep of enpoints) {
                 if (!ep.id) continue;
                 for (const group_id of ep.member_of) {
-                    await this.subscribe(group_id);
+                    await this.subscribe(group_id, ep.id);
                 }
             }
         });
     }
 
-    async subscribe(group_id: number): Promise<EmberStatus> {
-        if (this._multicast.indexOf(group_id) >= 0) {
+    public async subscribe(group_id: number, endpoint: number): Promise<EmberStatus> {
+        if (this._multicast.hasOwnProperty(group_id)) {
             debug.log("%s is already subscribed", group_id);
             return EmberStatus.SUCCESS;
         }
@@ -65,7 +61,7 @@ export class Multicast {
         try {
             const idx = this._available.pop();
             const entry: EmberMulticastTableEntry = new EmberMulticastTableEntry();
-            entry.endpoint = 1;
+            entry.endpoint = endpoint;
             entry.multicastId = group_id;
             entry.networkIndex = 0;
             const [status] = await this.driver.ezsp.setMulticastTableEntry(idx, entry);

@@ -126,7 +126,7 @@ class EZSPAdapter extends Adapter {
             stopBits: 1,
             xon: true,
             xoff: true
-        }, this.networkOptions);
+        }, this.networkOptions, this.greenPowerGroup);
         return Promise.resolve("resumed");
     }
 

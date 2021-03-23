@@ -200,11 +200,10 @@ export class Ezsp extends EventEmitter {
         return value;
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    async getMulticastTableEntry(index: number): Promise<any[]> {
-        const [ret, value] = await this.execCommand('getMulticastTableEntry', index);
-        console.assert(ret === EmberStatus.SUCCESS);
-        return [ret, value];
+    async getMulticastTableEntry(index: number): Promise<t.EmberMulticastTableEntry> {
+        const [value] = await this.execCommand('getMulticastTableEntry', index);
+        //console.assert(ret === EmberStatus.SUCCESS);
+        return value;
     }
 
     async setMulticastTableEntry(index: number, entry: t.EmberMulticastTableEntry): Promise<number[]> {
