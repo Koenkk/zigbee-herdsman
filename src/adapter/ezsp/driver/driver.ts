@@ -217,7 +217,7 @@ export class Driver extends EventEmitter {
         const parameters: EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;
         parameters.extendedPanId = extendedPanID;
-        parameters.radioTxPower = 20;
+        parameters.radioTxPower = 10;
         parameters.radioChannel = this.nwkOpt.channelList[0];
         parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
         parameters.nwkManagerId = 0;
