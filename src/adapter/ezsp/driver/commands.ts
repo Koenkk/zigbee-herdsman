@@ -402,7 +402,7 @@ export const COMMANDS: { [key: string]: [number, any[], any[]] } = {
         [EmberStatus, EmberEUI64]
     ],
     "getMulticastTableEntry": [99, [uint8_t],
-        [EmberStatus, EmberMulticastTableEntry]
+        [EmberMulticastTableEntry]
     ],
     "setMulticastTableEntry": [100, [uint8_t, EmberMulticastTableEntry],
         [EmberStatus]
