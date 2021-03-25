@@ -218,7 +218,7 @@ export class Driver extends EventEmitter {
         const parameters: EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;
         parameters.extendedPanId = extendedPanID;
-        parameters.radioTxPower = 10;
+        parameters.radioTxPower = 5;
         parameters.radioChannel = this.nwkOpt.channelList[0];
         parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
         parameters.nwkManagerId = 0;
@@ -289,15 +289,15 @@ export class Driver extends EventEmitter {
             break;
         }
         default:
-            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 35 (childJoinHandler) received: 00013e9c2ebd08feff9ffd9004 +1ms
-            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 35 (childJoinHandler)   parsed: 0,1,39998,144,253,159,255,254,8,189,46,4 +1ms
-            // zigbee-herdsman:adapter:ezsp:driver Unhandled frame childJoinHandler +2s
-            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 98 (incomingSenderEui64Handler) received: 2ebd08feff9ffd90 +2ms
-            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 98 (incomingSenderEui64Handler)   parsed: 144,253,159,255,254,8,189,46 +1ms
-            // zigbee-herdsman:adapter:ezsp:driver Unhandled frame incomingSenderEui64Handler
-            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 155 (zigbeeKeyEstablishmentHandler) received: 2ebd08feff9ffd9006 +2ms
-            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 155 (zigbeeKeyEstablishmentHandler)   parsed: 144,253,159,255,254,8,189,46,6 +2ms
-            // zigbee-herdsman:adapter:ezsp:driver Unhandled frame zigbeeKeyEstablishmentHandler
+            // <=== Application frame 35 (childJoinHandler) received: 00013e9c2ebd08feff9ffd9004 +1ms
+            // <=== Application frame 35 (childJoinHandler)   parsed: 0,1,39998,144,253,159,255,254,8,189,46,4 +1ms
+            // Unhandled frame childJoinHandler +2s
+            // <=== Application frame 98 (incomingSenderEui64Handler) received: 2ebd08feff9ffd90 +2ms
+            // <=== Application frame 98 (incomingSenderEui64Handler)   parsed: 144,253,159,255,254,8,189,46 +1ms
+            // Unhandled frame incomingSenderEui64Handler
+            // <=== Application frame 155 (zigbeeKeyEstablishmentHandler) received: 2ebd08feff9ffd9006 +2ms
+            // <=== Application frame 155 (zigbeeKeyEstablishmentHandler)   parsed: 144,253,159,255,254,8,189,46,6 +2ms
+            // Unhandled frame zigbeeKeyEstablishmentHandler
             debug.log(`Unhandled frame ${frameName}`);
         }
     }

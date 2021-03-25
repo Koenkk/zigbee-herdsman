@@ -485,7 +485,7 @@ class EZSPAdapter extends Adapter {
     }
 
     public async setTransmitPower(value: number): Promise<void> {
-        debug(`setTransmitPower to ${Number}`);
+        debug(`setTransmitPower to ${value}`);
         return this.driver.queue.execute<void>(async () => {
             await this.driver.setRadioPower(value);
         });
