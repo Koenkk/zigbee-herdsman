@@ -190,6 +190,7 @@ export class Driver extends EventEmitter {
         this.multicast = new Multicast(this);
         await this.multicast.startup([]);
         await this.multicast.subscribe(242, greenPowerGroup);
+        // await this.multicast.subscribe(1, 901);
     }
 
     private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
@@ -288,6 +289,15 @@ export class Driver extends EventEmitter {
             break;
         }
         default:
+            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 35 (childJoinHandler) received: 00013e9c2ebd08feff9ffd9004 +1ms
+            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 35 (childJoinHandler)   parsed: 0,1,39998,144,253,159,255,254,8,189,46,4 +1ms
+            // zigbee-herdsman:adapter:ezsp:driver Unhandled frame childJoinHandler +2s
+            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 98 (incomingSenderEui64Handler) received: 2ebd08feff9ffd90 +2ms
+            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 98 (incomingSenderEui64Handler)   parsed: 144,253,159,255,254,8,189,46 +1ms
+            // zigbee-herdsman:adapter:ezsp:driver Unhandled frame incomingSenderEui64Handler
+            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 155 (zigbeeKeyEstablishmentHandler) received: 2ebd08feff9ffd9006 +2ms
+            // zigbee-herdsman:adapter:ezsp:log <=== Application frame 155 (zigbeeKeyEstablishmentHandler)   parsed: 144,253,159,255,254,8,189,46,6 +2ms
+            // zigbee-herdsman:adapter:ezsp:driver Unhandled frame zigbeeKeyEstablishmentHandler
             debug.log(`Unhandled frame ${frameName}`);
         }
     }
@@ -487,5 +497,9 @@ export class Driver extends EventEmitter {
         return (!matcher.address || payload.address === matcher.address) &&
             payload.frame.clusterId === matcher.clusterId &&
             payload.payload[0] === matcher.sequence;
+    }
+
+    public setRadioPower(value: number): Promise<void> {
+        return this.ezsp.execCommand('setRadioPower', value);
     }
 }
