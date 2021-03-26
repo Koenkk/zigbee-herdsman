@@ -3294,6 +3294,41 @@ describe('Controller', () => {
         expect(error).toStrictEqual(new Error(`Command 2 genOnOff.toggle({}) failed (timeout)`));
     });
 
+    it('Write structured', async () => {
+        await controller.start();
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(null)
+        let error;
+        try {await endpoint.writeStructured('genPowerCfg', {})} catch (e) {error = e}
+        expect(error).toBeUndefined();
+    });
+
+    it('Write structured with disable response', async () => {
+        await controller.start();
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(null)
+        let error;
+        try {await endpoint.writeStructured('genPowerCfg', {}, {disableResponse: true})} catch (e) {error = e}
+        expect(error).toBeUndefined();
+    });
+
+    it('Write structured error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
+        let error;
+        try {await endpoint.writeStructured('genPowerCfg', {})} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`WriteStructured 0x129/1 genPowerCfg({}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+    });
+
     it('Green power', async () => {
         await controller.start();
         const data = {

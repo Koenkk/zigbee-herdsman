@@ -150,11 +150,20 @@ const Foundation: {
             {name: 'dataType', type: DataType.uint8},
         ],
     },
+    writeStructured: {
+        ID: 15,
+        parseStrategy: 'repetitive',
+        parameters: [
+            {name: 'attrId', type: DataType.uint16},
+            {name: 'selector', type: BuffaloZclDataType.STRUCTURED_SELECTOR},
+            {name: 'dataType', type: DataType.uint8},
+            {name: 'elementData', type: BuffaloZclDataType.USE_DATA_TYPE},
+        ]
+    },
 
     /**
      * TODO: not all commands are supported yet, missing:
      * - 14: readStruct
-     * - 15: writeStruct
      * - 16: writeStructRsp
      * - 17: discoverCommandsReceived
      * - 18: discoverCommandsReceivedResponse
