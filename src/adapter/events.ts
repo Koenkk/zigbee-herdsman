@@ -36,6 +36,7 @@ interface ZclDataPayload {
     endpoint: number;
     linkquality: number;
     groupID: number;
+    wasBroadcast: boolean;
 }
 
 interface RawDataPayload {
@@ -45,6 +46,7 @@ interface RawDataPayload {
     endpoint: number;
     linkquality: number;
     groupID: number;
+    wasBroadcast: boolean;
 }
 
 export {

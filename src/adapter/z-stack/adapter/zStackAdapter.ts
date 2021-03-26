@@ -741,6 +741,7 @@ class ZStackAdapter extends Adapter {
                             endpoint: object.payload.srcendpoint,
                             linkquality: object.payload.linkquality,
                             groupID: object.payload.groupid,
+                            wasBroadcast: object.payload.wasbroadcast === 1,
                         };
 
                         this.waitress.resolve(payload);
@@ -753,6 +754,7 @@ class ZStackAdapter extends Adapter {
                             endpoint: object.payload.srcendpoint,
                             linkquality: object.payload.linkquality,
                             groupID: object.payload.groupid,
+                            wasBroadcast: object.payload.wasbroadcast === 1,
                         };
 
                         this.emit(Events.Events.rawData, payload);

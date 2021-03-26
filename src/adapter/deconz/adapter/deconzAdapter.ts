@@ -628,7 +628,8 @@ class DeconzAdapter extends Adapter {
                         frame: frame,
                         endpoint: data.srcEndpoint,
                         linkquality: data.lqi,
-                        groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null
+                        groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null,
+                        wasBroadcast: data.srcAddrMode === 0x01 || data.srcAddrMode === 0xF,
                     };
                     debug(`response received`);
                     return response;
@@ -1055,7 +1056,8 @@ class DeconzAdapter extends Adapter {
             address: ind.srcId,
             endpoint: 242, // GP endpoint
             linkquality: 127,
-            groupID: 0x0b84
+            groupID: 0x0b84,
+            wasBroadcast: false,
         };
 
         this.waitress.resolve(payload);
@@ -1127,7 +1129,8 @@ class DeconzAdapter extends Adapter {
                     address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
                     endpoint: resp.srcEndpoint,
                     linkquality: resp.lqi,
-                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null
+                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null,
+                    wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xF,
                 };
 
                 this.waitress.resolve(payload);
@@ -1139,7 +1142,8 @@ class DeconzAdapter extends Adapter {
                     address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
                     endpoint: resp.srcEndpoint,
                     linkquality: resp.lqi,
-                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null
+                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null,
+                    wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xF,
                 };
 
                 this.emit(Events.Events.rawData, payload);
