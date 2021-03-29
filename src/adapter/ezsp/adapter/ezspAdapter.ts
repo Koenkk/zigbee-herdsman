@@ -221,6 +221,7 @@ class EZSPAdapter extends Adapter {
             // eslint-disable-next-line
             const add = (list: any) => {
                 for (const entry of list) {
+                    this.driver.setNode(entry.nodeid, entry.ieee);
                     neighbors.push({
                         linkquality: entry.lqi,
                         networkAddress: entry.nodeid,

@@ -281,7 +281,7 @@ export class Driver extends EventEmitter {
                 const msgType = args[0];
                 if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
                     const apsFrame = args[2];
-                    if (apsFrame.groupId) {
+                    if (apsFrame.destinationEndpoint == 255) {
                         this.multicast.subscribe(apsFrame.groupId, 1);
                     }
                 }
@@ -306,6 +306,7 @@ export class Driver extends EventEmitter {
     private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number, relays: any): void {
         // todo
         debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
+        this.setNode(nwk, ieee);
         if (ieee && !(ieee instanceof EmberEUI64)) {
             ieee = new EmberEUI64(ieee);
         }
@@ -335,6 +336,13 @@ export class Driver extends EventEmitter {
         }
         this.eui64ToNodeId.set(ieee.toString(), nwk);
         this.emit('deviceJoined', [nwk, ieee]);
+    }
+
+    public setNode(nwk: number, ieee: EmberEUI64 | number[]): void {
+        if (ieee && !(ieee instanceof EmberEUI64)) {
+            ieee = new EmberEUI64(ieee);
+        }
+        this.eui64ToNodeId.set(ieee.toString(), nwk);
     }
 
     public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, 
@@ -368,6 +376,7 @@ export class Driver extends EventEmitter {
             await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             return true;
         } catch (e) {
+            debug.error(`Request error ${e}: ${e.stack}`);
             return false;
         }
     }
