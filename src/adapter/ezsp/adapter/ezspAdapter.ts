@@ -221,6 +221,7 @@ class EZSPAdapter extends Adapter {
             // eslint-disable-next-line
             const add = (list: any) => {
                 for (const entry of list) {
+                    this.driver.setNode(entry.nodeid, entry.ieee);
                     neighbors.push({
                         linkquality: entry.lqi,
                         networkAddress: entry.nodeid,
@@ -485,7 +486,10 @@ class EZSPAdapter extends Adapter {
     }
 
     public async setTransmitPower(value: number): Promise<void> {
-        // todo
+        debug(`setTransmitPower to ${value}`);
+        return this.driver.queue.execute<void>(async () => {
+            await this.driver.setRadioPower(value);
+        });
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {
