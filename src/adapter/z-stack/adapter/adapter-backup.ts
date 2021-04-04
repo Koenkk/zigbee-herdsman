@@ -98,6 +98,7 @@ export class AdapterBackup {
         /* examine network security material table */
         const genericExtendedPanId = Buffer.alloc(8, 0xff);
         let secMaterialDescriptor: ReturnType<typeof Structs.nwkSecMaterialDescriptorEntry> = null;
+        /* istanbul ignore next */
         for (const entry of secMaterialTable.used) {
             if (entry.extendedPanID.equals(nib.extendedPANID)) {
                 secMaterialDescriptor = entry;
@@ -114,6 +115,7 @@ export class AdapterBackup {
         }
 
         /* return backup structure */
+        /* istanbul ignore next */
         return {
             znp: {
                 version: version,
@@ -360,8 +362,8 @@ export class AdapterBackup {
     private async getAdapterVersion(): Promise<ZnpVersion> {
         const versionResponse = await this.znp.request(Subsystem.SYS, "version", {});
         const version: ZnpVersion = versionResponse.payload.product;
+        /* istanbul ignore next */
         if (version === ZnpVersion.zStack12) {
-            /* istanbul ignore next */
             throw new Error("Backup is not supported for Z-Stack 1.2");
         }
         return version;

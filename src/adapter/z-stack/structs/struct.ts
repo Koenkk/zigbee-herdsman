@@ -37,7 +37,8 @@ export class Struct implements SerializableMemoryObject {
      * Mutations to the returned buffer will not be reflected within struct.
      */
     public serialize(alignment: StructMemoryAlignment = "unaligned", padLength = true, parentOffset = 0): Buffer {
-        if (alignment === "unaligned") {
+        switch (alignment) {
+        case "unaligned": {
             /* update child struct values and return as-is (unaligned) */
             /* istanbul ignore next */
             for (const key of Object.keys(this.childStructs)) {
@@ -45,7 +46,8 @@ export class Struct implements SerializableMemoryObject {
                 this.buffer.set(child.struct.serialize(alignment), child.offset);
             }
             return Buffer.from(this.buffer);
-        } else if (alignment === "aligned") {
+        }
+        case "aligned": {
             /* create 16-bit aligned buffer */
             const aligned = Buffer.alloc(this.getLength(alignment, padLength, parentOffset), this.paddingByte);
             let offset = 0;
@@ -79,17 +81,21 @@ export class Struct implements SerializableMemoryObject {
             }
             return aligned;
         }
+        }
     }
 
     /**
      * Returns total length of the struct. Struct length is always fixed and configured
      * by calls to `member()` methods.
      */
+    /* istanbul ignore next */
     public getLength(alignment: StructMemoryAlignment = "unaligned", padLength = true, parentOffset = 0): number {
-        if (alignment === "unaligned") {
+        switch (alignment) {
+        case "unaligned": {
             /* return actual length */
             return this.length;
-        } else if (alignment === "aligned") {
+        }
+        case "aligned": {
             /* compute aligned length and return */
             let length = this.members.reduce((offset, member) => {
                 switch (member.type) {
@@ -106,6 +112,7 @@ export class Struct implements SerializableMemoryObject {
                 length += length % 2;
             }
             return length;
+        }
         }
     }
 
@@ -194,8 +201,8 @@ export class Struct implements SerializableMemoryObject {
         }
         case "uint8array":
         case "uint8array-reversed": {
+            /* istanbul ignore next */
             if (!length) {
-                /* istanbul ignore next */
                 throw new Error("Struct builder requires length for `uint8array` and `uint8array-reversed` type");
             }
             Object.defineProperty(this, name,{
@@ -256,9 +263,9 @@ export class Struct implements SerializableMemoryObject {
      * 
      * @param data Data to initialize empty struct with.
      */
+    /* istanbul ignore next */
     public default(data: Buffer): this {
         if (data.length !== this.length) {
-            /* istanbul ignore next */
             throw new Error("Default value needs to have the length of unaligned structure.");
         }
         this.defaultData = Buffer.from(data);
@@ -270,6 +277,7 @@ export class Struct implements SerializableMemoryObject {
      * 
      * @param padding Byte to use for padding
      */
+    /* istanbul ignore next */
     public padding(padding = 0x00): this {
         this.paddingByte = padding;
         return this;

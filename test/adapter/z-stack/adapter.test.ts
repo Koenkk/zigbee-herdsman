@@ -838,6 +838,7 @@ const empty3UnalignedRequestMock = baseZnpRequestMock.clone()
         handler.nvItems.push({ id: NvItemsIds.NIB, value: Buffer.from("fb050279147900640000000105018f0700020d1e000015000000000000000000007b0008000020000f0f0400010000000100000000779fd609004b1200010000000000000000000000000000000000000000000000000000000000000000000000003c0c0001780a010000060200", "hex") });
         return {};
     })
+    .nv(NvItemsIds.NWKKEY, Buffer.alloc(21, 0))
     .nv(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, Buffer.from([0x00]))
     .nv(NvItemsIds.NIB, Buffer.from("fb050279147900640000000105018f0700020d1e00001500000000000000000000ffff08000020000f0f0400010000000100000000779fd609004b1200010000000000000000000000000000000000000000000000000000000000000000000000003c0c0001780a010000060200", "hex"))
     .nv(NvItemsIds.ADDRMGR, Buffer.from("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "hex"))
@@ -1137,6 +1138,20 @@ describe("zstack-adapter", () => {
         expect(result).toBe("reset");
     });
 
+    it("should commission network with 3.0.x adapter - auto concurrency", async () => {
+        mockZnpRequestWith(empty3AlignedRequestMock);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {});
+        const result = await adapter.start();
+        expect(result).toBe("reset");
+    });
+
+    it("should commission network with 3.x.0 adapter - auto concurrency", async () => {
+        mockZnpRequestWith(empty3x0AlignedRequestMock);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {});
+        const result = await adapter.start();
+        expect(result).toBe("reset");
+    });
+
     it("should commission network with 3.0.x adapter - unaligned 8-bit", async () => {
         mockZnpRequestWith(empty3UnalignedRequestMock);
         const result = await adapter.start();
@@ -1226,6 +1241,19 @@ describe("zstack-adapter", () => {
         await adapter.backup();
     });
 
+    it("should restore unified backup with 3.0.x adapter and create backup - no tclk seed", async () => {
+        const backupFile = getTempFile();
+        const backup = JSON.parse(JSON.stringify(backupMatchingConfig));
+        delete backup.stack_specific.zstack;
+        fs.writeFileSync(backupFile, JSON.stringify(backup), "utf8");
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3AlignedRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("restored");
+
+        await adapter.backup();
+    });
+
     it("should restore unified backup with 3.x.0 adapter and create backup - empty", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
@@ -1264,6 +1292,22 @@ describe("zstack-adapter", () => {
 
         const backup = await adapter.backup();
         expect(backup.networkKeyInfo.frameCounter).toBe(1250);
+    });
+
+    it("should create backup with 3.0.x adapter - security material table with generic record", async () => {
+        const builder = commissioned3AlignedRequestMock.clone();
+        mockZnpRequestWith(builder);
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+        for (let i = 0; i < 4; i++) { builder.nv(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, Buffer.from("000000000000000000000000", "hex")); }
+        const genericEntry = Structs.nwkSecMaterialDescriptorEntry();
+        genericEntry.extendedPanID = Buffer.from("ffffffffffffffff", "hex");
+        genericEntry.FrameCounter = 8737;
+        builder.nv(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + 3, genericEntry.serialize("aligned"));
+        mockZnpRequestWith(builder);
+
+        const backup = await adapter.backup();
+        expect(backup.networkKeyInfo.frameCounter).toBe(8737);
     });
 
     it("should fail to restore unified backup with 3.0.x adapter - invalid open coordinator backup version", async () => {
