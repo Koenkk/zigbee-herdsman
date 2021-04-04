@@ -250,7 +250,7 @@ class ZclFrame {
         if (command.parseStrategy === 'repetitive') {
             const payload = [];
 
-            while (buffalo.getPosition() < buffalo.getBuffer().length) {
+            while (buffalo.isMore()) {
                 const entry: {[s: string]: BuffaloTsType.Value} = {};
 
                 for (const parameter of command.parameters) {
