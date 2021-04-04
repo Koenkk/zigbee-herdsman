@@ -127,16 +127,6 @@ export class Struct implements SerializableMemoryObject {
     }
 
     /**
-     * Returns structure contents in JS object format.
-     */
-    // eslint-disable-next-line max-len
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types,@typescript-eslint/explicit-function-return-type
-    public toJSON() {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return this.members.reduce((a, c) => { a[c.key] = (this as any)[c.key]; return a; }, {} as any);
-    }
-
-    /**
      * Adds a numeric member of `uint8`, `uint16` or `uint32` type.
      * Internal representation is always little endian.
      * 
