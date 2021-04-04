@@ -18,11 +18,8 @@ class Buffalo {
         return this.buffer;
     }
 
-    public readEmpty(): null {
-        return null;
-    }
-
-    public writeEmpty(): void {
+    public isMore(): boolean {
+        return this.position < this.buffer.length;
     }
 
     public writeInt8(value: number): void {
@@ -53,36 +50,25 @@ class Buffalo {
     }
 
     public readUInt24(): number {
-        const lsb = this.readUInt16();
-        const msb = this.readUInt8();
-        return (msb * 65536) + lsb;
+        const value = this.buffer.readUIntLE(this.position, 3);
+        this.position += 3;
+        return value;
     }
 
     public writeUInt24(value: number): void {
-        let temp = Buffer.alloc(4);
-        temp.writeUInt32LE(value, 0);
-        temp = temp.slice(0, 3);
-        this.writeBuffer(temp, 3);
+        this.buffer.writeUIntLE(value, this.position, 3);
+        this.position += 3;
     }
 
     public readInt24(): number {
-        const lsb = this.readUInt16();
-        const msb = this.readUInt8();
-        const sign = (msb & 0x80) >> 7;
-        let value = ((msb & 0x7F) * 65536) + lsb;
-
-        if (sign) {
-            value = -(0x7FFFFF - value + 1);
-        }
-
+        const value = this.buffer.readIntLE(this.position, 3);
+        this.position += 3;
         return value;
     }
 
     public writeInt24(value: number): void {
-        let temp = Buffer.alloc(4);
-        temp.writeInt32LE(value, 0);
-        temp = temp.slice(0, 3);
-        this.writeBuffer(temp, 3);
+        this.buffer.writeIntLE(value, this.position, 3);
+        this.position += 3;
     }
 
     public readUInt16(): number {
@@ -183,9 +169,11 @@ class Buffalo {
             throw new Error(`Length of values: '${values}' is not consitent with expected length '${length}'`);
         }
 
-        for (const value of values) {
-            this.writeUInt8(value);
+        if (!(values instanceof Buffer)) {
+            values = Buffer.from(values);
         }
+
+        this.position += values.copy(this.buffer, this.position);
     }
 
     public writeListUInt8(values: number[]): void {
@@ -199,7 +187,6 @@ class Buffalo {
         for (let i = 0; i < options.length; i++) {
             value.push(this.readUInt8());
         }
-
         return value;
     }
 
@@ -277,7 +264,7 @@ class Buffalo {
         } else if (type === 'DOUBLELE') {
             this.writeDoubleLE(value);
         } else if (type === 'EMPTY') {
-            this.writeEmpty();
+            /* nothing to write */
         } else if (type === 'LIST_UINT8') {
             this.writeListUInt8(value);
         } else if (type === 'LIST_UINT16') {
@@ -319,7 +306,7 @@ class Buffalo {
         } else if (type === 'DOUBLELE') {
             return this.readDoubleLE();
         } else if (type === 'EMPTY') {
-            return this.readEmpty();
+            return null;
         } else if (type === 'LIST_UINT8') {
             return this.readListUInt8(options);
         } else if (type === 'LIST_UINT16') {
@@ -333,7 +320,5 @@ class Buffalo {
         }
     }
 }
-
-
 
 export default Buffalo;

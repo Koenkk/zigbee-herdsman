@@ -120,9 +120,7 @@ class BuffaloZcl extends Buffalo {
 
     private readOctetStr(): Buffer {
         const length = this.readUInt8();
-        const value = this.buffer.slice(this.position, this.position + length);
-        this.position += length;
-        return value;
+        return this.readBuffer(length);
     }
 
     private readCharStr(options: BuffaloZclOptions): Record<number, number | number[]> | string {
@@ -179,7 +177,7 @@ class BuffaloZcl extends Buffalo {
     private readExtensionFieldSets(): ExtensionFieldSet[] {
         const value = [];
 
-        while (this.position < this.buffer.length) {
+        while (this.isMore()) {
             const clstId = this.readUInt16();
             const len = this.readUInt8();
             const end = this.getPosition() + len;

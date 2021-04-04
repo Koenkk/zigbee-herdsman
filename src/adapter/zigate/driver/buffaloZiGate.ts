@@ -107,8 +107,7 @@ class BuffaloZiGate extends Buffalo {
 
     public readIeeeAddr(): string {
         const length = 8;
-        const value = this.buffer.slice(this.position, this.position + length);
-        this.position += length;
+        const value = this.readBuffer(length);
         return BuffaloZiGate.addressBufferToStringBE(value);
     }
 
@@ -132,10 +131,6 @@ class BuffaloZiGate extends Buffalo {
     public writeUInt32BE(value: number): void {
         this.buffer.writeUInt32BE(value, this.position);
         this.position += 4;
-    }
-
-    public isMore(): boolean {
-        return this.position < this.buffer.length;
     }
 }
 
