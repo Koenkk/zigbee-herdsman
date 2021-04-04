@@ -17,6 +17,7 @@ export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.Uni
 
     const packageInfo = JSON.parse((await fs.readFile(path.join(__dirname, "../../", "package.json"))).toString());
 
+    /* istanbul ignore next */
     return {
         metadata: {
             format: "zigpy/open-coordinator-backup",
@@ -67,6 +68,7 @@ export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.Uni
  */
 export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.Backup => {
     const tclkSeedString = backup.stack_specific?.zstack?.tclk_seed || null;
+    /* istanbul ignore next */
     return {
         networkOptions: {
             panId: Buffer.from(backup.pan_id, "hex").readUInt16BE(),
