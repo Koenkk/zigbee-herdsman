@@ -338,8 +338,6 @@ export class ZnpAdapterManager {
 
         this.debug.commissioning(`setting network commissioning parameters`);
 
-        this.debug.commissioning(`setting network commissioning parameters`);
-
         await this.nv.updateItem(NvItemsIds.STARTUP_OPTION, Buffer.from([0x02]));
         await this.nv.updateItem(NvItemsIds.LOGICAL_TYPE, Buffer.from([ZnpConstants.ZDO.deviceLogicalType.COORDINATOR]));
         await this.nv.updateItem(NvItemsIds.ZDO_DIRECT_CB, Buffer.from([0x01]));
