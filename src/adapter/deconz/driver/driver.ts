@@ -780,7 +780,7 @@ class Driver extends events.EventEmitter {
 
     private resetTimeoutCounterAfter1min() {
         if (this.timeoutResetTimeout === null) {
-            this.timeoutResetTimeout = setTimeout(function(){
+            this.timeoutResetTimeout = setTimeout(() => {
                 timeoutCounter = 0;
                 this.timeoutResetTimeout = null;
             }, 60000);
