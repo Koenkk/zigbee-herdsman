@@ -235,6 +235,16 @@ class Buffalo {
         return value;
     }
 
+    public readUtf8String(length: number): string {
+        const value = this.buffer.toString('utf8', this.position, this.position + length);
+        this.position += length;
+        return value;
+    }
+
+    public writeUtf8String(value: string): void {
+        this.position += this.buffer.write(value, this.position, 'utf8');
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public write(type: string, value: Value, options: Options): void {
         if (type === 'UINT8') {
