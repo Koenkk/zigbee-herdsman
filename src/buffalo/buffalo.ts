@@ -18,6 +18,10 @@ class Buffalo {
         return this.buffer;
     }
 
+    public getWritten(): Buffer {
+        return this.buffer.slice(0, this.position);
+    }
+
     public isMore(): boolean {
         return this.position < this.buffer.length;
     }
@@ -138,24 +142,8 @@ class Buffalo {
     }
 
     public readIeeeAddr(): string {
-        const length = 8;
-        const value = this.buffer.slice(this.position, this.position + length);
-        this.position += length;
-        return Buffalo.addressBufferToString(value);
-    }
-
-    private static addressBufferToString(buffer: Buffer): string {
-        let address = '0x';
-        for (let i = 0; i < buffer.length; i++) {
-            const value = buffer.readUInt8(buffer.length - i - 1);
-            if (value <= 15) {
-                address += '0' + value.toString(16);
-            } else {
-                address += value.toString(16);
-            }
-        }
-
-        return address;
+        const octets = Array.from(this.readBuffer(8).reverse());
+        return '0x' + octets.map(octet => octet.toString(16).padStart(2, '0')).join("");
     }
 
     protected readBuffer(length: number): Buffer {
@@ -231,7 +219,6 @@ class Buffalo {
         for (let i = 0; i < options.length; i++) {
             value.push(this.readUInt32());
         }
-
         return value;
     }
 
