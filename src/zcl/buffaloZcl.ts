@@ -142,16 +142,14 @@ class BuffaloZcl extends Buffalo {
 
             return value;
         } else {
-            const value = this.buffer.toString('utf8', this.position, this.position + length);
-            this.position += length;
-            return value;
+            return this.readUtf8String(length);
         }
     }
 
     private writeCharStr(value: string | number[]): void {
         if (typeof value === 'string') {
             this.writeUInt8(value.length);
-            this.position += this.buffer.write(value, this.position, 'utf8');
+            this.writeUtf8String(value);
         } else {
             this.writeBuffer(value, value.length);
         }
@@ -159,14 +157,12 @@ class BuffaloZcl extends Buffalo {
 
     private readLongCharStr(): string {
         const length = this.readUInt16();
-        const value = this.buffer.toString('utf8', this.position, this.position + length);
-        this.position += length;
-        return value;
+        return this.readUtf8String(length);
     }
 
     private writeLongCharStr(value: string): void {
         this.writeUInt16(value.length);
-        this.position += this.buffer.write(value, this.position, 'utf8');
+        this.writeUtf8String(value);
     }
 
     private writeOctetStr(value: number[]): void {
