@@ -118,7 +118,7 @@ class ZpiObject {
             buffalo.write(ParameterType[parameter.parameterType], value, {});
         }
 
-        return buffalo.getBuffer().slice(0, buffalo.getPosition());
+        return buffalo.getWritten();
     }
 
     public isResetCommand(): boolean {
