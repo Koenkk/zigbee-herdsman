@@ -264,7 +264,7 @@ export class ZnpAdapterManager {
      * 
      * @param nwkOptions Options to configure the new network with.
      * @param failOnCollision Whether process should throw an error if PAN ID collision is detected.
-     * @param writeConfiguredFlag Whether Z2M `hasConfigured` flag should be written to NV.
+     * @param writeConfiguredFlag Whether zigbee-herdsman `hasConfigured` flag should be written to NV.
      */
     private async beginCommissioning(nwkOptions: Models.NetworkOptions, failOnCollision = true, writeConfiguredFlag = true): Promise<void> {
         if (nwkOptions.panId === 65535) {

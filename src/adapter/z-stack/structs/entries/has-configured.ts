@@ -3,7 +3,7 @@
 import {Struct} from "../struct";
 
 /**
- * Creates a Z2M `hasConfigured` struct.
+ * Creates a zigbee-herdsman `hasConfigured` struct.
  * 
  * @param data Data to initialize structure with.
  */
