@@ -248,6 +248,7 @@ export class ZnpAdapterManager {
         await this.updateCommissioningNvItems(this.nwkOptions);
         
         /* settle & reset adapter */
+        this.debug.commissioning("giving adapter some time to settle");
         await Wait(1000);
         await this.resetAdapter();
 
@@ -405,7 +406,9 @@ export class ZnpAdapterManager {
      * Internal method to reset the adapter.
      */
     private async resetAdapter(): Promise<void> {
+        this.debug.startup("adapter reset requested");
         await this.znp.request(Subsystem.SYS, 'resetReq', {type: ZnpConstants.SYS.resetType.SOFT});
+        this.debug.startup("adapter reset successful");
     }
 
     /**
