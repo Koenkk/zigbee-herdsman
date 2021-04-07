@@ -307,6 +307,7 @@ export class AdapterNvMemory {
     public async writeTable<R extends Structs.BuiltStruct>(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, table: BuiltTable<R>): Promise<void>;
     
     public async writeTable<R extends Structs.BuiltStruct>(mode: "extended" | "legacy", p1: NvSystemIds | NvItemsIds, p2: NvItemsIds | BuiltTable<R>, p3?: BuiltTable<R>): Promise<void> {
+        this.checkMemoryAlignmentSetup();
         const sysId = mode === "legacy" ? undefined : p1 as NvSystemIds;
         const id = (mode === "legacy" ? p1 : p2) as NvItemsIds;
         const table = (mode === "legacy" ? p2 : p3) as BuiltTable<R>;
