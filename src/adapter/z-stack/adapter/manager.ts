@@ -233,14 +233,20 @@ export class ZnpAdapterManager {
         const provisioningNwkOptions: Models.NetworkOptions = {
             panId: 1 + Math.round(Math.random() * 65532),
             extendedPanId: crypto.randomBytes(8),
-            channelList: [11 + Math.round((Math.random() * (29 - 11)))],
+            channelList: [11 + Math.round((Math.random() * (26 - 11)))],
             networkKey: crypto.randomBytes(16),
             networkKeyDistribute: false
         };
 
         /* commission provisioning network */
+        this.debug.commissioning("commissioning random provisioning network:");
+        this.debug.commissioning(` - panId: ${provisioningNwkOptions.panId}`);
+        this.debug.commissioning(` - extendedPanId: ${provisioningNwkOptions.extendedPanId.toString("hex")}`);
+        this.debug.commissioning(` - channelList: ${provisioningNwkOptions.channelList.join(", ")}`);
+        this.debug.commissioning(` - networkKey: ${provisioningNwkOptions.networkKey.toString("hex")}`);
+        this.debug.commissioning(` - networkKeyDistribute: ${provisioningNwkOptions.networkKeyDistribute}`);
         await this.beginCommissioning(provisioningNwkOptions, false, false);
-        
+
         /* perform NV restore */
         await this.backup.restoreBackup(backup);
 

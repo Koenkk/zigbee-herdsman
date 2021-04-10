@@ -4,7 +4,7 @@
  * @param packedList Packed channel list value.
  */
 export const unpackChannelList = (packedList: number): number[] => {
-    return Array(29 - 11 + 1).fill(0).map((_, i) => 11 + i).filter(c => ((1 << c) & packedList) > 0);
+    return Array(26 - 11 + 1).fill(0).map((_, i) => 11 + i).filter(c => ((1 << c) & packedList) > 0);
 };
 
 /**
@@ -14,7 +14,7 @@ export const unpackChannelList = (packedList: number): number[] => {
  * @param channelList List of channels to be packed.
  */
 export const packChannelList = (channelList: number[]): number => {
-    const invalidChannel = channelList.find(c => c < 11 || c > 29);
+    const invalidChannel = channelList.find(c => c < 11 || c > 26);
     /* istanbul ignore next */
     if (invalidChannel !== undefined) {
         throw new Error(`Cannot pack channel list - unsupported channel ${invalidChannel}`);
