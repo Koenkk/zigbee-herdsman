@@ -238,9 +238,6 @@ export class ZnpAdapterManager {
             networkKeyDistribute: false
         };
 
-        /* clear the adapter */
-        await this.clearAdapter();
-
         /* commission provisioning network */
         this.debug.commissioning("commissioning random provisioning network:");
         this.debug.commissioning(` - panId: ${provisioningNwkOptions.panId}`);
@@ -283,7 +280,7 @@ export class ZnpAdapterManager {
 
         /* clear and reset the adapter */
         await this.nv.deleteItem(NvItemsIds.NIB);
-        await this.resetAdapter();
+        await this.clearAdapter();
 
         /* commission the network as per parameters */
         await this.updateCommissioningNvItems(nwkOptions);
