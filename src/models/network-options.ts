@@ -7,4 +7,5 @@ export interface NetworkOptions {
     channelList: number[];
     networkKey: Buffer;
     networkKeyDistribute: boolean;
+    hasDefaultExtendedPanId?: boolean;
 }

@@ -142,7 +142,7 @@ export class ZnpAdapterManager {
         if (!hasConfigured || !hasConfigured.isConfigured() || !nib) {
             /* Adapter is not configured or not commissioned */
             this.debug.strategy("(stage-1) adapter is not configured / not commissioned");
-            if (backup && Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions)) {
+            if (backup && Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions, true)) {
                 /* Adapter backup is available and matches configuration */
                 this.debug.strategy("(stage-2) configuration matches backup");
                 return "restoreBackup";
@@ -184,7 +184,7 @@ export class ZnpAdapterManager {
                     } else {
                         /* Backup does not match adapter state */
                         this.debug.strategy("(stage-4) adapter state does not match backup");
-                        if (backup && Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions)) {
+                        if (backup && Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions, true)) {
                             /* Adapter backup matches configuration */
                             this.debug.strategy("(stage-5) adapter backup matches configuration");
                             return "restoreBackup";
@@ -440,6 +440,7 @@ export class ZnpAdapterManager {
         if (parsed.extendedPanId.equals(Buffer.alloc(8, 0xdd))) {
             const adapterIeeeAddressResponse = await this.znp.request(Subsystem.SYS, "getExtAddr", {});
             parsed.extendedPanId = Buffer.from(adapterIeeeAddressResponse.payload.extaddress.split("0x")[1], "hex");
+            parsed.hasDefaultExtendedPanId = true;
         }
         return parsed;
     }
