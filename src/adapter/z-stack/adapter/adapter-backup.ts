@@ -303,11 +303,9 @@ export class AdapterBackup {
             }
         }
 
-        /* recover coordinator ieee address if security entries were recovered */
-        if (tclkTable.usedCount > 0 || apsLinkKeyDataTable.usedCount > 0) {
-            const reversedAdapterIeee = Buffer.from(backup.coordinatorIeeeAddress).reverse();
-            await this.nv.writeItem(NvItemsIds.EXTADDR, reversedAdapterIeee);
-        }
+        /* recover coordinator ieee address */
+        const reversedAdapterIeee = Buffer.from(backup.coordinatorIeeeAddress).reverse();
+        await this.nv.writeItem(NvItemsIds.EXTADDR, reversedAdapterIeee);
 
         /* write update nib */
         await this.nv.writeItem(NvItemsIds.NIB, nib);
