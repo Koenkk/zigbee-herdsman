@@ -151,6 +151,10 @@ class Controller extends events.EventEmitter {
             }
         }
 
+        if (startResult === 'reset' || (this.options.backupPath && !fs.existsSync(this.options.backupPath))) {
+            await this.backup();
+        }
+
         // Add coordinator to the database if it is not there yet.
         const coordinator = await this.adapter.getCoordinator();
         if (Device.byType('Coordinator').length === 0) {
@@ -170,7 +174,6 @@ class Controller extends events.EventEmitter {
         }
 
         // Set backup timer to 1 day.
-        await this.backup();
         this.backupTimer = setInterval(() => this.backup(), 86400000);
 
         // Set database save timer to 1 hour.
