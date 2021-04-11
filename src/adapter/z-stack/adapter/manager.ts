@@ -138,11 +138,16 @@ export class ZnpAdapterManager {
             backup.networkOptions.networkKey.equals(activeKeyInfo.key)
         );
 
+        const configMatchesBackup = (
+            backup &&
+            Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions, true)
+        );
+
         /* Determine startup strategy */
         if (!hasConfigured || !hasConfigured.isConfigured() || !nib) {
             /* Adapter is not configured or not commissioned */
             this.debug.strategy("(stage-1) adapter is not configured / not commissioned");
-            if (backup && Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions, true)) {
+            if (configMatchesBackup) {
                 /* Adapter backup is available and matches configuration */
                 this.debug.strategy("(stage-2) configuration matches backup");
                 return "restoreBackup";
@@ -184,7 +189,7 @@ export class ZnpAdapterManager {
                     } else {
                         /* Backup does not match adapter state */
                         this.debug.strategy("(stage-4) adapter state does not match backup");
-                        if (backup && Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions, true)) {
+                        if (configMatchesBackup) {
                             /* Adapter backup matches configuration */
                             this.debug.strategy("(stage-5) adapter backup matches configuration");
                             return "restoreBackup";
