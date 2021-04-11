@@ -238,6 +238,9 @@ export class ZnpAdapterManager {
             networkKeyDistribute: false
         };
 
+        /* clear the adapter */
+        await this.clearAdapter();
+
         /* commission provisioning network */
         this.debug.commissioning("commissioning random provisioning network:");
         this.debug.commissioning(` - panId: ${provisioningNwkOptions.panId}`);
@@ -415,6 +418,16 @@ export class ZnpAdapterManager {
         this.debug.startup("adapter reset requested");
         await this.znp.request(Subsystem.SYS, 'resetReq', {type: ZnpConstants.SYS.resetType.SOFT});
         this.debug.startup("adapter reset successful");
+    }
+
+    /**
+     * Internal method to reset adapter config and data.
+     */
+    private async clearAdapter(): Promise<void> {
+        this.debug.startup("clearing adapter using startup option 3");
+        await this.nv.writeItem(NvItemsIds.STARTUP_OPTION, Buffer.from([0x03]));
+        await this.resetAdapter();
+        await this.nv.writeItem(NvItemsIds.STARTUP_OPTION, Buffer.from([0x00]));
     }
 
     /**
