@@ -397,9 +397,9 @@ export class ZnpAdapterManager {
     
         for (const endpoint of Endpoints) {
             if (activeEp.payload.activeeplist.includes(endpoint.endpoint)) {
-                this.debug.startup(`Endpoint '${endpoint.endpoint}' already registered`);
+                this.debug.startup(`endpoint '${endpoint.endpoint}' already registered`);
             } else {
-                this.debug.startup(`Registering endpoint '${endpoint.endpoint}'`);
+                this.debug.startup(`registering endpoint '${endpoint.endpoint}'`);
                 await this.znp.request(Subsystem.AF, 'register', endpoint);
             }
         }
