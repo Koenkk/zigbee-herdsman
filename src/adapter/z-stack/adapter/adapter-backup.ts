@@ -58,26 +58,26 @@ export class AdapterBackup {
         const version: ZnpVersion = await this.getAdapterVersion();
 
         /* get adapter ieee address */
-        this.debug("fetching adapter ieee address");
         const ieeeAddressResponse = await this.znp.request(Subsystem.SYS, "getExtAddr", {});
         if (!ieeeAddressResponse || !ieeeAddressResponse.payload.extaddress || !ieeeAddressResponse.payload.extaddress.startsWith("0x")) {
             throw new Error("Failed to read adapter IEEE address");
         }
         const ieeeAddress = Buffer.from(ieeeAddressResponse.payload.extaddress.split("0x")[1], "hex");
+        this.debug("fetched adapter ieee address");
 
         /* get adapter nib */
-        this.debug("fetching adapter nib");
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
         if (!nib) {
             throw new Error("Cannot backup - adapter not commissioned");
         } 
+        this.debug("fetched adapter nib");
 
         /* get adapter active key information */
-        this.debug("fetching adapter active key information");
         const activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
         if (!activeKeyInfo) {
             throw new Error("Cannot backup - missing active key info");
         }
+        this.debug("fetched adapter active key information");
 
         /* get adapter security data */
         const preconfiguredKeyEnabled = await this.nv.readItem(NvItemsIds.PRECFGKEYS_ENABLE, 0);
