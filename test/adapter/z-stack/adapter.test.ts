@@ -1552,6 +1552,13 @@ describe("zstack-adapter", () => {
         expect(result).toBe("restored");
     });
 
+    it("should commission network with 1.2 adapter - default extended pan id", async () => {
+        mockZnpRequestWith(empty12UnalignedRequestMock);
+        adapter = new ZStackAdapter(networkOptionsDefaultExtendedPanId, serialPortOptions, "backup.json", {concurrent: 3});
+        const result = await adapter.start();
+        expect(result).toBe("restored");
+    });
+
     it("should commission network with 1.2 adapter - old adapter without version reporting", async () => {
         mockZnpRequestWith(
             empty12UnalignedRequestMock.clone()

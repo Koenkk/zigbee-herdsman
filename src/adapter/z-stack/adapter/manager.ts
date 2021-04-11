@@ -119,11 +119,16 @@ export class ZnpAdapterManager {
         /* get backup if available and supported by target */
         const backup = this.options.version === ZnpVersion.zStack12 ? undefined : await this.backup.getStoredBackup();
 
+        /* istanbul ignore next */
         const configMatchesAdapter = (
             nib &&
             Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList) &&
             this.nwkOptions.panId === nib.nwkPanId &&
-            this.nwkOptions.extendedPanId.equals(nib.extendedPANID) &&
+            (
+                this.nwkOptions.extendedPanId.equals(nib.extendedPANID) ||
+                /* exception for Z-Stack 1.2 adapters which may actually use 0xdddddddddddddddd as EPID (backward compatibility) */
+                (this.options.version === ZnpVersion.zStack12 && this.nwkOptions.hasDefaultExtendedPanId)
+            ) &&
             this.nwkOptions.networkKey.equals(preconfiguredKey.key) &&
             (this.options.version === ZnpVersion.zStack12 || this.nwkOptions.networkKey.equals(activeKeyInfo.key)) &&
             (this.options.version === ZnpVersion.zStack12 || this.nwkOptions.networkKey.equals(alternateKeyInfo.key))
