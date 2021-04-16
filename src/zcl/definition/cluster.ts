@@ -1912,6 +1912,12 @@ const Cluster: {
             viessmannCustom13: {ID: 0x404c, type: DataType.enum8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
             viessmannCustom14: {ID: 0x404d, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
             viessmannCustom15: {ID: 0x404e, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            wiserSmartPriorityLevel: {ID: 0xe000, type: DataType.uint8},
+            wiserSmartMasterShortAddress: {ID: 0xe001, type: DataType.uint16},
+            wiserSmartZoneMode: {ID: 0xe010, type: DataType.enum8},
+            wiserSmartHactConfig: {ID: 0xe011, type: DataType.bitmap8},
+            wiserSmartValvePosition: {ID: 0xe030, type: DataType.uint8},
+            wiserSmartValveCalibrationStatus: {ID: 0xe031, type: DataType.enum8},
             schneiderWiserSpecific: {ID: 0xe110, type: DataType.enum8, manufacturerCode: ManufacturerCode.SCHNEIDER},
         },
         commands: {
@@ -1955,6 +1961,20 @@ const Cluster: {
                     {name: 'enable', type: DataType.enum8},
                     {name: 'temperature', type: DataType.uint16},
                     {name: 'duration', type: DataType.uint16},
+                ],
+            },
+            wiserSmartSetSetpoint: {
+                ID: 224,
+                parameters: [
+                    {name: 'operatingmode', type: DataType.uint8},
+                    {name: 'zonemode', type: DataType.uint8},
+                    {name: 'setpoint', type: DataType.int16},
+                    {name: 'reserved', type: DataType.uint8},
+                ],
+            },
+            wiserSmartCalibrateValve: {
+                ID: 226,
+                parameters: [
                 ],
             },
         },
