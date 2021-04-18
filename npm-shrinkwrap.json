@@ -1,6 +1,6 @@
 {
   "name": "zigbee-herdsman",
-  "version": "0.13.90",
+  "version": "0.13.91",
   "lockfileVersion": 1,
   "requires": true,
   "dependencies": {
