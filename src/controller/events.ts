@@ -80,6 +80,8 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'arrivalSensorNotify': 'commandArrivalSensorNotify',
     'getPanelStatus': 'commandGetPanelStatus',
     'checkin': 'commandCheckIn',
+    'moveToHue': 'commandMoveToHue',
+    'store': 'commandStore',
 
     // HEIMAN scenes cluster
     'atHome': 'commandAtHome',
@@ -115,7 +117,7 @@ type MessagePayloadType =
     "commandArrivalSensorNotify" | 'commandCommisioningNotification' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
     'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest' |
-    'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport';
+    'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandMoveToHue' | 'commandStore';
 
 interface MessagePayload {
     type: MessagePayloadType;
