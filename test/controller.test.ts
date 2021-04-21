@@ -14,7 +14,7 @@ import path  from 'path';
 import {Wait} from '../src/utils';
 const flushPromises = () => new Promise(setImmediate);
 
-let skipWait = false;
+let skipWait = true;
 Wait.mockImplementation((milliseconds) => {
     if (!skipWait) {
         return new Promise((resolve): void => {
@@ -414,7 +414,6 @@ describe('Controller', () => {
         zclTransactionSequenceNumber.number = 1;
         iasZoneReadState170Count = 0;
         configureReportStatus = 0;
-        skipWait = false;
         enroll170 = true;
         options.network.channelList = [15];
         Object.keys(events).forEach((key) => events[key] = []);
@@ -1041,7 +1040,6 @@ describe('Controller', () => {
 
     it('Device joins and interview iAs enrollment succeeds', async () => {
         await controller.start();
-        skipWait = true;
         const event = mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         await event;
         expect(events.deviceInterview.length).toBe(2);
@@ -1067,7 +1065,6 @@ describe('Controller', () => {
         mockDevices['170'].attributes['1'].zoneState = 0;
         enroll170 = false;
         await controller.start();
-        skipWait = true;
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started')
@@ -1079,7 +1076,6 @@ describe('Controller', () => {
     it('Device joins, shouldnt enroll when already enrolled', async () => {
         await controller.start();
         iasZoneReadState170Count = 1;
-        skipWait = true;
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started')
@@ -2167,7 +2163,6 @@ describe('Controller', () => {
 
     it('Endpoint bind', async () => {
         await controller.start();
-        skipWait = true;
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -2186,7 +2181,6 @@ describe('Controller', () => {
 
     it('Endpoint addBinding', async () => {
         await controller.start();
-        skipWait = true;
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -2255,7 +2249,6 @@ describe('Controller', () => {
 
     it('Endpoint unbind', async () => {
         await controller.start();
-        skipWait = true;
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -2804,7 +2797,6 @@ describe('Controller', () => {
 
     it('Remove endpoint from all groups', async () => {
         await controller.start();
-        skipWait = true;
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device1 = controller.getDeviceByIeeeAddr('0x129');
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
