@@ -125,9 +125,9 @@ export class ZnpAdapterManager {
             Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList) &&
             this.nwkOptions.panId === nib.nwkPanId &&
             (
-                this.nwkOptions.extendedPanId.equals(nib.extendedPANID) ||
-                /* exception for Z-Stack 1.2 adapters which may actually use 0xdddddddddddddddd as EPID (backward compatibility) */
-                (this.options.version === ZnpVersion.zStack12 && this.nwkOptions.hasDefaultExtendedPanId)
+                this.nwkOptions.extendedPanId.equals(nib.extendedPANID) || 
+                /* exception for some adapters which may actually use 0xdddddddddddddddd as EPID (backward compatibility) */
+                this.nwkOptions.hasDefaultExtendedPanId
             ) &&
             this.nwkOptions.networkKey.equals(preconfiguredKey.key) &&
             (this.options.version === ZnpVersion.zStack12 || this.nwkOptions.networkKey.equals(activeKeyInfo.key)) &&
@@ -182,15 +182,15 @@ export class ZnpAdapterManager {
                     if (backupMatchesAdapter) {
                         /* Backup matches adapter state */
                         this.debug.strategy("(stage-4) adapter state matches backup");
-                        this.logger.warn(`Configuration is not consistent with adapter state/backup!`);
-                        this.logger.warn(`- PAN ID: configured=${this.nwkOptions.panId}, adapter=${nib.nwkPanId}`);
-                        this.logger.warn(`- Extended PAN ID: configured=${this.nwkOptions.extendedPanId.toString("hex")}, adapter=${nib.extendedPANID.toString("hex")}`);
-                        this.logger.warn(`- Network Key: configured=${this.nwkOptions.networkKey.toString("hex")}, adapter=${activeKeyInfo.key.toString("hex")}`);
-                        this.logger.warn(`- Channel List: configured=${this.nwkOptions.channelList.toString()}, adapter=${Utils.unpackChannelList(nib.channelList).toString()}`);
-                        this.logger.warn(`Please update configuration to prevent further issues.`);
-                        this.logger.warn(`If you wish to re-commission your network, please remove coordinator backup at ${this.options.backupPath}.`);
-                        this.logger.warn(`Re-commissioning your network will require re-pairing of all devices!`);
-                        return "startup";
+                        this.logger.error(`Configuration is not consistent with adapter state/backup!`);
+                        this.logger.error(`- PAN ID: configured=${this.nwkOptions.panId}, adapter=${nib.nwkPanId}`);
+                        this.logger.error(`- Extended PAN ID: configured=${this.nwkOptions.extendedPanId.toString("hex")}, adapter=${nib.extendedPANID.toString("hex")}`);
+                        this.logger.error(`- Network Key: configured=${this.nwkOptions.networkKey.toString("hex")}, adapter=${activeKeyInfo.key.toString("hex")}`);
+                        this.logger.error(`- Channel List: configured=${this.nwkOptions.channelList.toString()}, adapter=${Utils.unpackChannelList(nib.channelList).toString()}`);
+                        this.logger.error(`Please update configuration to prevent further issues.`);
+                        this.logger.error(`If you wish to re-commission your network, please remove coordinator backup at ${this.options.backupPath}.`);
+                        this.logger.error(`Re-commissioning your network will require re-pairing of all devices!`);
+                        throw new Error("startup failed - configuration-adapter mismatch - see logs above for more information");
                     } else {
                         /* Backup does not match adapter state */
                         this.debug.strategy("(stage-4) adapter state does not match backup");
