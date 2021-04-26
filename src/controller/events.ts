@@ -77,6 +77,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'alertsNotification': 'commandAlertsNotification',
     'programmingEventNotification': 'commandProgrammingEventNotification',
     'getPinCodeRsp': 'commandGetPinCodeRsp',
+    'getUserStatusRsp': 'commandGetUserStatusRsp',
     'arrivalSensorNotify': 'commandArrivalSensorNotify',
     'getPanelStatus': 'commandGetPanelStatus',
     'checkin': 'commandCheckIn',
