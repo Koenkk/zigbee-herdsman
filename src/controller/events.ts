@@ -115,7 +115,7 @@ type MessagePayloadType =
     'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandGetData' |
     'commandSetDataResponse' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
-    "commandArrivalSensorNotify" | 'commandCommisioningNotification' |
+    "commandArrivalSensorNotify" | 'commandCommisioningNotification' | 'commandGetUserStatusRsp' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
     'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest' |
     'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandMoveToHue' | 'commandStore';
