@@ -383,6 +383,7 @@ class Device extends Entity {
             // below prevents interview from failing
             // https://github.com/Koenkk/zigbee2mqtt/issues/4655
             'TS0216': {},
+            'MULTI-MECI--EA01': {},
         };
 
         const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
