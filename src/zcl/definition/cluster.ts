@@ -4157,6 +4157,15 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    schneiderSpecificPilotMode: {
+        ID: 0xFF23,
+        manufacturerCode: 4190,
+        attributes: {
+            pilotMode: { ID: 0x0031, type: dataType_1.default.enum8 },
+        },
+        commands: {},
+        commandsResponse: {},
+    },
 };
 
 export default Cluster;
