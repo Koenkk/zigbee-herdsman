@@ -4159,9 +4159,9 @@ const Cluster: {
     },
     schneiderSpecificPilotMode: {
         ID: 0xFF23,
-        manufacturerCode: 4190,
+        manufacturerCode: ManufacturerCode.SCHNEIDER,
         attributes: {
-            pilotMode: { ID: 0x0031, type: dataType_1.default.enum8 },
+            pilotMode: {ID: 0x0031, type: DataType.enum8},
         },
         commands: {},
         commandsResponse: {},
