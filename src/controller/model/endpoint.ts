@@ -269,6 +269,48 @@ class Endpoint extends Entity {
         }
     }
 
+    public async report(
+        clusterKey: number | string, attributes: KeyValue, options?: Options
+    ): Promise<void> {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+        const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
+        for (const [nameOrID, value] of Object.entries(attributes)) {
+            if (cluster.hasAttribute(nameOrID)) {
+                const attribute = cluster.getAttribute(nameOrID);
+                payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
+            } else if (!isNaN(Number(nameOrID))){
+                payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type});
+            } else {
+                throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
+            }
+        }
+
+        const log = `Report to ${this.deviceIeeeAddress}/${this.ID} ` +
+            `${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            const frame = Zcl.ZclFrame.create(
+                Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
+                options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+                "report", cluster.ID, payload, options.reservedBits
+            );
+            const result = await Entity.adapter.sendZclFrameToEndpoint(
+                this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
+                options.disableResponse, options.disableRecovery, options.srcEndpoint,
+            );
+
+            if (!options.disableResponse) {
+                this.checkStatus(result.frame.Payload);
+            }
+        } catch (error) {
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
+        }
+    }
+
     public async write(
         clusterKey: number | string, attributes: KeyValue, options?: Options
     ): Promise<void> {
