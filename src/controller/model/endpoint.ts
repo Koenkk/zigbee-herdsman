@@ -300,10 +300,6 @@ class Endpoint extends Entity {
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                 options.disableResponse, options.disableRecovery, options.srcEndpoint,
             );
-
-            if (!options.disableResponse) {
-                this.checkStatus(result.frame.Payload);
-            }
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
