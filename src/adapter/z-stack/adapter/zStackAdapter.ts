@@ -197,7 +197,8 @@ class ZStackAdapter extends Adapter {
     }
 
     public async supportsLED(): Promise<boolean> {
-        return this.version.product !== ZnpVersion.zStack3x0;
+        const zStack3x0 = this.version.product === ZnpVersion.zStack3x0;
+        return !zStack3x0 || (zStack3x0 && parseInt(this.version.revision) >= 20210430);
     }
 
     public async setLED(enabled: boolean): Promise<void> {

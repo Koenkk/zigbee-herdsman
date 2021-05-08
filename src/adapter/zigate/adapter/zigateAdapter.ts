@@ -164,8 +164,8 @@ class ZiGateAdapter extends Adapter {
         return Promise.resolve();
     };
 
-    public supportsLED(): Promise<boolean> {
-        return Promise.reject();
+    public async supportsLED(): Promise<boolean> {
+        return false;
     };
 
     public setLED(enabled: boolean): Promise<void> {

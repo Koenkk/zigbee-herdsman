@@ -129,7 +129,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
     })
 }
 
-const mocksClear = [mocksendZclFrameToEndpoint, mockAdapterReset, mocksendZclFrameToGroup, mockSetChannelInterPAN, mocksendZclFrameInterPANToIeeeAddr, mocksendZclFrameInterPANBroadcast, mockRestoreChannelInterPAN];
+const mocksClear = [mocksendZclFrameToEndpoint, mockAdapterReset, mocksendZclFrameToGroup, mockSetChannelInterPAN, mocksendZclFrameInterPANToIeeeAddr, mocksendZclFrameInterPANBroadcast, mockRestoreChannelInterPAN, mockAdapterSetLED];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const equalsPartial = (object, expected) => {
@@ -438,7 +438,7 @@ describe('Controller', () => {
 
     it('Call controller constructor options mixed with default options', async () => {
         await controller.start();
-        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, null);
+        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, {"disableLED": false});
     });
 
     it('Call controller constructor error on invalid channel', async () => {
@@ -674,6 +674,7 @@ describe('Controller', () => {
 
     it('Disable led', async () => {
         await controller.start();
+        mockAdapterSetLED.mockClear();
         await controller.setLED(false);
         expect(mockAdapterSetLED).toBeCalledTimes(1);
     });
@@ -875,6 +876,8 @@ describe('Controller', () => {
         expect(events.permitJoinChanged.length).toBe(1);
         expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual', timeout: undefined});
         expect(controller.getPermitJoin()).toBe(true);
+        expect(mockAdapterSetLED).toBeCalledTimes(1);
+        expect(mockAdapterSetLED).toHaveBeenCalledWith(true);
 
         // Green power
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
@@ -906,6 +909,8 @@ describe('Controller', () => {
         expect(events.permitJoinChanged.length).toBe(2);
         expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false, reason: 'manual', timeout: undefined});
         expect(controller.getPermitJoin()).toBe(false);
+        expect(mockAdapterSetLED).toBeCalledTimes(2);
+        expect(mockAdapterSetLED).toHaveBeenCalledWith(false);
 
         // Green power
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(4);
@@ -933,14 +938,17 @@ describe('Controller', () => {
 
     it('Controller permit joining for specific time', async () => {
         jest.useFakeTimers();
+        mockAdapterSupportsLED.mockReturnValueOnce(false);
         await controller.start();
         await controller.permitJoin(true, null, 10);
         expect(mockAdapterPermitJoin).toBeCalledTimes(1);
         expect(mockAdapterPermitJoin.mock.calls[0][0]).toBe(254);
         expect(events.permitJoinChanged.length).toBe(1);
         expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual', timeout: 10});
+        expect(mockAdapterSetLED).toHaveBeenCalledTimes(0);
 
         // Timer ends
+        mockAdapterSupportsLED.mockReturnValueOnce(false);
         jest.advanceTimersByTime(5 * 1000);
         await flushPromises();
         expect(controller.getPermitJoinTimeout()).toBe(5);
@@ -951,6 +959,7 @@ describe('Controller', () => {
         expect(events.permitJoinChanged.length).toBe(11);
         expect(events.permitJoinChanged[5]).toStrictEqual({permitted: true, reason: 'manual', timeout: 5});
         expect(events.permitJoinChanged[10]).toStrictEqual({permitted: false, reason: 'timer_expired', timeout: undefined});
+        expect(mockAdapterSetLED).toHaveBeenCalledTimes(0);
     });
 
     it('Shouldnt create backup when adapter doesnt support it', async () => {
