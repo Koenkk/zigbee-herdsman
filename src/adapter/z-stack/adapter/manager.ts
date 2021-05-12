@@ -179,7 +179,15 @@ export class ZnpAdapterManager {
                 if (backup) {
                     /* Backup is present */
                     this.debug.strategy("(stage-3) got adapter backup");
-                    if (backupMatchesAdapter) {
+                    
+                    /* Special treatment for incorrectly reversed Extended PAN IDs from previous releases */
+                    const isExtendedPanIdReversed = nib && this.nwkOptions.extendedPanId.equals(Buffer.from(nib.extendedPANID).reverse());
+                    if (isExtendedPanIdReversed) {
+                        this.debug.strategy("(stage-3) extended pan id is reversed");
+                        this.logger.warn(`Extended PAN ID is reversed (expected=${this.nwkOptions.extendedPanId.toString("hex")}, actual=${nib.extendedPANID.toString("hex")})`);
+                    }
+
+                    if (backupMatchesAdapter && !isExtendedPanIdReversed) {
                         /* Backup matches adapter state */
                         this.debug.strategy("(stage-4) adapter state matches backup");
                         this.logger.error(`Configuration is not consistent with adapter state/backup!`);

@@ -1502,6 +1502,33 @@ describe("zstack-adapter", () => {
         expect(mockLoggerError.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
     });
 
+    it("should start with 3.0.x adapter - backward-compat - reversed extended pan id", async () => {
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
+
+        const mockLoggerDebug = jest.fn();
+        const mockLoggerInfo = jest.fn();
+        const mockLoggerWarn = jest.fn();
+        const mockLoggerError = jest.fn();
+        const mockLogger: LoggerStub = {
+            debug: mockLoggerDebug,
+            info: mockLoggerInfo,
+            warn: mockLoggerWarn,
+            error: mockLoggerError
+        };
+
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3}, mockLogger);
+        const nib = Structs.nib(Buffer.from(commissioned3AlignedRequestMock.nvItems.find(item => item.id === NvItemsIds.NIB).value));
+        nib.extendedPANID = nib.extendedPANID.reverse();
+        mockZnpRequestWith(
+            commissioned3AlignedRequestMock.clone()
+            .nv(NvItemsIds.NIB, nib.serialize())
+        );
+        const result = await adapter.start();
+        expect(result).toBe("restored");
+        expect(mockLoggerWarn.mock.calls[0][0]).toBe("Extended PAN ID is reversed (expected=00124b0009d69f77, actual=779fd609004b1200)");
+    });
+
     it("should restore unified backup with 3.0.x adapter - commissioned, mismatched adapter-config, matching config-backup", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
