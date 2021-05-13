@@ -139,11 +139,18 @@ export class ZnpAdapterManager {
             (this.options.version === ZnpVersion.zStack12 || this.nwkOptions.networkKey.equals(alternateKeyInfo.key))
         );
 
+        /* Special treatment for incorrectly reversed Extended PAN IDs from previous releases */
+        const isBackupExtendedPanIdReversed = backup && nib && backup.networkOptions.extendedPanId.equals(Buffer.from(nib.extendedPANID).reverse());
+
         const backupMatchesAdapter = (
             backup &&
             nib &&
             backup.networkOptions.panId === nib.nwkPanId &&
-            backup.networkOptions.extendedPanId.equals(nib.extendedPANID) &&
+            (
+                backup.networkOptions.extendedPanId.equals(nib.extendedPANID) ||
+                /* exception for migration from previous code-base */
+                isBackupExtendedPanIdReversed
+            ) &&
             Utils.compareChannelLists(backup.networkOptions.channelList, nib.channelList) &&
             backup.networkOptions.networkKey.equals(activeKeyInfo.key)
         );
