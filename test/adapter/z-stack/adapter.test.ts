@@ -1525,7 +1525,7 @@ describe("zstack-adapter", () => {
             .nv(NvItemsIds.NIB, nib.serialize())
         );
         const result = await adapter.start();
-        expect(result).toBe("restored");
+        expect(result).toBe("resumed");
         expect(mockLoggerWarn.mock.calls[0][0]).toBe("Extended PAN ID is reversed (expected=00124b0009d69f77, actual=779fd609004b1200)");
     });
 
