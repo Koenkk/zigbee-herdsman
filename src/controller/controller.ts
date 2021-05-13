@@ -45,7 +45,7 @@ const DefaultOptions: Options = {
     databasePath: null,
     databaseBackupPath: null,
     backupPath: null,
-    adapter: null,
+    adapter: {disableLED: false},
     acceptJoiningDeviceHandler: null,
 };
 
@@ -213,6 +213,9 @@ class Controller extends events.EventEmitter {
         if (permit) {
             await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
             await this.greenPower.permitJoin(254);
+            if ((await this.adapter.supportsLED()) && !this.options.adapter.disableLED) {
+                await this.adapter.setLED(true);
+            }
 
             // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
             this.permitJoinNetworkClosedTimer = setInterval(async (): Promise<void> => {
@@ -238,6 +241,9 @@ class Controller extends events.EventEmitter {
             this.emit(Events.Events.permitJoinChanged, data);
         } else {
             debug.log('Disable joining');
+            if ((await this.adapter.supportsLED()) && !this.options.adapter.disableLED) {
+                await this.adapter.setLED(false);
+            }
             await this.greenPower.permitJoin(0);
             await this.adapter.permitJoin(0, null);
             const data: Events.PermitJoinChangedPayload = {permitted: false, reason, timeout: this.permitJoinTimeout};
@@ -269,7 +275,10 @@ class Controller extends events.EventEmitter {
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceAnnounce);
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceLeave);
 
-        await this.permitJoinInternal(false, 'manual');
+        try {
+            await this.permitJoinInternal(false, 'manual');
+        } catch (e) {}
+
         clearInterval(this.backupTimer);
         clearInterval(this.databaseSaveTimer);
         await this.backup();

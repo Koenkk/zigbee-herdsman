@@ -383,6 +383,7 @@ class Device extends Entity {
             // below prevents interview from failing
             // https://github.com/Koenkk/zigbee2mqtt/issues/4655
             'TS0216': {},
+            'MULTI-MECI--EA01': {},
         };
 
         const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
@@ -482,12 +483,28 @@ class Device extends Entity {
                 for (const [key, item] of Object.entries(Device.ReportablePropertiesMapping)) {
                     if (!this[item.key]) {
                         try {
-                            const result = await endpoint.read('genBasic', [key]);
+                            let result: KeyValue;
+                            try {
+                                result = await endpoint.read('genBasic', [key]);
+                            } catch (error) {
+                                // Reading attributes can fail for many reason, e.g. it could be that device rejoins
+                                // while joining like in:
+                                // https://github.com/Koenkk/zigbee-herdsman-converters/issues/2485.
+                                // The modelID and manufacturerName are crucial for device identification, so retry.
+                                if (item.key === 'modelID' || item.key === 'manufacturerName') {
+                                    debug.log(`Interview - first ${item.key} retrieval attempt failed, ` +
+                                        `retrying after 10 seconds...`);
+                                    await Wait(10000);
+                                    result = await endpoint.read('genBasic', [key]);
+                                }
+                            }
+
                             item.set(result[key], this);
                             debug.log(`Interview - got '${item.key}' for device '${this.ieeeAddr}'`);
                         } catch (error) {
                             debug.log(
-                                `Failed to read attribute '${item.key}' from endpoint '${endpoint.ID}' (${error})`
+                                `Interview - failed to read attribute '${item.key}' from ` +
+                                    `endpoint '${endpoint.ID}' (${error})`
                             );
                         }
                     }
