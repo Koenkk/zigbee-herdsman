@@ -15,7 +15,8 @@ export const compareNetworkOptions = (opts1: Models.NetworkOptions, opts2: Model
         opts1.panId === opts2.panId &&
         (
             opts1.extendedPanId.equals(opts2.extendedPanId) ||
-            (lenientExtendedPanIdMatching && (opts1.hasDefaultExtendedPanId || opts2.hasDefaultExtendedPanId))
+            (lenientExtendedPanIdMatching && (opts1.hasDefaultExtendedPanId || opts2.hasDefaultExtendedPanId)) ||
+            (lenientExtendedPanIdMatching && (opts1.extendedPanId.equals(Buffer.from(opts2.extendedPanId).reverse())))
         ) &&
         opts1.networkKey.equals(opts2.networkKey) &&
         compareChannelLists(opts1.channelList, opts2.channelList) &&
