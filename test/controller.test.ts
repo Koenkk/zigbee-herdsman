@@ -12,6 +12,8 @@ import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransacti
 import {Adapter} from '../src/adapter';
 import path  from 'path';
 import {Wait} from '../src/utils';
+import * as Models from "../src/models";
+import * as Utils from "../src/utils";
 const flushPromises = () => new Promise(setImmediate);
 
 let skipWait = true;
@@ -23,6 +25,8 @@ Wait.mockImplementation((milliseconds) => {
     }
 })
 
+const mockedDate = new Date();
+jest.spyOn(global, 'Date').mockImplementation(() => mockedDate);
 Date.now = jest.fn()
 // @ts-ignore
 Date.now.mockReturnValue(150);
@@ -242,6 +246,43 @@ const getCluster = (key) => {
     return cluster;
 }
 
+const mockDummyBackup: Models.Backup = {
+    networkOptions: {
+        panId: 6755,
+        extendedPanId: Buffer.from("deadbeef01020304", "hex"),
+        channelList: [11],
+        networkKey: Buffer.from("a1a2a3a4a5a6a7a8b1b2b3b4b5b6b7b8", "hex"),
+        networkKeyDistribute: false
+    },
+    coordinatorIeeeAddress: Buffer.from("0102030405060708", "hex"),
+    logicalChannel: 11,
+    networkUpdateId: 0,
+    securityLevel: 5,
+    znp: {
+        version: 1
+    },
+    networkKeyInfo: {
+        sequenceNumber: 0,
+        frameCounter: 10000
+    },
+    devices: [
+        {
+            networkAddress: 1001,
+            ieeeAddress: Buffer.from("c1c2c3c4c5c6c7c8", "hex")
+        },
+        {
+            networkAddress: 1002,
+            ieeeAddress: Buffer.from("d1d2d3d4d5d6d7d8", "hex"),
+            linkKey: {
+                key: Buffer.from("f8f7f6f5f4f3f2f1e1e2e3e4e5e6e7e8", "hex"),
+                rxCounter: 10000,
+                txCounter: 5000
+            }
+        }
+    ]
+};
+
+const mockDummyBackupStoragePromise = Utils.BackupUtils.toUnifiedBackup(mockDummyBackup);
 
 jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
     return jest.fn().mockImplementation(() => {
@@ -253,7 +294,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             getCoordinator: mockAdapterGetCoordinator,
             reset: mockAdapterReset,
             supportsBackup: mockAdapterSupportsBackup,
-            backup: () => {return {version: 'dummybackup'}},
+            backup: () => {return mockDummyBackup; },
             getCoordinatorVersion: () => {return {type: 'zStack', meta: {version: 1}}},
             getNetworkParameters: mockAdapterGetNetworkParameters,
             setLED: mockAdapterSetLED,
@@ -438,7 +479,7 @@ describe('Controller', () => {
 
     it('Call controller constructor options mixed with default options', async () => {
         await controller.start();
-        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, {"disableLED": false});
+        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, {"disableLED": false}, undefined);
     });
 
     it('Call controller constructor error on invalid channel', async () => {
@@ -516,7 +557,7 @@ describe('Controller', () => {
                 _type: 'Coordinator',
                 meta: {}
         });
-        expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual({version: 'dummybackup'});
+        expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(await mockDummyBackupStoragePromise)));
         jest.advanceTimersByTime(86500000);
     });
 
@@ -526,7 +567,7 @@ describe('Controller', () => {
         expect(controller.isStopping()).toBeFalsy();
         await controller.stop();
         expect(mockAdapterPermitJoin).toBeCalledWith(0, null);
-        expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual({version: 'dummybackup'});
+        expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(await mockDummyBackupStoragePromise)));
         expect(mockAdapterStop).toBeCalledTimes(1);
     });
 
@@ -2913,21 +2954,21 @@ describe('Controller', () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
         await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null, null);
         expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/bla');
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null, undefined);
     });
 
     it('Adapter create continue when is valid path fails', async () => {
         mockZStackAdapterIsValidPath.mockImplementationOnce(() => {throw new Error('failed')});
         await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null, null);
         expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/bla');
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null, undefined);
     });
 
     it('Adapter create auto detect', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null, null);
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null, undefined);
     });
 
     it('Adapter create auto detect nothing found', async () => {
@@ -2947,7 +2988,7 @@ describe('Controller', () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(false);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null, null);
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null, undefined);
     });
 
     it('Adapter create should be able to specify adapter', async () => {
@@ -2958,9 +2999,9 @@ describe('Controller', () => {
         mockZiGateAdapterIsValidPath.mockReturnValueOnce(false);
         mockZiGateAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'deconz'}, null, null);
-        expect(DeconzAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'deconz'}, null, null);
+        expect(DeconzAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'deconz'}, null, null, undefined);
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'zigate'}, null, null);
-        expect(ZiGateAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'zigate'}, null, null);
+        expect(ZiGateAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'zigate'}, null, null, undefined);
     });
 
     it('Adapter create should throw on uknown adapter', async () => {
