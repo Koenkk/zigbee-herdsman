@@ -268,7 +268,10 @@ class Controller extends events.EventEmitter {
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceAnnounce);
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceLeave);
 
-        await this.permitJoinInternal(false, 'manual');
+        try {
+            await this.permitJoinInternal(false, 'manual');
+        } catch (e) {}
+
         clearInterval(this.backupTimer);
         clearInterval(this.databaseSaveTimer);
         await this.backup();
