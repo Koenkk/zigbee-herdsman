@@ -80,7 +80,7 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
             }
 
             if (!result) {
-                result = Object.values(attributes).find((a): boolean => a.ID === key);
+                result = Object.values(attributes).find((a): boolean => a.ID === key && a.manufacturerCode == null);
             }
         } else {
             result = Object.values(attributes).find((a): boolean => a.name === key);

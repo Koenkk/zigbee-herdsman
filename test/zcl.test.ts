@@ -1223,10 +1223,10 @@ describe('Zcl', () => {
         expect(attribute).toStrictEqual({"ID": 4096, "manufacturerCode": 4338, "name": "ubisysTurnaroundGuardTime", "type": 32});
     });
 
-    it('Zcl utils get cluster attributes manufacturerCode wrong (should get it even tough manufacturerCode mismatches)', () => {
+    it('Zcl utils get cluster attributes manufacturerCode wrong', () => {
         const cluster = Zcl.Utils.getCluster('closuresWindowCovering', 123);
-        const attribute = cluster.getAttribute(0x1000);
-        expect(attribute).toStrictEqual({"ID": 4096, "manufacturerCode": 4338, "name": "ubisysTurnaroundGuardTime", "type": 32});
+        expect(() => cluster.getAttribute(0x1000))
+            .toThrowError("Cluster 'closuresWindowCovering' has no attribute '4096'");
     });
 
     it('Zcl utils get command', () => {
