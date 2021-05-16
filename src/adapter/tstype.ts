@@ -15,7 +15,8 @@ interface SerialPortOptions {
 
 interface AdapterOptions {
     concurrent?: number;
-    delay?: number
+    delay?: number;
+    disableLED: boolean;
 }
 
 interface CoordinatorVersion {

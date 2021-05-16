@@ -14,6 +14,7 @@ import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus} from '..
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
 import {Waitress, Wait} from '../../../utils';
+import * as Models from "../../../models";
 
 
 interface WaitressMatcher {
@@ -453,9 +454,8 @@ class EZSPAdapter extends Adapter {
         return false;
     }
 
-    public async backup(): Promise<BackupType> {
-        // todo
-        return Promise.reject();
+    public async backup(): Promise<Models.Backup> {
+        throw new Error("This adapter does not support backup");
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
