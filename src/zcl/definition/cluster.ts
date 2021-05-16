@@ -1912,6 +1912,7 @@ const Cluster: {
             viessmannCustom13: {ID: 0x404c, type: DataType.enum8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
             viessmannCustom14: {ID: 0x404d, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
             viessmannCustom15: {ID: 0x404e, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
+            schneiderWiserSpecific: {ID: 0xe110, type: DataType.enum8, manufacturerCode: ManufacturerCode.SCHNEIDER},
         },
         commands: {
             setpointRaiseLower: {
@@ -1945,6 +1946,15 @@ const Cluster: {
             getRelayStatusLog: {
                 ID: 4,
                 parameters: [
+                ],
+            },
+            schneiderWiserThermostatBoost: {
+                ID: 0x80,
+                parameters: [
+                    {name: 'command', type: DataType.enum8},
+                    {name: 'enable', type: DataType.enum8},
+                    {name: 'temperature', type: DataType.uint16},
+                    {name: 'duration', type: DataType.uint16},
                 ],
             },
         },
