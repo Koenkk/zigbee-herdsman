@@ -296,7 +296,7 @@ class Endpoint extends Entity {
                 options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
                 "report", cluster.ID, payload, options.reservedBits
             );
-            const result = await Entity.adapter.sendZclFrameToEndpoint(
+            await Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                 options.disableResponse, options.disableRecovery, options.srcEndpoint,
             );
