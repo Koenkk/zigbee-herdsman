@@ -125,7 +125,6 @@ type MessagePayloadType =
     'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandMoveToHue' | 'commandStore'|
     'commandWiserSmartSetSetpoint' | 'commandWiserSmartCalibrateValve';
 
-
 interface MessagePayload {
     type: MessagePayloadType;
     device: Device;
