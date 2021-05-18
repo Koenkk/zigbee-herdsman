@@ -98,6 +98,10 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
 
     'setTimeRequest': 'commandSetTimeRequest', // Tuya time sync
     'activeStatusReport': 'commandActiveStatusReport', // Tuya active status report
+
+    // Wiser Smart HVAC Commmands
+    'wiserSmartSetSetpoint': 'commandWiserSmartSetSetpoint',
+    'wiserSmartCalibrateValve': 'commandWiserSmartCalibrateValve',
 };
 
 type MessagePayloadType =
@@ -118,7 +122,8 @@ type MessagePayloadType =
     "commandArrivalSensorNotify" | 'commandCommisioningNotification' | 'commandGetUserStatusRsp' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
     'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest' |
-    'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandMoveToHue' | 'commandStore';
+    'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandMoveToHue' | 'commandStore'|
+    'commandWiserSmartSetSetpoint' | 'commandWiserSmartCalibrateValve';
 
 interface MessagePayload {
     type: MessagePayloadType;

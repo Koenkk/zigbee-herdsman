@@ -1957,6 +1957,20 @@ const Cluster: {
                     {name: 'duration', type: DataType.uint16},
                 ],
             },
+            wiserSmartSetSetpoint: {
+                ID: 224,
+                parameters: [
+                    {name: 'operatingmode', type: DataType.uint8},
+                    {name: 'zonemode', type: DataType.uint8},
+                    {name: 'setpoint', type: DataType.int16},
+                    {name: 'reserved', type: DataType.uint8},
+                ],
+            },
+            wiserSmartCalibrateValve: {
+                ID: 226,
+                parameters: [
+                ],
+            },
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
