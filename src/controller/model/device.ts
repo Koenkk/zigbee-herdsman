@@ -203,7 +203,7 @@ class Device extends Entity {
                 try {
                     await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response);
                 } catch (error) {
-                    debug.error(`genTime response to ${this.ieeeAddr} failed`);
+                    debug.error(`Read response to ${this.ieeeAddr} failed`);
                 }
             }
 
