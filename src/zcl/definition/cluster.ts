@@ -1951,8 +1951,8 @@ const Cluster: {
             danfossSetpointCommand: {
                 ID: 64,
                 parameters: [
-                    { name: 'setpointType', type: DataType.enum8 },
-                    { name: 'setpoint', type: DataType.int16 },
+                    {name: 'setpointType', type: DataType.enum8},
+                    {name: 'setpoint', type: DataType.int16},
                 ],
             },
             schneiderWiserThermostatBoost: {
