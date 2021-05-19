@@ -31,7 +31,7 @@ interface Options {
     transactionSequenceNumber?: number;
     disableRecovery?: boolean;
     writeUndiv?: boolean;
-    sendWhenMessageReceived?: boolean;
+    sendWhenActive?: boolean;
 }
 
 interface Clusters {
@@ -272,8 +272,8 @@ class Endpoint extends Entity {
         });
     }
 
-    public async sendRequest<Type>(func: () => Promise<Type>, sendWhenMessageReceived: boolean): Promise<Type> {
-        if (sendWhenMessageReceived) {
+    public async sendRequest<Type>(func: () => Promise<Type>, sendWhenActive: boolean): Promise<Type> {
+        if (sendWhenActive) {
             return new Promise((resolve, reject): void =>  {
                 this.pendingRequests.push({func, resolve, reject});
             });
@@ -327,7 +327,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint,
                 );
-            }, options.sendWhenMessageReceived);
+            }, options.sendWhenActive);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -368,7 +368,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint,
                 );
-            }, options.sendWhenMessageReceived);
+            }, options.sendWhenActive);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -406,7 +406,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint,
                 );
-            }, options.sendWhenMessageReceived);
+            }, options.sendWhenActive);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -454,7 +454,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenMessageReceived);
+            }, options.sendWhenActive);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -567,7 +567,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenMessageReceived);
+            }, options.sendWhenActive);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -620,7 +620,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenMessageReceived);
+            }, options.sendWhenActive);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -671,7 +671,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenMessageReceived);
+            }, options.sendWhenActive);
 
             // TODO: support `writeStructuredResponse`
         } catch (error) {
@@ -706,7 +706,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenMessageReceived);
+            }, options.sendWhenActive);
 
             if (result) {
                 return result.frame.Payload;
@@ -743,7 +743,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenMessageReceived);
+            }, options.sendWhenActive);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -776,7 +776,7 @@ class Endpoint extends Entity {
     ): Options {
         const providedOptions = options || {};
         return {
-            sendWhenMessageReceived: false,
+            sendWhenActive: false,
             timeout: 10000,
             disableResponse: false,
             disableRecovery: false,
