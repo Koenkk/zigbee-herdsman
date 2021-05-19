@@ -102,6 +102,9 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     // Wiser Smart HVAC Commmands
     'wiserSmartSetSetpoint': 'commandWiserSmartSetSetpoint',
     'wiserSmartCalibrateValve': 'commandWiserSmartCalibrateValve',
+
+    // Dafoss Ally/Hive TRV Commands
+    'danfossSetpointCommand': 'commandDanfossSetpointCommand',
 };
 
 type MessagePayloadType =
@@ -123,7 +126,7 @@ type MessagePayloadType =
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
     'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest' |
     'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandMoveToHue' | 'commandStore'|
-    'commandWiserSmartSetSetpoint' | 'commandWiserSmartCalibrateValve';
+    'commandWiserSmartSetSetpoint' | 'commandWiserSmartCalibrateValve' | 'commandDanfossSetpointCommand';
 
 interface MessagePayload {
     type: MessagePayloadType;
