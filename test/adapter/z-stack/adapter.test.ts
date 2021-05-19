@@ -17,6 +17,10 @@ import {ZnpAdapterManager} from "../../../src/adapter/z-stack/adapter/manager";
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
+jest.mock('../../../src/utils/wait', () => {
+    return jest.fn();
+});
+
 const waitForResult = (payload, ID = null) => {
     ID = ID || 1;
     return {start: () => {return {promise: payload, ID}}, ID};
@@ -938,7 +942,7 @@ const mockZnpWaitForDefault = () => {
             console.log(msg)
             throw new Error(msg);
         }
-    
+
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
             return waitForResult({payload: {activeeplist: []}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
@@ -956,7 +960,7 @@ const mockZnpWaitForStateChangeIndTimeout = () => {
             console.log(msg)
             throw new Error(msg);
         }
-    
+
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
             return waitForResult({payload: {activeeplist: []}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
@@ -1114,7 +1118,7 @@ jest.mock('../../../src/utils/queue', () => {
 Znp.isValidPath = jest.fn().mockReturnValue(true);
 Znp.autoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
 
-describe("zstack-adapter", () => {
+describe("onlythis zstack-adapter", () => {
     let adapter: ZStackAdapter;
 
     beforeEach(() => {
@@ -1320,7 +1324,7 @@ describe("zstack-adapter", () => {
                 version: 99 as any
             }
         };
-        
+
         fs.writeFileSync(backupFile, JSON.stringify(backupData), "utf8");
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
         mockZnpRequestWith(empty3AlignedRequestMock);
@@ -1337,7 +1341,7 @@ describe("zstack-adapter", () => {
                 version: undefined
             }
         };
-        
+
         fs.writeFileSync(backupFile, JSON.stringify(backupData), "utf8");
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
         mockZnpRequestWith(empty3AlignedRequestMock);
@@ -1549,7 +1553,7 @@ describe("zstack-adapter", () => {
                 console.log(msg)
                 throw new Error(msg);
             }
-        
+
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
                 return waitForResult({payload: {activeeplist: [1, 2, 3]}});
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
