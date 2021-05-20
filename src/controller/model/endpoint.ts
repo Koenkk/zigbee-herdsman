@@ -262,6 +262,16 @@ class Endpoint extends Entity {
     }
 
     public sendPendingRequests(): void {
+        while(this.pendingRequests.length > 0) {
+            const r = this.pendingRequests.shift();
+            try {
+                const result = await r.func();
+                r.resolve(result);
+            }
+            catch (error) {
+                r.reject(error);
+            }
+        }
         this.pendingRequests.forEach(async (r) => {
             try {
                 const result = await r.func();
@@ -274,9 +284,11 @@ class Endpoint extends Entity {
 
     public async sendRequest<Type>(func: () => Promise<Type>, sendWhenActive: boolean): Promise<Type> {
         if (sendWhenActive) {
-            return new Promise((resolve, reject): void =>  {
-                this.pendingRequests.push({func, resolve, reject});
-            });
+            const p = new Promise((resolve, reject): void  => {
+                        return func();
+                    });
+            this.pendingRequests.push(p);
+            return p;
         } else {
             return func();
         }
