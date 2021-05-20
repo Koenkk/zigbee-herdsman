@@ -262,7 +262,8 @@ class Endpoint extends Entity {
     }
 
     public sendPendingRequests(): void {
-        this.pendingRequests.forEach(async (r) => {
+        [...this.pendingRequests].forEach(async (r) => {
+            this.pendingRequests.splice(this.pendingRequests.indexOf(r), 1);
             try {
                 const result = await r.func();
                 r.resolve(result);

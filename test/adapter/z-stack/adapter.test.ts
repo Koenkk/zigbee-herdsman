@@ -1118,7 +1118,7 @@ jest.mock('../../../src/utils/queue', () => {
 Znp.isValidPath = jest.fn().mockReturnValue(true);
 Znp.autoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
 
-describe("onlythis zstack-adapter", () => {
+describe("zstack-adapter", () => {
     let adapter: ZStackAdapter;
 
     beforeEach(() => {

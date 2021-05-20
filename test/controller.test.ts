@@ -3598,17 +3598,20 @@ describe('Controller', () => {
         const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhenActive: true});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
 
-        await mockAdapterEvents['zclData']({
+        const data = {
             wasBroadcast: false,
             address: '0x129',
             frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
-        });
+        }
 
+        await mockAdapterEvents['zclData'](data);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         expect((await result)).toBe(undefined);
+        await mockAdapterEvents['zclData'](data);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
     });
 
     it('Write with sendWhenActive error', async () => {
