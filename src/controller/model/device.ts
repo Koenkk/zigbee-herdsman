@@ -202,7 +202,8 @@ class Device extends Entity {
                 }
 
                 try {
-                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response);
+                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response,
+                        {srcEndpoint: dataPayload.dstEndpoint});
                 } catch (error) {
                     debug.error(`Read response to ${this.ieeeAddr} failed`);
                 }
