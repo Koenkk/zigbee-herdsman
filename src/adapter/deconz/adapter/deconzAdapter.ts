@@ -632,7 +632,7 @@ class DeconzAdapter extends Adapter {
                         linkquality: data.lqi,
                         groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null,
                         wasBroadcast: data.srcAddrMode === 0x01 || data.srcAddrMode === 0xF,
-                        dstEndpoint: data.destEndpoint,
+                        destinationEndpoint: data.destEndpoint,
                     };
                     debug(`response received`);
                     return response;
@@ -1061,7 +1061,7 @@ class DeconzAdapter extends Adapter {
             linkquality: 127,
             groupID: 0x0b84,
             wasBroadcast: false,
-            dstEndpoint: 1,
+            destinationEndpoint: 1,
         };
 
         this.waitress.resolve(payload);
@@ -1135,7 +1135,7 @@ class DeconzAdapter extends Adapter {
                     linkquality: resp.lqi,
                     groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null,
                     wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xF,
-                    dstEndpoint: resp.destEndpoint,
+                    destinationEndpoint: resp.destEndpoint,
                 };
 
                 this.waitress.resolve(payload);
@@ -1149,7 +1149,7 @@ class DeconzAdapter extends Adapter {
                     linkquality: resp.lqi,
                     groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null,
                     wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xF,
-                    dstEndpoint: resp.destEndpoint,
+                    destinationEndpoint: resp.destEndpoint,
                 };
 
                 this.emit(Events.Events.rawData, payload);
