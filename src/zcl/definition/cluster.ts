@@ -1900,6 +1900,17 @@ const Cluster: {
             viessmannWindowOpenForce: {ID: 0x4003, type: DataType.boolean, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
             viessmannAssemblyMode: {ID: 0x4012, type: DataType.boolean, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
             schneiderWiserSpecific: {ID: 0xe110, type: DataType.enum8, manufacturerCode: ManufacturerCode.SCHNEIDER},
+            danfossWindowOpenInternal: {ID: 0x4000, type: DataType.enum8, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossWindowOpenExternal: {ID: 0x4003, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossDayOfWeek: {ID: 0x4010, type: DataType.enum8, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossTriggerTime: {ID: 0x4011, type: DataType.uint16, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossMountedModeActive: {ID: 0x4012, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossMountedModeControl: {ID: 0x4013, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossThermostatOrientation: {ID: 0x4014, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossAlgorithmScaleFactor: {ID: 0x4020, type: DataType.uint8, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossHeatAvailable: {ID: 0x4030, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossHeatRequired: {ID: 0x4031, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossLoadEstimate: {ID: 0x404a, type: DataType.int16, manufacturerCode: ManufacturerCode.DANFOSS},
         },
         commands: {
             setpointRaiseLower: {
@@ -2023,6 +2034,7 @@ const Cluster: {
             tempDisplayMode: {ID: 0, type: DataType.enum8},
             keypadLockout: {ID: 1, type: DataType.enum8},
             programmingVisibility: {ID: 2, type: DataType.enum8},
+            danfossViewingDirection: {ID: 0x4000, type: DataType.enum8, manufacturerCode: ManufacturerCode.DANFOSS},
         },
         commands: {
         },
