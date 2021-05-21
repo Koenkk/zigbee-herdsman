@@ -2034,6 +2034,7 @@ const Cluster: {
             tempDisplayMode: {ID: 0, type: DataType.enum8},
             keypadLockout: {ID: 1, type: DataType.enum8},
             programmingVisibility: {ID: 2, type: DataType.enum8},
+            danfossViewingDirection: {ID: 0x4000, type: DataType.enum8, manufacturerCode: ManufacturerCode.DANFOSS},
         },
         commands: {
         },
