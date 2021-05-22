@@ -69,6 +69,7 @@ class EZSPAdapter extends Adapter {
                     linkquality: frame.lqi,
                     groupID: frame.apsFrame.groupId,
                     wasBroadcast: false, // TODO
+                    destinationEndpoint: frame.apsFrame.destinationEndpoint,
                 };
 
                 this.waitress.resolve(payload);
@@ -82,6 +83,7 @@ class EZSPAdapter extends Adapter {
                     linkquality: frame.lqi,
                     groupID: frame.apsFrame.groupId,
                     wasBroadcast: false, // TODO
+                    destinationEndpoint: frame.apsFrame.destinationEndpoint,
                 };
 
                 this.emit(Events.Events.rawData, payload);

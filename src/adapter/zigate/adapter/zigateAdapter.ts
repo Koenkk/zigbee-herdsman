@@ -741,6 +741,7 @@ class ZiGateAdapter extends Adapter {
                 linkquality: data.ziGateObject.frame.readRSSI(),
                 groupID: null, // @todo
                 wasBroadcast: false, // TODO
+                destinationEndpoint: <number>data.ziGateObject.payload.destinationEndpoint,
             };
             this.waitress.resolve(payload);
             this.emit(Events.Events.zclData, payload)
@@ -758,6 +759,7 @@ class ZiGateAdapter extends Adapter {
             linkquality: data.ziGateObject.frame.readRSSI(),
             groupID: null,
             wasBroadcast: false, // TODO
+            destinationEndpoint: <number>data.ziGateObject.payload.destinationEndpoint,
         };
 
         this.emit(Events.Events.rawData, payload);
