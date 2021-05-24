@@ -1724,7 +1724,7 @@ const Cluster: {
                     {name: 'programeventsrc', type: DataType.uint8},
                     {name: 'programeventcode', type: DataType.uint8},
                     {name: 'userid', type: DataType.uint16},
-                    {name: 'pin', type: DataType.uint8},
+                    {name: 'pin', type: DataType.octetStr},
                     {name: 'usertype', type: DataType.uint8},
                     {name: 'userstatus', type: DataType.uint8},
                     {name: 'zigbeelocaltime', type: DataType.uint32},
