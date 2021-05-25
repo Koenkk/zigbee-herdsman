@@ -1713,7 +1713,7 @@ const Cluster: {
                     {name: 'opereventsrc', type: DataType.uint8},
                     {name: 'opereventcode', type: DataType.uint8},
                     {name: 'userid', type: DataType.uint16},
-                    {name: 'pin', type: DataType.uint8},
+                    {name: 'pin', type: DataType.octetStr},
                     {name: 'zigbeelocaltime', type: DataType.uint32},
                     {name: 'data', type: DataType.uint8},
                 ],
