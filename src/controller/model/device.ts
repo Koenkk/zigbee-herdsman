@@ -388,6 +388,9 @@ class Device extends Entity {
             // below prevents interview from failing
             // https://github.com/Koenkk/zigbee2mqtt/issues/4655
             'TS0216': {},
+            // Fails during ias enroll due to UNSUPPORTED_ATTRIBUTE
+            // https://github.com/Koenkk/zigbee2mqtt/issues/7564
+            'TS0202': {},
             'MULTI-MECI--EA01': {},
         };
 
