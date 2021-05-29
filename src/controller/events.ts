@@ -7,6 +7,7 @@ enum Events {
     deviceJoined = "deviceJoined",
     deviceInterview = "deviceInterview",
     deviceAnnounce = "deviceAnnounce",
+    deviceNetworkAddressChanged = "deviceNetworkAddressChanged",
     deviceLeave = "deviceLeave",
     permitJoinChanged = "permitJoinChanged",
 }
@@ -17,6 +18,10 @@ interface DeviceJoinedPayload {
 
 interface DeviceInterviewPayload {
     status: 'started' | 'successful' | 'failed';
+    device: Device;
+}
+
+interface DeviceNetworkAddressChangedPayload {
     device: Device;
 }
 
@@ -143,5 +148,5 @@ interface MessagePayload {
 
 export {
     Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload,
-    DeviceLeavePayload, DeviceJoinedPayload, PermitJoinChangedPayload,
+    DeviceLeavePayload, DeviceJoinedPayload, PermitJoinChangedPayload, DeviceNetworkAddressChangedPayload,
 };

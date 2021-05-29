@@ -406,6 +406,9 @@ class Controller extends events.EventEmitter {
             debug.log(`Device '${payload.ieeeAddr}' got new networkAddress '${payload.networkAddress}'`);
             device.networkAddress = payload.networkAddress;
             device.save();
+
+            const data: Events.DeviceNetworkAddressChangedPayload = {device};
+            this.emit(Events.Events.deviceNetworkAddressChanged, data);
         }
     }
 
