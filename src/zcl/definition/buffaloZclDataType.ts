@@ -9,6 +9,7 @@ enum BuffaloZclDataType {
     LIST_THERMO_TRANSITIONS = 1007,
     BUFFER = 1008,
     GDP_FRAME = 1009,
+    STRUCTURED_SELECTOR = 1010,
 }
 
 export default BuffaloZclDataType;

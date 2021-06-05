@@ -3,7 +3,6 @@ import * as t from './types';
 import {SerialDriver} from './uart';
 import {COMMANDS, ZDO_COMMANDS} from './commands';
 
-import {Deferred} from './utils';
 import {
     EmberStatus,
     EmberOutgoingMessageType,
@@ -47,7 +46,7 @@ type EZSPFrame = {
 };
 
 type EZSPWaitressMatcher = {
-    sequence: number,
+    sequence: number | null,
     frameId: number
 };
 
@@ -144,45 +143,37 @@ export class Ezsp extends EventEmitter {
     }
 
     async networkInit(): Promise<boolean> {
-        const fut = new Deferred();
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        this.on('frame', (frameName: string, response: any) => {
-            if ((frameName === "stackStatusHandler")) {
-                fut.resolve(response);
-            }
-        });
-
+        const waiter = this.waitFor(COMMANDS["stackStatusHandler"][0], null).start();
+        
         const [result] = await this.command("networkInit");
         debug.log('network init result', result);
         if ((result !== EmberStatus.SUCCESS)) {
+            this.waitress.remove(waiter.ID);
             debug.log("Failure to init network:" + result);
             return false;
         }
-        const v = await fut.promise;
-        return (v === EmberStatus.NETWORK_UP);
+
+        const response = await waiter.promise;
+        return response.payload[0] == EmberStatus.NETWORK_UP;
     }
 
     async leaveNetwork(): Promise<number> {
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        let v;
-        const fut = new Deferred();
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        this.on('frame', (frameName: string, response: any) => {
-            if ((frameName === "stackStatusHandler")) {
-                fut.resolve(response);
-            }
-        });
-        v = await this.command("leaveNetwork");
-        if ((v[0] !== EmberStatus.SUCCESS)) {
-            debug.log("Failure to leave network:" + v);
-            throw new Error(("Failure to leave network:" + v));
+        const waiter = this.waitFor(COMMANDS["stackStatusHandler"][0], null).start();
+        
+        const [result] = await this.command("leaveNetwork");
+        debug.log('network init result', result);
+        if ((result !== EmberStatus.SUCCESS)) {
+            this.waitress.remove(waiter.ID);
+            debug.log("Failure to leave network:" + result);
+            throw new Error(("Failure to leave network:" + result));
         }
-        v = await fut.promise;
-        if ((v !== EmberStatus.NETWORK_DOWN)) {
-            debug.log("Failure to leave network:" + v);
-            throw new Error(("Failure to leave network:" + v));
+
+        const response = await waiter.promise;
+        if ((response.payload[0] !== EmberStatus.NETWORK_DOWN)) {
+            debug.log("Wrong network status:" + response.payload);
+            throw new Error(("Wrong network status:" + response.payload));
         }
-        return v;
+        return response.payload[0];
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -200,11 +191,10 @@ export class Ezsp extends EventEmitter {
         return value;
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    async getMulticastTableEntry(index: number): Promise<any[]> {
-        const [ret, value] = await this.execCommand('getMulticastTableEntry', index);
-        console.assert(ret === EmberStatus.SUCCESS);
-        return [ret, value];
+    async getMulticastTableEntry(index: number): Promise<t.EmberMulticastTableEntry> {
+        const [value] = await this.execCommand('getMulticastTableEntry', index);
+        //console.assert(ret === EmberStatus.SUCCESS);
+        return value;
     }
 
     async setMulticastTableEntry(index: number, entry: t.EmberMulticastTableEntry): Promise<number[]> {
@@ -358,25 +348,19 @@ export class Ezsp extends EventEmitter {
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     async formNetwork(...args: any[]): Promise<number> {
-        let v;
-        const fut = new Deferred();
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        this.on('frame', (frameName: string, response: any) => {
-            if ((frameName === "stackStatusHandler")) {
-                fut.resolve(response);
-            }
-        });
-        v = await this.command("formNetwork", ...args);
+        const waiter = this.waitFor(COMMANDS["stackStatusHandler"][0], null).start();
+        const v = await this.command("formNetwork", ...args);
         if ((v[0] !== EmberStatus.SUCCESS)) {
-            debug.log("Failure forming network:" + v);
+            this.waitress.remove(waiter.ID);
+            debug.error("Failure forming network:" + v);
             throw new Error(("Failure forming network:" + v));
         }
-        v = await fut.promise;
-        if ((v !== EmberStatus.NETWORK_UP)) {
-            debug.log("Failure forming network:" + v);
-            throw new Error(("Failure forming network:" + v));
+        const response = await waiter.promise;
+        if ((response.payload[0] !== EmberStatus.NETWORK_UP)) {
+            debug.error("Wrong network status:" + response.payload);
+            throw new Error(("Wrong network status:" + response.payload));
         }
-        return v;
+        return response.payload[0];
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -429,7 +413,7 @@ export class Ezsp extends EventEmitter {
         // await this.execCommand('setSourceRouteDiscoveryMode', 1);
     }
 
-    public waitFor(frameId: number, sequence: number, timeout = 10000)
+    public waitFor(frameId: number, sequence: number | null, timeout = 10000)
         : { start: () => { promise: Promise<EZSPFrame>; ID: number }; ID: number } {
         return this.waitress.waitFor({frameId, sequence}, timeout);
     }
@@ -439,8 +423,10 @@ export class Ezsp extends EventEmitter {
     }
 
     private waitressValidator(payload: EZSPFrame, matcher: EZSPWaitressMatcher): boolean {
-        return (payload.sequence === matcher.sequence &&
-            payload.frameId === matcher.frameId);
+        return (
+            (matcher.sequence == null || payload.sequence === matcher.sequence) &&
+            payload.frameId === matcher.frameId
+        );
     }
 
     private async watchdogHandler(): Promise<void> {

@@ -17,6 +17,8 @@ import processFrame from '../driver/frameParser';
 import {Queue, Waitress, Wait} from '../../../utils';
 import PARAM from '../driver/constants';
 import { Command, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, gpDataInd } from '../driver/constants';
+import {LoggerStub} from "../../../controller/logger-stub";
+import * as Models from "../../../models";
 
 var frameParser = require('../driver/frameParser');
 
@@ -41,9 +43,9 @@ class DeconzAdapter extends Adapter {
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
 
     public constructor(networkOptions: NetworkOptions,
-        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
+        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions, logger?: LoggerStub) {
 
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        super(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
 
         const concurrent = this.adapterOptions && this.adapterOptions.concurrent ?
             this.adapterOptions.concurrent : 2;
@@ -628,7 +630,9 @@ class DeconzAdapter extends Adapter {
                         frame: frame,
                         endpoint: data.srcEndpoint,
                         linkquality: data.lqi,
-                        groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null
+                        groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null,
+                        wasBroadcast: data.srcAddrMode === 0x01 || data.srcAddrMode === 0xF,
+                        destinationEndpoint: data.destEndpoint,
                     };
                     debug(`response received`);
                     return response;
@@ -852,8 +856,8 @@ class DeconzAdapter extends Adapter {
         return false;
     }
 
-    public async backup(): Promise<BackupType> {
-        return Promise.reject();
+    public async backup(): Promise<Models.Backup> {
+        throw new Error("This adapter does not support backup");
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
@@ -1055,7 +1059,9 @@ class DeconzAdapter extends Adapter {
             address: ind.srcId,
             endpoint: 242, // GP endpoint
             linkquality: 127,
-            groupID: 0x0b84
+            groupID: 0x0b84,
+            wasBroadcast: false,
+            destinationEndpoint: 1,
         };
 
         this.waitress.resolve(payload);
@@ -1127,7 +1133,9 @@ class DeconzAdapter extends Adapter {
                     address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
                     endpoint: resp.srcEndpoint,
                     linkquality: resp.lqi,
-                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null
+                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null,
+                    wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xF,
+                    destinationEndpoint: resp.destEndpoint,
                 };
 
                 this.waitress.resolve(payload);
@@ -1139,7 +1147,9 @@ class DeconzAdapter extends Adapter {
                     address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
                     endpoint: resp.srcEndpoint,
                     linkquality: resp.lqi,
-                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null
+                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null,
+                    wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xF,
+                    destinationEndpoint: resp.destEndpoint,
                 };
 
                 this.emit(Events.Events.rawData, payload);

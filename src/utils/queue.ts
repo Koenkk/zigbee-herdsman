@@ -1,16 +1,14 @@
-interface Job {
+interface Job<T> {
     key: string | number;
-    // eslint-disable-next-line
-    func: () => Promise<any>;
+    func: () => Promise<T>;
     running: boolean;
-    // eslint-disable-next-line
-    resolve: (result: any) => void;
+    resolve: (result: T) => void;
     reject: (error: Error) => void;
 }
 
 class Queue {
-    private jobs: Job[];
-    private concurrent: number;
+    private jobs: Job<unknown>[];
+    private readonly concurrent: number;
 
     constructor(concurrent = 1) {
         this.jobs = [];
@@ -43,7 +41,7 @@ class Queue {
         }
     }
 
-    private getNext(): Job {
+    private getNext(): Job<unknown> {
         if (this.jobs.filter((j) => j.running).length > (this.concurrent - 1)) {
             return null;
         }

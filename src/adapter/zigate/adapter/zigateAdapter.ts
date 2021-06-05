@@ -18,7 +18,9 @@ import {
 } from "../driver/constants";
 import {RawAPSDataRequestPayload} from "../driver/commandType";
 import ZiGateObject from "../driver/ziGateObject";
-import {Buffalo} from "../../../buffalo";
+import { Buffalo } from "../../../buffalo";
+import {LoggerStub} from "../../../controller/logger-stub";
+import * as Models from "../../../models";
 
 const debug = Debug('adapter');
 
@@ -47,9 +49,11 @@ class ZiGateAdapter extends Adapter {
     public constructor(networkOptions: TsType.NetworkOptions,
                        serialPortOptions: TsType.SerialPortOptions,
                        backupPath: string,
-                       adapterOptions: TsType.AdapterOptions
+                       adapterOptions: TsType.AdapterOptions,
+                       logger?: LoggerStub
     ) {
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+
+        super(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
 
         this.joinPermitted = false;
         this.driver = new Driver(serialPortOptions.path, serialPortOptions);
@@ -164,8 +168,8 @@ class ZiGateAdapter extends Adapter {
         return Promise.resolve();
     };
 
-    public supportsLED(): Promise<boolean> {
-        return Promise.reject();
+    public async supportsLED(): Promise<boolean> {
+        return false;
     };
 
     public setLED(enabled: boolean): Promise<void> {
@@ -193,8 +197,8 @@ class ZiGateAdapter extends Adapter {
         return false;
     };
 
-    public async backup(): Promise<TsType.Backup> {
-        return Promise.reject();
+    public async backup(): Promise<Models.Backup> {
+        throw new Error("This adapter does not support backup");
     };
 
     public async setTransmitPower(value: number): Promise<void> {
@@ -736,6 +740,8 @@ class ZiGateAdapter extends Adapter {
                 endpoint: <number>data.ziGateObject.payload.sourceEndpoint,
                 linkquality: data.ziGateObject.frame.readRSSI(),
                 groupID: null, // @todo
+                wasBroadcast: false, // TODO
+                destinationEndpoint: <number>data.ziGateObject.payload.destinationEndpoint,
             };
             this.waitress.resolve(payload);
             this.emit(Events.Events.zclData, payload)
@@ -751,7 +757,9 @@ class ZiGateAdapter extends Adapter {
             address: <number>data.ziGateObject.payload.sourceAddress,
             endpoint: <number>data.ziGateObject.payload.sourceEndpoint,
             linkquality: data.ziGateObject.frame.readRSSI(),
-            groupID: null
+            groupID: null,
+            wasBroadcast: false, // TODO
+            destinationEndpoint: <number>data.ziGateObject.payload.destinationEndpoint,
         };
 
         this.emit(Events.Events.rawData, payload);

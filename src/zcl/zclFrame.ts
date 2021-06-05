@@ -80,7 +80,7 @@ class ZclFrame {
             throw new Error(`Frametype '${this.Header.frameControl.frameType}' not valid`);
         }
 
-        return buffalo.getBuffer().slice(0, buffalo.getPosition());
+        return buffalo.getWritten();
     }
 
     private writeHeader(buffalo: BuffaloZcl): void {
@@ -250,7 +250,7 @@ class ZclFrame {
         if (command.parseStrategy === 'repetitive') {
             const payload = [];
 
-            while (buffalo.getPosition() < buffalo.getBuffer().length) {
+            while (buffalo.isMore()) {
                 const entry: {[s: string]: BuffaloTsType.Value} = {};
 
                 for (const parameter of command.parameters) {
@@ -302,7 +302,7 @@ class ZclFrame {
                     payload.discComplete = buffalo.readUInt8();
                     payload.attrInfos = [];
 
-                    while (buffalo.getPosition() < buffalo.getBuffer().length) {
+                    while (buffalo.isMore()) {
                         const entry: {[s: string]: BuffaloTsType.Value} = {};
 
                         for (const parameter of command.parameters) {

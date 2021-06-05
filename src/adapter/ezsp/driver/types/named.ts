@@ -32,7 +32,7 @@ export class EmberNodeId extends basic.uint16_t {
 export class EmberPanId extends basic.uint16_t {
 }
 
-export class EmberMulticastId extends basic.uint8_t {
+export class EmberMulticastId extends basic.uint16_t {
 }
 
 export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {

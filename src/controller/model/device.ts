@@ -164,8 +164,9 @@ class Device extends Entity {
         return this.endpoints.find((d): boolean => d.deviceID === deviceID);
     }
 
-    public updateLastSeen(): void {
+    public receivedMessage(): void {
         this._lastSeen = Date.now();
+        this.endpoints.forEach((e) => e.sendPendingRequests());
     }
 
     public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, endpoint: Endpoint): Promise<void> {
@@ -178,39 +179,44 @@ class Device extends Entity {
             await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
         }
 
-        // Reponse to genTime reads
-        if (frame.isGlobal() && frame.isCluster('genTime') && frame.isCommand('read')) {
+        // Reponse to read requests
+        if (frame.isGlobal() && frame.isCommand('read')) {
             const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
-            const response: KeyValue = {};
-            const values: KeyValue = {
-                timeStatus: 3, // Time-master + synchronised
-                time: time,
-                timeZone: ((new Date()).getTimezoneOffset() * -1) * 60,
-                localTime: time - (new Date()).getTimezoneOffset() * 60,
+            const attributes: {[s: string]: KeyValue} = {
+                ...endpoint.clusters,
+                genTime: {attributes: {
+                    timeStatus: 3, // Time-master + synchronised
+                    time: time,
+                    timeZone: ((new Date()).getTimezoneOffset() * -1) * 60,
+                    localTime: time - (new Date()).getTimezoneOffset() * 60,
+                }},
             };
 
-            const cluster = Zcl.Utils.getCluster('genTime');
-            for (const entry of frame.Payload) {
-                const name = cluster.getAttribute(entry.attrId).name;
-                if (values.hasOwnProperty(name)) {
-                    response[name] = values[name];
-                } else {
-                    debug.error(`'${this.ieeeAddr}' read unsupported attribute from genTime '${name}'`);
+            if (frame.Cluster.name in attributes) {
+                const response: KeyValue = {};
+                for (const entry of frame.Payload) {
+                    const name = frame.Cluster.getAttribute(entry.attrId).name;
+                    if (name in attributes[frame.Cluster.name].attributes) {
+                        response[name] = attributes[frame.Cluster.name].attributes[name];
+                    }
+                }
+
+                try {
+                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response,
+                        {srcEndpoint: dataPayload.destinationEndpoint});
+                } catch (error) {
+                    debug.error(`Read response to ${this.ieeeAddr} failed`);
                 }
             }
 
-            try {
-                await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response);
-            } catch (error) {
-                debug.error(`genTime response to ${this.ieeeAddr} failed`);
-            }
         }
 
         // Send a default response if necessary.
         const isDefaultResponse = frame.isGlobal() && frame.getCommand().name === 'defaultRsp';
         const commandHasResponse = frame.getCommand().hasOwnProperty('response');
         const disableDefaultResponse = frame.Header.frameControl.disableDefaultResponse;
-        if (!disableDefaultResponse && !isDefaultResponse && !commandHasResponse && !this._skipDefaultResponse) {
+        if (!dataPayload.wasBroadcast && !disableDefaultResponse && !isDefaultResponse && !commandHasResponse &&
+            !this._skipDefaultResponse) {
             try {
                 await endpoint.defaultResponse(
                     frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
@@ -382,6 +388,10 @@ class Device extends Entity {
             // below prevents interview from failing
             // https://github.com/Koenkk/zigbee2mqtt/issues/4655
             'TS0216': {},
+            // Fails during ias enroll due to UNSUPPORTED_ATTRIBUTE
+            // https://github.com/Koenkk/zigbee2mqtt/issues/7564
+            'TS0202': {},
+            'MULTI-MECI--EA01': {},
         };
 
         const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
@@ -481,12 +491,28 @@ class Device extends Entity {
                 for (const [key, item] of Object.entries(Device.ReportablePropertiesMapping)) {
                     if (!this[item.key]) {
                         try {
-                            const result = await endpoint.read('genBasic', [key]);
+                            let result: KeyValue;
+                            try {
+                                result = await endpoint.read('genBasic', [key]);
+                            } catch (error) {
+                                // Reading attributes can fail for many reason, e.g. it could be that device rejoins
+                                // while joining like in:
+                                // https://github.com/Koenkk/zigbee-herdsman-converters/issues/2485.
+                                // The modelID and manufacturerName are crucial for device identification, so retry.
+                                if (item.key === 'modelID' || item.key === 'manufacturerName') {
+                                    debug.log(`Interview - first ${item.key} retrieval attempt failed, ` +
+                                        `retrying after 10 seconds...`);
+                                    await Wait(10000);
+                                    result = await endpoint.read('genBasic', [key]);
+                                }
+                            }
+
                             item.set(result[key], this);
                             debug.log(`Interview - got '${item.key}' for device '${this.ieeeAddr}'`);
                         } catch (error) {
                             debug.log(
-                                `Failed to read attribute '${item.key}' from endpoint '${endpoint.ID}' (${error})`
+                                `Interview - failed to read attribute '${item.key}' from ` +
+                                    `endpoint '${endpoint.ID}' (${error})`
                             );
                         }
                     }

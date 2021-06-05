@@ -1,20 +1,21 @@
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
-    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
+    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, NetworkParameters,
     StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions,
 } from '../../tstype';
 import {ZnpVersion} from './tstype';
 import * as Events from '../../events';
 import Adapter from '../../adapter';
 import {Znp, ZpiObject} from '../znp';
-import StartZnp from './startZnp';
 import {Constants as UnpiConstants} from '../unpi';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import {Queue, Waitress, Wait} from '../../../utils';
 import * as Constants from '../constants';
 import Debug from "debug";
-import {Backup} from './backup';
 import debounce from 'debounce';
+import {LoggerStub} from "../../../controller/logger-stub";
+import {ZnpAdapterManager} from "./manager";
+import * as Models from "../../../models";
 
 const debug = Debug("zigbee-herdsman:adapter:zStack:adapter");
 const Subsystem = UnpiConstants.Subsystem;
@@ -54,6 +55,7 @@ class DataConfirmError extends Error {
 class ZStackAdapter extends Adapter {
     private deviceAnnounceRouteDiscoveryDebouncers : Map<number, () => void>;
     private znp: Znp;
+    private adapterManager: ZnpAdapterManager;
     private transactionID: number;
     private version: {
         product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string;
@@ -65,9 +67,9 @@ class ZStackAdapter extends Adapter {
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
 
     public constructor(networkOptions: NetworkOptions,
-        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
+        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions, logger?: LoggerStub) {
 
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        super(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
         this.znp = new Znp(this.serialPortOptions.path, this.serialPortOptions.baudRate, this.serialPortOptions.rtscts);
 
         this.transactionID = 0;
@@ -118,8 +120,17 @@ class ZStackAdapter extends Adapter {
         this.queue = new Queue(concurrent);
 
         debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
-
-        return StartZnp(this.znp, this.version.product, this.networkOptions, this.greenPowerGroup, this.backupPath);
+        this.adapterManager = new ZnpAdapterManager(
+            this.znp,
+            {
+                backupPath: this.backupPath,
+                version: this.version.product,
+                greenPowerGroup: this.greenPowerGroup,
+                networkOptions: this.networkOptions
+            },
+            this.logger
+        );
+        return this.adapterManager.start();
     }
 
     public async stop(): Promise<void> {
@@ -197,7 +208,8 @@ class ZStackAdapter extends Adapter {
     }
 
     public async supportsLED(): Promise<boolean> {
-        return this.version.product !== ZnpVersion.zStack3x0;
+        const zStack3x0 = this.version.product === ZnpVersion.zStack3x0;
+        return !zStack3x0 || (zStack3x0 && parseInt(this.version.revision) >= 20210430);
     }
 
     public async setLED(enabled: boolean): Promise<void> {
@@ -741,6 +753,8 @@ class ZStackAdapter extends Adapter {
                             endpoint: object.payload.srcendpoint,
                             linkquality: object.payload.linkquality,
                             groupID: object.payload.groupid,
+                            wasBroadcast: object.payload.wasbroadcast === 1,
+                            destinationEndpoint: object.payload.dstendpoint,
                         };
 
                         this.waitress.resolve(payload);
@@ -753,6 +767,8 @@ class ZStackAdapter extends Adapter {
                             endpoint: object.payload.srcendpoint,
                             linkquality: object.payload.linkquality,
                             groupID: object.payload.groupid,
+                            wasBroadcast: object.payload.wasbroadcast === 1,
+                            destinationEndpoint: object.payload.dstendpoint,
                         };
 
                         this.emit(Events.Events.rawData, payload);
@@ -774,8 +790,8 @@ class ZStackAdapter extends Adapter {
         return this.version.product !== ZnpVersion.zStack12;
     }
 
-    public async backup(): Promise<BackupType> {
-        return Backup(this.znp);
+    public async backup(): Promise<Models.Backup> {
+        return this.adapterManager.backup.createBackup();
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {

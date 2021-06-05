@@ -86,18 +86,9 @@ class Driver extends events.EventEmitter {
         this.PROCESS_QUEUES = 5;
 
         const that = this;
-        setInterval(() => { that.processQueue(); }, this.PROCESS_QUEUES);  // fire non aps requests
-        setInterval(() => { that.processBusyQueue(); }, this.PROCESS_QUEUES); // check timeouts for non aps requests
-        setInterval(() => { that.processApsQueue(); }, this.PROCESS_QUEUES);  // fire aps request
-        setInterval(() => { that.processApsBusyQueue(); }, this.PROCESS_QUEUES);  // check timeouts for all open aps requests
-        setInterval(() => { that.processApsConfirmIndQueue(); }, this.PROCESS_QUEUES);  // fire aps indications and confirms
         setInterval(() => { that.deviceStateRequest()
                             .then(result => {})
                             .catch(error => {}); }, 10000);
-
-        setInterval(() => { that.handleDeviceStatus()
-                            .then(result => {})
-                            .catch(error => {}); }, this.HANDLE_DEVICE_STATUS_DELAY); // query confirm and indication requests
 
         setInterval(() => {
             that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
@@ -119,23 +110,39 @@ class Driver extends events.EventEmitter {
         debug(`Set delay to ${delay}`);
         this.DELAY = delay;
         this.READY_TO_SEND_TIMEOUT = delay;
+        this.PROCESS_QUEUES = delay;
+        this.HANDLE_DEVICE_STATUS_DELAY = delay;
+
         if (this.READY_TO_SEND_TIMEOUT === 0) {
             this.READY_TO_SEND_TIMEOUT = 1;
         }
 
-        if (delay > 0 && delay < 50) {
-            this.PROCESS_QUEUES = delay;
-            if (this.PROCESS_QUEUES < 5) {
-                this.PROCESS_QUEUES = 5;
-            }
-            this.HANDLE_DEVICE_STATUS_DELAY = delay;
-            if (this.HANDLE_DEVICE_STATUS_DELAY < 5) {
-                this.HANDLE_DEVICE_STATUS_DELAY = 5;
-            }
-        } else if (delay >= 50) {
-            this.PROCESS_QUEUES = 50;
-            this.HANDLE_DEVICE_STATUS_DELAY = 50;
+        if (this.PROCESS_QUEUES < 5) {
+            this.PROCESS_QUEUES = 5;
         }
+
+        if (this.HANDLE_DEVICE_STATUS_DELAY < 5) {
+            this.HANDLE_DEVICE_STATUS_DELAY = 5;
+        }
+
+        if (this.PROCESS_QUEUES > 60) {
+            this.PROCESS_QUEUES = 60;
+        }
+
+        if (this.HANDLE_DEVICE_STATUS_DELAY > 60) {
+            this.HANDLE_DEVICE_STATUS_DELAY = 60;
+        }
+
+        const that = this
+        setInterval(() => { that.processQueue(); }, this.PROCESS_QUEUES);  // fire non aps requests
+        setInterval(() => { that.processBusyQueue(); }, this.PROCESS_QUEUES); // check timeouts for non aps requests
+        setInterval(() => { that.processApsQueue(); }, this.PROCESS_QUEUES);  // fire aps request
+        setInterval(() => { that.processApsBusyQueue(); }, this.PROCESS_QUEUES);  // check timeouts for all open aps requests
+        setInterval(() => { that.processApsConfirmIndQueue(); }, this.PROCESS_QUEUES);  // fire aps indications and confirms
+
+        setInterval(() => { that.handleDeviceStatus()
+                            .then(result => {})
+                            .catch(error => {}); }, this.HANDLE_DEVICE_STATUS_DELAY); // query confirm and indication requests
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
@@ -780,7 +787,7 @@ class Driver extends events.EventEmitter {
 
     private resetTimeoutCounterAfter1min() {
         if (this.timeoutResetTimeout === null) {
-            this.timeoutResetTimeout = setTimeout(function(){
+            this.timeoutResetTimeout = setTimeout(() => {
                 timeoutCounter = 0;
                 this.timeoutResetTimeout = null;
             }, 60000);

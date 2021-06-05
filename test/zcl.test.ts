@@ -1,7 +1,10 @@
 import "regenerator-runtime/runtime";
 import * as Zcl from '../src/zcl';
-import {Direction, FrameType, DataType, BuffaloZclDataType} from '../src/zcl/definition';
+import {BuffaloZclDataType, DataType} from '../src/zcl/definition';
 import BuffaloZcl from '../src/zcl/buffaloZcl';
+import FrameType from "../src/zcl/definition/frameType";
+import Direction from "../src/zcl/definition/direction";
+import {StructuredIndicatorType} from "../src/zcl/tstype";
 
 describe('Zcl', () => {
 
@@ -871,6 +874,65 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
+    it('ZclFrame to buffer writeStructured single element', () => {
+        const expected = Buffer.from([0x10, 0x02, 0x0f, 0x01, 0x00, 0x01, 0x02, 0x00, 0x20, 0x03]);
+        const payload = [{attrId: 0x0001, selector: {indexes: [2]}, dataType: Zcl.DataType.uint8, elementData: 3}];
+        const frame = Zcl.ZclFrame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, null, 2, 0x0f, 0, payload);
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame to buffer writeStructured multiple elements', () => {
+        const expected = Buffer.from([0x10, 0x02, 0x0f, 0x02, 0x00, 0x02, 0x03, 0x00, 0x04, 0x00, 0x42, 0x03, 0x66, 0x6f, 0x6f, 0x05, 0x00, 0x03, 0x06, 0x00, 0x07, 0x00, 0x08, 0x00, 0x42, 0x03, 0x62, 0x61, 0x72]);
+        const payload = [
+            {attrId: 0x0002, selector: {indexes: [3, 4]}, dataType: Zcl.DataType.charStr, elementData: 'foo'},
+            {attrId: 0x0005, selector: {indexes: [6, 7, 8]}, dataType: Zcl.DataType.charStr, elementData: 'bar'}
+        ];
+        const frame = Zcl.ZclFrame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, null, 2, 0x0f, 0, payload);
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame to buffer writeStructured whole attribute', () => {
+        const expected = Buffer.from([0x10, 0x02, 0x0f, 0x09, 0x00, 0x00, 0x48, 0x20, 0x03, 0x00, 0x0a, 0x0b, 0x0c]);
+        const payload = [
+            {attrId: 0x0009, selector: {}, dataType: Zcl.DataType.array, elementData: {elementType: 'uint8', elements: [10, 11, 12]}},
+        ];
+        const frame = Zcl.ZclFrame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, null, 2, 0x0f, 0, payload);
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame to buffer writeStructured add element into set/bag', () => {
+        const expected = Buffer.from([0x10, 0x02, 0x0f, 0x0d, 0x00, 0x10, 0x42, 0x03, 0x66, 0x6f, 0x6f]);
+        const payload = [
+            {attrId: 0x000d, selector: {indicatorType: StructuredIndicatorType.Add}, dataType: Zcl.DataType.charStr, elementData: 'foo'},
+        ];
+        const frame = Zcl.ZclFrame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, null, 2, 0x0f, 0, payload);
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame to buffer writeStructured remove element from set/bag', () => {
+        const expected = Buffer.from([0x10, 0x02, 0x0f, 0x0e, 0x00, 0x20, 0x42, 0x03, 0x62, 0x61, 0x72]);
+        const payload = [
+            {attrId: 0x000e, selector: {indicatorType: StructuredIndicatorType.Remove}, dataType: Zcl.DataType.charStr, elementData: 'bar'},
+        ];
+        const frame = Zcl.ZclFrame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, null, 2, 0x0f, 0, payload);
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it('ZclFrame to buffer writeStructured Livolo malformed', () => {
+        const expected = Buffer.from([0x7c, 0xd2, 0x1a, 0xe9, 0x0f, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+        const payload = [
+            {attrId: 0x0000, selector: null, elementData: [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]},
+        ];
+        const frame = Zcl.ZclFrame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, 0x1ad2, 0xe9, 0x0f, 0, payload, 3);
+
+        expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
     it('ZclFrame from buffer ssIasAce arm command', () => {
         const buffer = [1,87,0,0,6,49,50,51,52,53,54,0];
         const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("ssIasAce").ID, Buffer.from(buffer));
@@ -1161,10 +1223,10 @@ describe('Zcl', () => {
         expect(attribute).toStrictEqual({"ID": 4096, "manufacturerCode": 4338, "name": "ubisysTurnaroundGuardTime", "type": 32});
     });
 
-    it('Zcl utils get cluster attributes manufacturerCode wrong (should get it even tough manufacturerCode mismatches)', () => {
+    it('Zcl utils get cluster attributes manufacturerCode wrong', () => {
         const cluster = Zcl.Utils.getCluster('closuresWindowCovering', 123);
-        const attribute = cluster.getAttribute(0x1000);
-        expect(attribute).toStrictEqual({"ID": 4096, "manufacturerCode": 4338, "name": "ubisysTurnaroundGuardTime", "type": 32});
+        expect(() => cluster.getAttribute(0x1000))
+            .toThrowError("Cluster 'closuresWindowCovering' has no attribute '4096'");
     });
 
     it('Zcl utils get command', () => {

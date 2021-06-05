@@ -10,11 +10,13 @@ import fs from 'fs';
 import {Utils as ZclUtils, FrameControl} from '../zcl';
 import Touchlink from './touchlink';
 import GreenPower from './greenPower';
+import {BackupUtils} from "../utils";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import mixin from 'mixin-deep';
 import Group from './model/group';
+import {LoggerStub} from "./logger-stub";
 
 interface Options {
     network: AdapterTsType.NetworkOptions;
@@ -43,7 +45,7 @@ const DefaultOptions: Options = {
     databasePath: null,
     databaseBackupPath: null,
     backupPath: null,
-    adapter: null,
+    adapter: {disableLED: false},
     acceptJoiningDeviceHandler: null,
 };
 
@@ -72,16 +74,18 @@ class Controller extends events.EventEmitter {
     private touchlink: Touchlink;
     private stopping: boolean;
     private networkParametersCached: AdapterTsType.NetworkParameters;
+    private logger?: LoggerStub;
 
     /**
      * Create a controller
      *
      * To auto detect the port provide `null` for `options.serialPort.path`
      */
-    public constructor(options: Options) {
+    public constructor(options: Options, logger?: LoggerStub) {
         super();
         this.stopping = false;
         this.options = mixin(JSON.parse(JSON.stringify(DefaultOptions)), options);
+        this.logger = logger;
 
         // Validate options
         for (const channel of this.options.network.channelList) {
@@ -109,7 +113,7 @@ class Controller extends events.EventEmitter {
      */
     public async start(): Promise<void> {
         this.adapter = await Adapter.create(this.options.network,
-            this.options.serialPort, this.options.backupPath, this.options.adapter);
+            this.options.serialPort, this.options.backupPath, this.options.adapter, this.logger);
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
         this.database = Database.open(this.options.databasePath);
         const startResult = await this.adapter.start();
@@ -147,6 +151,10 @@ class Controller extends events.EventEmitter {
             }
         }
 
+        if (startResult === 'reset' || (this.options.backupPath && !fs.existsSync(this.options.backupPath))) {
+            await this.backup();
+        }
+
         // Add coordinator to the database if it is not there yet.
         const coordinator = await this.adapter.getCoordinator();
         if (Device.byType('Coordinator').length === 0) {
@@ -166,7 +174,6 @@ class Controller extends events.EventEmitter {
         }
 
         // Set backup timer to 1 day.
-        await this.backup();
         this.backupTimer = setInterval(() => this.backup(), 86400000);
 
         // Set database save timer to 1 hour.
@@ -206,6 +213,9 @@ class Controller extends events.EventEmitter {
         if (permit) {
             await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
             await this.greenPower.permitJoin(254);
+            if ((await this.adapter.supportsLED()) && !this.options.adapter.disableLED) {
+                await this.adapter.setLED(true);
+            }
 
             // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
             this.permitJoinNetworkClosedTimer = setInterval(async (): Promise<void> => {
@@ -231,6 +241,9 @@ class Controller extends events.EventEmitter {
             this.emit(Events.Events.permitJoinChanged, data);
         } else {
             debug.log('Disable joining');
+            if ((await this.adapter.supportsLED()) && !this.options.adapter.disableLED) {
+                await this.adapter.setLED(false);
+            }
             await this.greenPower.permitJoin(0);
             await this.adapter.permitJoin(0, null);
             const data: Events.PermitJoinChangedPayload = {permitted: false, reason, timeout: this.permitJoinTimeout};
@@ -262,7 +275,10 @@ class Controller extends events.EventEmitter {
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceAnnounce);
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceLeave);
 
-        await this.permitJoinInternal(false, 'manual');
+        try {
+            await this.permitJoinInternal(false, 'manual');
+        } catch (e) {}
+
         clearInterval(this.backupTimer);
         clearInterval(this.databaseSaveTimer);
         await this.backup();
@@ -283,7 +299,8 @@ class Controller extends events.EventEmitter {
         if (this.options.backupPath && await this.adapter.supportsBackup()) {
             debug.log('Creating coordinator backup');
             const backup = await this.adapter.backup();
-            fs.writeFileSync(this.options.backupPath, JSON.stringify(backup, null, 2));
+            const unifiedBackup = await BackupUtils.toUnifiedBackup(backup);
+            fs.writeFileSync(this.options.backupPath, JSON.stringify(unifiedBackup, null, 2));
             debug.log(`Wrote coordinator backup to '${this.options.backupPath}'`);
         }
     }
@@ -389,6 +406,9 @@ class Controller extends events.EventEmitter {
             debug.log(`Device '${payload.ieeeAddr}' got new networkAddress '${payload.networkAddress}'`);
             device.networkAddress = payload.networkAddress;
             device.save();
+
+            const data: Events.DeviceNetworkAddressChangedPayload = {device};
+            this.emit(Events.Events.deviceNetworkAddressChanged, data);
         }
     }
 
@@ -401,7 +421,7 @@ class Controller extends events.EventEmitter {
             return;
         }
 
-        device.updateLastSeen();
+        device.receivedMessage();
 
         if (device.networkAddress !== payload.networkAddress) {
             debug.log(`Device '${payload.ieeeAddr}' announced with new networkAddress '${payload.networkAddress}'`);
@@ -498,7 +518,7 @@ class Controller extends events.EventEmitter {
             device.save();
         }
 
-        device.updateLastSeen();
+        device.receivedMessage();
 
         if (!device.interviewCompleted && !device.interviewing) {
             const payloadStart: Events.DeviceInterviewPayload = {status: 'started', device};
@@ -557,7 +577,7 @@ class Controller extends events.EventEmitter {
             return;
         }
 
-        device.updateLastSeen();
+        device.receivedMessage();
         device.linkquality = dataPayload.linkquality;
 
         let endpoint = device.getEndpoint(dataPayload.endpoint);

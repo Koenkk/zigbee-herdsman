@@ -14,6 +14,7 @@ import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus} from '..
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
 import {Waitress, Wait} from '../../../utils';
+import * as Models from "../../../models";
 
 
 interface WaitressMatcher {
@@ -67,6 +68,8 @@ class EZSPAdapter extends Adapter {
                     endpoint: frame.apsFrame.sourceEndpoint,
                     linkquality: frame.lqi,
                     groupID: frame.apsFrame.groupId,
+                    wasBroadcast: false, // TODO
+                    destinationEndpoint: frame.apsFrame.destinationEndpoint,
                 };
 
                 this.waitress.resolve(payload);
@@ -79,6 +82,8 @@ class EZSPAdapter extends Adapter {
                     endpoint: frame.apsFrame.sourceEndpoint,
                     linkquality: frame.lqi,
                     groupID: frame.apsFrame.groupId,
+                    wasBroadcast: false, // TODO
+                    destinationEndpoint: frame.apsFrame.destinationEndpoint,
                 };
 
                 this.emit(Events.Events.rawData, payload);
@@ -126,7 +131,7 @@ class EZSPAdapter extends Adapter {
             stopBits: 1,
             xon: true,
             xoff: true
-        }, this.networkOptions);
+        }, this.networkOptions, this.greenPowerGroup);
         return Promise.resolve("resumed");
     }
 
@@ -219,6 +224,7 @@ class EZSPAdapter extends Adapter {
             // eslint-disable-next-line
             const add = (list: any) => {
                 for (const entry of list) {
+                    this.driver.setNode(entry.nodeid, entry.ieee);
                     neighbors.push({
                         linkquality: entry.lqi,
                         networkAddress: entry.nodeid,
@@ -450,9 +456,8 @@ class EZSPAdapter extends Adapter {
         return false;
     }
 
-    public async backup(): Promise<BackupType> {
-        // todo
-        return Promise.reject();
+    public async backup(): Promise<Models.Backup> {
+        throw new Error("This adapter does not support backup");
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
@@ -483,7 +488,10 @@ class EZSPAdapter extends Adapter {
     }
 
     public async setTransmitPower(value: number): Promise<void> {
-        // todo
+        debug(`setTransmitPower to ${value}`);
+        return this.driver.queue.execute<void>(async () => {
+            await this.driver.setRadioPower(value);
+        });
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {

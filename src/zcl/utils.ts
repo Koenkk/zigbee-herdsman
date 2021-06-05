@@ -69,9 +69,8 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
     // eslint-disable-next-line
     const commandsResponse: {[s: string]: TsType.Command} = Object.assign({}, ...Object.entries(cluster.commandsResponse).map(([k, v]): any => ({[k]: {...v, name: k}})));
 
-    const getAttribute = (key: number | string): TsType.Attribute => {
+    const getAttributeInternal = (key: number | string): TsType.Attribute => {
         let result: TsType.Attribute = null;
-
         if (typeof key === 'number') {
             if (manufacturerCode) {
                 result = Object.values(attributes).find((a): boolean => {
@@ -80,12 +79,16 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
             }
 
             if (!result) {
-                result = Object.values(attributes).find((a): boolean => a.ID === key);
+                result = Object.values(attributes).find((a): boolean => a.ID === key && a.manufacturerCode == null);
             }
         } else {
             result = Object.values(attributes).find((a): boolean => a.name === key);
         }
+        return result;
+    };
 
+    const getAttribute = (key: number | string): TsType.Attribute => {
+        const result = getAttributeInternal(key);
         if (!result) {
             throw new Error(`Cluster '${name}' has no attribute '${key}'`);
         }
@@ -94,14 +97,7 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
     };
 
     const hasAttribute = (key: number | string): boolean => {
-        let result: TsType.Attribute = null;
-
-        if (typeof key === 'number') {
-            result = Object.values(attributes).find((a): boolean => a.ID === key);
-        } else {
-            result = Object.values(attributes).find((a): boolean => a.name === key);
-        }
-
+        const result = getAttributeInternal(key);
         return !!result;
     };
 

@@ -50,6 +50,18 @@ interface ZclArray {
 
 type DataTypeValueType = 'ANALOG' | 'DISCRETE';
 
+enum StructuredIndicatorType {
+    WriteWhole = 0x00,
+    Add = 0x10,
+    Remove = 0x20,
+}
+
+interface StructuredSelector {
+    indexes?: number[],
+    indicatorType?: StructuredIndicatorType,
+}
+
 export {
-    Cluster, Attribute, Command, Parameter, DataTypeValueType, BuffaloZclOptions, ZclArray,
+    Cluster, Attribute, Command, Parameter, DataTypeValueType, BuffaloZclOptions, ZclArray, StructuredIndicatorType,
+    StructuredSelector,
 };

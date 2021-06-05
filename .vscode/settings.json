@@ -4,4 +4,16 @@
         "javascript",
         "typescript",
     ],
+    "javascript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
+    "javascript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
+    "javascript.preferences.importModuleSpecifier": "relative",
+    "eslint.format.enable": true,
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "[typescript]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": false
+        }
+    },
 }

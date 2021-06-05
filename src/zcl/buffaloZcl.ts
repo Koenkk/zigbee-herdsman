@@ -1,7 +1,6 @@
-
 import {Buffalo, TsType} from '../buffalo';
 import {DataType} from './definition';
-import {BuffaloZclOptions, ZclArray} from './tstype';
+import {BuffaloZclOptions, StructuredIndicatorType, StructuredSelector, ZclArray} from './tstype';
 
 const aliases: {[s: string]: string} = {
     'boolean': 'uint8',
@@ -121,9 +120,7 @@ class BuffaloZcl extends Buffalo {
 
     private readOctetStr(): Buffer {
         const length = this.readUInt8();
-        const value = this.buffer.slice(this.position, this.position + length);
-        this.position += length;
-        return value;
+        return this.readBuffer(length);
     }
 
     private readCharStr(options: BuffaloZclOptions): Record<number, number | number[]> | string {
@@ -145,16 +142,14 @@ class BuffaloZcl extends Buffalo {
 
             return value;
         } else {
-            const value = this.buffer.toString('utf8', this.position, this.position + length);
-            this.position += length;
-            return value;
+            return this.readUtf8String(length);
         }
     }
 
     private writeCharStr(value: string | number[]): void {
         if (typeof value === 'string') {
             this.writeUInt8(value.length);
-            this.position += this.buffer.write(value, this.position, 'utf8');
+            this.writeUtf8String(value);
         } else {
             this.writeBuffer(value, value.length);
         }
@@ -162,14 +157,12 @@ class BuffaloZcl extends Buffalo {
 
     private readLongCharStr(): string {
         const length = this.readUInt16();
-        const value = this.buffer.toString('utf8', this.position, this.position + length);
-        this.position += length;
-        return value;
+        return this.readUtf8String(length);
     }
 
     private writeLongCharStr(value: string): void {
         this.writeUInt16(value.length);
-        this.position += this.buffer.write(value, this.position, 'utf8');
+        this.writeUtf8String(value);
     }
 
     private writeOctetStr(value: number[]): void {
@@ -180,7 +173,7 @@ class BuffaloZcl extends Buffalo {
     private readExtensionFieldSets(): ExtensionFieldSet[] {
         const value = [];
 
-        while (this.position < this.buffer.length) {
+        while (this.isMore()) {
             const clstId = this.readUInt16();
             const len = this.readUInt8();
             const end = this.getPosition() + len;
@@ -330,6 +323,20 @@ class BuffaloZcl extends Buffalo {
         this.writeUInt32(msb);
     }
 
+    private writeStructuredSelector(
+        value: StructuredSelector,
+    ): void {
+        if (value != null) {
+            const indexes = value.indexes || [];
+            const indicatorType = value.indicatorType || StructuredIndicatorType.WriteWhole;
+            const indicator = indexes.length + indicatorType;
+            this.writeUInt8(indicator);
+            for (const index of indexes) {
+                this.writeUInt16(index);
+            }
+        }
+    }
+
     public write(type: string, value: TsType.Value, options: BuffaloZclOptions): void {
         // TODO: write for the following is missing: struct
         type = aliases[type] || type;
@@ -358,6 +365,8 @@ class BuffaloZcl extends Buffalo {
             return this.writeArray(value);
         } else if (type === 'USE_DATA_TYPE') {
             return this.writeUseDataType(value, options);
+        } else if (type == 'STRUCTURED_SELECTOR') {
+            return this.writeStructuredSelector(value);
         } else {
             // In case the type is undefined, write it as a buffer to easily allow for custom types
             // e.g. for https://github.com/Koenkk/zigbee-herdsman/issues/127

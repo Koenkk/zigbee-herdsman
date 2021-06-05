@@ -51,6 +51,7 @@ export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT;
     public ezsp: Ezsp;
     private nwkOpt: TsType.NetworkOptions;
+    private greenPowerGroup: number;
     public networkParams: EmberNetworkParameters;
     public version: {
         product: number; majorrel: string; minorrel: string; maintrel: string; revision: string;
@@ -84,7 +85,7 @@ export class Driver extends EventEmitter {
                 await this.stop();
                 this.ezsp = undefined;
                 await Wait(1000);
-                await this.startup(this.port, this.serialOpt, this.nwkOpt);
+                await this.startup(this.port, this.serialOpt, this.nwkOpt, this.greenPowerGroup);
                 break;
             } catch (e) {
                 debug.error(`Reset error ${e.stack}`);
@@ -99,10 +100,12 @@ export class Driver extends EventEmitter {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    public async startup(port: string, serialOpt: Record<string, any>, nwkOpt: TsType.NetworkOptions): Promise<void> {
+    public async startup(port: string, serialOpt: Record<string, any>, nwkOpt: TsType.NetworkOptions, 
+        greenPowerGroup: number): Promise<void> {
         this.nwkOpt = nwkOpt;
         this.port = port;
         this.serialOpt = serialOpt;
+        this.greenPowerGroup = greenPowerGroup;
         this.transactionID = 1;
         this.ezsp = new Ezsp();
         this.ezsp.on('reset', this.onReset.bind(this));
@@ -186,6 +189,8 @@ export class Driver extends EventEmitter {
 
         this.multicast = new Multicast(this);
         await this.multicast.startup([]);
+        await this.multicast.subscribe(242, greenPowerGroup);
+        // await this.multicast.subscribe(1, 901);
     }
 
     private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
@@ -213,7 +218,7 @@ export class Driver extends EventEmitter {
         const parameters: EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;
         parameters.extendedPanId = extendedPanID;
-        parameters.radioTxPower = 20;
+        parameters.radioTxPower = 5;
         parameters.radioChannel = this.nwkOpt.channelList[0];
         parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
         parameters.nwkManagerId = 0;
@@ -270,10 +275,29 @@ export class Driver extends EventEmitter {
                 // send failure
             } else {
                 // send success
+                // If there was a message to the group and this group is not known, 
+                // then we will register the coordinator in this group
+                // Applicable for IKEA remotes
+                const msgType = args[0];
+                if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
+                    const apsFrame = args[2];
+                    if (apsFrame.destinationEndpoint == 255) {
+                        this.multicast.subscribe(apsFrame.groupId, 1);
+                    }
+                }
             }
             break;
         }
         default:
+            // <=== Application frame 35 (childJoinHandler) received: 00013e9c2ebd08feff9ffd9004 +1ms
+            // <=== Application frame 35 (childJoinHandler)   parsed: 0,1,39998,144,253,159,255,254,8,189,46,4 +1ms
+            // Unhandled frame childJoinHandler +2s
+            // <=== Application frame 98 (incomingSenderEui64Handler) received: 2ebd08feff9ffd90 +2ms
+            // <=== Application frame 98 (incomingSenderEui64Handler)   parsed: 144,253,159,255,254,8,189,46 +1ms
+            // Unhandled frame incomingSenderEui64Handler
+            // <=== Application frame 155 (zigbeeKeyEstablishmentHandler) received: 2ebd08feff9ffd9006 +2ms
+            // <=== Application frame 155 (zigbeeKeyEstablishmentHandler)   parsed: 144,253,159,255,254,8,189,46,6 +2ms
+            // Unhandled frame zigbeeKeyEstablishmentHandler
             debug.log(`Unhandled frame ${frameName}`);
         }
     }
@@ -282,6 +306,7 @@ export class Driver extends EventEmitter {
     private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number, relays: any): void {
         // todo
         debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
+        this.setNode(nwk, ieee);
         if (ieee && !(ieee instanceof EmberEUI64)) {
             ieee = new EmberEUI64(ieee);
         }
@@ -311,6 +336,13 @@ export class Driver extends EventEmitter {
         }
         this.eui64ToNodeId.set(ieee.toString(), nwk);
         this.emit('deviceJoined', [nwk, ieee]);
+    }
+
+    public setNode(nwk: number, ieee: EmberEUI64 | number[]): void {
+        if (ieee && !(ieee instanceof EmberEUI64)) {
+            ieee = new EmberEUI64(ieee);
+        }
+        this.eui64ToNodeId.set(ieee.toString(), nwk);
     }
 
     public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, 
@@ -344,6 +376,7 @@ export class Driver extends EventEmitter {
             await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             return true;
         } catch (e) {
+            debug.error(`Request error ${e}: ${e.stack}`);
             return false;
         }
     }
@@ -473,5 +506,9 @@ export class Driver extends EventEmitter {
         return (!matcher.address || payload.address === matcher.address) &&
             payload.frame.clusterId === matcher.clusterId &&
             payload.payload[0] === matcher.sequence;
+    }
+
+    public setRadioPower(value: number): Promise<void> {
+        return this.ezsp.execCommand('setRadioPower', value);
     }
 }

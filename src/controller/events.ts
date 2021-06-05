@@ -7,6 +7,7 @@ enum Events {
     deviceJoined = "deviceJoined",
     deviceInterview = "deviceInterview",
     deviceAnnounce = "deviceAnnounce",
+    deviceNetworkAddressChanged = "deviceNetworkAddressChanged",
     deviceLeave = "deviceLeave",
     permitJoinChanged = "permitJoinChanged",
 }
@@ -17,6 +18,10 @@ interface DeviceJoinedPayload {
 
 interface DeviceInterviewPayload {
     status: 'started' | 'successful' | 'failed';
+    device: Device;
+}
+
+interface DeviceNetworkAddressChangedPayload {
     device: Device;
 }
 
@@ -77,9 +82,12 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'alertsNotification': 'commandAlertsNotification',
     'programmingEventNotification': 'commandProgrammingEventNotification',
     'getPinCodeRsp': 'commandGetPinCodeRsp',
+    'getUserStatusRsp': 'commandGetUserStatusRsp',
     'arrivalSensorNotify': 'commandArrivalSensorNotify',
     'getPanelStatus': 'commandGetPanelStatus',
     'checkin': 'commandCheckIn',
+    'moveToHue': 'commandMoveToHue',
+    'store': 'commandStore',
 
     // HEIMAN scenes cluster
     'atHome': 'commandAtHome',
@@ -95,6 +103,13 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
 
     'setTimeRequest': 'commandSetTimeRequest', // Tuya time sync
     'activeStatusReport': 'commandActiveStatusReport', // Tuya active status report
+
+    // Wiser Smart HVAC Commmands
+    'wiserSmartSetSetpoint': 'commandWiserSmartSetSetpoint',
+    'wiserSmartCalibrateValve': 'commandWiserSmartCalibrateValve',
+
+    // Dafoss Ally/Hive TRV Commands
+    'danfossSetpointCommand': 'commandDanfossSetpointCommand',
 };
 
 type MessagePayloadType =
@@ -112,10 +127,11 @@ type MessagePayloadType =
     'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandGetData' |
     'commandSetDataResponse' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
-    "commandArrivalSensorNotify" | 'commandCommisioningNotification' |
+    "commandArrivalSensorNotify" | 'commandCommisioningNotification' | 'commandGetUserStatusRsp' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
     'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest' |
-    'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport';
+    'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandMoveToHue' | 'commandStore'|
+    'commandWiserSmartSetSetpoint' | 'commandWiserSmartCalibrateValve' | 'commandDanfossSetpointCommand';
 
 interface MessagePayload {
     type: MessagePayloadType;
@@ -132,5 +148,5 @@ interface MessagePayload {
 
 export {
     Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload,
-    DeviceLeavePayload, DeviceJoinedPayload, PermitJoinChangedPayload,
+    DeviceLeavePayload, DeviceJoinedPayload, PermitJoinChangedPayload, DeviceNetworkAddressChangedPayload,
 };

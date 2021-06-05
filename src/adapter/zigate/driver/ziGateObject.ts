@@ -142,7 +142,7 @@ class ZiGateObject {
             const value = this._payload[parameter.name];
             buffalo.write(parameter.parameterType, value, {});
         }
-        return buffalo.getBuffer().slice(0, buffalo.getPosition());
+        return buffalo.getWritten();
     }
 
 }
