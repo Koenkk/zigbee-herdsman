@@ -766,7 +766,7 @@ class ZnpRequestMockBuilder {
 }
 
 const baseZnpRequestMock = new ZnpRequestMockBuilder()
-    .handle(Subsystem.SYS, "version", payload => equals(payload, {}) ? { payload: { product: ZnpVersion.zStack30x, revision: "20201026" } } : undefined)
+    .handle(Subsystem.SYS, "version", payload => equals(payload, {}) ? { payload: { product: ZnpVersion.zStack30x, revision: 20201026 } } : undefined)
     .handle(Subsystem.SYS, "ping", () => ({}))
     .handle(Subsystem.SYS, "resetReq", () => ({}))
     .handle(Subsystem.SYS, "getExtAddr", () => ({ payload: { extaddress: "0x00124b0009d69f77" } }))
@@ -875,7 +875,7 @@ const commissioned3AlignedConfigMistmachRequestMock = commissioned3AlignedReques
     .nv(NvItemsIds.NIB, Buffer.from("fb050279147900640000000105018f000700020d1e0000001500000000000000000000007e000800000020000f0f0400010000000100000000779fd609004b1200010000000000000000000000000000000000000000000000000000000000000000000000003c0c0001780a0100000006020000", "hex"));
 
 const empty3x0AlignedRequestMock = baseZnpRequestMock.clone()
-    .handle(Subsystem.SYS, "version", payload => equals(payload, {}) ? { payload: { product: ZnpVersion.zStack3x0, revision: "20201026" } } : undefined)
+    .handle(Subsystem.SYS, "version", payload => equals(payload, {}) ? { payload: { product: ZnpVersion.zStack3x0, revision: 20210430 } } : undefined)
     .nv(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, Buffer.from([0x00]))
     .nv(NvItemsIds.NIB, Buffer.from("fb050279147900640000000105018f000700020d1e000000150000000000000000000000ffff0800000020000f0f0400010000000100000000779fd609004b1200010000000000000000000000000000000000000000000000000000000000000000000000003c0c0001780a0100000006020000", "hex"))
     .nv(NvItemsIds.APS_LINK_KEY_TABLE, Buffer.from("0000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000", "hex"));
@@ -923,7 +923,7 @@ const commissioned12UnalignedRequestMock = empty12UnalignedRequestMock.clone()
     .nv(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, Buffer.from([0x55]))
     .nv(NvItemsIds.NIB, Buffer.from("fb050279147900640000000105018f0700020d1e000015000000000000000000007b0008000020000f0f0400010000000100000000779fd609004b1200010000000000000000000000000000000000000000000000000000000000000000000000003c0c0001780a010000060200", "hex"));
 
-const mockZnpRequest = jest.fn().mockReturnValue({payload: {}}).mockImplementation((subsystem: Subsystem, command: string, payload: any, expectedStatus: ZnpCommandStatus) => baseZnpRequestMock.execute({subsystem, command, payload}));
+const mockZnpRequest = jest.fn().mockReturnValue(new Promise((resolve) => resolve({payload: {}}))).mockImplementation((subsystem: Subsystem, command: string, payload: any, expectedStatus: ZnpCommandStatus) => new Promise((resolve) => resolve(baseZnpRequestMock.execute({subsystem, command, payload}))));
 const mockZnpWaitFor = jest.fn();
 const mockZnpOpen = jest.fn();
 const mockZnpClose = jest.fn();
@@ -932,7 +932,7 @@ const mocks = [mockZnpOpen, mockZnpRequest, mockZnpClose];
 
 const mockZnpRequestWith = (builder: ZnpRequestMockBuilder) => {
     builder = builder.clone();
-    mockZnpRequest.mockImplementation((subsystem: Subsystem, command: string, payload: any, expectedStatus: ZnpCommandStatus) => builder.execute({subsystem, command, payload}));
+    mockZnpRequest.mockImplementation((subsystem: Subsystem, command: string, payload: any, expectedStatus: ZnpCommandStatus) => new Promise((resolve) => resolve(builder.execute({subsystem, command, payload}))));
 };
 
 const mockZnpWaitForDefault = () => {
@@ -1822,7 +1822,7 @@ describe("zstack-adapter", () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
-        expect(await adapter.getCoordinatorVersion()).toStrictEqual({type: 'zStack3x0', meta: {revision: '20201026', product: 1}})
+        expect(await adapter.getCoordinatorVersion()).toStrictEqual({type: 'zStack3x0', meta: {revision: 20210430, product: 1}})
     });
 
     it('Soft reset', async () => {
@@ -1858,7 +1858,7 @@ describe("zstack-adapter", () => {
         mockZnpRequest.mockClear();
         await adapter.setLED(false);
         expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0});
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
     });
 
     it('Enable led', async () => {
@@ -1867,12 +1867,22 @@ describe("zstack-adapter", () => {
         mockZnpRequest.mockClear();
         await adapter.setLED(true);
         expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1});
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
     });
 
     it('Supports led', async () => {
         basicMocks();
         await adapter.start();
+        expect(await adapter.supportsLED()).toBeTruthy();
+    });
+
+    it('Support LED should go to false when LED request fails', async () => {
+        basicMocks();
+        await adapter.start();
+        expect(await adapter.supportsLED()).toBeTruthy();
+        mockZnpRequest.mockClear();
+        mockZnpRequest.mockImplementationOnce(() => new Promise((resolve, reject) => reject("FAILED")));
+        await adapter.setLED(true);
         expect(await adapter.supportsLED()).toBeFalsy();
     });
 

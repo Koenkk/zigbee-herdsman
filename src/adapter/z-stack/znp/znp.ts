@@ -283,7 +283,7 @@ class Znp extends events.EventEmitter {
 
     public request(
         subsystem: Subsystem, command: string, payload: ZpiObjectPayload, waiterID: number = null,
-        expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS]
+        timeout: number = null, expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS]
     ): Promise<ZpiObject> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
@@ -298,10 +298,10 @@ class Znp extends events.EventEmitter {
             const frame = object.toUnpiFrame();
 
             if (object.type === Type.SREQ) {
-                const timeout = object.command === 'bdbStartCommissioning' || object.command === 'startupFromApp' ?
+                const t = object.command === 'bdbStartCommissioning' || object.command === 'startupFromApp' ?
                     40000 : timeouts.SREQ;
                 const waiter = this.waitress.waitFor(
-                    {type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout
+                    {type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout || t
                 );
                 this.unpiWriter.writeFrame(frame);
                 const result = await waiter.start().promise;
@@ -322,7 +322,7 @@ class Znp extends events.EventEmitter {
                 }
             } else if (object.type === Type.AREQ && object.isResetCommand()) {
                 const waiter = this.waitress.waitFor(
-                    {type: Type.AREQ, subsystem: Subsystem.SYS, command: 'resetInd'}, timeouts.reset
+                    {type: Type.AREQ, subsystem: Subsystem.SYS, command: 'resetInd'}, timeout || timeouts.reset
                 );
                 this.queue.clear();
                 this.unpiWriter.writeFrame(frame);

@@ -62,6 +62,7 @@ class ZStackAdapter extends Adapter {
     };
     private closing: boolean;
     private queue: Queue;
+    private supportsLED_: boolean;
     private interpanLock: boolean;
     private interpanEndpointRegistered: boolean;
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
@@ -110,6 +111,9 @@ class ZStackAdapter extends Adapter {
             debug(`Failed to get zStack version, assuming 1.2`);
             this.version = {"transportrev":2, "product":0, "majorrel":2, "minorrel":0, "maintrel":0, "revision":""};
         }
+
+        const zStack3x0 = this.version.product === ZnpVersion.zStack3x0;
+        this.supportsLED_ = !zStack3x0 || (zStack3x0 && parseInt(this.version.revision) >= 20210430);
 
         const concurrent = this.adapterOptions && this.adapterOptions.concurrent ?
             this.adapterOptions.concurrent :
@@ -208,12 +212,18 @@ class ZStackAdapter extends Adapter {
     }
 
     public async supportsLED(): Promise<boolean> {
-        const zStack3x0 = this.version.product === ZnpVersion.zStack3x0;
-        return !zStack3x0 || (zStack3x0 && parseInt(this.version.revision) >= 20210430);
+        return this.supportsLED_;
     }
 
     public async setLED(enabled: boolean): Promise<void> {
-        await this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: enabled ? 1 : 0});
+        this.znp.request(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: enabled ? 1 : 0}, null, 500).catch(() => {
+            // We cannot 100% correctly determine if an adapter supports LED. E.g. the zStack 1.2 20190608 fw supports
+            // led on the CC2531 but not on the CC2530. Therefore if a led request fails never thrown an error
+            // but instead mark the led as unsupported.
+            // https://github.com/Koenkk/zigbee-herdsman/issues/377
+            // https://github.com/Koenkk/zigbee2mqtt/issues/7693
+            this.supportsLED_ = false;
+        });
     }
 
     private async requestNetworkAddress(ieeeAddr: string): Promise<number> {
