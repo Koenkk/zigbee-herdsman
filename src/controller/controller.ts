@@ -265,7 +265,9 @@ class Controller extends events.EventEmitter {
 
     public async stop(): Promise<void> {
         this.stopping = true;
-        this.databaseSave();
+        try {
+            this.databaseSave();
+        } catch (e) {}
 
         // Unregister adapter events
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceJoined);
@@ -281,7 +283,10 @@ class Controller extends events.EventEmitter {
 
         clearInterval(this.backupTimer);
         clearInterval(this.databaseSaveTimer);
-        await this.backup();
+        try {
+            await this.backup();
+        }
+        catch (e) {}
         await this.adapter.stop();
     }
 
