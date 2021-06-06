@@ -1056,6 +1056,8 @@ const knownManufacturerCodes = {
     CALIX: 0x1276,
     /** ADEO */
     ADEO: 0x1277,
+    /** ELKO */
+    ELKO: 0x1277,
 };
 
 export default {
