@@ -1,0 +1,25 @@
+{
+  "logger": {
+    "title": "Remote Sync"
+  },
+  "uploadOnSave": false,
+  "useAtomicWrites": false,
+  "deleteLocal": false,
+  "hostname": "ioTinker.lan",
+  "port": "22",
+  "target": "/opt/iobroker/node_modules/zigbee-herdsman",
+  "ignore": [
+    ".remote-sync.json",
+    ".eslint*",
+    ".git/**",
+    "node_modules/**",
+    "docs/**",
+    "test/**",
+    ".babelrc.js",
+    ".npm*"
+  ],
+  "username": "linaro",
+  "password": "linaro",
+  "watch": [],
+  "transport": "scp"
+}

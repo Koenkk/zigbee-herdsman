@@ -285,8 +285,7 @@ class Controller extends events.EventEmitter {
         clearInterval(this.databaseSaveTimer);
         try {
             await this.backup();
-        }
-        catch (e) {}
+        } catch (e) {}
         await this.adapter.stop();
     }
 
