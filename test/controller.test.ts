@@ -2603,7 +2603,7 @@ describe('Controller', () => {
         await group.command('genOnOff', 'offWithEffect', {effectid: 9, effectvariant: 10});
         const call = mocksendZclFrameToGroup.mock.calls[0];
         expect(call[0]).toBe(2);
-        expect({...deepClone(call[1]), Cluster: null}).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":2,"manufacturerCode":null,"commandIdentifier":64},"Payload":{"effectid":9,"effectvariant":10},"Cluster": null});
+        expect({...deepClone(call[1]), Cluster: null}).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":2,"manufacturerCode":null,"commandIdentifier":64},"Payload":{"effectid":9,"effectvariant":10},"Cluster": null, "Command":{"ID":64,"parameters":[{"name":"effectid","type":32},{"name":"effectvariant","type":32}],"name":"offWithEffect"}});
     });
 
     it('Endpoint command with options', async () => {
@@ -2616,7 +2616,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe('0x129');
         expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
-        expect({...deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3]), Cluster: null}).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":100,"commandIdentifier":0},"Payload":{},"Cluster": null});
+        expect({...deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3]), Cluster: null}).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":100,"commandIdentifier":0},"Payload":{},"Cluster": null,"Command":{"ID":0,"parameters":[],"name":"off"}});
         expect(mocksendZclFrameToEndpoint.mock.calls[0][4]).toBe(10000);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][5]).toBe(false);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][6]).toBe(false);
