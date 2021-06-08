@@ -73,7 +73,7 @@
   "name": "zigbee-herdsman",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Asgothian/zigbee-herdsman.git"
+    "url": "git+https://github.com/Koenkk/zigbee-herdsman.git"
   },
   "scripts": {
     "build": "./node_modules/.bin/tsc",
