@@ -112,17 +112,20 @@ class Controller extends events.EventEmitter {
      * Start the Herdsman controller
      */
     public async start(): Promise<void> {
+        // Database (create end inject)
+        this.database = Database.open(this.options.databasePath);
+        Entity.injectDatabase(this.database);
+
+        // Adapter (create and inject)
         this.adapter = await Adapter.create(this.options.network,
             this.options.serialPort, this.options.backupPath, this.options.adapter, this.logger);
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
-        this.database = Database.open(this.options.databasePath);
         const startResult = await this.adapter.start();
         debug.log(`Started with result '${startResult}'`);
-
-        // Inject adapter and database in entity
-        debug.log(`Injected database: ${this.database != null}, adapter: ${this.adapter != null}`);
         Entity.injectAdapter(this.adapter);
-        Entity.injectDatabase(this.database);
+
+        // Inject log injection
+        debug.log(`Injected database: ${this.database != null}, adapter: ${this.adapter != null}`);
 
         this.greenPower = new GreenPower(this.adapter);
         this.greenPower.on(GreenPowerEvents.deviceJoined, this.onDeviceJoinedGreenPower.bind(this));
@@ -265,9 +268,7 @@ class Controller extends events.EventEmitter {
 
     public async stop(): Promise<void> {
         this.stopping = true;
-        try {
-            this.databaseSave();
-        } catch (e) {}
+        this.databaseSave();
 
         // Unregister adapter events
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceJoined);
@@ -285,7 +286,9 @@ class Controller extends events.EventEmitter {
         clearInterval(this.databaseSaveTimer);
         try {
             await this.backup();
-        } catch (e) {}
+        } catch (e) {
+            debug.error('unable to create backup when stopping zigbee-herdsman');
+        }
         await this.adapter.stop();
     }
 
