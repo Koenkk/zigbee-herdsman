@@ -124,7 +124,7 @@ class Controller extends events.EventEmitter {
         debug.log(`Started with result '${startResult}'`);
         Entity.injectAdapter(this.adapter);
 
-        // Inject log injection
+        // log injection
         debug.log(`Injected database: ${this.database != null}, adapter: ${this.adapter != null}`);
 
         this.greenPower = new GreenPower(this.adapter);
