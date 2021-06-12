@@ -446,6 +446,9 @@ const Cluster: {
             startUpOnOff: {ID: 16387, type: DataType.enum8},
             tuyaBacklightMode: {ID: 0x8001, type: DataType.enum8},
             moesStartUpOnOff: {ID: 0x8002, type: DataType.enum8},
+            elkoPreWarningTime: {ID: 0xE000, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
+            elkoOnTimeReload: {ID: 0xE001, type: DataType.uint32, manufacturerCode: ManufacturerCode.ELKO},
+            elkoOnTimeReloadOptions: {ID: 0xE002, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.ELKO},
         },
         commands: {
             off: {
@@ -512,6 +515,7 @@ const Cluster: {
             offTransitionTime: {ID: 19, type: DataType.uint16},
             defaultMoveRate: {ID: 20, type: DataType.uint16},
             startUpCurrentLevel: {ID: 16384, type: DataType.uint8},
+            elkoStartUpCurrentLevel: {ID: 0x4000, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
         },
         commands: {
             moveToLevel: {
@@ -1768,6 +1772,14 @@ const Cluster: {
             tuyaMovingState: {ID: 0xf000, type: DataType.enum8},
             tuyaCalibration: {ID: 0xf001, type: DataType.enum8},
             tuyaMotorReversal: {ID: 0xf002, type: DataType.enum8},
+            elkoDriveCloseDuration: {ID: 0xE000, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
+            elkoProtectionStatus: {ID: 0xE010, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.ELKO},
+            elkoProtectionSensor: {ID: 0xE013, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.ELKO},
+            elkoSunProtectionIlluminanceThreshold: {ID: 0xE012, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
+            elkoLiftDriveUpTime: {ID: 0xE014, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
+            elkoLiftDriveDownTime: {ID: 0xE015, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
+            elkoTiltOpenCloseAndStepTime: {ID: 0xE016, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
+            elkoTiltPositionPercentageAfterMoveToLevel: {ID: 0xE017, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
         },
         commands: {
             upOpen: {
@@ -1807,6 +1819,13 @@ const Cluster: {
                 ID: 8,
                 parameters: [
                     {name: 'percentagetiltvalue', type: DataType.uint8},
+                ],
+            },
+            elkoStopOrStepLiftPercentage: {
+                ID: 0x80,
+                parameters: [
+                    {name: 'direction', type: DataType.uint16},
+                    {name: 'stepvalue', type: DataType.uint16},
                 ],
             },
         },
@@ -1911,6 +1930,22 @@ const Cluster: {
             danfossHeatAvailable: {ID: 0x4030, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossHeatRequired: {ID: 0x4031, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossLoadEstimate: {ID: 0x404a, type: DataType.int16, manufacturerCode: ManufacturerCode.DANFOSS},
+            elkoLoad: {ID: 0x0401, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
+            elkoDisplayText: {ID: 0x0402, type: DataType.charStr, manufacturerCode: ManufacturerCode.ELKO},
+            elkoSensor: {ID: 0x0403, type: DataType.enum8, manufacturerCode: ManufacturerCode.ELKO},
+            elkoRegulatorTime: {ID: 0x0404, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
+            elkoRegulatorMode: {ID: 0x0405, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
+            elkoPowerStatus: {ID: 0x0406, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
+            elkoMeanPower: {ID: 0x0408, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
+            elkoExternalTemp: {ID: 0x0409, type: DataType.int16, manufacturerCode: ManufacturerCode.ELKO},
+            elkoNightSwitching: {ID: 0x0411, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
+            elkoFrostGuard: {ID: 0x0412, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
+            elkoChildLock: {ID: 0x0413, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
+            elkoMaxFloorTemp: {ID: 0x0414, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
+            elkoRelayState: {ID: 0x0415, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
+            elkoCalibration: {ID: 0x0417, type: DataType.int8, manufacturerCode: ManufacturerCode.ELKO},
+            elkoLastMessageId: {ID: 0x0418, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
+            elkoLastMessageStatus: {ID: 0x0419, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
         },
         commands: {
             setpointRaiseLower: {
@@ -2292,6 +2327,7 @@ const Cluster: {
             lampBurnHours: {ID: 51, type: DataType.uint24},
             lampAlarmMode: {ID: 52, type: DataType.bitmap8},
             lampBurnHoursTripPoint: {ID: 53, type: DataType.uint24},
+            elkoControlMode: {ID: 0xE000, type: DataType.enum8, manufacturerCode: ManufacturerCode.ELKO},
         },
         commands: {
         },
@@ -2394,6 +2430,10 @@ const Cluster: {
             ultrasonicOToUDelay: {ID: 32, type: DataType.uint16},
             ultrasonicUToODelay: {ID: 33, type: DataType.uint16},
             ultrasonicUToOThreshold: {ID: 34, type: DataType.uint8},
+            elkoOccupancyDfltOperationMode: {ID: 0xE000, type: DataType.enum8, manufacturerCode: ManufacturerCode.ELKO},
+            elkoOccupancyOperationMode: {ID: 0xE001, type: DataType.enum8, manufacturerCode: ManufacturerCode.ELKO},
+            elkoForceOffTimeout: {ID: 0xE002, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
+            elkoOccupancySensitivity: {ID: 0xE003, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
         },
         commands: {
         },
@@ -4192,6 +4232,32 @@ const Cluster: {
         manufacturerCode: ManufacturerCode.SCHNEIDER,
         attributes: {
             pilotMode: {ID: 0x0031, type: DataType.enum8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    elkoOccupancySettingClusterServer: {
+        ID: 0xFF19,
+        manufacturerCode: ManufacturerCode.ELKO,
+        attributes: {
+            AmbienceLightThreshold: {ID: 0x0000, type: DataType.uint16},
+            OccupancyActions: {ID: 0x0001, type: DataType.enum8},
+            UnoccupiedLevelDflt: {ID: 0x0002, type: DataType.uint8},
+            UnoccupiedLevel: {ID: 0x0003, type: DataType.uint8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    elkoSwitchConfigurationClusterServer: {
+        ID: 0xFF17,
+        manufacturerCode: ManufacturerCode.ELKO,
+        attributes: {
+            SwitchIndication: {ID: 0x0000, type: DataType.enum8},
+            UpSceneID: {ID: 0x0010, type: DataType.uint8},
+            UpGroupID: {ID: 0x0011, type: DataType.uint16},
+            DownSceneID: {ID: 0x0020, type: DataType.uint8},
+            DownGroupID: {ID: 0x0021, type: DataType.uint16},
+            SwitchActions: {ID: 0x0001, type: DataType.enum8},
         },
         commands: {},
         commandsResponse: {},

@@ -111,7 +111,7 @@ class Controller extends events.EventEmitter {
     /**
      * Start the Herdsman controller
      */
-    public async start(): Promise<void> {
+    public async start(): Promise<AdapterTsType.StartResult> {
         // Database (create end inject)
         this.database = Database.open(this.options.databasePath);
         Entity.injectDatabase(this.database);
@@ -183,6 +183,8 @@ class Controller extends events.EventEmitter {
         this.databaseSaveTimer = setInterval(() => this.databaseSave(), 3600000);
 
         this.touchlink = new Touchlink(this.adapter);
+
+        return startResult;
     }
 
     public async touchlinkIdentify(ieeeAddr: string, channel: number): Promise<void> {

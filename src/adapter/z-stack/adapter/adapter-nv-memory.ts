@@ -12,7 +12,7 @@ import {BuiltTable} from "../structs";
  */
 export class AdapterNvMemory {
     public memoryAlignment: Structs.StructMemoryAlignment = null;
-    
+
     private znp: Znp;
 
     public constructor(znp: Znp) {
@@ -30,7 +30,7 @@ export class AdapterNvMemory {
 
     /**
      * Reads a variable-length item from NV memory and returns buffer object. Read can be offset as required.
-     * 
+     *
      * @param id NV item identifier.
      * @param offset Desired data offset to read from.
      */
@@ -38,7 +38,7 @@ export class AdapterNvMemory {
 
     /**
      * Reads a variable-length item from NV memory and creates a builds a requested struct.
-     * 
+     *
      * @param id NV item identifier.
      * @param offset Desired data offset to read from.
      * @param useStruct Struct factory to use to wrap the data in.
@@ -77,7 +77,7 @@ export class AdapterNvMemory {
 
     /**
      * Writes data to adapter NV memory. Method fails if write fails.
-     * 
+     *
      * @param id NV item identifier.
      * @param data Data to be written.
      * @param offset Offset within NV item to write the data.
@@ -95,7 +95,7 @@ export class AdapterNvMemory {
             if (!autoInit) {
                 throw new Error(`Cannot write NV memory item which does not exist (id=${id})`);
             }
-            const initResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvItemInit", {id, len: buffer.length, initlen: initLength, initvalue: buffer.slice(0, initLength)}, undefined, [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]));
+            const initResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvItemInit", {id, len: buffer.length, initlen: initLength, initvalue: buffer.slice(0, initLength)}, undefined, null, [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED]));
             if (initResponse.payload.status !== 0x09) {
                 throw new Error(`Failed to initialize NV memory item (id=${id}, name=${NvItemsIds[id]}, len=${buffer.length}, status=${initResponse.payload.status})`);
             }
@@ -117,7 +117,7 @@ export class AdapterNvMemory {
 
     /**
      * Determines whether NV item is different from provided data and updates if necessary.
-     * 
+     *
      * @param id NV item identifier.
      * @param data Desired NV item value.
      * @param autoInit Whether NV item should be automatically initialized if not present.
@@ -132,7 +132,7 @@ export class AdapterNvMemory {
 
     /**
      * Deletes an NV memory item.
-     * 
+     *
      * @param id NV item identifier.
      */
     public async deleteItem(id: NvItemsIds): Promise<void> {
@@ -152,7 +152,7 @@ export class AdapterNvMemory {
     /**
      * Reads extended table entry (used by Z-Stack 3.x+). NV tables within newer Z-Stack releases include 16-bit `subId`
      * identifying table entries.
-     * 
+     *
      * @param sysId SimpleLink system identifier.
      * @param id NV item identifier.
      * @param subId Entry index.
@@ -183,7 +183,7 @@ export class AdapterNvMemory {
     /**
      * Writes extended table entry (user by Z-Stack 3.x+). NV tables within newer Z-Stack releases include 16-bit `subId`
      * identifying table tnreis.
-     * 
+     *
      * @param sysId SimpleLink system identifier.
      * @param id NV item identifier.
      * @param subId Entry index.
@@ -216,7 +216,7 @@ export class AdapterNvMemory {
     /**
      * Reads a legacy NV table at defined index into raw `Buffer` object array. Providing maximum
      * length is necessary in order to prevent invalid memory access.
-     * 
+     *
      * @param mode Only legacy mode is supported with this signature.
      * @param id The item index at which the table starts.
      * @param maxLength Maximum number of items the table may contain.
@@ -226,7 +226,7 @@ export class AdapterNvMemory {
     /**
      * Reads a legacy table at defined index into a table structure covering struct entries.
      * Providing maximum length is necessary in order to prevent invalid memory access.
-     * 
+     *
      * @param mode Only legacy mode is supported with this signature.
      * @param id The item index at which the table starts.
      * @param maxLength Maximum number of items the table may contain.
@@ -237,7 +237,7 @@ export class AdapterNvMemory {
     /**
      * Reads an extended (Z-Stack 3.x.0+) table into raw `Buffer` object array.
      * Maximum length is optional since the table boundary can be detected automatically.
-     * 
+     *
      * @param mode Only extended mode is supported with this signature.
      * @param sysId SimpleLink system identifier.
      * @param id Extended table NV index.
@@ -248,7 +248,7 @@ export class AdapterNvMemory {
     /**
      * Reads an extended (Z-Stack 3.x.0+) table into a table structure covering struct entries.
      * Maximum length is optional since the table boundary can be detected automatically.
-     * 
+     *
      * @param mode Only extended mode is supported with this signature.
      * @param sysId SimpleLink system identifier.
      * @param id Extended table NV index.
@@ -289,7 +289,7 @@ export class AdapterNvMemory {
 
     /**
      * Writes a struct-based table structure into a legacy NV memory position.
-     * 
+     *
      * @param mode Only legacy mode is supported with this signature.
      * @param id Start NV item index.
      * @param table Table structure to write to NV memory.
@@ -298,14 +298,14 @@ export class AdapterNvMemory {
 
     /**
      * Writes a struct-based table structure into an extended NV memory position.
-     * 
+     *
      * @param mode Only extended mode is supported with this signature.
      * @param sysId SimpleLink system identifier.
      * @param id Extended table NV item index.
      * @param table Table structure to write to NV memory.
      */
     public async writeTable<R extends Structs.BuiltStruct>(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, table: BuiltTable<R>): Promise<void>;
-    
+
     public async writeTable<R extends Structs.BuiltStruct>(mode: "extended" | "legacy", p1: NvSystemIds | NvItemsIds, p2: NvItemsIds | BuiltTable<R>, p3?: BuiltTable<R>): Promise<void> {
         this.checkMemoryAlignmentSetup();
         const sysId = mode === "legacy" ? undefined : p1 as NvSystemIds;
@@ -315,7 +315,7 @@ export class AdapterNvMemory {
         if (mode === "legacy") {
             for (const [index, entry] of table.entries.entries()) {
                 await this.writeItem(id + index, entry.serialize(this.memoryAlignment));
-            } 
+            }
         } else {
             for (const [index, entry] of table.entries.entries()) {
                 await this.writeExtendedTableEntry(sysId, id, index, entry.serialize(this.memoryAlignment));
@@ -325,9 +325,9 @@ export class AdapterNvMemory {
 
     /**
      * Internal function to prevent occasional ZNP request failures.
-     * 
+     *
      * *Some timeouts were present when working with SimpleLink Z-Stack 3.x.0+.*
-     * 
+     *
      * @param fn Function to retry.
      * @param retries Maximum number of retries.
      */
