@@ -787,7 +787,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return this.version.product !== ZnpVersion.zStack12;
+        return this.version && this.version.product !== ZnpVersion.zStack12;
     }
 
     public async backup(): Promise<Models.Backup> {

@@ -284,11 +284,7 @@ class Controller extends events.EventEmitter {
 
         clearInterval(this.backupTimer);
         clearInterval(this.databaseSaveTimer);
-        try {
-            await this.backup();
-        } catch (e) {
-            debug.error('unable to create backup when stopping zigbee-herdsman');
-        }
+        await this.backup();
         await this.adapter.stop();
     }
 
