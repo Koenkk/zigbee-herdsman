@@ -388,6 +388,8 @@ class Device extends Entity {
             // below prevents interview from failing
             // https://github.com/Koenkk/zigbee2mqtt/issues/4655
             'TS0216': {},
+            // https://github.com/Koenkk/zigbee-herdsman-converters/pull/2710
+            '3RWS18BZ': {},
             // Fails during ias enroll due to UNSUPPORTED_ATTRIBUTE
             // https://github.com/Koenkk/zigbee2mqtt/issues/7564
             'TS0202': {},
