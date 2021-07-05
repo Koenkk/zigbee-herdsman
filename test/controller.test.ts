@@ -14,7 +14,8 @@ import path  from 'path';
 import {Wait} from '../src/utils';
 import * as Models from "../src/models";
 import * as Utils from "../src/utils";
-const flushPromises = () => new Promise(setImmediate);
+const globalSetImmediate = setImmediate;
+const flushPromises = () => new Promise(globalSetImmediate);
 
 let skipWait = true;
 Wait.mockImplementation((milliseconds) => {
@@ -27,9 +28,6 @@ Wait.mockImplementation((milliseconds) => {
 
 const mockedDate = new Date();
 jest.spyOn(global, 'Date').mockImplementation(() => mockedDate);
-Date.now = jest.fn()
-// @ts-ignore
-Date.now.mockReturnValue(150);
 
 const mockAdapterEvents = {};
 const mockAdapterWaitFor = jest.fn();
@@ -282,7 +280,7 @@ const mockDummyBackup: Models.Backup = {
     ]
 };
 
-const mockDummyBackupStoragePromise = Utils.BackupUtils.toUnifiedBackup(mockDummyBackup);
+let dummyBackup;
 
 jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
     return jest.fn().mockImplementation(() => {
@@ -449,6 +447,17 @@ const databaseContents = () => fs.readFileSync(options.databasePath).toString();
 
 describe('Controller', () => {
     let controller;
+    
+    beforeAll(async () => {
+        jest.useFakeTimers();
+        Date.now = jest.fn()
+        Date.now.mockReturnValue(150);
+        dummyBackup = await Utils.BackupUtils.toUnifiedBackup(mockDummyBackup);
+    });
+
+    afterAll(async () => {
+        jest.useRealTimers();
+    });
 
     beforeEach(async () => {
         // @ts-ignore
@@ -474,7 +483,6 @@ describe('Controller', () => {
         mocksRestore.forEach((m) => m.mockRestore());
         mocksClear.forEach((m) => m.mockClear());
         restoreMocksendZclFrameToEndpoint();
-        jest.useRealTimers();
     });
 
     it('Call controller constructor options mixed with default options', async () => {
@@ -518,8 +526,17 @@ describe('Controller', () => {
         }).toThrowError('PanID must have a value of 0x0001 (1) - 0xFFFE (65534), got 0.');
     });
 
+    it('Controller stop, should create backup', async () => {
+        await controller.start();
+        if (fs.existsSync(options.backupPath)) fs.unlinkSync(options.backupPath);
+        expect(controller.isStopping()).toBeFalsy();
+        await controller.stop();
+        expect(mockAdapterPermitJoin).toBeCalledWith(0, null);
+        expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(dummyBackup)));
+        expect(mockAdapterStop).toBeCalledTimes(1);
+    });
+
     it('Controller start', async () => {
-        jest.useFakeTimers();
         await controller.start();
         expect(mockAdapterStart).toBeCalledTimes(1);
         expect(deepClone(controller.getDevicesByType('Coordinator')[0])).toStrictEqual({
@@ -559,18 +576,8 @@ describe('Controller', () => {
                 _type: 'Coordinator',
                 meta: {}
         });
-        expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(await mockDummyBackupStoragePromise)));
+        expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(dummyBackup)));
         jest.advanceTimersByTime(86500000);
-    });
-
-    it('Controller stop, should create backup', async () => {
-        await controller.start();
-        if (fs.existsSync(options.backupPath)) fs.unlinkSync(options.backupPath);
-        expect(controller.isStopping()).toBeFalsy();
-        await controller.stop();
-        expect(mockAdapterPermitJoin).toBeCalledWith(0, null);
-        expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(await mockDummyBackupStoragePromise)));
-        expect(mockAdapterStop).toBeCalledTimes(1);
     });
 
     it('Controller update ieeeAddr if changed', async () => {
@@ -800,7 +807,6 @@ describe('Controller', () => {
     });
 
     it('Get device should return same instance', async () => {
-        jest.useFakeTimers();
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(controller.getDeviceByIeeeAddr('0x129')).toBe(controller.getDeviceByIeeeAddr('0x129'));
@@ -911,7 +917,6 @@ describe('Controller', () => {
     });
 
     it('Controller permit joining', async () => {
-        jest.useFakeTimers();
         await controller.start();
         await controller.permitJoin(true);
         expect(mockAdapterPermitJoin).toBeCalledTimes(1);
@@ -965,7 +970,6 @@ describe('Controller', () => {
     });
 
     it('Controller permit joining through specific device', async () => {
-        jest.useFakeTimers();
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await controller.permitJoin(true, controller.getDeviceByIeeeAddr('0x129'));
@@ -980,7 +984,6 @@ describe('Controller', () => {
     });
 
     it('Controller permit joining for specific time', async () => {
-        jest.useFakeTimers();
         mockAdapterSupportsLED.mockReturnValueOnce(false);
         await controller.start();
         await controller.permitJoin(true, null, 10);

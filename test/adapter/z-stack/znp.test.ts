@@ -112,6 +112,14 @@ const mocks = [
 describe('ZNP', () => {
     let znp;
 
+    beforeAll(async () => {
+        jest.useFakeTimers();
+    });
+
+    afterAll(async () => {
+        jest.useRealTimers();
+    });
+
     beforeEach(() => {
         for (let mock of mocks) {
             // @ts-ignore
@@ -120,8 +128,6 @@ describe('ZNP', () => {
 
         // @ts-ignore; make sure we always get a new instance
         znp = new Znp("/dev/ttyACM0", 100, true);
-
-        jest.useRealTimers();
     });
 
     it('Open', async () => {
@@ -658,7 +664,6 @@ describe('ZNP', () => {
     it('znp request timeout', async () => {
         await znp.open();
 
-        jest.useFakeTimers();
         let result = znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
         jest.runAllTimers();
 
@@ -675,7 +680,6 @@ describe('ZNP', () => {
     it('znp request timeout for startupFromApp is longer', async () => {
         await znp.open();
 
-        jest.useFakeTimers();
         let result = znp.request(UnpiConstants.Subsystem.ZDO, 'startupFromApp', {startdelay: 100});
         jest.advanceTimersByTime(30000);
 
@@ -700,7 +704,6 @@ describe('ZNP', () => {
 
         await znp.open();
 
-        jest.useFakeTimers();
         let result = znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
         jest.runAllTimers();
 
@@ -769,7 +772,7 @@ describe('ZNP', () => {
         expect(object.payload).toStrictEqual({len: 2, status: 0, value: Buffer.from([1, 2])});
     });
 
-    it('znp request, waitfor with payload mismatch', async (done) => {
+    it('znp request, waitfor with payload mismatch', (done) => {
         let parsedCb;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
@@ -777,27 +780,27 @@ describe('ZNP', () => {
             }
         });
 
-        await znp.open();
-
-        jest.useFakeTimers();
-        const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 3, value: Buffer.from([1, 3])});
-        znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
-
-        parsedCb(new UnpiFrame(
-            UnpiConstants.Type.SRSP,
-            UnpiConstants.Subsystem.SYS,
-            0x08,
-            Buffer.from([0x00, 0x02, 0x01, 0x02])
-        ));
-
-        waiter.start().promise
-            .then(() => done("Shouldn't end up here"))
-            .catch((e) => {
-                expect(e).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 10000ms"));
-                done();
-            });
-
-        jest.runAllTimers();
+        znp.open().then(() => {
+            const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 3, value: Buffer.from([1, 3])});
+            znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
+    
+            parsedCb(new UnpiFrame(
+                UnpiConstants.Type.SRSP,
+                UnpiConstants.Subsystem.SYS,
+                0x08,
+                Buffer.from([0x00, 0x02, 0x01, 0x02])
+            ));
+    
+    
+            waiter.start().promise
+                .then(() => done("Shouldn't end up here"))
+                .catch((e) => {
+                    expect(e).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 10000ms"));
+                    done();
+                });
+    
+            jest.runOnlyPendingTimers();
+        });
     });
 
     it('ZpiObject throw error on missing write parser', async () => {

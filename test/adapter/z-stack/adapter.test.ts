@@ -16,6 +16,7 @@ import {UnifiedBackupStorage} from "../../../src/models";
 import {ZnpAdapterManager} from "../../../src/adapter/z-stack/adapter/manager";
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+const mockSetTimeout = () => setTimeout = jest.fn().mockImplementation((r) => r());
 
 jest.mock('../../../src/utils/wait', () => {
     return jest.fn();
@@ -1121,7 +1122,13 @@ Znp.autoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
 describe("zstack-adapter", () => {
     let adapter: ZStackAdapter;
 
+    afterAll(async () => {
+        jest.useRealTimers();
+    });
+
     beforeEach(() => {
+        jest.useRealTimers();
+        jest.useFakeTimers();
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {concurrent: 3});
         mockZnpWaitForDefault();
         mocks.forEach((m) => m.mockRestore());
@@ -2280,6 +2287,7 @@ describe("zstack-adapter", () => {
         const objectMismatch = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()}};
         let error;
         try {
+            mockSetTimeout();
             const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 1, false, false);
             znpReceived(objectMismatch);
             await response;
