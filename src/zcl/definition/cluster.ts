@@ -2304,6 +2304,19 @@ const Cluster: {
                     {name: 'enable', type: DataType.uint8},
                 ]
             },
+            tuyaOnStartUp: {
+                ID: 249,
+                parameters: [
+                    {name: 'mode', type: DataType.uint16},
+                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+            tuyaDoNotDisturb: {
+                ID: 250,
+                parameters: [
+                    {name: 'enable', type: DataType.uint8},
+                ],
+            },
         },
         commandsResponse: {
         },
