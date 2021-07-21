@@ -456,9 +456,12 @@ class Driver extends events.EventEmitter {
                 req.reject("TIMEOUT");
                 if (timeoutCounter >= 2) {
                     timeoutCounter = 0;
-                    debug("to many timeouts - restart serial connecion");
-                    if (this.serialPort.isOpen) {
+                    debug("too many timeouts - restart serial connecion");
+                    if (this.serialPort?.isOpen) {
                         this.serialPort.close();
+                    }
+                    if (this.socketPort) {
+                        this.socketPort.destroy();
                     }
                     await this.open();
                 }
