@@ -64,6 +64,16 @@ describe('Z-Stack Structs', () => {
         expect(table.serialize("aligned").toString("hex")).toBe("0000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000feff00000000");
     });
 
+    it('should properly evaluate security manager table occupancy', () => {
+        const table = Structs.securityManagerTable(8);
+        table.free[6].ami = 0xfffe;
+        table.free[6].authenticationOption = 0x00;
+        table.free[7].ami = 0x0000;
+        table.free[7].authenticationOption = 0x00;
+        expect(table.freeCount).toBe(8);
+        expect(table.usedCount).toBe(0);
+    });
+
     it('should properly serialize unaligned and aligned table - without inline occupancy', () => {
         const table = Structs.nwkSecMaterialDescriptorTable(8);
         expect(table.serialize().toString("hex")).toBe("000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
