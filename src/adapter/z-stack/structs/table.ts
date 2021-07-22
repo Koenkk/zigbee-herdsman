@@ -140,7 +140,7 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      * 
      * @param hasInlineHeader Sets whether table has record count header.
      */
-    public inlineHeder(hasInlineHeader = true): this {
+    public inlineHeader(hasInlineHeader = true): this {
         this.hasInlineLengthHeader = hasInlineHeader;
         return this;
     }

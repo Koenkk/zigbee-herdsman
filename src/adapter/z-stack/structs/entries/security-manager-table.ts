@@ -16,7 +16,7 @@ export const securityManagerTable =
         const table = Table.new<ReturnType<typeof securityManagerEntry>>()
             .struct(securityManagerEntry)
             .occupancy(e => ![0xfffe, 0xffff].includes(e.ami) && !(e.ami === 0x0000 && e.authenticationOption === SecurityManagerAuthenticationOption.Default))
-            .inlineHeder();
+            .inlineHeader();
         return typeof dataOrCapacity === "number" ?
             table.build(dataOrCapacity) :
             table.build(dataOrCapacity, alignment);
