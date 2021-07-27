@@ -644,7 +644,7 @@ class Controller extends events.EventEmitter {
             if (type === 'readResponse' || type === 'attributeReport') {
                 // Some device report, e.g. it's modelID through a readResponse or attributeReport
                 for (const [key, value] of Object.entries(data)) {
-                    const property =  Device.ReportablePropertiesMapping[key];
+                    const property = Device.ReportablePropertiesMapping[key];
                     if (property && !device[property.key]) {
                         property.set(value, device);
                     }

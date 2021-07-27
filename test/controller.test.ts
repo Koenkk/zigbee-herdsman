@@ -218,6 +218,14 @@ const mockDevices = {
             12: {modelId: 'GL-C-008', manufacturerName: 'Gledopto', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
         },
     },
+    173: {
+        nodeDescriptor: {type: 'EndDevice', manufacturerCode: 0},
+        activeEndpoints: {endpoints: [1]},
+        simpleDescriptor: 'error',
+        attributes: {
+            1: {modelId: 'TS0203', manufacturerName: '_TYZB01_xph99wvr'},
+        },
+    },
 }
 
 const mockZclFrame = ZclFrame;
@@ -328,6 +336,10 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
                 }
             },
             simpleDescriptor: (networkAddress, endpoint) => {
+                if (mockDevices[networkAddress].simpleDescriptor === 'error') {
+                    throw new Error('timeout');
+                }
+
                 if (mockDevices[networkAddress].simpleDescriptor[endpoint] === undefined) {
                     throw new Error('Simple descriptor failed');
                 }
@@ -1827,6 +1839,20 @@ describe('Controller', () => {
         });
 
         expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+    });
+
+    it('TuYa end devices joins, stops responding after 2 - 3 requests, should read modelID and manufacturerName immediately', async () => {
+        // https://github.com/Koenkk/zigbee2mqtt/issues/7553
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 173, ieeeAddr: '0x173'});
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe('started')
+        expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x173')
+        expect(events.deviceInterview[1].status).toBe('successful')
+        expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x173')
+        expect(controller.getDeviceByIeeeAddr('0x173').modelID).toBe('TS0203')
+        expect(controller.getDeviceByIeeeAddr('0x173').manufacturerName).toBe('_TYZB01_xph99wvr')
+        expect(controller.getDeviceByIeeeAddr('0x173').powerSource).toBe('Battery')
     });
 
     it('Xiaomi WXCJKG11LM join (get simple descriptor for endpoint 2 fails)', async () => {

@@ -372,6 +372,24 @@ class Device extends Entity {
     }
 
     private interviewQuirks(): boolean {
+        // TuYa end devices are typically hard to interview. They also don't require a full interview to work correctly
+        // e.g. no ias enrolling is required for the devices to work.
+        // Assume that in case we got both the manufacturerName and modelID the device works correctly.
+        // https://github.com/Koenkk/zigbee2mqtt/issues/7564:
+        //      Fails during ias enroll due to UNSUPPORTED_ATTRIBUTE
+        // https://github.com/Koenkk/zigbee2mqtt/issues/4655
+        //      Device does not change zoneState after enroll (event with original gateway)
+        // modelID is mostly in the form of e.g. TS0202 and manufacturerName like e.g. _TYZB01_xph99wvr
+        if (this.modelID && this.modelID.match('^TS\\d*$') && this.type === 'EndDevice' && this.manufacturerName &&
+            this.manufacturerName.match('^_TYZB01_.*$')) {
+            debug.log(`Interview procedure failed but got enough for TuYa end device`);
+            this._powerSource = 'Battery';
+            this._interviewing = false;
+            this._interviewCompleted = true;
+            this.save();
+            return true;
+        }
+
         // Some devices, e.g. Xiaomi end devices have a different interview procedure, after pairing they
         // report it's modelID trough a readResponse. The readResponse is received by the controller and set
         // on the device.
@@ -384,15 +402,8 @@ class Device extends Entity {
             'TERNCY-PP01': {
                 type: 'EndDevice', manufacturerID: 4648, manufacturerName: 'TERNCY', powerSource: 'Battery'
             },
-            // Device does not change zoneState after enroll (event with original gateway);['''''
-            // below prevents interview from failing
-            // https://github.com/Koenkk/zigbee2mqtt/issues/4655
-            'TS0216': {},
             // https://github.com/Koenkk/zigbee-herdsman-converters/pull/2710
             '3RWS18BZ': {},
-            // Fails during ias enroll due to UNSUPPORTED_ATTRIBUTE
-            // https://github.com/Koenkk/zigbee2mqtt/issues/7564
-            'TS0202': {},
             'MULTI-MECI--EA01': {},
         };
 
@@ -447,8 +458,23 @@ class Device extends Entity {
         if (this.manufacturerID === 4619 && this._type === 'EndDevice') {
             // Give TuYa end device some time to pair. Otherwise they leave immediately.
             // https://github.com/Koenkk/zigbee2mqtt/issues/5814
-            debug.log("Detected TuYa end device, waiting 10 seconds...");
+            debug.log("Interview - Detected TuYa end device, waiting 10 seconds...");
             await Wait(10000);
+        } else if (this.manufacturerID === 0 && this._type === 'EndDevice') {
+            // Potentially a TuYa device, some sleep fast so make sure to read the modelId and manufacturerName quickly.
+            // In case the device responds, the endoint and modelID/manufacturerName are set
+            // in controller.onZclOrRawData()
+            // https://github.com/Koenkk/zigbee2mqtt/issues/7553
+            debug.log("Interview - Detected potential TuYa end device, reading modelID and manufacturerName...");
+            try {
+                const endpoint = Endpoint.create(1, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
+                const result = await endpoint.read('genBasic', ['modelId', 'manufacturerName']);
+                Object.entries(result)
+                    .forEach((entry) => Device.ReportablePropertiesMapping[entry[0]].set(entry[1], this));
+            } catch (error) {
+                /* istanbul ignore next */
+                debug.log(`Interview - TuYa read modelID and manufacturerName failed (${error})`);
+            }
         }
 
         // e.g. Xiaomi Aqara Opple devices fail to respond to the first active endpoints request, therefore try 2 times
@@ -472,9 +498,8 @@ class Device extends Entity {
         // Some devices, e.g. TERNCY return endpoint 0 in the active endpoints request.
         // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
         // into an error. Therefore we filter it, more info: https://github.com/Koenkk/zigbee-herdsman/issues/82
-        this._endpoints = activeEndpoints.endpoints.filter((e) => e !== 0).map((e): Endpoint => {
-            return Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
-        });
+        activeEndpoints.endpoints.filter((e) => e !== 0 && !this.getEndpoint(e)).forEach((e) =>
+            this._endpoints.push(Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr)));
         this.save();
         debug.log(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
