@@ -591,7 +591,7 @@ class Controller extends events.EventEmitter {
                 `'${dataType}' data is from unknown endpoint '${dataPayload.endpoint}' from device with ` +
                 `network address '${dataPayload.address}', creating it...`
             );
-            endpoint = await device.createEndpoint(dataPayload.endpoint);
+            endpoint = device.createEndpoint(dataPayload.endpoint);
         }
 
         // Parse command for event

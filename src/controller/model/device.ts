@@ -143,7 +143,7 @@ class Device extends Entity {
         this._lastSeen = lastSeen;
     }
 
-    public async createEndpoint(ID: number): Promise<Endpoint> {
+    public createEndpoint(ID: number): Endpoint {
         if (this.getEndpoint(ID)) {
             throw new Error(`Device '${this.ieeeAddr}' already has an endpoint '${ID}'`);
         }
