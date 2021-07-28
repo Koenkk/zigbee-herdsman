@@ -24,7 +24,7 @@ class Group extends Entity {
     private databaseID: number;
     public readonly groupID: number;
     private readonly _members: Set<Endpoint>;
-    get members(): Endpoint[] {return Array.from(this._members);}
+    get members(): Endpoint[] {return Array.from(this._members).filter((e) => e.getDevice());}
     // Can be used by applications to store data.
     public readonly meta: KeyValue;
 
