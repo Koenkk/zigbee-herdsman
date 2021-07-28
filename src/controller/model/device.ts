@@ -48,6 +48,7 @@ class Device extends Entity {
     private _zclVersion?: number;
     private _linkquality?: number;
     private _skipDefaultResponse: boolean;
+    private _skipTimeResponse: boolean;
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -90,6 +91,8 @@ class Device extends Entity {
     set linkquality(linkquality: number) {this._linkquality = linkquality;}
     get skipDefaultResponse(): boolean {return this._skipDefaultResponse;}
     set skipDefaultResponse(skipDefaultResponse: boolean) {this._skipDefaultResponse = skipDefaultResponse;}
+    get skipTimeResponse(): boolean {return this._skipTimeResponse;}
+    set skipTimeResponse(skipTimeResponse: boolean) {this._skipTimeResponse = skipTimeResponse;}
 
     private meta: KeyValue;
 
@@ -139,6 +142,7 @@ class Device extends Entity {
         this._interviewCompleted = interviewCompleted;
         this._interviewing = false;
         this._skipDefaultResponse = false;
+        this._skipTimeResponse = false;
         this.meta = meta;
         this._lastSeen = lastSeen;
     }
@@ -192,7 +196,7 @@ class Device extends Entity {
                 }},
             };
 
-            if (frame.Cluster.name in attributes) {
+            if (frame.Cluster.name in attributes && (frame.Cluster.name !== 'genTime' || !this._skipTimeResponse)) {
                 const response: KeyValue = {};
                 for (const entry of frame.Payload) {
                     const name = frame.Cluster.getAttribute(entry.attrId).name;
