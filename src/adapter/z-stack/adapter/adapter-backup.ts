@@ -96,7 +96,7 @@ export class AdapterBackup {
         this.debug("fetched adapter security manager table");
         const apsLinkKeyDataTable = await this.getApsLinkKeyDataTable(version);
         this.debug("fetched adapter aps link key data table");
-        const tclkSeed = await this.nv.readItem(NvItemsIds.TCLK_SEED, 0, Structs.nwkKey);
+        const tclkSeed = version === ZnpVersion.zStack12 ? null : await this.nv.readItem(NvItemsIds.TCLK_SEED, 0, Structs.nwkKey);
         this.debug("fetched adapter tclk seed");
         const tclkTable = await this.getTclkTable(version);
         this.debug("fetched adapter tclk table");
