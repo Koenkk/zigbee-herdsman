@@ -119,7 +119,7 @@ export class AdapterBackup {
         if (!secMaterialDescriptor) {
             secMaterialDescriptor = Structs.nwkSecMaterialDescriptorEntry();
             secMaterialDescriptor.extendedPanID = nib.extendedPANID;
-            secMaterialDescriptor.FrameCounter = 1250;
+            secMaterialDescriptor.FrameCounter = version === ZnpVersion.zStack12 ? 0 : 1250;
         }
 
         /* return backup structure */
@@ -196,6 +196,7 @@ export class AdapterBackup {
     public async restoreBackup(backup: Models.Backup): Promise<void> {
         this.debug("restoring backup");
         const version: ZnpVersion = await this.getAdapterVersion();
+        /* istanbul ignore next */
         if (version === ZnpVersion.zStack12) {
             throw new Error("backup cannot be restored on Z-Stack 1.2 adapter");
         }
