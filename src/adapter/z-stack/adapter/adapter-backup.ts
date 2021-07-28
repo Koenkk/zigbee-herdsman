@@ -73,7 +73,15 @@ export class AdapterBackup {
         this.debug("fetched adapter nib");
 
         /* get adapter active key information */
-        const activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
+        let activeKeyInfo;
+        if (version === ZnpVersion.zStack12) {
+            const key = Structs.nwkKey((await this.znp.request(Subsystem.SAPI, "readConfiguration", {configid: NvItemsIds.PRECFGKEY})).payload.value);
+            activeKeyInfo = Structs.nwkKeyDescriptor();
+            activeKeyInfo.key = key.key;
+        } else {
+            activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
+        }
+
         if (!activeKeyInfo) {
             throw new Error("Cannot backup - missing active key info");
         }
@@ -188,6 +196,9 @@ export class AdapterBackup {
     public async restoreBackup(backup: Models.Backup): Promise<void> {
         this.debug("restoring backup");
         const version: ZnpVersion = await this.getAdapterVersion();
+        if (version === ZnpVersion.zStack12) {
+            throw new Error("backup cannot be restored on Z-Stack 1.2 adapter");
+        }
 
         /* fetch provisional NIB */
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
@@ -360,10 +371,6 @@ export class AdapterBackup {
     private async getAdapterVersion(): Promise<ZnpVersion> {
         const versionResponse = await this.znp.request(Subsystem.SYS, "version", {});
         const version: ZnpVersion = versionResponse.payload.product;
-        /* istanbul ignore next */
-        if (version === ZnpVersion.zStack12) {
-            throw new Error("Backup is not supported for Z-Stack 1.2");
-        }
         return version;
     }
 
