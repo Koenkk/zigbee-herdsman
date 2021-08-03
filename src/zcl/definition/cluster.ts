@@ -2704,6 +2704,8 @@ const Cluster: {
                 parameters: [
                     {name: 'startwarninginfo', type: DataType.uint8},
                     {name: 'warningduration', type: DataType.uint16},
+                    {name: 'strobedutycycle', type: DataType.uint8},
+                    {name: 'strobelevel', type: DataType.uint8},
                 ],
             },
             squawk: {
