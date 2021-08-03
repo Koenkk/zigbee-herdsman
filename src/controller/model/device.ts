@@ -222,8 +222,10 @@ class Device extends Entity {
         if (!dataPayload.wasBroadcast && !disableDefaultResponse && !isDefaultResponse && !commandHasResponse &&
             !this._skipDefaultResponse) {
             try {
+                const direction = frame.Header.frameControl.direction === Zcl.Direction.CLIENT_TO_SERVER ?
+                    Zcl.Direction.SERVER_TO_CLIENT : Zcl.Direction.CLIENT_TO_SERVER;
                 await endpoint.defaultResponse(
-                    frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
+                    frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber, {direction}
                 );
             } catch (error) {
                 debug.error(`Default response to ${this.ieeeAddr} failed`);
