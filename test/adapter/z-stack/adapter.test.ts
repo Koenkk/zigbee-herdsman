@@ -1601,7 +1601,7 @@ describe("zstack-adapter", () => {
             error: mockLoggerError
         };
 
-        adapter = new ZStackAdapter(networkOptionsMismatched, serialPortOptions, backupFile, {concurrent: 3, runInconsistent: true}, mockLogger);
+        adapter = new ZStackAdapter(networkOptionsMismatched, serialPortOptions, backupFile, {concurrent: 3, forceStartWithInconsistentAdapterConfiguration: true}, mockLogger);
         mockZnpRequestWith(commissioned3AlignedRequestMock);
         const result = await adapter.start();
         expect(result).toBe("resumed");
@@ -1613,6 +1613,7 @@ describe("zstack-adapter", () => {
         expect(mockLoggerError.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
         expect(mockLoggerError.mock.calls[6][0]).toMatch(`If you wish to re\-commission your network, please remove coordinator backup at ${backupFile}`);
         expect(mockLoggerError.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
+        expect(mockLoggerError.mock.calls[8][0]).toBe("Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.");
     });
 
     it("should start with 3.0.x adapter - backward-compat - reversed extended pan id", async () => {
