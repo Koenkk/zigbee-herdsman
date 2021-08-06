@@ -1586,6 +1586,36 @@ describe("zstack-adapter", () => {
         expect(mockLoggerError.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
     });
 
+    it("should start with runInconsistent option with 3.0.x adapter - commissioned, config-adapter mismatch", async () => {
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
+
+        const mockLoggerDebug = jest.fn();
+        const mockLoggerInfo = jest.fn();
+        const mockLoggerWarn = jest.fn();
+        const mockLoggerError = jest.fn();
+        const mockLogger: LoggerStub = {
+            debug: mockLoggerDebug,
+            info: mockLoggerInfo,
+            warn: mockLoggerWarn,
+            error: mockLoggerError
+        };
+
+        adapter = new ZStackAdapter(networkOptionsMismatched, serialPortOptions, backupFile, {concurrent: 3, forceStartWithInconsistentAdapterConfiguration: true}, mockLogger);
+        mockZnpRequestWith(commissioned3AlignedRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+        expect(mockLoggerError.mock.calls[0][0]).toBe("Configuration is not consistent with adapter state/backup!");
+        expect(mockLoggerError.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
+        expect(mockLoggerError.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
+        expect(mockLoggerError.mock.calls[3][0]).toBe("- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d");
+        expect(mockLoggerError.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
+        expect(mockLoggerError.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
+        expect(mockLoggerError.mock.calls[6][0]).toMatch(`If you wish to re\-commission your network, please remove coordinator backup at ${backupFile}`);
+        expect(mockLoggerError.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
+        expect(mockLoggerError.mock.calls[8][0]).toBe("Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.");
+    });
+
     it("should start with 3.0.x adapter - backward-compat - reversed extended pan id", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");

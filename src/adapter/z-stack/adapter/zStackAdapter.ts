@@ -130,7 +130,8 @@ class ZStackAdapter extends Adapter {
                 backupPath: this.backupPath,
                 version: this.version.product,
                 greenPowerGroup: this.greenPowerGroup,
-                networkOptions: this.networkOptions
+                networkOptions: this.networkOptions,
+                adapterOptions: this.adapterOptions,
             },
             this.logger
         );

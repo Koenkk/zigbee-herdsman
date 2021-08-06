@@ -17,6 +17,7 @@ interface AdapterOptions {
     concurrent?: number;
     delay?: number;
     disableLED: boolean;
+    forceStartWithInconsistentAdapterConfiguration?: boolean;
 }
 
 interface CoordinatorVersion {

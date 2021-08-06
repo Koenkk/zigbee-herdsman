@@ -222,7 +222,12 @@ export class ZnpAdapterManager {
                         this.logger.error(`Please update configuration to prevent further issues.`);
                         this.logger.error(`If you wish to re-commission your network, please remove coordinator backup at ${this.options.backupPath}.`);
                         this.logger.error(`Re-commissioning your network will require re-pairing of all devices!`);
-                        throw new Error("startup failed - configuration-adapter mismatch - see logs above for more information");
+                        if (this.options.adapterOptions.forceStartWithInconsistentAdapterConfiguration) {
+                            this.logger.error(`Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.`);
+                            return "startup";
+                        } else {
+                            throw new Error("startup failed - configuration-adapter mismatch - see logs above for more information");
+                        }
                     } else {
                         /* Backup does not match adapter state */
                         this.debug.strategy("(stage-4) adapter state does not match backup");
