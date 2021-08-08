@@ -63,10 +63,18 @@ class GreenPower extends events.EventEmitter {
 
             await this.adapter.sendZclFrameToAll(242, frame, 242);
 
+            const greenPowerPayload = new Array(
+                dataPayload.frame.Payload.options,
+                dataPayload.frame.Payload.payloadSize,
+                dataPayload.frame.Payload.commandFrame.options,
+                dataPayload.frame.Payload.commandFrame.extendedOptions,
+            );
+
             const eventData: GreenPowerDeviceJoinedPayload = {
                 sourceID: dataPayload.frame.Payload.srcID,
                 deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
                 networkAddress: dataPayload.address,
+                greenPowerKey: greenPowerPayload.join('.'),
             };
 
             this.emit(GreenPowerEvents.deviceJoined, eventData);

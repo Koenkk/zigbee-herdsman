@@ -32,6 +32,7 @@ class Device extends Entity {
     private _applicationVersion?: number;
     private _dateCode?: string;
     private _endpoints: Endpoint[];
+    private _greenPowerKey?: string;
     private _hardwareVersion?: number;
     private _ieeeAddr: string;
     private _interviewCompleted: boolean;
@@ -56,6 +57,8 @@ class Device extends Entity {
     get applicationVersion(): number {return this._applicationVersion;}
     set applicationVersion(applicationVersion: number) {this._applicationVersion = applicationVersion;}
     get endpoints(): Endpoint[] {return this._endpoints;}
+    get greenPowerKey(): string {return this._greenPowerKey;}
+    set greenPowerKey(greenPowerKey: string) {this._greenPowerKey = greenPowerKey;}
     get interviewCompleted(): boolean {return this._interviewCompleted;}
     get interviewing(): boolean {return this._interviewing;}
     get lastSeen(): number {return this._lastSeen;}
@@ -103,7 +106,7 @@ class Device extends Entity {
     public static readonly ReportablePropertiesMapping: {[s: string]: {
         set: (value: string | number, device: Device) => void;
         key: 'modelID' | 'manufacturerName' | 'applicationVersion' | 'zclVersion' | 'powerSource' | 'stackVersion' |
-            'dateCode' | 'softwareBuildID' | 'hardwareVersion';
+            'dateCode' | 'softwareBuildID' | 'hardwareVersion' | 'greenPowerKey';
     };} = {
         modelId: {key: 'modelID', set: (v: string, d: Device): void => {d.modelID = v;}},
         manufacturerName: {key: 'manufacturerName', set: (v: string, d: Device): void => {d.manufacturerName = v;}},
@@ -114,6 +117,7 @@ class Device extends Entity {
         hwVersion: {key: 'hardwareVersion', set: (v: number, d: Device): void => {d.hardwareVersion = v;}},
         dateCode: {key: 'dateCode', set: (v: string, d: Device): void => {d.dateCode = v;}},
         swBuildId: {key: 'softwareBuildID', set: (v: string, d: Device): void => {d.softwareBuildID = v;}},
+        greenPowerKey: {key: 'greenPowerKey', set: (v: string, d: Device): void => {d.greenPowerKey = v;}},
     };
 
     private constructor(
@@ -121,7 +125,7 @@ class Device extends Entity {
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
-        lastSeen: number,
+        lastSeen: number, greenPowerKey?: string,
     ) {
         super();
         this.ID = ID;
@@ -145,6 +149,7 @@ class Device extends Entity {
         this._skipTimeResponse = false;
         this.meta = meta;
         this._lastSeen = lastSeen;
+        this._greenPowerKey = greenPowerKey;
     }
 
     public createEndpoint(ID: number): Endpoint {
@@ -252,7 +257,7 @@ class Device extends Entity {
             entry.id, entry.type, ieeeAddr, networkAddress, entry.manufId, endpoints,
             entry.manufName, entry.powerSource, entry.modelId, entry.appVersion,
             entry.stackVersion, entry.zclVersion, entry.hwVersion, entry.dateCode, entry.swBuildId,
-            entry.interviewCompleted, meta, entry.lastSeen || null,
+            entry.interviewCompleted, meta, entry.lastSeen || null, entry.greenPowerKey || null,
         );
     }
 
@@ -269,7 +274,7 @@ class Device extends Entity {
             modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion,
             stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
             swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
-            meta: this.meta, lastSeen: this.lastSeen,
+            meta: this.meta, lastSeen: this.lastSeen, greenPowerKey: this.greenPowerKey,
         };
     }
 
@@ -315,6 +320,7 @@ class Device extends Entity {
         endpoints: {
             ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
         }[],
+        greenPowerKey?: string,
     ): Device {
         Device.loadFromDatabaseIfNecessary();
         if (Device.devices[ieeeAddr]) {
@@ -331,7 +337,7 @@ class Device extends Entity {
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
-            interviewCompleted, {}, null,
+            interviewCompleted, {}, null, greenPowerKey,
         );
 
         Entity.database.insert(device.toDatabaseEntry());
