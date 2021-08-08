@@ -222,9 +222,7 @@ const mockDevices = {
         nodeDescriptor: {type: 'EndDevice', manufacturerCode: 0},
         activeEndpoints: {endpoints: [1]},
         simpleDescriptor: 'error',
-        attributes: {
-            1: {modelId: 'TS0203', manufacturerName: '_TYZB01_xph99wvr'},
-        },
+        attributes: {},
     },
 }
 
@@ -1867,15 +1865,34 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
     });
 
-    it('TuYa end devices joins, stops responding after 2 - 3 requests, should read modelID and manufacturerName immediately', async () => {
+    it('TuYa end devices joins, stops responding after 1 requests, should read modelID and manufacturerName immediately on second pair', async () => {
         // https://github.com/Koenkk/zigbee2mqtt/issues/7553
         await controller.start();
+
+        // Joins
         await mockAdapterEvents['deviceJoined']({networkAddress: 173, ieeeAddr: '0x173'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started')
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x173')
-        expect(events.deviceInterview[1].status).toBe('successful')
+        expect(events.deviceInterview[1].status).toBe('failed')
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x173')
+        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(controller.getDeviceByIeeeAddr('0x173').modelID).toBe(undefined)
+        expect(controller.getDeviceByIeeeAddr('0x173').manufacturerName).toBe(undefined)
+
+        // Second pair attempt
+        await mockAdapterEvents['deviceLeave']({networkAddress: 173, ieeeAddr: '0x173'});
+        mockDevices[173].nodeDescriptor = 'error';
+        mockDevices[173].attributes[1] = {modelId: 'TS0203', manufacturerName: '_TYZB01_xph99wvr'};
+
+        await mockAdapterEvents['deviceJoined']({networkAddress: 173, ieeeAddr: '0x173'});
+        expect(events.deviceInterview.length).toBe(4);
+        expect(events.deviceInterview[2].status).toBe('started')
+        expect(events.deviceInterview[2].device._ieeeAddr).toBe('0x173')
+        expect(events.deviceInterview[3].status).toBe('successful')
+        expect(events.deviceInterview[3].device._ieeeAddr).toBe('0x173')
+        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(2);
+
         expect(controller.getDeviceByIeeeAddr('0x173').modelID).toBe('TS0203')
         expect(controller.getDeviceByIeeeAddr('0x173').manufacturerName).toBe('_TYZB01_xph99wvr')
         expect(controller.getDeviceByIeeeAddr('0x173').powerSource).toBe('Battery')

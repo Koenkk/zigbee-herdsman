@@ -5,6 +5,7 @@ import Entity from './entity';
 import {Wait} from '../../utils';
 import Debug from "debug";
 import * as Zcl from '../../zcl';
+import assert from 'assert';
 
 /**
  * @ignore
@@ -49,6 +50,7 @@ class Device extends Entity {
     private _linkquality?: number;
     private _skipDefaultResponse: boolean;
     private _skipTimeResponse: boolean;
+    private _deleted: boolean;
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -60,6 +62,7 @@ class Device extends Entity {
     get interviewing(): boolean {return this._interviewing;}
     get lastSeen(): number {return this._lastSeen;}
     get manufacturerID(): number {return this._manufacturerID;}
+    get isDeleted(): boolean {return this._deleted;}
     set type(type: DeviceType) {this._type = type;}
     get type(): DeviceType {return this._type;}
     get dateCode(): string {return this._dateCode;}
@@ -288,24 +291,29 @@ class Device extends Entity {
         }
     }
 
-    public static byIeeeAddr(ieeeAddr: string): Device {
+    public static byIeeeAddr(ieeeAddr: string, includeDeleted=false): Device {
         Device.loadFromDatabaseIfNecessary();
-        return Device.devices[ieeeAddr];
+        const device = Device.devices[ieeeAddr];
+        return device?._deleted && !includeDeleted ? undefined : device;
     }
 
     public static byNetworkAddress(networkAddress: number): Device {
-        Device.loadFromDatabaseIfNecessary();
-        return Object.values(Device.devices).find(d => d.networkAddress === networkAddress);
+        return Device.all().find(d => d.networkAddress === networkAddress);
     }
 
     public static byType(type: DeviceType): Device[] {
-        Device.loadFromDatabaseIfNecessary();
-        return Object.values(Device.devices).filter(d => d.type === type);
+        return Device.all().filter(d => d.type === type);
     }
 
     public static all(): Device[] {
         Device.loadFromDatabaseIfNecessary();
-        return Object.values(Device.devices);
+        return Object.values(Device.devices).filter(d => !d._deleted);
+    }
+
+    public undelete(): void {
+        assert(this._deleted, `Device '${this.ieeeAddr}' is not deleted`);
+        this._deleted = false;
+        Entity.database.insert(this.toDatabaseEntry());
     }
 
     public static create(
@@ -317,7 +325,7 @@ class Device extends Entity {
         }[],
     ): Device {
         Device.loadFromDatabaseIfNecessary();
-        if (Device.devices[ieeeAddr]) {
+        if (Device.devices[ieeeAddr] && !Device.devices[ieeeAddr]._deleted) {
             throw new Error(`Device with ieeeAddr '${ieeeAddr}' already exists`);
         }
 
@@ -437,25 +445,30 @@ class Device extends Entity {
             debug.log(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         };
 
-        let gotNodeDescriptor = false;
-        for (let attempt = 0; attempt < 6; attempt++) {
-            try {
-                await nodeDescriptorQuery();
-                gotNodeDescriptor = true;
-                break;
-            } catch (error) {
-                if (this.interviewQuirks()) {
-                    debug.log(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${error}')`);
-                    return;
-                } else {
-                    // Most of the times the first node descriptor query fails and the seconds one succeeds.
-                    debug.log(
-                        `Interview - node descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`
-                    );
+        const hasNodeDescriptor = (): boolean => this._manufacturerID != null && this._type != null;
+
+        if (!hasNodeDescriptor()) {
+            for (let attempt = 0; attempt < 6; attempt++) {
+                try {
+                    await nodeDescriptorQuery();
+                    break;
+                } catch (error) {
+                    if (this.interviewQuirks()) {
+                        debug.log(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${error}')`);
+                        return;
+                    } else {
+                        // Most of the times the first node descriptor query fails and the seconds one succeeds.
+                        debug.log(
+                            `Interview - node descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`
+                        );
+                    }
                 }
             }
+        } else {
+            debug.log(`Interview - skip node descriptor request for '${this.ieeeAddr}', already got it`);
         }
-        if (!gotNodeDescriptor) {
+
+        if (!hasNodeDescriptor()) {
             throw new Error(`Interview failed because can not get node descriptor ('${this.ieeeAddr}')`);
         }
 
@@ -617,7 +630,7 @@ class Device extends Entity {
             Entity.database.remove(this.ID);
         }
 
-        delete Device.devices[this.ieeeAddr];
+        this._deleted = true;
     }
 
     public async lqi(): Promise<LQI> {

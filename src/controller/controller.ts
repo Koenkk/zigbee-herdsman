@@ -503,7 +503,7 @@ class Controller extends events.EventEmitter {
             }
         }
 
-        let device = Device.byIeeeAddr(payload.ieeeAddr);
+        let device = Device.byIeeeAddr(payload.ieeeAddr, true);
         if (!device) {
             debug.log(`New device '${payload.ieeeAddr}' joined`);
             debug.log(`Creating device '${payload.ieeeAddr}'`);
@@ -514,7 +514,12 @@ class Controller extends events.EventEmitter {
 
             const eventData: Events.DeviceJoinedPayload = {device};
             this.emit(Events.Events.deviceJoined, eventData);
-        } else if (device.networkAddress !== payload.networkAddress) {
+        } else if (device.isDeleted) {
+            debug.log(`Delete device '${payload.ieeeAddr}' joined, undeleting`);
+            device.undelete();
+        }
+
+        if (device.networkAddress !== payload.networkAddress) {
             debug.log(
                 `Device '${payload.ieeeAddr}' is already in database with different networkAddress, ` +
                 `updating networkAddress`
