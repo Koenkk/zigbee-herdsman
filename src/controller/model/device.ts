@@ -58,7 +58,6 @@ class Device extends Entity {
     set applicationVersion(applicationVersion: number) {this._applicationVersion = applicationVersion;}
     get endpoints(): Endpoint[] {return this._endpoints;}
     get greenPowerKey(): string {return this._greenPowerKey;}
-    set greenPowerKey(greenPowerKey: string) {this._greenPowerKey = greenPowerKey;}
     get interviewCompleted(): boolean {return this._interviewCompleted;}
     get interviewing(): boolean {return this._interviewing;}
     get lastSeen(): number {return this._lastSeen;}
@@ -106,7 +105,7 @@ class Device extends Entity {
     public static readonly ReportablePropertiesMapping: {[s: string]: {
         set: (value: string | number, device: Device) => void;
         key: 'modelID' | 'manufacturerName' | 'applicationVersion' | 'zclVersion' | 'powerSource' | 'stackVersion' |
-            'dateCode' | 'softwareBuildID' | 'hardwareVersion' | 'greenPowerKey';
+            'dateCode' | 'softwareBuildID' | 'hardwareVersion';
     };} = {
         modelId: {key: 'modelID', set: (v: string, d: Device): void => {d.modelID = v;}},
         manufacturerName: {key: 'manufacturerName', set: (v: string, d: Device): void => {d.manufacturerName = v;}},
@@ -117,7 +116,6 @@ class Device extends Entity {
         hwVersion: {key: 'hardwareVersion', set: (v: number, d: Device): void => {d.hardwareVersion = v;}},
         dateCode: {key: 'dateCode', set: (v: string, d: Device): void => {d.dateCode = v;}},
         swBuildId: {key: 'softwareBuildID', set: (v: string, d: Device): void => {d.softwareBuildID = v;}},
-        greenPowerKey: {key: 'greenPowerKey', set: (v: string, d: Device): void => {d.greenPowerKey = v;}},
     };
 
     private constructor(
@@ -268,14 +266,20 @@ class Device extends Entity {
             endpoints[endpoint.ID] = endpoint.toDatabaseRecord();
         }
 
-        return {
+        const entry: DatabaseEntry = {
             id: this.ID, type: this.type, ieeeAddr: this.ieeeAddr, nwkAddr: this.networkAddress,
             manufId: this.manufacturerID, manufName: this.manufacturerName, powerSource: this.powerSource,
             modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion,
             stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
             swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
-            meta: this.meta, lastSeen: this.lastSeen, greenPowerKey: this.greenPowerKey,
+            meta: this.meta, lastSeen: this.lastSeen,
         };
+
+        if (this.greenPowerKey != null) {
+            entry.greenPowerKey = this.greenPowerKey;
+        }
+
+        return entry;
     }
 
     public save(): void {
