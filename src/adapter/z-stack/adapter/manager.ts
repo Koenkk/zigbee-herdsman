@@ -72,7 +72,13 @@ export class ZnpAdapterManager {
             break;
         }
         case "restoreBackup": {
-            await this.beginRestore();
+            if (this.options.version === ZnpVersion.zStack12) {
+                this.debug.startup(`performing recommissioning instead of restore for z-stack 1.2`);
+                await this.beginCommissioning(this.nwkOptions);
+                await this.beginStartup();
+            } else {
+                await this.beginRestore();
+            }
             result = "restored";
             break;
         }
@@ -110,16 +116,24 @@ export class ZnpAdapterManager {
         const hasConfiguredNvId = this.options.version === ZnpVersion.zStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3;
         const hasConfigured = await this.nv.readItem(hasConfiguredNvId, 0, Structs.hasConfigured);
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
-        const activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
-        const alternateKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ALTERN_KEY_INFO, 0, Structs.nwkKeyDescriptor);
         const preconfiguredKey = this.options.version === ZnpVersion.zStack12 ?
             Structs.nwkKey((await this.znp.request(Subsystem.SAPI, "readConfiguration", {configid: NvItemsIds.PRECFGKEY})).payload.value) :
             await this.nv.readItem(NvItemsIds.PRECFGKEY, 0, Structs.nwkKey);
+        let activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
+        let alternateKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ALTERN_KEY_INFO, 0, Structs.nwkKeyDescriptor);
+
+        /* Z-Stack 1.2 does not provide key info entries */
+        if (this.options.version === ZnpVersion.zStack12) {
+            activeKeyInfo = Structs.nwkKeyDescriptor();
+            activeKeyInfo.key = Buffer.from(preconfiguredKey.key);
+            alternateKeyInfo = Structs.nwkKeyDescriptor();
+            alternateKeyInfo.key = Buffer.from(preconfiguredKey.key);
+        }
 
         /* get backup if available and supported by target */
-        const backup = this.options.version === ZnpVersion.zStack12 ? undefined : await this.backup.getStoredBackup();
+        const backup = await this.backup.getStoredBackup();
 
-        /* Special treatment for incorrectly reversed Extended PAN IDs from previous releases */
+        /* special treatment for incorrectly reversed Extended PAN IDs from previous releases */
         const isExtendedPanIdReversed = nib && this.nwkOptions.extendedPanId.equals(Buffer.from(nib.extendedPANID).reverse());
 
         /* istanbul ignore next */
@@ -135,8 +149,8 @@ export class ZnpAdapterManager {
                 this.nwkOptions.hasDefaultExtendedPanId
             ) &&
             this.nwkOptions.networkKey.equals(preconfiguredKey.key) &&
-            (this.options.version === ZnpVersion.zStack12 || this.nwkOptions.networkKey.equals(activeKeyInfo.key)) &&
-            (this.options.version === ZnpVersion.zStack12 || this.nwkOptions.networkKey.equals(alternateKeyInfo.key))
+            this.nwkOptions.networkKey.equals(activeKeyInfo.key) &&
+            this.nwkOptions.networkKey.equals(alternateKeyInfo.key)
         );
 
         const backupMatchesAdapter = (
@@ -153,6 +167,12 @@ export class ZnpAdapterManager {
             Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions, true)
         );
 
+        const checkRestoreVersionCompatibility = (): void => {
+            if (this.options.version === ZnpVersion.zStack12 && backup && backup.znp?.version !== undefined && backup.znp.version !== ZnpVersion.zStack12) {
+                throw new Error(`your backup is from newer platform version (Z-Stack 3.0.x+) and cannot be restored onto Z-Stack 1.2 adapter - please remove backup before proceeding`);
+            }
+        };
+        
         /* Determine startup strategy */
         if (!hasConfigured || !hasConfigured.isConfigured() || !nib) {
             /* Adapter is not configured or not commissioned */
@@ -160,6 +180,7 @@ export class ZnpAdapterManager {
             if (configMatchesBackup) {
                 /* Adapter backup is available and matches configuration */
                 this.debug.strategy("(stage-2) configuration matches backup");
+                checkRestoreVersionCompatibility();
                 return "restoreBackup";
             } else {
                 /* Adapter backup is either not available or does not match configuration */
@@ -201,13 +222,19 @@ export class ZnpAdapterManager {
                         this.logger.error(`Please update configuration to prevent further issues.`);
                         this.logger.error(`If you wish to re-commission your network, please remove coordinator backup at ${this.options.backupPath}.`);
                         this.logger.error(`Re-commissioning your network will require re-pairing of all devices!`);
-                        throw new Error("startup failed - configuration-adapter mismatch - see logs above for more information");
+                        if (this.options.adapterOptions.forceStartWithInconsistentAdapterConfiguration) {
+                            this.logger.error(`Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.`);
+                            return "startup";
+                        } else {
+                            throw new Error("startup failed - configuration-adapter mismatch - see logs above for more information");
+                        }
                     } else {
                         /* Backup does not match adapter state */
                         this.debug.strategy("(stage-4) adapter state does not match backup");
                         if (configMatchesBackup) {
                             /* Adapter backup matches configuration */
                             this.debug.strategy("(stage-5) adapter backup matches configuration");
+                            checkRestoreVersionCompatibility();
                             return "restoreBackup";
                         } else {
                             /* Adapter backup does not match configuration */

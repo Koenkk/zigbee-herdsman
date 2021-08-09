@@ -16,6 +16,7 @@ import {UnifiedBackupStorage} from "../../../src/models";
 import {ZnpAdapterManager} from "../../../src/adapter/z-stack/adapter/manager";
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+const mockSetTimeout = () => setTimeout = jest.fn().mockImplementation((r) => r());
 
 jest.mock('../../../src/utils/wait', () => {
     return jest.fn();
@@ -152,6 +153,43 @@ const backupMatchingConfig = JSON.parse(`
           "rx_counter": 24,
           "tx_counter": 91
         }
+      }
+    ]
+  }
+`);
+
+const backupMatchingConfig12 = JSON.parse(`
+{
+    "metadata": {
+      "format": "zigpy/open-coordinator-backup",
+      "version": 1,
+      "source": "zigbee-herdsman@0.13.65",
+      "internal": {
+        "date": "2021-03-03T19:15:40.524Z",
+        "znpVersion": 0
+      }
+    },
+    "stack_specific": {
+      "zstack": {}
+    },
+    "coordinator_ieee": "00124b0009d80ba7",
+    "pan_id": "007b",
+    "extended_pan_id": "00124b0009d69f77",
+    "nwk_update_id": 0,
+    "security_level": 5,
+    "channel": 21,
+    "channel_mask": [
+      21
+    ],
+    "network_key": {
+      "key": "01030507090b0d0f00020406080a0c0d",
+      "sequence_number": 0,
+      "frame_counter": 0
+    },
+    "devices": [
+      {
+        "nwk_address": "ddf6",
+        "ieee_address": "00124b002226ef87"
       }
     ]
   }
@@ -921,7 +959,11 @@ const empty12UnalignedRequestMock = baseZnpRequestMock.clone()
 
 const commissioned12UnalignedRequestMock = empty12UnalignedRequestMock.clone()
     .nv(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, Buffer.from([0x55]))
+    .nv(NvItemsIds.PRECFGKEY, Buffer.from("01030507090b0d0f00020406080a0c0d", "hex"))
     .nv(NvItemsIds.NIB, Buffer.from("fb050279147900640000000105018f0700020d1e000015000000000000000000007b0008000020000f0f0400010000000100000000779fd609004b1200010000000000000000000000000000000000000000000000000000000000000000000000003c0c0001780a010000060200", "hex"));
+
+const commissioned12UnalignedMismatchRequestMock = commissioned12UnalignedRequestMock.clone()
+    .nv(NvItemsIds.PRECFGKEY, Buffer.from("aabb0507090b0d0f00020406080a0c0d", "hex"));
 
 const mockZnpRequest = jest.fn().mockReturnValue(new Promise((resolve) => resolve({payload: {}}))).mockImplementation((subsystem: Subsystem, command: string, payload: any, expectedStatus: ZnpCommandStatus) => new Promise((resolve) => resolve(baseZnpRequestMock.execute({subsystem, command, payload}))));
 const mockZnpWaitFor = jest.fn();
@@ -1121,7 +1163,13 @@ Znp.autoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
 describe("zstack-adapter", () => {
     let adapter: ZStackAdapter;
 
+    afterAll(async () => {
+        jest.useRealTimers();
+    });
+
     beforeEach(() => {
+        jest.useRealTimers();
+        jest.useFakeTimers();
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {concurrent: 3});
         mockZnpWaitForDefault();
         mocks.forEach((m) => m.mockRestore());
@@ -1269,6 +1317,18 @@ describe("zstack-adapter", () => {
         await adapter.backup();
     });
 
+    it("should (recommission) restore unified backup with 1.2 adapter and create backup - empty", async () => {
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig12), "utf8");
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 1});
+        mockZnpRequestWith(empty12UnalignedRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("restored");
+
+        const backup = await adapter.backup();
+        expect(backup.networkKeyInfo.frameCounter).toBe(0);
+    });
+
     it("should create backup with 3.0.x adapter - default security material table entry", async () => {
         const builder = commissioned3AlignedRequestMock.clone();
         mockZnpRequestWith(builder);
@@ -1312,6 +1372,15 @@ describe("zstack-adapter", () => {
 
         const backup = await adapter.backup();
         expect(backup.networkKeyInfo.frameCounter).toBe(8737);
+    });
+
+    it("should create backup with 1.2 adapter", async () => {
+        mockZnpRequestWith(commissioned12UnalignedRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+
+        const backup = await adapter.backup();
+        expect(backup.networkKeyInfo.frameCounter).toBe(0);
     });
 
     it("should fail to restore unified backup with 3.0.x adapter - invalid open coordinator backup version", async () => {
@@ -1388,6 +1457,17 @@ describe("zstack-adapter", () => {
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
         await expect(adapter.start()).rejects.toThrowError("target adapter security manager table size insufficient (size=1)");
     });
+
+    it("should fail to restore unified backup with 1.2 adapter - backup from newer adapter", async () => {
+        const backupFile = getTempFile();
+        let backupData: UnifiedBackupStorage = JSON.parse(JSON.stringify(backupMatchingConfig));
+        fs.writeFileSync(backupFile, JSON.stringify(backupData), "utf8");
+
+        mockZnpRequestWith(empty12UnalignedRequestMock);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
+        await expect(adapter.start()).rejects.toThrowError("your backup is from newer platform version (Z-Stack 3.0.x+) and cannot be restored onto Z-Stack 1.2 adapter - please remove backup before proceeding");
+    });
+
 
     it("should fail to create backup with 3.0.x adapter - unable to read ieee address", async () => {
         mockZnpRequestWith(commissioned3AlignedRequestMock.clone()
@@ -1506,6 +1586,36 @@ describe("zstack-adapter", () => {
         expect(mockLoggerError.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
     });
 
+    it("should start with runInconsistent option with 3.0.x adapter - commissioned, config-adapter mismatch", async () => {
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
+
+        const mockLoggerDebug = jest.fn();
+        const mockLoggerInfo = jest.fn();
+        const mockLoggerWarn = jest.fn();
+        const mockLoggerError = jest.fn();
+        const mockLogger: LoggerStub = {
+            debug: mockLoggerDebug,
+            info: mockLoggerInfo,
+            warn: mockLoggerWarn,
+            error: mockLoggerError
+        };
+
+        adapter = new ZStackAdapter(networkOptionsMismatched, serialPortOptions, backupFile, {concurrent: 3, forceStartWithInconsistentAdapterConfiguration: true}, mockLogger);
+        mockZnpRequestWith(commissioned3AlignedRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+        expect(mockLoggerError.mock.calls[0][0]).toBe("Configuration is not consistent with adapter state/backup!");
+        expect(mockLoggerError.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
+        expect(mockLoggerError.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
+        expect(mockLoggerError.mock.calls[3][0]).toBe("- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d");
+        expect(mockLoggerError.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
+        expect(mockLoggerError.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
+        expect(mockLoggerError.mock.calls[6][0]).toMatch(`If you wish to re\-commission your network, please remove coordinator backup at ${backupFile}`);
+        expect(mockLoggerError.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
+        expect(mockLoggerError.mock.calls[8][0]).toBe("Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.");
+    });
+
     it("should start with 3.0.x adapter - backward-compat - reversed extended pan id", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
@@ -1598,8 +1708,8 @@ describe("zstack-adapter", () => {
         expect(result).toBe("restored");
     });
 
-    it("should reset network with 1.2 adapter", async () => {
-        mockZnpRequestWith(commissioned12UnalignedRequestMock);
+    it("should reset network with 1.2 adapter - config mismtach", async () => {
+        mockZnpRequestWith(commissioned12UnalignedMismatchRequestMock);
         const result = await adapter.start();
         expect(result).toBe("reset");
     });
@@ -2280,6 +2390,7 @@ describe("zstack-adapter", () => {
         const objectMismatch = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()}};
         let error;
         try {
+            mockSetTimeout();
             const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 1, false, false);
             znpReceived(objectMismatch);
             await response;

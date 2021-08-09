@@ -25,11 +25,12 @@ describe('Utils', () => {
     });
 
     it('Test wait', async () => {
-        jest.useFakeTimers();
+        const originalSetTimeout = setTimeout;
+        setTimeout = jest.fn()
         Wait(1000).then(() => {});
         expect(setTimeout).toHaveBeenCalledTimes(1);
         expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000);
-        jest.runAllTimers();
+        setTimeout = originalSetTimeout;
     });
 
     it('Test waitress', async () => {
@@ -52,7 +53,7 @@ describe('Utils', () => {
         const wait2_5 = waitress.waitFor(2, 5000).start();
 
         waitress.remove(wait2_3.ID);
-        jest.runTimersToTime(6000);
+        jest.advanceTimersByTime(6000);
         waitress.remove(wait2_5.ID);
         waitress.resolve('two');
         expect(await wait2_1.promise).toBe('two');
@@ -80,7 +81,7 @@ describe('Utils', () => {
         let handled1 = waitress.reject('tree', 'drop');
         expect(handled1).toBe(false);
         let error2_;
-        jest.runTimersToTime(6000);
+        jest.advanceTimersByTime(6000);
         try {await wait2_.promise} catch (e) { error2_ = e};
         expect(error2_).toStrictEqual(new Error("Timedout '5000'"));
         let handled2 = waitress.reject('two', 'drop');

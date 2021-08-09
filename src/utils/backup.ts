@@ -25,7 +25,7 @@ export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.Uni
             source: `${packageInfo.name}@${packageInfo.version}`,
             internal: {
                 date: new Date().toISOString(),
-                znpVersion: backup.znp?.version || undefined
+                znpVersion: [null, undefined].includes(backup.znp?.version) ? undefined : backup.znp?.version
             }
         },
         stack_specific: {

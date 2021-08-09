@@ -2305,6 +2305,19 @@ const Cluster: {
                     {name: 'enable', type: DataType.uint8},
                 ]
             },
+            tuyaOnStartUp: {
+                ID: 249,
+                parameters: [
+                    {name: 'mode', type: DataType.uint16},
+                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+            tuyaDoNotDisturb: {
+                ID: 250,
+                parameters: [
+                    {name: 'enable', type: DataType.uint8},
+                ],
+            },
         },
         commandsResponse: {
         },
@@ -2692,6 +2705,8 @@ const Cluster: {
                 parameters: [
                     {name: 'startwarninginfo', type: DataType.uint8},
                     {name: 'warningduration', type: DataType.uint16},
+                    {name: 'strobedutycycle', type: DataType.uint8},
+                    {name: 'strobelevel', type: DataType.uint8},
                 ],
             },
             squawk: {
@@ -3844,6 +3859,9 @@ const Cluster: {
             outdoorTempToDisplay: {ID: 16, type: DataType.int16},
             outdoorTempToDisplayTimeout: {ID: 17, type: DataType.uint16},
             currentTimeToDisplay: {ID: 32, type: DataType.uint32},
+            ledIntensityOn: {ID: 82, type: DataType.uint8},
+            ledIntensityOff: {ID: 83, type: DataType.uint8},
+            minimumBrightness: {ID: 85, type: DataType.uint16},
             floorControlMode: {ID: 261, type: DataType.enum8},
             ambiantMaxHeatSetpointLimit: {ID: 264, type: DataType.int16},
             floorMinHeatSetpointLimit: {ID: 265, type: DataType.int16},

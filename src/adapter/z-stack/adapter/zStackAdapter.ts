@@ -130,7 +130,8 @@ class ZStackAdapter extends Adapter {
                 backupPath: this.backupPath,
                 version: this.version.product,
                 greenPowerGroup: this.greenPowerGroup,
-                networkOptions: this.networkOptions
+                networkOptions: this.networkOptions,
+                adapterOptions: this.adapterOptions,
             },
             this.logger
         );
@@ -797,7 +798,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return this.version.product !== ZnpVersion.zStack12;
+        return true;
     }
 
     public async backup(): Promise<Models.Backup> {

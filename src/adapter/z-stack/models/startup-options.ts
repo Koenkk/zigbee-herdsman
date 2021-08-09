@@ -9,4 +9,5 @@ export interface StartupOptions {
     networkOptions: TsType.NetworkOptions;
     greenPowerGroup: number;
     backupPath: string;
+    adapterOptions: TsType.AdapterOptions;
 }

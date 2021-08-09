@@ -25,13 +25,13 @@
     }
   ],
   "dependencies": {
-    "debounce": "^1.2.0",
-    "debug": "^4.3.1",
+    "debounce": "^1.2.1",
+    "debug": "^4.3.2",
     "fast-deep-equal": "^3.1.3",
     "mixin-deep": "^2.0.1",
-    "@serialport/bindings": "9.0.4",
+    "@serialport/bindings": "9.2.0",
     "mz": "^2.7.0",
-    "serialport": "9.0.6",
+    "serialport": "9.2.0",
     "slip": "^1.0.2"
   },
   "deprecated": false,
@@ -46,7 +46,7 @@
     "@types/debounce": "^1.2.0",
     "@types/debug": "*",
     "@types/jest": "*",
-    "@types/mz": "^2.7.3",
+    "@types/mz": "^2.7.4",
     "@types/nedb": "*",
     "@types/node": "*",
     "@types/serialport": "*",
@@ -56,7 +56,7 @@
     "eslint": "*",
     "jest": "*",
     "regenerator-runtime": "*",
-    "typedoc": "^0.20.0-beta.27",
+    "typedoc": "^0.21.5",
     "typedoc-plugin-markdown": "*",
     "typedoc-plugin-no-inherit": "*",
     "typedoc-plugin-sourcefile-url": "*",
@@ -81,10 +81,10 @@
     "test": "jest test",
     "test-with-coverage": "jest test --coverage --collectCoverageFrom 'src/**/*.ts'",
     "test-watch": "jest test --watch",
-    "eslint": "node_modules/.bin/eslint . --ext .ts",
+    "eslint": "node_modules/.bin/eslint . --ext .ts --max-warnings=0",
     "docs": "typedoc --tsconfig typedoc-tsconfig.json"
   },
-  "version": "0.13.114",
+  "version": "0.13.127",
   "jest": {
     "coverageThreshold": {
       "global": {

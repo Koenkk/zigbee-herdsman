@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 export class int_t {
     static _signed = true;
 

@@ -112,17 +112,20 @@ class Controller extends events.EventEmitter {
      * Start the Herdsman controller
      */
     public async start(): Promise<AdapterTsType.StartResult> {
+        // Database (create end inject)
+        this.database = Database.open(this.options.databasePath);
+        Entity.injectDatabase(this.database);
+
+        // Adapter (create and inject)
         this.adapter = await Adapter.create(this.options.network,
             this.options.serialPort, this.options.backupPath, this.options.adapter, this.logger);
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
-        this.database = Database.open(this.options.databasePath);
         const startResult = await this.adapter.start();
         debug.log(`Started with result '${startResult}'`);
-
-        // Inject adapter and database in entity
-        debug.log(`Injected database: ${this.database != null}, adapter: ${this.adapter != null}`);
         Entity.injectAdapter(this.adapter);
-        Entity.injectDatabase(this.database);
+
+        // log injection
+        debug.log(`Injected database: ${this.database != null}, adapter: ${this.adapter != null}`);
 
         this.greenPower = new GreenPower(this.adapter);
         this.greenPower.on(GreenPowerEvents.deviceJoined, this.onDeviceJoinedGreenPower.bind(this));
@@ -500,7 +503,7 @@ class Controller extends events.EventEmitter {
             }
         }
 
-        let device = Device.byIeeeAddr(payload.ieeeAddr);
+        let device = Device.byIeeeAddr(payload.ieeeAddr, true);
         if (!device) {
             debug.log(`New device '${payload.ieeeAddr}' joined`);
             debug.log(`Creating device '${payload.ieeeAddr}'`);
@@ -511,7 +514,12 @@ class Controller extends events.EventEmitter {
 
             const eventData: Events.DeviceJoinedPayload = {device};
             this.emit(Events.Events.deviceJoined, eventData);
-        } else if (device.networkAddress !== payload.networkAddress) {
+        } else if (device.isDeleted) {
+            debug.log(`Delete device '${payload.ieeeAddr}' joined, undeleting`);
+            device.undelete();
+        }
+
+        if (device.networkAddress !== payload.networkAddress) {
             debug.log(
                 `Device '${payload.ieeeAddr}' is already in database with different networkAddress, ` +
                 `updating networkAddress`
@@ -588,7 +596,7 @@ class Controller extends events.EventEmitter {
                 `'${dataType}' data is from unknown endpoint '${dataPayload.endpoint}' from device with ` +
                 `network address '${dataPayload.address}', creating it...`
             );
-            endpoint = await device.createEndpoint(dataPayload.endpoint);
+            endpoint = device.createEndpoint(dataPayload.endpoint);
         }
 
         // Parse command for event
@@ -641,7 +649,7 @@ class Controller extends events.EventEmitter {
             if (type === 'readResponse' || type === 'attributeReport') {
                 // Some device report, e.g. it's modelID through a readResponse or attributeReport
                 for (const [key, value] of Object.entries(data)) {
-                    const property =  Device.ReportablePropertiesMapping[key];
+                    const property = Device.ReportablePropertiesMapping[key];
                     if (property && !device[property.key]) {
                         property.set(value, device);
                     }

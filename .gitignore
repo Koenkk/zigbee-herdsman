@@ -3,3 +3,4 @@ coverage/
 dist/
 .idea
 temp/
+.remote-sync.json

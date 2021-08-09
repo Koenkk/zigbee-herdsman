@@ -22,7 +22,8 @@ const EndpointDefaults: {
 export const Endpoints = [
     {...EndpointDefaults, endpoint: 1, appprofid: 0x0104},
     {...EndpointDefaults, endpoint: 2, appprofid: 0x0101},
-    {...EndpointDefaults, endpoint: 3, appprofid: 0x0105},
+    // Required for https://github.com/Koenkk/zigbee-herdsman-converters/commit/d0fb06c2429171f327950484ea3dec80864637cc
+    {...EndpointDefaults, endpoint: 3, appprofid: 0x0104},
     {...EndpointDefaults, endpoint: 4, appprofid: 0x0107},
     {...EndpointDefaults, endpoint: 5, appprofid: 0x0108},
     {...EndpointDefaults, endpoint: 6, appprofid: 0x0109},

@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import * as t from './types';
 import {SerialDriver} from './uart';
 import {COMMANDS, ZDO_COMMANDS} from './commands';
@@ -144,7 +145,7 @@ export class Ezsp extends EventEmitter {
 
     async networkInit(): Promise<boolean> {
         const waiter = this.waitFor(COMMANDS["stackStatusHandler"][0], null).start();
-        
+
         const [result] = await this.command("networkInit");
         debug.log('network init result', result);
         if ((result !== EmberStatus.SUCCESS)) {
@@ -159,7 +160,7 @@ export class Ezsp extends EventEmitter {
 
     async leaveNetwork(): Promise<number> {
         const waiter = this.waitFor(COMMANDS["stackStatusHandler"][0], null).start();
-        
+
         const [result] = await this.command("leaveNetwork");
         debug.log('network init result', result);
         if ((result !== EmberStatus.SUCCESS)) {
@@ -283,19 +284,19 @@ export class Ezsp extends EventEmitter {
     async updatePolicies(): Promise<void> {
         // Set up the policies for what the NCP should do.
         const policies = [
-            [EzspPolicyId.BINDING_MODIFICATION_POLICY, 
+            [EzspPolicyId.BINDING_MODIFICATION_POLICY,
                 EzspDecisionId.CHECK_BINDING_MODIFICATIONS_ARE_VALID_ENDPOINT_CLUSTERS],
             [EzspPolicyId.UNICAST_REPLIES_POLICY, EzspDecisionId.HOST_WILL_NOT_SUPPLY_REPLY],
             [EzspPolicyId.POLL_HANDLER_POLICY, EzspDecisionId.POLL_HANDLER_IGNORE],
-            [EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY, 
+            [EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY,
                 EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK],
-            [EzspPolicyId.PACKET_VALIDATE_LIBRARY_POLICY, 
+            [EzspPolicyId.PACKET_VALIDATE_LIBRARY_POLICY,
                 EzspDecisionId.PACKET_VALIDATE_LIBRARY_CHECKS_DISABLED],
             [EzspPolicyId.ZLL_POLICY, EzspDecisionId.ALLOW_JOINS],
             [EzspPolicyId.TC_REJOINS_USING_WELL_KNOWN_KEY_POLICY, EzspDecisionId.ALLOW_JOINS],
 
             [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
-            [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS 
+            [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS
                 | EzspDecisionBitmask.ALLOW_JOINS],
             [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
         ];
@@ -383,7 +384,7 @@ export class Ezsp extends EventEmitter {
     }
 
     /* eslint-disable @typescript-eslint/no-explicit-any*/
-    public sendUnicast(direct: EmberOutgoingMessageType, nwk: number, apsFrame: 
+    public sendUnicast(direct: EmberOutgoingMessageType, nwk: number, apsFrame:
             EmberApsFrame, seq: number, data: Buffer): any {
         return this.execCommand('sendUnicast', direct, nwk, apsFrame, seq, data);
     }
@@ -391,7 +392,7 @@ export class Ezsp extends EventEmitter {
 
     /* eslint-disable @typescript-eslint/no-explicit-any*/
     public sendMulticast(apsFrame: EmberApsFrame, seq: number, data: Buffer): any {
-        return this.execCommand('sendMulticast', apsFrame, EZSP_DEFAULT_RADIUS, 
+        return this.execCommand('sendMulticast', apsFrame, EZSP_DEFAULT_RADIUS,
             EZSP_MULTICAST_NON_MEMBER_RADIUS, seq, data);
     }
     /* eslint-enable @typescript-eslint/no-explicit-any*/
