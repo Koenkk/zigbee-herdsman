@@ -1926,6 +1926,7 @@ const Cluster: {
             danfossMountedModeActive: {ID: 0x4012, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossMountedModeControl: {ID: 0x4013, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossThermostatOrientation: {ID: 0x4014, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossExternalMeasuredRoomSensor: {ID: 0x4015, type: DataType.int16, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossAlgorithmScaleFactor: {ID: 0x4020, type: DataType.uint8, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossHeatAvailable: {ID: 0x4030, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossHeatRequired: {ID: 0x4031, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
