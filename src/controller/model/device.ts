@@ -384,6 +384,8 @@ class Device extends Entity {
     }
 
     private interviewQuirks(): boolean {
+        debug.log(`Interview - quirks check for '${this.modelID}'-'${this.manufacturerName}'-'${this.type}'`);
+
         // TuYa end devices are typically hard to interview. They also don't require a full interview to work correctly
         // e.g. no ias enrolling is required for the devices to work.
         // Assume that in case we got both the manufacturerName and modelID the device works correctly.
@@ -394,11 +396,11 @@ class Device extends Entity {
         // modelID is mostly in the form of e.g. TS0202 and manufacturerName like e.g. _TYZB01_xph99wvr
         if (this.modelID && this.modelID.match('^TS\\d*$') && this.type === 'EndDevice' && this.manufacturerName &&
             this.manufacturerName.match('^_TYZB01_.*$')) {
-            debug.log(`Interview procedure failed but got enough for TuYa end device`);
             this._powerSource = 'Battery';
             this._interviewing = false;
             this._interviewCompleted = true;
             this.save();
+            debug.log(`Interview - quirks matched for TuYa end device`);
             return true;
         }
 
@@ -430,8 +432,10 @@ class Device extends Entity {
             this._interviewing = false;
             this._interviewCompleted = true;
             this.save();
+            debug.log(`Interview - quirks matched on '${match}'`);
             return true;
         } else {
+            debug.log('Interview - quirks did not match');
             return false;
         }
     }
