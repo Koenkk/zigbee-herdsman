@@ -10,6 +10,7 @@ enum Events {
     deviceNetworkAddressChanged = "deviceNetworkAddressChanged",
     deviceLeave = "deviceLeave",
     permitJoinChanged = "permitJoinChanged",
+    lastSeenChanged = "lastSeenChanged",
 }
 
 interface DeviceJoinedPayload {
@@ -35,6 +36,10 @@ interface DeviceLeavePayload {
 
 interface PermitJoinChangedPayload {
     permitted: boolean, reason: 'timer_expired' | 'manual', timeout: number
+}
+
+interface LastSeenChangedPayload {
+    device: Device;
 }
 
 const CommandsLookup: {[s: string]: MessagePayloadType} = {
@@ -149,4 +154,5 @@ interface MessagePayload {
 export {
     Events, MessagePayload, MessagePayloadType, CommandsLookup, DeviceInterviewPayload, DeviceAnnouncePayload,
     DeviceLeavePayload, DeviceJoinedPayload, PermitJoinChangedPayload, DeviceNetworkAddressChangedPayload,
+    LastSeenChangedPayload,
 };

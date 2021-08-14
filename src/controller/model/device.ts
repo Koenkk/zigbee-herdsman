@@ -171,9 +171,12 @@ class Device extends Entity {
         return this.endpoints.find((d): boolean => d.deviceID === deviceID);
     }
 
-    public receivedMessage(): void {
-        this._lastSeen = Date.now();
+    public sendPendingRequests(): void {
         this.endpoints.forEach((e) => e.sendPendingRequests());
+    }
+
+    public updateLastSeen(): void {
+        this._lastSeen = Date.now();
     }
 
     public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, endpoint: Endpoint): Promise<void> {
