@@ -389,7 +389,7 @@ class Device extends Entity {
     private interviewQuirks(): boolean {
         debug.log(`Interview - quirks check for '${this.modelID}'-'${this.manufacturerName}'-'${this.type}'`);
 
-        // TuYa end devices are typically hard to interview. They also don't require a full interview to work correctly
+        // TuYa devices are typically hard to interview. They also don't require a full interview to work correctly
         // e.g. no ias enrolling is required for the devices to work.
         // Assume that in case we got both the manufacturerName and modelID the device works correctly.
         // https://github.com/Koenkk/zigbee2mqtt/issues/7564:
@@ -397,9 +397,8 @@ class Device extends Entity {
         // https://github.com/Koenkk/zigbee2mqtt/issues/4655
         //      Device does not change zoneState after enroll (event with original gateway)
         // modelID is mostly in the form of e.g. TS0202 and manufacturerName like e.g. _TYZB01_xph99wvr
-        if (this.modelID && this.modelID.match('^TS\\d*$') && this.type === 'EndDevice' && this.manufacturerName &&
-            this.manufacturerName.match('^_TYZB01_.*$')) {
-            this._powerSource = 'Battery';
+        if (this.modelID?.match('^TS\\d*$') && this.manufacturerName?.match('^_TYZB01_.*$')) {
+            this._powerSource = this._powerSource || 'Battery';
             this._interviewing = false;
             this._interviewCompleted = true;
             this.save();
