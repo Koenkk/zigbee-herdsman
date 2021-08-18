@@ -647,11 +647,11 @@ class Device extends Entity {
         return Entity.adapter.routingTable(this.networkAddress);
     }
 
-    public async ping(): Promise<void> {
+    public async ping(disableRecovery = true): Promise<void> {
         // Zigbee does not have an official pining mechamism. Use a read request
         // of a mandatory basic cluster attribute to keep it as lightweight as
         // possible.
-        await this.endpoints[0].read('genBasic', ['zclVersion'], {disableRecovery: true});
+        await this.endpoints[0].read('genBasic', ['zclVersion'], {disableRecovery});
     }
 }
 
