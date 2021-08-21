@@ -1185,7 +1185,8 @@ const Cluster: {
             notification: {
                 ID: 0,
                 parameters: [
-                    {name: 'options', type: DataType.uint16},
+                    {name: 'options', type: DataType.uint8},
+                    {name: 'extendedOptions', type: DataType.uint8},
                     {name: 'srcID', type: DataType.uint32},
                     {name: 'frameCounter', type: DataType.uint32},
                     {name: 'commandID', type: DataType.uint8},
@@ -1196,7 +1197,8 @@ const Cluster: {
             commisioningNotification: {
                 ID: 4,
                 parameters: [
-                    {name: 'options', type: DataType.uint16},
+                    {name: 'options', type: DataType.uint8},
+                    {name: 'extendedOptions', type: DataType.uint8},
                     {name: 'srcID', type: DataType.uint32},
                     {name: 'frameCounter', type: DataType.uint32},
                     {name: 'commandID', type: DataType.uint8},
