@@ -67,7 +67,6 @@ class GreenPower extends events.EventEmitter {
             // - https://github.com/Koenkk/zigbee-herdsman/pull/403
             // - https://github.com/Koenkk/zigbee-herdsman/issues/398
             const greenPowerPayload = [
-                dataPayload.frame.Payload.options,
                 dataPayload.frame.Payload.payloadSize,
                 dataPayload.frame.Payload.commandFrame.options,
                 dataPayload.frame.Payload.commandFrame.extendedOptions,
