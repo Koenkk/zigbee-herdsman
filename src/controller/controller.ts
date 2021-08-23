@@ -513,12 +513,11 @@ class Controller extends events.EventEmitter {
                 'Unknown', payload.ieeeAddr, payload.networkAddress, undefined,
                 undefined, undefined, undefined, false, []
             );
-
-            const eventData: Events.DeviceJoinedPayload = {device};
-            this.emit(Events.Events.deviceJoined, eventData);
+            this.emit(Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
         } else if (device.isDeleted) {
             debug.log(`Delete device '${payload.ieeeAddr}' joined, undeleting`);
             device.undelete();
+            this.emit(Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
         }
 
         if (device.networkAddress !== payload.networkAddress) {
