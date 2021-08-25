@@ -63,9 +63,9 @@ class GreenPower extends events.EventEmitter {
 
             await this.adapter.sendZclFrameToAll(242, frame, 242);
 
-            // Use to caclulate the greenPowerKey to better identify devices
-            // - https://github.com/Koenkk/zigbee-herdsman/pull/403
+            // Use to calculate the greenPowerKey to better identify devices
             // - https://github.com/Koenkk/zigbee-herdsman/issues/398
+            // - https://github.com/Koenkk/zigbee-herdsman/pull/403
             // - https://github.com/Koenkk/zigbee-herdsman-converters/pull/2885
             const greenPowerPayload = [
                 dataPayload.frame.Payload.payloadSize,
