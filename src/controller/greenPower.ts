@@ -66,6 +66,7 @@ class GreenPower extends events.EventEmitter {
             // Use to caclulate the greenPowerKey to better identify devices
             // - https://github.com/Koenkk/zigbee-herdsman/pull/403
             // - https://github.com/Koenkk/zigbee-herdsman/issues/398
+            // - https://github.com/Koenkk/zigbee-herdsman-converters/pull/2885
             const greenPowerPayload = [
                 dataPayload.frame.Payload.payloadSize,
                 dataPayload.frame.Payload.commandFrame.options,
