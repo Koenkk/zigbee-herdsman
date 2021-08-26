@@ -288,8 +288,8 @@ class Device extends Entity {
         return entry;
     }
 
-    public save(): void {
-        Entity.database.update(this.toDatabaseEntry());
+    public save(writeDatabase=true): void {
+        Entity.database.update(this.toDatabaseEntry(), writeDatabase);
     }
 
     private static loadFromDatabaseIfNecessary(): void {

@@ -119,8 +119,8 @@ class Group extends Entity {
         delete Group.groups[this.groupID];
     }
 
-    public save(): void {
-        Entity.database.update(this.toDatabaseRecord());
+    public save(writeDatabase=true): void {
+        Entity.database.update(this.toDatabaseRecord(), writeDatabase);
     }
 
     public addMember(endpoint: Endpoint): void {

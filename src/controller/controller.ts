@@ -292,12 +292,14 @@ class Controller extends events.EventEmitter {
 
     private databaseSave(): void {
         for (const device of Device.all()) {
-            device.save();
+            device.save(false);
         }
 
         for (const group of Group.all()) {
-            group.save();
+            group.save(false);
         }
+
+        this.database.write();
     }
 
     private async backup(): Promise<void> {
