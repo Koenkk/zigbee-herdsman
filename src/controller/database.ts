@@ -39,13 +39,16 @@ class Database {
         this.write();
     }
 
-    public update(DatabaseEntry: DatabaseEntry): void {
+    public update(DatabaseEntry: DatabaseEntry, write: boolean): void {
         if (!this.entries[DatabaseEntry.id]) {
             throw new Error(`DatabaseEntry with ID '${DatabaseEntry.id}' does not exist`);
         }
 
         this.entries[DatabaseEntry.id] = DatabaseEntry;
-        this.write();
+
+        if (write) {
+            this.write();
+        }
     }
 
     public remove(ID: number): void {
@@ -69,7 +72,7 @@ class Database {
         }
     }
 
-    private write(): void {
+    public write(): void {
         const lines = [];
         for (const DatabaseEntry of Object.values(this.entries)) {
             const json = JSON.stringify(DatabaseEntry);
