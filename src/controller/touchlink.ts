@@ -23,6 +23,10 @@ class Touchlink {
         this.locked = lock;
     }
 
+    private transactionNumber(): number {
+        return Math.floor(Math.random() * 0xFFFFFFFF);
+    }
+
     public async scan(): Promise<{ieeeAddr: string; channel: number}[]> {
         this.lock(true);
         const result = [];
@@ -35,7 +39,7 @@ class Touchlink {
                 try {
                     // TODO: multiple responses are not handled yet.
                     const response = await this.adapter.sendZclFrameInterPANBroadcast(
-                        this.createScanRequestFrame(), 500
+                        this.createScanRequestFrame(this.transactionNumber()), 500
                     );
                     debug(`Got scan response on channel '${channel}' of '${response.address}'`);
                     AssertString(response.address);
@@ -57,14 +61,16 @@ class Touchlink {
         this.lock(true);
 
         try {
+            const transaction = this.transactionNumber();
+
             debug(`Set InterPAN channel to '${channel}'`);
             await this.adapter.setChannelInterPAN(channel);
 
-            await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(), 500);
+            await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(transaction), 500);
             debug(`Got scan response on channel '${channel}'`);
 
             debug(`Identifying '${ieeeAddr}'`);
-            await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(), ieeeAddr);
+            await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(transaction), ieeeAddr);
         } finally {
             debug(`Restore InterPAN channel`);
             await this.adapter.restoreChannelInterPAN();
@@ -75,19 +81,21 @@ class Touchlink {
     public async factoryReset(ieeeAddr: string, channel: number): Promise<boolean> {
         this.lock(true);
         try {
+            const transaction = this.transactionNumber();
+
             debug(`Set InterPAN channel to '${channel}'`);
             await this.adapter.setChannelInterPAN(channel);
 
-            await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(), 500);
+            await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(transaction), 500);
             debug(`Got scan response on channel '${channel}'`);
 
             debug(`Identifying '${ieeeAddr}'`);
-            await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(), ieeeAddr);
+            await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(transaction), ieeeAddr);
             await Wait(2000);
 
             debug(`Reset to factory new '${ieeeAddr}'`);
             await this.adapter.sendZclFrameInterPANToIeeeAddr(
-                this.createResetFactoryNewRequestFrame(), ieeeAddr
+                this.createResetFactoryNewRequestFrame(transaction), ieeeAddr
             );
         } finally {
             debug(`Restore InterPAN channel`);
@@ -108,8 +116,10 @@ class Touchlink {
                 await this.adapter.setChannelInterPAN(channel);
 
                 try {
+                    const transaction = this.transactionNumber();
+
                     const response = await this.adapter.sendZclFrameInterPANBroadcast(
-                        this.createScanRequestFrame(), 500
+                        this.createScanRequestFrame(transaction), 500
                     );
                     debug(`Got scan response on channel '${channel}'`);
                     AssertString(response.address);
@@ -118,13 +128,13 @@ class Touchlink {
                     // identify it (this will make e.g. the bulb flash)
                     debug(`Identifying`);
                     await this.adapter.sendZclFrameInterPANToIeeeAddr(
-                        this.createIdentifyRequestFrame(), response.address
+                        this.createIdentifyRequestFrame(transaction), response.address
                     );
                     await Wait(2000);
 
                     debug(`Reset to factory new`);
                     await this.adapter.sendZclFrameInterPANToIeeeAddr(
-                        this.createResetFactoryNewRequestFrame(), response.address
+                        this.createResetFactoryNewRequestFrame(transaction), response.address
                     );
                     done = true;
                 } catch (error) {
@@ -142,27 +152,27 @@ class Touchlink {
         return done;
     }
 
-    private createScanRequestFrame(): Zcl.ZclFrame {
+    private createScanRequestFrame(transaction: number): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
             null, 0, 'scanRequest', Zcl.Utils.getCluster('touchlink').ID,
-            {transactionID: 1, zigbeeInformation: 4, touchlinkInformation: 18}
+            {transactionID: transaction, zigbeeInformation: 4, touchlinkInformation: 18},
         );
     }
 
-    private createIdentifyRequestFrame(): Zcl.ZclFrame {
+    private createIdentifyRequestFrame(transaction: number): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
             null, 0, 'identifyRequest', Zcl.Utils.getCluster('touchlink').ID,
-            {transactionID: 1, duration: 65535}
+            {transactionID: transaction, duration: 65535}
         );
     }
 
-    private createResetFactoryNewRequestFrame(): Zcl.ZclFrame {
+    private createResetFactoryNewRequestFrame(transaction: number): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
             null, 0, 'resetToFactoryNew', Zcl.Utils.getCluster('touchlink').ID,
-            {transactionID: 1}
+            {transactionID: transaction}
         );
     }
 }
