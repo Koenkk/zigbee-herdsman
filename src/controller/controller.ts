@@ -483,7 +483,6 @@ class Controller extends events.EventEmitter {
             device = Device.create(
                 'GreenPower', ieeeAddr, payload.networkAddress, null,
                 undefined, undefined, modelID, true, [],
-                payload.greenPowerKey,
             );
             device.save();
 

@@ -521,7 +521,6 @@ describe('Zcl', () => {
 
         const payload = {
             options: 0,
-            extendedOptions: 0,
             srcID: 4650238,
             frameCounter: 249,
             commandID: 224,
@@ -561,8 +560,7 @@ describe('Zcl', () => {
             commandFrame: {},
             commandID: 16,
             frameCounter: 1253,
-            options: 160,
-            extendedOptions: 20,
+            options: 5280,
             payloadSize: 255,
         };
 
@@ -591,8 +589,7 @@ describe('Zcl', () => {
             commandFrame: {raw: Buffer.from([1])},
             commandID: 16,
             frameCounter: 1253,
-            options: 160,
-            extendedOptions: 20,
+            options: 5280,
             payloadSize: 255,
         };
 

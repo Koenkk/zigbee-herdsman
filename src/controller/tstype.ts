@@ -20,7 +20,6 @@ interface GreenPowerDeviceJoinedPayload {
     sourceID: number;
     deviceID: number;
     networkAddress: number;
-    greenPowerKey: string;
 }
 
 export {

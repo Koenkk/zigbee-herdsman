@@ -33,7 +33,6 @@ class Device extends Entity {
     private _applicationVersion?: number;
     private _dateCode?: string;
     private _endpoints: Endpoint[];
-    private _greenPowerKey?: string;
     private _hardwareVersion?: number;
     private _ieeeAddr: string;
     private _interviewCompleted: boolean;
@@ -59,7 +58,6 @@ class Device extends Entity {
     get applicationVersion(): number {return this._applicationVersion;}
     set applicationVersion(applicationVersion: number) {this._applicationVersion = applicationVersion;}
     get endpoints(): Endpoint[] {return this._endpoints;}
-    get greenPowerKey(): string {return this._greenPowerKey;}
     get interviewCompleted(): boolean {return this._interviewCompleted;}
     get interviewing(): boolean {return this._interviewing;}
     get lastSeen(): number {return this._lastSeen;}
@@ -126,7 +124,7 @@ class Device extends Entity {
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
-        lastSeen: number, greenPowerKey?: string,
+        lastSeen: number,
     ) {
         super();
         this.ID = ID;
@@ -150,7 +148,6 @@ class Device extends Entity {
         this._skipTimeResponse = false;
         this.meta = meta;
         this._lastSeen = lastSeen;
-        this._greenPowerKey = greenPowerKey;
     }
 
     public createEndpoint(ID: number): Endpoint {
@@ -261,7 +258,7 @@ class Device extends Entity {
             entry.id, entry.type, ieeeAddr, networkAddress, entry.manufId, endpoints,
             entry.manufName, entry.powerSource, entry.modelId, entry.appVersion,
             entry.stackVersion, entry.zclVersion, entry.hwVersion, entry.dateCode, entry.swBuildId,
-            entry.interviewCompleted, meta, entry.lastSeen || null, entry.greenPowerKey || null,
+            entry.interviewCompleted, meta, entry.lastSeen || null,
         );
     }
 
@@ -272,7 +269,7 @@ class Device extends Entity {
             endpoints[endpoint.ID] = endpoint.toDatabaseRecord();
         }
 
-        const entry: DatabaseEntry = {
+        return {
             id: this.ID, type: this.type, ieeeAddr: this.ieeeAddr, nwkAddr: this.networkAddress,
             manufId: this.manufacturerID, manufName: this.manufacturerName, powerSource: this.powerSource,
             modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion,
@@ -280,12 +277,6 @@ class Device extends Entity {
             swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
             meta: this.meta, lastSeen: this.lastSeen,
         };
-
-        if (this.greenPowerKey != null) {
-            entry.greenPowerKey = this.greenPowerKey;
-        }
-
-        return entry;
     }
 
     public save(writeDatabase=true): void {
@@ -335,7 +326,6 @@ class Device extends Entity {
         endpoints: {
             ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
         }[],
-        greenPowerKey?: string,
     ): Device {
         Device.loadFromDatabaseIfNecessary();
         if (Device.devices[ieeeAddr] && !Device.devices[ieeeAddr]._deleted) {
@@ -352,7 +342,7 @@ class Device extends Entity {
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
-            interviewCompleted, {}, null, greenPowerKey,
+            interviewCompleted, {}, null,
         );
 
         Entity.database.insert(device.toDatabaseEntry());
