@@ -3785,11 +3785,15 @@ const Cluster: {
                     {name: 'networkAddress', type: DataType.uint16},
                     {name: 'numberOfSubDevices', type: DataType.uint8},
                     {name: 'totalGroupIdentifiers', type: DataType.uint8},
-                    {name: 'endpointID', type: DataType.uint8},
-                    {name: 'profileID', type: DataType.uint16},
-                    {name: 'deviceID', type: DataType.uint16},
-                    {name: 'version', type: DataType.uint8},
-                    {name: 'groupIdentifierCount', type: DataType.uint8},
+                    // Below are optional according to the spec, not all devices send these.
+                    // e.g. https://github.com/Koenkk/zigbee2mqtt/issues/8535#issuecomment-909199162
+                    // Since we don't have a way to deal with optional attributes yet and since we don't
+                    // use these attributes anyway, disable them for now.
+                    // {name: 'endpointID', type: DataType.uint8},
+                    // {name: 'profileID', type: DataType.uint16},
+                    // {name: 'deviceID', type: DataType.uint16},
+                    // {name: 'version', type: DataType.uint8},
+                    // {name: 'groupIdentifierCount', type: DataType.uint8},
                 ],
             },
         },
