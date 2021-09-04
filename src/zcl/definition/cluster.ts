@@ -3281,6 +3281,7 @@ const Cluster: {
             prePayNotificationFlags: {ID: 4, type: DataType.bitmap32},
             deviceManagementFlags: {ID: 5, type: DataType.bitmap32},
             changeReportingProfile: {ID: 256, type: DataType.unknown},
+            develcoPulseConfiguration: {ID: 0x0300, type: DataType.uint16, manufacturerCode: ManufacturerCode.DEVELCO},
         },
         commands: {
             getProfile: {
