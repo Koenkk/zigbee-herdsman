@@ -4029,6 +4029,20 @@ const Cluster: {
         commands: {},
         commandsResponse: {}
     },
+    manuSpecificTuya_2: {
+        ID: 0xE002,
+        attributes: {
+            alarm_temperature_max: { ID: 53258, type: dataType_1.default.uint16 }, //0xD00A
+            alarm_temperature_min: { ID: 53259, type: dataType_1.default.uint16 }, //0xD00B
+            alarm_humidity_max: { ID: 53261, type: dataType_1.default.uint16 }, //0xD00D
+            alarm_humidity_min: { ID: 53262, type: dataType_1.default.uint16 }, //0xD00E
+            alarm_humidity: { ID: 53263, type: dataType_1.default.int16 },    //0xD00F
+            alarm_temperature: { ID: 53254, type: dataType_1.default.int16 }, //0xD006
+            unknown: { ID: 53264, type: dataType_1.default.uint8 }, //0xD010
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     manuSpecificCentraliteHumidity: {
         ID: 0xFC45,
         manufacturerCode: ManufacturerCode.Centralite,
