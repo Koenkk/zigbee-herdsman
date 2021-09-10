@@ -409,11 +409,11 @@ class Device extends Entity {
         // Similar to TuYa devices, Third Reality devices don't change zoneState after enroll
         if this.modelID?.match('^3R.*?Z') {
             this._powerSource = this._powerSource || 'Battery';
-            this._interviewing = false;                       
-            this._interviewCompleted = true;              
-            this.save();                              
+            this._interviewing = false;
+            this._interviewCompleted = true;
+            this.save();
             debug.log(`Interview - quirks matched for Third Reality end device`);
-            return true;                          
+            return true;
         }
 
         // Some devices, e.g. Xiaomi end devices have a different interview procedure, after pairing they
