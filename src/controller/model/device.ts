@@ -412,6 +412,9 @@ class Device extends Entity {
         const lookup: {[s: string]: {
             type?: DeviceType; manufacturerID?: number; manufacturerName?: string; powerSource?: string;
         };} = {
+            '^3R.*?Z': {
+                type: 'EndDevice', powerSource: 'Battery'
+            },
             'lumi\..*': {
                 type: 'EndDevice', manufacturerID: 4151, manufacturerName: 'LUMI', powerSource: 'Battery'
             },
