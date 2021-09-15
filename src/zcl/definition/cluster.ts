@@ -3282,6 +3282,7 @@ const Cluster: {
             deviceManagementFlags: {ID: 5, type: DataType.bitmap32},
             changeReportingProfile: {ID: 256, type: DataType.unknown},
             develcoPulseConfiguration: {ID: 0x0300, type: DataType.uint16, manufacturerCode: ManufacturerCode.DEVELCO},
+            develcoCurrentSummation: {ID: 0x0301, type: DataType.uint48, manufacturerCode: ManufacturerCode.DEVELCO},
             develcoInterfaceMode: {ID: 0x0302, type: DataType.enum16, manufacturerCode: ManufacturerCode.DEVELCO},
         },
         commands: {
