@@ -97,7 +97,7 @@ class Device extends Entity {
     get skipTimeResponse(): boolean {return this._skipTimeResponse;}
     set skipTimeResponse(skipTimeResponse: boolean) {this._skipTimeResponse = skipTimeResponse;}
 
-    private meta: KeyValue;
+    public meta: KeyValue;
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
