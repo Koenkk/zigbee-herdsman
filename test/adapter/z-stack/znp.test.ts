@@ -49,6 +49,7 @@ const mockSocketConnect = jest.fn().mockImplementation(() => {
     mockSocketCallbacks['ready']();
 });
 const mockSocketDestroy = jest.fn();
+let requestSpy;
 
 jest.mock('net', () => {
     return {
@@ -128,6 +129,11 @@ describe('ZNP', () => {
 
         // @ts-ignore; make sure we always get a new instance
         znp = new Znp("/dev/ttyACM0", 100, true);
+        requestSpy = jest.spyOn(znp, 'request').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        requestSpy.mockRestore();
     });
 
     it('Open', async () => {
@@ -141,13 +147,29 @@ describe('ZNP', () => {
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
         expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
+        expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(0);
+    });
+
+    it('Open - first ping fails should send reset bootloader', async () => {
+        requestSpy.mockImplementation(() => {throw new Error('failed')});
+        await znp.open();
+
+        expect(SerialPort).toHaveBeenCalledTimes(1);
+        expect(SerialPort).toHaveBeenCalledWith(
+            "/dev/ttyACM0",
+            {"autoOpen": false, "baudRate": 100, "rtscts": true},
+        );
+
+        expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
         expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(1);
-        expect(mockSerialPortSet).toHaveBeenCalledTimes(3);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
     });
 
     it('Open with defaults', async () => {
         znp = new Znp("/dev/ttyACM0", undefined, undefined);
+        requestSpy = jest.spyOn(znp, 'request').mockImplementation(() => {});
         await znp.open();
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
@@ -158,7 +180,6 @@ describe('ZNP', () => {
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
         expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
-        expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(1);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
     });
 
@@ -446,6 +467,7 @@ describe('ZNP', () => {
         });
 
         await znp.open();
+        requestSpy.mockRestore();
 
         const result = await znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
 
@@ -481,6 +503,7 @@ describe('ZNP', () => {
         });
 
         await znp.open();
+        requestSpy.mockRestore();
 
         expect(znp.waitress.waiters.size).toBe(0);
 
@@ -513,6 +536,7 @@ describe('ZNP', () => {
         });
 
         await znp.open();
+        requestSpy.mockRestore();
 
         expect(znp.waitress.waiters.size).toBe(0);
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead');
@@ -555,6 +579,7 @@ describe('ZNP', () => {
         });
 
         await znp.open();
+        requestSpy.mockRestore();
 
         const result = await znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
 
@@ -590,6 +615,7 @@ describe('ZNP', () => {
         });
 
         await znp.open();
+        requestSpy.mockRestore();
 
         const result = await znp.request(UnpiConstants.Subsystem.SYS, 'resetReq', {type: 1});
 
@@ -609,6 +635,7 @@ describe('ZNP', () => {
 
     it('znp request AREQ', async () => {
         await znp.open();
+        requestSpy.mockRestore();
 
         const result = await znp.request(UnpiConstants.Subsystem.SAPI, 'startConfirm', {status: 1});
 
@@ -624,6 +651,7 @@ describe('ZNP', () => {
 
     it('znp request without init', async () => {
         let error;
+        requestSpy.mockRestore();
 
         try {
             await znp.request(UnpiConstants.Subsystem.SAPI, 'startConfirm', {status: 1});
@@ -637,6 +665,7 @@ describe('ZNP', () => {
 
     it('znp request with non-existing subsystem', async () => {
         await znp.open();
+        requestSpy.mockRestore();
         let error;
 
         try {
@@ -650,6 +679,7 @@ describe('ZNP', () => {
 
     it('znp request with non-existing cmd', async () => {
         await znp.open();
+        requestSpy.mockRestore();
         let error;
 
         try {
@@ -663,6 +693,7 @@ describe('ZNP', () => {
 
     it('znp request timeout', async () => {
         await znp.open();
+        requestSpy.mockRestore();
 
         let result = znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
         jest.runAllTimers();
@@ -679,6 +710,7 @@ describe('ZNP', () => {
 
     it('znp request timeout for startupFromApp is longer', async () => {
         await znp.open();
+        requestSpy.mockRestore();
 
         let result = znp.request(UnpiConstants.Subsystem.ZDO, 'startupFromApp', {startdelay: 100});
         jest.advanceTimersByTime(30000);
@@ -703,6 +735,7 @@ describe('ZNP', () => {
         });
 
         await znp.open();
+        requestSpy.mockRestore();
 
         let result = znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
         jest.runAllTimers();
@@ -733,6 +766,7 @@ describe('ZNP', () => {
         });
 
         await znp.open();
+        requestSpy.mockRestore();
 
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead');
         znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
@@ -757,6 +791,7 @@ describe('ZNP', () => {
         });
 
         await znp.open();
+        requestSpy.mockRestore();
 
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 0, value: Buffer.from([1, 2])});
         znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
@@ -781,24 +816,25 @@ describe('ZNP', () => {
         });
 
         znp.open().then(() => {
+            requestSpy.mockRestore();
             const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 3, value: Buffer.from([1, 3])});
             znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
-    
+
             parsedCb(new UnpiFrame(
                 UnpiConstants.Type.SRSP,
                 UnpiConstants.Subsystem.SYS,
                 0x08,
                 Buffer.from([0x00, 0x02, 0x01, 0x02])
             ));
-    
-    
+
+
             waiter.start().promise
                 .then(() => done("Shouldn't end up here"))
                 .catch((e) => {
                     expect(e).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 10000ms"));
                     done();
                 });
-    
+
             jest.runOnlyPendingTimers();
         });
     });
