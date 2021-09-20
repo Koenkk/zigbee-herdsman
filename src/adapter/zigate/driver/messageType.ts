@@ -181,7 +181,7 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             // 1 = Formed new network
             // 128 – 244 = Failed (ZigBee event codes)
             {name: 'shortAddress', parameterType: 'UINT16BE'}, // <short address: uint16_t>
-            {name: 'extendedAddress', parameterType: 'IEEEADDR'}, // <extended address:uint64_t>
+            // {name: 'extendedAddress', parameterType: 'IEEEADDR'}, // <extended address:uint64_t>
             // {name: 'channel', parameterType: 'UINT8'}, // <channel: uint8_t>
         ]
     },
@@ -278,6 +278,12 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
         response: [
             {name: 'logLevel', parameterType: 'LOG_LEVEL'},
             {name: 'log', parameterType: 'STRING'},
+        ]
+    },
+    [ZiGateMessageCode.AddGroupResponse]: {
+        response: [
+            {name: 'status', parameterType: 'UINT16BE'},
+            {name: 'groupAddress', parameterType: 'UINT16BE'},
         ]
     }
 };
