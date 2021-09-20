@@ -231,6 +231,7 @@ export enum ZiGateCommandCode {
     ManagementLeaveRequest = 0x0047,
     ManagementLQI = 0x004E,
     SetSecurityStateKey = 0x0022,
+    AddGroup = 0x0060,
 }
 
 
@@ -260,6 +261,7 @@ export enum ZiGateMessageCode {
     RestartNonFactoryNew = 0x8006,
     RestartFactoryNew = 0x8007,
     ExtendedStatusCallBack = 0x9999,
+    AddGroupResponse = 0x8060,
 }
 
 // eslint-disable-next-line

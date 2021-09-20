@@ -18,12 +18,12 @@ import {
 } from "../driver/constants";
 import {RawAPSDataRequestPayload} from "../driver/commandType";
 import ZiGateObject from "../driver/ziGateObject";
-import { Buffalo } from "../../../buffalo";
+import {Buffalo} from "../../../buffalo";
 import {LoggerStub} from "../../../controller/logger-stub";
 import * as Models from "../../../models";
 
 const debug = Debug('adapter');
-
+const default_bind_group = 901;  // https://github.com/Koenkk/zigbee-herdsman-converters/blob/master/lib/constants.js#L3
 interface WaitressMatcher {
     address: number | string;
     endpoint: number;
@@ -88,6 +88,14 @@ class ZiGateAdapter extends Adapter {
                 deviceType: DEVICE_TYPE.coordinator
             });
             await this.initNetwork();
+
+            await this.driver.sendCommand(ZiGateCommandCode.AddGroup, {
+                addressMode: ADDRESS_MODE.short ,
+                shortAddress: 0x0000,
+                sourceEndpoint:0x01,
+                destinationEndpoint:0x01,
+                groupAddress: default_bind_group
+            });
         } catch (error) {
             throw new Error("failed to connect to zigate adapter " + error.message);
         }

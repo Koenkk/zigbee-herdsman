@@ -425,4 +425,13 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
             ],
         ]
     },
+    [ZiGateCommandCode.AddGroup]: {
+        request: [
+            { name: 'addressMode', parameterType: 'UINT8' }, //<device type: uint8_t>
+            { name: 'shortAddress', parameterType: 'UINT16BE' },
+            { name: 'sourceEndpoint', parameterType: 'UINT8' },
+            { name: 'destinationEndpoint', parameterType: 'UINT8' },
+            { name: 'groupAddress', parameterType: 'UINT16BE' },
+        ]
+    }
 };
