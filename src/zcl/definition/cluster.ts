@@ -516,6 +516,7 @@ const Cluster: {
             defaultMoveRate: {ID: 20, type: DataType.uint16},
             startUpCurrentLevel: {ID: 16384, type: DataType.uint8},
             elkoStartUpCurrentLevel: {ID: 0x4000, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
+            ubisysMinimumOnLevel: {ID: 0, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
         },
         commands: {
             moveToLevel: {
