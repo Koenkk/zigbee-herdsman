@@ -4023,14 +4023,6 @@ const Cluster: {
             }
         },
     },
-    manuSpecificTuyaSwitch: {
-        ID: 0xe001,
-        attributes: {
-            switchType: {ID: 0xd030, type: DataType.enum8},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     aqaraOpple: {
         ID: 0xFCC0,
         manufacturerCode: ManufacturerCode.LUMI_UNITED_TECH,
@@ -4051,6 +4043,14 @@ const Cluster: {
             alarm_humidity: {ID: 53263, type: DataType.enum8},
             alarm_temperature: {ID: 53254, type: DataType.enum8},
             unknown: {ID: 53264, type: DataType.uint8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    manuSpecificTuya_3: {
+        ID: 0xe001,
+        attributes: {
+            switchType: {ID: 0xd030, type: DataType.enum8},
         },
         commands: {},
         commandsResponse: {},
