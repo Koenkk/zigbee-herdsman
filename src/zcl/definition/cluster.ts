@@ -4023,6 +4023,14 @@ const Cluster: {
             }
         },
     },
+    manuSpecificTuyaSwitch: {
+        ID: 0xe001,
+        attributes: {
+            switchType: {ID: 0xd030, type: DataType.enum8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     aqaraOpple: {
         ID: 0xFCC0,
         manufacturerCode: ManufacturerCode.LUMI_UNITED_TECH,
