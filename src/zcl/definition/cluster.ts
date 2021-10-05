@@ -4048,6 +4048,14 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    manuSpecificTuya_3: {
+        ID: 0xe001,
+        attributes: {
+            switchType: {ID: 0xd030, type: DataType.enum8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     manuSpecificCentraliteHumidity: {
         ID: 0xFC45,
         manufacturerCode: ManufacturerCode.Centralite,
