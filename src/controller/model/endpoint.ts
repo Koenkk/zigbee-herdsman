@@ -80,7 +80,7 @@ class Endpoint extends Entity {
     public deviceNetworkAddress: number;
     private _binds: BindInternal[];
     private _configuredReportings: ConfiguredReportingInternal[];
-    private meta: KeyValue;
+    public meta: KeyValue;
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private pendingRequests: {func: () => Promise<any>, resolve: (value: any) => any, reject: (error: any) => any}[];
 
