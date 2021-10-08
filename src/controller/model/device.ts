@@ -486,7 +486,7 @@ class Device extends Entity {
             // https://github.com/Koenkk/zigbee2mqtt/issues/5814
             debug.log("Interview - Detected TuYa end device, waiting 10 seconds...");
             await Wait(10000);
-        } else if ([0, 4098].includes(this.manufacturerID) && this._type === 'EndDevice') {
+        } else if ([0, 4098].includes(this.manufacturerID)) {
             // Potentially a TuYa device, some sleep fast so make sure to read the modelId and manufacturerName quickly.
             // In case the device responds, the endoint and modelID/manufacturerName are set
             // in controller.onZclOrRawData()
