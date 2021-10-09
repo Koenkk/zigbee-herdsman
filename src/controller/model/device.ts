@@ -398,7 +398,7 @@ class Device extends Entity {
         //      Device does not change zoneState after enroll (event with original gateway)
         // modelID is mostly in the form of e.g. TS0202 and manufacturerName like e.g. _TYZB01_xph99wvr
         if (this.modelID?.match('^TS\\d*$') &&
-            (this.manufacturerName?.match('^_TYZB01_.*$') || this.manufacturerName?.match('^_TZ.*_.*$'))) {
+            (this.manufacturerName?.match('^_TZ.*_.*$') || this.manufacturerName?.match('^_TYZB01_.*$'))) {
             this._powerSource = this._powerSource || 'Battery';
             this._interviewing = false;
             this._interviewCompleted = true;
