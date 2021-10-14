@@ -172,8 +172,7 @@ class Controller extends events.EventEmitter {
         const databaseCoordinator = Device.byType('Coordinator')[0];
         if (databaseCoordinator.ieeeAddr !== coordinator.ieeeAddr) {
             debug.log(`Coordinator address changed, updating to '${coordinator.ieeeAddr}'`);
-            databaseCoordinator.ieeeAddr = coordinator.ieeeAddr;
-            databaseCoordinator.save();
+            databaseCoordinator.changeIeeeAddress(coordinator.ieeeAddr);
         }
 
         // Set backup timer to 1 day.

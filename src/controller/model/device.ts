@@ -161,6 +161,13 @@ class Device extends Entity {
         return endpoint;
     }
 
+    public changeIeeeAddress(ieeeAddr: string): void {
+        delete Device.devices[this.ieeeAddr];
+        this.ieeeAddr = ieeeAddr;
+        Device.devices[this.ieeeAddr] = this;
+        this.save();
+    }
+
     public getEndpoint(ID: number): Endpoint {
         return this.endpoints.find((e): boolean => e.ID === ID);
     }
