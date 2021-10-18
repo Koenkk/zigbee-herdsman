@@ -2644,6 +2644,7 @@ const Cluster: {
                     {name: 'zoneid', type: DataType.uint8},
                     {name: 'zonetype', type: DataType.uint16},
                     {name: 'ieeeaddr', type: DataType.ieeeAddr},
+                    {name: 'zonelabel', type: DataType.charStr},
                 ],
             },
             zoneStatusChanged: {
@@ -2652,8 +2653,7 @@ const Cluster: {
                     {name: 'zoneid', type: DataType.uint8},
                     {name: 'zonestatus', type: DataType.uint16},
                     {name: 'audiblenotif', type: DataType.uint8},
-                    {name: 'strlen', type: DataType.uint8},
-                    {name: 'string', type: DataType.charStr},
+                    {name: 'zonelabel', type: DataType.charStr},
                 ],
             },
             panelStatusChanged: {
