@@ -91,17 +91,17 @@ export class AdapterBackup {
         const preconfiguredKeyEnabled = await this.nv.readItem(NvItemsIds.PRECFGKEYS_ENABLE, 0);
         this.debug("fetched adapter pre-configured key");
         const addressManagerTable = await this.getAddressManagerTable(version);
-        this.debug(`fetched adapter address manager table (length=${addressManagerTable?.usedCount || 0})`);
+        this.debug(`fetched adapter address manager table (capacity=${addressManagerTable?.capacity || 0}, used=${addressManagerTable?.usedCount || 0})`);
         const securityManagerTable = await this.getSecurityManagerTable();
-        this.debug(`fetched adapter security manager table (length=${securityManagerTable?.usedCount || 0})`);
+        this.debug(`fetched adapter security manager table (capacity=${securityManagerTable?.usedCount || 0}, used=${securityManagerTable?.usedCount || 0})`);
         const apsLinkKeyDataTable = await this.getApsLinkKeyDataTable(version);
-        this.debug(`fetched adapter aps link key data table (length=${apsLinkKeyDataTable?.usedCount || 0})`);
+        this.debug(`fetched adapter aps link key data table (capacity=${apsLinkKeyDataTable?.usedCount || 0}, used=${apsLinkKeyDataTable?.usedCount || 0})`);
         const tclkSeed = version === ZnpVersion.zStack12 ? null : await this.nv.readItem(NvItemsIds.TCLK_SEED, 0, Structs.nwkKey);
         this.debug("fetched adapter tclk seed");
         const tclkTable = await this.getTclkTable(version);
-        this.debug(`fetched adapter tclk table (length=${tclkTable?.usedCount || 0})`);
+        this.debug(`fetched adapter tclk table (capacity=${tclkTable?.usedCount || 0}, used=${tclkTable?.usedCount || 0})`);
         const secMaterialTable = await this.getNetworkSecurityMaterialTable(version);
-        this.debug(`fetched adapter network security material table (length=${secMaterialTable?.usedCount || 0})`);
+        this.debug(`fetched adapter network security material table (capacity=${secMaterialTable?.usedCount || 0}, used=${secMaterialTable?.usedCount || 0})`);
 
         /* examine network security material table */
         const genericExtendedPanId = Buffer.alloc(8, 0xff);
