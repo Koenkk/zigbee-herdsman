@@ -182,6 +182,7 @@ export class AdapterBackup {
                 return {
                     networkAddress: ame.nwkAddr,
                     ieeeAddress: ame.extAddr,
+                    isDirectChild: (ame.user & AddressManagerUser.Assoc) > 0,
                     linkKey: !linkKeyInfo ? undefined : linkKeyInfo
                 }; 
             }).filter(e => e) || []
@@ -250,7 +251,7 @@ export class AdapterBackup {
             const ame = addressManagerTable.getNextFree();
             ame.nwkAddr = device.networkAddress;
             ame.extAddr = device.ieeeAddress;
-            ame.user = AddressManagerUser.Assoc;
+            ame.user = device.isDirectChild ? AddressManagerUser.Assoc : AddressManagerUser.Default;
             if (device.linkKey) {
                 let linkKeyProcessed = false;
                 /* attempt to recover tclk seed parameters (if available) */
@@ -319,7 +320,7 @@ export class AdapterBackup {
         const reversedAdapterIeee = Buffer.from(backup.coordinatorIeeeAddress).reverse();
         await this.nv.writeItem(NvItemsIds.EXTADDR, reversedAdapterIeee);
 
-        /* write update nib */
+        /* write updated nib */
         await this.nv.writeItem(NvItemsIds.NIB, nib);
 
         /* write network key info */

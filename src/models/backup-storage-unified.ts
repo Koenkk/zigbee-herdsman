@@ -38,6 +38,7 @@ export interface UnifiedBackupStorage {
     devices: {
         nwk_address: string;
         ieee_address: string;
+        is_child: boolean;
         link_key: {
             key: string;
             rx_counter: number;
