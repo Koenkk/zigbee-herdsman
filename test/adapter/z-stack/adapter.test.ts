@@ -139,6 +139,7 @@ const backupMatchingConfig = JSON.parse(`
       {
         "nwk_address": "4285",
         "ieee_address": "00158d00024f810d",
+        "is_child": false,
         "link_key": {
           "key": "55ba1e31fcd8171f9f0b63459effbca5",
           "rx_counter": 0,
@@ -148,6 +149,7 @@ const backupMatchingConfig = JSON.parse(`
       {
         "nwk_address": "4286",
         "ieee_address": "00158d00024f810e",
+        "is_child": true,
         "link_key": {
           "key": "55ba1e31fcd8171fee0b63459effeea5",
           "rx_counter": 24,

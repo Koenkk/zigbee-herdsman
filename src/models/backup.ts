@@ -19,6 +19,7 @@ export interface Backup {
     devices: {
         networkAddress: number;
         ieeeAddress: Buffer;
+        isDirectChild: boolean;
         linkKey?: {
             key: Buffer;
             rxCounter: number;

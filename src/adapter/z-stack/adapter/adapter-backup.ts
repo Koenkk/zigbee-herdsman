@@ -69,7 +69,7 @@ export class AdapterBackup {
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
         if (!nib) {
             throw new Error("Cannot backup - adapter not commissioned");
-        } 
+        }
         this.debug("fetched adapter nib");
 
         /* get adapter active key information */
@@ -91,17 +91,17 @@ export class AdapterBackup {
         const preconfiguredKeyEnabled = await this.nv.readItem(NvItemsIds.PRECFGKEYS_ENABLE, 0);
         this.debug("fetched adapter pre-configured key");
         const addressManagerTable = await this.getAddressManagerTable(version);
-        this.debug("fetched adapter address manager table");
+        this.debug(`fetched adapter address manager table (capacity=${addressManagerTable?.capacity || 0}, used=${addressManagerTable?.usedCount || 0})`);
         const securityManagerTable = await this.getSecurityManagerTable();
-        this.debug("fetched adapter security manager table");
+        this.debug(`fetched adapter security manager table (capacity=${securityManagerTable?.usedCount || 0}, used=${securityManagerTable?.usedCount || 0})`);
         const apsLinkKeyDataTable = await this.getApsLinkKeyDataTable(version);
-        this.debug("fetched adapter aps link key data table");
+        this.debug(`fetched adapter aps link key data table (capacity=${apsLinkKeyDataTable?.usedCount || 0}, used=${apsLinkKeyDataTable?.usedCount || 0})`);
         const tclkSeed = version === ZnpVersion.zStack12 ? null : await this.nv.readItem(NvItemsIds.TCLK_SEED, 0, Structs.nwkKey);
         this.debug("fetched adapter tclk seed");
         const tclkTable = await this.getTclkTable(version);
-        this.debug("fetched adapter tclk table");
+        this.debug(`fetched adapter tclk table (capacity=${tclkTable?.usedCount || 0}, used=${tclkTable?.usedCount || 0})`);
         const secMaterialTable = await this.getNetworkSecurityMaterialTable(version);
-        this.debug("fetched adapter network security material table");
+        this.debug(`fetched adapter network security material table (capacity=${secMaterialTable?.usedCount || 0}, used=${secMaterialTable?.usedCount || 0})`);
 
         /* examine network security material table */
         const genericExtendedPanId = Buffer.alloc(8, 0xff);
@@ -150,7 +150,7 @@ export class AdapterBackup {
                     /* istanbul ignore next */
                     return null;
                 }
-                let linkKeyInfo: { key: Buffer, rxCounter: number, txCounter: number } = null;
+                let linkKeyInfo: {key: Buffer, rxCounter: number, txCounter: number} = null;
                 const sme = securityManagerTable.used.find(e => e.ami === ami);
                 if (sme) {
                     const apsKeyDataIndex = version === ZnpVersion.zStack30x ? sme.keyNvId - NvItemsIds.APS_LINK_KEY_DATA_START : sme.keyNvId;
@@ -182,8 +182,9 @@ export class AdapterBackup {
                 return {
                     networkAddress: ame.nwkAddr,
                     ieeeAddress: ame.extAddr,
+                    isDirectChild: (ame.user & AddressManagerUser.Assoc) > 0,
                     linkKey: !linkKeyInfo ? undefined : linkKeyInfo
-                }; 
+                };
             }).filter(e => e) || []
         };
     }
@@ -250,7 +251,7 @@ export class AdapterBackup {
             const ame = addressManagerTable.getNextFree();
             ame.nwkAddr = device.networkAddress;
             ame.extAddr = device.ieeeAddress;
-            ame.user = AddressManagerUser.Assoc;
+            ame.user = device.isDirectChild ? AddressManagerUser.Assoc : AddressManagerUser.Default;
             if (device.linkKey) {
                 let linkKeyProcessed = false;
                 /* attempt to recover tclk seed parameters (if available) */
@@ -319,7 +320,7 @@ export class AdapterBackup {
         const reversedAdapterIeee = Buffer.from(backup.coordinatorIeeeAddress).reverse();
         await this.nv.writeItem(NvItemsIds.EXTADDR, reversedAdapterIeee);
 
-        /* write update nib */
+        /* write updated nib */
         await this.nv.writeItem(NvItemsIds.NIB, nib);
 
         /* write network key info */
@@ -418,7 +419,7 @@ export class AdapterBackup {
             return this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, undefined, Structs.apsTcLinkKeyTable);
         } else {
             return this.nv.readTable("legacy", NvItemsIds.LEGACY_TCLK_TABLE_START, 239, Structs.apsTcLinkKeyTable);
-        } 
+        }
     }
 
     /**
