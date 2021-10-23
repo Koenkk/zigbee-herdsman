@@ -1933,6 +1933,11 @@ const Cluster: {
             danfossHeatAvailable: {ID: 0x4030, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossHeatRequired: {ID: 0x4031, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossLoadEstimate: {ID: 0x404a, type: DataType.int16, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossRoomStatusCode: {ID: 0x4100, type: DataType.bitmap16, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossOutputStatus:  {ID: 0x4110, type: DataType.enum8, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossRoomFloorSensorMode: {ID: 0x4120, type: DataType.enum8, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossFloorMinSetpoint: {ID: 0x4121, type: DataType.int16, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossFloorMaxSetpoint: {ID: 0x4122, type: DataType.int16, manufacturerCode: ManufacturerCode.DANFOSS},
             elkoLoad: {ID: 0x0401, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
             elkoDisplayText: {ID: 0x0402, type: DataType.charStr, manufacturerCode: ManufacturerCode.ELKO},
             elkoSensor: {ID: 0x0403, type: DataType.enum8, manufacturerCode: ManufacturerCode.ELKO},
@@ -3740,6 +3745,10 @@ const Cluster: {
             averageMacRetryPerApsMessageSent: {ID: 283, type: DataType.uint16},
             lastMessageLqi: {ID: 284, type: DataType.uint8},
             lastMessageRssi: {ID: 285, type: DataType.int8},
+            danfossSystemStatusCode: {ID: 0x4000, type: DataType.bitmap16, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossSystemStatusWater: {ID: 0x4200, type: DataType.enum8, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossMultimasterRole: {ID: 0x4201, type: DataType.enum8, manufacturerCode: ManufacturerCode.DANFOSS},
+
         },
         commands: {
         },
