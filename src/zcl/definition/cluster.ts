@@ -3748,7 +3748,6 @@ const Cluster: {
             danfossSystemStatusCode: {ID: 0x4000, type: DataType.bitmap16, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossSystemStatusWater: {ID: 0x4200, type: DataType.enum8, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossMultimasterRole: {ID: 0x4201, type: DataType.enum8, manufacturerCode: ManufacturerCode.DANFOSS},
-
         },
         commands: {
         },
