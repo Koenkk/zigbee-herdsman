@@ -32,6 +32,7 @@ interface Options {
     disableRecovery?: boolean;
     writeUndiv?: boolean;
     sendWhenActive?: boolean;
+    activeTimeout?: number;
 }
 
 interface Clusters {
@@ -83,6 +84,7 @@ class Endpoint extends Entity {
     public meta: KeyValue;
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private pendingRequests: {func: () => Promise<any>, resolve: (value: any) => any, reject: (error: any) => any}[];
+    private lastPendingFlush: number;
 
     // Getters/setters
     get binds(): Bind[] {
@@ -149,6 +151,7 @@ class Endpoint extends Entity {
         this._configuredReportings = configuredReportings;
         this.meta = meta;
         this.pendingRequests = [];
+        this.lastPendingFlush = 0;
     }
 
     /**
@@ -262,6 +265,7 @@ class Endpoint extends Entity {
     }
 
     public sendPendingRequests(): void {
+        this.lastPendingFlush = Date.now();
         [...this.pendingRequests].forEach(async (r) => {
             this.pendingRequests.splice(this.pendingRequests.indexOf(r), 1);
             try {
@@ -273,8 +277,8 @@ class Endpoint extends Entity {
         });
     }
 
-    public async sendRequest<Type>(func: () => Promise<Type>, sendWhenActive: boolean): Promise<Type> {
-        if (sendWhenActive) {
+    public async sendRequest<Type>(func: () => Promise<Type>, sendWhenActive: boolean, activeTimeout: number): Promise<Type> {
+        if (sendWhenActive && (Date.now() - this.lastPendingFlush) > activeTimeout) {
             return new Promise((resolve, reject): void =>  {
                 this.pendingRequests.push({func, resolve, reject});
             });
@@ -328,7 +332,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint,
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhenActive, options.activeTimeout);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -369,7 +373,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint,
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhenActive, options.activeTimeout);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -407,7 +411,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint,
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhenActive, options.activeTimeout);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -455,7 +459,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhenActive, options.activeTimeout);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -568,7 +572,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhenActive, options.activeTimeout);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -621,7 +625,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhenActive, options.activeTimeout);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -672,7 +676,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhenActive, options.activeTimeout);
 
             // TODO: support `writeStructuredResponse`
         } catch (error) {
@@ -707,7 +711,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhenActive, options.activeTimeout);
 
             if (result) {
                 return result.frame.Payload;
@@ -744,7 +748,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhenActive, options.activeTimeout);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -778,6 +782,7 @@ class Endpoint extends Entity {
         const providedOptions = options || {};
         return {
             sendWhenActive: false,
+            activeTimeout: 500,
             timeout: 10000,
             disableResponse: false,
             disableRecovery: false,
