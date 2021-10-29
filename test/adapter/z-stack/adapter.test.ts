@@ -792,7 +792,6 @@ class ZnpRequestMockBuilder {
             throw new Error(msg);
         }
         const response = responder.exec(message.payload, this);
-        // console.log(message, response);
         return response;
     }
 
@@ -1716,10 +1715,63 @@ describe("zstack-adapter", () => {
         expect(result).toBe("reset");
     });
 
+    it("LED behaviour: disable LED true, firmware not handling leds", async () => {
+        basicMocks();
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {disableLED: true});
+        await adapter.start();
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
+        mockZnpRequest.mockClear();
+        await adapter.permitJoin(255, 0);
+        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        mockZnpRequest.mockClear();
+        await adapter.permitJoin(0, 0);
+        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+    });
 
+    it("LED behaviour: disable LED false, firmware not handling leds", async () => {
+        basicMocks();
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {disableLED: false});
+        await adapter.start();
+        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        mockZnpRequest.mockClear();
+        await adapter.permitJoin(255, 0);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
+        mockZnpRequest.mockClear();
+        await adapter.permitJoin(0, 0);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
+    });
 
+    it("LED behaviour: disable LED true, firmware handling leds", async () => {
+        mockZnpRequestWith(
+            baseZnpRequestMock.clone()
+                .handle(Subsystem.SYS, "version", payload => { return { payload: { product: ZnpVersion.zStack30x, revision: 20211030 } }})
+        );
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {disableLED: true});
+        await adapter.start();
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 0xFF, mode: 5}, null, 500);
+        mockZnpRequest.mockClear();
+        await adapter.permitJoin(255, 0);
+        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        mockZnpRequest.mockClear();
+        await adapter.permitJoin(0, 0);
+        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+    });
 
-
+    it("LED behaviour: disable LED false, firmware handling leds", async () => {
+        mockZnpRequestWith(
+            baseZnpRequestMock.clone()
+                .handle(Subsystem.SYS, "version", payload => { return { payload: { product: ZnpVersion.zStack30x, revision: 20211030 } }})
+        );
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {disableLED: false});
+        await adapter.start();
+        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        mockZnpRequest.mockClear();
+        await adapter.permitJoin(255, 0);
+        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        mockZnpRequest.mockClear();
+        await adapter.permitJoin(0, 0);
+        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+    });
 
     /* Original Tests */
     it('Is valid path', async () => {
@@ -1917,8 +1969,9 @@ describe("zstack-adapter", () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         await adapter.permitJoin(100, null);
-        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledTimes(2);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtPermitJoinReq', {addrmode: 0x0F, dstaddr: 0xFFFC , duration: 100, tcsignificance: 0 });
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
     });
 
     it('Permit join specific networkAddress', async () => {
@@ -1926,8 +1979,9 @@ describe("zstack-adapter", () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         await adapter.permitJoin(102, 42102);
-        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toBeCalledTimes(2);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtPermitJoinReq', {addrmode: 2, dstaddr: 42102 , duration: 102, tcsignificance: 0 });
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
     });
 
     it('Get coordinator version', async () => {
@@ -1964,38 +2018,19 @@ describe("zstack-adapter", () => {
         expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 15});
     });
 
-    it('Disable led', async () => {
-        basicMocks();
-        await adapter.start();
-        mockZnpRequest.mockClear();
-        await adapter.setLED(false);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
-    });
-
-    it('Enable led', async () => {
-        basicMocks();
-        await adapter.start();
-        mockZnpRequest.mockClear();
-        await adapter.setLED(true);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
-    });
-
-    it('Supports led', async () => {
-        basicMocks();
-        await adapter.start();
-        expect(await adapter.supportsLED()).toBeTruthy();
-    });
-
     it('Support LED should go to false when LED request fails', async () => {
         basicMocks();
         await adapter.start();
-        expect(await adapter.supportsLED()).toBeTruthy();
         mockZnpRequest.mockClear();
-        mockZnpRequest.mockImplementationOnce(() => new Promise((resolve, reject) => reject("FAILED")));
-        await adapter.setLED(true);
-        expect(await adapter.supportsLED()).toBeFalsy();
+        mockZnpRequest.mockImplementation((_, cmd) => new Promise((resolve, reject) => {
+            if (cmd == 'ledControl') reject('FAILED');
+            else resolve(null);
+        }));
+        await adapter.permitJoin(0, 0);
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
+        mockZnpRequest.mockClear();
+        await adapter.permitJoin(0, 0);
+        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
     });
 
     it('Node descriptor', async () => {

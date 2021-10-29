@@ -182,10 +182,6 @@ class DeconzAdapter extends Adapter {
         return Promise.reject();
     }
 
-    public async setLED(enabled: boolean): Promise<void> {
-        return Promise.reject();
-    }
-
     public async lqi(networkAddress: number): Promise<LQI> {
             const neighbors: LQINeighbor[] = [];
 
@@ -991,10 +987,6 @@ class DeconzAdapter extends Adapter {
             debug("get network parameters Error:" + error);
             return Promise.reject();
         }
-    }
-
-    public async supportsLED(): Promise<boolean> {
-        return false;
     }
 
     public async restoreChannelInterPAN(): Promise<void> {

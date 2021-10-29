@@ -42,8 +42,6 @@ const mockAdapterSupportsBackup = jest.fn().mockReturnValue(true);
 const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
-const mockAdapterSetLED = jest.fn();
-const mockAdapterSupportsLED = jest.fn().mockReturnValue(true);
 const mockAdapterSetTransmitPower = jest.fn();
 const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
     ieeeAddr: '0x123',
@@ -131,7 +129,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
     })
 }
 
-const mocksClear = [mocksendZclFrameToEndpoint, mockAdapterReset, mocksendZclFrameToGroup, mockSetChannelInterPAN, mocksendZclFrameInterPANToIeeeAddr, mocksendZclFrameInterPANBroadcast, mockRestoreChannelInterPAN, mockAdapterSetLED];
+const mocksClear = [mocksendZclFrameToEndpoint, mockAdapterReset, mocksendZclFrameToGroup, mockSetChannelInterPAN, mocksendZclFrameInterPANToIeeeAddr, mocksendZclFrameInterPANBroadcast, mockRestoreChannelInterPAN];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const equalsPartial = (object, expected) => {
@@ -301,8 +299,6 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             backup: () => {return mockDummyBackup; },
             getCoordinatorVersion: () => {return {type: 'zStack', meta: {version: 1}}},
             getNetworkParameters: mockAdapterGetNetworkParameters,
-            setLED: mockAdapterSetLED,
-            supportsLED: mockAdapterSupportsLED,
             waitFor: mockAdapterWaitFor,
             setTransmitPower: mockAdapterSetTransmitPower,
             nodeDescriptor: async (networkAddress) => {
@@ -733,23 +729,6 @@ describe('Controller', () => {
         expect(mockAdapterSetTransmitPower).toHaveBeenCalledWith(15);
     });
 
-    it('Disable led', async () => {
-        await controller.start();
-        mockAdapterSetLED.mockClear();
-        await controller.setLED(false);
-        expect(mockAdapterSetLED).toBeCalledTimes(1);
-    });
-
-    it('Throw error when not supports LED', async () => {
-        await controller.start();
-        mockAdapterSupportsLED.mockReturnValueOnce(false);
-        expect(await controller.supportsLED()).toBeFalsy();
-        mockAdapterSupportsLED.mockReturnValueOnce(false);
-        let error;
-        try {await controller.setLED(false)} catch (e) {error = e;}
-        expect(error).toStrictEqual(new Error(`Adapter doesn't support LED`));
-    });
-
     it('Get coordinator version', async () => {
         await controller.start();
         expect(await controller.getCoordinatorVersion()).toEqual({type: 'zStack', meta: {version: 1}});
@@ -935,8 +914,6 @@ describe('Controller', () => {
         expect(events.permitJoinChanged.length).toBe(1);
         expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual', timeout: undefined});
         expect(controller.getPermitJoin()).toBe(true);
-        expect(mockAdapterSetLED).toBeCalledTimes(1);
-        expect(mockAdapterSetLED).toHaveBeenCalledWith(true);
 
         // Green power
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
@@ -968,8 +945,6 @@ describe('Controller', () => {
         expect(events.permitJoinChanged.length).toBe(2);
         expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false, reason: 'manual', timeout: undefined});
         expect(controller.getPermitJoin()).toBe(false);
-        expect(mockAdapterSetLED).toBeCalledTimes(2);
-        expect(mockAdapterSetLED).toHaveBeenCalledWith(false);
 
         // Green power
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(4);
@@ -995,17 +970,14 @@ describe('Controller', () => {
     });
 
     it('Controller permit joining for specific time', async () => {
-        mockAdapterSupportsLED.mockReturnValueOnce(false);
         await controller.start();
         await controller.permitJoin(true, null, 10);
         expect(mockAdapterPermitJoin).toBeCalledTimes(1);
         expect(mockAdapterPermitJoin.mock.calls[0][0]).toBe(254);
         expect(events.permitJoinChanged.length).toBe(1);
         expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual', timeout: 10});
-        expect(mockAdapterSetLED).toHaveBeenCalledTimes(0);
 
         // Timer ends
-        mockAdapterSupportsLED.mockReturnValueOnce(false);
         jest.advanceTimersByTime(5 * 1000);
         await flushPromises();
         expect(controller.getPermitJoinTimeout()).toBe(5);
@@ -1016,7 +988,6 @@ describe('Controller', () => {
         expect(events.permitJoinChanged.length).toBe(11);
         expect(events.permitJoinChanged[5]).toStrictEqual({permitted: true, reason: 'manual', timeout: 5});
         expect(events.permitJoinChanged[10]).toStrictEqual({permitted: false, reason: 'timer_expired', timeout: undefined});
-        expect(mockAdapterSetLED).toHaveBeenCalledTimes(0);
     });
 
     it('Shouldnt create backup when adapter doesnt support it', async () => {
