@@ -108,16 +108,16 @@ class Device extends Entity {
         key: 'modelID' | 'manufacturerName' | 'applicationVersion' | 'zclVersion' | 'powerSource' | 'stackVersion' |
             'dateCode' | 'softwareBuildID' | 'hardwareVersion';
     };} = {
-        modelId: {key: 'modelID', set: (v: string, d: Device): void => {d.modelID = v;}},
-        manufacturerName: {key: 'manufacturerName', set: (v: string, d: Device): void => {d.manufacturerName = v;}},
-        powerSource: {key: 'powerSource', set: (v: string, d: Device): void => {d.powerSource = v;}},
-        zclVersion: {key: 'zclVersion', set: (v: number, d: Device): void => {d.zclVersion = v;}},
-        appVersion: {key: 'applicationVersion', set: (v: number, d: Device): void => {d.applicationVersion = v;}},
-        stackVersion: {key: 'stackVersion', set: (v: number, d: Device): void => {d.stackVersion = v;}},
-        hwVersion: {key: 'hardwareVersion', set: (v: number, d: Device): void => {d.hardwareVersion = v;}},
-        dateCode: {key: 'dateCode', set: (v: string, d: Device): void => {d.dateCode = v;}},
-        swBuildId: {key: 'softwareBuildID', set: (v: string, d: Device): void => {d.softwareBuildID = v;}},
-    };
+            modelId: {key: 'modelID', set: (v: string, d: Device): void => {d.modelID = v;}},
+            manufacturerName: {key: 'manufacturerName', set: (v: string, d: Device): void => {d.manufacturerName = v;}},
+            powerSource: {key: 'powerSource', set: (v: string, d: Device): void => {d.powerSource = v;}},
+            zclVersion: {key: 'zclVersion', set: (v: number, d: Device): void => {d.zclVersion = v;}},
+            appVersion: {key: 'applicationVersion', set: (v: number, d: Device): void => {d.applicationVersion = v;}},
+            stackVersion: {key: 'stackVersion', set: (v: number, d: Device): void => {d.stackVersion = v;}},
+            hwVersion: {key: 'hardwareVersion', set: (v: number, d: Device): void => {d.hardwareVersion = v;}},
+            dateCode: {key: 'dateCode', set: (v: string, d: Device): void => {d.dateCode = v;}},
+            swBuildId: {key: 'softwareBuildID', set: (v: string, d: Device): void => {d.softwareBuildID = v;}},
+        };
 
     private constructor(
         ID: number, type: DeviceType, ieeeAddr: string, networkAddress: number,
