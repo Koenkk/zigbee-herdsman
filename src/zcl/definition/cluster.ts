@@ -1148,14 +1148,13 @@ const Cluster: {
             checkinIntervalMin: {ID: 4, type: DataType.uint32},
             longPollIntervalMin: {ID: 5, type: DataType.uint32},
             fastPollTimeoutMax: {ID: 6, type: DataType.uint16},
-            physicalClosedLimit: {ID: 0, type: DataType.uint16},
         },
         commands: {
             checkinRsp: {
                 ID: 0,
                 parameters: [
-                    {name: 'startfastpolling', type: DataType.uint8},
-                    {name: 'fastpolltimeout', type: DataType.uint16},
+                    {name: 'startFastPolling', type: DataType.boolean},
+                    {name: 'fastPollTimeout', type: DataType.uint16},
                 ],
             },
             fastPollStop: {
@@ -1166,13 +1165,13 @@ const Cluster: {
             setLongPollInterval: {
                 ID: 2,
                 parameters: [
-                    {name: 'newlongpollinterval', type: DataType.uint32},
+                    {name: 'newLongPollInterval', type: DataType.uint32},
                 ],
             },
             setShortPollInterval: {
                 ID: 3,
                 parameters: [
-                    {name: 'newshortpollinterval', type: DataType.uint16},
+                    {name: 'newShortPollInterval', type: DataType.uint16},
                 ],
             },
         },
