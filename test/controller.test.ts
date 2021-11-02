@@ -3707,6 +3707,40 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard');});
+        const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true, sendWhenActive: true});
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+
+        // We need to send the data after it's been queued, but before we await
+        // the promise. Hijacking queueRequest seems easiest.
+        const origQueueRequest = endpoint.queueRequest;
+        endpoint.queueRequest = async req => {
+            const f = origQueueRequest.call(endpoint, req);
+
+            const data = {
+                wasBroadcast: false,
+                address: '0x129',
+                frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 1,
+            }
+
+            mockAdapterEvents['zclData'](data);
+            return await f;
+        };
+
+        expect((await result)).toBe(undefined);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
+    });
+
+    it('Write with sendWhenActive when pending', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        endpoint.pendingRequests.push({resolve: () => {}, reject: () => {}, func: async () => {}});
+        mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null)
         const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhenActive: true});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
@@ -3732,6 +3766,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
+        endpoint.pendingRequests.push({resolve: () => {}, reject: () => {}, func: async () => {}});
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard')});
         const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhenActive: true});
@@ -3752,7 +3787,7 @@ describe('Controller', () => {
         } catch (e) {
             error = e;
         }
-
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"sendWhenActive":true,"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
     });
 
@@ -3766,6 +3801,7 @@ describe('Controller', () => {
         await device.configurePollControl(target, true);
 
         const endpoint = device.getEndpoint(1);
+        endpoint.pendingRequests.push({resolve: () => {}, reject: () => {}, func: async () => {}});
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
         const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhenActive: true});
