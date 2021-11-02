@@ -57,6 +57,11 @@ const Cluster: {
                 parameters: [
                 ],
             },
+            tuyaSetup: {
+                ID: 0xf0,
+                parameters: [
+                ],
+            },
         },
         commandsResponse: {
         },
