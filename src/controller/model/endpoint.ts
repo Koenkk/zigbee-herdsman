@@ -74,6 +74,7 @@ class Endpoint extends Entity {
     public inputClusters: number[];
     public outputClusters: number[];
     public profileID?: number;
+    public defaultSendWhenActive: boolean;
     public readonly ID: number;
     public readonly clusters: Clusters;
     private readonly deviceIeeeAddress: string;
@@ -134,7 +135,7 @@ class Endpoint extends Entity {
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
         deviceNetworkAddress: number, deviceIeeeAddress: string, clusters: Clusters, binds: BindInternal[],
         configuredReportings: ConfiguredReportingInternal[],
-        meta: KeyValue,
+        meta: KeyValue, defaultSendWhenActive: boolean,
     ) {
         super();
         this.ID = ID;
@@ -149,6 +150,7 @@ class Endpoint extends Entity {
         this._configuredReportings = configuredReportings;
         this.meta = meta;
         this.pendingRequests = [];
+        this.defaultSendWhenActive = defaultSendWhenActive;
     }
 
     /**
@@ -199,7 +201,7 @@ class Endpoint extends Entity {
      */
 
     public static fromDatabaseRecord(
-        record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string
+        record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string, defaultSendWhenActive: boolean,
     ): Endpoint {
         // Migrate attrs to attributes
         for (const entry of Object.values(record.clusters).filter((e) => e.hasOwnProperty('attrs'))) {
@@ -214,7 +216,7 @@ class Endpoint extends Entity {
         return new Endpoint(
             record.epId, record.profId, record.devId, record.inClusterList, record.outClusterList, deviceNetworkAddress,
             deviceIeeeAddress, record.clusters, record.binds || [], record.configuredReportings || [],
-            record.meta || {},
+            record.meta || {}, defaultSendWhenActive,
         );
     }
 
@@ -228,11 +230,11 @@ class Endpoint extends Entity {
 
     public static create(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
-        deviceNetworkAddress: number, deviceIeeeAddress: string,
+        deviceNetworkAddress: number, deviceIeeeAddress: string, defaultSendWhenActive: boolean,
     ): Endpoint {
         return new Endpoint(
             ID, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress,
-            deviceIeeeAddress, {}, [], [], {},
+            deviceIeeeAddress, {}, [], [], {}, defaultSendWhenActive,
         );
     }
 
@@ -792,7 +794,7 @@ class Endpoint extends Entity {
     ): Options {
         const providedOptions = options || {};
         return {
-            sendWhenActive: false,
+            sendWhenActive: this.defaultSendWhenActive,
             timeout: 10000,
             disableResponse: false,
             disableRecovery: false,
