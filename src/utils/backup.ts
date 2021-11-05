@@ -87,7 +87,7 @@ export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.B
         securityLevel: backup.security_level || null,
         networkUpdateId: backup.nwk_update_id || null,
         devices: backup.devices.map(device => ({
-            networkAddress: Buffer.from(device.nwk_address, "hex").readUInt16BE(),
+            networkAddress: device.nwk_address ? Buffer.from(device.nwk_address, "hex").readUInt16BE() : Buffer.from("fffe", "hex").readUInt16BE(),
             ieeeAddress: Buffer.from(device.ieee_address, "hex"),
             isDirectChild: typeof device.is_child === "boolean" ? device.is_child : true,
             linkKey: !device.link_key ? undefined : {
