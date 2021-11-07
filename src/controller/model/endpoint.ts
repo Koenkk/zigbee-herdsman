@@ -261,6 +261,10 @@ class Endpoint extends Entity {
         return null;
     }
 
+    public hasPendingRequests(): boolean {
+        return this.pendingRequests.length > 0;
+    }
+
     public sendPendingRequests(): void {
         [...this.pendingRequests].forEach(async (r) => {
             this.pendingRequests.splice(this.pendingRequests.indexOf(r), 1);

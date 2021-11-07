@@ -98,6 +98,7 @@ class Device extends Entity {
     set skipTimeResponse(skipTimeResponse: boolean) {this._skipTimeResponse = skipTimeResponse;}
 
     public meta: KeyValue;
+    private useImplicitCheckin: boolean;
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
@@ -124,7 +125,7 @@ class Device extends Entity {
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
-        lastSeen: number,
+        lastSeen: number, useImplicitCheckin: boolean,
     ) {
         super();
         this.ID = ID;
@@ -148,6 +149,7 @@ class Device extends Entity {
         this._skipTimeResponse = false;
         this.meta = meta;
         this._lastSeen = lastSeen;
+        this.useImplicitCheckin = useImplicitCheckin;
     }
 
     public createEndpoint(ID: number): Endpoint {
@@ -178,12 +180,30 @@ class Device extends Entity {
         return this.endpoints.find((d): boolean => d.deviceID === deviceID);
     }
 
-    public sendPendingRequests(): void {
-        this.endpoints.forEach((e) => e.sendPendingRequests());
+    public implicitCheckin(): void {
+        if (!this.useImplicitCheckin) {
+            return;
+        }
+        this.endpoints.forEach(async e => e.sendPendingRequests());
     }
 
     public updateLastSeen(): void {
         this._lastSeen = Date.now();
+    }
+
+    private hasPendingRequests(): boolean {
+        return this.endpoints.find(e => e.hasPendingRequests()) !== undefined;
+    }
+
+    public async configurePollControl(coordinatorEndpoint: Endpoint, enable: boolean): Promise<void> {
+        const endpoint = this.getEndpoint(1);
+        if (enable) {
+            await endpoint.bind('genPollCtrl', coordinatorEndpoint);
+        } else {
+            await endpoint.unbind('genPollCtrl', coordinatorEndpoint);
+        }
+        this.useImplicitCheckin = !enable;
+        this.save();
     }
 
     public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, endpoint: Endpoint): Promise<void> {
@@ -228,6 +248,35 @@ class Device extends Entity {
 
         }
 
+        // Handle check-in from sleeping end devices
+        if (frame.isSpecific() && frame.isCluster("genPollCtrl") && frame.isCommand("checkin")) {
+            try {
+                if (this.hasPendingRequests()) {
+                    const payload = {
+                        startFastPolling: true,
+                        fastPollTimeout: 0,
+                    };
+                    debug.log(`check-in from ${this.ieeeAddr}: accepting fast-poll`);
+                    await endpoint.command(frame.Cluster.ID, 'checkinRsp', payload, {sendWhenActive: false});
+                    await Promise.all(this.endpoints.map(async e => e.sendPendingRequests()));
+                    // We *must* end fast-poll when we're done sending things. Otherwise
+                    // we cause undue power-drain.
+                    debug.log(`check-in from ${this.ieeeAddr}: stopping fast-poll`);
+                    await endpoint.command(frame.Cluster.ID, 'fastPollStop', {}, {sendWhenActive: false});
+                } else {
+                    const payload = {
+                        startFastPolling: false,
+                        fastPollTimeout: 0,
+                    };
+                    debug.log(`check-in from ${this.ieeeAddr}: declining fast-poll`);
+                    await endpoint.command(frame.Cluster.ID, 'checkinRsp', payload, {sendWhenActive: false});
+                }
+            } catch (error) {
+                /* istanbul ignore next */
+                debug.error(`Handling of poll check-in form ${this.ieeeAddr} failed`);
+            }
+        }
+
         // Send a default response if necessary.
         const isDefaultResponse = frame.isGlobal() && frame.getCommand().name === 'defaultRsp';
         const commandHasResponse = frame.getCommand().hasOwnProperty('response');
@@ -265,7 +314,7 @@ class Device extends Entity {
             entry.id, entry.type, ieeeAddr, networkAddress, entry.manufId, endpoints,
             entry.manufName, entry.powerSource, entry.modelId, entry.appVersion,
             entry.stackVersion, entry.zclVersion, entry.hwVersion, entry.dateCode, entry.swBuildId,
-            entry.interviewCompleted, meta, entry.lastSeen || null,
+            entry.interviewCompleted, meta, entry.lastSeen || null, entry.useImplicitCheckin,
         );
     }
 
@@ -282,7 +331,7 @@ class Device extends Entity {
             modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion,
             stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
             swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
-            meta: this.meta, lastSeen: this.lastSeen,
+            meta: this.meta, lastSeen: this.lastSeen, useImplicitCheckin: this.useImplicitCheckin,
         };
     }
 
@@ -349,7 +398,7 @@ class Device extends Entity {
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
-            interviewCompleted, {}, null,
+            interviewCompleted, {}, null, true
         );
 
         Entity.database.insert(device.toDatabaseEntry());

@@ -429,7 +429,7 @@ class Controller extends events.EventEmitter {
 
         device.updateLastSeen();
         this.emit(Events.Events.lastSeenChanged, {device: device} as Events.LastSeenChangedPayload);
-        device.sendPendingRequests();
+        device.implicitCheckin();
 
         if (device.networkAddress !== payload.networkAddress) {
             debug.log(`Device '${payload.ieeeAddr}' announced with new networkAddress '${payload.networkAddress}'`);
@@ -532,7 +532,7 @@ class Controller extends events.EventEmitter {
 
         device.updateLastSeen();
         this.emit(Events.Events.lastSeenChanged, {device: device} as Events.LastSeenChangedPayload);
-        device.sendPendingRequests();
+        device.implicitCheckin();
 
         if (!device.interviewCompleted && !device.interviewing) {
             const payloadStart: Events.DeviceInterviewPayload = {status: 'started', device};
@@ -593,7 +593,7 @@ class Controller extends events.EventEmitter {
 
         device.updateLastSeen();
         this.emit(Events.Events.lastSeenChanged, {device: device} as Events.LastSeenChangedPayload);
-        device.sendPendingRequests();
+        device.implicitCheckin();
         device.linkquality = dataPayload.linkquality;
 
         let endpoint = device.getEndpoint(dataPayload.endpoint);
