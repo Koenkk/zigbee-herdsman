@@ -265,26 +265,43 @@ class Endpoint extends Entity {
         return this.pendingRequests.length > 0;
     }
 
-    public sendPendingRequests(): void {
-        [...this.pendingRequests].forEach(async (r) => {
-            this.pendingRequests.splice(this.pendingRequests.indexOf(r), 1);
+    public async sendPendingRequests(): Promise<void> {
+        while (this.pendingRequests.length > 0) {
+            const r = this.pendingRequests.shift();
             try {
                 const result = await r.func();
                 r.resolve(result);
             } catch (error) {
                 r.reject(error);
             }
+        }
+    }
+
+    private async queueRequest<Type>(func: () => Promise<Type>): Promise<Type> {
+        debug.info(`Sending to ${this.deviceIeeeAddress}/${this.ID} when active`);
+        return new Promise((resolve, reject): void =>  {
+            this.pendingRequests.push({func, resolve, reject});
         });
     }
 
-    public async sendRequest<Type>(func: () => Promise<Type>, sendWhenActive: boolean): Promise<Type> {
-        if (sendWhenActive) {
-            return new Promise((resolve, reject): void =>  {
-                this.pendingRequests.push({func, resolve, reject});
-            });
-        } else {
-            return func();
+    private async sendRequest<Type>(func: () => Promise<Type>, sendWhenActive: boolean): Promise<Type> {
+        // If we already have something queued, we queue directly to avoid
+        // messing up the ordering too much.
+        if (sendWhenActive && this.pendingRequests.length > 0) {
+            return this.queueRequest(func);
         }
+
+        try {
+            return await func();
+        } catch(error) {
+            if (!sendWhenActive) {
+                throw(error);
+            }
+        }
+
+        // If we got a failed transaction, the device is likely sleeping.
+        // Queue for transmission later.
+        return this.queueRequest(func);
     }
 
     /*
