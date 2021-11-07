@@ -278,7 +278,7 @@ class Endpoint extends Entity {
     }
 
     private async queueRequest<Type>(func: () => Promise<Type>): Promise<Type> {
-        debug.info(`Writing to ${this.deviceIeeeAddress}/${this.ID} when active`);
+        debug.info(`Sending to ${this.deviceIeeeAddress}/${this.ID} when active`);
         return new Promise((resolve, reject): void =>  {
             this.pendingRequests.push({func, resolve, reject});
         });
@@ -299,7 +299,7 @@ class Endpoint extends Entity {
             }
         }
 
-        // If we got an expired transaction, the device is likely sleeping.
+        // If we got a failed transaction, the device is likely sleeping.
         // Queue for transmission later.
         return this.queueRequest(func);
     }
