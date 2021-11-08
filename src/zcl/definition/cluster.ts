@@ -3970,6 +3970,17 @@ const Cluster: {
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
+            resetDevice: {
+                ID: 3,
+                parameters: [
+                ],
+            },
+            unknown0x10: {
+                ID: 0x10,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
             sendData: {
                 ID: 4,
                 parameters: [
