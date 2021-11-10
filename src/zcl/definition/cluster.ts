@@ -3838,7 +3838,6 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
-    },
     manuSpecificClusterAduroSmart: {
         ID: 64716,
         attributes: {
