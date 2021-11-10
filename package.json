@@ -2,10 +2,7 @@
   "author": {
     "name": "Koen Kanters",
     "email": "koenkanters94@gmail.com"
-  },
-  "bugs": {
-    "url": "https://github.com/koenkk/zigbee-herdsman/issues"
-  },
+  },  
   "contributors": [
     {
       "name": "Koen Kanters",
@@ -22,6 +19,10 @@
     {
       "name": "Jack Wu",
       "email": "jackchased@gmail.com"
+    },
+    {
+      "name": "Hannu Hartikainen",
+      "email": "hhartikainen@gmail.com"
     }
   ],
   "dependencies": {
@@ -34,7 +35,7 @@
     "slip": "^1.0.2"
   },
   "deprecated": false,
-  "description": "An open source ZigBee gateway solution with node.js.",
+  "description": "Fork of an open source ZigBee gateway solution with node.js.",
   "devDependencies": {
     "@babel/cli": "*",
     "@babel/core": "*",
@@ -61,26 +62,21 @@
     "typedoc-plugin-sourcefile-url": "*",
     "typescript": "*"
   },
-  "homepage": "https://github.com/Koenkk/zigbee-herdsman",
-  "keywords": [
-    "zigbee",
-    "cc253x"
-  ],
-  "license": "MIT",
+  "license": "Unlicensed",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "name": "zigbee-herdsman",
+  "name": "@powerup/zigbee-herdsman",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Koenkk/zigbee-herdsman.git"
+    "url": "git+https://github.com/PowerUpHome/zigbee-herdsman"
   },
   "scripts": {
-    "build": "./node_modules/.bin/tsc",
-    "start": "./node_modules/.bin/tsc -w",
+    "build": "tsc",
+    "start": "tsc -w",
     "test": "jest test",
     "test-with-coverage": "jest test --coverage --collectCoverageFrom 'src/**/*.ts'",
     "test-watch": "jest test --watch",
-    "eslint": "node_modules/.bin/eslint . --ext .ts --max-warnings=0",
+    "eslint": "eslint . --ext .ts --max-warnings=0",
     "docs": "typedoc --tsconfig typedoc-tsconfig.json"
   },
   "version": "0.13.168",
