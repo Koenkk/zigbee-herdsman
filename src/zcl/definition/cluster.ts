@@ -3826,6 +3826,19 @@ const Cluster: {
             },
         },
     },
+    manuSpecificIkeaAirQuality: {
+        ID: 0xfc7d,
+        manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
+        attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.uint16},
+            measuredMinValue: {ID: 0x0001, type: DataType.uint16},
+            measuredMaxValue: {ID: 0x0002, type: DataType.uint16},
+            measuredTolerance: {ID: 0x0003, type: DataType.uint16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    },
     manuSpecificClusterAduroSmart: {
         ID: 64716,
         attributes: {
