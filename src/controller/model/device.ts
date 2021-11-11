@@ -195,17 +195,6 @@ class Device extends Entity {
         return this.endpoints.find(e => e.hasPendingRequests()) !== undefined;
     }
 
-    public async configurePollControl(coordinatorEndpoint: Endpoint, enable: boolean): Promise<void> {
-        const endpoint = this.getEndpoint(1);
-        if (enable) {
-            await endpoint.bind('genPollCtrl', coordinatorEndpoint);
-        } else {
-            await endpoint.unbind('genPollCtrl', coordinatorEndpoint);
-        }
-        this.useImplicitCheckin = !enable;
-        this.save();
-    }
-
     public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, endpoint: Endpoint): Promise<void> {
         const frame = dataPayload.frame;
 
@@ -677,6 +666,15 @@ class Device extends Entity {
             } else {
                 debug.log(`Interview - IAS - already enrolled, skipping enroll`);
             }
+        }
+
+        // Bind poll control
+        for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
+            debug.log(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+            const coordinator = Device.byType('Coordinator')[0];
+            const coordinatorEndpoint = coordinator.endpoints[0];
+            await endpoint.bind('genPollCtrl', coordinatorEndpoint);
+            this.useImplicitCheckin = false;
         }
     }
 

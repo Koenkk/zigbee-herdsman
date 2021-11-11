@@ -224,6 +224,12 @@ const mockDevices = {
         simpleDescriptor: 'error',
         attributes: {},
     },
+    174: {
+        nodeDescriptor: {type: 'EndDevice', manufacturerCode: 1213},
+        activeEndpoints: {endpoints: [1]},
+        simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [0,32], outputClusters: [2], profileID: 99}},
+        attributes: {},
+    },
 }
 
 const mockZclFrame = ZclFrame;
@@ -2321,28 +2327,44 @@ describe('Controller', () => {
         expect(call[7]).toBe(null);
     });
 
-    it('Configure poll control', async () => {
+    it('Poll control supported', async () => {
         await controller.start();
-        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
-        const device = controller.getDeviceByIeeeAddr('0x129');
-        const target = controller.getDeviceByIeeeAddr('0x170').getEndpoint(1);
+        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
+        const device = controller.getDeviceByIeeeAddr('0x174');
+        await device.interview();
         const endpoint = device.getEndpoint(1);
-        await device.configurePollControl(target, true);
+        const coordinator = Device.byType('Coordinator')[0];
+        const target = coordinator.getEndpoint(1);
         expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster('genPollCtrl'), target}]));
         expect(device.useImplicitCheckin).toEqual(false);
 
+        mocksendZclFrameToEndpoint.mockClear();
         await mockAdapterEvents['zclData']({
             wasBroadcast: false,
-            address: 129,
+            address: 174,
             frame: ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0),
             endpoint: 1,
             linkquality: 52,
             groupID: undefined,
         });
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe('0x174');
+        expect(call[1]).toBe(174);
+        expect(call[2]).toBe(1);
+        expect(call[3].Cluster.name).toBe('genPollCtrl');
+        expect(call[3].Command.name).toBe('checkinRsp');
+        expect(call[3].Payload).toStrictEqual({startFastPolling: false, fastPollTimeout: 0});
+    });
 
-        await device.configurePollControl(target, false);
-        expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([]));
+    it('Poll control unsupported', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        await device.interview();
+        const endpoint = device.getEndpoint(1);
+        const coordinator = Device.byType('Coordinator')[0];
+        const target = coordinator.getEndpoint(1);
+        expect(deepClone(endpoint.binds)).toStrictEqual([]);
         expect(device.useImplicitCheckin).toEqual(true);
     });
 
@@ -3793,12 +3815,11 @@ describe('Controller', () => {
 
     it('Explicit check-in', async () => {
         await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
-        const device = controller.getDeviceByIeeeAddr('0x129');
-        const target = controller.getDeviceByIeeeAddr('0x170');
-
-        await device.configurePollControl(target, true);
+        const device = controller.getDeviceByIeeeAddr('0x174');
+        const target = controller.getDeviceByIeeeAddr('0x129');
+        await device.interview();
 
         const endpoint = device.getEndpoint(1);
         endpoint.pendingRequests.push({resolve: () => {}, reject: () => {}, func: async () => {}});
@@ -3809,7 +3830,7 @@ describe('Controller', () => {
 
         await mockAdapterEvents['zclData']({
             wasBroadcast: false,
-            address: '0x129',
+            address: 174,
             frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
             endpoint: 1,
             linkquality: 50,
@@ -3820,7 +3841,7 @@ describe('Controller', () => {
 
         await mockAdapterEvents['zclData']({
             wasBroadcast: false,
-            address: 129,
+            address: 174,
             frame: ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0),
             endpoint: 1,
             linkquality: 52,
@@ -3828,7 +3849,32 @@ describe('Controller', () => {
         });
 
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+
+        const checkinrsp = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(checkinrsp[0]).toBe('0x174');
+        expect(checkinrsp[1]).toBe(174);
+        expect(checkinrsp[2]).toBe(1);
+        expect(checkinrsp[3].Cluster.name).toBe('genPollCtrl');
+        expect(checkinrsp[3].Command.name).toBe('checkinRsp');
+        expect(checkinrsp[3].Payload).toStrictEqual({startFastPolling: true, fastPollTimeout: 0});
+
         expect((await result)).toBe(undefined);
+
+        const cmd = mocksendZclFrameToEndpoint.mock.calls[1];
+        expect(cmd[0]).toBe('0x174');
+        expect(cmd[1]).toBe(174);
+        expect(cmd[2]).toBe(1);
+        expect(cmd[3].Cluster.name).toBe('genOnOff');
+
+        const fastpollstop = mocksendZclFrameToEndpoint.mock.calls[2];
+        expect(fastpollstop[0]).toBe('0x174');
+        expect(fastpollstop[1]).toBe(174);
+        expect(fastpollstop[2]).toBe(1);
+        expect(fastpollstop[3].Cluster.name).toBe('genPollCtrl');
+        expect(fastpollstop[3].Command.name).toBe('fastPollStop');
+        expect(fastpollstop[3].Payload).toStrictEqual({});
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
     });
 
 });
