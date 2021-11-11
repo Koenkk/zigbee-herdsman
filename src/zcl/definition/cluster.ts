@@ -3826,7 +3826,7 @@ const Cluster: {
             },
         },
     },
-    manuSpecificIkeaAirQuality: {
+    manuSpecificIkeaPM25Measurement: {
         ID: 0xfc7d,
         manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
         attributes: {
