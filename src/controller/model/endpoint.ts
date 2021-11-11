@@ -191,13 +191,7 @@ class Endpoint extends Entity {
     }
 
     private clusterNumbersToClusters(clusterNumbers: number[]): Zcl.TsType.Cluster[] {
-        return clusterNumbers.map((c) => {
-            try {
-                return Zcl.Utils.getCluster(c, this.getDevice().manufacturerID);
-            } catch {
-                return null;
-            }
-        }).filter((c) => c !== null);
+        return clusterNumbers.map((c) => Zcl.Utils.getCluster(c, this.getDevice().manufacturerID));
     }
 
     /*

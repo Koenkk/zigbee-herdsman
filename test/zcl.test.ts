@@ -68,7 +68,11 @@ describe('Zcl', () => {
     it('Get cluster by name non-existing', () => {
         expect(() => {
             Zcl.Utils.getCluster('notExisting');
-        }).toThrowError("Cluster with key 'notExisting' does not exist")
+        }).toThrowError("Cluster with name 'notExisting' does not exist")
+    });
+
+    it('Get cluster by id non-existing', () => {
+        expect(JSON.parse(JSON.stringify(Zcl.Utils.getCluster(0x190231)))).toStrictEqual({"ID":1638961,"attributes":{},"manufacturerCode":null,"name":"1638961","commands":{},"commandsResponse":{}});
     });
 
     it('Get specific command by ID', () => {

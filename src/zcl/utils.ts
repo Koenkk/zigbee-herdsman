@@ -56,10 +56,15 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
         name = key;
     }
 
-    const cluster = Cluster[name];
+    let cluster = Cluster[name];
 
     if (!cluster) {
-        throw new Error(`Cluster with key '${key}' does not exist`);
+        if (typeof key === 'number') {
+            name = key.toString();
+            cluster = {attributes: {}, commands: {}, commandsResponse: {}, manufacturerCode: null, ID: key};
+        } else {
+            throw new Error(`Cluster with name '${key}' does not exist`);
+        }
     }
 
     // eslint-disable-next-line

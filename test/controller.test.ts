@@ -3657,7 +3657,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 172, ieeeAddr: '0x172'});
         const device = controller.getDeviceByIeeeAddr('0x172');
         const endpoint = device.getEndpoint(11);
-        expect(endpoint.getInputClusters().map(c => c.name)).toStrictEqual(['genBasic', 'genIdentify', 'genGroups', 'genScenes', 'genOnOff', 'genLevelCtrl', 'lightingColorCtrl']);
+        expect(endpoint.getInputClusters().map(c => c.name)).toStrictEqual(['genBasic', 'genIdentify', 'genGroups', 'genScenes', 'genOnOff', 'genLevelCtrl', 'lightingColorCtrl', '912301']);
         expect(endpoint.getOutputClusters().map(c => c.name)).toStrictEqual(['genDeviceTempCfg']);
     });
 

@@ -666,12 +666,8 @@ class Controller extends events.EventEmitter {
         } else {
             type = 'raw';
             data = dataPayload.data;
-            try {
-                const cluster = ZclUtils.getCluster(dataPayload.clusterID);
-                clusterName = cluster.name;
-            } catch (error) {
-                clusterName = dataPayload.clusterID;
-            }
+            const name = ZclUtils.getCluster(dataPayload.clusterID).name;
+            clusterName = Number.isNaN(Number(name)) ? name : Number(name);
         }
 
         if (type && data) {
