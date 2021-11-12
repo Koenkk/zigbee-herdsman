@@ -195,17 +195,6 @@ class Device extends Entity {
         return this.endpoints.find(e => e.hasPendingRequests()) !== undefined;
     }
 
-    public async configurePollControl(coordinatorEndpoint: Endpoint, enable: boolean): Promise<void> {
-        const endpoint = this.getEndpoint(1);
-        if (enable) {
-            await endpoint.bind('genPollCtrl', coordinatorEndpoint);
-        } else {
-            await endpoint.unbind('genPollCtrl', coordinatorEndpoint);
-        }
-        this.useImplicitCheckin = !enable;
-        this.save();
-    }
-
     public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, endpoint: Endpoint): Promise<void> {
         const frame = dataPayload.frame;
 
@@ -630,6 +619,8 @@ class Device extends Entity {
             }
         }
 
+        const coordinator = Device.byType('Coordinator')[0];
+
         // Enroll IAS device
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
             debug.log(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
@@ -638,7 +629,6 @@ class Device extends Entity {
             debug.log(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`);
 
             // Do not enroll when device has already been enrolled
-            const coordinator = Device.byType('Coordinator')[0];
             if (stateBefore.zoneState !== 1 || stateBefore.iasCieAddr !== coordinator.ieeeAddr) {
                 debug.log(`Interview - IAS - not enrolled, enrolling`);
 
@@ -677,6 +667,13 @@ class Device extends Entity {
             } else {
                 debug.log(`Interview - IAS - already enrolled, skipping enroll`);
             }
+        }
+
+        // Bind poll control
+        for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
+            debug.log(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+            await endpoint.bind('genPollCtrl', coordinator.endpoints[0]);
+            this.useImplicitCheckin = false;
         }
     }
 
