@@ -3826,14 +3826,17 @@ const Cluster: {
             },
         },
     },
-    manuSpecificIkeaPM25Measurement: {
+    manuSpecificIkeaAirPurifier: {
         ID: 0xfc7d,
         manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.uint16},
-            measuredMinValue: {ID: 0x0001, type: DataType.uint16},
-            measuredMaxValue: {ID: 0x0002, type: DataType.uint16},
-            measuredTolerance: {ID: 0x0003, type: DataType.uint16},
+            filterOperationTime: {ID: 0x0000, type: DataType.uint32},
+            controlPanelLight: {ID: 0x0003, type: DataType.boolean},
+            particulateMatter25Measurement: {ID: 0x0004, type: DataType.uint16},
+            childLock: {ID: 0x0005, type: DataType.boolean},
+            fanMode: {ID: 0x0006, type: DataType.uint8},
+            fanSpeed: {ID: 0x0007, type: DataType.uint8},
+            totalOperationTime: {ID: 0x0008, type: DataType.uint32},
         },
         commands: {},
         commandsResponse: {},
