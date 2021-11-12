@@ -619,6 +619,8 @@ class Device extends Entity {
             }
         }
 
+        const coordinator = Device.byType('Coordinator')[0];
+
         // Enroll IAS device
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
             debug.log(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
@@ -627,7 +629,6 @@ class Device extends Entity {
             debug.log(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`);
 
             // Do not enroll when device has already been enrolled
-            const coordinator = Device.byType('Coordinator')[0];
             if (stateBefore.zoneState !== 1 || stateBefore.iasCieAddr !== coordinator.ieeeAddr) {
                 debug.log(`Interview - IAS - not enrolled, enrolling`);
 
@@ -671,9 +672,7 @@ class Device extends Entity {
         // Bind poll control
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
             debug.log(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
-            const coordinator = Device.byType('Coordinator')[0];
-            const coordinatorEndpoint = coordinator.endpoints[0];
-            await endpoint.bind('genPollCtrl', coordinatorEndpoint);
+            await endpoint.bind('genPollCtrl', coordinator.endpoints[0]);
             this.useImplicitCheckin = false;
         }
     }
