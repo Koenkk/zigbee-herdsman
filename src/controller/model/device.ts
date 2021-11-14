@@ -51,6 +51,7 @@ class Device extends Entity {
     private _skipDefaultResponse: boolean;
     private _skipTimeResponse: boolean;
     private _deleted: boolean;
+    private _defaultSendWhenActive?: boolean;
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -96,6 +97,13 @@ class Device extends Entity {
     set skipDefaultResponse(skipDefaultResponse: boolean) {this._skipDefaultResponse = skipDefaultResponse;}
     get skipTimeResponse(): boolean {return this._skipTimeResponse;}
     set skipTimeResponse(skipTimeResponse: boolean) {this._skipTimeResponse = skipTimeResponse;}
+    get defaultSendWhenActive(): boolean {return this._defaultSendWhenActive;}
+    set defaultSendWhenActive(defaultSendWhenActive: boolean) {
+        this._defaultSendWhenActive = defaultSendWhenActive;
+        for (const endpoint of this._endpoints) {
+            endpoint.defaultSendWhenActive = defaultSendWhenActive;
+        }
+    }
 
     public meta: KeyValue;
     private useImplicitCheckin: boolean;
@@ -125,7 +133,7 @@ class Device extends Entity {
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
-        lastSeen: number, useImplicitCheckin: boolean,
+        lastSeen: number, useImplicitCheckin: boolean, defaultSendWhenActive?: boolean,
     ) {
         super();
         this.ID = ID;
@@ -149,6 +157,7 @@ class Device extends Entity {
         this._skipTimeResponse = false;
         this.meta = meta;
         this._lastSeen = lastSeen;
+        this._defaultSendWhenActive = defaultSendWhenActive;
         this.useImplicitCheckin = useImplicitCheckin;
     }
 
@@ -157,7 +166,8 @@ class Device extends Entity {
             throw new Error(`Device '${this.ieeeAddr}' already has an endpoint '${ID}'`);
         }
 
-        const endpoint = Endpoint.create(ID, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
+        const endpoint = Endpoint.create(ID, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr,
+            this.defaultSendWhenActive || false);
         this.endpoints.push(endpoint);
         this.save();
         return endpoint;
@@ -290,7 +300,7 @@ class Device extends Entity {
         const networkAddress = entry.nwkAddr;
         const ieeeAddr = entry.ieeeAddr;
         const endpoints = Object.values(entry.endpoints).map((e): Endpoint => {
-            return Endpoint.fromDatabaseRecord(e, networkAddress, ieeeAddr);
+            return Endpoint.fromDatabaseRecord(e, networkAddress, ieeeAddr, entry.defaultSendWhenActive);
         });
 
         const meta = entry.meta ? entry.meta : {};
@@ -304,6 +314,7 @@ class Device extends Entity {
             entry.manufName, entry.powerSource, entry.modelId, entry.appVersion,
             entry.stackVersion, entry.zclVersion, entry.hwVersion, entry.dateCode, entry.swBuildId,
             entry.interviewCompleted, meta, entry.lastSeen || null, entry.useImplicitCheckin,
+            entry.defaultSendWhenActive,
         );
     }
 
@@ -321,6 +332,7 @@ class Device extends Entity {
             stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
             swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
             meta: this.meta, lastSeen: this.lastSeen, useImplicitCheckin: this.useImplicitCheckin,
+            defaultSendWhenActive: this.defaultSendWhenActive,
         };
     }
 
@@ -379,7 +391,7 @@ class Device extends Entity {
 
         const endpointsMapped = endpoints.map((e): Endpoint => {
             return Endpoint.create(
-                e.ID, e.profileID, e.deviceID, e.inputClusters, e.outputClusters, networkAddress, ieeeAddr
+                e.ID, e.profileID, e.deviceID, e.inputClusters, e.outputClusters, networkAddress, ieeeAddr, false
             );
         });
 
@@ -387,7 +399,7 @@ class Device extends Entity {
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
-            interviewCompleted, {}, null, true
+            interviewCompleted, {}, null, true, undefined,
         );
 
         Entity.database.insert(device.toDatabaseEntry());
@@ -492,6 +504,11 @@ class Device extends Entity {
     }
 
     private async interviewInternal(): Promise<void> {
+        // Clear defaultSendWhenActive mode when running interview
+        for (const endpoint of this._endpoints) {
+            endpoint.defaultSendWhenActive = false;
+        }
+
         const nodeDescriptorQuery = async (): Promise<void> => {
             const nodeDescriptor = await Entity.adapter.nodeDescriptor(this.networkAddress);
             this._manufacturerID = nodeDescriptor.manufacturerCode;
@@ -539,7 +556,8 @@ class Device extends Entity {
             // https://github.com/Koenkk/zigbee2mqtt/issues/7553
             debug.log("Interview - Detected potential TuYa end device, reading modelID and manufacturerName...");
             try {
-                const endpoint = Endpoint.create(1, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
+                const endpoint = Endpoint.create(1, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr,
+                    false);
                 const result = await endpoint.read('genBasic', ['modelId', 'manufacturerName']);
                 Object.entries(result)
                     .forEach((entry) => Device.ReportablePropertiesMapping[entry[0]].set(entry[1], this));
@@ -571,7 +589,8 @@ class Device extends Entity {
         // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
         // into an error. Therefore we filter it, more info: https://github.com/Koenkk/zigbee-herdsman/issues/82
         activeEndpoints.endpoints.filter((e) => e !== 0 && !this.getEndpoint(e)).forEach((e) =>
-            this._endpoints.push(Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr)));
+            this._endpoints.push(Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr,
+                false)));
         this.save();
         debug.log(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
@@ -670,10 +689,22 @@ class Device extends Entity {
         }
 
         // Bind poll control
+        let bound = false;
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
             debug.log(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
             await endpoint.bind('genPollCtrl', coordinator.endpoints[0]);
+            bound = true;
+        }
+
+        if (bound) {
+            if (this.defaultSendWhenActive === undefined)
+                this.defaultSendWhenActive = true;
             this.useImplicitCheckin = false;
+        }
+
+        // Reset defaultSendWhenActive mode when after interview
+        for (const endpoint of this._endpoints) {
+            endpoint.defaultSendWhenActive = this.defaultSendWhenActive || false;
         }
     }
 
