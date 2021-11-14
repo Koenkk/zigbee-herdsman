@@ -197,14 +197,6 @@ class EZSPAdapter extends Adapter {
         return Promise.reject();
     }
 
-    public async supportsLED(): Promise<boolean> {
-        return false;
-    }
-
-    public async setLED(enabled: boolean): Promise<void> {
-        return Promise.reject();
-    }
-
     public async lqi(networkAddress: number): Promise<LQI> {
         return this.driver.queue.execute<LQI>(async (): Promise<LQI> => {
             const neighbors: LQINeighbor[] = [];

@@ -176,14 +176,6 @@ class ZiGateAdapter extends Adapter {
         return Promise.resolve();
     };
 
-    public async supportsLED(): Promise<boolean> {
-        return false;
-    };
-
-    public setLED(enabled: boolean): Promise<void> {
-        return Promise.reject();
-    };
-
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
         debug.log('getNetworkParameters');
         return this.driver.sendCommand(ZiGateCommandCode.GetNetworkState, {}, 10000)
