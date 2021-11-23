@@ -2328,6 +2328,18 @@ const Cluster: {
                     {name: 'enable', type: DataType.uint8},
                 ]
             },
+            tuyaRgbMode2: {
+                ID: 240,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ]
+            },
+            tuyaWhite: {
+                ID: 242,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
             tuyaOnStartUp: {
                 ID: 249,
                 parameters: [
