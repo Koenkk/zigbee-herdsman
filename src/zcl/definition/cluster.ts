@@ -4113,6 +4113,12 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    manuSpecificTuya_1: {
+        ID: 0xE000,
+        attributes: {},
+        commands: {},
+        commandsResponse: {},
+    },
     manuSpecificTuya_3: {
         ID: 0xe001,
         attributes: {
