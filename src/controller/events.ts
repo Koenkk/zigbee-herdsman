@@ -40,6 +40,7 @@ interface PermitJoinChangedPayload {
 
 interface LastSeenChangedPayload {
     device: Device;
+    reason: 'deviceAnnounce' | 'networkAddress' | 'deviceJoined' | 'messageEmitted' | 'messageNonEmitted';
 }
 
 const CommandsLookup: {[s: string]: MessagePayloadType} = {

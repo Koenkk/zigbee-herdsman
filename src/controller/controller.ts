@@ -387,6 +387,8 @@ class Controller extends events.EventEmitter {
             return;
         }
 
+        this.emit(Events.Events.lastSeenChanged, {device, reason: 'networkAddress'} as Events.LastSeenChangedPayload);
+
         if (device.networkAddress !== payload.networkAddress) {
             debug.log(`Device '${payload.ieeeAddr}' got new networkAddress '${payload.networkAddress}'`);
             device.networkAddress = payload.networkAddress;
@@ -407,7 +409,7 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
-        this.emit(Events.Events.lastSeenChanged, {device: device} as Events.LastSeenChangedPayload);
+        this.emit(Events.Events.lastSeenChanged, {device, reason: 'deviceAnnounce'} as Events.LastSeenChangedPayload);
         device.implicitCheckin();
 
         if (device.networkAddress !== payload.networkAddress) {
@@ -510,7 +512,7 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
-        this.emit(Events.Events.lastSeenChanged, {device: device} as Events.LastSeenChangedPayload);
+        this.emit(Events.Events.lastSeenChanged, {device, reason: 'deviceJoined'} as Events.LastSeenChangedPayload);
         device.implicitCheckin();
 
         if (!device.interviewCompleted && !device.interviewing) {
@@ -571,7 +573,6 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
-        this.emit(Events.Events.lastSeenChanged, {device: device} as Events.LastSeenChangedPayload);
         device.implicitCheckin();
         device.linkquality = dataPayload.linkquality;
 
@@ -658,6 +659,11 @@ class Controller extends events.EventEmitter {
             };
 
             this.emit(Events.Events.message, eventData);
+            this.emit(Events.Events.lastSeenChanged, 
+                {device, reason: 'messageEmitted'} as Events.LastSeenChangedPayload);
+        } else {
+            this.emit(Events.Events.lastSeenChanged, 
+                {device, reason: 'messageNonEmitted'} as Events.LastSeenChangedPayload);
         }
 
 
