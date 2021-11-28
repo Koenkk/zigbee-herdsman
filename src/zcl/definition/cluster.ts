@@ -579,6 +579,13 @@ const Cluster: {
                 parameters: [
                 ],
             },
+            moveToLevelTuya: {
+                ID: 240,
+                parameters: [
+                    { name: 'level', type: dataType_1.default.uint16 },
+                    { name: 'transtime', type: dataType_1.default.uint16 },
+                ],
+            },   
         },
         commandsResponse: {
         },
