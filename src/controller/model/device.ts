@@ -83,7 +83,7 @@ class Device extends Entity {
     }
     get powerSource(): string {return this._powerSource;}
     set powerSource(powerSource: string) {
-        this._powerSource = typeof powerSource === 'number' ? Zcl.PowerSource[powerSource] : powerSource;
+        this._powerSource = typeof powerSource === 'number' ? Zcl.PowerSource[powerSource & ~(1 << 7)] : powerSource;
     }
     get softwareBuildID(): string {return this._softwareBuildID;}
     set softwareBuildID(softwareBuildID: string) {this._softwareBuildID = softwareBuildID;}
