@@ -349,7 +349,7 @@ export class Driver extends EventEmitter {
         /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
         data: Buffer, timeout = 30000): Promise<boolean> {
         try {
-            const seq = apsFrame.sequence + 1;
+            const seq = (apsFrame.sequence + 1) & 0xFF;
             let eui64: EmberEUI64;
             if (typeof nwk !== 'number') {
                 eui64 = nwk as EmberEUI64;
@@ -384,7 +384,7 @@ export class Driver extends EventEmitter {
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     public async mrequest(apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
         try {
-            const seq = apsFrame.sequence + 1;
+            const seq = (apsFrame.sequence + 1) & 0xFF;
             await this.ezsp.sendMulticast(apsFrame, seq, data);
             return true;
         } catch (e) {
