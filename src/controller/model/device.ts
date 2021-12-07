@@ -594,7 +594,8 @@ class Device extends Entity {
         this.save();
         debug.log(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
-        for (const endpoint of this.endpoints) {
+        for (const endpointID of activeEndpoints.endpoints) {
+            const endpoint = this.getEndpoint(endpointID);
             const simpleDescriptor = await Entity.adapter.simpleDescriptor(this.networkAddress, endpoint.ID);
             endpoint.profileID = simpleDescriptor.profileID;
             endpoint.deviceID = simpleDescriptor.deviceID;
