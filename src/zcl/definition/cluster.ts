@@ -4013,8 +4013,7 @@ const Cluster: {
             dataRequest: {
                 ID: 0,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
-                    {name: 'transid', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
                     {name: 'dp', type: DataType.uint8},
                     {name: 'datatype', type: DataType.uint8},
                     {name: 'length_hi', type: DataType.uint8},
@@ -4043,8 +4042,7 @@ const Cluster: {
             sendData: {
                 ID: 4,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
-                    {name: 'transid', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
                     {name: 'dp', type: DataType.uint8},
                     {name: 'datatype', type: DataType.uint8},
                     {name: 'length_hi', type: DataType.uint8},
@@ -4071,8 +4069,7 @@ const Cluster: {
             dataResponse: {
                 ID: 1,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
-                    {name: 'transid', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
                     {name: 'dp', type: DataType.uint8},
                     {name: 'datatype', type: DataType.uint8},
                     {name: 'fn', type: DataType.uint8},
@@ -4085,8 +4082,7 @@ const Cluster: {
             commandDataReport: {
                 ID: 2,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
-                    {name: 'transid', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
                     {name: 'dp', type: DataType.uint8},
                     {name: 'datatype', type: DataType.uint8},
                     {name: 'fn', type: DataType.uint8},
@@ -4096,8 +4092,7 @@ const Cluster: {
             activeStatusReport: {
                 ID: 6,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
-                    {name: 'transid', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
                     {name: 'dp', type: DataType.uint8},
                     {name: 'datatype', type: DataType.uint8},
                     {name: 'fn', type: DataType.uint8},
