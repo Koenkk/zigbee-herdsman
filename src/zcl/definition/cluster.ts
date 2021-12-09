@@ -4057,6 +4057,43 @@ const Cluster: {
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
+
+            /**
+             * Gw->Zigbee gateway notifies MCU of upgrade
+             */
+            mcuOtaNotify: {
+                ID: 0x12,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    // FIXME: key is fixed (8 byte) uint8 array
+                    //  Ask Koen is there any type to read fixed size uint_8t.
+                    //  currently there is `length` property in options but sems it is
+                    //  ignored in `writePayloadCluster()` and other methods.
+                    //  So, as workaround we use hi/low for key, which is not best solution
+                    {name: 'key_hi', type: DataType.uint32},
+                    {name: 'key_lo', type: DataType.uint32},
+                    {name: 'version', type: DataType.uint8},
+                    {name: 'imageSize', type: DataType.uint32},
+                    {name: 'crc', type: DataType.uint32},
+                ],
+            },
+
+            /**
+             * Gw->Zigbee gateway returns the requested upgrade package for MCU
+             */
+            mcuOtaBlockDataResponse: {
+                ID: 0x14,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'key_hi', type: DataType.uint32},
+                    {name: 'key_lo', type: DataType.uint32},
+                    {name: 'version', type: DataType.uint8},
+                    {name: 'offset', type: DataType.uint32},
+                    {name: 'imageData', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+
             /**
              * Time synchronization (bidirectional)
              */
@@ -4123,6 +4160,36 @@ const Cluster: {
                     {name: 'version', type: DataType.uint8},
                 ],
             },
+
+            /**
+             * Zigbee->Gw requests an upgrade package for the MCU
+             */
+            mcuOtaBlockDataRequest: {
+                ID: 0x13,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'key_hi', type: DataType.uint32},
+                    {name: 'key_lo', type: DataType.uint32},
+                    {name: 'version', type: DataType.uint8},
+                    {name: 'offset', type: DataType.uint32},
+                    {name: 'size', type: DataType.uint32},
+                ],
+            },
+
+            /**
+             * Zigbee->Gw returns the upgrade result for the mcu
+             */
+            mcuOtaResult: {
+                ID: 0x15,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'key_hi', type: DataType.uint32},
+                    {name: 'key_lo', type: DataType.uint32},
+                    {name: 'version', type: DataType.uint8},
+                ],
+            },
+
             /**
              * Time synchronization (bidirectional)
              */
