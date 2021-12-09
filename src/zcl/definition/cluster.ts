@@ -4022,10 +4022,13 @@ const Cluster: {
                 parameters: [
                 ],
             },
-            unknown0x10: {
+            /**
+             * Gw->Zigbee gateway query MCU version
+             */
+            mcuVersionRequest: {
                 ID: 0x10,
                 parameters: [
-                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                    {name: 'seq', type: DataType.uint16},
                 ],
             },
             sendData: {
@@ -4094,6 +4097,16 @@ const Cluster: {
                     {name: 'datatype', type: DataType.uint8},
                     {name: 'fn', type: DataType.uint8},
                     {name: 'data', type: DataType.octetStr},
+                ],
+            },
+            /**
+             * Zigbee->Gw MCU return version or actively report version
+             */
+            mcuVersionResponse: {
+                ID: 0x11,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'version', type: DataType.uint8},
                 ],
             },
             setTimeRequest: {
