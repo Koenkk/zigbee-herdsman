@@ -4039,6 +4039,13 @@ const Cluster: {
                     {name: 'seq', type: DataType.uint16},
                 ],
             },
+
+            /**
+             * FIXME: This command is not listed in Tuya zigbee cluster description,
+             *  but there is some command 0x04 (description is: Command Issuance)
+             *  in `Serial command list` section of the same document
+             *  So, need to investigate more information about it
+             */
             sendData: {
                 ID: 4,
                 parameters: [
@@ -4089,6 +4096,13 @@ const Cluster: {
                     {name: 'data', type: DataType.octetStr},
                 ],
             },
+
+            /**
+             * FIXME: This command is not listed in Tuya zigbee cluster description,
+             *  but there is some command 0x06 (description is: Status query)
+             *  in `Serial command list` section of the same document
+             *  So, need to investigate more information about it
+             */
             activeStatusReport: {
                 ID: 6,
                 parameters: [
