@@ -585,7 +585,7 @@ const Cluster: {
                     {name: 'level', type: DataType.uint16},
                     {name: 'transtime', type: DataType.uint16},
                 ],
-            },   
+            },
         },
         commandsResponse: {
         },
@@ -3992,16 +3992,28 @@ const Cluster: {
         commands: {},
         commandsResponse: {}
     },
+    /**
+     * Tuya cluster
+     *
+     * Common parameters:
+     *
+     *  seq -  Sequence number of transmitted data, range 0-65535, revert to 0 after reaching 65535
+     *
+     * Official Tuya documentation: https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
+     *
+     */
     manuSpecificTuya: {
         ID: 0xEF00,  // 61184
         attributes: {
         },
         commands: {
-            setData: {
+            /**
+             * Gateway-side data request
+             */
+            dataRequest: {
                 ID: 0,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
-                    {name: 'transid', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
                     {name: 'dp', type: DataType.uint8},
                     {name: 'datatype', type: DataType.uint8},
                     {name: 'length_hi', type: DataType.uint8},
@@ -4009,22 +4021,35 @@ const Cluster: {
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
-            resetDevice: {
+            /**
+             * GW send, trigger MCU side to report all current information, no zcl payload.
+             * Note: Device side can make a policy, data better not to report centrally
+             */
+            dataQuery: {
                 ID: 3,
                 parameters: [
                 ],
             },
-            unknown0x10: {
+            /**
+             * Gw->Zigbee gateway query MCU version
+             */
+            mcuVersionRequest: {
                 ID: 0x10,
                 parameters: [
-                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                    {name: 'seq', type: DataType.uint16},
                 ],
             },
+
+            /**
+             * FIXME: This command is not listed in Tuya zigbee cluster description,
+             *  but there is some command 0x04 (description is: Command Issuance)
+             *  in `Serial command list` section of the same document
+             *  So, need to investigate more information about it
+             */
             sendData: {
                 ID: 4,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
-                    {name: 'transid', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
                     {name: 'dp', type: DataType.uint8},
                     {name: 'datatype', type: DataType.uint8},
                     {name: 'length_hi', type: DataType.uint8},
@@ -4032,66 +4057,81 @@ const Cluster: {
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
-            // Time sync command (It's transparent beetween MCU and server)
-            // Time request device -> server
-            //   payloadSize = 0
-            // Set time, server -> device
-            //   payloadSize, should be always 8
-            //   payload[0-3] - UTC timestamp (big endian)
-            //   payload[4-7] - Local timestamp (big endian)
-            //
-            // Zigbee payload is very similar to the UART payload which is described here: https://developer.tuya.com/en/docs/iot/device-development/access-mode-mcu/zigbee-general-solution/tuya-zigbee-module-uart-communication-protocol/tuya-zigbee-module-uart-communication-protocol?id=K9ear5khsqoty#title-10-Time%20synchronization
-            //
-            // NOTE: You need to wait for time request before setting it. You can't set time without request.
-            setTime: {
+            /**
+             * Time synchronization (bidirectional)
+             */
+            mcuSyncTime: {
                 ID: 0x24,
                 parameters: [
-                    {name: 'payloadSize', type: DataType.uint16},
-                    {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'utc', type: DataType.uint32},
+                    {name: 'local', type: DataType.uint32},
                 ]
             }
         },
         commandsResponse: {
-            getData: {
+            /**
+             * Reply to MCU-side data request
+             */
+            dataResponse: {
                 ID: 1,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
-                    {name: 'transid', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
                     {name: 'dp', type: DataType.uint8},
                     {name: 'datatype', type: DataType.uint8},
                     {name: 'fn', type: DataType.uint8},
                     {name: 'data', type: DataType.octetStr},
                 ],
             },
-            // The ZED will respond with the command 0x02 when a change was requested
-            // from the MCU. The payload of that response is exacly the same as used
-            // for the command 0x01.
-            setDataResponse: {
+            /**
+             * MCU-side data active upload (bidirectional)
+             */
+            dataReport: {
                 ID: 2,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
-                    {name: 'transid', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
                     {name: 'dp', type: DataType.uint8},
                     {name: 'datatype', type: DataType.uint8},
                     {name: 'fn', type: DataType.uint8},
                     {name: 'data', type: DataType.octetStr},
                 ],
             },
+
+            /**
+             * FIXME: This command is not listed in Tuya zigbee cluster description,
+             *  but there is some command 0x06 (description is: Status query)
+             *  in `Serial command list` section of the same document
+             *  So, need to investigate more information about it
+             */
             activeStatusReport: {
                 ID: 6,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
-                    {name: 'transid', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
                     {name: 'dp', type: DataType.uint8},
                     {name: 'datatype', type: DataType.uint8},
                     {name: 'fn', type: DataType.uint8},
                     {name: 'data', type: DataType.octetStr},
                 ],
             },
-            setTimeRequest: {
+            /**
+             * Zigbee->Gw MCU return version or actively report version
+             */
+            mcuVersionResponse: {
+                ID: 0x11,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'version', type: DataType.uint8},
+                ],
+            },
+            /**
+             * Time synchronization (bidirectional)
+             */
+            mcuSyncTime: {
                 ID: 0x24,
                 parameters: [
-                    {name: 'payloadSize', type: DataType.uint16}
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'utc', type: DataType.uint32},
+                    {name: 'local', type: DataType.uint32},
                 ]
             }
         },

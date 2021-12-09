@@ -81,8 +81,8 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'enhancedMoveToHueAndSaturation': 'commandEnhancedMoveToHueAndSaturation',
     'downClose': 'commandDownClose',
     'upOpen': 'commandUpOpen',
-    'getData': 'commandGetData',
-    'setDataResponse': 'commandSetDataResponse',
+    'getData': 'commandDataResponse',
+    'dataReport': 'commandDataReport',
     'getWeeklyScheduleRsp': 'commandGetWeeklyScheduleRsp',
     'queryNextImageRequest': 'commandQueryNextImageRequest',
     'alertsNotification': 'commandAlertsNotification',
@@ -107,7 +107,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'createIdRsp': 'commandCreateIdRsp',
     'getIdAndKeyCodeListRsp': 'commandGetIdAndKeyCodeListRsp',
 
-    'setTimeRequest': 'commandSetTimeRequest', // Tuya time sync
+    'mcuSyncTime': 'commandMcuSyncTime', // Tuya time sync
     'activeStatusReport': 'commandActiveStatusReport', // Tuya active status report
 
     // Wiser Smart HVAC Commmands
@@ -130,12 +130,12 @@ type MessagePayloadType =
     'commandStepWithOnOff' | 'commandMoveToColorTemp' | 'commandMoveToColor' | 'commandOnWithTimedOff' |
     'commandRecall' | 'commandArm' | 'commandPanic' | 'commandEmergency' | 'commandColorLoopSet' |
     'commandOperationEventNotification' | 'commandStatusChangeNotification' | 'commandEnhancedMoveToHueAndSaturation' |
-    'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandGetData' |
-    'commandSetDataResponse' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
+    'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandDataResponse' |
+    'commandDataReport' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
     "commandArrivalSensorNotify" | 'commandCommisioningNotification' | 'commandGetUserStatusRsp' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
-    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest' |
+    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandMcuSyncTime' |
     'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandMoveToHue' | 'commandStore'|
     'commandWiserSmartSetSetpoint' | 'commandWiserSmartCalibrateValve' | 'commandDanfossSetpointCommand';
 
