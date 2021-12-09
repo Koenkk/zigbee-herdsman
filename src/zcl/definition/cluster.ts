@@ -4065,7 +4065,10 @@ const Cluster: {
             }
         },
         commandsResponse: {
-            getData: {
+            /**
+             * Reply to MCU-side data request
+             */
+            dataResponse: {
                 ID: 1,
                 parameters: [
                     {name: 'status', type: DataType.uint8},
