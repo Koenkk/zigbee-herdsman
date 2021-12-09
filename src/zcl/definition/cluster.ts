@@ -3992,10 +3992,16 @@ const Cluster: {
         commands: {},
         commandsResponse: {}
     },
-    //
-    // Official Tuya documentation
-    // https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
-    //
+    /**
+     * Tuya cluster
+     *
+     * Common parameters:
+     *
+     *  seq -  Sequence number of transmitted data, range 0-65535, revert to 0 after reaching 65535
+     *
+     * Official Tuya documentation: https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
+     *
+     */
     manuSpecificTuya: {
         ID: 0xEF00,  // 61184
         attributes: {
@@ -4043,22 +4049,15 @@ const Cluster: {
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
-            // Time sync command (It's transparent beetween MCU and server)
-            // Time request device -> server
-            //   payloadSize = 0
-            // Set time, server -> device
-            //   payloadSize, should be always 8
-            //   payload[0-3] - UTC timestamp (big endian)
-            //   payload[4-7] - Local timestamp (big endian)
-            //
-            // Zigbee payload is very similar to the UART payload which is described here: https://developer.tuya.com/en/docs/iot/device-development/access-mode-mcu/zigbee-general-solution/tuya-zigbee-module-uart-communication-protocol/tuya-zigbee-module-uart-communication-protocol?id=K9ear5khsqoty#title-10-Time%20synchronization
-            //
-            // NOTE: You need to wait for time request before setting it. You can't set time without request.
-            setTime: {
+            /**
+             * Time synchronization (bidirectional)
+             */
+            mcuSyncTime: {
                 ID: 0x24,
                 parameters: [
-                    {name: 'payloadSize', type: DataType.uint16},
-                    {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'utc', type: DataType.uint32},
+                    {name: 'local', type: DataType.uint32},
                 ]
             }
         },
@@ -4109,10 +4108,15 @@ const Cluster: {
                     {name: 'version', type: DataType.uint8},
                 ],
             },
-            setTimeRequest: {
+            /**
+             * Time synchronization (bidirectional)
+             */
+            mcuSyncTime: {
                 ID: 0x24,
                 parameters: [
-                    {name: 'payloadSize', type: DataType.uint16}
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'utc', type: DataType.uint32},
+                    {name: 'local', type: DataType.uint32},
                 ]
             }
         },

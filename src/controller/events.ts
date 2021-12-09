@@ -107,7 +107,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'createIdRsp': 'commandCreateIdRsp',
     'getIdAndKeyCodeListRsp': 'commandGetIdAndKeyCodeListRsp',
 
-    'setTimeRequest': 'commandSetTimeRequest', // Tuya time sync
+    'mcuSyncTime': 'commandMcuSyncTime', // Tuya time sync
     'activeStatusReport': 'commandActiveStatusReport', // Tuya active status report
 
     // Wiser Smart HVAC Commmands
@@ -135,7 +135,7 @@ type MessagePayloadType =
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | "commandGetPinCodeRsp" |
     "commandArrivalSensorNotify" | 'commandCommisioningNotification' | 'commandGetUserStatusRsp' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
-    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandSetTimeRequest' |
+    'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandMcuSyncTime' |
     'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandMoveToHue' | 'commandStore'|
     'commandWiserSmartSetSetpoint' | 'commandWiserSmartCalibrateValve' | 'commandDanfossSetpointCommand';
 
