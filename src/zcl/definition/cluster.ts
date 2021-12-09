@@ -4079,7 +4079,7 @@ const Cluster: {
             /**
              * MCU-side data active upload (bidirectional)
              */
-            commandDataReport: {
+            dataReport: {
                 ID: 2,
                 parameters: [
                     {name: 'seq', type: DataType.uint16},
