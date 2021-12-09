@@ -585,7 +585,7 @@ const Cluster: {
                     {name: 'level', type: DataType.uint16},
                     {name: 'transtime', type: DataType.uint16},
                 ],
-            },   
+            },
         },
         commandsResponse: {
         },
@@ -3992,6 +3992,10 @@ const Cluster: {
         commands: {},
         commandsResponse: {}
     },
+    //
+    // Official Tuya documentation
+    // https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
+    //
     manuSpecificTuya: {
         ID: 0xEF00,  // 61184
         attributes: {
@@ -4009,7 +4013,11 @@ const Cluster: {
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
-            resetDevice: {
+            /**
+             * GW send, trigger MCU side to report all current information, no zcl payload.
+             * Note: Device side can make a policy, data better not to report centrally
+             */
+            dataQuery: {
                 ID: 3,
                 parameters: [
                 ],
