@@ -4007,7 +4007,10 @@ const Cluster: {
         attributes: {
         },
         commands: {
-            setData: {
+            /**
+             * Gateway-side data request
+             */
+            dataRequest: {
                 ID: 0,
                 parameters: [
                     {name: 'status', type: DataType.uint8},
