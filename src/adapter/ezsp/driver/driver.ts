@@ -511,4 +511,8 @@ export class Driver extends EventEmitter {
     public setRadioPower(value: number): Promise<void> {
         return this.ezsp.execCommand('setRadioPower', value);
     }
+
+    public setChannel(channel: number): Promise<void> {
+        return this.ezsp.execCommand('setLogicalAndRadioChannel', channel);
+    }
 }
