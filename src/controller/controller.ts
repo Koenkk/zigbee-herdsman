@@ -641,7 +641,7 @@ class Controller extends events.EventEmitter {
                     }
                 }
 
-                endpoint.saveClusterAttributeKeyValue(clusterName, data);
+                endpoint.saveClusterAttributeKeyValue(frame.Cluster.ID, data);
             }
         } else {
             type = 'raw';
