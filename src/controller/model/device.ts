@@ -236,8 +236,6 @@ class Device extends Entity {
                         if (name in attributes[frame.Cluster.name].attributes) {
                             response[name] = attributes[frame.Cluster.name].attributes[name];
                         }
-                    } else {
-                        debug.error(`Unknown attribute: ${entry.attrId}.`);
                     }
                 }
 
