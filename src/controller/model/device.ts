@@ -231,7 +231,7 @@ class Device extends Entity {
             if (frame.Cluster.name in attributes && (frame.Cluster.name !== 'genTime' || !this._skipTimeResponse)) {
                 const response: KeyValue = {};
                 for (const entry of frame.Payload) {
-                    if (cluster.hasAttribute(entry.attrId)) {
+                    if (frame.Cluster.hasAttribute(entry.attrId)) {
                         const name = frame.Cluster.getAttribute(entry.attrId).name;
                         if (name in attributes[frame.Cluster.name].attributes) {
                             response[name] = attributes[frame.Cluster.name].attributes[name];
