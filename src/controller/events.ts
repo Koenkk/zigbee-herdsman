@@ -81,7 +81,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'enhancedMoveToHueAndSaturation': 'commandEnhancedMoveToHueAndSaturation',
     'downClose': 'commandDownClose',
     'upOpen': 'commandUpOpen',
-    'getData': 'commandDataResponse',
+    'dataResponse': 'commandDataResponse',
     'dataReport': 'commandDataReport',
     'getWeeklyScheduleRsp': 'commandGetWeeklyScheduleRsp',
     'queryNextImageRequest': 'commandQueryNextImageRequest',
