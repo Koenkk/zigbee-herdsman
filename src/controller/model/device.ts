@@ -728,6 +728,18 @@ class Device extends Entity {
         }
 
         this._deleted = true;
+
+        // Clear all data in case device joins again
+        this._interviewCompleted = false;
+        this._interviewing = false;
+        this.meta = {};
+        const newEndpoints: Endpoint[] = [];
+        for (const endpoint of this.endpoints) {
+            newEndpoints.push(Endpoint.create(endpoint.ID, endpoint.profileID, endpoint.deviceID, 
+                endpoint.inputClusters, endpoint.outputClusters, this.networkAddress, this.ieeeAddr, 
+                this.defaultSendWhenActive));
+        }
+        this._endpoints = newEndpoints;
     }
 
     public async lqi(): Promise<LQI> {
