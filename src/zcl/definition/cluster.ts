@@ -2491,6 +2491,7 @@ const Cluster: {
             elkoOccupancyOperationMode: {ID: 0xE001, type: DataType.enum8, manufacturerCode: ManufacturerCode.ELKO},
             elkoForceOffTimeout: {ID: 0xE002, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
             elkoOccupancySensitivity: {ID: 0xE003, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
+            sprutOccupancyLevel: {ID: 0x6600, type: DataType.uint16, manufacturerCode: ManufacturerCode.SprutDevice},
         },
         commands: {
         },
@@ -4491,6 +4492,41 @@ const Cluster: {
             DownGroupID: {ID: 0x0021, type: DataType.uint16},
             SwitchActions: {ID: 0x0001, type: DataType.enum8},
         },
+        commands: {},
+        commandsResponse: {},
+    },
+    sprutDevice: {
+        ID: 26112,
+        manufacturerCode: 26214,
+        attributes: {
+            debug: {ID: 0, type: DataType.boolean},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    sprutVoc: {
+        ID: 26113,
+        manufacturerCode: 26214,
+        attributes: {
+            voc: {ID: 26112, type: DataType.uint16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    sprutNoise: {
+        ID: 26114,
+        manufacturerCode: 26214,
+        attributes: {
+            noise: {ID: 26112, type: DataType.data8},
+            noise_detected: {ID: 26113, type: DataType.bitmap8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    sprutIrBlaster: {
+        ID: 26115,
+        manufacturerCode: 26214,
+        attributes: {},
         commands: {},
         commandsResponse: {},
     },
