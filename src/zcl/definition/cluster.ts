@@ -2491,7 +2491,7 @@ const Cluster: {
             elkoOccupancyOperationMode: {ID: 0xE001, type: DataType.enum8, manufacturerCode: ManufacturerCode.ELKO},
             elkoForceOffTimeout: {ID: 0xE002, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
             elkoOccupancySensitivity: {ID: 0xE003, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
-            sprutOccupancyLevel: { ID: 0x6600, type: dataType_1.default.uint16, manufacturerCode: manufacturerCode_1.default.SprutDevice },
+            sprutOccupancyLevel: {ID: 0x6600, type: DataType.uint16, manufacturerCode: ManufacturerCode.SprutDevice},
         },
         commands: {
         },
@@ -4499,7 +4499,7 @@ const Cluster: {
         ID: 26112,
         manufacturerCode: 26214,
         attributes: {
-            debug: { ID: 0, type: dataType_1.default.boolean },
+            debug: {ID: 0, type: DataType.boolean},
         },
         commands: {},
         commandsResponse: {},
@@ -4508,7 +4508,7 @@ const Cluster: {
         ID: 26113,
         manufacturerCode: 26214,
         attributes: {
-            voc: { ID: 26112, type: dataType_1.default.uint16 },
+            voc: {ID: 26112, type: DataType.uint16},
         },
         commands: {},
         commandsResponse: {},
@@ -4517,8 +4517,8 @@ const Cluster: {
         ID: 26114,
         manufacturerCode: 26214,
         attributes: {
-            noise: { ID: 26112, type: dataType_1.default.data8 },
-            noise_detected: { ID: 26113, type: dataType_1.default.bitmap8 },
+            noise: {ID: 26112, type: DataType.data8},
+            noise_detected: {ID: 26113, type: DataType.bitmap8},
         },
         commands: {},
         commandsResponse: {},
