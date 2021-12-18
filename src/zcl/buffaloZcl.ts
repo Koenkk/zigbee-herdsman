@@ -65,6 +65,9 @@ interface Gdp {
     securityKey: Buffer;
     keyMic: number;
     outgoingCounter: number;
+    applicationInfo: number;
+    numGdpCommands: number;
+    gpdCommandIdList: Buffer;
 }
 
 interface ExtensionFieldSet {
@@ -267,14 +270,25 @@ class BuffaloZcl extends Buffalo {
     private readGdpFrame(options: TsType.Options): Gdp | {raw: Buffer} | Record<string, never> {
         // Commisioning
         if (options.payload.commandID === 224) {
-            return {
+            const frame =  {
                 deviceID: this.readUInt8(),
                 options: this.readUInt8(),
                 extendedOptions: this.readUInt8(),
                 securityKey: this.readBuffer(16),
                 keyMic: this.readUInt32(),
                 outgoingCounter: this.readUInt32(),
+                applicationInfo: 0,
+                numGdpCommands: 0,
+                gpdCommandIdList: Buffer.alloc(0),
             };
+            if (frame.options & 0x04) {
+                frame.applicationInfo = this.readUInt8();
+            }
+            if (frame.applicationInfo & 0x04) {
+                frame.numGdpCommands = this.readUInt8();
+                frame.gpdCommandIdList = this.readBuffer(frame.numGdpCommands);
+            }
+            return frame;
         } else if (this.position != this.buffer.length) {
             return {raw: this.buffer.slice(this.position)};
         } else {

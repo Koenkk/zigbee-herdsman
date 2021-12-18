@@ -47,35 +47,58 @@ class GreenPower extends events.EventEmitter {
                 dataPayload.frame.Payload.srcID, dataPayload.frame.Payload.commandFrame.securityKey
             );
 
-            const payload = {
-                options: 0x00e548,
-                srcID: dataPayload.frame.Payload.srcID,
-                sinkGroupID: this.adapter.greenPowerGroup,
-                deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
-                frameCounter: dataPayload.frame.Payload.commandFrame.outgoingCounter,
-                gpdKey: [...key],
-            };
+            if (dataPayload.wasBroadcast) {
+                const payload = {
+                    options: 0x00e548,
+                    srcID: dataPayload.frame.Payload.srcID,
+                    sinkGroupID: this.adapter.greenPowerGroup,
+                    deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
+                    frameCounter: dataPayload.frame.Payload.commandFrame.outgoingCounter,
+                    gpdKey: [...key],
+                };
 
-            const frame = Zcl.ZclFrame.create(
-                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-                null, ZclTransactionSequenceNumber.next(), 'pairing', 33, payload
-            );
+                const frame = Zcl.ZclFrame.create(
+                    Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
+                    null, ZclTransactionSequenceNumber.next(), 'pairing', 33, payload
+                );
 
-            await this.adapter.sendZclFrameToAll(242, frame, 242);
+                await this.adapter.sendZclFrameToAll(242, frame, 242);
+            }
+            else {
+                const coordinator = await this.adapter.getCoordinator();
+
+                const payload = {
+                    options: 0x00e568,
+                    srcID: dataPayload.frame.Payload.srcID,
+                    sinkIEEEAddr: coordinator.ieeeAddr,
+                    sinkNwkAddr: coordinator.networkAddress,
+                    deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
+                    frameCounter: dataPayload.frame.Payload.commandFrame.outgoingCounter,
+                    gpdKey: [...key],
+                };
+
+                const frame = Zcl.ZclFrame.create(
+                    Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
+                    null, ZclTransactionSequenceNumber.next(), 'pairing', 33, payload
+                );
+
+                await this.adapter.sendZclFrameToEndpoint(null, dataPayload.frame.Payload.gppNwkAddr,242,frame,10000,
+                    false,false,242);
+            }
 
             const eventData: GreenPowerDeviceJoinedPayload = {
                 sourceID: dataPayload.frame.Payload.srcID,
                 deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
-                networkAddress: dataPayload.address,
+                networkAddress: dataPayload.frame.Payload.srcID & 0xFFFF,
             };
 
             this.emit(GreenPowerEvents.deviceJoined, eventData);
         }
     }
 
-    public async permitJoin(time: number): Promise<void> {
+    public async permitJoin(time: number, networkAddress: number): Promise<void> {
         const payload = {
-            options: 0x0b,
+            options: time ? (networkAddress === null ? 0x0b : 0x2b) : 0x0a,
             commisioningWindow: time,
         };
 
@@ -84,7 +107,11 @@ class GreenPower extends events.EventEmitter {
             null, ZclTransactionSequenceNumber.next(), 'commisioningMode', 33, payload
         );
 
-        await this.adapter.sendZclFrameToAll(242, frame, 242);
+        if (networkAddress === null) {
+            await this.adapter.sendZclFrameToAll(242, frame, 242);
+        } else {
+            await this.adapter.sendZclFrameToEndpoint(null, networkAddress,242,frame,10000,false,false,242);
+        }
     }
 }
 
