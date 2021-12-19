@@ -732,6 +732,22 @@ describe('Controller', () => {
         expect(events.message.length).toBe(0);
     });
 
+    it('Device should update properties when reported', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(Device.byIeeeAddr('0x129').modelID).toBe('myModelID');
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: 129,
+            frame: mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'new.model.id'}]),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(Device.byIeeeAddr('0x129').modelID).toBe('new.model.id');
+    });
+
     it('Set transmit power', async () => {
         await controller.start();
         await controller.setTransmitPower(15);
@@ -1512,7 +1528,7 @@ describe('Controller', () => {
                "meta": {},
                "_powerSource":"Mains (single phase)",
                "_modelID":"myModelID",
-               "_applicationVersion":2,
+               "_applicationVersion":3,
                "_stackVersion":101,
                "_zclVersion":1,
                "_hardwareVersion":3,
@@ -2098,7 +2114,7 @@ describe('Controller', () => {
                 "_manufacturerName":"KoenAndCo",
                 "meta": {},
                 "_powerSource":"Mains (single phase)",
-                "_modelID":"myModelID",
+                "_modelID":"lumi.sensor_wleak.aq1",
                 "_applicationVersion":2,
                 "_stackVersion":101,
                 "_zclVersion":1,

@@ -6,6 +6,7 @@ import {Wait} from '../../utils';
 import Debug from "debug";
 import * as Zcl from '../../zcl';
 import assert from 'assert';
+import {ZclFrameConverter} from '../helpers';
 
 /**
  * @ignore
@@ -207,6 +208,14 @@ class Device extends Entity {
 
     public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, endpoint: Endpoint): Promise<void> {
         const frame = dataPayload.frame;
+
+        // Update reportable properties
+        if (frame.isCluster('genBasic') && (frame.isCommand('readRsp') || frame.isCommand('report'))) {
+            for (const [key, value] of Object.entries(ZclFrameConverter.attributeKeyValue(frame))) {
+                Device.ReportablePropertiesMapping[key]?.set(value, this);
+                this.save();
+            }
+        }
 
         // Respond to enroll requests
         if (frame.isSpecific() && frame.isCluster('ssIasZone') && frame.isCommand('enrollReq')) {
