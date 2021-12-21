@@ -4530,6 +4530,15 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    manuSpecificSiglisZigfred: {
+        ID: 0x345,
+        manufacturerCode: 0x129C,
+        attributes: {
+            buttonEvent: {ID: 0x0008, type: DataType.uint32},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
 };
 
 export default Cluster;
