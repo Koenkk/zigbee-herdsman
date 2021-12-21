@@ -10,6 +10,7 @@ enum BuffaloZclDataType {
     BUFFER = 1008,
     GDP_FRAME = 1009,
     STRUCTURED_SELECTOR = 1010,
+    LIST_TUYA_DATAPOINT_VALUES = 1011,
 }
 
 export default BuffaloZclDataType;
