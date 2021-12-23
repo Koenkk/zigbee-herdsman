@@ -4205,6 +4205,7 @@ const Cluster: {
     },
     liXeePrivate: {
         ID: 0xFF66,
+        manufacturerCode: ManufacturerCode.JENNIC,
         attributes: {
             currentTarif: {ID: 0x0000, type: DataType.octetStr},
             tomorrowColor: {ID: 0x0001, type: DataType.octetStr},
