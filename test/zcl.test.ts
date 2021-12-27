@@ -1247,6 +1247,36 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
+    it.each([
+        [
+            'no data point',
+            [],
+            Buffer.from([]),
+        ],
+        [
+            'single data point',
+            [
+                {"dp":1, "datatype":4, "data": Buffer.from([1])},
+            ],
+            Buffer.from([1, 4, 0, 1, 1]),
+        ],
+        [
+            'two data points',
+            [
+                {"dp":1, "datatype":4, "data": Buffer.from([1])},
+                {"dp":4, "datatype":2, "data": Buffer.from([0, 0, 0, 90])}
+            ],
+            Buffer.from([1, 4, 0, 1, 1, 4, 2, 0, 4, 0, 0, 0, 90]),
+        ],
+    ])
+    ('BuffaloZcl writeListTuyaDataPointValues %s', (_name, payload, expected) => {
+        const buffer = Buffer.alloc(expected.length);
+        const buffalo = new BuffaloZcl(buffer);
+        const result = buffalo.write(BuffaloZclDataType[BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES], payload, {});
+        expect(buffalo.getPosition()).toBe(expected.length);
+        expect(buffer).toStrictEqual(expected);
+    });
+
     it('Zcl utils get cluster without manufacturerCode', () => {
         const cluster = Zcl.Utils.getCluster(0xfc00);
         expect(cluster.ID).toBe(0xfc00);

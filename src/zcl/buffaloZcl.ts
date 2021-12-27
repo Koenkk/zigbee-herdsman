@@ -300,6 +300,17 @@ class BuffaloZcl extends Buffalo {
         return value;
     }
 
+    private writeListTuyaDataPointValues(dpValues: TuyaDataPointValue[]): void {
+        for (const dpValue of dpValues) {
+            this.writeUInt8(dpValue.dp);
+            this.writeUInt8(dpValue.datatype);
+            const dataLen = dpValue.data.length;
+            this.writeUInt8((dataLen >> 8) & 0xFF);
+            this.writeUInt8(dataLen & 0xFF);
+            this.writeBuffer(dpValue.data, dataLen);
+        }
+    }
+
     private readUInt40(): [number, number] {
         const lsb = this.readUInt32();
         const msb = this.readUInt8();
@@ -373,6 +384,8 @@ class BuffaloZcl extends Buffalo {
             return this.writeListZoneInfo(value);
         } else if (type === 'LIST_THERMO_TRANSITIONS') {
             return this.writeListThermoTransitions(value);
+        } else if (type === 'LIST_TUYA_DATAPOINT_VALUES') {
+            return this.writeListTuyaDataPointValues(value);
         } else if (type === 'uint48') {
             return this.writeUInt48(value);
         } else if (type === 'uint56') {

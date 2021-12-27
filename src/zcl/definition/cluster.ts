@@ -4004,11 +4004,7 @@ const Cluster: {
                 ID: 0,
                 parameters: [
                     {name: 'seq', type: DataType.uint16},
-                    {name: 'dp', type: DataType.uint8},
-                    {name: 'datatype', type: DataType.uint8},
-                    {name: 'length_hi', type: DataType.uint8},
-                    {name: 'length_lo', type: DataType.uint8},
-                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                    {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
             /**
@@ -4040,11 +4036,7 @@ const Cluster: {
                 ID: 4,
                 parameters: [
                     {name: 'seq', type: DataType.uint16},
-                    {name: 'dp', type: DataType.uint8},
-                    {name: 'datatype', type: DataType.uint8},
-                    {name: 'length_hi', type: DataType.uint8},
-                    {name: 'length_lo', type: DataType.uint8},
-                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                    {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
 
