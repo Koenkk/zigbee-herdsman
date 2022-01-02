@@ -4082,9 +4082,8 @@ const Cluster: {
             mcuSyncTime: {
                 ID: 0x24,
                 parameters: [
-                    {name: 'seq', type: DataType.uint16},
-                    {name: 'utc', type: DataType.uint32},
-                    {name: 'local', type: DataType.uint32},
+                    {name: 'payloadSize', type: DataType.uint16},
+                    {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
                 ]
             }
         },
@@ -4169,9 +4168,7 @@ const Cluster: {
             mcuSyncTime: {
                 ID: 0x24,
                 parameters: [
-                    {name: 'seq', type: DataType.uint16},
-                    {name: 'utc', type: DataType.uint32},
-                    {name: 'local', type: DataType.uint32},
+                    {name: 'payloadSize', type: DataType.uint16}
                 ]
             }
         },
