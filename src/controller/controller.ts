@@ -562,8 +562,26 @@ class Controller extends events.EventEmitter {
             }
         }
 
-        const device = typeof dataPayload.address === 'string' ?
+        let device = typeof dataPayload.address === 'string' ?
             Device.byIeeeAddr(dataPayload.address) : Device.byNetworkAddress(dataPayload.address);
+        
+        /**
+         * Handling of re-transmitted Xiaomi messages.
+         * https://github.com/Koenkk/zigbee2mqtt/issues/1238
+         * https://github.com/Koenkk/zigbee2mqtt/issues/3592
+         *
+         * Some Xiaomi router devices re-transmit messages from Xiaomi end devices.
+         * The network address of these message is set to the one of the Xiaomi router.
+         * Therefore it looks like if the message came from the Xiaomi router, while in
+         * fact it came from the end device.
+         * Handling these message would result in false state updates.
+         * The group ID attribute of these message defines the network address of the end device.
+         */
+        if (device?.manufacturerName === 'LUMI' && device?.type == 'Router' && dataPayload.groupID) {
+            debug.log(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${dataPayload.groupID}`);
+            device = Device.byNetworkAddress(dataPayload.groupID);
+        }
+
         if (!device) {
             debug.log(
                 `'${dataType}' data is from unknown device with address '${dataPayload.address}', ` +

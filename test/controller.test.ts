@@ -228,6 +228,14 @@ const mockDevices = {
         simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [0,32], outputClusters: [2], profileID: 99}},
         attributes: {},
     },
+    175: {
+        nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
+        activeEndpoints: {endpoints: [1,2,3,4,5,6]},
+        simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [0, 1, 2], outputClusters: [2], profileID: 99}},
+        attributes: {
+            1: {modelId: 'lumi.plug', manufacturerName: 'LUMI', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
+        },
+    },
 }
 
 const mockZclFrame = ZclFrame;
@@ -3914,6 +3922,26 @@ describe('Controller', () => {
         expect(fastpollstop[3].Payload).toStrictEqual({});
 
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
+    });
+
+    it('Handle retransmitted Xiaomi messages', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 175, ieeeAddr: '0x175'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 171, ieeeAddr: '0x171'});
+
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: 175,
+            // Attrid 9999 does not exist in ZCL
+            frame: ZclFrame.create(0, 0, true, null, 40, 0, 1, [{attrId: 0}, {attrId: 9999}]),
+            endpoint: 1,
+            linkquality: 19,
+            groupID: 171,
+        });
+
+        const expected = {"type":"read","device":{"ID":3,"_applicationVersion":2,"_dateCode":"201901","_endpoints":[{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"defaultSendWhenActive":false,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},{"inputClusters":[],"outputClusters":[],"defaultSendWhenActive":false,"ID":2,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},{"inputClusters":[],"outputClusters":[],"defaultSendWhenActive":false,"ID":3,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},{"inputClusters":[],"outputClusters":[],"defaultSendWhenActive":false,"ID":4,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},{"inputClusters":[],"outputClusters":[],"defaultSendWhenActive":false,"ID":5,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},{"inputClusters":[],"outputClusters":[],"defaultSendWhenActive":false,"ID":6,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]}],"_hardwareVersion":3,"_ieeeAddr":"0x171","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_manufacturerID":1212,"_manufacturerName":"Xioami","_modelID":"lumi.remote.b286opcn01","_networkAddress":171,"_powerSource":"Mains (single phase)","_softwareBuildID":"1.01","_stackVersion":101,"_type":"EndDevice","_zclVersion":1,"_linkquality":19,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{},"useImplicitCheckin":true},"endpoint":{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"defaultSendWhenActive":false,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},"data":["mainsVoltage",9999],"linkquality":19,"groupID":171,"cluster":"genPowerCfg","meta":{"zclTransactionSequenceNumber":40,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
+        expect(events.message.length).toBe(1);
+        expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 
 });
