@@ -4232,10 +4232,10 @@ const Cluster: {
     manuSpecificTuya_2: {
         ID: 0xE002,
         attributes: {
-            alarm_temperature_max: {ID: 53258, type: DataType.uint16},
-            alarm_temperature_min: {ID: 53259, type: DataType.uint16},
-            alarm_humidity_max: {ID: 53261, type: DataType.uint16},
-            alarm_humidity_min: {ID: 53262, type: DataType.uint16},
+            alarm_temperature_max: {ID: 53258, type: DataType.int16},
+            alarm_temperature_min: {ID: 53259, type: DataType.int16},
+            alarm_humidity_max: {ID: 53261, type: DataType.int16},
+            alarm_humidity_min: {ID: 53262, type: DataType.int16},
             alarm_humidity: {ID: 53263, type: DataType.enum8},
             alarm_temperature: {ID: 53254, type: DataType.enum8},
             unknown: {ID: 53264, type: DataType.uint8},
