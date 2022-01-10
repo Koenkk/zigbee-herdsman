@@ -64,6 +64,7 @@ const mocksendZclFrameToEndpoint = jest.fn();
 let iasZoneReadState170Count = 0;
 let enroll170 = true;
 let configureReportStatus = 0;
+let configureReportDefaultRsp = false;
 
 const restoreMocksendZclFrameToEndpoint = () => {
     mocksendZclFrameToEndpoint.mockImplementation((ieeeAddr, networkAddress, endpoint, frame: ZclFrame) => {
@@ -118,11 +119,17 @@ const restoreMocksendZclFrameToEndpoint = () => {
         }
 
         if (frame.isGlobal() && frame.isCommand('configReport')) {
-            const payload = [];
-            for (const item of frame.Payload) {
-                payload.push({attrId: item.attrId, status: configureReportStatus, direction: 1})
+            let payload;
+            if (configureReportDefaultRsp) {
+                payload = {cmdId: 1, statusCode: configureReportStatus}
+            } else {
+                payload = [];
+                for (const item of frame.Payload) {
+                    payload.push({attrId: item.attrId, status: configureReportStatus, direction: 1})
+                }
+    
+                
             }
-
             // @ts-ignore
             return {frame: new ZclFrame(null, payload, frame.Cluster)};
         }
@@ -484,6 +491,7 @@ describe('Controller', () => {
         zclTransactionSequenceNumber.number = 1;
         iasZoneReadState170Count = 0;
         configureReportStatus = 0;
+        configureReportDefaultRsp = false;
         enroll170 = true;
         options.network.channelList = [15];
         Object.keys(events).forEach((key) => events[key] = []);
@@ -2664,6 +2672,31 @@ describe('Controller', () => {
 
     it('Endpoint configure reporting fails when status code is not 0', async () => {
         configureReportStatus = 1;
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockClear();
+        let error;
+        try {
+            await endpoint.configureReporting('genPowerCfg', [{
+                attribute: 'mainsFrequency',
+                minimumReportInterval: 1,
+                maximumReportInterval: 10,
+                reportableChange: 1,
+            }]);
+        }
+        catch (e) {
+            error = e;
+        }
+        expect(error instanceof Zcl.ZclStatusError).toBeTruthy();
+        expect(error.message).toStrictEqual(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"sendWhenActive":false,"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Status 'FAILURE')`);
+        expect(error.code).toBe(1);
+    });
+
+    it('Endpoint configure reporting fails when status code is not 0 default rsp', async () => {
+        configureReportStatus = 1;
+        configureReportDefaultRsp = true;
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
