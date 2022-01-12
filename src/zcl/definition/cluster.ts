@@ -4225,6 +4225,7 @@ const Cluster: {
             daysNumberNextCalendar: {ID: 0x0226, type: DataType.uint8},
             daysProfileCurrentCalendar: {ID: 0x0227, type: DataType.octetStr},
             daysProfileNextCalendar: {ID: 0x0228, type: DataType.octetStr},
+            linkyMode: {ID: 0x0300, type: DataType.uint8},
         },
         commands: {},
         commandsResponse: {},
