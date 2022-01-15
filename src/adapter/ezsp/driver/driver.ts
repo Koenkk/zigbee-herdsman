@@ -167,7 +167,7 @@ export class Driver extends EventEmitter {
             if (currentState == EmberNetworkStatus.JOINED_NETWORK) {
                 debug.log(`Leaving current network and forming new network`);
                 const st = await this.ezsp.leaveNetwork();
-                console.assert(st == EmberStatus.NETWORK_DOWN);
+                console.assert(st == EmberStatus.NETWORK_DOWN, `leaveNetwork returned unexpected status: ${st}`);
             }
             await this.form_network();
         }
@@ -175,7 +175,8 @@ export class Driver extends EventEmitter {
         debug.log('Network state', state);
 
         const [status, nodeType, networkParams] = await this.ezsp.execCommand('getNetworkParameters');
-        console.assert(status == EmberStatus.SUCCESS);
+        console.assert(status == EmberStatus.SUCCESS,
+            `Command (getNetworkParameters) returned unexpected state: ${status}`);
         this.networkParams = networkParams;
         debug.log("Node type: %s, Network parameters: %s", nodeType, networkParams);
 
@@ -209,7 +210,8 @@ export class Driver extends EventEmitter {
     private async form_network(): Promise<void> {
         let status;
         [status] = await this.ezsp.execCommand('clearKeyTable');
-        console.assert(status == EmberStatus.SUCCESS);
+        console.assert(status == EmberStatus.SUCCESS,
+            `Command (clearKeyTable) returned unexpected state: ${status}`);
 
         const panID = this.nwkOpt.panID;
         const extendedPanID = this.nwkOpt.extendedPanID;

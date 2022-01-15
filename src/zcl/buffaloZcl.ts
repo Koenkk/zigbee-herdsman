@@ -73,6 +73,12 @@ interface ExtensionFieldSet {
     extField: TsType.Value[];
 }
 
+interface TuyaDataPointValue {
+    dp: number;
+    datatype: number;
+    data: Buffer;
+}
+
 class BuffaloZcl extends Buffalo {
     private readUseDataType(options: BuffaloZclOptions): TsType.Value {
         return this.read(options.dataType, options);
@@ -276,6 +282,35 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
+    private readListTuyaDataPointValues(): TuyaDataPointValue[] {
+        const value = [];
+
+        while (this.isMore()) {
+            try {
+                const dp = this.readUInt8();
+                const datatype = this.readUInt8();
+                const len_hi = this.readUInt8();
+                const len_lo = this.readUInt8();
+                const data = this.readBuffer(len_lo + (len_hi << 8));
+                value.push({dp, datatype, data});
+            } catch (error) {
+                break;
+            }
+        }
+        return value;
+    }
+
+    private writeListTuyaDataPointValues(dpValues: TuyaDataPointValue[]): void {
+        for (const dpValue of dpValues) {
+            this.writeUInt8(dpValue.dp);
+            this.writeUInt8(dpValue.datatype);
+            const dataLen = dpValue.data.length;
+            this.writeUInt8((dataLen >> 8) & 0xFF);
+            this.writeUInt8(dataLen & 0xFF);
+            this.writeBuffer(dpValue.data, dataLen);
+        }
+    }
+
     private readUInt40(): [number, number] {
         const lsb = this.readUInt32();
         const msb = this.readUInt8();
@@ -349,6 +384,8 @@ class BuffaloZcl extends Buffalo {
             return this.writeListZoneInfo(value);
         } else if (type === 'LIST_THERMO_TRANSITIONS') {
             return this.writeListThermoTransitions(value);
+        } else if (type === 'LIST_TUYA_DATAPOINT_VALUES') {
+            return this.writeListTuyaDataPointValues(value);
         } else if (type === 'uint48') {
             return this.writeUInt48(value);
         } else if (type === 'uint56') {
@@ -390,6 +427,8 @@ class BuffaloZcl extends Buffalo {
             return this.readListThermoTransitions(options);
         } else if (type === 'GDP_FRAME') {
             return this.readGdpFrame(options);
+        } else if (type === 'LIST_TUYA_DATAPOINT_VALUES') {
+            return this.readListTuyaDataPointValues();
         } else if (type === 'uint40') {
             return this.readUInt40();
         } else if (type === 'uint48') {

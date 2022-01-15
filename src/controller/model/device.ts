@@ -6,6 +6,7 @@ import {Wait} from '../../utils';
 import Debug from "debug";
 import * as Zcl from '../../zcl';
 import assert from 'assert';
+import {ZclFrameConverter} from '../helpers';
 
 /**
  * @ignore
@@ -208,6 +209,14 @@ class Device extends Entity {
     public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, endpoint: Endpoint): Promise<void> {
         const frame = dataPayload.frame;
 
+        // Update reportable properties
+        if (frame.isCluster('genBasic') && (frame.isCommand('readRsp') || frame.isCommand('report'))) {
+            for (const [key, value] of Object.entries(ZclFrameConverter.attributeKeyValue(frame))) {
+                Device.ReportablePropertiesMapping[key]?.set(value, this);
+                this.save();
+            }
+        }
+
         // Respond to enroll requests
         if (frame.isSpecific() && frame.isCluster('ssIasZone') && frame.isCommand('enrollReq')) {
             debug.log(`IAS - '${this.ieeeAddr}' responding to enroll response`);
@@ -231,9 +240,11 @@ class Device extends Entity {
             if (frame.Cluster.name in attributes && (frame.Cluster.name !== 'genTime' || !this._skipTimeResponse)) {
                 const response: KeyValue = {};
                 for (const entry of frame.Payload) {
-                    const name = frame.Cluster.getAttribute(entry.attrId).name;
-                    if (name in attributes[frame.Cluster.name].attributes) {
-                        response[name] = attributes[frame.Cluster.name].attributes[name];
+                    if (frame.Cluster.hasAttribute(entry.attrId)) {
+                        const name = frame.Cluster.getAttribute(entry.attrId).name;
+                        if (name in attributes[frame.Cluster.name].attributes) {
+                            response[name] = attributes[frame.Cluster.name].attributes[name];
+                        }
                     }
                 }
 
@@ -726,6 +737,18 @@ class Device extends Entity {
         }
 
         this._deleted = true;
+
+        // Clear all data in case device joins again
+        this._interviewCompleted = false;
+        this._interviewing = false;
+        this.meta = {};
+        const newEndpoints: Endpoint[] = [];
+        for (const endpoint of this.endpoints) {
+            newEndpoints.push(Endpoint.create(endpoint.ID, endpoint.profileID, endpoint.deviceID, 
+                endpoint.inputClusters, endpoint.outputClusters, this.networkAddress, this.ieeeAddr, 
+                this.defaultSendWhenActive));
+        }
+        this._endpoints = newEndpoints;
     }
 
     public async lqi(): Promise<LQI> {

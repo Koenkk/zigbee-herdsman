@@ -303,13 +303,10 @@ class Endpoint extends Entity {
     /*
      * Zigbee functions
      */
-
-    private checkStatus(payload: [{status: Zcl.Status}]): void {
-        for (const item of payload) {
-            if (item.status !== Zcl.Status.SUCCESS) {
-                throw new Zcl.ZclStatusError(item.status);
-            }
-        }
+    private checkStatus(payload: [{status: Zcl.Status}] | {cmdId: number; statusCode: number}): void {
+        const codes = Array.isArray(payload) ? payload.map((i) => i.status) : [payload.statusCode];
+        const invalid = codes.find((c) => c !== Zcl.Status.SUCCESS);
+        if (invalid) throw new Zcl.ZclStatusError(invalid);
     }
 
     public async report(

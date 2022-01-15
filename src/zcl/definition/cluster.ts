@@ -1941,6 +1941,7 @@ const Cluster: {
             danfossMountedModeControl: {ID: 0x4013, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossThermostatOrientation: {ID: 0x4014, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossExternalMeasuredRoomSensor: {ID: 0x4015, type: DataType.int16, manufacturerCode: ManufacturerCode.DANFOSS},
+            danfossRadiatorCovered: {ID: 0x4016, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossAlgorithmScaleFactor: {ID: 0x4020, type: DataType.uint8, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossHeatAvailable: {ID: 0x4030, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossHeatRequired: {ID: 0x4031, type: DataType.boolean, manufacturerCode: ManufacturerCode.DANFOSS},
@@ -2335,18 +2336,6 @@ const Cluster: {
                     {name: 'enable', type: DataType.uint8},
                 ]
             },
-            tuyaRgbMode2: {
-                ID: 240,
-                parameters: [
-                    {name: 'data', type: BuffaloZclDataType.BUFFER},
-                ]
-            },
-            tuyaWhite: {
-                ID: 242,
-                parameters: [
-                    {name: 'data', type: BuffaloZclDataType.BUFFER},
-                ],
-            },
             tuyaOnStartUp: {
                 ID: 249,
                 parameters: [
@@ -2490,6 +2479,7 @@ const Cluster: {
             elkoOccupancyOperationMode: {ID: 0xE001, type: DataType.enum8, manufacturerCode: ManufacturerCode.ELKO},
             elkoForceOffTimeout: {ID: 0xE002, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
             elkoOccupancySensitivity: {ID: 0xE003, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
+            sprutOccupancyLevel: {ID: 0x6600, type: DataType.uint16, manufacturerCode: ManufacturerCode.SprutDevice},
         },
         commands: {
         },
@@ -4014,11 +4004,7 @@ const Cluster: {
                 ID: 0,
                 parameters: [
                     {name: 'seq', type: DataType.uint16},
-                    {name: 'dp', type: DataType.uint8},
-                    {name: 'datatype', type: DataType.uint8},
-                    {name: 'length_hi', type: DataType.uint8},
-                    {name: 'length_lo', type: DataType.uint8},
-                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                    {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
             /**
@@ -4050,11 +4036,7 @@ const Cluster: {
                 ID: 4,
                 parameters: [
                     {name: 'seq', type: DataType.uint16},
-                    {name: 'dp', type: DataType.uint8},
-                    {name: 'datatype', type: DataType.uint8},
-                    {name: 'length_hi', type: DataType.uint8},
-                    {name: 'length_lo', type: DataType.uint8},
-                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                    {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
 
@@ -4100,9 +4082,8 @@ const Cluster: {
             mcuSyncTime: {
                 ID: 0x24,
                 parameters: [
-                    {name: 'seq', type: DataType.uint16},
-                    {name: 'utc', type: DataType.uint32},
-                    {name: 'local', type: DataType.uint32},
+                    {name: 'payloadSize', type: DataType.uint16},
+                    {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
                 ]
             }
         },
@@ -4114,10 +4095,7 @@ const Cluster: {
                 ID: 1,
                 parameters: [
                     {name: 'seq', type: DataType.uint16},
-                    {name: 'dp', type: DataType.uint8},
-                    {name: 'datatype', type: DataType.uint8},
-                    {name: 'fn', type: DataType.uint8},
-                    {name: 'data', type: DataType.octetStr},
+                    {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
             /**
@@ -4127,10 +4105,7 @@ const Cluster: {
                 ID: 2,
                 parameters: [
                     {name: 'seq', type: DataType.uint16},
-                    {name: 'dp', type: DataType.uint8},
-                    {name: 'datatype', type: DataType.uint8},
-                    {name: 'fn', type: DataType.uint8},
-                    {name: 'data', type: DataType.octetStr},
+                    {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
 
@@ -4144,10 +4119,7 @@ const Cluster: {
                 ID: 6,
                 parameters: [
                     {name: 'seq', type: DataType.uint16},
-                    {name: 'dp', type: DataType.uint8},
-                    {name: 'datatype', type: DataType.uint8},
-                    {name: 'fn', type: DataType.uint8},
-                    {name: 'data', type: DataType.octetStr},
+                    {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
             /**
@@ -4196,9 +4168,7 @@ const Cluster: {
             mcuSyncTime: {
                 ID: 0x24,
                 parameters: [
-                    {name: 'seq', type: DataType.uint16},
-                    {name: 'utc', type: DataType.uint32},
-                    {name: 'local', type: DataType.uint32},
+                    {name: 'payloadSize', type: DataType.uint16}
                 ]
             }
         },
@@ -4213,13 +4183,60 @@ const Cluster: {
         commands: {},
         commandsResponse: {}
     },
+    liXeePrivate: {
+        ID: 0xFF66,
+        manufacturerCode: ManufacturerCode.JENNIC,
+        attributes: {
+            currentTarif: {ID: 0x0000, type: DataType.octetStr},
+            tomorrowColor: {ID: 0x0001, type: DataType.octetStr},
+            scheduleHPHC: {ID: 0x0002, type: DataType.uint8},
+            presencePotential: {ID: 0x0003, type: DataType.uint8},
+            startNoticeEJP: {ID: 0x0004, type: DataType.uint8},
+            warnDPS: {ID: 0x0005, type: DataType.uint16},
+            warnDIR1: {ID: 0x0006, type: DataType.uint16},
+            warnDIR2: {ID: 0x0007, type: DataType.uint16},
+            warnDIR3: {ID: 0x0008, type: DataType.uint16},
+            currentPrice: {ID: 0x0200, type: DataType.octetStr},
+            currentIndexTarif: {ID: 0x0201, type: DataType.uint8},
+            currentDate: {ID: 0x0202, type: DataType.octetStr},
+            activeEnerfyOutD01: {ID: 0x0203, type: DataType.uint32},
+            activeEnerfyOutD02: {ID: 0x0204, type: DataType.uint32},
+            activeEnerfyOutD03: {ID: 0x0205, type: DataType.uint32},
+            activeEnerfyOutD04: {ID: 0x0206, type: DataType.uint32},
+            injectedVA: {ID: 0x0207, type: DataType.uint16},
+            injectedVAMaxN: {ID: 0x0208, type: DataType.int16},
+            injectedVAMaxN1: {ID: 0x0209, type: DataType.int16},
+            injectedActiveLoadN: {ID: 0x0210, type: DataType.int16},
+            injectedActiveLoadN1: {ID: 0x0211, type: DataType.int16},
+            drawnVAMaxN1: {ID: 0x0212, type: DataType.int16},
+            drawnVAMaxN1P2: {ID: 0x0213, type: DataType.int16},
+            drawnVAMaxN1P3: {ID: 0x0214, type: DataType.int16},
+            message1: {ID: 0x0215, type: DataType.octetStr},
+            message2: {ID: 0x0216, type: DataType.octetStr},
+            statusRegister: {ID: 0x0217, type: DataType.octetStr},
+            startMobilePoint1: {ID: 0x0218, type: DataType.uint8},
+            stopMobilePoint1: {ID: 0x0219, type: DataType.uint8},
+            startMobilePoint2: {ID: 0x0220, type: DataType.uint8},
+            stopMobilePoint2: {ID: 0x0221, type: DataType.uint8},
+            startMobilePoint3: {ID: 0x0222, type: DataType.uint8},
+            stopMobilePoint3: {ID: 0x0223, type: DataType.uint8},
+            relais: {ID: 0x0224, type: DataType.uint16},
+            daysNumberCurrentCalendar: {ID: 0x0225, type: DataType.uint8},
+            daysNumberNextCalendar: {ID: 0x0226, type: DataType.uint8},
+            daysProfileCurrentCalendar: {ID: 0x0227, type: DataType.octetStr},
+            daysProfileNextCalendar: {ID: 0x0228, type: DataType.octetStr},
+            linkyMode: {ID: 0x0300, type: DataType.uint8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     manuSpecificTuya_2: {
         ID: 0xE002,
         attributes: {
-            alarm_temperature_max: {ID: 53258, type: DataType.uint16},
-            alarm_temperature_min: {ID: 53259, type: DataType.uint16},
-            alarm_humidity_max: {ID: 53261, type: DataType.uint16},
-            alarm_humidity_min: {ID: 53262, type: DataType.uint16},
+            alarm_temperature_max: {ID: 53258, type: DataType.int16},
+            alarm_temperature_min: {ID: 53259, type: DataType.int16},
+            alarm_humidity_max: {ID: 53261, type: DataType.int16},
+            alarm_humidity_min: {ID: 53262, type: DataType.int16},
             alarm_humidity: {ID: 53263, type: DataType.enum8},
             alarm_temperature: {ID: 53254, type: DataType.enum8},
             unknown: {ID: 53264, type: DataType.uint8},
@@ -4489,6 +4506,50 @@ const Cluster: {
             DownSceneID: {ID: 0x0020, type: DataType.uint8},
             DownGroupID: {ID: 0x0021, type: DataType.uint16},
             SwitchActions: {ID: 0x0001, type: DataType.enum8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    sprutDevice: {
+        ID: 26112,
+        manufacturerCode: 26214,
+        attributes: {
+            debug: {ID: 0, type: DataType.boolean},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    sprutVoc: {
+        ID: 26113,
+        manufacturerCode: 26214,
+        attributes: {
+            voc: {ID: 26112, type: DataType.uint16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    sprutNoise: {
+        ID: 26114,
+        manufacturerCode: 26214,
+        attributes: {
+            noise: {ID: 26112, type: DataType.data8},
+            noise_detected: {ID: 26113, type: DataType.bitmap8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    sprutIrBlaster: {
+        ID: 26115,
+        manufacturerCode: 26214,
+        attributes: {},
+        commands: {},
+        commandsResponse: {},
+    },
+    manuSpecificSiglisZigfred: {
+        ID: 0x345,
+        manufacturerCode: 0x129C,
+        attributes: {
+            buttonEvent: {ID: 0x0008, type: DataType.uint32},
         },
         commands: {},
         commandsResponse: {},

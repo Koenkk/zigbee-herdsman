@@ -181,13 +181,15 @@ export class Ezsp extends EventEmitter {
     async setConfigurationValue(configId: number, value: any): Promise<void> {
         debug.log('Set %s = %s', EzspConfigId.valueToName(EzspConfigId, configId), value);
         const [ret] = await this.execCommand('setConfigurationValue', configId, value);
-        console.assert(ret === EmberStatus.SUCCESS);
+        console.assert(ret === EmberStatus.SUCCESS,
+            `Command (setConfigurationValue) returned unexpected state: ${ret}`);
     }
 
     async getConfigurationValue(configId: number): Promise<number> {
         debug.log('Get %s', EzspConfigId.valueToName(EzspConfigId, configId));
         const [ret, value] = await this.execCommand('getConfigurationValue', configId);
-        console.assert(ret === EmberStatus.SUCCESS);
+        console.assert(ret === EmberStatus.SUCCESS,
+            `Command (getConfigurationValue) returned unexpected state: ${ret}`);
         debug.log('Got %s = %s', EzspConfigId.valueToName(EzspConfigId, configId), value);
         return value;
     }
@@ -200,20 +202,23 @@ export class Ezsp extends EventEmitter {
 
     async setMulticastTableEntry(index: number, entry: t.EmberMulticastTableEntry): Promise<number[]> {
         const [ret] = await this.execCommand('setMulticastTableEntry', index, entry);
-        console.assert(ret === EmberStatus.SUCCESS);
+        console.assert(ret === EmberStatus.SUCCESS,
+            `Command (setMulticastTableEntry) returned unexpected state: ${ret}`);
         return [ret];
     }
 
     async setInitialSecurityState(entry: t.EmberInitialSecurityState): Promise<number[]>{
         const [ret] = await this.execCommand('setInitialSecurityState', entry);
-        console.assert(ret === EmberStatus.SUCCESS);
+        console.assert(ret === EmberStatus.SUCCESS,
+            `Command (setInitialSecurityState) returned unexpected state: ${ret}`);
         return [ret];
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     async getCurrentSecurityState(): Promise<any[]> {
         const [ret, res] = await this.execCommand('getCurrentSecurityState');
-        console.assert(ret === EmberStatus.SUCCESS);
+        console.assert(ret === EmberStatus.SUCCESS,
+            `Command (getCurrentSecurityState) returned unexpected state: ${ret}`);
         return [ret, res];
     }
 
@@ -221,14 +226,17 @@ export class Ezsp extends EventEmitter {
     async setValue(valueId: t.EzspValueId, value: any): Promise<number[]> {
         debug.log('Set %s = %s', t.EzspValueId.valueToName(t.EzspValueId, valueId), value);
         const [ret] = await this.execCommand('setValue', valueId, value);
-        console.assert(ret === EmberStatus.SUCCESS);
+        console.assert(ret === EmberStatus.SUCCESS,
+            `Command (setValue) returned unexpected state: ${ret}`);
+
         return [ret];
     }
 
     async getValue(valueId: t.EzspValueId): Promise<Buffer> {
         debug.log('Get %s', t.EzspValueId.valueToName(t.EzspValueId, valueId));
         const [ret, value] = await this.execCommand('getValue', valueId);
-        console.assert(ret === EmberStatus.SUCCESS);
+        console.assert(ret === EmberStatus.SUCCESS,
+            `Command (getValue) returned unexpected state: ${ret}`);
         debug.log('Got %s = %s', t.EzspValueId.valueToName(t.EzspValueId, valueId), value);
         return value;
     }
@@ -237,7 +245,8 @@ export class Ezsp extends EventEmitter {
     async setPolicy(policyId: EzspPolicyId, value: any): Promise<number[]> {
         debug.log('Set %s = %s', EzspPolicyId.valueToName(EzspPolicyId, policyId), value);
         const [ret] = await this.execCommand('setPolicy', policyId, value);
-        console.assert(ret === EmberStatus.SUCCESS);
+        console.assert(ret === EmberStatus.SUCCESS,
+            `Command (setPolicy) returned unexpected state: ${ret}`);
         return [ret];
     }
 

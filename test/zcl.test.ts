@@ -1093,6 +1093,50 @@ describe('Zcl', () => {
         expect(value).toStrictEqual("0x0907070605040501");
     });
 
+    it.each([
+        [
+            'no data point',
+            Buffer.from([]),
+            [],
+        ],
+        [
+            'single data point',
+            Buffer.from([1, 4, 0, 1, 1]),
+            [
+                {"dp":1, "datatype":4, "data": Buffer.from([1])},
+            ],
+        ],
+        [
+            'two data points',
+            Buffer.from([1, 4, 0, 1, 1, 4, 2, 0, 4, 0, 0, 0, 90]),
+            [
+                {"dp":1, "datatype":4, "data": Buffer.from([1])},
+                {"dp":4, "datatype":2, "data": Buffer.from([0, 0, 0, 90])}
+            ],
+        ],
+        [
+            'incomplete data point is ignored',
+            Buffer.from([1, 4, 0, 1, 1, 4]),
+            [
+                {"dp":1, "datatype":4, "data": Buffer.from([1])},
+            ],
+        ],
+        [
+            'incomplete data buffer',
+            Buffer.from([1, 4, 0, 1, 1, 4, 2, 0, 4, 0, 0, 0]),
+            [
+                {"dp":1, "datatype":4, "data": Buffer.from([1])},
+                {"dp":4, "datatype":2, "data": Buffer.from([0, 0, 0])}
+            ],
+        ],
+    ])
+    ('BuffaloZcl read readListTuyaDataPointValues %s', (_name, buffer, payload) => {
+        const buffalo = new BuffaloZcl(buffer);
+        const value = buffalo.read(BuffaloZclDataType[BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES], {});
+        expect(buffalo.isMore()).not.toBeTruthy();
+        expect(value).toStrictEqual(payload);
+    });
+
     it('BuffaloZcl write charStr', () => {
         const payload = 'hello';
         const buffer = Buffer.alloc(7);
@@ -1199,6 +1243,36 @@ describe('Zcl', () => {
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
         const result = buffalo.write(DataType[DataType.array], payload, {});
+        expect(buffalo.getPosition()).toBe(expected.length);
+        expect(buffer).toStrictEqual(expected);
+    });
+
+    it.each([
+        [
+            'no data point',
+            [],
+            Buffer.from([]),
+        ],
+        [
+            'single data point',
+            [
+                {"dp":1, "datatype":4, "data": Buffer.from([1])},
+            ],
+            Buffer.from([1, 4, 0, 1, 1]),
+        ],
+        [
+            'two data points',
+            [
+                {"dp":1, "datatype":4, "data": Buffer.from([1])},
+                {"dp":4, "datatype":2, "data": Buffer.from([0, 0, 0, 90])}
+            ],
+            Buffer.from([1, 4, 0, 1, 1, 4, 2, 0, 4, 0, 0, 0, 90]),
+        ],
+    ])
+    ('BuffaloZcl writeListTuyaDataPointValues %s', (_name, payload, expected) => {
+        const buffer = Buffer.alloc(expected.length);
+        const buffalo = new BuffaloZcl(buffer);
+        const result = buffalo.write(BuffaloZclDataType[BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES], payload, {});
         expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });

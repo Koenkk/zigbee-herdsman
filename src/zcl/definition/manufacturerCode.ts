@@ -1058,6 +1058,8 @@ const knownManufacturerCodes = {
     ADEO: 0x1277,
     /** ELKO */
     ELKO: 0x1277,
+    /** Sprut.device */
+    SPRUT_DEVICE: 0x6666,
 };
 
 export default {
@@ -1071,4 +1073,5 @@ export default {
     SmartThings: knownManufacturerCodes.PHYSICAL,
     Heiman: knownManufacturerCodes.HEIMAN_TECHNOLOGY,
     Develco: knownManufacturerCodes.DEVELCO,
+    SprutDevice: knownManufacturerCodes.SPRUT_DEVICE,
 };

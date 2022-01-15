@@ -64,6 +64,7 @@ const mocksendZclFrameToEndpoint = jest.fn();
 let iasZoneReadState170Count = 0;
 let enroll170 = true;
 let configureReportStatus = 0;
+let configureReportDefaultRsp = false;
 
 const restoreMocksendZclFrameToEndpoint = () => {
     mocksendZclFrameToEndpoint.mockImplementation((ieeeAddr, networkAddress, endpoint, frame: ZclFrame) => {
@@ -118,11 +119,17 @@ const restoreMocksendZclFrameToEndpoint = () => {
         }
 
         if (frame.isGlobal() && frame.isCommand('configReport')) {
-            const payload = [];
-            for (const item of frame.Payload) {
-                payload.push({attrId: item.attrId, status: configureReportStatus, direction: 1})
+            let payload;
+            if (configureReportDefaultRsp) {
+                payload = {cmdId: 1, statusCode: configureReportStatus}
+            } else {
+                payload = [];
+                for (const item of frame.Payload) {
+                    payload.push({attrId: item.attrId, status: configureReportStatus, direction: 1})
+                }
+    
+                
             }
-
             // @ts-ignore
             return {frame: new ZclFrame(null, payload, frame.Cluster)};
         }
@@ -227,6 +234,14 @@ const mockDevices = {
         activeEndpoints: {endpoints: [1]},
         simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [0,32], outputClusters: [2], profileID: 99}},
         attributes: {},
+    },
+    175: {
+        nodeDescriptor: {type: 'Router', manufacturerCode: 1212},
+        activeEndpoints: {endpoints: [1,2,3,4,5,6]},
+        simpleDescriptor: {1: {endpointID: 1, deviceID: 5, inputClusters: [0, 1, 2], outputClusters: [2], profileID: 99}},
+        attributes: {
+            1: {modelId: 'lumi.plug', manufacturerName: 'LUMI', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
+        },
     },
 }
 
@@ -476,6 +491,7 @@ describe('Controller', () => {
         zclTransactionSequenceNumber.number = 1;
         iasZoneReadState170Count = 0;
         configureReportStatus = 0;
+        configureReportDefaultRsp = false;
         enroll170 = true;
         options.network.channelList = [15];
         Object.keys(events).forEach((key) => events[key] = []);
@@ -730,6 +746,22 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(0);
+    });
+
+    it('Device should update properties when reported', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(Device.byIeeeAddr('0x129').modelID).toBe('myModelID');
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: 129,
+            frame: mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'new.model.id'}]),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(Device.byIeeeAddr('0x129').modelID).toBe('new.model.id');
     });
 
     it('Set transmit power', async () => {
@@ -1512,7 +1544,7 @@ describe('Controller', () => {
                "meta": {},
                "_powerSource":"Mains (single phase)",
                "_modelID":"myModelID",
-               "_applicationVersion":2,
+               "_applicationVersion":3,
                "_stackVersion":101,
                "_zclVersion":1,
                "_hardwareVersion":3,
@@ -1830,7 +1862,7 @@ describe('Controller', () => {
         await mockAdapterEvents['zclData']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.create(0, 0, true, null, 40, 0, 513, [{attrId: 28}]),
+            frame: ZclFrame.create(0, 0, true, null, 40, 0, 513, [{attrId: 28}, {attrId: 2901238}]),
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -2098,7 +2130,7 @@ describe('Controller', () => {
                 "_manufacturerName":"KoenAndCo",
                 "meta": {},
                 "_powerSource":"Mains (single phase)",
-                "_modelID":"myModelID",
+                "_modelID":"lumi.sensor_wleak.aq1",
                 "_applicationVersion":2,
                 "_stackVersion":101,
                 "_zclVersion":1,
@@ -2640,6 +2672,31 @@ describe('Controller', () => {
 
     it('Endpoint configure reporting fails when status code is not 0', async () => {
         configureReportStatus = 1;
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockClear();
+        let error;
+        try {
+            await endpoint.configureReporting('genPowerCfg', [{
+                attribute: 'mainsFrequency',
+                minimumReportInterval: 1,
+                maximumReportInterval: 10,
+                reportableChange: 1,
+            }]);
+        }
+        catch (e) {
+            error = e;
+        }
+        expect(error instanceof Zcl.ZclStatusError).toBeTruthy();
+        expect(error.message).toStrictEqual(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"sendWhenActive":false,"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Status 'FAILURE')`);
+        expect(error.code).toBe(1);
+    });
+
+    it('Endpoint configure reporting fails when status code is not 0 default rsp', async () => {
+        configureReportStatus = 1;
+        configureReportDefaultRsp = true;
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -3898,6 +3955,26 @@ describe('Controller', () => {
         expect(fastpollstop[3].Payload).toStrictEqual({});
 
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
+    });
+
+    it('Handle retransmitted Xiaomi messages', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 175, ieeeAddr: '0x175'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 171, ieeeAddr: '0x171'});
+
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: 175,
+            // Attrid 9999 does not exist in ZCL
+            frame: ZclFrame.create(0, 0, true, null, 40, 0, 1, [{attrId: 0}, {attrId: 9999}]),
+            endpoint: 1,
+            linkquality: 19,
+            groupID: 171,
+        });
+
+        const expected = {"type":"read","device":{"ID":3,"_applicationVersion":2,"_dateCode":"201901","_endpoints":[{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"defaultSendWhenActive":false,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},{"inputClusters":[],"outputClusters":[],"defaultSendWhenActive":false,"ID":2,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},{"inputClusters":[],"outputClusters":[],"defaultSendWhenActive":false,"ID":3,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},{"inputClusters":[],"outputClusters":[],"defaultSendWhenActive":false,"ID":4,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},{"inputClusters":[],"outputClusters":[],"defaultSendWhenActive":false,"ID":5,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},{"inputClusters":[],"outputClusters":[],"defaultSendWhenActive":false,"ID":6,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]}],"_hardwareVersion":3,"_ieeeAddr":"0x171","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_manufacturerID":1212,"_manufacturerName":"Xioami","_modelID":"lumi.remote.b286opcn01","_networkAddress":171,"_powerSource":"Mains (single phase)","_softwareBuildID":"1.01","_stackVersion":101,"_type":"EndDevice","_zclVersion":1,"_linkquality":19,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{},"useImplicitCheckin":true},"endpoint":{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"defaultSendWhenActive":false,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":[]},"data":["mainsVoltage",9999],"linkquality":19,"groupID":171,"cluster":"genPowerCfg","meta":{"zclTransactionSequenceNumber":40,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
+        expect(events.message.length).toBe(1);
+        expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 
 });
