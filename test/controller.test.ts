@@ -2375,7 +2375,7 @@ describe('Controller', () => {
         expect(device.defaultSendRequestWhen).toEqual('immediate');
     });
 
-    it('Default sendWhenActive after poll control', async () => {
+    it('Default defaultSendRequestWhen after poll control', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
         const device = controller.getDeviceByIeeeAddr('0x174');
@@ -2384,7 +2384,7 @@ describe('Controller', () => {
         expect(device.defaultSendRequestWhen).toEqual('fastpoll');
     });
 
-    it('Default sendWhenActive after poll control with large polling period', async () => {
+    it('Default defaultSendRequestWhen after poll control with large polling period', async () => {
         await controller.start();
         mockDevices[174].attributes[1].checkinInterval = 99999;
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
@@ -2394,7 +2394,7 @@ describe('Controller', () => {
         expect(device.defaultSendRequestWhen).toEqual('active');
     });
 
-    it('Default sendWhenActive without poll control', async () => {
+    it('Default defaultSendRequestWhen without poll control', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -3783,7 +3783,7 @@ describe('Controller', () => {
         expect(error).toStrictEqual(new Error(`Report to 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
-    it('Write with sendWhenActive', async () => {
+    it('Write with sendWhen active', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -3816,7 +3816,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
     });
 
-    it('Write with sendWhenActive when pending', async () => {
+    it('Write with sendWhen active when pending', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -3843,7 +3843,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
     });
 
-    it('Write with sendWhenActive error', async () => {
+    it('Write with sendWhen active error', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
