@@ -48,9 +48,6 @@ class EZSPAdapter extends Adapter {
     private async processMessage(frame: any) {
         // todo
         debug(`processMessage: ${JSON.stringify(frame)}`);
-        if (!frame.senderEui64) {
-            frame.senderEui64 = await this.driver.networkIdToEUI64(frame.sender)
-        }
         if (frame.apsFrame.profileId == 0) {
             if (
                 frame.apsFrame.clusterId == EmberZDOCmd.Device_annce &&
@@ -267,17 +264,15 @@ class EZSPAdapter extends Adapter {
     }
 
     private async nodeDescriptorInternal(networkAddress: number): Promise<NodeDescriptor> {
-        return this.driver.queue.execute<NodeDescriptor>(async () => {
-            const descriptor = await this.driver.zdoRequest(
-                networkAddress, EmberZDOCmd.Node_Desc_req, EmberZDOCmd.Node_Desc_rsp,
-                networkAddress
-            );
-            const logicaltype = descriptor[3].byte1 & 0x07;
-            return {
-                manufacturerCode: descriptor[3].manufacturer_code,
-                type: (logicaltype == 0) ? 'Coordinator' : (logicaltype == 1) ? 'Router' : 'EndDevice'
-            };
-        });
+        const descriptor = await this.driver.zdoRequest(
+            networkAddress, EmberZDOCmd.Node_Desc_req, EmberZDOCmd.Node_Desc_rsp,
+            networkAddress
+        );
+        const logicaltype = descriptor[3].byte1 & 0x07;
+        return {
+            manufacturerCode: descriptor[3].manufacturer_code,
+            type: (logicaltype == 0) ? 'Coordinator' : (logicaltype == 1) ? 'Router' : 'EndDevice'
+        };
     }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
@@ -482,25 +477,47 @@ class EZSPAdapter extends Adapter {
     }
 
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
-        // todo
-        throw new Error("not supported");
+        return this.driver.queue.execute<void>(async () => {
+            debug('sendZclFrameInterPANToIeeeAddr');
+            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID);
+            frame.profileId = 0xFFFF;
+            frame.sourceEndpoint =  12;
+            frame.destinationEndpoint = 0xFE;
+            //const ieee = new EmberEUI64(ieeeAddr);
+            //frame.groupId = ieee;
+            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
+            const dataConfirmResult = await this.driver.mrequest(frame, zclFrame.toBuffer());
+        });
     }
 
-    public async sendZclFrameInterPANBroadcast(
-        zclFrame: ZclFrame, timeout: number
-    ): Promise<Events.ZclDataPayload> {
-        // todo
-        throw new Error("not supported");
-    }
+    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclDataPayload> {
+        return this.driver.queue.execute<Events.ZclDataPayload>(async () => {
+            debug('sendZclFrameInterPANBroadcast');
+            const command = zclFrame.getCommand();
+            if (!command.hasOwnProperty('response')) {
+                throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
+            }
 
-    public async sendZclFrameInterPANBroadcastWithResponse(
-        zclFrame: ZclFrame, timeout: number
-    ): Promise<Events.ZclDataPayload> {
-        throw new Error("not supported");
-    }
+            const response = this.waitForInternal(
+                null, 0xFE, null, zclFrame.Cluster.ID, command.response, timeout
+            );
 
-    public async sendZclFrameInterPANIeeeAddr(zclFrame: ZclFrame, ieeeAddr: any): Promise<void> {
-        throw new Error("not supported");
+            try {
+                const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID);
+                frame.profileId = 0xFFFF;
+                frame.sourceEndpoint =  12;
+                frame.destinationEndpoint = 0xFE;
+                frame.groupId = 0xFFFF;
+                frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
+                const dataConfirmResult = await this.driver.mrequest(frame, zclFrame.toBuffer());
+
+            } catch (error) {
+                response.cancel();
+                throw error;
+            }
+
+            return response.start().promise;
+        });
     }
 
     public async setTransmitPower(value: number): Promise<void> {
