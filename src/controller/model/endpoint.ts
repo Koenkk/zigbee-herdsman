@@ -1,5 +1,5 @@
 import Entity from './entity';
-import {KeyValue} from '../tstype';
+import {KeyValue, SendRequestWhen} from '../tstype';
 import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
@@ -31,7 +31,7 @@ interface Options {
     transactionSequenceNumber?: number;
     disableRecovery?: boolean;
     writeUndiv?: boolean;
-    sendWhen?: 'active' | 'immediate' | 'auto';
+    sendWhen?: SendRequestWhen;
 }
 
 interface Clusters {
@@ -72,7 +72,7 @@ interface ConfiguredReporting {
 interface PendingRequest {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     func: () => Promise<any>, resolve: (value: any) => any, reject: (error: any) => any, 
-    queueSendWhen: 'active' | 'fastpoll'
+    sendWhen: 'active' | 'fastpoll'
 }
 
 class Endpoint extends Entity {
@@ -267,7 +267,7 @@ class Endpoint extends Entity {
     public async sendPendingRequests(fastPolling: boolean): Promise<void> {
         const handled: PendingRequest[] = [];
         for (const request of this.pendingRequests) {
-            if (fastPolling || request.queueSendWhen == 'active') {
+            if ((fastPolling && request.sendWhen == 'fastpoll') || request.sendWhen == 'active') {
                 try {
                     const result = await request.func();
                     request.resolve(result);
@@ -281,45 +281,31 @@ class Endpoint extends Entity {
         this.pendingRequests = this.pendingRequests.filter((r) => !handled.includes(r));
     }
 
-    private async queueRequest<Type>(func: () => Promise<Type>, queueSendWhen: 'active' | 'fastpoll'): Promise<Type> {
+    private async queueRequest<Type>(func: () => Promise<Type>, sendWhen: 'active' | 'fastpoll'): Promise<Type> {
         debug.info(`Sending to ${this.deviceIeeeAddress}/${this.ID} when active`);
         return new Promise((resolve, reject): void =>  {
-            this.pendingRequests.push({func, resolve, reject, queueSendWhen});
+            this.pendingRequests.push({func, resolve, reject, sendWhen});
         });
     }
 
-    private async sendRequest<Type>(func: () => Promise<Type>, 
-        sendWhen: 'active' | 'auto' | 'immediate'): Promise<Type> {
-        const device = this.getDevice();
-        const fastPollingAvailable = !device.useImplicitCheckin;
-
-        let queueSendWhen: 'fastpoll' | 'immediate' | 'active';
-        if (sendWhen === 'auto') {
-            if (fastPollingAvailable) queueSendWhen = 'fastpoll';
-            else if (device.defaultSendWhenActive) queueSendWhen = 'active';
-            else queueSendWhen = 'immediate';
-        } else {
-            queueSendWhen = sendWhen;
-        }
-
+    private async sendRequest<Type>(func: () => Promise<Type>, sendWhen: SendRequestWhen): Promise<Type> {
         // If we already have something queued, we queue directly to avoid
         // messing up the ordering too much.
-        if (queueSendWhen !== 'immediate' && this.pendingRequests.length > 0) {
-            return this.queueRequest(func, queueSendWhen);
+        if (sendWhen !== 'immediate' && this.pendingRequests.length > 0) {
+            return this.queueRequest(func, sendWhen);
         }
 
-        // TODO
         try {
             return await func();
         } catch(error) {
-            if (queueSendWhen === 'immediate') {
+            if (sendWhen === 'immediate') {
                 throw(error);
             }
         }
 
         // If we got a failed transaction, the device is likely sleeping.
         // Queue for transmission later.
-        return this.queueRequest(func, queueSendWhen);
+        return this.queueRequest(func, sendWhen);
     }
 
     /*
@@ -813,7 +799,7 @@ class Endpoint extends Entity {
     ): Options {
         const providedOptions = options || {};
         return {
-            sendWhen: 'auto',
+            sendWhen: this.getDevice().defaultSendRequestWhen,
             timeout: 10000,
             disableResponse: false,
             disableRecovery: false,

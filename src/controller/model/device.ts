@@ -1,4 +1,4 @@
-import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
+import {KeyValue, DatabaseEntry, DeviceType, SendRequestWhen} from '../tstype';
 import {Events as AdapterEvents} from '../../adapter';
 import Endpoint from './endpoint';
 import Entity from './entity';
@@ -52,7 +52,7 @@ class Device extends Entity {
     private _skipDefaultResponse: boolean;
     private _skipTimeResponse: boolean;
     private _deleted: boolean;
-    private _defaultSendWhenActive?: boolean;
+    private _defaultSendRequestWhen?: SendRequestWhen;
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -98,14 +98,12 @@ class Device extends Entity {
     set skipDefaultResponse(skipDefaultResponse: boolean) {this._skipDefaultResponse = skipDefaultResponse;}
     get skipTimeResponse(): boolean {return this._skipTimeResponse;}
     set skipTimeResponse(skipTimeResponse: boolean) {this._skipTimeResponse = skipTimeResponse;}
-    get defaultSendWhenActive(): boolean {return this._defaultSendWhenActive;}
-    set defaultSendWhenActive(defaultSendWhenActive: boolean) {
-        this._defaultSendWhenActive = defaultSendWhenActive;
+    get defaultSendRequestWhen(): SendRequestWhen {return this._defaultSendRequestWhen;}
+    set defaultSendRequestWhen(defaultSendRequestWhen: SendRequestWhen) {
+        this._defaultSendRequestWhen = defaultSendRequestWhen;
     }
-    get useImplicitCheckin(): boolean {return this._useImplicitCheckin;}
 
     public meta: KeyValue;
-    private _useImplicitCheckin: boolean;
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
@@ -132,7 +130,7 @@ class Device extends Entity {
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
-        lastSeen: number, useImplicitCheckin: boolean, defaultSendWhenActive?: boolean,
+        lastSeen: number, defaultSendRequestWhen: SendRequestWhen,
     ) {
         super();
         this.ID = ID;
@@ -156,8 +154,7 @@ class Device extends Entity {
         this._skipTimeResponse = false;
         this.meta = meta;
         this._lastSeen = lastSeen;
-        this._defaultSendWhenActive = defaultSendWhenActive;
-        this._useImplicitCheckin = useImplicitCheckin;
+        this._defaultSendRequestWhen = defaultSendRequestWhen;
     }
 
     public createEndpoint(ID: number): Endpoint {
@@ -314,12 +311,24 @@ class Device extends Entity {
             throw new Error('Cannot load device from group');
         }
 
+        let defaultSendRequestWhen: SendRequestWhen = entry.defaultSendRequestWhen;
+        /* istanbul ignore next */
+        if (defaultSendRequestWhen == null) {
+            // Guess defaultSendRequestWhen based on old useImplicitCheckin/defaultSendWhenActive
+            if (entry.hasOwnProperty('useImplicitCheckin') && !entry.useImplicitCheckin) {
+                defaultSendRequestWhen = 'fastpoll';
+            } else if (entry.hasOwnProperty('defaultSendWhenActive') &&  entry.defaultSendWhenActive) {
+                defaultSendRequestWhen = 'active';
+            } else {
+                defaultSendRequestWhen = 'immediate';
+            }
+        }
+
         return new Device(
             entry.id, entry.type, ieeeAddr, networkAddress, entry.manufId, endpoints,
             entry.manufName, entry.powerSource, entry.modelId, entry.appVersion,
             entry.stackVersion, entry.zclVersion, entry.hwVersion, entry.dateCode, entry.swBuildId,
-            entry.interviewCompleted, meta, entry.lastSeen || null, entry.useImplicitCheckin,
-            entry.defaultSendWhenActive,
+            entry.interviewCompleted, meta, entry.lastSeen || null, defaultSendRequestWhen
         );
     }
 
@@ -336,8 +345,7 @@ class Device extends Entity {
             modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion,
             stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
             swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
-            meta: this.meta, lastSeen: this.lastSeen, useImplicitCheckin: this.useImplicitCheckin,
-            defaultSendWhenActive: this.defaultSendWhenActive,
+            meta: this.meta, lastSeen: this.lastSeen, defaultSendRequestWhen: this.defaultSendRequestWhen,
         };
     }
 
@@ -404,7 +412,7 @@ class Device extends Entity {
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
-            interviewCompleted, {}, null, true, undefined,
+            interviewCompleted, {}, null, 'immediate',
         );
 
         Entity.database.insert(device.toDatabaseEntry());
@@ -691,17 +699,15 @@ class Device extends Entity {
         }
 
         // Bind poll control
-        let bound = false;
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
             debug.log(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
             await endpoint.bind('genPollCtrl', coordinator.endpoints[0]);
-            bound = true;
-        }
-
-        if (bound) {
-            if (this.defaultSendWhenActive === undefined)
-                this.defaultSendWhenActive = true;
-            this._useImplicitCheckin = false;
+            const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval']);
+            if (pollPeriod.checkinInterval <= 2400) {// 10 minutes
+                this.defaultSendRequestWhen = 'fastpoll';
+            } else {
+                this.defaultSendRequestWhen = 'active';
+            }
         }
     }
 
