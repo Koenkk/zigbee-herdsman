@@ -348,7 +348,12 @@ class EZSPAdapter extends Adapter {
         frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
 
         const dataConfirmResult = await this.driver.request(networkAddress, frame, zclFrame.toBuffer());
-
+        if (!dataConfirmResult) {
+            if (response != null) {
+                response.cancel();
+            }
+            throw Error('sendZclFrameToEndpointInternal error');
+        }
         if (response !== null) {
             try {
                 const result = await response.start().promise;
