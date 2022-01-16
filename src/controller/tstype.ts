@@ -1,6 +1,7 @@
 // eslint-disable-next-line
 interface KeyValue {[s: string]: any};
 
+type SendRequestWhen = 'immediate' | 'fastpoll' | 'active';
 type DeviceType = 'Coordinator' | 'Router' | 'EndDevice' | 'Unknown' | 'GreenPower';
 
 type EntityType = DeviceType | 'Group';
@@ -24,4 +25,5 @@ interface GreenPowerDeviceJoinedPayload {
 
 export {
     KeyValue, DatabaseEntry, EntityType, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload,
+    SendRequestWhen
 };

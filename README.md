@@ -17,6 +17,9 @@ It was originally forked from zigbee-shepherd with the goal to refactor it to im
 
 # Changelog
 
+## 0.14.0 breaking changes
+- `sendWhenActive` has been replaced with `sendWhen: 'active'`
+
 ## 0.13.0 breaking changes
 - `controller.touchlinkFactoryReset` has been renamed to `controller.touchlinkFactoryResetFirst()`
 
