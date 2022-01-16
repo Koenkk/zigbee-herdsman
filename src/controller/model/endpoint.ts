@@ -1,5 +1,5 @@
 import Entity from './entity';
-import {KeyValue} from '../tstype';
+import {KeyValue, SendRequestWhen} from '../tstype';
 import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
@@ -31,7 +31,7 @@ interface Options {
     transactionSequenceNumber?: number;
     disableRecovery?: boolean;
     writeUndiv?: boolean;
-    sendWhenActive?: boolean;
+    sendWhen?: SendRequestWhen;
 }
 
 interface Clusters {
@@ -69,12 +69,17 @@ interface ConfiguredReporting {
     reportableChange: number,
 }
 
+interface PendingRequest {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    func: () => Promise<any>, resolve: (value: any) => any, reject: (error: any) => any, 
+    sendWhen: 'active' | 'fastpoll'
+}
+
 class Endpoint extends Entity {
     public deviceID?: number;
     public inputClusters: number[];
     public outputClusters: number[];
     public profileID?: number;
-    public defaultSendWhenActive: boolean;
     public readonly ID: number;
     public readonly clusters: Clusters;
     private readonly deviceIeeeAddress: string;
@@ -82,8 +87,7 @@ class Endpoint extends Entity {
     private _binds: BindInternal[];
     private _configuredReportings: ConfiguredReportingInternal[];
     public meta: KeyValue;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    private pendingRequests: {func: () => Promise<any>, resolve: (value: any) => any, reject: (error: any) => any}[];
+    private pendingRequests: PendingRequest[];
 
     // Getters/setters
     get binds(): Bind[] {
@@ -135,7 +139,7 @@ class Endpoint extends Entity {
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
         deviceNetworkAddress: number, deviceIeeeAddress: string, clusters: Clusters, binds: BindInternal[],
         configuredReportings: ConfiguredReportingInternal[],
-        meta: KeyValue, defaultSendWhenActive: boolean,
+        meta: KeyValue,
     ) {
         super();
         this.ID = ID;
@@ -150,7 +154,6 @@ class Endpoint extends Entity {
         this._configuredReportings = configuredReportings;
         this.meta = meta;
         this.pendingRequests = [];
-        this.defaultSendWhenActive = defaultSendWhenActive;
     }
 
     /**
@@ -201,7 +204,7 @@ class Endpoint extends Entity {
      */
 
     public static fromDatabaseRecord(
-        record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string, defaultSendWhenActive: boolean,
+        record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string,
     ): Endpoint {
         // Migrate attrs to attributes
         for (const entry of Object.values(record.clusters).filter((e) => e.hasOwnProperty('attrs'))) {
@@ -216,7 +219,7 @@ class Endpoint extends Entity {
         return new Endpoint(
             record.epId, record.profId, record.devId, record.inClusterList, record.outClusterList, deviceNetworkAddress,
             deviceIeeeAddress, record.clusters, record.binds || [], record.configuredReportings || [],
-            record.meta || {}, defaultSendWhenActive,
+            record.meta || {},
         );
     }
 
@@ -230,11 +233,11 @@ class Endpoint extends Entity {
 
     public static create(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
-        deviceNetworkAddress: number, deviceIeeeAddress: string, defaultSendWhenActive: boolean,
+        deviceNetworkAddress: number, deviceIeeeAddress: string,
     ): Endpoint {
         return new Endpoint(
             ID, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress,
-            deviceIeeeAddress, {}, [], [], {}, defaultSendWhenActive,
+            deviceIeeeAddress, {}, [], [], {},
         );
     }
 
@@ -261,43 +264,48 @@ class Endpoint extends Entity {
         return this.pendingRequests.length > 0;
     }
 
-    public async sendPendingRequests(): Promise<void> {
-        while (this.pendingRequests.length > 0) {
-            const r = this.pendingRequests.shift();
-            try {
-                const result = await r.func();
-                r.resolve(result);
-            } catch (error) {
-                r.reject(error);
+    public async sendPendingRequests(fastPolling: boolean): Promise<void> {
+        const handled: PendingRequest[] = [];
+        for (const request of this.pendingRequests) {
+            if ((fastPolling && request.sendWhen == 'fastpoll') || request.sendWhen == 'active') {
+                try {
+                    const result = await request.func();
+                    request.resolve(result);
+                } catch (error) {
+                    request.reject(error);
+                }
+                handled.push(request);
             }
         }
+
+        this.pendingRequests = this.pendingRequests.filter((r) => !handled.includes(r));
     }
 
-    private async queueRequest<Type>(func: () => Promise<Type>): Promise<Type> {
+    private async queueRequest<Type>(func: () => Promise<Type>, sendWhen: 'active' | 'fastpoll'): Promise<Type> {
         debug.info(`Sending to ${this.deviceIeeeAddress}/${this.ID} when active`);
         return new Promise((resolve, reject): void =>  {
-            this.pendingRequests.push({func, resolve, reject});
+            this.pendingRequests.push({func, resolve, reject, sendWhen});
         });
     }
 
-    private async sendRequest<Type>(func: () => Promise<Type>, sendWhenActive: boolean): Promise<Type> {
+    private async sendRequest<Type>(func: () => Promise<Type>, sendWhen: SendRequestWhen): Promise<Type> {
         // If we already have something queued, we queue directly to avoid
         // messing up the ordering too much.
-        if (sendWhenActive && this.pendingRequests.length > 0) {
-            return this.queueRequest(func);
+        if (sendWhen !== 'immediate' && this.pendingRequests.length > 0) {
+            return this.queueRequest(func, sendWhen);
         }
 
         try {
             return await func();
         } catch(error) {
-            if (!sendWhenActive) {
+            if (sendWhen === 'immediate') {
                 throw(error);
             }
         }
 
         // If we got a failed transaction, the device is likely sleeping.
         // Queue for transmission later.
-        return this.queueRequest(func);
+        return this.queueRequest(func, sendWhen);
     }
 
     /*
@@ -342,7 +350,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint,
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhen);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -383,7 +391,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint,
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhen);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -421,7 +429,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint,
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhen);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -469,7 +477,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhen);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -582,7 +590,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhen);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -635,7 +643,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhen);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -686,7 +694,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhen);
 
             // TODO: support `writeStructuredResponse`
         } catch (error) {
@@ -721,7 +729,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhen);
 
             if (result) {
                 return result.frame.Payload;
@@ -758,7 +766,7 @@ class Endpoint extends Entity {
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
                     options.disableResponse, options.disableRecovery, options.srcEndpoint
                 );
-            }, options.sendWhenActive);
+            }, options.sendWhen);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -791,7 +799,7 @@ class Endpoint extends Entity {
     ): Options {
         const providedOptions = options || {};
         return {
-            sendWhenActive: this.defaultSendWhenActive,
+            sendWhen: this.getDevice().defaultSendRequestWhen,
             timeout: 10000,
             disableResponse: false,
             disableRecovery: false,
