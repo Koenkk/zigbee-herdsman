@@ -78,10 +78,10 @@ export class Ezsp extends EventEmitter {
 
     public async connect(path: string, options: Record<string, number|boolean>): Promise<void> {
         await this.serialDriver.connect(path, options);
-        // this.watchdogTimer = setInterval(
-        //     this.watchdogHandler.bind(this),
-        //     WATCHDOG_WAKE_PERIOD*1000
-        // );
+        this.watchdogTimer = setInterval(
+            this.watchdogHandler.bind(this),
+            WATCHDOG_WAKE_PERIOD*1000
+        );
     }
 
     public async close(): Promise<void> {
