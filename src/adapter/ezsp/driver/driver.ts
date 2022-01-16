@@ -117,8 +117,8 @@ export class Driver extends EventEmitter {
 
         await this.ezsp.updatePolicies();
 
-        await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_OUTGOING_TRANSFER_SIZE, 82);
-        await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_INCOMING_TRANSFER_SIZE, 82);
+        //await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_OUTGOING_TRANSFER_SIZE, 82);
+        //await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_INCOMING_TRANSFER_SIZE, 82);
         await this.ezsp.setValue(EzspValueId.VALUE_END_DEVICE_KEEP_ALIVE_SUPPORT_MODE, 3);
 
         await this.ezsp.setSourceRouting();
@@ -423,7 +423,12 @@ export class Driver extends EventEmitter {
         const payload = this.makeZDOframe(requestName, frame.sequence, ...args);
         debug.log(`${requestName}  frame: ${payload}`);
         const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
-        await this.request(networkAddress, frame, payload);
+        const res = await this.request(networkAddress, frame, payload);
+        if (!res) {
+            debug.error(`zdoRequest error`);
+            this.waitress.remove(response.ID);
+            throw Error('ZdoRequest error');
+        }
         const message = await response.promise;
         debug.log(`${responseName}  frame: ${JSON.stringify(message.payload)}`);
         const result = this.parse_frame_payload(responseName, message.payload);
