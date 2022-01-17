@@ -1864,7 +1864,7 @@ const Cluster: {
             goToPercent: {
                 ID: 0,
                 parameters: [
-                    {name: 'Percent Open', type: DataType.uint8}
+                    {name: 'percentOpen', type: DataType.uint8}
                 ],
             },
             stop: {
