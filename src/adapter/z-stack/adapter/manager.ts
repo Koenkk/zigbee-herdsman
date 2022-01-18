@@ -257,7 +257,7 @@ export class ZnpAdapterManager {
      */
     private async beginStartup(): Promise<void> {
         /* run fixup for #9117 */
-        await Fixup.fixupAddressManagerTablePostZstack12Migration(this.options.version, this.nv);
+        await Fixup.fixupAddressManagerTablePostZstack3xRestore(this.options.version, this.nv);
 
         /* proceed with normal startup */
         const deviceInfo = await this.znp.request(Subsystem.UTIL, 'getDeviceInfo', {});

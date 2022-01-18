@@ -27,7 +27,7 @@ const debug = Debug("zigbee-herdsman:adapter:zStack:startup:fixup");
  * @param version ZNP version.
  * @param nv NVRAM driver instance.
  */
-export const fixupAddressManagerTablePostZstack12Migration = async (version: ZnpVersion, nv: AdapterNvMemory) => {
+export const fixupAddressManagerTablePostZstack3xRestore = async (version: ZnpVersion, nv: AdapterNvMemory) => {
     const emptyExtAddr1 = Buffer.alloc(8, 0x00);
     const emptyExtAddr2 = Buffer.alloc(8, 0xff);
 
