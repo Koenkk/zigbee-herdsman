@@ -318,6 +318,7 @@ export class Driver extends EventEmitter {
     private async handleRouteError(status: EmberStatus, nwk: number): Promise<void> {
         // todo
         debug.log(`handleRouteError: nwk=${nwk}, status=${status}`);
+        this.waitress.reject({address: nwk, payload: null, frame: null}, 'Route error');
         const ieee = await this.networkIdToEUI64(nwk);
         this.eui64ToRelays.set(ieee.toString(), null);
     }
@@ -511,8 +512,8 @@ export class Driver extends EventEmitter {
 
     private waitressValidator(payload: EmberFrame, matcher: EmberWaitressMatcher): boolean {
         return (!matcher.address || payload.address === matcher.address) &&
-            payload.frame.clusterId === matcher.clusterId &&
-            payload.payload[0] === matcher.sequence;
+            (!payload.frame || payload.frame.clusterId === matcher.clusterId) &&
+            (!payload.frame || payload.payload[0] === matcher.sequence);
     }
 
     public setRadioPower(value: number): Promise<void> {
