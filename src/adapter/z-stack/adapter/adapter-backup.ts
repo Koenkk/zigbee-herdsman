@@ -232,7 +232,7 @@ export class AdapterBackup {
         this.debug(` - network security material table: ${currentNwkSecMaterialTable.capacity}`);
 
         /* prepare table structures */
-        const addressManagerTable = Structs.addressManagerTable(currentAddressManagerTable.capacity);
+        const addressManagerTable = version === ZnpVersion.zStack3x0 ? Structs.addressManagerTable3x(currentAddressManagerTable.capacity) : Structs.addressManagerTable(currentAddressManagerTable.capacity);
         const securityManagerTable = Structs.securityManagerTable(currentSecurityManagerTable.capacity);
         const apsLinkKeyDataTable = Structs.apsLinkKeyDataTable(currentApsLinkKeyDataTable.capacity);
         const tclkTable = Structs.apsTcLinkKeyTable(currentTclkTable.capacity);
@@ -383,7 +383,7 @@ export class AdapterBackup {
      */
     private async getAddressManagerTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.addressManagerTable>> {
         if (version === ZnpVersion.zStack3x0) {
-            return this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, undefined, Structs.addressManagerTable);
+            return this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, undefined, Structs.addressManagerTable3x);
         } else {
             return this.nv.readItem(NvItemsIds.ADDRMGR, 0, Structs.addressManagerTable);
         }

@@ -9,6 +9,7 @@ import * as Models from "../../../models";
 import * as ZStackModels from "../models";
 import * as Utils from "../utils";
 import * as ZnpConstants from "../constants";
+import * as Fixup from "./fixup";
 import {AdapterBackup} from "./adapter-backup";
 import {AdapterNvMemory} from "./adapter-nv-memory";
 import {Subsystem} from "../unpi/constants";
@@ -172,7 +173,7 @@ export class ZnpAdapterManager {
                 throw new Error(`your backup is from newer platform version (Z-Stack 3.0.x+) and cannot be restored onto Z-Stack 1.2 adapter - please remove backup before proceeding`);
             }
         };
-        
+
         /* Determine startup strategy */
         if (!hasConfigured || !hasConfigured.isConfigured() || !nib) {
             /* Adapter is not configured or not commissioned */
@@ -255,6 +256,10 @@ export class ZnpAdapterManager {
      * Internal method to perform regular adapter startup in coordinator mode.
      */
     private async beginStartup(): Promise<void> {
+        /* run fixup for #9117 */
+        await Fixup.fixupAddressManagerTablePostZstack12Migration(this.options.version, this.nv);
+
+        /* proceed with normal startup */
         const deviceInfo = await this.znp.request(Subsystem.UTIL, 'getDeviceInfo', {});
         if (deviceInfo.payload.devicestate !== DevStates.ZB_COORD) {
             this.debug.startup("starting adapter as coordinator");
@@ -452,7 +457,7 @@ export class ZnpAdapterManager {
     private async addToGroup(endpoint: number, group: number): Promise<void> {
         const result = await this.znp.request(5, 'extFindGroup', {endpoint, groupid: group}, null, null, [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.FAILURE]);
         if (result.payload.status === ZnpCommandStatus.FAILURE) {
-            await this.znp.request(5, 'extAddGroup', {endpoint, groupid: group, namelen: 0, groupname:[]});
+            await this.znp.request(5, 'extAddGroup', {endpoint, groupid: group, namelen: 0, groupname: []});
         }
     }
 
