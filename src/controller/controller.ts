@@ -387,7 +387,8 @@ class Controller extends events.EventEmitter {
             return;
         }
 
-        this.emit(Events.Events.lastSeenChanged, {device, reason: 'networkAddress'} as Events.LastSeenChangedPayload);
+        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, 
+            {device, reason: 'networkAddress'} as Events.LastSeenChangedPayload);
 
         if (device.networkAddress !== payload.networkAddress) {
             debug.log(`Device '${payload.ieeeAddr}' got new networkAddress '${payload.networkAddress}'`);
@@ -395,7 +396,7 @@ class Controller extends events.EventEmitter {
             device.save();
 
             const data: Events.DeviceNetworkAddressChangedPayload = {device};
-            this.emit(Events.Events.deviceNetworkAddressChanged, data);
+            this.selfAndDeviceEmit(device, Events.Events.deviceNetworkAddressChanged, data);
         }
     }
 
@@ -409,7 +410,8 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
-        this.emit(Events.Events.lastSeenChanged, {device, reason: 'deviceAnnounce'} as Events.LastSeenChangedPayload);
+        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, 
+                {device, reason: 'deviceAnnounce'} as Events.LastSeenChangedPayload);
         device.implicitCheckin();
 
         if (device.networkAddress !== payload.networkAddress) {
@@ -419,7 +421,7 @@ class Controller extends events.EventEmitter {
         }
 
         const data: Events.DeviceAnnouncePayload = {device};
-        this.emit(Events.Events.deviceAnnounce, data);
+        this.selfAndDeviceEmit(device, Events.Events.deviceAnnounce, data);
     }
 
     private onDeviceLeave(payload: AdapterEvents.DeviceLeavePayload): void {
@@ -432,7 +434,7 @@ class Controller extends events.EventEmitter {
         }
 
         const data: Events.DeviceLeavePayload = {ieeeAddr: payload.ieeeAddr};
-        this.emit(Events.Events.deviceLeave, data);
+        this.selfAndDeviceEmit(device, Events.Events.deviceLeave, data);
     }
 
     private async onAdapterDisconnected(): Promise<void> {
@@ -467,11 +469,16 @@ class Controller extends events.EventEmitter {
             device.save();
 
             const deviceJoinedPayload: Events.DeviceJoinedPayload = {device};
-            this.emit(Events.Events.deviceJoined, deviceJoinedPayload);
+            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, deviceJoinedPayload);
 
             const deviceInterviewPayload: Events.DeviceInterviewPayload = {status: 'successful', device};
-            this.emit(Events.Events.deviceInterview, deviceInterviewPayload);
+            this.selfAndDeviceEmit(device, Events.Events.deviceInterview, deviceInterviewPayload);
         }
+    }
+
+    private selfAndDeviceEmit(device: Device, event: string, data: KeyValue): void {
+        device?.emit(event, data);
+        this.emit(event, data);
     }
 
     private async onDeviceJoined(payload: AdapterEvents.DeviceJoinedPayload): Promise<void> {
@@ -495,11 +502,11 @@ class Controller extends events.EventEmitter {
                 'Unknown', payload.ieeeAddr, payload.networkAddress, undefined,
                 undefined, undefined, undefined, false, []
             );
-            this.emit(Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
+            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
         } else if (device.isDeleted) {
             debug.log(`Delete device '${payload.ieeeAddr}' joined, undeleting`);
             device.undelete();
-            this.emit(Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
+            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
         }
 
         if (device.networkAddress !== payload.networkAddress) {
@@ -512,23 +519,24 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
-        this.emit(Events.Events.lastSeenChanged, {device, reason: 'deviceJoined'} as Events.LastSeenChangedPayload);
+        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, 
+            {device, reason: 'deviceJoined'} as Events.LastSeenChangedPayload);
         device.implicitCheckin();
 
         if (!device.interviewCompleted && !device.interviewing) {
             const payloadStart: Events.DeviceInterviewPayload = {status: 'started', device};
             debug.log(`Interview '${device.ieeeAddr}' start`);
-            this.emit(Events.Events.deviceInterview, payloadStart);
+            this.selfAndDeviceEmit(device, Events.Events.deviceInterview, payloadStart);
 
             try {
                 await device.interview();
                 debug.log(`Succesfully interviewed '${device.ieeeAddr}'`);
                 const event: Events.DeviceInterviewPayload = {status: 'successful', device};
-                this.emit(Events.Events.deviceInterview, event);
+                this.selfAndDeviceEmit(device, Events.Events.deviceInterview, event);
             } catch (error) {
                 debug.error(`Interview failed for '${device.ieeeAddr} with error '${error}'`);
                 const event: Events.DeviceInterviewPayload = {status: 'failed', device};
-                this.emit(Events.Events.deviceInterview, event);
+                this.selfAndDeviceEmit(device, Events.Events.deviceInterview, event);
             }
         } else {
             debug.log(
@@ -676,11 +684,11 @@ class Controller extends events.EventEmitter {
                 type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName, meta
             };
 
-            this.emit(Events.Events.message, eventData);
-            this.emit(Events.Events.lastSeenChanged, 
+            this.selfAndDeviceEmit(device, Events.Events.message, eventData);
+            this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, 
                 {device, reason: 'messageEmitted'} as Events.LastSeenChangedPayload);
         } else {
-            this.emit(Events.Events.lastSeenChanged, 
+            this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, 
                 {device, reason: 'messageNonEmitted'} as Events.LastSeenChangedPayload);
         }
 

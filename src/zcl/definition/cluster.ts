@@ -1846,6 +1846,37 @@ const Cluster: {
         commandsResponse: {
         },
     },
+    barrierControl:{
+        ID: 259,
+        attributes: {
+            movingState: {ID: 1, type: DataType.enum8},
+            safetyStatus: {ID: 2, type: DataType.bitmap16},
+            capabilities: {ID: 3, type: DataType.bitmap8},
+            openEvents: {ID: 4, type: DataType.uint16},
+            closeEvents: {ID: 5, type: DataType.uint16},
+            commandOpenEvents: {ID: 6, type: DataType.uint16},
+            commandCloseEvents: {ID: 7, type: DataType.uint16},
+            openPeriod: {ID: 8, type: DataType.uint16},
+            closePeriod: {ID: 9, type: DataType.uint16},
+            barrierPosition: {ID: 10, type: DataType.uint8}
+        },
+        commands: {
+            goToPercent: {
+                ID: 0,
+                parameters: [
+                    {name: 'percentOpen', type: DataType.uint8}
+                ],
+            },
+            stop: {
+                ID: 1,
+                parameters: [
+                ],
+            },
+        },
+        commandsResponse: {
+        },
+
+    },
     hvacPumpCfgCtrl: {
         ID: 512,
         attributes: {
