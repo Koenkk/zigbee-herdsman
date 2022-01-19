@@ -587,7 +587,7 @@ class DeconzAdapter extends Adapter {
         request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
         request.destAddr16 = networkAddress;
         request.destEndpoint = endpoint;
-        request.profileId = 0x104;
+        request.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104;
         request.clusterId = zclFrame.Cluster.ID;
         request.srcEndpoint = sourceEndpoint || 1;
         request.asduLength = pay.length;
@@ -685,7 +685,7 @@ class DeconzAdapter extends Adapter {
         request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
         request.destAddr16 = 0xFFFD;
         request.destEndpoint = endpoint;
-        request.profileId = 0x104;
+        request.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104;
         request.clusterId = zclFrame.Cluster.ID;
         request.srcEndpoint = sourceEndpoint;
         request.asduLength = pay.length;
