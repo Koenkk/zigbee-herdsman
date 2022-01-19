@@ -263,7 +263,7 @@ export class Ezsp extends EventEmitter {
             [EzspConfigId.CONFIG_ZLL_GROUP_ADDRESSES, 0],
             [EzspConfigId.CONFIG_ZLL_RSSI_THRESHOLD, 215], // -40
             [EzspConfigId.CONFIG_TRANSIENT_KEY_TIMEOUT_S, 300],
-            [EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT, 255],
+            //[EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT, 255],
             [EzspConfigId.CONFIG_BROADCAST_TABLE_SIZE, 15],
             [EzspConfigId.CONFIG_MAX_HOPS, 30],
 

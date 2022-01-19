@@ -117,8 +117,8 @@ export class Driver extends EventEmitter {
 
         await this.ezsp.updatePolicies();
 
-        await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_OUTGOING_TRANSFER_SIZE, 82);
-        await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_INCOMING_TRANSFER_SIZE, 82);
+        //await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_OUTGOING_TRANSFER_SIZE, 82);
+        //await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_INCOMING_TRANSFER_SIZE, 82);
         await this.ezsp.setValue(EzspValueId.VALUE_END_DEVICE_KEEP_ALIVE_SUPPORT_MODE, 3);
 
         await this.ezsp.setSourceRouting();
@@ -318,6 +318,7 @@ export class Driver extends EventEmitter {
     private async handleRouteError(status: EmberStatus, nwk: number): Promise<void> {
         // todo
         debug.log(`handleRouteError: nwk=${nwk}, status=${status}`);
+        this.waitress.reject({address: nwk, payload: null, frame: null}, 'Route error');
         const ieee = await this.networkIdToEUI64(nwk);
         this.eui64ToRelays.set(ieee.toString(), null);
     }
@@ -423,7 +424,12 @@ export class Driver extends EventEmitter {
         const payload = this.makeZDOframe(requestName, frame.sequence, ...args);
         debug.log(`${requestName}  frame: ${payload}`);
         const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
-        await this.request(networkAddress, frame, payload);
+        const res = await this.request(networkAddress, frame, payload);
+        if (!res) {
+            debug.error(`zdoRequest error`);
+            this.waitress.remove(response.ID);
+            throw Error('ZdoRequest error');
+        }
         const message = await response.promise;
         debug.log(`${responseName}  frame: ${JSON.stringify(message.payload)}`);
         const result = this.parse_frame_payload(responseName, message.payload);
@@ -506,11 +512,15 @@ export class Driver extends EventEmitter {
 
     private waitressValidator(payload: EmberFrame, matcher: EmberWaitressMatcher): boolean {
         return (!matcher.address || payload.address === matcher.address) &&
-            payload.frame.clusterId === matcher.clusterId &&
-            payload.payload[0] === matcher.sequence;
+            (!payload.frame || payload.frame.clusterId === matcher.clusterId) &&
+            (!payload.frame || payload.payload[0] === matcher.sequence);
     }
 
     public setRadioPower(value: number): Promise<void> {
         return this.ezsp.execCommand('setRadioPower', value);
+    }
+
+    public setChannel(channel: number): Promise<void> {
+        return this.ezsp.execCommand('setLogicalAndRadioChannel', channel);
     }
 }
