@@ -536,6 +536,9 @@ describe('Zcl', () => {
                 securityKey: Buffer.from([0xf1,0xec,0x92,0xab,0xff,0x8f,0x13,0x63,0xe1,0x46,0xbe,0xb5,0x18,0xc9,0x0c,0xab]),
                 keyMic: 3587458724,
                 outgoingCounter: 505,
+                applicationInfo: 0,
+                numGdpCommands: 0,
+                gpdCommandIdList: Buffer.alloc(0),
             },
         };
 
@@ -595,6 +598,36 @@ describe('Zcl', () => {
             frameCounter: 1253,
             options: 5280,
             payloadSize: 255,
+        };
+
+        expect(frame.Header).toStrictEqual(header);
+        expect(frame.Payload).toStrictEqual(payload);
+    });
+
+    it('ZclFrame from buffer GDP pairing', () => {
+        const buffer = [0x19, 0x17, 0x01, 0x68, 0xe5, 0x00, 0xf8, 0x71, 0x71, 0x01, 0x47, 0x65, 0xa1, 0x1c, 0x00, 0x4b, 0x12, 0x00, 0x00, 0x00, 0x02, 0x1c, 0x12, 0x00, 0x00, 0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1,0,0,0,0,0,0];
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Buffer.from(buffer));
+        const header = {
+            commandIdentifier: 1,
+            frameControl: {
+                reservedBits: 0,
+                direction: 1,
+                disableDefaultResponse: true,
+                frameType: 1,
+                manufacturerSpecific: false,
+            },
+            manufacturerCode: null,
+            transactionSequenceNumber: 23,
+        };
+
+        const payload = {
+            options: 0x00e568,
+            srcID: 0x017171f8,
+            sinkIEEEAddr: "0x00124b001ca16547",
+            sinkNwkAddr: 0,
+            deviceID: 2,
+            frameCounter: 4636,
+            gpdKey: Buffer.from([0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1])
         };
 
         expect(frame.Header).toStrictEqual(header);

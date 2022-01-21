@@ -216,12 +216,12 @@ class Controller extends events.EventEmitter {
 
         if (permit) {
             await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
-            await this.greenPower.permitJoin(254);
+            await this.greenPower.permitJoin(254, !device ? null : device.networkAddress);
 
             // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
             this.permitJoinNetworkClosedTimer = setInterval(async (): Promise<void> => {
                 await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
-                await this.greenPower.permitJoin(254);
+                await this.greenPower.permitJoin(254, !device ? null : device.networkAddress);
             }, 200 * 1000);
 
             if (typeof time === 'number') {
@@ -242,7 +242,7 @@ class Controller extends events.EventEmitter {
             this.emit(Events.Events.permitJoinChanged, data);
         } else {
             debug.log('Disable joining');
-            await this.greenPower.permitJoin(0);
+            await this.greenPower.permitJoin(0, null);
             await this.adapter.permitJoin(0, null);
             const data: Events.PermitJoinChangedPayload = {permitted: false, reason, timeout: this.permitJoinTimeout};
             this.emit(Events.Events.permitJoinChanged, data);
@@ -561,17 +561,21 @@ class Controller extends events.EventEmitter {
         }
         debug.log(`Received '${dataType}' data '${JSON.stringify(logDataPayload)}'`);
 
+        let gpDevice = null;
+
         if (this.isZclDataPayload(dataPayload, dataType)) {
             if (dataPayload.frame.Cluster.name === 'touchlink') {
                 // This is handled by touchlink
                 return;
             } else if (dataPayload.frame.Cluster.name === 'greenPower') {
                 this.greenPower.onZclGreenPowerData(dataPayload);
+                // lookup encapsulated gpDevice for further processing
+                gpDevice = Device.byNetworkAddress(dataPayload.frame.Payload.srcID & 0xFFFF);
             }
         }
 
-        let device = typeof dataPayload.address === 'string' ?
-            Device.byIeeeAddr(dataPayload.address) : Device.byNetworkAddress(dataPayload.address);
+        let device = gpDevice ? gpDevice : (typeof dataPayload.address === 'string' ?
+            Device.byIeeeAddr(dataPayload.address) : Device.byNetworkAddress(dataPayload.address));
         
         /**
          * Handling of re-transmitted Xiaomi messages.
