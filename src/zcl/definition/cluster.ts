@@ -4569,10 +4569,10 @@ const Cluster: {
         ID: 26114,
         manufacturerCode: 26214,
         attributes: {
-            noise: { ID: 26112, type: DataType.data8 },
-            noise_detected: { ID: 26113, type: DataType.bitmap8 },
-            NoiseDetectLevel: { ID: 26114, type: DataType.uint16 },
-            NoiseAfterDetectDelay: { ID: 26115, type: DataType.uint16 },
+            noise: {ID: 26112, type: DataType.data8},
+            noise_detected: {ID: 26113, type: DataType.bitmap8},
+            NoiseDetectLevel: {ID: 26114, type: DataType.uint16},
+            NoiseAfterDetectDelay: {ID: 26115, type: DataType.uint16},
         },
         commands: {},
         commandsResponse: {},
@@ -4585,19 +4585,19 @@ const Cluster: {
             playStore: {
                 ID: 0x00,
                 parameters: [
-                    { name: 'param', type: DataType.uint8 },
+                    {name: 'param', type: DataType.uint8},
                 ],
             },
             learnStart: {
                 ID: 0x01,
                 parameters: [
-                    { name: 'value', type: DataType.uint8 },
+                    {name: 'value', type: DataType.uint8},
                 ],
             },
             learnStop: {
                 ID: 0x02,
                 parameters: [
-                    { name: 'value', type: DataType.uint8 },
+                    {name: 'value', type: DataType.uint8},
                 ],
             },
         },
