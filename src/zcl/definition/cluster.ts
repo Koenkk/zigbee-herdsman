@@ -4570,7 +4570,9 @@ const Cluster: {
         manufacturerCode: 26214,
         attributes: {
             noise: {ID: 26112, type: DataType.data8},
-            noise_detected: {ID: 26113, type: DataType.bitmap8},
+            noiseDetected: {ID: 26113, type: DataType.bitmap8},
+            noiseDetectLevel: {ID: 26114, type: DataType.uint16},
+            noiseAfterDetectDelay: {ID: 26115, type: DataType.uint16},
         },
         commands: {},
         commandsResponse: {},
@@ -4579,7 +4581,26 @@ const Cluster: {
         ID: 26115,
         manufacturerCode: 26214,
         attributes: {},
-        commands: {},
+        commands: {
+            playStore: {
+                ID: 0x00,
+                parameters: [
+                    {name: 'param', type: DataType.uint8},
+                ],
+            },
+            learnStart: {
+                ID: 0x01,
+                parameters: [
+                    {name: 'value', type: DataType.uint8},
+                ],
+            },
+            learnStop: {
+                ID: 0x02,
+                parameters: [
+                    {name: 'value', type: DataType.uint8},
+                ],
+            },
+        },
         commandsResponse: {},
     },
     manuSpecificSiglisZigfred: {
