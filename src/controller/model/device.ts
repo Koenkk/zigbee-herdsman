@@ -484,8 +484,6 @@ class Device extends Entity {
         const lookup: {[s: string]: {
             type?: DeviceType; manufacturerID?: number; manufacturerName?: string; powerSource?: string;
         };} = {
-            // https://github.com/Koenkk/zigbee2mqtt/issues/10915
-            'ZB-CL01': {type: 'Router', powerSource: 'Mains (single phase)'},
             '^3R.*?Z': {
                 type: 'EndDevice', powerSource: 'Battery'
             },
