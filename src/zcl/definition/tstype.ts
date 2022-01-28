@@ -8,7 +8,13 @@ interface ParameterDefinition extends TsType.Parameter {
             'statusNotEquals' |
             'minimumRemainingBufferBytes' |
             'directionEquals' |
+            'bitMaskSet' |
+            'bitFieldEnum' |
             'dataTypeValueTypeEquals';
+        param?: string;
+        mask?: number;
+        offset?: number;
+        size?: number;
         value?: number | string;
     }[];
     name: string;

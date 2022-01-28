@@ -1,5 +1,6 @@
 import {KeyValue, DatabaseEntry, DeviceType, SendRequestWhen} from '../tstype';
 import {Events as AdapterEvents} from '../../adapter';
+import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import Endpoint from './endpoint';
 import Entity from './entity';
 import {Wait} from '../../utils';
@@ -712,7 +713,19 @@ class Device extends Entity {
     }
 
     public async removeFromNetwork(): Promise<void> {
-        await Entity.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
+        if (this._type === 'GreenPower') {
+            const payload = {
+                options: 0x002550,
+                srcID: Number(this.ieeeAddr),
+            };
+
+            const frame = Zcl.ZclFrame.create(
+                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
+                null, ZclTransactionSequenceNumber.next(), 'pairing', 33, payload
+            );
+
+            await Entity.adapter.sendZclFrameToAll(242, frame, 242);
+        } else await Entity.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
         await this.removeFromDatabase();
     }
 
