@@ -117,170 +117,174 @@ function parseChangeNetworkStateResponse(view : DataView) : number {
 }
 
 function parseQuerySendDataStateResponse(view : DataView) : object {
+    try {
+        const response: DataStateResponse = {};
+        let buf2, buf3;
 
-    const response: DataStateResponse = {};
-    let buf2, buf3;
+        response.commandId = view.getUint8(0);
+        response.seqNr = view.getUint8(1);
+        response.status = view.getUint8(2);
 
-    response.commandId = view.getUint8(0);
-    response.seqNr = view.getUint8(1);
-    response.status = view.getUint8(2);
-
-    if (response.status !== 0) {
-        if (response.status !== 5) {
-            debug("DATA_CONFIRM RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
+        if (response.status !== 0) {
+            if (response.status !== 5) {
+                debug("DATA_CONFIRM RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
+            }
+            return null;
         }
+
+        response.frameLength = 7;
+        response.payloadLength = view.getUint16(5, littleEndian);
+        response.deviceState = view.getUint8(7);
+        response.requestId = view.getUint8(8);
+
+        response.destAddrMode = view.getUint8(9);
+
+        let destAddr = "";
+        if (response.destAddrMode === 0x03) {
+            let res = view.getBigUint64(10, littleEndian).toString(16);
+            while (res.length < 16) {
+                res = "0" + res;
+            }
+            response.destAddr64 = res;
+            buf2 = view.buffer.slice(18, view.buffer.byteLength);
+            destAddr = response.destAddr64;
+        } else {
+            response.destAddr16 = view.getUint16(10, littleEndian);
+            buf2 = view.buffer.slice(12, view.buffer.byteLength);
+            destAddr = response.destAddr16.toString(16);
+        }
+        if (response.destAddrMode === 0x02 || response.destAddrMode === 0x03) {
+            response.destEndpoint = view.getUint8(view.byteLength - 7);
+        }
+
+        response.srcEndpoint = view.getUint8(view.byteLength - 6);
+        response.confirmStatus = view.getInt8(view.byteLength - 5);
+
+        let newStatus = response.deviceState.toString(2);
+        for (let l = 0; l <= (8 - newStatus.length); l++) {
+            newStatus = "0" + newStatus;
+        }
+
+        // resolve send data request promise
+        const i = apsBusyQueue.findIndex((r: Request) => (r.request && r.request.requestId === response.requestId));
+        if (i < 0) {
+            return;
+        }
+        clearTimeout(enableRtsTimeout);
+        enableRTS(); // enable ReadyToSend because confirm received
+        const req: Request = apsBusyQueue[i];
+
+        // TODO timeout (at driver.ts)
+        if (response.confirmStatus !== 0) {
+            // reject if status is not SUCCESS
+            //debug("REJECT APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
+            req.reject(response.confirmStatus);
+        } else {
+            //debug("RESOLVE APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
+            req.resolve(response.confirmStatus);
+        }
+
+        //remove from busyqueue
+        apsBusyQueue.splice(i, 1);
+
+        debug("DATA_CONFIRM RESPONSE - destAddr: 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus);
+        frameParserEvents.emit('receivedDataNotification', response.deviceState);
+
+        return response;
+    } catch (error) {
+        debug("DATA_CONFIRM RESPONSE ERROR: " + error);
         return null;
     }
-
-    response.frameLength = 7;
-    response.payloadLength = view.getUint16(5, littleEndian);
-    response.deviceState = view.getUint8(7);
-    response.requestId = view.getUint8(8);
-
-    response.destAddrMode = view.getUint8(9);
-
-    let destAddr = "";
-    if (response.destAddrMode === 0x03) {
-        let res = view.getBigUint64(10, littleEndian).toString(16);
-        while (res.length < 16) {
-            res = "0" + res;
-        }
-        response.destAddr64 = res;
-        buf2 = view.buffer.slice(18, view.buffer.byteLength);
-        destAddr = response.destAddr64;
-    } else {
-        response.destAddr16 = view.getUint16(10, littleEndian);
-        buf2 = view.buffer.slice(12, view.buffer.byteLength);
-        destAddr = response.destAddr16.toString(16);
-    }
-    if (response.destAddrMode === 0x02 || response.destAddrMode === 0x03) {
-        response.destEndpoint = view.getUint8(view.byteLength - 7);
-    }
-
-    response.srcEndpoint = view.getUint8(view.byteLength - 6);
-    response.confirmStatus = view.getInt8(view.byteLength - 5);
-
-    let newStatus = response.deviceState.toString(2);
-    for (let l = 0; l <= (8 - newStatus.length); l++) {
-        newStatus = "0" + newStatus;
-    }
-
-    // resolve send data request promise
-    const i = apsBusyQueue.findIndex((r: Request) => (r.request && r.request.requestId === response.requestId));
-    if (i < 0) {
-        return;
-    }
-    clearTimeout(enableRtsTimeout);
-    enableRTS(); // enable ReadyToSend because confirm received
-    const req: Request = apsBusyQueue[i];
-
-    // TODO timeout (at driver.ts)
-    if (response.confirmStatus !== 0) {
-        // reject if status is not SUCCESS
-        //debug("REJECT APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
-        req.reject(response.confirmStatus);
-    } else {
-        //debug("RESOLVE APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
-        req.resolve(response.confirmStatus);
-    }
-
-    //remove from busyqueue
-    apsBusyQueue.splice(i, 1);
-
-    debug("DATA_CONFIRM RESPONSE - destAddr: 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus);
-    frameParserEvents.emit('receivedDataNotification', response.deviceState);
-
-    return response;
 }
 
 function parseReadReceivedDataResponse(view : DataView) : object {
     // min 28 bytelength
-    const response: ReceivedDataResponse = {};
-    let buf2, buf3;
+    try {
+        const response: ReceivedDataResponse = {};
+        let buf2, buf3;
 
+        response.commandId = view.getUint8(0);
+        response.seqNr = view.getUint8(1);
+        response.status = view.getUint8(2);
 
-    response.commandId = view.getUint8(0);
-    response.seqNr = view.getUint8(1);
-    response.status = view.getUint8(2);
-
-    if (response.status != 0) {
-        if (response.status !== 5) {
-            debug("DATA_INDICATION RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
+        if (response.status != 0) {
+            if (response.status !== 5) {
+                debug("DATA_INDICATION RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
+            }
+            return null;
         }
+
+        response.frameLength = view.getUint16(3, littleEndian);
+        response.payloadLength = view.getUint16(5, littleEndian);
+        response.deviceState = view.getUint8(7);
+        response.destAddrMode = view.getUint8(8);
+
+        let destAddr = "";
+        if (response.destAddrMode === 0x03) {
+            let res = view.getBigUint64(9, littleEndian).toString(16);
+            while (res.length < 16) {
+                res = "0" + res;
+            }
+            response.destAddr64 = res;
+            buf2 = view.buffer.slice(17, view.buffer.byteLength);
+            destAddr = response.destAddr64;
+        } else {
+            response.destAddr16 = view.getUint16(9, littleEndian);
+            buf2 = view.buffer.slice(11, view.buffer.byteLength);
+            destAddr = response.destAddr16.toString(16);
+        }
+
+        view = new DataView(buf2);
+        response.destEndpoint = view.getUint8(0);
+        response.srcAddrMode = view.getUint8(1);
+
+        let srcAddr = "";
+        if (response.srcAddrMode === 0x02 || response.srcAddrMode === 0x04) {
+            response.srcAddr16 = view.getUint16(2, littleEndian)
+            buf3 = view.buffer.slice(4, view.buffer.byteLength);
+            srcAddr = response.srcAddr16.toString(16);
+        }
+
+        if (response.srcAddrMode === 0x03 || response.srcAddrMode === 0x04) {
+            let res = view.getBigUint64(2, littleEndian).toString(16);
+            while (res.length < 16) {
+                res = "0" + res;
+            }
+            response.srcAddr64 = res;
+            buf3 = view.buffer.slice(10, view.buffer.byteLength);
+            srcAddr = response.srcAddr64;
+        }
+
+        view = new DataView(buf3);
+        response.srcEndpoint = view.getUint8(0);
+        response.profileId = view.getUint16(1, littleEndian);
+        response.clusterId = view.getUint16(3, littleEndian);
+        response.asduLength = view.getUint16(5, littleEndian);
+
+        let payload = [];
+        let i = 0;
+        for (let u = 7; u < (response.asduLength + 7); u++) {
+            payload[i] = view.getUint8(u);
+            i++;
+        }
+
+        response.asduPayload = payload;
+        response.lqi = view.getUint8(view.byteLength - 8);
+        response.rssi = view.getInt8(view.byteLength - 3)
+
+        let newStatus = response.deviceState.toString(2);
+        for (let l = 0; l <= (8 - newStatus.length); l++) {
+            newStatus = "0" + newStatus;
+        }
+        debug("DATA_INDICATION RESPONSE - seqNr. " + response.seqNr + " srcAddr: 0x" + srcAddr + " destAddr: 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16) + " lqi: " + response.lqi);
+        debug("response payload: " + payload);
+        frameParserEvents.emit('receivedDataPayload', response);
+        frameParserEvents.emit('receivedDataNotification', response.deviceState);
+        return response;
+    } catch (error) {
+        debug("DATA_INDICATION RESPONSE ERROR: " + error);
         return null;
     }
-    if (view.byteLength < 10) {
-        debug("DATA_INDICATION RESPONSE - invalid length");
-        return null;
-    }
-
-    response.frameLength = view.getUint16(3, littleEndian);
-    response.payloadLength = view.getUint16(5, littleEndian);
-    response.deviceState = view.getUint8(7);
-    response.destAddrMode = view.getUint8(8);
-
-    let destAddr = "";
-    if (response.destAddrMode === 0x03) {
-        let res = view.getBigUint64(9, littleEndian).toString(16);
-        while (res.length < 16) {
-            res = "0" + res;
-        }
-        response.destAddr64 = res;
-        buf2 = view.buffer.slice(17, view.buffer.byteLength);
-        destAddr = response.destAddr64;
-    } else {
-        response.destAddr16 = view.getUint16(9, littleEndian);
-        buf2 = view.buffer.slice(11, view.buffer.byteLength);
-        destAddr = response.destAddr16.toString(16);
-    }
-
-    view = new DataView(buf2);
-    response.destEndpoint = view.getUint8(0);
-    response.srcAddrMode = view.getUint8(1);
-
-    let srcAddr = "";
-    if (response.srcAddrMode === 0x02 || response.srcAddrMode === 0x04) {
-        response.srcAddr16 = view.getUint16(2, littleEndian)
-        buf3 = view.buffer.slice(4, view.buffer.byteLength);
-        srcAddr = response.srcAddr16.toString(16);
-    }
-
-    if (response.srcAddrMode === 0x03 || response.srcAddrMode === 0x04) {
-        let res = view.getBigUint64(2, littleEndian).toString(16);
-        while (res.length < 16) {
-            res = "0" + res;
-        }
-        response.srcAddr64 = res;
-        buf3 = view.buffer.slice(10, view.buffer.byteLength);
-        srcAddr = response.srcAddr64;
-    }
-
-    view = new DataView(buf3);
-    response.srcEndpoint = view.getUint8(0);
-    response.profileId = view.getUint16(1, littleEndian);
-    response.clusterId = view.getUint16(3, littleEndian);
-    response.asduLength = view.getUint16(5, littleEndian);
-
-    let payload = [];
-    let i = 0;
-    for (let u = 7; u < (response.asduLength + 7); u++) {
-        payload[i] = view.getUint8(u);
-        i++;
-    }
-
-    response.asduPayload = payload;
-    response.lqi = view.getUint8(view.byteLength - 8);
-    response.rssi = view.getInt8(view.byteLength - 3)
-
-    let newStatus = response.deviceState.toString(2);
-    for (let l = 0; l <= (8 - newStatus.length); l++) {
-        newStatus = "0" + newStatus;
-    }
-    debug("DATA_INDICATION RESPONSE - seqNr. " + response.seqNr + " srcAddr: 0x" + srcAddr + " destAddr: 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16) + " lqi: " + response.lqi);
-    debug("response payload: " + payload);
-    frameParserEvents.emit('receivedDataPayload', response);
-    frameParserEvents.emit('receivedDataNotification', response.deviceState);
-    return response;
 }
 
 function parseEnqueueSendDataResponse(view : DataView) : number {
@@ -451,17 +455,20 @@ function parseFrame(frame: Uint8Array) : [number, number, Command, number] {
         throw new Error("received frame size to small");
     }
 
-    const view = new DataView(frame.buffer);
-    const commandId = view.getUint8(0);
-    const seqNumber = view.getUint8(1);
-    const status = view.getUint8(2);
-    const frameLength = view.getUint16(3, littleEndian);
-    const payloadLength = view.getUint16(5, littleEndian);
-    // todo check framelength, payloadlength < x
-    const parser = getParserForCommandId(commandId);
+    try {
+        const view = new DataView(frame.buffer);
+        const commandId = view.getUint8(0);
+        const seqNumber = view.getUint8(1);
+        const status = view.getUint8(2);
+        //const frameLength = view.getUint16(3, littleEndian);
+        //const payloadLength = view.getUint16(5, littleEndian);
+        const parser = getParserForCommandId(commandId);
 
-    return [seqNumber, status, parser(view), commandId];
-
+        return [seqNumber, status, parser(view), commandId];
+    } catch (error) {
+        debug("PARSE FRAME ERROR: " + error);
+        return null;
+    }
 }
 
 export default processFrame;
