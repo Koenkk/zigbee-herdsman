@@ -427,7 +427,7 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer): Promise<boolean> {
+    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, timeout = 30000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberRawFrame.serialize(EmberRawFrame, rawFrame), data]);
             await this.ezsp.execCommand('sendRawMessage', msgData);
