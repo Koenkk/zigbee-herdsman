@@ -3,7 +3,7 @@ import * as TsType from './../../tstype';
 import {Ezsp} from './ezsp';
 import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption} from './types';
 import {EventEmitter} from "events";
-import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState} from './types/struct';
+import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState, EmberRawFrame} from './types/struct';
 import {ember_security} from './utils';
 import {
     EmberOutgoingMessageType,
@@ -395,6 +395,17 @@ export class Driver extends EventEmitter {
         }
     }
 
+    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, timeout = 30000): Promise<boolean> {
+        try {
+            const msgData = Buffer.concat([EmberRawFrame.serialize(EmberRawFrame, rawFrame), data]);
+            await this.ezsp.execCommand('sendRawMessage', msgData);
+            return true;
+        } catch (e) {
+            debug.error(`Request error ${e}: ${e.stack}`);
+            return false;
+        }
+    }
+
     private nextTransactionID(): number {
         this.transactionID = (this.transactionID + 1) & 0xFF;
         return this.transactionID;
@@ -411,6 +422,12 @@ export class Driver extends EventEmitter {
         //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY;
         //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
         frame.options = EmberApsOption.APS_OPTION_NONE;
+        return frame;
+    }
+
+    public makeEmberRawFrame():EmberRawFrame {
+        const frame = new EmberRawFrame();
+        frame.sequence = this.nextTransactionID();
         return frame;
     }
 
