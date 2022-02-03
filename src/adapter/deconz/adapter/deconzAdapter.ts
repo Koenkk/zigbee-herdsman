@@ -574,12 +574,11 @@ class DeconzAdapter extends Adapter {
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
     ): Promise<Events.ZclDataPayload> {
+
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
-        let pay = zclFrame.toBuffer();
 
-        debug("zclFrame.payload:");
-        debug(zclFrame.Payload);
+        let pay = zclFrame.toBuffer();
         //console.log("zclFramte.toBuffer:");
         //console.log(pay);
 
@@ -592,7 +591,7 @@ class DeconzAdapter extends Adapter {
         request.srcEndpoint = sourceEndpoint || 1;
         request.asduLength = pay.length;
         request.asduPayload = [... pay];
-        request.txOptions = 0;
+        request.txOptions = 0x00; //0x04;
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = timeout;
 
@@ -600,13 +599,16 @@ class DeconzAdapter extends Adapter {
         this.driver.enqueueSendDataRequest(request)
             .then(result => {
                 debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.Header.transactionSequenceNumber}`);
+                debug(command.hasOwnProperty('response') + ", " + zclFrame.Header.frameControl.disableDefaultResponse + ", " + disableResponse);
                 if (!command.hasOwnProperty('response') || zclFrame.Header.frameControl.disableDefaultResponse || !disableResponse) {
+                    debug("resolve request");
                     return Promise.resolve();
                 }
             })
             .catch(error => {
-                debug(`sendZclFrameToEndpoint ERROR: ${error}`);
-                return Promise.reject();
+                debug(`sendZclFrameToEndpoint ERROR`);
+                debug(error);
+                //return Promise.reject();
             });
         try {
                 let data = null;
