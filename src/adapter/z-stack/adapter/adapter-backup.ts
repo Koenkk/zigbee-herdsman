@@ -37,7 +37,12 @@ export class AdapterBackup {
         } catch (error) {
             return null;
         }
-        const data = JSON.parse((await fs.readFile(this.defaultPath)).toString());
+        let data;
+        try {
+            data = JSON.parse((await fs.readFile(this.defaultPath)).toString());
+        } catch (error) {
+            throw new Error('Coordinator backup is corrupted');
+        }
         if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);

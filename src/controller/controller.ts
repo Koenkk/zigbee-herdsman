@@ -300,7 +300,9 @@ class Controller extends events.EventEmitter {
             debug.log('Creating coordinator backup');
             const backup = await this.adapter.backup();
             const unifiedBackup = await BackupUtils.toUnifiedBackup(backup);
-            fs.writeFileSync(this.options.backupPath, JSON.stringify(unifiedBackup, null, 2));
+            const tmpBackupPath = this.options.backupPath + '.tmp';
+            fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
+            fs.renameSync(tmpBackupPath, this.options.backupPath);
             debug.log(`Wrote coordinator backup to '${this.options.backupPath}'`);
         }
     }

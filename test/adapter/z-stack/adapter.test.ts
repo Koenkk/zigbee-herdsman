@@ -1384,6 +1384,14 @@ describe("zstack-adapter", () => {
         expect(backup.networkKeyInfo.frameCounter).toBe(0);
     });
 
+    it("should fail when backup file is corrupted - Coordinator backup is corrupted", async () => {
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, "{", "utf8");
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3AlignedRequestMock);
+        await expect(adapter.start()).rejects.toThrowError("Coordinator backup is corrupted");
+    });
+
     it("should fail to restore unified backup with 3.0.x adapter - invalid open coordinator backup version", async () => {
         const backupFile = getTempFile();
         let backupData: UnifiedBackupStorage = JSON.parse(JSON.stringify(backupMatchingConfig));
