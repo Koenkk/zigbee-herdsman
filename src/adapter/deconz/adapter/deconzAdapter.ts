@@ -41,6 +41,7 @@ class DeconzAdapter extends Adapter {
     private joinPermitted: boolean;
     private fwVersion: CoordinatorVersion;
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
+    private TX_OPTIONS = 0x00; // No APS ACKS
 
     public constructor(networkOptions: NetworkOptions,
         serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions, logger?: LoggerStub) {
@@ -60,6 +61,11 @@ class DeconzAdapter extends Adapter {
 
         this.driver = new Driver(serialPortOptions.path);
         this.driver.setDelay(delay);
+
+        if (delay >= 200) {
+            this.TX_OPTIONS = 0x04; // activate APS ACKS
+        }
+
         this.driver.on('rxFrame', (frame) => {processFrame(frame)});
         this.queue = new Queue(concurrent);
         this.transactionID = 0;
@@ -591,7 +597,7 @@ class DeconzAdapter extends Adapter {
         request.srcEndpoint = sourceEndpoint || 1;
         request.asduLength = pay.length;
         request.asduPayload = [... pay];
-        request.txOptions = 0x00; //0x04;
+        request.txOptions = this.TX_OPTIONS; // 0x00 normal; 0x04 APS ACK
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = timeout;
 
