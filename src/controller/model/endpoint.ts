@@ -410,15 +410,17 @@ class Endpoint extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
         const payload: {attrId: number; status: number; dataType: number; attrData: number | string}[] = [];
+        let status;
         for (const [nameOrID, value] of Object.entries(attributes)) {
-            if (!value.hasOwnProperty('status')) {
-            	value.status = 0;
+            status = 0;
+            if (value.hasOwnProperty('status')) {
+            	status = value.status;
             }
             if (cluster.hasAttribute(nameOrID)) {
                 const attribute = cluster.getAttribute(nameOrID);
-                payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type, status: value.status });
+                payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type, status: status });
             } else if (!isNaN(Number(nameOrID))){
-                payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type, status: value.status });
+                payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type, status: status });
             } else {
                 throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
             }
