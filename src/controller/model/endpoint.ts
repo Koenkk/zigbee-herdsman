@@ -409,21 +409,28 @@ class Endpoint extends Entity {
         assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
-        const payload: {attrId: number; status: number; dataType: number; attrData: number | string}[] = [];
-        let status;
+        const payloadOther: {status: number; attrId: number}[] = [];
+        const payloadSuccess: {status: number}[] = [];
+        let payload;
         for (const [nameOrID, value] of Object.entries(attributes)) {
-            status = 0;
-            if (value.hasOwnProperty('status')) {
-            	status = value.status;
-            }
-            if (cluster.hasAttribute(nameOrID)) {
-                const attribute = cluster.getAttribute(nameOrID);
-                payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type, status: status });
-            } else if (!isNaN(Number(nameOrID))){
-                payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type, status: status });
-            } else {
-                throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
-            }
+            if (value.hasOwnProperty('status')) {    
+            	if (value.status !== 0) {
+            	    payload = payloadOther;
+            	} else {
+            	    // When status is set to 0 (SUCCESS) attribute 'attrId' is omitted
+            	    payload = payloadSuccess;
+            	}  
+	        if (cluster.hasAttribute(nameOrID)) {
+		    const attribute = cluster.getAttribute(nameOrID);
+		    payload.push({attrId: attribute.ID, status: value.status});
+	        } else if (!isNaN(Number(nameOrID))){
+		    payload.push({attrId: Number(nameOrID), status: value.status});
+	        } else {
+		    throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
+	        }
+	    } else {
+	        throw new Error(`Missing attribute 'status'`);
+	    }
         }
 
         const frame = Zcl.ZclFrame.create(
