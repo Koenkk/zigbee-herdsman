@@ -409,37 +409,20 @@ class Endpoint extends Entity {
         assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
-        const payloadOther: {status: number; attrId: number}[] = [];
-        const payloadSuccess: {status: number}[] = [];
-        let payload;
+        const payload: {status: number; attrId: number}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (value.hasOwnProperty('status')) {    
-                if (cluster.hasAttribute(nameOrID)) {
+	            if (cluster.hasAttribute(nameOrID)) {
                     const attribute = cluster.getAttribute(nameOrID);
-                    if (value.status !== 0) {
-                        payload = payloadOther;
-                        payload.push({attrId: attribute.ID, status: value.status});
-                    } else {
-                        // When status is set to 0 (SUCCESS) attribute 'attrId' is omitted
-                        payload = payloadSuccess;
-                        payload.push({status: value.status});
-                    }  		    
-                } else if (!isNaN(Number(nameOrID))){
-                    if (value.status !== 0) {
-                        payload = payloadOther;
-                        payload.push({attrId: Number(nameOrID), status: value.status});
-                    } else {
-                        // When status is set to 0 (SUCCESS) attribute 'attrId' is omitted
-                        payload = payloadSuccess;
-                        payload.push({status: value.status});
-                    }
-                } else {
-                    throw new Error(
-                        `Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
-                }
-            } else {
-                throw new Error(`Missing attribute 'status'`);
-            }
+            	    payload.push({attrId: attribute.ID, status: value.status});
+	            } else if (!isNaN(Number(nameOrID))){
+            	    payload.push({attrId: Number(nameOrID), status: value.status});
+	            } else {
+		            throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
+	            }	        
+	        } else {
+	            throw new Error(`Missing attribute 'status'`);
+	        }
         }
 
         const frame = Zcl.ZclFrame.create(
