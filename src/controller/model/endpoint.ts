@@ -414,31 +414,32 @@ class Endpoint extends Entity {
         let payload;
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (value.hasOwnProperty('status')) {    
-	        if (cluster.hasAttribute(nameOrID)) {
-		    const attribute = cluster.getAttribute(nameOrID);
-		    if (value.status !== 0) {
-            	        payload = payloadOther;
-            	        payload.push({attrId: attribute.ID, status: value.status});
-            	    } else {
-            	        // When status is set to 0 (SUCCESS) attribute 'attrId' is omitted
-            	        payload = payloadSuccess;
-            	        payload.push({status: value.status});
-            	    }  		    
-	        } else if (!isNaN(Number(nameOrID))){
-	            if (value.status !== 0) {
-            	        payload = payloadOther;
-            	        payload.push({attrId: Number(nameOrID), status: value.status});
-            	    } else {
-            	        // When status is set to 0 (SUCCESS) attribute 'attrId' is omitted
-            	        payload = payloadSuccess;
-            	        payload.push({status: value.status});
-            	    }
-	        } else {
-		    throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
-	        }
-	    } else {
-	        throw new Error(`Missing attribute 'status'`);
-	    }
+                if (cluster.hasAttribute(nameOrID)) {
+                    const attribute = cluster.getAttribute(nameOrID);
+                    if (value.status !== 0) {
+                        payload = payloadOther;
+                        payload.push({attrId: attribute.ID, status: value.status});
+                    } else {
+                        // When status is set to 0 (SUCCESS) attribute 'attrId' is omitted
+                        payload = payloadSuccess;
+                        payload.push({status: value.status});
+                    }  		    
+                } else if (!isNaN(Number(nameOrID))){
+                    if (value.status !== 0) {
+                        payload = payloadOther;
+                        payload.push({attrId: Number(nameOrID), status: value.status});
+                    } else {
+                        // When status is set to 0 (SUCCESS) attribute 'attrId' is omitted
+                        payload = payloadSuccess;
+                        payload.push({status: value.status});
+                    }
+                } else {
+                    throw new Error(
+                        `Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
+                }
+            } else {
+                throw new Error(`Missing attribute 'status'`);
+            }
         }
 
         const frame = Zcl.ZclFrame.create(
