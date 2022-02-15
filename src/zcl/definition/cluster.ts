@@ -4011,6 +4011,20 @@ const Cluster: {
         commandsResponse: {
         }
     },
+    manuSpecificLegrandDevices2: {
+        ID: 0xfc40,
+        manufacturerCode: ManufacturerCode.LegrandNetatmo,
+        attributes: {},
+        commands: {
+            command0: {
+                ID: 0,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+        commandsResponse: {}
+    },
     wiserDeviceInfo: {
         ID: 0xFE03, // 65027
         attributes: {
