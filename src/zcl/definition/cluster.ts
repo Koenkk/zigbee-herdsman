@@ -2410,6 +2410,7 @@ const Cluster: {
             lampAlarmMode: {ID: 52, type: DataType.bitmap8},
             lampBurnHoursTripPoint: {ID: 53, type: DataType.uint24},
             elkoControlMode: {ID: 0xE000, type: DataType.enum8, manufacturerCode: ManufacturerCode.ELKO},
+            wiserControlMode: {ID: 0xE000, type: DataType.enum8, manufacturerCode: ManufacturerCode.SCHNEIDER},
         },
         commands: {
         },
