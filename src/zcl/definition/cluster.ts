@@ -4619,7 +4619,7 @@ const Cluster: {
         commandsResponse: {},
     },
     manuSpecificSiglisZigfred: {
-        ID: 0x345,
+        ID: 0xFC42,
         manufacturerCode: 0x129C,
         attributes: {
             buttonEvent: {ID: 0x0008, type: DataType.uint32},
