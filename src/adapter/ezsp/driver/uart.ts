@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 import {EventEmitter} from 'events';
-import {SerialPort} from 'serialport';
+import SerialPort from 'serialport';
 import net from 'net';
 import SocketPortUtils from '../../socketPortUtils';
 import {Deferred, crc16ccitt} from './utils';
@@ -180,12 +180,11 @@ export class SerialDriver extends EventEmitter {
         const options = {
             baudRate: typeof opt.baudRate === 'number' ? opt.baudRate : 115200, 
             rtscts: typeof opt.rtscts === 'boolean' ? opt.rtscts : false,
-            autoOpen: false,
-            path: path,
+            autoOpen: false
         };
 
-        debug(`Opening SerialPort with ${JSON.stringify(options)}`);
-        this.serialPort = new SerialPort(options);
+        debug(`Opening SerialPort with ${path} and ${JSON.stringify(options)}`);
+        this.serialPort = new SerialPort(path, options);
 
         this.writer = new Writer();
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment

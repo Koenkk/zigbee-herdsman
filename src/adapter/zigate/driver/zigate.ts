@@ -1,8 +1,7 @@
 /* istanbul ignore file */
 /* eslint-disable */
 
-import {SerialPort} from 'serialport';
-import { DelimiterParser } from '@serialport/parser-delimiter'
+import SerialPort from 'serialport';
 import {EventEmitter} from 'events';
 import {Debug} from '../debug';
 import SerialPortUtils from "../../serialPortUtils";
@@ -203,9 +202,8 @@ export default class ZiGate extends EventEmitter {
     }
 
     private async openSerialPort(): Promise<void> {
-        this.serialPort = new SerialPort({
+        this.serialPort = new SerialPort(this.path, {
             baudRate: this.baudRate,
-            path: this.path,
             dataBits: 8,
             parity: 'none', /* one of ['none', 'even', 'mark', 'odd', 'space'] */
             stopBits: 1, /* one of [1,2] */
@@ -213,7 +211,7 @@ export default class ZiGate extends EventEmitter {
             autoOpen: false
         });
         this.parser = this.serialPort.pipe(
-            new DelimiterParser(
+            new SerialPort.parsers.Delimiter(
                 {delimiter: [ZiGateFrame.STOP_BYTE], includeDelimiter: true}
             ),
         );
@@ -253,7 +251,7 @@ export default class ZiGate extends EventEmitter {
 
 
         this.parser = this.socketPort.pipe(
-            new DelimiterParser({delimiter: [ZiGateFrame.STOP_BYTE], includeDelimiter: true}),
+            new SerialPort.parsers.Delimiter({delimiter: [ZiGateFrame.STOP_BYTE], includeDelimiter: true}),
         );
         this.parser.on('data', this.onSerialData.bind(this));
 
