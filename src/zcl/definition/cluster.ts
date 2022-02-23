@@ -2452,6 +2452,7 @@ const Cluster: {
             tolerance: {ID: 3, type: DataType.uint16},
             minPercentChange: {ID: 16, type: DataType.unknown},
             minAbsoluteChange: {ID: 17, type: DataType.unknown},
+            sprutTemperatureOffset: {ID: 0x6600, type: DataType.int16, manufacturerCode: ManufacturerCode.SprutDevice},
         },
         commands: {
         },
@@ -2496,6 +2497,7 @@ const Cluster: {
             minMeasuredValue: {ID: 1, type: DataType.uint16},
             maxMeasuredValue: {ID: 2, type: DataType.uint16},
             tolerance: {ID: 3, type: DataType.uint16},
+            sprutHeater: {ID: 0x6600, type: DataType.boolean, manufacturerCode: ManufacturerCode.SprutDevice},
         },
         commands: {
         },
@@ -2518,6 +2520,7 @@ const Cluster: {
             elkoForceOffTimeout: {ID: 0xE002, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
             elkoOccupancySensitivity: {ID: 0xE003, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
             sprutOccupancyLevel: {ID: 0x6600, type: DataType.uint16, manufacturerCode: ManufacturerCode.SprutDevice},
+            sprutOccupancySensitivity: {ID: 0x6601, type: DataType.uint16, manufacturerCode: ManufacturerCode.SprutDevice},
         },
         commands: {
         },
@@ -2554,6 +2557,8 @@ const Cluster: {
             measuredValue: {ID: 0, type: DataType.singlePrec},
             minMeasuredValue: {ID: 1, type: DataType.singlePrec},
             maxMeasuredValue: {ID: 2, type: DataType.singlePrec},
+            sprutCO2Calibration: {ID: 0x6600, type: DataType.boolean, manufacturerCode: ManufacturerCode.SprutDevice},
+            sprutCO2AutoCalibration: {ID: 0x6601, type: DataType.boolean, manufacturerCode: ManufacturerCode.SprutDevice},
         },
         commands: {},
         commandsResponse: {},
@@ -4584,9 +4589,9 @@ const Cluster: {
         ID: 26114,
         manufacturerCode: 26214,
         attributes: {
-            noise: {ID: 26112, type: DataType.data8},
+            noise: {ID: 26112, type: DataType.singlePrec},
             noiseDetected: {ID: 26113, type: DataType.bitmap8},
-            noiseDetectLevel: {ID: 26114, type: DataType.uint16},
+            noiseDetectLevel: {ID: 26114, type: DataType.singlePrec},
             noiseAfterDetectDelay: {ID: 26115, type: DataType.uint16},
         },
         commands: {},
@@ -4614,6 +4619,22 @@ const Cluster: {
                 parameters: [
                     {name: 'value', type: DataType.uint8},
                 ],
+            },
+            clearStore: {
+                ID: 0x03,
+                parameters: [],
+            },
+            playRam: {
+                ID: 0x04,
+                parameters: [],
+            },
+            learnRamStart: {
+                ID: 0x05,
+                parameters: [],
+            },
+            learnRamStop: {
+                ID: 0x06,
+                parameters: [],
             },
         },
         commandsResponse: {},
