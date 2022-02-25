@@ -2410,6 +2410,7 @@ const Cluster: {
             lampAlarmMode: {ID: 52, type: DataType.bitmap8},
             lampBurnHoursTripPoint: {ID: 53, type: DataType.uint24},
             elkoControlMode: {ID: 0xE000, type: DataType.enum8, manufacturerCode: ManufacturerCode.ELKO},
+            wiserControlMode: {ID: 0xE000, type: DataType.enum8, manufacturerCode: ManufacturerCode.SCHNEIDER},
         },
         commands: {
         },
@@ -2451,6 +2452,7 @@ const Cluster: {
             tolerance: {ID: 3, type: DataType.uint16},
             minPercentChange: {ID: 16, type: DataType.unknown},
             minAbsoluteChange: {ID: 17, type: DataType.unknown},
+            sprutTemperatureOffset: {ID: 0x6600, type: DataType.int16, manufacturerCode: ManufacturerCode.SprutDevice},
         },
         commands: {
         },
@@ -2495,6 +2497,7 @@ const Cluster: {
             minMeasuredValue: {ID: 1, type: DataType.uint16},
             maxMeasuredValue: {ID: 2, type: DataType.uint16},
             tolerance: {ID: 3, type: DataType.uint16},
+            sprutHeater: {ID: 0x6600, type: DataType.boolean, manufacturerCode: ManufacturerCode.SprutDevice},
         },
         commands: {
         },
@@ -2517,6 +2520,7 @@ const Cluster: {
             elkoForceOffTimeout: {ID: 0xE002, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
             elkoOccupancySensitivity: {ID: 0xE003, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
             sprutOccupancyLevel: {ID: 0x6600, type: DataType.uint16, manufacturerCode: ManufacturerCode.SprutDevice},
+            sprutOccupancySensitivity: {ID: 0x6601, type: DataType.uint16, manufacturerCode: ManufacturerCode.SprutDevice},
         },
         commands: {
         },
@@ -2553,6 +2557,8 @@ const Cluster: {
             measuredValue: {ID: 0, type: DataType.singlePrec},
             minMeasuredValue: {ID: 1, type: DataType.singlePrec},
             maxMeasuredValue: {ID: 2, type: DataType.singlePrec},
+            sprutCO2Calibration: {ID: 0x6600, type: DataType.boolean, manufacturerCode: ManufacturerCode.SprutDevice},
+            sprutCO2AutoCalibration: {ID: 0x6601, type: DataType.boolean, manufacturerCode: ManufacturerCode.SprutDevice},
         },
         commands: {},
         commandsResponse: {},
@@ -4011,6 +4017,20 @@ const Cluster: {
         commandsResponse: {
         }
     },
+    manuSpecificLegrandDevices2: {
+        ID: 0xfc40,
+        manufacturerCode: ManufacturerCode.LegrandNetatmo,
+        attributes: {},
+        commands: {
+            command0: {
+                ID: 0,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+        commandsResponse: {}
+    },
     wiserDeviceInfo: {
         ID: 0xFE03, // 65027
         attributes: {
@@ -4224,8 +4244,8 @@ const Cluster: {
         ID: 0xFF66,
         manufacturerCode: ManufacturerCode.JENNIC,
         attributes: {
-            currentTarif: {ID: 0x0000, type: DataType.octetStr},
-            tomorrowColor: {ID: 0x0001, type: DataType.octetStr},
+            currentTarif: {ID: 0x0000, type: DataType.charStr},
+            tomorrowColor: {ID: 0x0001, type: DataType.charStr},
             scheduleHPHC: {ID: 0x0002, type: DataType.uint8},
             presencePotential: {ID: 0x0003, type: DataType.uint8},
             startNoticeEJP: {ID: 0x0004, type: DataType.uint8},
@@ -4233,9 +4253,9 @@ const Cluster: {
             warnDIR1: {ID: 0x0006, type: DataType.uint16},
             warnDIR2: {ID: 0x0007, type: DataType.uint16},
             warnDIR3: {ID: 0x0008, type: DataType.uint16},
-            currentPrice: {ID: 0x0200, type: DataType.octetStr},
+            currentPrice: {ID: 0x0200, type: DataType.charStr},
             currentIndexTarif: {ID: 0x0201, type: DataType.uint8},
-            currentDate: {ID: 0x0202, type: DataType.octetStr},
+            currentDate: {ID: 0x0202, type: DataType.charStr},
             activeEnerfyOutD01: {ID: 0x0203, type: DataType.uint32},
             activeEnerfyOutD02: {ID: 0x0204, type: DataType.uint32},
             activeEnerfyOutD03: {ID: 0x0205, type: DataType.uint32},
@@ -4248,8 +4268,8 @@ const Cluster: {
             drawnVAMaxN1: {ID: 0x0212, type: DataType.int16},
             drawnVAMaxN1P2: {ID: 0x0213, type: DataType.int16},
             drawnVAMaxN1P3: {ID: 0x0214, type: DataType.int16},
-            message1: {ID: 0x0215, type: DataType.octetStr},
-            message2: {ID: 0x0216, type: DataType.octetStr},
+            message1: {ID: 0x0215, type: DataType.charStr},
+            message2: {ID: 0x0216, type: DataType.charStr},
             statusRegister: {ID: 0x0217, type: DataType.octetStr},
             startMobilePoint1: {ID: 0x0218, type: DataType.uint8},
             stopMobilePoint1: {ID: 0x0219, type: DataType.uint8},
@@ -4260,8 +4280,8 @@ const Cluster: {
             relais: {ID: 0x0224, type: DataType.uint16},
             daysNumberCurrentCalendar: {ID: 0x0225, type: DataType.uint8},
             daysNumberNextCalendar: {ID: 0x0226, type: DataType.uint8},
-            daysProfileCurrentCalendar: {ID: 0x0227, type: DataType.octetStr},
-            daysProfileNextCalendar: {ID: 0x0228, type: DataType.octetStr},
+            daysProfileCurrentCalendar: {ID: 0x0227, type: DataType.longOctetStr},
+            daysProfileNextCalendar: {ID: 0x0228, type: DataType.longOctetStr},
             linkyMode: {ID: 0x0300, type: DataType.uint8},
         },
         commands: {},
@@ -4569,9 +4589,9 @@ const Cluster: {
         ID: 26114,
         manufacturerCode: 26214,
         attributes: {
-            noise: {ID: 26112, type: DataType.data8},
+            noise: {ID: 26112, type: DataType.singlePrec},
             noiseDetected: {ID: 26113, type: DataType.bitmap8},
-            noiseDetectLevel: {ID: 26114, type: DataType.uint16},
+            noiseDetectLevel: {ID: 26114, type: DataType.singlePrec},
             noiseAfterDetectDelay: {ID: 26115, type: DataType.uint16},
         },
         commands: {},
@@ -4600,11 +4620,27 @@ const Cluster: {
                     {name: 'value', type: DataType.uint8},
                 ],
             },
+            clearStore: {
+                ID: 0x03,
+                parameters: [],
+            },
+            playRam: {
+                ID: 0x04,
+                parameters: [],
+            },
+            learnRamStart: {
+                ID: 0x05,
+                parameters: [],
+            },
+            learnRamStop: {
+                ID: 0x06,
+                parameters: [],
+            },
         },
         commandsResponse: {},
     },
     manuSpecificSiglisZigfred: {
-        ID: 0x345,
+        ID: 0xFC42,
         manufacturerCode: 0x129C,
         attributes: {
             buttonEvent: {ID: 0x0008, type: DataType.uint32},

@@ -36,8 +36,9 @@ export const Endpoints = [
         appdeviceid: 0x0400,
         appnumoutclusters: 2,
         appoutclusterlist: [Zcl.Utils.getCluster('ssIasZone').ID, Zcl.Utils.getCluster('ssIasWd').ID],
-        appnuminclusters: 1,
-        appinclusterlist: [Zcl.Utils.getCluster('ssIasAce').ID]
+        appnuminclusters: 2,
+        // genTime required for https://github.com/Koenkk/zigbee2mqtt/issues/10816
+        appinclusterlist: [Zcl.Utils.getCluster('ssIasAce').ID, Zcl.Utils.getCluster('genTime').ID]
 
     },
     // TERNCY: https://github.com/Koenkk/zigbee-herdsman/issues/82

@@ -403,6 +403,51 @@ class Endpoint extends Entity {
         }
     }
 
+    public async writeResponse(
+        clusterKey: number | string, transactionSequenceNumber: number, attributes: KeyValue, options?: Options
+    ): Promise<void> {
+        assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
+        const payload: {status: number; attrId: number}[] = [];
+        for (const [nameOrID, value] of Object.entries(attributes)) {
+            if (value.hasOwnProperty('status')) {    
+	        if (cluster.hasAttribute(nameOrID)) {
+                    const attribute = cluster.getAttribute(nameOrID);
+            	    payload.push({attrId: attribute.ID, status: value.status});
+	        } else if (!isNaN(Number(nameOrID))){
+            	    payload.push({attrId: Number(nameOrID), status: value.status});
+	        } else {
+		    throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
+	        }	        
+	    } else {
+	        throw new Error(`Missing attribute 'status'`);
+	    }
+        }
+
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
+            options.manufacturerCode, transactionSequenceNumber, 'writeRsp', cluster.ID, payload, options.reservedBits
+        );
+
+        const log = `WriteResponse ${this.deviceIeeeAddress}/${this.ID} ` +
+            `${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            await this.sendRequest(async () => {
+                await Entity.adapter.sendZclFrameToEndpoint(
+                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
+                    options.disableResponse, options.disableRecovery, options.srcEndpoint
+                );
+            }, options.sendWhen);
+        } catch (error) {
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
+        }
+    }
+    
     public async read(
         clusterKey: number | string, attributes: string[] | number [], options?: Options
     ): Promise<KeyValue> {
