@@ -3813,7 +3813,7 @@ describe('Controller', () => {
         expect(events.deviceInterview.length).toBe(1);
         expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status":"successful","device":{"ID":2,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}}});
         expect((controller.getDeviceByIeeeAddr('0x000000000046f4fe')).networkAddress).toBe(0xf4fe);
-        expect(events.message.length).toBe(1);
+        expect(events.message.length).toBe(2);
 
         // Green power device send message
         events.message = [];
@@ -3845,7 +3845,7 @@ describe('Controller', () => {
     it('Green power unicast', async () => {
         await controller.start();
         const data = {
-            options: 0x800,
+            options: 0x800, // Proxy info present
             srcID: 0x017171f8,
             frameCounter: 248,
             commandID: 0xe0,
@@ -3854,6 +3854,12 @@ describe('Controller', () => {
                 deviceID: 0x02,
                 options: 0xc5,
                 extendedOptions: 0xf2,
+                gpdClientClusters: Buffer.alloc(0),
+                gpdServerClusters: Buffer.alloc(0),
+                manufacturerID: 0,
+                modelID: 0,
+                numClientClusters: 0,
+                numServerClusters: 0,
                 securityKey: Buffer.from([0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c]),
                 keyMic: 0xf80547fa,
                 outgoingCounter: 0x000011f8,
@@ -3891,6 +3897,7 @@ describe('Controller', () => {
         };
         const frameResponse = mockZclFrame.create(1, 1, true, null, 2, 'pairing', 33, dataResponse);
 
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe(null);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(242);
@@ -3899,7 +3906,6 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[0][5]).toBe(false);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][6]).toBe(false);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][7]).toBe(242);
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
         // When joins again, shouldnt emit duplicate event
         await mockAdapterEvents['zclData']({
@@ -3912,11 +3918,11 @@ describe('Controller', () => {
         });
 
         expect(events.deviceJoined.length).toBe(1);
-        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_events":{},"_eventsCount":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}}});
+        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_events":{},"_eventsCount":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":[]}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}}});
         expect(events.deviceInterview.length).toBe(1);
         expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status":"successful","device":{"ID":2,"_events":{},"_eventsCount":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}}});
         expect((controller.getDeviceByIeeeAddr('0x00000000017171f8')).networkAddress).toBe(0x71f8);
-        expect(events.message.length).toBe(0); //device creation must occur before new messages can be processed
+        expect(events.message.length).toBe(2);
 
         // Green power device send message
         events.message = [];

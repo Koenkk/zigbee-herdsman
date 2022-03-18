@@ -807,10 +807,15 @@ class Endpoint extends Entity {
 
         try {
             await this.sendRequest(async () => {
-                await Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
+                // Broadcast Green Power responses
+                if (this.ID === 242) {
+                    await Entity.adapter.sendZclFrameToAll(242, frame, 242);
+                } else {
+                    await Entity.adapter.sendZclFrameToEndpoint(
+                        this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
+                        options.disableResponse, options.disableRecovery, options.srcEndpoint
+                    );
+                }
             }, options.sendWhen);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
