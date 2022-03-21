@@ -287,7 +287,12 @@ function parseReadReceivedDataResponse(view : DataView) : object {
     }
 }
 
-function parseEnqueueSendDataResponse(view : DataView) : number {
+function parseEnqueueSendDataResponse(view : DataView) : Command {
+    if (view.byteLength < 9) {
+        debug("DATA_REQUEST RESPONSE - invalid response length: " + view.byteLength);
+        return null;
+    }
+
     const status = view.getUint8(2);
     const requestId = view.getUint8(8);
     const deviceState = view.getUint8(7);
