@@ -4031,6 +4031,26 @@ const Cluster: {
         },
         commandsResponse: {}
     },
+    manuSpecificNikoSwitchSetup: {
+        ID: 0xfc00,
+        manufacturerCode: ManufacturerCode.NIKO_NV,
+        attributes: {
+            operationMode: {ID: 0x0000, type: DataType.enum8},
+        },
+        commands: {},
+        commandsResponse: {}
+    },
+    manuSpecificNikoSwitch: {
+        ID: 0xfc01,
+        manufacturerCode: ManufacturerCode.NIKO_NV,
+        attributes: {
+            action: {ID: 0x0002, type: DataType.uint8},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
+    },
     wiserDeviceInfo: {
         ID: 0xFE03, // 65027
         attributes: {
