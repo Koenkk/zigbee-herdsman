@@ -1,8 +1,13 @@
-import {debug} from 'console';
 import {Buffalo, TsType} from '../buffalo';
 import {DataType} from './definition';
 import {BuffaloZclOptions, StructuredIndicatorType, StructuredSelector, ZclArray} from './tstype';
 import * as Utils from './utils';
+import Debug from "debug";
+
+const debug = {
+    info: Debug('zigbee-herdsman:controller:buffaloZcl'),
+    error: Debug('zigbee-herdsman:controller:buffaloZcl'),
+};
 
 interface KeyValue {[s: string | number]: number | string}
 
@@ -316,7 +321,7 @@ class BuffaloZcl extends Buffalo {
                 deviceID: this.readUInt8(),
                 options: this.readUInt8(),
                 extendedOptions: 0,
-                securityKey: Buffer.alloc(0),
+                securityKey: Buffer.alloc(16),
                 keyMic: 0,
                 outgoingCounter: 0,
                 applicationInfo: 0,
@@ -391,9 +396,9 @@ class BuffaloZcl extends Buffalo {
 
             const cluster = Utils.getCluster(
                 frame.clusterID,
-                frame.manufacturerCode ? frame.manufacturerCode : null
+                frame.manufacturerCode,
             );
-
+            
             while (this.position - start < options.payload.payloadSize) {
                 const attributeID = this.readUInt16();
                 const type = this.readUInt8();
@@ -403,7 +408,7 @@ class BuffaloZcl extends Buffalo {
                 try {
                     attribute = cluster.getAttribute(attributeID).name;
                 } catch {
-                    debug("Unknown attribute " + attributeID + " in cluster " + cluster.name);
+                    debug.info("Unknown attribute " + attributeID + " in cluster " + cluster.name);
                 }
 
                 frame.attributes[attribute] = this.read(DataType[type], options);
@@ -424,7 +429,7 @@ class BuffaloZcl extends Buffalo {
             const panIDPresent = v.options & (1 << 0);
             const gpdSecurityKeyPresent = v.options & (1 << 1);
             const gpdKeyEncryption = v.options & (1 << 2);
-            const securityLevel = v.options & (3 << 3);
+            const securityLevel = v.options & (3 << 3) >> 3;
 
             const hasGPDKeyMIC = gpdKeyEncryption && gpdSecurityKeyPresent;
             const hasFrameCounter = gpdSecurityKeyPresent &&

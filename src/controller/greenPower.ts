@@ -47,6 +47,7 @@ class GreenPower extends events.EventEmitter {
         return Buffer.concat([encrypted, cipher.final()]);
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private async sendPairingCommand(payload: any, dataPayload: AdapterEvents.ZclDataPayload): Promise<any> {
         debug.info("Payload.Options: " + payload.options + " wasBroadcast: " + dataPayload.wasBroadcast);
         
@@ -56,12 +57,14 @@ class GreenPower extends events.EventEmitter {
         case 0b01: // Groupcast to DGroupID
             payload.sinkGroupID = this.adapter.greenPowerGroup;
             break;
+        /* istanbul ignore next */
         case 0b00: // Full unicast forwarding
         case 0b11: // Lightweight unicast forwarding
             const coordinator = await this.adapter.getCoordinator();
             payload.sinkIEEEAddr = coordinator.ieeeAddr;
             payload.sinkNwkAddr = coordinator.networkAddress;
             break;
+        /* istanbul ignore next */
         default:
             debug.error("Unhandled applicationID: " + (payload.options & 7));
             return;
@@ -90,11 +93,14 @@ class GreenPower extends events.EventEmitter {
         let payload = {};
 
         switch(dataPayload.frame.Payload.commandID) {
+        /* istanbul ignore next */
         case undefined:
             debug.error("GP Undefined Command");
             break;
         case 0xE0: // GP Commissioning
             debug.info("GP Commissioning");
+
+            /* istanbul ignore if */
             if (typeof dataPayload.address !== 'number') {
                 debug.info("Warning: commissioning request with string type address");
                 break;
@@ -121,8 +127,8 @@ class GreenPower extends events.EventEmitter {
                     gpdPayload: {
                         commandID: 0xf0,
                         options: 0b00000000, // Disable encryption
-                        securityKey: [...dataPayload.frame.Payload.commandFrame.securityKey],
-                        keyMic: dataPayload.frame.Payload.commandFrame.keyMic,
+                        // securityKey: [...dataPayload.frame.Payload.commandFrame.securityKey],
+                        // keyMic: dataPayload.frame.Payload.commandFrame.keyMic,
                     }
                 };
 
@@ -168,6 +174,8 @@ class GreenPower extends events.EventEmitter {
             this.emit(GreenPowerEvents.deviceJoined, eventData);
 
             break;
+        
+        /* istanbul ignore next */
         case 0xE2: // GP Success
             debug.info("GP Success");
             if (typeof dataPayload.address !== 'number') {
@@ -199,6 +207,7 @@ class GreenPower extends events.EventEmitter {
 
             await this.adapter.sendZclFrameToAll(242, frame, 242);
             break;
+        /* istanbul ignore next */
         case 0xA1: // GP Manufacturer-specific Attribute Reporting
             break;
         default:

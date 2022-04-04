@@ -14,6 +14,7 @@ import path  from 'path';
 import {Wait} from '../src/utils';
 import * as Models from "../src/models";
 import * as Utils from "../src/utils";
+import { isTypedArray } from "util/types";
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
 
@@ -3840,6 +3841,146 @@ describe('Controller', () => {
         expect(events.message.length).toBe(1);
         const expected = {"type":"commandNotification","device":{"ID":2,"_events":{},"_eventsCount":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":[],"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": []}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":[],"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": []},"data":{"options":0,"srcID":0x46f4fe,"frameCounter":228,"commandID":34,"payloadSize":255,"commandFrame":{}},"linkquality":50,"groupID":1,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
         expect(deepClone(events.message[0])).toStrictEqual(expected);
+
+        await mockAdapterEvents['']
+    });
+
+    it('Green power channel request', async() => {
+        await controller.start();
+
+        // Channel Request
+        const data = {
+            options: 0,
+            srcID: 0x0046f4fe,
+            frameCounter: 228,
+            commandID: 0xe3,
+            gppNwkAddr: 0x1234,
+            payloadSize: 27,
+            commandFrame: {
+                nextChannel: 10,
+                nextNextChannel: 15,
+            },
+        };
+        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commisioningNotification', 33, data)
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: true,
+            address: 0x46f4fe,
+            frame,
+            endpoint: 242,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+
+        const commissioningReply = {
+            options: 0,
+            tempMaster: 0x1234,
+            tempMasterTx: 10,
+            srcID: 0x0046f4fe,
+            gpdCmd: 0xf3,
+            gpdPayload: {
+                commandID: 0xf3,
+                options: 4,
+            }
+        };
+
+        const frameResponse = mockZclFrame.create(1, 1, true, null, 2, 'response', 33, commissioningReply);
+
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(frameResponse));
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
+    });
+
+    it('Green power rxOnCap', async () => {
+        await controller.start();
+        const data = {
+            options: 0,
+            srcID: 0x0046f4fe,
+            frameCounter: 228,
+            commandID: 0xe0,
+            gppNwkAddr: 0x1234,
+            payloadSize: 27,
+            commandFrame: {
+                deviceID: 0x02,
+                options: 0x83,
+                extendedOptions: 0xf2,
+                securityKey: Buffer.from([0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab]),
+                keyMic: 0xd5d446a4,
+                outgoingCounter: 0x000004e4,
+            },
+        };
+        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commisioningNotification', 33, data)
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: true,
+            address: 0x46f4fe,
+            frame,
+            endpoint: 242,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        const device = controller.getDeviceByIeeeAddr('0x000000000046f4fe');
+        const networkParameters = await device.getNetworkParameters();
+
+        const commissioningReply = {
+            options: 0,
+            tempMaster: 0x1234,
+            tempMasterTx: networkParameters.channel - 11,
+            srcID: 0x0046f4fe,
+            gpdCmd: 0xf0,
+            gpdPayload: {
+                commandID: 0xf0,
+                options: 0b00000000, // Disable encryption
+            }
+        };
+
+        const frameResponse = mockZclFrame.create(1, 1, true, null, 2, 'response', 33, commissioningReply);
+
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(2);
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(frameResponse));
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
+
+        const pairingData = {
+            options: 424,
+            srcID: 0x0046f4fe,
+            sinkGroupID: 0x0b84,
+            deviceID: 2,
+        };
+        const pairing = mockZclFrame.create(1, 1, true, null, 3, 'pairing', 33, pairingData);
+
+        expect(mocksendZclFrameToAll.mock.calls[1][0]).toBe(242);
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[1][1])).toStrictEqual(deepClone(pairing));
+        expect(mocksendZclFrameToAll.mock.calls[1][2]).toBe(242);
+
+        mocksendZclFrameToAll.mockClear();
+        // Test green power response on endpoint object
+        const payload = {
+            options: 0b000,
+            tempMaster: 0x1234,
+            tempMasterTx: networkParameters.channel - 11,
+            srcID: 0x0046f4fe,
+            gpdCmd: 0xFE,
+            gpdPayload: {
+                commandID: 0xFE,
+                buffer: Buffer.alloc(1),
+            },
+        };
+
+        await device.getEndpoint(242).commandResponse('greenPower', 'response', payload,
+            {
+                srcEndpoint: 242,
+                disableDefaultResponse: true,
+            });
+
+
+        const response = mockZclFrame.create(1, 1, true, null, 4, 'response', 33, payload);
+        
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(response));
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
     });
 
     it('Green power unicast', async () => {
@@ -3967,6 +4108,21 @@ describe('Controller', () => {
         expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(controller.getDeviceByIeeeAddr('0x00000000017171f8')).toBeUndefined(); 
+
+        expect(Device.byIeeeAddr('0x00000000017171f8')).toBeUndefined();
+        expect(deepClone(Device.byIeeeAddr('0x00000000017171f8', true))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":[]}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":false,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":true,"meta":{}});
+
+        // Re-add device
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: 129,
+            frame: expectedFrame,
+            endpoint: 242,
+            linkquality: 50,
+            groupID: 0,
+        });
+
+        expect(deepClone(Device.byIeeeAddr('0x00000000017171f8'))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":[]}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":false,"meta":{}});
     });
 
     it('Get input/ouptut clusters', async () => {

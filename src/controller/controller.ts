@@ -470,18 +470,16 @@ class Controller extends events.EventEmitter {
             );
             device.save();
 
-            const deviceJoinedPayload: Events.DeviceJoinedPayload = {device};
-            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, deviceJoinedPayload);
+            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
 
             const deviceInterviewPayload: Events.DeviceInterviewPayload = {status: 'successful', device};
             this.selfAndDeviceEmit(device, Events.Events.deviceInterview, deviceInterviewPayload);
         } else if (device.isDeleted) {
             debug.log(`Deleted green power device '${ieeeAddr}' joined`);
 
-            device.undelete();
+            device.undelete(true);
 
-            const deviceJoinedPayload: Events.DeviceJoinedPayload = {device};
-            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, deviceJoinedPayload);
+            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
 
             const deviceInterviewPayload: Events.DeviceInterviewPayload = {status: 'successful', device};
             this.selfAndDeviceEmit(device, Events.Events.deviceInterview, deviceInterviewPayload);
