@@ -6,21 +6,11 @@ import SocketPortUtils from '../../socketPortUtils';
 import {Deferred, crc16ccitt} from './utils';
 import * as stream from 'stream';
 import {Queue, Waitress} from '../../../utils';
+import * as consts from './consts';
+import {Writer}  from './writer';
+import {Parser}  from './parser';
 import Debug from "debug";
-
 const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
-
-
-const FLAG = 0x7E;  // Marks end of frame
-const ESCAPE = 0x7D;  // Indicates that the following byte is escaped
-const CANCEL = 0x1A;  // Terminates a frame in progress
-const XON = 0x11;  // Resume transmission
-const XOFF = 0x13;  // Stop transmission
-const SUBSTITUTE = 0x18;  // Replaces a byte received with a low-level communication error
-const STUFF = 0x20;
-const RESERVED = [FLAG, ESCAPE, XON, XOFF, SUBSTITUTE, CANCEL];
-const RANDOMIZE_START = 0x42;
-const RANDOMIZE_SEQ = 0xB8;
 
 
 enum NcpResetCode {
@@ -33,106 +23,6 @@ enum NcpResetCode {
     RESET_SOFTWARE = 0x0B,
     ERROR_EXCEEDED_MAXIMUM_ACK_TIMEOUT_COUNT = 0x51,
     ERROR_UNKNOWN_EM3XX_ERROR = 0x80,
-}
-
-
-class Parser extends stream.Transform {
-    private buffer: Buffer;
-
-    public constructor() {
-        super();
-        this.buffer = Buffer.from([]);
-    }
-
-    public _transform(chunk: Buffer, _: string, cb: () => void): void {
-        //debug(`<-- [${[...chunk]}]`);
-        if (chunk.indexOf(CANCEL) >= 0) {
-            this.buffer = Buffer.from([]);
-            chunk = chunk.slice((chunk.lastIndexOf(CANCEL) + 1));
-        }
-        if (chunk.indexOf(SUBSTITUTE) >= 0) {
-            this.buffer = Buffer.from([]);
-            chunk = chunk.slice((chunk.indexOf(FLAG) + 1));
-        }
-        this.buffer = Buffer.concat([this.buffer, chunk]);
-        this.parseNext();
-        cb();
-    }
-
-    private parseNext(): void {
-        //debug(`--- parseNext [${[...this.buffer]}]`);
-        if (this.buffer.length && this.buffer.indexOf(FLAG) >= 0) {
-            debug(`<-- [${this.buffer.toString('hex')}] [${[...this.buffer]}]`);
-            try {
-                const frame = this.extract_frame();
-                if (frame) {
-                    this.emit('parsed', frame);
-                }
-            } catch (error) {
-                debug(`<-- error ${error.stack}`);
-            }
-            this.parseNext();
-        }
-    }
-
-    private extract_frame(): Buffer {
-        /* Extract a frame from the data buffer */
-        const place = this.buffer.indexOf(FLAG);
-        if (place >= 0) {
-            // todo: check crc data
-            const result = this.unstuff(this.buffer.slice(0, (place + 1)));
-            this.buffer = this.buffer.slice((place + 1));
-            return result;
-        } else {
-            return null;
-        }
-    }
-
-    private unstuff(s: Buffer): Buffer {
-        /* Unstuff (unescape) a string after receipt */
-        let escaped = false;
-        const out = Buffer.alloc(s.length);
-        let outIdx = 0;
-        for (let idx = 0; idx < s.length; idx += 1) {
-            const c = s[idx];
-            if (escaped) {
-                out.writeUInt8(c ^ STUFF, outIdx++);
-                escaped = false;
-            } else {
-                if ((c === ESCAPE)) {
-                    escaped = true;
-                } else {
-                    out.writeUInt8(c, outIdx++);
-                }
-            }
-        }
-        return out;
-    }
-}
-
-class Writer extends stream.Readable {
-    public writeBuffer(buffer: Buffer): void {
-        debug(`--> [${buffer.toString('hex')}] [${[...buffer]}]`);
-        this.push(buffer);
-    }
-
-    public _read(): void {
-    }
-
-    public stuff(s: Iterable<number>): Buffer {
-        /* Byte stuff (escape) a string for transmission */
-        const out = Buffer.alloc(256);
-        let outIdx = 0;
-        for (const c of s) {
-            if (RESERVED.includes(c)) {
-                out.writeUInt8(ESCAPE, outIdx++);
-                out.writeUInt8(c ^ STUFF, outIdx++);
-            } else {
-                out.writeUInt8(c, outIdx++);
-            }
-        }
-        return out.slice(0, outIdx);
-    }
 }
 
 type EZSPPacket = {
@@ -162,7 +52,7 @@ export class SerialDriver extends EventEmitter {
     constructor() {
         super();
         this.initialized = false;
-        this.queue = new Queue();
+        this.queue = new Queue(8);
         this.waitress = new Waitress<EZSPPacket, EZSPPacketMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
@@ -383,20 +273,20 @@ export class SerialDriver extends EventEmitter {
 
         const crc = crc16ccitt(Buffer.from(sum), 65535);
         const crcArr = [(crc >> 8), (crc % 256)];
-        return Buffer.concat([this.writer.stuff(sum.concat(crcArr)), Buffer.from([FLAG])]);
+        return Buffer.concat([this.writer.stuff(sum.concat(crcArr)), Buffer.from([consts.FLAG])]);
     }
 
     private randomize(s: Buffer): Buffer {
         /*XOR s with a pseudo-random sequence for transmission
         Used only in data frames
         */
-        let rand = RANDOMIZE_START;
+        let rand = consts.RANDOMIZE_START;
         const out = Buffer.alloc(s.length);
         let outIdx = 0;
         for (const c of s) {
             out.writeUInt8(c ^ rand, outIdx++);
             if ((rand % 2)) {
-                rand = ((rand >> 1) ^ RANDOMIZE_SEQ);
+                rand = ((rand >> 1) ^ consts.RANDOMIZE_SEQ);
             } else {
                 rand = (rand >> 1);
             }
@@ -417,7 +307,7 @@ export class SerialDriver extends EventEmitter {
             throw new TypeError("reset can only be called on a new connection");
         }
         /* Construct a reset frame */
-        const rst_frame = Buffer.concat([Buffer.from([CANCEL]), this.make_frame([0xC0])]);
+        const rst_frame = Buffer.concat([Buffer.from([consts.CANCEL]), this.make_frame([0xC0])]);
         debug(`Write reset`);
         this.resetDeferred = new Deferred<void>();
         this.writer.writeBuffer(rst_frame);
