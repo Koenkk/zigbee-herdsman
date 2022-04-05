@@ -3361,6 +3361,29 @@ const Cluster: {
             develcoPulseConfiguration: {ID: 0x0300, type: DataType.uint16, manufacturerCode: ManufacturerCode.DEVELCO},
             develcoCurrentSummation: {ID: 0x0301, type: DataType.uint48, manufacturerCode: ManufacturerCode.DEVELCO},
             develcoInterfaceMode: {ID: 0x0302, type: DataType.enum16, manufacturerCode: ManufacturerCode.DEVELCO},
+            owonL1PhasePower: {ID: 0x2000, type: DataType.int24,manufacturerCode: ManufacturerCode.OWON},
+            owonL2PhasePower: {ID: 0x2001, type: DataType.int24,manufacturerCode: ManufacturerCode.OWON},
+            owonL3PhasePower: {ID: 0x2002, type: DataType.int24,manufacturerCode: ManufacturerCode.OWON},
+            owonL1PhaseReactivePower: {ID: 0x2100, type: DataType.int24,manufacturerCode: ManufacturerCode.OWON},
+            owonL2PhaseReactivePower: {ID: 0x2101, type: DataType.int24,manufacturerCode: ManufacturerCode.OWON},
+            owonL3PhaseReactivePower: {ID: 0x2102, type: DataType.int24,manufacturerCode: ManufacturerCode.OWON},
+            owonL1PhaseVoltage: {ID: 0x3000, type: DataType.uint24,manufacturerCode: ManufacturerCode.OWON},
+            owonL2PhaseVoltage: {ID: 0x3001, type: DataType.uint24,manufacturerCode: ManufacturerCode.OWON},
+            owonL3PhaseVoltage: {ID: 0x3002, type: DataType.uint24,manufacturerCode: ManufacturerCode.OWON},
+            owonL1PhaseCurrent: {ID: 0x3100, type: DataType.uint24,manufacturerCode: ManufacturerCode.OWON},
+            owonL2PhaseCurrent: {ID: 0x3101, type: DataType.uint24,manufacturerCode: ManufacturerCode.OWON},
+            owonL3PhaseCurrent: {ID: 0x3102, type: DataType.uint24,manufacturerCode: ManufacturerCode.OWON},
+            owonCurrentSum: {ID: 0x3103, type: DataType.uint24,manufacturerCode: ManufacturerCode.OWON},
+            owonLeakageCurrent: {ID: 0x3104, type: DataType.uint24,manufacturerCode: ManufacturerCode.OWON},
+            owonL1Energy: {ID: 0x4000, type: DataType.uint48,manufacturerCode: ManufacturerCode.OWON},
+            owonL2Energy: {ID: 0x4001, type: DataType.uint48,manufacturerCode: ManufacturerCode.OWON},
+            owonL3Energy: {ID: 0x4002, type: DataType.uint48,manufacturerCode: ManufacturerCode.OWON},
+            owonL1ReactiveEnergy: {ID: 0x4100, type: DataType.uint48,manufacturerCode: ManufacturerCode.OWON},
+            owonL2ReactiveEnergy: {ID: 0x4101, type: DataType.uint48,manufacturerCode: ManufacturerCode.OWON},
+            owonL3ReactiveEnergy: {ID: 0x4102, type: DataType.uint48,manufacturerCode: ManufacturerCode.OWON},
+            owonReactiveEnergySum: {ID: 0x4103, type: DataType.uint48,manufacturerCode: ManufacturerCode.OWON},
+            owonFrequency: {ID: 0x5005, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
+			
         },
         commands: {
             getProfile: {
@@ -4030,6 +4053,26 @@ const Cluster: {
             },
         },
         commandsResponse: {}
+    },
+    manuSpecificNikoSwitchSetup: {
+        ID: 0xfc00,
+        manufacturerCode: ManufacturerCode.NIKO_NV,
+        attributes: {
+            operationMode: {ID: 0x0000, type: DataType.enum8},
+        },
+        commands: {},
+        commandsResponse: {}
+    },
+    manuSpecificNikoSwitch: {
+        ID: 0xfc01,
+        manufacturerCode: ManufacturerCode.NIKO_NV,
+        attributes: {
+            action: {ID: 0x0002, type: DataType.uint8},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
     },
     wiserDeviceInfo: {
         ID: 0xFE03, // 65027
