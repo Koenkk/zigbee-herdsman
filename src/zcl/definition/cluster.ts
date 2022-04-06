@@ -4237,8 +4237,21 @@ const Cluster: {
              *  in `Serial command list` section of the same document
              *  So, need to investigate more information about it
              */
-            activeStatusReport: {
+             activeStatusReport: {
                 ID: 6,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
+                ],
+            },
+            /**
+             * FIXME: This command is not listed in Tuya zigbee cluster description,
+             *  but there is some command 0x05 (description is: Status query)
+             *  in `Serial command list` section of the same document
+             *  So, need to investigate more information about it
+             */
+             activeStatusReportAlt: {
+                ID: 5,
                 parameters: [
                     {name: 'seq', type: DataType.uint16},
                     {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
