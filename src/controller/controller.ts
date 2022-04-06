@@ -460,7 +460,7 @@ class Controller extends events.EventEmitter {
         // Green power devices dont' have a modelID, create a modelID based on the deviceID (=type)
         const modelID = `GreenPower_${payload.deviceID}`;
 
-        let device = Device.byIeeeAddr(ieeeAddr);
+        let device = Device.byIeeeAddr(ieeeAddr, true);
         if (!device) {
             debug.log(`New green power device '${ieeeAddr}' joined`);
             debug.log(`Creating device '${ieeeAddr}'`);
@@ -470,8 +470,16 @@ class Controller extends events.EventEmitter {
             );
             device.save();
 
-            const deviceJoinedPayload: Events.DeviceJoinedPayload = {device};
-            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, deviceJoinedPayload);
+            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
+
+            const deviceInterviewPayload: Events.DeviceInterviewPayload = {status: 'successful', device};
+            this.selfAndDeviceEmit(device, Events.Events.deviceInterview, deviceInterviewPayload);
+        } else if (device.isDeleted) {
+            debug.log(`Deleted green power device '${ieeeAddr}' joined`);
+
+            device.undelete(true);
+
+            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
 
             const deviceInterviewPayload: Events.DeviceInterviewPayload = {status: 'successful', device};
             this.selfAndDeviceEmit(device, Events.Events.deviceInterview, deviceInterviewPayload);
@@ -570,7 +578,7 @@ class Controller extends events.EventEmitter {
                 // This is handled by touchlink
                 return;
             } else if (dataPayload.frame.Cluster.name === 'greenPower') {
-                this.greenPower.onZclGreenPowerData(dataPayload);
+                await this.greenPower.onZclGreenPowerData(dataPayload);
                 // lookup encapsulated gpDevice for further processing
                 gpDevice = Device.byNetworkAddress(dataPayload.frame.Payload.srcID & 0xFFFF);
             }
