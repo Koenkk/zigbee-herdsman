@@ -349,7 +349,7 @@ export class Driver extends EventEmitter {
 
     private async resetMfgId(mfgId: number): Promise<void> {
         await this.ezsp.execCommand('setManufacturerCode', mfgId);
-        await sleep(180);
+        await sleep(1000);
         await this.ezsp.execCommand('setManufacturerCode', DEFAULT_MFG_ID);
     }
 
@@ -359,8 +359,8 @@ export class Driver extends EventEmitter {
             ieee = new EmberEUI64(ieee);
         }
         for(let rec of IEEE_PREFIX_MFG_ID) {
-            if (((ieee as EmberEUI64).value() as Buffer).indexOf(Buffer.from(rec.prefix)) == 0) {
-                // set new code
+            if ((Buffer.from((ieee as EmberEUI64).value)).indexOf(Buffer.from(rec.prefix)) == 0) {
+                // set ManufacturerCode
                 debug.log(`handleNodeJoined: change ManufacturerCode for ieee ${ieee} to ${rec.mfgId}`);
                 this.resetMfgId(rec.mfgId);
                 break;
