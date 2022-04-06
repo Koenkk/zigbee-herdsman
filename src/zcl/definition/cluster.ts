@@ -4236,7 +4236,7 @@ const Cluster: {
              *  in `Serial command list` section of the same document
              *  So, need to investigate more information about it
              */
-             activeStatusReportAlt: {
+            activeStatusReportAlt: {
                 ID: 5,
                 parameters: [
                     {name: 'seq', type: DataType.uint16},
