@@ -3921,7 +3921,7 @@ describe('Controller', () => {
         });
 
         const device = controller.getDeviceByIeeeAddr('0x000000000046f4fe');
-        const networkParameters = await controller.getNetworkParameters();
+        const networkParameters = await device.getNetworkParameters();
 
         const commissioningReply = {
             options: 0,

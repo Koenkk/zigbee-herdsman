@@ -8,6 +8,7 @@ import Debug from "debug";
 import * as Zcl from '../../zcl';
 import assert from 'assert';
 import {ZclFrameConverter} from '../helpers';
+import {NetworkParameters} from '../../adapter/tstype';
 
 /**
  * @ignore
@@ -711,6 +712,10 @@ class Device extends Entity {
                 this.defaultSendRequestWhen = 'active';
             }
         }
+    }
+
+    public async getNetworkParameters(): Promise<NetworkParameters> {
+        return Entity.adapter.getNetworkParameters();
     }
 
     public async removeFromNetwork(): Promise<void> {
