@@ -349,7 +349,8 @@ export class Driver extends EventEmitter {
 
     private async resetMfgId(mfgId: number): Promise<void> {
         await this.ezsp.execCommand('setManufacturerCode', mfgId);
-        await sleep(1000);
+        // 60 sec for waiting
+        await sleep(60000);
         await this.ezsp.execCommand('setManufacturerCode', DEFAULT_MFG_ID);
     }
 
