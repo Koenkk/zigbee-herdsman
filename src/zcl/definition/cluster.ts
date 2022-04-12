@@ -2102,6 +2102,11 @@ const Cluster: {
                 parameters: [
                 ],
             },
+            plugwiseCalibrateValve: {
+                ID: 0xa0,
+                parameters: [
+                ],
+            }
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
