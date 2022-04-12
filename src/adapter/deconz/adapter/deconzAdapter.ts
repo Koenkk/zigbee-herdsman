@@ -3,7 +3,7 @@
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
-    StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions,
+    StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions, MatchDescriptor,
 } from '../../tstype';
 import Debug from "debug";
 import Adapter from '../../adapter';
@@ -19,6 +19,7 @@ import PARAM from '../driver/constants';
 import { Command, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, gpDataInd } from '../driver/constants';
 import {LoggerStub} from "../../../controller/logger-stub";
 import * as Models from "../../../models";
+import { Endpoint } from 'src/controller/model';
 
 var frameParser = require('../driver/frameParser');
 
@@ -410,7 +411,14 @@ class DeconzAdapter extends Adapter {
             return Promise.reject();
         }
     }
-
+    //CongNT16: add blank function
+    public async matchDescriptor(networkAddress: number, zigprofileid: number, numberofinput: number, inputclusterlist: number[], numberofoutput: number, outputclusterlist: number[]): Promise<MatchDescriptor> {
+        return this.queue.execute<MatchDescriptor>(async () => {
+            let results:number[] = [];
+            return {endpoints: results};
+        }, networkAddress);
+    }
+        
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
         const transactionID = this.nextTransactionID();
         const nwk1 = networkAddress & 0xff;

@@ -132,6 +132,9 @@ abstract class Adapter extends events.EventEmitter {
     public abstract routingTable(networkAddress: number): Promise<TsType.RoutingTable>;
 
     public abstract nodeDescriptor(networkAddress: number): Promise<TsType.NodeDescriptor>;
+    
+    //CongNT16: Add Match Descriptor Request function
+    public abstract matchDescriptor(networkAddress: number, zigprofileid: number, numberofinput: number, inputclusterlist: number[], numberofoutput: number, outputclusterlist: number[]): Promise<TsType.MatchDescriptor>;
 
     public abstract activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints>;
 

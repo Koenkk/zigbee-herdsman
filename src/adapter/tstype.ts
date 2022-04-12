@@ -34,6 +34,11 @@ interface NodeDescriptor {
     manufacturerCode: number;
 }
 
+//CongNT16: Add Match Descriptor Request function
+interface MatchDescriptor {
+    endpoints: number[];
+}
+
 interface ActiveEndpoints {
     endpoints: number[];
 }
@@ -98,5 +103,5 @@ interface NetworkParameters {
 export {
     SerialPortOptions, NetworkOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, LQINeighbor, RoutingTable, Backup, NetworkParameters,
-    StartResult, RoutingTableEntry, AdapterOptions,
+    StartResult, RoutingTableEntry, AdapterOptions, MatchDescriptor,
 };

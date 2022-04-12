@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 /* eslint-disable */
 import * as TsType from '../../tstype';
-import {ActiveEndpoints, DeviceType, LQI, LQINeighbor, NodeDescriptor, SimpleDescriptor} from '../../tstype';
+import {ActiveEndpoints, DeviceType, LQI, LQINeighbor, NodeDescriptor, SimpleDescriptor, MatchDescriptor} from '../../tstype';
 import * as Events from '../../events';
 import Adapter from '../../adapter';
 import {Direction, Foundation, FrameType, ZclFrame} from '../../../zcl';
@@ -330,6 +330,14 @@ class ZiGateAdapter extends Adapter {
             }
         }, networkAddress);
     };
+
+    //CongNT16: add blank function
+    public async matchDescriptor(networkAddress: number, zigprofileid: number, numberofinput: number, inputclusterlist: number[], numberofoutput: number, outputclusterlist: number[]): Promise<MatchDescriptor> {
+        return this.queue.execute<MatchDescriptor>(async () => {
+            let results:number[] = [];
+            return {endpoints: results};
+        }, networkAddress);
+    }
 
     public async activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints> {
         return this.queue.execute<ActiveEndpoints>(async () => {

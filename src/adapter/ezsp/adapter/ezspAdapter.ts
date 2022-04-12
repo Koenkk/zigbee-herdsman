@@ -3,7 +3,7 @@
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
-    StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions
+    StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions, MatchDescriptor
 } from '../../tstype';
 import Debug from "debug";
 import Adapter from '../../adapter';
@@ -274,7 +274,13 @@ class EZSPAdapter extends Adapter {
             type: (logicaltype == 0) ? 'Coordinator' : (logicaltype == 1) ? 'Router' : 'EndDevice'
         };
     }
-
+    //CongNT16: add blank function
+    public async matchDescriptor(networkAddress: number, zigprofileid: number, numberofinput: number, inputclusterlist: number[], numberofoutput: number, outputclusterlist: number[]): Promise<MatchDescriptor> {
+        return this.driver.queue.execute<MatchDescriptor>(async () => {
+            let results:number[] = [];
+            return {endpoints: results};
+        }, networkAddress);
+    }
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
         debug(`Requesting 'Active endpoints' for '${networkAddress}'`);
         return this.driver.queue.execute<ActiveEndpoints>(async () => {

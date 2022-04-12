@@ -577,6 +577,33 @@ class Device extends Entity {
             }
         }
 
+        // CongNT16: Add Match Descriptor Request
+        // public async matchDescriptor(networkAddress: number, zigprofileid: number, numberofinput: number, inputclusterlist: number[], numberofoutput: number, outputclusterlist: number[]): Promise<MatchDescriptor> {
+
+        let matchDescriptors;
+        const haid = 0x0104;
+        const numinput = 1;
+        const numoutput = 0;
+        let inlist = [1280];
+        let outlist:number[] = [];
+
+        for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+                matchDescriptors = await Entity.adapter.matchDescriptor(this.networkAddress, haid, numinput, inlist, numoutput, outlist)
+                matchDescriptors = await Entity.adapter.activeEndpoints(this.networkAddress);
+                break;
+            } catch (error) {
+                debug.log(`Interview - match descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`);
+            }
+        }
+        if (!matchDescriptors) {
+            throw new Error(`Interview failed because can not get match descriptor request ('${this.ieeeAddr}')`);
+        }
+
+        this.save();
+        debug.log(`Interview - successfully send match descriptor request for device '${this.ieeeAddr}'`);
+
+
         // e.g. Xiaomi Aqara Opple devices fail to respond to the first active endpoints request, therefore try 2 times
         // https://github.com/Koenkk/zigbee-herdsman/pull/103
         let activeEndpoints;

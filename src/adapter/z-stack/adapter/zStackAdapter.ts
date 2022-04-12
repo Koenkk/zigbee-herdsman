@@ -1,7 +1,7 @@
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
     DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, NetworkParameters,
-    StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions,
+    StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions, MatchDescriptor,
 } from '../../tstype';
 import {ZnpVersion} from './tstype';
 import * as Events from '../../events';
@@ -316,6 +316,28 @@ class ZStackAdapter extends Adapter {
         }
 
         return {manufacturerCode: descriptor.payload.manufacturercode, type};
+    }
+
+    /* CongNT16: Add Match Descriptor Request function
+    {name: 'dstaddr', parameterType: ParameterType.UINT16},
+    {name: 'nwkaddrofinterest', parameterType: ParameterType.UINT16},
+    {name: 'profileid', parameterType: ParameterType.UINT16},
+    {name: 'numinclusters', parameterType: ParameterType.UINT8},
+    {name: 'inclusterlist', parameterType: ParameterType.LIST_UINT16},
+    {name: 'numoutclusters', parameterType: ParameterType.UINT8},
+    {name: 'outclusterlist', parameterType: ParameterType.LIST_UINT16},
+    */
+    public async matchDescriptor(networkAddress: number, zigprofileid: number, numberofinput: number, inputclusterlist: number[], numberofoutput: number, outputclusterlist: number[]): Promise<MatchDescriptor> {
+        return this.queue.execute<MatchDescriptor>(async () => {
+            this.checkInterpanLock();
+            const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'matchDescRsp', {nwkaddr: networkAddress});
+            const payload = {dstaddr: networkAddress, nwkaddrofinterest: networkAddress, 
+                profileid: zigprofileid, numinclusters: numberofinput, inclusterlist: inputclusterlist, 
+                numoutclusters: numberofoutput, outclusterlist: outputclusterlist};
+            await this.znp.request(Subsystem.ZDO, 'matchDescReq', payload, response.ID);
+            const matchrsp = await response.start().promise;
+            return {endpoints: matchrsp.payload.matchlist};
+        }, networkAddress);
     }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
