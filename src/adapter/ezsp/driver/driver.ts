@@ -50,7 +50,8 @@ type EmberWaitressMatcher = {
 type IeeeMfg = {
     mfgId: number,
     prefix: number[]
-}
+};
+
 const IEEE_PREFIX_MFG_ID: IeeeMfg[] = [
     {mfgId: 0x115F, prefix: [0x04,0xcf,0xfc]},
     {mfgId: 0x115F, prefix: [0x54,0xef,0x44]},
@@ -359,14 +360,14 @@ export class Driver extends EventEmitter {
         if (ieee && !(ieee instanceof EmberEUI64)) {
             ieee = new EmberEUI64(ieee);
         }
-        for(let rec of IEEE_PREFIX_MFG_ID) {
+        for(const rec of IEEE_PREFIX_MFG_ID) {
             if ((Buffer.from((ieee as EmberEUI64).value)).indexOf(Buffer.from(rec.prefix)) == 0) {
                 // set ManufacturerCode
                 debug.log(`handleNodeJoined: change ManufacturerCode for ieee ${ieee} to ${rec.mfgId}`);
                 this.resetMfgId(rec.mfgId);
                 break;
             }
-        };
+        }
 
         this.eui64ToNodeId.set(ieee.toString(), nwk);
         this.emit('deviceJoined', [nwk, ieee]);
@@ -426,7 +427,7 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, timeout = 30000): Promise<boolean> {
+    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberRawFrame.serialize(EmberRawFrame, rawFrame), data]);
             await this.ezsp.execCommand('sendRawMessage', msgData);
