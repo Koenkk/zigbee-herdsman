@@ -508,14 +508,17 @@ class EZSPAdapter extends Adapter {
             );
 
             try {
-                const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID);
-                frame.profileId = 0xFFFF;
-                frame.sourceEndpoint =  12;
-                frame.destinationEndpoint = 0xFE;
-                frame.groupId = 0xFFFF;
-                frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
-                const dataConfirmResult = await this.driver.mrequest(frame, zclFrame.toBuffer());
-
+                const frame = this.driver.makeEmberRawFrame();
+                frame.ieeeFrameControl = 0xc801;
+                frame.destPanId = 0xFFFF;
+                frame.destNodeId = 0xFFFF;
+                frame.sourcePanId = this.driver.networkParams.panId;
+                frame.ieeeAddress = this.driver.ieee;
+                frame.nwkFrameControl = 0x000b;
+                frame.appFrameControl = 0x0b;
+                frame.clusterId = zclFrame.Cluster.ID;
+                frame.profileId = 0xc05e;
+                const dataConfirmResult = await this.driver.rawrequest(frame, zclFrame.toBuffer());
             } catch (error) {
                 response.cancel();
                 throw error;

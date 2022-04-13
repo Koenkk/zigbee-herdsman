@@ -1199,20 +1199,24 @@ const Cluster: {
                 ID: 0,
                 parameters: [
                     {name: 'options', type: DataType.uint16},
-                    {name: 'srcID', type: DataType.uint32},
+                    {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.uint8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
                     {name: 'frameCounter', type: DataType.uint32},
                     {name: 'commandID', type: DataType.uint8},
                     {name: 'payloadSize', type: DataType.uint8},
                     {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
-                    {name: 'gppNwkAddr', type: DataType.uint16,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x800}]},
-                    {name: 'gppGddLink', type: DataType.uint8,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x800}]},
+                    {name: 'gppNwkAddr', type: DataType.uint16,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x4000}]},
+                    {name: 'gppGddLink', type: DataType.uint8,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x4000}]},
                 ],
             },
             commisioningNotification: {
                 ID: 4,
                 parameters: [
                     {name: 'options', type: DataType.uint16},
-                    {name: 'srcID', type: DataType.uint32},
+                    {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.uint8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
                     {name: 'frameCounter', type: DataType.uint32},
                     {name: 'commandID', type: DataType.uint8},
                     {name: 'payloadSize', type: DataType.uint8},
@@ -1223,14 +1227,32 @@ const Cluster: {
             },
         },
         commandsResponse: {
+            response: {
+                ID: 6,
+                parameters: [
+                    {name: 'options', type: DataType.uint8},
+                    {name: 'tempMaster', type: DataType.uint16},
+                    {name: 'tempMasterTx', type: DataType.uint8},
+                    {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.uint8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdCmd', type: DataType.uint8},
+                    {name: 'gpdPayload', type: BuffaloZclDataType.GDP_FRAME},
+                ],
+            },
             pairing: {
                 ID: 1,
                 parameters: [
                     {name: 'options', type: DataType.uint24},
-                    {name: 'srcID', type: DataType.uint32},
-                    {name: 'sinkIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 6},]},
-                    {name: 'sinkNwkAddr', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 6}]},
-                    {name: 'sinkGroupID', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 4}]},
+                    {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.uint8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'sinkIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b110}]},
+                    {name: 'sinkIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b000}]},
+                    {name: 'sinkNwkAddr', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b110}]},
+                    {name: 'sinkNwkAddr', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b000}]},
+                    {name: 'sinkGroupID', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b100}]},
+                    {name: 'sinkGroupID', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b010}]},
                     {name: 'deviceID', type: DataType.uint8, conditions: [{type: 'bitMaskSet', param:'options', mask: 0x0008}]},
                     {name: 'frameCounter', type: DataType.uint32, conditions: [{type: 'bitMaskSet', param:'options', mask: 0x4000}]},
                     {name: 'gpdKey', type: DataType.secKey, conditions: [{type: 'bitMaskSet', param:'options', mask: 0x8000}]},
@@ -2080,6 +2102,11 @@ const Cluster: {
                 parameters: [
                 ],
             },
+            plugwiseCalibrateValve: {
+                ID: 0xa0,
+                parameters: [
+                ],
+            }
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
@@ -4208,7 +4235,19 @@ const Cluster: {
                     {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
-
+            /**
+             * FIXME: This command is not listed in Tuya zigbee cluster description,
+             *  but there is some command 0x05 (description is: Status query)
+             *  in `Serial command list` section of the same document
+             *  So, need to investigate more information about it
+             */
+            activeStatusReportAlt: {
+                ID: 5,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
+                ],
+            },
             /**
              * FIXME: This command is not listed in Tuya zigbee cluster description,
              *  but there is some command 0x06 (description is: Status query)
