@@ -212,8 +212,10 @@ class Device extends Entity {
         // Respond to enroll requests
         if (frame.isSpecific() && frame.isCluster('ssIasZone') && frame.isCommand('enrollReq')) {
             debug.log(`IAS - '${this.ieeeAddr}' responding to enroll response`);
-            const payload = {enrollrspcode: 0, zoneid: 23};
-            await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
+            const payload = {enrollrspcode: 0, zoneid: 4};
+            //await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
+            //CongNT16
+            await endpoint.commandResponse('ssIasZone', "enrollRsp", payload, {disableDefaultResponse: true}, frame.Header.transactionSequenceNumber);
         }
 
         // Reponse to read requests
