@@ -215,7 +215,7 @@ class Device extends Entity {
             const payload = {enrollrspcode: 0, zoneid: 4};
             //await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
             //CongNT16
-            await endpoint.commandResponse('ssIasZone', "enrollRsp", payload, {disableDefaultResponse: true}, frame.Header.transactionSequenceNumber);
+            await endpoint.commandResponse('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true}, frame.Header.transactionSequenceNumber);
         }
 
         // Reponse to read requests
