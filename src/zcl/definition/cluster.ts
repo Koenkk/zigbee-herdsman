@@ -3496,7 +3496,8 @@ const Cluster: {
             },
 			owonGetHistoryRecordRsp: {
 				ID: 0x20,
-				parameters: [],
+				parameters: [
+				],
 			},
         },
     },
