@@ -213,9 +213,10 @@ class Device extends Entity {
         if (frame.isSpecific() && frame.isCluster('ssIasZone') && frame.isCommand('enrollReq')) {
             debug.log(`IAS - '${this.ieeeAddr}' responding to enroll response`);
             const payload = {enrollrspcode: 0, zoneid: 4};
-            //await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
+            //CongNT16: add transactionSequenceNumber
+            await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true, transactionSequenceNumber: frame.Header.transactionSequenceNumber});
             //CongNT16
-            await endpoint.commandResponse('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true}, frame.Header.transactionSequenceNumber);
+            //await endpoint.commandResponse('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true}, frame.Header.transactionSequenceNumber);
         }
 
         // Reponse to read requests
@@ -632,8 +633,8 @@ class Device extends Entity {
                 let enrolled = false;
                 for (let attempt = 0; attempt < 6; attempt++) {
                     await Wait(500);
-                    const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'], 
-                        {sendWhen: 'immediate'});
+                    const stateAfter = await endpoint.read('ssIasZone', ['zoneState', 'zoneType'], {sendWhen: 'immediate'});
+                    await endpoint.read('ssIasZone', ['zoneStatus', 'currentZoneSensitivityLevel','tuya_iasZone_1','tuya_iasZone_2'], {sendWhen: 'immediate'});
                     debug.log(`Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`);
                     if (stateAfter.zoneState === 1) {
                         enrolled = true;

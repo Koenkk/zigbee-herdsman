@@ -2606,6 +2606,8 @@ const Cluster: {
             zoneId: {ID: 17, type: DataType.uint8},
             numZoneSensitivityLevelsSupported: {ID: 18, type: DataType.uint8},
             currentZoneSensitivityLevel: {ID: 19, type: DataType.uint8},
+            tuya_iasZone_1: {ID: 0xf001, type: DataType.uint8},
+            tuya_iasZone_2: {ID: 0xf002, type: DataType.uint8},
         },
         commands: {
             enrollRsp: {
