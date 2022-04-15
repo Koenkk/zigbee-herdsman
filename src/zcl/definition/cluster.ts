@@ -3494,6 +3494,10 @@ const Cluster: {
                 parameters: [
                 ],
             },
+			owonGetHistoryRecordRsp: {
+				ID: 0x20,
+				parameters: [],
+			},
         },
     },
     telecommunicationsInformation: {
@@ -4752,12 +4756,14 @@ const Cluster: {
 	owonClearMetering: {
 		ID: 0xFFE0,
 		manufacturerCode: ManufacturerCode.OWON,
+		attributes: {},
 		commands: {
 			owonClearMeasurementData: {
 				ID: 0x00,
 				parameters: [],
 			},
 		},
+		commandsResponse: {},
 	},
 };
 
