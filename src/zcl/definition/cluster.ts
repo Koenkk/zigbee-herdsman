@@ -3410,7 +3410,16 @@ const Cluster: {
             owonL3ReactiveEnergy: {ID: 0x4102, type: DataType.uint48,manufacturerCode: ManufacturerCode.OWON},
             owonReactiveEnergySum: {ID: 0x4103, type: DataType.uint48,manufacturerCode: ManufacturerCode.OWON},
             owonFrequency: {ID: 0x5005, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
-			
+			owonReportMap: {ID: 0x1000, type: DataType.bitmap8,manufacturerCode: ManufacturerCode.OWON},
+			owonReactivePowerSum: {ID: 0x2103, type: DataType.int24,manufacturerCode: ManufacturerCode.OWON},
+			owonLastHistoricalRecordTime: {ID: 0x5000, type: DataType.uint32,manufacturerCode: ManufacturerCode.OWON},
+			owonOldestHistoricalRecordTime: {ID: 0x5001, type: DataType.uint32,manufacturerCode: ManufacturerCode.OWON},
+			owonMinimumReportCycle: {ID: 0x5002, type: DataType.uint32,manufacturerCode: ManufacturerCode.OWON},
+			owonMaximumReportCycle: {ID: 0x5003, type: DataType.uint32,manufacturerCode: ManufacturerCode.OWON},
+			owonSentHistoricalRecordState: {ID: 0x5004, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
+			owonAccumulativeEnergyThreshold: {ID: 0x5006, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
+			owonReportMode: {ID: 0x5007, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
+			owonPercentChangeInPower: {ID: 0x5007, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
         },
         commands: {
             getProfile: {
@@ -3448,6 +3457,16 @@ const Cluster: {
                 parameters: [
                 ],
             },
+			owonGetHistoryRecord: {
+				ID: 0x20,
+                parameters: [
+                ],
+			},
+			owonStopSendingHistoricalRecord: {
+				ID: 0x21,
+                parameters: [
+                ],
+			},
         },
         commandsResponse: {
             getProfileRsp: {
@@ -4730,6 +4749,16 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+	owonClearMetering: {
+		ID: 0xFFE0,
+		manufacturerCode: ManufacturerCode.OWON,
+		commands: {
+			owonClearMeasurementData: {
+				ID: 0x00,
+				parameters: [],
+			},
+		},
+	},
 };
 
 export default Cluster;
