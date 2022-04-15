@@ -207,6 +207,7 @@ class Device extends Entity {
                 Device.ReportablePropertiesMapping[key]?.set(value, this);
                 this.save();
             }
+            return;
         }
 
         // Respond to enroll requests
@@ -215,6 +216,7 @@ class Device extends Entity {
             const payload = {enrollrspcode: 0, zoneid: 4};
             //CongNT16: add transactionSequenceNumber
             await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true, transactionSequenceNumber: frame.Header.transactionSequenceNumber});
+            return;
             //CongNT16
             //await endpoint.commandResponse('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true}, frame.Header.transactionSequenceNumber);
         }
@@ -250,6 +252,7 @@ class Device extends Entity {
                     debug.error(`Read response to ${this.ieeeAddr} failed`);
                 }
             }
+            return;
 
         }
 
@@ -280,6 +283,7 @@ class Device extends Entity {
                 /* istanbul ignore next */
                 debug.error(`Handling of poll check-in form ${this.ieeeAddr} failed`);
             }
+            return;
         }
 
         // Send a default response if necessary.
@@ -288,10 +292,13 @@ class Device extends Entity {
         const disableDefaultResponse = frame.Header.frameControl.disableDefaultResponse;
         if (!dataPayload.wasBroadcast && !disableDefaultResponse && !isDefaultResponse && !commandHasResponse &&
             !this._skipDefaultResponse) {
+            const defaultresponse_direction = 1 - frame.Header.frameControl.direction;
             try {
                 await endpoint.defaultResponse(
-                    frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
+                    //CongNT16: Fix Default Response
+                    frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber, {direction: defaultresponse_direction, disableDefaultResponse: false}
                 );
+                //await endpoint.defaultResponse(frame.getCommand().ID,0,frame.Cluster.ID, frame.Header.transactionSequenceNumber,{})
             } catch (error) {
                 debug.error(`Default response to ${this.ieeeAddr} failed`);
             }
