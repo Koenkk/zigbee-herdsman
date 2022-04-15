@@ -519,6 +519,7 @@ class Device extends Entity {
     }
 
     private async interviewInternal(): Promise<void> {
+        /* CONGNT16: Dont need to send Node Descriptor Request 
         const nodeDescriptorQuery = async (): Promise<void> => {
             const nodeDescriptor = await Entity.adapter.nodeDescriptor(this.networkAddress);
             this._manufacturerID = nodeDescriptor.manufacturerCode;
@@ -572,11 +573,11 @@ class Device extends Entity {
                 Object.entries(result)
                     .forEach((entry) => Device.ReportablePropertiesMapping[entry[0]].set(entry[1], this));
             } catch (error) {
-                /* istanbul ignore next */
+                // istanbul ignore next 
                 debug.log(`Interview - TuYa read modelID and manufacturerName failed (${error})`);
             }
         }
-
+        */
         // CongNT16: Add Match Descriptor Request
         // public async matchDescriptor(networkAddress: number, zigprofileid: number, numberofinput: number, inputclusterlist: number[], numberofoutput: number, outputclusterlist: number[]): Promise<MatchDescriptor> {
 
@@ -587,10 +588,9 @@ class Device extends Entity {
         let inlist = [1280];
         let outlist:number[] = [];
 
-        for (let attempt = 0; attempt < 2; attempt++) {
+        for (let attempt = 0; attempt < 3; attempt++) {
             try {
                 matchDescriptors = await Entity.adapter.matchDescriptor(this.networkAddress, haid, numinput, inlist, numoutput, outlist)
-                matchDescriptors = await Entity.adapter.activeEndpoints(this.networkAddress);
                 break;
             } catch (error) {
                 debug.log(`Interview - match descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`);
@@ -601,8 +601,52 @@ class Device extends Entity {
         }
 
         this.save();
-        debug.log(`Interview - successfully send match descriptor request for device '${this.ieeeAddr}'`);
+        debug.log(`Interview - got match descriptor for device '${this.ieeeAddr}'`);
 
+        const coordinator = Device.byType('Coordinator')[0];
+
+        // Enroll IAS device
+        if (matchDescriptors.endpoints !==[])   {
+            for (const endpointID of matchDescriptors.endpoints) {
+                matchDescriptors.endpoints.filter((e) => e !== 0 && !this.getEndpoint(e)).forEach((e) =>
+                this._endpoints.push(Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr)));
+                this.save();
+                const endpoint = this.getEndpoint(endpointID);
+                let writedIEEEAddr = false;
+                for (let attempt = 0; attempt < 6; attempt++) {
+                    await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr}, {sendWhen: 'immediate'});
+                    await Wait(500);
+                    const writedIEEEAddrresult = await endpoint.read('ssIasZone', ['iasCieAddr'], 
+                        {sendWhen: 'immediate'});
+                    await Wait(500);
+                    debug.log(`Interview - IAS - after writing iasCieAddr (${attempt}): '${JSON.stringify(writedIEEEAddr)}'`);
+                    if (writedIEEEAddrresult.iasCieAddr === coordinator.ieeeAddr) {
+                        writedIEEEAddr = true;
+                        debug.log(`Interview - IAS - wrote iasCieAddr`);
+                        break;
+                    }
+                }
+
+                let enrolled = false;
+                for (let attempt = 0; attempt < 6; attempt++) {
+                    await Wait(500);
+                    const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'], 
+                        {sendWhen: 'immediate'});
+                    debug.log(`Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`);
+                    if (stateAfter.zoneState === 1) {
+                        enrolled = true;
+                        break;
+                    }
+                }
+                if (enrolled) {
+                    debug.log(`Interview - IAS successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+                } else {
+                    throw new Error(
+                        `Interview failed because of failed IAS enroll (zoneState didn't change ('${this.ieeeAddr}')`
+                    );
+                }
+            }
+        }
 
         // e.g. Xiaomi Aqara Opple devices fail to respond to the first active endpoints request, therefore try 2 times
         // https://github.com/Koenkk/zigbee-herdsman/pull/103
@@ -674,10 +718,9 @@ class Device extends Entity {
                 }
             }
         }
+        //const coordinator = Device.byType('Coordinator')[0];
 
-        const coordinator = Device.byType('Coordinator')[0];
-
-        // Enroll IAS device
+        /* Enroll IAS device
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
             debug.log(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
 
@@ -726,6 +769,7 @@ class Device extends Entity {
                 debug.log(`Interview - IAS - already enrolled, skipping enroll`);
             }
         }
+        */
 
         // Bind poll control
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
