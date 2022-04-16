@@ -618,10 +618,10 @@ class Endpoint extends Entity {
         commandID: number, status: number, clusterID: number, transactionSequenceNumber: number, options?: Options
     ): Promise<void> {
         assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
-        options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, null);
+        options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, null);
         const payload = {cmdId: commandID, statusCode: status};
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
+            Zcl.FrameType.GLOBAL, options.direction, false,
             options.manufacturerCode, transactionSequenceNumber, 'defaultRsp', clusterID, payload, options.reservedBits
         );
 
@@ -633,7 +633,7 @@ class Endpoint extends Entity {
             await this.sendRequest(async () => {
                 await Entity.adapter.sendZclFrameToEndpoint(
                     this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
+                    true, options.disableRecovery, options.srcEndpoint
                 );
             }, options.sendWhen);
         } catch (error) {

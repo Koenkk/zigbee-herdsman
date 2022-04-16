@@ -397,7 +397,7 @@ class ZStackAdapter extends Adapter {
                 networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
                 zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
             );
-        } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
+        } else if (!zclFrame.Header.frameControl.disableDefaultResponse && command.name !== 'defaultRsp') {
             response = this.waitForInternal(
                 networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
                 zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
