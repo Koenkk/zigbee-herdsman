@@ -616,15 +616,23 @@ class Device extends Entity {
         // Enroll IAS device
         if (matchDescriptors.endpoints !==[])   {
             //Check ZoneID for this device, if >0 then reuse, else will create new zoneID
-            if (Device.devices[this.ieeeAddr]._zoneID ===0) {
+            if ((!Device.devices[this.ieeeAddr].zoneID) || (Device.devices[this.ieeeAddr].zoneID ===0)) {
+                //debug.log(`Cannot find zoneID  '${this.ieeeAddr}' '${Device.devices[this.ieeeAddr].zoneID}`);
                 let max_zoneID = 0;
                 for (const ieeeAddr in Device.devices) {
                     if (max_zoneID < Device.devices[ieeeAddr].zoneID){
                         max_zoneID = Device.devices[ieeeAddr].zoneID;
                     }
                 } 
-                this.zoneID = max_zoneID++;
+                //debug.log(`Find max_zoneID  '${max_zoneID}'`);
+                this.zoneID = max_zoneID + 1;
+                this.save();
+            } else
+            {
+                this.zoneID = Device.devices[this.ieeeAddr].zoneID;
+                //debug.log(`Find zoneID  '${this.ieeeAddr}' '${Device.devices[this.ieeeAddr].zoneID}`);
             }
+            //debug.log(`ZoneID  '${this.zoneID}'`);
             for (const endpointID1 of matchDescriptors.endpoints) {
                 //matchDescriptors.endpoints.filter((e) => e !== 0 && !this.getEndpoint(e)).forEach((e) =>
                 //this._endpoints.push(Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr)));
