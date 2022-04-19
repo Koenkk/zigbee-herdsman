@@ -54,6 +54,7 @@ class Device extends Entity {
     private _skipTimeResponse: boolean;
     private _deleted: boolean;
     private _defaultSendRequestWhen?: SendRequestWhen;
+    private _zoneID: number;
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -103,6 +104,12 @@ class Device extends Entity {
     set defaultSendRequestWhen(defaultSendRequestWhen: SendRequestWhen) {
         this._defaultSendRequestWhen = defaultSendRequestWhen;
     }
+    //CongNT16:Addd
+    get zoneID(): number {return this._zoneID;}
+    set zoneID(zoneID: number) {
+        this._zoneID = zoneID;
+    }
+
 
     public meta: KeyValue;
 
@@ -156,6 +163,7 @@ class Device extends Entity {
         this.meta = meta;
         this._lastSeen = lastSeen;
         this._defaultSendRequestWhen = defaultSendRequestWhen;
+        this._zoneID = 0;
     }
 
     public createEndpoint(ID: number): Endpoint {
@@ -212,7 +220,7 @@ class Device extends Entity {
         // Respond to enroll requests
         if (frame.isSpecific() && frame.isCluster('ssIasZone') && frame.isCommand('enrollReq')) {
             debug.log(`IAS - '${this.ieeeAddr}' responding to enroll response`);
-            const payload = {enrollrspcode: 0, zoneid: 23};
+            const payload = {enrollrspcode: 0, zoneid: this.zoneID};
             await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true, transactionSequenceNumber: frame.Header.transactionSequenceNumber});
             this._skipDefaultResponse = true;
         }
@@ -346,7 +354,7 @@ class Device extends Entity {
             modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion,
             stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
             swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
-            meta: this.meta, lastSeen: this.lastSeen, defaultSendRequestWhen: this.defaultSendRequestWhen,
+            meta: this.meta, lastSeen: this.lastSeen, defaultSendRequestWhen: this.defaultSendRequestWhen,zoneID: this.zoneID,
         };
     }
 
@@ -607,6 +615,16 @@ class Device extends Entity {
 
         // Enroll IAS device
         if (matchDescriptors.endpoints !==[])   {
+            //Check ZoneID for this device, if >0 then reuse, else will create new zoneID
+            if (Device.devices[this.ieeeAddr]._zoneID ===0) {
+                let max_zoneID = 0;
+                for (const ieeeAddr in Device.devices) {
+                    if (max_zoneID < Device.devices[ieeeAddr].zoneID){
+                        max_zoneID = Device.devices[ieeeAddr].zoneID;
+                    }
+                } 
+                this.zoneID = max_zoneID++;
+            }
             for (const endpointID1 of matchDescriptors.endpoints) {
                 //matchDescriptors.endpoints.filter((e) => e !== 0 && !this.getEndpoint(e)).forEach((e) =>
                 //this._endpoints.push(Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr)));
