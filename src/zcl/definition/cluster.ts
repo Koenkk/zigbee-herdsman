@@ -211,6 +211,12 @@ const Cluster: {
                     {name: 'groupname', type: DataType.charStr},
                 ],
             },
+            miboxerSetZones: {
+                ID: 0xf0,
+                parameters: [
+                    {name: 'zones', type: BuffaloZclDataType.LIST_MIBOXER_ZONES},
+                ],
+            }
         },
         commandsResponse: {
             addRsp: {
