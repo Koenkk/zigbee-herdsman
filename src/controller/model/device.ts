@@ -208,7 +208,7 @@ class Device extends Entity {
 
     public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, endpoint: Endpoint): Promise<void> {
         const frame = dataPayload.frame;
-        this._skipDefaultResponse = false;
+        this.skipDefaultResponse = false;
         // Update reportable properties
         if (frame.isCluster('genBasic') && (frame.isCommand('readRsp') || frame.isCommand('report'))) {
             for (const [key, value] of Object.entries(ZclFrameConverter.attributeKeyValue(frame))) {
@@ -221,8 +221,8 @@ class Device extends Entity {
         if (frame.isSpecific() && frame.isCluster('ssIasZone') && frame.isCommand('enrollReq')) {
             debug.log(`IAS - '${this.ieeeAddr}' responding to enroll response`);
             const payload = {enrollrspcode: 0, zoneid: this.zoneID};
-            await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true, transactionSequenceNumber: frame.Header.transactionSequenceNumber});
-            this._skipDefaultResponse = true;
+            await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: false, transactionSequenceNumber: frame.Header.transactionSequenceNumber});
+            this.skipDefaultResponse = true;
         }
 
         // Reponse to read requests
