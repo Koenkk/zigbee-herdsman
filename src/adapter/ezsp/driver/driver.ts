@@ -3,7 +3,7 @@ import * as TsType from './../../tstype';
 import {Ezsp} from './ezsp';
 import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption} from './types';
 import {EventEmitter} from "events";
-import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState} from './types/struct';
+import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState, EmberRawFrame} from './types/struct';
 import {ember_security} from './utils';
 import {
     EmberOutgoingMessageType,
@@ -46,6 +46,22 @@ type EmberWaitressMatcher = {
     clusterId: number,
     sequence: number
 };
+
+type IeeeMfg = {
+    mfgId: number,
+    prefix: number[]
+};
+
+const IEEE_PREFIX_MFG_ID: IeeeMfg[] = [
+    {mfgId: 0x115F, prefix: [0x04,0xcf,0xfc]},
+    {mfgId: 0x115F, prefix: [0x54,0xef,0x44]},
+];
+const DEFAULT_MFG_ID = 0x1049;
+
+function sleep(ms: number) : Promise<void>{
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 
 export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT;
@@ -332,11 +348,27 @@ export class Driver extends EventEmitter {
         this.emit('deviceLeft', [nwk, ieee]);
     }
 
+    private async resetMfgId(mfgId: number): Promise<void> {
+        await this.ezsp.execCommand('setManufacturerCode', mfgId);
+        // 60 sec for waiting
+        await sleep(60000);
+        await this.ezsp.execCommand('setManufacturerCode', DEFAULT_MFG_ID);
+    }
+
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     private handleNodeJoined(nwk: number, ieee: EmberEUI64 | number[]): void {
         if (ieee && !(ieee instanceof EmberEUI64)) {
             ieee = new EmberEUI64(ieee);
         }
+        for(const rec of IEEE_PREFIX_MFG_ID) {
+            if ((Buffer.from((ieee as EmberEUI64).value)).indexOf(Buffer.from(rec.prefix)) == 0) {
+                // set ManufacturerCode
+                debug.log(`handleNodeJoined: change ManufacturerCode for ieee ${ieee} to ${rec.mfgId}`);
+                this.resetMfgId(rec.mfgId);
+                break;
+            }
+        }
+
         this.eui64ToNodeId.set(ieee.toString(), nwk);
         this.emit('deviceJoined', [nwk, ieee]);
     }
@@ -395,6 +427,17 @@ export class Driver extends EventEmitter {
         }
     }
 
+    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer): Promise<boolean> {
+        try {
+            const msgData = Buffer.concat([EmberRawFrame.serialize(EmberRawFrame, rawFrame), data]);
+            await this.ezsp.execCommand('sendRawMessage', msgData);
+            return true;
+        } catch (e) {
+            debug.error(`Request error ${e}: ${e.stack}`);
+            return false;
+        }
+    }
+
     private nextTransactionID(): number {
         this.transactionID = (this.transactionID + 1) & 0xFF;
         return this.transactionID;
@@ -411,6 +454,12 @@ export class Driver extends EventEmitter {
         //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY;
         //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
         frame.options = EmberApsOption.APS_OPTION_NONE;
+        return frame;
+    }
+
+    public makeEmberRawFrame():EmberRawFrame {
+        const frame = new EmberRawFrame();
+        frame.sequence = this.nextTransactionID();
         return frame;
     }
 
