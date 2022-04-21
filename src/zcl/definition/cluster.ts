@@ -4734,10 +4734,7 @@ const Cluster: {
             stateAfterPowerRestored: {ID: 0x000f, type: DataType.uint8},
             loadLevelIndicatorTimeout: {ID: 0x0011, type: DataType.uint8},
             activePowerReports: {ID: 0x0012, type: DataType.uint16},
-            periodicPowerAndEnergyReports: {
-                ID: 0x0013,
-                type: DataType.uint16,
-            },
+            periodicPowerAndEnergyReports: {ID: 0x0013, type: DataType.uint16},
             activeEnergyReports: {ID: 0x0014, type: DataType.uint16},
             powerType: {ID: 0x0015, type: DataType.boolean},
             switchType: {ID: 0x0016, type: DataType.uint8},
@@ -4776,10 +4773,7 @@ const Cluster: {
             ledColorWhenOn: {ID: 0x005f, type: DataType.uint8},
             ledColorWhenOff: {ID: 0x060, type: DataType.uint8},
             ledIntensityWhenOn: {ID: 0x0061, type: DataType.uint8},
-            ledIntensityWhenOff: {
-                ID: 0x0062,
-                type: DataType.uint8,
-            },
+            ledIntensityWhenOff: {ID: 0x0062, type: DataType.uint8},
             localProtection: {ID: 0x0100, type: DataType.boolean},
             remoteProtection: {ID: 0x0101, type: DataType.boolean},
             outputMode: {ID: 0x0102, type: DataType.boolean},
@@ -4790,20 +4784,20 @@ const Cluster: {
             ledEffect: {
                 ID: 1,
                 parameters: [
-                    {name: "effect", type: DataType.uint8},
-                    {name: "color", type: DataType.uint8},
-                    {name: "level", type: DataType.uint8},
-                    {name: "duration", type: DataType.uint8},
+                    {name: 'effect', type: DataType.uint8},
+                    {name: 'color', type: DataType.uint8},
+                    {name: 'level', type: DataType.uint8},
+                    {name: 'duration', type: DataType.uint8},
                 ],
             },
             individualLedEffect:{
                 ID: 3,
                 parameters: [
-                    {name: "led", type: DataType.uint8},
-                    {name: "effect", type: DataType.uint8},
-                    {name: "color", type: DataType.uint8},
-                    {name: "level", type: DataType.uint8},
-                    {name: "duration", type: DataType.uint8},
+                    {name: 'led', type: DataType.uint8},
+                    {name: 'effect', type: DataType.uint8},
+                    {name: 'color', type: DataType.uint8},
+                    {name: 'level', type: DataType.uint8},
+                    {name: 'duration', type: DataType.uint8},
                 ]
             }
         },
