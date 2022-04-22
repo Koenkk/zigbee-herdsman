@@ -4105,20 +4105,27 @@ const Cluster: {
         },
         commandsResponse: {}
     },
-    manuSpecificNikoSwitchSetup: {
+    manuSpecificNiko1: {
         ID: 0xfc00,
         manufacturerCode: ManufacturerCode.NIKO_NV,
         attributes: {
-            operationMode: {ID: 0x0000, type: DataType.enum8},
+            /* WARNING: 0x0000 has different datatypes!
+             *          enum8 (switch) vs. bitmap8 (outlet)
+             *          unknown usage/function on outlet
+             */
+            switchOperationMode: {ID: 0x0000, type: DataType.enum8},
+            outletLedColor: {ID: 0x0100, type: DataType.uint24},
+            outletChildLock: {ID: 0x0101, type: DataType.uint8},
+            outletLedState: {ID: 0x0104, type: DataType.uint8},
         },
         commands: {},
         commandsResponse: {}
     },
-    manuSpecificNikoSwitch: {
+    manuSpecificNiko2: {
         ID: 0xfc01,
         manufacturerCode: ManufacturerCode.NIKO_NV,
         attributes: {
-            action: {ID: 0x0002, type: DataType.uint8},
+            switchAction: {ID: 0x0002, type: DataType.uint8},
         },
         commands: {
         },
