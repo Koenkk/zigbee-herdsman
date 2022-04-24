@@ -1590,4 +1590,33 @@ describe('Zcl', () => {
 
         expect(frame.getWritten()).toStrictEqual(Buffer.from(expected))
     });
+    
+    it('ZclFrame parse MiBoxer zone configuration command', () => {
+        const zoneConfigPayload = [0x11, 0x01, 0xf0, 0x08, 0x84, 0x2b, 0x01, 0x98, 0x2b, 0x02, 0xac, 0x2b, 0x03, 0xc0, 0x2b, 0x04, 0xd4, 0x2b, 0x05, 0xe8, 0x2b, 0x06, 0xfc, 0x2b, 0x07, 0x10, 0x2c, 0x08];
+        const zoneConfigFrame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genGroups").ID, Buffer.from(zoneConfigPayload));
+        expect(zoneConfigFrame.Payload.zones).toStrictEqual([
+            {zoneNum: 1, groupId: 0x2b84},
+            {zoneNum: 2, groupId: 0x2b98},
+            {zoneNum: 3, groupId: 0x2bac},
+            {zoneNum: 4, groupId: 0x2bc0},
+            {zoneNum: 5, groupId: 0x2bd4},
+            {zoneNum: 6, groupId: 0x2be8},
+            {zoneNum: 7, groupId: 0x2bfc},
+            {zoneNum: 8, groupId: 0x2c10},
+        ]);
+    });
+    it('ZclFrame serialize MiBoxer zone configuration command', () => {
+        const testZones = [
+            {zoneNum: 1, groupId: 0x2b84},
+            {zoneNum: 2, groupId: 0x2b98},
+            {zoneNum: 3, groupId: 0x2bac},
+            {zoneNum: 4, groupId: 0x2bc0},
+            {zoneNum: 5, groupId: 0x2bd4},
+            {zoneNum: 6, groupId: 0x2be8},
+            {zoneNum: 7, groupId: 0x2bfc},
+            {zoneNum: 8, groupId: 0x2c10},
+        ];
+        const zoneConfigFrame = Zcl.ZclFrame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true, null, 1, 'miboxerSetZones', Zcl.Utils.getCluster("genGroups").ID, { zones: testZones });
+        expect(zoneConfigFrame.toBuffer()).toStrictEqual(Buffer.from([0x11, 0x01, 0xf0, 0x08, 0x84, 0x2b, 0x01, 0x98, 0x2b, 0x02, 0xac, 0x2b, 0x03, 0xc0, 0x2b, 0x04, 0xd4, 0x2b, 0x05, 0xe8, 0x2b, 0x06, 0xfc, 0x2b, 0x07, 0x10, 0x2c, 0x08]));
+    });
 });

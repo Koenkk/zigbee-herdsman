@@ -11,6 +11,7 @@ enum BuffaloZclDataType {
     GDP_FRAME = 1009,
     STRUCTURED_SELECTOR = 1010,
     LIST_TUYA_DATAPOINT_VALUES = 1011,
+    LIST_MIBOXER_ZONES = 1012,
 }
 
 export default BuffaloZclDataType;

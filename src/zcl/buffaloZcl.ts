@@ -128,6 +128,11 @@ interface TuyaDataPointValue {
     data: Buffer;
 }
 
+interface MiboxerZone {
+    zoneNum: number;
+    groupId: number;
+}
+
 class BuffaloZcl extends Buffalo {
     private readUseDataType(options: BuffaloZclOptions): TsType.Value {
         return this.read(options.dataType, options);
@@ -501,6 +506,26 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
+    private readListMiboxerZones(): MiboxerZone[] {
+        const value = [];
+        const len = this.readUInt8();
+        for (let i = 0; i < len; i++) {
+            value.push({
+                groupId: this.readUInt16(),
+                zoneNum: this.readUInt8(),
+            });
+        }
+        return value;
+    }
+
+    private writeListMiboxerZones(values: MiboxerZone[]): void {
+        this.writeUInt8(values.length);
+        for (const value of values) {
+            this.writeUInt16(value.groupId);
+            this.writeUInt8(value.zoneNum);
+        }
+    }
+
     private readUInt40(): [number, number] {
         const lsb = this.readUInt32();
         const msb = this.readUInt8();
@@ -576,6 +601,8 @@ class BuffaloZcl extends Buffalo {
             return this.writeListThermoTransitions(value);
         } else if (type === 'LIST_TUYA_DATAPOINT_VALUES') {
             return this.writeListTuyaDataPointValues(value);
+        } else if (type === 'LIST_MIBOXER_ZONES') {
+            return this.writeListMiboxerZones(value);
         } else if (type === 'GDP_FRAME') {
             return this.writeGdpFrame(value);
         } else if (type === 'uint48') {
@@ -620,6 +647,8 @@ class BuffaloZcl extends Buffalo {
             return this.readGdpFrame(options);
         } else if (type === 'LIST_TUYA_DATAPOINT_VALUES') {
             return this.readListTuyaDataPointValues();
+        } else if (type === 'LIST_MIBOXER_ZONES') {
+            return this.readListMiboxerZones();
         } else if (type === 'uint40') {
             return this.readUInt40();
         } else if (type === 'uint48') {
