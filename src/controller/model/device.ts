@@ -8,6 +8,7 @@ import Debug from "debug";
 import * as Zcl from '../../zcl';
 import assert from 'assert';
 import {ZclFrameConverter} from '../helpers';
+import { coordinatorEndpoints } from 'src/adapter/zigate/driver/constants';
 
 /**
  * @ignore
@@ -222,6 +223,15 @@ class Device extends Entity {
             debug.log(`IAS - '${this.ieeeAddr}' responding to enroll response`);
             const payload = {enrollrspcode: 0, zoneid: this.zoneID};
             await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: false, transactionSequenceNumber: frame.Header.transactionSequenceNumber});
+            const coordinator = Device.byType('Coordinator')[0];
+            //await endpoint.bind(frame.Cluster.ID,coordinator.endpoints[0]);
+            await endpoint.bind(frame.Cluster.ID,1);
+            await endpoint.configureReporting('ssIasZone',
+                [{ attribute: {ID: 16, type: 240},
+                minimumReportInterval: 60,
+                maximumReportInterval: 3600,
+                reportableChange: 0,}],
+                );
             this.skipDefaultResponse = true;
         }
 
@@ -598,7 +608,6 @@ class Device extends Entity {
         for (let attempt = 0; attempt < 2; attempt++) {
             try {
                 matchDescriptors = await Entity.adapter.matchDescriptor(this.networkAddress, haid, numinput, inlist, numoutput, outlist)
-                matchDescriptors = await Entity.adapter.activeEndpoints(this.networkAddress);
                 break;
             } catch (error) {
                 debug.log(`Interview - match descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`);
