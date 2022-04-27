@@ -581,7 +581,7 @@ class Controller extends events.EventEmitter {
                 await this.greenPower.onZclGreenPowerData(dataPayload);
                 // lookup encapsulated gpDevice for further processing
                 gpDevice = Device.byNetworkAddress(dataPayload.frame.Payload.srcID & 0xFFFF);
-            }
+            } 
         }
 
         let device = gpDevice ? gpDevice : (typeof dataPayload.address === 'string' ?
@@ -643,6 +643,20 @@ class Controller extends events.EventEmitter {
             meta.manufacturerCode = frame.Header.manufacturerCode;
             meta.frameControl = frame.Header.frameControl;
 
+            //CongNT16: Check duplicate IAS Zone message from PIR device
+            if (frame.isCluster('ssIasZone') && command.name === 'statusChangeNotification' && meta.zclTransactionSequenceNumber === device.lastSequenceNumber) {
+                debug.log(
+                    `'Received duplicated data from device with address '${dataPayload.address}', ` +
+                    `skipping...`
+                );
+                return;
+            } else {
+                device.lastSequenceNumber = meta.zclTransactionSequenceNumber;
+                // let lastMeta = {
+                //     zclTransactionSequenceNumber: meta.zclTransactionSequenceNumber
+                // };
+            }
+           
             if (frame.isGlobal()) {
                 if (frame.isCommand('report')) {
                     type = 'attributeReport';

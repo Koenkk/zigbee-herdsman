@@ -56,7 +56,8 @@ class Device extends Entity {
     private _deleted: boolean;
     private _defaultSendRequestWhen?: SendRequestWhen;
     private _zoneID: number;
-
+    private _lastSequenceNumber: ZclTransactionSequenceNumber;
+    
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
     set ieeeAddr(ieeeAddr: string) {this._ieeeAddr = ieeeAddr;}
@@ -111,6 +112,10 @@ class Device extends Entity {
         this._zoneID = zoneID;
     }
 
+    get lastSequenceNumber(): ZclTransactionSequenceNumber {return this._lastSequenceNumber;}
+    set lastSequenceNumber(lastSequenceNumber: ZclTransactionSequenceNumber) {
+        this._lastSequenceNumber = lastSequenceNumber;
+    }
 
     public meta: KeyValue;
 
@@ -165,6 +170,7 @@ class Device extends Entity {
         this._lastSeen = lastSeen;
         this._defaultSendRequestWhen = defaultSendRequestWhen;
         this._zoneID = 0;
+        this._lastSequenceNumber = 0;
     }
 
     public createEndpoint(ID: number): Endpoint {
