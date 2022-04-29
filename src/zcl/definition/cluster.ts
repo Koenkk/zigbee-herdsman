@@ -4787,7 +4787,7 @@ const Cluster: {
             defaultLevelRemote: {ID: 0x000e, type: DataType.uint8},
             stateAfterPowerRestored: {ID: 0x000f, type: DataType.uint8},
             loadLevelIndicatorTimeout: {ID: 0x0011, type: DataType.uint8},
-            activePowerReports: {ID: 0x0012, type: DataType.uint16},
+            activePowerReports: {ID: 0x0012, type: DataType.uint8},
             periodicPowerAndEnergyReports: {ID: 0x0013, type: DataType.uint16},
             activeEnergyReports: {ID: 0x0014, type: DataType.uint16},
             powerType: {ID: 0x0015, type: DataType.boolean},
