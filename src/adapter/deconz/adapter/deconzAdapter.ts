@@ -1047,6 +1047,10 @@ class DeconzAdapter extends Adapter {
 
     private checkReceivedGreenPowerIndication(view: DataView) {
         const payBuf = Buffer.from(view.buffer);
+        
+        // Set direction to CLIENT_TO_SERVER
+        payBuf[0] &= ~(1<<3);
+        
         const frame = ZclFrame.fromBuffer(0x21, payBuf);
         const payload: Events.ZclDataPayload = {
             frame: frame,
