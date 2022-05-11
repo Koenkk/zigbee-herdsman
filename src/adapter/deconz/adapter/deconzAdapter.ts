@@ -1045,18 +1045,12 @@ class DeconzAdapter extends Adapter {
         });
     }
 
-    private checkReceivedGreenPowerIndication(ind: gpDataInd) {
-        ind.clusterId = 0x21;
-
-        let gpFrame = [ind.rspId, ind.seqNr, ind.id, ind.options & 0xff, (ind.options >> 8) & 0xff,
-        ind.srcId & 0xff, (ind.srcId >> 8) & 0xff, (ind.srcId >> 16) & 0xff, (ind.srcId >> 24) & 0xff,
-        ind.frameCounter & 0xff, (ind.frameCounter >> 8) & 0xff, (ind.frameCounter >> 16) & 0xff, (ind.frameCounter >> 24) & 0xff,
-        ind.commandId, ind.commandFrameSize].concat(ind.commandFrame);
-
-        const payBuf = Buffer.from(gpFrame);
+    private checkReceivedGreenPowerIndication(view: DataView) {
+        const payBuf = Buffer.from(view.buffer);
+        const frame = ZclFrame.fromBuffer(0x21, payBuf);
         const payload: Events.ZclDataPayload = {
-            frame: ZclFrame.fromBuffer(ind.clusterId, payBuf),
-            address: ind.srcId,
+            frame: frame,
+            address: frame.Payload.srcID,
             endpoint: 242, // GP endpoint
             linkquality: 127,
             groupID: 0x0b84,
