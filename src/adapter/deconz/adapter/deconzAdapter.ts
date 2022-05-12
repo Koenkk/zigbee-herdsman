@@ -1048,6 +1048,8 @@ class DeconzAdapter extends Adapter {
     private checkReceivedGreenPowerIndication(view: DataView) {
         const payBuf = Buffer.from(view.buffer);
         
+        debug("Payload Buffer: " + payBuf.toString("hex"))
+
         // Set direction to CLIENT_TO_SERVER
         payBuf[0] &= ~(1<<3);
         
