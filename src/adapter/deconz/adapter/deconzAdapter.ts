@@ -1053,7 +1053,9 @@ class DeconzAdapter extends Adapter {
     private checkReceivedGreenPowerIndication(ind: gpDataInd) {
         ind.clusterId = 0x21;
 
-        let gpFrame = [ind.rspId, ind.seqNr, ind.id, ind.options & 0xff, (ind.options >> 8) & 0xff,
+        let gpFrame = [ind.rspId, ind.seqNr, ind.id, 
+            0, 0, // 0, 0 for options is a temp fix until https://github.com/Koenkk/zigbee-herdsman/pull/536 is merged.
+            // ind.options & 0xff, (ind.options >> 8) & 0xff,
         ind.srcId & 0xff, (ind.srcId >> 8) & 0xff, (ind.srcId >> 16) & 0xff, (ind.srcId >> 24) & 0xff,
         ind.frameCounter & 0xff, (ind.frameCounter >> 8) & 0xff, (ind.frameCounter >> 16) & 0xff, (ind.frameCounter >> 24) & 0xff,
         ind.commandId, ind.commandFrameSize].concat(ind.commandFrame);
