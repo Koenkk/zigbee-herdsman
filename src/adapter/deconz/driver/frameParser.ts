@@ -288,32 +288,48 @@ function parseReadReceivedDataResponse(view : DataView) : object {
 }
 
 function parseEnqueueSendDataResponse(view : DataView) : number {
-    const status = view.getUint8(2);
-    const requestId = view.getUint8(8);
-    const deviceState = view.getUint8(7);
-    debug("DATA_REQUEST RESPONSE - request id: " + requestId + " status: " + status);
-    frameParserEvents.emit('receivedDataNotification', deviceState);
-    return deviceState;
+    try {
+        const status = view.getUint8(2);
+        const requestId = view.getUint8(8);
+        const deviceState = view.getUint8(7);
+        debug("DATA_REQUEST RESPONSE - request id: " + requestId + " status: " + status);
+        frameParserEvents.emit('receivedDataNotification', deviceState);
+        return deviceState;
+    } catch (error) {
+        debug("parseEnqueueSendDataResponse - " + error);
+        return null;
+    }
 }
 
 function parseWriteParameterResponse(view : DataView) : number {
-    const parameterId = view.getUint8(7);
-    debug(`write parameter response - parameter id: ${parameterId} - status: ${view.getUint8(2)}`);
-    return parameterId;
+    try {
+        const parameterId = view.getUint8(7);
+        debug(`write parameter response - parameter id: ${parameterId} - status: ${view.getUint8(2)}`);
+        return parameterId;
+    } catch (error) {
+        debug("parseWriteParameterResponse - " + error);
+        return null;
+    }
 }
 
 function parseReceivedDataNotification(view : DataView) : number {
-    const deviceState = view.getUint8(5);
-    debug("DEVICE_STATE changed: " + deviceState.toString(2));
-    frameParserEvents.emit('receivedDataNotification', deviceState);
-    return deviceState;
+    try {    
+        const deviceState = view.getUint8(5);
+        debug("DEVICE_STATE changed: " + deviceState.toString(2));
+        frameParserEvents.emit('receivedDataNotification', deviceState);
+        return deviceState;
+    } catch (error) {
+        debug("parseReceivedDataNotification - " + error);
+        return null;
+    }
 }
 
 function parseGreenPowerDataIndication(view : DataView) : object {
-    const ind: gpDataInd = {};
-    ind.seqNr = view.getUint8(1);
+    try {
+        const ind: gpDataInd = {};
+        ind.seqNr = view.getUint8(1);
 
-    if (view.byteLength < 30) {
+        if (view.byteLength < 30) {
         debug("GP data notification");
         ind.id = 0x00; // 0 = notification, 4 = commissioning
         ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
@@ -330,7 +346,7 @@ function parseGreenPowerDataIndication(view : DataView) : object {
             i++;
         }
         ind.commandFrame = payload;
-    } else {
+        } else {
         debug("GP commissioning notification");
         ind.id = 0x04; // 0 = notification, 4 = commissioning
         ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
@@ -347,9 +363,9 @@ function parseGreenPowerDataIndication(view : DataView) : object {
             i++;
         }
         ind.commandFrame = payload;
-    }
+        }
 
-    if (!(lastReceivedGpInd.srcId === ind.srcId &&
+        if (!(lastReceivedGpInd.srcId === ind.srcId &&
           lastReceivedGpInd.commandId === ind.commandId &&
           lastReceivedGpInd.frameCounter === ind.frameCounter)) {
 
@@ -359,8 +375,12 @@ function parseGreenPowerDataIndication(view : DataView) : object {
         //debug(`GP_DATA_INDICATION - src id: ${ind.srcId} cmd id: ${ind.commandId} frameCounter: ${ind.frameCounter}`);
         debug(`GP_DATA_INDICATION - src id: 0x${ind.srcId.toString(16)} cmd id: 0x${ind.commandId.toString(16)} frameCounter: 0x${ind.frameCounter.toString(16)}`);
         frameParserEvents.emit('receivedGreenPowerIndication', ind);
+        }
+        return ind;
+    } catch (error) {
+        debug("GREEN_POWER INDICATION - " + error);
+        return null;
     }
-    return ind;
 }
 
 function parseMacPollCommand(view : DataView) : number {

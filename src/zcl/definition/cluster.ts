@@ -211,6 +211,12 @@ const Cluster: {
                     {name: 'groupname', type: DataType.charStr},
                 ],
             },
+            miboxerSetZones: {
+                ID: 0xf0,
+                parameters: [
+                    {name: 'zones', type: BuffaloZclDataType.LIST_MIBOXER_ZONES},
+                ],
+            }
         },
         commandsResponse: {
             addRsp: {
@@ -515,6 +521,7 @@ const Cluster: {
             remainingTime: {ID: 1, type: DataType.uint16},
             minLevel: {ID: 2, type: DataType.uint8},
             maxLevel: {ID: 3, type: DataType.uint8},
+            options: {ID: 15, type: DataType.bitmap8},
             onOffTransitionTime: {ID: 16, type: DataType.uint16},
             onLevel: {ID: 17, type: DataType.uint8},
             onTransitionTime: {ID: 18, type: DataType.uint16},
@@ -1199,20 +1206,24 @@ const Cluster: {
                 ID: 0,
                 parameters: [
                     {name: 'options', type: DataType.uint16},
-                    {name: 'srcID', type: DataType.uint32},
+                    {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.uint8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
                     {name: 'frameCounter', type: DataType.uint32},
                     {name: 'commandID', type: DataType.uint8},
                     {name: 'payloadSize', type: DataType.uint8},
                     {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
-                    {name: 'gppNwkAddr', type: DataType.uint16,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x800}]},
-                    {name: 'gppGddLink', type: DataType.uint8,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x800}]},
+                    {name: 'gppNwkAddr', type: DataType.uint16,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x4000}]},
+                    {name: 'gppGddLink', type: DataType.uint8,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x4000}]},
                 ],
             },
             commisioningNotification: {
                 ID: 4,
                 parameters: [
                     {name: 'options', type: DataType.uint16},
-                    {name: 'srcID', type: DataType.uint32},
+                    {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.uint8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
                     {name: 'frameCounter', type: DataType.uint32},
                     {name: 'commandID', type: DataType.uint8},
                     {name: 'payloadSize', type: DataType.uint8},
@@ -1223,14 +1234,32 @@ const Cluster: {
             },
         },
         commandsResponse: {
+            response: {
+                ID: 6,
+                parameters: [
+                    {name: 'options', type: DataType.uint8},
+                    {name: 'tempMaster', type: DataType.uint16},
+                    {name: 'tempMasterTx', type: DataType.uint8},
+                    {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.uint8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdCmd', type: DataType.uint8},
+                    {name: 'gpdPayload', type: BuffaloZclDataType.GDP_FRAME},
+                ],
+            },
             pairing: {
                 ID: 1,
                 parameters: [
                     {name: 'options', type: DataType.uint24},
-                    {name: 'srcID', type: DataType.uint32},
-                    {name: 'sinkIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 6},]},
-                    {name: 'sinkNwkAddr', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 6}]},
-                    {name: 'sinkGroupID', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 4}]},
+                    {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.uint8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'sinkIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b110}]},
+                    {name: 'sinkIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b000}]},
+                    {name: 'sinkNwkAddr', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b110}]},
+                    {name: 'sinkNwkAddr', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b000}]},
+                    {name: 'sinkGroupID', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b100}]},
+                    {name: 'sinkGroupID', type: DataType.uint16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b010}]},
                     {name: 'deviceID', type: DataType.uint8, conditions: [{type: 'bitMaskSet', param:'options', mask: 0x0008}]},
                     {name: 'frameCounter', type: DataType.uint32, conditions: [{type: 'bitMaskSet', param:'options', mask: 0x4000}]},
                     {name: 'gpdKey', type: DataType.secKey, conditions: [{type: 'bitMaskSet', param:'options', mask: 0x8000}]},
@@ -2080,6 +2109,11 @@ const Cluster: {
                 parameters: [
                 ],
             },
+            plugwiseCalibrateValve: {
+                ID: 0xa0,
+                parameters: [
+                ],
+            }
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
@@ -3383,7 +3417,16 @@ const Cluster: {
             owonL3ReactiveEnergy: {ID: 0x4102, type: DataType.uint48,manufacturerCode: ManufacturerCode.OWON},
             owonReactiveEnergySum: {ID: 0x4103, type: DataType.uint48,manufacturerCode: ManufacturerCode.OWON},
             owonFrequency: {ID: 0x5005, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
-			
+            owonReportMap: {ID: 0x1000, type: DataType.bitmap8,manufacturerCode: ManufacturerCode.OWON},
+            owonReactivePowerSum: {ID: 0x2103, type: DataType.int24,manufacturerCode: ManufacturerCode.OWON},
+            owonLastHistoricalRecordTime: {ID: 0x5000, type: DataType.uint32,manufacturerCode: ManufacturerCode.OWON},
+            owonOldestHistoricalRecordTime: {ID: 0x5001, type: DataType.uint32,manufacturerCode: ManufacturerCode.OWON},
+            owonMinimumReportCycle: {ID: 0x5002, type: DataType.uint32,manufacturerCode: ManufacturerCode.OWON},
+            owonMaximumReportCycle: {ID: 0x5003, type: DataType.uint32,manufacturerCode: ManufacturerCode.OWON},
+            owonSentHistoricalRecordState: {ID: 0x5004, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
+            owonAccumulativeEnergyThreshold: {ID: 0x5006, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
+            owonReportMode: {ID: 0x5007, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
+            owonPercentChangeInPower: {ID: 0x5007, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
         },
         commands: {
             getProfile: {
@@ -3421,6 +3464,16 @@ const Cluster: {
                 parameters: [
                 ],
             },
+            owonGetHistoryRecord: {
+                ID: 0x20,
+                parameters: [
+                ],
+            },
+            owonStopSendingHistoricalRecord: {
+                ID: 0x21,
+                parameters: [
+                ],
+            },
         },
         commandsResponse: {
             getProfileRsp: {
@@ -3445,6 +3498,11 @@ const Cluster: {
             },
             getSnapshotRsp: {
                 ID: 4,
+                parameters: [
+                ],
+            },
+            owonGetHistoryRecordRsp: {
+                ID: 0x20,
                 parameters: [
                 ],
             },
@@ -4054,20 +4112,27 @@ const Cluster: {
         },
         commandsResponse: {}
     },
-    manuSpecificNikoSwitchSetup: {
+    manuSpecificNiko1: {
         ID: 0xfc00,
         manufacturerCode: ManufacturerCode.NIKO_NV,
         attributes: {
-            operationMode: {ID: 0x0000, type: DataType.enum8},
+            /* WARNING: 0x0000 has different datatypes!
+             *          enum8 (switch) vs. bitmap8 (outlet)
+             *          unknown usage/function on outlet
+             */
+            switchOperationMode: {ID: 0x0000, type: DataType.enum8},
+            outletLedColor: {ID: 0x0100, type: DataType.uint24},
+            outletChildLock: {ID: 0x0101, type: DataType.uint8},
+            outletLedState: {ID: 0x0104, type: DataType.uint8},
         },
         commands: {},
         commandsResponse: {}
     },
-    manuSpecificNikoSwitch: {
+    manuSpecificNiko2: {
         ID: 0xfc01,
         manufacturerCode: ManufacturerCode.NIKO_NV,
         attributes: {
-            action: {ID: 0x0002, type: DataType.uint8},
+            switchAction: {ID: 0x0002, type: DataType.uint8},
         },
         commands: {
         },
@@ -4208,7 +4273,19 @@ const Cluster: {
                     {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
-
+            /**
+             * FIXME: This command is not listed in Tuya zigbee cluster description,
+             *  but there is some command 0x05 (description is: Status query)
+             *  in `Serial command list` section of the same document
+             *  So, need to investigate more information about it
+             */
+            activeStatusReportAlt: {
+                ID: 5,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'dpValues', type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
+                ],
+            },
             /**
              * FIXME: This command is not listed in Tuya zigbee cluster description,
              *  but there is some command 0x06 (description is: Status query)
@@ -4689,6 +4766,109 @@ const Cluster: {
             buttonEvent: {ID: 0x0008, type: DataType.uint32},
         },
         commands: {},
+        commandsResponse: {},
+    },
+    manuSpecificInovelliVZM31SN: {
+        ID: 64561,
+        manufacturerCode: 0x122f,
+        attributes: {
+            dimmingSpeedUpRemote: {ID: 0x001, type: DataType.uint8},
+            dimmingSpeedUpLocal: {ID: 0x0002, type: DataType.uint8},
+            rampRateOffToOnRemote: {ID: 0x0003, type: DataType.uint8},
+            rampRateOffToOnLocal: {ID: 0x0004, type: DataType.uint8},
+            dimmingSpeedDownRemote: {ID: 0x0005 , type: DataType.uint8},
+            dimmingSpeedDownLocal: {ID: 0x0006, type: DataType.uint8},
+            rampRateOnToOffRemote: {ID: 0x0007, type: DataType.uint8},
+            rampRateOnToOffLocal: {ID: 0x0008, type: DataType.uint8},
+            minimumLevel: {ID: 0x0009, type: DataType.uint8},
+            maximumLevel: {ID: 0x000a, type: DataType.uint8},
+            invertSwitch: {ID: 0x000b, type: DataType.boolean},
+            autoTimerOff: {ID: 0x000c, type: DataType.uint16},
+            defaultLevelLocal: {ID: 0x000d, type: DataType.uint8},
+            defaultLevelRemote: {ID: 0x000e, type: DataType.uint8},
+            stateAfterPowerRestored: {ID: 0x000f, type: DataType.uint8},
+            loadLevelIndicatorTimeout: {ID: 0x0011, type: DataType.uint8},
+            activePowerReports: {ID: 0x0012, type: DataType.uint8},
+            periodicPowerAndEnergyReports: {ID: 0x0013, type: DataType.uint16},
+            activeEnergyReports: {ID: 0x0014, type: DataType.uint16},
+            powerType: {ID: 0x0015, type: DataType.boolean},
+            switchType: {ID: 0x0016, type: DataType.uint8},
+            buttonDelay: {ID: 0x0032, type: DataType.uint8},
+            deviceBindNumber: {ID: 0x0033, type: DataType.uint8},
+            smartBulbMode: {ID: 0x0034, type: DataType.boolean},
+            doubleTapUpForFullBrightness: {ID: 0x0035, type: DataType.boolean},
+            defaultLed1ColorWhenOn: {ID: 0x003c, type: DataType.uint8},
+            defaultLed1ColorWhenOff: {ID: 0x003d, type: DataType.uint8},
+            defaultLed1IntensityWhenOn: {ID: 0x003e, type: DataType.uint8},
+            defaultLed1IntensityWhenOff: {ID: 0x003f, type: DataType.uint8},
+            defaultLed2ColorWhenOn: {ID: 0x0041, type: DataType.uint8},
+            defaultLed2ColorWhenOff: {ID: 0x0042, type: DataType.uint8},
+            defaultLed2IntensityWhenOn: {ID: 0x0043, type: DataType.uint8},
+            defaultLed2IntensityWhenOff: {ID: 0x0044, type: DataType.uint8},
+            defaultLed3ColorWhenOn: {ID: 0x0046, type: DataType.uint8},
+            defaultLed3ColorWhenOff: {ID: 0x0047, type: DataType.uint8},
+            defaultLed3IntensityWhenOn: {ID: 0x0048, type: DataType.uint8},
+            defaultLed3IntensityWhenOff: {ID: 0x0049, type: DataType.uint8},
+            defaultLed4ColorWhenOn: {ID: 0x004b, type: DataType.uint8},
+            defaultLed4ColorWhenOff: {ID: 0x004c, type: DataType.uint8},
+            defaultLed4IntensityWhenOn: {ID: 0x004d, type: DataType.uint8},
+            defaultLed4IntensityWhenOff: {ID: 0x004e, type: DataType.uint8},
+            defaultLed5ColorWhenOn: {ID: 0x0050, type: DataType.uint8},
+            defaultLed5ColorWhenOff: {ID: 0x0051, type: DataType.uint8},
+            defaultLed5IntensityWhenOn: {ID: 0x0052, type: DataType.uint8},
+            defaultLed5IntensityWhenOff: {ID: 0x0053, type: DataType.uint8},
+            defaultLed6ColorWhenOn: {ID: 0x0055, type: DataType.uint8},
+            defaultLed6ColorWhenOff: {ID: 0x0056, type: DataType.uint8},
+            defaultLed6IntensityWhenOn: {ID: 0x0057, type: DataType.uint8},
+            defaultLed6IntensityWhenOff: {ID: 0x0058, type: DataType.uint8},
+            defaultLed7ColorWhenOn: {ID: 0x005a, type: DataType.uint8},
+            defaultLed7ColorWhenOff: {ID: 0x005b, type: DataType.uint8},
+            defaultLed7IntensityWhenOn: {ID: 0x005c, type: DataType.uint8},
+            defaultLed7IntensityWhenOff: {ID: 0x005d, type: DataType.uint8},
+            ledColorWhenOn: {ID: 0x005f, type: DataType.uint8},
+            ledColorWhenOff: {ID: 0x060, type: DataType.uint8},
+            ledIntensityWhenOn: {ID: 0x0061, type: DataType.uint8},
+            ledIntensityWhenOff: {ID: 0x0062, type: DataType.uint8},
+            localProtection: {ID: 0x0100, type: DataType.boolean},
+            remoteProtection: {ID: 0x0101, type: DataType.boolean},
+            outputMode: {ID: 0x0102, type: DataType.boolean},
+            onOffLedMode: {ID: 0x0103, type: DataType.boolean},
+            firmwareUpdateInProgressIndicator:{ID: 0x0104, type: DataType.boolean},
+        },
+        commands: {
+            ledEffect: {
+                ID: 1,
+                parameters: [
+                    {name: 'effect', type: DataType.uint8},
+                    {name: 'color', type: DataType.uint8},
+                    {name: 'level', type: DataType.uint8},
+                    {name: 'duration', type: DataType.uint8},
+                ],
+            },
+            individualLedEffect:{
+                ID: 3,
+                parameters: [
+                    {name: 'led', type: DataType.uint8},
+                    {name: 'effect', type: DataType.uint8},
+                    {name: 'color', type: DataType.uint8},
+                    {name: 'level', type: DataType.uint8},
+                    {name: 'duration', type: DataType.uint8},
+                ]
+            }
+        },
+        commandsResponse: {
+        },
+    },
+    owonClearMetering: {
+        ID: 0xFFE0,
+        manufacturerCode: ManufacturerCode.OWON,
+        attributes: {},
+        commands: {
+            owonClearMeasurementData: {
+                ID: 0x00,
+                parameters: [],
+            },
+        },
         commandsResponse: {},
     },
 };

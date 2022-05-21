@@ -143,7 +143,7 @@ export default class ZiGate extends EventEmitter {
                 return Promise.race(waiters);
             } catch (e) {
                 debug.error('sendCommand error:', e);
-                return Promise.reject();
+                return Promise.reject(new Error('sendCommand error: ' + e));
             }
         });
 

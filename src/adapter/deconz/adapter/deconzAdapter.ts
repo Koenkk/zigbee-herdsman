@@ -158,10 +158,11 @@ class DeconzAdapter extends Adapter {
 
             debug("PERMIT_JOIN - " + seconds + " seconds");
         } catch (error) {
-            debug("PERMIT_JOIN FAILED - " + error);
+            const msg = "PERMIT_JOIN FAILED - " + error;
+            debug(msg);
             // try again
             this.permitJoin(seconds, networkAddress);
-            //return Promise.reject(); // do not reject
+            //return Promise.reject(new Error(msg)); // do not reject
         }
     }
 
@@ -185,7 +186,7 @@ class DeconzAdapter extends Adapter {
     }
 
     public async reset(type: 'soft' | 'hard'): Promise<void> {
-        return Promise.reject();
+        return Promise.reject(new Error('Reset is not supported'));
     }
 
     public async lqi(networkAddress: number): Promise<LQI> {
@@ -259,8 +260,9 @@ class DeconzAdapter extends Adapter {
                     debug("LQI RESPONSE - addr: 0x" + networkAddress.toString(16) + " status: " + response.status + " read " + (response.tableListCount + response.startIndex) + "/" + response.tableEntrys + " entrys");
                     return response;
                 } catch (error) {
-                    debug("LQI REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-                    return Promise.reject();
+                    const msg = "LQI REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
+                    debug(msg);
+                    return Promise.reject(new Error(msg));
                 }
             };
 
@@ -352,8 +354,9 @@ class DeconzAdapter extends Adapter {
                     debug("ROUTING_TABLE RESPONSE - addr: 0x" + networkAddress.toString(16) + " status: " + response.status + " read " + (response.tableListCount + response.startIndex) + "/" + response.tableEntrys + " entrys");
                     return response;
                 } catch (error) {
-                    debug("ROUTING_TABLE REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-                    return Promise.reject();
+                    const msg = "ROUTING_TABLE REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
+                    debug(msg);
+                    return Promise.reject(new Error(msg));
                 }
             };
 
@@ -406,8 +409,9 @@ class DeconzAdapter extends Adapter {
             debug("RECEIVING NODE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " type: " + type + " manufacturer: 0x" + manufacturer.toString(16));
             return {manufacturerCode: manufacturer, type};
         } catch (error) {
-            debug("RECEIVING NODE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-            return Promise.reject();
+            const msg = "RECEIVING NODE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
+            debug(msg);
+            return Promise.reject(new Error(msg));
         }
     }
 
@@ -448,8 +452,9 @@ class DeconzAdapter extends Adapter {
             debug("ACTIVE_ENDPOINTS - addr: 0x" + networkAddress.toString(16) + " EP list: " + epList);
             return {endpoints: epList};
         } catch (error) {
-            debug("READING ACTIVE_ENDPOINTS FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-            return Promise.reject();
+            const msg = "READING ACTIVE_ENDPOINTS FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
+            debug(msg);
+            return Promise.reject(new Error(msg));
         }
     }
 
@@ -507,8 +512,9 @@ class DeconzAdapter extends Adapter {
             debug("RECEIVING SIMPLE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " EP:" + simpleDesc.endpointID + " inClusters: " + inClusters + " outClusters: " + outClusters);
             return simpleDesc;
         } catch (error) {
-            debug("RECEIVING SIMPLE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-            return Promise.reject();
+            const msg = "RECEIVING SIMPLE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
+            debug(msg);
+            return Promise.reject(new Error(msg));
         }
     }
 
@@ -614,7 +620,7 @@ class DeconzAdapter extends Adapter {
             .catch(error => {
                 debug(`sendZclFrameToEndpoint ERROR`);
                 debug(error);
-                //return Promise.reject();
+                //return Promise.reject(new Error("sendZclFrameToEndpoint ERROR " + error));
             });
         try {
                 let data = null;
@@ -676,7 +682,6 @@ class DeconzAdapter extends Adapter {
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
             //debug(`sendZclFrameToGroup ERROR: ${error}`);
-            //return Promise.reject();
             throw new Error(error);
         }
     }
@@ -706,7 +711,6 @@ class DeconzAdapter extends Adapter {
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
             //debug(`sendZclFrameToAll ERROR: ${error}`);
-            //return Promise.reject();
             throw new Error(error);
         }
     }
@@ -992,8 +996,9 @@ class DeconzAdapter extends Adapter {
                 channel: channel
             };
         } catch (error) {
-            debug("get network parameters Error:" + error);
-            return Promise.reject();
+            const msg = "get network parameters Error:" + error;
+            debug(msg);
+            return Promise.reject(new Error(msg));
         }
     }
 
@@ -1048,7 +1053,9 @@ class DeconzAdapter extends Adapter {
     private checkReceivedGreenPowerIndication(ind: gpDataInd) {
         ind.clusterId = 0x21;
 
-        let gpFrame = [ind.rspId, ind.seqNr, ind.id, ind.options & 0xff, (ind.options >> 8) & 0xff,
+        let gpFrame = [ind.rspId, ind.seqNr, ind.id, 
+            0, 0, // 0, 0 for options is a temp fix until https://github.com/Koenkk/zigbee-herdsman/pull/536 is merged.
+            // ind.options & 0xff, (ind.options >> 8) & 0xff,
         ind.srcId & 0xff, (ind.srcId >> 8) & 0xff, (ind.srcId >> 16) & 0xff, (ind.srcId >> 24) & 0xff,
         ind.frameCounter & 0xff, (ind.frameCounter >> 8) & 0xff, (ind.frameCounter >> 16) & 0xff, (ind.frameCounter >> 24) & 0xff,
         ind.commandId, ind.commandFrameSize].concat(ind.commandFrame);
