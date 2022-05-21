@@ -47,6 +47,22 @@ type EmberWaitressMatcher = {
     sequence: number
 };
 
+type IeeeMfg = {
+    mfgId: number,
+    prefix: number[]
+};
+
+const IEEE_PREFIX_MFG_ID: IeeeMfg[] = [
+    {mfgId: 0x115F, prefix: [0x04,0xcf,0xfc]},
+    {mfgId: 0x115F, prefix: [0x54,0xef,0x44]},
+];
+const DEFAULT_MFG_ID = 0x1049;
+
+function sleep(ms: number) : Promise<void>{
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT;
     public ezsp: Ezsp;
@@ -332,11 +348,27 @@ export class Driver extends EventEmitter {
         this.emit('deviceLeft', [nwk, ieee]);
     }
 
+    private async resetMfgId(mfgId: number): Promise<void> {
+        await this.ezsp.execCommand('setManufacturerCode', mfgId);
+        // 60 sec for waiting
+        await sleep(60000);
+        await this.ezsp.execCommand('setManufacturerCode', DEFAULT_MFG_ID);
+    }
+
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     private handleNodeJoined(nwk: number, ieee: EmberEUI64 | number[]): void {
         if (ieee && !(ieee instanceof EmberEUI64)) {
             ieee = new EmberEUI64(ieee);
         }
+        for(const rec of IEEE_PREFIX_MFG_ID) {
+            if ((Buffer.from((ieee as EmberEUI64).value)).indexOf(Buffer.from(rec.prefix)) == 0) {
+                // set ManufacturerCode
+                debug.log(`handleNodeJoined: change ManufacturerCode for ieee ${ieee} to ${rec.mfgId}`);
+                this.resetMfgId(rec.mfgId);
+                break;
+            }
+        }
+
         this.eui64ToNodeId.set(ieee.toString(), nwk);
         this.emit('deviceJoined', [nwk, ieee]);
     }

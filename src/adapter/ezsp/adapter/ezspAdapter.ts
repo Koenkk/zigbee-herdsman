@@ -195,7 +195,7 @@ class EZSPAdapter extends Adapter {
     }
 
     public async reset(type: 'soft' | 'hard'): Promise<void> {
-        return Promise.reject();
+        return Promise.reject(new Error("Not supported"));
     }
 
     public async lqi(networkAddress: number): Promise<LQI> {
@@ -246,7 +246,7 @@ class EZSPAdapter extends Adapter {
 
     public async routingTable(networkAddress: number): Promise<RoutingTable> {
         // todo
-        return Promise.reject();
+        return Promise.reject(new Error("Not supported"));
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
