@@ -48,14 +48,9 @@ const TABLE: number[] = [
     0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0
 ];
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-const crc16ccitt = defineCrc('ccitt', function (buf: any, previous: any): number {
-    if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
-
-    let crc = typeof previous !== 'undefined' ? ~~previous : 0xffff;
-
-    for (let index = 0; index < buf.length; index++) {
-        const byte = buf[index];
+const crc16ccitt = defineCrc('ccitt', function (buf: Buffer, previous: number): number {
+    let crc = ~~previous;
+    for (const byte of buf) {
         crc = (TABLE[((crc >> 8) ^ byte) & 0xff] ^ (crc << 8)) & 0xffff;
     }
 

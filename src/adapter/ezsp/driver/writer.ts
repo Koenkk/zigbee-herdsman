@@ -1,19 +1,43 @@
 import * as stream from 'stream';
 import * as consts from './consts';
+import {crc16ccitt} from './utils';
 import Debug from "debug";
 
-const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
+const debug = Debug('zigbee-herdsman:adapter:ezsp:writer');
 
 export class Writer extends stream.Readable {
     public writeBuffer(buffer: Buffer): void {
-        debug(`--> [${buffer.toString('hex')}] [${[...buffer]}]`);
+        debug(`--> [${buffer.toString('hex')}]`);
+        debug(`--> [${[...buffer]}]`);
         this.push(buffer);
     }
 
     public _read(): void {
     }
 
-    public stuff(s: Iterable<number>): Buffer {
+    public sendACK(ackNum: number): void {
+        /* Construct a acknowledgement frame */
+        const ackFrame = this.makeFrame((0b10000000 | ackNum));
+        debug(`Send ACK frame (${ackNum})`);
+        this.writeBuffer(ackFrame);
+    }
+
+    public sendReset(): void {
+        /* Construct a reset frame */
+        const rstFrame = Buffer.concat([Buffer.from([consts.CANCEL]), this.makeFrame(0xC0)]);
+        debug(`Send Reset frame`);
+        this.writeBuffer(rstFrame);
+    }
+
+    public sendData(data: Buffer, seq: number, rxmit: number, ackSeq: number) {
+        /* Construct a data frame */
+        debug(`Send Data frame (${seq})`);
+        const control = (((seq << 4) | (rxmit << 3)) | ackSeq);
+        const dataFrame = this.makeFrame(control, data);
+        this.writeBuffer(dataFrame);
+    }
+
+    private stuff(s: Iterable<number>): Buffer {
         /* Byte stuff (escape) a string for transmission */
         const out = Buffer.alloc(256);
         let outIdx = 0;
@@ -26,5 +50,14 @@ export class Writer extends stream.Readable {
             }
         }
         return out.slice(0, outIdx);
+    }
+
+    private makeFrame(control: number, data?: Buffer): Buffer {
+        /* Construct a frame */
+        const ctrl = Buffer.from([control]);
+        const frm = (data) ? Buffer.concat([ctrl, data]) : ctrl;
+        const crc = crc16ccitt(frm, 65535);
+        const crcArr = Buffer.from([(crc >> 8), (crc % 256)]);
+        return Buffer.concat([this.stuff(Buffer.concat([frm, crcArr])), Buffer.from([consts.FLAG])]);
     }
 }

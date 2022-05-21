@@ -2,7 +2,7 @@ import * as stream from 'stream';
 import * as consts from './consts';
 import Debug from "debug";
 
-const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
+const debug = Debug('zigbee-herdsman:adapter:ezsp:parser');
 
 export class Parser extends stream.Transform {
     private buffer: Buffer;
@@ -30,9 +30,10 @@ export class Parser extends stream.Transform {
     private parseNext(): void {
         //debug(`--- parseNext [${[...this.buffer]}]`);
         if (this.buffer.length && this.buffer.indexOf(consts.FLAG) >= 0) {
-            debug(`<-- [${this.buffer.toString('hex')}] [${[...this.buffer]}]`);
+            debug(`<-- [${this.buffer.toString('hex')}]`);
+            debug(`<-- [${[...this.buffer]}]`);
             try {
-                const frame = this.extract_frame();
+                const frame = this.extractFrame();
                 if (frame) {
                     this.emit('parsed', frame);
                 }
@@ -43,7 +44,7 @@ export class Parser extends stream.Transform {
         }
     }
 
-    private extract_frame(): Buffer {
+    private extractFrame(): Buffer {
         /* Extract a frame from the data buffer */
         const place = this.buffer.indexOf(consts.FLAG);
         if (place >= 0) {

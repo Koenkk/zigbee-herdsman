@@ -3,8 +3,7 @@ import {EventEmitter} from 'events';
 import SerialPort from 'serialport';
 import net from 'net';
 import SocketPortUtils from '../../socketPortUtils';
-import {Deferred, crc16ccitt} from './utils';
-import * as stream from 'stream';
+import {Deferred} from './utils';
 import {Queue, Waitress} from '../../../utils';
 import * as consts from './consts';
 import {Writer}  from './writer';
@@ -202,7 +201,7 @@ export class SerialDriver extends EventEmitter {
         //     debug('NAK-NAK');
         // }
         this.recvSeq = (frmNum + 1) & 7; // next
-        this.sendACK(this.recvSeq);
+        this.writer.sendACK(this.recvSeq);
         this.handleACK(data[0]);
         data = data.slice(1, (-3));
         const frame = this.randomize(data);
@@ -264,18 +263,6 @@ export class SerialDriver extends EventEmitter {
         this.resetDeferred.resolve(true);
     }
 
-    private make_frame(control: ArrayLike<number>, data?: ArrayLike<number>): Buffer {
-        /* Construct a frame */
-        const ctrlArr: Array<number> = Array.from(control);
-        const dataArr: Array<number> = (data && Array.from(data)) || [];
-
-        const sum = ctrlArr.concat(dataArr);
-
-        const crc = crc16ccitt(Buffer.from(sum), 65535);
-        const crcArr = [(crc >> 8), (crc % 256)];
-        return Buffer.concat([this.writer.stuff(sum.concat(crcArr)), Buffer.from([consts.FLAG])]);
-    }
-
     private randomize(s: Buffer): Buffer {
         /*XOR s with a pseudo-random sequence for transmission
         Used only in data frames
@@ -294,23 +281,15 @@ export class SerialDriver extends EventEmitter {
         return out;
     }
 
-    private makeDataFrame(data: Buffer, seq: number, rxmit: number, ackSeq: number): Buffer {
-        /* Construct a data frame */
-        const control = (((seq << 4) | (rxmit << 3)) | ackSeq);
-        return this.make_frame([control], this.randomize(data));
-    }
-
     async reset(): Promise<void> {
         // return this._gw.reset();
         debug('uart reseting');
         if ((this.resetDeferred)) {
             throw new TypeError("reset can only be called on a new connection");
         }
-        /* Construct a reset frame */
-        const rst_frame = Buffer.concat([Buffer.from([consts.CANCEL]), this.make_frame([0xC0])]);
         debug(`Write reset`);
         this.resetDeferred = new Deferred<void>();
-        this.writer.writeBuffer(rst_frame);
+        this.writer.sendReset();
         return this.resetDeferred.promise;
     }
 
@@ -349,13 +328,6 @@ export class SerialDriver extends EventEmitter {
         return this.initialized;
     }
 
-    private sendACK(ackNum: number): void {
-        /* Construct a acknowledgement frame */
-        const ackFrame = this.make_frame([(0b10000000 | ackNum)]);
-        debug(`Send ACK  frame (${ackNum})`);
-        this.writer.writeBuffer(ackFrame);
-    }
-
     public async sendDATA(data: Buffer): Promise<void> {
         const seq = this.sendSeq;
         this.sendSeq = ((seq + 1) % 8);  // next
@@ -365,10 +337,9 @@ export class SerialDriver extends EventEmitter {
 
         return this.queue.execute<void>(async (): Promise<void> => {
             debug(`Send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
-            pack = this.makeDataFrame(data, seq, 0, ackSeq);
+            this.writer.sendData(this.randomize(data), seq, 0, ackSeq);
             // const waiter = this.waitFor(nextSeq).start();
             debug(`waiting (${nextSeq})`);
-            this.writer.writeBuffer(pack);
             // await waiter.promise.catch(async () => {
             //     debug(`break waiting (${nextSeq})`);
             //     debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
@@ -384,7 +355,7 @@ export class SerialDriver extends EventEmitter {
             //     });
             //     debug(`rewaiting (${nextSeq}) success`);
             // });
-            debug(`waiting (${nextSeq}) success`);
+            //debug(`waiting (${nextSeq}) success`);
         });
 
 
