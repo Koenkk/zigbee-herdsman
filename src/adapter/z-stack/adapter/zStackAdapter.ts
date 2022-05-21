@@ -748,7 +748,8 @@ class ZStackAdapter extends Adapter {
                         // to rediscover the route every time.
                         const debouncer = debounce(() => {
                             this.queue.execute<void>(async () => {
-                                await this.discoverRoute(payload.networkAddress, false);
+                                /* istanbul ignore next */
+                                this.discoverRoute(payload.networkAddress, false).catch(() => {});
                             }, payload.networkAddress);
                         }, 60 * 1000, true);
                         this.deviceAnnounceRouteDiscoveryDebouncers.set(payload.networkAddress, debouncer);
