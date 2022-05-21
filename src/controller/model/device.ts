@@ -494,9 +494,9 @@ class Device extends Entity {
             'TERNCY-PP01': {
                 type: 'EndDevice', manufacturerID: 4648, manufacturerName: 'TERNCY', powerSource: 'Battery'
             },
-            // https://github.com/Koenkk/zigbee-herdsman-converters/pull/2710
-            '3RWS18BZ': {},
+            '3RWS18BZ': {}, // https://github.com/Koenkk/zigbee-herdsman-converters/pull/2710
             'MULTI-MECI--EA01': {},
+            'MOT003': {}, // https://github.com/Koenkk/zigbee2mqtt/issues/12471
         };
 
         const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
