@@ -9,6 +9,7 @@ import * as consts from './consts';
 import {Writer}  from './writer';
 import {Parser}  from './parser';
 import Debug from "debug";
+
 const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
 
 
@@ -212,18 +213,10 @@ export class SerialDriver extends EventEmitter {
         /* Handle an acknowledgement frame */
         // next number after the last accepted frame
         this.ackSeq = control & 0x07;
-        // const handled = this.waitress.resolve({sequence: this.ackSeq});
-        // if (!handled) {
-        //     debug(`Unexpected packet sequence ${this.ackSeq}`);
-        // } else {
-        //     debug(`Expected packet sequence ${this.ackSeq}`);
-        // }
-        // var ack, pending;
-        // ack = (((control & 7) - 1) % 8);
-        // if ((ack === this._pending[0])) {
-        //     [pending, this._pending] = [this._pending, [(- 1), null]];
-        //     pending[1].set_result(true);
-        // }
+        const handled = this.waitress.resolve({sequence: this.ackSeq});
+        if (!handled && this.sendSeq !== this.ackSeq) {
+            debug(`Unexpected packet sequence ${this.ackSeq} | ${this.sendSeq}`);
+        }
     }
 
     private handleNAK(control: number): void {
@@ -236,9 +229,6 @@ export class SerialDriver extends EventEmitter {
         } else {
             debug(`NAK Expected packet sequence ${nakNum}`);
         }
-        // if ((nak === this._pending[0])) {
-        //     this._pending[1].set_result(false);
-        // }
     }
 
     private rstack_frame_received(data: Buffer): void {
@@ -282,7 +272,6 @@ export class SerialDriver extends EventEmitter {
     }
 
     async reset(): Promise<void> {
-        // return this._gw.reset();
         debug('uart reseting');
         if ((this.resetDeferred)) {
             throw new TypeError("reset can only be called on a new connection");
@@ -333,44 +322,32 @@ export class SerialDriver extends EventEmitter {
         this.sendSeq = ((seq + 1) % 8);  // next
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
-        let pack;
 
         return this.queue.execute<void>(async (): Promise<void> => {
             debug(`Send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
-            this.writer.sendData(this.randomize(data), seq, 0, ackSeq);
-            // const waiter = this.waitFor(nextSeq).start();
+            const randData = this.randomize(data);
+            const waiter = this.waitFor(nextSeq).start();
+            this.writer.sendData(randData, seq, 0, ackSeq);
             debug(`waiting (${nextSeq})`);
-            // await waiter.promise.catch(async () => {
-            //     debug(`break waiting (${nextSeq})`);
-            //     debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
-            //     debug(`Resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
-            //     pack = this.makeDataFrame(data, seq, 1, ackSeq);
-            //     const waiter = this.waitFor(nextSeq).start();
-            //     debug(`rewaiting (${nextSeq})`);
-            //     this.writer.writeBuffer(pack);
-            //     await waiter.promise.catch((e) => {
-            //         debug(`break rewaiting (${nextSeq})`);
-            //         debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
-            //         throw new Error(`sendDATA error: ${e}`);
-            //     });
-            //     debug(`rewaiting (${nextSeq}) success`);
-            // });
-            //debug(`waiting (${nextSeq}) success`);
+            await waiter.promise.catch(async () => {
+                debug(`break waiting (${nextSeq})`);
+                debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
+                debug(`Resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
+                const waiter = this.waitFor(nextSeq).start();
+                this.writer.sendData(randData, seq, 1, ackSeq);
+                debug(`rewaiting (${nextSeq})`);
+                await waiter.promise.catch((e) => {
+                    debug(`break rewaiting (${nextSeq})`);
+                    debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
+                    throw new Error(`sendDATA error: ${e}`);
+                });
+                debug(`rewaiting (${nextSeq}) success`);
+            });
+            debug(`waiting (${nextSeq}) success`);
         });
-
-
-        // try {
-        //     debug(`Send DATA frame (${seq},${this.recvSeq},0): ${data.toString('hex')}`);
-        //     pack = this.data_frame(data, seq, 0);
-        //     this.writer.writeBuffer(pack);
-        // } catch (e) {
-        //     debug(`Send DATA frame (${seq},${this.recvSeq},1): ${data.toString('hex')}`);
-        //     pack = this.data_frame(data, seq, 1);
-        //     this.writer.writeBuffer(pack);
-        // }
     }
 
-    public waitFor(sequence: number, timeout = 10000)
+    public waitFor(sequence: number, timeout = 1000)
         : { start: () => { promise: Promise<EZSPPacket>; ID: number }; ID: number } {
         return this.waitress.waitFor({sequence}, timeout);
     }
