@@ -578,7 +578,7 @@ class Controller extends events.EventEmitter {
                 // This is handled by touchlink
                 return;
             } else if (dataPayload.frame.Cluster.name === 'greenPower') {
-                this.greenPower.onZclGreenPowerData(dataPayload);
+                await this.greenPower.onZclGreenPowerData(dataPayload);
                 // lookup encapsulated gpDevice for further processing
                 gpDevice = Device.byNetworkAddress(dataPayload.frame.Payload.srcID & 0xFFFF);
             }
