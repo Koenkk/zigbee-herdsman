@@ -283,8 +283,8 @@ class Device extends Entity {
         const isDefaultResponse = frame.isGlobal() && frame.getCommand().name === 'defaultRsp';
         const commandHasResponse = frame.getCommand().hasOwnProperty('response');
         const disableDefaultResponse = frame.Header.frameControl.disableDefaultResponse;
-        if (!dataPayload.wasBroadcast && !disableDefaultResponse && !isDefaultResponse && !commandHasResponse &&
-            !this._skipDefaultResponse) {
+        if (this.type !== 'GreenPower' && !dataPayload.wasBroadcast && !disableDefaultResponse && !isDefaultResponse && 
+            !commandHasResponse && !this._skipDefaultResponse) {
             try {
                 await endpoint.defaultResponse(
                     frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
