@@ -89,7 +89,6 @@ class GreenPower extends events.EventEmitter {
     }
 
     public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclDataPayload): Promise<void> {
-        const networkParameters = await this.adapter.getNetworkParameters();
         let payload = {};
 
         switch(dataPayload.frame.Payload.commandID) {
@@ -117,6 +116,7 @@ class GreenPower extends events.EventEmitter {
                 debug.info("RxOnCap set -> supports bidirectional communication");
                 // NOTE: currently encryption is disabled for RX capable GPDs
 
+                const networkParameters = await this.adapter.getNetworkParameters();
                 // Commissioning reply
                 payload = {
                     options: 0,
@@ -186,6 +186,7 @@ class GreenPower extends events.EventEmitter {
             break;
         case 0xE3: // GP Channel Request
             debug.info("GP Channel Request");
+            const networkParameters = await this.adapter.getNetworkParameters();
             // Channel notification
             payload = {
                 options: 0,
