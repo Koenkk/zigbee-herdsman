@@ -78,7 +78,6 @@ export class EZSPFrameData {
         if (!frame) throw new Error(`Unrecognized frame from FrameID ${key}`);
         const frameDesc = (this._isRequest_) ? frame.request || {} : frame.response || {};
         if (Buffer.isBuffer(params)) {
-            console.log();
             let data = params;
             for (const prop of Object.getOwnPropertyNames(frameDesc)) {
                 [this[prop], data] = frameDesc[prop].deserialize(frameDesc[prop], data);
@@ -189,7 +188,7 @@ export class Ezsp extends EventEmitter {
         // const frameName = cmd.name;
         const frm = new EZSPFrameData(frame_id, false, data);
         //debug.log("<=== Application frame %s (%s) received: %s", frame_id, frameName, data.toString('hex'));
-        debug.log("<=== Application frame %s received: %s", frame_id, frm);
+        debug.log("<=== Application frame %s received: %s", frame_id, JSON.stringify(frm));
         //const schema = cmd.outArgs;
         // [result, data] = t.deserialize(data, schema);
         // debug.log(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
@@ -223,10 +222,10 @@ export class Ezsp extends EventEmitter {
         const waiter = this.waitFor("stackStatusHandler", null).start();
 
         const result = await this.execCommand("networkInit");
-        debug.log('network init result', result);
+        debug.log('network init result: ', JSON.stringify(result));
         if ((result.status !== EmberStatus.SUCCESS)) {
             this.waitress.remove(waiter.ID);
-            debug.log("Failure to init network:" + result);
+            debug.log("Failure to init network");
             return false;
         }
 
@@ -239,17 +238,17 @@ export class Ezsp extends EventEmitter {
         const waiter = this.waitFor("stackStatusHandler", null).start();
 
         const result = await this.execCommand("leaveNetwork");
-        debug.log('network init result', result);
+        debug.log('network init result', JSON.stringify(result));
         if ((result.status !== EmberStatus.SUCCESS)) {
             this.waitress.remove(waiter.ID);
-            debug.log("Failure to leave network:" + result);
-            throw new Error(("Failure to leave network:" + result));
+            debug.log("Failure to leave network");
+            throw new Error(("Failure to leave network: " + JSON.stringify(result)));
         }
 
         const response = await waiter.promise;
         if ((response.payload.status !== EmberStatus.NETWORK_DOWN)) {
-            debug.log("Wrong network status:" + response.payload);
-            throw new Error(("Wrong network status:" + response.payload));
+            debug.log("Wrong network status: " + JSON.stringify(response.payload));
+            throw new Error(("Wrong network status: " + JSON.stringify(response.payload)));
         }
         return response.payload.status;
     }
@@ -403,7 +402,7 @@ export class Ezsp extends EventEmitter {
         //const c = COMMANDS[name];
         //const data = t.serialize(args, c[1]);
         const frmData = new EZSPFrameData(name, true, params);
-        debug.log(`makeFrame ${name}:`, frmData);
+        debug.log(`makeFrame ${name}:`, JSON.stringify(frmData));
         const frame = [(seq & 255)];
         if ((this.ezspV < 8)) {
             if ((this.ezspV >= 5)) {
@@ -419,7 +418,7 @@ export class Ezsp extends EventEmitter {
     }
 
     public execCommand(name: string, params: ParamsDesc = null): Promise<EZSPFrameData> {
-        debug.log(`===> Send command ${name}: (${params})`);
+        debug.log(`===> Send command ${name}: ${JSON.stringify(params)}`);
         return this.queue.execute<EZSPFrameData>(async (): Promise<EZSPFrameData> => {
             const data = this.makeFrame(name, params, this.cmdSeq);
             debug.log(`===> Send data    ${name}: (${data.toString('hex')})`);
@@ -438,13 +437,13 @@ export class Ezsp extends EventEmitter {
         const v = await this.execCommand("formNetwork", params);
         if ((v.status !== EmberStatus.SUCCESS)) {
             this.waitress.remove(waiter.ID);
-            debug.error("Failure forming network:" + v);
-            throw new Error(("Failure forming network:" + v));
+            debug.error("Failure forming network: " + JSON.stringify(v));
+            throw new Error(("Failure forming network: " + JSON.stringify(v)));
         }
         const response = await waiter.promise;
         if ((response.payload.status !== EmberStatus.NETWORK_UP)) {
-            debug.error("Wrong network status:" + response.payload);
-            throw new Error(("Wrong network status:" + response.payload));
+            debug.error("Wrong network status: " + JSON.stringify(response.payload));
+            throw new Error(("Wrong network status: " + JSON.stringify(response.payload)));
         }
         return response.payload.status;
     }
@@ -495,9 +494,9 @@ export class Ezsp extends EventEmitter {
             deliveryFailureThreshold: MTOR_DELIVERY_FAIL_THRESHOLD,
             maxHops: 0,
         });
-        debug.log("Set concentrator type: %s", res);
+        debug.log("Set concentrator type: %s", JSON.stringify(res));
         if (res.status != EmberStatus.SUCCESS) {
-            debug.log("Couldn't set concentrator type %s: %s", true, res);
+            debug.log("Couldn't set concentrator type %s: %s", true, JSON.stringify(res));
         }
         // await this.execCommand('setSourceRouteDiscoveryMode', 1);
     }

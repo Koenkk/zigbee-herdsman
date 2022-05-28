@@ -31,7 +31,7 @@ export class Parser extends stream.Transform {
         //debug(`--- parseNext [${[...this.buffer]}]`);
         if (this.buffer.length && this.buffer.indexOf(consts.FLAG) >= 0) {
             debug(`<-- [${this.buffer.toString('hex')}]`);
-            debug(`<-- [${[...this.buffer]}]`);
+            //debug(`<-- [${[...this.buffer]}]`);
             try {
                 const frame = this.extractFrame();
                 if (frame) {

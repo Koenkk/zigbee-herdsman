@@ -8,7 +8,7 @@ const debug = Debug('zigbee-herdsman:adapter:ezsp:writer');
 export class Writer extends stream.Readable {
     public writeBuffer(buffer: Buffer): void {
         debug(`--> [${buffer.toString('hex')}]`);
-        debug(`--> [${[...buffer]}]`);
+        //debug(`--> [${[...buffer]}]`);
         this.push(buffer);
     }
 
