@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 import * as TsType from './../../tstype';
-import {Ezsp} from './ezsp';
+import {Ezsp, EZSPFrameData} from './ezsp';
 import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption} from './types';
 import {EventEmitter} from "events";
 import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState, EmberRawFrame} from './types/struct';
@@ -178,26 +178,26 @@ export class Driver extends EventEmitter {
         };
 
         if (await this.needsToBeInitialised(nwkOpt)) {
-            const currentState = await this.ezsp.execCommand('networkState');
-            debug.log('Network state', currentState);
-            if (currentState == EmberNetworkStatus.JOINED_NETWORK) {
+            const res = await this.ezsp.execCommand('networkState');
+            debug.log('Network state', res);
+            if (res.status == EmberNetworkStatus.JOINED_NETWORK) {
                 debug.log(`Leaving current network and forming new network`);
                 const st = await this.ezsp.leaveNetwork();
                 console.assert(st == EmberStatus.NETWORK_DOWN, `leaveNetwork returned unexpected status: ${st}`);
             }
             await this.form_network();
         }
-        const state = await this.ezsp.execCommand('networkState');
+        const state = (await this.ezsp.execCommand('networkState')).status;
         debug.log('Network state', state);
 
-        const [status, nodeType, networkParams] = await this.ezsp.execCommand('getNetworkParameters');
-        console.assert(status == EmberStatus.SUCCESS,
-            `Command (getNetworkParameters) returned unexpected state: ${status}`);
-        this.networkParams = networkParams;
-        debug.log("Node type: %s, Network parameters: %s", nodeType, networkParams);
+        const netParams = await this.ezsp.execCommand('getNetworkParameters');
+        console.assert(netParams.status == EmberStatus.SUCCESS,
+            `Command (getNetworkParameters) returned unexpected state: ${netParams.status}`);
+        this.networkParams = netParams.parameters;
+        debug.log("Node type: %s, Network parameters: %s", netParams.nodeType, this.networkParams);
 
-        const [nwk] = await this.ezsp.execCommand('getNodeId');
-        const [ieee] = await this.ezsp.execCommand('getEui64');
+        const nwk = (await this.ezsp.execCommand('getNodeId')).nodeId;
+        const ieee = (await this.ezsp.execCommand('getEui64')).eui64;
         this.ieee = new EmberEUI64(ieee);
         debug.log('Network ready');
         this.ezsp.on('frame', this.handleFrame.bind(this));
@@ -213,10 +213,11 @@ export class Driver extends EventEmitter {
     private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
         let valid = true;
         valid = valid && (await this.ezsp.networkInit());
-        const [status, nodeType, networkParams] = await this.ezsp.execCommand('getNetworkParameters');
-        debug.log("Current Node type: %s, Network parameters: %s", nodeType, networkParams);
-        valid = valid && (status == EmberStatus.SUCCESS);
-        valid = valid && (nodeType == EmberNodeType.COORDINATOR);
+        const netParams = await this.ezsp.execCommand('getNetworkParameters');
+        const networkParams = netParams.parameters;
+        debug.log("Current Node type: %s, Network parameters: %s", netParams.nodeType, networkParams);
+        valid = valid && (netParams.status == EmberStatus.SUCCESS);
+        valid = valid && (netParams.nodeType == EmberNodeType.COORDINATOR);
         valid = valid && (options.panID == networkParams.panId);
         valid = valid && (options.channelList.includes(networkParams.radioChannel));
         valid = valid && (equals(options.extendedPanID, networkParams.extendedPanId));
@@ -225,14 +226,14 @@ export class Driver extends EventEmitter {
 
     private async form_network(): Promise<void> {
         let status;
-        [status] = await this.ezsp.execCommand('clearKeyTable');
+        status = (await this.ezsp.execCommand('clearKeyTable')).status;
         console.assert(status == EmberStatus.SUCCESS,
             `Command (clearKeyTable) returned unexpected state: ${status}`);
 
         const panID = this.nwkOpt.panID;
         const extendedPanID = this.nwkOpt.extendedPanID;
         const initial_security_state: EmberInitialSecurityState = ember_security(this.nwkOpt);
-        [status] = await this.ezsp.setInitialSecurityState(initial_security_state);
+        status = await this.ezsp.setInitialSecurityState(initial_security_state);
         const parameters: EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;
         parameters.extendedPanId = extendedPanID;
@@ -246,21 +247,29 @@ export class Driver extends EventEmitter {
         await this.ezsp.formNetwork(parameters);
         await this.ezsp.setValue(EzspValueId.VALUE_STACK_TOKEN_WRITING, 1);
 
-        await this.ezsp.execCommand('getKey', EmberKeyType.TRUST_CENTER_LINK_KEY);
-        await this.ezsp.execCommand('getKey', EmberKeyType.CURRENT_NETWORK_KEY);
+        await this.ezsp.execCommand('getKey', {index: EmberKeyType.TRUST_CENTER_LINK_KEY});
+        await this.ezsp.execCommand('getKey', {index: EmberKeyType.CURRENT_NETWORK_KEY});
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    private handleFrame(frameName: string, ...args: any[]): void {
+    private handleFrame(frameName: string, frame: EZSPFrameData): void {
         switch (true) {
         case (frameName === 'incomingMessageHandler'): {
-            const [messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message] = args;
-            const eui64 = this.eui64ToNodeId.get(sender);
+            //const [messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message] = args;
 
-            const handled = this.waitress.resolve({address: sender, payload: message, frame: apsFrame});
+            const eui64 = this.eui64ToNodeId.get(frame.sender);
+
+            const handled = this.waitress.resolve({address: frame.sender, payload: frame.message, frame: frame.apsFrame});
             if (!handled) {
                 this.emit('incomingMessage', {
-                    messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message,
+                    messageType: frame.type, 
+                    apsFrame: frame.apsFrame, 
+                    lqi: frame.lastHopLqi, 
+                    rssi: frame.lastHopRssi,
+                    sender: frame.sender,
+                    bindingIndex: frame.bindingIndex,
+                    addressIndex: frame.addressIndex,
+                    message: frame.message,
                     senderEui64: eui64
                 });
             }
@@ -268,27 +277,24 @@ export class Driver extends EventEmitter {
         }
         case (frameName === 'trustCenterJoinHandler'): {
             /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-            const [nwk, ieee, devUpdate, joinDecision, parent] = args;
-            if (devUpdate === EmberDeviceUpdate.DEVICE_LEFT) {
-                this.handleNodeLeft(nwk, ieee);
+            if (frame.status === EmberDeviceUpdate.DEVICE_LEFT) {
+                this.handleNodeLeft(frame.newNodeId, frame.newNodeEui64);
             } else {
-                this.handleNodeJoined(nwk, ieee);
+                this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
             }
             break;
         }
         case (frameName === 'incomingRouteRecordHandler'): {
-            const [nwk, ieee, lqi, rssi, relays] = args;
-            this.handleRouteRecord(nwk, ieee, lqi, rssi, relays);
+            this.handleRouteRecord(frame.source, frame.longId, frame.lastHopLqi, frame.lastHopRssi, frame.relay);
             break;
         }
         case (frameName === 'incomingRouteErrorHandler'): {
-            const [status, nwk] = args;
-            this.handleRouteError(status, nwk);
+            this.handleRouteError(frame.status, frame.target);
             break;
         }
         case (frameName === 'messageSentHandler'): {
             // todo
-            const status = args[4];
+            const status = frame.status;
             if (status != 0) {
                 // send failure
             } else {
@@ -296,9 +302,9 @@ export class Driver extends EventEmitter {
                 // If there was a message to the group and this group is not known, 
                 // then we will register the coordinator in this group
                 // Applicable for IKEA remotes
-                const msgType = args[0];
+                const msgType = frame.type;
                 if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
-                    const apsFrame = args[2];
+                    const apsFrame = frame.apsFrame;
                     if (apsFrame.destinationEndpoint == 255) {
                         this.multicast.subscribe(apsFrame.groupId, 1);
                     }
@@ -349,10 +355,10 @@ export class Driver extends EventEmitter {
     }
 
     private async resetMfgId(mfgId: number): Promise<void> {
-        await this.ezsp.execCommand('setManufacturerCode', mfgId);
+        await this.ezsp.execCommand('setManufacturerCode', {code: mfgId});
         // 60 sec for waiting
         await sleep(60000);
-        await this.ezsp.execCommand('setManufacturerCode', DEFAULT_MFG_ID);
+        await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -391,7 +397,7 @@ export class Driver extends EventEmitter {
                 const strEui64 = eui64.toString();
                 let nodeId = this.eui64ToNodeId.get(strEui64);
                 if (nodeId === undefined) {
-                    nodeId = await this.ezsp.execCommand('lookupNodeIdByEui64', eui64);
+                    nodeId = (await this.ezsp.execCommand('lookupNodeIdByEui64', {eui64: eui64})).nodeId;
                     if (nodeId && nodeId !== 0xFFFF) {
                         this.eui64ToNodeId.set(strEui64, nodeId);
                     } else {
@@ -402,7 +408,7 @@ export class Driver extends EventEmitter {
             } else {
                 eui64 = await this.networkIdToEUI64(nwk);
             }
-            await this.ezsp.execCommand('setExtendedTimeout', eui64, true);
+            await this.ezsp.execCommand('setExtendedTimeout', {remoteEui64: eui64, extendedTimeout: true});
             // for old emberznet < 8
             // const route = this.eui64ToRelays.get(eui64.toString());
             // if (route) {
@@ -430,7 +436,7 @@ export class Driver extends EventEmitter {
     public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, timeout = 30000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberRawFrame.serialize(EmberRawFrame, rawFrame), data]);
-            await this.ezsp.execCommand('sendRawMessage', msgData);
+            await this.ezsp.execCommand('sendRawMessage', {message: msgData});
             return true;
         } catch (e) {
             debug.error(`Request error ${e}: ${e.stack}`);
@@ -493,18 +499,14 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public getLocalEUI64(): Promise<EmberEUI64> {
-        return this.ezsp.execCommand('getEui64');
-    }
-
     public async networkIdToEUI64(nwk: number): Promise<EmberEUI64> {
         for (const [eUI64, value] of this.eui64ToNodeId) {
             if (value === nwk) return new EmberEUI64(eUI64);
         }
-        const value = await this.ezsp.execCommand('lookupEui64ByNodeId', nwk);
-        if (value[0] === EmberStatus.SUCCESS) {
+        const value = await this.ezsp.execCommand('lookupEui64ByNodeId', {nodeId: nwk});
+        if (value.status === EmberStatus.SUCCESS) {
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-            const eUI64 = new EmberEUI64(value[1] as any);
+            const eUI64 = new EmberEUI64(value.eui64);
             this.eui64ToNodeId.set(eUI64.toString(), nwk);
             return eUI64;
         } else {
@@ -516,7 +518,7 @@ export class Driver extends EventEmitter {
     public async permitJoining(seconds: number): Promise<any> {
         await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
             EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
-        return this.ezsp.execCommand('permitJoining', seconds);
+        return this.ezsp.execCommand('permitJoining', {duration: seconds});
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -537,16 +539,16 @@ export class Driver extends EventEmitter {
         inputClusters = [],
         outputClusters = []
     }: AddEndpointParameters): Promise<void> {
-        const res = await this.ezsp.execCommand('addEndpoint',
-            endpoint,
-            profileId,
-            deviceId,
-            appFlags,
-            inputClusters.length,
-            outputClusters.length,
-            inputClusters,
-            outputClusters,
-        );
+        const res = await this.ezsp.execCommand('addEndpoint', {
+            endpoint: endpoint,
+            profileId: profileId,
+            deviceId: deviceId,
+            appFlags: appFlags,
+            inputClusterCount: inputClusters.length,
+            outputClusterCount: outputClusters.length,
+            inputClusterList: inputClusters,
+            outputClusterList: outputClusters,
+        });
         debug.log("Ezsp adding endpoint: %s", res);
     }
 
@@ -565,11 +567,11 @@ export class Driver extends EventEmitter {
             (!payload.frame || payload.payload[0] === matcher.sequence);
     }
 
-    public setRadioPower(value: number): Promise<void> {
-        return this.ezsp.execCommand('setRadioPower', value);
+    public setRadioPower(value: number): Promise<EZSPFrameData> {
+        return this.ezsp.execCommand('setRadioPower', {power: value});
     }
 
-    public setChannel(channel: number): Promise<void> {
-        return this.ezsp.execCommand('setLogicalAndRadioChannel', channel);
+    public setChannel(channel: number): Promise<EZSPFrameData> {
+        return this.ezsp.execCommand('setLogicalAndRadioChannel', {radioChannel: channel});
     }
 }
