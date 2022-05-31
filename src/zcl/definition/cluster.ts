@@ -455,6 +455,7 @@ const Cluster: {
             onTime: {ID: 16385, type: DataType.uint16},
             offWaitTime: {ID: 16386, type: DataType.uint16},
             startUpOnOff: {ID: 16387, type: DataType.enum8},
+            tuyaBacklightSwitch: {ID: 0x5000, type: DataType.enum8},
             tuyaBacklightMode: {ID: 0x8001, type: DataType.enum8},
             moesStartUpOnOff: {ID: 0x8002, type: DataType.enum8},
             tuyaOperationMode: {ID: 0x8004, type: DataType.enum8},
@@ -4425,6 +4426,7 @@ const Cluster: {
         ID: 0xe001,
         attributes: {
             switchType: {ID: 0xd030, type: DataType.enum8},
+            powerOnBehavior: {ID: 0xd010, type: DataType.enum8},
         },
         commands: {},
         commandsResponse: {},
