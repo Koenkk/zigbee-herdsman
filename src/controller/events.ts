@@ -117,6 +117,14 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
 
     // Dafoss Ally/Hive TRV Commands
     'danfossSetpointCommand': 'commandDanfossSetpointCommand',
+
+    // Zosung IR remote cluster commands and responses
+    'zosungSendIRCode01': 'commandZosungSendIRCode01',
+    'zosungSendIRCode02': 'commandZosungSendIRCode02',
+    'zosungSendIRCode04': 'commandZosungSendIRCode04',
+    'zosungSendIRCode00': 'commandZosungSendIRCode00',
+    'zosungSendIRCode03Resp': 'zosungSendIRCode03Resp',
+    'zosungSendIRCode05Resp': 'zosungSendIRCode05Resp',
 };
 
 type MessagePayloadType =
@@ -139,7 +147,8 @@ type MessagePayloadType =
     'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandMcuSyncTime' |
     'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandActiveStatusReportAlt' |
     'commandMoveToHue' | 'commandStore'| 'commandWiserSmartSetSetpoint' | 'commandWiserSmartCalibrateValve' |
-    'commandDanfossSetpointCommand';
+    'commandDanfossSetpointCommand' | 'commandZosungSendIRCode00' | 'commandZosungSendIRCode01' |
+    'commandZosungSendIRCode02'|'commandZosungSendIRCode04' | 'zosungSendIRCode03Resp' | 'zosungSendIRCode05Resp';
 
 interface MessagePayload {
     type: MessagePayloadType;
