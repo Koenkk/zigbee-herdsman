@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 import * as TsType from './../../tstype';
-import {Ezsp, EZSPFrameData} from './ezsp';
+import {Ezsp, EZSPFrameData, EZSPZDOResponseFrameData} from './ezsp';
 import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption} from './types';
 import {EventEmitter} from "events";
 import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState, EmberRawFrame} from './types/struct';
@@ -20,6 +20,7 @@ import {Multicast} from './multicast';
 import {Queue, Waitress, Wait} from '../../../utils';
 import Debug from "debug";
 import equals from 'fast-deep-equal/es6';
+import {ParamsDesc} from './commands';
 
 const debug = {
     error: Debug('zigbee-herdsman:adapter:ezsp:driver:error'),
@@ -470,13 +471,12 @@ export class Driver extends EventEmitter {
     }
 
     public async zdoRequest(networkAddress: number, requestCmd: EmberZDOCmd,
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        responseCmd: EmberZDOCmd, ...args: any[]): Promise<any> {
+            responseCmd: EmberZDOCmd, params: ParamsDesc): Promise<EZSPZDOResponseFrameData> {
         const requestName = EmberZDOCmd.valueName(EmberZDOCmd, requestCmd);
         const responseName = EmberZDOCmd.valueName(EmberZDOCmd, responseCmd);
-        debug.log(`${requestName} params: ${[...args]}`);
+        debug.log(`${requestName} params: ${JSON.stringify(params)}`);
         const frame = this.makeApsFrame(requestCmd as number);
-        const payload = this.makeZDOframe(requestName, frame.sequence, ...args);
+        const payload = this.makeZDOframe(requestName, {transId: frame.sequence, ...params});
         const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
         const res = await this.request(networkAddress, frame, payload);
         if (!res) {
@@ -513,20 +513,17 @@ export class Driver extends EventEmitter {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    public async permitJoining(seconds: number): Promise<any> {
+    public async permitJoining(seconds: number): Promise<EZSPFrameData> {
         await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
             EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
         return this.ezsp.execCommand('permitJoining', {duration: seconds});
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    public makeZDOframe(name: string, ...args: any[]): Buffer {
-        return this.ezsp.makeZDOframe(name, ...args);
+    public makeZDOframe(name: string, params: ParamsDesc): Buffer {
+        return this.ezsp.makeZDOframe(name, params);
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    public parse_frame_payload(name: string, obj: Buffer): any[] {
+    public parse_frame_payload(name: string, obj: Buffer): EZSPZDOResponseFrameData {
         return this.ezsp.parse_frame_payload(name, obj);
     }
 

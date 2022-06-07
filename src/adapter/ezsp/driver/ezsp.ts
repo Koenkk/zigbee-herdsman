@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import * as t from './types';
 import {SerialDriver} from './uart';
-import {ZDO_COMMANDS, FRAMES, FRAME_NAME_BY_ID, EZSPFrameDesc, ParamsDesc} from './commands';
+import {FRAMES, FRAME_NAME_BY_ID, EZSPFrameDesc, ParamsDesc, ZDOREQUESTS, ZDOREQUEST_NAME_BY_ID, 
+    ZDORESPONSES, ZDORESPONSE_NAME_BY_ID} from './commands';
 
 import {
     EmberStatus,
@@ -75,7 +76,6 @@ export class EZSPFrameData {
         
         this._isRequest_ = isRequest;
         const frame = EZSPFrameData.getFrame(key);
-        if (!frame) throw new Error(`Unrecognized frame from FrameID ${key}`);
         const frameDesc = (this._isRequest_) ? frame.request || {} : frame.response || {};
         if (Buffer.isBuffer(params)) {
             let data = params;
@@ -92,6 +92,115 @@ export class EZSPFrameData {
     serialize(): Buffer {
         const frame = EZSPFrameData.getFrame(this._cls_);
         const frameDesc = (this._isRequest_) ? frame.request || {} : frame.response || {};
+        const result = [];
+        for (const prop of Object.getOwnPropertyNames(frameDesc)) {
+            result.push(frameDesc[prop].serialize(frameDesc[prop], this[prop]));
+        }
+        return Buffer.concat(result);
+    }
+
+    get name() {
+        return this._cls_;
+    }
+
+    get id() {
+        return this._id_;
+    }
+}
+
+
+export class EZSPZDORequestFrameData {
+    _cls_: string;
+    _id_: number;
+    _isRequest_: boolean;
+    [name: string]: any;
+
+    static getFrame(key: string|number): EZSPFrameDesc {
+        const name = (typeof key == 'string') ? key : ZDOREQUEST_NAME_BY_ID[key];
+        const frameDesc = ZDOREQUESTS[name];
+        if (!frameDesc) throw new Error(`Unrecognized ZDOFrame from FrameID ${key}`);
+        return frameDesc;
+    }
+
+    constructor(key: string|number, isRequest: boolean, params: ParamsDesc | Buffer) {
+        if (typeof key == 'string') {
+            this._cls_ = key;
+            this._id_ = ZDOREQUESTS[this._cls_].ID;
+        } else {
+            this._id_ = key;
+            this._cls_ = ZDOREQUEST_NAME_BY_ID[key];
+        }
+        
+        this._isRequest_ = isRequest;
+        const frame = EZSPZDORequestFrameData.getFrame(key);
+        const frameDesc = (this._isRequest_) ? frame.request || {} : frame.response || {};
+        if (Buffer.isBuffer(params)) {
+            let data = params;
+            for (const prop of Object.getOwnPropertyNames(frameDesc)) {
+                [this[prop], data] = frameDesc[prop].deserialize(frameDesc[prop], data);
+            }
+        } else {
+            for (const prop of Object.getOwnPropertyNames(frameDesc)) {
+                this[prop] = params[prop];
+            }
+        }
+    }
+
+    serialize(): Buffer {
+        const frame = EZSPZDORequestFrameData.getFrame(this._cls_);
+        const frameDesc = (this._isRequest_) ? frame.request || {} : frame.response || {};
+        const result = [];
+        for (const prop of Object.getOwnPropertyNames(frameDesc)) {
+            result.push(frameDesc[prop].serialize(frameDesc[prop], this[prop]));
+        }
+        return Buffer.concat(result);
+    }
+
+    get name() {
+        return this._cls_;
+    }
+
+    get id() {
+        return this._id_;
+    }
+}
+
+export class EZSPZDOResponseFrameData {
+    _cls_: string;
+    _id_: number;
+    [name: string]: any;
+
+    static getFrame(key: string|number): ParamsDesc {
+        const name = (typeof key == 'string') ? key : ZDORESPONSE_NAME_BY_ID[key];
+        const frameDesc = ZDORESPONSES[name];
+        if (!frameDesc) throw new Error(`Unrecognized ZDOFrame from FrameID ${key}`);
+        return frameDesc.params;
+    }
+
+    constructor(key: string|number, params: ParamsDesc | Buffer) {
+        if (typeof key == 'string') {
+            this._cls_ = key;
+            this._id_ = ZDORESPONSES[this._cls_].ID;
+        } else {
+            this._id_ = key;
+            this._cls_ = ZDORESPONSE_NAME_BY_ID[key];
+        }
+        
+        const frameDesc = EZSPZDOResponseFrameData.getFrame(key);
+        if (Buffer.isBuffer(params)) {
+            let data = params;
+            for (const prop of Object.getOwnPropertyNames(frameDesc)) {
+                [this[prop], data] = frameDesc[prop].deserialize(frameDesc[prop], data);
+            }
+        } else {
+            for (const prop of Object.getOwnPropertyNames(frameDesc)) {
+                this[prop] = params[prop];
+            }
+        }
+    }
+
+    serialize(): Buffer {
+        const frameDesc = EZSPZDOResponseFrameData.getFrame(this._cls_);
         const result = [];
         for (const prop of Object.getOwnPropertyNames(frameDesc)) {
             result.push(frameDesc[prop].serialize(frameDesc[prop], this[prop]));
@@ -391,11 +500,9 @@ export class Ezsp extends EventEmitter {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    public makeZDOframe(name: string, ...args: any[]): Buffer {
-        const c = ZDO_COMMANDS[name];
-        const data = t.serialize(args, c[1]);
-        return data;
+    public makeZDOframe(name: string, params: ParamsDesc): Buffer {
+        const frmData = new EZSPZDORequestFrameData(name, true, params);
+        return frmData.serialize();
     }
 
     private makeFrame(name: string, params: ParamsDesc, seq: number): Buffer {
@@ -448,15 +555,9 @@ export class Ezsp extends EventEmitter {
         return response.payload.status;
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    public parse_frame_payload(name: string, data: Buffer): any[] {
-        if (Object.keys(ZDO_COMMANDS).indexOf(name) < 0) {
-            throw new Error('Unknown ZDO command: ' + name);
-        }
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        const c = ZDO_COMMANDS[name];
-        const result = t.deserialize(data, c[1])[0];
-        return result;
+    public parse_frame_payload(name: string, data: Buffer): EZSPZDOResponseFrameData {
+        const frame = new EZSPZDOResponseFrameData(name, data);
+        return frame;
     }
 
     /* eslint-disable @typescript-eslint/no-explicit-any*/
