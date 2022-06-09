@@ -2328,7 +2328,7 @@ export const ZDOREQUESTS: {[key: string]: EZSPFrameDesc} = {
         ID: 0x0034,
         request: {
             transId: uint8_t,
-            destID: EmberNodeId,
+            destAddr: EmberNodeId,
             removechildrenRejoin: uint8_t
         },
         response: {
@@ -2340,7 +2340,7 @@ export const ZDOREQUESTS: {[key: string]: EZSPFrameDesc} = {
 export const ZDORESPONSES: {[key: string]: EZSPZDOResponseFrame} = {
     // ZDO Device and Discovery Attributes
     nodeDescRsp: {
-        ID: 0x0002,
+        ID: 0x8002,
         params: {
             transId: uint8_t,
             status: EmberStatus,
@@ -2349,7 +2349,7 @@ export const ZDORESPONSES: {[key: string]: EZSPZDOResponseFrame} = {
         },
     },
     simpleDescRsp: {
-        ID: 0x0004,
+        ID: 0x8004,
         params: {
             transId: uint8_t,
             status: EmberStatus, 
@@ -2359,7 +2359,7 @@ export const ZDORESPONSES: {[key: string]: EZSPZDOResponseFrame} = {
         },
     },
     activeEpRsp: {
-        ID: 0x0005,
+        ID: 0x8005,
         params: {
             transId: uint8_t,
             status: EmberStatus,
@@ -2369,20 +2369,20 @@ export const ZDORESPONSES: {[key: string]: EZSPZDOResponseFrame} = {
     },
     // ZDO Bind Manager Attributes
     bindRsp: {
-        ID: 0x0021,
+        ID: 0x8021,
         params: {
             status: EmberStatus
         }
     },
     unBindRsp: {
-        ID: 0x0022,
+        ID: 0x8022,
         params: {
             status: EmberStatus
         }
     },
     // ZDO network manager attributes commands 
     mgmtLqiRsp: {
-        ID: 0x0031,
+        ID: 0x8031,
         params: {
             transId: uint8_t,
             status: EmberStatus,
@@ -2390,7 +2390,7 @@ export const ZDORESPONSES: {[key: string]: EZSPZDOResponseFrame} = {
         }
     },
     mgmtLeaveRsp: {
-        ID: 0x0034,
+        ID: 0x8034,
         params: {
             status: EmberStatus
         }
@@ -2409,23 +2409,3 @@ for (const key of Object.getOwnPropertyNames(ZDORESPONSES)) {
     const frameDesc = ZDORESPONSES[key];
     ZDORESPONSE_NAME_BY_ID[frameDesc.ID] = key;
 }
-
-
-// //// EmberZDOCmd
-// /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-// export const ZDO_COMMANDS: { [key: string]: [number, any[], any[]] } = {
-//     "Node_Desc_req": [0x0002, [uint8_t, EmberNodeId], [EmberStatus]],
-//     "Node_Desc_rsp": [0x8002, [uint8_t, EmberStatus, EmberNodeId, EmberNodeDescriptor], []],
-//     "Simple_Desc_req": [0x0004, [uint8_t, EmberNodeId, uint8_t], [EmberStatus]],
-//     "Simple_Desc_rsp": [0x8004, [uint8_t, EmberStatus, EmberNodeId, uint8_t, EmberSimpleDescriptor], []],
-//     "Active_EP_req": [0x0005, [uint8_t, EmberNodeId], [EmberStatus]],
-//     "Active_EP_rsp": [0x8005, [EmberStatus, uint8_t, EmberNodeId, LVBytes], []],
-//     "Bind_req": [0x0021, [uint8_t, EmberEUI64, uint8_t, uint16_t, EmberMultiAddress], [EmberStatus]],
-//     "Bind_rsp": [0x8021, [EmberStatus], []],
-//     "Unbind_req": [0x0022, [uint8_t, EmberEUI64, uint8_t, uint16_t, EmberMultiAddress], [EmberStatus]],
-//     "Unbind_rsp": [0x8022, [EmberStatus], []],
-//     "Mgmt_Leave_req": [0x0034, [uint8_t, EmberEUI64, uint8_t], [EmberStatus]],
-//     "Mgmt_Leave_rsp": [0x8034, [EmberStatus], []],
-//     "Mgmt_Lqi_req": [0x0031, [uint8_t, uint8_t], [EmberStatus]],
-//     "Mgmt_Lqi_rsp": [0x8031, [uint8_t, EmberStatus, EmberNeighbors], [EmberStatus]],
-// };

@@ -53,6 +53,18 @@ type IeeeMfg = {
     prefix: number[]
 };
 
+export interface EmberIncomingMessage {
+    messageType: number, 
+    apsFrame: EmberApsFrame, 
+    lqi: number, 
+    rssi: number,
+    sender: number,
+    bindingIndex: number,
+    addressIndex: number,
+    message: Buffer,
+    senderEui64: EmberEUI64
+};
+
 const IEEE_PREFIX_MFG_ID: IeeeMfg[] = [
     {mfgId: 0x115F, prefix: [0x04,0xcf,0xfc]},
     {mfgId: 0x115F, prefix: [0x54,0xef,0x44]},
@@ -476,7 +488,7 @@ export class Driver extends EventEmitter {
         const responseName = EmberZDOCmd.valueName(EmberZDOCmd, responseCmd);
         debug.log(`${requestName} params: ${JSON.stringify(params)}`);
         const frame = this.makeApsFrame(requestCmd as number);
-        const payload = this.makeZDOframe(requestName, {transId: frame.sequence, ...params});
+        const payload = this.makeZDOframe(requestCmd as number, {transId: frame.sequence, ...params});
         const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
         const res = await this.request(networkAddress, frame, payload);
         if (!res) {
@@ -486,7 +498,7 @@ export class Driver extends EventEmitter {
         }
         const message = await response.promise;
         debug.log(`${responseName}  frame: ${JSON.stringify(message.payload)}`);
-        const result = this.parse_frame_payload(responseName, message.payload);
+        const result = this.parse_frame_payload(responseCmd as number, message.payload);
         debug.log(`${responseName} parsed: ${JSON.stringify(result)}`);
         return result;
     }
@@ -519,11 +531,11 @@ export class Driver extends EventEmitter {
         return this.ezsp.execCommand('permitJoining', {duration: seconds});
     }
 
-    public makeZDOframe(name: string, params: ParamsDesc): Buffer {
+    public makeZDOframe(name: string|number, params: ParamsDesc): Buffer {
         return this.ezsp.makeZDOframe(name, params);
     }
 
-    public parse_frame_payload(name: string, obj: Buffer): EZSPZDOResponseFrameData {
+    public parse_frame_payload(name: string|number, obj: Buffer): EZSPZDOResponseFrameData {
         return this.ezsp.parse_frame_payload(name, obj);
     }
 

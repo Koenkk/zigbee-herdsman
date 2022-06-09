@@ -500,7 +500,7 @@ export class Ezsp extends EventEmitter {
         }
     }
 
-    public makeZDOframe(name: string, params: ParamsDesc): Buffer {
+    public makeZDOframe(name: string|number, params: ParamsDesc): Buffer {
         const frmData = new EZSPZDORequestFrameData(name, true, params);
         return frmData.serialize();
     }
@@ -555,7 +555,7 @@ export class Ezsp extends EventEmitter {
         return response.payload.status;
     }
 
-    public parse_frame_payload(name: string, data: Buffer): EZSPZDOResponseFrameData {
+    public parse_frame_payload(name: string|number, data: Buffer): EZSPZDOResponseFrameData {
         const frame = new EZSPZDOResponseFrameData(name, data);
         return frame;
     }

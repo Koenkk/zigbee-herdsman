@@ -9,7 +9,7 @@ import Debug from "debug";
 import Adapter from '../../adapter';
 
 const debug = Debug("zigbee-herdsman:adapter:ezsp");
-import {Driver} from '../driver';
+import {Driver, EmberIncomingMessage} from '../driver';
 import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
@@ -45,7 +45,7 @@ class EZSPAdapter extends Adapter {
         this.driver.on('incomingMessage', this.processMessage.bind(this));
     }
 
-    private async processMessage(frame: any) {
+    private async processMessage(frame: EmberIncomingMessage) {
         // todo
         debug(`processMessage: ${JSON.stringify(frame)}`);
         if (frame.apsFrame.profileId == 0) {
