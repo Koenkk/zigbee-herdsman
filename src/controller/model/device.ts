@@ -632,6 +632,8 @@ class Device extends Entity {
                                         `retrying after 10 seconds...`);
                                     await Wait(10000);
                                     result = await endpoint.read('genBasic', [key], {sendWhen: 'immediate'});
+                                } else {
+                                    throw error;
                                 }
                             }
 
@@ -701,15 +703,20 @@ class Device extends Entity {
         }
 
         // Bind poll control
-        for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
-            debug.log(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
-            await endpoint.bind('genPollCtrl', coordinator.endpoints[0]);
-            const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval']);
-            if (pollPeriod.checkinInterval <= 2400) {// 10 minutes
-                this.defaultSendRequestWhen = 'fastpoll';
-            } else {
-                this.defaultSendRequestWhen = 'active';
+        try {
+            for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
+                debug.log(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+                await endpoint.bind('genPollCtrl', coordinator.endpoints[0]);
+                const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval']);
+                if (pollPeriod.checkinInterval <= 2400) {// 10 minutes
+                    this.defaultSendRequestWhen = 'fastpoll';
+                } else {
+                    this.defaultSendRequestWhen = 'active';
+                }
             }
+        } catch (error) {
+            /* istanbul ignore next */
+            debug.log(`Interview - failed to bind genPollCtrl (${error})`);
         }
     }
 
