@@ -296,6 +296,7 @@ class Controller extends events.EventEmitter {
     }
 
     public async backup(): Promise<void> {
+        this.databaseSave();
         if (this.options.backupPath && await this.adapter.supportsBackup()) {
             debug.log('Creating coordinator backup');
             const backup = await this.adapter.backup();
