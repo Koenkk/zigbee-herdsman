@@ -16,7 +16,7 @@ import {
     EmberZdoConfigurationFlags
 } from './types/named';
 import {EventEmitter} from 'events';
-import {EmberApsFrame} from './types/struct';
+import {EmberApsFrame, EmberNetworkParameters} from './types/struct';
 import {Queue, Waitress} from '../../../utils';
 import Debug from "debug";
 
@@ -539,9 +539,9 @@ export class Ezsp extends EventEmitter {
         });
     }
 
-    async formNetwork(params: ParamsDesc): Promise<number> {
+    async formNetwork(params: EmberNetworkParameters): Promise<number> {
         const waiter = this.waitFor("stackStatusHandler", null).start();
-        const v = await this.execCommand("formNetwork", params);
+        const v = await this.execCommand("formNetwork", {parameters: params});
         if ((v.status !== EmberStatus.SUCCESS)) {
             this.waitress.remove(waiter.ID);
             debug.error("Failure forming network: " + JSON.stringify(v));
