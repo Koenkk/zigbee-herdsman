@@ -3,7 +3,7 @@ import * as TsType from './../../tstype';
 import {Ezsp, EZSPFrameData, EZSPZDOResponseFrameData} from './ezsp';
 import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption} from './types';
 import {EventEmitter} from "events";
-import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState, EmberRawFrame} from './types/struct';
+import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState, EmberRawFrame, EmberIeeeRawFrame} from './types/struct';
 import {ember_security} from './utils';
 import {
     EmberOutgoingMessageType,
@@ -315,14 +315,30 @@ export class Driver extends EventEmitter {
                 // If there was a message to the group and this group is not known, 
                 // then we will register the coordinator in this group
                 // Applicable for IKEA remotes
-                const msgType = frame.type;
-                if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
-                    const apsFrame = frame.apsFrame;
-                    if (apsFrame.destinationEndpoint == 255) {
-                        this.multicast.subscribe(apsFrame.groupId, 1);
-                    }
-                }
+                // const msgType = frame.type;
+                // if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
+                //     const apsFrame = frame.apsFrame;
+                //     if (apsFrame.destinationEndpoint == 255) {
+                //         this.multicast.subscribe(apsFrame.groupId, 1);
+                //     }
+                // }
             }
+            break;
+        }
+        case (frameName === 'macFilterMatchMessageHandler'): {
+            const [rawFrame, data] = EmberIeeeRawFrame.deserialize(EmberIeeeRawFrame, frame.message);
+            debug.log(`macFilterMatchMessageHandler frame message: ${rawFrame}`);
+            this.emit('incomingMessage', {
+                messageType: null, 
+                apsFrame: rawFrame, 
+                lqi: frame.lastHopLqi, 
+                rssi: frame.lastHopRssi,
+                sender: null,
+                bindingIndex: null,
+                addressIndex: null,
+                message: data,
+                senderEui64: new EmberEUI64(rawFrame.sourceAddress)
+            });
             break;
         }
         default:
@@ -446,9 +462,20 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, timeout = 30000): Promise<boolean> {
+    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, timeout = 10000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberRawFrame.serialize(EmberRawFrame, rawFrame), data]);
+            await this.ezsp.execCommand('sendRawMessage', {message: msgData});
+            return true;
+        } catch (e) {
+            debug.error(`Request error ${e}: ${e.stack}`);
+            return false;
+        }
+    }
+
+    public async ieeerawrequest(rawFrame: EmberIeeeRawFrame, data: Buffer, timeout = 10000): Promise<boolean> {
+        try {
+            const msgData = Buffer.concat([EmberIeeeRawFrame.serialize(EmberIeeeRawFrame, rawFrame), data]);
             await this.ezsp.execCommand('sendRawMessage', {message: msgData});
             return true;
         } catch (e) {
@@ -478,6 +505,12 @@ export class Driver extends EventEmitter {
 
     public makeEmberRawFrame():EmberRawFrame {
         const frame = new EmberRawFrame();
+        frame.sequence = this.nextTransactionID();
+        return frame;
+    }
+
+    public makeEmberIeeeRawFrame():EmberIeeeRawFrame {
+        const frame = new EmberIeeeRawFrame();
         frame.sequence = this.nextTransactionID();
         return frame;
     }

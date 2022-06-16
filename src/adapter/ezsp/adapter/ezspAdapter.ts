@@ -87,6 +87,19 @@ class EZSPAdapter extends Adapter {
 
                 this.emit(Events.Events.rawData, payload);
             }
+        } else if (frame.apsFrame.profileId == 0xc05e) {  // ZLL Frame
+            const payload: Events.ZclDataPayload = {
+                frame: ZclFrame.fromBuffer(frame.apsFrame.clusterId, frame.message),
+                address: `0x${frame.senderEui64.toString()}`,
+                endpoint: 0xFE,
+                linkquality: frame.lqi,
+                groupID: null,
+                wasBroadcast: false,
+                destinationEndpoint: null,
+            };
+
+            this.waitress.resolve(payload);
+            this.emit(Events.Events.zclData, payload);
         }
         this.emit('event', frame);
     }
@@ -483,21 +496,28 @@ class EZSPAdapter extends Adapter {
 
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
         return this.driver.queue.execute<void>(async () => {
-            debug('sendZclFrameInterPANToIeeeAddr');
-            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID);
-            frame.profileId = 0xFFFF;
-            frame.sourceEndpoint =  12;
-            frame.destinationEndpoint = 0xFE;
-            //const ieee = new EmberEUI64(ieeeAddr);
-            //frame.groupId = ieee;
-            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
-            const dataConfirmResult = await this.driver.mrequest(frame, zclFrame.toBuffer());
+            debug(`sendZclFrameInterPANToIeeeAddr to ${ieeeAddr}`);
+            try {
+                const frame = this.driver.makeEmberIeeeRawFrame();
+                frame.ieeeFrameControl = 0xcc21;
+                frame.destPanId = 0xFFFF;
+                frame.destAddress = new EmberEUI64(ieeeAddr);
+                frame.sourcePanId = this.driver.networkParams.panId;
+                frame.sourceAddress = this.driver.ieee;
+                frame.nwkFrameControl = 0x000b;
+                frame.appFrameControl = 0x03;
+                frame.clusterId = zclFrame.Cluster.ID;
+                frame.profileId = 0xc05e;
+                const dataConfirmResult = await this.driver.ieeerawrequest(frame, zclFrame.toBuffer());
+            } catch (error) {
+                throw error;
+            }
         });
     }
 
     public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclDataPayload> {
         return this.driver.queue.execute<Events.ZclDataPayload>(async () => {
-            debug('sendZclFrameInterPANBroadcast');
+            debug(`sendZclFrameInterPANBroadcast`);
             const command = zclFrame.getCommand();
             if (!command.hasOwnProperty('response')) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
