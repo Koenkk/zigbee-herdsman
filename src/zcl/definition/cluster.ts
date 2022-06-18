@@ -4039,6 +4039,21 @@ const Cluster: {
             },
         },
     },
+    manuSpecificPhilips2: {
+        ID: 0xFC03,
+        manufacturerCode: ManufacturerCode.PHILIPS,
+        attributes: {
+        },
+        commands: {
+            multiColor: {
+                ID: 0,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+        commandsResponse: {},
+    },
     manuSpecificSinope: {
         ID: 65281,
         manufacturerCode: ManufacturerCode.Sinope,
