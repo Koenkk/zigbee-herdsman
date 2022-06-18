@@ -3,7 +3,8 @@ import * as TsType from './../../tstype';
 import {Ezsp, EZSPFrameData, EZSPZDOResponseFrameData} from './ezsp';
 import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption} from './types';
 import {EventEmitter} from "events";
-import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState, EmberRawFrame, EmberIeeeRawFrame} from './types/struct';
+import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState,
+    EmberRawFrame, EmberIeeeRawFrame} from './types/struct';
 import {ember_security} from './utils';
 import {
     EmberOutgoingMessageType,
@@ -63,7 +64,7 @@ export interface EmberIncomingMessage {
     addressIndex: number,
     message: Buffer,
     senderEui64: EmberEUI64
-};
+}
 
 const IEEE_PREFIX_MFG_ID: IeeeMfg[] = [
     {mfgId: 0x115F, prefix: [0x04,0xcf,0xfc]},
@@ -272,7 +273,8 @@ export class Driver extends EventEmitter {
 
             const eui64 = this.eui64ToNodeId.get(frame.sender);
 
-            const handled = this.waitress.resolve({address: frame.sender, payload: frame.message, frame: frame.apsFrame});
+            const handled = this.waitress.resolve({address: frame.sender, payload: frame.message,
+                frame: frame.apsFrame});
             if (!handled) {
                 this.emit('incomingMessage', {
                     messageType: frame.type, 
@@ -462,6 +464,7 @@ export class Driver extends EventEmitter {
         }
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, timeout = 10000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberRawFrame.serialize(EmberRawFrame, rawFrame), data]);
@@ -473,6 +476,7 @@ export class Driver extends EventEmitter {
         }
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     public async ieeerawrequest(rawFrame: EmberIeeeRawFrame, data: Buffer, timeout = 10000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberIeeeRawFrame.serialize(EmberIeeeRawFrame, rawFrame), data]);
@@ -516,7 +520,7 @@ export class Driver extends EventEmitter {
     }
 
     public async zdoRequest(networkAddress: number, requestCmd: EmberZDOCmd,
-            responseCmd: EmberZDOCmd, params: ParamsDesc): Promise<EZSPZDOResponseFrameData> {
+        responseCmd: EmberZDOCmd, params: ParamsDesc): Promise<EZSPZDOResponseFrameData> {
         const requestName = EmberZDOCmd.valueName(EmberZDOCmd, requestCmd);
         const responseName = EmberZDOCmd.valueName(EmberZDOCmd, responseCmd);
         debug.log(`${requestName} params: ${JSON.stringify(params)}`);

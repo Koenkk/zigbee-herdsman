@@ -9,8 +9,6 @@ import {/* Basic Types */
     WordList,
 
     /* Named Types */
-    EmberRf4ceTxOption,
-    EmberRf4ceNodeCapabilities,
     EmberNodeId,
     EmberPanId,
     EmberEUI64,
@@ -57,7 +55,6 @@ import {/* Basic Types */
     EmberSignatureData,
     EmberCertificate283k1Data,
     EmberPublicKey283k1Data,
-    EmberPrivateKey283k1Data,
     EmberSignature283k1Data,
     EmberMessageDigest,
     EmberAesMmoHashContext,
@@ -73,24 +70,21 @@ import {/* Basic Types */
     EmberZllAddressAssignment,
     EmberTokTypeStackZllData,
     EmberTokTypeStackZllSecurity,
-    EmberRf4ceVendorInfo,
-    EmberRf4ceApplicationInfo,
-    EmberRf4cePairingTableEntry,
     EmberGpAddress,
-    EmberGpSinkListEntry,
     EmberNodeDescriptor,
     EmberSimpleDescriptor,
     EmberMultiAddress,
     EmberNeighbors,
 } from './types';
 
-export interface ParamsDesc {[s: string]: any};
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+export interface ParamsDesc {[s: string]: any}
 
 export interface EZSPFrameDesc {
     ID: number,
     request: ParamsDesc,
     response: ParamsDesc,
-};
+}
 
 export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // Configuration Frames
@@ -2241,7 +2235,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             remainingTime: uint32_t
         },
     },
-}
+};
 
 export const FRAME_NAME_BY_ID: { [key: string]: string } = {};
 for (const key of Object.getOwnPropertyNames(FRAMES)) {
@@ -2251,7 +2245,7 @@ for (const key of Object.getOwnPropertyNames(FRAMES)) {
 
 interface EZSPZDOResponseFrame {
     ID: number, params: ParamsDesc
-};
+}
 
 export const ZDOREQUESTS: {[key: string]: EZSPFrameDesc} = {
     // ZDO Device and Discovery Attributes

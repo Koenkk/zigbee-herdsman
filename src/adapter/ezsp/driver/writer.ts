@@ -29,7 +29,7 @@ export class Writer extends stream.Readable {
         this.writeBuffer(rstFrame);
     }
 
-    public sendData(data: Buffer, seq: number, rxmit: number, ackSeq: number) {
+    public sendData(data: Buffer, seq: number, rxmit: number, ackSeq: number): void {
         /* Construct a data frame */
         debug(`Send Data frame (${seq})`);
         const control = (((seq << 4) | (rxmit << 3)) | ackSeq);

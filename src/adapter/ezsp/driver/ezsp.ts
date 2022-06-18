@@ -33,7 +33,7 @@ const MTOR_ROUTE_ERROR_THRESHOLD = 4;
 const MTOR_DELIVERY_FAIL_THRESHOLD = 3;
 const MAX_WATCHDOG_FAILURES = 4;
 //const RESET_ATTEMPT_BACKOFF_TIME = 5;
-const WATCHDOG_WAKE_PERIOD = 10;  // in sec
+//const WATCHDOG_WAKE_PERIOD = 10;  // in sec
 //const EZSP_COUNTER_CLEAR_INTERVAL = 180;  // Clear counters every n * WATCHDOG_WAKE_PERIOD
 const EZSP_DEFAULT_RADIUS = 0;
 const EZSP_MULTICAST_NON_MEMBER_RADIUS = 3;
@@ -56,6 +56,7 @@ export class EZSPFrameData {
     _cls_: string;
     _id_: number;
     _isRequest_: boolean;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     [name: string]: any;
 
     static getFrame(key: string|number): EZSPFrameDesc {
@@ -99,11 +100,11 @@ export class EZSPFrameData {
         return Buffer.concat(result);
     }
 
-    get name() {
+    get name(): string {
         return this._cls_;
     }
 
-    get id() {
+    get id(): number {
         return this._id_;
     }
 }
@@ -113,6 +114,7 @@ export class EZSPZDORequestFrameData {
     _cls_: string;
     _id_: number;
     _isRequest_: boolean;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     [name: string]: any;
 
     static getFrame(key: string|number): EZSPFrameDesc {
@@ -156,11 +158,11 @@ export class EZSPZDORequestFrameData {
         return Buffer.concat(result);
     }
 
-    get name() {
+    get name(): string {
         return this._cls_;
     }
 
-    get id() {
+    get id(): number {
         return this._id_;
     }
 }
@@ -168,6 +170,7 @@ export class EZSPZDORequestFrameData {
 export class EZSPZDOResponseFrameData {
     _cls_: string;
     _id_: number;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     [name: string]: any;
 
     static getFrame(key: string|number): ParamsDesc {
@@ -208,11 +211,11 @@ export class EZSPZDOResponseFrameData {
         return Buffer.concat(result);
     }
 
-    get name() {
+    get name(): string {
         return this._cls_;
     }
 
-    get id() {
+    get id(): number {
         return this._id_;
     }
 }
@@ -278,7 +281,7 @@ export class Ezsp extends EventEmitter {
         data randomization removed.
         */
         debug.log(`<=== Frame: ${data.toString('hex')}`);
-        let frame_id: number, result, sequence;
+        let frame_id: number, sequence;
         if ((this.ezspV < 8)) {
             [sequence, frame_id, data] = [data[0], data[2], data.slice(3)];
         } else {
