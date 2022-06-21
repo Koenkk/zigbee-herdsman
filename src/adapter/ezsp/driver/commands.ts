@@ -2322,7 +2322,7 @@ export const ZDOREQUESTS: {[key: string]: EZSPFrameDesc} = {
         ID: 0x0034,
         request: {
             transId: uint8_t,
-            destAddr: EmberNodeId,
+            destAddr: EmberEUI64,
             removechildrenRejoin: uint8_t
         },
         response: {
