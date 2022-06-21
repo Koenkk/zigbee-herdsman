@@ -22,8 +22,8 @@ import Debug from "debug";
 
 
 const debug = {
-    error: Debug('zigbee-herdsman:adapter:ezsp:error'),
-    log: Debug('zigbee-herdsman:adapter:ezsp:log'),
+    error: Debug('zigbee-herdsman:adapter:ezsp:erro'),
+    log: Debug('zigbee-herdsman:adapter:ezsp:ezsp'),
 };
 
 
@@ -280,7 +280,7 @@ export class Ezsp extends EventEmitter {
         just have EZSP application stuff here, with all escaping/stuffing and
         data randomization removed.
         */
-        debug.log(`<=== Frame: ${data.toString('hex')}`);
+        debug.log(`<== Frame: ${data.toString('hex')}`);
         let frame_id: number, sequence;
         if ((this.ezspV < 8)) {
             [sequence, frame_id, data] = [data[0], data[2], data.slice(3)];
@@ -295,15 +295,8 @@ export class Ezsp extends EventEmitter {
                 data = data.slice(2);
             }
         }
-        // const cmd = this.COMMANDS_BY_ID.get(frame_id);
-        // if (!cmd) throw new Error('Unrecognized command from FrameID' + frame_id);
-        // const frameName = cmd.name;
         const frm = new EZSPFrameData(frame_id, false, data);
-        //debug.log("<=== Application frame %s (%s) received: %s", frame_id, frameName, data.toString('hex'));
-        debug.log("<=== Application frame %s received: %s", frame_id, JSON.stringify(frm));
-        //const schema = cmd.outArgs;
-        // [result, data] = t.deserialize(data, schema);
-        // debug.log(`<=== Application frame ${frame_id} (${frameName})   parsed: ${result}`);
+        debug.log(`<== 0x${frame_id.toString(16)}: ${JSON.stringify(frm)}`);
         const handled = this.waitress.resolve({
             frameId: frame_id,
             frameName: frm.name,
@@ -512,7 +505,7 @@ export class Ezsp extends EventEmitter {
         //const c = COMMANDS[name];
         //const data = t.serialize(args, c[1]);
         const frmData = new EZSPFrameData(name, true, params);
-        debug.log(`makeFrame ${name}:`, JSON.stringify(frmData));
+        debug.log(`==> ${JSON.stringify(frmData)}`);
         const frame = [(seq & 255)];
         if ((this.ezspV < 8)) {
             if ((this.ezspV >= 5)) {
@@ -528,10 +521,10 @@ export class Ezsp extends EventEmitter {
     }
 
     public execCommand(name: string, params: ParamsDesc = null): Promise<EZSPFrameData> {
-        debug.log(`===> Send command ${name}: ${JSON.stringify(params)}`);
+        debug.log(`==> ${name}: ${JSON.stringify(params)}`);
         return this.queue.execute<EZSPFrameData>(async (): Promise<EZSPFrameData> => {
             const data = this.makeFrame(name, params, this.cmdSeq);
-            debug.log(`===> Send data    ${name}: (${data.toString('hex')})`);
+            //debug.log(`===> Data  ${name}: (${data.toString('hex')})`);
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
             //const c = COMMANDS[name];
             const waiter = this.waitFor(name, this.cmdSeq).start();

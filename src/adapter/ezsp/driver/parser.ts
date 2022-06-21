@@ -2,7 +2,7 @@ import * as stream from 'stream';
 import * as consts from './consts';
 import Debug from "debug";
 
-const debug = Debug('zigbee-herdsman:adapter:ezsp:parser');
+const debug = Debug('zigbee-herdsman:adapter:ezsp:recv');
 
 export class Parser extends stream.Transform {
     private buffer: Buffer;
@@ -13,7 +13,6 @@ export class Parser extends stream.Transform {
     }
 
     public _transform(chunk: Buffer, _: string, cb: () => void): void {
-        //debug(`<-- [${[...chunk]}]`);
         if (chunk.indexOf(consts.CANCEL) >= 0) {
             this.buffer = Buffer.from([]);
             chunk = chunk.slice((chunk.lastIndexOf(consts.CANCEL) + 1));
@@ -22,16 +21,15 @@ export class Parser extends stream.Transform {
             this.buffer = Buffer.from([]);
             chunk = chunk.slice((chunk.indexOf(consts.FLAG) + 1));
         }
+        debug(`<-- [${chunk.toString('hex')}]`);
         this.buffer = Buffer.concat([this.buffer, chunk]);
         this.parseNext();
         cb();
     }
 
     private parseNext(): void {
-        //debug(`--- parseNext [${[...this.buffer]}]`);
         if (this.buffer.length && this.buffer.indexOf(consts.FLAG) >= 0) {
-            debug(`<-- [${this.buffer.toString('hex')}]`);
-            //debug(`<-- [${[...this.buffer]}]`);
+            //debug(`<-- [${this.buffer.toString('hex')}]`);
             try {
                 const frame = this.extractFrame();
                 if (frame) {

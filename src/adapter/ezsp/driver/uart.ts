@@ -157,32 +157,32 @@ export class SerialDriver extends EventEmitter {
             /* Frame receive handler */
             switch (true) {
             case ((data[0] & 0x80) === 0):
-                debug(`Recv DATA frame (${(data[0] & 0x70) >> 4},`+
+                debug(`<-- DATA (${(data[0] & 0x70) >> 4},`+
                     `${data[0] & 0x07},${(data[0] & 0x08) >> 3}): ${data.toString('hex')}`);
                 this.handleDATA(data);
                 break;
 
             case ((data[0] & 0xE0) === 0x80):
-                debug(`Recv ACK  frame (${data[0] & 0x07}): ${data.toString('hex')}`);
+                debug(`<-- ACK  (${data[0] & 0x07}): ${data.toString('hex')}`);
                 this.handleACK(data[0]);
                 break;
 
             case ((data[0] & 0xE0) === 0xA0):
-                debug(`Recv NAK  frame (${data[0] & 0x07}): ${data.toString('hex')}`);
+                debug(`<-- NAK  (${data[0] & 0x07}): ${data.toString('hex')}`);
                 this.handleNAK(data[0]);
                 break;
 
             case (data[0] === 0xC0):
-                debug(`Recv RST  frame: ${data.toString('hex')}`);
+                debug(`<-- RST:  ${data.toString('hex')}`);
                 break;
 
             case (data[0] === 0xC1):
-                debug(`RSTACK frame: ${data.toString('hex')}`);
+                debug(`<-- RSTACK: ${data.toString('hex')}`);
                 this.rstack_frame_received(data);
                 break;
 
             case (data[0] === 0xC2):
-                debug(`Error frame : ${data.toString('hex')}`);
+                debug(`<-- Error: ${data.toString('hex')}`);
                 break;
             default:
                 debug("UNKNOWN FRAME RECEIVED: %r", data);
@@ -202,6 +202,7 @@ export class SerialDriver extends EventEmitter {
         //     debug('NAK-NAK');
         // }
         this.recvSeq = (frmNum + 1) & 7; // next
+        debug(`--> ACK  (${this.recvSeq})`);
         this.writer.sendACK(this.recvSeq);
         this.handleACK(data[0]);
         data = data.slice(1, (-3));
@@ -272,11 +273,11 @@ export class SerialDriver extends EventEmitter {
     }
 
     async reset(): Promise<void> {
-        debug('uart reseting');
+        debug('Uart reseting');
         if ((this.resetDeferred)) {
             throw new TypeError("reset can only be called on a new connection");
         }
-        debug(`Write reset`);
+        debug(`--> Write reset`);
         this.resetDeferred = new Deferred<void>();
         this.writer.sendReset();
         return this.resetDeferred.promise;
@@ -324,26 +325,26 @@ export class SerialDriver extends EventEmitter {
         const ackSeq = this.recvSeq;
 
         return this.queue.execute<void>(async (): Promise<void> => {
-            debug(`Send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
+            debug(`--> DATA (${seq},${ackSeq},0): ${data.toString('hex')}`);
             const randData = this.randomize(data);
             const waiter = this.waitFor(nextSeq).start();
             this.writer.sendData(randData, seq, 0, ackSeq);
-            debug(`waiting (${nextSeq})`);
+            debug(`-?- waiting (${nextSeq})`);
             await waiter.promise.catch(async () => {
-                debug(`break waiting (${nextSeq})`);
+                debug(`-!- break waiting (${nextSeq})`);
                 debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
-                debug(`Resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
+                debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`);
                 const waiter = this.waitFor(nextSeq).start();
                 this.writer.sendData(randData, seq, 1, ackSeq);
-                debug(`rewaiting (${nextSeq})`);
+                debug(`-?- rewaiting (${nextSeq})`);
                 await waiter.promise.catch((e) => {
-                    debug(`break rewaiting (${nextSeq})`);
+                    debug(`-!- break rewaiting (${nextSeq})`);
                     debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
                     throw new Error(`sendDATA error: ${e}`);
                 });
-                debug(`rewaiting (${nextSeq}) success`);
+                debug(`-+- rewaiting (${nextSeq}) success`);
             });
-            debug(`waiting (${nextSeq}) success`);
+            debug(`-+- waiting (${nextSeq}) success`);
         });
     }
 

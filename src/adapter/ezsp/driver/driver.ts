@@ -24,8 +24,8 @@ import equals from 'fast-deep-equal/es6';
 import {ParamsDesc} from './commands';
 
 const debug = {
-    error: Debug('zigbee-herdsman:adapter:ezsp:driver:error'),
-    log: Debug('zigbee-herdsman:adapter:ezsp:driver'),
+    error: Debug('zigbee-herdsman:adapter:ezsp:erro'),
+    log: Debug('zigbee-herdsman:adapter:ezsp:driv'),
 };
 
 interface AddEndpointParameters {
