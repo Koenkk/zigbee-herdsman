@@ -328,21 +328,23 @@ export class SerialDriver extends EventEmitter {
             const waiter = this.waitFor(nextSeq).start();
             this.writer.sendData(randData, seq, 0, ackSeq);
             debug(`-?- waiting (${nextSeq})`);
-            await waiter.promise.catch(async () => {
+            return waiter.promise.catch(async () => {
                 debug(`-!- break waiting (${nextSeq})`);
                 debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
                 debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`);
                 const waiter = this.waitFor(nextSeq).start();
                 this.writer.sendData(randData, seq, 1, ackSeq);
                 debug(`-?- rewaiting (${nextSeq})`);
-                await waiter.promise.catch((e) => {
+                return waiter.promise.catch((e) => {
                     debug(`-!- break rewaiting (${nextSeq})`);
                     debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
                     throw new Error(`sendDATA error: ${e}`);
+                }).then(()=>{
+                    debug(`-+- rewaiting (${nextSeq}) success`);
                 });
-                debug(`-+- rewaiting (${nextSeq}) success`);
+            }).then(()=>{
+                debug(`-+- waiting (${nextSeq}) success`);
             });
-            debug(`-+- waiting (${nextSeq}) success`);
         });
     }
 

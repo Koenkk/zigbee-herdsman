@@ -497,15 +497,16 @@ export class Ezsp extends EventEmitter {
         return Buffer.concat([Buffer.from(frame), frmData.serialize()]);
     }
 
-    public execCommand(name: string, params: ParamsDesc = null): Promise<EZSPFrameData> {
+    public async execCommand(name: string, params: ParamsDesc = null): Promise<EZSPFrameData> {
         debug.log(`==> ${name}: ${JSON.stringify(params)}`);
         return this.queue.execute<EZSPFrameData>(async (): Promise<EZSPFrameData> => {
             const data = this.makeFrame(name, params, this.cmdSeq);
-            const waiter = this.waitFor(name, this.cmdSeq).start();
+            const waiter = this.waitFor(name, this.cmdSeq);
             this.cmdSeq = (this.cmdSeq + 1) & 255;
-            this.serialDriver.sendDATA(data);
-            const response = await waiter.promise;
-            return response.payload;
+            return this.serialDriver.sendDATA(data).then(async ()=>{
+                const response = await waiter.start().promise;
+                return response.payload;
+            });
         });
     }
 
