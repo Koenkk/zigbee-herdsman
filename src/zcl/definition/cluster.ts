@@ -455,6 +455,7 @@ const Cluster: {
             onTime: {ID: 16385, type: DataType.uint16},
             offWaitTime: {ID: 16386, type: DataType.uint16},
             startUpOnOff: {ID: 16387, type: DataType.enum8},
+            tuyaBacklightSwitch: {ID: 0x5000, type: DataType.enum8},
             tuyaBacklightMode: {ID: 0x8001, type: DataType.enum8},
             moesStartUpOnOff: {ID: 0x8002, type: DataType.enum8},
             tuyaOperationMode: {ID: 0x8004, type: DataType.enum8},
@@ -4038,6 +4039,21 @@ const Cluster: {
             },
         },
     },
+    manuSpecificPhilips2: {
+        ID: 0xFC03,
+        manufacturerCode: ManufacturerCode.PHILIPS,
+        attributes: {
+        },
+        commands: {
+            multiColor: {
+                ID: 0,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+        commandsResponse: {},
+    },
     manuSpecificSinope: {
         ID: 65281,
         manufacturerCode: ManufacturerCode.Sinope,
@@ -4425,6 +4441,7 @@ const Cluster: {
         ID: 0xe001,
         attributes: {
             switchType: {ID: 0xd030, type: DataType.enum8},
+            powerOnBehavior: {ID: 0xd010, type: DataType.enum8},
         },
         commands: {},
         commandsResponse: {},
@@ -4870,6 +4887,106 @@ const Cluster: {
             },
         },
         commandsResponse: {},
+    },
+    zosungIRTransmit: {
+        ID: 0xed00,
+        attributes: {
+        },
+        commands: {
+            zosungSendIRCode00: {
+                ID: 0,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'length', type: DataType.uint32},
+                    {name: 'unk1', type: DataType.uint32},
+                    {name: 'unk2', type: DataType.uint16},
+                    {name: 'unk3', type: DataType.uint8},
+                    {name: 'cmd', type: DataType.uint8},
+                    {name: 'unk4', type: DataType.uint16},
+                ],
+            },
+            zosungSendIRCode01: {
+                ID: 1,
+                parameters: [
+                    {name: 'zero', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'length', type: DataType.uint32},
+                    {name: 'unk1', type: DataType.uint32},
+                    {name: 'unk2', type: DataType.uint16},
+                    {name: 'unk3', type: DataType.uint8},
+                    {name: 'cmd', type: DataType.uint8},
+                    {name: 'unk4', type: DataType.uint16},
+                ],
+            },
+            zosungSendIRCode02: {
+                ID: 2,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'position', type: DataType.uint32},
+                    {name: 'maxlen', type: DataType.uint8},
+                ],
+            },
+            zosungSendIRCode03: {
+                ID: 3,
+                parameters: [
+                    {name: 'zero', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'position', type: DataType.uint32},
+                    {name: 'msgpart', type: DataType.octetStr},
+                    {name: 'msgpartcrc', type: DataType.uint8},
+                ],
+            },
+            zosungSendIRCode04: {
+                ID: 4,
+                parameters: [
+                    {name: 'zero0', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'zero1', type: DataType.uint16},
+                ],
+            },
+            zosungSendIRCode05: {
+                ID: 5,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'zero', type: DataType.uint16},
+                ],
+            },
+        },
+        commandsResponse: {
+            zosungSendIRCode03Resp: {
+                ID: 3,
+                parameters: [
+                    {name: 'zero', type: DataType.uint8},
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'position', type: DataType.uint32},
+                    {name: 'msgpart', type: DataType.octetStr},
+                    {name: 'msgpartcrc', type: DataType.uint8},
+                ],
+            },
+            zosungSendIRCode05Resp: {
+                ID: 5,
+                parameters: [
+                    {name: 'seq', type: DataType.uint16},
+                    {name: 'zero', type: DataType.uint16},
+                ],
+            },
+        },
+    },
+    zosungIRControl: {
+        ID: 0xe004,
+        attributes: {
+        },
+        commands: {
+            zosungControlIRCommand00: {
+                ID: 0,
+                parameters: [
+                    // JSON string with a command.
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+        commandsResponse: {
+        },
     },
 };
 
