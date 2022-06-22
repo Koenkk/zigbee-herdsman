@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import * as stream from 'stream';
 import * as consts from './consts';
 import {crc16ccitt} from './utils';
