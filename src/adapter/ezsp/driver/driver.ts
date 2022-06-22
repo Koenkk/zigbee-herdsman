@@ -100,7 +100,6 @@ export class Driver extends EventEmitter {
     constructor() {
         super();
         this.queue = new Queue();
-
         this.waitress = new Waitress<EmberFrame, EmberWaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
@@ -156,7 +155,6 @@ export class Driver extends EventEmitter {
         //const count = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
         //debug.log("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
 
-        //await this.addEndpoint({outputClusters: [0x0500]});
         await this.addEndpoint({
             inputClusters: [0x0000, 0x0003, 0x0006, 0x000A, 0x0019, 0x001A, 0x0300],
             outputClusters: [0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0020,
@@ -265,14 +263,10 @@ export class Driver extends EventEmitter {
         await this.ezsp.execCommand('getKey', {index: EmberKeyType.CURRENT_NETWORK_KEY});
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private handleFrame(frameName: string, frame: EZSPFrameData): void {
         switch (true) {
         case (frameName === 'incomingMessageHandler'): {
-            //const [messageType, apsFrame, lqi, rssi, sender, bindingIndex, addressIndex, message] = args;
-
             const eui64 = this.eui64ToNodeId.get(frame.sender);
-
             const handled = this.waitress.resolve({address: frame.sender, payload: frame.message,
                 frame: frame.apsFrame});
             if (!handled) {
@@ -291,7 +285,6 @@ export class Driver extends EventEmitter {
             break;
         }
         case (frameName === 'trustCenterJoinHandler'): {
-            /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
             if (frame.status === EmberDeviceUpdate.DEVICE_LEFT) {
                 this.handleNodeLeft(frame.newNodeId, frame.newNodeEui64);
             } else {
@@ -343,6 +336,10 @@ export class Driver extends EventEmitter {
             });
             break;
         }
+        case (frameName === 'stackStatusHandler'): {
+            debug.log(`stackStatusHandler: ${EmberStatus.valueToName(EmberStatus, frame.status)}`);
+            break;
+        }
         default:
             // <=== Application frame 35 (childJoinHandler) received: 00013e9c2ebd08feff9ffd9004 +1ms
             // <=== Application frame 35 (childJoinHandler)   parsed: 0,1,39998,144,253,159,255,254,8,189,46,4 +1ms
@@ -357,8 +354,8 @@ export class Driver extends EventEmitter {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number, relays: any): void {
+    private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number,
+        relays: number): void {
         // todo
         debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
         this.setNode(nwk, ieee);
@@ -376,7 +373,6 @@ export class Driver extends EventEmitter {
         this.eui64ToRelays.set(ieee.toString(), null);
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     private handleNodeLeft(nwk: number, ieee: EmberEUI64 | number[]): void {
         if (ieee && !(ieee instanceof EmberEUI64)) {
             ieee = new EmberEUI64(ieee);
@@ -392,7 +388,6 @@ export class Driver extends EventEmitter {
         await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     private handleNodeJoined(nwk: number, ieee: EmberEUI64 | number[]): void {
         if (ieee && !(ieee instanceof EmberEUI64)) {
             ieee = new EmberEUI64(ieee);
@@ -507,13 +502,13 @@ export class Driver extends EventEmitter {
         return frame;
     }
 
-    public makeEmberRawFrame():EmberRawFrame {
+    public makeEmberRawFrame(): EmberRawFrame {
         const frame = new EmberRawFrame();
         frame.sequence = this.nextTransactionID();
         return frame;
     }
 
-    public makeEmberIeeeRawFrame():EmberIeeeRawFrame {
+    public makeEmberIeeeRawFrame(): EmberIeeeRawFrame {
         const frame = new EmberIeeeRawFrame();
         frame.sequence = this.nextTransactionID();
         return frame;
@@ -553,7 +548,6 @@ export class Driver extends EventEmitter {
         }
         const value = await this.ezsp.execCommand('lookupEui64ByNodeId', {nodeId: nwk});
         if (value.status === EmberStatus.SUCCESS) {
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
             const eUI64 = new EmberEUI64(value.eui64);
             this.eui64ToNodeId.set(eUI64.toString(), nwk);
             return eUI64;
@@ -594,7 +588,7 @@ export class Driver extends EventEmitter {
             inputClusterList: inputClusters,
             outputClusterList: outputClusters,
         });
-        debug.log("Ezsp adding endpoint: %s", res);
+        debug.log(`Ezsp adding endpoint: ${JSON.stringify(res)}`);
     }
 
     public waitFor(address: number, clusterId: number, sequence: number, timeout = 30000)

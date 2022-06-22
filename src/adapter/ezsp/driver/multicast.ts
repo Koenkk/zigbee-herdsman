@@ -6,7 +6,7 @@ import {EmberMulticastTableEntry} from './types/struct';
 import Debug from "debug";
 
 const debug = {
-    log: Debug('zigbee-herdsman:adapter:ezsp:multicast'),
+    log: Debug('zigbee-herdsman:adapter:ezsp:cast'),
 };
 
 

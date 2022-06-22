@@ -2,7 +2,7 @@ import * as stream from 'stream';
 import * as consts from './consts';
 import Debug from "debug";
 
-const debug = Debug('zigbee-herdsman:adapter:ezsp:recv');
+const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
 
 export class Parser extends stream.Transform {
     private buffer: Buffer;

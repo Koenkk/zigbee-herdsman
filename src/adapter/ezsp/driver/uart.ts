@@ -40,8 +40,7 @@ export class SerialDriver extends EventEmitter {
     private writer: Writer;
     private parser: Parser;
     private initialized: boolean;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    private resetDeferred: Deferred<any>;
+    private resetDeferred: Deferred<void>;
     private portType: 'serial' | 'socket';
     private sendSeq = 0; // next frame number to send
     private recvSeq = 0; // next frame number to receive
@@ -243,15 +242,14 @@ export class SerialDriver extends EventEmitter {
             code = NcpResetCode.ERROR_UNKNOWN_EM3XX_ERROR;
         }
         debug("RSTACK Version: %d Reason: %s frame: %s", data[1], code.toString(), data.toString('hex'));
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        if (NcpResetCode[<any>code].toString() !== NcpResetCode.RESET_SOFTWARE.toString()) {
+        if (NcpResetCode[<number>code].toString() !== NcpResetCode.RESET_SOFTWARE.toString()) {
             return;
         }
         if ((!this.resetDeferred)) {
             debug("Reset future is None");
             return;
         }
-        this.resetDeferred.resolve(true);
+        this.resetDeferred.resolve();
     }
 
     private randomize(s: Buffer): Buffer {

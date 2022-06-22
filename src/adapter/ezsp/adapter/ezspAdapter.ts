@@ -8,7 +8,7 @@ import {
 import Debug from "debug";
 import Adapter from '../../adapter';
 
-const debug = Debug("zigbee-herdsman:adapter:ezsp");
+const debug = Debug("zigbee-herdsman:adapter:ezsp:debg");
 import {Driver, EmberIncomingMessage} from '../driver';
 import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
