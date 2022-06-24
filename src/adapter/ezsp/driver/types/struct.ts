@@ -695,3 +695,28 @@ export class EmberRawFrame extends EzspStruct {
         ['profileId', basic.uint16_t],
     ];
 }
+
+export class EmberIeeeRawFrame extends EzspStruct {
+    public ieeeFrameControl: number;
+    public sequence: number;
+    public destPanId: number;
+    public destAddress: named.EmberEUI64;
+    public sourcePanId: number;
+    public sourceAddress: named.EmberEUI64;
+    public nwkFrameControl: number;
+    public appFrameControl: number;
+    public clusterId: number;
+    public profileId: number;
+    static _fields = [
+        ['ieeeFrameControl', basic.uint16_t],
+        ['sequence', basic.uint8_t],
+        ['destPanId', named.EmberPanId],
+        ['destAddress', named.EmberEUI64],
+        ['sourcePanId', named.EmberPanId],
+        ['sourceAddress', named.EmberEUI64],
+        ['nwkFrameControl', basic.uint16_t],
+        ['appFrameControl', basic.uint8_t],
+        ['clusterId', basic.uint16_t],
+        ['profileId', basic.uint16_t],
+    ];
+}
