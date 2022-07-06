@@ -4019,7 +4019,8 @@ const Cluster: {
         },
     },
     manuSpecificPhilips: {
-        ID: 64512,
+        ID: 0xFC00,
+        manufacturerCode: ManufacturerCode.PHILIPS,
         attributes: {
             config: {ID: 49, type: DataType.bitmap16},
         },
