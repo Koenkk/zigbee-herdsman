@@ -213,7 +213,8 @@ class GreenPower extends events.EventEmitter {
             case 0xA1: // GP Manufacturer-specific Attribute Reporting
                 break;
             default:
-                debug.info("Unhandled Zigbee GreenPower command: 0x" + dataPayload.frame.Payload.commandID.toString(16));
+                debug.info("Unhandled Zigbee GreenPower command: 0x" + 
+                    dataPayload.frame.Payload.commandID.toString(16));
             }
         } catch (error) {
             /* istanbul ignore next */
