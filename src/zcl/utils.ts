@@ -34,10 +34,14 @@ function IsDataTypeAnalogOrDiscrete(dataType: DataType): 'ANALOG' | 'DISCRETE' {
 function getCluster(key: string | number, manufacturerCode: number = null): TsType.Cluster {
     let name: string;
 
+    console.log("GET CLUSTER", key, manufacturerCode);
+
     if (typeof key === 'number') {
         if (manufacturerCode) {
             for (const [clusterName, cluster] of Object.entries(Cluster)) {
+                console.log('1', clusterName, cluster.ID, cluster.manufacturerCode);
                 if (cluster.ID === key && cluster.manufacturerCode === manufacturerCode) {
+                    console.log('MATCH 1', cluster.ID, clusterName, cluster.manufacturerCode);
                     name = clusterName;
                     break;
                 }
@@ -46,13 +50,16 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
 
         if (!name) {
             for (const [clusterName, cluster] of Object.entries(Cluster)) {
+                console.log('2', clusterName, cluster.ID, cluster.manufacturerCode);
                 if (cluster.ID === key) {
+                    console.log('MATCH 2', cluster.ID, clusterName, cluster.manufacturerCode);
                     name = clusterName;
                     break;
                 }
             }
         }
     } else {
+        console.log('MATCH 3', key);
         name = key;
     }
 
