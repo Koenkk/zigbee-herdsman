@@ -33,6 +33,14 @@ interface Options {
     acceptJoiningDeviceHandler: (ieeeAddr: string) => Promise<boolean>;
 }
 
+async function catcho(func: () => Promise<void>, errorMessage: string): Promise<void> {
+    try {
+        await func();
+    } catch (error) {
+        debug.error(`${errorMessage}: ${error}`);
+    }
+}
+
 const DefaultOptions: Options = {
     network: {
         networkKeyDistribute: false,
@@ -273,9 +281,7 @@ class Controller extends events.EventEmitter {
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceAnnounce);
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceLeave);
 
-        try {
-            await this.permitJoinInternal(false, 'manual');
-        } catch (e) {}
+        await catcho(() => this.permitJoinInternal(false, 'manual'), "Failed to disable join on stop");
 
         clearInterval(this.backupTimer);
         clearInterval(this.databaseSaveTimer);
@@ -443,10 +449,7 @@ class Controller extends events.EventEmitter {
     private async onAdapterDisconnected(): Promise<void> {
         debug.log(`Adapter disconnected'`);
 
-        try {
-            await this.adapter.stop();
-        } catch (error) {
-        }
+        await catcho(() => this.adapter.stop(), 'Failed to stop adapter on disconnect');
 
         this.emit(Events.Events.adapterDisconnected);
     }
@@ -498,7 +501,8 @@ class Controller extends events.EventEmitter {
         if (this.options.acceptJoiningDeviceHandler) {
             if (!(await this.options.acceptJoiningDeviceHandler(payload.ieeeAddr))) {
                 debug.log(`Device '${payload.ieeeAddr}' rejected by handler, removing it`);
-                await this.adapter.removeDevice(payload.networkAddress, payload.ieeeAddr);
+                await catcho(() => this.adapter.removeDevice(payload.networkAddress, payload.ieeeAddr), 
+                    'Failed to remove rejected device');
                 return;
             } else {
                 debug.log(`Device '${payload.ieeeAddr}' accepted by handler`);
