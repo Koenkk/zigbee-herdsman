@@ -98,7 +98,7 @@ class DeconzAdapter extends Adapter {
     }
 
     public async stop(): Promise<void> {
-        this.driver.close();
+        await this.driver.close();
     }
 
     public async getCoordinator(): Promise<Coordinator> {
