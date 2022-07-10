@@ -766,7 +766,7 @@ describe('Zcl', () => {
             FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f3, 8, 'readRsp', 0xfc00, payload
         );
 
-        expect(frame.Cluster.name).toBe('manuSpecificPhilips');
+        expect(frame.Cluster.name).toBe('manuSpecificUbisysDeviceSetup');
     });
 
     it('ZclFrame with Ubisys (manufacturer specific) cluster fromBuffer', () => {
@@ -1320,6 +1320,12 @@ describe('Zcl', () => {
     it('Zcl utils get cluster without manufacturerCode', () => {
         const cluster = Zcl.Utils.getCluster(0xfc00);
         expect(cluster.ID).toBe(0xfc00);
+        expect(cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+    });
+
+    it('Zcl utils get cluster with manufacturerCode', () => {
+        const cluster = Zcl.Utils.getCluster(0xfc00, 0x100b);
+        expect(cluster.ID).toBe(0xfc00);
         expect(cluster.name).toBe('manuSpecificPhilips');
     });
 
@@ -1332,7 +1338,7 @@ describe('Zcl', () => {
     it('Zcl utils get cluster manufacturerCode wrong', () => {
         const cluster = Zcl.Utils.getCluster(0xfc00, 123);
         expect(cluster.ID).toBe(0xfc00);
-        expect(cluster.name).toBe('manuSpecificPhilips');
+        expect(cluster.name).toBe('manuSpecificUbisysDeviceSetup');
     });
 
     it('Zcl utils get cluster attributes manufacturerCode', () => {
