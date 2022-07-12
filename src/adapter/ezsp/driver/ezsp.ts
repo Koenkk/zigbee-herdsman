@@ -363,7 +363,7 @@ export class Ezsp extends EventEmitter {
         return ret.value;
     }
 
-    async setMulticastTableEntry(index: number, entry: t.EmberMulticastTableEntry): Promise<number[]> {
+    async setMulticastTableEntry(index: number, entry: t.EmberMulticastTableEntry): Promise<EmberStatus> {
         const ret = await this.execCommand('setMulticastTableEntry', {index: index, value: entry});
         console.assert(ret.status === EmberStatus.SUCCESS,
             `Command (setMulticastTableEntry) returned unexpected state: ${ret}`);

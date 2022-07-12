@@ -310,13 +310,13 @@ export class Driver extends EventEmitter {
                 // If there was a message to the group and this group is not known, 
                 // then we will register the coordinator in this group
                 // Applicable for IKEA remotes
-                // const msgType = frame.type;
-                // if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
-                //     const apsFrame = frame.apsFrame;
-                //     if (apsFrame.destinationEndpoint == 255) {
-                //         this.multicast.subscribe(apsFrame.groupId, 1);
-                //     }
-                // }
+                const msgType = frame.type;
+                if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
+                    const apsFrame = frame.apsFrame;
+                    if (apsFrame.destinationEndpoint == 255) {
+                        this.multicast.subscribe(apsFrame.groupId, 1);
+                    }
+                }
             }
             break;
         }
