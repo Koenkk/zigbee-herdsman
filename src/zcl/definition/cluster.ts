@@ -4019,7 +4019,8 @@ const Cluster: {
         },
     },
     manuSpecificPhilips: {
-        ID: 64512,
+        ID: 0xFC00,
+        manufacturerCode: ManufacturerCode.PHILIPS,
         attributes: {
             config: {ID: 49, type: DataType.bitmap16},
         },
@@ -4080,7 +4081,7 @@ const Cluster: {
     },
     manuSpecificUbisysDeviceSetup: {
         ID: 0xfc00,
-        manufacturerCode: ManufacturerCode.Ubisys,
+        // Doesn't use manufacturerCode: https://github.com/Koenkk/zigbee-herdsman-converters/pull/4412
         attributes: {
             inputConfigurations: {ID: 0x0000, type: DataType.array},
             inputActions: {ID: 0x0001, type: DataType.array},

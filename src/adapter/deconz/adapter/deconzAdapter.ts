@@ -72,7 +72,6 @@ class DeconzAdapter extends Adapter {
         this.openRequestsQueue = [];
         this.joinPermitted = false;
         this.fwVersion = null;
-        console.log('CREATED DECONZ ADAPTER');
 
         this.frameParserEvent.on('receivedDataPayload', (data: any) => {this.checkReceivedDataPayload(data)});
         this.frameParserEvent.on('receivedGreenPowerIndication', (data: any) => {this.checkReceivedGreenPowerIndication(data)});
@@ -99,7 +98,7 @@ class DeconzAdapter extends Adapter {
     }
 
     public async stop(): Promise<void> {
-        this.driver.close();
+        await this.driver.close();
     }
 
     public async getCoordinator(): Promise<Coordinator> {

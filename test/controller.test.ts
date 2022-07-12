@@ -821,6 +821,7 @@ describe('Controller', () => {
     });
 
     it('Join a device and explictly refuse it', async () => {
+        mockAdapterRemoveDevice.mockImplementationOnce(() => new Promise((_, r) => r("I won't remove myself!")));
         const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(false);
         controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
         controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
