@@ -360,6 +360,7 @@ class EZSPAdapter extends Adapter {
         frame.groupId = 0;
         frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
 
+        this.driver.setNode(networkAddress, new EmberEUI64(ieeeAddr));
         const dataConfirmResult = await this.driver.request(networkAddress, frame, zclFrame.toBuffer());
         if (!dataConfirmResult) {
             if (response != null) {
