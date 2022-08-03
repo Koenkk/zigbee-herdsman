@@ -13,8 +13,17 @@ import {Driver, EmberIncomingMessage} from '../driver';
 import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
-import {Waitress, Wait} from '../../../utils';
+import {Waitress, Wait, RealpathSync} from '../../../utils';
 import * as Models from "../../../models";
+import SerialPortUtils from '../../serialPortUtils';
+import SocketPortUtils from '../../socketPortUtils';
+
+
+const autoDetectDefinitions = [
+    { manufacturer: 'Silicon Labs', vendorId: '10c4', productId: 'ea60' },  // Sprut
+    { manufacturer: '1a86', vendorId: '1a86', productId: '7523' },  // ZB-GW04
+    { manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4' },  // Sonoff ZBDongle-E
+];
 
 
 interface WaitressMatcher {
@@ -152,13 +161,23 @@ class EZSPAdapter extends Adapter {
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
-        // todo
-        return false;
+        // For TCP paths we cannot get device information, therefore we cannot validate it.
+        if (SocketPortUtils.isTcpPath(path)) {
+            return false;
+        }
+
+        try {
+            return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+        } catch (error) {
+            debug(`Failed to determine if path is valid: '${error}'`);
+            return false;
+        }
     }
 
     public static async autoDetectPath(): Promise<string> {
-        // todo
-        return '';
+        const paths = await SerialPortUtils.find(autoDetectDefinitions);
+        paths.sort((a, b) => (a < b) ? -1 : 1);
+        return paths.length > 0 ? paths[0] : null;
     }
 
     public async getCoordinator(): Promise<Coordinator> {
