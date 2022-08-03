@@ -21,7 +21,6 @@ import SocketPortUtils from '../../socketPortUtils';
 
 const autoDetectDefinitions = [
     { manufacturer: 'Silicon Labs', vendorId: '10c4', productId: 'ea60' },  // Sprut
-    { manufacturer: '1a86', vendorId: '1a86', productId: '7523' },  // ZB-GW04
     { manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4' },  // Sonoff ZBDongle-E
 ];
 
