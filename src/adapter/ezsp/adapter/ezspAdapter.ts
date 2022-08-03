@@ -13,8 +13,16 @@ import {Driver, EmberIncomingMessage} from '../driver';
 import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
-import {Waitress, Wait} from '../../../utils';
+import {Waitress, Wait, RealpathSync} from '../../../utils';
 import * as Models from "../../../models";
+import SerialPortUtils from '../../serialPortUtils';
+import SocketPortUtils from '../../socketPortUtils';
+
+
+const autoDetectDefinitions = [
+    { manufacturer: 'Silicon Labs', vendorId: '10c4', productId: 'ea60' },  // Sprut
+    { manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4' },  // Sonoff ZBDongle-E
+];
 
 
 interface WaitressMatcher {
@@ -152,13 +160,23 @@ class EZSPAdapter extends Adapter {
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
-        // todo
-        return false;
+        // For TCP paths we cannot get device information, therefore we cannot validate it.
+        if (SocketPortUtils.isTcpPath(path)) {
+            return false;
+        }
+
+        try {
+            return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+        } catch (error) {
+            debug(`Failed to determine if path is valid: '${error}'`);
+            return false;
+        }
     }
 
     public static async autoDetectPath(): Promise<string> {
-        // todo
-        return '';
+        const paths = await SerialPortUtils.find(autoDetectDefinitions);
+        paths.sort((a, b) => (a < b) ? -1 : 1);
+        return paths.length > 0 ? paths[0] : null;
     }
 
     public async getCoordinator(): Promise<Coordinator> {
@@ -258,8 +276,46 @@ class EZSPAdapter extends Adapter {
     }
 
     public async routingTable(networkAddress: number): Promise<RoutingTable> {
-        // todo
-        return Promise.reject(new Error("Not supported"));
+        return this.driver.queue.execute<RoutingTable>(async (): Promise<RoutingTable> => {
+            this.checkInterpanLock();
+            const table: RoutingTableEntry[] = [];
+
+            const request = async (startIndex: number): Promise<any> => {
+                const result = await this.driver.zdoRequest(
+                    networkAddress, EmberZDOCmd.Mgmt_Rtg_req, EmberZDOCmd.Mgmt_Rtg_rsp,
+                    {startindex: startIndex}
+                );
+                if (result.status !== EmberStatus.SUCCESS) {
+                    throw new Error(`Routing table for '${networkAddress}' failed`);
+                }
+
+                return result;
+            };
+
+            // eslint-disable-next-line
+            const add = (list: any) => {
+                for (const entry of list) {
+                    table.push({
+                        destinationAddress: entry.destination,
+                        status: entry.status,
+                        nextHop: entry.nexthop
+                    });
+                }
+            };
+
+            let response = await request(0);
+            add(response.routingtablelist.table);
+            const size = response.routingtablelist.entries;
+            let nextStartIndex = response.routingtablelist.table.length;
+
+            while (table.length < size) {
+                response = await request(nextStartIndex);
+                add(response.routingtablelist.table);
+                nextStartIndex += response.routingtablelist.table.length;
+            }
+
+            return {table};
+        }, networkAddress);
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {

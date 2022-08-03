@@ -75,6 +75,7 @@ import {/* Basic Types */
     EmberSimpleDescriptor,
     EmberMultiAddress,
     EmberNeighbors,
+    EmberRoutingTable,
 } from './types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -2318,6 +2319,16 @@ export const ZDOREQUESTS: {[key: string]: EZSPFrameDesc} = {
             status: EmberStatus
         },
     },
+    mgmtRtgReq: {
+        ID: 0x0032,
+        request: {
+            transId: uint8_t,
+            startindex: uint8_t
+        },
+        response: {
+            status: EmberStatus
+        },
+    },
     mgmtLeaveReq: {
         ID: 0x0034,
         request: {
@@ -2381,6 +2392,14 @@ export const ZDORESPONSES: {[key: string]: EZSPZDOResponseFrame} = {
             transId: uint8_t,
             status: EmberStatus,
             neighborlqilist: EmberNeighbors
+        }
+    },
+    mgmtRtgRsp: {
+        ID: 0x8032,
+        params: {
+            transId: uint8_t,
+            status: EmberStatus,
+            routingtablelist: EmberRoutingTable
         }
     },
     mgmtLeaveRsp: {
