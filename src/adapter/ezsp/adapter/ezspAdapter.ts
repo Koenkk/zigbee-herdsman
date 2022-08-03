@@ -277,8 +277,46 @@ class EZSPAdapter extends Adapter {
     }
 
     public async routingTable(networkAddress: number): Promise<RoutingTable> {
-        // todo
-        return Promise.reject(new Error("Not supported"));
+        return this.driver.queue.execute<RoutingTable>(async (): Promise<RoutingTable> => {
+            this.checkInterpanLock();
+            const table: RoutingTableEntry[] = [];
+
+            const request = async (startIndex: number): Promise<any> => {
+                const result = await this.driver.zdoRequest(
+                    networkAddress, EmberZDOCmd.Mgmt_Rtg_req, EmberZDOCmd.Mgmt_Rtg_rsp,
+                    {startindex: startIndex}
+                );
+                if (result.status !== EmberStatus.SUCCESS) {
+                    throw new Error(`Routing table for '${networkAddress}' failed`);
+                }
+
+                return result;
+            };
+
+            // eslint-disable-next-line
+            const add = (list: any) => {
+                for (const entry of list) {
+                    table.push({
+                        destinationAddress: entry.destination,
+                        status: entry.status,
+                        nextHop: entry.nexthop
+                    });
+                }
+            };
+
+            let response = await request(0);
+            add(response.routingtablelist.table);
+            const size = response.routingtablelist.entries;
+            let nextStartIndex = response.routingtablelist.table.length;
+
+            while (table.length < size) {
+                response = await request(nextStartIndex);
+                add(response.routingtablelist.table);
+                nextStartIndex += response.routingtablelist.table.length;
+            }
+
+            return {table};
+        }, networkAddress);
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {

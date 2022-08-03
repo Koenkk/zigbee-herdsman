@@ -670,6 +670,22 @@ export class EmberNeighbors extends EzspStruct {
     ];
 }
 
+export class EmberRoutingTableEntry extends EzspStruct {
+    static _fields = [
+        ['destination', basic.uint16_t],
+        ['status', basic.uint8_t],
+        ['nexthop', basic.uint16_t],
+    ];
+}
+
+export class EmberRoutingTable extends EzspStruct {
+    static _fields = [
+        ['entries', basic.uint8_t],
+        ['startindex', basic.uint8_t],
+        ['table', basic.LVList(EmberRoutingTableEntry)],
+    ];
+}
+
 export class EmberRawFrame extends EzspStruct {
     public ieeeFrameControl: number;
     public sequence: number;
