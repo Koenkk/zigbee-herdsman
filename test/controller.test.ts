@@ -1564,6 +1564,7 @@ describe('Controller', () => {
                "_softwareBuildID":"1.01",
                "_interviewCompleted":true,
                "_interviewing":false,
+               "_lastDefaultResponseSequenceNumber": 1,
             },
             "endpoint":{
                "ID":3,
@@ -1670,6 +1671,7 @@ describe('Controller', () => {
                "_softwareBuildID":"1.01",
                "_interviewCompleted":true,
                "_interviewing":false,
+               "_lastDefaultResponseSequenceNumber": 29,
             },
             "endpoint":{
                 "_events":{},"_eventsCount":0,
