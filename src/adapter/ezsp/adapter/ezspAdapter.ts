@@ -392,6 +392,9 @@ class EZSPAdapter extends Adapter {
         dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
         assocRestore: { ieeeadr: string, nwkaddr: number, noderelation: number }
     ): Promise<Events.ZclDataPayload> {
+        if (ieeeAddr == null) {
+            ieeeAddr = `0x${this.driver.ieee.toString()}`;
+        }
         debug('sendZclFrameToEndpointInternal %s:%i/%i (%i,%i,%i)',
             ieeeAddr, networkAddress, endpoint, responseAttempt, dataRequestAttempt, this.driver.queue.count());
         let response = null;
