@@ -12,8 +12,7 @@ import {
     EzspDecisionId,
     EzspDecisionBitmask,
     EmberConcentratorType,
-    EzspConfigId,
-    EmberZdoConfigurationFlags
+    EzspConfigId
 } from './types/named';
 import {EventEmitter} from 'events';
 import {EmberApsFrame, EmberNetworkParameters} from './types/struct';
