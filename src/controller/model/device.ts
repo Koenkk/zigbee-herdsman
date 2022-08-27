@@ -54,6 +54,7 @@ class Device extends Entity {
     private _skipTimeResponse: boolean;
     private _deleted: boolean;
     private _defaultSendRequestWhen?: SendRequestWhen;
+    private _lastDefaultResponseSequenceNumber: number;
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -283,9 +284,12 @@ class Device extends Entity {
         const isDefaultResponse = frame.isGlobal() && frame.getCommand().name === 'defaultRsp';
         const commandHasResponse = frame.getCommand().hasOwnProperty('response');
         const disableDefaultResponse = frame.Header.frameControl.disableDefaultResponse;
+        // Sometimes messages are received twice, prevent responding twice
+        const alreadyResponded = this._lastDefaultResponseSequenceNumber === frame.Header.transactionSequenceNumber;
         if (this.type !== 'GreenPower' && !dataPayload.wasBroadcast && !disableDefaultResponse && !isDefaultResponse && 
-            !commandHasResponse && !this._skipDefaultResponse) {
+            !commandHasResponse && !this._skipDefaultResponse && !alreadyResponded) {
             try {
+                this._lastDefaultResponseSequenceNumber = frame.Header.transactionSequenceNumber;
                 await endpoint.defaultResponse(
                     frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber,
                 );
