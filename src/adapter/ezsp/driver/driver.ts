@@ -146,9 +146,10 @@ export class Driver extends EventEmitter {
 
         await this.ezsp.updatePolicies();
 
-        //await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_OUTGOING_TRANSFER_SIZE, 82);
-        //await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_INCOMING_TRANSFER_SIZE, 82);
+        await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_OUTGOING_TRANSFER_SIZE, 82);
+        await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_INCOMING_TRANSFER_SIZE, 82);
         await this.ezsp.setValue(EzspValueId.VALUE_END_DEVICE_KEEP_ALIVE_SUPPORT_MODE, 3);
+        await this.ezsp.setValue(EzspValueId.VALUE_CCA_THRESHOLD, 0);
 
         await this.ezsp.setSourceRouting();
 

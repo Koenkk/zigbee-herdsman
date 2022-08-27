@@ -415,31 +415,22 @@ export class Ezsp extends EventEmitter {
             [EzspConfigId.CONFIG_FRAGMENT_DELAY_MS, 50],
             [EzspConfigId.CONFIG_TX_POWER_MODE, 3],
             [EzspConfigId.CONFIG_FRAGMENT_WINDOW_SIZE, 1],
-            //[EzspConfigId.CONFIG_BEACON_JITTER_DURATION, 0],
             [EzspConfigId.CONFIG_NEIGHBOR_TABLE_SIZE, 16],
             [EzspConfigId.CONFIG_ROUTE_TABLE_SIZE, 16],
             [EzspConfigId.CONFIG_BINDING_TABLE_SIZE, 32],
             [EzspConfigId.CONFIG_KEY_TABLE_SIZE, 12],
             [EzspConfigId.CONFIG_ZLL_GROUP_ADDRESSES, 0],
-            [EzspConfigId.CONFIG_ZLL_RSSI_THRESHOLD, 215], // -40
-            [EzspConfigId.CONFIG_TRANSIENT_KEY_TIMEOUT_S, 300],
-            //[EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT, 255],
-            [EzspConfigId.CONFIG_BROADCAST_TABLE_SIZE, 15],
+            [EzspConfigId.CONFIG_ZLL_RSSI_THRESHOLD, 0],
+            [EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT, 255],
+            [EzspConfigId.CONFIG_BROADCAST_TABLE_SIZE, 43],
             [EzspConfigId.CONFIG_MAX_HOPS, 30],
-
-            [EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 7680], // 30000
-            [EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16], // 61
-            [EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE, 16],
-            [EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 16], // 8
-            [EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 2],
+            [EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 30000],
+            [EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 255],
+            [EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 250],
+            [EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 4],
             [EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1],
-            [EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90],
-            [EzspConfigId.CONFIG_APPLICATION_ZDO_FLAGS,
-                EmberZdoConfigurationFlags.APP_RECEIVES_SUPPORTED_ZDO_REQUESTS
-                | EmberZdoConfigurationFlags.APP_HANDLES_UNSUPPORTED_ZDO_REQUESTS],
             [EzspConfigId.CONFIG_SECURITY_LEVEL, 5],
-            [EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 8], // 14
-            [EzspConfigId.CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 2],
+            [EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 14],
             [EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 32],
             [EzspConfigId.CONFIG_STACK_PROFILE, 2],
             [EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 255],
@@ -454,7 +445,7 @@ export class Ezsp extends EventEmitter {
         // Set up the policies for what the NCP should do.
         const policies = [
             [EzspPolicyId.BINDING_MODIFICATION_POLICY,
-                EzspDecisionId.CHECK_BINDING_MODIFICATIONS_ARE_VALID_ENDPOINT_CLUSTERS],
+                EzspDecisionId.DISALLOW_BINDING_MODIFICATION],
             [EzspPolicyId.UNICAST_REPLIES_POLICY, EzspDecisionId.HOST_WILL_NOT_SUPPLY_REPLY],
             [EzspPolicyId.POLL_HANDLER_POLICY, EzspDecisionId.POLL_HANDLER_IGNORE],
             [EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY,
@@ -463,11 +454,10 @@ export class Ezsp extends EventEmitter {
                 EzspDecisionId.PACKET_VALIDATE_LIBRARY_CHECKS_DISABLED],
             [EzspPolicyId.ZLL_POLICY, EzspDecisionId.ALLOW_JOINS],
             [EzspPolicyId.TC_REJOINS_USING_WELL_KNOWN_KEY_POLICY, EzspDecisionId.ALLOW_JOINS],
-
-            [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
+            [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_APP_KEY_REQUESTS],
             [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS
                 | EzspDecisionBitmask.ALLOW_JOINS],
-            [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
+            [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.GENERATE_NEW_TC_LINK_KEY],
         ];
 
         for (const [policy, value] of policies) {
