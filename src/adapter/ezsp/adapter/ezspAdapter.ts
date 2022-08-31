@@ -225,6 +225,10 @@ class EZSPAdapter extends Adapter {
         return {type: `EZSP v${this.driver.version.product}`, meta: this.driver.version};
     }
 
+    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+        return Promise.reject(new Error('Add install code is not supported'));
+    }
+
     public async reset(type: 'soft' | 'hard'): Promise<void> {
         return Promise.reject(new Error("Not supported"));
     }

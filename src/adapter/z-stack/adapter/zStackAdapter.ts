@@ -16,6 +16,7 @@ import debounce from 'debounce';
 import {LoggerStub} from "../../../controller/logger-stub";
 import {ZnpAdapterManager} from "./manager";
 import * as Models from "../../../models";
+import assert from 'assert';
 
 const debug = Debug("zigbee-herdsman:adapter:zStack:adapter");
 const Subsystem = UnpiConstants.Subsystem;
@@ -640,6 +641,12 @@ class ZStackAdapter extends Adapter {
 
             return {table};
         }, networkAddress);
+    }
+
+    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+        assert(this.version.product !== ZnpVersion.zStack12, 'Install code is not supported for ZStack 1.2 adapter');
+        const payload = {installCodeFormat: 1, ieeeaddr: ieeeAddress, installCode: key};
+        await this.znp.request(Subsystem.APP_CNF, 'bdbAddInstallCode', payload);
     }
 
     public async bind(
