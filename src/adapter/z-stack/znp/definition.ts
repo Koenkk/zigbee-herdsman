@@ -2986,6 +2986,19 @@ const Definition: {
     ],
     [Subsystem.APP_CNF]: [
         {
+            name: 'bdbAddInstallCode',
+            ID: 4,
+            type: CommandType.SREQ,
+            request: [
+                {name: 'installCodeFormat', parameterType: ParameterType.UINT8},
+                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
+                {name: 'installCode', parameterType: ParameterType.BUFFER},
+            ],
+            response: [
+                {name: 'status', parameterType: ParameterType.UINT8},
+            ]
+        },
+        {
             name: 'bdbStartCommissioning',
             ID: 5,
             type: CommandType.SREQ,

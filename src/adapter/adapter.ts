@@ -116,6 +116,8 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract setTransmitPower(value: number): Promise<void>;
 
+    public abstract addInstallCode(ieeeAddress: string, key: Buffer): Promise<void>;
+
     public abstract waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,

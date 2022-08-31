@@ -165,6 +165,10 @@ class ZiGateAdapter extends Adapter {
         this.joinPermitted = result.payload.status === 0;
     };
 
+    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+        return Promise.reject(new Error('Add install code is not supported'));
+    }
+
     public async reset(type: 'soft' | 'hard'): Promise<void> {
         debug.log('reset %s', type);
 

@@ -58,6 +58,7 @@ const mockAdapterGetNetworkParameters = jest.fn().mockReturnValue({panID: 1, ext
 const mockAdapterBind = jest.fn();
 const mocksendZclFrameToGroup = jest.fn();
 const mocksendZclFrameToAll = jest.fn();
+const mockAddInstallCode = jest.fn();
 const mockAdapterUnbind = jest.fn();
 const mockAdapterRemoveDevice = jest.fn();
 const mocksendZclFrameToEndpoint = jest.fn();
@@ -137,7 +138,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
     })
 }
 
-const mocksClear = [mocksendZclFrameToEndpoint, mockAdapterReset, mocksendZclFrameToGroup, mockSetChannelInterPAN, mocksendZclFrameInterPANToIeeeAddr, mocksendZclFrameInterPANBroadcast, mockRestoreChannelInterPAN];
+const mocksClear = [mocksendZclFrameToEndpoint, mockAdapterReset, mocksendZclFrameToGroup, mockSetChannelInterPAN, mocksendZclFrameInterPANToIeeeAddr, mocksendZclFrameInterPANBroadcast, mockRestoreChannelInterPAN, mockAddInstallCode];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const equalsPartial = (object, expected) => {
@@ -368,6 +369,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             sendZclFrameToEndpoint: mocksendZclFrameToEndpoint,
             sendZclFrameToGroup: mocksendZclFrameToGroup,
             sendZclFrameToAll: mocksendZclFrameToAll,
+            addInstallCode: mockAddInstallCode,
             permitJoin: mockAdapterPermitJoin,
             supportsDiscoverRoute: mockAdapterSupportsDiscoverRoute,
             discoverRoute: mockDiscoverRoute,
@@ -952,6 +954,14 @@ describe('Controller', () => {
         mockAdapterStart.mockReturnValueOnce("reset");
         await controller.start();
         expect(fs.existsSync(databaseBackupPath)).toBeTruthy();
+    });
+
+    it('Add install code', async () => {
+        await controller.start();
+        const code = "RB01SG0D831018264800400000000000000000009035EAFFFE424783DLKAE3B287281CF16F550733A0CEC38AA31E802";
+        await controller.addInstallCode(code);
+        expect(mockAddInstallCode).toHaveBeenCalledTimes(1);
+        expect(mockAddInstallCode).toHaveBeenCalledWith('0x9035EAFFFE424783', Buffer.from([0xAE, 0x3B, 0x28, 0x72, 0x81, 0xCF, 0x16, 0xF5, 0x50, 0x73, 0x3A, 0x0C, 0xEC, 0x38, 0xAA, 0x31, 0xE8, 0x02]));
     });
 
     it('Controller permit joining', async () => {
