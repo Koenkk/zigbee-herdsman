@@ -2340,6 +2340,17 @@ export const ZDOREQUESTS: {[key: string]: EZSPFrameDesc} = {
             status: EmberStatus
         },
     },
+    mgmtPermitJoinReq: {
+        ID: 0x0036,
+        request: {
+            transId: uint8_t,
+            duration: uint8_t,
+            tcSignificant: Bool
+        },
+        response: {
+            status: EmberStatus
+        },
+    },
 };
 
 export const ZDORESPONSES: {[key: string]: EZSPZDOResponseFrame} = {
@@ -2376,12 +2387,14 @@ export const ZDORESPONSES: {[key: string]: EZSPZDOResponseFrame} = {
     bindRsp: {
         ID: 0x8021,
         params: {
+            transId: uint8_t,
             status: EmberStatus
         }
     },
     unBindRsp: {
         ID: 0x8022,
         params: {
+            transId: uint8_t,
             status: EmberStatus
         }
     },
@@ -2405,6 +2418,14 @@ export const ZDORESPONSES: {[key: string]: EZSPZDOResponseFrame} = {
     mgmtLeaveRsp: {
         ID: 0x8034,
         params: {
+            transId: uint8_t,
+            status: EmberStatus
+        }
+    },
+    mgmtPermitJoinRsp: {
+        ID: 0x8036,
+        params: {
+            transId: uint8_t,
             status: EmberStatus
         }
     },
