@@ -557,12 +557,9 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async preJoining(): Promise<void> {
+    public async permitJoining(seconds: number): Promise<EZSPFrameData> {
         await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
             EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
-    }
-
-    public async permitJoining(seconds: number): Promise<EZSPFrameData> {
         return this.ezsp.execCommand('permitJoining', {duration: seconds});
     }
 
@@ -595,7 +592,7 @@ export class Driver extends EventEmitter {
         debug.log(`Ezsp adding endpoint: ${JSON.stringify(res)}`);
     }
 
-    public waitFor(address: number, clusterId: number, sequence: number, timeout = 10000)
+    public waitFor(address: number, clusterId: number, sequence: number, timeout = 30000)
         : { start: () => { promise: Promise<EmberFrame>; ID: number }; ID: number } {
         return this.waitress.waitFor({address, clusterId, sequence}, timeout);
     }
