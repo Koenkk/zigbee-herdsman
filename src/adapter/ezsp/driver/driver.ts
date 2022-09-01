@@ -130,7 +130,8 @@ export class Driver extends EventEmitter {
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     public async startup(port: string, serialOpt: Record<string, any>, nwkOpt: TsType.NetworkOptions, 
-        greenPowerGroup: number): Promise<void> {
+        greenPowerGroup: number): Promise<TsType.StartResult> {
+        let result: TsType.StartResult = 'resumed';
         this.nwkOpt = nwkOpt;
         this.port = port;
         this.serialOpt = serialOpt;
@@ -199,6 +200,7 @@ export class Driver extends EventEmitter {
                 console.assert(st == EmberStatus.NETWORK_DOWN, `leaveNetwork returned unexpected status: ${st}`);
             }
             await this.form_network();
+            result = 'reset';
         }
         const state = (await this.ezsp.execCommand('networkState')).status;
         debug.log('Network state', state);
@@ -216,11 +218,17 @@ export class Driver extends EventEmitter {
         this.ezsp.on('frame', this.handleFrame.bind(this));
         this.handleNodeJoined(nwk, this.ieee);
         debug.log(`EZSP nwk=${nwk}, IEEE=0x${this.ieee}`);
+        const linkResult = await this.ezsp.execCommand('getKey', {index: EmberKeyType.TRUST_CENTER_LINK_KEY});
+        debug.log(`TRUST_CENTER_LINK_KEY: ${JSON.stringify(linkResult)}`);
+        const netResult = await this.ezsp.execCommand('getKey', {index: EmberKeyType.CURRENT_NETWORK_KEY});
+        debug.log(`CURRENT_NETWORK_KEY: ${JSON.stringify(netResult)}`);
+
 
         this.multicast = new Multicast(this);
         await this.multicast.startup([]);
         await this.multicast.subscribe(242, greenPowerGroup);
         // await this.multicast.subscribe(1, 901);
+        return result;
     }
 
     private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
@@ -259,9 +267,6 @@ export class Driver extends EventEmitter {
 
         await this.ezsp.formNetwork(parameters);
         await this.ezsp.setValue(EzspValueId.VALUE_STACK_TOKEN_WRITING, 1);
-
-        await this.ezsp.execCommand('getKey', {index: EmberKeyType.TRUST_CENTER_LINK_KEY});
-        await this.ezsp.execCommand('getKey', {index: EmberKeyType.CURRENT_NETWORK_KEY});
     }
 
     private handleFrame(frameName: string, frame: EZSPFrameData): void {
