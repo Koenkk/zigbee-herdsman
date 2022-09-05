@@ -235,7 +235,7 @@ export class Struct implements SerializableMemoryObject {
         }
         }
         this.members.push({key: name, offset, type, length});
-        return this as R;
+        return (this as unknown) as R;
     }
 
     /**
@@ -255,7 +255,7 @@ export class Struct implements SerializableMemoryObject {
             writable: false,
             value: () => body.bind(this)(this)
         });
-        return this as R;
+        return (this as unknown) as R;
     }
 
     /**
