@@ -145,7 +145,7 @@ type MessagePayloadType =
     'commandDataReport' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | 'commandGetPinCodeRsp' |
     'commandArrivalSensorNotify' | 'commandCommisioningNotification' | 'commandGetUserStatusRsp' |
-    'commandAlarm' | 'unlockDoorRsp' |
+    'commandAlarm' | 'commandUnlockDoorRsp' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
     'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandMcuSyncTime' |
     'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandActiveStatusReportAlt' |
