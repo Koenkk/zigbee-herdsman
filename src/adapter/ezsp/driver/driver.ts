@@ -139,6 +139,7 @@ export class Driver extends EventEmitter {
         this.transactionID = 1;
         this.ezsp = new Ezsp();
         this.ezsp.on('reset', this.onReset.bind(this));
+        this.ezsp.on('close', this.onClose.bind(this));
     
         await this.ezsp.connect(port, serialOpt);
         await this.ezsp.version();
@@ -539,6 +540,10 @@ export class Driver extends EventEmitter {
         const result = this.parse_frame_payload(responseCmd as number, message.payload);
         debug.log(`${responseName} parsed: ${JSON.stringify(result)}`);
         return result;
+    }
+
+    private onClose(): void {
+        debug.log('Close driver');
     }
 
     public async stop(): Promise<void> {
