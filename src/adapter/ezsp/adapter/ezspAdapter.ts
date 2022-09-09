@@ -144,7 +144,7 @@ class EZSPAdapter extends Adapter {
      * Adapter methods
      */
     public async start(): Promise<StartResult> {
-        await this.driver.startup(this.port.path, {
+        return await this.driver.startup(this.port.path, {
             baudRate: this.port.baudRate || 115200,
             rtscts: this.port.rtscts,
             parity: 'none',
@@ -152,7 +152,6 @@ class EZSPAdapter extends Adapter {
             xon: true,
             xoff: true
         }, this.networkOptions, this.greenPowerGroup);
-        return Promise.resolve("resumed");
     }
 
     public async stop(): Promise<void> {
