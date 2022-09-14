@@ -463,7 +463,7 @@ export class Ezsp extends EventEmitter {
             [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_APP_KEY_REQUESTS],
             [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS
                 | EzspDecisionBitmask.ALLOW_JOINS],
-            [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.GENERATE_NEW_TC_LINK_KEY],
+            [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
         ];
 
         for (const [policy, value] of policies) {
@@ -502,6 +502,9 @@ export class Ezsp extends EventEmitter {
             return this.serialDriver.sendDATA(data).then(async ()=>{
                 const response = await waiter.start().promise;
                 return response.payload;
+            }).catch((e) => {
+                this.waitress.remove(waiter.ID);
+                throw new Error((`Failure send ${name}:` + JSON.stringify(data)));
             });
         });
     }

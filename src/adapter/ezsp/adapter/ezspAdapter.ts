@@ -10,7 +10,7 @@ import Adapter from '../../adapter';
 
 const debug = Debug("zigbee-herdsman:adapter:ezsp:debg");
 import {Driver, EmberIncomingMessage} from '../driver';
-import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
+import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus, EmberKeyData} from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
 import {Waitress, Wait, RealpathSync} from '../../../utils';
@@ -239,7 +239,13 @@ class EZSPAdapter extends Adapter {
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        return Promise.reject(new Error('Add install code is not supported'));
+        const ieee = new EmberEUI64(ieeeAddress);
+        const linkKey = new EmberKeyData();
+        linkKey.contents = key;
+        const result = await this.driver.addTransientLinkKey(ieee, linkKey);
+        if (result.status !== EmberStatus.SUCCESS) {
+            throw new Error(`Add install code for '${ieeeAddress}' failed`);
+        }
     }
 
     public async reset(type: 'soft' | 'hard'): Promise<void> {
