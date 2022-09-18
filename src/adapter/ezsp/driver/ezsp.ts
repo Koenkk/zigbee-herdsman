@@ -502,7 +502,7 @@ export class Ezsp extends EventEmitter {
             return this.serialDriver.sendDATA(data).then(async ()=>{
                 const response = await waiter.start().promise;
                 return response.payload;
-            }).catch((e) => {
+            }).catch(() => {
                 this.waitress.remove(waiter.ID);
                 throw new Error((`Failure send ${name}:` + JSON.stringify(data)));
             });

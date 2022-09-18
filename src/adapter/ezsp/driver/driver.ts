@@ -570,7 +570,7 @@ export class Driver extends EventEmitter {
     public async preJoining(): Promise<void> {
         await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
             EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
-            //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
+        //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
     }
 
     public async permitJoining(seconds: number): Promise<EZSPFrameData> {
