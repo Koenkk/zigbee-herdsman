@@ -212,9 +212,19 @@ class Controller extends events.EventEmitter {
     }
 
     public async addInstallCode(installCode: string): Promise<void> {
-        assert(installCode.length === 95, `Unsupported install code, got ${installCode.length} chars, expected 95`);
-        const ieeeAddr = `0x${installCode.substring(40, 56)}`;
-        const key = Buffer.from(installCode.substring(59, 95).match(/.{1,2}/g).map(d => parseInt(d, 16)));
+        const aqaraMatch = installCode.match(/^G\$M:.+\$A:(.+)\$I:(.+)$/);
+        let ieeeAddr, key;
+        if (aqaraMatch) {
+            ieeeAddr = aqaraMatch[1];
+            key = aqaraMatch[2];
+        } else {
+            assert(installCode.length === 95, `Unsupported install code, got ${installCode.length} chars, expected 95`);
+            ieeeAddr = installCode.substring(40, 56);
+            key = installCode.substring(59, 95);
+        }
+
+        ieeeAddr = `0x${ieeeAddr}`;
+        key = Buffer.from(key.match(/.{1,2}/g).map(d => parseInt(d, 16)));
         await this.adapter.addInstallCode(ieeeAddr, key);
     }
 
