@@ -17,6 +17,7 @@ import {Waitress, Wait, RealpathSync} from '../../../utils';
 import * as Models from "../../../models";
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
+import crypto from 'crypto';
 
 
 const autoDetectDefinitions = [
@@ -65,7 +66,7 @@ class EZSPAdapter extends Adapter {
                 [ieee, rst] = EmberEUI64.deserialize(EmberEUI64, rst as Buffer);
                 ieee = new EmberEUI64(ieee);
                 debug("ZDO Device announce: %s, %s", nwk, ieee.toString());
-                this.handleDeviceJoin([nwk, ieee]);
+                this.driver.handleNodeJoined(nwk, ieee);
             }
         } else if (frame.apsFrame.profileId == 260 || frame.apsFrame.profileId == 0xFFFF) {
             try {
@@ -239,6 +240,9 @@ class EZSPAdapter extends Adapter {
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+        if ([8, 10, 14, 18].indexOf(key.length) === -1) {
+            throw new Error('Wrong install code length');
+        }
         const ieee = new EmberEUI64(ieeeAddress);
         const linkKey = new EmberKeyData();
         linkKey.contents = key;

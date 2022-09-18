@@ -295,7 +295,7 @@ export class Driver extends EventEmitter {
             if (frame.status === EmberDeviceUpdate.DEVICE_LEFT) {
                 this.handleNodeLeft(frame.newNodeId, frame.newNodeEui64);
             } else {
-                this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
+                //this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
             }
             break;
         }
@@ -395,7 +395,7 @@ export class Driver extends EventEmitter {
         await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
     }
 
-    private handleNodeJoined(nwk: number, ieee: EmberEUI64 | number[]): void {
+    public handleNodeJoined(nwk: number, ieee: EmberEUI64 | number[]): void {
         if (ieee && !(ieee instanceof EmberEUI64)) {
             ieee = new EmberEUI64(ieee);
         }
@@ -447,8 +447,8 @@ export class Driver extends EventEmitter {
             // if (route) {
             //     const [status] = await this.ezsp.execCommand('setSourceRoute', eui64, );
             // }
-            await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
-            return true;
+            const result = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
+            return result.status == EmberStatus.SUCCESS;
         } catch (e) {
             debug.error(`Request error ${e}: ${e.stack}`);
             return false;
@@ -525,17 +525,17 @@ export class Driver extends EventEmitter {
         responseCmd: EmberZDOCmd, params: ParamsDesc): Promise<EZSPZDOResponseFrameData> {
         const requestName = EmberZDOCmd.valueName(EmberZDOCmd, requestCmd);
         const responseName = EmberZDOCmd.valueName(EmberZDOCmd, responseCmd);
-        debug.log(`${requestName} params: ${JSON.stringify(params)}`);
+        debug.log(`ZDO ${requestName} params: ${JSON.stringify(params)}`);
         const frame = this.makeApsFrame(requestCmd as number);
         const payload = this.makeZDOframe(requestCmd as number, {transId: frame.sequence, ...params});
-        const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
+        const waiter = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
         const res = await this.request(networkAddress, frame, payload);
         if (!res) {
             debug.error(`zdoRequest error`);
-            this.waitress.remove(response.ID);
+            this.waitress.remove(waiter.ID);
             throw Error('ZdoRequest error');
         }
-        const message = await response.promise;
+        const message = await waiter.promise;
         debug.log(`${responseName}  frame: ${JSON.stringify(message.payload)}`);
         const result = this.parse_frame_payload(responseCmd as number, message.payload);
         debug.log(`${responseName} parsed: ${JSON.stringify(result)}`);
@@ -569,8 +569,8 @@ export class Driver extends EventEmitter {
 
     public async preJoining(): Promise<void> {
         await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
-            EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS |
-            EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY);
+            EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
+            //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
     }
 
     public async permitJoining(seconds: number): Promise<EZSPFrameData> {
