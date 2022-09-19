@@ -439,7 +439,7 @@ export class Ezsp extends EventEmitter {
             //[EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 14],
             //[EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 32],
             [EzspConfigId.CONFIG_STACK_PROFILE, 2],
-            //[EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 255],
+            [EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 255],
         ];
 
         for (const [confName, value] of config) {
