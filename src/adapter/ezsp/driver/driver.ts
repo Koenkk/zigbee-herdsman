@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import * as TsType from './../../tstype';
 import {Ezsp, EZSPFrameData, EZSPZDOResponseFrameData} from './ezsp';
-import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption} from './types';
+import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption, EmberKeyData} from './types';
 import {EventEmitter} from "events";
 import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState,
     EmberRawFrame, EmberIeeeRawFrame} from './types/struct';
@@ -99,7 +99,7 @@ export class Driver extends EventEmitter {
 
     constructor() {
         super();
-        this.queue = new Queue();
+        this.queue = new Queue(8);
         this.waitress = new Waitress<EmberFrame, EmberWaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
@@ -194,7 +194,7 @@ export class Driver extends EventEmitter {
 
         if (await this.needsToBeInitialised(nwkOpt)) {
             const res = await this.ezsp.execCommand('networkState');
-            debug.log('Network state', res);
+            debug.log(`Network state ${res}`);
             if (res.status == EmberNetworkStatus.JOINED_NETWORK) {
                 debug.log(`Leaving current network and forming new network`);
                 const st = await this.ezsp.leaveNetwork();
@@ -204,7 +204,7 @@ export class Driver extends EventEmitter {
             result = 'reset';
         }
         const state = (await this.ezsp.execCommand('networkState')).status;
-        debug.log('Network state', state);
+        debug.log(`Network state ${state}`);
 
         const netParams = await this.ezsp.execCommand('getNetworkParameters');
         console.assert(netParams.status == EmberStatus.SUCCESS,
@@ -219,12 +219,11 @@ export class Driver extends EventEmitter {
         this.ezsp.on('frame', this.handleFrame.bind(this));
         this.handleNodeJoined(nwk, this.ieee);
         debug.log(`EZSP nwk=${nwk}, IEEE=0x${this.ieee}`);
-        const linkResult = await this.ezsp.execCommand('getKey', {index: EmberKeyType.TRUST_CENTER_LINK_KEY});
+        const linkResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.TRUST_CENTER_LINK_KEY});
         debug.log(`TRUST_CENTER_LINK_KEY: ${JSON.stringify(linkResult)}`);
-        const netResult = await this.ezsp.execCommand('getKey', {index: EmberKeyType.CURRENT_NETWORK_KEY});
+        const netResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.CURRENT_NETWORK_KEY});
         debug.log(`CURRENT_NETWORK_KEY: ${JSON.stringify(netResult)}`);
-
-
+        
         this.multicast = new Multicast(this);
         await this.multicast.startup([]);
         await this.multicast.subscribe(242, greenPowerGroup);
@@ -250,7 +249,8 @@ export class Driver extends EventEmitter {
         let status;
         status = (await this.ezsp.execCommand('clearKeyTable')).status;
         console.assert(status == EmberStatus.SUCCESS,
-            `Command (clearKeyTable) returned unexpected state: ${status}`);
+            `Command clearKeyTable returned unexpected state: ${status}`);
+        await this.ezsp.execCommand('clearTransientLinkKeys');
 
         const panID = this.nwkOpt.panID;
         const extendedPanID = this.nwkOpt.extendedPanID;
@@ -295,7 +295,7 @@ export class Driver extends EventEmitter {
             if (frame.status === EmberDeviceUpdate.DEVICE_LEFT) {
                 this.handleNodeLeft(frame.newNodeId, frame.newNodeEui64);
             } else {
-                this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
+                //this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
             }
             break;
         }
@@ -395,7 +395,7 @@ export class Driver extends EventEmitter {
         await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
     }
 
-    private handleNodeJoined(nwk: number, ieee: EmberEUI64 | number[]): void {
+    public handleNodeJoined(nwk: number, ieee: EmberEUI64 | number[]): void {
         if (ieee && !(ieee instanceof EmberEUI64)) {
             ieee = new EmberEUI64(ieee);
         }
@@ -447,8 +447,8 @@ export class Driver extends EventEmitter {
             // if (route) {
             //     const [status] = await this.ezsp.execCommand('setSourceRoute', eui64, );
             // }
-            await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
-            return true;
+            const result = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
+            return result.status == EmberStatus.SUCCESS;
         } catch (e) {
             debug.error(`Request error ${e}: ${e.stack}`);
             return false;
@@ -525,17 +525,17 @@ export class Driver extends EventEmitter {
         responseCmd: EmberZDOCmd, params: ParamsDesc): Promise<EZSPZDOResponseFrameData> {
         const requestName = EmberZDOCmd.valueName(EmberZDOCmd, requestCmd);
         const responseName = EmberZDOCmd.valueName(EmberZDOCmd, responseCmd);
-        debug.log(`${requestName} params: ${JSON.stringify(params)}`);
+        debug.log(`ZDO ${requestName} params: ${JSON.stringify(params)}`);
         const frame = this.makeApsFrame(requestCmd as number);
         const payload = this.makeZDOframe(requestCmd as number, {transId: frame.sequence, ...params});
-        const response = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
+        const waiter = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
         const res = await this.request(networkAddress, frame, payload);
         if (!res) {
             debug.error(`zdoRequest error`);
-            this.waitress.remove(response.ID);
+            this.waitress.remove(waiter.ID);
             throw Error('ZdoRequest error');
         }
-        const message = await response.promise;
+        const message = await waiter.promise;
         debug.log(`${responseName}  frame: ${JSON.stringify(message.payload)}`);
         const result = this.parse_frame_payload(responseCmd as number, message.payload);
         debug.log(`${responseName} parsed: ${JSON.stringify(result)}`);
@@ -570,6 +570,7 @@ export class Driver extends EventEmitter {
     public async preJoining(): Promise<void> {
         await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
             EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
+        //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
     }
 
     public async permitJoining(seconds: number): Promise<EZSPFrameData> {
@@ -626,5 +627,9 @@ export class Driver extends EventEmitter {
 
     public setChannel(channel: number): Promise<EZSPFrameData> {
         return this.ezsp.execCommand('setLogicalAndRadioChannel', {radioChannel: channel});
+    }
+    
+    public addTransientLinkKey(partner: EmberEUI64, transientKey: EmberKeyData): Promise<EZSPFrameData> {
+        return this.ezsp.execCommand('addTransientLinkKey', {partner, transientKey});
     }
 }

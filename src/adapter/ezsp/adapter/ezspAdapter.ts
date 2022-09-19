@@ -10,13 +10,14 @@ import Adapter from '../../adapter';
 
 const debug = Debug("zigbee-herdsman:adapter:ezsp:debg");
 import {Driver, EmberIncomingMessage} from '../driver';
-import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
+import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus, EmberKeyData} from '../driver/types';
 import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
 import * as Events from '../../events';
 import {Waitress, Wait, RealpathSync} from '../../../utils';
 import * as Models from "../../../models";
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
+import crypto from 'crypto';
 
 
 const autoDetectDefinitions = [
@@ -65,7 +66,7 @@ class EZSPAdapter extends Adapter {
                 [ieee, rst] = EmberEUI64.deserialize(EmberEUI64, rst as Buffer);
                 ieee = new EmberEUI64(ieee);
                 debug("ZDO Device announce: %s, %s", nwk, ieee.toString());
-                this.handleDeviceJoin([nwk, ieee]);
+                this.driver.handleNodeJoined(nwk, ieee);
             }
         } else if (frame.apsFrame.profileId == 260 || frame.apsFrame.profileId == 0xFFFF) {
             try {
@@ -239,7 +240,19 @@ class EZSPAdapter extends Adapter {
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        return Promise.reject(new Error('Add install code is not supported'));
+        if ([8, 10, 14, 18].indexOf(key.length) === -1) {
+            throw new Error('Wrong install code length');
+        }
+        // TODO: Key need to be converted to aes hash string 
+        // https://github.com/zigpy/bellows/blob/dev/bellows/zigbee/application.py#L839
+        // https://github.com/zigpy/zigpy/blob/dev/zigpy/util.py#L188
+        const ieee = new EmberEUI64(ieeeAddress);
+        const linkKey = new EmberKeyData();
+        linkKey.contents = key;
+        const result = await this.driver.addTransientLinkKey(ieee, linkKey);
+        if (result.status !== EmberStatus.SUCCESS) {
+            throw new Error(`Add install code for '${ieeeAddress}' failed`);
+        }
     }
 
     public async reset(type: 'soft' | 'hard'): Promise<void> {
