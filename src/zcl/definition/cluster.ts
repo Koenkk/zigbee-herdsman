@@ -4783,7 +4783,16 @@ const Cluster: {
         attributes: {
             buttonEvent: {ID: 0x0008, type: DataType.uint32},
         },
-        commands: {},
+        commands: {
+            siglisZigfredButtonEvent: {
+                ID: 0x02,
+                parameters: [
+                    {name: 'button', type: DataType.uint8},
+                    {name: 'type', type: DataType.uint8},
+                    {name: 'duration', type: DataType.uint16},
+                ],
+            },
+        },
         commandsResponse: {},
     },
     manuSpecificInovelliVZM31SN: {
