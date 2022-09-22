@@ -4787,9 +4787,9 @@ const Cluster: {
             siglisZigfredButtonEvent: {
                 ID: 0x02,
                 parameters: [
-                    { name: 'button', type: DataType.uint8 },
-                    { name: 'type', type: DataType.uint8 },
-                    { name: 'duration', type: DataType.uint16 },
+                    {name: 'button', type: DataType.uint8},
+                    {name: 'type', type: DataType.uint8},
+                    {name: 'duration', type: DataType.uint16},
                 ],
             },
         },
