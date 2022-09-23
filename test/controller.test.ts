@@ -956,12 +956,20 @@ describe('Controller', () => {
         expect(fs.existsSync(databaseBackupPath)).toBeTruthy();
     });
 
-    it('Add install code', async () => {
+    it('Add install code 18 byte', async () => {
         await controller.start();
         const code = "RB01SG0D831018264800400000000000000000009035EAFFFE424783DLKAE3B287281CF16F550733A0CEC38AA31E802";
         await controller.addInstallCode(code);
         expect(mockAddInstallCode).toHaveBeenCalledTimes(1);
         expect(mockAddInstallCode).toHaveBeenCalledWith('0x9035EAFFFE424783', Buffer.from([0xAE, 0x3B, 0x28, 0x72, 0x81, 0xCF, 0x16, 0xF5, 0x50, 0x73, 0x3A, 0x0C, 0xEC, 0x38, 0xAA, 0x31, 0xE8, 0x02]));
+    });
+
+    it('Add install code 16 byte', async () => {
+        await controller.start();
+        const code = "RB01SG0D836591B3CC0010000000000000000000000D6F00179F2BC9DLKD0F471C9BBA2C0208608E91EED17E2B1";
+        await controller.addInstallCode(code);
+        expect(mockAddInstallCode).toHaveBeenCalledTimes(1);
+        expect(mockAddInstallCode).toHaveBeenCalledWith('0x000D6F00179F2BC9', Buffer.from([0xd0, 0xf4, 0x71, 0xc9, 0xbb, 0xa2, 0xc0, 0x20, 0x86, 0x08, 0xe9, 0x1e, 0xed, 0x17, 0xe2, 0xb1]));
     });
 
     it('Add install code Aqara', async () => {
