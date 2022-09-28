@@ -2557,6 +2557,9 @@ const Cluster: {
             elkoOccupancySensitivity: {ID: 0xE003, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
             sprutOccupancyLevel: {ID: 0x6600, type: DataType.uint16, manufacturerCode: ManufacturerCode.SprutDevice},
             sprutOccupancySensitivity: {ID: 0x6601, type: DataType.uint16, manufacturerCode: ManufacturerCode.SprutDevice},
+            develcoArmThresholdMinTemperature: {ID: 0xfc00, type: DataType.int16, manufacturerCode: ManufacturerCode.DEVELCO},
+            develcoArmThresholdMaxTemperature: {ID: 0xfc01, type: DataType.int16, manufacturerCode: ManufacturerCode.DEVELCO},
+            develcoTargetLevel: {ID: 0xfc02, type: DataType.uint16, manufacturerCode: ManufacturerCode.DEVELCO},
         },
         commands: {
         },
