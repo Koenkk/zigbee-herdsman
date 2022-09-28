@@ -50,6 +50,7 @@ const Cluster: {
             deviceEnabled: {ID: 18, type: DataType.boolean},
             alarmMask: {ID: 19, type: DataType.bitmap8},
             disableLocalConfig: {ID: 20, type: DataType.bitmap8},
+            develcoLedControl: {ID: 0x8100, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.DEVELCO},
         },
         commands: {
             resetFactDefault: {
