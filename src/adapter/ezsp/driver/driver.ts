@@ -1,7 +1,8 @@
 /* istanbul ignore file */
 import * as TsType from './../../tstype';
 import {Ezsp, EZSPFrameData, EZSPZDOResponseFrameData} from './ezsp';
-import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption, EmberKeyData} from './types';
+import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption, EmberKeyData,
+    EmberJoinDecision} from './types';
 import {EventEmitter} from "events";
 import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState,
     EmberRawFrame, EmberIeeeRawFrame} from './types/struct';
@@ -223,6 +224,7 @@ export class Driver extends EventEmitter {
         debug.log(`TRUST_CENTER_LINK_KEY: ${JSON.stringify(linkResult)}`);
         const netResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.CURRENT_NETWORK_KEY});
         debug.log(`CURRENT_NETWORK_KEY: ${JSON.stringify(netResult)}`);
+        await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
         
         this.multicast = new Multicast(this);
         await this.multicast.startup([]);
@@ -295,7 +297,12 @@ export class Driver extends EventEmitter {
             if (frame.status === EmberDeviceUpdate.DEVICE_LEFT) {
                 this.handleNodeLeft(frame.newNodeId, frame.newNodeEui64);
             } else {
-                //this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
+                if (frame.status === EmberDeviceUpdate.STANDARD_SECURITY_UNSECURED_JOIN) {
+                    this.cleanupTClinkKey(frame.newNodeEui64);
+                }
+                if (frame.policyDecision !== EmberJoinDecision.DENY_JOIN) {
+                    //this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
+                }
             }
             break;
         }
@@ -358,6 +365,14 @@ export class Driver extends EventEmitter {
             // <=== Application frame 155 (zigbeeKeyEstablishmentHandler)   parsed: 144,253,159,255,254,8,189,46,6 +2ms
             // Unhandled frame zigbeeKeyEstablishmentHandler
             debug.log(`Unhandled frame ${frameName}`);
+        }
+    }
+
+    private async cleanupTClinkKey(ieee: EmberEUI64): Promise<void> {
+        // Remove tc link_key for the given device.
+        const index = (await this.ezsp.execCommand('findKeyTableEntry', {address: ieee, linkKey: true})).index;
+        if (index != 0xFF) {
+            await this.ezsp.execCommand('eraseKeyTableEntry', {index: index});
         }
     }
 
@@ -504,8 +519,8 @@ export class Driver extends EventEmitter {
         frame.destinationEndpoint = 0;
         frame.groupId = 0;
         //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY;
-        //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY|EmberApsOption.APS_OPTION_RETRY;
-        frame.options = EmberApsOption.APS_OPTION_NONE;
+        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
+        //frame.options = EmberApsOption.APS_OPTION_NONE;
         return frame;
     }
 
@@ -568,8 +583,15 @@ export class Driver extends EventEmitter {
     }
 
     public async preJoining(): Promise<void> {
+        const ieee = new EmberEUI64('0xFFFFFFFFFFFFFFFF');
+        const linkKey = new EmberKeyData();
+        linkKey.contents = Buffer.from("ZigBeeAlliance09");
+        const result = await this.addTransientLinkKey(ieee, linkKey);
+        if (result.status !== EmberStatus.SUCCESS) {
+            throw new Error(`Add Transient Link Key for '${ieee}' failed`);
+        }
         await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
-            EzspDecisionBitmask.IGNORE_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
+            EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
         //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
     }
 
