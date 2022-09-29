@@ -218,9 +218,11 @@ class Controller extends events.EventEmitter {
             ieeeAddr = aqaraMatch[1];
             key = aqaraMatch[2];
         } else {
-            assert(installCode.length === 95, `Unsupported install code, got ${installCode.length} chars, expected 95`);
-            ieeeAddr = installCode.substring(40, 56);
-            key = installCode.substring(59, 95);
+            assert(installCode.length === 95 || installCode.length === 91, 
+                `Unsupported install code, got ${installCode.length} chars, expected 95 or 91`);
+            const keyStart = installCode.length - (installCode.length === 95 ? 36 : 32);
+            ieeeAddr = installCode.substring(keyStart - 19, keyStart - 3);
+            key = installCode.substring(keyStart, installCode.length);
         }
 
         ieeeAddr = `0x${ieeeAddr}`;
