@@ -2612,7 +2612,7 @@ const Cluster: {
             zoneId: {ID: 17, type: DataType.uint8},
             numZoneSensitivityLevelsSupported: {ID: 18, type: DataType.uint8},
             currentZoneSensitivityLevel: {ID: 19, type: DataType.uint8},
-            develcoAlarmOffDelay: {ID: 0x8100, type: DataType.uint16, manufacturerCode: ManufacturerCode.DEVELCO},
+            develcoAlarmOffDelay: {ID: 0x8001, type: DataType.uint16, manufacturerCode: ManufacturerCode.DEVELCO},
         },
         commands: {
             enrollRsp: {
