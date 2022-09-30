@@ -218,7 +218,9 @@ class EZSPAdapter extends Adapter {
     public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
         return this.driver.queue.execute<void>(async () => {
             this.checkInterpanLock();
-            this.driver.preJoining();
+            if (seconds) {
+                this.driver.preJoining();
+            }
             if (networkAddress) {
                 const result = await this.driver.zdoRequest(
                     networkAddress, EmberZDOCmd.Mgmt_Permit_Joining_req,

@@ -301,7 +301,7 @@ export class Driver extends EventEmitter {
                     this.cleanupTClinkKey(frame.newNodeEui64);
                 }
                 if (frame.policyDecision !== EmberJoinDecision.DENY_JOIN) {
-                    //this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
+                    this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
                 }
             }
             break;
