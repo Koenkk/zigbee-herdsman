@@ -245,16 +245,7 @@ class EZSPAdapter extends Adapter {
         if ([8, 10, 14, 18].indexOf(key.length) === -1) {
             throw new Error('Wrong install code length');
         }
-        // TODO: Key need to be converted to aes hash string 
-        // https://github.com/zigpy/bellows/blob/dev/bellows/zigbee/application.py#L839
-        // https://github.com/zigpy/zigpy/blob/dev/zigpy/util.py#L188
-        const ieee = new EmberEUI64(ieeeAddress);
-        const linkKey = new EmberKeyData();
-        linkKey.contents = key;
-        const result = await this.driver.addTransientLinkKey(ieee, linkKey);
-        if (result.status !== EmberStatus.SUCCESS) {
-            throw new Error(`Add install code for '${ieeeAddress}' failed`);
-        }
+        await this.driver.addInstallCode(ieeeAddress, key);
     }
 
     public async reset(type: 'soft' | 'hard'): Promise<void> {

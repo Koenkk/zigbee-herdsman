@@ -5,7 +5,7 @@ import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOpti
     EmberJoinDecision} from './types';
 import {EventEmitter} from "events";
 import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState,
-    EmberRawFrame, EmberIeeeRawFrame} from './types/struct';
+    EmberRawFrame, EmberIeeeRawFrame, EmberAesMmoHashContext} from './types/struct';
 import {ember_security} from './utils';
 import {
     EmberOutgoingMessageType,
@@ -653,5 +653,24 @@ export class Driver extends EventEmitter {
     
     public addTransientLinkKey(partner: EmberEUI64, transientKey: EmberKeyData): Promise<EZSPFrameData> {
         return this.ezsp.execCommand('addTransientLinkKey', {partner, transientKey});
+    }
+    
+    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+        // Key need to be converted to aes hash string 
+        const hc = new EmberAesMmoHashContext();
+        hc.result = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        hc.length = 0;
+        const hash = await this.ezsp.execCommand('aesMmoHash', {context: hc, finalize: true, data: key});
+        if (hash.status == EmberStatus.SUCCESS) {
+            const ieee = new EmberEUI64(ieeeAddress);
+            const linkKey = new EmberKeyData();
+            linkKey.contents = hash.returnContext.result;
+            const result = await this.addTransientLinkKey(ieee, linkKey);
+            if (result.status !== EmberStatus.SUCCESS) {
+                throw new Error(`Add install code for '${ieeeAddress}' failed`);
+            }
+        } else {
+            throw new Error(`Add install code for '${ieeeAddress}' failed`);
+        }
     }
 }

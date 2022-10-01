@@ -251,6 +251,8 @@ export class EmberMessageDigest extends EzspStruct {
 }
 
 export class EmberAesMmoHashContext extends EzspStruct {
+    public result: Buffer;
+    public length: number;
     // The hash context for an ongoing hash operation.
     static _fields = [
         // The result of ongoing the hash operation.
