@@ -363,6 +363,9 @@ export class EmberCurrentSecurityState extends EzspStruct {
 }
 
 export class EmberKeyStruct extends EzspStruct {
+    public key: EmberKeyData;
+    public outgoingFrameCounter: number;
+    public sequenceNumber: number;
     // A structure containing a key and its associated data.
     static _fields = [
         // A bitmask indicating the presence of data within the various fields

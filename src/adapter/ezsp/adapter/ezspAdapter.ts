@@ -17,7 +17,7 @@ import {Waitress, Wait, RealpathSync} from '../../../utils';
 import * as Models from "../../../models";
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
-import crypto from 'crypto';
+import {EZSPAdapterBackup} from './backup';
 
 
 const autoDetectDefinitions = [
@@ -39,6 +39,7 @@ class EZSPAdapter extends Adapter {
     private port: SerialPortOptions;
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
     private interpanLock: boolean;
+    private backupMan: EZSPAdapterBackup;
 
     public constructor(networkOptions: NetworkOptions,
                        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
@@ -52,10 +53,10 @@ class EZSPAdapter extends Adapter {
         this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
         this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
         this.driver.on('incomingMessage', this.processMessage.bind(this));
+        this.backupMan = new EZSPAdapterBackup(this.driver, backupPath);
     }
 
     private async processMessage(frame: EmberIncomingMessage) {
-        // todo
         debug(`processMessage: ${JSON.stringify(frame)}`);
         if (frame.apsFrame.profileId == 0) {
             if (
@@ -114,7 +115,6 @@ class EZSPAdapter extends Adapter {
     }
 
     private async handleDeviceJoin(arr: any[]) {
-        // todo
         let [nwk, ieee] = arr;
         debug('Device join request received: %s %s', nwk, ieee.toString('hex'));
         const payload: Events.DeviceJoinedPayload = {
@@ -130,7 +130,6 @@ class EZSPAdapter extends Adapter {
     }
 
     private handleDeviceLeft(arr: any[]) {
-        // todo
         let [nwk, ieee] = arr;
         debug('Device left network request received: %s %s', nwk, ieee);
 
@@ -237,7 +236,6 @@ class EZSPAdapter extends Adapter {
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
-        // todo
         return {type: `EZSP v${this.driver.version.product}`, meta: this.driver.version};
     }
 
@@ -553,12 +551,11 @@ class EZSPAdapter extends Adapter {
     }
 
     public async supportsBackup(): Promise<boolean> {
-        //todo
-        return false;
+        return true;
     }
 
     public async backup(): Promise<Models.Backup> {
-        throw new Error("This adapter does not support backup");
+        return this.backupMan.createBackup();
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
