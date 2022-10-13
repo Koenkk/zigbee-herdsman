@@ -68,4 +68,10 @@ function ember_security(config: Record<string, any>): EmberInitialSecurityState 
     return isc;
 }
 
-export {crc16ccitt, ember_security};
+const allChannels = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26];
+function channelsMask2list(channelMask: number): number[] {
+    return allChannels.map((channel: number) => ((2 ** channel) & channelMask) ? channel : null).filter((x)=>x);
+}
+
+
+export {crc16ccitt, ember_security, channelsMask2list};

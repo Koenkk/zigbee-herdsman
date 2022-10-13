@@ -394,7 +394,7 @@ export class Ezsp extends EventEmitter {
         debug.log('Set %s = %s', t.EzspValueId.valueToName(t.EzspValueId, valueId), value);
         const ret = await this.execCommand('setValue', {valueId, value});
         console.assert(ret.status === EmberStatus.SUCCESS,
-            `Command (setValue) returned unexpected state: ${ret}`);
+            `Command (setValue) returned unexpected state: ${ret.status}`);
 
         return ret;
     }

@@ -3,6 +3,7 @@ import Debug from "debug";
 import {Driver} from '../driver';
 import * as Models from "../../../models";
 import {EmberKeyType, EmberKeyStruct, EmberNetworkParameters} from '../driver/types';
+import {channelsMask2list} from '../driver/utils';
 
 
 export class EZSPAdapterBackup {
@@ -30,22 +31,22 @@ export class EZSPAdapterBackup {
         return {
             ezsp: {
                 version: version,
-                hashed_tclk: trustCenterLinkKey.key.contents,
+                hashed_tclk: Buffer.from(trustCenterLinkKey.key.contents),
             },
             networkOptions: {
                 panId: networkParams.panId,
                 extendedPanId: Buffer.from(networkParams.extendedPanId),
-                channelList: [networkParams.channels],
-                networkKey: networkKey.key.contents,
+                channelList: channelsMask2list(networkParams.channels),
+                networkKey: Buffer.from(networkKey.key.contents),
                 networkKeyDistribute: true,
             },
-            logicalChannel: netParams.radioChannel,
+            logicalChannel: networkParams.radioChannel,
             networkKeyInfo: {
                 sequenceNumber: networkKey.sequenceNumber,
                 frameCounter: networkKey.outgoingFrameCounter
             },
             securityLevel: 5,
-            networkUpdateId: netParams.nwkUpdateId,
+            networkUpdateId: networkParams.nwkUpdateId,
             coordinatorIeeeAddress: ieee,
             devices: []
         };
