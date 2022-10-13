@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import Debug from "debug";
 import {Driver} from '../driver';
 import * as Models from "../../../models";
@@ -29,7 +30,7 @@ export class EZSPAdapterBackup {
         return {
             ezsp: {
                 version: version,
-                trustCenterLinkKey: trustCenterLinkKey.key.contents,
+                hashed_tclk: trustCenterLinkKey.key.contents,
             },
             networkOptions: {
                 panId: networkParams.panId,

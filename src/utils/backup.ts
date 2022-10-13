@@ -25,13 +25,25 @@ export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.Uni
             source: `${packageInfo.name}@${packageInfo.version}`,
             internal: {
                 date: new Date().toISOString(),
-                znpVersion: [null, undefined].includes(backup.znp?.version) ? undefined : backup.znp?.version
+                ...(backup.znp) ? {
+                    znpVersion: [null, undefined].includes(backup.znp?.version) ? undefined : backup.znp?.version
+                } : undefined,
+                ...(backup.ezsp) ? {
+                    ezspVersion: [null, undefined].includes(backup.ezsp?.version) ? undefined : backup.ezsp?.version
+                } : undefined,
             }
         },
         stack_specific: {
-            zstack: {
-                tclk_seed: backup.znp?.trustCenterLinkKeySeed?.toString("hex") || undefined
-            }
+            ...(backup.znp) ? {
+                zstack: {
+                    tclk_seed: backup.znp?.trustCenterLinkKeySeed?.toString("hex") || undefined
+                }
+            } : undefined,
+            ...(backup.ezsp) ? {
+                ezsp: {
+                    hashed_tclk: backup.ezsp?.hashed_tclk?.toString("hex") || undefined
+                }
+            } : undefined
         },
         coordinator_ieee: backup.coordinatorIeeeAddress?.toString("hex") || null,
         pan_id: panIdBuffer.toString("hex"),

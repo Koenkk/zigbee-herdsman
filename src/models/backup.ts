@@ -32,6 +32,6 @@ export interface Backup {
     };
     ezsp?: {
         version?: number;
-        trustCenterLinkKey?: Buffer;
+        hashed_tclk?: Buffer;
     };
 }
