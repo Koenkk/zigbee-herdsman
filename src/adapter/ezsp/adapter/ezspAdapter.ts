@@ -21,8 +21,8 @@ import {EZSPAdapterBackup} from './backup';
 
 
 const autoDetectDefinitions = [
-    { manufacturer: 'Silicon Labs', vendorId: '10c4', productId: 'ea60' },  // Sprut
     { manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4' },  // Sonoff ZBDongle-E
+    { manufacturer: 'Nabu Casa', vendorId: '10c4', productId: 'ea60' },  // Home Assistant SkyConnect
 ];
 
 
@@ -159,7 +159,6 @@ class EZSPAdapter extends Adapter {
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
-        return false;
         // For TCP paths we cannot get device information, therefore we cannot validate it.
         if (SocketPortUtils.isTcpPath(path)) {
             return false;
@@ -174,7 +173,6 @@ class EZSPAdapter extends Adapter {
     }
 
     public static async autoDetectPath(): Promise<string> {
-        return '';
         const paths = await SerialPortUtils.find(autoDetectDefinitions);
         paths.sort((a, b) => (a < b) ? -1 : 1);
         return paths.length > 0 ? paths[0] : null;
