@@ -256,7 +256,7 @@ export class Driver extends EventEmitter {
 
         const panID = this.nwkOpt.panID;
         const extendedPanID = this.nwkOpt.extendedPanID;
-        const initial_security_state: EmberInitialSecurityState = ember_security(this.nwkOpt);
+        const initial_security_state: EmberInitialSecurityState = ember_security(this.nwkOpt, this.ezsp.ezspV);
         status = await this.ezsp.setInitialSecurityState(initial_security_state);
         const parameters: EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;
@@ -352,6 +352,14 @@ export class Driver extends EventEmitter {
         }
         case (frameName === 'stackStatusHandler'): {
             debug.log(`stackStatusHandler: ${EmberStatus.valueToName(EmberStatus, frame.status)}`);
+            break;
+        }
+        case (frameName === 'childJoinHandler'): {
+            if (!frame.joining) {
+                this.handleNodeLeft(frame.childId, frame.childEui64);
+            } else {
+                this.handleNodeJoined(frame.childId, frame.childEui64);
+            }
             break;
         }
         default:
@@ -583,12 +591,14 @@ export class Driver extends EventEmitter {
     }
 
     public async preJoining(): Promise<void> {
-        const ieee = new EmberEUI64('0xFFFFFFFFFFFFFFFF');
-        const linkKey = new EmberKeyData();
-        linkKey.contents = Buffer.from("ZigBeeAlliance09");
-        const result = await this.addTransientLinkKey(ieee, linkKey);
-        if (result.status !== EmberStatus.SUCCESS) {
-            throw new Error(`Add Transient Link Key for '${ieee}' failed`);
+        if (this.ezsp.ezspV >= 8) {
+            const ieee = new EmberEUI64('0xFFFFFFFFFFFFFFFF');
+            const linkKey = new EmberKeyData();
+            linkKey.contents = Buffer.from("ZigBeeAlliance09");
+            const result = await this.addTransientLinkKey(ieee, linkKey);
+            if (result.status !== EmberStatus.SUCCESS) {
+                throw new Error(`Add Transient Link Key for '${ieee}' failed`);
+            }
         }
         await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
             EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);

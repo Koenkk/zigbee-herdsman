@@ -50,7 +50,7 @@ export class Deferred<T> {
 }
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-function ember_security(config: Record<string, any>): EmberInitialSecurityState {
+function ember_security(config: Record<string, any>, ezspV: number): EmberInitialSecurityState {
     const isc: EmberInitialSecurityState = new EmberInitialSecurityState();
     isc.bitmask = (EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY |
         EmberInitialSecurityBitmask.TRUST_CENTER_GLOBAL_LINK_KEY |
@@ -59,8 +59,11 @@ function ember_security(config: Record<string, any>): EmberInitialSecurityState 
         EmberInitialSecurityBitmask.REQUIRE_ENCRYPTED_KEY |
         EmberInitialSecurityBitmask.TRUST_CENTER_USES_HASHED_LINK_KEY);
     isc.preconfiguredKey = new EmberKeyData();
-    //isc.preconfiguredKey.contents = Buffer.from("ZigBeeAlliance09");
-    isc.preconfiguredKey.contents = randomBytes(16);
+    if (ezspV >= 8) {
+        isc.preconfiguredKey.contents = randomBytes(16);
+    } else {
+        isc.preconfiguredKey.contents = Buffer.from("ZigBeeAlliance09");
+    }
     isc.networkKey = new EmberKeyData();
     isc.networkKey.contents = config.networkKey;
     isc.networkKeySequenceNumber = 0;

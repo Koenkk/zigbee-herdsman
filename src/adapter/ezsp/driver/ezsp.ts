@@ -565,7 +565,9 @@ export class Ezsp extends EventEmitter {
         if (res.status != EmberStatus.SUCCESS) {
             debug.log("Couldn't set concentrator type %s: %s", true, JSON.stringify(res));
         }
-        await this.execCommand('setSourceRouteDiscoveryMode', {mode: 1});
+        if (this.ezspV >= 8) {
+            await this.execCommand('setSourceRouteDiscoveryMode', {mode: 1});
+        }
     }
 
     public waitFor(frameId: string|number, sequence: number | null, timeout = 10000)
