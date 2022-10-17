@@ -256,7 +256,7 @@ export class Driver extends EventEmitter {
 
         const panID = this.nwkOpt.panID;
         const extendedPanID = this.nwkOpt.extendedPanID;
-        const initial_security_state: EmberInitialSecurityState = ember_security(this.nwkOpt, this.ezsp.ezspV);
+        const initial_security_state: EmberInitialSecurityState = ember_security(this.nwkOpt);
         status = await this.ezsp.setInitialSecurityState(initial_security_state);
         const parameters: EmberNetworkParameters = new EmberNetworkParameters();
         parameters.panId = panID;

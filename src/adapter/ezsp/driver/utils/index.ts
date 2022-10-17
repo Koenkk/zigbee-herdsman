@@ -50,7 +50,7 @@ export class Deferred<T> {
 }
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-function ember_security(config: Record<string, any>, ezspV: number): EmberInitialSecurityState {
+function ember_security(config: Record<string, any>): EmberInitialSecurityState {
     const isc: EmberInitialSecurityState = new EmberInitialSecurityState();
     isc.bitmask = (EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY |
         EmberInitialSecurityBitmask.TRUST_CENTER_GLOBAL_LINK_KEY |
