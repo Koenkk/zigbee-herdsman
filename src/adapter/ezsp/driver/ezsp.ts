@@ -449,7 +449,7 @@ export class Ezsp extends EventEmitter {
 
     async updatePolicies(): Promise<void> {
         // Set up the policies for what the NCP should do.
-        const policies = [
+        let policies = [
             [EzspPolicyId.BINDING_MODIFICATION_POLICY,
                 EzspDecisionId.DISALLOW_BINDING_MODIFICATION],
             [EzspPolicyId.UNICAST_REPLIES_POLICY, EzspDecisionId.HOST_WILL_NOT_SUPPLY_REPLY],
@@ -461,11 +461,14 @@ export class Ezsp extends EventEmitter {
             [EzspPolicyId.ZLL_POLICY, EzspDecisionId.ALLOW_JOINS],
             [EzspPolicyId.TC_REJOINS_USING_WELL_KNOWN_KEY_POLICY, EzspDecisionId.ALLOW_JOINS],
             [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_APP_KEY_REQUESTS],
-            [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS
-                | EzspDecisionBitmask.ALLOW_JOINS],
             [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
         ];
-
+        if (this.ezspV >= 8) {
+            policies = policies.concat([
+                [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS
+                    | EzspDecisionBitmask.ALLOW_JOINS],
+            ]);
+        }
         for (const [policy, value] of policies) {
             await this.setPolicy(policy, value);
         }

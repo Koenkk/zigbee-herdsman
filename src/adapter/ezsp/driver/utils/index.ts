@@ -59,11 +59,7 @@ function ember_security(config: Record<string, any>, ezspV: number): EmberInitia
         EmberInitialSecurityBitmask.REQUIRE_ENCRYPTED_KEY |
         EmberInitialSecurityBitmask.TRUST_CENTER_USES_HASHED_LINK_KEY);
     isc.preconfiguredKey = new EmberKeyData();
-    if (ezspV >= 8) {
-        isc.preconfiguredKey.contents = randomBytes(16);
-    } else {
-        isc.preconfiguredKey.contents = Buffer.from("ZigBeeAlliance09");
-    }
+    isc.preconfiguredKey.contents = randomBytes(16);
     isc.networkKey = new EmberKeyData();
     isc.networkKey.contents = config.networkKey;
     isc.networkKeySequenceNumber = 0;

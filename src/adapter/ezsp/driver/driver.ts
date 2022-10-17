@@ -464,12 +464,13 @@ export class Driver extends EventEmitter {
             } else {
                 eui64 = await this.networkIdToEUI64(nwk);
             }
+            if (this.ezsp.ezspV < 8) {
+                // const route = this.eui64ToRelays.get(eui64.toString());
+                // if (route) {
+                //     const = await this.ezsp.execCommand('setSourceRoute', {eui64});
+                // // }
+            }
             await this.ezsp.execCommand('setExtendedTimeout', {remoteEui64: eui64, extendedTimeout: true});
-            // for old emberznet < 8
-            // const route = this.eui64ToRelays.get(eui64.toString());
-            // if (route) {
-            //     const [status] = await this.ezsp.execCommand('setSourceRoute', eui64, );
-            // }
             const result = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             return result.status == EmberStatus.SUCCESS;
         } catch (e) {
@@ -591,18 +592,18 @@ export class Driver extends EventEmitter {
     }
 
     public async preJoining(): Promise<void> {
-        if (this.ezsp.ezspV >= 8) {
-            const ieee = new EmberEUI64('0xFFFFFFFFFFFFFFFF');
-            const linkKey = new EmberKeyData();
-            linkKey.contents = Buffer.from("ZigBeeAlliance09");
-            const result = await this.addTransientLinkKey(ieee, linkKey);
-            if (result.status !== EmberStatus.SUCCESS) {
-                throw new Error(`Add Transient Link Key for '${ieee}' failed`);
-            }
+        const ieee = new EmberEUI64('0xFFFFFFFFFFFFFFFF');
+        const linkKey = new EmberKeyData();
+        linkKey.contents = Buffer.from("ZigBeeAlliance09");
+        const result = await this.addTransientLinkKey(ieee, linkKey);
+        if (result.status !== EmberStatus.SUCCESS) {
+            throw new Error(`Add Transient Link Key for '${ieee}' failed`);
         }
-        await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
-            EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
-        //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
+        if (this.ezsp.ezspV >= 8) {
+            await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
+                EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
+            //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
+        }
     }
 
     public async permitJoining(seconds: number): Promise<EZSPFrameData> {
