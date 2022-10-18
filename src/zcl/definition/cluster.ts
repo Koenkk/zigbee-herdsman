@@ -4866,6 +4866,7 @@ const Cluster: {
             outputMode: {ID: 0x0102, type: DataType.boolean},
             onOffLedMode: {ID: 0x0103, type: DataType.boolean},
             firmwareUpdateInProgressIndicator:{ID: 0x0104, type: DataType.boolean},
+            relayClick:{ID: 0x105, type:DataType.boolean},
         },
         commands: {
             ledEffect: {
