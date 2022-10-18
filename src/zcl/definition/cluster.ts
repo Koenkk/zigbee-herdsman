@@ -50,6 +50,8 @@ const Cluster: {
             deviceEnabled: {ID: 18, type: DataType.boolean},
             alarmMask: {ID: 19, type: DataType.bitmap8},
             disableLocalConfig: {ID: 20, type: DataType.bitmap8},
+            develcoPrimarySwVersion: {ID: 0x8000, type: DataType.octetStr, manufacturerCode: ManufacturerCode.DEVELCO},
+            develcoPrimaryHwVersion: {ID: 0x8020, type: DataType.octetStr, manufacturerCode: ManufacturerCode.DEVELCO},
             develcoLedControl: {ID: 0x8100, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.DEVELCO},
         },
         commands: {
@@ -2557,9 +2559,6 @@ const Cluster: {
             elkoOccupancySensitivity: {ID: 0xE003, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
             sprutOccupancyLevel: {ID: 0x6600, type: DataType.uint16, manufacturerCode: ManufacturerCode.SprutDevice},
             sprutOccupancySensitivity: {ID: 0x6601, type: DataType.uint16, manufacturerCode: ManufacturerCode.SprutDevice},
-            develcoArmThresholdMinTemperature: {ID: 0xfc00, type: DataType.int16, manufacturerCode: ManufacturerCode.DEVELCO},
-            develcoArmThresholdMaxTemperature: {ID: 0xfc01, type: DataType.int16, manufacturerCode: ManufacturerCode.DEVELCO},
-            develcoTargetLevel: {ID: 0xfc02, type: DataType.uint16, manufacturerCode: ManufacturerCode.DEVELCO},
         },
         commands: {
         },
