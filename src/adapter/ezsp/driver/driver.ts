@@ -149,8 +149,8 @@ export class Driver extends EventEmitter {
 
         await this.ezsp.updatePolicies();
 
-        await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_OUTGOING_TRANSFER_SIZE, 82);
-        await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_INCOMING_TRANSFER_SIZE, 82);
+        //await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_OUTGOING_TRANSFER_SIZE, 82);
+        //await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_INCOMING_TRANSFER_SIZE, 82);
         await this.ezsp.setValue(EzspValueId.VALUE_END_DEVICE_KEEP_ALIVE_SUPPORT_MODE, 3);
         await this.ezsp.setValue(EzspValueId.VALUE_CCA_THRESHOLD, 0);
 
@@ -354,6 +354,14 @@ export class Driver extends EventEmitter {
             debug.log(`stackStatusHandler: ${EmberStatus.valueToName(EmberStatus, frame.status)}`);
             break;
         }
+        case (frameName === 'childJoinHandler'): {
+            if (!frame.joining) {
+                this.handleNodeLeft(frame.childId, frame.childEui64);
+            } else {
+                this.handleNodeJoined(frame.childId, frame.childEui64);
+            }
+            break;
+        }
         default:
             // <=== Application frame 35 (childJoinHandler) received: 00013e9c2ebd08feff9ffd9004 +1ms
             // <=== Application frame 35 (childJoinHandler)   parsed: 0,1,39998,144,253,159,255,254,8,189,46,4 +1ms
@@ -456,12 +464,13 @@ export class Driver extends EventEmitter {
             } else {
                 eui64 = await this.networkIdToEUI64(nwk);
             }
+            if (this.ezsp.ezspV < 8) {
+                // const route = this.eui64ToRelays.get(eui64.toString());
+                // if (route) {
+                //     const = await this.ezsp.execCommand('setSourceRoute', {eui64});
+                // // }
+            }
             await this.ezsp.execCommand('setExtendedTimeout', {remoteEui64: eui64, extendedTimeout: true});
-            // for old emberznet < 8
-            // const route = this.eui64ToRelays.get(eui64.toString());
-            // if (route) {
-            //     const [status] = await this.ezsp.execCommand('setSourceRoute', eui64, );
-            // }
             const result = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
             return result.status == EmberStatus.SUCCESS;
         } catch (e) {
@@ -590,9 +599,11 @@ export class Driver extends EventEmitter {
         if (result.status !== EmberStatus.SUCCESS) {
             throw new Error(`Add Transient Link Key for '${ieee}' failed`);
         }
-        await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
-            EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
-        //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
+        if (this.ezsp.ezspV >= 8) {
+            await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
+                EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
+            //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
+        }
     }
 
     public async permitJoining(seconds: number): Promise<EZSPFrameData> {

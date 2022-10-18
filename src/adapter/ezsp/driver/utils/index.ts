@@ -59,7 +59,6 @@ function ember_security(config: Record<string, any>): EmberInitialSecurityState 
         EmberInitialSecurityBitmask.REQUIRE_ENCRYPTED_KEY |
         EmberInitialSecurityBitmask.TRUST_CENTER_USES_HASHED_LINK_KEY);
     isc.preconfiguredKey = new EmberKeyData();
-    //isc.preconfiguredKey.contents = Buffer.from("ZigBeeAlliance09");
     isc.preconfiguredKey.contents = randomBytes(16);
     isc.networkKey = new EmberKeyData();
     isc.networkKey.contents = config.networkKey;
@@ -68,4 +67,10 @@ function ember_security(config: Record<string, any>): EmberInitialSecurityState 
     return isc;
 }
 
-export {crc16ccitt, ember_security};
+const allChannels = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26];
+function channelsMask2list(channelMask: number): number[] {
+    return allChannels.map((channel: number) => ((2 ** channel) & channelMask) ? channel : null).filter((x)=>x);
+}
+
+
+export {crc16ccitt, ember_security, channelsMask2list};
