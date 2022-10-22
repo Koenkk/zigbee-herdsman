@@ -206,3 +206,15 @@ export function fixed_list(length: number, itemtype: any): {
     return FixedList;
 }
 /* eslint-enable @typescript-eslint/no-explicit-any*/
+
+export class Bytes {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static serialize(cls: any, value: any[]): Buffer {
+        return Buffer.from(value);
+    }
+
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    static deserialize(cls: any, data: Buffer): any[] {
+        return [data];
+    }
+}

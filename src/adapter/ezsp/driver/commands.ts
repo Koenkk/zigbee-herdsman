@@ -7,6 +7,7 @@ import {/* Basic Types */
     LVBytes,
     fixed_list,
     WordList,
+    Bytes,
 
     /* Named Types */
     EmberNodeId,
@@ -2206,17 +2207,18 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             status: EmberStatus,
             gpdLink: uint8_t,
             sequenceNumber: uint8_t,
-            addr: EmberGpAddress,
-            gpdfSecurityLevel: EmberGpSecurityLevel,
-            gpdfSecurityKeyType: EmberGpKeyType,
-            autoCommissioning: Bool,
-            bidirectionalInfo: uint8_t,
-            gpdSecurityFrameCounter: uint32_t,
-            gpdCommandId: uint8_t,
-            mic: uint32_t,
+            addr: EmberEUI64,
+            payload: Bytes,
+            // gpdfSecurityLevel: EmberGpSecurityLevel,
+            // gpdfSecurityKeyType: EmberGpKeyType,
+            // autoCommissioning: Bool,
+            // bidirectionalInfo: uint8_t,
+            // gpdSecurityFrameCounter: uint32_t,
+            // gpdCommandId: uint8_t,
+            // mic: uint32_t,
             //attr: EmberGpSinkListEntry,
-            proxyTableIndex: uint8_t,
-            gpdCommandPayload: LVBytes
+            // proxyTableIndex: uint8_t,
+            // gpdCommandPayload: LVBytes
         },
     },
     changeSourceRouteHandler: {
