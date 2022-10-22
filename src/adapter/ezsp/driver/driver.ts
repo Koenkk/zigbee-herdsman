@@ -166,7 +166,7 @@ export class Driver extends EventEmitter {
                 0x0B04, 0x0702, 0x1000, 0xFC01, 0xFC02]
         });
         await this.addEndpoint({
-            endpoint: 242, profileId: 0xA10E, deviceId: 0x61,
+            endpoint: 242, profileId: 0xA1E0, deviceId: 0x61,
             outputClusters: [0x0021]
         });
 
