@@ -195,7 +195,7 @@ export class Driver extends EventEmitter {
 
         if (await this.needsToBeInitialised(nwkOpt)) {
             const res = await this.ezsp.execCommand('networkState');
-            debug.log(`Network state ${res}`);
+            debug.log(`Network state ${res.status}`);
             if (res.status == EmberNetworkStatus.JOINED_NETWORK) {
                 debug.log(`Leaving current network and forming new network`);
                 const st = await this.ezsp.leaveNetwork();
@@ -360,6 +360,10 @@ export class Driver extends EventEmitter {
             } else {
                 this.handleNodeJoined(frame.childId, frame.childEui64);
             }
+            break;
+        }
+        case (frameName == 'gpepIncomingMessageHandler'): {
+            this.handleGPMessage(frame);
             break;
         }
         default:
@@ -683,5 +687,25 @@ export class Driver extends EventEmitter {
         } else {
             throw new Error(`Add install code for '${ieeeAddress}' failed`);
         }
+    }
+
+    private async handleGPMessage(frame: EZSPFrameData): Promise<void> {
+        // Commissioning
+        if (frame.gpdCommandId == 0xE0) {
+            
+        } else {
+
+        }
+        // this.emit('incomingMessage', {
+        //     messageType: null, 
+        //     apsFrame: {
+        //         profileId: 0xA1E0,
+        //         endpoint: 242,
+        //         clusterId: 0x0021,
+        //     }, 
+        //     lqi: frame.gpdLink,
+        //     message: frame,
+        //     senderEui64: new EmberEUI64(frame.addr)
+        // });
     }
 }

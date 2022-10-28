@@ -2207,14 +2207,16 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             status: EmberStatus,
             gpdLink: uint8_t,
             sequenceNumber: uint8_t,
+            addrType: uint8_t,
             addr: EmberEUI64,
+            addrE: uint8_t,
+            gpdfSecurityLevel: EmberGpSecurityLevel,
+            gpdfSecurityKeyType: EmberGpKeyType,
+            autoCommissioning: Bool,
+            bidirectionalInfo: uint8_t,
+            gpdSecurityFrameCounter: uint32_t,
+            gpdCommandId: uint8_t,
             payload: Bytes,
-            // gpdfSecurityLevel: EmberGpSecurityLevel,
-            // gpdfSecurityKeyType: EmberGpKeyType,
-            // autoCommissioning: Bool,
-            // bidirectionalInfo: uint8_t,
-            // gpdSecurityFrameCounter: uint32_t,
-            // gpdCommandId: uint8_t,
             // mic: uint32_t,
             //attr: EmberGpSinkListEntry,
             // proxyTableIndex: uint8_t,
@@ -2433,6 +2435,10 @@ export const ZDORESPONSES: {[key: string]: EZSPZDOResponseFrame} = {
     },
 };
 
+
+export const ZGP: {[key: string]: EZSPZDOResponseFrame} = {
+
+};
 
 export const ZDOREQUEST_NAME_BY_ID: { [key: string]: string } = {};
 for (const key of Object.getOwnPropertyNames(ZDOREQUESTS)) {
