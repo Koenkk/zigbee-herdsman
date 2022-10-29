@@ -4068,7 +4068,11 @@ const Cluster: {
             currentTimeToDisplay: {ID: 32, type: DataType.uint32},
             ledIntensityOn: {ID: 82, type: DataType.uint8},
             ledIntensityOff: {ID: 83, type: DataType.uint8},
+            ledColorOn: {ID: 80, type: DataType.uint24},  // inversed hex BBGGRR
+            ledColorOff: {ID: 81, type: DataType.uint24},
             minimumBrightness: {ID: 85, type: DataType.uint16},
+            //currentLoad: {ID: 112, type: DataType.??},
+            dimmerTimmer: {ID: 160, type: DataType.uint32},
             floorControlMode: {ID: 261, type: DataType.enum8},
             ambiantMaxHeatSetpointLimit: {ID: 264, type: DataType.int16},
             floorMinHeatSetpointLimit: {ID: 265, type: DataType.int16},
@@ -4077,6 +4081,7 @@ const Cluster: {
             floorLimitStatus: {ID: 268, type: DataType.enum8},
             timeFormatToDisplay: {ID: 276, type: DataType.enum8},
             GFCiStatus: {ID: 277, type: DataType.enum8},
+            connectedLoad: {ID: 281, type: DataType.uint16},
         },
         commands: {
         },
