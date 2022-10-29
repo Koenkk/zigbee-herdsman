@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import * as TsType from './../../tstype';
 import {Ezsp, EZSPFrameData, EZSPZDOResponseFrameData} from './ezsp';
-import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption, EmberKeyData,
+import {EmberStatus, EmberNodeType, uint16_t, uint8_t, uint32_t, EmberZDOCmd, EmberApsOption, EmberKeyData,
     EmberJoinDecision} from './types';
 import {EventEmitter} from "events";
 import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState,
@@ -692,20 +692,50 @@ export class Driver extends EventEmitter {
     private async handleGPMessage(frame: EZSPFrameData): Promise<void> {
         // Commissioning
         if (frame.gpdCommandId == 0xE0) {
-            
+            let data = frame.payload.subarray(5);
+            let st, deviceId, options, extOptions, key, mic, counter;
+            [st, data] = uint8_t.deserialize(uint8_t, data);
+            [deviceId, data] = uint8_t.deserialize(uint8_t, data);
+            [options, data] = uint8_t.deserialize(uint8_t, data);
+            [extOptions, data] = uint8_t.deserialize(uint8_t, data);
+            [key, data] = EmberKeyData.deserialize(EmberKeyData, data);
+            [mic, data] = uint32_t.deserialize(uint32_t, data);
+            [counter, data] = uint32_t.deserialize(uint32_t, data);
+            const gpdMessage = {
+                messageType: 0,
+                apsFrame: {
+                    profileId: 0xA1E0,
+                    sourceEndpoint: 242,
+                    clusterId: 0x0021,
+                    sequence: frame.sequenceNumber,
+                }, 
+                lqi: frame.gpdLink,
+                message: {
+                    commandID: frame.gpdCommandId,
+                    commandFrame: {
+                        options: options,
+                        securityKey: Buffer.from(key.contents),
+                        deviceID: deviceId,
+                        outgoingCounter: counter,
+                    },
+                    srcID: frame.srcId,
+                },
+                sender: frame.addr,
+            };
+            this.emit('gpdMessage', gpdMessage);
         } else {
-
+            // this.emit('incomingMessage', {
+            //     messageType: null, 
+            //     apsFrame: {
+            //         profileId: 0xA1E0,
+            //         sourceEndpoint: 242,
+            //         clusterId: 0x0021,
+            //     }, 
+            //     lqi: frame.gpdLink,
+            //     message: {
+            //     },
+            //     senderEui64: new EmberEUI64(frame.addr)
+            // });
         }
-        // this.emit('incomingMessage', {
-        //     messageType: null, 
-        //     apsFrame: {
-        //         profileId: 0xA1E0,
-        //         endpoint: 242,
-        //         clusterId: 0x0021,
-        //     }, 
-        //     lqi: frame.gpdLink,
-        //     message: frame,
-        //     senderEui64: new EmberEUI64(frame.addr)
-        // });
     }
 }
