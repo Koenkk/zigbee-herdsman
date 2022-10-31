@@ -518,6 +518,17 @@ export class Driver extends EventEmitter {
         }
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+    public async brequest(destination: number, apsFrame: EmberApsFrame, data: Buffer): Promise<boolean> {
+        try {
+            const seq = (apsFrame.sequence + 1) & 0xFF;
+            await this.ezsp.sendBroadcast(destination, apsFrame, seq, data);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
     private nextTransactionID(): number {
         this.transactionID = (this.transactionID + 1) & 0xFF;
         return this.transactionID;
@@ -693,6 +704,7 @@ export class Driver extends EventEmitter {
         // Commissioning
         if (frame.gpdCommandId == 0xE0) {
             let data = frame.payload.subarray(5);
+            /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
             let st, deviceId, options, extOptions, key, mic, counter;
             [st, data] = uint8_t.deserialize(uint8_t, data);
             [deviceId, data] = uint8_t.deserialize(uint8_t, data);
