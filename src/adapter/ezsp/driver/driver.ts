@@ -737,18 +737,23 @@ export class Driver extends EventEmitter {
             };
             this.emit('gpdMessage', gpdMessage);
         } else {
-            // this.emit('incomingMessage', {
-            //     messageType: null, 
-            //     apsFrame: {
-            //         profileId: 0xA1E0,
-            //         sourceEndpoint: 242,
-            //         clusterId: 0x0021,
-            //     }, 
-            //     lqi: frame.gpdLink,
-            //     message: {
-            //     },
-            //     senderEui64: new EmberEUI64(frame.addr)
-            // });
+            const gpdMessage = {
+                messageType: 0,
+                apsFrame: {
+                    profileId: 0xA1E0,
+                    sourceEndpoint: 242,
+                    clusterId: 0x0021,
+                    sequence: frame.sequenceNumber,
+                }, 
+                lqi: frame.gpdLink,
+                message: {
+                    commandID: frame.gpdCommandId,
+                    frameCounter: frame.sequenceNumber,
+                    srcID: frame.srcId,
+                },
+                sender: frame.addr,
+            };
+            this.emit('incomingMessage', gpdMessage);
         }
     }
 }

@@ -111,6 +111,22 @@ class EZSPAdapter extends Adapter {
 
             this.waitress.resolve(payload);
             this.emit(Events.Events.zclData, payload);
+        } else if (frame.apsFrame.profileId == 0xA1E0) {  // GP Frame
+            const zclFrame = ZclFrame.create(
+                FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true,
+                null, frame.apsFrame.sequence, 'notification', frame.apsFrame.clusterId, frame.message);
+            const payload: Events.ZclDataPayload = {
+                frame: zclFrame,
+                address: frame.sender,
+                endpoint: frame.apsFrame.sourceEndpoint,
+                linkquality: frame.lqi,
+                groupID: null,
+                wasBroadcast: true,
+                destinationEndpoint: frame.apsFrame.sourceEndpoint,
+            };
+
+            this.waitress.resolve(payload);
+            this.emit(Events.Events.zclData, payload);
         }
         this.emit('event', frame);
     }
