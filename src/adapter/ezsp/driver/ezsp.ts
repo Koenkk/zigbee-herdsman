@@ -575,7 +575,8 @@ export class Ezsp extends EventEmitter {
         }
     }
 
-    public sendBroadcast(destination: number, apsFrame: EmberApsFrame, seq: number, data: Buffer): Promise<EZSPFrameData> {
+    public sendBroadcast(destination: number, apsFrame: EmberApsFrame, seq: number, data: Buffer)
+        : Promise<EZSPFrameData> {
         return this.execCommand('sendBroadcast', {
             destination: destination,
             apsFrame: apsFrame,

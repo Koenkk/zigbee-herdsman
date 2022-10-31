@@ -704,7 +704,7 @@ export class Driver extends EventEmitter {
         // Commissioning
         if (frame.gpdCommandId == 0xE0) {
             let data = frame.payload.subarray(5);
-            /* eslint-disable @typescript-eslint/no-unused-vars */
+            /* eslint-disable */
             let st, deviceId, options, extOptions, key, mic, counter;
             [st, data] = uint8_t.deserialize(uint8_t, data);
             [deviceId, data] = uint8_t.deserialize(uint8_t, data);
@@ -713,7 +713,7 @@ export class Driver extends EventEmitter {
             [key, data] = EmberKeyData.deserialize(EmberKeyData, data);
             [mic, data] = uint32_t.deserialize(uint32_t, data);
             [counter, data] = uint32_t.deserialize(uint32_t, data);
-            /* eslint-enable @typescript-eslint/no-unused-vars */
+            /* eslint-enable */
             const gpdMessage = {
                 messageType: 0,
                 apsFrame: {
