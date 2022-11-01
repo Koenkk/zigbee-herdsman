@@ -715,7 +715,7 @@ export class Driver extends EventEmitter {
             [counter, data] = uint32_t.deserialize(uint32_t, data);
             /* eslint-enable */
             const gpdMessage = {
-                messageType: 0,
+                messageType: frame.gpdCommandId,
                 apsFrame: {
                     profileId: 0xA1E0,
                     sourceEndpoint: 242,
@@ -735,10 +735,10 @@ export class Driver extends EventEmitter {
                 },
                 sender: frame.addr,
             };
-            this.emit('gpdMessage', gpdMessage);
+            this.emit('incomingMessage', gpdMessage);
         } else {
             const gpdMessage = {
-                messageType: 0,
+                messageType: frame.gpdCommandId,
                 apsFrame: {
                     profileId: 0xA1E0,
                     sourceEndpoint: 242,

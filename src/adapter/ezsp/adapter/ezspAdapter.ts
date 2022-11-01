@@ -53,7 +53,6 @@ class EZSPAdapter extends Adapter {
         this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
         this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
         this.driver.on('incomingMessage', this.processMessage.bind(this));
-        this.driver.on('gpdMessage', this.processGPDMessage.bind(this));
         this.backupMan = new EZSPAdapterBackup(this.driver, backupPath);
     }
 
@@ -114,7 +113,9 @@ class EZSPAdapter extends Adapter {
         } else if (frame.apsFrame.profileId == 0xA1E0) {  // GP Frame
             const zclFrame = ZclFrame.create(
                 FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true,
-                null, frame.apsFrame.sequence, 'notification', frame.apsFrame.clusterId, frame.message);
+                null, frame.apsFrame.sequence,
+                (frame.messageType == 0xE0) ? 'commisioningNotification' : 'notification',
+                frame.apsFrame.clusterId, frame.message);
             const payload: Events.ZclDataPayload = {
                 frame: zclFrame,
                 address: frame.sender,
@@ -129,24 +130,6 @@ class EZSPAdapter extends Adapter {
             this.emit(Events.Events.zclData, payload);
         }
         this.emit('event', frame);
-    }
-
-    private async processGPDMessage(frame: EmberIncomingMessage) {
-        debug(`processGPDMessage: ${JSON.stringify(frame)}`);
-        const zclFrame = ZclFrame.create(
-            FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true,
-            null, frame.apsFrame.sequence, 'commisioningNotification', frame.apsFrame.clusterId, frame.message);
-        const payload: Events.ZclDataPayload = {
-            frame: zclFrame,
-            address: frame.sender,
-            endpoint: frame.apsFrame.sourceEndpoint,
-            linkquality: frame.lqi,
-            groupID: null,
-            wasBroadcast: true,
-            destinationEndpoint: frame.apsFrame.sourceEndpoint,
-        };
-        this.waitress.resolve(payload);
-        this.emit(Events.Events.zclData, payload);
     }
 
     private async handleDeviceJoin(arr: any[]) {
