@@ -13,6 +13,7 @@ import {
     LVList,
     fixed_list,
     WordList,
+    Bytes,
 } from './basic';
 
 import {
@@ -145,6 +146,7 @@ export {
     LVList,
     fixed_list,
     WordList,
+    Bytes,
 
     /* Named Types */
     NcpResetCode,

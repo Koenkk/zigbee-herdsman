@@ -7,6 +7,7 @@ import {/* Basic Types */
     LVBytes,
     fixed_list,
     WordList,
+    Bytes,
 
     /* Named Types */
     EmberNodeId,
@@ -2206,17 +2207,21 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             status: EmberStatus,
             gpdLink: uint8_t,
             sequenceNumber: uint8_t,
-            addr: EmberGpAddress,
+            addrType: uint8_t,
+            addr: uint32_t,
+            srcId: uint32_t,
+            addrE: uint8_t,
             gpdfSecurityLevel: EmberGpSecurityLevel,
             gpdfSecurityKeyType: EmberGpKeyType,
             autoCommissioning: Bool,
             bidirectionalInfo: uint8_t,
             gpdSecurityFrameCounter: uint32_t,
             gpdCommandId: uint8_t,
-            mic: uint32_t,
+            payload: Bytes,
+            // mic: uint32_t,
             //attr: EmberGpSinkListEntry,
-            proxyTableIndex: uint8_t,
-            gpdCommandPayload: LVBytes
+            // proxyTableIndex: uint8_t,
+            // gpdCommandPayload: LVBytes
         },
     },
     changeSourceRouteHandler: {
@@ -2431,6 +2436,10 @@ export const ZDORESPONSES: {[key: string]: EZSPZDOResponseFrame} = {
     },
 };
 
+
+export const ZGP: {[key: string]: EZSPZDOResponseFrame} = {
+
+};
 
 export const ZDOREQUEST_NAME_BY_ID: { [key: string]: string } = {};
 for (const key of Object.getOwnPropertyNames(ZDOREQUESTS)) {

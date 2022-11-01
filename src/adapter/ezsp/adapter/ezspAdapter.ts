@@ -110,6 +110,24 @@ class EZSPAdapter extends Adapter {
 
             this.waitress.resolve(payload);
             this.emit(Events.Events.zclData, payload);
+        } else if (frame.apsFrame.profileId == 0xA1E0) {  // GP Frame
+            const zclFrame = ZclFrame.create(
+                FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true,
+                null, frame.apsFrame.sequence,
+                (frame.messageType == 0xE0) ? 'commisioningNotification' : 'notification',
+                frame.apsFrame.clusterId, frame.message);
+            const payload: Events.ZclDataPayload = {
+                frame: zclFrame,
+                address: frame.sender,
+                endpoint: frame.apsFrame.sourceEndpoint,
+                linkquality: frame.lqi,
+                groupID: null,
+                wasBroadcast: true,
+                destinationEndpoint: frame.apsFrame.sourceEndpoint,
+            };
+
+            this.waitress.resolve(payload);
+            this.emit(Events.Events.zclData, payload);
         }
         this.emit('event', frame);
     }
@@ -487,8 +505,23 @@ class EZSPAdapter extends Adapter {
     }
 
     public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
-        // todo
-        return Promise.resolve();
+        return this.driver.queue.execute<void>(async () => {
+            this.checkInterpanLock();
+            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID);
+            frame.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xA1E0 : 0x0104;
+            frame.sourceEndpoint =  sourceEndpoint;
+            frame.destinationEndpoint = endpoint;
+            frame.groupId = 0xFFFD;
+            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
+            const dataConfirmResult = await this.driver.mrequest(frame, zclFrame.toBuffer());
+
+            /**
+             * As a broadcast command is not confirmed and thus immidiately returns
+             * (contrary to network address requests) we will give the
+             * command some time to 'settle' in the network.
+             */
+            await Wait(200);
+        });
     }
 
     public async bind(
