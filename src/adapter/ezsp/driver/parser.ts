@@ -76,7 +76,7 @@ export class Parser extends stream.Transform {
         return out.subarray(0, outIdx);
     }
 
-    public reset() {
+    public reset(): void {
         // clear buffer
         this.buffer = Buffer.from([]);
     }
