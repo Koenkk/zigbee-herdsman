@@ -63,7 +63,7 @@ class EZSPAdapter extends Adapter {
                 frame.apsFrame.clusterId == EmberZDOCmd.Device_annce &&
                 frame.apsFrame.destinationEndpoint == 0) {
                 let nwk, rst, ieee;
-                [nwk, rst] = uint16_t.deserialize(uint16_t, frame.message.slice(1));
+                [nwk, rst] = uint16_t.deserialize(uint16_t, frame.message.subarray(1));
                 [ieee, rst] = EmberEUI64.deserialize(EmberEUI64, rst as Buffer);
                 ieee = new EmberEUI64(ieee);
                 debug("ZDO Device announce: %s, %s", nwk, ieee.toString());

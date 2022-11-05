@@ -21,6 +21,12 @@ export class Writer extends stream.Readable {
         this.writeBuffer(ackFrame);
     }
 
+    public sendNAK(ackNum: number): void {
+        /* Construct a negative acknowledgement frame */
+        const nakFrame = this.makeFrame((0b10100000 | ackNum));
+        this.writeBuffer(nakFrame);
+    }
+
     public sendReset(): void {
         /* Construct a reset frame */
         const rstFrame = Buffer.concat([Buffer.from([consts.CANCEL]), this.makeFrame(0xC0)]);
@@ -46,7 +52,7 @@ export class Writer extends stream.Readable {
                 out.writeUInt8(c, outIdx++);
             }
         }
-        return out.slice(0, outIdx);
+        return out.subarray(0, outIdx);
     }
 
     private makeFrame(control: number, data?: Buffer): Buffer {
