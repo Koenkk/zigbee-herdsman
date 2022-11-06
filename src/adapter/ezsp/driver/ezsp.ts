@@ -32,7 +32,7 @@ const MTOR_ROUTE_ERROR_THRESHOLD = 4;
 const MTOR_DELIVERY_FAIL_THRESHOLD = 3;
 const MAX_WATCHDOG_FAILURES = 4;
 //const RESET_ATTEMPT_BACKOFF_TIME = 5;
-const WATCHDOG_WAKE_PERIOD = 0;  // in sec
+const WATCHDOG_WAKE_PERIOD = 10;  // in sec
 //const EZSP_COUNTER_CLEAR_INTERVAL = 180;  // Clear counters every n * WATCHDOG_WAKE_PERIOD
 const EZSP_DEFAULT_RADIUS = 0;
 const EZSP_MULTICAST_NON_MEMBER_RADIUS = 3;
@@ -278,16 +278,16 @@ export class Ezsp extends EventEmitter {
         debug.log(`<== Frame: ${data.toString('hex')}`);
         let frame_id: number, sequence;
         if ((this.ezspV < 8)) {
-            [sequence, frame_id, data] = [data[0], data[2], data.slice(3)];
+            [sequence, frame_id, data] = [data[0], data[2], data.subarray(3)];
         } else {
             sequence = data[0];
-            [[frame_id], data] = t.deserialize(data.slice(3), [t.uint16_t]);
+            [[frame_id], data] = t.deserialize(data.subarray(3), [t.uint16_t]);
         }
         if ((frame_id === 255)) {
             frame_id = 0;
             if ((data.length > 1)) {
                 frame_id = data[1];
-                data = data.slice(2);
+                data = data.subarray(2);
             }
         }
         const frm = new EZSPFrameData(frame_id, false, data);

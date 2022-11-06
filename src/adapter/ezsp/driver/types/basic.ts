@@ -16,7 +16,7 @@ export class int_t {
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     static deserialize(cls: any, data: Buffer): any[] {
-        return [cls._signed ? data.readIntLE(0, cls._size) : data.readUIntLE(0, cls._size), data.slice(cls._size)];
+        return [cls._signed ? data.readIntLE(0, cls._size) : data.readUIntLE(0, cls._size), data.subarray(cls._size)];
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -100,8 +100,8 @@ export class LVBytes {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     static deserialize(cls: any, data: Buffer): any[] {
         const l = data.readIntLE(0, 1);
-        const s = data.slice(1, (l + 1));
-        return [s, data.slice((l + 1))];
+        const s = data.subarray(1, (l + 1));
+        return [s, data.subarray((l + 1))];
     }
 }
 
@@ -138,7 +138,7 @@ class _LVList extends List {
         let item, length;
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const r: any[] = [];
-        [length, data] = [data[0], data.slice(1)];
+        [length, data] = [data[0], data.subarray(1)];
         for (let i = 0; i < length; i++) {
             [item, data] = cls.itemtype.deserialize(cls.itemtype, data);
             r.push(item);

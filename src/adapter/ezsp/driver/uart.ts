@@ -3,7 +3,7 @@ import {EventEmitter} from 'events';
 import SerialPort from 'serialport';
 import net from 'net';
 import SocketPortUtils from '../../socketPortUtils';
-import {Deferred} from './utils';
+import {Deferred, crc16ccitt} from './utils';
 import {Queue, Waitress} from '../../../utils';
 import * as consts from './consts';
 import {Writer}  from './writer';
@@ -152,6 +152,19 @@ export class SerialDriver extends EventEmitter {
     }
 
     private onParsed(data: Buffer): void {
+        // check CRC
+        const crc = crc16ccitt(data.subarray(0, -3), 65535);
+        const crcArr = Buffer.from([(crc >> 8), (crc % 256)]);
+        if (!data.subarray(-3, -1).equals(crcArr)) {
+            // CRC error
+            debug(`<-- CRC error: ${data.toString('hex')}|` +
+                `${data.subarray(-3, -1).toString('hex')}|` +
+                `${crcArr.toString('hex')}`);
+            // send NAK
+            this.writer.sendNAK(this.recvSeq);
+            // skip handler
+            return;
+        }
         try {
             /* Frame receive handler */
             switch (true) {
@@ -182,6 +195,8 @@ export class SerialDriver extends EventEmitter {
 
             case (data[0] === 0xC2):
                 debug(`<-- Error: ${data.toString('hex')}`);
+                // send reset
+                this.reset();
                 break;
             default:
                 debug("UNKNOWN FRAME RECEIVED: %r", data);
@@ -204,7 +219,7 @@ export class SerialDriver extends EventEmitter {
         debug(`--> ACK  (${this.recvSeq})`);
         this.writer.sendACK(this.recvSeq);
         this.handleACK(data[0]);
-        data = data.slice(1, (-3));
+        data = data.subarray(1, -3);
         const frame = this.randomize(data);
         this.emit('received', frame);
     }
@@ -275,6 +290,7 @@ export class SerialDriver extends EventEmitter {
         if ((this.resetDeferred)) {
             throw new TypeError("reset can only be called on a new connection");
         }
+        this.parser.reset();
         debug(`--> Write reset`);
         this.resetDeferred = new Deferred<void>();
         this.writer.sendReset();
