@@ -1,5 +1,5 @@
 import "regenerator-runtime/runtime";
-import SerialPort from 'serialport';
+import {SerialPort} from 'serialport';
 import {SerialDriver} from '../../../src/adapter/ezsp/driver/uart';
 import {Writer} from '../../../src/adapter/ezsp/driver/writer';
 
@@ -19,21 +19,23 @@ let mockSerialPortIsOpen = false;
 
 
 jest.mock('serialport', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            close: mockSerialPortClose,
-            constructor: mockSerialPortConstructor,
-            emit: () => {},
-            on: () => {},
-            once: mockSerialPortOnce,
-            open: mockSerialPortOpen,
-            pipe: mockSerialPortPipe,
-            set: mockSerialPortSet,
-            write: mockSerialPortWrite,
-            flush: mockSerialPortFlush,
-            isOpen: mockSerialPortIsOpen,
-        };
-    });
+    return {
+        SerialPort: jest.fn().mockImplementation(() => {
+            return {
+                close: mockSerialPortClose,
+                constructor: mockSerialPortConstructor,
+                emit: () => {},
+                on: () => {},
+                once: mockSerialPortOnce,
+                open: mockSerialPortOpen,
+                pipe: mockSerialPortPipe,
+                set: mockSerialPortSet,
+                write: mockSerialPortWrite,
+                flush: mockSerialPortFlush,
+                isOpen: mockSerialPortIsOpen,
+            };
+        })
+    };
 });
 
 let writeBufferSpy;
@@ -79,8 +81,7 @@ describe('UART', () => {
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
         expect(SerialPort).toHaveBeenCalledWith(
-            "/dev/ttyACM0",
-            {"autoOpen": false, "baudRate": 115200, "rtscts": false},
+            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 115200, "rtscts": false},
         );
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
