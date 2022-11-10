@@ -1,9 +1,10 @@
 /* istanbul ignore file */
 /* eslint-disable */
 
-import {DelimiterParser, SerialPort} from 'serialport';
+import {DelimiterParser} from '@serialport/parser-delimiter'
 import {EventEmitter} from 'events';
 import {Debug} from '../debug';
+import {SerialPort} from '../../serialPort';
 import SerialPortUtils from "../../serialPortUtils";
 import SocketPortUtils from "../../socketPortUtils";
 import net from "net";

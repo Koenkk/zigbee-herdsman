@@ -2,12 +2,12 @@
 /* eslint-disable */
 import Debug from 'debug';
 import events from 'events';
-import {SerialPort} from 'serialport';
 import Writer from './writer';
 import Parser from './parser';
 import Frame from './frame';
 import PARAM from './constants';
 import * as Events from '../../events';
+import {SerialPort} from '../../serialPort';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import net from 'net';

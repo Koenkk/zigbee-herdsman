@@ -1,5 +1,5 @@
 import "regenerator-runtime/runtime";
-import {SerialPort} from 'serialport';
+import {SerialPort} from '../../../src/adapter/serialPort';
 import {SerialDriver} from '../../../src/adapter/ezsp/driver/uart';
 import {Writer} from '../../../src/adapter/ezsp/driver/writer';
 
@@ -18,7 +18,7 @@ const mockSerialPortWrite = jest.fn((buffer, cb) => (cb) ? cb() : null);
 let mockSerialPortIsOpen = false;
 
 
-jest.mock('serialport', () => {
+jest.mock('../../../src/adapter/serialPort', () => {
     return {
         SerialPort: jest.fn().mockImplementation(() => {
             return {

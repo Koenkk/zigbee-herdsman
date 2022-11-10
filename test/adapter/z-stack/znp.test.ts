@@ -1,6 +1,6 @@
 import "regenerator-runtime/runtime";
 import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
-import {SerialPort} from 'serialport';
+import {SerialPort} from '../../../src/adapter/serialPort';
 import net from 'net';
 import {Frame as UnpiFrame, Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
@@ -21,7 +21,7 @@ jest.mock('../../../src/utils/wait', () => {
     return jest.fn();
 });
 
-jest.mock('serialport', () => {
+jest.mock('../../../src/adapter/serialPort', () => {
     return {
         SerialPort: jest.fn().mockImplementation(() => {
             return {
