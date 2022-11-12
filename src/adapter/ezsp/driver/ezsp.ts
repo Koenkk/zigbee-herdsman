@@ -240,6 +240,7 @@ export class Ezsp extends EventEmitter {
         this.serialDriver = new SerialDriver();
         this.serialDriver.on('received', this.onFrameReceived.bind(this));
         this.serialDriver.on('close', this.onClose.bind(this));
+        this.serialDriver.on('reset', this.resetHandler.bind(this));
     }
 
     public async connect(path: string, options: Record<string, number|boolean>): Promise<void> {
@@ -500,6 +501,9 @@ export class Ezsp extends EventEmitter {
 
     public async execCommand(name: string, params: ParamsDesc = null): Promise<EZSPFrameData> {
         debug.log(`==> ${name}: ${JSON.stringify(params)}`);
+        if (!this.serialDriver.isInitialized()) {
+            throw new Error('Connection not initialized');
+        }
         return this.queue.execute<EZSPFrameData>(async (): Promise<EZSPFrameData> => {
             const data = this.makeFrame(name, params, this.cmdSeq);
             const waiter = this.waitFor(name, this.cmdSeq);
@@ -509,7 +513,7 @@ export class Ezsp extends EventEmitter {
                 return response.payload;
             }).catch(() => {
                 this.waitress.remove(waiter.ID);
-                throw new Error((`Failure send ${name}:` + JSON.stringify(data)));
+                throw new Error(`Failure send ${name}:` + JSON.stringify(data));
             });
         });
     }
@@ -604,7 +608,6 @@ export class Ezsp extends EventEmitter {
     }
 
     private async watchdogHandler(): Promise<void> {
-        if (!this.serialDriver.isInitialized()) return;
         debug.log(`Time to watchdog ... ${this.failures}`);
         try {
             await this.execCommand('nop');
@@ -613,8 +616,12 @@ export class Ezsp extends EventEmitter {
             this.failures += 1;
             if (this.failures > MAX_WATCHDOG_FAILURES) {
                 this.failures = 0;
-                this.emit('reset');
+                this.resetHandler();
             }
         }
+    }
+
+    private async resetHandler(): Promise<void> {
+        this.emit('reset');
     }
 }

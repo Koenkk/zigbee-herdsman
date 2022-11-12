@@ -393,18 +393,18 @@ export class Driver extends EventEmitter {
         // todo
         debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
         this.setNode(nwk, ieee);
-        if (ieee && !(ieee instanceof EmberEUI64)) {
-            ieee = new EmberEUI64(ieee);
-        }
-        this.eui64ToRelays.set(ieee.toString(), relays);
+        // if (ieee && !(ieee instanceof EmberEUI64)) {
+        //     ieee = new EmberEUI64(ieee);
+        // }
+        // this.eui64ToRelays.set(ieee.toString(), relays);
     }
 
     private async handleRouteError(status: EmberStatus, nwk: number): Promise<void> {
         // todo
         debug.log(`handleRouteError: nwk=${nwk}, status=${status}`);
         this.waitress.reject({address: nwk, payload: null, frame: null}, 'Route error');
-        const ieee = await this.networkIdToEUI64(nwk);
-        this.eui64ToRelays.set(ieee.toString(), null);
+        // const ieee = await this.networkIdToEUI64(nwk);
+        // this.eui64ToRelays.set(ieee.toString(), null);
     }
 
     private handleNodeLeft(nwk: number, ieee: EmberEUI64 | number[]): void {
