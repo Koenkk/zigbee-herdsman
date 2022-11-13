@@ -1954,7 +1954,7 @@ const Cluster: {
         attributes: {
             localTemp: {ID: 0, type: DataType.int16},
             outdoorTemp: {ID: 1, type: DataType.int16},
-            ocupancy: {ID: 2, type: DataType.bitmap8},
+            occupancy: {ID: 2, type: DataType.bitmap8},
             absMinHeatSetpointLimit: {ID: 3, type: DataType.int16},
             absMaxHeatSetpointLimit: {ID: 4, type: DataType.int16},
             absMinCoolSetpointLimit: {ID: 5, type: DataType.int16},
