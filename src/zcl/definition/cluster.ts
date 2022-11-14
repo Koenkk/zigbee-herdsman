@@ -4138,6 +4138,20 @@ const Cluster: {
         },
         commandsResponse: {}
     },
+    manuSpecificLegrandDevices3: {
+        ID: 0xfc41,
+        manufacturerCode: ManufacturerCode.LegrandNetatmo,
+        attributes: {},
+        commands: {
+            command0: {
+                ID: 0,
+                parameters: [
+                    { name: 'data', type: BuffaloZclDataType.BUFFER },
+                ],
+            },
+        },
+        commandsResponse: {}
+    },
     manuSpecificNiko1: {
         ID: 0xfc00,
         manufacturerCode: ManufacturerCode.NIKO_NV,
