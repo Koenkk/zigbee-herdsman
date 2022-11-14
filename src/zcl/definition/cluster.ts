@@ -4146,7 +4146,7 @@ const Cluster: {
             command0: {
                 ID: 0,
                 parameters: [
-                    { name: 'data', type: BuffaloZclDataType.BUFFER },
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
                 ],
             },
         },
