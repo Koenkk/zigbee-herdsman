@@ -196,6 +196,7 @@ export class SerialDriver extends EventEmitter {
             case (data[0] === 0xC2):
                 debug(`<-- Error: ${data.toString('hex')}`);
                 // send reset
+                this.resetDeferred = undefined;
                 this.reset();
                 break;
             default:
@@ -290,7 +291,7 @@ export class SerialDriver extends EventEmitter {
 
     async reset(): Promise<void> {
         debug('Uart reseting');
-        if ((this.resetDeferred)) {
+        if (this.resetDeferred) {
             throw new TypeError("reset can only be called on a new connection");
         }
         this.parser.reset();
