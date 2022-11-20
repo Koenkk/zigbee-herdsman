@@ -403,7 +403,7 @@ class EZSPAdapter extends Adapter {
             return {
                 profileID: descriptor.descriptor.profileid,
                 endpointID: descriptor.descriptor.endpoint,
-                deviceID: descriptor.descriptordeviceid,
+                deviceID: descriptor.descriptor.deviceid,
                 inputClusters: descriptor.descriptor.inclusterlist,
                 outputClusters: descriptor.descriptor.outclusterlist,
             };
