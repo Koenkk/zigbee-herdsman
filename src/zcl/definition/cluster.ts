@@ -3432,6 +3432,7 @@ const Cluster: {
             owonAccumulativeEnergyThreshold: {ID: 0x5006, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
             owonReportMode: {ID: 0x5007, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
             owonPercentChangeInPower: {ID: 0x5007, type: DataType.uint8,manufacturerCode: ManufacturerCode.OWON},
+            dawonspecific: {ID: 0x0099, type: DataType.uint8},
         },
         commands: {
             getProfile: {
