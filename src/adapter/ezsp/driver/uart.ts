@@ -197,6 +197,7 @@ export class SerialDriver extends EventEmitter {
             case (data[0] === 0xC2):
                 debug(`<-- Error: ${data.toString('hex')}`);
                 // send reset
+                this.resetDeferred = undefined;
                 this.reset();
                 break;
             default:
@@ -211,21 +212,23 @@ export class SerialDriver extends EventEmitter {
     private handleDATA(data: Buffer): void {
         /* Data frame receive handler */
         const frmNum = (data[0] & 0x70) >> 4;
-        //const ackNum = data[0] & 0x07;
-        //const reTx = (data[0] & 0x08) >> 3;
-        // if (seq !== this.recvSeq) {
-        //     debug('NAK-NAK');
-        // }
+        const reTx = (data[0] & 0x08) >> 3;
         this.recvSeq = (frmNum + 1) & 7; // next
         debug(`--> ACK  (${this.recvSeq})`);
         this.writer.sendACK(this.recvSeq);
-        this.handleACK(data[0]);
+        const handled = this.handleACK(data[0]);
+        if (reTx && !handled) {
+            // if the package is resent and did not expect it, 
+            // then will skip it - already processed it earlier
+            debug(`Skipping the packet as repeated (${this.recvSeq})`);
+            return;
+        } 
         data = data.subarray(1, -3);
         const frame = this.randomize(data);
         this.emit('received', frame);
     }
 
-    private handleACK(control: number): void {
+    private handleACK(control: number): boolean {
         /* Handle an acknowledgement frame */
         // next number after the last accepted frame
         this.ackSeq = control & 0x07;
@@ -233,6 +236,7 @@ export class SerialDriver extends EventEmitter {
         if (!handled && this.sendSeq !== this.ackSeq) {
             debug(`Unexpected packet sequence ${this.ackSeq} | ${this.sendSeq}`);
         }
+        return handled;
     }
 
     private handleNAK(control: number): void {
@@ -288,7 +292,7 @@ export class SerialDriver extends EventEmitter {
 
     async reset(): Promise<void> {
         debug('Uart reseting');
-        if ((this.resetDeferred)) {
+        if (this.resetDeferred) {
             throw new TypeError("reset can only be called on a new connection");
         }
         this.parser.reset();
@@ -345,16 +349,19 @@ export class SerialDriver extends EventEmitter {
             const waiter = this.waitFor(nextSeq).start();
             this.writer.sendData(randData, seq, 0, ackSeq);
             debug(`-?- waiting (${nextSeq})`);
-            return waiter.promise.catch(async () => {
+            return waiter.promise.catch(async (e) => {
+                debug(`--> Error: ${e}`);
                 debug(`-!- break waiting (${nextSeq})`);
                 debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
                 debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`);
                 const waiter = this.waitFor(nextSeq).start();
                 this.writer.sendData(randData, seq, 1, ackSeq);
                 debug(`-?- rewaiting (${nextSeq})`);
-                return waiter.promise.catch((e) => {
+                return waiter.promise.catch(async (e) => {
+                    debug(`--> Error: ${e}`);
                     debug(`-!- break rewaiting (${nextSeq})`);
                     debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
+                    this.emit('reset');
                     throw new Error(`sendDATA error: ${e}`);
                 }).then(()=>{
                     debug(`-+- rewaiting (${nextSeq}) success`);
@@ -365,7 +372,7 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    public waitFor(sequence: number, timeout = 1000)
+    public waitFor(sequence: number, timeout = 2000)
         : { start: () => { promise: Promise<EZSPPacket>; ID: number }; ID: number } {
         return this.waitress.waitFor({sequence}, timeout);
     }

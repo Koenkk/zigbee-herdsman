@@ -73,11 +73,6 @@ const IEEE_PREFIX_MFG_ID: IeeeMfg[] = [
 ];
 const DEFAULT_MFG_ID = 0x1049;
 
-function sleep(ms: number) : Promise<void>{
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-
 export class Driver extends EventEmitter {
     private direct = EmberOutgoingMessageType.OUTGOING_DIRECT;
     public ezsp: Ezsp;
@@ -224,6 +219,7 @@ export class Driver extends EventEmitter {
         debug.log(`TRUST_CENTER_LINK_KEY: ${JSON.stringify(linkResult)}`);
         const netResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.CURRENT_NETWORK_KEY});
         debug.log(`CURRENT_NETWORK_KEY: ${JSON.stringify(netResult)}`);
+        await Wait(1000);
         await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
         
         this.multicast = new Multicast(this);
@@ -393,18 +389,18 @@ export class Driver extends EventEmitter {
         // todo
         debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
         this.setNode(nwk, ieee);
-        if (ieee && !(ieee instanceof EmberEUI64)) {
-            ieee = new EmberEUI64(ieee);
-        }
-        this.eui64ToRelays.set(ieee.toString(), relays);
+        // if (ieee && !(ieee instanceof EmberEUI64)) {
+        //     ieee = new EmberEUI64(ieee);
+        // }
+        // this.eui64ToRelays.set(ieee.toString(), relays);
     }
 
     private async handleRouteError(status: EmberStatus, nwk: number): Promise<void> {
         // todo
         debug.log(`handleRouteError: nwk=${nwk}, status=${status}`);
-        this.waitress.reject({address: nwk, payload: null, frame: null}, 'Route error');
-        const ieee = await this.networkIdToEUI64(nwk);
-        this.eui64ToRelays.set(ieee.toString(), null);
+        //this.waitress.reject({address: nwk, payload: null, frame: null}, 'Route error');
+        // const ieee = await this.networkIdToEUI64(nwk);
+        // this.eui64ToRelays.set(ieee.toString(), null);
     }
 
     private handleNodeLeft(nwk: number, ieee: EmberEUI64 | number[]): void {
@@ -418,7 +414,7 @@ export class Driver extends EventEmitter {
     private async resetMfgId(mfgId: number): Promise<void> {
         await this.ezsp.execCommand('setManufacturerCode', {code: mfgId});
         // 60 sec for waiting
-        await sleep(60000);
+        await Wait(60000);
         await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
     }
 

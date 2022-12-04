@@ -240,6 +240,7 @@ export class Ezsp extends EventEmitter {
         this.serialDriver = new SerialDriver();
         this.serialDriver.on('received', this.onFrameReceived.bind(this));
         this.serialDriver.on('close', this.onClose.bind(this));
+        this.serialDriver.on('reset', this.resetHandler.bind(this));
     }
 
     public async connect(path: string, options: Record<string, number|boolean>): Promise<void> {
@@ -420,9 +421,9 @@ export class Ezsp extends EventEmitter {
 
     async updateConfig(): Promise<void> {
         const config = [
-            //[EzspConfigId.CONFIG_FRAGMENT_DELAY_MS, 50],
+            [EzspConfigId.CONFIG_FRAGMENT_DELAY_MS, 50],
             //[EzspConfigId.CONFIG_TX_POWER_MODE, 3],
-            //[EzspConfigId.CONFIG_FRAGMENT_WINDOW_SIZE, 1],
+            [EzspConfigId.CONFIG_FRAGMENT_WINDOW_SIZE, 1],
             //[EzspConfigId.CONFIG_NEIGHBOR_TABLE_SIZE, 16],
             //[EzspConfigId.CONFIG_ROUTE_TABLE_SIZE, 16],
             //[EzspConfigId.CONFIG_BINDING_TABLE_SIZE, 32],
@@ -432,13 +433,13 @@ export class Ezsp extends EventEmitter {
             //[EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT, 255],
             //[EzspConfigId.CONFIG_BROADCAST_TABLE_SIZE, 43],
             //[EzspConfigId.CONFIG_MAX_HOPS, 30],
-            //[EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 30000],
+            [EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 30000],
             //[EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 255],
             //[EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 250],
             //[EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 4],
             //[EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1],
             [EzspConfigId.CONFIG_SECURITY_LEVEL, 5],
-            //[EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 14],
+            [EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 14],
             //[EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 32],
             [EzspConfigId.CONFIG_STACK_PROFILE, 2],
             [EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 255],
@@ -500,6 +501,9 @@ export class Ezsp extends EventEmitter {
 
     public async execCommand(name: string, params: ParamsDesc = null): Promise<EZSPFrameData> {
         debug.log(`==> ${name}: ${JSON.stringify(params)}`);
+        if (!this.serialDriver.isInitialized()) {
+            throw new Error('Connection not initialized');
+        }
         return this.queue.execute<EZSPFrameData>(async (): Promise<EZSPFrameData> => {
             const data = this.makeFrame(name, params, this.cmdSeq);
             const waiter = this.waitFor(name, this.cmdSeq);
@@ -509,7 +513,7 @@ export class Ezsp extends EventEmitter {
                 return response.payload;
             }).catch(() => {
                 this.waitress.remove(waiter.ID);
-                throw new Error((`Failure send ${name}:` + JSON.stringify(data)));
+                throw new Error(`Failure send ${name}:` + JSON.stringify(data));
             });
         });
     }
@@ -604,7 +608,6 @@ export class Ezsp extends EventEmitter {
     }
 
     private async watchdogHandler(): Promise<void> {
-        if (!this.serialDriver.isInitialized()) return;
         debug.log(`Time to watchdog ... ${this.failures}`);
         try {
             await this.execCommand('nop');
@@ -613,8 +616,12 @@ export class Ezsp extends EventEmitter {
             this.failures += 1;
             if (this.failures > MAX_WATCHDOG_FAILURES) {
                 this.failures = 0;
-                this.emit('reset');
+                this.resetHandler();
             }
         }
+    }
+
+    private async resetHandler(): Promise<void> {
+        this.emit('reset');
     }
 }
