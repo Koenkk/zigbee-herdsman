@@ -4050,6 +4050,7 @@ const Cluster: {
         ID: 0xFC03,
         manufacturerCode: ManufacturerCode.PHILIPS,
         attributes: {
+            state: {ID: 0x0002, type: DataType.octetStr},
         },
         commands: {
             multiColor: {
