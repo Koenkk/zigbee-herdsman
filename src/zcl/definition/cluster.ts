@@ -5030,6 +5030,21 @@ const Cluster: {
         commandsResponse: {
         },
     },
+    manuSpecificBosch: {
+        ID: 0x05,
+        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
+        attributes: {
+        },
+        commands: {
+            testTamper: {
+                ID: 0xF3,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
+            },
+        },
+        commandsResponse: {},
+    },
 };
 
 export default Cluster;
