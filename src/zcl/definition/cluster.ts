@@ -4068,6 +4068,7 @@ const Cluster: {
         attributes: {
             outdoorTempToDisplay: {ID: 16, type: DataType.int16},
             outdoorTempToDisplayTimeout: {ID: 17, type: DataType.uint16},
+            seconScreenBehavior: {ID: 18, type: DataType.enum8}, // auto:0,setpoint:1,outside:2
             currentTimeToDisplay: {ID: 32, type: DataType.uint32},
             ledIntensityOn: {ID: 82, type: DataType.uint8},
             ledIntensityOff: {ID: 83, type: DataType.uint8},
