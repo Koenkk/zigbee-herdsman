@@ -2633,6 +2633,12 @@ const Cluster: {
                 parameters: [
                 ],
             },
+            boschTestTamper: {
+                ID: 0xF3,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
+            },
         },
         commandsResponse: {
             statusChangeNotification: {
