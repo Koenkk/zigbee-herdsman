@@ -2636,7 +2636,7 @@ const Cluster: {
             boschTestTamper: {
                 ID: 0xF3,
                 parameters: [
-                    {name: 'data', type: DataType.uint8}
+                    {name: 'data', type: DataType.uint8},
                 ],
             },
         },
