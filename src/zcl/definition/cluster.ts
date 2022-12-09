@@ -4097,7 +4097,7 @@ const Cluster: {
             auxConnectedLoad: {ID: 280, type: DataType.uint16},
             connectedLoad: {ID: 281, type: DataType.uint16},
             pumpProtection: {ID: 296, type: DataType.uint8},
-            directSetpoint: { ID: 299, type: dataType.int16 }, // incoherent results (occupied or not) please update
+            directSetpoint: { ID: 299, type: DataType.int16 }, // incoherent results (occupied or not) please update
             reportLocalTemperature: {ID: 301, type: DataType.int16},
             // attribute 512 is readable
         },
