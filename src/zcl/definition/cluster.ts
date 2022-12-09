@@ -4304,6 +4304,17 @@ const Cluster: {
                     {name: 'payloadSize', type: DataType.uint16},
                     {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
                 ]
+            },
+
+            /**
+             * Gateway connection status (bidirectional)
+             */
+            mcuGatewayConnectionStatus: {
+                ID: 0x25,
+                parameters: [
+                    {name: 'payloadSize', type: DataType.uint16},
+                    {name: 'payload', type: DataType.uint8},
+                ]
             }
         },
         commandsResponse: {
@@ -4398,6 +4409,16 @@ const Cluster: {
              */
             mcuSyncTime: {
                 ID: 0x24,
+                parameters: [
+                    {name: 'payloadSize', type: DataType.uint16}
+                ]
+            },
+
+            /**
+             * Gateway connection status (bidirectional)
+             */
+            mcuGatewayConnectionStatus: {
+                ID: 0x25,
                 parameters: [
                     {name: 'payloadSize', type: DataType.uint16}
                 ]
