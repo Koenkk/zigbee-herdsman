@@ -4073,7 +4073,7 @@ const Cluster: {
         manufacturerCode: ManufacturerCode.Sinope,
         attributes: {
             // attribute 1 readable
-            KeyboardLock: { ID: 2, type: DataType.enum8 }, 
+            KeyboardLock: { ID: 2, type: DataType.enum8}, 
             outdoorTempToDisplay: {ID: 16, type: DataType.int16},
             outdoorTempToDisplayTimeout: {ID: 17, type: DataType.uint16},
             secondScreenBehavior: {ID: 18, type: DataType.enum8}, // auto:0,setpoint:1,outside:2
@@ -4097,7 +4097,7 @@ const Cluster: {
             auxConnectedLoad: {ID: 280, type: DataType.uint16},
             connectedLoad: {ID: 281, type: DataType.uint16},
             pumpProtection: {ID: 296, type: DataType.uint8},
-            directSetpoint: { ID: 299, type: DataType.int16 }, // incoherent results (occupied or not) please update
+            directSetpoint: { ID: 299, type: DataType.int16}, // incoherent results (occupied or not) please update
             reportLocalTemperature: {ID: 301, type: DataType.int16},
             // attribute 512 is readable
         },
