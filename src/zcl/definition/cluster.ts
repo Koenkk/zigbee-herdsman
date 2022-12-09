@@ -4308,6 +4308,17 @@ const Cluster: {
                     {name: 'payloadSize', type: DataType.uint16},
                     {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
                 ]
+            },
+
+            /**
+             * Gateway connection status (bidirectional)
+             */
+            mcuGatewayConnectionStatus: {
+                ID: 0x25,
+                parameters: [
+                    {name: 'payloadSize', type: DataType.uint16},
+                    {name: 'payload', type: DataType.uint8},
+                ]
             }
         },
         commandsResponse: {
@@ -4402,6 +4413,16 @@ const Cluster: {
              */
             mcuSyncTime: {
                 ID: 0x24,
+                parameters: [
+                    {name: 'payloadSize', type: DataType.uint16}
+                ]
+            },
+
+            /**
+             * Gateway connection status (bidirectional)
+             */
+            mcuGatewayConnectionStatus: {
+                ID: 0x25,
                 parameters: [
                     {name: 'payloadSize', type: DataType.uint16}
                 ]
@@ -4746,6 +4767,16 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    clipsalWiserSwitchConfigurationClusterServer: {
+        ID: 0xFF17,
+        manufacturerCode: ManufacturerCode.SCHNEIDER,
+        attributes: {
+            SwitchIndication: {ID: 0x0000, type: DataType.enum8},
+            SwitchActions: {ID: 0x0001, type: DataType.enum8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },    
     sprutDevice: {
         ID: 26112,
         manufacturerCode: 26214,

@@ -109,6 +109,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'createIdRsp': 'commandCreateIdRsp',
     'getIdAndKeyCodeListRsp': 'commandGetIdAndKeyCodeListRsp',
 
+    'mcuGatewayConnectionStatus': 'commandMcuGatewayConnectionStatus', // Tuya gateway connnection status
     'mcuSyncTime': 'commandMcuSyncTime', // Tuya time sync
     'activeStatusReport': 'commandActiveStatusReport', // Tuya active status report (command 0x06)
     'activeStatusReportAlt': 'commandActiveStatusReportAlt', // Tuya active status report (command 0x05)
@@ -155,7 +156,7 @@ type MessagePayloadType =
     'commandMoveToHue' | 'commandStore'| 'commandWiserSmartSetSetpoint' | 'commandWiserSmartCalibrateValve' |
     'commandSiglisZigfredButtonEvent' | 'commandDanfossSetpointCommand' | 'commandZosungSendIRCode00' |
     'commandZosungSendIRCode01' | 'commandZosungSendIRCode02'|'commandZosungSendIRCode04' | 'zosungSendIRCode03Resp' | 
-    'zosungSendIRCode05Resp';
+    'zosungSendIRCode05Resp' | 'commandMcuGatewayConnectionStatus';
 
 interface MessagePayload {
     type: MessagePayloadType;
