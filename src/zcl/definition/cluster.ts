@@ -4742,6 +4742,16 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    clipsalWiserSwitchConfigurationClusterServer: {
+        ID: 0xFF17,
+        manufacturerCode: ManufacturerCode.SCHNEIDER,
+        attributes: {
+            SwitchIndication: {ID: 0x0000, type: DataType.enum8},
+            SwitchActions: {ID: 0x0001, type: DataType.enum8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },    
     sprutDevice: {
         ID: 26112,
         manufacturerCode: 26214,
