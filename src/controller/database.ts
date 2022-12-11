@@ -80,6 +80,10 @@ class Database {
         }
         const tmpPath = this.path + '.tmp';
         fs.writeFileSync(tmpPath, lines.join('\n'));
+        // Ensure file is on disk https://github.com/Koenkk/zigbee2mqtt/issues/11759
+        const fd = fs.openSync(tmpPath, 'r+');
+        fs.fsyncSync(fd);
+        fs.closeSync(fd);
         fs.renameSync(tmpPath, this.path);
     }
 }
