@@ -5077,7 +5077,7 @@ const Cluster: {
         manufacturerCode: ManufacturerCode.Bosch,
         attributes: {
             sensitivity: {ID: 0x4003, type: 0x21}, // value: 1,2,3
-		},
+        },
         commands: { /////////// VALIDATED  ////////////
             initiateTestMode: {
                 ID: 0x00,
@@ -5086,7 +5086,7 @@ const Cluster: {
         },
         commandsResponse: {
         },
-    },	
+    },    
     manuSpecificBosch3: {
         ID: 0xe002,
         manufacturerCode: ManufacturerCode.Bosch,
@@ -5104,42 +5104,42 @@ const Cluster: {
             unknown6       : {ID: 0x400a, type: 0x21}, 
             unknown7       : {ID: 0x400b, type: 0x21}, 
             unknown8       : {ID: 0x400c, type: 0x21}, 
-		},
+        },
         commands: {
         },
         commandsResponse: {
         },
-    },	
-	manuSpecificBosch5: {
+    },    
+    manuSpecificBosch5: {
         ID: 0xe004,
         manufacturerCode: ManufacturerCode.Bosch,
         attributes: {
-			unknown_attribute: {ID: 0x4000, type: DataType.bitmap8}, // 0,1 ??? read during pairing
-			pre_alarm: {ID: 0x4001, type: DataType.bitmap8}, // 0,1 on/off
+            unknown_attribute: {ID: 0x4000, type: DataType.bitmap8}, // 0,1 ??? read during pairing
+            pre_alarm: {ID: 0x4001, type: DataType.bitmap8}, // 0,1 on/off
         },
         commands: {
         },
         commandsResponse: {
         },
-    },	
-	manuSpecificBosch7: {
+    },    
+    manuSpecificBosch7: {
         ID: 0xe006,
         manufacturerCode: ManufacturerCode.Bosch,
         attributes: {
-			unknown1:  {ID: 0x5003, type: 0x28}, // perhaps signal strength? -7?
-			unknown2:  {ID: 0x5004, type: 0x20}, // ????
-			heartbeat: {ID: 0x5005, type: DataType.bitmap8}, // 0,1 on/off
+            unknown1:  {ID: 0x5003, type: 0x28}, // perhaps signal strength? -7?
+            unknown2:  {ID: 0x5004, type: 0x20}, // ????
+            heartbeat: {ID: 0x5005, type: DataType.bitmap8}, // 0,1 on/off
         },
         commands: {
-			pairingCompleted: {
+            pairingCompleted: {
                 ID: 0x01,
                 parameters: [],
             },
         },
         commandsResponse: {
         },
-    },	
-	manuSpecificBosch8: {
+    },    
+    manuSpecificBosch8: {
         ID: 0xe007,
         manufacturerCode: ManufacturerCode.Bosch,
         attributes: {
@@ -5149,13 +5149,13 @@ const Cluster: {
             burglarAlarm: {
                 ID: 0x01,
                 parameters: [
-					{name: 'data', type: DataType.uint8}, // data:1 trips the siren data:0 should stop the siren
-				],
+                    {name: 'data', type: DataType.uint8}, // data:1 trips the siren data:0 should stop the siren
+                ],
             },
         },
         commandsResponse: {
         },
-    },	
+    },    
 };
 
 export default Cluster;
