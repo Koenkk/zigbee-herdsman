@@ -1074,4 +1074,5 @@ export default {
     Heiman: knownManufacturerCodes.HEIMAN_TECHNOLOGY,
     Develco: knownManufacturerCodes.DEVELCO,
     SprutDevice: knownManufacturerCodes.SPRUT_DEVICE,
+    Bosch: knownManufacturerCodes.ROBERT_BOSCH_GMBH,
 };
