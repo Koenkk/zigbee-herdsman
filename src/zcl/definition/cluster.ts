@@ -5076,16 +5076,15 @@ const Cluster: {
         ID: 0xe000,
         manufacturerCode: ManufacturerCode.Bosch,
         attributes: {
-            sensitivity: {ID: 0x4003, type: 0x21}, // value: 1,2,3
+            sensitivity: {ID: 0x4003, type: 0x21},
         },
-        commands: { /////////// VALIDATED  ////////////
+        commands: {
             initiateTestMode: {
                 ID: 0x00,
                 parameters: [],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },    
     manuSpecificBosch3: {
         ID: 0xe002,
@@ -5105,10 +5104,8 @@ const Cluster: {
             unknown7       : {ID: 0x400b, type: 0x21}, 
             unknown8       : {ID: 0x400c, type: 0x21}, 
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },    
     manuSpecificBosch5: {
         ID: 0xe004,
@@ -5117,10 +5114,8 @@ const Cluster: {
             unknown_attribute: {ID: 0x4000, type: DataType.bitmap8}, // 0,1 ??? read during pairing
             pre_alarm: {ID: 0x4001, type: DataType.bitmap8}, // 0,1 on/off
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },    
     manuSpecificBosch7: {
         ID: 0xe006,
@@ -5136,8 +5131,7 @@ const Cluster: {
                 parameters: [],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },    
     manuSpecificBosch8: {
         ID: 0xe007,
@@ -5153,8 +5147,7 @@ const Cluster: {
                 ],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },    
 };
 
