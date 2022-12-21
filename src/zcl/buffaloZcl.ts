@@ -53,6 +53,7 @@ const aliases: {[s: string]: string} = {
 const extensionFieldSetsDateTypeLookup: {[key: number]: string[]} = {
     6: ['uint8'],
     8: ['uint8'],
+    258: ['uint8', 'unit8'],
     768: ['uint16', 'uint16', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16', 'uint16'],
 };
 
