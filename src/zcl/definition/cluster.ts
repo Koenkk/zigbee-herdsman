@@ -4075,7 +4075,7 @@ const Cluster: {
             // attribute ID :1's readable
             keypadLockout: {ID: 2, type: DataType.enum8},
             // 'firmware number': {ID: 3, type: DataType.unknown},
-            firmwareVersion: {ID: 4, type: DataType.charStr },
+            firmwareVersion: {ID: 4, type: DataType.charStr},
             outdoorTempToDisplay: {ID: 16, type: DataType.int16},
             outdoorTempToDisplayTimeout: {ID: 17, type: DataType.uint16},
             secondScreenBehavior: {ID: 18, type: DataType.enum8}, // auto:0,setpoint:1,outside:2
@@ -4086,7 +4086,7 @@ const Cluster: {
             ledColorOff: {ID: 81, type: DataType.uint24},
             minimumBrightness: {ID: 85, type: DataType.uint16},
             currentLoad: {ID: 112, type: DataType.bitmap8}, // related to ecoMode(s)
-            ecoMode: {ID: 113, type: DataType.int8 }, // default:-128||-100-0-100%
+            ecoMode: {ID: 113, type: DataType.int8}, // default:-128||-100-0-100%
             ecoMode1: {ID: 114, type: DataType.uint8}, // default:255||0-99
             ecoMode2: {ID: 115, type: DataType.uint8}, // default 255||0-100
             unknown: {ID: 117, type: DataType.bitmap32}, // RW *testing*
@@ -4105,8 +4105,8 @@ const Cluster: {
             auxConnectedLoad: {ID: 280, type: DataType.uint16},
             connectedLoad: {ID: 281, type: DataType.uint16},
             pumpProtection: {ID: 296, type: DataType.uint8},
-            unknown3: {ID: 298, type: DataType.enum8 }, // RW default:60||5,10,15,20,30,60 *testing*
-            currentSetpoint: {ID: 299, type: DataType.int16}, // W:to unnocuppiedSetpoint, R:deps of SinopeOccupancy
+            unknown3: {ID: 298, type: DataType.enum8}, // RW default:60||5,10,15,20,30,60 *testing*
+            currentSetpoint: {ID: 299, type: DataType.int16}, // W:to unnocuppiedSetpoint, R:depends of SinopeOccupancy
             // attribute ID: 300's readable, returns a buffer
             reportLocalTemperature: {ID: 301, type: DataType.int16},
             // attribute ID: 512's readable 
