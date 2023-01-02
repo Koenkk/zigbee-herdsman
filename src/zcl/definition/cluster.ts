@@ -4099,7 +4099,7 @@ const Cluster: {
             floorMinHeatSetpointLimit: {ID: 265, type: DataType.int16},
             floorMaxHeatSetpointLimit: {ID: 266, type: DataType.int16},
             temperatureSensor: {ID: 267, type: DataType.enum8},
-            floorLimitStatus: {ID: 268, type: DataType.uint8},
+            floorLimitStatus: {ID: 268, type: DataType.enum8},
             timeFormatToDisplay: {ID: 276, type: DataType.enum8},
             GFCiStatus: {ID: 277, type: DataType.enum8},
             auxConnectedLoad: {ID: 280, type: DataType.uint16},
