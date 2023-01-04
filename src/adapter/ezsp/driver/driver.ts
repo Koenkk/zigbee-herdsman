@@ -310,6 +310,10 @@ export class Driver extends EventEmitter {
             this.handleRouteError(frame.status, frame.target);
             break;
         }
+        case (frameName === 'incomingNetworkStatusHandler'): {
+            this.handleNetworkStatus(frame.errorCode, frame.target);
+            break;
+        }       
         case (frameName === 'messageSentHandler'): {
             // todo
             const status = frame.status;
@@ -387,7 +391,10 @@ export class Driver extends EventEmitter {
     private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number,
         relays: number): void {
         // todo
-        debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
+        if (ieee && !(ieee instanceof EmberEUI64)) {
+             ieee = new EmberEUI64(ieee);
+        }
+        debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${JSON.stringify(relays)}`);
         this.setNode(nwk, ieee);
         // if (ieee && !(ieee instanceof EmberEUI64)) {
         //     ieee = new EmberEUI64(ieee);
@@ -401,6 +408,10 @@ export class Driver extends EventEmitter {
         //this.waitress.reject({address: nwk, payload: null, frame: null}, 'Route error');
         // const ieee = await this.networkIdToEUI64(nwk);
         // this.eui64ToRelays.set(ieee.toString(), null);
+    }
+
+    private handleNetworkStatus(errorCode: number, target: number): void {
+        debug.log(`handleNetworkStatus: errorCode=${errorCode}, target=${target}`);
     }
 
     private handleNodeLeft(nwk: number, ieee: EmberEUI64 | number[]): void {

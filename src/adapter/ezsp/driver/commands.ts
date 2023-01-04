@@ -2224,12 +2224,12 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             // gpdCommandPayload: LVBytes
         },
     },
-    changeSourceRouteHandler: {
+    incomingNetworkStatusHandler: {
         ID: 0x00C4,
         request: null,
         response: {
-            newChildId: EmberNodeId,
-            newParentId: EmberNodeId
+            errorCode: uint8_t,
+            target: EmberNodeId
         },
     },
     setSourceRouteDiscoveryMode: {
