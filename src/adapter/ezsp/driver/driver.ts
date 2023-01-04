@@ -392,9 +392,10 @@ export class Driver extends EventEmitter {
         relays: number): void {
         // todo
         if (ieee && !(ieee instanceof EmberEUI64)) {
-             ieee = new EmberEUI64(ieee);
+            ieee = new EmberEUI64(ieee);
         }
-        debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${JSON.stringify(relays)}`);
+        debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, 
+            relays=${JSON.stringify(relays)}`);
         this.setNode(nwk, ieee);
         // if (ieee && !(ieee instanceof EmberEUI64)) {
         //     ieee = new EmberEUI64(ieee);
