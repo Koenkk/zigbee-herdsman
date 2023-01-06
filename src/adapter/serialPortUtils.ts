@@ -1,4 +1,4 @@
-import {SerialPort} from './serialPort';
+import SerialPort from 'serialport';
 import {EqualsPartial} from '../utils';
 
 interface PortInfoMatch {

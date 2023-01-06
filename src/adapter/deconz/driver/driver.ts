@@ -2,12 +2,12 @@
 /* eslint-disable */
 import Debug from 'debug';
 import events from 'events';
+import SerialPort from 'serialport';
 import Writer from './writer';
 import Parser from './parser';
 import Frame from './frame';
 import PARAM from './constants';
 import * as Events from '../../events';
-import {SerialPort} from '../../serialPort';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import net from 'net';
@@ -184,7 +184,7 @@ class Driver extends events.EventEmitter {
 
     public openSerialPort(): Promise<void> {
         debug(`Opening with ${this.path}`);
-        this.serialPort = new SerialPort({path: this.path, baudRate: 38400, autoOpen: false});
+        this.serialPort = new SerialPort(this.path, {baudRate: 38400, autoOpen: false});
 
         this.writer = new Writer();
         // @ts-ignore
