@@ -25,12 +25,14 @@
     }
   ],
   "dependencies": {
+    "@serialport/bindings-cpp": "^10.8.0",
+    "@serialport/parser-delimiter": "^10.5.0",
+    "@serialport/stream": "^10.5.0",
     "debounce": "^1.2.1",
     "debug": "^4.3.4",
     "fast-deep-equal": "^3.1.3",
     "mixin-deep": "^2.0.1",
     "mz": "^2.7.0",
-    "serialport": "9.2.8",
     "slip": "^1.0.2"
   },
   "deprecated": false,
@@ -48,7 +50,6 @@
     "@types/mz": "^2.7.4",
     "@types/nedb": "*",
     "@types/node": "*",
-    "@types/serialport": "*",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
     "babel-jest": "*",
