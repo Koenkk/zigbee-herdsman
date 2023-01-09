@@ -206,7 +206,6 @@ class Device extends Entity {
         if (frame.isCluster('genBasic') && (frame.isCommand('readRsp') || frame.isCommand('report'))) {
             for (const [key, value] of Object.entries(ZclFrameConverter.attributeKeyValue(frame))) {
                 Device.ReportablePropertiesMapping[key]?.set(value, this);
-                this.save();
             }
         }
 
@@ -478,7 +477,6 @@ class Device extends Entity {
             this._powerSource = this._powerSource || 'Battery';
             this._interviewing = false;
             this._interviewCompleted = true;
-            this.save();
             debug.log(`Interview - quirks matched for TuYa end device`);
             return true;
         }
@@ -513,7 +511,6 @@ class Device extends Entity {
             this._powerSource = this._powerSource || info.powerSource;
             this._interviewing = false;
             this._interviewCompleted = true;
-            this.save();
             debug.log(`Interview - quirks matched on '${match}'`);
             return true;
         } else {
@@ -527,7 +524,6 @@ class Device extends Entity {
             const nodeDescriptor = await Entity.adapter.nodeDescriptor(this.networkAddress);
             this._manufacturerID = nodeDescriptor.manufacturerCode;
             this._type = nodeDescriptor.type;
-            this.save();
             debug.log(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
         };
 
@@ -604,7 +600,6 @@ class Device extends Entity {
         // into an error. Therefore we filter it, more info: https://github.com/Koenkk/zigbee-herdsman/issues/82
         activeEndpoints.endpoints.filter((e) => e !== 0 && !this.getEndpoint(e)).forEach((e) =>
             this._endpoints.push(Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr)));
-        this.save();
         debug.log(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
 
         for (const endpointID of activeEndpoints.endpoints.filter((e) => e !== 0)) {
@@ -615,7 +610,6 @@ class Device extends Entity {
             endpoint.inputClusters = simpleDescriptor.inputClusters;
             endpoint.outputClusters = simpleDescriptor.outputClusters;
             debug.log(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`);
-            this.save();
 
             // Read attributes, nice to have but not required for succesfull pairing as most of the attributes
             // are not mandatory in ZCL specification.
