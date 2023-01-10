@@ -2110,6 +2110,14 @@ const Cluster: {
                     {name: 'reserved', type: DataType.uint8},
                 ],
             },
+            wiserSmartSetFipMode: {
+                ID: 225,
+                parameters: [
+                    {name: 'zonemode', type: DataType.uint8},
+                    {name: 'fipmode', type: DataType.enum8},
+                    {name: 'reserved', type: DataType.uint8},
+                ],
+            },
             wiserSmartCalibrateValve: {
                 ID: 226,
                 parameters: [
