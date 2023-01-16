@@ -4114,7 +4114,7 @@ const Cluster: {
             connectedLoad: {ID: 281, type: DataType.uint16},
             pumpProtection: {ID: 296, type: DataType.uint8},
             unknown3: {ID: 298, type: DataType.enum8}, // RW default:60||5,10,15,20,30,60 *testing*
-            currentSetpoint: {ID: 299, type: DataType.int16}, // W:to unnocuppiedSetpoint, R:depends of SinopeOccupancy
+            currentSetpoint: {ID: 299, type: DataType.int16}, // W:to ocuppiedHeatSetpoint, R:depends of SinopeOccupancy
             // attribute ID: 300's readable, returns a buffer
             reportLocalTemperature: {ID: 301, type: DataType.int16},
             // attribute ID: 512's readable 
