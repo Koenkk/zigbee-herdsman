@@ -4098,9 +4098,9 @@ const Cluster: {
             ecoMode1: {ID: 114, type: DataType.uint8}, // default:255||0-99
             ecoMode2: {ID: 115, type: DataType.uint8}, // default 255||0-100
             unknown: {ID: 117, type: DataType.bitmap32}, // RW *testing*
-            DRWaterHeaterTempMin: {ID: 118, type: DataType.uint8}, // RW *testing*
-            DRWaterHeaterTempTime: {ID: 119, type: DataType.uint8}, // RW *testing*
-            DRWaterHeaterTimeOn: {ID: 120, type: DataType.uint16}, // RW *testing*
+            drWaterHeaterTempMin: {ID: 118, type: DataType.uint8}, // RW *testing*
+            drWaterHeaterTempTime: {ID: 119, type: DataType.uint8}, // RW *testing*
+            drWaterHeaterTimeOn: {ID: 120, type: DataType.uint16}, // RW *testing*
             unknown1: {ID: 128, type: DataType.uint32}, // readOnly stringNumber *testing*
             dimmerTimmer: {ID: 160, type: DataType.uint32},
             unknown2: {ID: 256, type: DataType.uint8}, // readOnly *testing*
