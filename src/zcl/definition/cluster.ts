@@ -4093,11 +4093,15 @@ const Cluster: {
             ledColorOn: {ID: 80, type: DataType.uint24},  // inversed hex BBGGRR
             ledColorOff: {ID: 81, type: DataType.uint24},
             minimumBrightness: {ID: 85, type: DataType.uint16},
+            connectedLoad: {ID: 96, type: DataType.uint16}, // unit watt/hr
             currentLoad: {ID: 112, type: DataType.bitmap8}, // related to ecoMode(s)
             ecoMode: {ID: 113, type: DataType.int8}, // default:-128||-100-0-100%
             ecoMode1: {ID: 114, type: DataType.uint8}, // default:255||0-99
             ecoMode2: {ID: 115, type: DataType.uint8}, // default 255||0-100
             unknown: {ID: 117, type: DataType.bitmap32}, // RW *testing*
+            drConfigWaterTempMin: {ID: 118, type: DataType.uint8}, // value 45 or 0
+            drConfigWaterTempTime: {ID: 119, type: DataType.uint8}, // default 2
+            drWTTimeOn: {ID: 120, type: DataType.uint16},
             unknown1: {ID: 128, type: DataType.uint32}, // readOnly stringNumber *testing*
             dimmerTimmer: {ID: 160, type: DataType.uint32},
             unknown2: {ID: 256, type: DataType.uint8}, // readOnly *testing*
@@ -4118,6 +4122,7 @@ const Cluster: {
             // attribute ID: 300's readable, returns a buffer
             reportLocalTemperature: {ID: 301, type: DataType.int16},
             // attribute ID: 512's readable 
+            coldLoadPickupStatus: {ID: 643, type: DataType.uint8},
         },
         commands: {
         },
