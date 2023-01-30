@@ -88,11 +88,11 @@ export class SerialDriver extends EventEmitter {
         return new Promise((resolve, reject): void => {
             this.serialPort.open(async (error): Promise<void> => {
                 if (error) {
-                    reject(new Error(`Error while opening serialport '${error}'`));
                     this.initialized = false;
                     if (this.serialPort.isOpen) {
                         this.serialPort.close();
                     }
+                    reject(new Error(`Error while opening serialport '${error}'`));
                 } else {
                     debug('Serialport opened');
                     this.serialPort.once('close', this.onPortClose.bind(this));
@@ -144,8 +144,8 @@ export class SerialDriver extends EventEmitter {
 
             this.socketPort.on('error', function () {
                 debug('Socket error');
-                reject(new Error(`Error while opening socket`));
                 self.initialized = false;
+                reject(new Error(`Error while opening socket`));
             });
 
             this.socketPort.connect(info.port, info.host);
