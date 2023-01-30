@@ -5166,7 +5166,217 @@ const Cluster: {
             },
         },
         commandsResponse: {},
-    },    
+    },
+    manuSpecificAssaDoorLock: {
+        ID: 0xEACC,
+        attributes: {
+            autoLockTime: {ID: 0x0012, type: DataType.uint8},
+            wrongCodeAttempts: {ID: 0x0013, type: DataType.uint8},
+            shutdownTime: {ID: 0x0014, type: DataType.uint8},
+            batteryLevel: {ID: 0x0015, type: DataType.uint8},
+            insideEscutcheonLED: {ID: 0x0016, type: DataType.uint8},
+            volume: {ID: 0x0017, type: DataType.uint8},
+            lockMode: {ID: 0x0018, type: DataType.uint8},
+            language: {ID: 0x0019, type: DataType.uint8},
+            allCodesLockout: {ID: 0x001A, type: DataType.boolean},
+            oneTouchLocking: {ID: 0x001B, type: DataType.boolean},
+            privacyButtonSetting: {ID: 0x001C, type: DataType.boolean},
+            /* enableLogging: {ID: 0x0020, type: DataType.boolean},*/ // marked in C4 driver as not supported
+            numberLogRecordsSupported: {ID: 0x0021, type: DataType.uint16},
+            numberPinsSupported: {ID: 0x0030, type: DataType.uint8},
+            numberScheduleSlotsPerUser: {ID: 0x0040, type: DataType.uint8},
+            alarmMask: {ID: 0x0050, type: DataType.uint8},
+        },
+        commands: {
+            getLockStatus: {
+                ID: 0x10,
+                response: 2,
+                parameters: [],
+            },
+            getBatteryLevel: {
+                ID: 0x12,
+                parameters: [],
+            },
+            setRFLockoutTime: {
+                ID: 0x13,
+                parameters: [],
+            },
+            /* getLogRecord: {
+                ID: 0x20,
+                parameters: [],
+            },*/ // marked in C4 driver as not supported
+            userCodeSet: {
+                ID: 0x30,
+                parameters: [
+                    {name: 'payload', type: DataType.charStr}, // bit pack ("bbb", slot, status, pinLength) .. pin
+                ],
+            },
+            userCodeGet: {
+                ID: 0x31,
+                parameters: [
+                    {name: 'payload', type: DataType.charStr}, // bit pack ("b", slot)
+                ],
+            },
+            userCodeClear: {
+                ID: 0x32,
+                parameters: [
+                    {name: 'payload', type: DataType.charStr}, // bit pack ("b", slot)
+                ],
+            },
+            clearAllUserCodes: {
+                ID: 0x33,
+                parameters: [],
+            },
+            setUserCodeStatus: {
+                ID: 0x34,
+                parameters: [],
+            },
+            getUserCodeStatus: {
+                ID: 0x35,
+                parameters: [],
+            },
+            getLastUserIdEntered: {
+                ID: 0x36,
+                parameters: [],
+            },
+            userAdded: {
+                ID: 0x37,
+                parameters: [],
+            },
+            userDeleted: {
+                ID: 0x38,
+                parameters: [],
+            },
+            setScheduleSlot: {
+                ID: 0x40,
+                parameters: [
+                    {name: 'payload', type: DataType.charStr}, // bit pack ("bbbbbbb", 0, slot, weeklyScheduleNumber, startHour, startMinute, hours, minutes)
+                ],
+            },
+            getScheduleSlot: {
+                ID: 0x41,
+                parameters: [
+                    {name: 'payload', type: DataType.charStr}, // bit pack ("bb", slot, userId)
+                ],
+            },
+            setScheduleSlotStatus: {
+                ID: 0x42,
+                parameters: [
+                    {name: 'payload', type: DataType.charStr}, // bit pack ("bbb", 0, slot, status)
+                ],
+            },
+            reflash: {
+                ID: 0x60,
+                response: 4,
+                parameters: [
+                    {name: 'payload', type: DataType.charStr}, // bit pack ("bI", version, length)
+                ],
+            },
+            reflashData: {
+                ID: 0x61,
+                response: 5,
+                parameters: [
+                    {name: 'payload', type: DataType.charStr}, // bit pack ("IH", segmentId - 1, length) .. string sub (data, start, finish)
+                ],
+            },
+            reflashStatus: {
+                ID: 0x62,
+                response: 6,
+                parameters: [
+                    {name: 'payload', type: DataType.charStr}, // bit pack ("bI", reflashStatusParameter, 0x00)
+                ],
+            },
+            getReflashLock: {
+                ID: 0x90,
+                parameters: [],
+            },
+            getHistory: {
+                ID: 0xA0,
+                parameters: [],
+            },
+            getLogin: {
+               ID: 0xA1,
+               parameters: [],
+            },
+            getUser: {
+                ID: 0xA2,
+                parameters: [],
+            },
+            getUsers: {
+                ID: 0xA3,
+                parameters: [],
+            },
+            getMandatoryAttributes: {
+                ID: 0xB0,
+                parameters: [],
+            },
+            readAttribute: {
+                ID: 0xB1,
+                parameters: [],
+            },
+            writeAttribute: {
+                ID: 0xB2,
+                parameters: [],
+            },
+            configureReporting: {
+                ID: 0xB3,
+                parameters: [],
+            },
+            getBasicClusterAttributes: {
+                ID: 0xB4,
+                parameters: [],
+            },
+        },
+        commandsResponse: {
+            /* boltStateRsp: {
+                ID: 0,
+                parameters: [
+                    {name: 'state', type: DataType.uint8},
+                ],
+            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
+            /* handleStateRsp: {
+                ID: 1,
+                parameters: [
+                    {name: 'state', type: DataType.uint8},
+                ],
+            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
+            getLockStatusRsp: {
+                ID: 2,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },
+            /* lockStatusReportRsp: {
+                ID: 3,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
+            reflashRsp: {
+                ID: 4,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },
+            reflashDataRsp: {
+                ID: 5,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },
+            reflashStatusRsp: {
+                ID: 6,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },
+            /* userStatusRsp: {
+                ID: 7,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
+        },
+    },
 };
-
 export default Cluster;
