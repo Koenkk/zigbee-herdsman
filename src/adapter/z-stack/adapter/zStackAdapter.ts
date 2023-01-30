@@ -564,7 +564,7 @@ class ZStackAdapter extends Adapter {
                 );
                 const result = await response.start().promise;
                 if (result.payload.status !== ZnpCommandStatus.SUCCESS) {
-                    throw new Error(`LQI for '${networkAddress}' failed`);
+                    throw new Error(`LQI for '${networkAddress}' failed with status code '${result.payload.status}' ('${ZnpCommandStatus[result.payload.status]}')`);
                 }
 
                 return result;
@@ -611,7 +611,7 @@ class ZStackAdapter extends Adapter {
                 );
                 const result = await response.start().promise;
                 if (result.payload.status !== ZnpCommandStatus.SUCCESS) {
-                    throw new Error(`Routing table for '${networkAddress}' failed`);
+                    throw new Error(`Routing table for '${networkAddress}' failed with status code '${result.payload.status}' ('${ZnpCommandStatus[result.payload.status]}')`);
                 }
 
                 return result;
