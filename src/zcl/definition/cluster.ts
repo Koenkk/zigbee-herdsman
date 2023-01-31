@@ -4092,8 +4092,11 @@ const Cluster: {
             ledIntensityOff: {ID: 83, type: DataType.uint8},
             ledColorOn: {ID: 80, type: DataType.uint24},  // inversed hex BBGGRR
             ledColorOff: {ID: 81, type: DataType.uint24},
+            onLedIntensity: {ID: 82, type: DataType.uint8}, // percent
+            offLedIntensity: {ID: 83, type: DataType.uint8}, // percent
+            actionReport: {ID: 84, type: DataType.enum8}, // singleTapUp: 1,2, doubleTapUp: 1,4, singleTapDown: 17,18, doubleTapDown: 17,20
             minimumBrightness: {ID: 85, type: DataType.uint16},
-            connectedLoad: {ID: 96, type: DataType.uint16}, // unit watt/hr
+            connectedLoadRM: {ID: 96, type: DataType.uint16}, // unit watt/hr for Calypso RM3500 & Load Controller RM3250 
             currentLoad: {ID: 112, type: DataType.bitmap8}, // related to ecoMode(s)
             ecoMode: {ID: 113, type: DataType.int8}, // default:-128||-100-0-100%
             ecoMode1: {ID: 114, type: DataType.uint8}, // default:255||0-99
