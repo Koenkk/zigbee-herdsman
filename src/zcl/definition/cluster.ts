@@ -5304,8 +5304,8 @@ const Cluster: {
                 parameters: [],
             },
             getLogin: {
-               ID: 0xA1,
-               parameters: [],
+                ID: 0xA1,
+                parameters: [],
             },
             getUser: {
                 ID: 0xA2,
