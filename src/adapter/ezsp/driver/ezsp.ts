@@ -476,7 +476,7 @@ export class Ezsp extends EventEmitter {
                 EzspDecisionId.PACKET_VALIDATE_LIBRARY_CHECKS_DISABLED],
             [EzspPolicyId.ZLL_POLICY, EzspDecisionId.ALLOW_JOINS],
             [EzspPolicyId.TC_REJOINS_USING_WELL_KNOWN_KEY_POLICY, EzspDecisionId.ALLOW_JOINS],
-            [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_APP_KEY_REQUESTS],
+            [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
             [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
         ];
         if (this.ezspV >= 8) {
