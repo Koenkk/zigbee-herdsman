@@ -97,7 +97,7 @@ class EZSPAdapter extends Adapter {
 
                 this.emit(Events.Events.rawData, payload);
             }
-        } else if (frame.apsFrame.profileId == 0xc05e) {  // ZLL Frame
+        } else if (frame.apsFrame.profileId == 0xc05e && frame.senderEui64) {  // ZLL Frame
             const payload: Events.ZclDataPayload = {
                 frame: ZclFrame.fromBuffer(frame.apsFrame.clusterId, frame.message),
                 address: `0x${frame.senderEui64.toString()}`,
