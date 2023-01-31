@@ -5168,7 +5168,7 @@ const Cluster: {
         commandsResponse: {},
     },
     manuSpecificAssaDoorLock: {
-        ID: 0xEACC,
+        ID: 0xFC00,
         attributes: {
             autoLockTime: {ID: 0x0012, type: DataType.uint8},
             wrongCodeAttempts: {ID: 0x0013, type: DataType.uint8},
@@ -5190,7 +5190,7 @@ const Cluster: {
         commands: {
             getLockStatus: {
                 ID: 0x10,
-                response: 2,
+                response: 0,
                 parameters: [],
             },
             getBatteryLevel: {
@@ -5208,19 +5208,22 @@ const Cluster: {
             userCodeSet: {
                 ID: 0x30,
                 parameters: [
-                    {name: 'payload', type: DataType.charStr}, // bit pack ("bbb", slot, status, pinLength) .. pin
+                    // bit pack ("bbb", slot, status, pinLength) .. pin
+                    {name: 'payload', type: DataType.charStr},
                 ],
             },
             userCodeGet: {
                 ID: 0x31,
                 parameters: [
-                    {name: 'payload', type: DataType.charStr}, // bit pack ("b", slot)
+                    // bit pack ("b", slot)
+                    {name: 'payload', type: DataType.charStr},
                 ],
             },
             userCodeClear: {
                 ID: 0x32,
                 parameters: [
-                    {name: 'payload', type: DataType.charStr}, // bit pack ("b", slot)
+                    // bit pack ("b", slot)
+                    {name: 'payload', type: DataType.charStr},
                 ],
             },
             clearAllUserCodes: {
@@ -5250,40 +5253,46 @@ const Cluster: {
             setScheduleSlot: {
                 ID: 0x40,
                 parameters: [
-                    {name: 'payload', type: DataType.charStr}, // bit pack ("bbbbbbb", 0, slot, weeklyScheduleNumber, startHour, startMinute, hours, minutes)
+                    // bit pack ("bbbbbbb", 0, slot, weeklyScheduleNumber, startHour, startMinute, hours, minutes)
+                    {name: 'payload', type: DataType.charStr},
                 ],
             },
             getScheduleSlot: {
                 ID: 0x41,
                 parameters: [
-                    {name: 'payload', type: DataType.charStr}, // bit pack ("bb", slot, userId)
+                    // bit pack ("bb", slot, userId)
+                    {name: 'payload', type: DataType.charStr},
                 ],
             },
             setScheduleSlotStatus: {
                 ID: 0x42,
                 parameters: [
-                    {name: 'payload', type: DataType.charStr}, // bit pack ("bbb", 0, slot, status)
+                    // bit pack ("bbb", 0, slot, status)
+                    {name: 'payload', type: DataType.charStr},
                 ],
             },
             reflash: {
                 ID: 0x60,
-                response: 4,
+                response: 1,
                 parameters: [
-                    {name: 'payload', type: DataType.charStr}, // bit pack ("bI", version, length)
+                    // bit pack ("bI", version, length)
+                    {name: 'payload', type: DataType.charStr},
                 ],
             },
             reflashData: {
                 ID: 0x61,
-                response: 5,
+                response: 2,
                 parameters: [
-                    {name: 'payload', type: DataType.charStr}, // bit pack ("IH", segmentId - 1, length) .. string sub (data, start, finish)
+                    // bit pack ("IH", segmentId - 1, length) .. string sub (data, start, finish)
+                    {name: 'payload', type: DataType.charStr},
                 ],
             },
             reflashStatus: {
                 ID: 0x62,
-                response: 6,
+                response: 3,
                 parameters: [
-                    {name: 'payload', type: DataType.charStr}, // bit pack ("bI", reflashStatusParameter, 0x00)
+                    // bit pack ("bI", reflashStatusParameter, 0x00)
+                    {name: 'payload', type: DataType.charStr},
                 ],
             },
             getReflashLock: {
@@ -5328,48 +5337,48 @@ const Cluster: {
             },
         },
         commandsResponse: {
-            /* boltStateRsp: {
-                ID: 0,
-                parameters: [
-                    {name: 'state', type: DataType.uint8},
-                ],
-            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
-            /* handleStateRsp: {
-                ID: 1,
-                parameters: [
-                    {name: 'state', type: DataType.uint8},
-                ],
-            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
             getLockStatusRsp: {
-                ID: 2,
+                ID: 0,
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                 ],
             },
-            /* lockStatusReportRsp: {
-                ID: 3,
-                parameters: [
-                    {name: 'status', type: DataType.uint8},
-                ],
-            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
             reflashRsp: {
-                ID: 4,
+                ID: 1,
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                 ],
             },
             reflashDataRsp: {
-                ID: 5,
+                ID: 2,
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                 ],
             },
             reflashStatusRsp: {
-                ID: 6,
+                ID: 3,
                 parameters: [
                     {name: 'status', type: DataType.uint8},
                 ],
             },
+            /* boltStateRsp: {
+                ID: 4,
+                parameters: [
+                    {name: 'state', type: DataType.uint8},
+                ],
+            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
+            /* lockStatusReportRsp: {
+                ID: 5,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
+            /* handleStateRsp: {
+                ID: 6,
+                parameters: [
+                    {name: 'state', type: DataType.uint8},
+                ],
+            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
             /* userStatusRsp: {
                 ID: 7,
                 parameters: [
@@ -5378,5 +5387,41 @@ const Cluster: {
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
         },
     },
+    manuSpecificDoorman: {
+        ID: 0xEACC,
+        attributes: {},
+        commands: {
+            getConfigurationParameter: {
+                ID: 0xFC,
+                parameters: [
+                    // bit pack ("bbb", 0x00, 0x00, configurationId)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            setConfigurationParameter: {
+                ID: 0xFD,
+                parameters: [
+                    // bit pack ("bbbb", 0x00, 0x00, configurationId, value)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            integrationModeActivation: {
+                ID: 0x25,
+                parameters: [
+                    // bit pack ("bbbbb", slot, codeType, string sub (userCode, 1, 2), string sub (userCode, 3, 4), string sub (userCode, 5, 6)) .. String duplicate (0xff, 12)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            armDisarm: {
+                ID: 0x4E,
+                parameters: [
+                    // bit pack ("bb", lockSequenceNumber, operatingParameter)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+        },
+        commandsResponse: {},
+    },
 };
+
 export default Cluster;
