@@ -584,7 +584,7 @@ export class Driver extends EventEmitter {
     public async stop(): Promise<void> {
         if (this.ezsp) {
             debug.log('Stop driver');
-            return this.ezsp.close();
+            return this.ezsp.close(true);
         }
     }
 
