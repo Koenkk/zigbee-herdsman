@@ -4092,12 +4092,19 @@ const Cluster: {
             ledIntensityOff: {ID: 83, type: DataType.uint8},
             ledColorOn: {ID: 80, type: DataType.uint24},  // inversed hex BBGGRR
             ledColorOff: {ID: 81, type: DataType.uint24},
+            onLedIntensity: {ID: 82, type: DataType.uint8}, // percent
+            offLedIntensity: {ID: 83, type: DataType.uint8}, // percent
+            actionReport: {ID: 84, type: DataType.enum8}, // singleTapUp: 1,2, doubleTapUp: 1,4, singleTapDown: 17,18, doubleTapDown: 17,20
             minimumBrightness: {ID: 85, type: DataType.uint16},
+            connectedLoadRM: {ID: 96, type: DataType.uint16}, // unit watt/hr for Calypso RM3500 & Load Controller RM3250 
             currentLoad: {ID: 112, type: DataType.bitmap8}, // related to ecoMode(s)
             ecoMode: {ID: 113, type: DataType.int8}, // default:-128||-100-0-100%
             ecoMode1: {ID: 114, type: DataType.uint8}, // default:255||0-99
             ecoMode2: {ID: 115, type: DataType.uint8}, // default 255||0-100
             unknown: {ID: 117, type: DataType.bitmap32}, // RW *testing*
+            drConfigWaterTempMin: {ID: 118, type: DataType.uint8}, // value 45 or 0
+            drConfigWaterTempTime: {ID: 119, type: DataType.uint8}, // default 2
+            drWTTimeOn: {ID: 120, type: DataType.uint16},
             unknown1: {ID: 128, type: DataType.uint32}, // readOnly stringNumber *testing*
             dimmerTimmer: {ID: 160, type: DataType.uint32},
             unknown2: {ID: 256, type: DataType.uint8}, // readOnly *testing*
@@ -4118,6 +4125,7 @@ const Cluster: {
             // attribute ID: 300's readable, returns a buffer
             reportLocalTemperature: {ID: 301, type: DataType.int16},
             // attribute ID: 512's readable 
+            coldLoadPickupStatus: {ID: 643, type: DataType.uint8},
         },
         commands: {
         },
@@ -5166,7 +5174,262 @@ const Cluster: {
             },
         },
         commandsResponse: {},
-    },    
+    },
+    manuSpecificAssaDoorLock: {
+        ID: 0xFC00,
+        attributes: {
+            autoLockTime: {ID: 0x0012, type: DataType.uint8},
+            wrongCodeAttempts: {ID: 0x0013, type: DataType.uint8},
+            shutdownTime: {ID: 0x0014, type: DataType.uint8},
+            batteryLevel: {ID: 0x0015, type: DataType.uint8},
+            insideEscutcheonLED: {ID: 0x0016, type: DataType.uint8},
+            volume: {ID: 0x0017, type: DataType.uint8},
+            lockMode: {ID: 0x0018, type: DataType.uint8},
+            language: {ID: 0x0019, type: DataType.uint8},
+            allCodesLockout: {ID: 0x001A, type: DataType.boolean},
+            oneTouchLocking: {ID: 0x001B, type: DataType.boolean},
+            privacyButtonSetting: {ID: 0x001C, type: DataType.boolean},
+            /* enableLogging: {ID: 0x0020, type: DataType.boolean},*/ // marked in C4 driver as not supported
+            numberLogRecordsSupported: {ID: 0x0021, type: DataType.uint16},
+            numberPinsSupported: {ID: 0x0030, type: DataType.uint8},
+            numberScheduleSlotsPerUser: {ID: 0x0040, type: DataType.uint8},
+            alarmMask: {ID: 0x0050, type: DataType.uint8},
+        },
+        commands: {
+            getLockStatus: {
+                ID: 0x10,
+                response: 0,
+                parameters: [],
+            },
+            getBatteryLevel: {
+                ID: 0x12,
+                parameters: [],
+            },
+            setRFLockoutTime: {
+                ID: 0x13,
+                parameters: [],
+            },
+            /* getLogRecord: {
+                ID: 0x20,
+                parameters: [],
+            },*/ // marked in C4 driver as not supported
+            userCodeSet: {
+                ID: 0x30,
+                parameters: [
+                    // bit pack ("bbb", slot, status, pinLength) .. pin
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            userCodeGet: {
+                ID: 0x31,
+                parameters: [
+                    // bit pack ("b", slot)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            userCodeClear: {
+                ID: 0x32,
+                parameters: [
+                    // bit pack ("b", slot)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            clearAllUserCodes: {
+                ID: 0x33,
+                parameters: [],
+            },
+            setUserCodeStatus: {
+                ID: 0x34,
+                parameters: [],
+            },
+            getUserCodeStatus: {
+                ID: 0x35,
+                parameters: [],
+            },
+            getLastUserIdEntered: {
+                ID: 0x36,
+                parameters: [],
+            },
+            userAdded: {
+                ID: 0x37,
+                parameters: [],
+            },
+            userDeleted: {
+                ID: 0x38,
+                parameters: [],
+            },
+            setScheduleSlot: {
+                ID: 0x40,
+                parameters: [
+                    // bit pack ("bbbbbbb", 0, slot, weeklyScheduleNumber, startHour, startMinute, hours, minutes)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            getScheduleSlot: {
+                ID: 0x41,
+                parameters: [
+                    // bit pack ("bb", slot, userId)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            setScheduleSlotStatus: {
+                ID: 0x42,
+                parameters: [
+                    // bit pack ("bbb", 0, slot, status)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            reflash: {
+                ID: 0x60,
+                response: 1,
+                parameters: [
+                    // bit pack ("bI", version, length)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            reflashData: {
+                ID: 0x61,
+                response: 2,
+                parameters: [
+                    // bit pack ("IH", segmentId - 1, length) .. string sub (data, start, finish)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            reflashStatus: {
+                ID: 0x62,
+                response: 3,
+                parameters: [
+                    // bit pack ("bI", reflashStatusParameter, 0x00)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            getReflashLock: {
+                ID: 0x90,
+                parameters: [],
+            },
+            getHistory: {
+                ID: 0xA0,
+                parameters: [],
+            },
+            getLogin: {
+                ID: 0xA1,
+                parameters: [],
+            },
+            getUser: {
+                ID: 0xA2,
+                parameters: [],
+            },
+            getUsers: {
+                ID: 0xA3,
+                parameters: [],
+            },
+            getMandatoryAttributes: {
+                ID: 0xB0,
+                parameters: [],
+            },
+            readAttribute: {
+                ID: 0xB1,
+                parameters: [],
+            },
+            writeAttribute: {
+                ID: 0xB2,
+                parameters: [],
+            },
+            configureReporting: {
+                ID: 0xB3,
+                parameters: [],
+            },
+            getBasicClusterAttributes: {
+                ID: 0xB4,
+                parameters: [],
+            },
+        },
+        commandsResponse: {
+            getLockStatusRsp: {
+                ID: 0,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },
+            reflashRsp: {
+                ID: 1,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },
+            reflashDataRsp: {
+                ID: 2,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },
+            reflashStatusRsp: {
+                ID: 3,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },
+            /* boltStateRsp: {
+                ID: 4,
+                parameters: [
+                    {name: 'state', type: DataType.uint8},
+                ],
+            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
+            /* lockStatusReportRsp: {
+                ID: 5,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
+            /* handleStateRsp: {
+                ID: 6,
+                parameters: [
+                    {name: 'state', type: DataType.uint8},
+                ],
+            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
+            /* userStatusRsp: {
+                ID: 7,
+                parameters: [
+                    {name: 'status', type: DataType.uint8},
+                ],
+            },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
+        },
+    },
+    manuSpecificDoorman: {
+        ID: 0xEACC,
+        attributes: {},
+        commands: {
+            getConfigurationParameter: {
+                ID: 0xFC,
+                parameters: [
+                    // bit pack ("bbb", 0x00, 0x00, configurationId)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            setConfigurationParameter: {
+                ID: 0xFD,
+                parameters: [
+                    // bit pack ("bbbb", 0x00, 0x00, configurationId, value)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            integrationModeActivation: {
+                ID: 0x25,
+                parameters: [
+                    // bit pack ("bbbbb", slot, codeType, string sub (userCode, 1, 2), string sub (userCode, 3, 4), string sub (userCode, 5, 6)) .. String duplicate (0xff, 12)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+            armDisarm: {
+                ID: 0x4E,
+                parameters: [
+                    // bit pack ("bb", lockSequenceNumber, operatingParameter)
+                    {name: 'payload', type: DataType.charStr},
+                ],
+            },
+        },
+        commandsResponse: {},
+    },
 };
 
 export default Cluster;

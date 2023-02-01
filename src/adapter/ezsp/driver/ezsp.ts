@@ -16,7 +16,7 @@ import {
 } from './types/named';
 import {EventEmitter} from 'events';
 import {EmberApsFrame, EmberNetworkParameters} from './types/struct';
-import {Queue, Waitress} from '../../../utils';
+import {Queue, Waitress, Wait} from '../../../utils';
 import Debug from "debug";
 
 
@@ -244,7 +244,19 @@ export class Ezsp extends EventEmitter {
     }
 
     public async connect(path: string, options: Record<string, number|boolean>): Promise<void> {
-        await this.serialDriver.connect(path, options);
+        for (let i = 1; i < 5; i += 1) {
+            try {
+                await this.serialDriver.connect(path, options);
+                break;
+            } catch (error) {
+                debug.error(`Connection attempt ${i} error: ${error.stack}`);
+                await Wait(5000);
+                debug.log(`Next attempt ${i+1}`);
+            }
+        }
+        if (!this.serialDriver.isInitialized) {
+            throw new Error("Failure to connect");
+        }
         if (WATCHDOG_WAKE_PERIOD) {
             this.watchdogTimer = setInterval(
                 this.watchdogHandler.bind(this),
@@ -255,13 +267,14 @@ export class Ezsp extends EventEmitter {
 
     private onClose(): void {
         debug.log('Close ezsp');
-        clearTimeout(this.watchdogTimer);
         this.emit('close');
     }
 
-    public async close(): Promise<void> {
+    public async close(force: boolean): Promise<void> {
         debug.log('Stop ezsp');
-        clearTimeout(this.watchdogTimer);
+        if (force) {
+            clearTimeout(this.watchdogTimer);
+        }
         await this.serialDriver.close();
     }
 
