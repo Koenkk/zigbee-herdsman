@@ -59,8 +59,19 @@ class Buffalo {
         return value;
     }
 
+    public readBigEndianUInt24(): number {
+        const value = this.buffer.readUintBE(this.position, 3);
+        this.position += 3;
+        return value;
+    }
+
     public writeUInt24(value: number): void {
         this.buffer.writeUIntLE(value, this.position, 3);
+        this.position += 3;
+    }
+
+    public writeBigEndianUInt24(value: number): void {
+        this.buffer.writeUIntBE(value, this.position, 3);
         this.position += 3;
     }
 
@@ -252,6 +263,8 @@ class Buffalo {
             this.writeInt16(value);
         } else if (type === 'UINT24') {
             this.writeUInt24(value);
+        } else if (type === 'BEUINT24') {
+            this.writeBigEndianUInt24(value);
         } else if (type === 'INT24') {
             this.writeInt24(value);
         } else if (type === 'INT32') {
@@ -294,6 +307,8 @@ class Buffalo {
             return this.readInt16();
         } else if (type === 'UINT24') {
             return this.readUInt24();
+        } else if (type === 'BEUINT24') {
+            return this.readBigEndianUInt24();
         } else if (type === 'INT24') {
             return this.readInt24();
         } else if (type === 'INT32') {

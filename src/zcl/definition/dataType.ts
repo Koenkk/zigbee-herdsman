@@ -32,6 +32,7 @@ enum DataType {
     int32 = 43,
     enum8 = 48,
     enum16 = 49,
+    beUint24 = 50,
     singlePrec = 57,
     doublePrec = 58,
     octetStr = 65,
