@@ -325,7 +325,7 @@ class EZSPAdapter extends Adapter {
                 );
                 if (result.status !== EmberStatus.SUCCESS) {
                     throw new Error(`Routing table for '${networkAddress}' failed with with error: '${
-                        EmberStatus[result.status]}' (status code ${result.status})`);`);
+                        EmberStatus[result.status]}' (status code ${result.status})`);
                 }
 
                 return result;
