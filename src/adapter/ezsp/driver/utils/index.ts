@@ -55,8 +55,9 @@ function ember_security(config: Record<string, any>): EmberInitialSecurityState 
     isc.bitmask = (EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY |
         EmberInitialSecurityBitmask.TRUST_CENTER_GLOBAL_LINK_KEY |
         EmberInitialSecurityBitmask.HAVE_NETWORK_KEY |
-        EmberInitialSecurityBitmask.PRECONFIGURED_NETWORK_KEY_MODE |
-        EmberInitialSecurityBitmask.REQUIRE_ENCRYPTED_KEY);
+        //EmberInitialSecurityBitmask.PRECONFIGURED_NETWORK_KEY_MODE |
+        EmberInitialSecurityBitmask.REQUIRE_ENCRYPTED_KEY |
+        EmberInitialSecurityBitmask.TRUST_CENTER_USES_HASHED_LINK_KEY);
     isc.preconfiguredKey = new EmberKeyData();
     isc.preconfiguredKey.contents = randomBytes(16);
     isc.networkKey = new EmberKeyData();
