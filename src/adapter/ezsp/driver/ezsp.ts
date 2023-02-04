@@ -12,7 +12,8 @@ import {
     EzspDecisionId,
     EzspDecisionBitmask,
     EmberConcentratorType,
-    EzspConfigId
+    EzspConfigId,
+    EmberZdoConfigurationFlags
 } from './types/named';
 import {EventEmitter} from 'events';
 import {EmberApsFrame, EmberNetworkParameters} from './types/struct';
@@ -434,7 +435,20 @@ export class Ezsp extends EventEmitter {
 
     async updateConfig(): Promise<void> {
         const config = [
+            [EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90],
+            [EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 2],
+            [EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1],
             [EzspConfigId.CONFIG_FRAGMENT_DELAY_MS, 50],
+            [EzspConfigId.CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 2],
+            //[EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16],
+            //[EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 16],
+            [EzspConfigId.CONFIG_APPLICATION_ZDO_FLAGS, 
+                EmberZdoConfigurationFlags.APP_HANDLES_UNSUPPORTED_ZDO_REQUESTS | 
+                EmberZdoConfigurationFlags.APP_RECEIVES_SUPPORTED_ZDO_REQUESTS],
+            [EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 7680],
+            [EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 14],
+            [EzspConfigId.CONFIG_SECURITY_LEVEL, 5],
+            [EzspConfigId.CONFIG_STACK_PROFILE, 2],
             //[EzspConfigId.CONFIG_TX_POWER_MODE, 3],
             [EzspConfigId.CONFIG_FRAGMENT_WINDOW_SIZE, 1],
             //[EzspConfigId.CONFIG_NEIGHBOR_TABLE_SIZE, 16],
@@ -446,15 +460,7 @@ export class Ezsp extends EventEmitter {
             //[EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT, 255],
             //[EzspConfigId.CONFIG_BROADCAST_TABLE_SIZE, 43],
             //[EzspConfigId.CONFIG_MAX_HOPS, 30],
-            [EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 30000],
-            //[EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 255],
-            //[EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 250],
-            //[EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 4],
-            //[EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1],
-            [EzspConfigId.CONFIG_SECURITY_LEVEL, 5],
-            [EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 14],
             //[EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 32],
-            [EzspConfigId.CONFIG_STACK_PROFILE, 2],
             [EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 255],
         ];
 
@@ -466,16 +472,16 @@ export class Ezsp extends EventEmitter {
     async updatePolicies(): Promise<void> {
         // Set up the policies for what the NCP should do.
         let policies = [
-            [EzspPolicyId.BINDING_MODIFICATION_POLICY,
-                EzspDecisionId.DISALLOW_BINDING_MODIFICATION],
-            [EzspPolicyId.UNICAST_REPLIES_POLICY, EzspDecisionId.HOST_WILL_NOT_SUPPLY_REPLY],
-            [EzspPolicyId.POLL_HANDLER_POLICY, EzspDecisionId.POLL_HANDLER_IGNORE],
-            [EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY,
-                EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK],
-            [EzspPolicyId.PACKET_VALIDATE_LIBRARY_POLICY,
-                EzspDecisionId.PACKET_VALIDATE_LIBRARY_CHECKS_DISABLED],
-            [EzspPolicyId.ZLL_POLICY, EzspDecisionId.ALLOW_JOINS],
-            [EzspPolicyId.TC_REJOINS_USING_WELL_KNOWN_KEY_POLICY, EzspDecisionId.ALLOW_JOINS],
+            // [EzspPolicyId.BINDING_MODIFICATION_POLICY,
+            //     EzspDecisionId.DISALLOW_BINDING_MODIFICATION],
+            // [EzspPolicyId.UNICAST_REPLIES_POLICY, EzspDecisionId.HOST_WILL_NOT_SUPPLY_REPLY],
+            // [EzspPolicyId.POLL_HANDLER_POLICY, EzspDecisionId.POLL_HANDLER_IGNORE],
+            // [EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY,
+            //     EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK],
+            // [EzspPolicyId.PACKET_VALIDATE_LIBRARY_POLICY,
+            //     EzspDecisionId.PACKET_VALIDATE_LIBRARY_CHECKS_DISABLED],
+            // [EzspPolicyId.ZLL_POLICY, EzspDecisionId.ALLOW_JOINS],
+            // [EzspPolicyId.TC_REJOINS_USING_WELL_KNOWN_KEY_POLICY, EzspDecisionId.ALLOW_JOINS],
             [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
             [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
         ];
