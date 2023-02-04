@@ -2415,6 +2415,14 @@ const Cluster: {
                     {name: 'maximum', type: DataType.uint16},
                 ],
             },
+            tuyaMoveToHueAndSaturationBrightness2: {
+                ID: 225,
+                parameters: [
+                    {name: 'hue', type: DataType.uint16},
+                    {name: 'saturation', type: DataType.uint16},
+                    {name: 'brightness', type: DataType.uint16},
+                ],
+            },
             tuyaRgbMode: {
                 ID: 240,
                 parameters: [
