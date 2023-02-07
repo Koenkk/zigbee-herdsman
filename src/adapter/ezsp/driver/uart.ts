@@ -3,7 +3,7 @@ import {EventEmitter} from 'events';
 import net from 'net';
 import {SerialPort} from '../../serialPort';
 import SocketPortUtils from '../../socketPortUtils';
-import {Deferred, crc16ccitt} from './utils';
+import {crc16ccitt} from './utils';
 import {Queue, Waitress} from '../../../utils';
 import * as consts from './consts';
 import {Writer}  from './writer';
