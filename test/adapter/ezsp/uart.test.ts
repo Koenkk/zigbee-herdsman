@@ -66,7 +66,7 @@ describe('UART', () => {
         serialDriver = new SerialDriver();
         writeBufferSpy = jest.spyOn(Writer.prototype, 'writeBuffer').mockImplementation((buffer) => {
             if (buffer[0] == 0x1a) {
-                serialDriver.resetDeferred.resolve(true);
+                serialDriver.waitress.resolve({sequence: -1});
             }
         });
         jest.spyOn(Writer.prototype, 'pipe').mockImplementation(jest.fn());
