@@ -3,7 +3,7 @@ import {EventEmitter} from 'events';
 import net from 'net';
 import {SerialPort} from '../../serialPort';
 import SocketPortUtils from '../../socketPortUtils';
-import {Deferred, crc16ccitt} from './utils';
+import {crc16ccitt} from './utils';
 import {Queue, Waitress} from '../../../utils';
 import * as consts from './consts';
 import {Writer}  from './writer';
@@ -40,7 +40,6 @@ export class SerialDriver extends EventEmitter {
     private writer: Writer;
     private parser: Parser;
     private initialized: boolean;
-    private resetDeferred: Deferred<void>;
     private portType: 'serial' | 'socket';
     private sendSeq = 0; // next frame number to send
     private recvSeq = 0; // next frame number to receive
@@ -197,7 +196,6 @@ export class SerialDriver extends EventEmitter {
             case (data[0] === 0xC2):
                 debug(`<-- Error: ${data.toString('hex')}`);
                 // send reset
-                this.resetDeferred = undefined;
                 this.reset();
                 break;
             default:
@@ -265,11 +263,7 @@ export class SerialDriver extends EventEmitter {
         if (NcpResetCode[<number>code].toString() !== NcpResetCode.RESET_SOFTWARE.toString()) {
             return;
         }
-        if ((!this.resetDeferred)) {
-            debug("Reset future is None");
-            return;
-        }
-        this.resetDeferred.resolve();
+        this.waitress.resolve({sequence: -1});
     }
 
     private randomize(s: Buffer): Buffer {
@@ -292,14 +286,21 @@ export class SerialDriver extends EventEmitter {
 
     async reset(): Promise<void> {
         debug('Uart reseting');
-        if (this.resetDeferred) {
-            throw new TypeError("reset can only be called on a new connection");
-        }
         this.parser.reset();
-        debug(`--> Write reset`);
-        this.resetDeferred = new Deferred<void>();
-        this.writer.sendReset();
-        return this.resetDeferred.promise;
+        return this.queue.execute<void>(async (): Promise<void> => {
+            debug(`--> Write reset`);
+            const waiter = this.waitFor(-1).start();
+            this.writer.sendReset();
+            debug(`-?- waiting reset`);
+            return waiter.promise.catch(async (e) => {
+                debug(`--> Error: ${e}`);
+                this.emit('reset');
+                throw new Error(`Reset error: ${e}`);
+            }).then(()=>{
+                debug(`-+- waiting reset success`);
+            });
+        });
+
     }
 
     public close(): Promise<void> {
@@ -328,7 +329,6 @@ export class SerialDriver extends EventEmitter {
 
     private onPortClose(): void {
         debug('Port closed');
-        this.resetDeferred = undefined;
         this.initialized = false;
         this.emit('close');
     }
