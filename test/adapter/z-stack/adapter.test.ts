@@ -2522,7 +2522,7 @@ describe("zstack-adapter", () => {
 
         let error;
         try {await adapter.lqi(204)} catch (e) {error = e};
-        expect(error).toStrictEqual(new Error("LQI for '204' failed"));
+        expect(error).toStrictEqual(new Error("LQI for '204' failed with error: 'FAILURE' (1)"));
         expect(mockQueueExecute.mock.calls[0][1]).toBe(204);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 204, startindex: 0}, 1)
@@ -2549,7 +2549,7 @@ describe("zstack-adapter", () => {
 
         let error;
         try {await adapter.routingTable(206)} catch (e) {error = e};
-        expect(error).toStrictEqual(new Error("Routing table for '206' failed"));
+        expect(error).toStrictEqual(new Error("Routing table for '206' failed with error: 'FAILURE' (1)"));
         expect(mockQueueExecute.mock.calls[0][1]).toBe(206);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 206, startindex: 0}, 1)
