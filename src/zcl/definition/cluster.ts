@@ -2442,6 +2442,14 @@ const Cluster: {
                     {name: 'enable', type: DataType.uint8},
                 ],
             },
+            tuyaOnOffTransitionTime: {
+                ID: 251,
+                parameters: [
+                    {name: 'unknown', type: DataType.uint8},
+                    {name: 'onTransitionTime', type: BuffaloZclDataType.BIG_ENDIAN_UINT24},
+                    {name: 'offTransitionTime', type: BuffaloZclDataType.BIG_ENDIAN_UINT24},
+                ],
+            },
         },
         commandsResponse: {
         },

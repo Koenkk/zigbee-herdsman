@@ -519,12 +519,22 @@ class BuffaloZcl extends Buffalo {
         return value;
     }
 
+    private readBigEndianUInt24(): number {
+        return this.readBuffer(3).readUIntBE(0, 3);
+    }
+
     private writeListMiboxerZones(values: MiboxerZone[]): void {
         this.writeUInt8(values.length);
         for (const value of values) {
             this.writeUInt16(value.groupId);
             this.writeUInt8(value.zoneNum);
         }
+    }
+
+    private writeBigEndianUInt24(value: number): void {
+        const buffer = Buffer.alloc(3);
+        buffer.writeUIntLE(value, 0, 3);
+        this.writeBuffer(buffer.reverse(), 3);
     }
 
     private readUInt40(): [number, number] {
@@ -604,6 +614,8 @@ class BuffaloZcl extends Buffalo {
             return this.writeListTuyaDataPointValues(value);
         } else if (type === 'LIST_MIBOXER_ZONES') {
             return this.writeListMiboxerZones(value);
+        } else if (type === 'BIG_ENDIAN_UINT24') {
+            return this.writeBigEndianUInt24(value);
         } else if (type === 'GDP_FRAME') {
             return this.writeGdpFrame(value);
         } else if (type === 'uint48') {
@@ -650,6 +662,8 @@ class BuffaloZcl extends Buffalo {
             return this.readListTuyaDataPointValues();
         } else if (type === 'LIST_MIBOXER_ZONES') {
             return this.readListMiboxerZones();
+        } else if (type === 'BIG_ENDIAN_UINT24') {
+            return this.readBigEndianUInt24();
         } else if (type === 'uint40') {
             return this.readUInt40();
         } else if (type === 'uint48') {
