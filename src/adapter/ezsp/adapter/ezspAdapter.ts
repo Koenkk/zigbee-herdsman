@@ -277,7 +277,7 @@ class EZSPAdapter extends Adapter {
                     {startindex: startIndex}
                 );
                 if (result.status !== EmberStatus.SUCCESS) {
-                    throw new Error(`LQI for '${networkAddress}' failed`);
+                    throw new Error(`LQI for '${networkAddress}' failed with with status code ${result.status}`);
                 }
 
                 return result;
@@ -323,7 +323,7 @@ class EZSPAdapter extends Adapter {
                     {startindex: startIndex}
                 );
                 if (result.status !== EmberStatus.SUCCESS) {
-                    throw new Error(`Routing table for '${networkAddress}' failed`);
+                    throw new Error(`Routing table for '${networkAddress}' failed with status code ${result.status}`);
                 }
 
                 return result;

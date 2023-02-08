@@ -12,6 +12,7 @@ enum BuffaloZclDataType {
     STRUCTURED_SELECTOR = 1010,
     LIST_TUYA_DATAPOINT_VALUES = 1011,
     LIST_MIBOXER_ZONES = 1012,
+    BIG_ENDIAN_UINT24 = 1013,
 }
 
 export default BuffaloZclDataType;

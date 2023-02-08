@@ -312,21 +312,6 @@ describe('helloworld', () => {
         expect(value).toStrictEqual(100000);
     });
 
-    it('BEUINT24 write', () => {
-        const buffalo = new Buffalo(Buffer.alloc(4), 1);
-        const payload = 16777200;
-        buffalo.write('BEUINT24', payload, {});
-        expect(buffalo.getPosition()).toStrictEqual(4);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xFF, 0xFF, 0xF0]));
-    });
-
-    it('BEUINT24 read', () => {
-        const buffalo = new Buffalo(Buffer.from([0x01, 0x01, 0x86, 0xA0, 0x02]), 1);
-        const value = buffalo.read('BEUINT24', {});
-        expect(buffalo.getPosition()).toStrictEqual(4);
-        expect(value).toStrictEqual(100000);
-    });
-
     it('INT24 write +', () => {
         const buffalo = new Buffalo(Buffer.alloc(3));
         buffalo.write('INT24', 65536, {});
