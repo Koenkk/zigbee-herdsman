@@ -108,7 +108,6 @@ export class Driver extends EventEmitter {
             debug.log(`Reset connection. Try ${attempts}`);
             try {
                 await this.stop();
-                this.ezsp = undefined;
                 await Wait(1000);
                 await this.startup(this.port, this.serialOpt, this.nwkOpt, this.greenPowerGroup);
                 break;
@@ -133,6 +132,7 @@ export class Driver extends EventEmitter {
         this.serialOpt = serialOpt;
         this.greenPowerGroup = greenPowerGroup;
         this.transactionID = 1;
+        this.ezsp = undefined;
         this.ezsp = new Ezsp();
         this.ezsp.on('reset', this.onReset.bind(this));
         this.ezsp.on('close', this.onClose.bind(this));
