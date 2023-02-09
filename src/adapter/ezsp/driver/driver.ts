@@ -530,7 +530,7 @@ export class Driver extends EventEmitter {
         return this.transactionID;
     }
 
-    public makeApsFrame(clusterId: number): EmberApsFrame {
+    public makeApsFrame(clusterId: number, disableResponse: boolean): EmberApsFrame {
         const frame = new EmberApsFrame();
         frame.clusterId = clusterId;
         frame.profileId = 0;
@@ -538,9 +538,10 @@ export class Driver extends EventEmitter {
         frame.sourceEndpoint = 0;
         frame.destinationEndpoint = 0;
         frame.groupId = 0;
-        //frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY;
-        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
-        //frame.options = EmberApsOption.APS_OPTION_NONE;
+        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY;
+        if (!disableResponse) {
+            frame.options ||= EmberApsOption.APS_OPTION_RETRY;
+        }
         return frame;
     }
 
@@ -561,7 +562,7 @@ export class Driver extends EventEmitter {
         const requestName = EmberZDOCmd.valueName(EmberZDOCmd, requestCmd);
         const responseName = EmberZDOCmd.valueName(EmberZDOCmd, responseCmd);
         debug.log(`ZDO ${requestName} params: ${JSON.stringify(params)}`);
-        const frame = this.makeApsFrame(requestCmd as number);
+        const frame = this.makeApsFrame(requestCmd as number, false);
         const payload = this.makeZDOframe(requestCmd as number, {transId: frame.sequence, ...params});
         const waiter = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
         const res = await this.request(networkAddress, frame, payload);
