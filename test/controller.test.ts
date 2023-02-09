@@ -1859,7 +1859,7 @@ describe('Controller', () => {
         await mockAdapterEvents['zclData']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 9}]),
+            frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 4}]),
             endpoint: 1,
             linkquality: 19,
             groupID: 10,

@@ -226,6 +226,8 @@ class Device extends Entity {
                     time: time,
                     timeZone: ((new Date()).getTimezoneOffset() * -1) * 60,
                     localTime: time - (new Date()).getTimezoneOffset() * 60,
+                    lastSetTime: time,
+                    validUntilTime: time + (24 * 60 * 60), // valid for 24 hours
                 }},
             };
 
