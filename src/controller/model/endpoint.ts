@@ -82,7 +82,7 @@ class Endpoint extends Entity {
     public profileID?: number;
     public readonly ID: number;
     public readonly clusters: Clusters;
-    private readonly deviceIeeeAddress: string;
+    public deviceIeeeAddress: string;
     public deviceNetworkAddress: number;
     private _binds: BindInternal[];
     private _configuredReportings: ConfiguredReportingInternal[];
