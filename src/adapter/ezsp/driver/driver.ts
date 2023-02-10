@@ -350,14 +350,14 @@ export class Driver extends EventEmitter {
             debug.log(`stackStatusHandler: ${EmberStatus.valueToName(EmberStatus, frame.status)}`);
             break;
         }
-        case (frameName === 'childJoinHandler'): {
-            if (!frame.joining) {
-                this.handleNodeLeft(frame.childId, frame.childEui64);
-            } else {
-                this.handleNodeJoined(frame.childId, frame.childEui64);
-            }
-            break;
-        }
+        // case (frameName === 'childJoinHandler'): {
+        //     if (!frame.joining) {
+        //         this.handleNodeLeft(frame.childId, frame.childEui64);
+        //     } else {
+        //         this.handleNodeJoined(frame.childId, frame.childEui64);
+        //     }
+        //     break;
+        // }
         case (frameName == 'gpepIncomingMessageHandler'): {
             this.handleGPMessage(frame);
             break;
