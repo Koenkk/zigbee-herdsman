@@ -449,12 +449,11 @@ class EZSPAdapter extends Adapter {
             );
         }
 
-        const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID);
+        const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID, disableResponse || zclFrame.Header.frameControl.disableDefaultResponse);
         frame.profileId = 0x0104;
         frame.sourceEndpoint = sourceEndpoint || 0x01;
         frame.destinationEndpoint = endpoint;
         frame.groupId = 0;
-        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
 
         this.driver.setNode(networkAddress, new EmberEUI64(ieeeAddr));
         const dataConfirmResult = await this.driver.request(networkAddress, frame, zclFrame.toBuffer());
@@ -488,12 +487,11 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         return this.driver.queue.execute<void>(async () => {
             this.checkInterpanLock();
-            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID);
+            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID, false);
             frame.profileId = 0x0104;
             frame.sourceEndpoint =  0x01;
             frame.destinationEndpoint = 0x01;
             frame.groupId = groupID;
-            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
             const dataConfirmResult = await this.driver.mrequest(frame, zclFrame.toBuffer());
             /**
              * As a group command is not confirmed and thus immidiately returns
@@ -507,12 +505,11 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
         return this.driver.queue.execute<void>(async () => {
             this.checkInterpanLock();
-            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID);
+            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID, false);
             frame.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xA1E0 : 0x0104;
             frame.sourceEndpoint =  sourceEndpoint;
             frame.destinationEndpoint = endpoint;
             frame.groupId = 0xFFFD;
-            frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY | EmberApsOption.APS_OPTION_RETRY;
             const dataConfirmResult = await this.driver.mrequest(frame, zclFrame.toBuffer());
 
             /**
