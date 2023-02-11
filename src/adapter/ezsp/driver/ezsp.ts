@@ -437,7 +437,7 @@ export class Ezsp extends EventEmitter {
         const config = [
             [EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90],
             [EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 2],
-            [EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1],
+            //[EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1],
             [EzspConfigId.CONFIG_FRAGMENT_DELAY_MS, 50],
             [EzspConfigId.CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 2],
             //[EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16],
