@@ -174,6 +174,7 @@ class Device extends Entity {
         delete Device.devices[this.ieeeAddr];
         this.ieeeAddr = ieeeAddr;
         Device.devices[this.ieeeAddr] = this;
+        this.endpoints.forEach((e) => e.deviceIeeeAddress = ieeeAddr);
         this.save();
     }
 
