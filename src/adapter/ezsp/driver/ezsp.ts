@@ -465,7 +465,11 @@ export class Ezsp extends EventEmitter {
         ];
 
         for (const [confName, value] of config) {
-            await this.setConfigurationValue(confName, value);
+            try {
+                await this.setConfigurationValue(confName, value);
+            } catch (error) {
+                debug.error(`setConfigurationValue(${confName}, ${value}) error: ${error} ${error.stack}`);
+            }
         }
     }
 

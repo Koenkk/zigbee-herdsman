@@ -4,7 +4,7 @@ import net from 'net';
 import {SerialPort} from '../../serialPort';
 import SocketPortUtils from '../../socketPortUtils';
 import {crc16ccitt} from './utils';
-import {Queue, Waitress} from '../../../utils';
+import {Queue, Waitress, Wait} from '../../../utils';
 import * as consts from './consts';
 import {Writer}  from './writer';
 import {Parser}  from './parser';
@@ -353,6 +353,7 @@ export class SerialDriver extends EventEmitter {
                 debug(`--> Error: ${e}`);
                 debug(`-!- break waiting (${nextSeq})`);
                 debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
+                await Wait(500);
                 debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`);
                 const waiter = this.waitFor(nextSeq).start();
                 this.writer.sendData(randData, seq, 1, ackSeq);
