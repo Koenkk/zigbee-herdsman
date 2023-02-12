@@ -628,9 +628,9 @@ class DeconzAdapter extends Adapter {
         try {
                 let data = null;
                 if (command.hasOwnProperty('response') && !disableResponse) {
-                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber);
+                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber, request.timeout);
                 } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
-                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber);
+                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber, request.timeout);
                 }
 
                 if (data !== null) {
@@ -1044,11 +1044,11 @@ class DeconzAdapter extends Adapter {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    private waitForData(addr: number, profileId: number, clusterId: number, transactionSequenceNumber?: number) : Promise<ReceivedDataResponse> {
+    private waitForData(addr: number, profileId: number, clusterId: number, transactionSequenceNumber?: number, timeout?: number) : Promise<ReceivedDataResponse> {
         return new Promise((resolve, reject): void => {
             const ts = Date.now();
             const commandId = PARAM.PARAM.APS.DATA_INDICATION;
-            const req: WaitForDataRequest = {addr, profileId, clusterId, transactionSequenceNumber, resolve, reject, ts};
+            const req: WaitForDataRequest = {addr, profileId, clusterId, transactionSequenceNumber, resolve, reject, ts, timeout};
             this.openRequestsQueue.push(req);
         });
     }
@@ -1112,7 +1112,10 @@ class DeconzAdapter extends Adapter {
             }
 
             const now = Date.now();
-            if ((now - req.ts) > 60000) { // 60 seconds
+
+            // Default timeout: 60 seconds.
+            // Comparison is negated to prevent orphans when invalid timeout is entered (resulting in NaN).
+            if (!((now - req.ts) <= (req.timeout ?? 60) * 1000)) {
                 //debug("Timeout for request in openRequestsQueue addr: " + req.addr.toString(16) + " clusterId: " + req.clusterId.toString(16) + " profileId: " + req.profileId.toString(16));
                 //remove from busyQueue
                 this.openRequestsQueue.splice(i, 1);
