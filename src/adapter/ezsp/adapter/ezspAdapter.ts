@@ -532,6 +532,9 @@ class EZSPAdapter extends Adapter {
             const addrmode = (type === 'group') ? 1 : 3;
             const ieeeDst = (type === 'group') ? destinationAddressOrGroup : 
                 new EmberEUI64(destinationAddressOrGroup as string);
+            if (type !== 'group') {
+                this.driver.setNode(destinationNetworkAddress, ieeeDst as EmberEUI64);
+            }
             await this.driver.zdoRequest(
                 destinationNetworkAddress, EmberZDOCmd.Bind_req, EmberZDOCmd.Bind_rsp,
                 {sourceEui: ieee, sourceEp: sourceEndpoint, clusterId: clusterID,
@@ -551,6 +554,9 @@ class EZSPAdapter extends Adapter {
             const addrmode = (type === 'group') ? 1 : 3;
             const ieeeDst = (type === 'group') ? destinationAddressOrGroup : 
                 new EmberEUI64(destinationAddressOrGroup as string);
+            if (type !== 'group') {
+                this.driver.setNode(destinationNetworkAddress, ieeeDst as EmberEUI64);
+            }
             await this.driver.zdoRequest(
                 destinationNetworkAddress, EmberZDOCmd.Unbind_req, EmberZDOCmd.Unbind_rsp,
                 {sourceEui: ieee, sourceEp: sourceEndpoint, clusterId: clusterID,
@@ -563,6 +569,7 @@ class EZSPAdapter extends Adapter {
         return this.driver.queue.execute<void>(async () => {
             this.checkInterpanLock();
             const ieee = new EmberEUI64(ieeeAddr);
+            this.driver.setNode(networkAddress, ieee);
             await this.driver.zdoRequest(
                 networkAddress, EmberZDOCmd.Mgmt_Leave_req, EmberZDOCmd.Mgmt_Leave_rsp,
                 {destAddr: ieee, removechildrenRejoin: 0x00}
