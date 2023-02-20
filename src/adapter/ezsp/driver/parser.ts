@@ -66,8 +66,10 @@ export class Parser extends stream.Transform {
                 out.writeUInt8(c ^ consts.STUFF, outIdx++);
                 escaped = false;
             } else {
-                if ((c === consts.ESCAPE)) {
+                if (c === consts.ESCAPE) {
                     escaped = true;
+                } else if (c === consts.XOFF || c === consts.XON) {
+                    // skip
                 } else {
                     out.writeUInt8(c, outIdx++);
                 }
