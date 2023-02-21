@@ -718,7 +718,7 @@ class Driver extends events.EventEmitter {
                 debug(`Timeout for aps request CMD: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`);
                 //remove from busyQueue
                 apsBusyQueue.splice(i, 1);
-                req.reject("APS TIMEOUT");
+                req.reject(new Error("APS TIMEOUT"));
             }
         }
     }
