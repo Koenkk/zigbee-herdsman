@@ -2630,6 +2630,9 @@ const Cluster: {
     pm25Measurement: {
         ID: 0x042a,
         attributes: {
+            //IKEA Vindstyrka: measured value is reported as float
+            measuredValueIkea: {ID: 0x0000, type: DataType.singlePrec, manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN},
+            //default cluster spec: values reported as uint16
             measuredValue: {ID: 0x0000, type: DataType.uint16},
             measuredMinValue: {ID: 0x0001, type: DataType.uint16},
             measuredMaxValue: {ID: 0x0002, type: DataType.uint16},
