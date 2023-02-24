@@ -2627,6 +2627,17 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    pm25Measurement: {
+        ID: 0x042a,
+        attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.uint16},
+            measuredMinValue: {ID: 0x0001, type: DataType.uint16},
+            measuredMaxValue: {ID: 0x0002, type: DataType.uint16},
+            measuredTolerance: {ID: 0x0003, type: DataType.uint16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     ssIasZone: {
         ID: 1280,
         attributes: {
@@ -4582,19 +4593,6 @@ const Cluster: {
             x_axis: {ID:18, type: DataType.int16},
             y_axis: {ID:19, type: DataType.int16},
             z_axis: {ID:20, type: DataType.int16},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    heimanSpecificPM25Measurement: {
-        // from HS2AQ-3.0海曼智能空气质量检测仪API文档-V01
-        ID: 0x042a,
-        manufacturerCode: ManufacturerCode.Heiman,
-        attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.uint16},
-            measuredMinValue: {ID: 0x0001, type: DataType.uint16},
-            measuredMaxValue: {ID: 0x0002, type: DataType.uint16},
-            measuredTolerance: {ID: 0x0003, type: DataType.uint16},
         },
         commands: {},
         commandsResponse: {},
