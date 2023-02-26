@@ -635,7 +635,8 @@ export class Ezsp extends EventEmitter {
     }
 
     private waitressValidator(payload: EZSPFrame, matcher: EZSPWaitressMatcher): boolean {
-        const frameNames = (typeof matcher.frameId == 'string') ? [matcher.frameId] : FRAME_NAMES_BY_ID[matcher.frameId];
+        const frameNames = (typeof matcher.frameId == 'string') ?
+            [matcher.frameId] : FRAME_NAMES_BY_ID[matcher.frameId];
         return (
             (matcher.sequence == null || payload.sequence === matcher.sequence) &&
             frameNames.includes(payload.frameName)
