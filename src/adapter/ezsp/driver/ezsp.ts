@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import * as t from './types';
 import {SerialDriver} from './uart';
-import {FRAMES, FRAME_NAME_BY_ID, EZSPFrameDesc, ParamsDesc, ZDOREQUESTS, ZDOREQUEST_NAME_BY_ID, 
+import {FRAMES, FRAME_NAMES_BY_ID, EZSPFrameDesc, ParamsDesc, ZDOREQUESTS, ZDOREQUEST_NAME_BY_ID, 
     ZDORESPONSES, ZDORESPONSE_NAME_BY_ID} from './commands';
 
 import {
@@ -59,21 +59,33 @@ export class EZSPFrameData {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     [name: string]: any;
 
-    static getFrame(key: string|number): EZSPFrameDesc {
-        const name = (typeof key == 'string') ? key : FRAME_NAME_BY_ID[key];
+    static createFrame(frame_id: number, isRequest: boolean, params: ParamsDesc | Buffer): EZSPFrameData {
+        const names = FRAME_NAMES_BY_ID[frame_id];
+        if (!names) {
+            throw new Error(`Unrecognized frame FrameID ${frame_id}`);
+        }
+        let frm: EZSPFrameData;
+        names.every((frameName)=>{
+            try {
+                frm = new EZSPFrameData(frameName, false, params);
+                return false;
+            } catch (error) {
+                debug.error(`Frame ${frameName} parsing error: ${error.stack}`);
+                return true;
+            }
+        });
+        return frm;
+    }
+
+    static getFrame(name: string): EZSPFrameDesc {
         const frameDesc = FRAMES[name];
-        if (!frameDesc) throw new Error(`Unrecognized frame from FrameID ${key}`);
+        if (!frameDesc) throw new Error(`Unrecognized frame from FrameID ${name}`);
         return frameDesc;
     }
 
-    constructor(key: string|number, isRequest: boolean, params: ParamsDesc | Buffer) {
-        if (typeof key == 'string') {
-            this._cls_ = key;
-            this._id_ = FRAMES[this._cls_].ID;
-        } else {
-            this._id_ = key;
-            this._cls_ = FRAME_NAME_BY_ID[key];
-        }
+    constructor(key: string, isRequest: boolean, params: ParamsDesc | Buffer) {
+        this._cls_ = key;
+        this._id_ = FRAMES[this._cls_].ID;
         
         this._isRequest_ = isRequest;
         const frame = EZSPFrameData.getFrame(key);
@@ -305,7 +317,7 @@ export class Ezsp extends EventEmitter {
                 data = data.subarray(2);
             }
         }
-        const frm = new EZSPFrameData(frame_id, false, data);
+        const frm = EZSPFrameData.createFrame(frame_id, false, data);
         debug.log(`<== 0x${frame_id.toString(16)}: ${JSON.stringify(frm)}`);
         const handled = this.waitress.resolve({
             frameId: frame_id,
@@ -623,10 +635,10 @@ export class Ezsp extends EventEmitter {
     }
 
     private waitressValidator(payload: EZSPFrame, matcher: EZSPWaitressMatcher): boolean {
-        const frameName = (typeof matcher.frameId == 'string') ? matcher.frameId : FRAME_NAME_BY_ID[matcher.frameId];
+        const frameNames = (typeof matcher.frameId == 'string') ? [matcher.frameId] : FRAME_NAMES_BY_ID[matcher.frameId];
         return (
             (matcher.sequence == null || payload.sequence === matcher.sequence) &&
-            payload.frameName === frameName
+            frameNames.includes(payload.frameName)
         );
     }
 
