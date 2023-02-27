@@ -2232,6 +2232,14 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             newParentId: EmberNodeId
         },
     },
+    incomingNetworkStatusHandler: {
+        ID: 0x00C4,
+        request: null,
+        response: {
+            errorCode: uint8_t,
+            target: EmberNodeId
+        },
+    },
     setSourceRouteDiscoveryMode: {
         ID: 0x005a,
         request: {
@@ -2243,10 +2251,14 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
 };
 
-export const FRAME_NAME_BY_ID: { [key: string]: string } = {};
+export const FRAME_NAMES_BY_ID: { [key: string]: string[] } = {};
 for (const key of Object.getOwnPropertyNames(FRAMES)) {
     const frameDesc = FRAMES[key];
-    FRAME_NAME_BY_ID[frameDesc.ID] = key;
+    if (FRAME_NAMES_BY_ID[frameDesc.ID]) {
+        FRAME_NAMES_BY_ID[frameDesc.ID].push(key);
+    } else {
+        FRAME_NAMES_BY_ID[frameDesc.ID] = [key];
+    }
 }
 
 interface EZSPZDOResponseFrame {
