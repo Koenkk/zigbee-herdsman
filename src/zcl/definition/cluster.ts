@@ -4030,6 +4030,17 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    msIkeaVocIndexMeasurement: {
+        ID: 0xfc7e,
+        manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
+        attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.singlePrec},
+            measuredMinValue: {ID: 0x0001, type: DataType.singlePrec},
+            measuredMaxValue: {ID: 0x0002, type: DataType.singlePrec},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     manuSpecificClusterAduroSmart: {
         ID: 64716,
         attributes: {
