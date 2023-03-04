@@ -4034,9 +4034,9 @@ const Cluster: {
         ID: 0xfc7e,
         manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.uint16},
-            measuredMinValue: {ID: 0x0001, type: DataType.uint16},
-            measuredMaxValue: {ID: 0x0002, type: DataType.uint16},
+            measuredValue: {ID: 0x0000, type: DataType.singlePrec},
+            measuredMinValue: {ID: 0x0001, type: DataType.singlePrec},
+            measuredMaxValue: {ID: 0x0002, type: DataType.singlePrec},
         },
         commands: {},
         commandsResponse: {},
