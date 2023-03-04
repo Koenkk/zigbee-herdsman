@@ -596,7 +596,7 @@ class Device extends Entity {
         }
 
         // Make sure that the endpoint are sorted.
-        activeEndpoints.endpoints.sort();
+        activeEndpoints.endpoints.sort((a, b) => a - b);
 
         // Some devices, e.g. TERNCY return endpoint 0 in the active endpoints request.
         // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
