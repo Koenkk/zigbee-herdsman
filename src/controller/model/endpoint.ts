@@ -275,6 +275,9 @@ class Endpoint extends Entity {
                     request.resolve(result);
                 } catch (error) {
                     debug.error(error);
+                    if (fastPolling) {
+                        request.reject(error);
+                    }
                     // stop sending on first error
                     if (!ignoreErrors) {
                       break;
@@ -284,7 +287,12 @@ class Endpoint extends Entity {
             }
         }
 
-        this.pendingRequests = this.pendingRequests.filter((r) => !handled.includes(r));
+        if (fastPolling) {
+            // clean up message queue after fastpoll send
+            this.pendingRequests = [];
+        } else {
+            this.pendingRequests = this.pendingRequests.filter((r) => !handled.includes(r));
+        }
     }
 
     private async queueRequest<Type>(func: () => Promise<Type>, sendWhen: 'active' | 'fastpoll'): Promise<Type> {
