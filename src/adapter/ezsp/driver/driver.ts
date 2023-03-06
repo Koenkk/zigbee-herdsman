@@ -538,7 +538,8 @@ export class Driver extends EventEmitter {
         frame.sourceEndpoint = 0;
         frame.destinationEndpoint = 0;
         frame.groupId = 0;
-        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY;
+        frame.options = (EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY ||
+            EmberApsOption.APS_OPTION_ENABLE_ADDRESS_DISCOVERY);
         if (!disableResponse) {
             frame.options ||= EmberApsOption.APS_OPTION_RETRY;
         }

@@ -289,7 +289,7 @@ export class SerialDriver extends EventEmitter {
         this.parser.reset();
         return this.queue.execute<void>(async (): Promise<void> => {
             debug(`--> Write reset`);
-            const waiter = this.waitFor(-1).start();
+            const waiter = this.waitFor(-1, 10000).start();
             this.writer.sendReset();
             debug(`-?- waiting reset`);
             return waiter.promise.catch(async (e) => {
