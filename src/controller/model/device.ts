@@ -709,7 +709,7 @@ class Device extends Entity {
             for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
                 debug.log(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
                 await endpoint.bind('genPollCtrl', coordinator.endpoints[0]);
-                const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval']);
+                const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval'], {sendWhen: 'immediate'});
                 retentionTimeout = pollPeriod.checkinInterval;
                 if (pollPeriod.checkinInterval <= 2400) {// 10 minutes
                     this.defaultSendRequestWhen = 'fastpoll';
