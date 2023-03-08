@@ -229,7 +229,8 @@ class Endpoint extends Entity {
         return {
             profId: this.profileID, epId: this.ID, devId: this.deviceID,
             inClusterList: this.inputClusters, outClusterList: this.outputClusters, clusters: this.clusters,
-            binds: this._binds, configuredReportings: this._configuredReportings, meta: this.meta, retentionTimeout: this.retentionTimeout
+            binds: this._binds, configuredReportings: this._configuredReportings, meta: this.meta,
+            retentionTimeout: this.retentionTimeout
         };
     }
 
@@ -266,7 +267,7 @@ class Endpoint extends Entity {
         return this.pendingRequests.length > 0;
     }
 
-    public async sendPendingRequests(fastPolling: boolean, ignoreErrors: boolean = true): Promise<void> {
+    public async sendPendingRequests(fastPolling: boolean, ignoreErrors = true): Promise<void> {
         const handled: PendingRequest[] = [];
         for (const request of this.pendingRequests) {
             if ((fastPolling && request.sendWhen == 'fastpoll') || request.sendWhen == 'active') {
@@ -280,7 +281,7 @@ class Endpoint extends Entity {
                     }
                     // stop sending on first error
                     if (!ignoreErrors) {
-                      break;
+                        break;
                     }
                 }
                 handled.push(request);
@@ -298,13 +299,14 @@ class Endpoint extends Entity {
     private async queueRequest<Type>(func: () => Promise<Type>, sendWhen: 'active' | 'fastpoll'): Promise<Type> {
         debug.info(`Sending to ${this.deviceIeeeAddress}/${this.ID} when active`);
         return new Promise((resolve, reject): void =>  {
-            let request: PendingRequest = {func, resolve, reject, sendWhen};
+            const request: PendingRequest = {func, resolve, reject, sendWhen};
             this.pendingRequests.push(request);
 
             // Remove request from queue after a timeout. We use the checkinInterval from genPollCtrl if available.
             // If not, the default is 24h, which practically replicates old behavior where messages never expired
-            // From a standard perspective, as little as 7.68 seconds would be sufficient if the device didn't tell us otherwise.
-            let timeout = this.retentionTimeout + 10000|| 86400000;
+            // From a standard perspective, as little as 7.68 seconds would be sufficient if the device didn't tell
+            /// us otherwise.
+            const timeout = this.retentionTimeout + 10000 || 86400000;
             debug.info(`Queue pending request for ${(timeout) / 1000} seconds`);
             setTimeout( async() => {
                 if (this.pendingRequests.includes(request))
@@ -326,20 +328,22 @@ class Endpoint extends Entity {
     }
 
     private async sendRequest<Type>(func: () => Promise<Type>, sendWhen: SendRequestWhen): Promise<Type> {
- 
+
         // Send message immediately if asked to do so.
         if (sendWhen === 'immediate') {
             debug.info(`sendRequest: sending request immediately`);
-            return await func();
+            return func();
         }
 
         // Add all other messages to the message queue.
-        let promise = this.queueRequest(func, sendWhen);
+        const promise = this.queueRequest(func, sendWhen);
 
         // Try to send the whole message queue, but skip fastpoll messages and stop on first error.
-        debug.info(`sendRequest: try to send message queue - # of pending requests: ${this.pendingRequests.length } active: ${ (this.pendingRequests.filter((r) => r.sendWhen == 'active')).length}`);
+        debug.info(`sendRequest: try to send message queue - # of pending requests: ${this.pendingRequests.length}
+        active: ${ (this.pendingRequests.filter((r) => r.sendWhen == 'active')).length}`);
         await this.sendPendingRequests(false, false);
-        debug.info(`sendRequest: remaining # of pending requests after sending: ${this.pendingRequests.length}  active: ${ (this.pendingRequests.filter((r) => r.sendWhen == 'active')).length}`);
+        debug.info(`sendRequest: remaining # of pending requests after sending: ${this.pendingRequests.length}
+        active: ${ (this.pendingRequests.filter((r) => r.sendWhen == 'active')).length}`);
         return promise;
     }
 
