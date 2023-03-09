@@ -4272,7 +4272,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
         let error = null;
-        try {            
+        try {
             const data = {
                 wasBroadcast: false,
                 address: '0x129',
@@ -4284,7 +4284,7 @@ describe('Controller', () => {
             await mockAdapterEvents['zclData'](data);
             expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
             await mockAdapterEvents['zclData'](data);
-            
+
             await result;
         } catch (e) {
             error = e;
@@ -4294,6 +4294,7 @@ describe('Controller', () => {
     });
 
     it('Write with sendWhen active, timeout', async () => {
+        Date.now.mockReturnValue(1000);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
         const device = controller.getDeviceByIeeeAddr('0x174');
@@ -4309,10 +4310,18 @@ describe('Controller', () => {
         const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true, sendWhen: 'active'});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
-        jest.advanceTimersByTime(20000);
-        let error = null;
+        Date.now.mockReturnValue(21000);
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: 174,
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
         expect((await result)).toBe(undefined);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
+        Date.now.mockReturnValue(150);
     });
 
     it('Write with sendWhen active, sent before timeout', async () => {
@@ -4338,6 +4347,7 @@ describe('Controller', () => {
     });
 
     it('Write with sendWhen active, error after timeout', async () => {
+        Date.now.mockReturnValue(1000);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
         const device = controller.getDeviceByIeeeAddr('0x174');
@@ -4353,15 +4363,26 @@ describe('Controller', () => {
         const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true, sendWhen: 'active'});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
-        jest.advanceTimersByTime(20000);
+        Date.now.mockReturnValue(21000);
         let error = null;
         try {
+            await mockAdapterEvents['zclData']({
+                wasBroadcast: false,
+                address: 174,
+                frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 1,
+
+            });
+            expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
             await result;
         } catch (e) {
             error = e;
         }
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
         expect(error.message).toStrictEqual(`Write 0x174/1 genOnOff({"onOff":10}, {"sendWhen":"active","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
+        Date.now.mockReturnValue(150);
     });
 
     it('Fast polling', async () => {
