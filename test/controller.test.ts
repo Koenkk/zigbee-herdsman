@@ -4301,7 +4301,7 @@ describe('Controller', () => {
         mockDevices[174].attributes[1].checkinInterval = 9999;
         await device.interview();
         const endpoint = device.getEndpoint(1);
-        expect(endpoint.retentionTimeout).toBe(9999);
+        expect(device.pollCheckingInterval).toBe(9999);
 
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => { throw new Error('Dogs barking too hard');});
@@ -4331,7 +4331,7 @@ describe('Controller', () => {
         mockDevices[174].attributes[1].checkinInterval = 9999;
         await device.interview();
         const endpoint = device.getEndpoint(1);
-        expect(endpoint.retentionTimeout).toBe(9999);
+        expect(device.pollCheckingInterval).toBe(9999);
 
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockResolvedValueOnce("");
@@ -4354,7 +4354,7 @@ describe('Controller', () => {
         mockDevices[174].attributes[1].checkinInterval = 9999;
         await device.interview();
         const endpoint = device.getEndpoint(1);
-        expect(endpoint.retentionTimeout).toBe(9999);
+        expect(device.pollCheckingInterval).toBe(9999);
 
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => { throw new Error('Dogs barking too hard');});

@@ -88,7 +88,6 @@ class Endpoint extends Entity {
     private _configuredReportings: ConfiguredReportingInternal[];
     public meta: KeyValue;
     private pendingRequests: PendingRequest[];
-    public retentionTimeout?: number;
 
     // Getters/setters
     get binds(): Bind[] {
@@ -140,7 +139,7 @@ class Endpoint extends Entity {
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
         deviceNetworkAddress: number, deviceIeeeAddress: string, clusters: Clusters, binds: BindInternal[],
         configuredReportings: ConfiguredReportingInternal[],
-        meta: KeyValue, retentionTimeout?: number
+        meta: KeyValue
     ) {
         super();
         this.ID = ID;
@@ -155,7 +154,6 @@ class Endpoint extends Entity {
         this._configuredReportings = configuredReportings;
         this.meta = meta;
         this.pendingRequests = [];
-        this.retentionTimeout = retentionTimeout;
     }
 
     /**
@@ -221,7 +219,7 @@ class Endpoint extends Entity {
         return new Endpoint(
             record.epId, record.profId, record.devId, record.inClusterList, record.outClusterList, deviceNetworkAddress,
             deviceIeeeAddress, record.clusters, record.binds || [], record.configuredReportings || [],
-            record.meta || {}, record.retentionTimeout
+            record.meta || {}
         );
     }
 
@@ -229,18 +227,17 @@ class Endpoint extends Entity {
         return {
             profId: this.profileID, epId: this.ID, devId: this.deviceID,
             inClusterList: this.inputClusters, outClusterList: this.outputClusters, clusters: this.clusters,
-            binds: this._binds, configuredReportings: this._configuredReportings, meta: this.meta,
-            retentionTimeout: this.retentionTimeout
+            binds: this._binds, configuredReportings: this._configuredReportings, meta: this.meta
         };
     }
 
     public static create(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
-        deviceNetworkAddress: number, deviceIeeeAddress: string, retentionTimeout?: number
+        deviceNetworkAddress: number, deviceIeeeAddress: string
     ): Endpoint {
         return new Endpoint(
             ID, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress,
-            deviceIeeeAddress, {}, [], [], {}, retentionTimeout
+            deviceIeeeAddress, {}, [], [], {}
         );
     }
 
@@ -308,7 +305,7 @@ class Endpoint extends Entity {
             // If not, the default is 24h, which practically replicates old behavior where messages never expired
             // From a standard perspective, as little as 7.68 seconds would be sufficient if the device didn't tell
             /// us otherwise.
-            const expires = (this.retentionTimeout || 86400000) + Date.now();
+            const expires = (this.getDevice().pollCheckingInterval ??  86400000) + Date.now();
             const request: PendingRequest = {func, resolve, reject, sendWhen, expires};
             this.pendingRequests.push(request);
         });
