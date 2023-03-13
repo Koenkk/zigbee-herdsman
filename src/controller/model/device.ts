@@ -55,6 +55,7 @@ class Device extends Entity {
     private _deleted: boolean;
     private _defaultSendRequestWhen?: SendRequestWhen;
     private _lastDefaultResponseSequenceNumber: number;
+    private _pollCheckingInterval: number;
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -104,6 +105,8 @@ class Device extends Entity {
     set defaultSendRequestWhen(defaultSendRequestWhen: SendRequestWhen) {
         this._defaultSendRequestWhen = defaultSendRequestWhen;
     }
+    get pollCheckingInterval(): number {return this._pollCheckingInterval;}
+    set pollCheckingInterval(pollCheckingInterval: number) {this._pollCheckingInterval = pollCheckingInterval;}
 
     public meta: KeyValue;
 
@@ -132,7 +135,7 @@ class Device extends Entity {
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
-        lastSeen: number, defaultSendRequestWhen: SendRequestWhen,
+        lastSeen: number, defaultSendRequestWhen: SendRequestWhen, pollCheckingInterval: number
     ) {
         super();
         this.ID = ID;
@@ -157,6 +160,7 @@ class Device extends Entity {
         this.meta = meta;
         this._lastSeen = lastSeen;
         this._defaultSendRequestWhen = defaultSendRequestWhen;
+        this._pollCheckingInterval = pollCheckingInterval;
     }
 
     public createEndpoint(ID: number): Endpoint {
@@ -335,7 +339,7 @@ class Device extends Entity {
             entry.id, entry.type, ieeeAddr, networkAddress, entry.manufId, endpoints,
             entry.manufName, entry.powerSource, entry.modelId, entry.appVersion,
             entry.stackVersion, entry.zclVersion, entry.hwVersion, entry.dateCode, entry.swBuildId,
-            entry.interviewCompleted, meta, entry.lastSeen || null, defaultSendRequestWhen
+            entry.interviewCompleted, meta, entry.lastSeen || null, defaultSendRequestWhen, entry.pollCheckingInterval
         );
     }
 
@@ -353,6 +357,7 @@ class Device extends Entity {
             stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
             swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
             meta: this.meta, lastSeen: this.lastSeen, defaultSendRequestWhen: this.defaultSendRequestWhen,
+            pollCheckingInterval: this.pollCheckingInterval
         };
     }
 
@@ -420,7 +425,7 @@ class Device extends Entity {
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
-            interviewCompleted, {}, null, 'immediate',
+            interviewCompleted, {}, null, 'immediate', undefined
         );
 
         Entity.database.insert(device.toDatabaseEntry());
@@ -708,7 +713,8 @@ class Device extends Entity {
             for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
                 debug.log(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
                 await endpoint.bind('genPollCtrl', coordinator.endpoints[0]);
-                const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval']);
+                const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval'], {sendWhen: 'immediate'});
+                this.pollCheckingInterval = pollPeriod.checkinInterval;
                 if (pollPeriod.checkinInterval <= 2400) {// 10 minutes
                     this.defaultSendRequestWhen = 'fastpoll';
                 } else {

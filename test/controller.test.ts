@@ -4209,16 +4209,10 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         mocksendZclFrameToEndpoint.mockClear();
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard');});
-        const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true, sendWhen: 'active'});
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
-        // We need to send the data after it's been queued, but before we await
-        // the promise. Hijacking queueRequest seems easiest.
-        const origQueueRequest = endpoint.queueRequest;
-        endpoint.queueRequest = async req => {
-            const f = origQueueRequest.call(endpoint, req, 'active');
-
+        // We need to send the data after it's been queued, but before we await the promise.
+        // When sendZclFrameToEndpoint is called for the first time, the data is already queued. 
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
             const data = {
                 wasBroadcast: false,
                 address: '0x129',
@@ -4227,11 +4221,12 @@ describe('Controller', () => {
                 linkquality: 50,
                 groupID: 1,
             }
+            expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+            mockAdapterEvents['zclData'](data);  
 
-            mockAdapterEvents['zclData'](data);
-            return await f;
-        };
-
+            throw new Error('Dogs barking too hard');
+        });
+        const result = await endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true, sendWhen: 'active'});
         expect((await result)).toBe(undefined);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
     });
@@ -4245,7 +4240,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null)
         const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'active'});
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
         const data = {
             wasBroadcast: false,
@@ -4257,10 +4252,10 @@ describe('Controller', () => {
         }
 
         await mockAdapterEvents['zclData'](data);
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
         expect((await result)).toBe(undefined);
         await mockAdapterEvents['zclData'](data);
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
     });
 
     it('Write with sendWhen active error', async () => {
@@ -4271,26 +4266,123 @@ describe('Controller', () => {
         endpoint.pendingRequests.push({resolve: () => {}, reject: () => {}, func: async () => {}});
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard')});
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard')});
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {return Promise.resolve ();});
         const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'active'});
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
         let error = null;
         try {
-            await mockAdapterEvents['zclData']({
+            const data = {
                 wasBroadcast: false,
                 address: '0x129',
                 frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
                 endpoint: 1,
                 linkquality: 50,
                 groupID: 1,
-            });
+            };
+            await mockAdapterEvents['zclData'](data);
+            expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
+            await mockAdapterEvents['zclData'](data);
 
             await result;
         } catch (e) {
             error = e;
         }
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
+        expect(error == null);
+    });
+
+    it('Write with sendWhen active, timeout', async () => {
+        Date.now.mockReturnValue(1000);
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
+        const device = controller.getDeviceByIeeeAddr('0x174');
+        mockDevices[174].attributes[1].checkinInterval = 9999;
+        await device.interview();
+        const endpoint = device.getEndpoint(1);
+        expect(device.pollCheckingInterval).toBe(9999);
+
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => { throw new Error('Dogs barking too hard');});
+        mocksendZclFrameToEndpoint.mockResolvedValueOnce("");
+
+        const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true, sendWhen: 'active'});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
-        expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"active","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
+
+        Date.now.mockReturnValue(21000);
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: 174,
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+        expect((await result)).toBe(undefined);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
+        Date.now.mockReturnValue(150);
+    });
+
+    it('Write with sendWhen active, sent before timeout', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
+        const device = controller.getDeviceByIeeeAddr('0x174');
+        mockDevices[174].attributes[1].checkinInterval = 9999;
+        await device.interview();
+        const endpoint = device.getEndpoint(1);
+        expect(device.pollCheckingInterval).toBe(9999);
+
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockResolvedValueOnce("");
+
+        const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true, sendWhen: 'active'});
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect((await result)).toBe(undefined);
+
+        jest.advanceTimersByTime(20000);
+        let error = null;
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+    });
+
+    it('Write with sendWhen active, error after timeout', async () => {
+        Date.now.mockReturnValue(1000);
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
+        const device = controller.getDeviceByIeeeAddr('0x174');
+        mockDevices[174].attributes[1].checkinInterval = 9999;
+        await device.interview();
+        const endpoint = device.getEndpoint(1);
+        expect(device.pollCheckingInterval).toBe(9999);
+
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => { throw new Error('Dogs barking too hard');});
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => { throw new Error('Dogs barking too hard');});
+
+        const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true, sendWhen: 'active'});
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+
+        Date.now.mockReturnValue(21000);
+        let error = null;
+        try {
+            await mockAdapterEvents['zclData']({
+                wasBroadcast: false,
+                address: 174,
+                frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 1,
+
+            });
+            expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
+            await result;
+        } catch (e) {
+            error = e;
+        }
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
+        expect(error.message).toStrictEqual(`Write 0x174/1 genOnOff({"onOff":10}, {"sendWhen":"active","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
+        Date.now.mockReturnValue(150);
     });
 
     it('Fast polling', async () => {
@@ -4341,6 +4433,65 @@ describe('Controller', () => {
         expect(checkinrsp[3].Payload).toStrictEqual({startFastPolling: true, fastPollTimeout: 0});
 
         expect((await result)).toBe(undefined);
+
+        const cmd = mocksendZclFrameToEndpoint.mock.calls[1];
+        expect(cmd[0]).toBe('0x174');
+        expect(cmd[1]).toBe(174);
+        expect(cmd[2]).toBe(1);
+        expect(cmd[3].Cluster.name).toBe('genOnOff');
+
+        const fastpollstop = mocksendZclFrameToEndpoint.mock.calls[2];
+        expect(fastpollstop[0]).toBe('0x174');
+        expect(fastpollstop[1]).toBe(174);
+        expect(fastpollstop[2]).toBe(1);
+        expect(fastpollstop[3].Cluster.name).toBe('genPollCtrl');
+        expect(fastpollstop[3].Command.name).toBe('fastPollStop');
+        expect(fastpollstop[3].Payload).toStrictEqual({});
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
+    });
+
+    it('Fast polling send error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x174');
+        const target = controller.getDeviceByIeeeAddr('0x129');
+        await device.interview();
+        let error = null;
+        const endpoint = device.getEndpoint(1);
+        endpoint.pendingRequests.push({resolve: () => {}, reject: () => {}, func: async () => {}, sendWhen: 'fastpoll'});
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard')});
+
+        const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true});
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: 174,
+            frame: ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0),
+            endpoint: 1,
+            linkquality: 52,
+            groupID: undefined,
+        });
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+
+        const checkinrsp = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(checkinrsp[0]).toBe('0x174');
+        expect(checkinrsp[1]).toBe(174);
+        expect(checkinrsp[2]).toBe(1);
+        expect(checkinrsp[3].Cluster.name).toBe('genPollCtrl');
+        expect(checkinrsp[3].Command.name).toBe('checkinRsp');
+        expect(checkinrsp[3].Payload).toStrictEqual({startFastPolling: true, fastPollTimeout: 0});
+
+        try {
+            await result;
+        } catch(e) { error = e }
+        expect(error.message).toStrictEqual(`Write 0x174/1 genOnOff({"onOff":1}, {"sendWhen":"fastpoll","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
 
         const cmd = mocksendZclFrameToEndpoint.mock.calls[1];
         expect(cmd[0]).toBe('0x174');
