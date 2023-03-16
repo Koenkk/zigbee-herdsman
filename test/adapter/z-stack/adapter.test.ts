@@ -2469,10 +2469,13 @@ describe("zstack-adapter", () => {
         }
 
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
-        expect(mockZnpRequest).toBeCalledTimes(3);
+        expect(mockZnpRequest).toBeCalledTimes(6);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(1, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1}, 99)
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 5, 'extRouteDisc', {dstAddr: 2, options: 0, radius: Constants.AF.DEFAULT_RADIUS})
-        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 2}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 7, "assocGetWithAddress", {extaddr: '0x02', nwkaddr: 2})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 7, "assocRemove", {ieeeadr: '0x02'})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(4, 7, "assocAdd",         {ieeeadr: '0x02', nwkaddr: 2, noderelation: 1})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(5, 5, 'extRouteDisc', {dstAddr: 2, options: 0, radius: Constants.AF.DEFAULT_RADIUS})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(6, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 2}, 99)
         expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 0 - 1 after 1ms"));
     });
 
