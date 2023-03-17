@@ -2454,6 +2454,34 @@ describe("zstack-adapter", () => {
         await adapter.start();
 
         mockZnpRequest.mockClear();
+        assocGetWithAddressNodeRelation = 2;
+        const responseMismatchFrame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 102, 'readRsp', 0, [{attrId: 0, attrData: 5, dataType: 32, status: 0}]);
+        const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
+        const objectMismatch = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()}};
+        let error;
+        try {
+            mockSetTimeout();
+            const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 1, false, false);
+            znpReceived(objectMismatch);
+            await response;
+        } catch (e) {
+            error = e;
+        }
+
+        expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
+        expect(mockZnpRequest).toBeCalledTimes(4);
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(1, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 1}, 99)
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(2, 7, "assocGetWithAddress", {extaddr: '0x02', nwkaddr: 2})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(3, 5, 'extRouteDisc', {dstAddr: 2, options: 0, radius: Constants.AF.DEFAULT_RADIUS})
+        expect(mockZnpRequest).toHaveBeenNthCalledWith(4, 4, "dataRequest", {"clusterid": 0, "data": frame.toBuffer(), "destendpoint": 20, "dstaddr": 2, "len": 5, "options": 0, "radius": 30, "srcendpoint": 1, "transid": 2}, 99)
+        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 0 - 1 after 1ms"));
+    });
+
+    it('Send zcl frame network address timeout should discover route, rewrite child entry and retry for sleepy end device', async () => {
+        basicMocks();
+        await adapter.start();
+
+        mockZnpRequest.mockClear();
 
         const responseMismatchFrame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 102, 'readRsp', 0, [{attrId: 0, attrData: 5, dataType: 32, status: 0}]);
         const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}]);
