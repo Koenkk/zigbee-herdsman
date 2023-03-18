@@ -507,9 +507,9 @@ class ZStackAdapter extends Adapter {
                     const match =  await this.znp.request(
                         Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
                     );
-                    debug(`Node relation (${ieeeAddr}): ${match.payload.noderelation}`);
-                    if (match.payload.noderelation == 1) { // CHILD_RFD only
-                        debug(`Rewrite association table entry (${ieeeAddr})`);
+                    debug(`Response timeout recovery: Node relation ${match.payload.noderelation} (${ieeeAddr})`);
+                    if (this.supportsAssocAdd() && this.supportsAssocRemove() && match.payload.noderelation == 1) {
+                        debug(`Response timeout recovery: Rewrite association table entry (${ieeeAddr})`);
                         await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
                         assocRestore =
                             {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation};
