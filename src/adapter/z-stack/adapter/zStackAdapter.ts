@@ -501,6 +501,20 @@ class ZStackAdapter extends Adapter {
             } catch (error) {
                 debug('Response timeout (%s:%d,%d)', ieeeAddr, networkAddress, responseAttempt);
                 if (responseAttempt < 1 && !disableRecovery) {
+                    // No response could be because the radio of the end device is turned off:
+                    // Sometimes the coordinator does not properly set the PENDING flag.
+                    // Try to rewrite the device entry in the association table, this fixes it sometimes.
+                    const match =  await this.znp.request(
+                        Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
+                    );
+                    debug(`Response timeout recovery: Node relation ${match.payload.noderelation} (${ieeeAddr})`);
+                    if (this.supportsAssocAdd() && this.supportsAssocRemove() && match.payload.noderelation == 1) {
+                        debug(`Response timeout recovery: Rewrite association table entry (${ieeeAddr})`);
+                        await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
+                        assocRestore =
+                            {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation};
+                        await this.znp.request(Subsystem.UTIL, 'assocAdd', assocRestore);
+                    }
                     // No response could be of invalid route, e.g. when message is send to wrong parent of end device.
                     await this.discoverRoute(networkAddress);
                     return this.sendZclFrameToEndpointInternal(
