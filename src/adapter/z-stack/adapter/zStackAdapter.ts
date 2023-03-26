@@ -441,7 +441,7 @@ class ZStackAdapter extends Adapter {
                         Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
                     );
 
-                    if (match.payload.noderelation !== 255) {
+                    if (match.payload.nwkaddr !== 0xFFFE && match.payload.noderelation !== 255) {
                         doAssocRemove = true;
                         assocRestore =
                             {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation};
@@ -507,13 +507,16 @@ class ZStackAdapter extends Adapter {
                     const match =  await this.znp.request(
                         Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
                     );
-                    debug(`Response timeout recovery: Node relation ${match.payload.noderelation} (${ieeeAddr})`);
-                    if (this.supportsAssocAdd() && this.supportsAssocRemove() && match.payload.noderelation == 1) {
+                    debug(`Response timeout recovery: Node relation ${
+                        match.payload.noderelation} (${ieeeAddr} / ${match.payload.nwkaddr})`);
+                    if (this.supportsAssocAdd() && this.supportsAssocRemove() &&
+                        match.payload.nwkaddr !== 0xFFFE && match.payload.noderelation == 1
+                    ) {
                         debug(`Response timeout recovery: Rewrite association table entry (${ieeeAddr})`);
                         await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
-                        assocRestore =
-                            {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation};
-                        await this.znp.request(Subsystem.UTIL, 'assocAdd', assocRestore);
+                        await this.znp.request(Subsystem.UTIL, 'assocAdd',
+                            {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation}
+                        );
                     }
                     // No response could be of invalid route, e.g. when message is send to wrong parent of end device.
                     await this.discoverRoute(networkAddress);
