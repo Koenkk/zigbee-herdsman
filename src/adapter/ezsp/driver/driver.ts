@@ -224,7 +224,7 @@ export class Driver extends EventEmitter {
         
         this.multicast = new Multicast(this);
         await this.multicast.startup([]);
-        await this.multicast.subscribe(242, greenPowerGroup);
+        await this.multicast.subscribe(greenPowerGroup, 242);
         // await this.multicast.subscribe(1, 901);
         return result;
     }
