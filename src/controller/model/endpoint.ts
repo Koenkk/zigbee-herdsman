@@ -71,8 +71,8 @@ interface ConfiguredReporting {
 
 interface PendingRequest {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    func: () => Promise<any>, resolve: (value: any) => any, reject: (error: any) => any, 
-    sendWhen: 'active' | 'fastpoll'
+    func: () => Promise<any>, resolve: (value: any) => any, reject: (error: any) => any,
+    sendWhen: 'active' | 'fastpoll', expires: number
 }
 
 class Endpoint extends Entity {
@@ -139,7 +139,7 @@ class Endpoint extends Entity {
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
         deviceNetworkAddress: number, deviceIeeeAddress: string, clusters: Clusters, binds: BindInternal[],
         configuredReportings: ConfiguredReportingInternal[],
-        meta: KeyValue,
+        meta: KeyValue
     ) {
         super();
         this.ID = ID;
@@ -219,7 +219,7 @@ class Endpoint extends Entity {
         return new Endpoint(
             record.epId, record.profId, record.devId, record.inClusterList, record.outClusterList, deviceNetworkAddress,
             deviceIeeeAddress, record.clusters, record.binds || [], record.configuredReportings || [],
-            record.meta || {},
+            record.meta || {}
         );
     }
 
@@ -227,17 +227,17 @@ class Endpoint extends Entity {
         return {
             profId: this.profileID, epId: this.ID, devId: this.deviceID,
             inClusterList: this.inputClusters, outClusterList: this.outputClusters, clusters: this.clusters,
-            binds: this._binds, configuredReportings: this._configuredReportings, meta: this.meta,
+            binds: this._binds, configuredReportings: this._configuredReportings, meta: this.meta
         };
     }
 
     public static create(
         ID: number, profileID: number, deviceID: number, inputClusters: number[], outputClusters: number[],
-        deviceNetworkAddress: number, deviceIeeeAddress: string,
+        deviceNetworkAddress: number, deviceIeeeAddress: string
     ): Endpoint {
         return new Endpoint(
             ID, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress,
-            deviceIeeeAddress, {}, [], [], {},
+            deviceIeeeAddress, {}, [], [], {}
         );
     }
 
@@ -264,48 +264,73 @@ class Endpoint extends Entity {
         return this.pendingRequests.length > 0;
     }
 
-    public async sendPendingRequests(fastPolling: boolean): Promise<void> {
+    public async sendPendingRequests(fastPolling: boolean, ignoreErrors = true): Promise<void> {
         const handled: PendingRequest[] = [];
         for (const request of this.pendingRequests) {
+            const now = Date.now();
+            if (now > request.expires) {
+                debug.info(`sendPendingRequest: Remove after timeout. Size: ${this.pendingRequests.length}`);
+            }
             if ((fastPolling && request.sendWhen == 'fastpoll') || request.sendWhen == 'active') {
                 try {
                     const result = await request.func();
                     request.resolve(result);
                 } catch (error) {
-                    request.reject(error);
+                    debug.error(error);
+                    if (fastPolling || now > request.expires) {
+                        request.reject(error);
+                        handled.push(request);
+                    }
+                    // stop sending on first error
+                    if (!ignoreErrors) {
+                        break;
+                    }
                 }
                 handled.push(request);
             }
         }
 
-        this.pendingRequests = this.pendingRequests.filter((r) => !handled.includes(r));
+        if (fastPolling) {
+            // clean up message queue after fastpoll send
+            this.pendingRequests = [];
+        } else {
+            this.pendingRequests = this.pendingRequests.filter((r) => !handled.includes(r));
+        }
     }
 
     private async queueRequest<Type>(func: () => Promise<Type>, sendWhen: 'active' | 'fastpoll'): Promise<Type> {
         debug.info(`Sending to ${this.deviceIeeeAddress}/${this.ID} when active`);
         return new Promise((resolve, reject): void =>  {
-            this.pendingRequests.push({func, resolve, reject, sendWhen});
+            // Remove request from queue after a timeout. We use the checkinInterval from genPollCtrl if available.
+            // If not, the default is 24h, which practically replicates old behavior where messages never expired
+            // From a standard perspective, as little as 7.68 seconds would be sufficient if the device didn't tell
+            /// us otherwise.
+            const expires = (this.getDevice().pollCheckingInterval ??  86400000) + Date.now();
+            const request: PendingRequest = {func, resolve, reject, sendWhen, expires};
+            this.pendingRequests.push(request);
         });
     }
 
     private async sendRequest<Type>(func: () => Promise<Type>, sendWhen: SendRequestWhen): Promise<Type> {
-        // If we already have something queued, we queue directly to avoid
-        // messing up the ordering too much.
-        if (sendWhen !== 'immediate' && this.pendingRequests.length > 0) {
-            return this.queueRequest(func, sendWhen);
+
+        // Send message immediately if asked to do so.
+        if (sendWhen === 'immediate') {
+            debug.info(`sendRequest: sending request immediately`);
+            return func();
         }
 
-        try {
-            return await func();
-        } catch(error) {
-            if (sendWhen === 'immediate') {
-                throw(error);
-            }
-        }
+        // Add all other messages to the message queue.
+        const promise = this.queueRequest(func, sendWhen);
 
-        // If we got a failed transaction, the device is likely sleeping.
-        // Queue for transmission later.
-        return this.queueRequest(func, sendWhen);
+        // Try to send the whole message queue, but skip fastpoll messages and stop on first error.
+        debug.info(`sendRequest: try to send message queue - # of pending requests: ${
+            this.pendingRequests.length} active: ${
+            (this.pendingRequests.filter((r) => r.sendWhen == 'active')).length}`);
+        await this.sendPendingRequests(false, false);
+        debug.info(`sendRequest: remaining # of pending requests after sending: ${
+            this.pendingRequests.length} active: ${
+            (this.pendingRequests.filter((r) => r.sendWhen == 'active')).length}`);
+        return promise;
     }
 
     /*
