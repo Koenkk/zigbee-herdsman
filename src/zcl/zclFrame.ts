@@ -43,10 +43,10 @@ class ZclFrame {
      */
     public static create(
         frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number,
-        transactionSequenceNumber: number, commandKey: number | string, clusterID: number,
+        transactionSequenceNumber: number, commandKey: number | string, clusterKey: number | string,
         payload: ZclPayload, reservedBits = 0
     ): ZclFrame {
-        const cluster = Utils.getCluster(clusterID, manufacturerCode != null ? manufacturerCode : null);
+        const cluster = Utils.getCluster(clusterKey, manufacturerCode != null ? manufacturerCode : null);
         let command: TsType.Command = null;
         if (frameType === FrameType.GLOBAL) {
             command = Utils.getGlobalCommand(commandKey);

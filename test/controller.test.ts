@@ -2870,6 +2870,19 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[0][7]).toBe(null);
     });
 
+    it('Endpoint command with duplicate cluster ID', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockClear();
+        await endpoint.command('manuSpecificAssaDoorLock', 'getBatteryLevel', {})
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe('0x129');
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].toBuffer()).toStrictEqual(Buffer.from([1, 11, 18]));
+    });
+
     it('Endpoint command with duplicate identifier', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
