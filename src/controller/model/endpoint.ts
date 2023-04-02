@@ -71,8 +71,8 @@ interface ConfiguredReporting {
 
 interface PendingRequest {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    func: () => Promise<any>, resolve: (value: any) => any, reject: (error: any) => any, 
-    sendWhen: 'active' | 'fastpoll'
+    func: () => Promise<any>, resolve: (value: any) => any, reject: (error: any) => any,
+    sendWhen: 'active' | 'fastpoll', expires: number
 }
 
 class Endpoint extends Entity {
@@ -88,6 +88,7 @@ class Endpoint extends Entity {
     private _configuredReportings: ConfiguredReportingInternal[];
     public meta: KeyValue;
     private pendingRequests: PendingRequest[];
+    private sendInProgress: boolean;
 
     // Getters/setters
     get binds(): Bind[] {
@@ -265,26 +266,59 @@ class Endpoint extends Entity {
     }
 
     public async sendPendingRequests(fastPolling: boolean): Promise<void> {
+
+        if (this.pendingRequests.length === 0) return;
+
+        if (this.sendInProgress) {
+            debug.info(`Request Queue (${this.deviceIeeeAddress}): send pending requests already in progress`);
+            return;
+        }
+        this.sendInProgress = true;
+
+        const now = Date.now();
+        const expired: PendingRequest[] = [];
+        for (const request of this.pendingRequests) {
+            if (now > request.expires) {
+                debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): discard after timeout. Size before: ${
+                    this.pendingRequests.length}`);
+                request.reject("Message discarded after Timeout");
+                expired.push(request);
+            }
+        }
+        this.pendingRequests = this.pendingRequests.filter((r) => !expired.includes(r));
+
         const handled: PendingRequest[] = [];
         for (const request of this.pendingRequests) {
             if ((fastPolling && request.sendWhen == 'fastpoll') || request.sendWhen == 'active') {
                 try {
                     const result = await request.func();
+                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`);
                     request.resolve(result);
                 } catch (error) {
+                    debug.error(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ${
+                        (request.expires - now) / 1000} seconds`);
                     request.reject(error);
                 }
                 handled.push(request);
             }
         }
 
+        const sizeBefore = this.pendingRequests.length;
         this.pendingRequests = this.pendingRequests.filter((r) => !handled.includes(r));
+        if (handled.length > 0) {
+            debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): remove ${
+                handled.length} requests from queue (${sizeBefore} --> ${this.pendingRequests.length})`);
+        }
+        this.sendInProgress = false;
     }
 
     private async queueRequest<Type>(func: () => Promise<Type>, sendWhen: 'active' | 'fastpoll'): Promise<Type> {
         debug.info(`Sending to ${this.deviceIeeeAddress}/${this.ID} when active`);
         return new Promise((resolve, reject): void =>  {
-            this.pendingRequests.push({func, resolve, reject, sendWhen});
+            // Remove request from queue after timeout
+            const expires = this.getDevice().pendingRequestTimeout + Date.now();
+            const request: PendingRequest = {func, resolve, reject, sendWhen, expires};
+            this.pendingRequests.push(request);
         });
     }
 
