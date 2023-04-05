@@ -3,6 +3,7 @@ import {KeyValue, SendRequestWhen} from '../tstype';
 import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
+import {ZclDataPayload} from '../../adapter/events';
 import Group from './group';
 import Device from './device';
 import Debug from "debug";
@@ -321,25 +322,29 @@ class Endpoint extends Entity {
             this.pendingRequests.push(request);
         });
     }
-
-    private async sendRequest<Type>(func: () => Promise<Type>, sendWhen: SendRequestWhen): Promise<Type> {
+    /* eslint-disable-next-line */
+    private async sendRequest<Type = ZclDataPayload>(data: any, options: Options, func: () => Promise<Type> = (): Promise<any> => {
+        return Entity.adapter.sendZclFrameToEndpoint(
+            this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, data, options.timeout,
+            options.disableResponse, options.disableRecovery, options.srcEndpoint);
+    }): Promise<Type> {
         // If we already have something queued, we queue directly to avoid
         // messing up the ordering too much.
-        if (sendWhen !== 'immediate' && this.pendingRequests.length > 0) {
-            return this.queueRequest(func, sendWhen);
+        if (options.sendWhen !== 'immediate' && this.pendingRequests.length > 0) {
+            return this.queueRequest(func, options.sendWhen);
         }
 
         try {
             return await func();
         } catch(error) {
-            if (sendWhen === 'immediate') {
+            if (options.sendWhen === 'immediate') {
                 throw(error);
             }
         }
 
         // If we got a failed transaction, the device is likely sleeping.
         // Queue for transmission later.
-        return this.queueRequest(func, sendWhen);
+        return this.queueRequest(func, options.sendWhen);
     }
 
     /*
@@ -379,12 +384,7 @@ class Endpoint extends Entity {
                 "report", cluster.ID, payload, options.reservedBits
             );
 
-            await this.sendRequest(async () => {
-                await Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint,
-                );
-            }, options.sendWhen);
+            await this.sendRequest(frame, options);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -420,13 +420,7 @@ class Endpoint extends Entity {
                 options.writeUndiv ? "writeUndiv" : "write", cluster.ID, payload, options.reservedBits
             );
 
-            const result = await this.sendRequest(async () => {
-                return Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint,
-                );
-            }, options.sendWhen);
-
+            const result = await this.sendRequest(frame, options);
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
             }
@@ -469,12 +463,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await this.sendRequest(async () => {
-                await Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            await this.sendRequest(frame, options);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -503,12 +492,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const result = await this.sendRequest(async () => {
-                return Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint,
-                );
-            }, options.sendWhen);
+            const result = await this.sendRequest(frame, options);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -551,12 +535,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await this.sendRequest(async () => {
-                await Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            await this.sendRequest(frame, options);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -664,12 +643,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await this.sendRequest(async () => {
-                await Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            await this.sendRequest(frame, options);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -717,12 +691,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const result = await this.sendRequest(async () => {
-                return Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            const result = await this.sendRequest(frame, options);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -768,12 +737,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await this.sendRequest(async () => {
-                await Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            await this.sendRequest(frame, options);
 
             // TODO: support `writeStructuredResponse`
         } catch (error) {
@@ -803,12 +767,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const result = await this.sendRequest(async () => {
-                return Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            const result = await this.sendRequest(frame, options);
 
             if (result) {
                 return result.frame.Payload;
@@ -840,7 +799,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await this.sendRequest(async () => {
+            await this.sendRequest(frame, options, async () => {
                 // Broadcast Green Power responses
                 if (this.ID === 242) {
                     await Entity.adapter.sendZclFrameToAll(242, frame, 242);
@@ -850,7 +809,7 @@ class Endpoint extends Entity {
                         options.disableResponse, options.disableRecovery, options.srcEndpoint
                     );
                 }
-            }, options.sendWhen);
+            });
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
