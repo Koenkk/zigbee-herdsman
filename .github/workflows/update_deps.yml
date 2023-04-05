@@ -17,7 +17,7 @@ jobs:
     - run: rm -rf package-lock.json
     - run: npx npm-check-updates -u -x serialport # serialport is currently broken: https://github.com/Koenkk/zigbee-herdsman/issues/540
     - run: npm install
-    - uses: peter-evans/create-pull-request@v4
+    - uses: peter-evans/create-pull-request@v5
       with:
         commit-message: Update dependencies
         branch: "update_deps"
