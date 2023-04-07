@@ -43,10 +43,10 @@ class ZclFrame {
      */
     public static create(
         frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number,
-        transactionSequenceNumber: number, commandKey: number | string, clusterID: number,
+        transactionSequenceNumber: number, commandKey: number | string, clusterKey: number | string,
         payload: ZclPayload, reservedBits = 0
     ): ZclFrame {
-        const cluster = Utils.getCluster(clusterID, manufacturerCode != null ? manufacturerCode : null);
+        const cluster = Utils.getCluster(clusterKey, manufacturerCode != null ? manufacturerCode : null);
         let command: TsType.Command = null;
         if (frameType === FrameType.GLOBAL) {
             command = Utils.getGlobalCommand(commandKey);
@@ -347,7 +347,7 @@ class ZclFrame {
                 } else if(condition.type == 'bitFieldEnum') {
                     return ((entry[condition.param] >> condition.offset) & ((1<<condition.size)-1)) !== condition.value;
                 } else if (remainingBufferBytes != null && condition.type == 'minimumRemainingBufferBytes') {
-                    return remainingBufferBytes < condition.value;
+                    return remainingBufferBytes < (condition.value as number);
                 } else  {
                     /* istanbul ignore else */
                     if (condition.type == 'dataTypeValueTypeEquals') {

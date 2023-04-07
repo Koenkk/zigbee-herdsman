@@ -2050,6 +2050,8 @@ const Cluster: {
             elkoCalibration: {ID: 0x0417, type: DataType.int8, manufacturerCode: ManufacturerCode.ELKO},
             elkoLastMessageId: {ID: 0x0418, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
             elkoLastMessageStatus: {ID: 0x0419, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
+            fourNoksHysteresisHigh: {ID: 0x0101, type: DataType.uint16, manufacturerCode: ManufacturerCode._4_NOKS},
+            fourNoksHysteresisLow: {ID: 0x0102, type: DataType.uint16, manufacturerCode: ManufacturerCode._4_NOKS},
         },
         commands: {
             setpointRaiseLower: {
