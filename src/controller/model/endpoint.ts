@@ -3,7 +3,7 @@ import {KeyValue, SendRequestWhen} from '../tstype';
 import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
-import {ZclDataPayload} from '../../adapter/events';
+import {Events as AdapterEvents} from '../../adapter';
 import Group from './group';
 import Device from './device';
 import Debug from "debug";
@@ -73,7 +73,7 @@ interface ConfiguredReporting {
 interface PendingRequest {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     func: () => Promise<any>, resolve: (value: any) => any, reject: (error: any) => any,
-    sendWhen: 'active' | 'fastpoll', expires: number
+    sendWhen: 'active' | 'fastpoll', expires: number, lastError: Error
 }
 
 class Endpoint extends Entity {
@@ -271,80 +271,101 @@ class Endpoint extends Entity {
         if (this.pendingRequests.length === 0) return;
 
         if (this.sendInProgress) {
-            debug.info(`Request Queue (${this.deviceIeeeAddress}): send pending requests already in progress`);
+            debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): sendPendingRequests already in progress`);
             return;
         }
         this.sendInProgress = true;
 
+        // Remove expired requests first
         const now = Date.now();
-        const expired: PendingRequest[] = [];
-        for (const request of this.pendingRequests) {
-            if (now > request.expires) {
-                debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): discard after timeout. Size before: ${
-                    this.pendingRequests.length}`);
-                request.reject("Message discarded after Timeout");
-                expired.push(request);
+        this.pendingRequests = this.pendingRequests.filter((request) => {
+            const isExpired = now > request.expires;
+            if (isExpired) {
+                debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): discard after timeout. ` +
+                `Size before: ${this.pendingRequests.length}`);
+                request.reject(request.lastError ?? new Error("Request timeout before first check-in"));
             }
-        }
-        this.pendingRequests = this.pendingRequests.filter((r) => !expired.includes(r));
+            return !isExpired;
+        });
 
-        const handled: PendingRequest[] = [];
-        for (const request of this.pendingRequests) {
+        const postponedRequests = [];
+        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send pending requests (` +
+            `${this.pendingRequests.length}, ${fastPolling})`);
+
+        // Elements can be added to the queue while send is in progress.
+        // Using a while loop ensures that newly added elements are also sent in the end
+        while (this.pendingRequests.length > 0) {
+            const request = this.pendingRequests.shift();
+
             if ((fastPolling && request.sendWhen == 'fastpoll') || request.sendWhen == 'active') {
                 try {
                     const result = await request.func();
                     debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`);
                     request.resolve(result);
                 } catch (error) {
-                    debug.error(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ${
-                        (request.expires - now) / 1000} seconds`);
+                    debug.error(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ` +
+                        `${(request.expires - now) / 1000} seconds`);
                     request.reject(error);
                 }
-                handled.push(request);
+            }
+            else {
+                postponedRequests.push(request);
             }
         }
-
-        const sizeBefore = this.pendingRequests.length;
-        this.pendingRequests = this.pendingRequests.filter((r) => !handled.includes(r));
-        if (handled.length > 0) {
-            debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): remove ${
-                handled.length} requests from queue (${sizeBefore} --> ${this.pendingRequests.length})`);
-        }
+        this.pendingRequests = postponedRequests;
         this.sendInProgress = false;
     }
 
-    private async queueRequest<Type>(func: () => Promise<Type>, sendWhen: 'active' | 'fastpoll'): Promise<Type> {
-        debug.info(`Sending to ${this.deviceIeeeAddress}/${this.ID} when active`);
+    private async queueRequest<Type>(func: () => Promise<Type>, sendWhen: 'active' | 'fastpoll',
+        lastError?: Error): Promise<Type> {
+        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Sending when active. ` +
+            `Timeout ${this.getDevice().pendingRequestTimeout/1000} seconds`);
         return new Promise((resolve, reject): void =>  {
             // Remove request from queue after timeout
             const expires = this.getDevice().pendingRequestTimeout + Date.now();
-            const request: PendingRequest = {func, resolve, reject, sendWhen, expires};
+            const request: PendingRequest = {func, resolve, reject, sendWhen, expires, lastError};
             this.pendingRequests.push(request);
         });
     }
-    /* eslint-disable-next-line */
-    private async sendRequest<Type = ZclDataPayload>(data: any, options: Options, func: () => Promise<Type> = (): Promise<any> => {
-        return Entity.adapter.sendZclFrameToEndpoint(
-            this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, data, options.timeout,
-            options.disableResponse, options.disableRecovery, options.srcEndpoint);
-    }): Promise<Type> {
+
+    private async sendRequest(data: Zcl.ZclFrame, options: Options): Promise<AdapterEvents.ZclDataPayload>;
+    private async sendRequest<Type>(
+        data: Zcl.ZclFrame, options: Options, func: () => Promise<Type>): Promise<Type>;
+    private async sendRequest<Type>(
+        data: Zcl.ZclFrame, options: Options, func: () => Promise<Type> = (): Promise<Type> => {
+            return Entity.adapter.sendZclFrameToEndpoint(
+                this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, data, options.timeout,
+                options.disableResponse, options.disableRecovery, options.srcEndpoint) as Promise<Type>;
+        }): Promise<Type> {
+        const logPrefix = `Request Queue (${this.deviceIeeeAddress}/${this.ID}): `;
+
         // If we already have something queued, we queue directly to avoid
         // messing up the ordering too much.
-        if (options.sendWhen !== 'immediate' && this.pendingRequests.length > 0) {
+        if (options.sendWhen !== 'immediate' && (this.hasPendingRequests() || this.sendInProgress)) {
+            debug.info(logPrefix + `queue request (${this.pendingRequests.length} / ${this.sendInProgress})))`);
             return this.queueRequest(func, options.sendWhen);
         }
 
-        try {
-            return await func();
-        } catch(error) {
-            if (options.sendWhen === 'immediate') {
-                throw(error);
+        // send without queueing if sendWhen is 'immediate' or if this is a response
+        if (options.sendWhen === 'immediate' || (data.Header.frameControl.direction === Zcl.Direction.SERVER_TO_CLIENT))
+        {
+            if (this.getDevice().defaultSendRequestWhen !=='immediate')
+            {
+                debug.info(logPrefix + `send ${data.getCommand().name} request, bypass queue on fail ` +
+                    `(sendWhen=${options.sendWhen})`);
             }
+            return func();
         }
 
+        try {
+            debug.info(logPrefix + `send request (queue empty)`);
+            return await func();
+        } catch(error) {
         // If we got a failed transaction, the device is likely sleeping.
         // Queue for transmission later.
-        return this.queueRequest(func, options.sendWhen);
+            debug.info(logPrefix + `queue request (transaction failed)`);
+            return this.queueRequest(func, options.sendWhen, error);
+        }
     }
 
     /*
