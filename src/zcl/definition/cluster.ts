@@ -4953,7 +4953,7 @@ const Cluster: {
             deviceBindNumber: {ID: 0x0033, type: DataType.uint8},
             smartBulbMode: {ID: 0x0034, type: DataType.boolean},
             doubleTapUpToParam55: {ID: 0x0035, type: DataType.boolean},
-            doubleTapUpToParam56: {ID: 0x0036, type: DataType.boolean},
+            doubleTapUpDownParam56: {ID: 0x0036, type: DataType.boolean},
             brightnessLevelForDoubleTapUp: {ID: 0x0037, type: DataType.uint8},
             brightnessLevelForDoubleTapDown: {ID: 0x0038, type: DataType.uint8},
             defaultLed1ColorWhenOn: {ID: 0x003c, type: DataType.uint8},
