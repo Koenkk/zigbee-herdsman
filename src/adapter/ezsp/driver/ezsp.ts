@@ -59,20 +59,26 @@ export class EZSPFrameData {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     [name: string]: any;
 
-    static createFrame(frame_id: number, isRequest: boolean, params: ParamsDesc | Buffer): EZSPFrameData {
+    static createFrame(
+        ezspv: number, frame_id: number, isRequest: boolean, params: ParamsDesc | Buffer
+    ): EZSPFrameData {
         const names = FRAME_NAMES_BY_ID[frame_id];
         if (!names) {
             throw new Error(`Unrecognized frame FrameID ${frame_id}`);
         }
         let frm: EZSPFrameData;
         names.every((frameName)=>{
+            const frameDesc = EZSPFrameData.getFrame(frameName);
+            if ((frameDesc.maxV && frameDesc.maxV < ezspv) || (frameDesc.minV && frameDesc.minV > ezspv)) {
+                return true;
+            }
             try {
-                frm = new EZSPFrameData(frameName, false, params);
-                return false;
+                frm = new EZSPFrameData(frameName, isRequest, params);
             } catch (error) {
                 debug.error(`Frame ${frameName} parsing error: ${error.stack}`);
                 return true;
             }
+            return false;
         });
         return frm;
     }
@@ -288,6 +294,7 @@ export class Ezsp extends EventEmitter {
         if (force) {
             clearTimeout(this.watchdogTimer);
         }
+        this.queue.clear();
         await this.serialDriver.close();
     }
 
@@ -317,7 +324,11 @@ export class Ezsp extends EventEmitter {
                 data = data.subarray(2);
             }
         }
-        const frm = EZSPFrameData.createFrame(frame_id, false, data);
+        const frm = EZSPFrameData.createFrame(this.ezspV, frame_id, false, data);
+        if (!frm) {
+            debug.error(`Unparsed frame 0x${frame_id.toString(16)}. Skipped`);
+            return;
+        }
         debug.log(`<== 0x${frame_id.toString(16)}: ${JSON.stringify(frm)}`);
         const handled = this.waitress.resolve({
             frameId: frame_id,
