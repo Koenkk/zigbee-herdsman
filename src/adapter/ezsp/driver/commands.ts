@@ -86,6 +86,8 @@ export interface EZSPFrameDesc {
     ID: number,
     request: ParamsDesc,
     response: ParamsDesc,
+    minV?: number,
+    maxV?: number
 }
 
 export const FRAMES: {[key: string]: EZSPFrameDesc} = {
@@ -2231,6 +2233,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             newChildId: EmberNodeId,
             newParentId: EmberNodeId
         },
+        maxV: 8
     },
     incomingNetworkStatusHandler: {
         ID: 0x00C4,
@@ -2239,6 +2242,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             errorCode: uint8_t,
             target: EmberNodeId
         },
+        minV: 9
     },
     setSourceRouteDiscoveryMode: {
         ID: 0x005a,

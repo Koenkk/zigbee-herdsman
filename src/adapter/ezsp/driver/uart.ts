@@ -50,7 +50,7 @@ export class SerialDriver extends EventEmitter {
     constructor() {
         super();
         this.initialized = false;
-        this.queue = new Queue(8);
+        this.queue = new Queue(1);
         this.waitress = new Waitress<EZSPPacket, EZSPPacketMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
@@ -287,6 +287,7 @@ export class SerialDriver extends EventEmitter {
     async reset(): Promise<void> {
         debug('Uart reseting');
         this.parser.reset();
+        this.queue.clear();
         return this.queue.execute<void>(async (): Promise<void> => {
             debug(`--> Write reset`);
             const waiter = this.waitFor(-1, 10000).start();
@@ -305,15 +306,16 @@ export class SerialDriver extends EventEmitter {
 
     public close(): Promise<void> {
         return new Promise((resolve, reject): void => {
+            this.queue.clear();
             if (this.initialized) {
                 if (this.portType === 'serial') {
                     this.serialPort.flush((): void => {
                         this.serialPort.close((error): void => {
                             this.initialized = false;
+                            this.emit('close');
                             error == null ?
                                 resolve() :
                                 reject(new Error(`Error while closing serialport '${error}'`));
-                            this.emit('close');
                         });
                     });
                 } else {
@@ -321,8 +323,8 @@ export class SerialDriver extends EventEmitter {
                     resolve();
                 }
             } else {
-                resolve();
                 this.emit('close');
+                resolve();
             }
         });
     }
