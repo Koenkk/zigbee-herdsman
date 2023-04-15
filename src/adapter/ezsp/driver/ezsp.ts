@@ -59,7 +59,9 @@ export class EZSPFrameData {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     [name: string]: any;
 
-    static createFrame(ezspv: number, frame_id: number, isRequest: boolean, params: ParamsDesc | Buffer): EZSPFrameData {
+    static createFrame(
+        ezspv: number, frame_id: number, isRequest: boolean, params: ParamsDesc | Buffer
+    ): EZSPFrameData {
         const names = FRAME_NAMES_BY_ID[frame_id];
         if (!names) {
             throw new Error(`Unrecognized frame FrameID ${frame_id}`);
