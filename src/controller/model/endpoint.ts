@@ -361,8 +361,8 @@ class Endpoint extends Entity {
             debug.info(logPrefix + `send request (queue empty)`);
             return await func();
         } catch(error) {
-        // If we got a failed transaction, the device is likely sleeping.
-        // Queue for transmission later.
+            // If we got a failed transaction, the device is likely sleeping.
+            // Queue for transmission later.
             debug.info(logPrefix + `queue request (transaction failed)`);
             return this.queueRequest(func, options.sendWhen, error);
         }
