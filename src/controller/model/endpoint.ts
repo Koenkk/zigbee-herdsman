@@ -1,5 +1,5 @@
 import Entity from './entity';
-import {KeyValue, SendRequestWhen} from '../tstype';
+import {KeyValue, SendRequestWhen, SendPolicy} from '../tstype';
 import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
@@ -13,6 +13,34 @@ const debug = {
     info: Debug('zigbee-herdsman:controller:endpoint'),
     error: Debug('zigbee-herdsman:controller:endpoint'),
 };
+
+const defaultSendPolicy: {[key: number]: SendPolicy} = {
+    0x00: 'keep-payload',   // Read Attributes
+    0x01: 'immediate',      // Read Attributes Response
+    0x02: 'keep-command',   // Write Attributes
+    0x03: 'keep-cmd-undiv', // Write Attributes Undivided
+    0x04: 'immediate',      // Write Attributes Response
+    0x05: 'keep-command',   // Write Attributes No Response
+    0x06: 'keep-payload',   // Configure Reporting
+    0x07: 'immediate',      // Configure Reporting Response
+    0x08: 'keep-payload',   // Read Reporting Configuration
+    0x09: 'immediate',      // Read Reporting Configuration Response
+    0x0a: 'keep-payload',   // Report attributes
+    0x0b: 'immediate',      // Default Response
+    0x0c: 'keep-payload',   // Discover Attributes
+    0x0d: 'immediate',      // Discover Attributes Response
+    0x0e: 'keep-payload',   // Read Attributes Structured
+    0x0f: 'keep-payload',   // Write Attributes Structured
+    0x10: 'immediate',      // Write Attributes Structured response
+    0x11: 'keep-payload',   // Discover Commands Received
+    0x12: 'immediate',      // Discover Commands Received Response
+    0x13: 'keep-payload',   // Discover Commands Generated
+    0x14: 'immediate',      // Discover Commands Generated Response
+    0x15: 'keep-payload',   // Discover Attributes Extended
+    0x16: 'immediate',      // Discover Attributes Extended Response
+};
+
+type Mutable<T> = { -readonly [P in keyof T ]: T[P] };
 
 interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
@@ -76,17 +104,20 @@ export class Request<Type = any> {
     private _func: (frame: Zcl.ZclFrame) => Promise<Type>;
     frame: Zcl.ZclFrame;
     expires: number;
+    sendPolicy: SendPolicy;
     sendWhen: SendRequestWhen;
     private _resolveQueue: Array<(value: Type) => void>;
     private _rejectQueue: Array <(error: Error) => void>;
     private _lastError: Error;
     constructor (func: (frame: Zcl.ZclFrame) => Promise<Type>, frame: Zcl.ZclFrame, timeout: number,
-        sendWhen?: SendRequestWhen, lastError?: Error, resolve?:(value: Type) => void,
-        reject?: (error: Error) => void) {
+        sendWhen?: SendRequestWhen, sendPolicy?: SendPolicy, lastError?: Error,
+        resolve?:(value: Type) => void, reject?: (error: Error) => void) {
         this._func = func;
         this.frame = frame;
         this.sendWhen = sendWhen ?? 'active',
         this.expires =  timeout + Date.now();
+        this.sendPolicy = sendPolicy ?? (typeof frame.getCommand !== 'function' ? 
+            undefined : defaultSendPolicy[frame.getCommand().ID]);
         this._resolveQueue = resolve === undefined ?
             new Array<(value: Type) => void>() : new Array<(value: Type) => void>(resolve);
         this._rejectQueue = reject === undefined ?
@@ -131,8 +162,7 @@ class Endpoint extends Entity {
     private _binds: BindInternal[];
     private _configuredReportings: ConfiguredReportingInternal[];
     public meta: KeyValue;
-    private pendingRequests: Request[];
-    private postponedRequests: Request[];
+    private pendingRequests: Set<Request>;
     private sendInProgress: boolean;
 
     // Getters/setters
@@ -199,8 +229,7 @@ class Endpoint extends Entity {
         this._binds = binds;
         this._configuredReportings = configuredReportings;
         this.meta = meta;
-        this.pendingRequests = [];
-        this.postponedRequests = [];
+        this.pendingRequests = new Set<Request>;
         this.sendInProgress =false;
     }
 
@@ -309,12 +338,12 @@ class Endpoint extends Entity {
     }
 
     public hasPendingRequests(): boolean {
-        return this.pendingRequests.length > 0;
+        return this.pendingRequests.size > 0;
     }
 
     public async sendPendingRequests(fastPolling: boolean): Promise<void> {
 
-        if (this.pendingRequests.length === 0) return;
+        if (this.pendingRequests.size === 0) return;
 
         if (this.sendInProgress) {
             debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): sendPendingRequests already in progress`);
@@ -324,25 +353,19 @@ class Endpoint extends Entity {
 
         // Remove expired requests first
         const now = Date.now();
-        this.pendingRequests = this.pendingRequests.filter((request) => {
-            const isExpired = now > request.expires;
-            if (isExpired) {
+        for (const request of this.pendingRequests) {
+            if (now > request.expires) {
                 debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): discard after timeout. ` +
-                `Size before: ${this.pendingRequests.length}`);
+                `Size before: ${this.pendingRequests.size}`);
                 request.reject();
+                this.pendingRequests.delete(request);
             }
-            return !isExpired;
-        });
+        }
 
-        this.postponedRequests = [];
         debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send pending requests (` +
-            `${this.pendingRequests.length}, ${fastPolling})`);
+            `${this.pendingRequests.size}, ${fastPolling})`);
 
-        // Elements can be added to the queue while send is in progress.
-        // Using a while loop ensures that newly added elements are also sent in the end
-        while (this.pendingRequests.length > 0) {
-            const request = this.pendingRequests.shift();
-
+        for (const request of this.pendingRequests) {
             if ((fastPolling && request.sendWhen == 'fastpoll') || request.sendWhen == 'active') {
                 try {
                     const result = await request.send();
@@ -353,13 +376,9 @@ class Endpoint extends Entity {
                         `${(request.expires - now) / 1000} seconds`);
                     request.reject(error);
                 }
-            }
-            else {
-                this.postponedRequests.push(request);
+                this.pendingRequests.delete(request);
             }
         }
-        this.pendingRequests = this.postponedRequests;
-        this.postponedRequests = [];
         this.sendInProgress = false;
     }
 
@@ -368,7 +387,7 @@ class Endpoint extends Entity {
             `Timeout ${this.getDevice().pendingRequestTimeout/1000} seconds`);
         return new Promise((resolve, reject): void =>  {
             request.addCallbacks(resolve, reject);
-            this.pendingRequests.push(request);
+            this.pendingRequests.add(request);
         });
     }
 
@@ -398,7 +417,7 @@ class Endpoint extends Entity {
         // If we already have something queued, we queue directly to avoid
         // messing up the ordering too much.
         if (this.hasPendingRequests() || this.sendInProgress) {
-            debug.info(logPrefix + `queue request (${this.pendingRequests.length} / ${this.sendInProgress})))`);
+            debug.info(logPrefix + `queue request (${this.pendingRequests.size} / ${this.sendInProgress})))`);
             return this.queueRequest(request);
         }
 
