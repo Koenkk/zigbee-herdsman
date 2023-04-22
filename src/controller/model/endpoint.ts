@@ -311,6 +311,46 @@ class Endpoint extends Entity {
             this.pendingRequests.add(request);
         });
     }
+    private filterRequests(newRequest: Request): void {
+
+        if(this.pendingRequests.size === 0 || !(typeof newRequest.frame.getCommand === 'function')) {
+            return;
+        }
+        const clusterID = newRequest.frame.Cluster.ID;
+        const payload = newRequest.frame.Payload;
+        const commandID = newRequest.frame.getCommand().ID;
+
+        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): ZCL ${newRequest.frame.getCommand().name} ` +
+            `command, filter requests. Before: ${this.pendingRequests.size}`);
+
+        for (const request of this.pendingRequests) {
+            if( request?.frame?.Cluster?.ID === undefined || typeof request.frame.getCommand !== 'function') {
+                continue;
+            }
+            if (['bulk', 'queue', 'immediate', 'keep-payload'].includes(request.sendPolicy)) {
+                continue;
+            }
+            /* istanbul ignore else */
+            if(request.frame.Cluster.ID === clusterID && request.frame.getCommand().ID === commandID) {
+                /* istanbul ignore else */
+                if (newRequest.sendPolicy === 'keep-command' || newRequest.sendPolicy === 'keep-cmd-undiv') {
+                    const filteredPayload = request.frame.Payload.filter((oldEl: {attrId: number}) =>
+                        !payload.find((newEl: {attrId: number}) => oldEl.attrId === newEl.attrId));
+                    if (filteredPayload.length == 0) {
+                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Remove & reject request`);
+                        request.reject();
+                        this.pendingRequests.delete(request);
+                    } else if (newRequest.sendPolicy !== 'keep-cmd-undiv') {
+                        // remove all duplicate attributes if we shall not write undivided
+                        (request.frame as Mutable<Zcl.ZclFrame>).Payload = filteredPayload;
+                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): `
+                            + `Remove commands from request`);
+                    }
+                }
+            }
+        }
+        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): After: ${this.pendingRequests.size}`);
+    }
 
     private async sendRequest(frame: Zcl.ZclFrame, options: Options): Promise<AdapterEvents.ZclDataPayload>;
     private async sendRequest<Type>(frame: Zcl.ZclFrame, options: Options,
@@ -324,6 +364,8 @@ class Endpoint extends Entity {
         const logPrefix = `Request Queue (${this.deviceIeeeAddress}/${this.ID}): `;
         const request = new Request(func, frame, this.getDevice().pendingRequestTimeout, options.sendWhen);
 
+        // Check if such a request is already in the queue and remove the old one(s) if necessary
+        this.filterRequests(request);
 
         // send without queueing if sendWhen is 'immediate' or if this is a response
         if (options.sendWhen === 'immediate'

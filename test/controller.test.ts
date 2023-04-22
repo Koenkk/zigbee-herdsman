@@ -4349,6 +4349,64 @@ describe('Controller', () => {
         expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"active","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
     });
 
+    it('Write with sendWhen active, replace queued messages', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        //add a request with empty data and a ZclFrame to the queue
+        endpoint.pendingRequests.add(new Request(async () => {}, [], 100));
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {});
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard')});
+        let result1, result2: Promise <any>;
+        endpoint.write('genOnOff', {onOff: 0, startUpOnOff: 0}, {disableResponse: true, sendWhen: 'active'});
+        result1 = endpoint.write('genOnOff', {onOff: 0}, {disableResponse: true, sendWhen: 'active'});
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+        expect(endpoint.pendingRequests.size).toStrictEqual (3);
+        //add another non-ZCL request, should go directly to queue without errors
+        endpoint.sendRequest(5, [], (d) => d+1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+        expect(endpoint.pendingRequests.size).toStrictEqual (4);
+        let error = null;
+        try {
+            // Add the same ZCL request with different payload again, the first one should be rejected and removed from the queue
+            result2 = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'active'});
+            await result1;
+        } catch (e) {
+            error = e;
+        }
+        expect(endpoint.pendingRequests.size).toStrictEqual (4);
+        // writeUndiv request should not be divided
+        endpoint.write('genOnOff', {onOff: 0, startUpOnOff: 0}, {disableResponse: true, sendWhen: 'active', writeUndiv: true});
+        endpoint.write('genOnOff', {startUpOnOff: 1}, {disableResponse: true, sendWhen: 'active', writeUndiv: true});
+        // read request should not be divided
+        endpoint.read('genOnOff', ['onOff'], {disableResponse: true, sendWhen: 'active'});
+        endpoint.read('genOnOff', ['onOff'], {disableResponse: true, sendWhen: 'active'});
+        expect(endpoint.pendingRequests.size).toStrictEqual (8);
+        try {
+            // Implicit checkin, there are 6 ZclFrames and 2 other requests left in the queue
+            await mockAdapterEvents['zclData']({
+                wasBroadcast: false,
+                address: '0x129',
+                frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 1,
+            });
+
+            await result2;
+        } catch (e) {
+            error = e;
+        }
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(4);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].Payload).toStrictEqual ([{"attrData": 0, "attrId": 16387, "dataType": 48}]);
+        expect(mocksendZclFrameToEndpoint.mock.calls[1][3].Payload).toStrictEqual ([{"attrData": 1, "attrId": 0, "dataType": 16}]);
+        expect(mocksendZclFrameToEndpoint.mock.calls[2][3].Payload).toStrictEqual ([{"attrData": 0, "attrId": 0, "dataType": 16}, {"attrData": 0, "attrId": 16387, "dataType": 48}]);
+        expect(mocksendZclFrameToEndpoint.mock.calls[3][3].Payload).toStrictEqual ([{"attrData": 1, "attrId": 16387, "dataType": 48}]);
+        expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"active","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
+    });
+
     it('Write with sendWhen active, discard messages after expiration', async () => {
         Date.now.mockReturnValue(1000);
         await controller.start();
