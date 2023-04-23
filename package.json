@@ -25,7 +25,7 @@
     }
   ],
   "dependencies": {
-    "@serialport/bindings-cpp": "^10.8.0",
+    "@serialport/bindings-cpp": "^11.0.1",
     "@serialport/parser-delimiter": "^10.5.0",
     "@serialport/stream": "^10.5.0",
     "debounce": "^1.2.1",
@@ -56,7 +56,7 @@
     "eslint": "*",
     "jest": "*",
     "regenerator-runtime": "*",
-    "typedoc": "^0.24.2",
+    "typedoc": "^0.24.5",
     "typedoc-plugin-markdown": "*",
     "typedoc-plugin-no-inherit": "*",
     "typedoc-plugin-sourcefile-url": "*",
