@@ -40,8 +40,6 @@ const defaultSendPolicy: {[key: number]: SendPolicy} = {
     0x16: 'immediate',      // Discover Attributes Extended Response
 };
 
-type Mutable<T> = { -readonly [P in keyof T ]: T[P] };
-
 interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
     minimumReportInterval: number;
