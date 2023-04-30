@@ -114,6 +114,17 @@ class Buffalo {
         return value;
     }
 
+    public writeInt48(value: number): void {
+        this.buffer.writeIntLE(value, this.position, 6);
+        this.position += 6;
+    }
+
+    public readInt48(): number {
+        const value = this.buffer.readIntLE(this.position, 6);
+        this.position += 6;
+        return value;
+    }
+
     public writeFloatLE(value: number): void {
         this.buffer.writeFloatLE(value, this.position);
         this.position += 4;
@@ -256,6 +267,8 @@ class Buffalo {
             this.writeInt24(value);
         } else if (type === 'INT32') {
             this.writeInt32(value);
+        } else if (type === 'INT48') {
+            this.writeInt48(value);
         } else if (type === 'FLOATLE') {
             this.writeFloatLE(value);
         } else if (type === 'DOUBLELE') {
@@ -282,7 +295,7 @@ class Buffalo {
             return this.readUInt16();
         } else if (type === 'UINT32') {
             return this.readUInt32();
-        }  else if (type === 'IEEEADDR') {
+        } else if (type === 'IEEEADDR') {
             return this.readIeeeAddr();
         } else if (type.startsWith('BUFFER')) {
             let length = Number(type.replace('BUFFER', ''));
@@ -298,6 +311,8 @@ class Buffalo {
             return this.readInt24();
         } else if (type === 'INT32') {
             return this.readInt32();
+        } else if (type === 'INT48') {
+            return this.readInt48();
         } else if (type === 'FLOATLE') {
             return this.readFloatLE();
         } else if (type === 'DOUBLELE') {

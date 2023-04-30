@@ -30,6 +30,7 @@ enum DataType {
     int16 = 41,
     int24 = 42,
     int32 = 43,
+    int48 = 45,
     enum8 = 48,
     enum16 = 49,
     singlePrec = 57,
@@ -54,7 +55,6 @@ enum DataType {
 
     // TODO: ones below are not in BuffaloZcl and thus cannot be parsed/written
     int40 = 44,
-    int48 = 45,
     int56 = 46,
     int64 = 47,
     semiPrec = 56,

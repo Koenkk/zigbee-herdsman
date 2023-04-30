@@ -4575,7 +4575,26 @@ const Cluster: {
             switchType: {ID: 0xd030, type: DataType.enum8},
             powerOnBehavior: {ID: 0xd010, type: DataType.enum8},
         },
-        commands: {},
+        commands: {
+            setOptions1: {
+                ID: 0xE5,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+            setOptions2: {
+                ID: 0xE6,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+            setOptions3: {
+                ID: 0xE7,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
         commandsResponse: {},
     },
     manuSpecificCentraliteHumidity: {
