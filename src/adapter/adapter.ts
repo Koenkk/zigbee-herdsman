@@ -5,6 +5,7 @@ import {ZclFrame, FrameType, Direction} from '../zcl';
 import Debug from "debug";
 import {LoggerStub} from "../controller/logger-stub";
 import * as Models from "../models";
+import Bonjour from 'bonjour-service';
 
 const debug = Debug("zigbee-herdsman:adapter");
 
@@ -80,6 +81,40 @@ abstract class Adapter extends events.EventEmitter {
             if (!serialPortOptions.path) {
                 throw new Error("No path provided and failed to auto detect path");
             }
+        } else if(serialPortOptions.path.indexOf("mdns://") != -1){
+            const bj = new Bonjour();
+            logger.info("Starting mdns discovery...");
+                const mdnsDevice = serialPortOptions.path.substring(7);
+                const mdnsTimeout: number = 3000;
+                var mdnsIp = "";
+                var mdnsPort = "";
+                var mdnsBaud = 0;
+                var mdnsAdapter = 'zstack' as TsType.SerialPortOptions["adapter"]
+                bj.findOne({ type: mdnsDevice}, mdnsTimeout, function (service: any) {
+                    if(!service) return;
+                    mdnsIp = service.addresses[0];
+                    mdnsPort = service.port;
+                    mdnsAdapter = service.txt.radio_type == "znp" ? "zstack" : service.txt.service;
+                    mdnsBaud = parseInt(service.txt.baud_rate);
+                    logger.info("mdns discovery done!");
+                    logger.info(`Adapter Ip: ${mdnsIp}`);
+                    logger.info(`Adapter Port: ${mdnsPort}`);
+                    logger.info(`Adapter Radio: ${mdnsAdapter}`);
+                    logger.info(`Adapter Baud: ${mdnsBaud}\n`);
+                    bj.destroy();
+                });
+                return await new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if(mdnsIp && mdnsPort && mdnsBaud){
+                            serialPortOptions.path = `tcp://${mdnsIp}:${mdnsPort}`;
+                            serialPortOptions.adapter = mdnsAdapter;
+                            serialPortOptions.baudRate = mdnsBaud;
+                            resolve(new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger));
+                        }else{
+                            bj.destroy();
+                            reject(new Error(`mdns adapter ${mdnsDevice} not found!`));
+                        }
+                }, mdnsTimeout + 100)});
         } else {
             try {
                 // Determine adapter to use
