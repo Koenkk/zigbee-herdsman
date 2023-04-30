@@ -354,6 +354,21 @@ describe('helloworld', () => {
         expect(value).toStrictEqual(-16515320);
     });
 
+    it('INT48 write', () => {
+        const buffalo = new Buffalo(Buffer.alloc(6));
+        buffalo.write('INT48', -1082348273920, {});
+        expect(buffalo.getPosition()).toStrictEqual(6);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xFF, 0x03, 0xFF, 0x03, 0xFF]))
+    });
+
+
+    it('INT48 read', () => {
+        const buffalo = new Buffalo(Buffer.from([0x00, 0xFF, 0x03, 0xFF, 0x03, 0xFF]));
+        const value = buffalo.read('INT48', {});
+        expect(buffalo.getPosition()).toStrictEqual(6);
+        expect(value).toStrictEqual(-1082348273920);
+    });
+
     it('FLOATLE write', () => {
         const buffalo = new Buffalo(Buffer.alloc(4));
         buffalo.write('FLOATLE', 400.50, {});
