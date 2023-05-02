@@ -5,7 +5,7 @@ import {ZclFrame, FrameType, Direction} from '../zcl';
 import Debug from "debug";
 import {LoggerStub} from "../controller/logger-stub";
 import * as Models from "../models";
-import Bonjour from 'bonjour-service';
+import Bonjour, { Service } from 'bonjour-service';
 
 const debug = Debug("zigbee-herdsman:adapter");
 
@@ -83,38 +83,43 @@ abstract class Adapter extends events.EventEmitter {
             }
         } else if(serialPortOptions.path.indexOf("mdns://") != -1){
             const bj = new Bonjour();
-            logger.info("Starting mdns discovery...");
-                const mdnsDevice = serialPortOptions.path.substring(7);
-                const mdnsTimeout: number = 3000;
-                var mdnsIp = "";
-                var mdnsPort = "";
-                var mdnsBaud = 0;
-                var mdnsAdapter = 'zstack' as TsType.SerialPortOptions["adapter"]
-                bj.findOne({ type: mdnsDevice}, mdnsTimeout, function (service: any) {
-                    if(!service) return;
-                    mdnsIp = service.addresses[0];
-                    mdnsPort = service.port;
-                    mdnsAdapter = service.txt.radio_type == "znp" ? "zstack" : service.txt.service;
-                    mdnsBaud = parseInt(service.txt.baud_rate);
-                    logger.info("mdns discovery done!");
-                    logger.info(`Adapter Ip: ${mdnsIp}`);
-                    logger.info(`Adapter Port: ${mdnsPort}`);
-                    logger.info(`Adapter Radio: ${mdnsAdapter}`);
-                    logger.info(`Adapter Baud: ${mdnsBaud}\n`);
-                    bj.destroy();
-                });
-                return await new Promise((resolve, reject) => {
-                    setTimeout(() => {
-                        if(mdnsIp && mdnsPort && mdnsBaud){
+            const mdnsDevice = serialPortOptions.path.substring(7);
+            const mdnsTimeout = 2000; //timeout for mdns scan
+            var mdnsIp = "";
+            var mdnsPort: number;
+            var mdnsBaud: number;
+            var mdnsAdapter = 'zstack' as TsType.SerialPortOptions["adapter"];
+            console.log(logger);
+            //logger.info(`Starting mdns discovery for device: ${mdnsDevice}`);
+
+            return await new Promise((resolve, reject) => {
+                bj.findOne({ type: mdnsDevice}, mdnsTimeout, function (service: Service) {
+                    if(service){
+                        if(service.txt && service.txt.radio_type && service.txt.baud_rate && service.addresses && service.port){
+                            mdnsIp = service.addresses[0];
+                            mdnsPort = service.port;
+                            mdnsAdapter = service.txt.radio_type == "znp" ? "zstack" : service.txt.radio_type;
+                            mdnsBaud = parseInt(service.txt.baud_rate);
+                            logger.info(`Found mdns adapter!`);
+                            logger.info(`Adapter Ip: ${mdnsIp}`);
+                            logger.info(`Adapter Port: ${mdnsPort}`);
+                            logger.info(`Adapter Radio: ${mdnsAdapter}`);
+                            logger.info(`Adapter Baud: ${mdnsBaud}\n`);
+                            bj.destroy();
                             serialPortOptions.path = `tcp://${mdnsIp}:${mdnsPort}`;
                             serialPortOptions.adapter = mdnsAdapter;
                             serialPortOptions.baudRate = mdnsBaud;
                             resolve(new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger));
                         }else{
                             bj.destroy();
-                            reject(new Error(`mdns adapter ${mdnsDevice} not found!`));
+                            reject(new Error(`Wrong Zeroconf format! Refer to documentation [link_to_docs_here]`));
                         }
-                }, mdnsTimeout + 100)});
+                    }else{
+                        bj.destroy();
+                        reject(new Error(`Not found adapter [${mdnsDevice}] after ${mdnsTimeout}ms!`));
+                    }
+                });
+            })
         } else {
             try {
                 // Determine adapter to use
