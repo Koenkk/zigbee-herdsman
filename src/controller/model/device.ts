@@ -423,10 +423,10 @@ class Device extends Entity {
         return Object.values(Device.devices).filter(d => !d._deleted);
     }
 
-    public undelete(interviewCompleted=false): void {
+    public undelete(interviewCompleted?: boolean): void {
         assert(this._deleted, `Device '${this.ieeeAddr}' is not deleted`);
         this._deleted = false;
-        this._interviewCompleted=interviewCompleted;
+        this._interviewCompleted = interviewCompleted ?? this._interviewCompleted;
         Entity.database.insert(this.toDatabaseEntry());
     }
 
