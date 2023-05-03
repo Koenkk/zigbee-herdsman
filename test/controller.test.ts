@@ -3465,7 +3465,7 @@ describe('Controller', () => {
 
         let error;
         try {
-            await Adapter.create(null, {path: 'mdns://mdns_test_device', baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
         } catch(e) {
             error = e;
         }
@@ -3498,7 +3498,7 @@ describe('Controller', () => {
             }, 200);
         }
 
-        await Adapter.create(null, {path: 'mdns://mdns_test_device', baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+        await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
 
         expect(mockLoggerInfo.mock.calls[0][0]).toBe(`Starting mdns discovery for device: ${fakeAdapterName}`);
         expect(mockLoggerInfo.mock.calls[1][0]).toBe(`Found mdns adapter!`);
@@ -3534,7 +3534,7 @@ describe('Controller', () => {
             }, 200);
         }
 
-        await Adapter.create(null, {path: 'mdns://mdns_test_device', baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+        await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
 
         expect(mockLoggerInfo.mock.calls[0][0]).toBe(`Starting mdns discovery for device: ${fakeAdapterName}`);
         expect(mockLoggerInfo.mock.calls[1][0]).toBe(`Found mdns adapter!`);

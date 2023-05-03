@@ -5,7 +5,7 @@ import {ZclFrame, FrameType, Direction} from '../zcl';
 import Debug from "debug";
 import {LoggerStub} from "../controller/logger-stub";
 import * as Models from "../models";
-import Bonjour, { Service } from 'bonjour-service';
+import Bonjour, {Service} from 'bonjour-service';
 
 const debug = Debug("zigbee-herdsman:adapter");
 
@@ -87,21 +87,21 @@ abstract class Adapter extends events.EventEmitter {
                 throw new Error(
                     `You must specify the adapter type after mdns://`+
                     `More about it [link_to_docs_here]`
-                    );
+                );
             }
             const bj = new Bonjour();
             const mdnsTimeout = 2000; // timeout for mdns scan
-            var mdnsIp = "";
-            var mdnsPort: number;
-            var mdnsBaud: number;
-            var mdnsAdapter = 'zstack' as TsType.SerialPortOptions["adapter"];
+            let mdnsIp = "";
+            let mdnsPort: number;
+            let mdnsBaud: number;
+            let mdnsAdapter = 'zstack' as TsType.SerialPortOptions["adapter"];
 
             logger.info(`Starting mdns discovery for device: ${mdnsDevice}`);
 
             return await new Promise((resolve, reject) => {
-                bj.findOne({ type: mdnsDevice}, mdnsTimeout, function (service: Service) {
+                bj.findOne({type: mdnsDevice}, mdnsTimeout, function (service: Service) {
                     if(service){
-                        if(service.txt && service.txt.radio_type && service.txt.baud_rate && service.addresses && service.port){
+                        if(service.txt&&service.txt.radio_type&&service.txt.baud_rate&&service.addresses&&service.port){
                             mdnsIp = service.addresses[0];
                             mdnsPort = service.port;
                             mdnsAdapter = service.txt.radio_type == "znp" ? "zstack" : service.txt.radio_type;
@@ -118,7 +118,10 @@ abstract class Adapter extends events.EventEmitter {
                             resolve(new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger));
                         }else{
                             bj.destroy();
-                            reject(new Error(`Adapter returned wrong Zeroconf format! Refer to documentation [link_to_docs_here]`));
+                            reject(new Error(
+                                `Adapter returned wrong Zeroconf format! `+ 
+                                `Refer to documentation [link_to_docs_here]`
+                            ));
                         }
                     }else{
                         bj.destroy();
