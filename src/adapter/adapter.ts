@@ -82,15 +82,22 @@ abstract class Adapter extends events.EventEmitter {
                 throw new Error("No path provided and failed to auto detect path");
             }
         } else if(serialPortOptions.path.indexOf("mdns://") != -1){
-            const bj = new Bonjour();
             const mdnsDevice = serialPortOptions.path.substring(7);
-            const mdnsTimeout = 2000; //timeout for mdns scan
+            if(mdnsDevice.length == 0){
+                throw new Error(
+                    `You must specify the adapter type after mdns://`+
+                    `More about it [link_to_docs_here]`
+                    );
+                return;
+            }
+            const bj = new Bonjour();
+            const mdnsTimeout = 2000; // timeout for mdns scan
             var mdnsIp = "";
             var mdnsPort: number;
             var mdnsBaud: number;
             var mdnsAdapter = 'zstack' as TsType.SerialPortOptions["adapter"];
-            console.log(logger);
-            //logger.info(`Starting mdns discovery for device: ${mdnsDevice}`);
+
+            logger.info(`Starting mdns discovery for device: ${mdnsDevice}`);
 
             return await new Promise((resolve, reject) => {
                 bj.findOne({ type: mdnsDevice}, mdnsTimeout, function (service: Service) {
@@ -112,11 +119,11 @@ abstract class Adapter extends events.EventEmitter {
                             resolve(new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger));
                         }else{
                             bj.destroy();
-                            reject(new Error(`Wrong Zeroconf format! Refer to documentation [link_to_docs_here]`));
+                            reject(new Error(`Adapter returned wrong Zeroconf format! Refer to documentation [link_to_docs_here]`));
                         }
                     }else{
                         bj.destroy();
-                        reject(new Error(`Not found adapter [${mdnsDevice}] after ${mdnsTimeout}ms!`));
+                        reject(new Error(`Adapter [${mdnsDevice}] not found after ${mdnsTimeout}ms!`));
                     }
                 });
             })

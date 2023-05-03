@@ -16,7 +16,7 @@ import {Wait} from '../src/utils';
 import * as Models from "../src/models";
 import * as Utils from "../src/utils";
 import { isTypedArray } from "util/types";
-import Bonjour from 'bonjour-service';
+import Bonjour, {BrowserConfig, Service} from 'bonjour-service';
 import {LoggerStub} from "../src/controller/logger-stub";
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
@@ -428,9 +428,6 @@ const getTempFile = (filename) => {
 }
 
 // Mock static methods
-// const mockBonjourFindOne = jest.fn().mockReturnValue("/dev/autodetected");
-// Bonjour.findOne = mockBonjourFindOne;
-
 const mockZStackAdapterIsValidPath = jest.fn().mockReturnValue(true);
 const mockZStackAdapterAutoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
 ZStackAdapter.isValidPath = mockZStackAdapterIsValidPath;
@@ -3408,18 +3405,73 @@ describe('Controller', () => {
             warn: mockLoggerWarn,
             error: mockLoggerError
         };
-        // const bjTst = new Bonjour();
-        // bjTst.publish({name: 'mdns-test', type: 'mdns_test_device', port: 6638, txt: {radio_type: 'znp', baud_rate: '115200', addresses: ['111.111.111.111']}});
-        //await Adapter.create(null, {path: 'mdns://mdns_test_device', baudRate: 100, rtscts: false, adapter: null}, null, mockLogger);
-        //expect(mockLoggerError.mock.calls[0][0]).toBe("");
-        //bjTst.unpublishAll();
         let error;
         try {
-            await await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, mockLogger);
+            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
         } catch(e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error(`Not found adapter [${fakeAdapterName}] after 2000ms!`));
+        expect(error).toStrictEqual(new Error(`Adapter [${fakeAdapterName}] not found after 2000ms!`));
+    });
+
+    it('Adapter mdns without type test', async () => {
+        const fakeAdapterName = '';
+        const mockLoggerDebug = jest.fn();
+        const mockLoggerInfo = jest.fn();
+        const mockLoggerWarn = jest.fn();
+        const mockLoggerError = jest.fn();
+        const mockLogger: LoggerStub = {
+            debug: mockLoggerDebug,
+            info: mockLoggerInfo,
+            warn: mockLoggerWarn,
+            error: mockLoggerError
+        };
+        let error;
+        try {
+            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+        } catch(e) {
+            error = e;
+        }
+        expect(error).toStrictEqual(new Error(
+            `You must specify the adapter type after mdns://`+
+            `More about it [link_to_docs_here]`
+            ));
+    });
+
+    it('Adapter mdns detection test', async () => {
+        const fakeAdapterName = 'mdns_test_device';
+        const fakeIp = '111.111.111.111';
+        const fakePort = 6638;
+        const fakeRadio = 'znp';
+        const fakeRadioDetected = fakeRadio == 'znp' ? 'zstack' : fakeRadio;
+        const fakeBaud = '115200';
+
+        const mockLoggerDebug = jest.fn();
+        const mockLoggerInfo = jest.fn();
+        const mockLoggerWarn = jest.fn();
+        const mockLoggerError = jest.fn();
+        const mockLogger: LoggerStub = {
+            debug: mockLoggerDebug,
+            info: mockLoggerInfo,
+            warn: mockLoggerWarn,
+            error: mockLoggerError
+        };
+
+        Bonjour.prototype.findOne = function(opts?: BrowserConfig | undefined, timeout?: number, callback?: CallableFunction) {
+            setTimeout(() => {
+                callback({name: 'fakeAdapter', type: fakeAdapterName, port: fakePort, addresses: [fakeIp], txt: {radio_type: fakeRadio, baud_rate: fakeBaud}});
+            }, 200);
+        }
+
+        await Adapter.create(null, {path: 'mdns://mdns_test_device', baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+
+        expect(mockLoggerInfo.mock.calls[0][0]).toBe(`Starting mdns discovery for device: ${fakeAdapterName}`);
+        expect(mockLoggerInfo.mock.calls[1][0]).toBe(`Found mdns adapter!`);
+        expect(mockLoggerInfo.mock.calls[2][0]).toBe(`Adapter Ip: ${fakeIp}`);
+        expect(mockLoggerInfo.mock.calls[3][0]).toBe(`Adapter Port: ${fakePort}`);
+        expect(mockLoggerInfo.mock.calls[4][0]).toBe(`Adapter Radio: ${fakeRadioDetected}`);
+        expect(mockLoggerInfo.mock.calls[5][0]).toBe(`Adapter Baud: ${fakeBaud}\n`);
+        
     });
 
     it('Adapter create auto detect nothing found', async () => {
