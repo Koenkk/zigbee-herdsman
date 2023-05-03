@@ -98,7 +98,7 @@ abstract class Adapter extends events.EventEmitter {
 
             logger.info(`Starting mdns discovery for device: ${mdnsDevice}`);
 
-            return await new Promise((resolve, reject) => {
+            await new Promise((resolve, reject) => {
                 bj.findOne({type: mdnsDevice}, mdnsTimeout, function (service: Service) {
                     if(service){
                         if(service.txt&&service.txt.radio_type&&service.txt.baud_rate&&service.addresses&&service.port){
@@ -128,7 +128,7 @@ abstract class Adapter extends events.EventEmitter {
                         reject(new Error(`Adapter [${mdnsDevice}] not found after ${mdnsTimeout}ms!`));
                     }
                 });
-            })
+            });
         } else {
             try {
                 // Determine adapter to use
