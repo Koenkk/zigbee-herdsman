@@ -3473,7 +3473,43 @@ describe('Controller', () => {
         
     });
 
-    it('Adapter mdns detection test', async () => {
+    it('Adapter mdns detection ezsp test', async () => {
+        const fakeAdapterName = 'mdns_test_device';
+        const fakeIp = '111.111.111.111';
+        const fakePort = 6638;
+        const fakeRadio = 'ezsp';
+        const fakeRadioDetected = fakeRadio == 'znp' ? 'zstack' : fakeRadio;
+        const fakeBaud = '115200';
+
+        const mockLoggerDebug = jest.fn();
+        const mockLoggerInfo = jest.fn();
+        const mockLoggerWarn = jest.fn();
+        const mockLoggerError = jest.fn();
+        const mockLogger: LoggerStub = {
+            debug: mockLoggerDebug,
+            info: mockLoggerInfo,
+            warn: mockLoggerWarn,
+            error: mockLoggerError
+        };
+
+        Bonjour.prototype.findOne = function(opts?: BrowserConfig | undefined, timeout?: number, callback?: CallableFunction) {
+            setTimeout(() => {
+                callback({name: 'fakeAdapter', type: fakeAdapterName, port: fakePort, addresses: [fakeIp], txt: {radio_type: fakeRadio, baud_rate: fakeBaud}});
+            }, 200);
+        }
+
+        await Adapter.create(null, {path: 'mdns://mdns_test_device', baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+
+        expect(mockLoggerInfo.mock.calls[0][0]).toBe(`Starting mdns discovery for device: ${fakeAdapterName}`);
+        expect(mockLoggerInfo.mock.calls[1][0]).toBe(`Found mdns adapter!`);
+        expect(mockLoggerInfo.mock.calls[2][0]).toBe(`Adapter Ip: ${fakeIp}`);
+        expect(mockLoggerInfo.mock.calls[3][0]).toBe(`Adapter Port: ${fakePort}`);
+        expect(mockLoggerInfo.mock.calls[4][0]).toBe(`Adapter Radio: ${fakeRadioDetected}`);
+        expect(mockLoggerInfo.mock.calls[5][0]).toBe(`Adapter Baud: ${fakeBaud}\n`);
+        
+    });
+
+    it('Adapter mdns detection zstack test', async () => {
         const fakeAdapterName = 'mdns_test_device';
         const fakeIp = '111.111.111.111';
         const fakePort = 6638;
