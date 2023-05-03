@@ -88,7 +88,6 @@ abstract class Adapter extends events.EventEmitter {
                     `You must specify the adapter type after mdns://`+
                     `More about it [link_to_docs_here]`
                     );
-                return;
             }
             const bj = new Bonjour();
             const mdnsTimeout = 2000; // timeout for mdns scan
