@@ -3434,8 +3434,9 @@ describe('Controller', () => {
         }
         expect(error).toStrictEqual(new Error(
             `You must specify the coordinator mdns service type after mdns://`+
-            `Read about coordinator mdns service type: https://www.zigbee2mqtt.io/guide/configuration/adapter-settings.html#mdns-zeroconf-discovery`
-            ));
+            `Read about coordinator mdns service type:`+
+            `https://www.zigbee2mqtt.io/guide/configuration/adapter-settings.html#mdns-zeroconf-discovery`
+        ));
     });
 
     it('Adapter mdns wrong Zeroconf test', async () => {
@@ -3471,7 +3472,8 @@ describe('Controller', () => {
         }
         expect(error).toStrictEqual(new Error(
             `Coordinator returned wrong Zeroconf format! `+ 
-            `Read about Zeroconf format here: https://github.com/fairecasoimeme/ZiGate-Ethernet/issues/7`
+            `Read about Zeroconf format here:`+
+            `https://github.com/fairecasoimeme/ZiGate-Ethernet/issues/7`
         ));
         
     });

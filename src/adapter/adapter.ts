@@ -86,7 +86,8 @@ abstract class Adapter extends events.EventEmitter {
             if(mdnsDevice.length == 0){
                 throw new Error(
                     `You must specify the coordinator mdns service type after mdns://`+
-                    `Read about coordinator mdns service type: https://www.zigbee2mqtt.io/guide/configuration/adapter-settings.html#mdns-zeroconf-discovery`
+                    `Read about coordinator mdns service type:`+
+                    `https://www.zigbee2mqtt.io/guide/configuration/adapter-settings.html#mdns-zeroconf-discovery`
                 );
             }
             const bj = new Bonjour();
@@ -101,7 +102,7 @@ abstract class Adapter extends events.EventEmitter {
                             const mdnsIp = service.addresses[0];
                             const mdnsPort = service.port;
                             const mdnsAdapter = (service.txt.radio_type == "znp" ?
-                             "zstack" : service.txt.radio_type) as TsType.SerialPortOptions["adapter"];
+                                "zstack" : service.txt.radio_type) as TsType.SerialPortOptions["adapter"];
                             const mdnsBaud = parseInt(service.txt.baud_rate);
                             logger.info(`Coordinator Ip: ${mdnsIp}`);
                             logger.info(`Coordinator Port: ${mdnsPort}`);
@@ -116,7 +117,8 @@ abstract class Adapter extends events.EventEmitter {
                             bj.destroy();
                             reject(new Error(
                                 `Coordinator returned wrong Zeroconf format! `+ 
-                                `Read about Zeroconf format here: https://github.com/fairecasoimeme/ZiGate-Ethernet/issues/7`
+                                `Read about Zeroconf format here:`+
+                                `https://github.com/fairecasoimeme/ZiGate-Ethernet/issues/7`
                             ));
                         }
                     }else{
