@@ -3411,7 +3411,7 @@ describe('Controller', () => {
         } catch(e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error(`Adapter [${fakeAdapterName}] not found after 2000ms!`));
+        expect(error).toStrictEqual(new Error(`Coordinator [${fakeAdapterName}] not found after 2000ms!`));
     });
 
     it('Adapter mdns without type test', async () => {
@@ -3433,8 +3433,8 @@ describe('Controller', () => {
             error = e;
         }
         expect(error).toStrictEqual(new Error(
-            `You must specify the adapter type after mdns://`+
-            `More about it [link_to_docs_here]`
+            `You must specify the coordinator mdns service type after mdns://`+
+            `Read about coordinator mdns service type: https://www.zigbee2mqtt.io/guide/configuration/adapter-settings.html#mdns-zeroconf-discovery`
             ));
     });
 
@@ -3469,7 +3469,10 @@ describe('Controller', () => {
         } catch(e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error(`Adapter returned wrong Zeroconf format! Refer to documentation [link_to_docs_here]`));
+        expect(error).toStrictEqual(new Error(
+            `Coordinator returned wrong Zeroconf format! `+ 
+            `Read about Zeroconf format here: https://github.com/fairecasoimeme/ZiGate-Ethernet/issues/7`
+        ));
         
     });
 
@@ -3500,12 +3503,11 @@ describe('Controller', () => {
 
         await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
 
-        expect(mockLoggerInfo.mock.calls[0][0]).toBe(`Starting mdns discovery for device: ${fakeAdapterName}`);
-        expect(mockLoggerInfo.mock.calls[1][0]).toBe(`Found mdns adapter!`);
-        expect(mockLoggerInfo.mock.calls[2][0]).toBe(`Adapter Ip: ${fakeIp}`);
-        expect(mockLoggerInfo.mock.calls[3][0]).toBe(`Adapter Port: ${fakePort}`);
-        expect(mockLoggerInfo.mock.calls[4][0]).toBe(`Adapter Radio: ${fakeRadioDetected}`);
-        expect(mockLoggerInfo.mock.calls[5][0]).toBe(`Adapter Baud: ${fakeBaud}\n`);
+        expect(mockLoggerInfo.mock.calls[0][0]).toBe(`Starting mdns discovery for coordinator: ${fakeAdapterName}`);
+        expect(mockLoggerInfo.mock.calls[1][0]).toBe(`Coordinator Ip: ${fakeIp}`);
+        expect(mockLoggerInfo.mock.calls[2][0]).toBe(`Coordinator Port: ${fakePort}`);
+        expect(mockLoggerInfo.mock.calls[3][0]).toBe(`Coordinator Radio: ${fakeRadioDetected}`);
+        expect(mockLoggerInfo.mock.calls[4][0]).toBe(`Coordinator Baud: ${fakeBaud}\n`);
         
     });
 
@@ -3536,12 +3538,11 @@ describe('Controller', () => {
 
         await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
 
-        expect(mockLoggerInfo.mock.calls[0][0]).toBe(`Starting mdns discovery for device: ${fakeAdapterName}`);
-        expect(mockLoggerInfo.mock.calls[1][0]).toBe(`Found mdns adapter!`);
-        expect(mockLoggerInfo.mock.calls[2][0]).toBe(`Adapter Ip: ${fakeIp}`);
-        expect(mockLoggerInfo.mock.calls[3][0]).toBe(`Adapter Port: ${fakePort}`);
-        expect(mockLoggerInfo.mock.calls[4][0]).toBe(`Adapter Radio: ${fakeRadioDetected}`);
-        expect(mockLoggerInfo.mock.calls[5][0]).toBe(`Adapter Baud: ${fakeBaud}\n`);
+        expect(mockLoggerInfo.mock.calls[0][0]).toBe(`Starting mdns discovery for coordinator: ${fakeAdapterName}`);
+        expect(mockLoggerInfo.mock.calls[1][0]).toBe(`Coordinator Ip: ${fakeIp}`);
+        expect(mockLoggerInfo.mock.calls[2][0]).toBe(`Coordinator Port: ${fakePort}`);
+        expect(mockLoggerInfo.mock.calls[3][0]).toBe(`Coordinator Radio: ${fakeRadioDetected}`);
+        expect(mockLoggerInfo.mock.calls[4][0]).toBe(`Coordinator Baud: ${fakeBaud}\n`);
         
     });
 
