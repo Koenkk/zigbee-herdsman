@@ -1,5 +1,5 @@
 import Entity from './entity';
-import {KeyValue, SendRequestWhen} from '../tstype';
+import {KeyValue, SendRequestWhen, SendPolicy} from '../tstype';
 import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
@@ -14,6 +14,8 @@ const debug = {
     info: Debug('zigbee-herdsman:controller:endpoint'),
     error: Debug('zigbee-herdsman:controller:endpoint'),
 };
+
+type Mutable<T> = { -readonly [P in keyof T ]: T[P] };
 
 interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
@@ -34,6 +36,7 @@ interface Options {
     disableRecovery?: boolean;
     writeUndiv?: boolean;
     sendWhen?: SendRequestWhen;
+    sendPolicy?: SendPolicy;
 }
 
 interface Clusters {
@@ -287,7 +290,7 @@ class Endpoint extends Entity {
             `${this.pendingRequests.size}, ${fastPolling})`);
 
         for (const request of this.pendingRequests) {
-            if ((fastPolling && request.sendWhen == 'fastpoll') || request.sendWhen == 'active') {
+            if (fastPolling || (request.sendWhen !== 'fastpoll' && request.sendPolicy !== 'bulk')) {
                 try {
                     const result = await request.send();
                     debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`);
@@ -311,6 +314,56 @@ class Endpoint extends Entity {
             this.pendingRequests.add(request);
         });
     }
+    private filterRequests(newRequest: Request): void {
+
+        if(this.pendingRequests.size === 0 || !(typeof newRequest.frame.getCommand === 'function')) {
+            return;
+        }
+        const clusterID = newRequest.frame.Cluster.ID;
+        const payload = newRequest.frame.Payload;
+        const commandID = newRequest.frame.getCommand().ID;
+
+        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): ZCL ${newRequest.frame.getCommand().name} ` +
+            `command, filter requests. Before: ${this.pendingRequests.size}`);
+
+        for (const request of this.pendingRequests) {
+            if( request?.frame?.Cluster?.ID === undefined || typeof request.frame.getCommand !== 'function') {
+                continue;
+            }
+            if (['bulk', 'queue', 'immediate'].includes(request.sendPolicy)) {
+                continue;
+            }
+            /* istanbul ignore else */
+            if(request.frame.Cluster.ID === clusterID && request.frame.getCommand().ID === commandID) {
+                /* istanbul ignore else */
+                if (newRequest.sendPolicy === 'keep-payload'
+                    && JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
+                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Merge duplicate request`);
+                    this.pendingRequests.delete(request);
+                    newRequest.moveCallbacks(request);
+                }
+                else if (newRequest.sendPolicy === 'keep-command' || newRequest.sendPolicy === 'keep-cmd-undiv') {
+                    const filteredPayload = request.frame.Payload.filter((oldEl: {attrId: number}) =>
+                        !payload.find((newEl: {attrId: number}) => oldEl.attrId === newEl.attrId));
+                    if (filteredPayload.length == 0) {
+                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Remove & reject request`);
+                        if( JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
+                            newRequest.moveCallbacks(request);
+                        } else {
+                            request.reject();
+                        }
+                        this.pendingRequests.delete(request);
+                    } else if (newRequest.sendPolicy !== 'keep-cmd-undiv') {
+                        // remove all duplicate attributes if we shall not write undivided
+                        (request.frame as Mutable<Zcl.ZclFrame>).Payload = filteredPayload;
+                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): `
+                            + `Remove commands from request`);
+                    }
+                }
+            }
+        }
+        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): After: ${this.pendingRequests.size}`);
+    }
 
     private async sendRequest(frame: Zcl.ZclFrame, options: Options): Promise<AdapterEvents.ZclDataPayload>;
     private async sendRequest<Type>(frame: Zcl.ZclFrame, options: Options,
@@ -322,12 +375,17 @@ class Endpoint extends Entity {
                 options.disableResponse, options.disableRecovery, options.srcEndpoint) as Promise<Type>;
         }): Promise<Type> {
         const logPrefix = `Request Queue (${this.deviceIeeeAddress}/${this.ID}): `;
-        const request = new Request(func, frame, this.getDevice().pendingRequestTimeout, options.sendWhen);
+        const request = new Request(func, frame, this.getDevice().pendingRequestTimeout, options.sendWhen,
+            options.sendPolicy);
 
+        if (request.sendPolicy !== 'bulk') {
+            // Check if such a request is already in the queue and remove the old one(s) if necessary
+            this.filterRequests(request);
+        }
 
-        // send without queueing if sendWhen is 'immediate' or if this is a response
-        if (options.sendWhen === 'immediate'
-            || (frame.Header?.frameControl.direction === Zcl.Direction.SERVER_TO_CLIENT)) {
+        // send without queueing if sendWhen or sendPolicy is 'immediate' or if the device has no timeout set
+        if (request.sendWhen === 'immediate' || request.sendPolicy === 'immediate'
+            || !this.getDevice().pendingRequestTimeout) {
             if (this.getDevice().defaultSendRequestWhen !=='immediate')
             {
                 debug.info(logPrefix + `send ${frame.getCommand().name} request immediately ` +
@@ -337,7 +395,8 @@ class Endpoint extends Entity {
         }
         // If we already have something queued, we queue directly to avoid
         // messing up the ordering too much.
-        if (this.hasPendingRequests() || this.sendInProgress) {
+        // If a send is already in progress or if this is a bulk message, we also queue directly.
+        if (this.hasPendingRequests() || request.sendPolicy === 'bulk' || this.sendInProgress) {
             debug.info(logPrefix + `queue request (${this.pendingRequests.size} / ${this.sendInProgress})))`);
             return this.queueRequest(request);
         }
