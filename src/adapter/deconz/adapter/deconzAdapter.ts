@@ -614,22 +614,20 @@ class DeconzAdapter extends Adapter {
         this.driver.enqueueSendDataRequest(request)
             .then(result => {
                 debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.Header.transactionSequenceNumber}`);
-                debug(command.hasOwnProperty('response') + ", " + zclFrame.Header.frameControl.disableDefaultResponse + ", " + disableResponse);
+                debug(command.hasOwnProperty('response') + ", " + zclFrame.Header.frameControl.disableDefaultResponse + ", " + disableResponse + ", " + request.timeout);
                 if (!command.hasOwnProperty('response') || zclFrame.Header.frameControl.disableDefaultResponse || !disableResponse) {
-                    debug("resolve request");
+                    debug(`resolve request (${zclFrame.Header.transactionSequenceNumber})`);
                     return Promise.resolve();
                 }
             })
             .catch(error => {
-                debug(`sendZclFrameToEndpoint ERROR`);
+                debug(`sendZclFrameToEndpoint ERROR (${zclFrame.Header.transactionSequenceNumber})`);
                 debug(error);
                 //return Promise.reject(new Error("sendZclFrameToEndpoint ERROR " + error));
             });
         try {
                 let data = null;
-                if (command.hasOwnProperty('response') && !disableResponse) {
-                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber, request.timeout);
-                } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
+                if ((command.hasOwnProperty('response') && !disableResponse) || !zclFrame.Header.frameControl.disableDefaultResponse) {
                     data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber, request.timeout);
                 }
 
@@ -647,15 +645,15 @@ class DeconzAdapter extends Adapter {
                         wasBroadcast: data.srcAddrMode === 0x01 || data.srcAddrMode === 0xF,
                         destinationEndpoint: data.destEndpoint,
                     };
-                    debug(`response received`);
+                    debug(`response received (${zclFrame.Header.transactionSequenceNumber})`);
                     return response;
                 } else {
-                    debug(`no response expected`);
+                    debug(`no response expected (${zclFrame.Header.transactionSequenceNumber})`);
                     return null;
                 }
 
             } catch (error) {
-                throw new Error("no response received");
+                throw new Error(`no response received (${zclFrame.Header.transactionSequenceNumber})`);
             }
     }
 
