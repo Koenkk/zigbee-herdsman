@@ -25,9 +25,9 @@
     }
   ],
   "dependencies": {
-    "@serialport/bindings-cpp": "^10.8.0",
-    "@serialport/parser-delimiter": "^10.5.0",
-    "@serialport/stream": "^10.5.0",
+    "@serialport/bindings-cpp": "^11.0.1",
+    "@serialport/parser-delimiter": "^11.0.0",
+    "@serialport/stream": "^11.0.0",
     "bonjour-service": "latest",
     "debounce": "^1.2.1",
     "debug": "^4.3.4",
@@ -57,7 +57,7 @@
     "eslint": "*",
     "jest": "*",
     "regenerator-runtime": "*",
-    "typedoc": "^0.24.2",
+    "typedoc": "^0.24.6",
     "typedoc-plugin-markdown": "*",
     "typedoc-plugin-no-inherit": "*",
     "typedoc-plugin-sourcefile-url": "*",
@@ -85,7 +85,7 @@
     "eslint": "node_modules/.bin/eslint . --ext .ts --max-warnings=0",
     "docs": "typedoc --tsconfig typedoc-tsconfig.json"
   },
-  "version": "0.14.111",
+  "version": "0.14.114",
   "jest": {
     "coverageThreshold": {
       "global": {

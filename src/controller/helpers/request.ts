@@ -54,6 +54,13 @@ class Request<Type = any> {
         this._lastError = lastError ?? Error("Request rejected before first send");
     }
 
+    moveCallbacks(from: Request <Type>) : void {
+        this._resolveQueue = this._resolveQueue.concat(from._resolveQueue);
+        this._rejectQueue = this._rejectQueue.concat(from._rejectQueue);
+        from._resolveQueue.length = 0;
+        from._rejectQueue.length = 0;
+    }
+
     addCallbacks(resolve: (value: Type) => void, reject: (error: Error) => void): void {
         this._resolveQueue.push(resolve);
         this._rejectQueue.push(reject);

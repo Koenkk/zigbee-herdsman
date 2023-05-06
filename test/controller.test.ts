@@ -2398,7 +2398,7 @@ describe('Controller', () => {
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":11,"manufacturerCode":null,"commandIdentifier":0},"Payload":[{"attrId":0}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}});
+        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":11,"manufacturerCode":null,"commandIdentifier":0},"Payload":[{"attrId":0}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"schneiderMeterRadioPower": {"ID": 57856,"manufacturerCode": 4190,"name": "schneiderMeterRadioPower","type": 40},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}});
         expect(call[4]).toBe(10000);
         expect(call[5]).toBe(false);
         expect(call[6]).toBe(true);
@@ -3054,7 +3054,7 @@ describe('Controller', () => {
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4107,"commandIdentifier":2},"Payload":[{"attrId":49,"attrData":11,"dataType":25}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":2,"name":"write","parameters":[{"name":"attrId","type":33},{"name":"dataType","type":32},{"name":"attrData","type":1000}],"response":4}});
+        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4107,"commandIdentifier":2},"Payload":[{"attrId":49,"attrData":11,"dataType":25}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"schneiderMeterRadioPower": {"ID": 57856,"manufacturerCode": 4190,"name": "schneiderMeterRadioPower","type": 40},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":2,"name":"write","parameters":[{"name":"attrId","type":33},{"name":"dataType","type":32},{"name":"attrData","type":1000}],"response":4}});
         expect(call[4]).toBe(12);
     });
 
@@ -3071,7 +3071,7 @@ describe('Controller', () => {
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4107,"commandIdentifier":3},"Payload":[{"attrId":49,"attrData":11,"dataType":25}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":3,"name":"writeUndiv","parameters":[{"name":"attrId","type":33},{"name":"dataType","type":32},{"name":"attrData","type":1000}]}});
+        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4107,"commandIdentifier":3},"Payload":[{"attrId":49,"attrData":11,"dataType":25}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"schneiderMeterRadioPower": {"ID": 57856,"manufacturerCode": 4190,"name": "schneiderMeterRadioPower","type": 40},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":3,"name":"writeUndiv","parameters":[{"name":"attrId","type":33},{"name":"dataType","type":32},{"name":"attrData","type":1000}]}});
         expect(call[4]).toBe(12);
     });
 
@@ -3099,7 +3099,7 @@ describe('Controller', () => {
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":99,"manufacturerCode":null,"commandIdentifier":4},"Payload":[{"attrId":85,"status":1}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":4,"name":"writeRsp","parameters":[{"name":"status","type":32},{"conditions":[{"type":"statusNotEquals","value":0}],"name":"attrId","type":33}]}});
+        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":99,"manufacturerCode":null,"commandIdentifier":4},"Payload":[{"attrId":85,"status":1}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"schneiderMeterRadioPower": {"ID": 57856,"manufacturerCode": 4190,"name": "schneiderMeterRadioPower","type": 40},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":4,"name":"writeRsp","parameters":[{"name":"status","type":32},{"conditions":[{"type":"statusNotEquals","value":0}],"name":"attrId","type":33}]}});
         expect(call[4]).toBe(10000);
     });
     
@@ -3151,7 +3151,7 @@ describe('Controller', () => {
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":99,"manufacturerCode":null,"commandIdentifier":4},"Payload":[{"attrId":0,"status":1}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":4,"name":"writeRsp","parameters":[{"name":"status","type":32},{"conditions":[{"type":"statusNotEquals","value":0}],"name":"attrId","type":33}]}});
+        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":99,"manufacturerCode":null,"commandIdentifier":4},"Payload":[{"attrId":0,"status":1}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"schneiderMeterRadioPower": {"ID": 57856,"manufacturerCode": 4190,"name": "schneiderMeterRadioPower","type": 40},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":4,"name":"writeRsp","parameters":[{"name":"status","type":32},{"conditions":[{"type":"statusNotEquals","value":0}],"name":"attrId","type":33}]}});
         expect(call[4]).toBe(10000);
     });
 
@@ -3178,7 +3178,7 @@ describe('Controller', () => {
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":11,"manufacturerCode":null,"commandIdentifier":0},"Payload":[{"attrId":2}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}});
+        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":11,"manufacturerCode":null,"commandIdentifier":0},"Payload":[{"attrId":2}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"schneiderMeterRadioPower": {"ID": 57856,"manufacturerCode": 4190,"name": "schneiderMeterRadioPower","type": 40},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}});
         expect(call[4]).toBe(10000);
     });
 
@@ -3194,7 +3194,7 @@ describe('Controller', () => {
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4447,"commandIdentifier":0},"Payload":[{"attrId":65314}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}});
+        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4447,"commandIdentifier":0},"Payload":[{"attrId":65314}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"schneiderMeterRadioPower": {"ID": 57856,"manufacturerCode": 4190,"name": "schneiderMeterRadioPower","type": 40},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}});
         expect(call[4]).toBe(10000);
     });
 
@@ -3210,7 +3210,7 @@ describe('Controller', () => {
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":99,"manufacturerCode":null,"commandIdentifier":1},"Payload":[{"attrId":85,"attrData":11,"dataType":25,"status":0}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":1,"name":"readRsp","parameters":[{"name":"attrId","type":33},{"name":"status","type":32},{"name":"dataType","type":32,"conditions":[{"type":"statusEquals","value":0}]},{"name":"attrData","type":1000,"conditions":[{"type":"statusEquals","value":0}]}]}});
+        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":99,"manufacturerCode":null,"commandIdentifier":1},"Payload":[{"attrId":85,"attrData":11,"dataType":25,"status":0}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"schneiderMeterRadioPower": {"ID": 57856,"manufacturerCode": 4190,"name": "schneiderMeterRadioPower","type": 40},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":1,"name":"readRsp","parameters":[{"name":"attrId","type":33},{"name":"status","type":32},{"name":"dataType","type":32,"conditions":[{"type":"statusEquals","value":0}]},{"name":"attrData","type":1000,"conditions":[{"type":"statusEquals","value":0}]}]}});
         expect(call[4]).toBe(10000);
     });
 
@@ -4388,7 +4388,7 @@ describe('Controller', () => {
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4107,"commandIdentifier":10},"Payload":[{"attrId":49,"attrData":11,"dataType":25}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":10,"name":"report","parameters":[{"name":"attrId","type":33},{"name":"dataType","type":32},{"name":"attrData","type":1000}]}});
+        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4107,"commandIdentifier":10},"Payload":[{"attrId":49,"attrData":11,"dataType":25}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"schneiderMeterRadioPower": {"ID": 57856,"manufacturerCode": 4190,"name": "schneiderMeterRadioPower","type": 40},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":10,"name":"report","parameters":[{"name":"attrId","type":33},{"name":"dataType","type":32},{"name":"attrData","type":1000}]}});
         expect(call[4]).toBe(12);
     });
 
@@ -4419,6 +4419,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
+        device.pendingRequestTimeout = 10000;
         const endpoint = device.getEndpoint(1);
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard');});
@@ -4450,8 +4451,9 @@ describe('Controller', () => {
 
     it('Write with sendWhen active when pending', async () => {
         await controller.start();
-        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
+        device.pendingRequestTimeout = 10000;
         const endpoint = device.getEndpoint(1);
         endpoint.pendingRequests.add(new Request(async () => {}, [], 100));
         mocksendZclFrameToEndpoint.mockClear();
@@ -4480,6 +4482,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
+        device.pendingRequestTimeout = 10000;
         const endpoint = device.getEndpoint(1);
         endpoint.pendingRequests.add(new Request(async () => {}, [], 100));
         mocksendZclFrameToEndpoint.mockClear();
@@ -4506,15 +4509,135 @@ describe('Controller', () => {
         expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"active","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
     });
 
+    it('Write with sendWhen active, replace queued messages', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        device.pendingRequestTimeout = 10000;
+        const endpoint = device.getEndpoint(1);
+        //add a request with empty data and a ZclFrame to the queue
+        endpoint.pendingRequests.add(new Request(async () => {}, [], 100));
+        // Queue content:
+        // 1. empty request
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {});
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard')});
+        mocksendZclFrameToEndpoint.mockReturnValueOnce( {frame: {Payload: new Array( {"attrId": 1, "attrData": "one", "status": 0})}});
+        mocksendZclFrameToEndpoint.mockReturnValueOnce( {frame: {Payload: new Array( {"attrId": 2, "attrData": "two", "status": 0})}});
+        mocksendZclFrameToEndpoint.mockReturnValueOnce( {frame: {Payload: new Array( {"attrId": 3, "attrData": "three", "status": 0})}});
+        mocksendZclFrameToEndpoint.mockReturnValueOnce( {frame: {Payload: new Array( {"attrId": 4, "attrData": "four", "status": 0})}});
+        let result1, result2: Promise <any>;
+        endpoint.write('genOnOff', {onOff: 0, startUpOnOff: 0}, {disableResponse: true, sendWhen: 'active'});
+        // Queue content:
+        // 1. empty
+        // 2. ZCL write 'genOnOff' {onOff: 0, startUpOnOff: 0}
+        result1 = endpoint.write('genOnOff', {onOff: 0}, {disableResponse: true, sendWhen: 'active'});
+        // Queue content:
+        // 1. empty
+        // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
+        // 3. ZCL write 'genOnOff' {onOff: 0} --> result1
+        expect(endpoint.pendingRequests.size).toStrictEqual (3);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+
+        //add another non-ZCL request, should go directly to queue without errors
+        endpoint.sendRequest(5, [], (d) => d+1);
+        // Queue content:
+        // 1. empty
+        // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
+        // 3. ZCL write 'genOnOff' {onOff: 0}
+        // 4. add 1
+        expect(endpoint.pendingRequests.size).toStrictEqual (4);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+
+        let error = null;
+        try {
+            // Add the same ZCL request with different payload again, the first one should be rejected and removed from the queue
+            result2 = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'active'});
+            await result1;
+            // Queue content:
+            // 1. empty
+            // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
+            // 3. add 1
+            // 4. ZCL write 'genOnOff' {onOff: 1} --> result2
+            expect(endpoint.pendingRequests.size).toStrictEqual (4);
+        } catch (e) {
+            error = e;
+        }
+        // Now add the same ZCL request with same payload again. The previous one should *not* be rejected but removed from the queue
+        const result3 = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'active'});
+        // Queue content:
+        // 1. empty
+        // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
+        // 3. add 1
+        // 4. ZCL write 'genOnOff' {onOff: 1} --> result2, result3
+        expect(endpoint.pendingRequests.size).toStrictEqual (4);
+
+        // writeUndiv request should not be divided, so both should go to the queue
+        endpoint.write('genOnOff', {onOff: 0, startUpOnOff: 0}, {disableResponse: true, sendWhen: 'active', writeUndiv: true});
+        endpoint.write('genOnOff', {startUpOnOff: 1}, {disableResponse: true, sendWhen: 'active', writeUndiv: true});
+        // Queue content:
+        // 1. empty
+        // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
+        // 3. add 1
+        // 4. ZCL write 'genOnOff' {onOff: 1} --> result2, result3
+        // 5. ZCL writeUndiv 'genOnOff' {onOff: 0, startUpOnOff: 0}
+        // 6. ZCL writeUndiv 'genOnOff' {startUpOnOff: 1}
+        expect(endpoint.pendingRequests.size).toStrictEqual (6);
+
+        // read requests should be combined to one
+        const result4 = endpoint.read('genOnOff', ['onOff'], {disableResponse: false, sendWhen: 'active'});
+        const result5 = endpoint.read('genOnOff', ['onOff'], {disableResponse: false, sendWhen: 'active'});
+        // Queue content:
+        // 1. empty
+        // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
+        // 3. add 1
+        // 4. ZCL write 'genOnOff' {onOff: 1} --> result2, result3
+        // 5. ZCL writeUndiv 'genOnOff' {onOff: 0, startUpOnOff: 0}
+        // 6. ZCL writeUndiv 'genOnOff' {startUpOnOff: 1}
+        // 7. ZCL read 'genOnOff' --> result4, result4
+        expect(endpoint.pendingRequests.size).toStrictEqual (7);
+
+        try {
+            // Implicit checkin, there are 5 ZclFrames and 2 other requests left in the queue:
+            await mockAdapterEvents['zclData']({
+                wasBroadcast: false,
+                address: '0x129',
+                frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 1,
+            });
+
+            await result3;
+            expect (result3).rejects.toStrictEqual({"3": "yes"});
+        } catch (e) {
+            try {
+                await result2;
+            } catch(e) {
+                error = e;
+            }
+        }
+        expect (result4).resolves.toStrictEqual({"3": "three"});
+        expect (result5).resolves.toStrictEqual({"3": "three"});
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(5);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].Payload).toStrictEqual ([{"attrData": 0, "attrId": 16387, "dataType": 48}]);
+        expect(mocksendZclFrameToEndpoint.mock.calls[1][3].Payload).toStrictEqual ([{"attrData": 1, "attrId": 0, "dataType": 16}]);
+        expect(mocksendZclFrameToEndpoint.mock.calls[2][3].Payload).toStrictEqual ([{"attrData": 0, "attrId": 0, "dataType": 16}, {"attrData": 0, "attrId": 16387, "dataType": 48}]);
+        expect(mocksendZclFrameToEndpoint.mock.calls[3][3].Payload).toStrictEqual ([{"attrData": 1, "attrId": 16387, "dataType": 48}]);
+        expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"active","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"active","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard))`);
+    });
+
     it('Write with sendWhen active, discard messages after expiration', async () => {
         Date.now.mockReturnValue(1000);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
         const device = controller.getDeviceByIeeeAddr('0x174');
         mockDevices[174].attributes[1].checkinInterval = 3996; //999 seconds
+
         await device.interview();
         const endpoint = device.getEndpoint(1);
         expect(device.checkinInterval).toBe(999);
+        expect(device.pendingRequestTimeout).toBe(999000);
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {  throw new Error('Dogs barking too hard');});
 
@@ -4558,6 +4681,70 @@ describe('Controller', () => {
         await result;
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         expect(endpoint.pendingRequests.size).toBe(0);
+    });
+
+      it('Write with sendWhen active, send bulk messages', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x174');
+        const target = controller.getDeviceByIeeeAddr('0x129');
+        await device.interview();
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
+
+        const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendPolicy:'bulk'});
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: 174,
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+
+        });
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: 174,
+            frame: ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0),
+            endpoint: 1,
+            linkquality: 52,
+            groupID: undefined,
+        });
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+
+        const checkinrsp = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(checkinrsp[0]).toBe('0x174');
+        expect(checkinrsp[1]).toBe(174);
+        expect(checkinrsp[2]).toBe(1);
+        expect(checkinrsp[3].Cluster.name).toBe('genPollCtrl');
+        expect(checkinrsp[3].Command.name).toBe('checkinRsp');
+        expect(checkinrsp[3].Payload).toStrictEqual({startFastPolling: true, fastPollTimeout: 0});
+
+        expect((await result)).toBe(undefined);
+
+        const cmd = mocksendZclFrameToEndpoint.mock.calls[1];
+        expect(cmd[0]).toBe('0x174');
+        expect(cmd[1]).toBe(174);
+        expect(cmd[2]).toBe(1);
+        expect(cmd[3].Cluster.name).toBe('genOnOff');
+
+        const fastpollstop = mocksendZclFrameToEndpoint.mock.calls[2];
+        expect(fastpollstop[0]).toBe('0x174');
+        expect(fastpollstop[1]).toBe(174);
+        expect(fastpollstop[2]).toBe(1);
+        expect(fastpollstop[3].Cluster.name).toBe('genPollCtrl');
+        expect(fastpollstop[3].Command.name).toBe('fastPollStop');
+        expect(fastpollstop[3].Payload).toStrictEqual({});
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
     });
 
     it('Fast polling', async () => {
