@@ -118,7 +118,7 @@ abstract class Adapter extends events.EventEmitter {
                                 `txt.radio_type, got: ${service.txt?.radio_type}\n` +
                                 `txt.baud_rate, got: ${service.txt?.baud_rate}\n` +
                                 `address, got: ${service.addresses?.[0]}\n` +
-                                `port, got: ${service.port}\n`
+                                `port, got: ${service.port}`
                             ));
                         }
                     } else {

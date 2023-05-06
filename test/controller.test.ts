@@ -3411,7 +3411,7 @@ describe('Controller', () => {
         } catch(e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error(`Coordinator [${fakeAdapterName}] not found after 2000ms!`));
+        expect(error).toStrictEqual(new Error(`Coordinator [${fakeAdapterName}] not found after timeout of 2000ms!`));
     });
 
     it('Adapter mdns without type test', async () => {
@@ -3433,9 +3433,7 @@ describe('Controller', () => {
             error = e;
         }
         expect(error).toStrictEqual(new Error(
-            `You must specify the coordinator mdns service type after mdns://`+
-            `Read about coordinator mdns service type:`+
-            `https://www.zigbee2mqtt.io/guide/configuration/adapter-settings.html#mdns-zeroconf-discovery`
+            `No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`
         ));
     });
 
@@ -3471,9 +3469,11 @@ describe('Controller', () => {
             error = e;
         }
         expect(error).toStrictEqual(new Error(
-            `Coordinator returned wrong Zeroconf format! `+ 
-            `Read about Zeroconf format here:`+
-            `https://github.com/fairecasoimeme/ZiGate-Ethernet/issues/7`
+            `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
+            `txt.radio_type, got: undefined\n` +
+            `txt.baud_rate, got: 115200\n` +
+            `address, got: 111.111.111.111\n` +
+            `port, got: 6638`
         ));
         
     });
