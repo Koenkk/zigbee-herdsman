@@ -81,28 +81,26 @@ abstract class Adapter extends events.EventEmitter {
             if (!serialPortOptions.path) {
                 throw new Error("No path provided and failed to auto detect path");
             }
-        } else if(serialPortOptions.path.indexOf("mdns://") != -1){
+        } else if (serialPortOptions.path.startsWith("mdns://")) {
             const mdnsDevice = serialPortOptions.path.substring(7);
-            if(mdnsDevice.length == 0){
+            if (mdnsDevice.length == 0){
                 throw new Error(
-                    `You must specify the coordinator mdns service type after mdns://`+
-                    `Read about coordinator mdns service type:`+
-                    `https://www.zigbee2mqtt.io/guide/configuration/adapter-settings.html#mdns-zeroconf-discovery`
+                    `No mdns device specified. ` +
+                    `You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`
                 );
             }
             const bj = new Bonjour();
             const mdnsTimeout = 2000; // timeout for mdns scan
 
             logger.info(`Starting mdns discovery for coordinator: ${mdnsDevice}`);
-
             await new Promise((resolve, reject) => {
                 bj.findOne({type: mdnsDevice}, mdnsTimeout, function (service: Service) {
-                    if(service){
-                        if(service.txt&&service.txt.radio_type&&service.txt.baud_rate&&service.addresses&&service.port){
+                    if (service) {
+                        if (service.txt?.radio_type && service.txt?.baud_rate && service.addresses && service.port) {
                             const mdnsIp = service.addresses[0];
                             const mdnsPort = service.port;
-                            const mdnsAdapter = (service.txt.radio_type == "znp" ?
-                                "zstack" : service.txt.radio_type) as TsType.SerialPortOptions["adapter"];
+                            const mdnsAdapter = (service.txt.radio_type == 'znp' ?
+                                'zstack' : service.txt.radio_type) as TsType.SerialPortOptions['adapter'];
                             const mdnsBaud = parseInt(service.txt.baud_rate);
                             logger.info(`Coordinator Ip: ${mdnsIp}`);
                             logger.info(`Coordinator Port: ${mdnsPort}`);
@@ -113,17 +111,19 @@ abstract class Adapter extends events.EventEmitter {
                             serialPortOptions.adapter = mdnsAdapter;
                             serialPortOptions.baudRate = mdnsBaud;
                             resolve(new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger));
-                        }else{
+                        } else {
                             bj.destroy();
                             reject(new Error(
-                                `Coordinator returned wrong Zeroconf format! `+ 
-                                `Read about Zeroconf format here:`+
-                                `https://github.com/fairecasoimeme/ZiGate-Ethernet/issues/7`
+                                `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
+                                `txt.radio_type, got: ${service.txt?.radio_type}\n` +
+                                `txt.baud_rate, got: ${service.txt?.baud_rate}\n` +
+                                `address, got: ${service.addresses?.[0]}\n` +
+                                `port, got: ${service.port}\n`
                             ));
                         }
-                    }else{
+                    } else {
                         bj.destroy();
-                        reject(new Error(`Coordinator [${mdnsDevice}] not found after ${mdnsTimeout}ms!`));
+                        reject(new Error(`Coordinator [${mdnsDevice}] not found after timeout of ${mdnsTimeout}ms!`));
                     }
                 });
             });
