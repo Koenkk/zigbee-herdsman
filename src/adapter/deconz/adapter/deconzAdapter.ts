@@ -1113,7 +1113,7 @@ class DeconzAdapter extends Adapter {
 
             // Default timeout: 60 seconds.
             // Comparison is negated to prevent orphans when invalid timeout is entered (resulting in NaN).
-            if (!((now - req.ts) <= (req.timeout ?? 60) * 1000)) {
+            if (!((now - req.ts) <= (req.timeout ?? 60000))) {
                 //debug("Timeout for request in openRequestsQueue addr: " + req.addr.toString(16) + " clusterId: " + req.clusterId.toString(16) + " profileId: " + req.profileId.toString(16));
                 //remove from busyQueue
                 this.openRequestsQueue.splice(i, 1);
