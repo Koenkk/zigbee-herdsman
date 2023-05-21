@@ -4,8 +4,14 @@ on:
   schedule:
   - cron: "0 0 * * 0"
 
+permissions:
+  contents: read
+
 jobs:
   update_deps:
+    permissions:
+      contents: write  # for peter-evans/create-pull-request to create branch
+      pull-requests: write  # for peter-evans/create-pull-request to create a PR
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -14,8 +20,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 18
-    - run: rm -rf package-lock.json
-    - run: npx npm-check-updates -u -x serialport # serialport is currently broken: https://github.com/Koenkk/zigbee-herdsman/issues/540
+    - run: npx npm-check-updates -u
     - run: npm install
     - uses: peter-evans/create-pull-request@v5
       with:
