@@ -4257,6 +4257,47 @@ const Cluster: {
         commandsResponse: {
         }
     },
+    manuSpecificUbisysHeatingRegulatorThermostat: {
+        ID: 0x0201, // = 513
+        manufacturerCode: ManufacturerCode.Ubisys,
+        attributes: {
+            classBTemperatureOffset: {ID: 0x0000, type: DataType.int8},
+            returnFlowTemperatureWeight: {ID: 0x0001, type: DataType.int8},
+            rawOutdoorTemperature: {ID: 0x0002, type: DataType.struct},
+            rawLocalTemperatureA: {ID: 0x0003, type: DataType.struct},
+            rawLocalTemperatureB: {ID: 0x0004, type: DataType.struct},
+            rawForwardFlowTemperature: {ID: 0x0005, type: DataType.struct},
+            rawReturnFlowTemperature: {ID: 0x0006, type: DataType.struct},
+            installedExtensions: {ID: 0x0007, type: DataType.bitmap64},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
+    },
+    manuSpecificUbisysHeatingRegulatorLevelCtrl: {
+        ID: 8,
+        manufacturerCode: ManufacturerCode.Ubisys,
+        attributes: {
+            valveType: {ID: 0x0000, type: DataType.bitmap8},
+            cyclePeriod: {ID: 0x0001, type: DataType.uint8},
+            season: {ID: 0x0002, type: DataType.enum8},
+            backupLevel: {ID: 0x0003, type: DataType.uint8},
+            alternateBackupLevel: {ID: 0x0004, type: DataType.uint8},
+            lowerRange: {ID: 0x0005, type: DataType.uint8},
+            upperRange: {ID: 0x0006, type: DataType.uint8},
+            pumpThresholdOn: {ID: 0x0007, type: DataType.uint8},
+            pumpThresholdOff: {ID: 0x0008, type: DataType.uint8},
+            heatingDemandEnableThreshold: {ID: 0x0009, type: DataType.uint8},
+            heatingDemandDisableThreshold: {ID: 0x000A, type: DataType.uint8},
+            coolingDemandEnableThreshold: {ID: 0x000B, type: DataType.uint8},
+            coolingDemandDisableThreshold: {ID: 0x000C, type: DataType.uint8},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
+    },
     manuSpecificLegrandDevices: {
         ID: 0xfc01,
         manufacturerCode: ManufacturerCode.LegrandNetatmo,
