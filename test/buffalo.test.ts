@@ -2,7 +2,7 @@ import "regenerator-runtime/runtime";
 import {Buffalo} from '../src/buffalo';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from './testUtils';
 
-describe('helloworld', () => {
+describe('Buffalo', () => {
     it('UINT8 write', () => {
         const buffalo = new Buffalo(Buffer.alloc(3), 1);
         buffalo.write('UINT8', 240, {});
