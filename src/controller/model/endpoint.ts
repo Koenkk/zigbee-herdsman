@@ -296,7 +296,7 @@ class Endpoint extends Entity {
                     debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`);
                     request.resolve(result);
                 } catch (error) {
-                    debug.error(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ` +
+                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ` +
                         `${(request.expires - now) / 1000} seconds`);
                     request.reject(error);
                 }
@@ -393,16 +393,14 @@ class Endpoint extends Entity {
             }
             return request.send();
         }
-        // If we already have something queued, we queue directly to avoid
-        // messing up the ordering too much.
-        // If a send is already in progress or if this is a bulk message, we also queue directly.
-        if (this.hasPendingRequests() || request.sendPolicy === 'bulk' || this.sendInProgress) {
+        // If this is a bulk message, we queue directly.
+        if (request.sendPolicy === 'bulk') {
             debug.info(logPrefix + `queue request (${this.pendingRequests.size} / ${this.sendInProgress})))`);
             return this.queueRequest(request);
         }
 
         try {
-            debug.info(logPrefix + `send request (queue empty)`);
+            debug.info(logPrefix + `send request`);
             return await request.send();
         } catch(error) {
             // If we got a failed transaction, the device is likely sleeping.
