@@ -57,7 +57,7 @@
     "eslint": "*",
     "jest": "*",
     "regenerator-runtime": "*",
-    "typedoc": "^0.24.7",
+    "typedoc": "^0.24.8",
     "typedoc-plugin-markdown": "*",
     "typedoc-plugin-no-inherit": "*",
     "typedoc-plugin-sourcefile-url": "*",
