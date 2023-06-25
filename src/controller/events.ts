@@ -1,3 +1,4 @@
+import {FrameControl} from "../zcl";
 import {Device, Endpoint} from "./model";
 import {KeyValue} from "./tstype";
 
@@ -171,6 +172,8 @@ interface MessagePayload {
     data: KeyValue | Array<string | number>;
     meta: {
         zclTransactionSequenceNumber?: number;
+        manufacturerCode?: number;
+        frameControl?: FrameControl;
     };
 }
 
