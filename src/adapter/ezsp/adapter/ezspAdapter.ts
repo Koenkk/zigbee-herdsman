@@ -414,13 +414,11 @@ class EZSPAdapter extends Adapter {
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
     ): Promise<Events.ZclDataPayload> {
-        return this.driver.queue.execute<Events.ZclDataPayload>(async () => {
-            this.checkInterpanLock();
-            return this.sendZclFrameToEndpointInternal(
-                ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
-                disableRecovery, 0, 0, false, false, false, null
-            );
-        }, networkAddress);
+        this.checkInterpanLock();
+        return this.sendZclFrameToEndpointInternal(
+            ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
+            disableRecovery, 0, 0, false, false, false, null
+        );
     }
 
     private async sendZclFrameToEndpointInternal(
