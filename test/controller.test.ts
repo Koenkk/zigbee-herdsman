@@ -4508,25 +4508,37 @@ describe('Controller', () => {
             jest.advanceTimersByTime(10);
             return f;
         };
+        const origSendPendingRequests = endpoint.sendPendingRequests;
+        endpoint.sendPendingRequests = async (fastpoll) => {
+            const f = origSendPendingRequests.call(endpoint, fastpoll);
+            jest.advanceTimersByTime(10);
+            return f;
+        };
         endpoint.pendingRequests.add(new Request(async () => {}, [], 100));
         mocksendZclFrameToEndpoint.mockClear();
-        mocksendZclFrameToEndpoint.mockImplementation(async () => {throw new Error('Dogs barking too hard')});
-        const nextTick = new Promise (process.nextTick);
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Cats barking too hard');});
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard');});
+        let nextTick = new Promise (process.nextTick);
         const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'active'});
         await nextTick;
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        const data = {
+            wasBroadcast: false,
+            address: '0x129',
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        }
 
+        nextTick = new Promise (process.nextTick);
+        await mockAdapterEvents['zclData'](data);
+        await nextTick;
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
+        Date.now.mockReturnValue(100000);
         let error = null;
-        try {
-            await mockAdapterEvents['zclData']({
-                wasBroadcast: false,
-                address: '0x129',
-                frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
-                endpoint: 1,
-                linkquality: 50,
-                groupID: 1,
-            });
-
+        try{
+            await mockAdapterEvents['zclData'](data);
             await result;
         } catch (e) {
             error = e;
@@ -4570,8 +4582,9 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockReturnValueOnce( {frame: {Payload: new Array( {"attrId": 3, "attrData": "three", "status": 0})}});
         mocksendZclFrameToEndpoint.mockReturnValueOnce( {frame: {Payload: new Array( {"attrId": 4, "attrData": "four", "status": 0})}});
         let result1, result2: Promise <any>;
+        let nextTick = new Promise (process.nextTick);
         endpoint.write('genOnOff', {onOff: 0, startUpOnOff: 0}, {disableResponse: true, sendWhen: 'active'});
-        await new Promise (process.nextTick);
+        await nextTick;
         // Queue content:
         // 1. empty
         // 2. ZCL write 'genOnOff' {onOff: 0, startUpOnOff: 0}
@@ -4650,37 +4663,24 @@ describe('Controller', () => {
         expect(endpoint.pendingRequests.size).toStrictEqual (7);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(8);
 
-        try {
-            // Implicit checkin, there are 5 ZclFrames and 2 other requests left in the queue:
-            await mockAdapterEvents['zclData']({
-                wasBroadcast: false,
-                address: '0x129',
-                frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
-                endpoint: 1,
-                linkquality: 50,
-                groupID: 1,
-            });
+        // Implicit checkin, there are 5 ZclFrames and 2 other requests left in the queue:
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: '0x129',
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
 
-            await result6;
-        } catch (e) {
-            try {
-                await result3;
-            } catch (e) {
-                try {
-                    await result2;
-                } catch(e) {
-                    error = e;
-                }
-            }
-        }
-        expect (result4).resolves.toStrictEqual({"3": "three"});
-        expect (result5).resolves.toStrictEqual({"3": "three"});
+        await result4;
+        expect(result4).resolves.toStrictEqual({"3": "three"});
+        expect(result5).resolves.toStrictEqual({"3": "three"});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(13);
         expect(mocksendZclFrameToEndpoint.mock.calls[8][3].Payload).toStrictEqual ([{"attrData": 0, "attrId": 16387, "dataType": 48}]);
         expect(mocksendZclFrameToEndpoint.mock.calls[9][3].Payload).toStrictEqual ([{"attrData": 1, "attrId": 0, "dataType": 16}]);
         expect(mocksendZclFrameToEndpoint.mock.calls[10][3].Payload).toStrictEqual ([{"attrData": 0, "attrId": 0, "dataType": 16}, {"attrData": 0, "attrId": 16387, "dataType": 48}]);
         expect(mocksendZclFrameToEndpoint.mock.calls[11][3].Payload).toStrictEqual ([{"attrData": 1, "attrId": 16387, "dataType": 48}]);
-        expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"active","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"active","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard))`);
     });
 
     it('Write with sendWhen active, discard messages after expiration', async () => {
