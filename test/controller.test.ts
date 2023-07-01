@@ -4510,7 +4510,7 @@ describe('Controller', () => {
         };
         const origSendPendingRequests = endpoint.sendPendingRequests;
         endpoint.sendPendingRequests = async (fastpoll) => {
-            const f = origSendPendingRequests.call(endpoint, fastpoll);
+            const f = await origSendPendingRequests.call(endpoint, fastpoll);
             jest.advanceTimersByTime(10);
             return f;
         };
