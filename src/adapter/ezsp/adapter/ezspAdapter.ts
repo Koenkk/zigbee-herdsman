@@ -256,7 +256,7 @@ class EZSPAdapter extends Adapter {
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        if ([8, 10, 14, 18].indexOf(key.length) === -1) {
+        if ([8, 10, 14, 16, 18].indexOf(key.length) === -1) {
             throw new Error('Wrong install code length');
         }
         await this.driver.addInstallCode(ieeeAddress, key);
