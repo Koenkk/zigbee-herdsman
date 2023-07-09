@@ -269,7 +269,7 @@ class Endpoint extends Entity {
 
         if (this.pendingRequests.size === 0) return;
 
-        if (this.sendInProgress) {
+        if (!fastPolling && this.sendInProgress) {
             debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): sendPendingRequests already in progress`);
             return;
         }

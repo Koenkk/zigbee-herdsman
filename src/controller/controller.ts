@@ -638,7 +638,10 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
-        device.implicitCheckin();
+        //no implicit checkin for genPollCtrl data because it might interfere with the explicit checkin
+        if (!this.isZclDataPayload(dataPayload, dataType) || !dataPayload.frame.isCluster("genPollCtrl")) {
+            device.implicitCheckin();
+        }
         device.linkquality = dataPayload.linkquality;
 
         let endpoint = device.getEndpoint(dataPayload.endpoint);
