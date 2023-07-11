@@ -103,7 +103,7 @@ class Endpoint extends Entity {
             }
 
             if (target) {
-                return {target, cluster: Zcl.Utils.getCluster(entry.cluster)};
+                return {target, cluster: Zcl.Utils.getCluster(entry.cluster, this.getDevice().manufacturerID)};
             } else {
                 return undefined;
             }
