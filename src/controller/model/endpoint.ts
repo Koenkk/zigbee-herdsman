@@ -494,6 +494,34 @@ class Endpoint extends Entity {
         }
     }
 
+    public async writeControl4(clusterKey: number | string, xpayload: number[], options?: Options) {
+        var _a;
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+
+        const log = `Write ${this.deviceIeeeAddress}/${this.ID} ` +
+        `${cluster.name}(${JSON.stringify(xpayload)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            const payload = [];
+            xpayload = xpayload.slice(3);
+            payload.push({ attrId: 0, attrData: xpayload, dataType:'charStr'});
+            const frame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL,0,true,null,0x73,"c4cmd_s",0x0001,payload,0x1);
+
+
+            await Entity.adapter.sendZclFrameToEndpoint(
+                this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
+                options.disableResponse, options.disableRecovery, options.srcEndpoint
+            );
+        }
+        catch (error) {
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
+        }
+    }
+
     public async writeResponse(
         clusterKey: number | string, transactionSequenceNumber: number, attributes: KeyValue, options?: Options
     ): Promise<void> {

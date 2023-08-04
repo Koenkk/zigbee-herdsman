@@ -55,4 +55,5 @@ export const Endpoints = [
     // OTA - it queries for ZLL profile, but then contacts with HA profile)
     {...EndpointDefaults, endpoint: 47, appprofid: 0x0104},
     {...EndpointDefaults, endpoint: 242, appprofid: 0xa1e0},
+    {...EndpointDefaults, endpoint: 197, appprofid: 0xC25C},
 ];

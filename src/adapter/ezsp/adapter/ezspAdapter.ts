@@ -69,7 +69,7 @@ class EZSPAdapter extends Adapter {
                 debug("ZDO Device announce: %s, %s", nwk, ieee.toString());
                 this.driver.handleNodeJoined(nwk, ieee);
             }
-        } else if (frame.apsFrame.profileId == 260 || frame.apsFrame.profileId == 0xFFFF) {
+        } else if (frame.apsFrame.profileId == 260 || frame.apsFrame.profileId == 0xFFFF || frame.apsFrame.profileId == 0xC25C) {
             try {
                 const payload: Events.ZclDataPayload = {
                     frame: ZclFrame.fromBuffer(frame.apsFrame.clusterId, frame.message),

@@ -160,7 +160,13 @@ const Foundation: {
             {name: 'elementData', type: BuffaloZclDataType.USE_DATA_TYPE},
         ]
     },
-
+    writeControl4: {
+        ID: 49,
+        parseStrategy: 'repetitive',
+        parameters: [
+            { name: 'attrData', type: BuffaloZclDataType.USE_DATA_TYPE },
+        ]
+    }
     /**
      * TODO: not all commands are supported yet, missing:
      * - 14: readStruct
