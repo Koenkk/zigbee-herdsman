@@ -334,6 +334,18 @@ class Controller extends events.EventEmitter {
         }
     }
 
+    public async coordinatorCheck(): Promise<{missingRouters: Device[]}> {
+        if (await this.adapter.supportsBackup()) {
+            const backup = await this.adapter.backup();
+            const devicesInBackup = backup.devices.map((d) => `0x${d.ieeeAddress.toString('hex')}`);
+            const missingRouters = this.getDevices()
+                .filter((d) => d.type === 'Router' && !devicesInBackup.includes(d.ieeeAddr));
+            return {missingRouters};
+        } else {
+            throw new Error("Coordinator does not coordinator check because it doesn't support backups");
+        }
+    }
+
     public async reset(type: 'soft' | 'hard'): Promise<void> {
         await this.adapter.reset(type);
     }
