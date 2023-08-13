@@ -4907,6 +4907,20 @@ describe('Controller', () => {
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 
+    it('Shouldnt throw error on coordinatorCheck when adapter doesnt support backups', async () => {
+        mockAdapterSupportsBackup.mockReturnValue(false);
+        await controller.start();
+        await expect(controller.coordinatorCheck()).rejects.toHaveProperty('message', `Coordinator does not coordinator check because it doesn't support backups`);
+    });
+
+    it('Should do a coordinator check', async () => {
+        mockAdapterSupportsBackup.mockReturnValue(true);
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const result = await controller.coordinatorCheck();
+        expect(result.missingRouters.length).toBe(1);
+        expect(result.missingRouters[0].ieeeAddr).toBe('0x129');
+    });
 });
 
 
