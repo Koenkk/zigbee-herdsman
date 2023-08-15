@@ -342,7 +342,8 @@ class Endpoint extends Entity {
                     this.pendingRequests.delete(request);
                     newRequest.moveCallbacks(request);
                 }
-                else if (newRequest.sendPolicy === 'keep-command' || newRequest.sendPolicy === 'keep-cmd-undiv') {
+                else if ((newRequest.sendPolicy === 'keep-command' || newRequest.sendPolicy === 'keep-cmd-undiv') &&
+                        Array.isArray(request.frame.Payload)) {
                     const filteredPayload = request.frame.Payload.filter((oldEl: {attrId: number}) =>
                         !payload.find((newEl: {attrId: number}) => oldEl.attrId === newEl.attrId));
                     if (filteredPayload.length == 0) {
