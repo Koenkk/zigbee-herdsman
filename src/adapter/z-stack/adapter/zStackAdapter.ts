@@ -852,8 +852,8 @@ class ZStackAdapter extends Adapter {
         return true;
     }
 
-    public async backup(): Promise<Models.Backup> {
-        return this.adapterManager.backup.createBackup();
+    public async backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup> {
+        return this.adapterManager.backup.createBackup(ieeeAddressesInDatabase);
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {

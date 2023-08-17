@@ -58,7 +58,7 @@ export class AdapterBackup {
     /**
      * Creates a new backup from connected ZNP adapter and returns it in internal backup model format.
      */
-    public async createBackup(): Promise<Models.Backup> {
+    public async createBackup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup> {
         this.debug("creating backup");
         const version: ZnpVersion = await this.getAdapterVersion();
 
@@ -129,7 +129,7 @@ export class AdapterBackup {
 
         /* return backup structure */
         /* istanbul ignore next */
-        return {
+        const backup: Models.Backup = {
             znp: {
                 version: version,
                 trustCenterLinkKeySeed: tclkSeed?.key || undefined
@@ -192,6 +192,29 @@ export class AdapterBackup {
                 };
             }).filter(e => e) || []
         };
+
+        try {
+            /**
+             * Due to a bug in ZStack, some devices go missing from the backed-up device tables which makes them disappear from the backup.
+             * This causes the devices not to be restored when e.g. re-flashing the adapter.
+             * If you then try to join a new device via a Zigbee 3.0 router that went missing (those with a linkkey), joning fails as the coordinator
+             * does not have the linkKey anymore.
+             * Below we don't remove any devices from the backup which have a linkkey and are still in the database (=ieeeAddressesInDatabase)
+             */
+            const oldBackup = await this.getStoredBackup();
+            const missing = oldBackup.devices.filter((d) =>
+                d.linkKey && ieeeAddressesInDatabase.includes(`0x${d.ieeeAddress.toString("hex")}`) &&
+                !backup.devices.find((dd) => d.ieeeAddress === dd.ieeeAddress));
+            this.debug(
+                `Following devices with link key are missing from new backup but present in old backup and database, ` +
+                `adding them back: ${missing.map((d) => d.ieeeAddress).join(', ')}`
+            );
+            backup.devices = [...backup.devices, ...missing];
+        } catch (error) {
+            this.debug(`Failed to read old backup, not checking for missing routers: ${error}`);
+        }
+
+        return backup;
     }
 
     /**

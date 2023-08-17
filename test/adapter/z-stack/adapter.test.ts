@@ -13,7 +13,6 @@ import * as Zcl from '../../../src/zcl';
 import * as Constants from '../../../src/adapter/z-stack/constants';
 import {ZclDataPayload} from "../../../src/adapter/events";
 import {UnifiedBackupStorage} from "../../../src/models";
-import {ZnpAdapterManager} from "../../../src/adapter/z-stack/adapter/manager";
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 const mockSetTimeout = () => setTimeout = jest.fn().mockImplementation((r) => r());
@@ -1292,7 +1291,7 @@ describe("zstack-adapter", () => {
         const result = await adapter.start();
         expect(result).toBe("restored");
 
-        await adapter.backup();
+        await adapter.backup([]);
     });
 
     it("should restore unified backup with 3.0.x adapter and create backup - no tclk seed", async () => {
@@ -1305,7 +1304,7 @@ describe("zstack-adapter", () => {
         const result = await adapter.start();
         expect(result).toBe("restored");
 
-        await adapter.backup();
+        await adapter.backup([]);
     });
 
     it("should restore unified backup with 3.x.0 adapter and create backup - empty", async () => {
@@ -1316,7 +1315,7 @@ describe("zstack-adapter", () => {
         const result = await adapter.start();
         expect(result).toBe("restored");
 
-        await adapter.backup();
+        await adapter.backup([]);
     });
 
     it("should (recommission) restore unified backup with 1.2 adapter and create backup - empty", async () => {
@@ -1327,7 +1326,7 @@ describe("zstack-adapter", () => {
         const result = await adapter.start();
         expect(result).toBe("restored");
 
-        const backup = await adapter.backup();
+        const backup = await adapter.backup([]);
         expect(backup.networkKeyInfo.frameCounter).toBe(0);
     });
 
@@ -1344,7 +1343,7 @@ describe("zstack-adapter", () => {
         builder.nv(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + 0, secMaterialTableEntry.serialize("aligned"));
         mockZnpRequestWith(builder);
 
-        const backup = await adapter.backup();
+        const backup = await adapter.backup([]);
         expect(backup.networkKeyInfo.frameCounter).toBe(2800);
     });
 
@@ -1356,7 +1355,7 @@ describe("zstack-adapter", () => {
         for (let i = 0; i < 4; i++) { builder.nv(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + i, Buffer.from("000000000000000000000000", "hex")); }
         mockZnpRequestWith(builder);
 
-        const backup = await adapter.backup();
+        const backup = await adapter.backup([]);
         expect(backup.networkKeyInfo.frameCounter).toBe(1250);
     });
 
@@ -1372,7 +1371,7 @@ describe("zstack-adapter", () => {
         builder.nv(NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START + 3, genericEntry.serialize("aligned"));
         mockZnpRequestWith(builder);
 
-        const backup = await adapter.backup();
+        const backup = await adapter.backup([]);
         expect(backup.networkKeyInfo.frameCounter).toBe(8737);
     });
 
@@ -1381,8 +1380,31 @@ describe("zstack-adapter", () => {
         const result = await adapter.start();
         expect(result).toBe("resumed");
 
-        const backup = await adapter.backup();
+        const backup = await adapter.backup([]);
         expect(backup.networkKeyInfo.frameCounter).toBe(0);
+    });
+
+    it("should keep missing devices in backup", async () => {
+        const backupFile = getTempFile();
+        const backupWithMissingDevice = JSON.parse(JSON.stringify(backupMatchingConfig));
+        backupWithMissingDevice.devices.push({
+            "nwk_address": "20fa",
+            "ieee_address": "00128d11124fa80b",
+            "link_key": {
+              "key": "bff550908aa1529ee90eea3c3bdc26fc",
+              "rx_counter": 0,
+              "tx_counter": 2
+            }
+        });
+        fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3AlignedRequestMock);
+        await adapter.start();
+        fs.writeFileSync(backupFile, JSON.stringify(backupWithMissingDevice), "utf8");
+        const backup = await adapter.backup(['0x00128d11124fa80b']);
+        const missingDevice = backup.devices.find((d) => d.ieeeAddress.toString('hex') == '00128d11124fa80b');
+        expect(missingDevice).not.toBeNull();
+        expect(missingDevice?.linkKey?.key.toString('hex')).toBe('bff550908aa1529ee90eea3c3bdc26fc');
     });
 
     it("should fail when backup file is corrupted - Coordinator backup is corrupted", async () => {
@@ -1485,7 +1507,7 @@ describe("zstack-adapter", () => {
         );
         const result = await adapter.start();
         expect(result).toBe("resumed");
-        await expect(adapter.backup()).rejects.toThrowError("Failed to read adapter IEEE address");
+        await expect(adapter.backup([])).rejects.toThrowError("Failed to read adapter IEEE address");
     });
 
     it("should fail to create backup with 3.0.x adapter - adapter not commissioned - missing nib", async () => {
@@ -1495,7 +1517,7 @@ describe("zstack-adapter", () => {
         expect(result).toBe("reset");
         builder.nv(NvItemsIds.NIB, null);
         mockZnpRequestWith(builder);
-        await expect(adapter.backup()).rejects.toThrowError("Cannot backup - adapter not commissioned");
+        await expect(adapter.backup([])).rejects.toThrowError("Cannot backup - adapter not commissioned");
     });
 
     it("should fail to create backup with 3.0.x adapter - missing active key info", async () => {
@@ -1505,7 +1527,7 @@ describe("zstack-adapter", () => {
         expect(result).toBe("reset");
         builder.nv(NvItemsIds.NWK_ACTIVE_KEY_INFO, null);
         mockZnpRequestWith(builder);
-        await expect(adapter.backup()).rejects.toThrowError("Cannot backup - missing active key info");
+        await expect(adapter.backup([])).rejects.toThrowError("Cannot backup - missing active key info");
     });
 
     it("should restore legacy backup with 3.0.x adapter - empty", async () => {
