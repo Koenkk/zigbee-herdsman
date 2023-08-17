@@ -194,6 +194,13 @@ export class AdapterBackup {
         };
 
         try {
+            /**
+             * Due to a bug in ZStack, some devices go missing from the backed-up device tables which makes them disappear from the backup.
+             * This causes the devices not to be restored when e.g. re-flashing the adapter.
+             * If you then try to join a new device via a Zigbee 3.0 router that went missing (those with a linkkey), joning fails as the coordinator
+             * does not have the linkKey anymore.
+             * Below we don't remove any devices from the backup which have a linkkey and are still in the database (=ieeeAddressesInDatabase)
+             */
             const oldBackup = await this.getStoredBackup();
             const missing = oldBackup.devices.filter((d) =>
                 d.linkKey && ieeeAddressesInDatabase.includes(`0x${d.ieeeAddress.toString("hex")}`) &&
