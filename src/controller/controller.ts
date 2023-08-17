@@ -325,12 +325,24 @@ class Controller extends events.EventEmitter {
         this.databaseSave();
         if (this.options.backupPath && await this.adapter.supportsBackup()) {
             debug.log('Creating coordinator backup');
-            const backup = await this.adapter.backup();
+            const backup = await this.adapter.backup(Device.all().map((d) => d.ieeeAddr));
             const unifiedBackup = await BackupUtils.toUnifiedBackup(backup);
             const tmpBackupPath = this.options.backupPath + '.tmp';
             fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
             fs.renameSync(tmpBackupPath, this.options.backupPath);
             debug.log(`Wrote coordinator backup to '${this.options.backupPath}'`);
+        }
+    }
+
+    public async coordinatorCheck(): Promise<{missingRouters: Device[]}> {
+        if (await this.adapter.supportsBackup()) {
+            const backup = await this.adapter.backup(Device.all().map((d) => d.ieeeAddr));
+            const devicesInBackup = backup.devices.map((d) => `0x${d.ieeeAddress.toString('hex')}`);
+            const missingRouters = this.getDevices()
+                .filter((d) => d.type === 'Router' && !devicesInBackup.includes(d.ieeeAddr));
+            return {missingRouters};
+        } else {
+            throw new Error("Coordinator does not coordinator check because it doesn't support backups");
         }
     }
 
