@@ -764,7 +764,7 @@ class Endpoint extends Entity {
 
             for (const e of payload) {
                 const match = this._configuredReportings.find(c => c.attrId === e.attrId && c.cluster === cluster.ID && 
-                    c.manufacturerCode === cluster.manufacturerCode);
+                    c.manufacturerCode == cluster.manufacturerCode);
                 if (match) {
                     this._configuredReportings.splice(this._configuredReportings.indexOf(match), 1);
                 }
