@@ -205,9 +205,10 @@ export class AdapterBackup {
             const missing = oldBackup.devices.filter((d) =>
                 d.linkKey && ieeeAddressesInDatabase.includes(`0x${d.ieeeAddress.toString("hex")}`) &&
                 !backup.devices.find((dd) => d.ieeeAddress === dd.ieeeAddress));
+            const missingStr = missing.map((d) => `0x${d.ieeeAddress.toString('hex')}`).join(', ');
             this.debug(
                 `Following devices with link key are missing from new backup but present in old backup and database, ` +
-                `adding them back: ${missing.map((d) => d.ieeeAddress).join(', ')}`
+                `adding them back: ${missingStr}`
             );
             backup.devices = [...backup.devices, ...missing];
         } catch (error) {
