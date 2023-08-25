@@ -1401,9 +1401,11 @@ describe("zstack-adapter", () => {
         mockZnpRequestWith(empty3AlignedRequestMock);
         await adapter.start();
         fs.writeFileSync(backupFile, JSON.stringify(backupWithMissingDevice), "utf8");
-        const backup = await adapter.backup(['0x00128d11124fa80b']);
+        const devicesInDatabase = backupWithMissingDevice.devices.map((d) => `0x${d.ieee_address}`);
+        const backup = await adapter.backup(devicesInDatabase);
         const missingDevice = backup.devices.find((d) => d.ieeeAddress.toString('hex') == '00128d11124fa80b');
         expect(missingDevice).not.toBeNull();
+        expect(backupWithMissingDevice.devices.length).toBe(backup.devices.length);
         expect(missingDevice?.linkKey?.key.toString('hex')).toBe('bff550908aa1529ee90eea3c3bdc26fc');
     });
 
