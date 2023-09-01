@@ -64,7 +64,6 @@ interface ConfiguredReportingInternal {
     minRepIntval: number,
     maxRepIntval: number,
     repChange: number,
-    manufacturerCode?: number | undefined,
 }
 
 interface ConfiguredReporting {
@@ -113,7 +112,7 @@ class Endpoint extends Entity {
 
     get configuredReportings(): ConfiguredReporting[] {
         return this._configuredReportings.map((entry) => {
-            const cluster = Zcl.Utils.getCluster(entry.cluster, entry.manufacturerCode);
+            const cluster = Zcl.Utils.getCluster(entry.cluster, this.getDevice().manufacturerID);
             let attribute : Zcl.TsType.Attribute;
 
             if (cluster.hasAttribute(entry.attrId)) {
@@ -763,8 +762,7 @@ class Endpoint extends Entity {
             }
 
             for (const e of payload) {
-                const match = this._configuredReportings.find(c => c.attrId === e.attrId && c.cluster === cluster.ID && 
-                    c.manufacturerCode == cluster.manufacturerCode);
+                const match = this._configuredReportings.find(c => c.attrId === e.attrId && c.cluster === cluster.ID);
                 if (match) {
                     this._configuredReportings.splice(this._configuredReportings.indexOf(match), 1);
                 }
@@ -775,7 +773,6 @@ class Endpoint extends Entity {
                     this._configuredReportings.push({
                         cluster: cluster.ID, attrId: entry.attrId, minRepIntval: entry.minRepIntval,
                         maxRepIntval: entry.maxRepIntval, repChange: entry.repChange,
-                        manufacturerCode: options.manufacturerCode,
                     });
                 }
             }
