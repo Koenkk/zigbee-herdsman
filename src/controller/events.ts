@@ -84,6 +84,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'upOpen': 'commandUpOpen',
     'dataResponse': 'commandDataResponse',
     'dataReport': 'commandDataReport',
+    'mcuVersionResponse': 'commandMcuVersionResponse',
     'getWeeklyScheduleRsp': 'commandGetWeeklyScheduleRsp',
     'queryNextImageRequest': 'commandQueryNextImageRequest',
     'alertsNotification': 'commandAlertsNotification',
@@ -153,7 +154,7 @@ type MessagePayloadType =
     'commandDataReport' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | 'commandGetPinCodeRsp' |
     'commandArrivalSensorNotify' | 'commandCommisioningNotification' | 'commandGetUserStatusRsp' |
-    'commandAlarm' | 'commandUnlockDoorRsp' |
+    'commandAlarm' | 'commandUnlockDoorRsp' | 'commandMcuVersionResponse' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
     'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandMcuSyncTime' |
     'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandActiveStatusReportAlt' |
