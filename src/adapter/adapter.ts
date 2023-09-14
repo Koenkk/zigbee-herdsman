@@ -111,9 +111,12 @@ abstract class Adapter extends events.EventEmitter {
                             serialPortOptions.adapter = mdnsAdapter;
                             serialPortOptions.baudRate = mdnsBaud;
                             
-                            if (adapterLookup.hasOwnProperty(serialPortOptions.adapter) && serialPortOptions.adapter !== 'auto') {
-                                    adapter = adapterLookup[serialPortOptions.adapter];
-                                    resolve(new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger));
+                            if (adapterLookup.hasOwnProperty(serialPortOptions.adapter) 
+                            && serialPortOptions.adapter !== 'auto') {
+                                adapter = adapterLookup[serialPortOptions.adapter];
+                                resolve(
+                                    new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger)
+                                    );
                             }else{
                                 reject(new Error(
                                     `Adapter ${serialPortOptions.adapter} is not supported.`
