@@ -116,7 +116,7 @@ abstract class Adapter extends events.EventEmitter {
                                 adapter = adapterLookup[serialPortOptions.adapter];
                                 resolve(
                                     new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger)
-                                    );
+                                );
                             }else{
                                 reject(new Error(
                                     `Adapter ${serialPortOptions.adapter} is not supported.`
