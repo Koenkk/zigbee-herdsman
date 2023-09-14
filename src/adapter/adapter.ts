@@ -110,6 +110,9 @@ abstract class Adapter extends events.EventEmitter {
                             serialPortOptions.path = `tcp://${mdnsIp}:${mdnsPort}`;
                             serialPortOptions.adapter = mdnsAdapter;
                             serialPortOptions.baudRate = mdnsBaud;
+                            if (serialPortOptions.adapter && serialPortOptions.adapter !== 'auto') {
+                                adapter = adapterLookup[serialPortOptions.adapter];
+                            }
                             resolve(new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger));
                         } else {
                             bj.destroy();
