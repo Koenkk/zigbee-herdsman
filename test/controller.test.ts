@@ -3538,7 +3538,7 @@ describe('Controller', () => {
         const fakeAdapterName = 'mdns_test_device';
         const fakeIp = '111.111.111.111';
         const fakePort = 6638;
-        const fakeRadio = 'unsupported_radio';
+        const fakeRadio = 'auto';
         const fakeBaud = '115200';
 
         const mockLoggerDebug = jest.fn();
