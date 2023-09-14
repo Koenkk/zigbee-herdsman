@@ -3534,6 +3534,43 @@ describe('Controller', () => {
         
     });
 
+    it('Adapter mdns detection unsupported adapter test', async () => {
+        const fakeAdapterName = 'mdns_test_device';
+        const fakeIp = '111.111.111.111';
+        const fakePort = 6638;
+        const fakeRadio = 'unsupported_radio';
+        const fakeBaud = '115200';
+
+        const mockLoggerDebug = jest.fn();
+        const mockLoggerInfo = jest.fn();
+        const mockLoggerWarn = jest.fn();
+        const mockLoggerError = jest.fn();
+        const mockLogger: LoggerStub = {
+            debug: mockLoggerDebug,
+            info: mockLoggerInfo,
+            warn: mockLoggerWarn,
+            error: mockLoggerError
+        };
+
+        Bonjour.prototype.findOne = function(opts?: BrowserConfig | undefined, timeout?: number, callback?: CallableFunction) {
+            setTimeout(() => {
+                callback({name: 'fakeAdapter', type: fakeAdapterName, port: fakePort, addresses: [fakeIp], txt: {radio_type: fakeRadio, baud_rate: fakeBaud}});
+            }, 200);
+        }
+
+        let error;
+        try {
+            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+        } catch (e) {
+            error = e;
+        }
+
+        expect(error).toStrictEqual(new Error(
+            `Adapter ${fakeRadio} is not supported.`
+        ));
+        
+    });
+
     it('Adapter mdns detection zstack test', async () => {
         const fakeAdapterName = 'mdns_test_device';
         const fakeIp = '111.111.111.111';
