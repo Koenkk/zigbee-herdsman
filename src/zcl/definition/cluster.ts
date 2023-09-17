@@ -4187,6 +4187,7 @@ const Cluster: {
             outdoorTempToDisplay: {ID: 16, type: DataType.int16},
             outdoorTempToDisplayTimeout: {ID: 17, type: DataType.uint16},
             secondScreenBehavior: {ID: 18, type: DataType.enum8}, // auto:0,setpoint:1,outside:2
+            tankSize: {ID: 19, type: DataType.enum8}, //1=40gal, 2=50gal, 3=60gal, 4=80gal
             currentTimeToDisplay: {ID: 32, type: DataType.uint32},
             ledIntensityOn: {ID: 82, type: DataType.uint8},
             ledIntensityOff: {ID: 83, type: DataType.uint8},
@@ -4208,15 +4209,19 @@ const Cluster: {
             unknown1: {ID: 128, type: DataType.uint32}, // readOnly stringNumber *testing*
             dimmerTimmer: {ID: 160, type: DataType.uint32},
             unknown2: {ID: 256, type: DataType.uint8}, // readOnly *testing*
+            setpoint: {ID: 260, type: DataType.int16},
             floorControlMode: {ID: 261, type: DataType.enum8},  // airFloorMode
             auxOutputMode: {ID: 262, type: DataType.enum8},
+            floorTemperature: {ID: 263, type: DataType.int16},
             ambiantMaxHeatSetpointLimit: {ID: 264, type: DataType.int16},
             floorMinHeatSetpointLimit: {ID: 265, type: DataType.int16},
             floorMaxHeatSetpointLimit: {ID: 266, type: DataType.int16},
             temperatureSensor: {ID: 267, type: DataType.enum8},
             floorLimitStatus: {ID: 268, type: DataType.enum8},
+            roomTemperature: {ID: 269, type: DataType.int16},
             timeFormatToDisplay: {ID: 276, type: DataType.enum8},
             GFCiStatus: {ID: 277, type: DataType.enum8},
+            hvacMode: {ID: 278, type: DataType.enum8},
             auxConnectedLoad: {ID: 280, type: DataType.uint16},
             connectedLoad: {ID: 281, type: DataType.uint16},
             pumpProtection: {ID: 296, type: DataType.uint8},
