@@ -4187,6 +4187,7 @@ const Cluster: {
             outdoorTempToDisplay: {ID: 16, type: DataType.int16},
             outdoorTempToDisplayTimeout: {ID: 17, type: DataType.uint16},
             secondScreenBehavior: {ID: 18, type: DataType.enum8}, // auto:0,setpoint:1,outside:2
+            tankSize: {ID: 19, type: DataType.enum8}, // 1:40gal,2:50gal,3:60gal,4:80gal
             currentTimeToDisplay: {ID: 32, type: DataType.uint32},
             ledIntensityOn: {ID: 82, type: DataType.uint8},
             ledIntensityOff: {ID: 83, type: DataType.uint8},
