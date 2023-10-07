@@ -10,6 +10,7 @@ import PowerSource from './definition/powerSource';
 import EndpointDeviceType from './definition/endpointDeviceType';
 import ManufacturerCode from './definition/manufacturerCode';
 import ZclFrame from './zclFrame';
+import ZclHeader from './zclHeader';
 import ZclStatusError from './zclStatusError';
 import * as TsType from './tstype';
 
@@ -28,4 +29,5 @@ export {
     FrameControl,
     EndpointDeviceType,
     ZclStatusError,
+    ZclHeader,
 };

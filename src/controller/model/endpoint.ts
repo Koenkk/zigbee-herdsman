@@ -883,7 +883,7 @@ class Endpoint extends Entity {
 
     public waitForCommand(
         clusterKey: number | string, commandKey: number | string, transactionSequenceNumber: number, timeout: number,
-    ): {promise: Promise<{header: KeyValue; payload: KeyValue}>; cancel: () => void} {
+    ): {promise: Promise<{header: Zcl.ZclHeader; payload: KeyValue}>; cancel: () => void} {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
         const waiter = Entity.adapter.waitFor(
@@ -891,7 +891,7 @@ class Endpoint extends Entity {
             transactionSequenceNumber, cluster.ID, command.ID, timeout
         );
 
-        const promise = new Promise<{header: KeyValue; payload: KeyValue}>((resolve, reject) => {
+        const promise = new Promise<{header: Zcl.ZclHeader; payload: KeyValue}>((resolve, reject) => {
             waiter.promise.then(
                 (payload) => resolve({header: payload.frame.Header, payload: payload.frame.Payload}),
                 (error) => reject(error),
