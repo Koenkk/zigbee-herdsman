@@ -2875,7 +2875,7 @@ const Cluster: {
             boschOutdoorSiren: {
                 ID: 0xf0,
                 parameters: [
-                    { name: 'data', type: DataType.uint8 }, // data:1
+                    {name: 'data', type: DataType.uint8},
                 ],
             },
             squawk: {
