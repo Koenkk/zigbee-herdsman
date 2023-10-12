@@ -2872,6 +2872,12 @@ const Cluster: {
                     {name: 'strobelevel', type: DataType.uint8},
                 ],
             },
+            boschOutdoorSiren: {
+                ID: 0xf0,
+                parameters: [
+                    { name: 'data', type: dataType_1.default.uint8 }, // data:1
+                ],
+            },
             squawk: {
                 ID: 1,
                 parameters: [
