@@ -19,7 +19,7 @@ import {
     EmberKeyType
 } from './types/named';
 import {Multicast} from './multicast';
-import {Queue, Waitress, Wait} from '../../../utils';
+import {Waitress, Wait} from '../../../utils';
 import Debug from "debug";
 import equals from 'fast-deep-equal/es6';
 import {ParamsDesc} from './commands';
@@ -87,7 +87,6 @@ export class Driver extends EventEmitter {
     public ieee: EmberEUI64;
     private multicast: Multicast;
     private waitress: Waitress<EmberFrame, EmberWaitressMatcher>;
-    public queue: Queue;
     private transactionID = 1;
     private port: string;
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -95,7 +94,7 @@ export class Driver extends EventEmitter {
 
     constructor() {
         super();
-        this.queue = new Queue(8);
+        
         this.waitress = new Waitress<EmberFrame, EmberWaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
     }

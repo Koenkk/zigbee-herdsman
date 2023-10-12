@@ -41,15 +41,13 @@ export class Multicast {
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     async startup(enpoints: Array<any>): Promise<void> {
-        return this.driver.queue.execute<void>(async () => {
-            await this._initialize();
-            for (const ep of enpoints) {
-                if (!ep.id) continue;
-                for (const group_id of ep.member_of) {
-                    await this.subscribe(group_id, ep.id);
-                }
+        await this._initialize();
+        for (const ep of enpoints) {
+            if (!ep.id) continue;
+            for (const group_id of ep.member_of) {
+                await this.subscribe(group_id, ep.id);
             }
-        });
+        }
     }
 
     public async subscribe(group_id: number, endpoint: number): Promise<EmberStatus> {
