@@ -83,7 +83,9 @@
     "test-with-coverage": "jest test --coverage --collectCoverageFrom 'src/**/*.ts'",
     "test-watch": "jest test --watch",
     "eslint": "node_modules/.bin/eslint . --ext .ts --max-warnings=0",
-    "docs": "typedoc --tsconfig typedoc-tsconfig.json"
+    "docs": "typedoc --tsconfig typedoc-tsconfig.json",
+    "clean": "rimraf temp coverage dist",
+    "prepack": "npm run clean && npm run build"
   },
   "version": "0.19.2",
   "jest": {

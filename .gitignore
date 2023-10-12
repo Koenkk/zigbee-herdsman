@@ -4,3 +4,4 @@ dist/
 .idea
 temp/
 .remote-sync.json
+tsconfig.tsbuildinfo
