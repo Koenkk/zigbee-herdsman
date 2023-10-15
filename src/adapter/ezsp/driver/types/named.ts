@@ -60,7 +60,7 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
         const arr = super.deserialize(cls, data);
         const r = arr[0];
         data = arr[1] as Buffer;
-        return [(r as number[]).reverse(), data];
+        return [Buffer.from(r).reverse(), data];
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -70,7 +70,7 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
         }
         console.assert(cls._length === value.length);
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        const val = (value as any[]).reverse().map(i => basic.uint8_t.serialize(basic.uint8_t, i)[0]);
+        const val = Buffer.from(value).reverse().map(i => basic.uint8_t.serialize(basic.uint8_t, i)[0]);
         return Buffer.from(val);
     }
 

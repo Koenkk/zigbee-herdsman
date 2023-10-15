@@ -1,4 +1,5 @@
-import {Direction, Foundation, DataType, BuffaloZclDataType, FrameControl} from './definition';
+import {Direction, Foundation, DataType, BuffaloZclDataType} from './definition';
+import ZclHeader from './zclHeader';
 import * as Utils from './utils';
 import BuffaloZcl from './buffaloZcl';
 import {TsType as BuffaloTsType} from '../buffalo';
@@ -9,13 +10,6 @@ const MINIMAL_FRAME_LENGTH = 3;
 
 // eslint-disable-next-line
 type ZclPayload = any;
-
-interface ZclHeader {
-    frameControl: FrameControl;
-    manufacturerCode: number;
-    transactionSequenceNumber: number;
-    commandIdentifier: number;
-}
 
 const ListTypes: number[] = [
     BuffaloZclDataType.LIST_UINT8,
@@ -43,10 +37,10 @@ class ZclFrame {
      */
     public static create(
         frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number,
-        transactionSequenceNumber: number, commandKey: number | string, clusterID: number,
+        transactionSequenceNumber: number, commandKey: number | string, clusterKey: number | string,
         payload: ZclPayload, reservedBits = 0
     ): ZclFrame {
-        const cluster = Utils.getCluster(clusterID, manufacturerCode != null ? manufacturerCode : null);
+        const cluster = Utils.getCluster(clusterKey, manufacturerCode != null ? manufacturerCode : null);
         let command: TsType.Command = null;
         if (frameType === FrameType.GLOBAL) {
             command = Utils.getGlobalCommand(commandKey);
@@ -347,7 +341,7 @@ class ZclFrame {
                 } else if(condition.type == 'bitFieldEnum') {
                     return ((entry[condition.param] >> condition.offset) & ((1<<condition.size)-1)) !== condition.value;
                 } else if (remainingBufferBytes != null && condition.type == 'minimumRemainingBufferBytes') {
-                    return remainingBufferBytes < condition.value;
+                    return remainingBufferBytes < (condition.value as number);
                 } else  {
                     /* istanbul ignore else */
                     if (condition.type == 'dataTypeValueTypeEquals') {

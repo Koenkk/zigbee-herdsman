@@ -2,7 +2,7 @@ import "regenerator-runtime/runtime";
 import {Buffalo} from '../src/buffalo';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from './testUtils';
 
-describe('helloworld', () => {
+describe('Buffalo', () => {
     it('UINT8 write', () => {
         const buffalo = new Buffalo(Buffer.alloc(3), 1);
         buffalo.write('UINT8', 240, {});
@@ -352,6 +352,21 @@ describe('helloworld', () => {
         const value = buffalo.read('INT32', {});
         expect(buffalo.getPosition()).toStrictEqual(4);
         expect(value).toStrictEqual(-16515320);
+    });
+
+    it('INT48 write', () => {
+        const buffalo = new Buffalo(Buffer.alloc(6));
+        buffalo.write('INT48', -1082348273920, {});
+        expect(buffalo.getPosition()).toStrictEqual(6);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xFF, 0x03, 0xFF, 0x03, 0xFF]))
+    });
+
+
+    it('INT48 read', () => {
+        const buffalo = new Buffalo(Buffer.from([0x00, 0xFF, 0x03, 0xFF, 0x03, 0xFF]));
+        const value = buffalo.read('INT48', {});
+        expect(buffalo.getPosition()).toStrictEqual(6);
+        expect(value).toStrictEqual(-1082348273920);
     });
 
     it('FLOATLE write', () => {

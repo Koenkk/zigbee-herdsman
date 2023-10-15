@@ -1,5 +1,10 @@
 import fs from 'fs';
+import Debug from "debug";
 import {DatabaseEntry, EntityType} from './tstype';
+
+const debug = {
+    log: Debug('zigbee-herdsman:controller:database:log'),
+};
 
 class Database {
     private entries: {[id: number]: DatabaseEntry};
@@ -73,6 +78,7 @@ class Database {
     }
 
     public write(): void {
+        debug.log(`Writing database to '${this.path}'`);
         const lines = [];
         for (const DatabaseEntry of Object.values(this.entries)) {
             const json = JSON.stringify(DatabaseEntry);
@@ -80,6 +86,10 @@ class Database {
         }
         const tmpPath = this.path + '.tmp';
         fs.writeFileSync(tmpPath, lines.join('\n'));
+        // Ensure file is on disk https://github.com/Koenkk/zigbee2mqtt/issues/11759
+        const fd = fs.openSync(tmpPath, 'r+');
+        fs.fsyncSync(fd);
+        fs.closeSync(fd);
         fs.renameSync(tmpPath, this.path);
     }
 }

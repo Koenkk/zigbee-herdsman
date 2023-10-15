@@ -1,6 +1,6 @@
 import "regenerator-runtime/runtime";
 import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
-import SerialPort from 'serialport';
+import {SerialPort} from '../../../src/adapter/serialPort';
 import net from 'net';
 import {Frame as UnpiFrame, Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
@@ -21,22 +21,24 @@ jest.mock('../../../src/utils/wait', () => {
     return jest.fn();
 });
 
-jest.mock('serialport', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            close: mockSerialPortClose,
-            constructor: mockSerialPortConstructor,
-            emit: () => {},
-            on: () => {},
-            once: mockSerialPortOnce,
-            open: mockSerialPortOpen,
-            pipe: mockSerialPortPipe,
-            set: mockSerialPortSet,
-            write: mockSerialPortWrite,
-            flush: mockSerialPortFlush,
-            isOpen: mockSerialPortIsOpen,
-        };
-    });
+jest.mock('../../../src/adapter/serialPort', () => {
+    return {
+        SerialPort: jest.fn().mockImplementation(() => {
+            return {
+                close: mockSerialPortClose,
+                constructor: mockSerialPortConstructor,
+                emit: () => {},
+                on: () => {},
+                once: mockSerialPortOnce,
+                open: mockSerialPortOpen,
+                pipe: mockSerialPortPipe,
+                set: mockSerialPortSet,
+                write: mockSerialPortWrite,
+                flush: mockSerialPortFlush,
+                isOpen: mockSerialPortIsOpen,
+            };
+        }),
+    };
 });
 
 const mockSocketSetNoDelay = jest.fn();
@@ -141,8 +143,7 @@ describe('ZNP', () => {
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
         expect(SerialPort).toHaveBeenCalledWith(
-            "/dev/ttyACM0",
-            {"autoOpen": false, "baudRate": 100, "rtscts": true},
+            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 100, "rtscts": true},
         );
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
@@ -157,8 +158,7 @@ describe('ZNP', () => {
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
         expect(SerialPort).toHaveBeenCalledWith(
-            "/dev/ttyACM0",
-            {"autoOpen": false, "baudRate": 100, "rtscts": true},
+            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 100, "rtscts": true},
         );
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
@@ -174,8 +174,7 @@ describe('ZNP', () => {
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
         expect(SerialPort).toHaveBeenCalledWith(
-            "/dev/ttyACM0",
-            {"autoOpen": false, "baudRate": 115200, "rtscts": false},
+            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 115200, "rtscts": false},
         );
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
@@ -284,8 +283,7 @@ describe('ZNP', () => {
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
         expect(SerialPort).toHaveBeenCalledWith(
-            "/dev/ttyACM0",
-            {"autoOpen": false, "baudRate": 100, "rtscts": true},
+            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 100, "rtscts": true},
         );
 
         expect(error).toEqual(new Error("Error while opening serialport 'failed!'"));
@@ -310,8 +308,7 @@ describe('ZNP', () => {
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
         expect(SerialPort).toHaveBeenCalledWith(
-            "/dev/ttyACM0",
-            {"autoOpen": false, "baudRate": 100, "rtscts": true},
+            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 100, "rtscts": true},
         );
 
         expect(error).toEqual(new Error("Error while opening serialport 'failed!'"));

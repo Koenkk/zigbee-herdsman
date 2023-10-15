@@ -5,6 +5,7 @@ import {ZclFrame, FrameType, Direction} from '../zcl';
 import Debug from "debug";
 import {LoggerStub} from "../controller/logger-stub";
 import * as Models from "../models";
+import Bonjour, {Service} from 'bonjour-service';
 
 const debug = Debug("zigbee-herdsman:adapter");
 
@@ -80,6 +81,61 @@ abstract class Adapter extends events.EventEmitter {
             if (!serialPortOptions.path) {
                 throw new Error("No path provided and failed to auto detect path");
             }
+        } else if (serialPortOptions.path.startsWith("mdns://")) {
+            const mdnsDevice = serialPortOptions.path.substring(7);
+            if (mdnsDevice.length == 0){
+                throw new Error(
+                    `No mdns device specified. ` +
+                    `You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`
+                );
+            }
+            const bj = new Bonjour();
+            const mdnsTimeout = 2000; // timeout for mdns scan
+
+            logger.info(`Starting mdns discovery for coordinator: ${mdnsDevice}`);
+            await new Promise((resolve, reject) => {
+                bj.findOne({type: mdnsDevice}, mdnsTimeout, function (service: Service) {
+                    if (service) {
+                        if (service.txt?.radio_type && service.txt?.baud_rate && service.addresses && service.port) {
+                            const mdnsIp = service.addresses[0];
+                            const mdnsPort = service.port;
+                            const mdnsAdapter = (service.txt.radio_type == 'znp' ?
+                                'zstack' : service.txt.radio_type) as TsType.SerialPortOptions['adapter'];
+                            const mdnsBaud = parseInt(service.txt.baud_rate);
+                            logger.info(`Coordinator Ip: ${mdnsIp}`);
+                            logger.info(`Coordinator Port: ${mdnsPort}`);
+                            logger.info(`Coordinator Radio: ${mdnsAdapter}`);
+                            logger.info(`Coordinator Baud: ${mdnsBaud}\n`);
+                            bj.destroy();
+                            serialPortOptions.path = `tcp://${mdnsIp}:${mdnsPort}`;
+                            serialPortOptions.adapter = mdnsAdapter;
+                            serialPortOptions.baudRate = mdnsBaud;
+                            
+                            if (adapterLookup.hasOwnProperty(serialPortOptions.adapter) 
+                                    && serialPortOptions.adapter !== 'auto') {
+                                adapter = adapterLookup[serialPortOptions.adapter];
+                                resolve(
+                                    new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger)
+                                );
+                            } else {
+                                reject(new Error(`Adapter ${serialPortOptions.adapter} is not supported.`));
+                            }
+                        } else {
+                            bj.destroy();
+                            reject(new Error(
+                                `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
+                                `txt.radio_type, got: ${service.txt?.radio_type}\n` +
+                                `txt.baud_rate, got: ${service.txt?.baud_rate}\n` +
+                                `address, got: ${service.addresses?.[0]}\n` +
+                                `port, got: ${service.port}`
+                            ));
+                        }
+                    } else {
+                        bj.destroy();
+                        reject(new Error(`Coordinator [${mdnsDevice}] not found after timeout of ${mdnsTimeout}ms!`));
+                    }
+                });
+            });
         } else {
             try {
                 // Determine adapter to use
@@ -110,11 +166,13 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract supportsBackup(): Promise<boolean>;
 
-    public abstract backup(): Promise<Models.Backup>;
+    public abstract backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup>;
 
     public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
 
     public abstract setTransmitPower(value: number): Promise<void>;
+
+    public abstract addInstallCode(ieeeAddress: string, key: Buffer): Promise<void>;
 
     public abstract waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,

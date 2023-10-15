@@ -12,7 +12,8 @@ export interface UnifiedBackupStorage {
         internal: {
             /* zigbee-herdsman specific data */
             date: string;
-            znpVersion: number;
+            znpVersion?: number;
+            ezspVersion?: number;
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             [key: string]: any;
@@ -21,6 +22,9 @@ export interface UnifiedBackupStorage {
     stack_specific?: {
         zstack?: {
             tclk_seed?: string;
+        };
+        ezsp?: {
+            hashed_tclk?: string;
         };
     };
     coordinator_ieee: string;

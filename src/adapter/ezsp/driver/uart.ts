@@ -1,26 +1,16 @@
 /* istanbul ignore file */
 import {EventEmitter} from 'events';
-import SerialPort from 'serialport';
 import net from 'net';
+import {SerialPort} from '../../serialPort';
 import SocketPortUtils from '../../socketPortUtils';
-import {Deferred, crc16ccitt} from './utils';
-import * as stream from 'stream';
-import {Queue, Waitress} from '../../../utils';
+import {crc16ccitt} from './utils';
+import {Queue, Waitress, Wait} from '../../../utils';
+import * as consts from './consts';
+import {Writer}  from './writer';
+import {Parser}  from './parser';
 import Debug from "debug";
 
 const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
-
-
-const FLAG = 0x7E;  // Marks end of frame
-const ESCAPE = 0x7D;  // Indicates that the following byte is escaped
-const CANCEL = 0x1A;  // Terminates a frame in progress
-const XON = 0x11;  // Resume transmission
-const XOFF = 0x13;  // Stop transmission
-const SUBSTITUTE = 0x18;  // Replaces a byte received with a low-level communication error
-const STUFF = 0x20;
-const RESERVED = [FLAG, ESCAPE, XON, XOFF, SUBSTITUTE, CANCEL];
-const RANDOMIZE_START = 0x42;
-const RANDOMIZE_SEQ = 0xB8;
 
 
 enum NcpResetCode {
@@ -33,106 +23,6 @@ enum NcpResetCode {
     RESET_SOFTWARE = 0x0B,
     ERROR_EXCEEDED_MAXIMUM_ACK_TIMEOUT_COUNT = 0x51,
     ERROR_UNKNOWN_EM3XX_ERROR = 0x80,
-}
-
-
-class Parser extends stream.Transform {
-    private buffer: Buffer;
-
-    public constructor() {
-        super();
-        this.buffer = Buffer.from([]);
-    }
-
-    public _transform(chunk: Buffer, _: string, cb: () => void): void {
-        //debug(`<-- [${[...chunk]}]`);
-        if (chunk.indexOf(CANCEL) >= 0) {
-            this.buffer = Buffer.from([]);
-            chunk = chunk.slice((chunk.lastIndexOf(CANCEL) + 1));
-        }
-        if (chunk.indexOf(SUBSTITUTE) >= 0) {
-            this.buffer = Buffer.from([]);
-            chunk = chunk.slice((chunk.indexOf(FLAG) + 1));
-        }
-        this.buffer = Buffer.concat([this.buffer, chunk]);
-        this.parseNext();
-        cb();
-    }
-
-    private parseNext(): void {
-        //debug(`--- parseNext [${[...this.buffer]}]`);
-        if (this.buffer.length && this.buffer.indexOf(FLAG) >= 0) {
-            debug(`<-- [${this.buffer.toString('hex')}] [${[...this.buffer]}]`);
-            try {
-                const frame = this.extract_frame();
-                if (frame) {
-                    this.emit('parsed', frame);
-                }
-            } catch (error) {
-                debug(`<-- error ${error.stack}`);
-            }
-            this.parseNext();
-        }
-    }
-
-    private extract_frame(): Buffer {
-        /* Extract a frame from the data buffer */
-        const place = this.buffer.indexOf(FLAG);
-        if (place >= 0) {
-            // todo: check crc data
-            const result = this.unstuff(this.buffer.slice(0, (place + 1)));
-            this.buffer = this.buffer.slice((place + 1));
-            return result;
-        } else {
-            return null;
-        }
-    }
-
-    private unstuff(s: Buffer): Buffer {
-        /* Unstuff (unescape) a string after receipt */
-        let escaped = false;
-        const out = Buffer.alloc(s.length);
-        let outIdx = 0;
-        for (let idx = 0; idx < s.length; idx += 1) {
-            const c = s[idx];
-            if (escaped) {
-                out.writeUInt8(c ^ STUFF, outIdx++);
-                escaped = false;
-            } else {
-                if ((c === ESCAPE)) {
-                    escaped = true;
-                } else {
-                    out.writeUInt8(c, outIdx++);
-                }
-            }
-        }
-        return out;
-    }
-}
-
-class Writer extends stream.Readable {
-    public writeBuffer(buffer: Buffer): void {
-        debug(`--> [${buffer.toString('hex')}] [${[...buffer]}]`);
-        this.push(buffer);
-    }
-
-    public _read(): void {
-    }
-
-    public stuff(s: Iterable<number>): Buffer {
-        /* Byte stuff (escape) a string for transmission */
-        const out = Buffer.alloc(256);
-        let outIdx = 0;
-        for (const c of s) {
-            if (RESERVED.includes(c)) {
-                out.writeUInt8(ESCAPE, outIdx++);
-                out.writeUInt8(c ^ STUFF, outIdx++);
-            } else {
-                out.writeUInt8(c, outIdx++);
-            }
-        }
-        return out.slice(0, outIdx);
-    }
 }
 
 type EZSPPacket = {
@@ -150,8 +40,6 @@ export class SerialDriver extends EventEmitter {
     private writer: Writer;
     private parser: Parser;
     private initialized: boolean;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    private resetDeferred: Deferred<any>;
     private portType: 'serial' | 'socket';
     private sendSeq = 0; // next frame number to send
     private recvSeq = 0; // next frame number to receive
@@ -162,7 +50,7 @@ export class SerialDriver extends EventEmitter {
     constructor() {
         super();
         this.initialized = false;
-        this.queue = new Queue();
+        this.queue = new Queue(1);
         this.waitress = new Waitress<EZSPPacket, EZSPPacketMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
@@ -178,13 +66,14 @@ export class SerialDriver extends EventEmitter {
 
     private async openSerialPort(path: string, opt: Record<string, number|boolean>): Promise<void> {
         const options = {
+            path,
             baudRate: typeof opt.baudRate === 'number' ? opt.baudRate : 115200, 
             rtscts: typeof opt.rtscts === 'boolean' ? opt.rtscts : false,
             autoOpen: false
         };
 
-        debug(`Opening SerialPort with ${path} and ${JSON.stringify(options)}`);
-        this.serialPort = new SerialPort(path, options);
+        debug(`Opening SerialPort with ${JSON.stringify(options)}`);
+        this.serialPort = new SerialPort(options);
 
         this.writer = new Writer();
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -198,11 +87,11 @@ export class SerialDriver extends EventEmitter {
         return new Promise((resolve, reject): void => {
             this.serialPort.open(async (error): Promise<void> => {
                 if (error) {
-                    reject(new Error(`Error while opening serialport '${error}'`));
                     this.initialized = false;
                     if (this.serialPort.isOpen) {
                         this.serialPort.close();
                     }
+                    reject(new Error(`Error while opening serialport '${error}'`));
                 } else {
                     debug('Serialport opened');
                     this.serialPort.once('close', this.onPortClose.bind(this));
@@ -254,8 +143,8 @@ export class SerialDriver extends EventEmitter {
 
             this.socketPort.on('error', function () {
                 debug('Socket error');
-                reject(new Error(`Error while opening socket`));
                 self.initialized = false;
+                reject(new Error(`Error while opening socket`));
             });
 
             this.socketPort.connect(info.port, info.host);
@@ -263,36 +152,51 @@ export class SerialDriver extends EventEmitter {
     }
 
     private onParsed(data: Buffer): void {
+        // check CRC
+        const crc = crc16ccitt(data.subarray(0, -3), 65535);
+        const crcArr = Buffer.from([(crc >> 8), (crc % 256)]);
+        if (!data.subarray(-3, -1).equals(crcArr)) {
+            // CRC error
+            debug(`<-- CRC error: ${data.toString('hex')}|` +
+                `${data.subarray(-3, -1).toString('hex')}|` +
+                `${crcArr.toString('hex')}`);
+            // send NAK
+            this.writer.sendNAK(this.recvSeq);
+            // skip handler
+            return;
+        }
         try {
             /* Frame receive handler */
             switch (true) {
             case ((data[0] & 0x80) === 0):
-                debug(`Recv DATA frame (${(data[0] & 0x70) >> 4},`+
+                debug(`<-- DATA (${(data[0] & 0x70) >> 4},`+
                     `${data[0] & 0x07},${(data[0] & 0x08) >> 3}): ${data.toString('hex')}`);
                 this.handleDATA(data);
                 break;
 
             case ((data[0] & 0xE0) === 0x80):
-                debug(`Recv ACK  frame (${data[0] & 0x07}): ${data.toString('hex')}`);
+                debug(`<-- ACK  (${data[0] & 0x07}): ${data.toString('hex')}`);
                 this.handleACK(data[0]);
                 break;
 
             case ((data[0] & 0xE0) === 0xA0):
-                debug(`Recv NAK  frame (${data[0] & 0x07}): ${data.toString('hex')}`);
+                debug(`<-- NAK  (${data[0] & 0x07}): ${data.toString('hex')}`);
                 this.handleNAK(data[0]);
                 break;
 
             case (data[0] === 0xC0):
-                debug(`Recv RST  frame: ${data.toString('hex')}`);
+                debug(`<-- RST:  ${data.toString('hex')}`);
                 break;
 
             case (data[0] === 0xC1):
-                debug(`RSTACK frame: ${data.toString('hex')}`);
+                debug(`<-- RSTACK: ${data.toString('hex')}`);
                 this.rstack_frame_received(data);
                 break;
 
             case (data[0] === 0xC2):
-                debug(`Error frame : ${data.toString('hex')}`);
+                debug(`<-- Error: ${data.toString('hex')}`);
+                // send reset
+                this.reset();
                 break;
             default:
                 debug("UNKNOWN FRAME RECEIVED: %r", data);
@@ -306,35 +210,31 @@ export class SerialDriver extends EventEmitter {
     private handleDATA(data: Buffer): void {
         /* Data frame receive handler */
         const frmNum = (data[0] & 0x70) >> 4;
-        //const ackNum = data[0] & 0x07;
-        //const reTx = (data[0] & 0x08) >> 3;
-        // if (seq !== this.recvSeq) {
-        //     debug('NAK-NAK');
-        // }
+        const reTx = (data[0] & 0x08) >> 3;
         this.recvSeq = (frmNum + 1) & 7; // next
-        this.sendACK(this.recvSeq);
-        this.handleACK(data[0]);
-        data = data.slice(1, (-3));
+        debug(`--> ACK  (${this.recvSeq})`);
+        this.writer.sendACK(this.recvSeq);
+        const handled = this.handleACK(data[0]);
+        if (reTx && !handled) {
+            // if the package is resent and did not expect it, 
+            // then will skip it - already processed it earlier
+            debug(`Skipping the packet as repeated (${this.recvSeq})`);
+            return;
+        } 
+        data = data.subarray(1, -3);
         const frame = this.randomize(data);
         this.emit('received', frame);
     }
 
-    private handleACK(control: number): void {
+    private handleACK(control: number): boolean {
         /* Handle an acknowledgement frame */
         // next number after the last accepted frame
         this.ackSeq = control & 0x07;
-        // const handled = this.waitress.resolve({sequence: this.ackSeq});
-        // if (!handled) {
-        //     debug(`Unexpected packet sequence ${this.ackSeq}`);
-        // } else {
-        //     debug(`Expected packet sequence ${this.ackSeq}`);
-        // }
-        // var ack, pending;
-        // ack = (((control & 7) - 1) % 8);
-        // if ((ack === this._pending[0])) {
-        //     [pending, this._pending] = [this._pending, [(- 1), null]];
-        //     pending[1].set_result(true);
-        // }
+        const handled = this.waitress.resolve({sequence: this.ackSeq});
+        if (!handled && this.sendSeq !== this.ackSeq) {
+            debug(`Unexpected packet sequence ${this.ackSeq} | ${this.sendSeq}`);
+        }
+        return handled;
     }
 
     private handleNAK(control: number): void {
@@ -347,9 +247,6 @@ export class SerialDriver extends EventEmitter {
         } else {
             debug(`NAK Expected packet sequence ${nakNum}`);
         }
-        // if ((nak === this._pending[0])) {
-        //     this._pending[1].set_result(false);
-        // }
     }
 
     private rstack_frame_received(data: Buffer): void {
@@ -363,40 +260,23 @@ export class SerialDriver extends EventEmitter {
             code = NcpResetCode.ERROR_UNKNOWN_EM3XX_ERROR;
         }
         debug("RSTACK Version: %d Reason: %s frame: %s", data[1], code.toString(), data.toString('hex'));
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        if (NcpResetCode[<any>code].toString() !== NcpResetCode.RESET_SOFTWARE.toString()) {
+        if (NcpResetCode[<number>code].toString() !== NcpResetCode.RESET_SOFTWARE.toString()) {
             return;
         }
-        if ((!this.resetDeferred)) {
-            debug("Reset future is None");
-            return;
-        }
-        this.resetDeferred.resolve(true);
-    }
-
-    private make_frame(control: ArrayLike<number>, data?: ArrayLike<number>): Buffer {
-        /* Construct a frame */
-        const ctrlArr: Array<number> = Array.from(control);
-        const dataArr: Array<number> = (data && Array.from(data)) || [];
-
-        const sum = ctrlArr.concat(dataArr);
-
-        const crc = crc16ccitt(Buffer.from(sum), 65535);
-        const crcArr = [(crc >> 8), (crc % 256)];
-        return Buffer.concat([this.writer.stuff(sum.concat(crcArr)), Buffer.from([FLAG])]);
+        this.waitress.resolve({sequence: -1});
     }
 
     private randomize(s: Buffer): Buffer {
         /*XOR s with a pseudo-random sequence for transmission
         Used only in data frames
         */
-        let rand = RANDOMIZE_START;
+        let rand = consts.RANDOMIZE_START;
         const out = Buffer.alloc(s.length);
         let outIdx = 0;
         for (const c of s) {
             out.writeUInt8(c ^ rand, outIdx++);
             if ((rand % 2)) {
-                rand = ((rand >> 1) ^ RANDOMIZE_SEQ);
+                rand = ((rand >> 1) ^ consts.RANDOMIZE_SEQ);
             } else {
                 rand = (rand >> 1);
             }
@@ -404,37 +284,38 @@ export class SerialDriver extends EventEmitter {
         return out;
     }
 
-    private makeDataFrame(data: Buffer, seq: number, rxmit: number, ackSeq: number): Buffer {
-        /* Construct a data frame */
-        const control = (((seq << 4) | (rxmit << 3)) | ackSeq);
-        return this.make_frame([control], this.randomize(data));
-    }
-
     async reset(): Promise<void> {
-        // return this._gw.reset();
-        debug('uart reseting');
-        if ((this.resetDeferred)) {
-            throw new TypeError("reset can only be called on a new connection");
-        }
-        /* Construct a reset frame */
-        const rst_frame = Buffer.concat([Buffer.from([CANCEL]), this.make_frame([0xC0])]);
-        debug(`Write reset`);
-        this.resetDeferred = new Deferred<void>();
-        this.writer.writeBuffer(rst_frame);
-        return this.resetDeferred.promise;
+        debug('Uart reseting');
+        this.parser.reset();
+        this.queue.clear();
+        return this.queue.execute<void>(async (): Promise<void> => {
+            debug(`--> Write reset`);
+            const waiter = this.waitFor(-1, 10000).start();
+            this.writer.sendReset();
+            debug(`-?- waiting reset`);
+            return waiter.promise.catch(async (e) => {
+                debug(`--> Error: ${e}`);
+                this.emit('reset');
+                throw new Error(`Reset error: ${e}`);
+            }).then(()=>{
+                debug(`-+- waiting reset success`);
+            });
+        });
+
     }
 
     public close(): Promise<void> {
         return new Promise((resolve, reject): void => {
+            this.queue.clear();
             if (this.initialized) {
                 if (this.portType === 'serial') {
                     this.serialPort.flush((): void => {
                         this.serialPort.close((error): void => {
                             this.initialized = false;
+                            this.emit('close');
                             error == null ?
                                 resolve() :
                                 reject(new Error(`Error while closing serialport '${error}'`));
-                            this.emit('close');
                         });
                     });
                 } else {
@@ -442,15 +323,14 @@ export class SerialDriver extends EventEmitter {
                     resolve();
                 }
             } else {
-                resolve();
                 this.emit('close');
+                resolve();
             }
         });
     }
 
     private onPortClose(): void {
         debug('Port closed');
-        this.resetDeferred = undefined;
         this.initialized = false;
         this.emit('close');
     }
@@ -459,57 +339,43 @@ export class SerialDriver extends EventEmitter {
         return this.initialized;
     }
 
-    private sendACK(ackNum: number): void {
-        /* Construct a acknowledgement frame */
-        const ackFrame = this.make_frame([(0b10000000 | ackNum)]);
-        debug(`Send ACK  frame (${ackNum})`);
-        this.writer.writeBuffer(ackFrame);
-    }
-
     public async sendDATA(data: Buffer): Promise<void> {
         const seq = this.sendSeq;
         this.sendSeq = ((seq + 1) % 8);  // next
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
-        let pack;
 
         return this.queue.execute<void>(async (): Promise<void> => {
-            debug(`Send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
-            pack = this.makeDataFrame(data, seq, 0, ackSeq);
-            // const waiter = this.waitFor(nextSeq).start();
-            debug(`waiting (${nextSeq})`);
-            this.writer.writeBuffer(pack);
-            // await waiter.promise.catch(async () => {
-            //     debug(`break waiting (${nextSeq})`);
-            //     debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
-            //     debug(`Resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
-            //     pack = this.makeDataFrame(data, seq, 1, ackSeq);
-            //     const waiter = this.waitFor(nextSeq).start();
-            //     debug(`rewaiting (${nextSeq})`);
-            //     this.writer.writeBuffer(pack);
-            //     await waiter.promise.catch((e) => {
-            //         debug(`break rewaiting (${nextSeq})`);
-            //         debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
-            //         throw new Error(`sendDATA error: ${e}`);
-            //     });
-            //     debug(`rewaiting (${nextSeq}) success`);
-            // });
-            debug(`waiting (${nextSeq}) success`);
+            debug(`--> DATA (${seq},${ackSeq},0): ${data.toString('hex')}`);
+            const randData = this.randomize(data);
+            const waiter = this.waitFor(nextSeq).start();
+            this.writer.sendData(randData, seq, 0, ackSeq);
+            debug(`-?- waiting (${nextSeq})`);
+            return waiter.promise.catch(async (e) => {
+                debug(`--> Error: ${e}`);
+                debug(`-!- break waiting (${nextSeq})`);
+                debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
+                await Wait(500);
+                debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`);
+                const waiter = this.waitFor(nextSeq).start();
+                this.writer.sendData(randData, seq, 1, ackSeq);
+                debug(`-?- rewaiting (${nextSeq})`);
+                return waiter.promise.catch(async (e) => {
+                    debug(`--> Error: ${e}`);
+                    debug(`-!- break rewaiting (${nextSeq})`);
+                    debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
+                    this.emit('reset');
+                    throw new Error(`sendDATA error: ${e}`);
+                }).then(()=>{
+                    debug(`-+- rewaiting (${nextSeq}) success`);
+                });
+            }).then(()=>{
+                debug(`-+- waiting (${nextSeq}) success`);
+            });
         });
-
-
-        // try {
-        //     debug(`Send DATA frame (${seq},${this.recvSeq},0): ${data.toString('hex')}`);
-        //     pack = this.data_frame(data, seq, 0);
-        //     this.writer.writeBuffer(pack);
-        // } catch (e) {
-        //     debug(`Send DATA frame (${seq},${this.recvSeq},1): ${data.toString('hex')}`);
-        //     pack = this.data_frame(data, seq, 1);
-        //     this.writer.writeBuffer(pack);
-        // }
     }
 
-    public waitFor(sequence: number, timeout = 10000)
+    public waitFor(sequence: number, timeout = 2000)
         : { start: () => { promise: Promise<EZSPPacket>; ID: number }; ID: number } {
         return this.waitress.waitFor({sequence}, timeout);
     }

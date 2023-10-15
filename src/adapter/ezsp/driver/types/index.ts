@@ -13,6 +13,7 @@ import {
     LVList,
     fixed_list,
     WordList,
+    Bytes,
 } from './basic';
 
 import {
@@ -111,6 +112,8 @@ import {
     EmberSimpleDescriptor,
     EmberMultiAddress,
     EmberNeighbors,
+    EmberRoutingTable,
+    EmberRoutingTableEntry,
 } from './struct';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -143,6 +146,7 @@ export {
     LVList,
     fixed_list,
     WordList,
+    Bytes,
 
     /* Named Types */
     NcpResetCode,
@@ -239,4 +243,6 @@ export {
     EmberSimpleDescriptor,
     EmberMultiAddress,
     EmberNeighbors,
+    EmberRoutingTable,
+    EmberRoutingTableEntry,
 };

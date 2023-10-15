@@ -2,12 +2,12 @@
 /* eslint-disable */
 import Debug from 'debug';
 import events from 'events';
-import SerialPort from 'serialport';
 import Writer from './writer';
 import Parser from './parser';
 import Frame from './frame';
 import PARAM from './constants';
 import * as Events from '../../events';
+import {SerialPort} from '../../serialPort';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import net from 'net';
@@ -103,7 +103,28 @@ class Driver extends events.EventEmitter {
              }, (1000 * 60 * 8)); // 8 minutes
 
         this.onParsed = this.onParsed.bind(this);
-        this.frameParserEvent.on('receivedDataNotification', (data: number) => {this.checkDeviceStatus(data)});
+        this.frameParserEvent.on('receivedDataNotification', (data: number) => {this.catchPromise(this.checkDeviceStatus(data))});
+
+        this.on('close', () => {
+            this.intervals.forEach(i => clearInterval(i));
+            queue.length = 0;
+            busyQueue.length = 0;
+            apsQueue.length = 0;
+            apsBusyQueue.length = 0;
+            apsConfirmIndQueue.length = 0;
+            timeoutCounter = 0;
+        })
+    }
+
+    protected intervals: NodeJS.Timer[] = [];
+
+    protected registerInterval(interval: NodeJS.Timer) {
+        this.intervals.push(interval);
+    }
+    
+    protected catchPromise(val: any) {
+        return Promise.resolve(val)
+            .catch(err => debug(`Promise was caught with reason: ${err}`));
     }
 
     public setDelay(delay: number): void {
@@ -134,15 +155,12 @@ class Driver extends events.EventEmitter {
         }
 
         const that = this
-        setInterval(() => { that.processQueue(); }, this.PROCESS_QUEUES);  // fire non aps requests
-        setInterval(() => { that.processBusyQueue(); }, this.PROCESS_QUEUES); // check timeouts for non aps requests
-        setInterval(() => { that.processApsQueue(); }, this.PROCESS_QUEUES);  // fire aps request
-        setInterval(() => { that.processApsBusyQueue(); }, this.PROCESS_QUEUES);  // check timeouts for all open aps requests
-        setInterval(() => { that.processApsConfirmIndQueue(); }, this.PROCESS_QUEUES);  // fire aps indications and confirms
-
-        setInterval(() => { that.handleDeviceStatus()
-                            .then(result => {})
-                            .catch(error => {}); }, this.HANDLE_DEVICE_STATUS_DELAY); // query confirm and indication requests
+        this.registerInterval(setInterval(() => { that.processQueue(); }, this.PROCESS_QUEUES));  // fire non aps requests
+        this.registerInterval(setInterval(() => { this.catchPromise(that.processBusyQueue()); }, this.PROCESS_QUEUES)); // check timeouts for non aps requests
+        this.registerInterval(setInterval(() => { this.catchPromise(that.processApsQueue()); }, this.PROCESS_QUEUES));  // fire aps request
+        this.registerInterval(setInterval(() => { that.processApsBusyQueue(); }, this.PROCESS_QUEUES));  // check timeouts for all open aps requests
+        this.registerInterval(setInterval(() => { this.catchPromise(that.processApsConfirmIndQueue()); }, this.PROCESS_QUEUES));  // fire aps indications and confirms
+        this.registerInterval(setInterval(() => { this.catchPromise(that.handleDeviceStatus()); }, this.HANDLE_DEVICE_STATUS_DELAY)); // query confirm and indication requests
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
@@ -166,7 +184,7 @@ class Driver extends events.EventEmitter {
 
     public openSerialPort(): Promise<void> {
         debug(`Opening with ${this.path}`);
-        this.serialPort = new SerialPort(this.path, {baudRate: 38400, autoOpen: false});
+        this.serialPort = new SerialPort({path: this.path, baudRate: 38400, autoOpen: false});
 
         this.writer = new Writer();
         // @ts-ignore
@@ -700,7 +718,7 @@ class Driver extends events.EventEmitter {
                 debug(`Timeout for aps request CMD: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`);
                 //remove from busyQueue
                 apsBusyQueue.splice(i, 1);
-                req.reject("APS TIMEOUT");
+                req.reject(new Error("APS TIMEOUT"));
             }
         }
     }

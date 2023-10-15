@@ -53,6 +53,7 @@ const aliases: {[s: string]: string} = {
 const extensionFieldSetsDateTypeLookup: {[key: number]: string[]} = {
     6: ['uint8'],
     8: ['uint8'],
+    258: ['uint8', 'unit8'],
     768: ['uint16', 'uint16', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16', 'uint16'],
 };
 
@@ -126,6 +127,11 @@ interface TuyaDataPointValue {
     dp: number;
     datatype: number;
     data: Buffer;
+}
+
+interface MiboxerZone {
+    zoneNum: number;
+    groupId: number;
 }
 
 class BuffaloZcl extends Buffalo {
@@ -501,6 +507,36 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
+    private readListMiboxerZones(): MiboxerZone[] {
+        const value = [];
+        const len = this.readUInt8();
+        for (let i = 0; i < len; i++) {
+            value.push({
+                groupId: this.readUInt16(),
+                zoneNum: this.readUInt8(),
+            });
+        }
+        return value;
+    }
+
+    private readBigEndianUInt24(): number {
+        return this.readBuffer(3).readUIntBE(0, 3);
+    }
+
+    private writeListMiboxerZones(values: MiboxerZone[]): void {
+        this.writeUInt8(values.length);
+        for (const value of values) {
+            this.writeUInt16(value.groupId);
+            this.writeUInt8(value.zoneNum);
+        }
+    }
+
+    private writeBigEndianUInt24(value: number): void {
+        const buffer = Buffer.alloc(3);
+        buffer.writeUIntLE(value, 0, 3);
+        this.writeBuffer(buffer.reverse(), 3);
+    }
+
     private readUInt40(): [number, number] {
         const lsb = this.readUInt32();
         const msb = this.readUInt8();
@@ -576,6 +612,10 @@ class BuffaloZcl extends Buffalo {
             return this.writeListThermoTransitions(value);
         } else if (type === 'LIST_TUYA_DATAPOINT_VALUES') {
             return this.writeListTuyaDataPointValues(value);
+        } else if (type === 'LIST_MIBOXER_ZONES') {
+            return this.writeListMiboxerZones(value);
+        } else if (type === 'BIG_ENDIAN_UINT24') {
+            return this.writeBigEndianUInt24(value);
         } else if (type === 'GDP_FRAME') {
             return this.writeGdpFrame(value);
         } else if (type === 'uint48') {
@@ -620,6 +660,10 @@ class BuffaloZcl extends Buffalo {
             return this.readGdpFrame(options);
         } else if (type === 'LIST_TUYA_DATAPOINT_VALUES') {
             return this.readListTuyaDataPointValues();
+        } else if (type === 'LIST_MIBOXER_ZONES') {
+            return this.readListMiboxerZones();
+        } else if (type === 'BIG_ENDIAN_UINT24') {
+            return this.readBigEndianUInt24();
         } else if (type === 'uint40') {
             return this.readUInt40();
         } else if (type === 'uint48') {

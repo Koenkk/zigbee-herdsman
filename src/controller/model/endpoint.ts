@@ -1,8 +1,10 @@
 import Entity from './entity';
-import {KeyValue, SendRequestWhen} from '../tstype';
+import {KeyValue, SendRequestWhen, SendPolicy} from '../tstype';
 import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
+import Request from '../helpers/request';
+import {Events as AdapterEvents} from '../../adapter';
 import Group from './group';
 import Device from './device';
 import Debug from "debug";
@@ -12,6 +14,8 @@ const debug = {
     info: Debug('zigbee-herdsman:controller:endpoint'),
     error: Debug('zigbee-herdsman:controller:endpoint'),
 };
+
+type Mutable<T> = { -readonly [P in keyof T ]: T[P] };
 
 interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
@@ -32,6 +36,7 @@ interface Options {
     disableRecovery?: boolean;
     writeUndiv?: boolean;
     sendWhen?: SendRequestWhen;
+    sendPolicy?: SendPolicy;
 }
 
 interface Clusters {
@@ -59,6 +64,7 @@ interface ConfiguredReportingInternal {
     minRepIntval: number,
     maxRepIntval: number,
     repChange: number,
+    manufacturerCode?: number | undefined,
 }
 
 interface ConfiguredReporting {
@@ -69,12 +75,6 @@ interface ConfiguredReporting {
     reportableChange: number,
 }
 
-interface PendingRequest {
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    func: () => Promise<any>, resolve: (value: any) => any, reject: (error: any) => any, 
-    sendWhen: 'active' | 'fastpoll'
-}
-
 class Endpoint extends Entity {
     public deviceID?: number;
     public inputClusters: number[];
@@ -82,12 +82,13 @@ class Endpoint extends Entity {
     public profileID?: number;
     public readonly ID: number;
     public readonly clusters: Clusters;
-    private readonly deviceIeeeAddress: string;
+    public deviceIeeeAddress: string;
     public deviceNetworkAddress: number;
     private _binds: BindInternal[];
     private _configuredReportings: ConfiguredReportingInternal[];
     public meta: KeyValue;
-    private pendingRequests: PendingRequest[];
+    private pendingRequests: Set<Request>;
+    private sendInProgress: boolean;
 
     // Getters/setters
     get binds(): Bind[] {
@@ -103,7 +104,7 @@ class Endpoint extends Entity {
             }
 
             if (target) {
-                return {target, cluster: Zcl.Utils.getCluster(entry.cluster)};
+                return {target, cluster: Zcl.Utils.getCluster(entry.cluster, this.getDevice().manufacturerID)};
             } else {
                 return undefined;
             }
@@ -112,7 +113,7 @@ class Endpoint extends Entity {
 
     get configuredReportings(): ConfiguredReporting[] {
         return this._configuredReportings.map((entry) => {
-            const cluster = Zcl.Utils.getCluster(entry.cluster, this.getDevice().manufacturerID);
+            const cluster = Zcl.Utils.getCluster(entry.cluster, entry.manufacturerCode);
             let attribute : Zcl.TsType.Attribute;
 
             if (cluster.hasAttribute(entry.attrId)) {
@@ -153,7 +154,8 @@ class Endpoint extends Entity {
         this._binds = binds;
         this._configuredReportings = configuredReportings;
         this.meta = meta;
-        this.pendingRequests = [];
+        this.pendingRequests = new Set<Request>;
+        this.sendInProgress =false;
     }
 
     /**
@@ -261,51 +263,153 @@ class Endpoint extends Entity {
     }
 
     public hasPendingRequests(): boolean {
-        return this.pendingRequests.length > 0;
+        return this.pendingRequests.size > 0;
     }
 
     public async sendPendingRequests(fastPolling: boolean): Promise<void> {
-        const handled: PendingRequest[] = [];
+
+        if (this.pendingRequests.size === 0) return;
+
+        if (this.sendInProgress) {
+            debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): sendPendingRequests already in progress`);
+            return;
+        }
+        this.sendInProgress = true;
+
+        // Remove expired requests first
+        const now = Date.now();
         for (const request of this.pendingRequests) {
-            if ((fastPolling && request.sendWhen == 'fastpoll') || request.sendWhen == 'active') {
-                try {
-                    const result = await request.func();
-                    request.resolve(result);
-                } catch (error) {
-                    request.reject(error);
-                }
-                handled.push(request);
+            if (now > request.expires) {
+                debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): discard after timeout. ` +
+                `Size before: ${this.pendingRequests.size}`);
+                request.reject();
+                this.pendingRequests.delete(request);
             }
         }
 
-        this.pendingRequests = this.pendingRequests.filter((r) => !handled.includes(r));
+        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send pending requests (` +
+            `${this.pendingRequests.size}, ${fastPolling})`);
+
+        for (const request of this.pendingRequests) {
+            if (fastPolling || (request.sendWhen !== 'fastpoll' && request.sendPolicy !== 'bulk')) {
+                try {
+                    const result = await request.send();
+                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`);
+                    request.resolve(result);
+                } catch (error) {
+                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ` +
+                        `${(request.expires - now) / 1000} seconds`);
+                    request.reject(error);
+                }
+                this.pendingRequests.delete(request);
+            }
+        }
+        this.sendInProgress = false;
     }
 
-    private async queueRequest<Type>(func: () => Promise<Type>, sendWhen: 'active' | 'fastpoll'): Promise<Type> {
-        debug.info(`Sending to ${this.deviceIeeeAddress}/${this.ID} when active`);
+    private async queueRequest<Type>(request: Request<Type>): Promise<Type> {
+        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Sending when active. ` +
+            `Timeout ${this.getDevice().pendingRequestTimeout/1000} seconds`);
         return new Promise((resolve, reject): void =>  {
-            this.pendingRequests.push({func, resolve, reject, sendWhen});
+            request.addCallbacks(resolve, reject);
+            this.pendingRequests.add(request);
         });
     }
+    private filterRequests(newRequest: Request): void {
 
-    private async sendRequest<Type>(func: () => Promise<Type>, sendWhen: SendRequestWhen): Promise<Type> {
-        // If we already have something queued, we queue directly to avoid
-        // messing up the ordering too much.
-        if (sendWhen !== 'immediate' && this.pendingRequests.length > 0) {
-            return this.queueRequest(func, sendWhen);
+        if(this.pendingRequests.size === 0 || !(typeof newRequest.frame.getCommand === 'function')) {
+            return;
+        }
+        const clusterID = newRequest.frame.Cluster.ID;
+        const payload = newRequest.frame.Payload;
+        const commandID = newRequest.frame.getCommand().ID;
+
+        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): ZCL ${newRequest.frame.getCommand().name} ` +
+            `command, filter requests. Before: ${this.pendingRequests.size}`);
+
+        for (const request of this.pendingRequests) {
+            if( request?.frame?.Cluster?.ID === undefined || typeof request.frame.getCommand !== 'function') {
+                continue;
+            }
+            if (['bulk', 'queue', 'immediate'].includes(request.sendPolicy)) {
+                continue;
+            }
+            /* istanbul ignore else */
+            if(request.frame.Cluster.ID === clusterID && request.frame.getCommand().ID === commandID) {
+                /* istanbul ignore else */
+                if (newRequest.sendPolicy === 'keep-payload'
+                    && JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
+                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Merge duplicate request`);
+                    this.pendingRequests.delete(request);
+                    newRequest.moveCallbacks(request);
+                }
+                else if ((newRequest.sendPolicy === 'keep-command' || newRequest.sendPolicy === 'keep-cmd-undiv') &&
+                        Array.isArray(request.frame.Payload)) {
+                    const filteredPayload = request.frame.Payload.filter((oldEl: {attrId: number}) =>
+                        !payload.find((newEl: {attrId: number}) => oldEl.attrId === newEl.attrId));
+                    if (filteredPayload.length == 0) {
+                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Remove & reject request`);
+                        if( JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
+                            newRequest.moveCallbacks(request);
+                        } else {
+                            request.reject();
+                        }
+                        this.pendingRequests.delete(request);
+                    } else if (newRequest.sendPolicy !== 'keep-cmd-undiv') {
+                        // remove all duplicate attributes if we shall not write undivided
+                        (request.frame as Mutable<Zcl.ZclFrame>).Payload = filteredPayload;
+                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): `
+                            + `Remove commands from request`);
+                    }
+                }
+            }
+        }
+        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): After: ${this.pendingRequests.size}`);
+    }
+
+    private async sendRequest(frame: Zcl.ZclFrame, options: Options): Promise<AdapterEvents.ZclDataPayload>;
+    private async sendRequest<Type>(frame: Zcl.ZclFrame, options: Options,
+        func: (frame: Zcl.ZclFrame) => Promise<Type>): Promise<Type>;
+    private async sendRequest<Type>(frame: Zcl.ZclFrame, options: Options,
+        func: (d: Zcl.ZclFrame) => Promise<Type> = (d: Zcl.ZclFrame): Promise<Type> => {
+            return Entity.adapter.sendZclFrameToEndpoint(
+                this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, d, options.timeout,
+                options.disableResponse, options.disableRecovery, options.srcEndpoint) as Promise<Type>;
+        }): Promise<Type> {
+        const logPrefix = `Request Queue (${this.deviceIeeeAddress}/${this.ID}): `;
+        const request = new Request(func, frame, this.getDevice().pendingRequestTimeout, options.sendWhen,
+            options.sendPolicy);
+
+        if (request.sendPolicy !== 'bulk') {
+            // Check if such a request is already in the queue and remove the old one(s) if necessary
+            this.filterRequests(request);
+        }
+
+        // send without queueing if sendWhen or sendPolicy is 'immediate' or if the device has no timeout set
+        if (request.sendWhen === 'immediate' || request.sendPolicy === 'immediate'
+            || !this.getDevice().pendingRequestTimeout) {
+            if (this.getDevice().defaultSendRequestWhen !=='immediate')
+            {
+                debug.info(logPrefix + `send ${frame.getCommand().name} request immediately ` +
+                    `(sendWhen=${options.sendWhen})`);
+            }
+            return request.send();
+        }
+        // If this is a bulk message, we queue directly.
+        if (request.sendPolicy === 'bulk') {
+            debug.info(logPrefix + `queue request (${this.pendingRequests.size} / ${this.sendInProgress})))`);
+            return this.queueRequest(request);
         }
 
         try {
-            return await func();
+            debug.info(logPrefix + `send request`);
+            return await request.send();
         } catch(error) {
-            if (sendWhen === 'immediate') {
-                throw(error);
-            }
+            // If we got a failed transaction, the device is likely sleeping.
+            // Queue for transmission later.
+            debug.info(logPrefix + `queue request (transaction failed)`);
+            return this.queueRequest(request);
         }
-
-        // If we got a failed transaction, the device is likely sleeping.
-        // Queue for transmission later.
-        return this.queueRequest(func, sendWhen);
     }
 
     /*
@@ -345,12 +449,7 @@ class Endpoint extends Entity {
                 "report", cluster.ID, payload, options.reservedBits
             );
 
-            await this.sendRequest(async () => {
-                await Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint,
-                );
-            }, options.sendWhen);
+            await this.sendRequest(frame, options);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -386,13 +485,7 @@ class Endpoint extends Entity {
                 options.writeUndiv ? "writeUndiv" : "write", cluster.ID, payload, options.reservedBits
             );
 
-            const result = await this.sendRequest(async () => {
-                return Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint,
-                );
-            }, options.sendWhen);
-
+            const result = await this.sendRequest(frame, options);
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
             }
@@ -435,12 +528,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await this.sendRequest(async () => {
-                await Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            await this.sendRequest(frame, options);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -469,12 +557,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const result = await this.sendRequest(async () => {
-                return Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint,
-                );
-            }, options.sendWhen);
+            const result = await this.sendRequest(frame, options);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
@@ -517,12 +600,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await this.sendRequest(async () => {
-                await Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            await this.sendRequest(frame, options);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -630,12 +708,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await this.sendRequest(async () => {
-                await Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            await this.sendRequest(frame, options);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -683,22 +756,15 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const result = await this.sendRequest(async () => {
-                return Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            const result = await this.sendRequest(frame, options);
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
             }
 
             for (const e of payload) {
-                const match = this._configuredReportings.find(c => c.attrId === e.attrId && c.cluster === cluster.ID);
-                if (match) {
-                    this._configuredReportings.splice(this._configuredReportings.indexOf(match), 1);
-                }
+                this._configuredReportings = this._configuredReportings.filter((c) => !(c.attrId === e.attrId &&
+                    c.cluster === cluster.ID && c.manufacturerCode === options.manufacturerCode));
             }
 
             for (const entry of payload) {
@@ -706,6 +772,7 @@ class Endpoint extends Entity {
                     this._configuredReportings.push({
                         cluster: cluster.ID, attrId: entry.attrId, minRepIntval: entry.minRepIntval,
                         maxRepIntval: entry.maxRepIntval, repChange: entry.repChange,
+                        manufacturerCode: options.manufacturerCode,
                     });
                 }
             }
@@ -734,12 +801,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await this.sendRequest(async () => {
-                await Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            await this.sendRequest(frame, options);
 
             // TODO: support `writeStructuredResponse`
         } catch (error) {
@@ -761,7 +823,7 @@ class Endpoint extends Entity {
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, options.direction, options.disableDefaultResponse,
             options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-            command.name, cluster.ID, payload, options.reservedBits
+            command.name, cluster.name, payload, options.reservedBits
         );
 
         const log = `Command ${this.deviceIeeeAddress}/${this.ID} ` +
@@ -769,12 +831,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const result = await this.sendRequest(async () => {
-                return Entity.adapter.sendZclFrameToEndpoint(
-                    this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
-                    options.disableResponse, options.disableRecovery, options.srcEndpoint
-                );
-            }, options.sendWhen);
+            const result = await this.sendRequest(frame, options);
 
             if (result) {
                 return result.frame.Payload;
@@ -797,8 +854,8 @@ class Endpoint extends Entity {
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
 
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.SPECIFIC, options.direction, options.disableDefaultResponse,
-            options.manufacturerCode, transactionSequenceNumber, command.ID, cluster.ID, payload, options.reservedBits
+            Zcl.FrameType.SPECIFIC, options.direction, options.disableDefaultResponse, options.manufacturerCode,
+            transactionSequenceNumber, command.name, cluster.name, payload, options.reservedBits
         );
 
         const log = `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
@@ -806,17 +863,17 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            await this.sendRequest(async () => {
+            await this.sendRequest(frame, options, async (f) => {
                 // Broadcast Green Power responses
                 if (this.ID === 242) {
-                    await Entity.adapter.sendZclFrameToAll(242, frame, 242);
+                    await Entity.adapter.sendZclFrameToAll(242, f, 242);
                 } else {
                     await Entity.adapter.sendZclFrameToEndpoint(
-                        this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, frame, options.timeout,
+                        this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, f, options.timeout,
                         options.disableResponse, options.disableRecovery, options.srcEndpoint
                     );
                 }
-            }, options.sendWhen);
+            });
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -826,7 +883,7 @@ class Endpoint extends Entity {
 
     public waitForCommand(
         clusterKey: number | string, commandKey: number | string, transactionSequenceNumber: number, timeout: number,
-    ): {promise: Promise<{header: KeyValue; payload: KeyValue}>; cancel: () => void} {
+    ): {promise: Promise<{header: Zcl.ZclHeader; payload: KeyValue}>; cancel: () => void} {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
         const waiter = Entity.adapter.waitFor(
@@ -834,7 +891,7 @@ class Endpoint extends Entity {
             transactionSequenceNumber, cluster.ID, command.ID, timeout
         );
 
-        const promise = new Promise<{header: KeyValue; payload: KeyValue}>((resolve, reject) => {
+        const promise = new Promise<{header: Zcl.ZclHeader; payload: KeyValue}>((resolve, reject) => {
             waiter.promise.then(
                 (payload) => resolve({header: payload.frame.Header, payload: payload.frame.Payload}),
                 (error) => reject(error),

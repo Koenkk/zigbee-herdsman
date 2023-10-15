@@ -72,7 +72,6 @@ class DeconzAdapter extends Adapter {
         this.openRequestsQueue = [];
         this.joinPermitted = false;
         this.fwVersion = null;
-        console.log('CREATED DECONZ ADAPTER');
 
         this.frameParserEvent.on('receivedDataPayload', (data: any) => {this.checkReceivedDataPayload(data)});
         this.frameParserEvent.on('receivedGreenPowerIndication', (data: any) => {this.checkReceivedGreenPowerIndication(data)});
@@ -99,7 +98,7 @@ class DeconzAdapter extends Adapter {
     }
 
     public async stop(): Promise<void> {
-        this.driver.close();
+        await this.driver.close();
     }
 
     public async getCoordinator(): Promise<Coordinator> {
@@ -158,10 +157,11 @@ class DeconzAdapter extends Adapter {
 
             debug("PERMIT_JOIN - " + seconds + " seconds");
         } catch (error) {
-            debug("PERMIT_JOIN FAILED - " + error);
+            const msg = "PERMIT_JOIN FAILED - " + error;
+            debug(msg);
             // try again
             this.permitJoin(seconds, networkAddress);
-            //return Promise.reject(); // do not reject
+            //return Promise.reject(new Error(msg)); // do not reject
         }
     }
 
@@ -184,8 +184,12 @@ class DeconzAdapter extends Adapter {
         }
     }
 
+    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+        return Promise.reject(new Error('Add install code is not supported'));
+    }
+
     public async reset(type: 'soft' | 'hard'): Promise<void> {
-        return Promise.reject();
+        return Promise.reject(new Error('Reset is not supported'));
     }
 
     public async lqi(networkAddress: number): Promise<LQI> {
@@ -259,8 +263,9 @@ class DeconzAdapter extends Adapter {
                     debug("LQI RESPONSE - addr: 0x" + networkAddress.toString(16) + " status: " + response.status + " read " + (response.tableListCount + response.startIndex) + "/" + response.tableEntrys + " entrys");
                     return response;
                 } catch (error) {
-                    debug("LQI REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-                    return Promise.reject();
+                    const msg = "LQI REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
+                    debug(msg);
+                    return Promise.reject(new Error(msg));
                 }
             };
 
@@ -352,8 +357,9 @@ class DeconzAdapter extends Adapter {
                     debug("ROUTING_TABLE RESPONSE - addr: 0x" + networkAddress.toString(16) + " status: " + response.status + " read " + (response.tableListCount + response.startIndex) + "/" + response.tableEntrys + " entrys");
                     return response;
                 } catch (error) {
-                    debug("ROUTING_TABLE REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-                    return Promise.reject();
+                    const msg = "ROUTING_TABLE REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
+                    debug(msg);
+                    return Promise.reject(new Error(msg));
                 }
             };
 
@@ -406,8 +412,9 @@ class DeconzAdapter extends Adapter {
             debug("RECEIVING NODE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " type: " + type + " manufacturer: 0x" + manufacturer.toString(16));
             return {manufacturerCode: manufacturer, type};
         } catch (error) {
-            debug("RECEIVING NODE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-            return Promise.reject();
+            const msg = "RECEIVING NODE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
+            debug(msg);
+            return Promise.reject(new Error(msg));
         }
     }
 
@@ -448,8 +455,9 @@ class DeconzAdapter extends Adapter {
             debug("ACTIVE_ENDPOINTS - addr: 0x" + networkAddress.toString(16) + " EP list: " + epList);
             return {endpoints: epList};
         } catch (error) {
-            debug("READING ACTIVE_ENDPOINTS FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-            return Promise.reject();
+            const msg = "READING ACTIVE_ENDPOINTS FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
+            debug(msg);
+            return Promise.reject(new Error(msg));
         }
     }
 
@@ -507,8 +515,9 @@ class DeconzAdapter extends Adapter {
             debug("RECEIVING SIMPLE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " EP:" + simpleDesc.endpointID + " inClusters: " + inClusters + " outClusters: " + outClusters);
             return simpleDesc;
         } catch (error) {
-            debug("RECEIVING SIMPLE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
-            return Promise.reject();
+            const msg = "RECEIVING SIMPLE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
+            debug(msg);
+            return Promise.reject(new Error(msg));
         }
     }
 
@@ -605,23 +614,21 @@ class DeconzAdapter extends Adapter {
         this.driver.enqueueSendDataRequest(request)
             .then(result => {
                 debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.Header.transactionSequenceNumber}`);
-                debug(command.hasOwnProperty('response') + ", " + zclFrame.Header.frameControl.disableDefaultResponse + ", " + disableResponse);
+                debug(command.hasOwnProperty('response') + ", " + zclFrame.Header.frameControl.disableDefaultResponse + ", " + disableResponse + ", " + request.timeout);
                 if (!command.hasOwnProperty('response') || zclFrame.Header.frameControl.disableDefaultResponse || !disableResponse) {
-                    debug("resolve request");
+                    debug(`resolve request (${zclFrame.Header.transactionSequenceNumber})`);
                     return Promise.resolve();
                 }
             })
             .catch(error => {
-                debug(`sendZclFrameToEndpoint ERROR`);
+                debug(`sendZclFrameToEndpoint ERROR (${zclFrame.Header.transactionSequenceNumber})`);
                 debug(error);
-                //return Promise.reject();
+                //return Promise.reject(new Error("sendZclFrameToEndpoint ERROR " + error));
             });
         try {
                 let data = null;
-                if (command.hasOwnProperty('response') && !disableResponse) {
-                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber);
-                } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
-                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber);
+                if ((command.hasOwnProperty('response') && !disableResponse) || !zclFrame.Header.frameControl.disableDefaultResponse) {
+                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber, request.timeout);
                 }
 
                 if (data !== null) {
@@ -638,15 +645,15 @@ class DeconzAdapter extends Adapter {
                         wasBroadcast: data.srcAddrMode === 0x01 || data.srcAddrMode === 0xF,
                         destinationEndpoint: data.destEndpoint,
                     };
-                    debug(`response received`);
+                    debug(`response received (${zclFrame.Header.transactionSequenceNumber})`);
                     return response;
                 } else {
-                    debug(`no response expected`);
+                    debug(`no response expected (${zclFrame.Header.transactionSequenceNumber})`);
                     return null;
                 }
 
             } catch (error) {
-                throw new Error("no response received");
+                throw new Error(`no response received (${zclFrame.Header.transactionSequenceNumber})`);
             }
     }
 
@@ -676,7 +683,6 @@ class DeconzAdapter extends Adapter {
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
             //debug(`sendZclFrameToGroup ERROR: ${error}`);
-            //return Promise.reject();
             throw new Error(error);
         }
     }
@@ -706,7 +712,6 @@ class DeconzAdapter extends Adapter {
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
             //debug(`sendZclFrameToAll ERROR: ${error}`);
-            //return Promise.reject();
             throw new Error(error);
         }
     }
@@ -992,8 +997,9 @@ class DeconzAdapter extends Adapter {
                 channel: channel
             };
         } catch (error) {
-            debug("get network parameters Error:" + error);
-            return Promise.reject();
+            const msg = "get network parameters Error:" + error;
+            debug(msg);
+            return Promise.reject(new Error(msg));
         }
     }
 
@@ -1036,11 +1042,11 @@ class DeconzAdapter extends Adapter {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    private waitForData(addr: number, profileId: number, clusterId: number, transactionSequenceNumber?: number) : Promise<ReceivedDataResponse> {
+    private waitForData(addr: number, profileId: number, clusterId: number, transactionSequenceNumber?: number, timeout?: number) : Promise<ReceivedDataResponse> {
         return new Promise((resolve, reject): void => {
             const ts = Date.now();
             const commandId = PARAM.PARAM.APS.DATA_INDICATION;
-            const req: WaitForDataRequest = {addr, profileId, clusterId, transactionSequenceNumber, resolve, reject, ts};
+            const req: WaitForDataRequest = {addr, profileId, clusterId, transactionSequenceNumber, resolve, reject, ts, timeout};
             this.openRequestsQueue.push(req);
         });
     }
@@ -1048,7 +1054,9 @@ class DeconzAdapter extends Adapter {
     private checkReceivedGreenPowerIndication(ind: gpDataInd) {
         ind.clusterId = 0x21;
 
-        let gpFrame = [ind.rspId, ind.seqNr, ind.id, ind.options & 0xff, (ind.options >> 8) & 0xff,
+        let gpFrame = [ind.rspId, ind.seqNr, ind.id, 
+            0, 0, // 0, 0 for options is a temp fix until https://github.com/Koenkk/zigbee-herdsman/pull/536 is merged.
+            // ind.options & 0xff, (ind.options >> 8) & 0xff,
         ind.srcId & 0xff, (ind.srcId >> 8) & 0xff, (ind.srcId >> 16) & 0xff, (ind.srcId >> 24) & 0xff,
         ind.frameCounter & 0xff, (ind.frameCounter >> 8) & 0xff, (ind.frameCounter >> 16) & 0xff, (ind.frameCounter >> 24) & 0xff,
         ind.commandId, ind.commandFrameSize].concat(ind.commandFrame);
@@ -1102,7 +1110,10 @@ class DeconzAdapter extends Adapter {
             }
 
             const now = Date.now();
-            if ((now - req.ts) > 60000) { // 60 seconds
+
+            // Default timeout: 60 seconds.
+            // Comparison is negated to prevent orphans when invalid timeout is entered (resulting in NaN).
+            if (!((now - req.ts) <= (req.timeout ?? 60000))) {
                 //debug("Timeout for request in openRequestsQueue addr: " + req.addr.toString(16) + " clusterId: " + req.clusterId.toString(16) + " profileId: " + req.profileId.toString(16));
                 //remove from busyQueue
                 this.openRequestsQueue.splice(i, 1);

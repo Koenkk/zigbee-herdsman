@@ -76,6 +76,7 @@ interface WaitForDataRequest {
     resolve?: Function;
     reject?: Function;
     ts?: number;
+    timeout?: number;
 }
 
 interface ReceivedDataResponse {

@@ -251,6 +251,8 @@ export class EmberMessageDigest extends EzspStruct {
 }
 
 export class EmberAesMmoHashContext extends EzspStruct {
+    public result: Buffer;
+    public length: number;
     // The hash context for an ongoing hash operation.
     static _fields = [
         // The result of ongoing the hash operation.
@@ -361,6 +363,9 @@ export class EmberCurrentSecurityState extends EzspStruct {
 }
 
 export class EmberKeyStruct extends EzspStruct {
+    public key: EmberKeyData;
+    public outgoingFrameCounter: number;
+    public sequenceNumber: number;
     // A structure containing a key and its associated data.
     static _fields = [
         // A bitmask indicating the presence of data within the various fields
@@ -670,6 +675,22 @@ export class EmberNeighbors extends EzspStruct {
     ];
 }
 
+export class EmberRoutingTableEntry extends EzspStruct {
+    static _fields = [
+        ['destination', basic.uint16_t],
+        ['status', basic.uint8_t],
+        ['nexthop', basic.uint16_t],
+    ];
+}
+
+export class EmberRoutingTable extends EzspStruct {
+    static _fields = [
+        ['entries', basic.uint8_t],
+        ['startindex', basic.uint8_t],
+        ['table', basic.LVList(EmberRoutingTableEntry)],
+    ];
+}
+
 export class EmberRawFrame extends EzspStruct {
     public ieeeFrameControl: number;
     public sequence: number;
@@ -689,6 +710,31 @@ export class EmberRawFrame extends EzspStruct {
         ['destNodeId', named.EmberNodeId],
         ['sourcePanId', named.EmberPanId],
         ['ieeeAddress', named.EmberEUI64],
+        ['nwkFrameControl', basic.uint16_t],
+        ['appFrameControl', basic.uint8_t],
+        ['clusterId', basic.uint16_t],
+        ['profileId', basic.uint16_t],
+    ];
+}
+
+export class EmberIeeeRawFrame extends EzspStruct {
+    public ieeeFrameControl: number;
+    public sequence: number;
+    public destPanId: number;
+    public destAddress: named.EmberEUI64;
+    public sourcePanId: number;
+    public sourceAddress: named.EmberEUI64;
+    public nwkFrameControl: number;
+    public appFrameControl: number;
+    public clusterId: number;
+    public profileId: number;
+    static _fields = [
+        ['ieeeFrameControl', basic.uint16_t],
+        ['sequence', basic.uint8_t],
+        ['destPanId', named.EmberPanId],
+        ['destAddress', named.EmberEUI64],
+        ['sourcePanId', named.EmberPanId],
+        ['sourceAddress', named.EmberEUI64],
         ['nwkFrameControl', basic.uint16_t],
         ['appFrameControl', basic.uint8_t],
         ['clusterId', basic.uint16_t],

@@ -766,7 +766,7 @@ describe('Zcl', () => {
             FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f3, 8, 'readRsp', 0xfc00, payload
         );
 
-        expect(frame.Cluster.name).toBe('manuSpecificPhilips');
+        expect(frame.Cluster.name).toBe('manuSpecificUbisysDeviceSetup');
     });
 
     it('ZclFrame with Ubisys (manufacturer specific) cluster fromBuffer', () => {
@@ -1320,6 +1320,12 @@ describe('Zcl', () => {
     it('Zcl utils get cluster without manufacturerCode', () => {
         const cluster = Zcl.Utils.getCluster(0xfc00);
         expect(cluster.ID).toBe(0xfc00);
+        expect(cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+    });
+
+    it('Zcl utils get cluster with manufacturerCode', () => {
+        const cluster = Zcl.Utils.getCluster(0xfc00, 0x100b);
+        expect(cluster.ID).toBe(0xfc00);
         expect(cluster.name).toBe('manuSpecificPhilips');
     });
 
@@ -1332,7 +1338,7 @@ describe('Zcl', () => {
     it('Zcl utils get cluster manufacturerCode wrong', () => {
         const cluster = Zcl.Utils.getCluster(0xfc00, 123);
         expect(cluster.ID).toBe(0xfc00);
-        expect(cluster.name).toBe('manuSpecificPhilips');
+        expect(cluster.name).toBe('manuSpecificUbisysDeviceSetup');
     });
 
     it('Zcl utils get cluster attributes manufacturerCode', () => {
@@ -1589,5 +1595,53 @@ describe('Zcl', () => {
         }, null);
 
         expect(frame.getWritten()).toStrictEqual(Buffer.from(expected))
+    });
+    
+    it('ZclFrame parse MiBoxer zone configuration command', () => {
+        const zoneConfigPayload = [0x11, 0x01, 0xf0, 0x08, 0x84, 0x2b, 0x01, 0x98, 0x2b, 0x02, 0xac, 0x2b, 0x03, 0xc0, 0x2b, 0x04, 0xd4, 0x2b, 0x05, 0xe8, 0x2b, 0x06, 0xfc, 0x2b, 0x07, 0x10, 0x2c, 0x08];
+        const zoneConfigFrame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genGroups").ID, Buffer.from(zoneConfigPayload));
+        expect(zoneConfigFrame.Payload.zones).toStrictEqual([
+            {zoneNum: 1, groupId: 0x2b84},
+            {zoneNum: 2, groupId: 0x2b98},
+            {zoneNum: 3, groupId: 0x2bac},
+            {zoneNum: 4, groupId: 0x2bc0},
+            {zoneNum: 5, groupId: 0x2bd4},
+            {zoneNum: 6, groupId: 0x2be8},
+            {zoneNum: 7, groupId: 0x2bfc},
+            {zoneNum: 8, groupId: 0x2c10},
+        ]);
+    });
+    it('ZclFrame serialize MiBoxer zone configuration command', () => {
+        const testZones = [
+            {zoneNum: 1, groupId: 0x2b84},
+            {zoneNum: 2, groupId: 0x2b98},
+            {zoneNum: 3, groupId: 0x2bac},
+            {zoneNum: 4, groupId: 0x2bc0},
+            {zoneNum: 5, groupId: 0x2bd4},
+            {zoneNum: 6, groupId: 0x2be8},
+            {zoneNum: 7, groupId: 0x2bfc},
+            {zoneNum: 8, groupId: 0x2c10},
+        ];
+        const zoneConfigFrame = Zcl.ZclFrame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true, null, 1, 'miboxerSetZones', Zcl.Utils.getCluster("genGroups").ID, { zones: testZones });
+        expect(zoneConfigFrame.toBuffer()).toStrictEqual(Buffer.from([0x11, 0x01, 0xf0, 0x08, 0x84, 0x2b, 0x01, 0x98, 0x2b, 0x02, 0xac, 0x2b, 0x03, 0xc0, 0x2b, 0x04, 0xd4, 0x2b, 0x05, 0xe8, 0x2b, 0x06, 0xfc, 0x2b, 0x07, 0x10, 0x2c, 0x08]));
+    });
+
+
+    it('BuffaloZcl read BIG_ENDIAN_UINT24', () => {
+        const buffer = Buffer.from([0x01, 0x01, 0x86, 0xA0, 0x02]);
+        const buffalo = new BuffaloZcl(buffer, 1);
+        const value = buffalo.read(BuffaloZclDataType[BuffaloZclDataType.BIG_ENDIAN_UINT24], {});
+        expect(buffalo.getPosition()).toBe(4);
+        expect(value).toStrictEqual(100000);
+    });
+
+    it('BuffaloZcl write BIG_ENDIAN_UINT24', () => {
+        const payload = 16777200;
+        const buffer = Buffer.alloc(4);
+        const expected = Buffer.from([0x00, 0xFF, 0xFF, 0xF0]);
+        const buffalo = new BuffaloZcl(buffer, 1);
+        buffalo.write(BuffaloZclDataType[BuffaloZclDataType.BIG_ENDIAN_UINT24], payload, {});
+        expect(buffalo.getPosition()).toBe(4);
+        expect(buffer).toStrictEqual(expected);
     });
 });

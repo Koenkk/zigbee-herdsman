@@ -89,129 +89,136 @@ class GreenPower extends events.EventEmitter {
     }
 
     public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclDataPayload): Promise<void> {
-        const networkParameters = await this.adapter.getNetworkParameters();
         let payload = {};
 
-        switch(dataPayload.frame.Payload.commandID) {
-        /* istanbul ignore next */
-        case undefined:
-            debug.error("GP Undefined Command");
-            break;
-        case 0xE0: // GP Commissioning
-            debug.info("GP Commissioning");
-
-            /* istanbul ignore if */
-            if (typeof dataPayload.address !== 'number') {
-                debug.info("Warning: commissioning request with string type address");
+        try {
+            switch(dataPayload.frame.Payload.commandID) {
+            /* istanbul ignore next */
+            case undefined:
+                debug.error("GP Undefined Command");
                 break;
-            }
-
-            const rxOnCap = dataPayload.frame.Payload.commandFrame.options & 0b10;
-
-            const key = this.encryptSecurityKey(
-                dataPayload.frame.Payload.srcID, dataPayload.frame.Payload.commandFrame.securityKey
-            );
-
-            // RX capable GPD needs GP Commissioning Reply
-            if (rxOnCap) {
-                debug.info("RxOnCap set -> supports bidirectional communication");
-                // NOTE: currently encryption is disabled for RX capable GPDs
-
-                // Commissioning reply
+            case 0xE0: // GP Commissioning
+                debug.info("GP Commissioning");
+    
+                /* istanbul ignore if */
+                if (typeof dataPayload.address !== 'number') {
+                    debug.info("Warning: commissioning request with string type address");
+                    break;
+                }
+    
+                const rxOnCap = dataPayload.frame.Payload.commandFrame.options & 0b10;
+    
+                const key = this.encryptSecurityKey(
+                    dataPayload.frame.Payload.srcID, dataPayload.frame.Payload.commandFrame.securityKey
+                );
+    
+                // RX capable GPD needs GP Commissioning Reply
+                if (rxOnCap) {
+                    debug.info("RxOnCap set -> supports bidirectional communication");
+                    // NOTE: currently encryption is disabled for RX capable GPDs
+    
+                    const networkParameters = await this.adapter.getNetworkParameters();
+                    // Commissioning reply
+                    payload = {
+                        options: 0,
+                        tempMaster: dataPayload.frame.Payload.gppNwkAddr,
+                        tempMasterTx: networkParameters.channel - 11,
+                        srcID: dataPayload.frame.Payload.srcID,
+                        gpdCmd: 0xf0,
+                        gpdPayload: {
+                            commandID: 0xf0,
+                            options: 0b00000000, // Disable encryption
+                            // securityKey: [...dataPayload.frame.Payload.commandFrame.securityKey],
+                            // keyMic: dataPayload.frame.Payload.commandFrame.keyMic,
+                        }
+                    };
+    
+                    const frame = Zcl.ZclFrame.create(
+                        Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
+                        null, ZclTransactionSequenceNumber.next(), 'response', 33, payload
+                    );
+                    await this.adapter.sendZclFrameToAll(242, frame, 242);
+    
+                    payload = {
+                        options: 0b0000000110101000, // Disable encryption
+                        srcID: dataPayload.frame.Payload.srcID,
+                        deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
+                    };
+        
+                    await this.sendPairingCommand(payload, dataPayload);
+                } else {
+                    // Communication mode:
+                    //  Broadcast: Groupcast to precommissioned ID (0b10)
+                    // !Broadcast: Lightweight unicast (0b11)
+                    let opt = 0b1110010101101000;
+                    if (dataPayload.wasBroadcast) {
+                        opt = 0b1110010101001000;
+                    }
+    
+                    payload = {
+                        options: opt,
+                        srcID: dataPayload.frame.Payload.srcID,
+                        deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
+                        frameCounter: dataPayload.frame.Payload.commandFrame.outgoingCounter,
+    
+                        gpdKey: [...key],
+                    };
+    
+                    await this.sendPairingCommand(payload, dataPayload);
+                }
+                
+                const eventData: GreenPowerDeviceJoinedPayload = {
+                    sourceID: dataPayload.frame.Payload.srcID,
+                    deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
+                    networkAddress: dataPayload.frame.Payload.srcID & 0xFFFF,
+                };
+                this.emit(GreenPowerEvents.deviceJoined, eventData);
+    
+                break;
+            
+            /* istanbul ignore next */
+            case 0xE2: // GP Success
+                debug.info("GP Success");
+                if (typeof dataPayload.address !== 'number') {
+                    debug.info("Warning: commissioning request with string type address");
+                    break;
+                }
+    
+                break;
+            case 0xE3: // GP Channel Request
+                debug.info("GP Channel Request");
+                const networkParameters = await this.adapter.getNetworkParameters();
+                // Channel notification
                 payload = {
                     options: 0,
                     tempMaster: dataPayload.frame.Payload.gppNwkAddr,
-                    tempMasterTx: networkParameters.channel - 11,
+                    tempMasterTx: dataPayload.frame.Payload.commandFrame.nextChannel,
                     srcID: dataPayload.frame.Payload.srcID,
-                    gpdCmd: 0xf0,
+                    gpdCmd: 0xf3,
+    
                     gpdPayload: {
-                        commandID: 0xf0,
-                        options: 0b00000000, // Disable encryption
-                        // securityKey: [...dataPayload.frame.Payload.commandFrame.securityKey],
-                        // keyMic: dataPayload.frame.Payload.commandFrame.keyMic,
+                        commandID: 0xf3,
+                        options: networkParameters.channel - 11,
                     }
                 };
-
+    
                 const frame = Zcl.ZclFrame.create(
                     Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
                     null, ZclTransactionSequenceNumber.next(), 'response', 33, payload
                 );
-                await this.adapter.sendZclFrameToAll(242, frame, 242);
-
-                payload = {
-                    options: 0b0000000110101000, // Disable encryption
-                    srcID: dataPayload.frame.Payload.srcID,
-                    deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
-                };
     
-                await this.sendPairingCommand(payload, dataPayload);
-            } else {
-                // Communication mode:
-                //  Broadcast: Groupcast to precommissioned ID (0b10)
-                // !Broadcast: Lightweight unicast (0b11)
-                let opt = 0b1110010101101000;
-                if (dataPayload.wasBroadcast) {
-                    opt = 0b1110010101001000;
-                }
-
-                payload = {
-                    options: opt,
-                    srcID: dataPayload.frame.Payload.srcID,
-                    deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
-                    frameCounter: dataPayload.frame.Payload.commandFrame.outgoingCounter,
-
-                    gpdKey: [...key],
-                };
-
-                await this.sendPairingCommand(payload, dataPayload);
-            }
-            
-            const eventData: GreenPowerDeviceJoinedPayload = {
-                sourceID: dataPayload.frame.Payload.srcID,
-                deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
-                networkAddress: dataPayload.frame.Payload.srcID & 0xFFFF,
-            };
-            this.emit(GreenPowerEvents.deviceJoined, eventData);
-
-            break;
-        
-        /* istanbul ignore next */
-        case 0xE2: // GP Success
-            debug.info("GP Success");
-            if (typeof dataPayload.address !== 'number') {
-                debug.info("Warning: commissioning request with string type address");
+                await this.adapter.sendZclFrameToAll(242, frame, 242);
                 break;
+            /* istanbul ignore next */
+            case 0xA1: // GP Manufacturer-specific Attribute Reporting
+                break;
+            default:
+                debug.info("Unhandled Zigbee GreenPower command: 0x" + 
+                    dataPayload.frame.Payload.commandID.toString(16));
             }
-
-            break;
-        case 0xE3: // GP Channel Request
-            debug.info("GP Channel Request");
-            // Channel notification
-            payload = {
-                options: 0,
-                tempMaster: dataPayload.frame.Payload.gppNwkAddr,
-                tempMasterTx: dataPayload.frame.Payload.commandFrame.nextChannel,
-                srcID: dataPayload.frame.Payload.srcID,
-                gpdCmd: 0xf3,
-
-                gpdPayload: {
-                    commandID: 0xf3,
-                    options: networkParameters.channel - 11,
-                }
-            };
-
-            const frame = Zcl.ZclFrame.create(
-                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-                null, ZclTransactionSequenceNumber.next(), 'response', 33, payload
-            );
-
-            await this.adapter.sendZclFrameToAll(242, frame, 242);
-            break;
-        /* istanbul ignore next */
-        case 0xA1: // GP Manufacturer-specific Attribute Reporting
-            break;
-        default:
-            debug.info("Unhandled Zigbee GreenPower command: 0x" + dataPayload.frame.Payload.commandID.toString(16));
+        } catch (error) {
+            /* istanbul ignore next */
+            debug.error(`onZclGreenPowerData failed with error '${error}'`);
         }
     }
 

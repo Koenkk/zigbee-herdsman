@@ -11,6 +11,7 @@ import {Utils as ZclUtils, FrameControl} from '../zcl';
 import Touchlink from './touchlink';
 import GreenPower from './greenPower';
 import {BackupUtils} from "../utils";
+import assert from 'assert';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -31,6 +32,14 @@ interface Options {
      * try to remove the device from the network.
      */
     acceptJoiningDeviceHandler: (ieeeAddr: string) => Promise<boolean>;
+}
+
+async function catcho(func: () => Promise<void>, errorMessage: string): Promise<void> {
+    try {
+        await func();
+    } catch (error) {
+        debug.error(`${errorMessage}: ${error}`);
+    }
 }
 
 const DefaultOptions: Options = {
@@ -202,6 +211,25 @@ class Controller extends events.EventEmitter {
         return this.touchlink.factoryResetFirst();
     }
 
+    public async addInstallCode(installCode: string): Promise<void> {
+        const aqaraMatch = installCode.match(/^G\$M:.+\$A:(.+)\$I:(.+)$/);
+        let ieeeAddr, key;
+        if (aqaraMatch) {
+            ieeeAddr = aqaraMatch[1];
+            key = aqaraMatch[2];
+        } else {
+            assert(installCode.length === 95 || installCode.length === 91, 
+                `Unsupported install code, got ${installCode.length} chars, expected 95 or 91`);
+            const keyStart = installCode.length - (installCode.length === 95 ? 36 : 32);
+            ieeeAddr = installCode.substring(keyStart - 19, keyStart - 3);
+            key = installCode.substring(keyStart, installCode.length);
+        }
+
+        ieeeAddr = `0x${ieeeAddr}`;
+        key = Buffer.from(key.match(/.{1,2}/g).map(d => parseInt(d, 16)));
+        await this.adapter.addInstallCode(ieeeAddr, key);
+    }
+
     public async permitJoin(permit: boolean, device?: Device, time?: number): Promise<void> {
         await this.permitJoinInternal(permit, 'manual', device, time);
     }
@@ -273,9 +301,7 @@ class Controller extends events.EventEmitter {
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceAnnounce);
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceLeave);
 
-        try {
-            await this.permitJoinInternal(false, 'manual');
-        } catch (e) {}
+        await catcho(() => this.permitJoinInternal(false, 'manual'), "Failed to disable join on stop");
 
         clearInterval(this.backupTimer);
         clearInterval(this.databaseSaveTimer);
@@ -295,15 +321,28 @@ class Controller extends events.EventEmitter {
         this.database.write();
     }
 
-    private async backup(): Promise<void> {
+    public async backup(): Promise<void> {
+        this.databaseSave();
         if (this.options.backupPath && await this.adapter.supportsBackup()) {
             debug.log('Creating coordinator backup');
-            const backup = await this.adapter.backup();
+            const backup = await this.adapter.backup(Device.all().map((d) => d.ieeeAddr));
             const unifiedBackup = await BackupUtils.toUnifiedBackup(backup);
             const tmpBackupPath = this.options.backupPath + '.tmp';
             fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
             fs.renameSync(tmpBackupPath, this.options.backupPath);
             debug.log(`Wrote coordinator backup to '${this.options.backupPath}'`);
+        }
+    }
+
+    public async coordinatorCheck(): Promise<{missingRouters: Device[]}> {
+        if (await this.adapter.supportsBackup()) {
+            const backup = await this.adapter.backup(Device.all().map((d) => d.ieeeAddr));
+            const devicesInBackup = backup.devices.map((d) => `0x${d.ieeeAddress.toString('hex')}`);
+            const missingRouters = this.getDevices()
+                .filter((d) => d.type === 'Router' && !devicesInBackup.includes(d.ieeeAddr));
+            return {missingRouters};
+        } else {
+            throw new Error("Coordinator does not coordinator check because it doesn't support backups");
         }
     }
 
@@ -442,10 +481,7 @@ class Controller extends events.EventEmitter {
     private async onAdapterDisconnected(): Promise<void> {
         debug.log(`Adapter disconnected'`);
 
-        try {
-            await this.adapter.stop();
-        } catch (error) {
-        }
+        await catcho(() => this.adapter.stop(), 'Failed to stop adapter on disconnect');
 
         this.emit(Events.Events.adapterDisconnected);
     }
@@ -497,7 +533,8 @@ class Controller extends events.EventEmitter {
         if (this.options.acceptJoiningDeviceHandler) {
             if (!(await this.options.acceptJoiningDeviceHandler(payload.ieeeAddr))) {
                 debug.log(`Device '${payload.ieeeAddr}' rejected by handler, removing it`);
-                await this.adapter.removeDevice(payload.networkAddress, payload.ieeeAddr);
+                await catcho(() => this.adapter.removeDevice(payload.networkAddress, payload.ieeeAddr), 
+                    'Failed to remove rejected device');
                 return;
             } else {
                 debug.log(`Device '${payload.ieeeAddr}' accepted by handler`);

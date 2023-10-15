@@ -6,7 +6,7 @@ import {EmberMulticastTableEntry} from './types/struct';
 import Debug from "debug";
 
 const debug = {
-    log: Debug('zigbee-herdsman:adapter:ezsp:multicast'),
+    log: Debug('zigbee-herdsman:adapter:ezsp:cast'),
 };
 
 
@@ -41,15 +41,13 @@ export class Multicast {
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     async startup(enpoints: Array<any>): Promise<void> {
-        return this.driver.queue.execute<void>(async () => {
-            await this._initialize();
-            for (const ep of enpoints) {
-                if (!ep.id) continue;
-                for (const group_id of ep.member_of) {
-                    await this.subscribe(group_id, ep.id);
-                }
+        await this._initialize();
+        for (const ep of enpoints) {
+            if (!ep.id) continue;
+            for (const group_id of ep.member_of) {
+                await this.subscribe(group_id, ep.id);
             }
-        });
+        }
     }
 
     public async subscribe(group_id: number, endpoint: number): Promise<EmberStatus> {
@@ -64,7 +62,7 @@ export class Multicast {
             entry.endpoint = endpoint;
             entry.multicastId = group_id;
             entry.networkIndex = 0;
-            const [status] = await this.driver.ezsp.setMulticastTableEntry(idx, entry);
+            const status = await this.driver.ezsp.setMulticastTableEntry(idx, entry);
             if (status !== EmberStatus.SUCCESS) {
                 debug.log(
                     "Set MulticastTableEntry #%s for %s multicast id: %s",

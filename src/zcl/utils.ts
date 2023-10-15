@@ -36,21 +36,16 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
 
     if (typeof key === 'number') {
         if (manufacturerCode) {
-            for (const [clusterName, cluster] of Object.entries(Cluster)) {
-                if (cluster.ID === key && cluster.manufacturerCode === manufacturerCode) {
-                    name = clusterName;
-                    break;
-                }
-            }
+            name = Object.entries(Cluster)
+                .find((e) => e[1].ID === key && e[1].manufacturerCode === manufacturerCode)?.[0];
+        } 
+        
+        if (!name) {
+            name = Object.entries(Cluster).find((e) => e[1].ID === key && !e[1].manufacturerCode)?.[0];
         }
 
         if (!name) {
-            for (const [clusterName, cluster] of Object.entries(Cluster)) {
-                if (cluster.ID === key) {
-                    name = clusterName;
-                    break;
-                }
-            }
+            name = Object.entries(Cluster).find((e) => e[1].ID === key)?.[0];
         }
     } else {
         name = key;

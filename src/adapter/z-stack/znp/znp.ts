@@ -6,6 +6,7 @@ import {
 
 import {Wait, Queue, Waitress, RealpathSync} from '../../../utils';
 
+import {SerialPort} from '../../serialPort';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 
@@ -15,7 +16,6 @@ import ZpiObject from './zpiObject';
 import {ZpiObjectPayload} from './tstype';
 import {Subsystem, Type} from '../unpi/constants';
 
-import SerialPort from 'serialport';
 import net from 'net';
 import events from 'events';
 import Equals from 'fast-deep-equal/es6';
@@ -126,10 +126,10 @@ class Znp extends events.EventEmitter {
     }
 
     private async openSerialPort(): Promise<void> {
-        const options = {baudRate: this.baudRate, rtscts: this.rtscts, autoOpen: false};
+        const options = {path: this.path, baudRate: this.baudRate, rtscts: this.rtscts, autoOpen: false};
 
-        debug.log(`Opening SerialPort with ${this.path} and ${JSON.stringify(options)}`);
-        this.serialPort = new SerialPort(this.path, options);
+        debug.log(`Opening SerialPort with ${JSON.stringify(options)}`);
+        this.serialPort = new SerialPort(options);
 
         this.unpiWriter = new UnpiWriter();
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
