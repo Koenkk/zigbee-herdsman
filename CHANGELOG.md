@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.20.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.19.2...v0.20.0) (2023-10-16)
+
+
+### Features
+
+* add Inovelli VZM35 cluster parameters ([#780](https://github.com/Koenkk/zigbee-herdsman/issues/780)) ([5b854d1](https://github.com/Koenkk/zigbee-herdsman/commit/5b854d1f404fcc42c2249b961ddde7fa652074bb))
+* **ignore:** Enable incremental TSC builds ([#774](https://github.com/Koenkk/zigbee-herdsman/issues/774)) ([764ab21](https://github.com/Koenkk/zigbee-herdsman/commit/764ab215bc561988cdca838954d6656396d6a223))
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#779](https://github.com/Koenkk/zigbee-herdsman/issues/779)) ([1abb4aa](https://github.com/Koenkk/zigbee-herdsman/commit/1abb4aa62ad81982ca3ea58f809a38d576a5277e))
+
 ## [0.19.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.19.1...v0.19.2) (2023-10-12)
 
 
