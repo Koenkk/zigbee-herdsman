@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.21.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.20.0...v0.21.0) (2023-10-25)
+
+
+### Features
+
+* **add:** New Legrand NLLV specific attributes ([#784](https://github.com/Koenkk/zigbee-herdsman/issues/784)) ([e9acbab](https://github.com/Koenkk/zigbee-herdsman/commit/e9acbab047e528e6a128d6557edebbc463f7e3c9))
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#782](https://github.com/Koenkk/zigbee-herdsman/issues/782)) ([10e5e00](https://github.com/Koenkk/zigbee-herdsman/commit/10e5e00da2e215318f8ccf5fcd6f0bcb76ce2d2f))
+* Remove manufacturer code for Elko attributes ([#786](https://github.com/Koenkk/zigbee-herdsman/issues/786)) ([1b46aac](https://github.com/Koenkk/zigbee-herdsman/commit/1b46aac19f6c9bf91a28e7d19cd9db1b8285ad9c))
+
 ## [0.20.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.19.2...v0.20.0) (2023-10-16)
 
 
