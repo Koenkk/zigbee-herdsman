@@ -683,7 +683,7 @@ class Controller extends events.EventEmitter {
             if (frame.isGlobal()) {
                 if (frame.isCommand('report')) {
                     type = 'attributeReport';
-                    data = ZclFrameConverter.attributeKeyValue(dataPayload.frame);
+                    data = ZclFrameConverter.attributeKeyValue(dataPayload.frame, device.manufacturerID);
                 } else if (frame.isCommand('read')) {
                     type = 'read';
                     data = ZclFrameConverter.attributeList(dataPayload.frame);
