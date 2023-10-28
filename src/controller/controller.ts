@@ -686,15 +686,15 @@ class Controller extends events.EventEmitter {
                     data = ZclFrameConverter.attributeKeyValue(dataPayload.frame, device.manufacturerID);
                 } else if (frame.isCommand('read')) {
                     type = 'read';
-                    data = ZclFrameConverter.attributeList(dataPayload.frame);
+                    data = ZclFrameConverter.attributeList(dataPayload.frame, device.manufacturerID);
                 } else if (frame.isCommand('write')) {
                     type = 'write';
-                    data = ZclFrameConverter.attributeKeyValue(dataPayload.frame);
+                    data = ZclFrameConverter.attributeKeyValue(dataPayload.frame, device.manufacturerID);
                 } else {
                     /* istanbul ignore else */
                     if (frame.isCommand('readRsp')) {
                         type = 'readResponse';
-                        data = ZclFrameConverter.attributeKeyValue(dataPayload.frame);
+                        data = ZclFrameConverter.attributeKeyValue(dataPayload.frame, device.manufacturerID);
                     }
                 }
             } else {
