@@ -561,7 +561,7 @@ class Endpoint extends Entity {
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
-                return ZclFrameConverter.attributeKeyValue(result.frame);
+                return ZclFrameConverter.attributeKeyValue(result.frame, this.getDevice().manufacturerID);
             } else {
                 return null;
             }

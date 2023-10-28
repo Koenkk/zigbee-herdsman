@@ -17,7 +17,7 @@ function getCluster(frame: ZclFrame, deviceManufacturerID: number): Cluster {
     return cluster;
 }
 
-function attributeKeyValue(frame: ZclFrame, deviceManufacturerID?: number): KeyValue {
+function attributeKeyValue(frame: ZclFrame, deviceManufacturerID: number): KeyValue {
     const payload: KeyValue = {};
     const cluster = getCluster(frame, deviceManufacturerID);
 
@@ -32,7 +32,7 @@ function attributeKeyValue(frame: ZclFrame, deviceManufacturerID?: number): KeyV
     return payload;
 }
 
-function attributeList(frame: ZclFrame, deviceManufacturerID?: number): Array<string | number> {
+function attributeList(frame: ZclFrame, deviceManufacturerID: number): Array<string | number> {
     const payload: Array<string | number> = [];
     const cluster = getCluster(frame, deviceManufacturerID);
 
