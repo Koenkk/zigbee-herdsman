@@ -259,6 +259,14 @@ const mockDevices = {
             1: {modelId: 'lumi.plug', manufacturerName: 'LUMI', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
         },
     },
+    177: {
+        nodeDescriptor: {type: 'Router', manufacturerCode: 4129},
+        activeEndpoints: {endpoints: [1]},
+        simpleDescriptor: {1: {endpointID: 1, deviceID: 514, inputClusters: [0, 3, 258, 4, 5, 15, 64513], outputClusters: [258, 0, 64513, 5, 25], profileID: 260}},
+        attributes: {
+            1: {modelId: ' Shutter switch with neutral', manufacturerName: 'Legrand', zclVersion: 2, appVersion: 0, hwVersion: 8, dateCode: '231030', swBuildId: '0038', powerSource: 1, stackVersion: 67},
+        },
+    },
 }
 
 const mockZclFrame = ZclFrame;
