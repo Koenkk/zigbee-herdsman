@@ -213,8 +213,8 @@ class Device extends Entity {
 
         // Update reportable properties
         if (frame.isCluster('genBasic') && (frame.isCommand('readRsp') || frame.isCommand('report'))) {
-            for (const [key, value] of Object.entries(ZclFrameConverter.attributeKeyValue(frame))) {
-                Device.ReportablePropertiesMapping[key]?.set(value, this);
+            for (const [key, val] of Object.entries(ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID))) {
+                Device.ReportablePropertiesMapping[key]?.set(val, this);
             }
         }
 
