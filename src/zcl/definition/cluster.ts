@@ -466,6 +466,7 @@ const Cluster: {
             elkoPreWarningTime: {ID: 0xE000, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
             elkoOnTimeReload: {ID: 0xE001, type: DataType.uint32, manufacturerCode: ManufacturerCode.ELKO},
             elkoOnTimeReloadOptions: {ID: 0xE002, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.ELKO},
+            nodonTransitionTime: {ID: 0x0001, type: DataType.uint16, manufacturerCode: ManufacturerCode.NODON},
         },
         commands: {
             off: {
@@ -5593,6 +5594,23 @@ const Cluster: {
             },
         },
         commandsResponse: {},
+    },
+    manuSpecificNodOnFilPilote: {
+        ID: 0xFC00,
+        manufacturerCode: ManufacturerCode.NodOn,
+        attributes: {
+            mode: {ID: 0x0000, type: DataType.uint8}
+        },
+        commands: {
+            setMode: {
+                ID: 0x0000,
+                parameters: [
+                    {name: 'mode', type: DataType.uint8},
+                ],
+            },
+        },
+        commandsResponse: {
+        },
     },
 };
 
