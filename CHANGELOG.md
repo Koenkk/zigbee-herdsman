@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.22.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.21.0...v0.22.0) (2023-11-03)
+
+
+### Features
+
+* **ignore:** Add NodOn Manuf Code and Manufacturer Cluster ([#790](https://github.com/Koenkk/zigbee-herdsman/issues/790)) ([fd5bf6c](https://github.com/Koenkk/zigbee-herdsman/commit/fd5bf6c4ebb91181f3c75b5cb2d699a2dc349453))
+
+
+### Bug Fixes
+
+* Fix wrong attribute names when device manufacturer ID is missing from message ([#787](https://github.com/Koenkk/zigbee-herdsman/issues/787)) ([d8e4b5b](https://github.com/Koenkk/zigbee-herdsman/commit/d8e4b5bac01478b54f43190e775cb14f72c17b43))
+
 ## [0.21.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.20.0...v0.21.0) (2023-10-25)
 
 
