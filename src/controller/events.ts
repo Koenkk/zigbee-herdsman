@@ -46,7 +46,7 @@ interface LastSeenChangedPayload {
 
 const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'notification': 'commandNotification',
-    'commisioningNotification': 'commandCommisioningNotification',
+    'commissioningNotification': 'commandCommissioningNotification',
     'on': 'commandOn',
     'offWithEffect': 'commandOffWithEffect',
     'step': 'commandStep',
@@ -153,7 +153,7 @@ type MessagePayloadType =
     'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandDataResponse' |
     'commandDataReport' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | 'commandGetPinCodeRsp' |
-    'commandArrivalSensorNotify' | 'commandCommisioningNotification' | 'commandGetUserStatusRsp' |
+    'commandArrivalSensorNotify' | 'commandCommissioningNotification' | 'commandGetUserStatusRsp' |
     'commandAlarm' | 'commandUnlockDoorRsp' | 'commandMcuVersionResponse' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
     'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandMcuSyncTime' |

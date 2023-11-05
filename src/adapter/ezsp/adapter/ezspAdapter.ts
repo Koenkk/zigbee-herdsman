@@ -121,7 +121,7 @@ class EZSPAdapter extends Adapter {
             const zclFrame = ZclFrame.create(
                 FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true,
                 null, frame.apsFrame.sequence,
-                (frame.messageType == 0xE0) ? 'commisioningNotification' : 'notification',
+                (frame.messageType == 0xE0) ? 'commissioningNotification' : 'notification',
                 frame.apsFrame.clusterId, frame.message);
             const payload: Events.ZclDataPayload = {
                 frame: zclFrame,

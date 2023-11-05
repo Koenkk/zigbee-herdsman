@@ -1044,9 +1044,9 @@ describe('Controller', () => {
 
         // Green power
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(4);
-        const commisionFrameDisable = mockZclFrame.create(1, 1, true, null, 5, 'commisioningMode', 33, {options: 0x0a, commisioningWindow: 0});
+        const commissionFrameDisable = mockZclFrame.create(1, 1, true, null, 5, 'commisioningMode', 33, {options: 0x0a, commisioningWindow: 0});
         expect(mocksendZclFrameToAll.mock.calls[3][0]).toBe(242);
-        expect(deepClone(mocksendZclFrameToAll.mock.calls[3][1])).toStrictEqual(deepClone(commisionFrameDisable));
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[3][1])).toStrictEqual(deepClone(commissionFrameDisable));
         expect(mocksendZclFrameToAll.mock.calls[3][2]).toBe(242);
         expect(mocksendZclFrameToAll).toBeCalledTimes(4);
     });
@@ -4081,7 +4081,7 @@ describe('Controller', () => {
                 outgoingCounter: 0x000004e4,
             },
         };
-        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commisioningNotification', 33, data)
+        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commissioningNotification', 33, data)
         await mockAdapterEvents['zclData']({
             wasBroadcast: true,
             address: 0x46f4fe,
@@ -4168,7 +4168,7 @@ describe('Controller', () => {
                 nextNextChannel: 15,
             },
         };
-        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commisioningNotification', 33, data)
+        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commissioningNotification', 33, data)
         await mockAdapterEvents['zclData']({
             wasBroadcast: true,
             address: 0x46f4fe,
@@ -4217,7 +4217,7 @@ describe('Controller', () => {
                 outgoingCounter: 0x000004e4,
             },
         };
-        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commisioningNotification', 33, data)
+        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commissioningNotification', 33, data)
         await mockAdapterEvents['zclData']({
             wasBroadcast: true,
             address: 0x46f4fe,
@@ -4319,7 +4319,7 @@ describe('Controller', () => {
             gppGddLink: 0xd8,
        };
 
-       const expectedFrame = mockZclFrame.create(1, 0, true, null, 100, 'commisioningNotification', 33, data);
+       const expectedFrame = mockZclFrame.create(1, 0, true, null, 100, 'commissioningNotification', 33, data);
 
        const receivedFrame = ZclFrame.fromBuffer(33, Buffer.from([0x11, 0x64, 0x04, 0x00, 0x08, 0xf8, 0x71, 0x71, 0x01, 0xf8, 0x00, 0x00, 0x00, 0xe0, 0x2e, 0x02, 0xc5, 0xf2, 0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c, 0xfa, 0x47, 0x05, 0xf8, 0xf8, 0x11, 0x00, 0x00, 0x04, 0x11, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x22, 0x60, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x81, 0x00, 0xd8]));
 
