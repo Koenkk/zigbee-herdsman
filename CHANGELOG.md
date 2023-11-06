@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.22.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.22.0...v0.22.1) (2023-11-06)
+
+
+### Bug Fixes
+
+* Fix typo, change to `commission` ([#793](https://github.com/Koenkk/zigbee-herdsman/issues/793)) ([e423928](https://github.com/Koenkk/zigbee-herdsman/commit/e423928c8131f935695d4eafe0b3ffa0ffc0003b))
+* **ignore:** update dependencies ([#792](https://github.com/Koenkk/zigbee-herdsman/issues/792)) ([cb252c1](https://github.com/Koenkk/zigbee-herdsman/commit/cb252c1f739c2ddc1e75a6248fb8fa910d2fb0cf))
+
 ## [0.22.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.21.0...v0.22.0) (2023-11-03)
 
 
