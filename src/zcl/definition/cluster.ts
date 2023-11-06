@@ -1223,7 +1223,7 @@ const Cluster: {
                     {name: 'gppGddLink', type: DataType.uint8,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x4000}]},
                 ],
             },
-            commisioningNotification: {
+            commissioningNotification: {
                 ID: 4,
                 parameters: [
                     {name: 'options', type: DataType.uint16},
