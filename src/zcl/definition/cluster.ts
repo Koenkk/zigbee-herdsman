@@ -1211,7 +1211,7 @@ const Cluster: {
             notification: {
                 ID: 0,
                 parameters: [
-                    {name: 'options', type: DataType.uint16},
+                    {name: 'options', type: DataType.bitmap16},
                     {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
                     {name: 'gpdIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
                     {name: 'gpdEndpoint', type: DataType.uint8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
@@ -1226,7 +1226,7 @@ const Cluster: {
             commisioningNotification: {
                 ID: 4,
                 parameters: [
-                    {name: 'options', type: DataType.uint16},
+                    {name: 'options', type: DataType.bitmap16},
                     {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
                     {name: 'gpdIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
                     {name: 'gpdEndpoint', type: DataType.uint8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
@@ -1243,7 +1243,7 @@ const Cluster: {
             response: {
                 ID: 6,
                 parameters: [
-                    {name: 'options', type: DataType.uint8},
+                    {name: 'options', type: DataType.bitmap8},
                     {name: 'tempMaster', type: DataType.uint16},
                     {name: 'tempMasterTx', type: DataType.uint8},
                     {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
@@ -1256,7 +1256,7 @@ const Cluster: {
             pairing: {
                 ID: 1,
                 parameters: [
-                    {name: 'options', type: DataType.uint24},
+                    {name: 'options', type: DataType.bitmap24},
                     {name: 'srcID', type: DataType.uint32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
                     {name: 'gpdIEEEAddr', type: DataType.ieeeAddr, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
                     {name: 'gpdEndpoint', type: DataType.uint8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
@@ -1274,7 +1274,7 @@ const Cluster: {
             commisioningMode: {
                 ID: 2,
                 parameters: [
-                    {name: 'options', type: DataType.uint8},
+                    {name: 'options', type: DataType.bitmap8},
                     {name: 'commisioningWindow', type: DataType.uint16},
                 ],
             },
