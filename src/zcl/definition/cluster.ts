@@ -4245,6 +4245,12 @@ const Cluster: {
             inputActions: {ID: 0x0001, type: DataType.array},
         },
         commands: {
+            command0: {
+                ID: 0,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
         },
         commandsResponse: {
         }
