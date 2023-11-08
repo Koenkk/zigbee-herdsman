@@ -4239,8 +4239,19 @@ const Cluster: {
     },
     manuSpecificUbisysDeviceSetup: {
         ID: 0xfc00,
-        manufacturerCode: 0x128b,
         // Doesn't use manufacturerCode: https://github.com/Koenkk/zigbee-herdsman-converters/pull/4412
+        attributes: {
+            inputConfigurations: {ID: 0x0000, type: DataType.array},
+            inputActions: {ID: 0x0001, type: DataType.array},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        }
+    },
+    manuSpecificUbisysDeviceSetup2: {
+        ID: 0xfc00,
+        manufacturerCode: 0x128b,
         attributes: {
             inputConfigurations: {ID: 0x0000, type: DataType.array},
             inputActions: {ID: 0x0001, type: DataType.array},
