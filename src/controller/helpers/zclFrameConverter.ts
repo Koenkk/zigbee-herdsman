@@ -8,10 +8,12 @@ interface KeyValue {[s: string]: number | string}
 // This leads to incorrect reported attribute names.
 // Remap the attributes using the target device's manufacturer ID
 // if the header is lacking the information.
+// Note: Limit this feature to Legrand / 4129 only following regressions with Tuya devices
 function getCluster(frame: ZclFrame, deviceManufacturerID: number): Cluster {
     let cluster = frame.Cluster;
 
-    if (!frame?.Header?.manufacturerCode && frame?.Cluster && Number.isInteger(deviceManufacturerID)) {
+    if (!frame?.Header?.manufacturerCode && frame?.Cluster &&
+         Number.isInteger(deviceManufacturerID) && deviceManufacturerID == 4129) {
         cluster = ZclUtils.getCluster(frame.Cluster.ID, deviceManufacturerID);
     }
     return cluster;
