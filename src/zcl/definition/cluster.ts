@@ -5612,6 +5612,15 @@ const Cluster: {
         commandsResponse: {
         },
     },
+    manuSpecificProfalux1: {
+        ID: 0xfc21,  // Config cluster, 0xfc20 mostly for commands it seems
+        manufacturerCode: ManufacturerCode.PROFALUX,
+        attributes: {
+            motorCoverType: {ID: 0, type: DataType.uint8}, // 0 : rolling shutters (volet), 1 : rolling shutters with tilt (BSO), 2: shade (store)
+        },
+        commands: {},
+        commandsResponse: {},
+    },
 };
 
 export default Cluster;
