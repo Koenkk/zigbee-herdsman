@@ -5033,8 +5033,8 @@ describe('Controller', () => {
         expect(events.message[0].data).not.toMatchObject({calibrationMode:4});
     });
 
-    // ZCLFrame without manufacturer specific flag set or manufacturer code set, to specific device
-    it('Should resolve manufacturer specific cluster attribute names on generic ZCL frames: specific target device', async () => {
+    // ZCLFrame without manufacturer specific flag set or manufacturer code set, to specific device (Legrand only)
+    it('Should resolve manufacturer specific cluster attribute names on generic ZCL frames: Legrand target device', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 177, ieeeAddr: '0x177'});
         await mockAdapterEvents['zclData']({
