@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.23.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.22.1...v0.23.0) (2023-11-13)
+
+
+### Features
+
+* Add `manuSpecificProfalux1` cluster ([#800](https://github.com/Koenkk/zigbee-herdsman/issues/800)) ([7347212](https://github.com/Koenkk/zigbee-herdsman/commit/7347212660904b41c6038f74776c3499599c6f22))
+
+
+### Bug Fixes
+
+* Fix some manufacturer specific attribute names being wrong ([#797](https://github.com/Koenkk/zigbee-herdsman/issues/797)) ([285e9ac](https://github.com/Koenkk/zigbee-herdsman/commit/285e9ac36d761747a95cc328d41ad4145518a89b))
+* **ignore:** update dependencies ([#798](https://github.com/Koenkk/zigbee-herdsman/issues/798)) ([5c0666a](https://github.com/Koenkk/zigbee-herdsman/commit/5c0666a22a9b84165c57bfff93d4025903294c1a))
+
 ## [0.22.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.22.0...v0.22.1) (2023-11-06)
 
 
