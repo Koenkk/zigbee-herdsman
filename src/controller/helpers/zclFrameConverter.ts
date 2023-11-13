@@ -12,8 +12,7 @@ interface KeyValue {[s: string]: number | string}
 function getCluster(frame: ZclFrame, deviceManufacturerID: number): Cluster {
     let cluster = frame.Cluster;
 
-    if (!frame?.Header?.manufacturerCode && frame?.Cluster &&
-         Number.isInteger(deviceManufacturerID) && deviceManufacturerID == 4129) {
+    if (!frame?.Header?.manufacturerCode && frame?.Cluster && deviceManufacturerID == 4129) {
         cluster = ZclUtils.getCluster(frame.Cluster.ID, deviceManufacturerID);
     }
     return cluster;
