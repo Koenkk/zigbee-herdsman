@@ -1,5 +1,6 @@
 import {ZclFrame, Utils as ZclUtils} from '../../zcl';
 import {Cluster} from '../../zcl/tstype';
+import ManufacturerCode from '../../zcl/definition/manufacturerCode';
 
 interface KeyValue {[s: string]: number | string}
 
@@ -12,7 +13,7 @@ interface KeyValue {[s: string]: number | string}
 function getCluster(frame: ZclFrame, deviceManufacturerID: number): Cluster {
     let cluster = frame.Cluster;
 
-    if (!frame?.Header?.manufacturerCode && frame?.Cluster && deviceManufacturerID == 4129) {
+    if (!frame?.Header?.manufacturerCode && frame?.Cluster && deviceManufacturerID == ManufacturerCode.LegrandNetatmo) {
         cluster = ZclUtils.getCluster(frame.Cluster.ID, deviceManufacturerID);
     }
     return cluster;
