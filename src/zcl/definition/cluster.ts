@@ -3599,6 +3599,29 @@ const Cluster: {
             },
         },
     },
+    tunneling: {
+        ID: 0x0704,
+        attributes: {
+        },
+        commands: {
+            transferData: {
+                ID: 2,
+                parameters: [
+                    {name: 'tunnelID', type: DataType.uint16},
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+        commandsResponse: {
+            transferDataResp: {
+                ID: 1,
+                parameters: [
+                    {name: 'tunnelID', type: DataType.uint16},
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+    },
     telecommunicationsInformation: {
         ID: 2304,
         attributes: {
