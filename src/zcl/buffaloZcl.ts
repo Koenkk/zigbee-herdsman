@@ -682,6 +682,8 @@ class BuffaloZcl extends Buffalo {
             return this.readArray();
         } else if (type === 'struct') {
             return this.readStruct();
+        } else if (type === 'BUFFER') {
+            return this.readBuffer(this.buffer.length);
         } else {
             // TODO: remove uppercase once dataTypes are snake case
             return super.read(type.toUpperCase(), options);
