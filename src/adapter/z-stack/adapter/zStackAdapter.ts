@@ -777,7 +777,7 @@ class ZStackAdapter extends Adapter {
                                 /* istanbul ignore next */
                                 this.discoverRoute(payload.networkAddress, false).catch(() => {});
                             }, payload.networkAddress);
-                        }, 60 * 1000, true);
+                        }, 60 * 1000, {immediate: true});
                         this.deviceAnnounceRouteDiscoveryDebouncers.set(payload.networkAddress, debouncer);
                     }
 
