@@ -1644,4 +1644,11 @@ describe('Zcl', () => {
         expect(buffalo.getPosition()).toBe(4);
         expect(buffer).toStrictEqual(expected);
     });
+
+    it('BuffaloZcl read BUFFER', () => {
+        const buffer = Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05]);
+        const buffalo = new BuffaloZcl(buffer);
+        const value = buffalo.read(BuffaloZclDataType[BuffaloZclDataType.BUFFER], {});
+        expect(value).toStrictEqual(Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05]));
+    });
 });

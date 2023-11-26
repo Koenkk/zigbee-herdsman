@@ -46,7 +46,7 @@ interface LastSeenChangedPayload {
 
 const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'notification': 'commandNotification',
-    'commisioningNotification': 'commandCommisioningNotification',
+    'commissioningNotification': 'commandCommissioningNotification',
     'on': 'commandOn',
     'offWithEffect': 'commandOffWithEffect',
     'step': 'commandStep',
@@ -84,6 +84,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'upOpen': 'commandUpOpen',
     'dataResponse': 'commandDataResponse',
     'dataReport': 'commandDataReport',
+    'mcuVersionResponse': 'commandMcuVersionResponse',
     'getWeeklyScheduleRsp': 'commandGetWeeklyScheduleRsp',
     'queryNextImageRequest': 'commandQueryNextImageRequest',
     'alertsNotification': 'commandAlertsNotification',
@@ -132,6 +133,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'zosungSendIRCode00': 'commandZosungSendIRCode00',
     'zosungSendIRCode03Resp': 'zosungSendIRCode03Resp',
     'zosungSendIRCode05Resp': 'zosungSendIRCode05Resp',
+    'transferDataResp': 'transferDataResp', 
     
     // Schneider
     'schneiderWiserThermostatBoost':'commandSchneiderWiserThermostatBoost',
@@ -152,15 +154,16 @@ type MessagePayloadType =
     'commandUpOpen' | 'commandDownClose' | 'commandMoveToLevel' | 'commandMoveColorTemp' | 'commandDataResponse' |
     'commandDataReport' | 'commandGetWeeklyScheduleRsp' | 'commandQueryNextImageRequest' | 'commandNotification' |
     'commandAlertsNotification' | 'commandProgrammingEventNotification' | 'commandGetPinCodeRsp' |
-    'commandArrivalSensorNotify' | 'commandCommisioningNotification' | 'commandGetUserStatusRsp' |
-    'commandAlarm' | 'commandUnlockDoorRsp' |
+    'commandArrivalSensorNotify' | 'commandCommissioningNotification' | 'commandGetUserStatusRsp' |
+    'commandAlarm' | 'commandUnlockDoorRsp' | 'commandMcuVersionResponse' |
     'commandAtHome' | 'commandGoOut' | 'commandCinema' | 'commandRepast' | 'commandSleep' |
     'commandStudyKeyRsp' | 'commandCreateIdRsp' | 'commandGetIdAndKeyCodeListRsp' | 'commandMcuSyncTime' |
     'commandGetPanelStatus' | 'commandCheckIn' | 'commandActiveStatusReport' | 'commandActiveStatusReportAlt' |
     'commandMoveToHue' | 'commandStore'| 'commandWiserSmartSetSetpoint' | 'commandWiserSmartCalibrateValve' |
     'commandSiglisZigfredButtonEvent' | 'commandDanfossSetpointCommand' | 'commandZosungSendIRCode00' |
     'commandZosungSendIRCode01' | 'commandZosungSendIRCode02'|'commandZosungSendIRCode04' | 'zosungSendIRCode03Resp' | 
-    'zosungSendIRCode05Resp' | 'commandMcuGatewayConnectionStatus' | 'commandSchneiderWiserThermostatBoost';
+    'zosungSendIRCode05Resp' | 'commandMcuGatewayConnectionStatus' | 'commandSchneiderWiserThermostatBoost' | 
+	'transferDataResp';
 
 interface MessagePayload {
     type: MessagePayloadType;

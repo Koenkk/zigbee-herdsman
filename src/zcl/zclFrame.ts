@@ -1,4 +1,5 @@
-import {Direction, Foundation, DataType, BuffaloZclDataType, FrameControl} from './definition';
+import {Direction, Foundation, DataType, BuffaloZclDataType} from './definition';
+import ZclHeader from './zclHeader';
 import * as Utils from './utils';
 import BuffaloZcl from './buffaloZcl';
 import {TsType as BuffaloTsType} from '../buffalo';
@@ -9,13 +10,6 @@ const MINIMAL_FRAME_LENGTH = 3;
 
 // eslint-disable-next-line
 type ZclPayload = any;
-
-interface ZclHeader {
-    frameControl: FrameControl;
-    manufacturerCode: number;
-    transactionSequenceNumber: number;
-    commandIdentifier: number;
-}
 
 const ListTypes: number[] = [
     BuffaloZclDataType.LIST_UINT8,

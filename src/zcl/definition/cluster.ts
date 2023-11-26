@@ -466,6 +466,7 @@ const Cluster: {
             elkoPreWarningTime: {ID: 0xE000, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
             elkoOnTimeReload: {ID: 0xE001, type: DataType.uint32, manufacturerCode: ManufacturerCode.ELKO},
             elkoOnTimeReloadOptions: {ID: 0xE002, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.ELKO},
+            nodonTransitionTime: {ID: 0x0001, type: DataType.uint16, manufacturerCode: ManufacturerCode.NODON},
         },
         commands: {
             off: {
@@ -1222,7 +1223,7 @@ const Cluster: {
                     {name: 'gppGddLink', type: DataType.uint8,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x4000}]},
                 ],
             },
-            commisioningNotification: {
+            commissioningNotification: {
                 ID: 4,
                 parameters: [
                     {name: 'options', type: DataType.uint16},
@@ -1824,8 +1825,12 @@ const Cluster: {
             ubisysStartupSteps: {ID: 0x1007, type: DataType.uint16, manufacturerCode: ManufacturerCode.Ubisys},
             tuyaMovingState: {ID: 0xf000, type: DataType.enum8},
             tuyaCalibration: {ID: 0xf001, type: DataType.enum8},
+            stepPositionLift: {ID: 0xf001, type: DataType.enum8, manufacturerCode: ManufacturerCode.LegrandNetatmo},
             tuyaMotorReversal: {ID: 0xf002, type: DataType.enum8},
+            calibrationMode: {ID: 0xf002, type: DataType.enum8, manufacturerCode: ManufacturerCode.LegrandNetatmo},
             moesCalibrationTime: {ID: 0xf003, type: DataType.uint16},
+            targetPositionTiltPercentage: {ID: 0xf003, type: DataType.enum8, manufacturerCode: ManufacturerCode.LegrandNetatmo},
+            stepPositionTilt: {ID: 0xf004, type: DataType.enum8, manufacturerCode: ManufacturerCode.LegrandNetatmo},
             elkoDriveCloseDuration: {ID: 0xE000, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
             elkoProtectionStatus: {ID: 0xE010, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.ELKO},
             elkoProtectionSensor: {ID: 0xE013, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.ELKO},
@@ -2033,24 +2038,24 @@ const Cluster: {
             danfossRoomFloorSensorMode: {ID: 0x4120, type: DataType.enum8, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossFloorMinSetpoint: {ID: 0x4121, type: DataType.int16, manufacturerCode: ManufacturerCode.DANFOSS},
             danfossFloorMaxSetpoint: {ID: 0x4122, type: DataType.int16, manufacturerCode: ManufacturerCode.DANFOSS},
-            elkoLoad: {ID: 0x0401, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
-            elkoDisplayText: {ID: 0x0402, type: DataType.charStr, manufacturerCode: ManufacturerCode.ELKO},
-            elkoSensor: {ID: 0x0403, type: DataType.enum8, manufacturerCode: ManufacturerCode.ELKO},
-            elkoRegulatorTime: {ID: 0x0404, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
-            elkoRegulatorMode: {ID: 0x0405, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
-            elkoPowerStatus: {ID: 0x0406, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
-            elkoDateTime: {ID: 0x0407, type: DataType.octetStr, manufacturerCode: ManufacturerCode.ELKO},
-            elkoMeanPower: {ID: 0x0408, type: DataType.uint16, manufacturerCode: ManufacturerCode.ELKO},
-            elkoExternalTemp: {ID: 0x0409, type: DataType.int16, manufacturerCode: ManufacturerCode.ELKO},
-            elkoNightSwitching: {ID: 0x0411, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
-            elkoFrostGuard: {ID: 0x0412, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
-            elkoChildLock: {ID: 0x0413, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
-            elkoMaxFloorTemp: {ID: 0x0414, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
-            elkoRelayState: {ID: 0x0415, type: DataType.boolean, manufacturerCode: ManufacturerCode.ELKO},
-            elkoVersion: {ID: 0x0416, type: DataType.octetStr, manufacturerCode: ManufacturerCode.ELKO},
-            elkoCalibration: {ID: 0x0417, type: DataType.int8, manufacturerCode: ManufacturerCode.ELKO},
-            elkoLastMessageId: {ID: 0x0418, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
-            elkoLastMessageStatus: {ID: 0x0419, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
+            elkoLoad: {ID: 0x0401, type: DataType.uint16},
+            elkoDisplayText: {ID: 0x0402, type: DataType.charStr},
+            elkoSensor: {ID: 0x0403, type: DataType.enum8},
+            elkoRegulatorTime: {ID: 0x0404, type: DataType.uint8},
+            elkoRegulatorMode: {ID: 0x0405, type: DataType.boolean},
+            elkoPowerStatus: {ID: 0x0406, type: DataType.boolean},
+            elkoDateTime: {ID: 0x0407, type: DataType.octetStr},
+            elkoMeanPower: {ID: 0x0408, type: DataType.uint16},
+            elkoExternalTemp: {ID: 0x0409, type: DataType.int16},
+            elkoNightSwitching: {ID: 0x0411, type: DataType.boolean},
+            elkoFrostGuard: {ID: 0x0412, type: DataType.boolean},
+            elkoChildLock: {ID: 0x0413, type: DataType.boolean},
+            elkoMaxFloorTemp: {ID: 0x0414, type: DataType.uint8},
+            elkoRelayState: {ID: 0x0415, type: DataType.boolean},
+            elkoVersion: {ID: 0x0416, type: DataType.octetStr},
+            elkoCalibration: {ID: 0x0417, type: DataType.int8},
+            elkoLastMessageId: {ID: 0x0418, type: DataType.uint8},
+            elkoLastMessageStatus: {ID: 0x0419, type: DataType.uint8},
             fourNoksHysteresisHigh: {ID: 0x0101, type: DataType.uint16, manufacturerCode: ManufacturerCode._4_NOKS},
             fourNoksHysteresisLow: {ID: 0x0102, type: DataType.uint16, manufacturerCode: ManufacturerCode._4_NOKS},
         },
@@ -3594,6 +3599,29 @@ const Cluster: {
             },
         },
     },
+    tunneling: {
+        ID: 0x0704,
+        attributes: {
+        },
+        commands: {
+            transferData: {
+                ID: 2,
+                parameters: [
+                    {name: 'tunnelID', type: DataType.uint16},
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+        commandsResponse: {
+            transferDataResp: {
+                ID: 1,
+                parameters: [
+                    {name: 'tunnelID', type: DataType.uint16},
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+    },
     telecommunicationsInformation: {
         ID: 2304,
         attributes: {
@@ -5040,7 +5068,7 @@ const Cluster: {
         },
         commandsResponse: {},
     },
-    manuSpecificInovelliVZM31SN: {
+    manuSpecificInovelli: {
         ID: 64561,
         manufacturerCode: 0x122f,
         attributes: {
@@ -5061,11 +5089,16 @@ const Cluster: {
             stateAfterPowerRestored: {ID: 0x000f, type: DataType.uint8},
             loadLevelIndicatorTimeout: {ID: 0x0011, type: DataType.uint8},
             activePowerReports: {ID: 0x0012, type: DataType.uint8},
+
             periodicPowerAndEnergyReports: {ID: 0x0013, type: DataType.uint16},
             activeEnergyReports: {ID: 0x0014, type: DataType.uint16},
             powerType: {ID: 0x0015, type: DataType.boolean},
             switchType: {ID: 0x0016, type: DataType.uint8},
             higherOutputInNonNeutral: {ID: 0x0019, type: DataType.boolean},
+            nonNeutralAuxMediumGear: {ID: 0x001e, type: DataType.uint8},
+            nonNeutralAuxLowGear: {ID: 0x001f, type: DataType.uint8},
+            internalTemperature: {ID: 0x0020, type: DataType.uint8},
+            overheat: {ID: 0x0021, type: DataType.boolean},
             buttonDelay: {ID: 0x0032, type: DataType.uint8},
             deviceBindNumber: {ID: 0x0033, type: DataType.uint8},
             smartBulbMode: {ID: 0x0034, type: DataType.boolean},
@@ -5115,6 +5148,7 @@ const Cluster: {
             firmwareUpdateInProgressIndicator: {ID: 0x0104, type: DataType.boolean},
             relayClick: {ID: 0x105, type: DataType.boolean},
             doubleTapClearNotifications: {ID: 0x106, type: DataType.boolean},
+            fanLedLevelType: {ID: 0x0107, type: DataType.uint8},
         },
         commands: {
             ledEffect: {
@@ -5582,6 +5616,32 @@ const Cluster: {
                 ],
             },
         },
+        commandsResponse: {},
+    },
+    manuSpecificNodOnFilPilote: {
+        ID: 0xFC00,
+        manufacturerCode: ManufacturerCode.NodOn,
+        attributes: {
+            mode: {ID: 0x0000, type: DataType.uint8}
+        },
+        commands: {
+            setMode: {
+                ID: 0x0000,
+                parameters: [
+                    {name: 'mode', type: DataType.uint8},
+                ],
+            },
+        },
+        commandsResponse: {
+        },
+    },
+    manuSpecificProfalux1: {
+        ID: 0xfc21,  // Config cluster, 0xfc20 mostly for commands it seems
+        manufacturerCode: ManufacturerCode.PROFALUX,
+        attributes: {
+            motorCoverType: {ID: 0, type: DataType.uint8}, // 0 : rolling shutters (volet), 1 : rolling shutters with tilt (BSO), 2: shade (store)
+        },
+        commands: {},
         commandsResponse: {},
     },
 };

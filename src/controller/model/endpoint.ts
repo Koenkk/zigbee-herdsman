@@ -64,6 +64,7 @@ interface ConfiguredReportingInternal {
     minRepIntval: number,
     maxRepIntval: number,
     repChange: number,
+    manufacturerCode?: number | undefined,
 }
 
 interface ConfiguredReporting {
@@ -103,7 +104,7 @@ class Endpoint extends Entity {
             }
 
             if (target) {
-                return {target, cluster: Zcl.Utils.getCluster(entry.cluster)};
+                return {target, cluster: Zcl.Utils.getCluster(entry.cluster, this.getDevice().manufacturerID)};
             } else {
                 return undefined;
             }
@@ -112,7 +113,7 @@ class Endpoint extends Entity {
 
     get configuredReportings(): ConfiguredReporting[] {
         return this._configuredReportings.map((entry) => {
-            const cluster = Zcl.Utils.getCluster(entry.cluster, this.getDevice().manufacturerID);
+            const cluster = Zcl.Utils.getCluster(entry.cluster, entry.manufacturerCode);
             let attribute : Zcl.TsType.Attribute;
 
             if (cluster.hasAttribute(entry.attrId)) {
@@ -341,7 +342,8 @@ class Endpoint extends Entity {
                     this.pendingRequests.delete(request);
                     newRequest.moveCallbacks(request);
                 }
-                else if (newRequest.sendPolicy === 'keep-command' || newRequest.sendPolicy === 'keep-cmd-undiv') {
+                else if ((newRequest.sendPolicy === 'keep-command' || newRequest.sendPolicy === 'keep-cmd-undiv') &&
+                        Array.isArray(request.frame.Payload)) {
                     const filteredPayload = request.frame.Payload.filter((oldEl: {attrId: number}) =>
                         !payload.find((newEl: {attrId: number}) => oldEl.attrId === newEl.attrId));
                     if (filteredPayload.length == 0) {
@@ -558,7 +560,7 @@ class Endpoint extends Entity {
 
             if (!options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
-                return ZclFrameConverter.attributeKeyValue(result.frame);
+                return ZclFrameConverter.attributeKeyValue(result.frame, this.getDevice().manufacturerID);
             } else {
                 return null;
             }
@@ -760,10 +762,8 @@ class Endpoint extends Entity {
             }
 
             for (const e of payload) {
-                const match = this._configuredReportings.find(c => c.attrId === e.attrId && c.cluster === cluster.ID);
-                if (match) {
-                    this._configuredReportings.splice(this._configuredReportings.indexOf(match), 1);
-                }
+                this._configuredReportings = this._configuredReportings.filter((c) => !(c.attrId === e.attrId &&
+                    c.cluster === cluster.ID && c.manufacturerCode === options.manufacturerCode));
             }
 
             for (const entry of payload) {
@@ -771,6 +771,7 @@ class Endpoint extends Entity {
                     this._configuredReportings.push({
                         cluster: cluster.ID, attrId: entry.attrId, minRepIntval: entry.minRepIntval,
                         maxRepIntval: entry.maxRepIntval, repChange: entry.repChange,
+                        manufacturerCode: options.manufacturerCode,
                     });
                 }
             }
@@ -881,7 +882,7 @@ class Endpoint extends Entity {
 
     public waitForCommand(
         clusterKey: number | string, commandKey: number | string, transactionSequenceNumber: number, timeout: number,
-    ): {promise: Promise<{header: KeyValue; payload: KeyValue}>; cancel: () => void} {
+    ): {promise: Promise<{header: Zcl.ZclHeader; payload: KeyValue}>; cancel: () => void} {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
         const waiter = Entity.adapter.waitFor(
@@ -889,7 +890,7 @@ class Endpoint extends Entity {
             transactionSequenceNumber, cluster.ID, command.ID, timeout
         );
 
-        const promise = new Promise<{header: KeyValue; payload: KeyValue}>((resolve, reject) => {
+        const promise = new Promise<{header: Zcl.ZclHeader; payload: KeyValue}>((resolve, reject) => {
             waiter.promise.then(
                 (payload) => resolve({header: payload.frame.Header, payload: payload.frame.Payload}),
                 (error) => reject(error),

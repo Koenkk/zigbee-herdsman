@@ -6,6 +6,7 @@ coverage
 .travis.yml
 .jenkins.yml
 .codeclimate.yml
+tsconfig.tsbuildinfo
 
 #linters
 .jscsrc

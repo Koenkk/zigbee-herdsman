@@ -110,7 +110,16 @@ abstract class Adapter extends events.EventEmitter {
                             serialPortOptions.path = `tcp://${mdnsIp}:${mdnsPort}`;
                             serialPortOptions.adapter = mdnsAdapter;
                             serialPortOptions.baudRate = mdnsBaud;
-                            resolve(new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger));
+                            
+                            if (adapterLookup.hasOwnProperty(serialPortOptions.adapter) 
+                                    && serialPortOptions.adapter !== 'auto') {
+                                adapter = adapterLookup[serialPortOptions.adapter];
+                                resolve(
+                                    new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger)
+                                );
+                            } else {
+                                reject(new Error(`Adapter ${serialPortOptions.adapter} is not supported.`));
+                            }
                         } else {
                             bj.destroy();
                             reject(new Error(
@@ -157,7 +166,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract supportsBackup(): Promise<boolean>;
 
-    public abstract backup(): Promise<Models.Backup>;
+    public abstract backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup>;
 
     public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
 

@@ -777,7 +777,7 @@ class ZStackAdapter extends Adapter {
                                 /* istanbul ignore next */
                                 this.discoverRoute(payload.networkAddress, false).catch(() => {});
                             }, payload.networkAddress);
-                        }, 60 * 1000, true);
+                        }, 60 * 1000, {immediate: true});
                         this.deviceAnnounceRouteDiscoveryDebouncers.set(payload.networkAddress, debouncer);
                     }
 
@@ -852,8 +852,8 @@ class ZStackAdapter extends Adapter {
         return true;
     }
 
-    public async backup(): Promise<Models.Backup> {
-        return this.adapterManager.backup.createBackup();
+    public async backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup> {
+        return this.adapterManager.backup.createBackup(ieeeAddressesInDatabase);
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {

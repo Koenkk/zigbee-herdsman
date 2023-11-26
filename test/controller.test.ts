@@ -259,6 +259,14 @@ const mockDevices = {
             1: {modelId: 'lumi.plug', manufacturerName: 'LUMI', zclVersion: 1, appVersion: 2, hwVersion: 3, dateCode: '201901', swBuildId: '1.01', powerSource: 1, stackVersion: 101},
         },
     },
+    177: {
+        nodeDescriptor: {type: 'Router', manufacturerCode: 4129},
+        activeEndpoints: {endpoints: [1]},
+        simpleDescriptor: {1: {endpointID: 1, deviceID: 514, inputClusters: [0, 3, 258, 4, 5, 15, 64513], outputClusters: [258, 0, 64513, 5, 25], profileID: 260}},
+        attributes: {
+            1: {modelId: ' Shutter switch with neutral', manufacturerName: 'Legrand', zclVersion: 2, appVersion: 0, hwVersion: 8, dateCode: '231030', swBuildId: '0038', powerSource: 1, stackVersion: 67},
+        },
+    },
 }
 
 const mockZclFrame = ZclFrame;
@@ -1036,9 +1044,9 @@ describe('Controller', () => {
 
         // Green power
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(4);
-        const commisionFrameDisable = mockZclFrame.create(1, 1, true, null, 5, 'commisioningMode', 33, {options: 0x0a, commisioningWindow: 0});
+        const commissionFrameDisable = mockZclFrame.create(1, 1, true, null, 5, 'commisioningMode', 33, {options: 0x0a, commisioningWindow: 0});
         expect(mocksendZclFrameToAll.mock.calls[3][0]).toBe(242);
-        expect(deepClone(mocksendZclFrameToAll.mock.calls[3][1])).toStrictEqual(deepClone(commisionFrameDisable));
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[3][1])).toStrictEqual(deepClone(commissionFrameDisable));
         expect(mocksendZclFrameToAll.mock.calls[3][2]).toBe(242);
         expect(mocksendZclFrameToAll).toBeCalledTimes(4);
     });
@@ -2676,14 +2684,14 @@ describe('Controller', () => {
         expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":11,"manufacturerCode":null,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":1,"dataType":32,"minRepIntval":1,"maxRepIntval":10,"repChange":1}],"Cluster":{"ID":1,"attributes":{"mainsVoltage":{"ID":0,"type":33,"name":"mainsVoltage"},"mainsFrequency":{"ID":1,"type":32,"name":"mainsFrequency"},"mainsAlarmMask":{"ID":16,"type":24,"name":"mainsAlarmMask"},"mainsVoltMinThres":{"ID":17,"type":33,"name":"mainsVoltMinThres"},"mainsVoltMaxThres":{"ID":18,"type":33,"name":"mainsVoltMaxThres"},"mainsVoltageDwellTripPoint":{"ID":19,"type":33,"name":"mainsVoltageDwellTripPoint"},"batteryVoltage":{"ID":32,"type":32,"name":"batteryVoltage"},"batteryPercentageRemaining":{"ID":33,"type":32,"name":"batteryPercentageRemaining"},"batteryManufacturer":{"ID":48,"type":66,"name":"batteryManufacturer"},"batterySize":{"ID":49,"type":48,"name":"batterySize"},"batteryAHrRating":{"ID":50,"type":33,"name":"batteryAHrRating"},"batteryQuantity":{"ID":51,"type":32,"name":"batteryQuantity"},"batteryRatedVoltage":{"ID":52,"type":32,"name":"batteryRatedVoltage"},"batteryAlarmMask":{"ID":53,"type":24,"name":"batteryAlarmMask"},"batteryVoltMinThres":{"ID":54,"type":32,"name":"batteryVoltMinThres"},"batteryVoltThres1":{"ID":55,"type":32,"name":"batteryVoltThres1"},"batteryVoltThres2":{"ID":56,"type":32,"name":"batteryVoltThres2"},"batteryVoltThres3":{"ID":57,"type":32,"name":"batteryVoltThres3"},"batteryPercentMinThres":{"ID":58,"type":32,"name":"batteryPercentMinThres"},"batteryPercentThres1":{"ID":59,"type":32,"name":"batteryPercentThres1"},"batteryPercentThres2":{"ID":60,"type":32,"name":"batteryPercentThres2"},"batteryPercentThres3":{"ID":61,"type":32,"name":"batteryPercentThres3"},"batteryAlarmState":{"ID":62,"type":27,"name":"batteryAlarmState"}},"name":"genPowerCfg","commands":{},"commandsResponse":{}},"Command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"name":"dataType","type":32,"conditions":[{"type":"directionEquals","value":0}]},{"name":"minRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"maxRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"repChange","type":1000,"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}]},{"name":"timeout","type":33,"conditions":[{"type":"directionEquals","value":1}]}],"response":7}});
     });
 
-    it('Endpoint configure reporting for manufacturer specific cluster', async () => {
+    it('Endpoint configure reporting for manufacturer specific cluster with cluster ID collision', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         mocksendZclFrameToEndpoint.mockClear();
-        await endpoint.configureReporting('manuSpecificSamsungAccelerometer', [{
-            attribute: 'acceleration',
+        await endpoint.configureReporting('manuSpecificUbisysHeatingRegulatorThermostat', [{
+            attribute: 'classBTemperatureOffset',
             minimumReportInterval: 1,
             maximumReportInterval: 10,
             reportableChange: 1,
@@ -2693,7 +2701,20 @@ describe('Controller', () => {
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1)
-        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4362,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":16,"dataType":24,"minRepIntval":1,"maxRepIntval":10,"repChange":1}],"Cluster":{"ID":64514,"attributes":{"motion_threshold_multiplier":{"ID":0,"type":32,"name":"motion_threshold_multiplier"},"motion_threshold":{"ID":2,"type":33,"name":"motion_threshold"},"acceleration":{"ID":16,"type":24,"name":"acceleration"},"x_axis":{"ID":18,"type":41,"name":"x_axis"},"y_axis":{"ID":19,"type":41,"name":"y_axis"},"z_axis":{"ID":20,"type":41,"name":"z_axis"}},"manufacturerCode":4362,"name":"manuSpecificSamsungAccelerometer","commands":{},"commandsResponse":{}},"Command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"name":"dataType","type":32,"conditions":[{"type":"directionEquals","value":0}]},{"name":"minRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"maxRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"repChange","type":1000,"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}]},{"name":"timeout","type":33,"conditions":[{"type":"directionEquals","value":1}]}],"response":7}});
+        expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4338,"commandIdentifier":6},"Payload":[{"direction":0,"attrId":0,"dataType":40,"minRepIntval":1,"maxRepIntval":10,"repChange":1}],"Cluster":{"ID":513,"attributes":{"classBTemperatureOffset":{"ID":0,"type":40,"name":"classBTemperatureOffset"},"returnFlowTemperatureWeight":{"ID":1,"type":40,"name":"returnFlowTemperatureWeight"},"rawOutdoorTemperature":{"ID":2,"type":76,"name":"rawOutdoorTemperature"},"rawLocalTemperatureA":{"ID":3,"type":76,"name":"rawLocalTemperatureA"},"rawLocalTemperatureB":{"ID":4,"type":76,"name":"rawLocalTemperatureB"},"rawForwardFlowTemperature":{"ID":5,"type":76,"name":"rawForwardFlowTemperature"},"rawReturnFlowTemperature":{"ID":6,"type":76,"name":"rawReturnFlowTemperature"},"installedExtensions":{"ID":7,"type":31,"name":"installedExtensions"}},"manufacturerCode":4338,"name":"manuSpecificUbisysHeatingRegulatorThermostat","commands":{},"commandsResponse":{}},"Command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"name":"dataType","type":32,"conditions":[{"type":"directionEquals","value":0}]},{"name":"minRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"maxRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"repChange","type":1000,"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}]},{"name":"timeout","type":33,"conditions":[{"type":"directionEquals","value":1}]}],"response":7}});
+
+        await endpoint.configureReporting('hvacThermostat', [{
+            attribute: 'localTemp',
+            minimumReportInterval: 1,
+            maximumReportInterval: 10,
+            reportableChange: 1,
+        }])
+
+        expect(endpoint.configuredReportings.length).toBe(2);
+        expect(endpoint.configuredReportings[0].attribute.name).toBe('classBTemperatureOffset');
+        expect(endpoint.configuredReportings[0].cluster.name).toBe('manuSpecificUbisysHeatingRegulatorThermostat');
+        expect(endpoint.configuredReportings[1].attribute.name).toBe('localTemp');
+        expect(endpoint.configuredReportings[1].cluster.name).toBe('hvacThermostat');
     });
 
     it('Endpoint configure reporting for manufacturer specific attribute', async () => {
@@ -2708,13 +2729,13 @@ describe('Controller', () => {
             minimumReportInterval: 1,
             maximumReportInterval: 10,
             reportableChange: 1,
-        }])
+        }], {manufacturerCode: 0x1221})
 
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1)
-        expect({...deepClone(call[3]), Cluster: {}}).toStrictEqual({"Cluster":{},"Command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"conditions":[{"type":"directionEquals","value":0}],"name":"dataType","type":32},{"conditions":[{"type":"directionEquals","value":0}],"name":"minRepIntval","type":33},{"conditions":[{"type":"directionEquals","value":0}],"name":"maxRepIntval","type":33},{"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}],"name":"repChange","type":1000},{"conditions":[{"type":"directionEquals","value":1}],"name":"timeout","type":33}],"response":7},"Header":{"commandIdentifier":6,"frameControl":{"direction":0,"disableDefaultResponse":true,"frameType":0,"manufacturerSpecific":false,"reservedBits":0},"manufacturerCode":null,"transactionSequenceNumber":11},"Payload":[{"attrId":16384,"dataType":48,"direction":0,"maxRepIntval":10,"minRepIntval":1,"repChange":1}]});
+        expect({...deepClone(call[3]), Cluster: {}}).toStrictEqual({"Cluster":{},"Command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"conditions":[{"type":"directionEquals","value":0}],"name":"dataType","type":32},{"conditions":[{"type":"directionEquals","value":0}],"name":"minRepIntval","type":33},{"conditions":[{"type":"directionEquals","value":0}],"name":"maxRepIntval","type":33},{"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}],"name":"repChange","type":1000},{"conditions":[{"type":"directionEquals","value":1}],"name":"timeout","type":33}],"response":7},"Header":{"commandIdentifier":6,"frameControl":{"direction":0,"disableDefaultResponse":true,"frameType":0,"manufacturerSpecific":true,"reservedBits":0},"manufacturerCode":4641,"transactionSequenceNumber":11},"Payload":[{"attrId":16384,"dataType":48,"direction":0,"maxRepIntval":10,"minRepIntval":1,"repChange":1}]});
 
         expect(endpoint.configuredReportings.length).toBe(1);
         expect({...endpoint.configuredReportings[0], cluster: undefined}).toStrictEqual({"attribute":{"ID":16384,"type":48,"manufacturerCode":4641,"name":"viessmannWindowOpenInternal"},"minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1, "cluster": undefined});
@@ -3521,6 +3542,43 @@ describe('Controller', () => {
         
     });
 
+    it('Adapter mdns detection unsupported adapter test', async () => {
+        const fakeAdapterName = 'mdns_test_device';
+        const fakeIp = '111.111.111.111';
+        const fakePort = 6638;
+        const fakeRadio = 'auto';
+        const fakeBaud = '115200';
+
+        const mockLoggerDebug = jest.fn();
+        const mockLoggerInfo = jest.fn();
+        const mockLoggerWarn = jest.fn();
+        const mockLoggerError = jest.fn();
+        const mockLogger: LoggerStub = {
+            debug: mockLoggerDebug,
+            info: mockLoggerInfo,
+            warn: mockLoggerWarn,
+            error: mockLoggerError
+        };
+
+        Bonjour.prototype.findOne = function(opts?: BrowserConfig | undefined, timeout?: number, callback?: CallableFunction) {
+            setTimeout(() => {
+                callback({name: 'fakeAdapter', type: fakeAdapterName, port: fakePort, addresses: [fakeIp], txt: {radio_type: fakeRadio, baud_rate: fakeBaud}});
+            }, 200);
+        }
+
+        let error;
+        try {
+            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+        } catch (e) {
+            error = e;
+        }
+
+        expect(error).toStrictEqual(new Error(
+            `Adapter ${fakeRadio} is not supported.`
+        ));
+        
+    });
+
     it('Adapter mdns detection zstack test', async () => {
         const fakeAdapterName = 'mdns_test_device';
         const fakeIp = '111.111.111.111';
@@ -4023,7 +4081,7 @@ describe('Controller', () => {
                 outgoingCounter: 0x000004e4,
             },
         };
-        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commisioningNotification', 33, data)
+        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commissioningNotification', 33, data)
         await mockAdapterEvents['zclData']({
             wasBroadcast: true,
             address: 0x46f4fe,
@@ -4110,7 +4168,7 @@ describe('Controller', () => {
                 nextNextChannel: 15,
             },
         };
-        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commisioningNotification', 33, data)
+        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commissioningNotification', 33, data)
         await mockAdapterEvents['zclData']({
             wasBroadcast: true,
             address: 0x46f4fe,
@@ -4159,7 +4217,7 @@ describe('Controller', () => {
                 outgoingCounter: 0x000004e4,
             },
         };
-        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commisioningNotification', 33, data)
+        const frame = mockZclFrame.create(1, 0, true, null, 10, 'commissioningNotification', 33, data)
         await mockAdapterEvents['zclData']({
             wasBroadcast: true,
             address: 0x46f4fe,
@@ -4261,7 +4319,7 @@ describe('Controller', () => {
             gppGddLink: 0xd8,
        };
 
-       const expectedFrame = mockZclFrame.create(1, 0, true, null, 100, 'commisioningNotification', 33, data);
+       const expectedFrame = mockZclFrame.create(1, 0, true, null, 100, 'commissioningNotification', 33, data);
 
        const receivedFrame = ZclFrame.fromBuffer(33, Buffer.from([0x11, 0x64, 0x04, 0x00, 0x08, 0xf8, 0x71, 0x71, 0x01, 0xf8, 0x00, 0x00, 0x00, 0xe0, 0x2e, 0x02, 0xc5, 0xf2, 0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c, 0xfa, 0x47, 0x05, 0xf8, 0xf8, 0x11, 0x00, 0x00, 0x04, 0x11, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x22, 0x60, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x81, 0x00, 0xd8]));
 
@@ -4907,6 +4965,90 @@ describe('Controller', () => {
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 
+    it('Shouldnt throw error on coordinatorCheck when adapter doesnt support backups', async () => {
+        mockAdapterSupportsBackup.mockReturnValue(false);
+        await controller.start();
+        await expect(controller.coordinatorCheck()).rejects.toHaveProperty('message', `Coordinator does not coordinator check because it doesn't support backups`);
+    });
+
+    it('Should do a coordinator check', async () => {
+        mockAdapterSupportsBackup.mockReturnValue(true);
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const result = await controller.coordinatorCheck();
+        expect(result.missingRouters.length).toBe(1);
+        expect(result.missingRouters[0].ieeeAddr).toBe('0x129');
+    });
+
+    // ZCLFrame with manufacturer specific flag and manufacturer code defined, to generic device
+    // ZCLFrameConverter should not modify specific frames!
+    it('Should resolve manufacturer specific cluster attribute names on specific ZCL frames: generic target device', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: '0x129',
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, Buffer.from([28,33,16,13,1,2,240,0,48,4])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 0,
+        });
+        expect(events.message.length).toBe(1);
+        expect(events.message[0].data).toMatchObject({calibrationMode:4});
+        expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal:4});
+    });
+
+    // ZCLFrame with manufacturer specific flag and manufacturer code defined, to specific device
+    // ZCLFrameConverter should not modify specific frames!
+    it('Should resolve manufacturer specific cluster attribute names on specific ZCL frames: specific target device', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 177, ieeeAddr: '0x177'});
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: '0x177',
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, Buffer.from([28,33,16,13,1,2,240,0,48,4])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 0,
+        });
+        expect(events.message.length).toBe(1);
+        expect(events.message[0].data).toMatchObject({calibrationMode:4});
+        expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal:4});
+    });
+
+    // ZCLFrame without manufacturer specific flag or manufacturer code set, to generic device
+    it('Should resolve generic cluster attribute names on generic ZCL frames: generic target device', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: '0x129',
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, Buffer.from([24,242,10,2,240,48,4])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 0,
+        });
+        expect(events.message.length).toBe(1);
+        expect(events.message[0].data).toMatchObject({tuyaMotorReversal:4});
+        expect(events.message[0].data).not.toMatchObject({calibrationMode:4});
+    });
+
+    // ZCLFrame without manufacturer specific flag set or manufacturer code set, to specific device (Legrand only)
+    it('Should resolve manufacturer specific cluster attribute names on generic ZCL frames: Legrand target device', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 177, ieeeAddr: '0x177'});
+        await mockAdapterEvents['zclData']({
+            wasBroadcast: false,
+            address: '0x177',
+            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, Buffer.from([24,242,10,2,240,48,4])),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 0,
+        });
+        expect(events.message.length).toBe(1);
+        expect(events.message[0].data).toMatchObject({calibrationMode:4});
+        expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal:4});
+    });
 });
 
 

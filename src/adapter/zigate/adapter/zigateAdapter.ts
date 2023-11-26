@@ -65,6 +65,7 @@ class ZiGateAdapter extends Adapter {
         this.driver.on('receivedRaw', this.rawDataListener.bind(this));
         this.driver.on('LeaveIndication', this.leaveIndicationListener.bind(this));
         this.driver.on('DeviceAnnounce', this.deviceAnnounceListener.bind(this));
+        this.driver.on('close', this.onZiGateClose.bind(this));
     }
 
     /**
@@ -798,6 +799,13 @@ class ZiGateAdapter extends Adapter {
             matcher.commandIdentifier === payload.frame.Header.commandIdentifier &&
             matcher.direction === payload.frame.Header.frameControl.direction;
     }
+
+    private onZiGateClose(): void {
+        if (!this.closing) {
+            this.emit(Events.Events.disconnected);
+        }
+    }
+
 }
 
 export default ZiGateAdapter;

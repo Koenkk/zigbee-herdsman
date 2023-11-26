@@ -29,6 +29,7 @@ var apsBusyQueue: Array<object> = [];
 var apsConfirmIndQueue: Array<object> = [];
 var timeoutCounter = 0;
 var readyToSend: boolean = true;
+var currentBaudRate = 0;
 
 function enableRTS() {
     if (readyToSend === false) {
@@ -178,13 +179,14 @@ class Driver extends events.EventEmitter {
         this.emit('close');
     }
 
-    public async open(): Promise<void> {
-        return this.portType === 'serial' ? this.openSerialPort() : this.openSocketPort();
+    public async open(baudrate: number): Promise<void> {
+        currentBaudRate = baudrate;
+        return this.portType === 'serial' ? this.openSerialPort(baudrate) : this.openSocketPort();
     }
 
-    public openSerialPort(): Promise<void> {
+    public openSerialPort(baudrate: number): Promise<void> {
         debug(`Opening with ${this.path}`);
-        this.serialPort = new SerialPort({path: this.path, baudRate: 38400, autoOpen: false});
+        this.serialPort = new SerialPort({path: this.path, baudRate: baudrate, autoOpen: false}); //38400 RaspBee //115200 ConBee3
 
         this.writer = new Writer();
         // @ts-ignore
@@ -481,7 +483,7 @@ class Driver extends events.EventEmitter {
                     if (this.socketPort) {
                         this.socketPort.destroy();
                     }
-                    await this.open();
+                    await this.open(currentBaudRate);
                 }
             }
         }
