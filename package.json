@@ -48,7 +48,7 @@
     "@types/debounce": "^1.2.4",
     "@types/debug": "*",
     "@types/jest": "*",
-    "@types/mz": "^2.7.7",
+    "@types/mz": "^2.7.8",
     "@types/nedb": "*",
     "@types/node": "*",
     "@typescript-eslint/eslint-plugin": "*",
