@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.24.0...v0.25.0) (2023-11-30)
+
+
+### Features
+
+* Add `tradfriButton` cluster https://github.com/Koenkk/zigbee-herdsman-converters/pull/6574 ([6e454d8](https://github.com/Koenkk/zigbee-herdsman/commit/6e454d86823d5c0c47c454a71a96f1062e4f077c))
+
 ## [0.24.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.23.0...v0.24.0) (2023-11-30)
 
 
