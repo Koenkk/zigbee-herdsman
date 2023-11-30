@@ -137,6 +137,12 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     
     // Schneider
     'schneiderWiserThermostatBoost':'commandSchneiderWiserThermostatBoost',
+
+    // Tradfri
+    'action1': 'commandAction1',
+    'action2': 'commandAction2',
+    'action3': 'commandAction3',
+    'action4': 'commandAction4',
 };
 
 type MessagePayloadType =
@@ -163,7 +169,7 @@ type MessagePayloadType =
     'commandSiglisZigfredButtonEvent' | 'commandDanfossSetpointCommand' | 'commandZosungSendIRCode00' |
     'commandZosungSendIRCode01' | 'commandZosungSendIRCode02'|'commandZosungSendIRCode04' | 'zosungSendIRCode03Resp' | 
     'zosungSendIRCode05Resp' | 'commandMcuGatewayConnectionStatus' | 'commandSchneiderWiserThermostatBoost' | 
-	'transferDataResp';
+	'transferDataResp' | 'commandAction1' | 'commandAction2' | 'commandAction3' | 'commandAction4';
 
 interface MessagePayload {
     type: MessagePayloadType;
