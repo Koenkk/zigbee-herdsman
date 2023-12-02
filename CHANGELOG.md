@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.25.0...v0.25.1) (2023-12-02)
+
+
+### Bug Fixes
+
+* Rename manuSpecificNodOnFilPilote to manuSpecificNodOnPilotWire ([#812](https://github.com/Koenkk/zigbee-herdsman/issues/812)) ([9f5aabc](https://github.com/Koenkk/zigbee-herdsman/commit/9f5aabc909770ea29102338eb29c51354ce0001a))
+
 ## [0.25.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.24.0...v0.25.0) (2023-11-30)
 
 
