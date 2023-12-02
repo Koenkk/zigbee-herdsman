@@ -5652,7 +5652,7 @@ const Cluster: {
         },
         commandsResponse: {},
     },
-    manuSpecificNodOnFilPilote: {
+    manuSpecificNodOnPilotWire: {
         ID: 0xFC00,
         manufacturerCode: ManufacturerCode.NodOn,
         attributes: {
