@@ -2717,6 +2717,27 @@ describe('Controller', () => {
         expect(endpoint.configuredReportings[1].cluster.name).toBe('hvacThermostat');
     });
 
+    it('Should replace legacy configured reportings without manufacturerCode', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockClear();
+
+        endpoint._configuredReportings = [{"cluster":65382,"attrId":5,"minRepIntval":60,"maxRepIntval":900,"repChange":1}]
+
+        await endpoint.configureReporting('liXeePrivate', [{
+            attribute: 'warnDPS',
+            minimumReportInterval: 1,
+            maximumReportInterval: 10,
+            reportableChange: 1,
+        }])
+
+        expect(endpoint.configuredReportings.length).toBe(1);
+        expect(endpoint.configuredReportings[0].attribute.name).toBe('warnDPS');
+        expect(endpoint.configuredReportings[0].cluster.name).toBe('liXeePrivate');
+    });
+
     it('Endpoint configure reporting for manufacturer specific attribute', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});

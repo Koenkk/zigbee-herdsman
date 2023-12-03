@@ -763,8 +763,10 @@ class Endpoint extends Entity {
             }
 
             for (const e of payload) {
-                this._configuredReportings = this._configuredReportings.filter((c) => !(c.attrId === e.attrId &&
-                    c.cluster === cluster.ID && c.manufacturerCode === options.manufacturerCode));
+                this._configuredReportings = this._configuredReportings.filter((c) => !(
+                    c.attrId === e.attrId && c.cluster === cluster.ID && 
+                    (!('manufacturerCode' in c) || c.manufacturerCode === options.manufacturerCode)
+                ));
             }
 
             for (const entry of payload) {
