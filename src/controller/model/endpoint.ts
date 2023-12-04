@@ -270,7 +270,7 @@ class Endpoint extends Entity {
 
         if (this.pendingRequests.size === 0) return;
 
-        if (this.sendInProgress) {
+        if (!fastPolling && this.sendInProgress) {
             debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): sendPendingRequests already in progress`);
             return;
         }
@@ -296,12 +296,11 @@ class Endpoint extends Entity {
                     const result = await request.send();
                     debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`);
                     request.resolve(result);
+                    this.pendingRequests.delete(request);
                 } catch (error) {
                     debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ` +
                         `${(request.expires - now) / 1000} seconds`);
-                    request.reject(error);
                 }
-                this.pendingRequests.delete(request);
             }
         }
         this.sendInProgress = false;
