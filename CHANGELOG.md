@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.25.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.25.2...v0.25.3) (2023-12-04)
+
+
+### Bug Fixes
+
+* Add `action6` to `tradfriButton` cluster https://github.com/Koenkk/zigbee2mqtt/discussions/20003 ([54adbb3](https://github.com/Koenkk/zigbee-herdsman/commit/54adbb3a7b89112b5ce22f2f6ac8fda04e728eec))
+* Improve request queue behaviour ([#817](https://github.com/Koenkk/zigbee-herdsman/issues/817)) ([1051d9d](https://github.com/Koenkk/zigbee-herdsman/commit/1051d9dd31364d9cccc2d011f9eac5a1642728db))
+
 ## [0.25.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.25.1...v0.25.2) (2023-12-03)
 
 
