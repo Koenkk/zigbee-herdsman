@@ -17,11 +17,11 @@ const debug = {
 
 type Mutable<T> = { -readonly [P in keyof T ]: T[P] };
 
-interface ConfigureReportingItem {
+export interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
     minimumReportInterval: number;
     maximumReportInterval: number;
-    reportableChange: number;
+    reportableChange: number | [number, number];
 }
 
 interface Options {
@@ -536,7 +536,7 @@ class Endpoint extends Entity {
     }
     
     public async read(
-        clusterKey: number | string, attributes: string[] | number [], options?: Options
+        clusterKey: number | string, attributes: (string | number)[], options?: Options
     ): Promise<KeyValue> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
@@ -762,8 +762,10 @@ class Endpoint extends Entity {
             }
 
             for (const e of payload) {
-                this._configuredReportings = this._configuredReportings.filter((c) => !(c.attrId === e.attrId &&
-                    c.cluster === cluster.ID && c.manufacturerCode === options.manufacturerCode));
+                this._configuredReportings = this._configuredReportings.filter((c) => !(
+                    c.attrId === e.attrId && c.cluster === cluster.ID && 
+                    (!('manufacturerCode' in c) || c.manufacturerCode === options.manufacturerCode)
+                ));
             }
 
             for (const entry of payload) {

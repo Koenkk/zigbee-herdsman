@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.25.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.25.1...v0.25.2) (2023-12-03)
+
+
+### Bug Fixes
+
+* Fix duplicate configured reportings https://github.com/Koenkk/zigbee2mqtt/issues/19317 ([59c1bbe](https://github.com/Koenkk/zigbee-herdsman/commit/59c1bbe2d090403c0443f97d4fba3e644b1121f3))
+* **ignore:** update dependencies ([#815](https://github.com/Koenkk/zigbee-herdsman/issues/815)) ([e346986](https://github.com/Koenkk/zigbee-herdsman/commit/e3469860de19cd9b3e34be0c7374db3bba88146d))
+
+## [0.25.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.25.0...v0.25.1) (2023-12-02)
+
+
+### Bug Fixes
+
+* Rename manuSpecificNodOnFilPilote to manuSpecificNodOnPilotWire ([#812](https://github.com/Koenkk/zigbee-herdsman/issues/812)) ([9f5aabc](https://github.com/Koenkk/zigbee-herdsman/commit/9f5aabc909770ea29102338eb29c51354ce0001a))
+
+## [0.25.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.24.0...v0.25.0) (2023-11-30)
+
+
+### Features
+
+* Add `tradfriButton` cluster https://github.com/Koenkk/zigbee-herdsman-converters/pull/6574 ([6e454d8](https://github.com/Koenkk/zigbee-herdsman/commit/6e454d86823d5c0c47c454a71a96f1062e4f077c))
+
+## [0.24.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.23.0...v0.24.0) (2023-11-30)
+
+
+### Features
+
+* Add tunnel cluter ([#806](https://github.com/Koenkk/zigbee-herdsman/issues/806)) ([e4d8cbe](https://github.com/Koenkk/zigbee-herdsman/commit/e4d8cbec7500e060af8d93b2361fcff3431e0237))
+
+
+### Bug Fixes
+
+* Fix some types ([#810](https://github.com/Koenkk/zigbee-herdsman/issues/810)) ([694a1fc](https://github.com/Koenkk/zigbee-herdsman/commit/694a1fc6bb164408535fa10a2e6a3894d3dd2ef6))
+* **ignore:** update dependencies ([#805](https://github.com/Koenkk/zigbee-herdsman/issues/805)) ([6449923](https://github.com/Koenkk/zigbee-herdsman/commit/6449923babdcdd3190ab3d1c6455c3df32266a76))
+* **ignore:** update dependencies ([#809](https://github.com/Koenkk/zigbee-herdsman/issues/809)) ([71f3eca](https://github.com/Koenkk/zigbee-herdsman/commit/71f3eca6cf332386103abb1241da6e8fd6e6aaac))
+
 ## [0.23.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.22.1...v0.23.0) (2023-11-13)
 
 

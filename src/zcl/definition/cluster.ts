@@ -4841,6 +4841,40 @@ const Cluster: {
         commandsResponse: {
         },
     },
+    tradfriButton: {
+        ID: 0xfc80,
+        manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
+        attributes: {
+        },
+        commands: {
+            action1: {
+                ID: 1,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
+            },
+            action2: {
+                ID: 2,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
+            },
+            action3: {
+                ID: 3,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
+            },
+            action4: {
+                ID: 4,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
+            },
+        },
+        commandsResponse: {
+        },
+    },
     heimanSpecificInfraRedRemote: {
         // from HS2IRC-3.0海曼智能红外转发控制器API-V01文档
         ID: 0xfc82,
@@ -5618,7 +5652,7 @@ const Cluster: {
         },
         commandsResponse: {},
     },
-    manuSpecificNodOnFilPilote: {
+    manuSpecificNodOnPilotWire: {
         ID: 0xFC00,
         manufacturerCode: ManufacturerCode.NodOn,
         attributes: {
