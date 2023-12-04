@@ -4871,6 +4871,12 @@ const Cluster: {
                     {name: 'data', type: DataType.uint8},
                 ],
             },
+            action6: {
+                ID: 6,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
+            },
         },
         commandsResponse: {
         },

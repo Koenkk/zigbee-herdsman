@@ -143,6 +143,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
     'action2': 'commandAction2',
     'action3': 'commandAction3',
     'action4': 'commandAction4',
+    'action6': 'commandAction6',
 };
 
 type MessagePayloadType =
@@ -169,7 +170,7 @@ type MessagePayloadType =
     'commandSiglisZigfredButtonEvent' | 'commandDanfossSetpointCommand' | 'commandZosungSendIRCode00' |
     'commandZosungSendIRCode01' | 'commandZosungSendIRCode02'|'commandZosungSendIRCode04' | 'zosungSendIRCode03Resp' | 
     'zosungSendIRCode05Resp' | 'commandMcuGatewayConnectionStatus' | 'commandSchneiderWiserThermostatBoost' | 
-	'transferDataResp' | 'commandAction1' | 'commandAction2' | 'commandAction3' | 'commandAction4';
+	'transferDataResp' | 'commandAction1' | 'commandAction2' | 'commandAction3' | 'commandAction4' | 'commandAction6';
 
 interface MessagePayload {
     type: MessagePayloadType;
