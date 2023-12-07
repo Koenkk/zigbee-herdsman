@@ -5403,6 +5403,26 @@ const Cluster: {
         },
         commandsResponse: {},
     },
+    manuSpecificBosch9: {
+        ID: 0xfca1,
+        manufacturerCode: ManufacturerCode.Bosch,
+        attributes: {},
+        commands: {
+            confirmButtonPressed: {
+                ID: 0x0010,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+            pairingCompleted: {
+                ID: 0x0012,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+        commandsResponse: {},
+    },
     manuSpecificAssaDoorLock: {
         ID: 0xFC00,
         attributes: {
