@@ -4,6 +4,7 @@ import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
 import Request from '../helpers/request';
+import RequestQueue from '../helpers/requestQueue';
 import {Events as AdapterEvents} from '../../adapter';
 import Group from './group';
 import Device from './device';
@@ -14,8 +15,6 @@ const debug = {
     info: Debug('zigbee-herdsman:controller:endpoint'),
     error: Debug('zigbee-herdsman:controller:endpoint'),
 };
-
-type Mutable<T> = { -readonly [P in keyof T ]: T[P] };
 
 export interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
@@ -87,8 +86,7 @@ class Endpoint extends Entity {
     private _binds: BindInternal[];
     private _configuredReportings: ConfiguredReportingInternal[];
     public meta: KeyValue;
-    private pendingRequests: Set<Request>;
-    private sendInProgress: boolean;
+    private pendingRequests: RequestQueue;
 
     // Getters/setters
     get binds(): Bind[] {
@@ -154,8 +152,7 @@ class Endpoint extends Entity {
         this._binds = binds;
         this._configuredReportings = configuredReportings;
         this.meta = meta;
-        this.pendingRequests = new Set<Request>;
-        this.sendInProgress =false;
+        this.pendingRequests = new RequestQueue(this);
     }
 
     /**
@@ -267,103 +264,7 @@ class Endpoint extends Entity {
     }
 
     public async sendPendingRequests(fastPolling: boolean): Promise<void> {
-
-        if (this.pendingRequests.size === 0) return;
-
-        if (!fastPolling && this.sendInProgress) {
-            debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): sendPendingRequests already in progress`);
-            return;
-        }
-        this.sendInProgress = true;
-
-        // Remove expired requests first
-        const now = Date.now();
-        for (const request of this.pendingRequests) {
-            if (now > request.expires) {
-                debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): discard after timeout. ` +
-                `Size before: ${this.pendingRequests.size}`);
-                request.reject();
-                this.pendingRequests.delete(request);
-            }
-        }
-
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send pending requests (` +
-            `${this.pendingRequests.size}, ${fastPolling})`);
-
-        for (const request of this.pendingRequests) {
-            if (fastPolling || (request.sendWhen !== 'fastpoll' && request.sendPolicy !== 'bulk')) {
-                try {
-                    const result = await request.send();
-                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`);
-                    request.resolve(result);
-                    this.pendingRequests.delete(request);
-                } catch (error) {
-                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ` +
-                        `${(request.expires - now) / 1000} seconds`);
-                }
-            }
-        }
-        this.sendInProgress = false;
-    }
-
-    private async queueRequest<Type>(request: Request<Type>): Promise<Type> {
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Sending when active. ` +
-            `Timeout ${this.getDevice().pendingRequestTimeout/1000} seconds`);
-        return new Promise((resolve, reject): void =>  {
-            request.addCallbacks(resolve, reject);
-            this.pendingRequests.add(request);
-        });
-    }
-    private filterRequests(newRequest: Request): void {
-
-        if(this.pendingRequests.size === 0 || !(typeof newRequest.frame.getCommand === 'function')) {
-            return;
-        }
-        const clusterID = newRequest.frame.Cluster.ID;
-        const payload = newRequest.frame.Payload;
-        const commandID = newRequest.frame.getCommand().ID;
-
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): ZCL ${newRequest.frame.getCommand().name} ` +
-            `command, filter requests. Before: ${this.pendingRequests.size}`);
-
-        for (const request of this.pendingRequests) {
-            if( request?.frame?.Cluster?.ID === undefined || typeof request.frame.getCommand !== 'function') {
-                continue;
-            }
-            if (['bulk', 'queue', 'immediate'].includes(request.sendPolicy)) {
-                continue;
-            }
-            /* istanbul ignore else */
-            if(request.frame.Cluster.ID === clusterID && request.frame.getCommand().ID === commandID) {
-                /* istanbul ignore else */
-                if (newRequest.sendPolicy === 'keep-payload'
-                    && JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
-                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Merge duplicate request`);
-                    this.pendingRequests.delete(request);
-                    newRequest.moveCallbacks(request);
-                }
-                else if ((newRequest.sendPolicy === 'keep-command' || newRequest.sendPolicy === 'keep-cmd-undiv') &&
-                        Array.isArray(request.frame.Payload)) {
-                    const filteredPayload = request.frame.Payload.filter((oldEl: {attrId: number}) =>
-                        !payload.find((newEl: {attrId: number}) => oldEl.attrId === newEl.attrId));
-                    if (filteredPayload.length == 0) {
-                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Remove & reject request`);
-                        if( JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
-                            newRequest.moveCallbacks(request);
-                        } else {
-                            request.reject();
-                        }
-                        this.pendingRequests.delete(request);
-                    } else if (newRequest.sendPolicy !== 'keep-cmd-undiv') {
-                        // remove all duplicate attributes if we shall not write undivided
-                        (request.frame as Mutable<Zcl.ZclFrame>).Payload = filteredPayload;
-                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): `
-                            + `Remove commands from request`);
-                    }
-                }
-            }
-        }
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): After: ${this.pendingRequests.size}`);
+        return this.pendingRequests.send(fastPolling);
     }
 
     private async sendRequest(frame: Zcl.ZclFrame, options: Options): Promise<AdapterEvents.ZclDataPayload>;
@@ -381,7 +282,7 @@ class Endpoint extends Entity {
 
         if (request.sendPolicy !== 'bulk') {
             // Check if such a request is already in the queue and remove the old one(s) if necessary
-            this.filterRequests(request);
+            this.pendingRequests.filter(request);
         }
 
         // send without queueing if sendWhen or sendPolicy is 'immediate' or if the device has no timeout set
@@ -396,8 +297,8 @@ class Endpoint extends Entity {
         }
         // If this is a bulk message, we queue directly.
         if (request.sendPolicy === 'bulk') {
-            debug.info(logPrefix + `queue request (${this.pendingRequests.size} / ${this.sendInProgress})))`);
-            return this.queueRequest(request);
+            debug.info(logPrefix + `queue request (${this.pendingRequests.size})))`);
+            return this.pendingRequests.queue(request);
         }
 
         try {
@@ -407,7 +308,7 @@ class Endpoint extends Entity {
             // If we got a failed transaction, the device is likely sleeping.
             // Queue for transmission later.
             debug.info(logPrefix + `queue request (transaction failed)`);
-            return this.queueRequest(request);
+            return this.pendingRequests.queue(request);
         }
     }
 
@@ -511,7 +412,7 @@ class Endpoint extends Entity {
             	    payload.push({attrId: Number(nameOrID), status: value.status});
 	        } else {
 		    throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
-	        }	        
+	        }
 	    } else {
 	        throw new Error(`Missing attribute 'status'`);
 	    }
@@ -534,7 +435,7 @@ class Endpoint extends Entity {
             throw error;
         }
     }
-    
+
     public async read(
         clusterKey: number | string, attributes: (string | number)[], options?: Options
     ): Promise<KeyValue> {
