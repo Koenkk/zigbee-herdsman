@@ -5134,6 +5134,8 @@ const Cluster: {
             activeEnergyReports: {ID: 0x0014, type: DataType.uint16},
             powerType: {ID: 0x0015, type: DataType.boolean},
             switchType: {ID: 0x0016, type: DataType.uint8},
+            quickStartTime: {ID: 0x0017, type: DataType.uint8}, 
+            quickStartLevel: {ID: 0x0018, type: DataType.uint8},
             higherOutputInNonNeutral: {ID: 0x0019, type: DataType.boolean},
             nonNeutralAuxMediumGear: {ID: 0x001e, type: DataType.uint8},
             nonNeutralAuxLowGear: {ID: 0x001f, type: DataType.uint8},
