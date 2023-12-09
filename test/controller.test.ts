@@ -603,8 +603,10 @@ describe('Controller', () => {
                     "_events":{},"_eventsCount":0,
                      inputClusters: [10],
                      outputClusters: [11],
-                     pendingRequests: new Object,
-                     sendInProgress: false,
+                     pendingRequests: {
+                        ID: 1,
+                        deviceIeeeAddress: "0x123",
+                        sendInProgress: false},
                      profileID: 2,
                      ID: 1,
                      meta: {},
@@ -617,8 +619,10 @@ describe('Controller', () => {
                     "_events":{},"_eventsCount":0,
                      inputClusters: [1],
                      outputClusters: [0],
-                     pendingRequests: new Object,
-                     sendInProgress: false,
+                     pendingRequests: {
+                        ID: 2,
+                        deviceIeeeAddress: "0x123",
+                        sendInProgress: false},
                      profileID: 3,
                      meta: {},
                      ID: 2,
@@ -818,7 +822,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
         expect(events.deviceInterview[0]).toStrictEqual({"device":{"_events":{},"_eventsCount":0,"meta": {}, "_skipDefaultResponse": false, "_skipTimeResponse": false, "_lastSeen": deepClone(Date.now()), "ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[],"_type":"Unknown","_ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129},"status":"started"});
-        const device = {"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": deepClone(Date.now()),"_type":"Unknown","_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"_events":{},"_eventsCount":0,"clusters": {}, "ID":1,"inputClusters":[0,1],"outputClusters":[2],"pendingRequests": new Object, "sendInProgress": false,"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [], "_configuredReportings": [],"meta":{},"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
+        const device = {"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": deepClone(Date.now()),"_type":"Unknown","_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"_events":{},"_eventsCount":0,"clusters": {}, "ID":1,"inputClusters":[0,1],"outputClusters":[2],"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [], "_configuredReportings": [],"meta":{},"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
         expect(deepClone(controller.getDeviceByNetworkAddress(129))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
@@ -836,7 +840,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
         expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "_skipDefaultResponse": false,"_events":{},"_eventsCount":0,"_skipTimeResponse":false,"_lastSeen": deepClone(Date.now()), "ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[],"_ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129,"_type":"Unknown"},"status":"started"});
-        const device = {"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": deepClone(Date.now()),"_type":"Unknown","_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"_events":{},"_eventsCount":0,"clusters": {}, "ID":1,"inputClusters":[0,1],"meta":{},"outputClusters":[2],"pendingRequests": new Object, "sendInProgress": false,"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [], "_configuredReportings": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
+        const device = {"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": deepClone(Date.now()),"_type":"Unknown","_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"_events":{},"_eventsCount":0,"clusters": {}, "ID":1,"inputClusters":[0,1],"meta":{},"outputClusters":[2],"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [], "_configuredReportings": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
         expect(deepClone(controller.getDeviceByIeeeAddr('0x129'))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
@@ -1256,7 +1260,7 @@ describe('Controller', () => {
                     "outputClusters":[
                         2
                     ],
-                    "pendingRequests": new Object, "sendInProgress": false,
+                    "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                     "_binds": [],
                     "_configuredReportings": [],
                     "meta":{},
@@ -1294,7 +1298,7 @@ describe('Controller', () => {
                 "deviceID": 5,
                 "inputClusters":[0,1],
                 "outputClusters":[2],
-                "pendingRequests": new Object, "sendInProgress": false,
+                "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                 "deviceNetworkAddress":129,
                 "deviceIeeeAddress":"0x129",
                 "_binds": [],
@@ -1372,7 +1376,7 @@ describe('Controller', () => {
                     "outputClusters":[
                         2
                     ],
-                    "pendingRequests": new Object, "sendInProgress": false,
+                    "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                     "deviceNetworkAddress":129,
                     "deviceIeeeAddress":"0x129",
                     "_binds": [],
@@ -1404,7 +1408,7 @@ describe('Controller', () => {
                 "deviceID": 5,
                 "inputClusters":[0, 1],
                 "outputClusters":[2],
-                "pendingRequests": new Object, "sendInProgress": false,
+                "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                 "deviceNetworkAddress":129,
                 "deviceIeeeAddress":"0x129",
                 "_binds": [],
@@ -1463,7 +1467,7 @@ describe('Controller', () => {
                     "outputClusters":[
                         2
                     ],
-                    "pendingRequests": new Object, "sendInProgress": false,
+                    "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                     "deviceNetworkAddress":129,
                     "deviceIeeeAddress":"0x129",
                     "_binds": [],
@@ -1496,7 +1500,7 @@ describe('Controller', () => {
                 "deviceID": 5,
                 "inputClusters":[0, 1],
                 "outputClusters":[2],
-                "pendingRequests": new Object, "sendInProgress": false,
+                "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                 "deviceNetworkAddress":129,
                 "deviceIeeeAddress":"0x129",
                 "_binds": [],
@@ -1569,7 +1573,7 @@ describe('Controller', () => {
                      "outputClusters":[
                         2
                      ],
-                     "pendingRequests": new Object, "sendInProgress": false,
+                     "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                      "deviceNetworkAddress":129,
                      "deviceIeeeAddress":"0x129",
                      "_binds": [],
@@ -1594,7 +1598,7 @@ describe('Controller', () => {
                      "outputClusters":[
 
                      ],
-                     "pendingRequests": new Object, "sendInProgress": false,
+                     "pendingRequests": {"ID": 3,"deviceIeeeAddress": "0x129","sendInProgress": false},
                      "deviceNetworkAddress":129,
                      "deviceIeeeAddress":"0x129",
                      "_binds": [],
@@ -1627,7 +1631,7 @@ describe('Controller', () => {
                "outputClusters":[
 
                ],
-               "pendingRequests": new Object, "sendInProgress": false,
+               "pendingRequests": {"ID": 3,"deviceIeeeAddress": "0x129","sendInProgress": false},
                "meta":{},
                "deviceNetworkAddress":129,
                "deviceIeeeAddress":"0x129",
@@ -1700,7 +1704,7 @@ describe('Controller', () => {
                      "outputClusters":[
                         2
                      ],
-                     "pendingRequests": new Object, "sendInProgress": false,
+                     "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                      "deviceNetworkAddress":129,
                      "deviceIeeeAddress":"0x129",
                      "_binds": [],
@@ -1737,7 +1741,7 @@ describe('Controller', () => {
                "outputClusters":[
                   2
                ],
-               "pendingRequests": new Object, "sendInProgress": false,
+               "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                "deviceNetworkAddress":129,
                "deviceIeeeAddress":"0x129",
                "_binds": [],
@@ -2054,7 +2058,7 @@ describe('Controller', () => {
                       "outputClusters":[
 
                       ],
-                      "pendingRequests": new Object, "sendInProgress": false,
+                      "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x150","sendInProgress": false},
                       "deviceNetworkAddress":150,
                       "deviceIeeeAddress":"0x150",
                       "_binds": [],
@@ -2111,7 +2115,7 @@ describe('Controller', () => {
                       "outputClusters":[
 
                       ],
-                      "pendingRequests": new Object, "sendInProgress": false,
+                      "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x151","sendInProgress": false},
                       "deviceNetworkAddress":151,
                       "deviceIeeeAddress":"0x151",
                       "_binds": [],
@@ -2188,7 +2192,7 @@ describe('Controller', () => {
                     "outputClusters":[
                         2
                     ],
-                    "pendingRequests": new Object, "sendInProgress": false,
+                    "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                     "deviceNetworkAddress":129,
                     "deviceIeeeAddress":"0x129",
                     "_binds": [],
@@ -2221,7 +2225,7 @@ describe('Controller', () => {
                 "deviceID": 5,
                 "inputClusters":[0, 1],
                 "outputClusters":[2],
-                "pendingRequests": new Object, "sendInProgress": false,
+                "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                 "deviceNetworkAddress":129,
                 "deviceIeeeAddress":"0x129",
                 "_binds": [],
@@ -3035,7 +3039,7 @@ describe('Controller', () => {
         const line = JSON.stringify({"id":3,"type":"EndDevice","ieeeAddr":"0x90fd9ffffe4b64ae","nwkAddr":19468,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Battery","modelId":"TRADFRI remote control","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0,1,3,9,2821,4096],"outClusterList":[3,4,5,6,8,25,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170302","swBuildId":"1.2.214","zclVersion":1,"interviewCompleted":true,"_id":"fJ5pmjqKRYbNvslK"});
         fs.writeFileSync(options.databasePath, line + "\n");
         await controller.start();
-        const expected = {"ID": 3, "_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": null, "_applicationVersion": 17, "_dateCode": "20170302", "_endpoints": [{"_events":{},"_eventsCount":0,"meta":{},"clusters": {}, "ID": 1, "deviceID": 2096, "_binds": [], "_configuredReportings": [],"deviceIeeeAddress": "0x90fd9ffffe4b64ae", "deviceNetworkAddress": 19468, "inputClusters": [0, 1, 3, 9, 2821, 4096], "outputClusters": [3, 4, 5, 6, 8, 25, 4096], "pendingRequests": new Object, "sendInProgress": false, "profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x90fd9ffffe4b64ae", "_interviewCompleted": true,"_events":{},"_eventsCount":0, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {}, "_modelID": "TRADFRI remote control", "_networkAddress": 19468, "_powerSource": "Battery", "_softwareBuildID": "1.2.214", "_stackVersion": 87, "_type": "EndDevice", "_zclVersion": 1}
+        const expected = {"ID": 3, "_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": null, "_applicationVersion": 17, "_dateCode": "20170302", "_endpoints": [{"_events":{},"_eventsCount":0,"meta":{},"clusters": {}, "ID": 1, "deviceID": 2096, "_binds": [], "_configuredReportings": [],"deviceIeeeAddress": "0x90fd9ffffe4b64ae", "deviceNetworkAddress": 19468, "inputClusters": [0, 1, 3, 9, 2821, 4096], "outputClusters": [3, 4, 5, 6, 8, 25, 4096], "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x90fd9ffffe4b64ae","sendInProgress": false}, "profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x90fd9ffffe4b64ae", "_interviewCompleted": true,"_events":{},"_eventsCount":0, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {}, "_modelID": "TRADFRI remote control", "_networkAddress": 19468, "_powerSource": "Battery", "_softwareBuildID": "1.2.214", "_stackVersion": 87, "_type": "EndDevice", "_zclVersion": 1}
         expect(deepClone(controller.getDeviceByIeeeAddr("0x90fd9ffffe4b64ae"))).toStrictEqual(expected);
     });
 
@@ -3356,10 +3360,10 @@ describe('Controller', () => {
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
         expect((controller.getDevices()).length).toBe(4);
-        expect(deepClone(controller.getDeviceByIeeeAddr('0x123'))).toStrictEqual({"ID":1,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"deviceID":5,"_events":{},"_eventsCount":0,"inputClusters":[],"outputClusters":[],"profileID":260,"ID":1,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":257,"ID":2,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":261,"ID":3,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":263,"ID":4,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":264,"ID":5,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":265,"ID":6,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"deviceID":1024,"inputClusters":[],"outputClusters":[1280],"profileID":260,"ID":11,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false}],"_ieeeAddr":"0x123","_interviewCompleted":false,"_interviewing":false,"_lastSeen":null,"_manufacturerID":0,"_networkAddress":0,"_type":"Coordinator","_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{}});
-        expect(deepClone(controller.getDeviceByIeeeAddr('0x000b57fffec6a5b2'))).toStrictEqual({"ID": 3,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": null,  "_applicationVersion": 17, "_dateCode": "20170331", "_endpoints": [{"_events":{},"_eventsCount":0,"meta":{},"_binds": [], "_configuredReportings": [], "clusters": {}, "ID": 1, "deviceID": 544, "deviceIeeeAddress": "0x000b57fffec6a5b2", "deviceNetworkAddress": 40369, "inputClusters": [0, 3, 4, 5, 6, 8, 768, 2821, 4096], "outputClusters": [5, 25, 32, 4096],  "pendingRequests":new Object,"sendInProgress":false,"profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x000b57fffec6a5b2", "_interviewCompleted": true,"_events":{},"_eventsCount":0, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {"reporting": 1}, "_modelID": "TRADFRI bulb E27 WS opal 980lm", "_networkAddress": 40369, "_powerSource": "Mains (single phase)", "_softwareBuildID": "1.2.217", "_stackVersion": 87, "_type": "Router", "_zclVersion": 1});
-        expect(deepClone(controller.getDeviceByIeeeAddr('0x0017880104e45517'))).toStrictEqual({"ID":4,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_applicationVersion":2,"_dateCode":"20160302","_endpoints":[{"deviceID":2096,"_events":{},"_eventsCount":0,"inputClusters":[0],"outputClusters":[0,3,4,6,8,5],"profileID":49246,"ID":1,"clusters":{"genBasic":{"dir":{"value":3},"attributes":{"modelId":"RWL021"}}},"deviceIeeeAddress":"0x0017880104e45517","deviceNetworkAddress":6538,"_binds":[{"type":"endpoint","endpointID":1,"deviceIeeeAddr":"0x000b57fffec6a5b2"}],"_configuredReportings":[{"cluster":1,"attrId":0,"minRepIntval":1,"maxRepIntval":20,"repChange":2}],"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"deviceID":12,"inputClusters":[0,1,3,15,64512],"outputClusters":[25],"profileID":260,"ID":2,"clusters":{},"deviceIeeeAddress":"0x0017880104e45517","deviceNetworkAddress":6538,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false}],"_hardwareVersion":1,"_ieeeAddr":"0x0017880104e45517","_interviewCompleted":true,"_interviewing":false,"_lastSeen":123,"_manufacturerID":4107,"_manufacturerName":"Philips","_modelID":"RWL021","_networkAddress":6538,"_powerSource":"Battery","_softwareBuildID":"5.45.1.17846","_stackVersion":1,"_type":"EndDevice","_zclVersion":1,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{"configured":1}});
-        expect(deepClone(controller.getDeviceByIeeeAddr('0x0017880104e45518'))).toStrictEqual({"ID":6,"_checkinInterval":123456,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":123456000,"_defaultSendRequestWhen": "immediate","_applicationVersion":2,"_dateCode":"20160302","_endpoints":[{"deviceID":2096,"_events":{},"_eventsCount":0,"inputClusters":[0],"outputClusters":[0,3,4,6,8,5],"profileID":49246,"ID":1,"clusters":{},"deviceIeeeAddress":"0x0017880104e45518","deviceNetworkAddress":6536,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"deviceID":12,"inputClusters":[0,1,3,15,32,64512],"outputClusters":[25],"profileID":260,"ID":2,"clusters":{},"deviceIeeeAddress":"0x0017880104e45518","deviceNetworkAddress":6536,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false}],"_hardwareVersion":1,"_ieeeAddr":"0x0017880104e45518","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":4107,"_manufacturerName":"Philips","_modelID":"RWL021","_networkAddress":6536,"_powerSource":"Battery","_softwareBuildID":"5.45.1.17846","_stackVersion":1,"_type":"EndDevice","_zclVersion":1,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{"configured":1}});
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x123'))).toStrictEqual({"ID":1,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"deviceID":5,"_events":{},"_eventsCount":0,"inputClusters":[],"outputClusters":[],"profileID":260,"ID":1,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":257,"ID":2,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":261,"ID":3,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 3,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":263,"ID":4,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 4,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":264,"ID":5,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 5,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":265,"ID":6,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 6,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":1024,"inputClusters":[],"outputClusters":[1280],"profileID":260,"ID":11,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 11,"deviceIeeeAddress": "0x123","sendInProgress": false}}],"_ieeeAddr":"0x123","_interviewCompleted":false,"_interviewing":false,"_lastSeen":null,"_manufacturerID":0,"_networkAddress":0,"_type":"Coordinator","_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{}});
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x000b57fffec6a5b2'))).toStrictEqual({"ID": 3,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": null,  "_applicationVersion": 17, "_dateCode": "20170331", "_endpoints": [{"_events":{},"_eventsCount":0,"meta":{},"_binds": [], "_configuredReportings": [], "clusters": {}, "ID": 1, "deviceID": 544, "deviceIeeeAddress": "0x000b57fffec6a5b2", "deviceNetworkAddress": 40369, "inputClusters": [0, 3, 4, 5, 6, 8, 768, 2821, 4096], "outputClusters": [5, 25, 32, 4096],  "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x000b57fffec6a5b2","sendInProgress": false},"profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x000b57fffec6a5b2", "_interviewCompleted": true,"_events":{},"_eventsCount":0, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {"reporting": 1}, "_modelID": "TRADFRI bulb E27 WS opal 980lm", "_networkAddress": 40369, "_powerSource": "Mains (single phase)", "_softwareBuildID": "1.2.217", "_stackVersion": 87, "_type": "Router", "_zclVersion": 1});
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x0017880104e45517'))).toStrictEqual({"ID":4,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_applicationVersion":2,"_dateCode":"20160302","_endpoints":[{"deviceID":2096,"_events":{},"_eventsCount":0,"inputClusters":[0],"outputClusters":[0,3,4,6,8,5],"profileID":49246,"ID":1,"clusters":{"genBasic":{"dir":{"value":3},"attributes":{"modelId":"RWL021"}}},"deviceIeeeAddress":"0x0017880104e45517","deviceNetworkAddress":6538,"_binds":[{"type":"endpoint","endpointID":1,"deviceIeeeAddr":"0x000b57fffec6a5b2"}],"_configuredReportings":[{"cluster":1,"attrId":0,"minRepIntval":1,"maxRepIntval":20,"repChange":2}],"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x0017880104e45517","sendInProgress": false}},{"deviceID":12,"inputClusters":[0,1,3,15,64512],"outputClusters":[25],"profileID":260,"ID":2,"clusters":{},"deviceIeeeAddress":"0x0017880104e45517","deviceNetworkAddress":6538,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x0017880104e45517","sendInProgress": false}}],"_hardwareVersion":1,"_ieeeAddr":"0x0017880104e45517","_interviewCompleted":true,"_interviewing":false,"_lastSeen":123,"_manufacturerID":4107,"_manufacturerName":"Philips","_modelID":"RWL021","_networkAddress":6538,"_powerSource":"Battery","_softwareBuildID":"5.45.1.17846","_stackVersion":1,"_type":"EndDevice","_zclVersion":1,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{"configured":1}});
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x0017880104e45518'))).toStrictEqual({"ID":6,"_checkinInterval":123456,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":123456000,"_defaultSendRequestWhen": "immediate","_applicationVersion":2,"_dateCode":"20160302","_endpoints":[{"deviceID":2096,"_events":{},"_eventsCount":0,"inputClusters":[0],"outputClusters":[0,3,4,6,8,5],"profileID":49246,"ID":1,"clusters":{},"deviceIeeeAddress":"0x0017880104e45518","deviceNetworkAddress":6536,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x0017880104e45518","sendInProgress": false}},{"deviceID":12,"inputClusters":[0,1,3,15,32,64512],"outputClusters":[25],"profileID":260,"ID":2,"clusters":{},"deviceIeeeAddress":"0x0017880104e45518","deviceNetworkAddress":6536,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x0017880104e45518","sendInProgress": false}}],"_hardwareVersion":1,"_ieeeAddr":"0x0017880104e45518","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":4107,"_manufacturerName":"Philips","_modelID":"RWL021","_networkAddress":6536,"_powerSource":"Battery","_softwareBuildID":"5.45.1.17846","_stackVersion":1,"_type":"EndDevice","_zclVersion":1,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{"configured":1}});
         expect((await controller.getGroups({})).length).toBe(2);
 
         const group1 = controller.getGroupByID(1);
@@ -3367,7 +3371,7 @@ describe('Controller', () => {
         expect(deepClone(group1)).toStrictEqual({"_events":{},"_eventsCount":0,"databaseID": 2, "groupID": 1, "_members": [], "meta": {}});
         const group2 = controller.getGroupByID(2);
         group2._members = Array.from(group2._members);
-        expect(deepClone(group2)).toStrictEqual({"_events":{},"_eventsCount":0,"databaseID": 5, "groupID": 2, "_members": [{"meta":{},"_binds": [], "_configuredReportings": [], "clusters": {}, "ID": 1, "_events":{},"_eventsCount":0,"deviceID": 544, "deviceIeeeAddress": "0x000b57fffec6a5b2", "deviceNetworkAddress": 40369, "inputClusters": [0, 3, 4, 5, 6, 8, 768, 2821, 4096], "outputClusters": [5, 25, 32, 4096], "pendingRequests": new Object, "sendInProgress": false, "profileID": 49246}], "meta": {}});
+        expect(deepClone(group2)).toStrictEqual({"_events":{},"_eventsCount":0,"databaseID": 5, "groupID": 2, "_members": [{"meta":{},"_binds": [], "_configuredReportings": [], "clusters": {}, "ID": 1, "_events":{},"_eventsCount":0,"deviceID": 544, "deviceIeeeAddress": "0x000b57fffec6a5b2", "deviceNetworkAddress": 40369, "inputClusters": [0, 3, 4, 5, 6, 8, 768, 2821, 4096], "outputClusters": [5, 25, 32, 4096], "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x000b57fffec6a5b2","sendInProgress": false}, "profileID": 49246}], "meta": {}});
     });
 
     it('Shouldnt load device from group databaseentry', async () => {
@@ -3709,7 +3713,7 @@ describe('Controller', () => {
                         "outputClusters":[
                             2
                         ],
-                        "pendingRequests": new Object, "sendInProgress": false,
+                        "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                         "profileID":99,
                         "ID":1,
                         "clusters":{
@@ -3751,7 +3755,7 @@ describe('Controller', () => {
                 "outputClusters":[
                     2
                 ],
-                "pendingRequests": new Object, "sendInProgress": false,
+                "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                 "profileID":99,
                 "ID":1,
                 "clusters":{
@@ -3820,7 +3824,7 @@ describe('Controller', () => {
                         "outputClusters":[
                             2
                         ],
-                        "pendingRequests": new Object, "sendInProgress": false,
+                        "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                         "profileID":99,
                         "ID":1,
                         "clusters":{
@@ -3863,7 +3867,7 @@ describe('Controller', () => {
                 "outputClusters":[
                     2
                 ],
-                "pendingRequests": new Object, "sendInProgress": false,
+                "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
                 "profileID":99,
                 "ID":1,
                 "clusters":{
@@ -4138,7 +4142,7 @@ describe('Controller', () => {
         });
 
         expect(events.deviceJoined.length).toBe(1);
-        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"inputClusters":[],"outputClusters":[],"pendingRequests":new Object, "sendInProgress": false,"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": [],"_events":{},"_eventsCount":0,"meta":{}}],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}}});
+        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"inputClusters":[],"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x000000000046f4fe","sendInProgress": false},"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": [],"_events":{},"_eventsCount":0,"meta":{}}],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}}});
         expect(events.deviceInterview.length).toBe(1);
         expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status":"successful","device":{"ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}}});
         expect((controller.getDeviceByIeeeAddr('0x000000000046f4fe')).networkAddress).toBe(0xf4fe);
@@ -4167,7 +4171,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {"type":"commandNotification","device":{"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":new Object, "sendInProgress": false,"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": []}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":new Object, "sendInProgress": false,"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": []},"data":{"options":0,"srcID":0x46f4fe,"frameCounter":228,"commandID":34,"payloadSize":255,"commandFrame":{}},"linkquality":50,"groupID":1,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
+        const expected = {"type":"commandNotification","device":{"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x000000000046f4fe","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": []}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x000000000046f4fe","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": []},"data":{"options":0,"srcID":0x46f4fe,"frameCounter":228,"commandID":34,"payloadSize":255,"commandFrame":{}},"linkquality":50,"groupID":1,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
         expect(deepClone(events.message[0])).toStrictEqual(expected);
 
         await mockAdapterEvents['']
@@ -4387,7 +4391,7 @@ describe('Controller', () => {
         });
 
         expect(events.deviceJoined.length).toBe(1);
-        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":new Object, "sendInProgress": false}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}}});
+        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false}}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}}});
         expect(events.deviceInterview.length).toBe(1);
         expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status":"successful","device":{"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}}});
         expect((controller.getDeviceByIeeeAddr('0x00000000017171f8')).networkAddress).toBe(0x71f8);
@@ -4418,7 +4422,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {"type":"commandNotification","device":{"ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":new Object, "sendInProgress": false,"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"_binds":[], "_configuredReportings": []}],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":new Object, "sendInProgress": false,"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"_binds":[], "_configuredReportings": []},"data":{"options":0x5488,"srcID":0x017171f8,"frameCounter":4601,"commandID":0x13,"payloadSize":0,"commandFrame":{},"gppNwkAddr": 129,"gppGddLink":0xd8},"linkquality":50,"groupID":0,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
+        const expected = {"type":"commandNotification","device":{"ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"_binds":[], "_configuredReportings": []}],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"_binds":[], "_configuredReportings": []},"data":{"options":0x5488,"srcID":0x017171f8,"frameCounter":4601,"commandID":0x13,"payloadSize":0,"commandFrame":{},"gppNwkAddr": 129,"gppGddLink":0xd8},"linkquality":50,"groupID":0,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
         expect(deepClone(events.message[0])).toStrictEqual(expected);
 
         // Remove green power device from network
@@ -4438,7 +4442,7 @@ describe('Controller', () => {
         expect(controller.getDeviceByIeeeAddr('0x00000000017171f8')).toBeUndefined(); 
 
         expect(Device.byIeeeAddr('0x00000000017171f8')).toBeUndefined();
-        expect(deepClone(Device.byIeeeAddr('0x00000000017171f8', true))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":new Object, "sendInProgress": false}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":false,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":true,"meta":{}});
+        expect(deepClone(Device.byIeeeAddr('0x00000000017171f8', true))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false}}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":false,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":true,"meta":{}});
 
         // Re-add device
         await mockAdapterEvents['zclData']({
@@ -4450,7 +4454,7 @@ describe('Controller', () => {
             groupID: 0,
         });
 
-        expect(deepClone(Device.byIeeeAddr('0x00000000017171f8'))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests":new Object, "sendInProgress": false}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":false,"meta":{}});
+        expect(deepClone(Device.byIeeeAddr('0x00000000017171f8'))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false}}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":false,"meta":{}});
     });
 
     it('Get input/ouptut clusters', async () => {
@@ -4515,9 +4519,9 @@ describe('Controller', () => {
 
         // We need to send the data after it's been queued, but before we await
         // the promise. Hijacking queueRequest seems easiest.
-        const origQueueRequest = endpoint.queueRequest;
-        endpoint.queueRequest = async (req) => {
-            const f = origQueueRequest.call(endpoint, req);
+        const origQueueRequest = endpoint.pendingRequests.queue;
+        endpoint.pendingRequests.queue = async (req) => {
+            const f = origQueueRequest.call(endpoint.pendingRequests, req);
 
             const data = {
                 wasBroadcast: false,
@@ -4543,9 +4547,9 @@ describe('Controller', () => {
         device.pendingRequestTimeout = 10000;
         const endpoint = device.getEndpoint(1);
         // We need to wait for the data to be queued
-        const origQueueRequest = endpoint.queueRequest;
-        endpoint.queueRequest = async (req) => {
-            const f = origQueueRequest.call(endpoint, req);
+        const origQueueRequest = endpoint.pendingRequests.queue;
+        endpoint.pendingRequests.queue = async (req) => {
+            const f = origQueueRequest.call(endpoint.pendingRequests, req);
             jest.advanceTimersByTime(10);
             return f;
         };
@@ -4581,9 +4585,9 @@ describe('Controller', () => {
         device.pendingRequestTimeout = 10000;
         const endpoint = device.getEndpoint(1);
         // We need to wait for the data to be queued
-        const origQueueRequest = endpoint.queueRequest;
-        endpoint.queueRequest = async (req) => {
-            const f = origQueueRequest.call(endpoint, req);
+        const origQueueRequest = endpoint.pendingRequests.queue;
+        endpoint.pendingRequests.queue = async (req) => {
+            const f = origQueueRequest.call(endpoint.pendingRequests, req);
             jest.advanceTimersByTime(10);
             return f;
         };
@@ -4634,9 +4638,9 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
 
         // We need to wait for the data to be queued, but not for the promise to resolve
-        const origQueueRequest = endpoint.queueRequest;
-        endpoint.queueRequest = async (req) => {
-            const f = origQueueRequest.call(endpoint, req);
+        const origQueueRequest = endpoint.pendingRequests.queue;
+        endpoint.pendingRequests.queue = async (req) => {
+            const f = origQueueRequest.call(endpoint.pendingRequests, req);
             jest.advanceTimersByTime(10);
             return f;
         };
@@ -4778,9 +4782,9 @@ describe('Controller', () => {
 
         // We need to send the data after it's been queued, but before we await
         // the promise. Hijacking queueRequest seems easiest.
-        const origQueueRequest = endpoint.queueRequest;
-        endpoint.queueRequest = async (req) => {
-            const f = origQueueRequest.call(endpoint, req);
+        const origQueueRequest = endpoint.pendingRequests.queue;
+        endpoint.pendingRequests.queue = async (req) => {
+            const f = origQueueRequest.call(endpoint.pendingRequests, req);
 
             await mockAdapterEvents['zclData']({
                 wasBroadcast: false,
@@ -4818,9 +4822,9 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockImplementationOnce(() => {throw new Error("dogs barking too hard");});
         const endpoint = device.getEndpoint(1);
-        const origQueueRequest = endpoint.queueRequest;
-        endpoint.queueRequest = async (req) => {
-            const f = origQueueRequest.call(endpoint, req);
+        const origQueueRequest = endpoint.pendingRequests.queue;
+        endpoint.pendingRequests.queue = async (req) => {
+            const f = origQueueRequest.call(endpoint.pendingRequests, req);
             jest.advanceTimersByTime(10);
             return f;
         };
@@ -4845,6 +4849,15 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
+
+        // onZclData is called via mockAdapterEvents, but we need to wait until it has finished
+        const origOnZclData = device.onZclData;
+        device.onZclData = async (payload, endpoint) => {
+            const f = origOnZclData.call(device, payload, endpoint);
+            jest.advanceTimersByTime(10);
+            return f;
+        };
+        const nextTick = new Promise (process.nextTick);
 
         const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendPolicy:'bulk'});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
@@ -4888,6 +4901,8 @@ describe('Controller', () => {
         expect(cmd[2]).toBe(1);
         expect(cmd[3].Cluster.name).toBe('genOnOff');
 
+        await nextTick;
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
         const fastpollstop = mocksendZclFrameToEndpoint.mock.calls[2];
         expect(fastpollstop[0]).toBe('0x174');
         expect(fastpollstop[1]).toBe(174);
@@ -4895,8 +4910,6 @@ describe('Controller', () => {
         expect(fastpollstop[3].Cluster.name).toBe('genPollCtrl');
         expect(fastpollstop[3].Command.name).toBe('fastPollStop');
         expect(fastpollstop[3].Payload).toStrictEqual({});
-
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
     });
 
     it('Fast polling', async () => {
@@ -4912,6 +4925,15 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockImplementationOnce(() => {throw new Error("dogs barking too hard");});
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
+
+        // onZclData is called via mockAdapterEvents, but we need to wait until it has finished
+        const origOnZclData = device.onZclData;
+        device.onZclData = async (payload, endpoint) => {
+            const f = origOnZclData.call(device, payload, endpoint);
+            jest.advanceTimersByTime(10);
+            return f;
+        };
+        const nextTick = new Promise (process.nextTick);
 
         const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
@@ -4949,6 +4971,9 @@ describe('Controller', () => {
 
         expect((await result)).toBe(undefined);
 
+        await nextTick;
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(4);
+
         const cmd = mocksendZclFrameToEndpoint.mock.calls[2];
         expect(cmd[0]).toBe('0x174');
         expect(cmd[1]).toBe(174);
@@ -4963,7 +4988,6 @@ describe('Controller', () => {
         expect(fastpollstop[3].Command.name).toBe('fastPollStop');
         expect(fastpollstop[3].Payload).toStrictEqual({});
 
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(4);
     });
 
     it('Handle retransmitted Xiaomi messages', async () => {
@@ -4981,7 +5005,7 @@ describe('Controller', () => {
             groupID: 171,
         });
 
-        const expected = {"type":"read","device":{"ID":3,"_applicationVersion":2,"_dateCode":"201901","_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"inputClusters":[],"outputClusters":[],"ID":2,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"inputClusters":[],"outputClusters":[],"ID":3,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"inputClusters":[],"outputClusters":[],"ID":4,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"inputClusters":[],"outputClusters":[],"ID":5,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},{"inputClusters":[],"outputClusters":[],"ID":6,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false}],"_events":{},"_eventsCount":0,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_ieeeAddr":"0x171","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_manufacturerID":1212,"_manufacturerName":"Xioami","_modelID":"lumi.remote.b286opcn01","_networkAddress":171,"_powerSource":"Mains (single phase)","_softwareBuildID":"1.01","_stackVersion":101,"_type":"EndDevice","_zclVersion":1,"_linkquality":19,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{}},"endpoint":{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests":new Object, "sendInProgress": false},"data":["mainsVoltage",9999],"linkquality":19,"groupID":171,"cluster":"genPowerCfg","meta":{"zclTransactionSequenceNumber":40,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
+        const expected = {"type":"read","device":{"ID":3,"_applicationVersion":2,"_dateCode":"201901","_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":2,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":3,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 3,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":4,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 4,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":5,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 5,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":6,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 6,"deviceIeeeAddress": "0x171","sendInProgress": false}}],"_events":{},"_eventsCount":0,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_ieeeAddr":"0x171","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_manufacturerID":1212,"_manufacturerName":"Xioami","_modelID":"lumi.remote.b286opcn01","_networkAddress":171,"_powerSource":"Mains (single phase)","_softwareBuildID":"1.01","_stackVersion":101,"_type":"EndDevice","_zclVersion":1,"_linkquality":19,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{}},"endpoint":{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x171","sendInProgress": false}},"data":["mainsVoltage",9999],"linkquality":19,"groupID":171,"cluster":"genPowerCfg","meta":{"zclTransactionSequenceNumber":40,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
         expect(events.message.length).toBe(1);
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
