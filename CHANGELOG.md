@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.26.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.26.0...v0.26.1) (2023-12-10)
+
+
+### Bug Fixes
+
+* Extend `manuSpecificInovelli` cluster ([#824](https://github.com/Koenkk/zigbee-herdsman/issues/824)) ([435ed7a](https://github.com/Koenkk/zigbee-herdsman/commit/435ed7a5a0f1e45fbc4ecbc3882772e5d10ed2a9))
+* **ignore:** Cleanup request queue ([#826](https://github.com/Koenkk/zigbee-herdsman/issues/826)) ([db1545b](https://github.com/Koenkk/zigbee-herdsman/commit/db1545b1170bf74c3fa9624807e233e863b844b1))
+
 ## [0.26.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.25.3...v0.26.0) (2023-12-07)
 
 
