@@ -5421,6 +5421,20 @@ const Cluster: {
         },
         commandsResponse: {},
     },
+    manuSpecificBosch10: {
+        ID: 0xfca0,
+        manufacturerCode: ManufacturerCode.Bosch,
+        attributes: {
+            device_mode: {ID: 0x0000, type: DataType.enum8},
+            switch_type: {ID: 0x0001, type: DataType.enum8},
+            calibration_opening_time: {ID: 0x0002, type: DataType.uint32},
+            calibration_closing_time: {ID: 0x0003, type: DataType.uint32},
+            child_lock: {ID: 0x0008, type: DataType.boolean},
+            motor_state: {ID: 0x0013, type: DataType.enum8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     manuSpecificAssaDoorLock: {
         ID: 0xFC00,
         attributes: {
