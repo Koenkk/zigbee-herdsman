@@ -664,7 +664,7 @@ class ZiGateAdapter extends Adapter {
 
         try {
             // The block is wrapped in trapping because if the network is already created, the firmware does not accept the new key.
-            debug.log('Set EPanID %h', this.networkOptions.extendedPanID);
+            debug.log('Set EPanID %h', this.networkOptions.extendedPanID.toString());
             await this.driver.sendCommand(ZiGateCommandCode.SetExtendedPANID, {
                 panId: this.networkOptions.extendedPanID,
             });
