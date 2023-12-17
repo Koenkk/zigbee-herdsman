@@ -2775,6 +2775,16 @@ describe("zstack-adapter", () => {
         expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
     });
 
+    it('Ignore device leave with rejoin', async () => {
+        basicMocks();
+        await adapter.start();
+        let deviceAnnounce;
+        const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'leaveInd', payload: {srcaddr: 123, extaddr: '0x123', rejoin: true},};
+        adapter.on("deviceLeave", (p) => {deviceAnnounce = p;})
+        znpReceived(object);
+        expect(deviceAnnounce).toStrictEqual(undefined);
+    });
+
     it('Do nothing wiht non areq event', async () => {
         basicMocks();
         await adapter.start();
