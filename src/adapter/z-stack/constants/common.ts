@@ -1,4 +1,3 @@
-
 export enum AddressMode {
     ADDR_NOT_PRESENT = 0,
     ADDR_GROUP = 1,
@@ -141,8 +140,10 @@ export enum NvItemsIds {
     SAS_CURR_NWK_KEY = 210,
     SAS_CURR_PRECFG_LINK_KEY = 211,
     TCLK_SEED = 257,
+    // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
     LEGACY_TCLK_TABLE_START_12 = 257, // Keep it for Legacy 1.2 stack
     LEGACY_TCLK_TABLE_START = 273, // Valid for <= Z-Stack 3.0.x
+    // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
     EX_TCLK_TABLE = 4, // Valid for >= Z-Stack 3.0.x
     APS_LINK_KEY_DATA_START = 513,
     APS_LINK_KEY_DATA_END = 767,
@@ -152,6 +153,7 @@ export enum NvItemsIds {
     ZNP_HAS_CONFIGURED_ZSTACK1 = 3840,
     ZNP_HAS_CONFIGURED_ZSTACK3 = 96,
     ZCD_NV_EX_APS_KEY_DATA_TABLE = 6,
+    // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
     ZCD_NV_EX_ADDRMGR = 1
 }
 
