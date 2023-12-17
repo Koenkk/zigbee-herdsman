@@ -117,9 +117,9 @@ class Driver extends events.EventEmitter {
         })
     }
 
-    protected intervals: NodeJS.Timer[] = [];
+    protected intervals: NodeJS.Timeout[] = [];
 
-    protected registerInterval(interval: NodeJS.Timer) {
+    protected registerInterval(interval: NodeJS.Timeout) {
         this.intervals.push(interval);
     }
     
