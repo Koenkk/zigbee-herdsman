@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.27.0...v0.27.1) (2023-12-17)
+
+
+### Bug Fixes
+
+* **ignore:** Remove zigate %h formatter ([28b0821](https://github.com/Koenkk/zigbee-herdsman/commit/28b0821299ec40363f738412f72b45b598c61c35))
+
 ## [0.27.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.26.1...v0.27.0) (2023-12-17)
 
 
