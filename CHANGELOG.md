@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.27.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.26.1...v0.27.0) (2023-12-17)
+
+
+### Features
+
+* **ignore:** add displayUnit and airQuality attributes to aqaraOpple cluster ([#829](https://github.com/Koenkk/zigbee-herdsman/issues/829)) ([65ef3db](https://github.com/Koenkk/zigbee-herdsman/commit/65ef3dbb763d79f61d10e80b18b99c3a0e423f2a))
+
+
+### Bug Fixes
+
+* Fix devices disappearing with zStack adapter when rejoining the network ([#830](https://github.com/Koenkk/zigbee-herdsman/issues/830)) ([fe8ebb7](https://github.com/Koenkk/zigbee-herdsman/commit/fe8ebb78f47f03d1506fdedba34821e1c8c7e5d8))
+
 ## [0.26.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.26.0...v0.26.1) (2023-12-10)
 
 
