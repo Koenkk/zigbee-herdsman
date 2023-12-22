@@ -2058,6 +2058,22 @@ const Cluster: {
             elkoLastMessageStatus: {ID: 0x0419, type: DataType.uint8},
             fourNoksHysteresisHigh: {ID: 0x0101, type: DataType.uint16, manufacturerCode: ManufacturerCode._4_NOKS},
             fourNoksHysteresisLow: {ID: 0x0102, type: DataType.uint16, manufacturerCode: ManufacturerCode._4_NOKS},
+            ubisysClassBTemperatureOffset: {ID: 0x0000, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysReturnFlowTemperatureWeight: {ID: 0x0001, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawOutdoorTemperature: {ID: 0x0002, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawLocalTemperatureA: {ID: 0x0003, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawLocalTemperatureB: {ID: 0x0004, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawForwardFlowTemperature: {ID: 0x0005, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawReturnFlowTemperature: {ID: 0x0006, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysInstalledExtensions: {ID: 0x0007, type: DataType.bitmap64, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysTemperatureOffset: {ID: 0x0010, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysDefaultOccupiedHeatingSetpoint: {ID: 0x0011, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysVacationMode: {ID: 0x0012, type: DataType.boolean, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRemoteTemperature: {ID: 0x0013, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRemoteTemperatureValidDuration: {ID: 0x0014, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysProportionalGain: {ID: 0x0020, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysProportionalShift: {ID: 0x0021, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysIntegralFactor: {ID: 0x0022, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
         },
         commands: {
             setpointRaiseLower: {
@@ -4279,24 +4295,6 @@ const Cluster: {
             capabilities: {ID: 0x0000, type: DataType.bitmap8},
             status: {ID: 0x0001, type: DataType.bitmap8},
             mode: {ID: 0x0002, type: DataType.bitmap8},
-        },
-        commands: {
-        },
-        commandsResponse: {
-        }
-    },
-    manuSpecificUbisysHeatingRegulatorThermostat: {
-        ID: 0x0201, // = 513
-        manufacturerCode: ManufacturerCode.Ubisys,
-        attributes: {
-            classBTemperatureOffset: {ID: 0x0000, type: DataType.int8},
-            returnFlowTemperatureWeight: {ID: 0x0001, type: DataType.int8},
-            rawOutdoorTemperature: {ID: 0x0002, type: DataType.struct},
-            rawLocalTemperatureA: {ID: 0x0003, type: DataType.struct},
-            rawLocalTemperatureB: {ID: 0x0004, type: DataType.struct},
-            rawForwardFlowTemperature: {ID: 0x0005, type: DataType.struct},
-            rawReturnFlowTemperature: {ID: 0x0006, type: DataType.struct},
-            installedExtensions: {ID: 0x0007, type: DataType.bitmap64},
         },
         commands: {
         },
