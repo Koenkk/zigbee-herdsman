@@ -2164,7 +2164,12 @@ const Cluster: {
                 ID: 0xa0,
                 parameters: [
                 ],
-            }
+            },
+            boschCalibrateValve: {
+                ID: 0x41,
+                parameters: [
+                ],
+            },
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
