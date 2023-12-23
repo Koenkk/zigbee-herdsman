@@ -535,7 +535,20 @@ const Cluster: {
             defaultMoveRate: {ID: 20, type: DataType.uint16},
             startUpCurrentLevel: {ID: 16384, type: DataType.uint8},
             elkoStartUpCurrentLevel: {ID: 0x4000, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
-            ubisysMinimumOnLevel: {ID: 0, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysMinimumOnLevel: {ID: 0x0000, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysValveType: {ID: 0x0001, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysCyclePeriod: {ID: 0x0002, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysSeason: {ID: 0x0003, type: DataType.enum8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysBackupLevel: {ID: 0x0004, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysAlternateBackupLevel: {ID: 0x0005, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysLowerRange: {ID: 0x0006, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysUpperRange: {ID: 0x0007, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysPumpThresholdOn: {ID: 0x0008, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysPumpThresholdOff: {ID: 0x0009, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysHeatingDemandEnableThreshold: {ID: 0x000A, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysHeatingDemandDisableThreshold: {ID: 0x000B, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysCoolingDemandEnableThreshold: {ID: 0x000C, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysCoolingDemandDisableThreshold: {ID: 0x000D, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
         },
         commands: {
             moveToLevel: {
@@ -2058,6 +2071,22 @@ const Cluster: {
             elkoLastMessageStatus: {ID: 0x0419, type: DataType.uint8},
             fourNoksHysteresisHigh: {ID: 0x0101, type: DataType.uint16, manufacturerCode: ManufacturerCode._4_NOKS},
             fourNoksHysteresisLow: {ID: 0x0102, type: DataType.uint16, manufacturerCode: ManufacturerCode._4_NOKS},
+            ubisysClassBTemperatureOffset: {ID: 0x0000, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysReturnFlowTemperatureWeight: {ID: 0x0001, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawOutdoorTemperature: {ID: 0x0002, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawLocalTemperatureA: {ID: 0x0003, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawLocalTemperatureB: {ID: 0x0004, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawForwardFlowTemperature: {ID: 0x0005, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawReturnFlowTemperature: {ID: 0x0006, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysInstalledExtensions: {ID: 0x0007, type: DataType.bitmap64, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysTemperatureOffset: {ID: 0x0010, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysDefaultOccupiedHeatingSetpoint: {ID: 0x0011, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysVacationMode: {ID: 0x0012, type: DataType.boolean, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRemoteTemperature: {ID: 0x0013, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRemoteTemperatureValidDuration: {ID: 0x0014, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysProportionalGain: {ID: 0x0020, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysProportionalShift: {ID: 0x0021, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysIntegralFactor: {ID: 0x0022, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
         },
         commands: {
             setpointRaiseLower: {
@@ -4279,47 +4308,6 @@ const Cluster: {
             capabilities: {ID: 0x0000, type: DataType.bitmap8},
             status: {ID: 0x0001, type: DataType.bitmap8},
             mode: {ID: 0x0002, type: DataType.bitmap8},
-        },
-        commands: {
-        },
-        commandsResponse: {
-        }
-    },
-    manuSpecificUbisysHeatingRegulatorThermostat: {
-        ID: 0x0201, // = 513
-        manufacturerCode: ManufacturerCode.Ubisys,
-        attributes: {
-            classBTemperatureOffset: {ID: 0x0000, type: DataType.int8},
-            returnFlowTemperatureWeight: {ID: 0x0001, type: DataType.int8},
-            rawOutdoorTemperature: {ID: 0x0002, type: DataType.struct},
-            rawLocalTemperatureA: {ID: 0x0003, type: DataType.struct},
-            rawLocalTemperatureB: {ID: 0x0004, type: DataType.struct},
-            rawForwardFlowTemperature: {ID: 0x0005, type: DataType.struct},
-            rawReturnFlowTemperature: {ID: 0x0006, type: DataType.struct},
-            installedExtensions: {ID: 0x0007, type: DataType.bitmap64},
-        },
-        commands: {
-        },
-        commandsResponse: {
-        }
-    },
-    manuSpecificUbisysHeatingRegulatorLevelCtrl: {
-        ID: 8,
-        manufacturerCode: ManufacturerCode.Ubisys,
-        attributes: {
-            valveType: {ID: 0x0000, type: DataType.bitmap8},
-            cyclePeriod: {ID: 0x0001, type: DataType.uint8},
-            season: {ID: 0x0002, type: DataType.enum8},
-            backupLevel: {ID: 0x0003, type: DataType.uint8},
-            alternateBackupLevel: {ID: 0x0004, type: DataType.uint8},
-            lowerRange: {ID: 0x0005, type: DataType.uint8},
-            upperRange: {ID: 0x0006, type: DataType.uint8},
-            pumpThresholdOn: {ID: 0x0007, type: DataType.uint8},
-            pumpThresholdOff: {ID: 0x0008, type: DataType.uint8},
-            heatingDemandEnableThreshold: {ID: 0x0009, type: DataType.uint8},
-            heatingDemandDisableThreshold: {ID: 0x000A, type: DataType.uint8},
-            coolingDemandEnableThreshold: {ID: 0x000B, type: DataType.uint8},
-            coolingDemandDisableThreshold: {ID: 0x000C, type: DataType.uint8},
         },
         commands: {
         },
