@@ -5701,6 +5701,38 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    manuSpecificAmazonWWAH: {
+        ID: 0xfc57,
+        manufacturerCode: ManufacturerCode.AMAZON_LAB126,
+        attributes: {
+            disableOTADowngrades: {ID: 0x0002, type: DataType.boolean},
+            mgmtLeaveWithoutRejoinEnabled: {ID: 0x0003, type: DataType.boolean},
+            nwkRetryCount: {ID: 0x0004, type: DataType.uint8},
+            macRetryCount: {ID: 0x0005, type: DataType.uint8},
+            routerCheckInEnabled: {ID: 0x0006, type: DataType.boolean},
+            touchlinkInterpanEnabled: {ID: 0x0007, type: DataType.boolean},
+            wwahParentClassificationEnabled: {ID: 0x0008, type: DataType.boolean},
+            wwahAppEventRetryEnabled: {ID: 0x0009, type: DataType.boolean},
+            wwahAppEventRetryQueueSize: {ID: 0x000A, type: DataType.uint8},
+            wwahRejoinEnabled: {ID: 0x000B, type: DataType.boolean},
+            macPollFailureWaitTime: {ID: 0x000C, type: DataType.uint8},
+            configurationModeEnabled: {ID: 0x000D, type: DataType.boolean},
+            currentDebugReportID: {ID: 0x000E, type: DataType.uint8},
+            tcSecurityOnNwkKeyRotationEnabled: {ID: 0x000F, type: DataType.boolean},
+            wwahBadParentRecoveryEnabled: {ID: 0x0010, type: DataType.boolean},
+            pendingNetworkUpdateChannel: {ID: 0x0011, type: DataType.uint8},
+            pendingNetworkUpdatePANID: {ID: 0x0012, type: DataType.uint16},
+            otaMaxOfflineDuration: {ID: 0x0013, type: DataType.uint16},
+            clusterRevision: {ID: 0xFFFD, type: DataType.uint16},
+        },
+        commands: {
+            clearBindingTable: {
+                ID: 0x0A,
+                parameters: [],
+            },
+        },
+        commandsResponse: {},
+    },
 };
 
 export default Cluster;
