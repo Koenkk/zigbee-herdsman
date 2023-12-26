@@ -41,8 +41,6 @@
   "devDependencies": {
     "@babel/cli": "*",
     "@babel/core": "*",
-    "@babel/plugin-proposal-class-properties": "*",
-    "@babel/plugin-proposal-object-rest-spread": "*",
     "@babel/preset-env": "*",
     "@babel/preset-typescript": "*",
     "@types/debounce": "^1.2.4",
@@ -60,7 +58,6 @@
     "typedoc": "^0.25.4",
     "typedoc-plugin-markdown": "*",
     "typedoc-plugin-no-inherit": "*",
-    "typedoc-plugin-sourcefile-url": "*",
     "typescript": "*"
   },
   "homepage": "https://github.com/Koenkk/zigbee-herdsman",
