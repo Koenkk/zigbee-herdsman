@@ -273,7 +273,7 @@ export class Ezsp extends EventEmitter {
                 debug.log(`Next attempt ${i+1}`);
             }
         }
-        if (!this.serialDriver.isInitialized) {
+        if (!this.serialDriver.isInitialized()) {
             throw new Error("Failure to connect");
         }
         if (WATCHDOG_WAKE_PERIOD) {
