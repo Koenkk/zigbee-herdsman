@@ -5178,6 +5178,7 @@ const Cluster: {
             ledBarScaling: {ID: 0x0064, type: DataType.boolean},
             auxSwitchUniqueScenes: {ID: 0x007b, type: DataType.boolean},
             bindingOffToOnSyncLevel: {ID: 0x007d, type: DataType.boolean},
+            breezeMode: {ID: 0x0081, type: DataType.uint32},
             localProtection: {ID: 0x0100, type: DataType.boolean},
             remoteProtection: {ID: 0x0101, type: DataType.boolean},
             outputMode: {ID: 0x0102, type: DataType.boolean},
