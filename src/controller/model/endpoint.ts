@@ -634,8 +634,8 @@ class Endpoint extends Entity {
                     dataType = attribute.type;
                     attrId = attribute.ID;
                     if (attribute.hasOwnProperty('manufacturerCode')) {
-	                options.manufacturerCode = attribute.manufacturerCode;
-		    }
+                        options.manufacturerCode = attribute.manufacturerCode;
+                    }
                 }
             }
 
