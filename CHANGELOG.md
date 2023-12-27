@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.29.0...v0.29.1) (2023-12-27)
+
+
+### Bug Fixes
+
+* **ignore:** Revert module to commonjs ([7d14fff](https://github.com/Koenkk/zigbee-herdsman/commit/7d14fff1e45f7ccd99369fe606c57563b641e06c))
+
 ## [0.29.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.28.0...v0.29.0) (2023-12-27)
 
 
