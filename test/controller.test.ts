@@ -2733,6 +2733,30 @@ describe('Controller', () => {
         expect({...endpoint.configuredReportings[0], cluster: undefined}).toStrictEqual({"attribute":{"ID":16384,"type":48,"manufacturerCode":4641,"name":"viessmannWindowOpenInternal"},"minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1, "cluster": undefined});
     });
 
+    it('Endpoint configure reporting for manufacturer specific attribute from definition', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        device._manufacturerID = 0x10f2;
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockClear();
+        await endpoint.configureReporting('hvacThermostat', [{
+            attribute: 'ubisysVacationMode',
+            minimumReportInterval: 1,
+            maximumReportInterval: 10,
+            reportableChange: 1,
+        }])
+
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe('0x129');
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1)
+        expect({...deepClone(call[3]), Cluster: {}}).toStrictEqual({"Cluster":{},"Command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"conditions":[{"type":"directionEquals","value":0}],"name":"dataType","type":32},{"conditions":[{"type":"directionEquals","value":0}],"name":"minRepIntval","type":33},{"conditions":[{"type":"directionEquals","value":0}],"name":"maxRepIntval","type":33},{"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}],"name":"repChange","type":1000},{"conditions":[{"type":"directionEquals","value":1}],"name":"timeout","type":33}],"response":7},"Header":{"commandIdentifier":6,"frameControl":{"direction":0,"disableDefaultResponse":true,"frameType":0,"manufacturerSpecific":true,"reservedBits":0},"manufacturerCode":4338,"transactionSequenceNumber":11},"Payload":[{"attrId":18,"dataType":16,"direction":0,"maxRepIntval":10,"minRepIntval":1,"repChange":1}]});
+
+        expect(endpoint.configuredReportings.length).toBe(1);
+        expect({...endpoint.configuredReportings[0], cluster: undefined}).toStrictEqual({"attribute":{"ID":18,"type":16,"manufacturerCode":4338,"name":"ubisysVacationMode"},"minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1, "cluster": undefined});
+    });
+
     it('Save endpoint configure reporting', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
