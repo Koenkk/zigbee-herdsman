@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.29.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.28.0...v0.29.0) (2023-12-27)
+
+
+### Features
+
+* **ignore:** Add Amazon Work With All Hubs cluster ([#839](https://github.com/Koenkk/zigbee-herdsman/issues/839)) ([854fd12](https://github.com/Koenkk/zigbee-herdsman/commit/854fd12c08ea9dea97e4a05d2de22ef5419a7dfe))
+
+
+### Bug Fixes
+
+* Add breezemode to Inovelli Cluster ([#842](https://github.com/Koenkk/zigbee-herdsman/issues/842)) ([64273b7](https://github.com/Koenkk/zigbee-herdsman/commit/64273b755122ea76120a446717a579cab0118aa2))
+* Fix EZSP initialisation check ([#841](https://github.com/Koenkk/zigbee-herdsman/issues/841)) ([93cc97f](https://github.com/Koenkk/zigbee-herdsman/commit/93cc97f3f0591ac0bbbbbad6b76ae10e6cefb9a8))
+* Fix wrong manufacturer code when configuring reporting for manufacturer specific attribute ([#844](https://github.com/Koenkk/zigbee-herdsman/issues/844)) ([9951d44](https://github.com/Koenkk/zigbee-herdsman/commit/9951d44af24023ea339e159e6f86c942543b8546))
+* **ignore:** update dependencies ([#845](https://github.com/Koenkk/zigbee-herdsman/issues/845)) ([9d122f3](https://github.com/Koenkk/zigbee-herdsman/commit/9d122f3a531f6487f4e7f3b737ebf70549ded5c0))
+* **ignore:** Update tsconfig and fix 599b3e96afe9ace3cb0231ff069fc3ff70e43b2e ([c4f9bf4](https://github.com/Koenkk/zigbee-herdsman/commit/c4f9bf4ae5385ede9718ed09066e2450222d5aef))
+
 ## [0.28.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.27.1...v0.28.0) (2023-12-23)
 
 
