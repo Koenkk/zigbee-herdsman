@@ -633,6 +633,9 @@ class Endpoint extends Entity {
                     const attribute = cluster.getAttribute(item.attribute);
                     dataType = attribute.type;
                     attrId = attribute.ID;
+                    if (attribute.hasOwnProperty('manufacturerCode')) {
+                        options.manufacturerCode = attribute.manufacturerCode;
+                    }
                 }
             }
 
