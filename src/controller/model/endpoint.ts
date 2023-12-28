@@ -362,6 +362,26 @@ class Endpoint extends Entity {
     ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+
+        const manufacturerCodes = new Set(Object.keys(attributes).map((nameOrID): string|number => {
+            // we fall back to caller|cluster provided manufacturerCode
+            if (cluster.hasAttribute(nameOrID)) {
+                const attribute = cluster.getAttribute(nameOrID);
+                return (attribute.manufacturerCode === undefined) ?
+		    options.manufacturerCode :
+		    attribute.manufacturerCode;
+            } else {
+                // unknown attribute, we should not fail on this here
+                return options.manufacturerCode;
+            }
+        }));
+        if (manufacturerCodes.size == 1) {
+            options.manufacturerCode = manufacturerCodes.values().next().value;
+        } else {
+	    throw new Error('Cannot have attributes with different manufacturerCode ' +
+		"in single 'write' call");
+        }
+
         const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (cluster.hasAttribute(nameOrID)) {
@@ -441,6 +461,26 @@ class Endpoint extends Entity {
     ): Promise<KeyValue> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+
+        const manufacturerCodes = new Set(attributes.map((nameOrID): string|number => {
+            // we fall back to caller|cluster provided manufacturerCode
+            if (cluster.hasAttribute(nameOrID)) {
+                const attribute = cluster.getAttribute(nameOrID);
+                return (attribute.manufacturerCode === undefined) ?
+		    options.manufacturerCode :
+		    attribute.manufacturerCode;
+            } else {
+                // unknown attribute, we should not fail on this here
+                return options.manufacturerCode;
+            }
+        }));
+        if (manufacturerCodes.size == 1) {
+            options.manufacturerCode = manufacturerCodes.values().next().value;
+        } else {
+	    throw new Error('Cannot have attributes with different manufacturerCode ' +
+		"in single 'read' call");
+        }
+
         const payload: {attrId: number}[] = [];
         for (const attribute of attributes) {
             payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
@@ -621,6 +661,25 @@ class Endpoint extends Entity {
     ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+
+        const manufacturerCodes = new Set(items.map((item): string|number => {
+            // we fall back to caller|cluster provided manufacturerCode
+            if ((typeof item.attribute !== 'object') && (cluster.hasAttribute(item.attribute))) {
+                const attribute = cluster.getAttribute(item.attribute);
+                return (attribute.manufacturerCode === undefined) ?
+		    options.manufacturerCode :
+		    attribute.manufacturerCode;
+            } else {
+                return options.manufacturerCode;
+            }
+        }));
+        if (manufacturerCodes.size == 1) {
+            options.manufacturerCode = manufacturerCodes.values().next().value;
+        } else {
+	    throw new Error('Cannot have attributes with different manufacturerCode ' +
+		"in single 'configureReporting' call");
+        }
+
         const payload = items.map((item): KeyValue => {
             let dataType, attrId;
 
@@ -633,9 +692,6 @@ class Endpoint extends Entity {
                     const attribute = cluster.getAttribute(item.attribute);
                     dataType = attribute.type;
                     attrId = attribute.ID;
-                    if (attribute.hasOwnProperty('manufacturerCode')) {
-                        options.manufacturerCode = attribute.manufacturerCode;
-                    }
                 }
             }
 
