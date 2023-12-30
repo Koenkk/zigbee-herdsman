@@ -362,7 +362,7 @@ class Endpoint extends Entity {
     ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-        options.manufacturerCode = this.ensureManufacturerCodeIsUnique(
+        options.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
             cluster, Object.keys(attributes), options.manufacturerCode, 'write',
         );
 
@@ -445,7 +445,7 @@ class Endpoint extends Entity {
     ): Promise<KeyValue> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-        options.manufacturerCode = this.ensureManufacturerCodeIsUnique(
+        options.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
             cluster, attributes, options.manufacturerCode, 'read',
         );
 
@@ -629,7 +629,7 @@ class Endpoint extends Entity {
     ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-        options.manufacturerCode = this.ensureManufacturerCodeIsUnique(
+        options.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
             cluster, items, options.manufacturerCode, 'configureReporting',
         );
 
@@ -835,7 +835,7 @@ class Endpoint extends Entity {
         };
     }
 
-    private ensureManufacturerCodeIsUnique(
+    private ensureManufacturerCodeIsUniqueAndGet(
         cluster: Zcl.TsType.Cluster, attributes: (string|number)[]|ConfigureReportingItem[],
         fallbackManufacturerCode: number, caller: string,
     ): number {
