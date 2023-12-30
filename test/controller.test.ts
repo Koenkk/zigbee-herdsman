@@ -73,7 +73,7 @@ let configureReportDefaultRsp = false;
 
 const restoreMocksendZclFrameToEndpoint = () => {
     mocksendZclFrameToEndpoint.mockImplementation((ieeeAddr, networkAddress, endpoint, frame: ZclFrame) => {
-        if (frame.isGlobal() && frame.isCommand('read') && (frame.isCluster('genBasic') || frame.isCluster('ssIasZone') || frame.isCluster('genPollCtrl'))) {
+        if (frame.isGlobal() && frame.isCommand('read') && (frame.isCluster('genBasic') || frame.isCluster('ssIasZone') || frame.isCluster('genPollCtrl') || frame.isCluster('hvacThermostat'))) {
             const payload = [];
             const cluster = frame.Cluster;
             for (const item of frame.Payload) {
@@ -3283,7 +3283,7 @@ describe('Controller', () => {
         expect(call[4]).toBe(10000);
     });
 
-    it('Read from endpoint with custom attribute', async () => {
+    it('onlythis Read from endpoint with custom attribute', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mocksendZclFrameToEndpoint.mockClear();
