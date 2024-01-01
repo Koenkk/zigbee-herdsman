@@ -362,6 +362,10 @@ class Endpoint extends Entity {
     ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+        options.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
+            cluster, Object.keys(attributes), options.manufacturerCode, 'write',
+        );
+
         const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (cluster.hasAttribute(nameOrID)) {
@@ -441,6 +445,10 @@ class Endpoint extends Entity {
     ): Promise<KeyValue> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+        options.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
+            cluster, attributes, options.manufacturerCode, 'read',
+        );
+
         const payload: {attrId: number}[] = [];
         for (const attribute of attributes) {
             payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
@@ -621,6 +629,10 @@ class Endpoint extends Entity {
     ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+        options.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
+            cluster, items, options.manufacturerCode, 'configureReporting',
+        );
+
         const payload = items.map((item): KeyValue => {
             let dataType, attrId;
 
@@ -633,9 +645,6 @@ class Endpoint extends Entity {
                     const attribute = cluster.getAttribute(item.attribute);
                     dataType = attribute.type;
                     attrId = attribute.ID;
-                    if (attribute.hasOwnProperty('manufacturerCode')) {
-                        options.manufacturerCode = attribute.manufacturerCode;
-                    }
                 }
             }
 
@@ -824,6 +833,42 @@ class Endpoint extends Entity {
             writeUndiv: false,
             ...providedOptions
         };
+    }
+
+    private ensureManufacturerCodeIsUniqueAndGet(
+        cluster: Zcl.TsType.Cluster, attributes: (string|number)[]|ConfigureReportingItem[],
+        fallbackManufacturerCode: number, caller: string,
+    ): number {
+        const manufacturerCodes = new Set(attributes.map((nameOrID): number => {
+            let attributeID;
+            if (typeof nameOrID == 'object') {
+                // ConfigureReportingItem
+                if (typeof nameOrID.attribute !== 'object') {
+                    attributeID = nameOrID.attribute;
+                } else {
+                    return fallbackManufacturerCode;
+                }
+            } else {
+                // string || number
+                attributeID = nameOrID;
+            }
+
+            // we fall back to caller|cluster provided manufacturerCode
+            if (cluster.hasAttribute(attributeID)) {
+                const attribute = cluster.getAttribute(attributeID);
+                return (attribute.manufacturerCode === undefined) ?
+                    fallbackManufacturerCode :
+                    attribute.manufacturerCode;
+            } else {
+                // unknown attribute, we should not fail on this here
+                return fallbackManufacturerCode;
+            }
+        }));
+        if (manufacturerCodes.size == 1) {
+            return manufacturerCodes.values().next().value;
+        } else {
+            throw new Error(`Cannot have attributes with different manufacturerCode in single '${caller}' call`);
+        }
     }
 
     public async addToGroup(group: Group): Promise<void> {
