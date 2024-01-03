@@ -4998,7 +4998,6 @@ describe('Controller', () => {
         await device.interview();
 
         const endpoint = device.getEndpoint(1);
-        endpoint.pendingRequests.add(new Request(async () => {}, [], 100, 'fastpoll', undefined, undefined, () => {}, () => {}));
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockImplementationOnce(() => {throw new Error("dogs barking too hard");});
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);

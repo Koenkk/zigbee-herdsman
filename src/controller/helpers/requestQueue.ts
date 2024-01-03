@@ -50,7 +50,7 @@ class RequestQueue extends Set<Request> {
             `${this.size}, ${fastPolling})`);
 
         for (const request of this) {
-            if (fastPolling || (request.sendWhen !== 'fastpoll' && request.sendPolicy !== 'bulk')) {
+            if (fastPolling || request.sendPolicy !== 'bulk') {
                 try {
                     const result = await request.send();
                     debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`);
