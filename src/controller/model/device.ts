@@ -270,12 +270,12 @@ class Device extends Entity {
                         fastPollTimeout: 0,
                     };
                     debug.log(`check-in from ${this.ieeeAddr}: accepting fast-poll`);
-                    await endpoint.command(frame.Cluster.ID, 'checkinRsp', payload, {sendWhen: 'immediate'});
+                    await endpoint.command(frame.Cluster.ID, 'checkinRsp', payload, {sendPolicy: 'immediate'});
 
                     // This is a good time to read the checkin interval if we haven't stored it previously
                     if (this._checkinInterval === undefined) {
                         const pollPeriod =
-                            await endpoint.read('genPollCtrl', ['checkinInterval'], {sendWhen: 'immediate'});
+                            await endpoint.read('genPollCtrl', ['checkinInterval'], {sendPolicy: 'immediate'});
                         this._checkinInterval = pollPeriod.checkinInterval / 4; // convert to seconds
                         this.pendingRequestTimeout = this._checkinInterval * 1000; // milliseconds
                         debug.log(`Request Queue (${
@@ -285,14 +285,14 @@ class Device extends Entity {
                     // We *must* end fast-poll when we're done sending things. Otherwise
                     // we cause undue power-drain.
                     debug.log(`check-in from ${this.ieeeAddr}: stopping fast-poll`);
-                    await endpoint.command(frame.Cluster.ID, 'fastPollStop', {}, {sendWhen: 'immediate'});
+                    await endpoint.command(frame.Cluster.ID, 'fastPollStop', {}, {sendPolicy: 'immediate'});
                 } else {
                     const payload = {
                         startFastPolling: false,
                         fastPollTimeout: 0,
                     };
                     debug.log(`check-in from ${this.ieeeAddr}: declining fast-poll`);
-                    await endpoint.command(frame.Cluster.ID, 'checkinRsp', payload, {sendWhen: 'immediate'});
+                    await endpoint.command(frame.Cluster.ID, 'checkinRsp', payload, {sendPolicy: 'immediate'});
                 }
             } catch (error) {
                 /* istanbul ignore next */
@@ -461,7 +461,7 @@ class Device extends Entity {
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
-            interviewCompleted, {}, null, 'immediate', undefined, 0
+            interviewCompleted, {}, null, undefined, undefined, 0
         );
 
         Entity.database.insert(device.toDatabaseEntry());
@@ -612,7 +612,7 @@ class Device extends Entity {
             try {
                 const endpoint = Endpoint.create(1, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
                 const result = await endpoint.read('genBasic', ['modelId', 'manufacturerName'], 
-                    {sendWhen: 'immediate'});
+                    {sendPolicy: 'immediate'});
                 Object.entries(result)
                     .forEach((entry) => Device.ReportablePropertiesMapping[entry[0]].set(entry[1], this));
             } catch (error) {
@@ -663,7 +663,7 @@ class Device extends Entity {
                         try {
                             let result: KeyValue;
                             try {
-                                result = await endpoint.read('genBasic', [key], {sendWhen: 'immediate'});
+                                result = await endpoint.read('genBasic', [key], {sendPolicy: 'immediate'});
                             } catch (error) {
                                 // Reading attributes can fail for many reason, e.g. it could be that device rejoins
                                 // while joining like in:
@@ -673,7 +673,7 @@ class Device extends Entity {
                                     debug.log(`Interview - first ${item.key} retrieval attempt failed, ` +
                                         `retrying after 10 seconds...`);
                                     await Wait(10000);
-                                    result = await endpoint.read('genBasic', [key], {sendWhen: 'immediate'});
+                                    result = await endpoint.read('genBasic', [key], {sendPolicy: 'immediate'});
                                 } else {
                                     throw error;
                                 }
@@ -698,14 +698,14 @@ class Device extends Entity {
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
             debug.log(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
 
-            const stateBefore = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'], {sendWhen: 'immediate'});
+            const stateBefore = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'], {sendPolicy: 'immediate'});
             debug.log(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`);
 
             // Do not enroll when device has already been enrolled
             if (stateBefore.zoneState !== 1 || stateBefore.iasCieAddr !== coordinator.ieeeAddr) {
                 debug.log(`Interview - IAS - not enrolled, enrolling`);
 
-                await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr}, {sendWhen: 'immediate'});
+                await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr}, {sendPolicy: 'immediate'});
                 debug.log(`Interview - IAS - wrote iasCieAddr`);
 
                 // There are 2 enrollment procedures:
@@ -717,14 +717,14 @@ class Device extends Entity {
                 await Wait(500);
                 debug.log(`IAS - '${this.ieeeAddr}' sending enroll response (auto enroll)`);
                 const payload = {enrollrspcode: 0, zoneid: 23};
-                await endpoint.command('ssIasZone', 'enrollRsp', payload, 
-                    {disableDefaultResponse: true, sendWhen: 'immediate'});
+                await endpoint.command('ssIasZone', 'enrollRsp', payload,
+                    {disableDefaultResponse: true, sendPolicy: 'immediate'});
 
                 let enrolled = false;
                 for (let attempt = 0; attempt < 20; attempt++) {
                     await Wait(500);
-                    const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'], 
-                        {sendWhen: 'immediate'});
+                    const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'],
+                        {sendPolicy: 'immediate'});
                     debug.log(`Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`);
                     if (stateAfter.zoneState === 1) {
                         enrolled = true;
@@ -749,7 +749,7 @@ class Device extends Entity {
             for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
                 debug.log(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
                 await endpoint.bind('genPollCtrl', coordinator.endpoints[0]);
-                const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval'], {sendWhen: 'immediate'});
+                const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval'], {sendPolicy: 'immediate'});
                 this._checkinInterval = pollPeriod.checkinInterval / 4; // convert to seconds
                 this.pendingRequestTimeout = this._checkinInterval * 1000; // milliseconds
                 if (pollPeriod.checkinInterval <= 2400) {// 10 minutes

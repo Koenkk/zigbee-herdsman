@@ -277,21 +277,31 @@ class Endpoint extends Entity {
                 options.disableResponse, options.disableRecovery, options.srcEndpoint) as Promise<Type>;
         }): Promise<Type> {
         const logPrefix = `Request Queue (${this.deviceIeeeAddress}/${this.ID}): `;
-        const request = new Request(func, frame, this.getDevice().pendingRequestTimeout, options.sendWhen,
-            options.sendPolicy);
+
+        if(options.sendWhen) {
+            /* istanbul ignore next */
+            if ((options.sendWhen === 'immediate') && (this.getDevice().pendingRequestTimeout > 0)) {
+                debug.info (logPrefix + "sendWhen is deprecated. Interpreting sendwhen='immediate' as sendPolicy='immediate'" );
+                options.sendPolicy = 'immediate';
+            } else {
+                debug.info (logPrefix + "sendWhen is deprecated and will be ignored.");
+            }
+        }
+
+        const request = new Request(func, frame, this.getDevice().pendingRequestTimeout, options.sendPolicy);
 
         if (request.sendPolicy !== 'bulk') {
             // Check if such a request is already in the queue and remove the old one(s) if necessary
             this.pendingRequests.filter(request);
         }
 
-        // send without queueing if sendWhen or sendPolicy is 'immediate' or if the device has no timeout set
-        if (request.sendWhen === 'immediate' || request.sendPolicy === 'immediate'
+        // send without queueing if sendPolicy is 'immediate' or if the device has no timeout set
+        if (request.sendPolicy === 'immediate'
             || !this.getDevice().pendingRequestTimeout) {
-            if (this.getDevice().defaultSendRequestWhen !=='immediate')
+            if (this.getDevice().pendingRequestTimeout > 0)
             {
                 debug.info(logPrefix + `send ${frame.getCommand().name} request immediately ` +
-                    `(sendWhen=${options.sendWhen})`);
+                    `(sendPolicy=${options.sendPolicy})`);
             }
             return request.send();
         }
@@ -820,7 +830,7 @@ class Endpoint extends Entity {
     ): Options {
         const providedOptions = options || {};
         return {
-            sendWhen: this.getDevice().defaultSendRequestWhen,
+            sendWhen: undefined,
             timeout: 10000,
             disableResponse: false,
             disableRecovery: false,

@@ -34,16 +34,14 @@ class Request<Type = any> {
     frame: Zcl.ZclFrame;
     expires: number;
     sendPolicy: SendPolicy;
-    sendWhen: SendRequestWhen;
     private resolveQueue: Array<(value: Type) => void>;
     private rejectQueue: Array <(error: Error) => void>;
     private lastError: Error;
     constructor (func: (frame: Zcl.ZclFrame) => Promise<Type>, frame: Zcl.ZclFrame, timeout: number,
-        sendWhen?: SendRequestWhen, sendPolicy?: SendPolicy, lastError?: Error,
+        sendPolicy?: SendPolicy, lastError?: Error,
         resolve?:(value: Type) => void, reject?: (error: Error) => void) {
         this.func = func;
         this.frame = frame;
-        this.sendWhen = sendWhen ?? 'active',
         this.expires =  timeout + Date.now();
         this.sendPolicy = sendPolicy ?? (typeof frame.getCommand !== 'function' ?
             undefined : Request.defaultSendPolicy[frame.getCommand().ID]);
