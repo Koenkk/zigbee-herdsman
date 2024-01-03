@@ -279,7 +279,6 @@ class Endpoint extends Entity {
         const logPrefix = `Request Queue (${this.deviceIeeeAddress}/${this.ID}): `;
 
         if(options.sendWhen) {
-            /* istanbul ignore next */
             if ((options.sendWhen === 'immediate') && (this.getDevice().pendingRequestTimeout > 0)) {
                 debug.info (logPrefix + "sendWhen is deprecated. Interpreting sendwhen='immediate' as sendPolicy='immediate'" );
                 options.sendPolicy = 'immediate';

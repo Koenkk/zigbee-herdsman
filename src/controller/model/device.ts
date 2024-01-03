@@ -53,7 +53,6 @@ class Device extends Entity {
     private _skipDefaultResponse: boolean;
     private _skipTimeResponse: boolean;
     private _deleted: boolean;
-    private _defaultSendRequestWhen?: SendRequestWhen;
     private _lastDefaultResponseSequenceNumber: number;
     private _checkinInterval: number;
     private _pendingRequestTimeout: number;
@@ -102,10 +101,6 @@ class Device extends Entity {
     set skipDefaultResponse(skipDefaultResponse: boolean) {this._skipDefaultResponse = skipDefaultResponse;}
     get skipTimeResponse(): boolean {return this._skipTimeResponse;}
     set skipTimeResponse(skipTimeResponse: boolean) {this._skipTimeResponse = skipTimeResponse;}
-    get defaultSendRequestWhen(): SendRequestWhen {return this._defaultSendRequestWhen;}
-    set defaultSendRequestWhen(defaultSendRequestWhen: SendRequestWhen) {
-        this._defaultSendRequestWhen = defaultSendRequestWhen;
-    }
     get checkinInterval(): number {return this._checkinInterval;}
     get pendingRequestTimeout(): number {return this._pendingRequestTimeout;}
     set pendingRequestTimeout(pendingRequestTimeout: number) {this._pendingRequestTimeout = pendingRequestTimeout;}
@@ -137,7 +132,7 @@ class Device extends Entity {
         manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
         powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
         hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
-        lastSeen: number, defaultSendRequestWhen: SendRequestWhen, checkinInterval: number,
+        lastSeen: number, checkinInterval: number,
         pendingRequestTimeout: number
     ) {
         super();
@@ -162,7 +157,6 @@ class Device extends Entity {
         this._skipTimeResponse = false;
         this.meta = meta;
         this._lastSeen = lastSeen;
-        this._defaultSendRequestWhen = defaultSendRequestWhen;
         this._checkinInterval = checkinInterval;
         this._pendingRequestTimeout = pendingRequestTimeout;
     }
@@ -344,19 +338,6 @@ class Device extends Entity {
             throw new Error('Cannot load device from group');
         }
 
-        let defaultSendRequestWhen: SendRequestWhen = entry.defaultSendRequestWhen;
-        /* istanbul ignore next */
-        if (defaultSendRequestWhen == null) {
-            // Guess defaultSendRequestWhen based on old useImplicitCheckin/defaultSendWhenActive
-            if (entry.hasOwnProperty('useImplicitCheckin') && !entry.useImplicitCheckin) {
-                defaultSendRequestWhen = 'fastpoll';
-            } else if (entry.hasOwnProperty('defaultSendWhenActive') &&  entry.defaultSendWhenActive) {
-                defaultSendRequestWhen = 'active';
-            } else {
-                defaultSendRequestWhen = 'immediate';
-            }
-        }
-
         // default: no timeout (messages expire immediately after first send attempt)
         let pendingRequestTimeout = 0;
         if((endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))).length > 0) {
@@ -374,7 +355,7 @@ class Device extends Entity {
             entry.id, entry.type, ieeeAddr, networkAddress, entry.manufId, endpoints,
             entry.manufName, entry.powerSource, entry.modelId, entry.appVersion,
             entry.stackVersion, entry.zclVersion, entry.hwVersion, entry.dateCode, entry.swBuildId,
-            entry.interviewCompleted, meta, entry.lastSeen || null, defaultSendRequestWhen, entry.checkinInterval,
+            entry.interviewCompleted, meta, entry.lastSeen || null, entry.checkinInterval,
             pendingRequestTimeout
         );
     }
@@ -392,8 +373,7 @@ class Device extends Entity {
             modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion,
             stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
             swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
-            meta: this.meta, lastSeen: this.lastSeen, defaultSendRequestWhen: this.defaultSendRequestWhen,
-            checkinInterval: this.checkinInterval
+            meta: this.meta, lastSeen: this.lastSeen, checkinInterval: this.checkinInterval
         };
     }
 
@@ -461,7 +441,7 @@ class Device extends Entity {
         const device = new Device(
             ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
             powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
-            interviewCompleted, {}, null, undefined, undefined, 0
+            interviewCompleted, {}, null, undefined, 0
         );
 
         Entity.database.insert(device.toDatabaseEntry());
@@ -752,11 +732,6 @@ class Device extends Entity {
                 const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval'], {sendPolicy: 'immediate'});
                 this._checkinInterval = pollPeriod.checkinInterval / 4; // convert to seconds
                 this.pendingRequestTimeout = this._checkinInterval * 1000; // milliseconds
-                if (pollPeriod.checkinInterval <= 2400) {// 10 minutes
-                    this.defaultSendRequestWhen = 'fastpoll';
-                } else {
-                    this.defaultSendRequestWhen = 'active';
-                }
             }
         } catch (error) {
             /* istanbul ignore next */
