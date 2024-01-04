@@ -58,10 +58,13 @@ class Waitress<TPayload, TMatcher> {
         const start = (): {promise: Promise<TPayload>; ID: number} => {
             const waiter = this.waiters.get(ID);
             if (waiter && !waiter.resolved && !waiter.timer) {
+                // Capture the stack trace from the caller of start()
+                const error = new Error();
+                Error.captureStackTrace(error);
                 waiter.timer = setTimeout((): void => {
-                    const message = this.timeoutFormatter(matcher, timeout);
+                    error.message = this.timeoutFormatter(matcher, timeout);
                     waiter.timedout = true;
-                    waiter.reject(new Error(message));
+                    waiter.reject(error);
                 }, timeout);
             }
 

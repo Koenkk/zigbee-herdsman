@@ -1,9 +1,7 @@
 interface Job<T> {
     key: string | number;
-    func: () => Promise<T>;
     running: boolean;
-    resolve: (result: T) => void;
-    reject: (error: Error) => void;
+    start: () => void;
 }
 
 class Queue {
@@ -15,29 +13,28 @@ class Queue {
         this.concurrent = concurrent;
     }
 
-    public execute<T>(func: () => Promise<T>, key: string | number = null): Promise<T> {
-        return new Promise((resolve, reject): void =>  {
-            this.jobs.push({key, func, running: false, resolve, reject});
+    public async execute<T>(func: () => Promise<T>, key: string | number = null): Promise<T> {
+        const job : Job<unknown> = {key, running: false, start: null};
+        await new Promise((resolve): void =>  {
+            job.start = (): void => resolve(null);
+            this.jobs.push(job);
             this.executeNext();
         });
+
+        try {
+            return await func();
+        } finally {
+            this.jobs.splice(this.jobs.indexOf(job), 1);
+            this.executeNext();
+        }
     }
 
-    private async executeNext(): Promise<void> {
+    private executeNext(): void {
         const job = this.getNext();
 
         if (job) {
             job.running = true;
-
-            try {
-                const result = await job.func();
-                this.jobs.splice(this.jobs.indexOf(job), 1);
-                job.resolve(result);
-                this.executeNext();
-            } catch (error) {
-                this.jobs.splice(this.jobs.indexOf(job), 1);
-                job.reject(error);
-                this.executeNext();
-            }
+            job.start();
         }
     }
 
