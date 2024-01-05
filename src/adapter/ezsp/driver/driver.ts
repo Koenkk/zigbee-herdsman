@@ -566,7 +566,7 @@ export class Driver extends EventEmitter {
         const payload = this.makeZDOframe(requestCmd as number, {transId: frame.sequence, ...params});
         const waiter = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
         // if the request takes longer than the timeout, avoid an unhandled promise rejection.
-        waiter.promise.catch((v) => {});
+        waiter.promise.catch(() => {});
         const res = await this.request(networkAddress, frame, payload);
         if (!res) {
             debug.error(`zdoRequest error`);

@@ -89,7 +89,7 @@ export class SerialDriver extends EventEmitter {
                     if (error) {
                         reject(new Error(`Error while opening serialport '${error}'`));
                     } else {
-                        resolve();
+                        resolve(null);
                     }
                 });
             });
