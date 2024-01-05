@@ -263,6 +263,7 @@ export class Ezsp extends EventEmitter {
     }
 
     public async connect(path: string, options: Record<string, number|boolean>): Promise<void> {
+        let lastError = null;
         for (let i = 1; i < 5; i += 1) {
             try {
                 await this.serialDriver.connect(path, options);
@@ -271,10 +272,11 @@ export class Ezsp extends EventEmitter {
                 debug.error(`Connection attempt ${i} error: ${error.stack}`);
                 await Wait(5000);
                 debug.log(`Next attempt ${i+1}`);
+                lastError = error;
             }
         }
         if (!this.serialDriver.isInitialized()) {
-            throw new Error("Failure to connect");
+            throw new Error("Failure to connect", {cause: lastError});
         }
         if (WATCHDOG_WAKE_PERIOD) {
             this.watchdogTimer = setInterval(

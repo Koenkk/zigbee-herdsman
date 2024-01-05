@@ -83,29 +83,35 @@ export class SerialDriver extends EventEmitter {
         this.parser = new Parser();
         this.serialPort.pipe(this.parser);
         this.parser.on('parsed', this.onParsed.bind(this));
-
-        return new Promise((resolve, reject): void => {
-            this.serialPort.open(async (error): Promise<void> => {
-                if (error) {
-                    this.initialized = false;
-                    if (this.serialPort.isOpen) {
-                        this.serialPort.close();
+        try {
+            await new Promise((resolve, reject): void => {
+                this.serialPort.open(async (error): Promise<void> => {
+                    if (error) {
+                        reject(new Error(`Error while opening serialport '${error}'`));
+                    } else {
+                        resolve(null);
                     }
-                    reject(new Error(`Error while opening serialport '${error}'`));
-                } else {
-                    debug('Serialport opened');
-                    this.serialPort.once('close', this.onPortClose.bind(this));
-                    this.serialPort.once('error', (error) => {
-                        debug(`Serialport error: ${error}`);
-                    });
-                    // reset
-                    await this.reset();
-                    this.initialized = true;
-                    this.emit('connected');
-                    resolve();
-                }
+                });
             });
-        });
+
+            debug('Serialport opened');
+            this.serialPort.once('close', this.onPortClose.bind(this));
+            this.serialPort.once('error', (error) => {
+                debug(`Serialport error: ${error}`);
+            });
+    
+            // reset
+            await this.reset();
+            this.initialized = true;
+            this.emit('connected');
+        } catch (e) {
+            this.initialized = false;
+            if (this.serialPort.isOpen) {
+                this.serialPort.close();
+            }
+            throw e;
+        }
+            
     }
 
     private async openSocketPort(path: string): Promise<void> {
@@ -196,7 +202,7 @@ export class SerialDriver extends EventEmitter {
             case (data[0] === 0xC2):
                 debug(`<-- Error: ${data.toString('hex')}`);
                 // send reset
-                this.reset();
+                this.reset().catch((e) => debug(`Failed to reset: ${e}`));
                 break;
             default:
                 debug("UNKNOWN FRAME RECEIVED: %r", data);

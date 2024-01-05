@@ -248,8 +248,10 @@ class Controller extends events.EventEmitter {
 
             // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
             this.permitJoinNetworkClosedTimer = setInterval(async (): Promise<void> => {
-                await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
-                await this.greenPower.permitJoin(254, !device ? null : device.networkAddress);
+                await catcho(async () => {
+                    await this.adapter.permitJoin(254, !device ? null : device.networkAddress);
+                    await this.greenPower.permitJoin(254, !device ? null : device.networkAddress);
+                }, "Failed to keep permit join alive");
             }, 200 * 1000);
 
             if (typeof time === 'number') {
