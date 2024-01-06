@@ -17,6 +17,7 @@ export class EZSPAdapterBackup {
     }
 
     public async createBackup(): Promise<Models.Backup> {
+        if (this.driver.ezsp.ezspV >= 13) return;
         this.debug("creating backup");
         const version: number = await this.driver.ezsp.version();
         const linkResult = await this.driver.ezsp.execCommand('getKey', {keyType: EmberKeyType.TRUST_CENTER_LINK_KEY});

@@ -214,10 +214,12 @@ export class Driver extends EventEmitter {
         this.ezsp.on('frame', this.handleFrame.bind(this));
         this.handleNodeJoined(nwk, this.ieee);
         debug.log(`EZSP nwk=${nwk}, IEEE=0x${this.ieee}`);
-        const linkResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.TRUST_CENTER_LINK_KEY});
-        debug.log(`TRUST_CENTER_LINK_KEY: ${JSON.stringify(linkResult)}`);
-        const netResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.CURRENT_NETWORK_KEY});
-        debug.log(`CURRENT_NETWORK_KEY: ${JSON.stringify(netResult)}`);
+        if (this.ezsp.ezspV < 13) {
+            const linkResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.TRUST_CENTER_LINK_KEY});
+            debug.log(`TRUST_CENTER_LINK_KEY: ${JSON.stringify(linkResult)}`);
+            const netResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.CURRENT_NETWORK_KEY});
+            debug.log(`CURRENT_NETWORK_KEY: ${JSON.stringify(netResult)}`);
+        }
         await Wait(1000);
         await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
         
@@ -677,7 +679,11 @@ export class Driver extends EventEmitter {
     }
     
     public addTransientLinkKey(partner: EmberEUI64, transientKey: EmberKeyData): Promise<EZSPFrameData> {
-        return this.ezsp.execCommand('addTransientLinkKey', {partner, transientKey});
+        if (this.ezsp.ezspV < 13) {
+            return this.ezsp.execCommand('addTransientLinkKey', {partner, transientKey});
+        } else {
+            return this.ezsp.execCommand('importTransientKey', {partner, transientKey, flags: 0});
+        }
     }
     
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {

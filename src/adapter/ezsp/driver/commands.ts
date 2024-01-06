@@ -1294,6 +1294,17 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             status: EmberStatus
         },
     },
+    importTransientKey: {
+        ID: 0x0111,
+        request: {
+            partner: EmberEUI64,
+            transientKey: EmberKeyData,
+            flags: uint8_t
+        },
+        response: {
+            status: EmberStatus
+        },
+    },
     clearTransientLinkKeys: {
         ID: 0x006B, // 107
         request: null,
