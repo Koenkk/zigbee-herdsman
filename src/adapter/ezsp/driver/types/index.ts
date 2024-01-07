@@ -69,6 +69,7 @@ import {
     EzspSourceRouteOverheadInformation,
     EmberNetworkInitBitmask,
     EmberZDOCmd,
+    EmberDerivedKeyType,
 } from './named';
 
 import {
@@ -114,6 +115,7 @@ import {
     EmberNeighbors,
     EmberRoutingTable,
     EmberRoutingTableEntry,
+    EmberSecurityManagerContext,
 } from './struct';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -201,6 +203,7 @@ export {
     EzspSourceRouteOverheadInformation,
     EmberNetworkInitBitmask,
     EmberZDOCmd,
+    EmberDerivedKeyType,
 
     /* Structs */
     EzspStruct,
@@ -245,4 +248,5 @@ export {
     EmberNeighbors,
     EmberRoutingTable,
     EmberRoutingTableEntry,
+    EmberSecurityManagerContext,
 };

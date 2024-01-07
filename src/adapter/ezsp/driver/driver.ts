@@ -5,7 +5,7 @@ import {EmberStatus, EmberNodeType, uint16_t, uint8_t, uint32_t, EmberZDOCmd, Em
     EmberJoinDecision} from './types';
 import {EventEmitter} from "events";
 import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState,
-    EmberRawFrame, EmberIeeeRawFrame, EmberAesMmoHashContext} from './types/struct';
+    EmberRawFrame, EmberIeeeRawFrame, EmberAesMmoHashContext, EmberSecurityManagerContext} from './types/struct';
 import {ember_security} from './utils';
 import {
     EmberOutgoingMessageType,
@@ -16,7 +16,8 @@ import {
     EzspPolicyId,
     EzspDecisionBitmask,
     EmberNetworkStatus,
-    EmberKeyType
+    EmberKeyType,
+    EmberDerivedKeyType,
 } from './types/named';
 import {Multicast} from './multicast';
 import {Waitress, Wait} from '../../../utils';
@@ -214,12 +215,10 @@ export class Driver extends EventEmitter {
         this.ezsp.on('frame', this.handleFrame.bind(this));
         this.handleNodeJoined(nwk, this.ieee);
         debug.log(`EZSP nwk=${nwk}, IEEE=0x${this.ieee}`);
-        if (this.ezsp.ezspV < 13) {
-            const linkResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.TRUST_CENTER_LINK_KEY});
-            debug.log(`TRUST_CENTER_LINK_KEY: ${JSON.stringify(linkResult)}`);
-            const netResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.CURRENT_NETWORK_KEY});
-            debug.log(`CURRENT_NETWORK_KEY: ${JSON.stringify(netResult)}`);
-        }
+        const linkResult = await this.getKey(EmberKeyType.TRUST_CENTER_LINK_KEY);
+        debug.log(`TRUST_CENTER_LINK_KEY: ${JSON.stringify(linkResult)}`);
+        const netResult = await this.getKey(EmberKeyType.CURRENT_NETWORK_KEY);
+        debug.log(`CURRENT_NETWORK_KEY: ${JSON.stringify(netResult)}`);
         await Wait(1000);
         await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
         
@@ -759,6 +758,24 @@ export class Driver extends EventEmitter {
                 sender: frame.addr,
             };
             this.emit('incomingMessage', gpdMessage);
+        }
+    }
+
+    public async getKey(keyType: EmberKeyType): Promise<EZSPFrameData> {
+        if (this.ezsp.ezspV < 13) {
+            return this.ezsp.execCommand('getKey', {keyType});
+        } else {
+            const smc = new EmberSecurityManagerContext();        
+            smc.type = keyType;
+            smc.index = 0;
+            smc.derivedType = EmberDerivedKeyType.NONE;
+            smc.eui64 = new EmberEUI64('0x0000000000000000');
+            smc.multiNetworkIndex = 0;
+            smc.flags = 0;
+            smc.psaKeyAlgPermission = 0;
+            const keyInfo = await this.ezsp.execCommand('exportKey', {context: smc});
+            console.assert(keyInfo.status == EmberStatus.SUCCESS, `exportKey returned unexpected status: ${keyInfo.status}`);
+            return {keyContent: keyInfo};
         }
     }
 }

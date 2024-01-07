@@ -77,6 +77,7 @@ import {/* Basic Types */
     EmberMultiAddress,
     EmberNeighbors,
     EmberRoutingTable,
+    EmberSecurityManagerContext,
 } from './types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -1180,6 +1181,16 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
         response: {
             status: EmberStatus,
             keyStruct: EmberKeyStruct
+        },
+    },
+    exportKey: {
+        ID: 0x0114,
+        request: {
+            context: EmberSecurityManagerContext
+        },
+        response: {
+            keyData: EmberKeyData,
+            status: EmberStatus
         },
     },
     switchNetworkKeyHandler: {

@@ -741,3 +741,30 @@ export class EmberIeeeRawFrame extends EzspStruct {
         ['profileId', basic.uint16_t],
     ];
 }
+
+export class EmberSecurityManagerContext extends EzspStruct {
+    // Context for Zigbee Security Manager operations.
+    public type: named.EmberKeyType;
+    public index: number;
+    public derivedType: named.EmberDerivedKeyType;
+    public eui64: named.EmberEUI64;
+    public multiNetworkIndex: number;
+    public flags: number;
+    public psaKeyAlgPermission: basic.uint32_t;
+    static _fields = [
+        // The type of key being referenced.
+        ['type', named.EmberKeyType],
+        // The index of the referenced key.
+        ['index', basic.uint8_t],
+        // The type of key derivation operation to perform on a key.
+        ['derivedType', named.EmberDerivedKeyType],
+        // The EUI64 associated with this key.
+        ['eui64', named.EmberEUI64],
+        // Multi-network index.
+        ['multiNetworkIndex', basic.uint8_t],
+        // Flag bitmask.
+        ['flags', basic.uint8_t],
+        // Algorithm to use with this key (for PSA APIs)
+        ['psaKeyAlgPermission', basic.uint32_t],
+    ]
+}
