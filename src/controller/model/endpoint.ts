@@ -280,7 +280,8 @@ class Endpoint extends Entity {
 
         if(options.sendWhen) {
             if ((options.sendWhen === 'immediate') && (this.getDevice().pendingRequestTimeout > 0)) {
-                debug.info (logPrefix + "sendWhen is deprecated. Interpreting sendwhen='immediate' as sendPolicy='immediate'" );
+                debug.info (logPrefix
+                    + "sendWhen is deprecated. Interpreting sendwhen='immediate' as sendPolicy='immediate'");
                 options.sendPolicy = 'immediate';
             } else {
                 debug.info (logPrefix + "sendWhen is deprecated and will be ignored.");

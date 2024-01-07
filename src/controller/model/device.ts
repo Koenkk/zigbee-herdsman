@@ -1,4 +1,4 @@
-import {KeyValue, DatabaseEntry, DeviceType, SendRequestWhen} from '../tstype';
+import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
 import {Events as AdapterEvents} from '../../adapter';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import Endpoint from './endpoint';
@@ -678,7 +678,8 @@ class Device extends Entity {
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
             debug.log(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
 
-            const stateBefore = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'], {sendPolicy: 'immediate'});
+            const stateBefore = await endpoint.read(
+                'ssIasZone', ['iasCieAddr', 'zoneState'], {sendPolicy: 'immediate'});
             debug.log(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`);
 
             // Do not enroll when device has already been enrolled

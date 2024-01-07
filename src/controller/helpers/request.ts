@@ -1,4 +1,4 @@
-import {SendRequestWhen, SendPolicy} from '../tstype';
+import {SendPolicy} from '../tstype';
 import * as Zcl from '../../zcl';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
