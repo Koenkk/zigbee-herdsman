@@ -775,7 +775,7 @@ export class Driver extends EventEmitter {
             smc.psaKeyAlgPermission = 0;
             const keyInfo = await this.ezsp.execCommand('exportKey', {context: smc});
             console.assert(keyInfo.status == EmberStatus.SUCCESS, `exportKey returned unexpected status: ${keyInfo.status}`);
-            return {keyContent: keyInfo};
+            return keyInfo;
         }
     }
 }
