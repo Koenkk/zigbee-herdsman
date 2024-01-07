@@ -766,5 +766,5 @@ export class EmberSecurityManagerContext extends EzspStruct {
         ['flags', basic.uint8_t],
         // Algorithm to use with this key (for PSA APIs)
         ['psaKeyAlgPermission', basic.uint32_t],
-    ]
+    ];
 }
