@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.31.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.30.0...v0.31.0) (2024-01-07)
+
+
+### Features
+
+* Use cluster definition manufacturerCode when available ([#848](https://github.com/Koenkk/zigbee-herdsman/issues/848)) ([3b51b0b](https://github.com/Koenkk/zigbee-herdsman/commit/3b51b0b3ffe4471e4de505ddebd665014acf2cd9))
+
+
+### Bug Fixes
+
+* Catch more unhandled promise rejections for EZSP adapter ([#853](https://github.com/Koenkk/zigbee-herdsman/issues/853)) ([33fa223](https://github.com/Koenkk/zigbee-herdsman/commit/33fa223e19dfbd4094c3179dd70bd3499359bd29))
+* **ignore:** update dependencies ([#855](https://github.com/Koenkk/zigbee-herdsman/issues/855)) ([618d522](https://github.com/Koenkk/zigbee-herdsman/commit/618d5223a575ddea4415a63ebb3deff92eef4070))
+
 ## [0.30.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.29.1...v0.30.0) (2024-01-01)
 
 
