@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.31.0...v0.32.0) (2024-01-08)
+
+
+### Features
+
+* Support EZSP 13 (gecko 4.4.0, ncp 7.4.0.0) ([#858](https://github.com/Koenkk/zigbee-herdsman/issues/858)) ([460910c](https://github.com/Koenkk/zigbee-herdsman/commit/460910c2a6528d37b181ef51c74bd6dfa964a591))
+
 ## [0.31.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.30.0...v0.31.0) (2024-01-07)
 
 
