@@ -320,6 +320,8 @@ export class SerialDriver extends EventEmitter {
                 this.socketPort.destroy();
             }
         }
+
+        this.emit('close');
     }
 
     private onPortError(error: Error): void {

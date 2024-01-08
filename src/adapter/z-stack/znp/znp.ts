@@ -281,6 +281,8 @@ class Znp extends events.EventEmitter {
                 this.socketPort.destroy();
             }
         }
+
+        this.emit('close');
     }
 
     public request(

@@ -276,6 +276,8 @@ class Driver extends events.EventEmitter {
                 this.socketPort.destroy();
             }
         }
+
+        this.emit('close');
     }
 
     public readParameterRequest(parameterId: number) : Promise<Command> {

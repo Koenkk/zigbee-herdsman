@@ -182,6 +182,8 @@ export default class ZiGate extends EventEmitter {
                 this.socketPort.destroy();
             }
         }
+
+        this.emit('close');
     }
 
     public waitFor(matcher: WaitressMatcher, timeout: number = timeouts.default):
