@@ -4542,6 +4542,21 @@ describe('Controller', () => {
         expect(error).toStrictEqual(new Error(`Report to 0x129/1 genOnOff({"onOff":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
+    it('Translate defaultSendRequestWhen to pendingRequestTimeout', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        expect(device.pendingRequestTimeout).toStrictEqual(0);
+        device.defaultSendRequestWhen = 'active';
+        3600000
+        expect(device.pendingRequestTimeout).toStrictEqual(3600000);
+        device.pendingRequestTimeout = 10;
+        device.defaultSendRequestWhen = 'active';
+        expect(device.pendingRequestTimeout).toStrictEqual(10);
+        device.defaultSendRequestWhen = 'immediate';
+        expect(device.pendingRequestTimeout).toStrictEqual(0);
+    });
+
     it('Write to device with pendingRequestTimeout > 0', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x129'});
