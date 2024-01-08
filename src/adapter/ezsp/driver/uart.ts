@@ -314,6 +314,8 @@ export class SerialDriver extends EventEmitter {
                 try {
                     await this.serialPort.asyncFlushAndClose();
                 } catch (error) {
+                    this.emit('close');
+
                     throw error;
                 }
             } else {

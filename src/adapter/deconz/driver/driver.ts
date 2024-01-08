@@ -270,6 +270,8 @@ class Driver extends events.EventEmitter {
                 try {
                     await this.serialPort.asyncFlushAndClose();
                 } catch (error) {
+                    this.emit('close');
+
                     throw error;
                 }
             } else {
