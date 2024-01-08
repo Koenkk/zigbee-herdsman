@@ -611,7 +611,7 @@ class EZSPAdapter extends Adapter {
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return (this.driver && this.driver.ezsp && this.driver.ezsp.ezspV < 13);
+        return (this.driver?.ezsp?.ezspV < 13);
     }
 
     public async backup(): Promise<Models.Backup> {
