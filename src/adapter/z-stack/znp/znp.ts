@@ -149,7 +149,6 @@ class Znp extends events.EventEmitter {
             this.serialPort.once('error', this.onPortError.bind(this));
 
             this.initialized = true;
-            this.emit('connected');
 
             await this.skipBootloader();
         } catch (error) {

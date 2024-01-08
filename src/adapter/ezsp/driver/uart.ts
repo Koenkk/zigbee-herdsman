@@ -95,7 +95,6 @@ export class SerialDriver extends EventEmitter {
             await this.reset();
 
             this.initialized = true;
-            this.emit('connected');
         } catch (error) {
             this.initialized = false;
 
@@ -134,7 +133,6 @@ export class SerialDriver extends EventEmitter {
                 // reset
                 await this.reset();
                 self.initialized = true;
-                this.emit('connected');
                 resolve();
             });
 

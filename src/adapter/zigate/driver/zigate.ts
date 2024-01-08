@@ -220,7 +220,6 @@ export default class ZiGate extends EventEmitter {
             this.serialPort.once('error', this.onPortError.bind(this));
 
             this.initialized = true;
-            this.emit('connected');
         } catch (error) {
             this.initialized = false;
 
