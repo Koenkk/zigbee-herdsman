@@ -1,4 +1,4 @@
-import {KeyValue, DatabaseEntry, DeviceType, SendRequestWhen} from '../tstype';
+import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
 import {Events as AdapterEvents} from '../../adapter';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import Endpoint from './endpoint';
@@ -101,20 +101,6 @@ class Device extends Entity {
     set skipDefaultResponse(skipDefaultResponse: boolean) {this._skipDefaultResponse = skipDefaultResponse;}
     get skipTimeResponse(): boolean {return this._skipTimeResponse;}
     set skipTimeResponse(skipTimeResponse: boolean) {this._skipTimeResponse = skipTimeResponse;}
-    set defaultSendRequestWhen(defaultSendRequestWhen: SendRequestWhen) {
-        debug.log(`Setting defaultSendRequestWhen() is deprecated. Use pendingRequestTimeout() instead.`);
-        if (defaultSendRequestWhen === 'immediate' && this.pendingRequestTimeout > 0) {
-            debug.log(`Requested defaultSendRequestWhen = 'immediate' is treated as pendingRequestTimeout = 0`);
-            this.pendingRequestTimeout = 0;
-        } else if (!this.pendingRequestTimeout) {
-            debug.log(`Requested defaultSendRequestWhen = '${defaultSendRequestWhen}'`
-                + ` is treated as 1 hour pendingRequestTimeout`);
-            this.pendingRequestTimeout = 3600000;
-        } else {
-            debug.log(`Requesting defaultSendRequestWhen = '${defaultSendRequestWhen}'`
-                + ` for device with pendingRequestTimeout === ${this.pendingRequestTimeout} has no effect`);
-        }
-    }
     get checkinInterval(): number {return this._checkinInterval;}
     get pendingRequestTimeout(): number {return this._pendingRequestTimeout;}
     set pendingRequestTimeout(pendingRequestTimeout: number) {this._pendingRequestTimeout = pendingRequestTimeout;}
