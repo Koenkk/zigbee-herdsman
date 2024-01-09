@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.32.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.0...v0.32.1) (2024-01-09)
+
+
+### Bug Fixes
+
+* Improve request queue behavior [#6](https://github.com/Koenkk/zigbee-herdsman/issues/6) ([#860](https://github.com/Koenkk/zigbee-herdsman/issues/860)) ([746fafb](https://github.com/Koenkk/zigbee-herdsman/commit/746fafbea9f28829feba300a9de9f1261c2c1e36))
+* Improve serialport code consistency across adapters ([#859](https://github.com/Koenkk/zigbee-herdsman/issues/859)) ([0d636fc](https://github.com/Koenkk/zigbee-herdsman/commit/0d636fc299444777ece86a337707570cc5e48cc7))
+
 ## [0.32.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.31.0...v0.32.0) (2024-01-08)
 
 
