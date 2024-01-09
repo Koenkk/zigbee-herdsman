@@ -6,11 +6,13 @@ import {Writer} from '../../../src/adapter/ezsp/driver/writer';
 let mockParser;
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
+const mockSerialPortAsyncFlushAndClose = jest.fn();
 const mockSerialPortPipe = jest.fn().mockImplementation((parser) => {
     mockParser = parser;
 });
 const mockSerialPortList = jest.fn().mockReturnValue([]);
 const mockSerialPortOpen = jest.fn().mockImplementation((cb) => cb());
+const mockSerialPortAsyncOpen = jest.fn();
 const mockSerialPortConstructor = jest.fn();
 const mockSerialPortOnce = jest.fn();
 const mockSerialPortSet = jest.fn().mockImplementation((opts, cb) => cb());
@@ -33,6 +35,8 @@ jest.mock('../../../src/adapter/serialPort', () => {
                 write: mockSerialPortWrite,
                 flush: mockSerialPortFlush,
                 isOpen: mockSerialPortIsOpen,
+                asyncOpen: mockSerialPortAsyncOpen,
+                asyncFlushAndClose: mockSerialPortAsyncFlushAndClose,
             };
         })
     };
@@ -42,7 +46,7 @@ let writeBufferSpy;
 
 const mocks = [
     mockSerialPortClose, mockSerialPortPipe, mockSerialPortConstructor, mockSerialPortOpen,
-    mockSerialPortOnce, mockSerialPortWrite, SerialPort,
+    mockSerialPortOnce, mockSerialPortWrite, SerialPort, mockSerialPortAsyncFlushAndClose, mockSerialPortAsyncOpen,
 ];
 
 describe('UART', () => {
@@ -85,7 +89,7 @@ describe('UART', () => {
         );
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
-        expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortAsyncOpen).toHaveBeenCalledTimes(1);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
         expect(writeBufferSpy).toHaveBeenCalledTimes(1);
     });
