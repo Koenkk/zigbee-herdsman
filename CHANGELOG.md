@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.32.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.1...v0.32.2) (2024-01-10)
+
+
+### Bug Fixes
+
+* Add bosch smoke alarm II ssiasZone command ([#861](https://github.com/Koenkk/zigbee-herdsman/issues/861)) ([48680fa](https://github.com/Koenkk/zigbee-herdsman/commit/48680fa0b24be74eb03fc314093a016d6deac1e6))
+* Add OWON PC321 Power factor attributes ([#864](https://github.com/Koenkk/zigbee-herdsman/issues/864)) ([0d60b75](https://github.com/Koenkk/zigbee-herdsman/commit/0d60b75a482fc8d8d7b1c9cce188adb14640787b))
+
 ## [0.32.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.0...v0.32.1) (2024-01-09)
 
 
