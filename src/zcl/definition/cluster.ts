@@ -2685,6 +2685,10 @@ const Cluster: {
                     {name: 'data', type: DataType.uint8},
                 ],
             },
+            boschSmokeDetectorSiren: {
+                ID: 0x80,
+                parameters: [{name: "data", type: DataType.uint16}],
+            },
         },
         commandsResponse: {
             statusChangeNotification: {
