@@ -597,7 +597,6 @@ describe('Controller', () => {
             ID: 1,
             "_events":{},"_eventsCount":0,
             _pendingRequestTimeout: 0,
-            _defaultSendRequestWhen:"immediate",
                 _endpoints:
                  [ { deviceID: 3,
                     "_events":{},"_eventsCount":0,
@@ -821,12 +820,12 @@ describe('Controller', () => {
         expect(databaseContents().includes("0x129")).toBeFalsy();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
-        expect(events.deviceInterview[0]).toStrictEqual({"device":{"_events":{},"_eventsCount":0,"meta": {}, "_skipDefaultResponse": false, "_skipTimeResponse": false, "_lastSeen": deepClone(Date.now()), "ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[],"_type":"Unknown","_ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129},"status":"started"});
-        const device = {"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": deepClone(Date.now()),"_type":"Unknown","_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"_events":{},"_eventsCount":0,"clusters": {}, "ID":1,"inputClusters":[0,1],"outputClusters":[2],"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [], "_configuredReportings": [],"meta":{},"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
+        expect(events.deviceInterview[0]).toStrictEqual({"device":{"_events":{},"_eventsCount":0,"meta": {}, "_skipDefaultResponse": false, "_skipTimeResponse": false, "_lastSeen": deepClone(Date.now()), "ID":2,"_pendingRequestTimeout":0,"_endpoints":[],"_type":"Unknown","_ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129},"status":"started"});
+        const device = {"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": deepClone(Date.now()),"_type":"Unknown","_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"_events":{},"_eventsCount":0,"clusters": {}, "ID":1,"inputClusters":[0,1],"outputClusters":[2],"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [], "_configuredReportings": [],"meta":{},"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
         expect(deepClone(controller.getDeviceByNetworkAddress(129))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
-        expect(databaseContents()).toStrictEqual(`{"id":1,"type":"Coordinator","ieeeAddr":"0x123","nwkAddr":123,"manufId":100,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{},"lastSeen":null,"defaultSendRequestWhen":"immediate"}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150,"defaultSendRequestWhen":"immediate"}`);
+        expect(databaseContents()).toStrictEqual(`{"id":1,"type":"Coordinator","ieeeAddr":"0x123","nwkAddr":123,"manufId":100,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{},"lastSeen":null}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}`);
         expect(controller.getDeviceByNetworkAddress(129).lastSeen).toBe(Date.now());
     });
 
@@ -839,8 +838,8 @@ describe('Controller', () => {
         expect(databaseContents().includes("0x129")).toBeFalsy();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
-        expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "_skipDefaultResponse": false,"_events":{},"_eventsCount":0,"_skipTimeResponse":false,"_lastSeen": deepClone(Date.now()), "ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[],"_ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129,"_type":"Unknown"},"status":"started"});
-        const device = {"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": deepClone(Date.now()),"_type":"Unknown","_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"_events":{},"_eventsCount":0,"clusters": {}, "ID":1,"inputClusters":[0,1],"meta":{},"outputClusters":[2],"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [], "_configuredReportings": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
+        expect(events.deviceInterview[0]).toStrictEqual({"device":{"meta": {}, "_skipDefaultResponse": false,"_events":{},"_eventsCount":0,"_skipTimeResponse":false,"_lastSeen": deepClone(Date.now()), "ID":2,"_pendingRequestTimeout":0,"_endpoints":[],"_ieeeAddr":"0x129","_interviewCompleted":false,"_interviewing":false,"_networkAddress":129,"_type":"Unknown"},"status":"started"});
+        const device = {"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": deepClone(Date.now()),"_type":"Unknown","_ieeeAddr":"0x129","_networkAddress":129,"meta": {},"_endpoints":[{"_events":{},"_eventsCount":0,"clusters": {}, "ID":1,"inputClusters":[0,1],"meta":{},"outputClusters":[2],"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},"deviceNetworkAddress":129,"deviceIeeeAddress":"0x129","_binds": [], "_configuredReportings": [],"deviceID":5,"profileID":99}],"_type":"Router","_manufacturerID":1212,"_manufacturerName":"KoenAndCo","_powerSource":"Mains (single phase)","_modelID":"myModelID","_applicationVersion":2,"_stackVersion":101,"_zclVersion":1,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_dateCode":"201901","_softwareBuildID":"1.01","_interviewCompleted":true,"_interviewing":false};
         expect(events.deviceInterview[1]).toStrictEqual({"status":"successful","device":device});
         expect(deepClone(controller.getDeviceByIeeeAddr('0x129'))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
@@ -1243,7 +1242,6 @@ describe('Controller', () => {
                 "_events":{},"_eventsCount":0,
                 "_ieeeAddr":"0x129",
                 "_pendingRequestTimeout":0,
-                "_defaultSendRequestWhen": "immediate",
                 "_networkAddress":129,
                 "_lastSeen": deepClone(Date.now()),
                 "_linkquality":50,
@@ -1357,7 +1355,6 @@ describe('Controller', () => {
                 "ID":2,
                 "_events":{},"_eventsCount":0,
                 "_pendingRequestTimeout": 0,
-                "_defaultSendRequestWhen": "immediate",
                 "_ieeeAddr":"0x129",
                 "_networkAddress":129,
                 "_lastSeen": deepClone(Date.now()),
@@ -1449,7 +1446,6 @@ describe('Controller', () => {
                 "ID":2,
                 "_ieeeAddr":"0x129",
                 "_pendingRequestTimeout": 0,
-                "_defaultSendRequestWhen": "immediate",
                 "_networkAddress":129,
                 "_lastSeen": deepClone(Date.now()),
                 "_linkquality":50,
@@ -1556,7 +1552,6 @@ describe('Controller', () => {
                "_ieeeAddr":"0x129",
                "_lastSeen": deepClone(Date.now()),
                "_pendingRequestTimeout": 0,
-               "_defaultSendRequestWhen": "immediate",
                "_linkquality":52,
                 "_skipDefaultResponse": false,
                 "_skipTimeResponse": false,
@@ -1685,7 +1680,6 @@ describe('Controller', () => {
                "ID":2,
                "_events":{},"_eventsCount":0,
                "_pendingRequestTimeout": 0,
-               "_defaultSendRequestWhen": "immediate",
                "_lastSeen": deepClone(Date.now()),
                "_linkquality":19,
                 "_skipDefaultResponse": false,
@@ -2035,7 +2029,6 @@ describe('Controller', () => {
                 "ID":2,
                 "_events":{},"_eventsCount":0,
                 "_pendingRequestTimeout": 0,
-                "_defaultSendRequestWhen": "immediate",
                 "_ieeeAddr":"0x150",
                 "_networkAddress":150,
                 "_lastSeen": deepClone(Date.now()),
@@ -2091,7 +2084,6 @@ describe('Controller', () => {
                 "ID":2,
                 "_events":{},"_eventsCount":0,
                 "_pendingRequestTimeout":0,
-                "_defaultSendRequestWhen": "immediate",
                 "_ieeeAddr":"0x151",
                 "_networkAddress":151,
                 "_lastSeen": deepClone(Date.now()),
@@ -2214,7 +2206,6 @@ describe('Controller', () => {
                 "_hardwareVersion":3,"_events":{},"_eventsCount":0,
                 "_dateCode":"201901",
                 "_pendingRequestTimeout":0,
-                "_defaultSendRequestWhen": "immediate",
                 "_softwareBuildID":"1.01",
                 "_interviewCompleted":true,
                 "_interviewing":false,
@@ -2434,7 +2425,6 @@ describe('Controller', () => {
         const coordinator = Device.byType('Coordinator')[0];
         const target = coordinator.getEndpoint(1);
         expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster('genPollCtrl'), target}]));
-        expect(device.defaultSendRequestWhen).toEqual('fastpoll');
 
         device._checkinInterval = undefined;
         expect(device._checkinInterval).toBe(undefined);
@@ -2488,35 +2478,6 @@ describe('Controller', () => {
         const coordinator = Device.byType('Coordinator')[0];
         const target = coordinator.getEndpoint(1);
         expect(deepClone(endpoint.binds)).toStrictEqual([]);
-        expect(device.defaultSendRequestWhen).toEqual('immediate');
-    });
-
-    it('Default defaultSendRequestWhen after poll control', async () => {
-        await controller.start();
-        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
-        const device = controller.getDeviceByIeeeAddr('0x174');
-        const endpoint = device.getEndpoint(1);
-        await device.interview();
-        expect(device.defaultSendRequestWhen).toEqual('fastpoll');
-    });
-
-    it('Default defaultSendRequestWhen after poll control with large polling period', async () => {
-        await controller.start();
-        mockDevices[174].attributes[1].checkinInterval = 99999;
-        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
-        const device = controller.getDeviceByIeeeAddr('0x174');
-        const endpoint = device.getEndpoint(1);
-        await device.interview();
-        expect(device.defaultSendRequestWhen).toEqual('active');
-    });
-
-    it('Default defaultSendRequestWhen without poll control', async () => {
-        await controller.start();
-        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = controller.getDeviceByIeeeAddr('0x129');
-        const endpoint = device.getEndpoint(1);
-        await device.interview();
-        expect(device.defaultSendRequestWhen).toEqual('immediate');
     });
 
     it('Endpoint get id', async () => {
@@ -2842,7 +2803,7 @@ describe('Controller', () => {
             error = e;
         }
         expect(error instanceof Zcl.ZclStatusError).toBeTruthy();
-        expect(error.message).toStrictEqual(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Status 'FAILURE')`);
+        expect(error.message).toStrictEqual(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Status 'FAILURE')`);
         expect(error.code).toBe(1);
     });
 
@@ -2867,7 +2828,7 @@ describe('Controller', () => {
             error = e;
         }
         expect(error instanceof Zcl.ZclStatusError).toBeTruthy();
-        expect(error.message).toStrictEqual(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Status 'FAILURE')`);
+        expect(error.message).toStrictEqual(`ConfigureReporting 0x129/1 genPowerCfg([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Status 'FAILURE')`);
         expect(error.code).toBe(1);
     });
 
@@ -2922,7 +2883,7 @@ describe('Controller', () => {
         expect(call[2]).toBe(1);
         expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":11,"manufacturerCode":null,"commandIdentifier":0},"Payload":{"groupid":2,"groupname":""},"Cluster":{"ID":4,"attributes":{"nameSupport":{"ID":0,"type":24,"name":"nameSupport"}},"name":"genGroups","commands":{"add":{"ID":0,"response":0,"parameters":[{"name":"groupid","type":33},{"name":"groupname","type":66}],"name":"add"},"view":{"ID":1,"parameters":[{"name":"groupid","type":33}],"name":"view"},"getMembership":{"ID":2,"response":2,"parameters":[{"name":"groupcount","type":32},{"name":"grouplist","type":1002}],"name":"getMembership"},"miboxerSetZones":{"ID":240,"name":"miboxerSetZones","parameters":[{"name":"zones","type":1012}]},"remove":{"ID":3,"response":3,"parameters":[{"name":"groupid","type":33}],"name":"remove"},"removeAll":{"ID":4,"parameters":[],"name":"removeAll"},"addIfIdentifying":{"ID":5,"parameters":[{"name":"groupid","type":33},{"name":"groupname","type":66}],"name":"addIfIdentifying"}},"commandsResponse":{"addRsp":{"ID":0,"parameters":[{"name":"status","type":32},{"name":"groupid","type":33}],"name":"addRsp"},"viewRsp":{"ID":1,"parameters":[{"name":"status","type":32},{"name":"groupid","type":33},{"name":"groupname","type":66}],"name":"viewRsp"},"getMembershipRsp":{"ID":2,"parameters":[{"name":"capacity","type":32},{"name":"groupcount","type":32},{"name":"grouplist","type":1002}],"name":"getMembershipRsp"},"removeRsp":{"ID":3,"parameters":[{"name":"status","type":32},{"name":"groupid","type":33}],"name":"removeRsp"}}},"Command":{"ID":0,"response":0,"parameters":[{"name":"groupid","type":33},{"name":"groupname","type":66}],"name":"add"}});
         expect(group.members).toContain(endpoint);
-        expect(databaseContents()).toContain(`{"id":1,"type":"Coordinator","ieeeAddr":"0x123","nwkAddr":123,"manufId":100,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{},"lastSeen":null,"defaultSendRequestWhen":"immediate"}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150,"defaultSendRequestWhen":"immediate"}\n{"id":3,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}}`);
+        expect(databaseContents()).toContain(`{"id":1,"type":"Coordinator","ieeeAddr":"0x123","nwkAddr":123,"manufId":100,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{},"lastSeen":null}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}\n{"id":3,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}}`);
     });
 
     it('Remove endpoint from group', async () => {
@@ -3057,7 +3018,7 @@ describe('Controller', () => {
         const line = JSON.stringify({"id":3,"type":"EndDevice","ieeeAddr":"0x90fd9ffffe4b64ae","nwkAddr":19468,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Battery","modelId":"TRADFRI remote control","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0,1,3,9,2821,4096],"outClusterList":[3,4,5,6,8,25,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170302","swBuildId":"1.2.214","zclVersion":1,"interviewCompleted":true,"_id":"fJ5pmjqKRYbNvslK"});
         fs.writeFileSync(options.databasePath, line + "\n");
         await controller.start();
-        const expected = {"ID": 3, "_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": null, "_applicationVersion": 17, "_dateCode": "20170302", "_endpoints": [{"_events":{},"_eventsCount":0,"meta":{},"clusters": {}, "ID": 1, "deviceID": 2096, "_binds": [], "_configuredReportings": [],"deviceIeeeAddress": "0x90fd9ffffe4b64ae", "deviceNetworkAddress": 19468, "inputClusters": [0, 1, 3, 9, 2821, 4096], "outputClusters": [3, 4, 5, 6, 8, 25, 4096], "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x90fd9ffffe4b64ae","sendInProgress": false}, "profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x90fd9ffffe4b64ae", "_interviewCompleted": true,"_events":{},"_eventsCount":0, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {}, "_modelID": "TRADFRI remote control", "_networkAddress": 19468, "_powerSource": "Battery", "_softwareBuildID": "1.2.214", "_stackVersion": 87, "_type": "EndDevice", "_zclVersion": 1}
+        const expected = {"ID": 3, "_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": null, "_applicationVersion": 17, "_dateCode": "20170302", "_endpoints": [{"_events":{},"_eventsCount":0,"meta":{},"clusters": {}, "ID": 1, "deviceID": 2096, "_binds": [], "_configuredReportings": [],"deviceIeeeAddress": "0x90fd9ffffe4b64ae", "deviceNetworkAddress": 19468, "inputClusters": [0, 1, 3, 9, 2821, 4096], "outputClusters": [3, 4, 5, 6, 8, 25, 4096], "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x90fd9ffffe4b64ae","sendInProgress": false}, "profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x90fd9ffffe4b64ae", "_interviewCompleted": true,"_events":{},"_eventsCount":0, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {}, "_modelID": "TRADFRI remote control", "_networkAddress": 19468, "_powerSource": "Battery", "_softwareBuildID": "1.2.214", "_stackVersion": 87, "_type": "EndDevice", "_zclVersion": 1}
         expect(deepClone(controller.getDeviceByIeeeAddr("0x90fd9ffffe4b64ae"))).toStrictEqual(expected);
     });
 
@@ -3264,7 +3225,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.writeResponse('genBasic', 99, {zclVersion: {status: 0x01}})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`WriteResponse 0x129/1 genBasic({"zclVersion":{"status":1}}, {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`WriteResponse 0x129/1 genBasic({"zclVersion":{"status":1}}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Read from endpoint with string', async () => {
@@ -3437,10 +3398,10 @@ describe('Controller', () => {
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
         expect((controller.getDevices()).length).toBe(4);
-        expect(deepClone(controller.getDeviceByIeeeAddr('0x123'))).toStrictEqual({"ID":1,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"deviceID":5,"_events":{},"_eventsCount":0,"inputClusters":[],"outputClusters":[],"profileID":260,"ID":1,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":257,"ID":2,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":261,"ID":3,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 3,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":263,"ID":4,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 4,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":264,"ID":5,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 5,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":265,"ID":6,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 6,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":1024,"inputClusters":[],"outputClusters":[1280],"profileID":260,"ID":11,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 11,"deviceIeeeAddress": "0x123","sendInProgress": false}}],"_ieeeAddr":"0x123","_interviewCompleted":false,"_interviewing":false,"_lastSeen":null,"_manufacturerID":0,"_networkAddress":0,"_type":"Coordinator","_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{}});
-        expect(deepClone(controller.getDeviceByIeeeAddr('0x000b57fffec6a5b2'))).toStrictEqual({"ID": 3,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": null,  "_applicationVersion": 17, "_dateCode": "20170331", "_endpoints": [{"_events":{},"_eventsCount":0,"meta":{},"_binds": [], "_configuredReportings": [], "clusters": {}, "ID": 1, "deviceID": 544, "deviceIeeeAddress": "0x000b57fffec6a5b2", "deviceNetworkAddress": 40369, "inputClusters": [0, 3, 4, 5, 6, 8, 768, 2821, 4096], "outputClusters": [5, 25, 32, 4096],  "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x000b57fffec6a5b2","sendInProgress": false},"profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x000b57fffec6a5b2", "_interviewCompleted": true,"_events":{},"_eventsCount":0, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {"reporting": 1}, "_modelID": "TRADFRI bulb E27 WS opal 980lm", "_networkAddress": 40369, "_powerSource": "Mains (single phase)", "_softwareBuildID": "1.2.217", "_stackVersion": 87, "_type": "Router", "_zclVersion": 1});
-        expect(deepClone(controller.getDeviceByIeeeAddr('0x0017880104e45517'))).toStrictEqual({"ID":4,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_applicationVersion":2,"_dateCode":"20160302","_endpoints":[{"deviceID":2096,"_events":{},"_eventsCount":0,"inputClusters":[0],"outputClusters":[0,3,4,6,8,5],"profileID":49246,"ID":1,"clusters":{"genBasic":{"dir":{"value":3},"attributes":{"modelId":"RWL021"}}},"deviceIeeeAddress":"0x0017880104e45517","deviceNetworkAddress":6538,"_binds":[{"type":"endpoint","endpointID":1,"deviceIeeeAddr":"0x000b57fffec6a5b2"}],"_configuredReportings":[{"cluster":1,"attrId":0,"minRepIntval":1,"maxRepIntval":20,"repChange":2}],"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x0017880104e45517","sendInProgress": false}},{"deviceID":12,"inputClusters":[0,1,3,15,64512],"outputClusters":[25],"profileID":260,"ID":2,"clusters":{},"deviceIeeeAddress":"0x0017880104e45517","deviceNetworkAddress":6538,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x0017880104e45517","sendInProgress": false}}],"_hardwareVersion":1,"_ieeeAddr":"0x0017880104e45517","_interviewCompleted":true,"_interviewing":false,"_lastSeen":123,"_manufacturerID":4107,"_manufacturerName":"Philips","_modelID":"RWL021","_networkAddress":6538,"_powerSource":"Battery","_softwareBuildID":"5.45.1.17846","_stackVersion":1,"_type":"EndDevice","_zclVersion":1,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{"configured":1}});
-        expect(deepClone(controller.getDeviceByIeeeAddr('0x0017880104e45518'))).toStrictEqual({"ID":6,"_checkinInterval":123456,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":123456000,"_defaultSendRequestWhen": "immediate","_applicationVersion":2,"_dateCode":"20160302","_endpoints":[{"deviceID":2096,"_events":{},"_eventsCount":0,"inputClusters":[0],"outputClusters":[0,3,4,6,8,5],"profileID":49246,"ID":1,"clusters":{},"deviceIeeeAddress":"0x0017880104e45518","deviceNetworkAddress":6536,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x0017880104e45518","sendInProgress": false}},{"deviceID":12,"inputClusters":[0,1,3,15,32,64512],"outputClusters":[25],"profileID":260,"ID":2,"clusters":{},"deviceIeeeAddress":"0x0017880104e45518","deviceNetworkAddress":6536,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x0017880104e45518","sendInProgress": false}}],"_hardwareVersion":1,"_ieeeAddr":"0x0017880104e45518","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":4107,"_manufacturerName":"Philips","_modelID":"RWL021","_networkAddress":6536,"_powerSource":"Battery","_softwareBuildID":"5.45.1.17846","_stackVersion":1,"_type":"EndDevice","_zclVersion":1,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{"configured":1}});
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x123'))).toStrictEqual({"ID":1,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_endpoints":[{"deviceID":5,"_events":{},"_eventsCount":0,"inputClusters":[],"outputClusters":[],"profileID":260,"ID":1,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":257,"ID":2,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":261,"ID":3,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 3,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":263,"ID":4,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 4,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":264,"ID":5,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 5,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":5,"inputClusters":[],"outputClusters":[],"profileID":265,"ID":6,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 6,"deviceIeeeAddress": "0x123","sendInProgress": false}},{"deviceID":1024,"inputClusters":[],"outputClusters":[1280],"profileID":260,"ID":11,"clusters":{},"deviceIeeeAddress":"0x123","deviceNetworkAddress":0,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 11,"deviceIeeeAddress": "0x123","sendInProgress": false}}],"_ieeeAddr":"0x123","_interviewCompleted":false,"_interviewing":false,"_lastSeen":null,"_manufacturerID":0,"_networkAddress":0,"_type":"Coordinator","_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{}});
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x000b57fffec6a5b2'))).toStrictEqual({"ID": 3,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_lastSeen": null,  "_applicationVersion": 17, "_dateCode": "20170331", "_endpoints": [{"_events":{},"_eventsCount":0,"meta":{},"_binds": [], "_configuredReportings": [], "clusters": {}, "ID": 1, "deviceID": 544, "deviceIeeeAddress": "0x000b57fffec6a5b2", "deviceNetworkAddress": 40369, "inputClusters": [0, 3, 4, 5, 6, 8, 768, 2821, 4096], "outputClusters": [5, 25, 32, 4096],  "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x000b57fffec6a5b2","sendInProgress": false},"profileID": 49246}], "_hardwareVersion": 1, "_ieeeAddr": "0x000b57fffec6a5b2", "_interviewCompleted": true,"_events":{},"_eventsCount":0, "_interviewing": false, "_manufacturerID": 4476, "_manufacturerName": "IKEA of Sweden", "meta": {"reporting": 1}, "_modelID": "TRADFRI bulb E27 WS opal 980lm", "_networkAddress": 40369, "_powerSource": "Mains (single phase)", "_softwareBuildID": "1.2.217", "_stackVersion": 87, "_type": "Router", "_zclVersion": 1});
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x0017880104e45517'))).toStrictEqual({"ID":4,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_applicationVersion":2,"_dateCode":"20160302","_endpoints":[{"deviceID":2096,"_events":{},"_eventsCount":0,"inputClusters":[0],"outputClusters":[0,3,4,6,8,5],"profileID":49246,"ID":1,"clusters":{"genBasic":{"dir":{"value":3},"attributes":{"modelId":"RWL021"}}},"deviceIeeeAddress":"0x0017880104e45517","deviceNetworkAddress":6538,"_binds":[{"type":"endpoint","endpointID":1,"deviceIeeeAddr":"0x000b57fffec6a5b2"}],"_configuredReportings":[{"cluster":1,"attrId":0,"minRepIntval":1,"maxRepIntval":20,"repChange":2}],"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x0017880104e45517","sendInProgress": false}},{"deviceID":12,"inputClusters":[0,1,3,15,64512],"outputClusters":[25],"profileID":260,"ID":2,"clusters":{},"deviceIeeeAddress":"0x0017880104e45517","deviceNetworkAddress":6538,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x0017880104e45517","sendInProgress": false}}],"_hardwareVersion":1,"_ieeeAddr":"0x0017880104e45517","_interviewCompleted":true,"_interviewing":false,"_lastSeen":123,"_manufacturerID":4107,"_manufacturerName":"Philips","_modelID":"RWL021","_networkAddress":6538,"_powerSource":"Battery","_softwareBuildID":"5.45.1.17846","_stackVersion":1,"_type":"EndDevice","_zclVersion":1,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{"configured":1}});
+        expect(deepClone(controller.getDeviceByIeeeAddr('0x0017880104e45518'))).toStrictEqual({"ID":6,"_checkinInterval":123456,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":123456000,"_applicationVersion":2,"_dateCode":"20160302","_endpoints":[{"deviceID":2096,"_events":{},"_eventsCount":0,"inputClusters":[0],"outputClusters":[0,3,4,6,8,5],"profileID":49246,"ID":1,"clusters":{},"deviceIeeeAddress":"0x0017880104e45518","deviceNetworkAddress":6536,"_binds":[],"_configuredReportings":[],"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x0017880104e45518","sendInProgress": false}},{"deviceID":12,"inputClusters":[0,1,3,15,32,64512],"outputClusters":[25],"profileID":260,"ID":2,"clusters":{},"deviceIeeeAddress":"0x0017880104e45518","deviceNetworkAddress":6536,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x0017880104e45518","sendInProgress": false}}],"_hardwareVersion":1,"_ieeeAddr":"0x0017880104e45518","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":4107,"_manufacturerName":"Philips","_modelID":"RWL021","_networkAddress":6536,"_powerSource":"Battery","_softwareBuildID":"5.45.1.17846","_stackVersion":1,"_type":"EndDevice","_zclVersion":1,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{"configured":1}});
         expect((await controller.getGroups({})).length).toBe(2);
 
         const group1 = controller.getGroupByID(1);
@@ -3779,7 +3740,6 @@ describe('Controller', () => {
                 "_applicationVersion":2,
                 "_dateCode":"201901",
                 "_pendingRequestTimeout":0,
-                "_defaultSendRequestWhen": "immediate",
                 "_endpoints":[
                     {
                         "deviceID":5,
@@ -3888,7 +3848,6 @@ describe('Controller', () => {
                 "_applicationVersion":2,
                 "_dateCode":"201901",
                 "_pendingRequestTimeout":0,
-                "_defaultSendRequestWhen": "immediate",
                 "_endpoints":[
                     {
                         "meta":{},
@@ -3987,7 +3946,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.command('genOnOff', 'toggle', {})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Command 0x129/1 genOnOff.toggle({}, {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":false,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Command 0x129/1 genOnOff.toggle({}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":false,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Endpoint commandResponse error', async () => {
@@ -3998,7 +3957,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.commandResponse('genOta', 'imageNotify', {payloadType: 0, queryJitter: 1}, null, null)} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`CommandResponse 0x129/1 genOta.imageNotify({"payloadType":0,"queryJitter":1}, {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`CommandResponse 0x129/1 genOta.imageNotify({"payloadType":0,"queryJitter":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Endpoint commandResponse error when transactionSequenceNumber provided through options', async () => {
@@ -4020,7 +3979,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.configureReporting('genOnOff', [{attribute: 'onOff', minimumReportInterval: 0, maximumReportInterval: 2, reportableChange: 10}])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ConfigureReporting 0x129/1 genOnOff([{"attribute":"onOff","minimumReportInterval":0,"maximumReportInterval":2,"reportableChange":10}], {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ConfigureReporting 0x129/1 genOnOff([{"attribute":"onOff","minimumReportInterval":0,"maximumReportInterval":2,"reportableChange":10}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('DefaultResponse error', async () => {
@@ -4031,7 +3990,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.defaultResponse(1, 0, 1, 3)} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`DefaultResponse 0x129/1 1(1, {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`DefaultResponse 0x129/1 1(1, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('DefaultResponse error when transactionSequenceNumber provided through options', async () => {
@@ -4075,7 +4034,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.readResponse('genOnOff', 1, [{onOff: 1}])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ReadResponse 0x129/1 genOnOff([{"onOff":1}], {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ReadResponse 0x129/1 genOnOff([{"onOff":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Read error', async () => {
@@ -4086,7 +4045,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.read('genOnOff', ['onOff'])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Read 0x129/1 genOnOff(["onOff"], {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Read 0x129/1 genOnOff(["onOff"], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Read with disable response', async () => {
@@ -4108,7 +4067,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.write('genOnOff', {onOff: 1})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Write 0x129/1 genOnOff({"onOff":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Write with disable response', async () => {
@@ -4163,7 +4122,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.writeStructured('genPowerCfg', {})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`WriteStructured 0x129/1 genPowerCfg({}, {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`WriteStructured 0x129/1 genPowerCfg({}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Green power', async () => {
@@ -4219,9 +4178,9 @@ describe('Controller', () => {
         });
 
         expect(events.deviceJoined.length).toBe(1);
-        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"inputClusters":[],"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x000000000046f4fe","sendInProgress": false},"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": [],"_events":{},"_eventsCount":0,"meta":{}}],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}}});
+        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"inputClusters":[],"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x000000000046f4fe","sendInProgress": false},"ID":242,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": [],"_events":{},"_eventsCount":0,"meta":{}}],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}}});
         expect(events.deviceInterview.length).toBe(1);
-        expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status":"successful","device":{"ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}}});
+        expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status":"successful","device":{"ID":2,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}}});
         expect((controller.getDeviceByIeeeAddr('0x000000000046f4fe')).networkAddress).toBe(0xf4fe);
         expect(events.message.length).toBe(2);
 
@@ -4248,7 +4207,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {"type":"commandNotification","device":{"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x000000000046f4fe","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": []}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x000000000046f4fe","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": []},"data":{"options":0,"srcID":0x46f4fe,"frameCounter":228,"commandID":34,"payloadSize":255,"commandFrame":{}},"linkquality":50,"groupID":1,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
+        const expected = {"type":"commandNotification","device":{"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x000000000046f4fe","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": []}],"_ieeeAddr":"0x000000000046f4fe","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_modelID":"GreenPower_2","_networkAddress":0xf4fe,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x000000000046f4fe","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x000000000046f4fe","deviceNetworkAddress":0xf4fe,"_binds":[], "_configuredReportings": []},"data":{"options":0,"srcID":0x46f4fe,"frameCounter":228,"commandID":34,"payloadSize":255,"commandFrame":{}},"linkquality":50,"groupID":1,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
         expect(deepClone(events.message[0])).toStrictEqual(expected);
 
         await mockAdapterEvents['']
@@ -4468,9 +4427,9 @@ describe('Controller', () => {
         });
 
         expect(events.deviceJoined.length).toBe(1);
-        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false}}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}}});
+        expect(deepClone(events.deviceJoined[0])).toStrictEqual({"device":{"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false}}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}}});
         expect(events.deviceInterview.length).toBe(1);
-        expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status":"successful","device":{"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}}});
+        expect(deepClone(events.deviceInterview[0])).toStrictEqual({"status":"successful","device":{"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":null,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}}});
         expect((controller.getDeviceByIeeeAddr('0x00000000017171f8')).networkAddress).toBe(0x71f8);
         expect(events.message.length).toBe(2);
 
@@ -4499,7 +4458,7 @@ describe('Controller', () => {
         });
 
         expect(events.message.length).toBe(1);
-        const expected = {"type":"commandNotification","device":{"ID":2,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"_binds":[], "_configuredReportings": []}],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"_binds":[], "_configuredReportings": []},"data":{"options":0x5488,"srcID":0x017171f8,"frameCounter":4601,"commandID":0x13,"payloadSize":0,"commandFrame":{},"gppNwkAddr": 129,"gppGddLink":0xd8},"linkquality":50,"groupID":0,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
+        const expected = {"type":"commandNotification","device":{"ID":2,"_pendingRequestTimeout":0,"_endpoints":[{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"_binds":[], "_configuredReportings": []}],"_events":{},"_eventsCount":0,"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality": 50,"_manufacturerID":null,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","meta":{}},"endpoint":{"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false},"ID":242,"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"_binds":[], "_configuredReportings": []},"data":{"options":0x5488,"srcID":0x017171f8,"frameCounter":4601,"commandID":0x13,"payloadSize":0,"commandFrame":{},"gppNwkAddr": 129,"gppGddLink":0xd8},"linkquality":50,"groupID":0,"cluster":"greenPower","meta":{"zclTransactionSequenceNumber":10,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
         expect(deepClone(events.message[0])).toStrictEqual(expected);
 
         // Remove green power device from network
@@ -4519,7 +4478,7 @@ describe('Controller', () => {
         expect(controller.getDeviceByIeeeAddr('0x00000000017171f8')).toBeUndefined(); 
 
         expect(Device.byIeeeAddr('0x00000000017171f8')).toBeUndefined();
-        expect(deepClone(Device.byIeeeAddr('0x00000000017171f8', true))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false}}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":false,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":true,"meta":{}});
+        expect(deepClone(Device.byIeeeAddr('0x00000000017171f8', true))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false}}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":false,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":true,"meta":{}});
 
         // Re-add device
         await mockAdapterEvents['zclData']({
@@ -4531,7 +4490,7 @@ describe('Controller', () => {
             groupID: 0,
         });
 
-        expect(deepClone(Device.byIeeeAddr('0x00000000017171f8'))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false}}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":false,"meta":{}});
+        expect(deepClone(Device.byIeeeAddr('0x00000000017171f8'))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_skipTimeResponse":false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false}}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":false,"meta":{}});
     });
 
     it('Get input/ouptut clusters', async () => {
@@ -4580,44 +4539,10 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.report('genOnOff', {onOff: 1})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Report to 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"immediate","timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Report to 0x129/1 genOnOff({"onOff":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
-    it('Write with sendWhen active', async () => {
-        await controller.start();
-        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = controller.getDeviceByIeeeAddr('0x129');
-        device.pendingRequestTimeout = 10000;
-        const endpoint = device.getEndpoint(1);
-        mocksendZclFrameToEndpoint.mockClear();
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard');});
-        const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true, sendWhen: 'active'});
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
-
-        // We need to send the data after it's been queued, but before we await
-        // the promise. Hijacking queueRequest seems easiest.
-        const origQueueRequest = endpoint.pendingRequests.queue;
-        endpoint.pendingRequests.queue = async (req) => {
-            const f = origQueueRequest.call(endpoint.pendingRequests, req);
-
-            const data = {
-                wasBroadcast: false,
-                address: '0x129',
-                frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
-                endpoint: 1,
-                linkquality: 50,
-                groupID: 1,
-            }
-
-            mockAdapterEvents['zclData'](data);
-            return await f;
-        };
-
-        expect((await result)).toBe(undefined);
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
-    });
-
-    it('Write with sendWhen active when pending', async () => {
+    it('Write to device with pendingRequestTimeout > 0', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -4635,7 +4560,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard');});
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
         const nextTick = new Promise (process.nextTick);
-        const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'active'});
+        const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
         const data = {
@@ -4655,7 +4580,38 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
     });
 
-    it('Write with sendWhen active error', async () => {
+    
+    it('Write to device with pendingRequestTimeout > 0, override default sendPolicy', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        device.pendingRequestTimeout = 10000;
+        const endpoint = device.getEndpoint(1);
+
+        endpoint.pendingRequests.add(new Request(async () => {}, [], 100));
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard');});
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Cats barking too hard');});
+        try {
+            await endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendPolicy: 'immediate'});
+        } catch (error) {
+            expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false,"sendPolicy":"immediate"}) failed (Dogs barking too hard)`);
+        }
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(endpoint.pendingRequests.size).toStrictEqual(1);
+
+        // sendWhen=immediate should be interpreted as sendPolicy=immediate and treated the same way
+        try {
+            await endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'immediate'});
+        } catch (error) {
+            expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"immediate","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Cats barking too hard)`);
+        }
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
+        expect(endpoint.pendingRequests.size).toStrictEqual(1);
+    });
+
+
+    it('Write to device with pendingRequestTimeout > 0, error', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -4674,12 +4630,13 @@ describe('Controller', () => {
             jest.advanceTimersByTime(10);
             return f;
         };
-        endpoint.pendingRequests.add(new Request(async () => {}, [], 100));
+        endpoint.pendingRequests.add(new Request(async () => {}, [], 100, undefined, undefined, () => {}, () => {}));
+ 
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Cats barking too hard');});
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard');});
         let nextTick = new Promise (process.nextTick);
-        const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'active'});
+        const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true});
         await nextTick;
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const data = {
@@ -4704,10 +4661,10 @@ describe('Controller', () => {
             error = e;
         }
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
-        expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"active","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
+        expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
     });
 
-    it('Write with sendWhen active, replace queued messages', async () => {
+    it('Write to device with pendingRequestTimeout > 0, replace queued messages', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
@@ -4743,13 +4700,13 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockReturnValueOnce( {frame: {Payload: new Array( {"attrId": 4, "attrData": "four", "status": 0})}});
         let result1, result2: Promise <any>;
         let nextTick = new Promise (process.nextTick);
-        endpoint.write('genOnOff', {onOff: 0, startUpOnOff: 0}, {disableResponse: true, sendWhen: 'active'});
+        endpoint.write('genOnOff', {onOff: 0, startUpOnOff: 0}, {disableResponse: true});
         await nextTick;
         // Queue content:
         // 1. empty
         // 2. ZCL write 'genOnOff' {onOff: 0, startUpOnOff: 0}
         expect(endpoint.pendingRequests.size).toStrictEqual (2);
-        result1 = endpoint.write('genOnOff', {onOff: 0}, {disableResponse: true, sendWhen: 'active'});
+        result1 = endpoint.write('genOnOff', {onOff: 0}, {disableResponse: true});
         await new Promise (process.nextTick);
         // Queue content:
         // 1. empty
@@ -4772,7 +4729,7 @@ describe('Controller', () => {
         let error = null;
         try {
             // Add the same ZCL request with different payload again, the first one should be rejected and removed from the queue
-            result2 = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'active'});
+            result2 = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true});
             expect (await result1).rejects.toBe("asas");
         } catch (e) {
             error = e;
@@ -4784,7 +4741,7 @@ describe('Controller', () => {
             expect(endpoint.pendingRequests.size).toStrictEqual (4);
         }
         // Now add the same ZCL request with same payload again. The previous one should *not* be rejected but removed from the queue
-        const result3 = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'active'});
+        const result3 = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true});
         await new Promise (process.nextTick);
         // Queue content:
         // 1. empty
@@ -4794,9 +4751,9 @@ describe('Controller', () => {
         expect(endpoint.pendingRequests.size).toStrictEqual (4);
 
         // writeUndiv request should not be divided, so both should go to the queue
-        endpoint.write('genOnOff', {onOff: 0, startUpOnOff: 0}, {disableResponse: true, sendWhen: 'active', writeUndiv: true});
+        endpoint.write('genOnOff', {onOff: 0, startUpOnOff: 0}, {disableResponse: true, writeUndiv: true});
         await new Promise (process.nextTick);
-        endpoint.write('genOnOff', {startUpOnOff: 1}, {disableResponse: true, sendWhen: 'active', writeUndiv: true});
+        endpoint.write('genOnOff', {startUpOnOff: 1}, {disableResponse: true, writeUndiv: true});
         await new Promise (process.nextTick);
         // Queue content:
         // 1. empty
@@ -4808,9 +4765,9 @@ describe('Controller', () => {
         expect(endpoint.pendingRequests.size).toStrictEqual (6);
 
         // read requests should be combined to one
-        const result4 = endpoint.read('genOnOff', ['onOff'], {disableResponse: false, sendWhen: 'active'});
+        const result4 = endpoint.read('genOnOff', ['onOff'], {disableResponse: false});
         await new Promise (process.nextTick);
-        const result5 = endpoint.read('genOnOff', ['onOff'], {disableResponse: false, sendWhen: 'active'});
+        const result5 = endpoint.read('genOnOff', ['onOff'], {disableResponse: false});
         await new Promise (process.nextTick);
         // Queue content:
         // 1. empty
@@ -4843,7 +4800,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[11][3].Payload).toStrictEqual ([{"attrData": 1, "attrId": 16387, "dataType": 48}]);
     });
 
-    it('Write with sendWhen active, discard messages after expiration', async () => {
+    it('Write to device with pendingRequestTimeout > 0, discard messages after expiration', async () => {
         Date.now.mockReturnValue(1000);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
@@ -4908,7 +4865,7 @@ describe('Controller', () => {
         endpoint.pendingRequests.add(new Request(async () => {
             await endpoint.sendPendingRequests(false);}, [], 100));
         const nextTick = new Promise (process.nextTick);
-        const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true, sendWhen: 'active'});
+        const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true});
         await nextTick;
         await endpoint.sendPendingRequests(false);
         await result;
@@ -4916,7 +4873,7 @@ describe('Controller', () => {
         expect(endpoint.pendingRequests.size).toBe(0);
     });
 
-      it('Write with sendWhen active, send bulk messages', async () => {
+      it('Write to device with pendingRequestTimeout > 0, send bulk messages', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -4989,84 +4946,6 @@ describe('Controller', () => {
         expect(fastpollstop[3].Payload).toStrictEqual({});
     });
 
-    it('Fast polling', async () => {
-        await controller.start();
-        await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
-        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = controller.getDeviceByIeeeAddr('0x174');
-        const target = controller.getDeviceByIeeeAddr('0x129');
-        await device.interview();
-
-        const endpoint = device.getEndpoint(1);
-        endpoint.pendingRequests.add(new Request(async () => {}, [], 100, 'fastpoll', undefined, undefined, () => {}, () => {}));
-        mocksendZclFrameToEndpoint.mockClear();
-        mocksendZclFrameToEndpoint.mockImplementationOnce(() => {throw new Error("dogs barking too hard");});
-        mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-
-        // onZclData is called via mockAdapterEvents, but we need to wait until it has finished
-        const origOnZclData = device.onZclData;
-        device.onZclData = async (payload, endpoint) => {
-            const f = origOnZclData.call(device, payload, endpoint);
-            jest.advanceTimersByTime(10);
-            return f;
-        };
-        const nextTick = new Promise (process.nextTick);
-
-        const result = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true});
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
-
-        await mockAdapterEvents['zclData']({
-            wasBroadcast: false,
-            address: 174,
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from([24,169,10,0,0,24,1])),
-            endpoint: 1,
-            linkquality: 50,
-            groupID: 1,
-
-        });
-
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
-
-        await mockAdapterEvents['zclData']({
-            wasBroadcast: false,
-            address: 174,
-            frame: ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0),
-            endpoint: 1,
-            linkquality: 52,
-            groupID: undefined,
-        });
-
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
-
-        const checkinrsp = mocksendZclFrameToEndpoint.mock.calls[1];
-        expect(checkinrsp[0]).toBe('0x174');
-        expect(checkinrsp[1]).toBe(174);
-        expect(checkinrsp[2]).toBe(1);
-        expect(checkinrsp[3].Cluster.name).toBe('genPollCtrl');
-        expect(checkinrsp[3].Command.name).toBe('checkinRsp');
-        expect(checkinrsp[3].Payload).toStrictEqual({startFastPolling: true, fastPollTimeout: 0});
-
-        expect((await result)).toBe(undefined);
-
-        await nextTick;
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(4);
-
-        const cmd = mocksendZclFrameToEndpoint.mock.calls[2];
-        expect(cmd[0]).toBe('0x174');
-        expect(cmd[1]).toBe(174);
-        expect(cmd[2]).toBe(1);
-        expect(cmd[3].Cluster.name).toBe('genOnOff');
-
-        const fastpollstop = mocksendZclFrameToEndpoint.mock.calls[3];
-        expect(fastpollstop[0]).toBe('0x174');
-        expect(fastpollstop[1]).toBe(174);
-        expect(fastpollstop[2]).toBe(1);
-        expect(fastpollstop[3].Cluster.name).toBe('genPollCtrl');
-        expect(fastpollstop[3].Command.name).toBe('fastPollStop');
-        expect(fastpollstop[3].Payload).toStrictEqual({});
-
-    });
-
     it('Handle retransmitted Xiaomi messages', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 175, ieeeAddr: '0x175'});
@@ -5082,7 +4961,7 @@ describe('Controller', () => {
             groupID: 171,
         });
 
-        const expected = {"type":"read","device":{"ID":3,"_applicationVersion":2,"_dateCode":"201901","_pendingRequestTimeout":0,"_defaultSendRequestWhen": "immediate","_endpoints":[{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":2,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":3,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 3,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":4,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 4,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":5,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 5,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":6,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 6,"deviceIeeeAddress": "0x171","sendInProgress": false}}],"_events":{},"_eventsCount":0,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_ieeeAddr":"0x171","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_manufacturerID":1212,"_manufacturerName":"Xioami","_modelID":"lumi.remote.b286opcn01","_networkAddress":171,"_powerSource":"Mains (single phase)","_softwareBuildID":"1.01","_stackVersion":101,"_type":"EndDevice","_zclVersion":1,"_linkquality":19,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{}},"endpoint":{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x171","sendInProgress": false}},"data":["mainsVoltage",9999],"linkquality":19,"groupID":171,"cluster":"genPowerCfg","meta":{"zclTransactionSequenceNumber":40,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
+        const expected = {"type":"read","device":{"ID":3,"_applicationVersion":2,"_dateCode":"201901","_pendingRequestTimeout":0,"_endpoints":[{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":2,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 2,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":3,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 3,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":4,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 4,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":5,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 5,"deviceIeeeAddress": "0x171","sendInProgress": false}},{"inputClusters":[],"outputClusters":[],"ID":6,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 6,"deviceIeeeAddress": "0x171","sendInProgress": false}}],"_events":{},"_eventsCount":0,"_hardwareVersion":3,"_events":{},"_eventsCount":0,"_ieeeAddr":"0x171","_interviewCompleted":true,"_interviewing":false,"_lastSeen":150,"_manufacturerID":1212,"_manufacturerName":"Xioami","_modelID":"lumi.remote.b286opcn01","_networkAddress":171,"_powerSource":"Mains (single phase)","_softwareBuildID":"1.01","_stackVersion":101,"_type":"EndDevice","_zclVersion":1,"_linkquality":19,"_skipDefaultResponse":false,"_skipTimeResponse":false,"meta":{}},"endpoint":{"deviceID":5,"inputClusters":[0,1,2],"outputClusters":[2],"profileID":99,"ID":1,"clusters":{},"deviceIeeeAddress":"0x171","deviceNetworkAddress":171,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"meta":{},"pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x171","sendInProgress": false}},"data":["mainsVoltage",9999],"linkquality":19,"groupID":171,"cluster":"genPowerCfg","meta":{"zclTransactionSequenceNumber":40,"manufacturerCode":null,"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false}}};
         expect(events.message.length).toBe(1);
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
