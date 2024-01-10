@@ -78,9 +78,6 @@ class Znp extends events.EventEmitter {
 
         this.queue = new Queue();
         this.waitress = new Waitress<ZpiObject, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
-
-        this.onUnpiParsed = this.onUnpiParsed.bind(this);
-        this.onPortClose = this.onPortClose.bind(this);
     }
 
     private log(type: Type, message: string): void {
@@ -115,6 +112,10 @@ class Znp extends events.EventEmitter {
         return this.initialized;
     }
 
+    private onPortError(error: Error): void {
+        debug.error(`Port error: ${error}`);
+    }
+
     private onPortClose(): void {
         debug.log('Port closed');
         this.initialized = false;
@@ -138,28 +139,27 @@ class Znp extends events.EventEmitter {
 
         this.unpiParser = new UnpiParser();
         this.serialPort.pipe(this.unpiParser);
-        this.unpiParser.on('parsed', this.onUnpiParsed);
+        this.unpiParser.on('parsed', this.onUnpiParsed.bind(this));
 
-        return new Promise((resolve, reject): void => {
-            this.serialPort.open(async (error): Promise<void> => {
-                if (error) {
-                    reject(new Error(`Error while opening serialport '${error}'`));
-                    this.initialized = false;
-                    if (this.serialPort.isOpen) {
-                        this.serialPort.close();
-                    }
-                } else {
-                    debug.log('Serialport opened');
-                    this.initialized = true;
-                    await this.skipBootloader();
-                    this.serialPort.once('close', this.onPortClose);
-                    this.serialPort.once('error', (error) => {
-                        debug.error(`Serialport error: ${error}`);
-                    });
-                    resolve();
-                }
-            });
-        });
+        try {
+            await this.serialPort.asyncOpen();
+            debug.log('Serialport opened');
+
+            this.serialPort.once('close', this.onPortClose.bind(this));
+            this.serialPort.once('error', this.onPortError.bind(this));
+
+            this.initialized = true;
+
+            await this.skipBootloader();
+        } catch (error) {
+            this.initialized = false;
+
+            if (this.serialPort.isOpen) {
+                this.serialPort.close();
+            }
+
+            throw error;
+        }
     }
 
     private async openSocketPort(): Promise<void> {
@@ -175,7 +175,7 @@ class Znp extends events.EventEmitter {
 
         this.unpiParser = new UnpiParser();
         this.socketPort.pipe(this.unpiParser);
-        this.unpiParser.on('parsed', this.onUnpiParsed);
+        this.unpiParser.on('parsed', this.onUnpiParsed.bind(this));
 
         return new Promise((resolve, reject): void => {
             this.socketPort.on('connect', function() {
@@ -191,7 +191,7 @@ class Znp extends events.EventEmitter {
                 resolve();
             });
 
-            this.socketPort.once('close', this.onPortClose);
+            this.socketPort.once('close', this.onPortClose.bind(this));
 
             this.socketPort.on('error', function () {
                 debug.log('Socket error');
@@ -263,29 +263,27 @@ class Znp extends events.EventEmitter {
         return paths.length > 0 ? paths[0] : null;
     }
 
-    public close(): Promise<void> {
-        return new Promise((resolve, reject): void => {
-            if (this.initialized) {
-                if (this.portType === 'serial') {
-                    this.serialPort.flush((): void => {
-                        this.serialPort.close((error): void => {
-                            this.initialized = false;
-                            error == null ?
-                                resolve() :
-                                reject(new Error(`Error while closing serialport '${error}'`));
-                            this.emit('close');
-                        });
-                    });
-                } else {
-                    this.socketPort.destroy();
-                    resolve();
+    public async close(): Promise<void> {
+        debug.log('closing');
+        this.queue.clear();
+
+        if (this.initialized) {
+            this.initialized = false;
+
+            if (this.portType === 'serial') {
+                try {
+                    await this.serialPort.asyncFlushAndClose();
+                } catch (error) {
+                    this.emit('close');
+
+                    throw error;
                 }
             } else {
-                resolve();
-                this.emit('close');
+                this.socketPort.destroy();
             }
-        });
+        }
 
+        this.emit('close');
     }
 
     public request(

@@ -83,35 +83,27 @@ export class SerialDriver extends EventEmitter {
         this.parser = new Parser();
         this.serialPort.pipe(this.parser);
         this.parser.on('parsed', this.onParsed.bind(this));
-        try {
-            await new Promise((resolve, reject): void => {
-                this.serialPort.open(async (error): Promise<void> => {
-                    if (error) {
-                        reject(new Error(`Error while opening serialport '${error}'`));
-                    } else {
-                        resolve(null);
-                    }
-                });
-            });
 
+        try {
+            await this.serialPort.asyncOpen();
             debug('Serialport opened');
+
             this.serialPort.once('close', this.onPortClose.bind(this));
-            this.serialPort.once('error', (error) => {
-                debug(`Serialport error: ${error}`);
-            });
-    
+            this.serialPort.once('error', this.onPortError.bind(this));
+
             // reset
             await this.reset();
+
             this.initialized = true;
-            this.emit('connected');
-        } catch (e) {
+        } catch (error) {
             this.initialized = false;
+
             if (this.serialPort.isOpen) {
                 this.serialPort.close();
             }
-            throw e;
+
+            throw error;
         }
-            
     }
 
     private async openSocketPort(path: string): Promise<void> {
@@ -141,7 +133,6 @@ export class SerialDriver extends EventEmitter {
                 // reset
                 await this.reset();
                 self.initialized = true;
-                this.emit('connected');
                 resolve();
             });
 
@@ -295,44 +286,46 @@ export class SerialDriver extends EventEmitter {
         this.parser.reset();
         this.queue.clear();
         return this.queue.execute<void>(async (): Promise<void> => {
-            debug(`--> Write reset`);
-            const waiter = this.waitFor(-1, 10000).start();
-            this.writer.sendReset();
-            debug(`-?- waiting reset`);
-            return waiter.promise.catch(async (e) => {
+            try {
+                debug(`--> Write reset`);
+                const waiter = this.waitFor(-1, 10000);
+                this.writer.sendReset();
+                debug(`-?- waiting reset`);
+                await waiter.start().promise;
+                debug(`-+- waiting reset success`);
+            } catch (e) {
                 debug(`--> Error: ${e}`);
                 this.emit('reset');
                 throw new Error(`Reset error: ${e}`);
-            }).then(()=>{
-                debug(`-+- waiting reset success`);
-            });
-        });
-
-    }
-
-    public close(): Promise<void> {
-        return new Promise((resolve, reject): void => {
-            this.queue.clear();
-            if (this.initialized) {
-                if (this.portType === 'serial') {
-                    this.serialPort.flush((): void => {
-                        this.serialPort.close((error): void => {
-                            this.initialized = false;
-                            this.emit('close');
-                            error == null ?
-                                resolve() :
-                                reject(new Error(`Error while closing serialport '${error}'`));
-                        });
-                    });
-                } else {
-                    this.socketPort.destroy();
-                    resolve();
-                }
-            } else {
-                this.emit('close');
-                resolve();
             }
         });
+    }
+
+    public async close(): Promise<void> {
+        debug('closing');
+        this.queue.clear();
+
+        if (this.initialized) {
+            this.initialized = false;
+
+            if (this.portType === 'serial') {
+                try {
+                    await this.serialPort.asyncFlushAndClose();
+                } catch (error) {
+                    this.emit('close');
+
+                    throw error;
+                }
+            } else {
+                this.socketPort.destroy();
+            }
+        }
+
+        this.emit('close');
+    }
+
+    private onPortError(error: Error): void {
+        debug(`Port error: ${error}`);
     }
 
     private onPortClose(): void {
@@ -352,32 +345,36 @@ export class SerialDriver extends EventEmitter {
         const ackSeq = this.recvSeq;
 
         return this.queue.execute<void>(async (): Promise<void> => {
-            debug(`--> DATA (${seq},${ackSeq},0): ${data.toString('hex')}`);
             const randData = this.randomize(data);
-            const waiter = this.waitFor(nextSeq).start();
-            this.writer.sendData(randData, seq, 0, ackSeq);
-            debug(`-?- waiting (${nextSeq})`);
-            return waiter.promise.catch(async (e) => {
-                debug(`--> Error: ${e}`);
+
+            try {
+                const waiter = this.waitFor(nextSeq);
+                debug(`--> DATA (${seq},${ackSeq},0): ${data.toString('hex')}`);
+                this.writer.sendData(randData, seq, 0, ackSeq);
+                debug(`-?- waiting (${nextSeq})`);
+                await waiter.start().promise;
+                debug(`-+- waiting (${nextSeq}) success`);
+            } catch (e1) {
+                debug(`--> Error: ${e1}`);
                 debug(`-!- break waiting (${nextSeq})`);
                 debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
-                await Wait(500);
-                debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`);
-                const waiter = this.waitFor(nextSeq).start();
-                this.writer.sendData(randData, seq, 1, ackSeq);
-                debug(`-?- rewaiting (${nextSeq})`);
-                return waiter.promise.catch(async (e) => {
-                    debug(`--> Error: ${e}`);
+
+                try {
+                    await Wait(500);
+                    const waiter = this.waitFor(nextSeq);
+                    debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`);
+                    this.writer.sendData(randData, seq, 1, ackSeq);
+                    debug(`-?- rewaiting (${nextSeq})`);
+                    await waiter.start().promise;
+                    debug(`-+- rewaiting (${nextSeq}) success`);
+                } catch (e2) {
+                    debug(`--> Error: ${e2}`);
                     debug(`-!- break rewaiting (${nextSeq})`);
                     debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
                     this.emit('reset');
-                    throw new Error(`sendDATA error: ${e}`);
-                }).then(()=>{
-                    debug(`-+- rewaiting (${nextSeq}) success`);
-                });
-            }).then(()=>{
-                debug(`-+- waiting (${nextSeq}) success`);
-            });
+                    throw new Error(`sendDATA error: try 1: ${e1}, try 2: ${e2}`);
+                }
+            }
         });
     }
 

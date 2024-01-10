@@ -164,37 +164,28 @@ export default class ZiGate extends EventEmitter {
         return this.portType === 'serial' ? this.openSerialPort() : this.openSocketPort();
     }
 
-    public close(): Promise<void> {
-        debug.info('close');
-        return new Promise((resolve, reject) => {
-            if (this.initialized) {
-                this.initialized = false;
-                this.portWrite = null;
-                if (this.portType === 'serial') {
-                    this.serialPort.flush((): void => {
-                        this.serialPort.close((error): void => {
-                            this.serialPort = null;
-                            error == null ?
-                                resolve() :
-                                reject(new Error(`Error while closing serialPort '${error}'`));
-                            this.emit('close');
-                        });
-                    });
-                } else {
-                    // @ts-ignore
-                    this.socketPort.destroy((error?: Error): void => {
-                        this.socketPort = null;
-                        error == null ?
-                            resolve() :
-                            reject(new Error(`Error while closing serialPort '${error}'`));
-                        this.emit('close');
-                    });
+    public async close(): Promise<void> {
+        debug.info('closing');
+        this.queue.clear();
+
+        if (this.initialized) {
+            this.portWrite = null;
+            this.initialized = false;
+
+            if (this.portType === 'serial') {
+                try {
+                    await this.serialPort.asyncFlushAndClose();
+                } catch (error) {
+                    this.emit('close');
+
+                    throw error;
                 }
             } else {
-                resolve();
-                this.emit('close');
+                this.socketPort.destroy();
             }
-        });
+        }
+
+        this.emit('close');
     }
 
     public waitFor(matcher: WaitressMatcher, timeout: number = timeouts.default):
@@ -220,27 +211,24 @@ export default class ZiGate extends EventEmitter {
         this.parser.on('data', this.onSerialData.bind(this));
 
         this.portWrite = this.serialPort;
-        return new Promise((resolve, reject): void => {
-            this.serialPort.open(async (err: unknown): Promise<void> => {
-                if (err) {
-                    this.serialPort = null;
-                    this.parser = null;
-                    this.path = null;
-                    this.initialized = false;
-                    const error = `Error while opening serialPort '${err}'`;
-                    debug.error(error);
-                    reject(new Error(error));
-                } else {
-                    debug.log('Successfully connected ZiGate port \'' + this.path + '\'');
-                    this.serialPort.on('error', (error) => {
-                        debug.error(`serialPort error: ${error}`);
-                    });
-                    this.serialPort.on('close', this.onPortClose.bind(this));
-                    this.initialized = true;
-                    resolve();
-                }
-            });
-        });
+
+        try {
+            await this.serialPort.asyncOpen();
+            debug.log('Serialport opened');
+
+            this.serialPort.once('close', this.onPortClose.bind(this));
+            this.serialPort.once('error', this.onPortError.bind(this));
+
+            this.initialized = true;
+        } catch (error) {
+            this.initialized = false;
+
+            if (this.serialPort.isOpen) {
+                this.serialPort.close();
+            }
+
+            throw error;
+        }
     }
 
     private async openSocketPort(): Promise<void> {
@@ -272,7 +260,7 @@ export default class ZiGate extends EventEmitter {
                 resolve();
             });
 
-            this.socketPort.once('close', this.onPortClose);
+            this.socketPort.once('close', this.onPortClose.bind(this));
 
             this.socketPort.on('error', (error) => {
                 debug.log('Socket error', error);
@@ -285,12 +273,12 @@ export default class ZiGate extends EventEmitter {
         });
     }
 
-    private onSerialError(err: string): void {
-        debug.error('serial error: ', err);
+    private onPortError(error: Error): void {
+        debug.error(`Port error: ${error}`);
     }
 
     private onPortClose(): void {
-        debug.log('serial closed');
+        debug.log('Port closed');
         this.initialized = false;
         this.emit('close');
     }
