@@ -28,8 +28,8 @@
     "@serialport/bindings-cpp": "^12.0.1",
     "@serialport/parser-delimiter": "^12.0.0",
     "@serialport/stream": "^12.0.0",
-    "bonjour-service": "^1.1.1",
-    "debounce": "^1.2.1",
+    "bonjour-service": "^1.2.0",
+    "debounce": "^2.0.0",
     "debug": "^4.3.4",
     "fast-deep-equal": "^3.1.3",
     "mixin-deep": "^2.0.1",
@@ -41,14 +41,12 @@
   "devDependencies": {
     "@babel/cli": "*",
     "@babel/core": "*",
-    "@babel/plugin-proposal-class-properties": "*",
-    "@babel/plugin-proposal-object-rest-spread": "*",
     "@babel/preset-env": "*",
     "@babel/preset-typescript": "*",
-    "@types/debounce": "^1.2.3",
+    "@types/debounce": "^1.2.4",
     "@types/debug": "*",
     "@types/jest": "*",
-    "@types/mz": "^2.7.6",
+    "@types/mz": "^2.7.8",
     "@types/nedb": "*",
     "@types/node": "*",
     "@typescript-eslint/eslint-plugin": "*",
@@ -57,10 +55,9 @@
     "eslint": "*",
     "jest": "*",
     "regenerator-runtime": "*",
-    "typedoc": "^0.25.3",
+    "typedoc": "^0.25.6",
     "typedoc-plugin-markdown": "*",
     "typedoc-plugin-no-inherit": "*",
-    "typedoc-plugin-sourcefile-url": "*",
     "typescript": "*"
   },
   "homepage": "https://github.com/Koenkk/zigbee-herdsman",
@@ -87,7 +84,7 @@
     "clean": "rimraf temp coverage dist",
     "prepack": "npm run clean && npm run build"
   },
-  "version": "0.22.1",
+  "version": "0.32.1",
   "jest": {
     "coverageThreshold": {
       "global": {

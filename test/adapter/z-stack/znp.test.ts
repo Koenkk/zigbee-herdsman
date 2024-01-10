@@ -8,9 +8,11 @@ import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
 
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
+const mockSerialPortAsyncFlushAndClose = jest.fn();
 const mockSerialPortPipe = jest.fn();
 const mockSerialPortList = jest.fn().mockReturnValue([]);
 const mockSerialPortOpen = jest.fn().mockImplementation((cb) => cb());
+const mockSerialPortAsyncOpen = jest.fn();
 const mockSerialPortConstructor = jest.fn();
 const mockSerialPortOnce = jest.fn();
 const mockSerialPortSet = jest.fn().mockImplementation((opts, cb) => cb());
@@ -36,6 +38,8 @@ jest.mock('../../../src/adapter/serialPort', () => {
                 write: mockSerialPortWrite,
                 flush: mockSerialPortFlush,
                 isOpen: mockSerialPortIsOpen,
+                asyncOpen: mockSerialPortAsyncOpen,
+                asyncFlushAndClose: mockSerialPortAsyncFlushAndClose,
             };
         }),
     };
@@ -109,7 +113,7 @@ jest.mock('../../../src/adapter/z-stack/unpi/writer', () => {
 const mocks = [
     mockSerialPortClose, mockSerialPortPipe, mockSerialPortConstructor, mockSerialPortOpen,
     mockSerialPortOnce, mockSerialPortWrite, SerialPort, mockUnpiParserOn, mockUnpiWriterWriteFrame,
-    mockUnpiWriterWriteBuffer, mockSerialPortFlush,
+    mockUnpiWriterWriteBuffer, mockSerialPortFlush, mockSerialPortAsyncFlushAndClose, mockSerialPortAsyncOpen
 ];
 
 describe('ZNP', () => {
@@ -147,7 +151,7 @@ describe('ZNP', () => {
         );
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
-        expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortAsyncOpen).toHaveBeenCalledTimes(1);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
         expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(0);
     });
@@ -162,7 +166,7 @@ describe('ZNP', () => {
         );
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
-        expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortAsyncOpen).toHaveBeenCalledTimes(1);
         expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(1);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
     });
@@ -178,7 +182,7 @@ describe('ZNP', () => {
         );
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
-        expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortAsyncOpen).toHaveBeenCalledTimes(1);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
     });
 
@@ -270,7 +274,11 @@ describe('ZNP', () => {
     });
 
     it('Open with error', async () => {
-        mockSerialPortOpen.mockImplementationOnce((cb) => cb('failed!'));
+        mockSerialPortAsyncOpen.mockImplementationOnce(() => {
+            return new Promise((resolve, reject) => {
+                reject('failed!');
+            });
+        });
         mockSerialPortIsOpen = true;
 
         let error = false;
@@ -286,16 +294,20 @@ describe('ZNP', () => {
             {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 100, "rtscts": true},
         );
 
-        expect(error).toEqual(new Error("Error while opening serialport 'failed!'"));
+        expect(error).toEqual('failed!');
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
-        expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortAsyncOpen).toHaveBeenCalledTimes(1);
         expect(mockSerialPortClose).toHaveBeenCalledTimes(1);
         expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(0);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(0);
     });
 
     it('Open with error when serialport is not open', async () => {
-        mockSerialPortOpen.mockImplementationOnce((cb) => cb('failed!'));
+        mockSerialPortAsyncOpen.mockImplementationOnce(() => {
+            return new Promise((resolve, reject) => {
+                reject('failed!');
+            });
+        });
         mockSerialPortIsOpen = false;
 
         let error = false;
@@ -311,9 +323,9 @@ describe('ZNP', () => {
             {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 100, "rtscts": true},
         );
 
-        expect(error).toEqual(new Error("Error while opening serialport 'failed!'"));
+        expect(error).toEqual('failed!');
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
-        expect(mockSerialPortOpen).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortAsyncOpen).toHaveBeenCalledTimes(1);
         expect(mockSerialPortClose).toHaveBeenCalledTimes(0);
         expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(0);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(0);
@@ -328,15 +340,18 @@ describe('ZNP', () => {
         await znp.close();
         expect(znp.isInitialized()).toBeFalsy();
 
-        expect(mockSerialPortFlush).toHaveBeenCalledTimes(1);
-        expect(mockSerialPortClose).toHaveBeenCalledTimes(1);
+        expect(mockSerialPortAsyncFlushAndClose).toHaveBeenCalledTimes(1);
         expect(close).toHaveBeenCalledTimes(1);
     });
 
     it('Open and close error', async () => {
         const close = jest.fn();
         znp.on('close', close);
-        mockSerialPortClose.mockImplementationOnce((cb) => cb("failed!"));
+        mockSerialPortAsyncFlushAndClose.mockImplementationOnce(() => {
+            return new Promise((resolve, reject) => {
+                reject('failed!');
+            });
+        });
         await znp.open();
 
         let error;
@@ -346,20 +361,22 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(mockSerialPortFlush).toHaveBeenCalledTimes(1);
-        expect(mockSerialPortClose).toHaveBeenCalledTimes(1);
-        expect(error).toStrictEqual(new Error("Error while closing serialport 'failed!'"));
+        expect(mockSerialPortAsyncFlushAndClose).toHaveBeenCalledTimes(1);
+        expect(error).toEqual('failed!');
         expect(close).toHaveBeenCalledTimes(1);
     });
 
     it('Close without initialization', async () => {
         const close = jest.fn();
         znp.on('close', close);
-        mockSerialPortClose.mockImplementationOnce((cb) => cb("failed!"));
+        mockSerialPortAsyncFlushAndClose.mockImplementationOnce(() => {
+            return new Promise((resolve, reject) => {
+                reject('failed!');
+            });
+        });
         await znp.close();
 
-        expect(mockSerialPortFlush).toHaveBeenCalledTimes(0);
-        expect(mockSerialPortClose).toHaveBeenCalledTimes(0);
+        expect(mockSerialPortAsyncFlushAndClose).toHaveBeenCalledTimes(0);
         expect(close).toHaveBeenCalledTimes(1);
     });
 

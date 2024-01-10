@@ -5,7 +5,7 @@ import {EmberStatus, EmberNodeType, uint16_t, uint8_t, uint32_t, EmberZDOCmd, Em
     EmberJoinDecision} from './types';
 import {EventEmitter} from "events";
 import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState,
-    EmberRawFrame, EmberIeeeRawFrame, EmberAesMmoHashContext} from './types/struct';
+    EmberRawFrame, EmberIeeeRawFrame, EmberAesMmoHashContext, EmberSecurityManagerContext} from './types/struct';
 import {ember_security} from './utils';
 import {
     EmberOutgoingMessageType,
@@ -16,7 +16,8 @@ import {
     EzspPolicyId,
     EzspDecisionBitmask,
     EmberNetworkStatus,
-    EmberKeyType
+    EmberKeyType,
+    EmberDerivedKeyType,
 } from './types/named';
 import {Multicast} from './multicast';
 import {Waitress, Wait} from '../../../utils';
@@ -214,9 +215,9 @@ export class Driver extends EventEmitter {
         this.ezsp.on('frame', this.handleFrame.bind(this));
         this.handleNodeJoined(nwk, this.ieee);
         debug.log(`EZSP nwk=${nwk}, IEEE=0x${this.ieee}`);
-        const linkResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.TRUST_CENTER_LINK_KEY});
+        const linkResult = await this.getKey(EmberKeyType.TRUST_CENTER_LINK_KEY);
         debug.log(`TRUST_CENTER_LINK_KEY: ${JSON.stringify(linkResult)}`);
-        const netResult = await this.ezsp.execCommand('getKey', {keyType: EmberKeyType.CURRENT_NETWORK_KEY});
+        const netResult = await this.getKey(EmberKeyType.CURRENT_NETWORK_KEY);
         debug.log(`CURRENT_NETWORK_KEY: ${JSON.stringify(netResult)}`);
         await Wait(1000);
         await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
@@ -565,6 +566,8 @@ export class Driver extends EventEmitter {
         const frame = this.makeApsFrame(requestCmd as number, false);
         const payload = this.makeZDOframe(requestCmd as number, {transId: frame.sequence, ...params});
         const waiter = this.waitFor(networkAddress, responseCmd as number, frame.sequence).start();
+        // if the request takes longer than the timeout, avoid an unhandled promise rejection.
+        waiter.promise.catch(() => {});
         const res = await this.request(networkAddress, frame, payload);
         if (!res) {
             debug.error(`zdoRequest error`);
@@ -675,7 +678,11 @@ export class Driver extends EventEmitter {
     }
     
     public addTransientLinkKey(partner: EmberEUI64, transientKey: EmberKeyData): Promise<EZSPFrameData> {
-        return this.ezsp.execCommand('addTransientLinkKey', {partner, transientKey});
+        if (this.ezsp.ezspV < 13) {
+            return this.ezsp.execCommand('addTransientLinkKey', {partner, transientKey});
+        } else {
+            return this.ezsp.execCommand('importTransientKey', {partner, transientKey, flags: 0});
+        }
     }
     
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
@@ -751,6 +758,25 @@ export class Driver extends EventEmitter {
                 sender: frame.addr,
             };
             this.emit('incomingMessage', gpdMessage);
+        }
+    }
+
+    public async getKey(keyType: EmberKeyType): Promise<EZSPFrameData> {
+        if (this.ezsp.ezspV < 13) {
+            return this.ezsp.execCommand('getKey', {keyType});
+        } else {
+            const smc = new EmberSecurityManagerContext();        
+            smc.type = keyType;
+            smc.index = 0;
+            smc.derivedType = EmberDerivedKeyType.NONE;
+            smc.eui64 = new EmberEUI64('0x0000000000000000');
+            smc.multiNetworkIndex = 0;
+            smc.flags = 0;
+            smc.psaKeyAlgPermission = 0;
+            const keyInfo = await this.ezsp.execCommand('exportKey', {context: smc});
+            console.assert(keyInfo.status == EmberStatus.SUCCESS, 
+                `exportKey returned unexpected status: ${keyInfo.status}`);
+            return keyInfo;
         }
     }
 }

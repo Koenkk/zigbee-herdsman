@@ -19,11 +19,11 @@ export class EZSPAdapterBackup {
     public async createBackup(): Promise<Models.Backup> {
         this.debug("creating backup");
         const version: number = await this.driver.ezsp.version();
-        const linkResult = await this.driver.ezsp.execCommand('getKey', {keyType: EmberKeyType.TRUST_CENTER_LINK_KEY});
+        const linkResult = await this.driver.getKey(EmberKeyType.TRUST_CENTER_LINK_KEY);
         const trustCenterLinkKey: EmberKeyStruct = linkResult.keyStruct;
         const netParams = await this.driver.ezsp.execCommand('getNetworkParameters');
         const networkParams: EmberNetworkParameters = netParams.parameters;
-        const netResult = await this.driver.ezsp.execCommand('getKey', {keyType: EmberKeyType.CURRENT_NETWORK_KEY});
+        const netResult = await this.driver.getKey(EmberKeyType.CURRENT_NETWORK_KEY);
         const networkKey: EmberKeyStruct = netResult.keyStruct;
         const ieee = (await this.driver.ezsp.execCommand('getEui64')).eui64;
         /* return backup structure */

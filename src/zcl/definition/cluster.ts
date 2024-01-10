@@ -535,7 +535,20 @@ const Cluster: {
             defaultMoveRate: {ID: 20, type: DataType.uint16},
             startUpCurrentLevel: {ID: 16384, type: DataType.uint8},
             elkoStartUpCurrentLevel: {ID: 0x4000, type: DataType.uint8, manufacturerCode: ManufacturerCode.ELKO},
-            ubisysMinimumOnLevel: {ID: 0, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysMinimumOnLevel: {ID: 0x0000, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysValveType: {ID: 0x0001, type: DataType.bitmap8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysCyclePeriod: {ID: 0x0002, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysSeason: {ID: 0x0003, type: DataType.enum8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysBackupLevel: {ID: 0x0004, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysAlternateBackupLevel: {ID: 0x0005, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysLowerRange: {ID: 0x0006, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysUpperRange: {ID: 0x0007, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysPumpThresholdOn: {ID: 0x0008, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysPumpThresholdOff: {ID: 0x0009, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysHeatingDemandEnableThreshold: {ID: 0x000A, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysHeatingDemandDisableThreshold: {ID: 0x000B, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysCoolingDemandEnableThreshold: {ID: 0x000C, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysCoolingDemandDisableThreshold: {ID: 0x000D, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
         },
         commands: {
             moveToLevel: {
@@ -2058,6 +2071,22 @@ const Cluster: {
             elkoLastMessageStatus: {ID: 0x0419, type: DataType.uint8},
             fourNoksHysteresisHigh: {ID: 0x0101, type: DataType.uint16, manufacturerCode: ManufacturerCode._4_NOKS},
             fourNoksHysteresisLow: {ID: 0x0102, type: DataType.uint16, manufacturerCode: ManufacturerCode._4_NOKS},
+            ubisysClassBTemperatureOffset: {ID: 0x0000, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysReturnFlowTemperatureWeight: {ID: 0x0001, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawOutdoorTemperature: {ID: 0x0002, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawLocalTemperatureA: {ID: 0x0003, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawLocalTemperatureB: {ID: 0x0004, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawForwardFlowTemperature: {ID: 0x0005, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRawReturnFlowTemperature: {ID: 0x0006, type: DataType.struct, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysInstalledExtensions: {ID: 0x0007, type: DataType.bitmap64, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysTemperatureOffset: {ID: 0x0010, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysDefaultOccupiedHeatingSetpoint: {ID: 0x0011, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysVacationMode: {ID: 0x0012, type: DataType.boolean, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRemoteTemperature: {ID: 0x0013, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysRemoteTemperatureValidDuration: {ID: 0x0014, type: DataType.uint8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysProportionalGain: {ID: 0x0020, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysProportionalShift: {ID: 0x0021, type: DataType.int8, manufacturerCode: ManufacturerCode.Ubisys},
+            ubisysIntegralFactor: {ID: 0x0022, type: DataType.int16, manufacturerCode: ManufacturerCode.Ubisys},
         },
         commands: {
             setpointRaiseLower: {
@@ -2135,7 +2164,12 @@ const Cluster: {
                 ID: 0xa0,
                 parameters: [
                 ],
-            }
+            },
+            boschCalibrateValve: {
+                ID: 0x41,
+                parameters: [
+                ],
+            },
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
@@ -3603,6 +3637,29 @@ const Cluster: {
             },
         },
     },
+    tunneling: {
+        ID: 0x0704,
+        attributes: {
+        },
+        commands: {
+            transferData: {
+                ID: 2,
+                parameters: [
+                    {name: 'tunnelID', type: DataType.uint16},
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+        commandsResponse: {
+            transferDataResp: {
+                ID: 1,
+                parameters: [
+                    {name: 'tunnelID', type: DataType.uint16},
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+    },
     telecommunicationsInformation: {
         ID: 2304,
         attributes: {
@@ -4266,47 +4323,6 @@ const Cluster: {
         commandsResponse: {
         }
     },
-    manuSpecificUbisysHeatingRegulatorThermostat: {
-        ID: 0x0201, // = 513
-        manufacturerCode: ManufacturerCode.Ubisys,
-        attributes: {
-            classBTemperatureOffset: {ID: 0x0000, type: DataType.int8},
-            returnFlowTemperatureWeight: {ID: 0x0001, type: DataType.int8},
-            rawOutdoorTemperature: {ID: 0x0002, type: DataType.struct},
-            rawLocalTemperatureA: {ID: 0x0003, type: DataType.struct},
-            rawLocalTemperatureB: {ID: 0x0004, type: DataType.struct},
-            rawForwardFlowTemperature: {ID: 0x0005, type: DataType.struct},
-            rawReturnFlowTemperature: {ID: 0x0006, type: DataType.struct},
-            installedExtensions: {ID: 0x0007, type: DataType.bitmap64},
-        },
-        commands: {
-        },
-        commandsResponse: {
-        }
-    },
-    manuSpecificUbisysHeatingRegulatorLevelCtrl: {
-        ID: 8,
-        manufacturerCode: ManufacturerCode.Ubisys,
-        attributes: {
-            valveType: {ID: 0x0000, type: DataType.bitmap8},
-            cyclePeriod: {ID: 0x0001, type: DataType.uint8},
-            season: {ID: 0x0002, type: DataType.enum8},
-            backupLevel: {ID: 0x0003, type: DataType.uint8},
-            alternateBackupLevel: {ID: 0x0004, type: DataType.uint8},
-            lowerRange: {ID: 0x0005, type: DataType.uint8},
-            upperRange: {ID: 0x0006, type: DataType.uint8},
-            pumpThresholdOn: {ID: 0x0007, type: DataType.uint8},
-            pumpThresholdOff: {ID: 0x0008, type: DataType.uint8},
-            heatingDemandEnableThreshold: {ID: 0x0009, type: DataType.uint8},
-            heatingDemandDisableThreshold: {ID: 0x000A, type: DataType.uint8},
-            coolingDemandEnableThreshold: {ID: 0x000B, type: DataType.uint8},
-            coolingDemandDisableThreshold: {ID: 0x000C, type: DataType.uint8},
-        },
-        commands: {
-        },
-        commandsResponse: {
-        }
-    },
     manuSpecificLegrandDevices: {
         ID: 0xfc01,
         manufacturerCode: ManufacturerCode.LegrandNetatmo,
@@ -4609,8 +4625,10 @@ const Cluster: {
         ID: 0xFCC0,
         manufacturerCode: ManufacturerCode.LUMI_UNITED_TECH,
         attributes: {
-            mode: {ID: 9, type: DataType.uint8},
-            illuminance: {ID: 0x0112, type: DataType.uint32}
+            mode: {ID: 0x0009, type: DataType.uint8},
+            illuminance: {ID: 0x0112, type: DataType.uint32},
+            displayUnit: {ID: 0x0114, type: DataType.uint8},
+            airQuality: {ID: 0x0129, type: DataType.uint8},
         },
         commands: {},
         commandsResponse: {}
@@ -4817,6 +4835,46 @@ const Cluster: {
             repast: {
                 ID: 0xf4,
                 parameters: [],
+            },
+        },
+        commandsResponse: {
+        },
+    },
+    tradfriButton: {
+        ID: 0xfc80,
+        manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
+        attributes: {
+        },
+        commands: {
+            action1: {
+                ID: 1,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
+            },
+            action2: {
+                ID: 2,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
+            },
+            action3: {
+                ID: 3,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
+            },
+            action4: {
+                ID: 4,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
+            },
+            action6: {
+                ID: 6,
+                parameters: [
+                    {name: 'data', type: DataType.uint8},
+                ],
             },
         },
         commandsResponse: {
@@ -5075,6 +5133,8 @@ const Cluster: {
             activeEnergyReports: {ID: 0x0014, type: DataType.uint16},
             powerType: {ID: 0x0015, type: DataType.boolean},
             switchType: {ID: 0x0016, type: DataType.uint8},
+            quickStartTime: {ID: 0x0017, type: DataType.uint8}, 
+            quickStartLevel: {ID: 0x0018, type: DataType.uint8},
             higherOutputInNonNeutral: {ID: 0x0019, type: DataType.boolean},
             nonNeutralAuxMediumGear: {ID: 0x001e, type: DataType.uint8},
             nonNeutralAuxLowGear: {ID: 0x001f, type: DataType.uint8},
@@ -5122,6 +5182,7 @@ const Cluster: {
             ledBarScaling: {ID: 0x0064, type: DataType.boolean},
             auxSwitchUniqueScenes: {ID: 0x007b, type: DataType.boolean},
             bindingOffToOnSyncLevel: {ID: 0x007d, type: DataType.boolean},
+            breezeMode: {ID: 0x0081, type: DataType.uint32},
             localProtection: {ID: 0x0100, type: DataType.boolean},
             remoteProtection: {ID: 0x0101, type: DataType.boolean},
             outputMode: {ID: 0x0102, type: DataType.boolean},
@@ -5342,6 +5403,40 @@ const Cluster: {
                 ],
             },
         },
+        commandsResponse: {},
+    },
+    manuSpecificBosch9: {
+        ID: 0xfca1,
+        manufacturerCode: ManufacturerCode.Bosch,
+        attributes: {},
+        commands: {
+            confirmButtonPressed: {
+                ID: 0x0010,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+            pairingCompleted: {
+                ID: 0x0012,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+        },
+        commandsResponse: {},
+    },
+    manuSpecificBosch10: {
+        ID: 0xfca0,
+        manufacturerCode: ManufacturerCode.Bosch,
+        attributes: {
+            deviceMode: {ID: 0x0000, type: DataType.enum8},
+            switchType: {ID: 0x0001, type: DataType.enum8},
+            calibrationOpeningTime: {ID: 0x0002, type: DataType.uint32},
+            calibrationClosingTime: {ID: 0x0003, type: DataType.uint32},
+            childLock: {ID: 0x0008, type: DataType.boolean},
+            motorState: {ID: 0x0013, type: DataType.enum8},
+        },
+        commands: {},
         commandsResponse: {},
     },
     manuSpecificAssaDoorLock: {
@@ -5599,7 +5694,7 @@ const Cluster: {
         },
         commandsResponse: {},
     },
-    manuSpecificNodOnFilPilote: {
+    manuSpecificNodOnPilotWire: {
         ID: 0xFC00,
         manufacturerCode: ManufacturerCode.NodOn,
         attributes: {
@@ -5615,6 +5710,47 @@ const Cluster: {
         },
         commandsResponse: {
         },
+    },
+    manuSpecificProfalux1: {
+        ID: 0xfc21,  // Config cluster, 0xfc20 mostly for commands it seems
+        manufacturerCode: ManufacturerCode.PROFALUX,
+        attributes: {
+            motorCoverType: {ID: 0, type: DataType.uint8}, // 0 : rolling shutters (volet), 1 : rolling shutters with tilt (BSO), 2: shade (store)
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    manuSpecificAmazonWWAH: {
+        ID: 0xfc57,
+        manufacturerCode: ManufacturerCode.AMAZON_LAB126,
+        attributes: {
+            disableOTADowngrades: {ID: 0x0002, type: DataType.boolean},
+            mgmtLeaveWithoutRejoinEnabled: {ID: 0x0003, type: DataType.boolean},
+            nwkRetryCount: {ID: 0x0004, type: DataType.uint8},
+            macRetryCount: {ID: 0x0005, type: DataType.uint8},
+            routerCheckInEnabled: {ID: 0x0006, type: DataType.boolean},
+            touchlinkInterpanEnabled: {ID: 0x0007, type: DataType.boolean},
+            wwahParentClassificationEnabled: {ID: 0x0008, type: DataType.boolean},
+            wwahAppEventRetryEnabled: {ID: 0x0009, type: DataType.boolean},
+            wwahAppEventRetryQueueSize: {ID: 0x000A, type: DataType.uint8},
+            wwahRejoinEnabled: {ID: 0x000B, type: DataType.boolean},
+            macPollFailureWaitTime: {ID: 0x000C, type: DataType.uint8},
+            configurationModeEnabled: {ID: 0x000D, type: DataType.boolean},
+            currentDebugReportID: {ID: 0x000E, type: DataType.uint8},
+            tcSecurityOnNwkKeyRotationEnabled: {ID: 0x000F, type: DataType.boolean},
+            wwahBadParentRecoveryEnabled: {ID: 0x0010, type: DataType.boolean},
+            pendingNetworkUpdateChannel: {ID: 0x0011, type: DataType.uint8},
+            pendingNetworkUpdatePANID: {ID: 0x0012, type: DataType.uint16},
+            otaMaxOfflineDuration: {ID: 0x0013, type: DataType.uint16},
+            clusterRevision: {ID: 0xFFFD, type: DataType.uint16},
+        },
+        commands: {
+            clearBindingTable: {
+                ID: 0x0A,
+                parameters: [],
+            },
+        },
+        commandsResponse: {},
     },
 };
 

@@ -20,4 +20,34 @@ export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends Ser
         };
         super(opts, openCallback);
     }
+
+    public async asyncOpen(): Promise<void> {
+        return new Promise((resolve, reject): void => {
+            this.open((error: Error | null): void => {
+                if (error) {
+                    reject(new Error(`Error while opening serialport '${error}'`));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    public async asyncFlushAndClose(): Promise<void> {
+        return new Promise((resolve, reject): void => {
+            this.flush((flushError: Error | null): void => {
+                if (flushError) {
+                    reject(new Error(`Error while flushing serialport '${flushError}'`));
+                } else {
+                    this.close((closeError: Error | null): void => {
+                        if (closeError) {
+                            reject(new Error(`Error while closing serialport '${closeError}'`));
+                        } else {
+                            resolve();
+                        }
+                    });
+                }
+            });
+        })
+    }
 }

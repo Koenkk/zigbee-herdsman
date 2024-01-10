@@ -1,4 +1,4 @@
-import {SendRequestWhen, SendPolicy} from '../tstype';
+import {SendPolicy} from '../tstype';
 import * as Zcl from '../../zcl';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -30,57 +30,55 @@ class Request<Type = any> {
         0x16: 'immediate',      // Discover Attributes Extended Response
     };
 
-    private _func: (frame: Zcl.ZclFrame) => Promise<Type>;
+    private func: (frame: Zcl.ZclFrame) => Promise<Type>;
     frame: Zcl.ZclFrame;
     expires: number;
     sendPolicy: SendPolicy;
-    sendWhen: SendRequestWhen;
-    private _resolveQueue: Array<(value: Type) => void>;
-    private _rejectQueue: Array <(error: Error) => void>;
-    private _lastError: Error;
+    private resolveQueue: Array<(value: Type) => void>;
+    private rejectQueue: Array <(error: Error) => void>;
+    private lastError: Error;
     constructor (func: (frame: Zcl.ZclFrame) => Promise<Type>, frame: Zcl.ZclFrame, timeout: number,
-        sendWhen?: SendRequestWhen, sendPolicy?: SendPolicy, lastError?: Error,
+        sendPolicy?: SendPolicy, lastError?: Error,
         resolve?:(value: Type) => void, reject?: (error: Error) => void) {
-        this._func = func;
+        this.func = func;
         this.frame = frame;
-        this.sendWhen = sendWhen ?? 'active',
         this.expires =  timeout + Date.now();
         this.sendPolicy = sendPolicy ?? (typeof frame.getCommand !== 'function' ?
             undefined : Request.defaultSendPolicy[frame.getCommand().ID]);
-        this._resolveQueue = resolve === undefined ?
+        this.resolveQueue = resolve === undefined ?
             new Array<(value: Type) => void>() : new Array<(value: Type) => void>(resolve);
-        this._rejectQueue = reject === undefined ?
+        this.rejectQueue = reject === undefined ?
             new Array<(error: Error) => void>() : new Array<(error: Error) => void>(reject);
-        this._lastError = lastError ?? Error("Request rejected before first send");
+        this.lastError = lastError ?? Error("Request rejected before first send");
     }
 
     moveCallbacks(from: Request <Type>) : void {
-        this._resolveQueue = this._resolveQueue.concat(from._resolveQueue);
-        this._rejectQueue = this._rejectQueue.concat(from._rejectQueue);
-        from._resolveQueue.length = 0;
-        from._rejectQueue.length = 0;
+        this.resolveQueue = this.resolveQueue.concat(from.resolveQueue);
+        this.rejectQueue = this.rejectQueue.concat(from.rejectQueue);
+        from.resolveQueue.length = 0;
+        from.rejectQueue.length = 0;
     }
 
     addCallbacks(resolve: (value: Type) => void, reject: (error: Error) => void): void {
-        this._resolveQueue.push(resolve);
-        this._rejectQueue.push(reject);
+        this.resolveQueue.push(resolve);
+        this.rejectQueue.push(reject);
     }
 
     reject(error?: Error): void {
-        this._rejectQueue.forEach(el => el(error ?? this._lastError));
-        this._rejectQueue.length = 0;
+        this.rejectQueue.forEach(el => el(error ?? this.lastError));
+        this.rejectQueue.length = 0;
     }
 
     resolve(value: Type): void {
-        this._resolveQueue.forEach(el => el(value));
-        this._resolveQueue.length = 0;
+        this.resolveQueue.forEach(el => el(value));
+        this.resolveQueue.length = 0;
     }
 
     async send(): Promise<Type> {
         try {
-            return await this._func(this.frame);
+            return await this.func(this.frame);
         } catch (error) {
-            this._lastError = error;
+            this.lastError = error;
             throw (error);
         }
     }

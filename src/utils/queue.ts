@@ -1,13 +1,11 @@
-interface Job<T> {
+interface Job {
     key: string | number;
-    func: () => Promise<T>;
     running: boolean;
-    resolve: (result: T) => void;
-    reject: (error: Error) => void;
+    start: () => void;
 }
 
 class Queue {
-    private jobs: Job<unknown>[];
+    private jobs: Job[];
     private readonly concurrent: number;
 
     constructor(concurrent = 1) {
@@ -15,33 +13,41 @@ class Queue {
         this.concurrent = concurrent;
     }
 
-    public execute<T>(func: () => Promise<T>, key: string | number = null): Promise<T> {
-        return new Promise((resolve, reject): void =>  {
-            this.jobs.push({key, func, running: false, resolve, reject});
-            this.executeNext();
-        });
-    }
-
-    private async executeNext(): Promise<void> {
-        const job = this.getNext();
-
-        if (job) {
+    public async execute<T>(func: () => Promise<T>, key: string | number = null): Promise<T> {
+        const job : Job = {key, running: false, start: null};
+        // Minor optimization/workaround: various tests like the idea that a job that is
+        // immediately runnable is run without an event loop spin. This also helps with stack
+        // traces in some cases, so avoid an `await` if we can help it.
+        this.jobs.push(job);
+        if (this.getNext() !== job) {
+            await new Promise((resolve): void =>  {
+                job.start = (): void => {
+                    job.running = true;
+                    resolve(null);
+                };
+                this.executeNext();
+            });
+        } else {
             job.running = true;
+        }
 
-            try {
-                const result = await job.func();
-                this.jobs.splice(this.jobs.indexOf(job), 1);
-                job.resolve(result);
-                this.executeNext();
-            } catch (error) {
-                this.jobs.splice(this.jobs.indexOf(job), 1);
-                job.reject(error);
-                this.executeNext();
-            }
+        try {
+            return await func();
+        } finally {
+            this.jobs.splice(this.jobs.indexOf(job), 1);
+            this.executeNext();
         }
     }
 
-    private getNext(): Job<unknown> {
+    private executeNext(): void {
+        const job = this.getNext();
+
+        if (job) {
+            job.start();
+        }
+    }
+
+    private getNext(): Job {
         if (this.jobs.filter((j) => j.running).length > (this.concurrent - 1)) {
             return null;
         }

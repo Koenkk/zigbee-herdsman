@@ -777,7 +777,7 @@ class ZStackAdapter extends Adapter {
                                 /* istanbul ignore next */
                                 this.discoverRoute(payload.networkAddress, false).catch(() => {});
                             }, payload.networkAddress);
-                        }, 60 * 1000, true);
+                        }, 60 * 1000, {immediate: true});
                         this.deviceAnnounceRouteDiscoveryDebouncers.set(payload.networkAddress, debouncer);
                     }
 
@@ -795,12 +795,16 @@ class ZStackAdapter extends Adapter {
             } else {
                 /* istanbul ignore else */
                 if (object.command === 'leaveInd') {
-                    const payload: Events.DeviceLeavePayload = {
-                        networkAddress: object.payload.srcaddr,
-                        ieeeAddr: object.payload.extaddr,
-                    };
+                    if (object.payload.rejoin) {
+                        debug(`Device leave: Got leave indication with rejoin=true, nothing to do`);
+                    } else {
+                        const payload: Events.DeviceLeavePayload = {
+                            networkAddress: object.payload.srcaddr,
+                            ieeeAddr: object.payload.extaddr,
+                        };
 
-                    this.emit(Events.Events.deviceLeave, payload);
+                        this.emit(Events.Events.deviceLeave, payload);
+                    }
                 }
             }
         } else {

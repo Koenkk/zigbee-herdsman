@@ -117,9 +117,9 @@ class Driver extends events.EventEmitter {
         })
     }
 
-    protected intervals: NodeJS.Timer[] = [];
+    protected intervals: NodeJS.Timeout[] = [];
 
-    protected registerInterval(interval: NodeJS.Timer) {
+    protected registerInterval(interval: NodeJS.Timeout) {
         this.intervals.push(interval);
     }
     
@@ -173,6 +173,10 @@ class Driver extends events.EventEmitter {
         return paths.length > 0 ? paths[0] : null;
     }
 
+    private onPortError(error: Error): void {
+        debug(`Port error: ${error}`);
+    }
+
     private onPortClose(): void {
         debug('Port closed');
         this.initialized = false;
@@ -184,7 +188,7 @@ class Driver extends events.EventEmitter {
         return this.portType === 'serial' ? this.openSerialPort(baudrate) : this.openSocketPort();
     }
 
-    public openSerialPort(baudrate: number): Promise<void> {
+    private async openSerialPort(baudrate: number): Promise<void> {
         debug(`Opening with ${this.path}`);
         this.serialPort = new SerialPort({path: this.path, baudRate: baudrate, autoOpen: false}); //38400 RaspBee //115200 ConBee3
 
@@ -196,21 +200,23 @@ class Driver extends events.EventEmitter {
         this.serialPort.pipe(this.parser);
         this.parser.on('parsed', this.onParsed);
 
-        return new Promise((resolve, reject): void => {
-            this.serialPort.open(async (error: object): Promise<void> => {
-                if (error) {
-                    reject(new Error(`Error while opening serialport '${error}'`));
-                    this.initialized = false;
-                    if (this.serialPort.isOpen) {
-                        this.serialPort.close();
-                    }
-                } else {
-                    debug('Serialport opened');
-                    this.initialized = true;
-                    resolve();
-                }
-            });
-        });
+        try {
+            await this.serialPort.asyncOpen();
+            debug('Serialport opened');
+
+            this.serialPort.once('close', this.onPortClose.bind(this));
+            this.serialPort.once('error', this.onPortError.bind(this));
+
+            this.initialized = true;
+        } catch (error) {
+            this.initialized = false;
+
+            if (this.serialPort.isOpen) {
+                this.serialPort.close();
+            }
+
+            throw error;
+        }
     }
 
     private async openSocketPort(): Promise<void> {
@@ -240,7 +246,7 @@ class Driver extends events.EventEmitter {
                 resolve();
             });
 
-            this.socketPort.once('close', this.onPortClose);
+            this.socketPort.once('close', this.onPortClose.bind(this));
 
             this.socketPort.on('error', function () {
                 debug('Socket error');
@@ -252,29 +258,27 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public close(): Promise<void> {
-        return new Promise((resolve, reject): void => {
-            if (this.initialized) {
-                if (this.portType === 'serial') {
-                    this.serialPort.flush((): void => {
-                        this.serialPort.close((error): void => {
-                            this.initialized = false;
-                            error == null ?
-                                resolve() :
-                                reject(new Error(`Error while closing serialport '${error}'`));
-                            this.emit('close');
-                        });
-                    });
-                } else {
-                    this.socketPort.destroy();
-                    resolve();
+    public async close(): Promise<void> {
+        debug('closing');
+        queue = [];
+
+        if (this.initialized) {
+            this.initialized = false;
+
+            if (this.portType === 'serial') {
+                try {
+                    await this.serialPort.asyncFlushAndClose();
+                } catch (error) {
+                    this.emit('close');
+
+                    throw error;
                 }
             } else {
-                resolve();
-                this.emit('close');
+                this.socketPort.destroy();
             }
-        });
+        }
 
+        this.emit('close');
     }
 
     public readParameterRequest(parameterId: number) : Promise<Command> {

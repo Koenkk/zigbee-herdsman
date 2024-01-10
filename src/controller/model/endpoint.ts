@@ -4,6 +4,7 @@ import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
 import Request from '../helpers/request';
+import RequestQueue from '../helpers/requestQueue';
 import {Events as AdapterEvents} from '../../adapter';
 import Group from './group';
 import Device from './device';
@@ -15,13 +16,11 @@ const debug = {
     error: Debug('zigbee-herdsman:controller:endpoint'),
 };
 
-type Mutable<T> = { -readonly [P in keyof T ]: T[P] };
-
-interface ConfigureReportingItem {
+export interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
     minimumReportInterval: number;
     maximumReportInterval: number;
-    reportableChange: number;
+    reportableChange: number | [number, number];
 }
 
 interface Options {
@@ -87,8 +86,7 @@ class Endpoint extends Entity {
     private _binds: BindInternal[];
     private _configuredReportings: ConfiguredReportingInternal[];
     public meta: KeyValue;
-    private pendingRequests: Set<Request>;
-    private sendInProgress: boolean;
+    private pendingRequests: RequestQueue;
 
     // Getters/setters
     get binds(): Bind[] {
@@ -154,8 +152,7 @@ class Endpoint extends Entity {
         this._binds = binds;
         this._configuredReportings = configuredReportings;
         this.meta = meta;
-        this.pendingRequests = new Set<Request>;
-        this.sendInProgress =false;
+        this.pendingRequests = new RequestQueue(this);
     }
 
     /**
@@ -267,104 +264,7 @@ class Endpoint extends Entity {
     }
 
     public async sendPendingRequests(fastPolling: boolean): Promise<void> {
-
-        if (this.pendingRequests.size === 0) return;
-
-        if (this.sendInProgress) {
-            debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): sendPendingRequests already in progress`);
-            return;
-        }
-        this.sendInProgress = true;
-
-        // Remove expired requests first
-        const now = Date.now();
-        for (const request of this.pendingRequests) {
-            if (now > request.expires) {
-                debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): discard after timeout. ` +
-                `Size before: ${this.pendingRequests.size}`);
-                request.reject();
-                this.pendingRequests.delete(request);
-            }
-        }
-
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send pending requests (` +
-            `${this.pendingRequests.size}, ${fastPolling})`);
-
-        for (const request of this.pendingRequests) {
-            if (fastPolling || (request.sendWhen !== 'fastpoll' && request.sendPolicy !== 'bulk')) {
-                try {
-                    const result = await request.send();
-                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`);
-                    request.resolve(result);
-                } catch (error) {
-                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ` +
-                        `${(request.expires - now) / 1000} seconds`);
-                    request.reject(error);
-                }
-                this.pendingRequests.delete(request);
-            }
-        }
-        this.sendInProgress = false;
-    }
-
-    private async queueRequest<Type>(request: Request<Type>): Promise<Type> {
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Sending when active. ` +
-            `Timeout ${this.getDevice().pendingRequestTimeout/1000} seconds`);
-        return new Promise((resolve, reject): void =>  {
-            request.addCallbacks(resolve, reject);
-            this.pendingRequests.add(request);
-        });
-    }
-    private filterRequests(newRequest: Request): void {
-
-        if(this.pendingRequests.size === 0 || !(typeof newRequest.frame.getCommand === 'function')) {
-            return;
-        }
-        const clusterID = newRequest.frame.Cluster.ID;
-        const payload = newRequest.frame.Payload;
-        const commandID = newRequest.frame.getCommand().ID;
-
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): ZCL ${newRequest.frame.getCommand().name} ` +
-            `command, filter requests. Before: ${this.pendingRequests.size}`);
-
-        for (const request of this.pendingRequests) {
-            if( request?.frame?.Cluster?.ID === undefined || typeof request.frame.getCommand !== 'function') {
-                continue;
-            }
-            if (['bulk', 'queue', 'immediate'].includes(request.sendPolicy)) {
-                continue;
-            }
-            /* istanbul ignore else */
-            if(request.frame.Cluster.ID === clusterID && request.frame.getCommand().ID === commandID) {
-                /* istanbul ignore else */
-                if (newRequest.sendPolicy === 'keep-payload'
-                    && JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
-                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Merge duplicate request`);
-                    this.pendingRequests.delete(request);
-                    newRequest.moveCallbacks(request);
-                }
-                else if ((newRequest.sendPolicy === 'keep-command' || newRequest.sendPolicy === 'keep-cmd-undiv') &&
-                        Array.isArray(request.frame.Payload)) {
-                    const filteredPayload = request.frame.Payload.filter((oldEl: {attrId: number}) =>
-                        !payload.find((newEl: {attrId: number}) => oldEl.attrId === newEl.attrId));
-                    if (filteredPayload.length == 0) {
-                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Remove & reject request`);
-                        if( JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
-                            newRequest.moveCallbacks(request);
-                        } else {
-                            request.reject();
-                        }
-                        this.pendingRequests.delete(request);
-                    } else if (newRequest.sendPolicy !== 'keep-cmd-undiv') {
-                        // remove all duplicate attributes if we shall not write undivided
-                        (request.frame as Mutable<Zcl.ZclFrame>).Payload = filteredPayload;
-                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): `
-                            + `Remove commands from request`);
-                    }
-                }
-            }
-        }
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): After: ${this.pendingRequests.size}`);
+        return this.pendingRequests.send(fastPolling);
     }
 
     private async sendRequest(frame: Zcl.ZclFrame, options: Options): Promise<AdapterEvents.ZclDataPayload>;
@@ -377,28 +277,38 @@ class Endpoint extends Entity {
                 options.disableResponse, options.disableRecovery, options.srcEndpoint) as Promise<Type>;
         }): Promise<Type> {
         const logPrefix = `Request Queue (${this.deviceIeeeAddress}/${this.ID}): `;
-        const request = new Request(func, frame, this.getDevice().pendingRequestTimeout, options.sendWhen,
-            options.sendPolicy);
+
+        if(options.sendWhen) {
+            if ((options.sendWhen === 'immediate') && (this.getDevice().pendingRequestTimeout > 0)) {
+                debug.info (logPrefix
+                    + "sendWhen is deprecated. Interpreting sendwhen='immediate' as sendPolicy='immediate'");
+                options.sendPolicy = 'immediate';
+            } else {
+                debug.info (logPrefix + "sendWhen is deprecated and will be ignored.");
+            }
+        }
+
+        const request = new Request(func, frame, this.getDevice().pendingRequestTimeout, options.sendPolicy);
 
         if (request.sendPolicy !== 'bulk') {
             // Check if such a request is already in the queue and remove the old one(s) if necessary
-            this.filterRequests(request);
+            this.pendingRequests.filter(request);
         }
 
-        // send without queueing if sendWhen or sendPolicy is 'immediate' or if the device has no timeout set
-        if (request.sendWhen === 'immediate' || request.sendPolicy === 'immediate'
+        // send without queueing if sendPolicy is 'immediate' or if the device has no timeout set
+        if (request.sendPolicy === 'immediate'
             || !this.getDevice().pendingRequestTimeout) {
-            if (this.getDevice().defaultSendRequestWhen !=='immediate')
+            if (this.getDevice().pendingRequestTimeout > 0)
             {
                 debug.info(logPrefix + `send ${frame.getCommand().name} request immediately ` +
-                    `(sendWhen=${options.sendWhen})`);
+                    `(sendPolicy=${options.sendPolicy})`);
             }
             return request.send();
         }
         // If this is a bulk message, we queue directly.
         if (request.sendPolicy === 'bulk') {
-            debug.info(logPrefix + `queue request (${this.pendingRequests.size} / ${this.sendInProgress})))`);
-            return this.queueRequest(request);
+            debug.info(logPrefix + `queue request (${this.pendingRequests.size})))`);
+            return this.pendingRequests.queue(request);
         }
 
         try {
@@ -408,7 +318,7 @@ class Endpoint extends Entity {
             // If we got a failed transaction, the device is likely sleeping.
             // Queue for transmission later.
             debug.info(logPrefix + `queue request (transaction failed)`);
-            return this.queueRequest(request);
+            return this.pendingRequests.queue(request);
         }
     }
 
@@ -462,6 +372,10 @@ class Endpoint extends Entity {
     ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+        options.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
+            cluster, Object.keys(attributes), options.manufacturerCode, 'write',
+        );
+
         const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (cluster.hasAttribute(nameOrID)) {
@@ -512,7 +426,7 @@ class Endpoint extends Entity {
             	    payload.push({attrId: Number(nameOrID), status: value.status});
 	        } else {
 		    throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
-	        }	        
+	        }
 	    } else {
 	        throw new Error(`Missing attribute 'status'`);
 	    }
@@ -535,12 +449,16 @@ class Endpoint extends Entity {
             throw error;
         }
     }
-    
+
     public async read(
-        clusterKey: number | string, attributes: string[] | number [], options?: Options
+        clusterKey: number | string, attributes: (string | number)[], options?: Options
     ): Promise<KeyValue> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+        options.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
+            cluster, attributes, options.manufacturerCode, 'read',
+        );
+
         const payload: {attrId: number}[] = [];
         for (const attribute of attributes) {
             payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
@@ -721,6 +639,10 @@ class Endpoint extends Entity {
     ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+        options.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
+            cluster, items, options.manufacturerCode, 'configureReporting',
+        );
+
         const payload = items.map((item): KeyValue => {
             let dataType, attrId;
 
@@ -763,8 +685,10 @@ class Endpoint extends Entity {
             }
 
             for (const e of payload) {
-                this._configuredReportings = this._configuredReportings.filter((c) => !(c.attrId === e.attrId &&
-                    c.cluster === cluster.ID && c.manufacturerCode === options.manufacturerCode));
+                this._configuredReportings = this._configuredReportings.filter((c) => !(
+                    c.attrId === e.attrId && c.cluster === cluster.ID && 
+                    (!('manufacturerCode' in c) || c.manufacturerCode === options.manufacturerCode)
+                ));
             }
 
             for (const entry of payload) {
@@ -906,7 +830,7 @@ class Endpoint extends Entity {
     ): Options {
         const providedOptions = options || {};
         return {
-            sendWhen: this.getDevice().defaultSendRequestWhen,
+            sendWhen: undefined,
             timeout: 10000,
             disableResponse: false,
             disableRecovery: false,
@@ -919,6 +843,42 @@ class Endpoint extends Entity {
             writeUndiv: false,
             ...providedOptions
         };
+    }
+
+    private ensureManufacturerCodeIsUniqueAndGet(
+        cluster: Zcl.TsType.Cluster, attributes: (string|number)[]|ConfigureReportingItem[],
+        fallbackManufacturerCode: number, caller: string,
+    ): number {
+        const manufacturerCodes = new Set(attributes.map((nameOrID): number => {
+            let attributeID;
+            if (typeof nameOrID == 'object') {
+                // ConfigureReportingItem
+                if (typeof nameOrID.attribute !== 'object') {
+                    attributeID = nameOrID.attribute;
+                } else {
+                    return fallbackManufacturerCode;
+                }
+            } else {
+                // string || number
+                attributeID = nameOrID;
+            }
+
+            // we fall back to caller|cluster provided manufacturerCode
+            if (cluster.hasAttribute(attributeID)) {
+                const attribute = cluster.getAttribute(attributeID);
+                return (attribute.manufacturerCode === undefined) ?
+                    fallbackManufacturerCode :
+                    attribute.manufacturerCode;
+            } else {
+                // unknown attribute, we should not fail on this here
+                return fallbackManufacturerCode;
+            }
+        }));
+        if (manufacturerCodes.size == 1) {
+            return manufacturerCodes.values().next().value;
+        } else {
+            throw new Error(`Cannot have attributes with different manufacturerCode in single '${caller}' call`);
+        }
     }
 
     public async addToGroup(group: Group): Promise<void> {
