@@ -102,6 +102,10 @@ class Device extends Entity {
     get skipTimeResponse(): boolean {return this._skipTimeResponse;}
     set skipTimeResponse(skipTimeResponse: boolean) {this._skipTimeResponse = skipTimeResponse;}
     get checkinInterval(): number {return this._checkinInterval;}
+    set checkinInterval(checkinInterval: number) {
+        this._checkinInterval = checkinInterval;
+        this.resetPendingRequestTimeout();
+    };
     get pendingRequestTimeout(): number {return this._pendingRequestTimeout;}
     set pendingRequestTimeout(pendingRequestTimeout: number) {this._pendingRequestTimeout = pendingRequestTimeout;}
 
@@ -198,6 +202,12 @@ class Device extends Entity {
         this._lastSeen = Date.now();
     }
 
+    private resetPendingRequestTimeout(): void {
+        // pendingRequestTimeout can be changed dynamically at runtime, and it is not persisted.
+        // Default timeout is one checkin interval in milliseconds.
+        this._pendingRequestTimeout = this._checkinInterval * 1000;
+    }
+
     private hasPendingRequests(): boolean {
         return this.endpoints.find(e => e.hasPendingRequests()) !== undefined;
     }
@@ -271,7 +281,7 @@ class Device extends Entity {
                         const pollPeriod =
                             await endpoint.read('genPollCtrl', ['checkinInterval'], {sendPolicy: 'immediate'});
                         this._checkinInterval = pollPeriod.checkinInterval / 4; // convert to seconds
-                        this.pendingRequestTimeout = this._checkinInterval * 1000; // milliseconds
+                        this.resetPendingRequestTimeout();
                         debug.log(`Request Queue (${
                             this.ieeeAddr}): default expiration timeout set to ${this.pendingRequestTimeout}`);
                     }
@@ -732,7 +742,7 @@ class Device extends Entity {
                 await endpoint.bind('genPollCtrl', coordinator.endpoints[0]);
                 const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval'], {sendPolicy: 'immediate'});
                 this._checkinInterval = pollPeriod.checkinInterval / 4; // convert to seconds
-                this.pendingRequestTimeout = this._checkinInterval * 1000; // milliseconds
+                this.resetPendingRequestTimeout();
             }
         } catch (error) {
             /* istanbul ignore next */

@@ -4615,7 +4615,8 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
-        device.pendingRequestTimeout = 10000;
+        device.checkinInterval = 10;
+        expect(device.pendingRequestTimeout).toStrictEqual(10000);
         const endpoint = device.getEndpoint(1);
         // We need to wait for the data to be queued
         const origQueueRequest = endpoint.pendingRequests.queue;
