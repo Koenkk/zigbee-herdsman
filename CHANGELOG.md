@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.2...v0.32.3) (2024-01-11)
+
+
+### Bug Fixes
+
+* Add setter for checkinInterval ([#867](https://github.com/Koenkk/zigbee-herdsman/issues/867)) ([87c0c50](https://github.com/Koenkk/zigbee-herdsman/commit/87c0c5020ea1db00d476e9a59b0475ea51f479d5))
+
 ## [0.32.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.1...v0.32.2) (2024-01-10)
 
 
