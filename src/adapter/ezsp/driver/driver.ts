@@ -93,6 +93,7 @@ export class Driver extends EventEmitter {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private serialOpt: Record<string, any>;
 
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     constructor(port: string, serialOpt: Record<string, any>, nwkOpt: TsType.NetworkOptions, greenPowerGroup: number) {
         super();
 
@@ -132,7 +133,6 @@ export class Driver extends EventEmitter {
         await this.reset();
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     public async startup(): Promise<TsType.StartResult> {
         let result: TsType.StartResult = 'resumed';
         this.transactionID = 1;
