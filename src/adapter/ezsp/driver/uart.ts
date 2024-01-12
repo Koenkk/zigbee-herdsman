@@ -89,7 +89,7 @@ export class SerialDriver extends EventEmitter {
             debug('Serialport opened');
 
             this.serialPort.once('close', this.onPortClose.bind(this));
-            this.serialPort.once('error', this.onPortError.bind(this));
+            this.serialPort.on('error', this.onPortError.bind(this));
 
             // reset
             await this.reset();
