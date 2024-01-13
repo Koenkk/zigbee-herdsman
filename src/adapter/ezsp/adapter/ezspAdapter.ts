@@ -439,8 +439,8 @@ class EZSPAdapter extends Adapter {
         if (ieeeAddr == null) {
             ieeeAddr = `0x${this.driver.ieee.toString()}`;
         }
-        debug('sendZclFrameToEndpointInternal %s:%i/%i (%i,%i,%i)',
-            ieeeAddr, networkAddress, endpoint, responseAttempt, dataRequestAttempt, this.queue.count());
+        debug('sendZclFrameToEndpointInternal %s:%i/%i (%i,%i,%i), timeout=%i',
+            ieeeAddr, networkAddress, endpoint, responseAttempt, dataRequestAttempt, this.queue.count(), timeout);
         let response = null;
         const command = zclFrame.getCommand();
         if (command.hasOwnProperty('response') && disableResponse === false) {
