@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.32.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.3...v0.32.4) (2024-01-13)
+
+
+### Bug Fixes
+
+* EZSP: Implemented several attempts to send a request in case of problems ([#871](https://github.com/Koenkk/zigbee-herdsman/issues/871)) ([41a4543](https://github.com/Koenkk/zigbee-herdsman/commit/41a45432b0c261487c548ccdfac03fcaecfa51e1))
+* **ignore:** update dependencies ([#873](https://github.com/Koenkk/zigbee-herdsman/issues/873)) ([f794563](https://github.com/Koenkk/zigbee-herdsman/commit/f79456385ce3ab6c63c96d093ac170afe0948a19))
+* Improve EZSP connect logic ([#869](https://github.com/Koenkk/zigbee-herdsman/issues/869)) ([a02a8e1](https://github.com/Koenkk/zigbee-herdsman/commit/a02a8e1efb4395b116be5bf14e79393eeca6627e))
+
 ## [0.32.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.2...v0.32.3) (2024-01-11)
 
 
