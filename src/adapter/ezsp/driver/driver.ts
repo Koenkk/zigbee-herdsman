@@ -75,7 +75,6 @@ const IEEE_PREFIX_MFG_ID: IeeeMfg[] = [
 const DEFAULT_MFG_ID = 0x1049;
 
 export class Driver extends EventEmitter {
-    private direct = EmberOutgoingMessageType.OUTGOING_DIRECT;
     public ezsp: Ezsp;
     private nwkOpt: TsType.NetworkOptions;
     private greenPowerGroup: number;
@@ -444,39 +443,57 @@ export class Driver extends EventEmitter {
 
     public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, 
         /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-        data: Buffer, timeout = 30000): Promise<boolean> {
-        try {
-            const seq = (apsFrame.sequence + 1) & 0xFF;
-            let eui64: EmberEUI64;
-            if (typeof nwk !== 'number') {
-                eui64 = nwk as EmberEUI64;
-                const strEui64 = eui64.toString();
-                let nodeId = this.eui64ToNodeId.get(strEui64);
-                if (nodeId === undefined) {
-                    nodeId = (await this.ezsp.execCommand('lookupNodeIdByEui64', {eui64: eui64})).nodeId;
-                    if (nodeId && nodeId !== 0xFFFF) {
-                        this.eui64ToNodeId.set(strEui64, nodeId);
-                    } else {
-                        throw new Error('Unknown EUI64:' + strEui64);
+        data: Buffer, extendedTimeout = false): Promise<boolean> {
+        let result = false;
+        // we make three attempts to send the request
+        for (const delay of [500, 1000, 1500]) {
+            try {
+                const seq = (apsFrame.sequence + 1) & 0xFF;
+                let eui64: EmberEUI64;
+                if (typeof nwk !== 'number') {
+                    eui64 = nwk as EmberEUI64;
+                    const strEui64 = eui64.toString();
+                    let nodeId = this.eui64ToNodeId.get(strEui64);
+                    if (nodeId === undefined) {
+                        nodeId = (await this.ezsp.execCommand('lookupNodeIdByEui64', {eui64: eui64})).nodeId;
+                        if (nodeId && nodeId !== 0xFFFF) {
+                            this.eui64ToNodeId.set(strEui64, nodeId);
+                        } else {
+                            throw new Error('Unknown EUI64:' + strEui64);
+                        }
                     }
+                    nwk = nodeId;
+                } else {
+                    eui64 = await this.networkIdToEUI64(nwk);
                 }
-                nwk = nodeId;
-            } else {
-                eui64 = await this.networkIdToEUI64(nwk);
+                if (this.ezsp.ezspV < 8) {
+                    // const route = this.eui64ToRelays.get(eui64.toString());
+                    // if (route) {
+                    //     const = await this.ezsp.execCommand('setSourceRoute', {eui64});
+                    // // }
+                }
+                if (extendedTimeout) {
+                    await this.ezsp.execCommand('setExtendedTimeout', {remoteEui64: eui64, extendedTimeout: true});
+                }
+                const sendResult = await this.ezsp.sendUnicast(
+                    EmberOutgoingMessageType.OUTGOING_DIRECT, nwk, apsFrame, seq, data
+                );
+                // repeat only for these statuses
+                if ([EmberStatus.MAX_MESSAGE_LIMIT_REACHED, EmberStatus.NO_BUFFERS, EmberStatus.NETWORK_BUSY]
+                    .includes(sendResult.status)) {
+                    // need to repeat after pause
+                    debug.log(`Request send status ${sendResult.status}. Attempt to repeat the request`);
+                    await Wait(delay);
+                } else {
+                    result = (sendResult.status == EmberStatus.SUCCESS);
+                    break;
+                }
+            } catch (e) {
+                debug.error(`Request error ${e}: ${e.stack}`);
+                break;
             }
-            if (this.ezsp.ezspV < 8) {
-                // const route = this.eui64ToRelays.get(eui64.toString());
-                // if (route) {
-                //     const = await this.ezsp.execCommand('setSourceRoute', {eui64});
-                // // }
-            }
-            await this.ezsp.execCommand('setExtendedTimeout', {remoteEui64: eui64, extendedTimeout: true});
-            const result = await this.ezsp.sendUnicast(this.direct, nwk, apsFrame, seq, data);
-            return result.status == EmberStatus.SUCCESS;
-        } catch (e) {
-            debug.error(`Request error ${e}: ${e.stack}`);
-            return false;
         }
+        return result;
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
