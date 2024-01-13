@@ -92,24 +92,30 @@ export class Driver extends EventEmitter {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private serialOpt: Record<string, any>;
 
-    constructor() {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    constructor(port: string, serialOpt: Record<string, any>, nwkOpt: TsType.NetworkOptions, greenPowerGroup: number) {
         super();
-        
+
+        this.nwkOpt = nwkOpt;
+        this.port = port;
+        this.serialOpt = serialOpt;
+        this.greenPowerGroup = greenPowerGroup;
         this.waitress = new Waitress<EmberFrame, EmberWaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
-    
-    private async onReset(): Promise<void> {
+
+    public async reset(): Promise<TsType.StartResult> {
         let attempts = 0;
         const pauses = [10, 30, 60];
         let pause = 0;
+
+        // infinite retries
         while (true) {
             debug.log(`Reset connection. Try ${attempts}`);
             try {
                 await this.stop();
                 await Wait(1000);
-                await this.startup(this.port, this.serialOpt, this.nwkOpt, this.greenPowerGroup);
-                break;
+                return await this.startup();
             } catch (e) {
                 debug.error(`Reset error ${e.stack}`);
                 attempts += 1;
@@ -122,37 +128,37 @@ export class Driver extends EventEmitter {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    public async startup(port: string, serialOpt: Record<string, any>, nwkOpt: TsType.NetworkOptions, 
-        greenPowerGroup: number): Promise<TsType.StartResult> {
+    private async onReset(): Promise<void> {
+        await this.reset();
+    }
+
+    public async startup(): Promise<TsType.StartResult> {
         let result: TsType.StartResult = 'resumed';
-        this.nwkOpt = nwkOpt;
-        this.port = port;
-        this.serialOpt = serialOpt;
-        this.greenPowerGroup = greenPowerGroup;
         this.transactionID = 1;
         this.ezsp = undefined;
         this.ezsp = new Ezsp();
-        this.ezsp.on('reset', this.onReset.bind(this));
         this.ezsp.on('close', this.onClose.bind(this));
-    
-        await this.ezsp.connect(port, serialOpt);
+
+        try {
+            await this.ezsp.connect(this.port, this.serialOpt);
+        } catch (error) {
+            debug.error(`EZSP could not connect: ${error.cause ?? error}`);
+            
+            throw error;
+        }
+
+        this.ezsp.on('reset', this.onReset.bind(this));
+
         await this.ezsp.version();
-
         await this.ezsp.updateConfig();
-
         await this.ezsp.updatePolicies();
-
         //await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_OUTGOING_TRANSFER_SIZE, 82);
         //await this.ezsp.setValue(EzspValueId.VALUE_MAXIMUM_INCOMING_TRANSFER_SIZE, 82);
         await this.ezsp.setValue(EzspValueId.VALUE_END_DEVICE_KEEP_ALIVE_SUPPORT_MODE, 3);
         await this.ezsp.setValue(EzspValueId.VALUE_CCA_THRESHOLD, 0);
-
         await this.ezsp.setSourceRouting();
-
         //const count = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
         //debug.log("APS_UNICAST_MESSAGE_COUNT is set to %s", count);
-
         await this.addEndpoint({
             inputClusters: [0x0000, 0x0003, 0x0006, 0x000A, 0x0019, 0x001A, 0x0300],
             outputClusters: [0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0020,
@@ -187,7 +193,7 @@ export class Driver extends EventEmitter {
             revision: vers
         };
 
-        if (await this.needsToBeInitialised(nwkOpt)) {
+        if (await this.needsToBeInitialised(this.nwkOpt)) {
             const res = await this.ezsp.execCommand('networkState');
             debug.log(`Network state ${res.status}`);
             if (res.status == EmberNetworkStatus.JOINED_NETWORK) {
@@ -223,7 +229,7 @@ export class Driver extends EventEmitter {
         
         this.multicast = new Multicast(this);
         await this.multicast.startup([]);
-        await this.multicast.subscribe(greenPowerGroup, 242);
+        await this.multicast.subscribe(this.greenPowerGroup, 242);
         // await this.multicast.subscribe(1, 901);
         return result;
     }

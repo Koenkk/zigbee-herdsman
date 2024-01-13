@@ -27,6 +27,7 @@ const debug = {
 };
 
 
+const MAX_SERIAL_CONNECT_ATTEMPTS = 4;
 const MTOR_MIN_INTERVAL = 10;
 const MTOR_MAX_INTERVAL = 90;
 const MTOR_ROUTE_ERROR_THRESHOLD = 4;
@@ -259,25 +260,33 @@ export class Ezsp extends EventEmitter {
         this.serialDriver = new SerialDriver();
         this.serialDriver.on('received', this.onFrameReceived.bind(this));
         this.serialDriver.on('close', this.onClose.bind(this));
-        this.serialDriver.on('reset', this.resetHandler.bind(this));
     }
 
     public async connect(path: string, options: Record<string, number|boolean>): Promise<void> {
         let lastError = null;
-        for (let i = 1; i < 5; i += 1) {
+
+        for (let i = 1; i <= MAX_SERIAL_CONNECT_ATTEMPTS; i++) {
             try {
                 await this.serialDriver.connect(path, options);
                 break;
             } catch (error) {
                 debug.error(`Connection attempt ${i} error: ${error.stack}`);
-                await Wait(5000);
-                debug.log(`Next attempt ${i+1}`);
+
+                if (i < MAX_SERIAL_CONNECT_ATTEMPTS) {
+                    await Wait(5000);
+                    debug.log(`Next attempt ${i+1}`);
+                }
+
                 lastError = error;
             }
         }
+
         if (!this.serialDriver.isInitialized()) {
             throw new Error("Failure to connect", {cause: lastError});
         }
+
+        this.serialDriver.on('reset', this.onReset.bind(this));
+
         if (WATCHDOG_WAKE_PERIOD) {
             this.watchdogTimer = setInterval(
                 this.watchdogHandler.bind(this),
@@ -665,12 +674,16 @@ export class Ezsp extends EventEmitter {
             this.failures += 1;
             if (this.failures > MAX_WATCHDOG_FAILURES) {
                 this.failures = 0;
-                this.resetHandler();
+                this.reset();
             }
         }
     }
 
-    private async resetHandler(): Promise<void> {
+    private reset(): void {
         this.emit('reset');
+    }
+
+    private onReset(): void {
+        this.reset();
     }
 }

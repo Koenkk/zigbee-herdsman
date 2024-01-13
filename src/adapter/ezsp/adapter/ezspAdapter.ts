@@ -56,7 +56,14 @@ class EZSPAdapter extends Adapter {
         debug(`Adapter concurrent: ${concurrent}`);
         this.queue = new Queue(concurrent);
         
-        this.driver = new Driver();
+        this.driver = new Driver(this.port.path, {
+            baudRate: this.port.baudRate || 115200,
+            rtscts: this.port.rtscts,
+            parity: 'none',
+            stopBits: 1,
+            xon: true,
+            xoff: true
+        }, this.networkOptions, this.greenPowerGroup);
         this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
         this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
         this.driver.on('incomingMessage', this.processMessage.bind(this));
@@ -169,14 +176,11 @@ class EZSPAdapter extends Adapter {
      * Adapter methods
      */
     public async start(): Promise<StartResult> {
-        return await this.driver.startup(this.port.path, {
-            baudRate: this.port.baudRate || 115200,
-            rtscts: this.port.rtscts,
-            parity: 'none',
-            stopBits: 1,
-            xon: true,
-            xoff: true
-        }, this.networkOptions, this.greenPowerGroup);
+        try {
+            return await this.driver.startup();
+        } catch {
+            return await this.driver.reset();
+        }
     }
 
     public async stop(): Promise<void> {

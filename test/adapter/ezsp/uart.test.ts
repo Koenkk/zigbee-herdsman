@@ -90,7 +90,7 @@ describe('UART', () => {
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
         expect(mockSerialPortAsyncOpen).toHaveBeenCalledTimes(1);
-        expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
+        expect(mockSerialPortOnce).toHaveBeenCalledTimes(1);
         expect(writeBufferSpy).toHaveBeenCalledTimes(1);
     });
 
