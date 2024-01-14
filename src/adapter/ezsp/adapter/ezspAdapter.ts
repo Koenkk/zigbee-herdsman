@@ -36,7 +36,6 @@ interface WaitressMatcher {
 
 class EZSPAdapter extends Adapter {
     private driver: Driver;
-    private port: SerialPortOptions;
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
     private interpanLock: boolean;
     private backupMan: EZSPAdapterBackup;
@@ -46,24 +45,17 @@ class EZSPAdapter extends Adapter {
     public constructor(networkOptions: NetworkOptions,
                        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
-        this.port = serialPortOptions;
+
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
         this.interpanLock = false;
-        
+
         const concurrent = adapterOptions && adapterOptions.concurrent ? adapterOptions.concurrent : 8;
         debug(`Adapter concurrent: ${concurrent}`);
         this.queue = new Queue(concurrent);
-        
-        this.driver = new Driver(this.port.path, {
-            baudRate: this.port.baudRate || 115200,
-            rtscts: this.port.rtscts,
-            parity: 'none',
-            stopBits: 1,
-            xon: true,
-            xoff: true
-        }, this.networkOptions, this.greenPowerGroup);
+
+        this.driver = new Driver(this.serialPortOptions, this.networkOptions, this.greenPowerGroup);
         this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
         this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
         this.driver.on('incomingMessage', this.processMessage.bind(this));

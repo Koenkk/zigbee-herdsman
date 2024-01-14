@@ -3,12 +3,12 @@ import {EventEmitter} from 'events';
 import net from 'net';
 import {SerialPort} from '../../serialPort';
 import SocketPortUtils from '../../socketPortUtils';
-import {crc16ccitt} from './utils';
 import {Queue, Waitress, Wait} from '../../../utils';
-import * as consts from './consts';
 import {Writer}  from './writer';
 import {Parser}  from './parser';
+import {Frame as NpiFrame, FrameType} from './frame';
 import Debug from "debug";
+import {SerialPortOptions} from '../../tstype';
 
 const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
 
@@ -55,29 +55,33 @@ export class SerialDriver extends EventEmitter {
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
-    async connect(path: string, options: Record<string, number|boolean>): Promise<void> {
-        this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
+    async connect(options: SerialPortOptions): Promise<void> {
+        this.portType = SocketPortUtils.isTcpPath(options.path) ? 'socket' : 'serial';
         if (this.portType === 'serial') {
-            await this.openSerialPort(path, options);
+            await this.openSerialPort(options.path, options.baudRate, options.rtscts);
         } else {
-            await this.openSocketPort(path);
+            await this.openSocketPort(options.path);
         }
     }
 
-    private async openSerialPort(path: string, opt: Record<string, number|boolean>): Promise<void> {
+    private async openSerialPort(path: string, baudRate: number, rtscts: boolean): Promise<void> {
         const options = {
             path,
-            baudRate: typeof opt.baudRate === 'number' ? opt.baudRate : 115200, 
-            rtscts: typeof opt.rtscts === 'boolean' ? opt.rtscts : false,
-            autoOpen: false
+            baudRate: typeof baudRate === 'number' ? baudRate : 115200, 
+            rtscts: typeof rtscts === 'boolean' ? rtscts : false,
+            autoOpen: false,
+            parity: 'none',
+            stopBits: 1,
+            xon: true,
+            xoff: true,
         };
 
         debug(`Opening SerialPort with ${JSON.stringify(options)}`);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         this.serialPort = new SerialPort(options);
 
         this.writer = new Writer();
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         this.writer.pipe(this.serialPort);
 
         this.parser = new Parser();
@@ -122,25 +126,27 @@ export class SerialDriver extends EventEmitter {
         this.parser.on('parsed', this.onParsed.bind(this));
 
         return new Promise((resolve, reject): void => {
-            this.socketPort.on('connect', function () {
+            this.socketPort.on('connect', () => {
                 debug('Socket connected');
             });
 
-            // eslint-disable-next-line
-            const self = this;
             this.socketPort.on('ready', async (): Promise<void> => {
                 debug('Socket ready');
                 // reset
                 await this.reset();
-                self.initialized = true;
+
+                this.initialized = true;
+
                 resolve();
             });
 
             this.socketPort.once('close', this.onPortClose.bind(this));
 
-            this.socketPort.on('error', function () {
+            this.socketPort.on('error', () => {
                 debug('Socket error');
-                self.initialized = false;
+
+                this.initialized = false;
+
                 reject(new Error(`Error while opening socket`));
             });
 
@@ -148,55 +154,41 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    private onParsed(data: Buffer): void {
-        // check CRC
-        const crc = crc16ccitt(data.subarray(0, -3), 65535);
-        const crcArr = Buffer.from([(crc >> 8), (crc % 256)]);
-        if (!data.subarray(-3, -1).equals(crcArr)) {
-            // CRC error
-            debug(`<-- CRC error: ${data.toString('hex')}|` +
-                `${data.subarray(-3, -1).toString('hex')}|` +
-                `${crcArr.toString('hex')}`);
+    private onParsed(frame: NpiFrame): void {
+        try {
+            frame.checkCRC();
+        } catch (error) {
+            debug(error);
+
             // send NAK
             this.writer.sendNAK(this.recvSeq);
             // skip handler
             return;
         }
+
         try {
             /* Frame receive handler */
-            switch (true) {
-            case ((data[0] & 0x80) === 0):
-                debug(`<-- DATA (${(data[0] & 0x70) >> 4},`+
-                    `${data[0] & 0x07},${(data[0] & 0x08) >> 3}): ${data.toString('hex')}`);
-                this.handleDATA(data);
+            switch (frame.type) {
+            case FrameType.DATA:
+                this.handleDATA(frame);
                 break;
-
-            case ((data[0] & 0xE0) === 0x80):
-                debug(`<-- ACK  (${data[0] & 0x07}): ${data.toString('hex')}`);
-                this.handleACK(data[0]);
+            case FrameType.ACK:
+                this.handleACK(frame);
                 break;
-
-            case ((data[0] & 0xE0) === 0xA0):
-                debug(`<-- NAK  (${data[0] & 0x07}): ${data.toString('hex')}`);
-                this.handleNAK(data[0]);
+            case FrameType.NAK:
+                this.handleNAK(frame);
                 break;
-
-            case (data[0] === 0xC0):
-                debug(`<-- RST:  ${data.toString('hex')}`);
+            case FrameType.RST:
+                this.handleRST(frame);
                 break;
-
-            case (data[0] === 0xC1):
-                debug(`<-- RSTACK: ${data.toString('hex')}`);
-                this.rstack_frame_received(data);
+            case FrameType.RSTACK:
+                this.handleRSTACK(frame);
                 break;
-
-            case (data[0] === 0xC2):
-                debug(`<-- Error: ${data.toString('hex')}`);
-                // send reset
-                this.reset().catch((e) => debug(`Failed to reset: ${e}`));
+            case FrameType.ERROR:
+                this.handleError(frame);
                 break;
             default:
-                debug("UNKNOWN FRAME RECEIVED: %r", data);
+                debug(`UNKNOWN FRAME RECEIVED: ${frame}`);
             }
 
         } catch (error) {
@@ -204,40 +196,58 @@ export class SerialDriver extends EventEmitter {
         }
     }
 
-    private handleDATA(data: Buffer): void {
+    private handleDATA(frame: NpiFrame): void {
         /* Data frame receive handler */
-        const frmNum = (data[0] & 0x70) >> 4;
-        const reTx = (data[0] & 0x08) >> 3;
+        const frmNum = (frame.seq & 0x70) >> 4;
+        const reTx = (frame.seq & 0x08) >> 3;
+
+        debug(`<-- DATA (${frmNum},${frame.seq & 0x07},${reTx}): ${frame}`);
+
         this.recvSeq = (frmNum + 1) & 7; // next
+
         debug(`--> ACK  (${this.recvSeq})`);
+
         this.writer.sendACK(this.recvSeq);
-        const handled = this.handleACK(data[0]);
+
+        const handled = this.handleACK(frame);
+
         if (reTx && !handled) {
             // if the package is resent and did not expect it, 
             // then will skip it - already processed it earlier
             debug(`Skipping the packet as repeated (${this.recvSeq})`);
+
             return;
-        } 
-        data = data.subarray(1, -3);
-        const frame = this.randomize(data);
-        this.emit('received', frame);
+        }
+
+        const data = frame.buffer.subarray(1, -3);
+
+        this.emit('received', NpiFrame.makeRandomizedBuffer(data));
     }
 
-    private handleACK(control: number): boolean {
+    private handleACK(frame: NpiFrame): boolean {
         /* Handle an acknowledgement frame */
         // next number after the last accepted frame
-        this.ackSeq = control & 0x07;
+        this.ackSeq = frame.seq & 0x07;
+
+        debug.log(`<-- ACK (${this.ackSeq}): ${frame}`);
+
         const handled = this.waitress.resolve({sequence: this.ackSeq});
+
         if (!handled && this.sendSeq !== this.ackSeq) {
             debug(`Unexpected packet sequence ${this.ackSeq} | ${this.sendSeq}`);
         }
+
         return handled;
     }
 
-    private handleNAK(control: number): void {
+    private handleNAK(frame: NpiFrame): void {
         /* Handle negative acknowledgment frame */
-        const nakNum = control & 0x07;
+        const nakNum = frame.seq & 0x07;
+
+        debug.log(`<-- NAK (${nakNum}): ${frame}`);
+
         const handled = this.waitress.reject({sequence: nakNum}, 'Recv NAK frame');
+
         if (!handled) {
             // send NAK
             debug(`NAK Unexpected packet sequence ${nakNum}`);
@@ -246,56 +256,63 @@ export class SerialDriver extends EventEmitter {
         }
     }
 
-    private rstack_frame_received(data: Buffer): void {
+    private handleRST(frame: NpiFrame): void {
+        debug(`<-- RST:  ${frame}`);
+    }
+
+    private handleRSTACK(frame: NpiFrame): void {
         /* Reset acknowledgement frame receive handler */
         let code;
         this.sendSeq = 0;
         this.recvSeq = 0;
+
+        debug(`<-- RSTACK ${frame}`);
+
         try {
-            code = NcpResetCode[data[2]];
+            code = NcpResetCode[frame.buffer[2]];
         } catch (e) {
             code = NcpResetCode.ERROR_UNKNOWN_EM3XX_ERROR;
         }
-        debug("RSTACK Version: %d Reason: %s frame: %s", data[1], code.toString(), data.toString('hex'));
+
+        debug(`RSTACK Version: ${frame.buffer[1]} Reason: ${code.toString()} frame: ${frame}`);
+
         if (NcpResetCode[<number>code].toString() !== NcpResetCode.RESET_SOFTWARE.toString()) {
             return;
         }
+
         this.waitress.resolve({sequence: -1});
     }
 
-    private randomize(s: Buffer): Buffer {
-        /*XOR s with a pseudo-random sequence for transmission
-        Used only in data frames
-        */
-        let rand = consts.RANDOMIZE_START;
-        const out = Buffer.alloc(s.length);
-        let outIdx = 0;
-        for (const c of s) {
-            out.writeUInt8(c ^ rand, outIdx++);
-            if ((rand % 2)) {
-                rand = ((rand >> 1) ^ consts.RANDOMIZE_SEQ);
-            } else {
-                rand = (rand >> 1);
-            }
+    private async handleError(frame: NpiFrame): Promise<void> {
+        debug(`<-- Error ${frame}`);
+
+        try {
+            // send reset
+            await this.reset();
+        } catch (error) {
+            debug(`Failed to reset on Error Frame: ${error}`);
         }
-        return out;
     }
 
     async reset(): Promise<void> {
         debug('Uart reseting');
         this.parser.reset();
         this.queue.clear();
+
         return this.queue.execute<void>(async (): Promise<void> => {
             try {
                 debug(`--> Write reset`);
                 const waiter = this.waitFor(-1, 10000);
+
                 this.writer.sendReset();
                 debug(`-?- waiting reset`);
                 await waiter.start().promise;
                 debug(`-+- waiting reset success`);
             } catch (e) {
                 debug(`--> Error: ${e}`);
+
                 this.emit('reset');
+
                 throw new Error(`Reset error: ${e}`);
             }
         });
@@ -330,7 +347,9 @@ export class SerialDriver extends EventEmitter {
 
     private onPortClose(): void {
         debug('Port closed');
+
         this.initialized = false;
+
         this.emit('close');
     }
 
@@ -345,7 +364,7 @@ export class SerialDriver extends EventEmitter {
         const ackSeq = this.recvSeq;
 
         return this.queue.execute<void>(async (): Promise<void> => {
-            const randData = this.randomize(data);
+            const randData = NpiFrame.makeRandomizedBuffer(data);
 
             try {
                 const waiter = this.waitFor(nextSeq);
@@ -371,7 +390,9 @@ export class SerialDriver extends EventEmitter {
                     debug(`--> Error: ${e2}`);
                     debug(`-!- break rewaiting (${nextSeq})`);
                     debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
+
                     this.emit('reset');
+
                     throw new Error(`sendDATA error: try 1: ${e1}, try 2: ${e2}`);
                 }
             }

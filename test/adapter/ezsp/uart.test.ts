@@ -81,12 +81,19 @@ describe('UART', () => {
     });
 
     it('Connect', async () => {
-        await serialDriver.connect("/dev/ttyACM0", {});
+        await serialDriver.connect({path: "/dev/ttyACM0"});
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
-        expect(SerialPort).toHaveBeenCalledWith(
-            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 115200, "rtscts": false},
-        );
+        expect(SerialPort).toHaveBeenCalledWith( {
+            path: "/dev/ttyACM0",
+            baudRate: 115200,
+            rtscts: false,
+            autoOpen: false,
+            parity: 'none',
+            stopBits: 1,
+            xon: true,
+            xoff: true,
+        });
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
         expect(mockSerialPortAsyncOpen).toHaveBeenCalledTimes(1);
