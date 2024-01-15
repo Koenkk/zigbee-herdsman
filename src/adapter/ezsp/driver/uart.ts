@@ -198,10 +198,10 @@ export class SerialDriver extends EventEmitter {
 
     private handleDATA(frame: NpiFrame): void {
         /* Data frame receive handler */
-        const frmNum = (frame.seq & 0x70) >> 4;
-        const reTx = (frame.seq & 0x08) >> 3;
+        const frmNum = (frame.control & 0x70) >> 4;
+        const reTx = (frame.control & 0x08) >> 3;
 
-        debug(`<-- DATA (${frmNum},${frame.seq & 0x07},${reTx}): ${frame}`);
+        debug(`<-- DATA (${frmNum},${frame.control & 0x07},${reTx}): ${frame}`);
 
         this.recvSeq = (frmNum + 1) & 7; // next
 
@@ -227,7 +227,7 @@ export class SerialDriver extends EventEmitter {
     private handleACK(frame: NpiFrame): boolean {
         /* Handle an acknowledgement frame */
         // next number after the last accepted frame
-        this.ackSeq = frame.seq & 0x07;
+        this.ackSeq = frame.control & 0x07;
 
         debug.log(`<-- ACK (${this.ackSeq}): ${frame}`);
 
@@ -242,7 +242,7 @@ export class SerialDriver extends EventEmitter {
 
     private handleNAK(frame: NpiFrame): void {
         /* Handle negative acknowledgment frame */
-        const nakNum = frame.seq & 0x07;
+        const nakNum = frame.control & 0x07;
 
         debug.log(`<-- NAK (${nakNum}): ${frame}`);
 

@@ -12,10 +12,13 @@ export enum FrameType {
     RSTACK = 6,
 }
 
-// Pretty basic for now, but can serve as a base for future needs
+/**
+ * Basic class to handle uart-level frames
+ * https://www.silabs.com/documents/public/user-guides/ug101-uart-gateway-protocol-reference.pdf
+ */
 export class Frame {
     /**
-     * Type of the Frame as determined by buffer index zero.
+     * Type of the Frame as determined by its control byte.
      */
     public readonly type: FrameType;
     public readonly buffer: Buffer;
@@ -23,26 +26,26 @@ export class Frame {
     public constructor(buffer: Buffer) {
         this.buffer = buffer;
 
-        const typeId = this.buffer[0];
+        const ctrlByte = this.buffer[0];
 
-        if ((typeId & 0x80) === 0) {
+        if ((ctrlByte & 0x80) === 0) {
             this.type = FrameType.DATA;
-        } else if ((typeId & 0xE0) === 0x80) {
+        } else if ((ctrlByte & 0xE0) === 0x80) {
             this.type = FrameType.ACK;
-        } else if ((typeId & 0xE0) === 0xA0) {
+        } else if ((ctrlByte & 0xE0) === 0xA0) {
             this.type = FrameType.NAK;
-        } else if (typeId === 0xC0) {
+        } else if (ctrlByte === 0xC0) {
             this.type = FrameType.RST;
-        } else if (typeId === 0xC1) {
+        } else if (ctrlByte === 0xC1) {
             this.type = FrameType.RSTACK;
-        } else if (typeId === 0xC2) {
+        } else if (ctrlByte === 0xC2) {
             this.type = FrameType.ERROR;
         } else {
             this.type = FrameType.UNKNOWN;
         }
     }
 
-    get seq(): number {
+    get control(): number {
         return this.buffer[0];
     }
 
