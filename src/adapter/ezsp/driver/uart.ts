@@ -192,7 +192,7 @@ export class SerialDriver extends EventEmitter {
             }
 
         } catch (error) {
-            debug(`Error while parsing to ZpiObject '${error.stack}'`);
+            debug(`Error while parsing to NpiFrame '${error.stack}'`);
         }
     }
 
@@ -229,7 +229,7 @@ export class SerialDriver extends EventEmitter {
         // next number after the last accepted frame
         this.ackSeq = frame.control & 0x07;
 
-        debug.log(`<-- ACK (${this.ackSeq}): ${frame}`);
+        debug(`<-- ACK (${this.ackSeq}): ${frame}`);
 
         const handled = this.waitress.resolve({sequence: this.ackSeq});
 
@@ -244,7 +244,7 @@ export class SerialDriver extends EventEmitter {
         /* Handle negative acknowledgment frame */
         const nakNum = frame.control & 0x07;
 
-        debug.log(`<-- NAK (${nakNum}): ${frame}`);
+        debug(`<-- NAK (${nakNum}): ${frame}`);
 
         const handled = this.waitress.reject({sequence: nakNum}, 'Recv NAK frame');
 
