@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.6](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.5...v0.32.6) (2024-01-16)
+
+
+### Bug Fixes
+
+* Fix debug logging ([#876](https://github.com/Koenkk/zigbee-herdsman/issues/876)) ([99bc922](https://github.com/Koenkk/zigbee-herdsman/commit/99bc922b88524009521a7c8f3a8af88b37e3c702))
+
 ## [0.32.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.4...v0.32.5) (2024-01-15)
 
 
