@@ -18,7 +18,6 @@ interface KeyValue {[s: string]: any};
                     set of command IDs.
 */
 type SendPolicy = 'bulk' | 'queue' | 'immediate' | 'keep-payload' | 'keep-command' | 'keep-cmd-undiv';
-type SendRequestWhen = 'immediate' | 'fastpoll' | 'active';
 type DeviceType = 'Coordinator' | 'Router' | 'EndDevice' | 'Unknown' | 'GreenPower';
 
 type EntityType = DeviceType | 'Group';
@@ -42,5 +41,5 @@ interface GreenPowerDeviceJoinedPayload {
 
 export {
     KeyValue, DatabaseEntry, EntityType, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload,
-    SendRequestWhen, SendPolicy
+    SendPolicy
 };

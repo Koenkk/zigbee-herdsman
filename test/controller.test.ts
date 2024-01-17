@@ -4599,15 +4599,6 @@ describe('Controller', () => {
         }
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         expect(endpoint.pendingRequests.size).toStrictEqual(1);
-
-        // sendWhen=immediate should be interpreted as sendPolicy=immediate and treated the same way
-        try {
-            await endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendWhen: 'immediate'});
-        } catch (error) {
-            expect(error.message).toStrictEqual(`Write 0x129/1 genOnOff({"onOff":1}, {"sendWhen":"immediate","timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Cats barking too hard)`);
-        }
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
-        expect(endpoint.pendingRequests.size).toStrictEqual(1);
     });
 
 
@@ -4834,7 +4825,7 @@ describe('Controller', () => {
         };
 
         endpoint.pendingRequests.add(new Request(async () => {}, [], 100));
-        const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true, sendWhen: 'active'});
+        const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
         Date.now.mockReturnValue(1001000);
