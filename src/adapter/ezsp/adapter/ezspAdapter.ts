@@ -117,23 +117,30 @@ class EZSPAdapter extends Adapter {
             this.waitress.resolve(payload);
             this.emit(Events.Events.zclData, payload);
         } else if (frame.apsFrame.profileId == 0xA1E0) {  // GP Frame
-            const zclFrame = ZclFrame.create(
-                FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true,
-                null, frame.apsFrame.sequence,
-                (frame.messageType == 0xE0) ? 'commissioningNotification' : 'notification',
-                frame.apsFrame.clusterId, frame.message);
-            const payload: Events.ZclDataPayload = {
-                frame: zclFrame,
-                address: frame.sender,
-                endpoint: frame.apsFrame.sourceEndpoint,
-                linkquality: frame.lqi,
-                groupID: null,
-                wasBroadcast: true,
-                destinationEndpoint: frame.apsFrame.sourceEndpoint,
-            };
-
-            this.waitress.resolve(payload);
-            this.emit(Events.Events.zclData, payload);
+            // Only handle when clusterId == 33 (greenPower), some devices send messages with this profileId
+            // while the cluster is not greenPower
+            // https://github.com/Koenkk/zigbee2mqtt/issues/20838
+            if (frame.apsFrame.clusterId === 33) {
+                const zclFrame = ZclFrame.create(
+                    FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true,
+                    null, frame.apsFrame.sequence,
+                    (frame.messageType == 0xE0) ? 'commissioningNotification' : 'notification',
+                    frame.apsFrame.clusterId, frame.message);
+                const payload: Events.ZclDataPayload = {
+                    frame: zclFrame,
+                    address: frame.sender,
+                    endpoint: frame.apsFrame.sourceEndpoint,
+                    linkquality: frame.lqi,
+                    groupID: null,
+                    wasBroadcast: true,
+                    destinationEndpoint: frame.apsFrame.sourceEndpoint,
+                };
+    
+                this.waitress.resolve(payload);
+                this.emit(Events.Events.zclData, payload);
+            } else {
+                debug(`Ignoring GP frame because clusterId is not greenPower`);
+            }
         }
         this.emit('event', frame);
     }
