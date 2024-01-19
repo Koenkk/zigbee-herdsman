@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.7](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.6...v0.32.7) (2024-01-19)
+
+
+### Bug Fixes
+
+* Fix invalid GP frame crashing EZSP adapter https://github.com/Koenkk/zigbee2mqtt/issues/20838 ([f7ef707](https://github.com/Koenkk/zigbee-herdsman/commit/f7ef70768264f495ce7f45782130c9f9103c659a))
+
 ## [0.32.6](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.5...v0.32.6) (2024-01-16)
 
 
