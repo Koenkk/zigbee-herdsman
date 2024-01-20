@@ -1,5 +1,5 @@
 import Entity from './entity';
-import {KeyValue, SendRequestWhen, SendPolicy} from '../tstype';
+import {KeyValue, SendPolicy} from '../tstype';
 import * as Zcl from '../../zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
@@ -34,7 +34,6 @@ interface Options {
     transactionSequenceNumber?: number;
     disableRecovery?: boolean;
     writeUndiv?: boolean;
-    sendWhen?: SendRequestWhen;
     sendPolicy?: SendPolicy;
 }
 
@@ -277,17 +276,6 @@ class Endpoint extends Entity {
                 options.disableResponse, options.disableRecovery, options.srcEndpoint) as Promise<Type>;
         }): Promise<Type> {
         const logPrefix = `Request Queue (${this.deviceIeeeAddress}/${this.ID}): `;
-
-        if(options.sendWhen) {
-            if ((options.sendWhen === 'immediate') && (this.getDevice().pendingRequestTimeout > 0)) {
-                debug.info (logPrefix
-                    + "sendWhen is deprecated. Interpreting sendwhen='immediate' as sendPolicy='immediate'");
-                options.sendPolicy = 'immediate';
-            } else {
-                debug.info (logPrefix + "sendWhen is deprecated and will be ignored.");
-            }
-        }
-
         const request = new Request(func, frame, this.getDevice().pendingRequestTimeout, options.sendPolicy);
 
         if (request.sendPolicy !== 'bulk') {
@@ -830,7 +818,6 @@ class Endpoint extends Entity {
     ): Options {
         const providedOptions = options || {};
         return {
-            sendWhen: undefined,
             timeout: 10000,
             disableResponse: false,
             disableRecovery: false,
