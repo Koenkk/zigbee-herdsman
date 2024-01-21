@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.33.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.7...v0.33.0) (2024-01-21)
+
+
+### Features
+
+* **ignore:** Update Inovelli cluster definition with new parameters for updated VZM35 firmware ([#881](https://github.com/Koenkk/zigbee-herdsman/issues/881)) ([3c69f6b](https://github.com/Koenkk/zigbee-herdsman/commit/3c69f6bdbf61077d357063ee6e4a1b9f840cb562))
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#882](https://github.com/Koenkk/zigbee-herdsman/issues/882)) ([78aa3e8](https://github.com/Koenkk/zigbee-herdsman/commit/78aa3e8c0086e82d0df360b10f0031a0b0b0f99a))
+* Remove deprecated `options.sendWhen` ([#879](https://github.com/Koenkk/zigbee-herdsman/issues/879)) ([2d3a5d1](https://github.com/Koenkk/zigbee-herdsman/commit/2d3a5d1d25f45360e253946d26f4e8b95ea75e26))
+
 ## [0.32.7](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.6...v0.32.7) (2024-01-19)
 
 
