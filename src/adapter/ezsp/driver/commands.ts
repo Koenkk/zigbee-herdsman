@@ -28,6 +28,7 @@ import {/* Basic Types */
     EzspMfgTokenId,
     EzspStatus,
     EmberStatus,
+    EmberStackError,
     EmberEventUnits,
     EmberNodeType,
     EmberNetworkStatus,
@@ -2261,7 +2262,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
         ID: 0x00C4,
         request: null,
         response: {
-            errorCode: uint8_t,
+            errorCode: EmberStackError,
             target: EmberNodeId
         },
         minV: 9

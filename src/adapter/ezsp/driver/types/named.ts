@@ -1086,6 +1086,30 @@ export class EmberStatus extends basic.uint8_t {
     static APPLICATION_ERROR_15 = 0xFF;
 }
 
+export class EmberStackError extends basic.uint8_t {
+    // Error codes that a router uses to notify the message initiator about a broken route.
+    static EMBER_ROUTE_ERROR_NO_ROUTE_AVAILABLE          = 0x00;
+    static EMBER_ROUTE_ERROR_TREE_LINK_FAILURE           = 0x01;
+    static EMBER_ROUTE_ERROR_NON_TREE_LINK_FAILURE       = 0x02;
+    static EMBER_ROUTE_ERROR_LOW_BATTERY_LEVEL           = 0x03;
+    static EMBER_ROUTE_ERROR_NO_ROUTING_CAPACITY         = 0x04;
+    static EMBER_ROUTE_ERROR_NO_INDIRECT_CAPACITY        = 0x05;
+    static EMBER_ROUTE_ERROR_INDIRECT_TRANSACTION_EXPIRY = 0x06;
+    static EMBER_ROUTE_ERROR_TARGET_DEVICE_UNAVAILABLE   = 0x07;
+    static EMBER_ROUTE_ERROR_TARGET_ADDRESS_UNALLOCATED  = 0x08;
+    static EMBER_ROUTE_ERROR_PARENT_LINK_FAILURE         = 0x09;
+    static EMBER_ROUTE_ERROR_VALIDATE_ROUTE              = 0x0A;
+    static EMBER_ROUTE_ERROR_SOURCE_ROUTE_FAILURE        = 0x0B;
+    static EMBER_ROUTE_ERROR_MANY_TO_ONE_ROUTE_FAILURE   = 0x0C;
+    static EMBER_ROUTE_ERROR_ADDRESS_CONFLICT            = 0x0D;
+    static EMBER_ROUTE_ERROR_VERIFY_ADDRESSES            = 0x0E;
+    static EMBER_ROUTE_ERROR_PAN_IDENTIFIER_UPDATE       = 0x0F;
+
+    static ZIGBEE_NETWORK_STATUS_NETWORK_ADDRESS_UPDATE  = 0x10;
+    static ZIGBEE_NETWORK_STATUS_BAD_FRAME_COUNTER       = 0x11;
+    static ZIGBEE_NETWORK_STATUS_BAD_KEY_SEQUENCE_NUMBER = 0x12;
+    static ZIGBEE_NETWORK_STATUS_UNKNOWN_COMMAND         = 0x13;
+}
 
 export class EmberEventUnits extends basic.uint8_t {
     // Either marks an event as inactive or specifies the units for the event
