@@ -18,6 +18,7 @@ import {
     EmberNetworkStatus,
     EmberKeyType,
     EmberDerivedKeyType,
+    EmberStackError,
 } from './types/named';
 import {Multicast} from './multicast';
 import {Waitress, Wait} from '../../../utils';
@@ -327,6 +328,10 @@ export class Driver extends EventEmitter {
             this.handleRouteError(frame.status, frame.target);
             break;
         }
+        case (frameName === 'incomingNetworkStatusHandler'): {
+            this.handleNetworkStatus(frame.errorCode, frame.target);
+            break;
+        }
         case (frameName === 'messageSentHandler'): {
             // todo
             const status = frame.status;
@@ -405,7 +410,7 @@ export class Driver extends EventEmitter {
     private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number,
         relays: number): void {
         // todo
-        debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
+        debug.log(`handleRouteRecord: nwk=${nwk}, ieee=${ieee.toString()}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`);
 
         this.setNode(nwk, ieee);
         // if (ieee && !(ieee instanceof EmberEUI64)) {
@@ -420,6 +425,14 @@ export class Driver extends EventEmitter {
         //this.waitress.reject({address: nwk, payload: null, frame: null}, 'Route error');
         // const ieee = await this.networkIdToEUI64(nwk);
         // this.eui64ToRelays.set(ieee.toString(), null);
+    }
+
+    private async handleNetworkStatus(errorCode: EmberStackError, nwk: number): Promise<void> {
+        // todo
+        // <== Frame: e19401c4000684c5
+        // <== 0xc4: {"_cls_":"incomingNetworkStatusHandler","_id_":196,"_isRequest_":false,"errorCode":6,"target":50564}
+        // https://docs.silabs.com/d/zigbee-stack-api/7.4.0/message#ember-incoming-network-status-handler
+        debug.log(`handleNetworkStatus: nwk=${nwk}, errorCode=${errorCode}`);
     }
 
     private handleNodeLeft(nwk: number, ieee: EmberEUI64 | number[]): void {
