@@ -47,6 +47,75 @@ const WATCHDOG_WAKE_PERIOD = 10;  // in sec
 const EZSP_DEFAULT_RADIUS = 0;
 const EZSP_MULTICAST_NON_MEMBER_RADIUS = 3;
 
+const CONFIG_IDS_PRE_V9: number[][] = [
+    [EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90],
+    [EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 2],
+    //[EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1],
+    [EzspConfigId.CONFIG_FRAGMENT_DELAY_MS, 50],
+    [EzspConfigId.CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 2],
+    //[EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16],
+    //[EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 16],
+    [EzspConfigId.CONFIG_APPLICATION_ZDO_FLAGS, 
+        EmberZdoConfigurationFlags.APP_HANDLES_UNSUPPORTED_ZDO_REQUESTS | 
+        EmberZdoConfigurationFlags.APP_RECEIVES_SUPPORTED_ZDO_REQUESTS],
+    [EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 7680],
+    [EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 14],
+    [EzspConfigId.CONFIG_SECURITY_LEVEL, 5],
+    [EzspConfigId.CONFIG_STACK_PROFILE, 2],
+    //[EzspConfigId.CONFIG_TX_POWER_MODE, 3],
+    [EzspConfigId.CONFIG_FRAGMENT_WINDOW_SIZE, 1],
+    //[EzspConfigId.CONFIG_NEIGHBOR_TABLE_SIZE, 16],
+    //[EzspConfigId.CONFIG_ROUTE_TABLE_SIZE, 16],
+    //[EzspConfigId.CONFIG_BINDING_TABLE_SIZE, 32],
+    //[EzspConfigId.CONFIG_KEY_TABLE_SIZE, 12],
+    //[EzspConfigId.CONFIG_ZLL_GROUP_ADDRESSES, 0],
+    //[EzspConfigId.CONFIG_ZLL_RSSI_THRESHOLD, 0],
+    //[EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT, 255],
+    //[EzspConfigId.CONFIG_BROADCAST_TABLE_SIZE, 43],
+    //[EzspConfigId.CONFIG_MAX_HOPS, 30],
+    //[EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 32],
+    [EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 255],
+];
+
+/**
+ * Can only decrease "NCP Memory Allocation" configs at runtime from V9 on.
+ * @see https://www.silabs.com/documents/public/release-notes/emberznet-release-notes-7.0.1.0.pdf
+ */
+const CONFIG_IDS_CURRENT: number[][] = [
+    [EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90],
+    [EzspConfigId.CONFIG_FRAGMENT_DELAY_MS, 50],
+    [EzspConfigId.CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 2],
+    [EzspConfigId.CONFIG_APPLICATION_ZDO_FLAGS, 
+        EmberZdoConfigurationFlags.APP_HANDLES_UNSUPPORTED_ZDO_REQUESTS | 
+        EmberZdoConfigurationFlags.APP_RECEIVES_SUPPORTED_ZDO_REQUESTS],
+    [EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 7680],
+    [EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 14],
+    [EzspConfigId.CONFIG_SECURITY_LEVEL, 5],
+    [EzspConfigId.CONFIG_STACK_PROFILE, 2],
+    [EzspConfigId.CONFIG_FRAGMENT_WINDOW_SIZE, 1],
+];
+
+const POLICY_IDS_PRE_V8: number[][] = [
+    // [EzspPolicyId.BINDING_MODIFICATION_POLICY,
+    //     EzspDecisionId.DISALLOW_BINDING_MODIFICATION],
+    // [EzspPolicyId.UNICAST_REPLIES_POLICY, EzspDecisionId.HOST_WILL_NOT_SUPPLY_REPLY],
+    // [EzspPolicyId.POLL_HANDLER_POLICY, EzspDecisionId.POLL_HANDLER_IGNORE],
+    // [EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY,
+    //     EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK],
+    // [EzspPolicyId.PACKET_VALIDATE_LIBRARY_POLICY,
+    //     EzspDecisionId.PACKET_VALIDATE_LIBRARY_CHECKS_DISABLED],
+    // [EzspPolicyId.ZLL_POLICY, EzspDecisionId.ALLOW_JOINS],
+    // [EzspPolicyId.TC_REJOINS_USING_WELL_KNOWN_KEY_POLICY, EzspDecisionId.ALLOW_JOINS],
+    [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
+    [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
+];
+
+const POLICY_IDS_CURRENT: number[][] = [
+    [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
+    [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
+    [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS],
+];
+
 
 type EZSPFrame = {
     sequence: number,
@@ -424,18 +493,20 @@ export class Ezsp extends EventEmitter {
     }
 
     async setConfigurationValue(configId: number, value: number): Promise<void> {
-        debug.log('Set %s = %s', EzspConfigId.valueToName(EzspConfigId, configId), value);
+        const configName = EzspConfigId.valueToName(EzspConfigId, configId);
+        debug.log(`Set ${configName} = ${value}`);
         const ret = await this.execCommand('setConfigurationValue', {configId: configId, value: value});
         console.assert(ret.status === EmberStatus.SUCCESS,
-            `Command (setConfigurationValue(${configId}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`);
+            `Command (setConfigurationValue(${configName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`);
     }
 
     async getConfigurationValue(configId: number): Promise<number> {
-        debug.log('Get %s', EzspConfigId.valueToName(EzspConfigId, configId));
+        const configName = EzspConfigId.valueToName(EzspConfigId, configId);
+        debug.log(`Get ${configName}`);
         const ret = await this.execCommand('getConfigurationValue', {configId: configId});
         console.assert(ret.status === EmberStatus.SUCCESS,
-            `Command (getConfigurationValue(${configId})) returned unexpected state: ${JSON.stringify(ret)}`);
-        debug.log('Got %s = %s', EzspConfigId.valueToName(EzspConfigId, configId), ret.value.toString());
+            `Command (getConfigurationValue(${configName})) returned unexpected state: ${JSON.stringify(ret)}`);
+        debug.log(`Got ${configName} = ${ret.value}`);
         return ret.value;
     }
 
@@ -466,61 +537,36 @@ export class Ezsp extends EventEmitter {
     }
 
     async setValue(valueId: t.EzspValueId, value: number): Promise<EZSPFrameData> {
-        debug.log('Set %s = %s', t.EzspValueId.valueToName(t.EzspValueId, valueId), value);
+        const valueName = t.EzspValueId.valueToName(t.EzspValueId, valueId);
+        debug.log(`Set ${valueName} = ${value}`);
         const ret = await this.execCommand('setValue', {valueId, value});
         console.assert(ret.status === EmberStatus.SUCCESS,
-            `Command (setValue) returned unexpected state: ${JSON.stringify(ret)}`);
+            `Command (setValue(${valueName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`);
 
         return ret;
     }
 
     async getValue(valueId: t.EzspValueId): Promise<Buffer> {
-        debug.log('Get %s', t.EzspValueId.valueToName(t.EzspValueId, valueId));
+        const valueName = t.EzspValueId.valueToName(t.EzspValueId, valueId);
+        debug.log(`Get ${valueName}`);
         const ret = await this.execCommand('getValue', {valueId});
         console.assert(ret.status === EmberStatus.SUCCESS,
-            `Command (getValue) returned unexpected state: ${ret}`);
-        debug.log('Got %s = %s', t.EzspValueId.valueToName(t.EzspValueId, valueId), ret.value);
+            `Command (getValue(${valueName})) returned unexpected state: ${JSON.stringify(ret)}`);
+        debug.log(`Got ${valueName} = ${ret.value}`);
         return ret.value;
     }
 
     async setPolicy(policyId: EzspPolicyId, value: number): Promise<EZSPFrameData> {
-        debug.log('Set %s = %s', EzspPolicyId.valueToName(EzspPolicyId, policyId), value);
+        const policyName = EzspPolicyId.valueToName(EzspPolicyId, policyId);
+        debug.log(`Set ${policyName} = ${value}`);
         const ret = await this.execCommand('setPolicy', {policyId: policyId, decisionId: value});
         console.assert(ret.status === EmberStatus.SUCCESS,
-            `Command (setPolicy) returned unexpected state: ${JSON.stringify(ret)}`);
+            `Command (setPolicy(${policyName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`);
         return ret;
     }
 
     async updateConfig(): Promise<void> {
-        const config = [
-            [EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90],
-            [EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 2],
-            //[EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1],
-            [EzspConfigId.CONFIG_FRAGMENT_DELAY_MS, 50],
-            [EzspConfigId.CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 2],
-            //[EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 16],
-            //[EzspConfigId.CONFIG_ADDRESS_TABLE_SIZE, 16],
-            [EzspConfigId.CONFIG_APPLICATION_ZDO_FLAGS, 
-                EmberZdoConfigurationFlags.APP_HANDLES_UNSUPPORTED_ZDO_REQUESTS | 
-                EmberZdoConfigurationFlags.APP_RECEIVES_SUPPORTED_ZDO_REQUESTS],
-            [EzspConfigId.CONFIG_INDIRECT_TRANSMISSION_TIMEOUT, 7680],
-            [EzspConfigId.CONFIG_END_DEVICE_POLL_TIMEOUT, 14],
-            [EzspConfigId.CONFIG_SECURITY_LEVEL, 5],
-            [EzspConfigId.CONFIG_STACK_PROFILE, 2],
-            //[EzspConfigId.CONFIG_TX_POWER_MODE, 3],
-            [EzspConfigId.CONFIG_FRAGMENT_WINDOW_SIZE, 1],
-            //[EzspConfigId.CONFIG_NEIGHBOR_TABLE_SIZE, 16],
-            //[EzspConfigId.CONFIG_ROUTE_TABLE_SIZE, 16],
-            //[EzspConfigId.CONFIG_BINDING_TABLE_SIZE, 32],
-            //[EzspConfigId.CONFIG_KEY_TABLE_SIZE, 12],
-            //[EzspConfigId.CONFIG_ZLL_GROUP_ADDRESSES, 0],
-            //[EzspConfigId.CONFIG_ZLL_RSSI_THRESHOLD, 0],
-            //[EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT, 255],
-            //[EzspConfigId.CONFIG_BROADCAST_TABLE_SIZE, 43],
-            //[EzspConfigId.CONFIG_MAX_HOPS, 30],
-            //[EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 32],
-            [EzspConfigId.CONFIG_PACKET_BUFFER_COUNT, 255],
-        ];
+        const config = (this.ezspV < 9 ? CONFIG_IDS_PRE_V9 : CONFIG_IDS_CURRENT);
 
         for (const [confName, value] of config) {
             try {
@@ -533,28 +579,14 @@ export class Ezsp extends EventEmitter {
 
     async updatePolicies(): Promise<void> {
         // Set up the policies for what the NCP should do.
-        let policies = [
-            // [EzspPolicyId.BINDING_MODIFICATION_POLICY,
-            //     EzspDecisionId.DISALLOW_BINDING_MODIFICATION],
-            // [EzspPolicyId.UNICAST_REPLIES_POLICY, EzspDecisionId.HOST_WILL_NOT_SUPPLY_REPLY],
-            // [EzspPolicyId.POLL_HANDLER_POLICY, EzspDecisionId.POLL_HANDLER_IGNORE],
-            // [EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY,
-            //     EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK],
-            // [EzspPolicyId.PACKET_VALIDATE_LIBRARY_POLICY,
-            //     EzspDecisionId.PACKET_VALIDATE_LIBRARY_CHECKS_DISABLED],
-            // [EzspPolicyId.ZLL_POLICY, EzspDecisionId.ALLOW_JOINS],
-            // [EzspPolicyId.TC_REJOINS_USING_WELL_KNOWN_KEY_POLICY, EzspDecisionId.ALLOW_JOINS],
-            [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
-            [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
-        ];
-        if (this.ezspV >= 8) {
-            policies = policies.concat([
-                [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS
-                    | EzspDecisionBitmask.ALLOW_JOINS],
-            ]);
-        }
+        const policies = (this.ezspV < 8 ? POLICY_IDS_PRE_V8 : POLICY_IDS_CURRENT);
+
         for (const [policy, value] of policies) {
-            await this.setPolicy(policy, value);
+            try {
+                await this.setPolicy(policy, value);
+            } catch (error) {
+                debug.error(`setPolicy(${policy}, ${value}) error: ${error} ${error.stack}`);
+            }
         }
     }
 
