@@ -129,9 +129,11 @@ export class SerialDriver extends EventEmitter {
             this.socketPort.on('connect', () => {
                 debug('Socket connected');
             });
-
             this.socketPort.on('ready', async (): Promise<void> => {
                 debug('Socket ready');
+                this.socketPort.once('close', this.onPortClose.bind(this));
+                this.socketPort.on('error', this.onPortError.bind(this));
+
                 // reset
                 await this.reset();
 
@@ -139,15 +141,10 @@ export class SerialDriver extends EventEmitter {
 
                 resolve();
             });
-
-            this.socketPort.once('close', this.onPortClose.bind(this));
-
-            this.socketPort.on('error', () => {
-                debug('Socket error');
-
+            this.socketPort.once('error', (err) => {
                 this.initialized = false;
 
-                reject(new Error(`Error while opening socket`));
+                reject(err);
             });
 
             this.socketPort.connect(info.port, info.host);
@@ -345,12 +342,13 @@ export class SerialDriver extends EventEmitter {
         debug(`Port error: ${error}`);
     }
 
-    private onPortClose(): void {
-        debug('Port closed');
+    private onPortClose(err: boolean | Error): void {
+        debug(`Port closed. Error? ${err}`);
 
-        this.initialized = false;
-
-        this.emit('close');
+        // on error: serialport passes an Error object, net.Socket a boolean
+        if (err != null && err !== false) {
+            this.emit('reset');
+        }
     }
 
     public isInitialized(): boolean {
