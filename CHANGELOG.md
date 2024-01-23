@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.33.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.0...v0.33.1) (2024-01-23)
+
+
+### Bug Fixes
+
+* EZSP: Added base for `incomingNetworkStatusHandler` ([#883](https://github.com/Koenkk/zigbee-herdsman/issues/883)) ([0b16f1b](https://github.com/Koenkk/zigbee-herdsman/commit/0b16f1ba1ed441c65c65ec6165158de054107ffc))
+* EZSP: Cleanup asserts & fix unsupported configs. ([#885](https://github.com/Koenkk/zigbee-herdsman/issues/885)) ([2a2b3d0](https://github.com/Koenkk/zigbee-herdsman/commit/2a2b3d06a52e1abef66791764e42fdd424d75886))
+
 ## [0.33.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.32.7...v0.33.0) (2024-01-21)
 
 
