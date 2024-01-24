@@ -40,6 +40,7 @@ class EZSPAdapter extends Adapter {
     private interpanLock: boolean;
     private backupMan: EZSPAdapterBackup;
     private queue: Queue;
+    private closing: boolean;
 
 
     public constructor(networkOptions: NetworkOptions,
@@ -50,12 +51,14 @@ class EZSPAdapter extends Adapter {
             this.waitressValidator, this.waitressTimeoutFormatter
         );
         this.interpanLock = false;
+        this.closing = false;
 
         const concurrent = adapterOptions && adapterOptions.concurrent ? adapterOptions.concurrent : 8;
         debug(`Adapter concurrent: ${concurrent}`);
         this.queue = new Queue(concurrent);
 
         this.driver = new Driver(this.serialPortOptions, this.networkOptions, this.greenPowerGroup);
+        this.driver.on('close', this.onDriverClose.bind(this));
         this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
         this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
         this.driver.on('incomingMessage', this.processMessage.bind(this));
@@ -175,15 +178,20 @@ class EZSPAdapter extends Adapter {
      * Adapter methods
      */
     public async start(): Promise<StartResult> {
-        try {
-            return await this.driver.startup();
-        } catch {
-            return await this.driver.reset();
-        }
+        return this.driver.startup();
     }
 
     public async stop(): Promise<void> {
+        this.closing = true;
         await this.driver.stop();
+    }
+
+    public async onDriverClose(): Promise<void> {
+        debug(`onDriverClose()`);
+
+        if (!this.closing) {
+            this.emit(Events.Events.disconnected);
+        }
     }
 
     public static async isValidPath(path: string): Promise<boolean> {

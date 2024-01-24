@@ -126,12 +126,21 @@ export class SerialDriver extends EventEmitter {
         this.parser.on('parsed', this.onParsed.bind(this));
 
         return new Promise((resolve, reject): void => {
+            const openError = (err: Error): void => {
+                this.initialized = false;
+
+                reject(err);
+            };
+
             this.socketPort.on('connect', () => {
                 debug('Socket connected');
             });
-
             this.socketPort.on('ready', async (): Promise<void> => {
                 debug('Socket ready');
+                this.socketPort.removeListener('error', openError);
+                this.socketPort.once('close', this.onPortClose.bind(this));
+                this.socketPort.on('error', this.onPortError.bind(this));
+
                 // reset
                 await this.reset();
 
@@ -139,16 +148,7 @@ export class SerialDriver extends EventEmitter {
 
                 resolve();
             });
-
-            this.socketPort.once('close', this.onPortClose.bind(this));
-
-            this.socketPort.on('error', () => {
-                debug('Socket error');
-
-                this.initialized = false;
-
-                reject(new Error(`Error while opening socket`));
-            });
+            this.socketPort.once('error', openError);
 
             this.socketPort.connect(info.port, info.host);
         });
@@ -318,8 +318,8 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    public async close(): Promise<void> {
-        debug('closing');
+    public async close(emitClose: boolean): Promise<void> {
+        debug('Closing UART');
         this.queue.clear();
 
         if (this.initialized) {
@@ -329,7 +329,9 @@ export class SerialDriver extends EventEmitter {
                 try {
                     await this.serialPort.asyncFlushAndClose();
                 } catch (error) {
-                    this.emit('close');
+                    if (emitClose) {
+                        this.emit('close');
+                    }
 
                     throw error;
                 }
@@ -338,19 +340,27 @@ export class SerialDriver extends EventEmitter {
             }
         }
 
-        this.emit('close');
+        if (emitClose) {
+            this.emit('close');
+        }
     }
 
     private onPortError(error: Error): void {
         debug(`Port error: ${error}`);
     }
 
-    private onPortClose(): void {
-        debug('Port closed');
+    private onPortClose(err: boolean | Error): void {
+        debug(`Port closed. Error? ${err}`);
 
-        this.initialized = false;
-
-        this.emit('close');
+        // on error: serialport passes an Error object (in case of disconnect)
+        //           net.Socket passes a boolean (in case of a transmission error)
+        // try to reset instead of failing immediately
+        if (err != null && err !== false) {
+            this.emit('reset');
+        } else {
+            this.initialized = false;
+            this.emit('close');
+        }
     }
 
     public isInitialized(): boolean {

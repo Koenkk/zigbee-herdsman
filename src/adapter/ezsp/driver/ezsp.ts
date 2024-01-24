@@ -36,6 +36,8 @@ const debug = {
 
 
 const MAX_SERIAL_CONNECT_ATTEMPTS = 4;
+/** In ms. This is multiplied by tries count (above), e.g. 4 tries = 5000, 10000, 15000 */
+const SERIAL_CONNECT_NEW_ATTEMPT_MIN_DELAY = 5000;
 const MTOR_MIN_INTERVAL = 10;
 const MTOR_MAX_INTERVAL = 90;
 const MTOR_ROUTE_ERROR_THRESHOLD = 4;
@@ -336,7 +338,7 @@ export class Ezsp extends EventEmitter {
 
         this.serialDriver = new SerialDriver();
         this.serialDriver.on('received', this.onFrameReceived.bind(this));
-        this.serialDriver.on('close', this.onClose.bind(this));
+        this.serialDriver.on('close', this.onSerialClose.bind(this));
     }
 
     public async connect(options: SerialPortOptions): Promise<void> {
@@ -350,7 +352,7 @@ export class Ezsp extends EventEmitter {
                 debug.error(`Connection attempt ${i} error: ${error.stack}`);
 
                 if (i < MAX_SERIAL_CONNECT_ATTEMPTS) {
-                    await Wait(5000);
+                    await Wait(SERIAL_CONNECT_NEW_ATTEMPT_MIN_DELAY * i);
                     debug.log(`Next attempt ${i+1}`);
                 }
 
@@ -362,7 +364,7 @@ export class Ezsp extends EventEmitter {
             throw new Error("Failure to connect", {cause: lastError});
         }
 
-        this.serialDriver.on('reset', this.onReset.bind(this));
+        this.serialDriver.on('reset', this.onSerialReset.bind(this));
 
         if (WATCHDOG_WAKE_PERIOD) {
             this.watchdogTimer = setInterval(
@@ -372,18 +374,22 @@ export class Ezsp extends EventEmitter {
         }
     }
 
-    private onClose(): void {
-        debug.log('Close ezsp');
+    private onSerialReset(): void {
+        debug.log('onSerialReset()');
+        this.emit('reset');
+    }
 
+    private onSerialClose(): void {
+        debug.log('onSerialClose()');
         this.emit('close');
     }
 
-    public async close(): Promise<void> {
-        debug.log('Stop ezsp');
+    public async close(emitClose: boolean): Promise<void> {
+        debug.log('Closing Ezsp');
 
         clearTimeout(this.watchdogTimer);
         this.queue.clear();
-        await this.serialDriver.close();
+        await this.serialDriver.close(emitClose);
     }
 
     /**
@@ -749,16 +755,9 @@ export class Ezsp extends EventEmitter {
 
             if (this.failures > MAX_WATCHDOG_FAILURES) {
                 this.failures = 0;
-                this.reset();
+
+                this.emit('reset');
             }
         }
-    }
-
-    private reset(): void {
-        this.emit('reset');
-    }
-
-    private onReset(): void {
-        this.reset();
     }
 }
