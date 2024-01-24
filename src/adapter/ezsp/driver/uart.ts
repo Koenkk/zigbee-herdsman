@@ -126,11 +126,18 @@ export class SerialDriver extends EventEmitter {
         this.parser.on('parsed', this.onParsed.bind(this));
 
         return new Promise((resolve, reject): void => {
+            const openError = (err: Error): void => {
+                this.initialized = false;
+
+                reject(err);
+            };
+
             this.socketPort.on('connect', () => {
                 debug('Socket connected');
             });
             this.socketPort.on('ready', async (): Promise<void> => {
                 debug('Socket ready');
+                this.socketPort.removeListener('error', openError);
                 this.socketPort.once('close', this.onPortClose.bind(this));
                 this.socketPort.on('error', this.onPortError.bind(this));
 
@@ -141,11 +148,7 @@ export class SerialDriver extends EventEmitter {
 
                 resolve();
             });
-            this.socketPort.once('error', (err) => {
-                this.initialized = false;
-
-                reject(err);
-            });
+            this.socketPort.once('error', openError);
 
             this.socketPort.connect(info.port, info.host);
         });
