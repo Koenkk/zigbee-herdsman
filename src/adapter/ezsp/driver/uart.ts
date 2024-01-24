@@ -315,8 +315,8 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    public async close(): Promise<void> {
-        debug('closing');
+    public async close(emitClose: boolean): Promise<void> {
+        debug('Closing UART');
         this.queue.clear();
 
         if (this.initialized) {
@@ -326,7 +326,9 @@ export class SerialDriver extends EventEmitter {
                 try {
                     await this.serialPort.asyncFlushAndClose();
                 } catch (error) {
-                    this.emit('close');
+                    if (emitClose) {
+                        this.emit('close');
+                    }
 
                     throw error;
                 }
@@ -335,7 +337,9 @@ export class SerialDriver extends EventEmitter {
             }
         }
 
-        this.emit('close');
+        if (emitClose) {
+            this.emit('close');
+        }
     }
 
     private onPortError(error: Error): void {
@@ -345,9 +349,14 @@ export class SerialDriver extends EventEmitter {
     private onPortClose(err: boolean | Error): void {
         debug(`Port closed. Error? ${err}`);
 
-        // on error: serialport passes an Error object, net.Socket a boolean
+        // on error: serialport passes an Error object (in case of disconnect)
+        //           net.Socket passes a boolean (in case of a transmission error)
+        // try to reset instead of failing immediately
         if (err != null && err !== false) {
             this.emit('reset');
+        } else {
+            this.initialized = false;
+            this.emit('close');
         }
     }
 

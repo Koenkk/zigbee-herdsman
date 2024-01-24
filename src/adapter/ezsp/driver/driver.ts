@@ -103,34 +103,47 @@ export class Driver extends EventEmitter {
             this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
-    public async reset(): Promise<TsType.StartResult> {
-        let attempts = 0;
-        const pauses = [10, 30, 60];
-        let pause = 0;
+    /**
+     * Requested by the EZSP watchdog after too many failures, or by UART layer after port closed unexpectedly.
+     * Tries to stop the layers below and startup again.
+     * @returns 
+     */
+    public async reset(): Promise<void> {
+        debug.log(`Reset connection.`);
 
-        // infinite retries XXX: might want to hard fail after a while..?
-        while (true) {
-            debug.log(`Reset connection. Try ${attempts}`);
+        try {
+            // don't emit 'close' on stop since we don't want this to bubble back up as 'disconnected' to the controller.
+            await this.stop(false);
+            await Wait(1000);
+            await this.startup();
+        } catch (err) {
+            debug.error(`Reset error ${err.stack}`);
+
             try {
+                // here we let emit
                 await this.stop();
-                await Wait(1000);
-                return await this.startup();
-            } catch (e) {
-                debug.error(`Reset error ${e.stack}`);
-                attempts += 1;
-
-                if (pauses.length) {
-                    pause = pauses.shift();
-                }
-
-                debug.log(`Pause ${pause}sec before try ${attempts}`);
-                await Wait(pause*1000);
+            } catch (stopErr) {
+                debug.error(`Failed to stop after failed reset ${stopErr.stack}`);
             }
         }
     }
 
-    private async onReset(): Promise<void> {
+    private async onEzspReset(): Promise<void> {
+        debug.log('onEzspReset()');
         await this.reset();
+    }
+
+    private onEzspClose(): void {
+        debug.log('onEzspClose()');
+        this.emit('close');
+    }
+
+    public async stop(emitClose: boolean = true): Promise<void> {
+        debug.log('Stopping driver');
+
+        if (this.ezsp) {
+            return this.ezsp.close(emitClose);
+        }
     }
 
     public async startup(): Promise<TsType.StartResult> {
@@ -138,7 +151,7 @@ export class Driver extends EventEmitter {
         this.transactionID = 1;
         this.ezsp = undefined;
         this.ezsp = new Ezsp();
-        this.ezsp.on('close', this.onClose.bind(this));
+        this.ezsp.on('close', this.onEzspClose.bind(this));
 
         try {
             await this.ezsp.connect(this.serialOpt);
@@ -148,7 +161,7 @@ export class Driver extends EventEmitter {
             throw error;
         }
 
-        this.ezsp.on('reset', this.onReset.bind(this));
+        this.ezsp.on('reset', this.onEzspReset.bind(this));
 
         await this.ezsp.version();
         await this.ezsp.updateConfig();
@@ -661,17 +674,6 @@ export class Driver extends EventEmitter {
             debug.error(`zdoRequest error: ${e} ${e.stack}`);
 
             throw e;
-        }
-    }
-
-    private onClose(): void {
-        debug.log('Close driver');
-    }
-
-    public async stop(): Promise<void> {
-        if (this.ezsp) {
-            debug.log('Stop driver');
-            return this.ezsp.close();
         }
     }
 
