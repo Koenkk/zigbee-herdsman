@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.33.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.1...v0.33.2) (2024-01-24)
+
+
+### Bug Fixes
+
+* EZSP: Fix socket error handling & serial/socket reset/close logic ([#886](https://github.com/Koenkk/zigbee-herdsman/issues/886)) ([43b02ee](https://github.com/Koenkk/zigbee-herdsman/commit/43b02eeca3fbfb6cc55f17cf6f27a2483c3c3d86))
+
 ## [0.33.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.0...v0.33.1) (2024-01-23)
 
 
