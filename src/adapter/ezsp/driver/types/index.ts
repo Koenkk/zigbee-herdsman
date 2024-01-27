@@ -43,6 +43,7 @@ import {
     EzspMfgTokenId,
     EzspStatus,
     EmberStatus,
+    SLStatus,
     EmberStackError,
     EmberEventUnits,
     EmberNodeType,
@@ -117,6 +118,7 @@ import {
     EmberRoutingTable,
     EmberRoutingTableEntry,
     EmberSecurityManagerContext,
+    EmberSecurityManagerNetworkKeyInfo,
 } from './struct';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -178,6 +180,7 @@ export {
     EzspMfgTokenId,
     EzspStatus,
     EmberStatus,
+    SLStatus,
     EmberStackError,
     EmberEventUnits,
     EmberNodeType,
@@ -251,4 +254,5 @@ export {
     EmberRoutingTable,
     EmberRoutingTableEntry,
     EmberSecurityManagerContext,
+    EmberSecurityManagerNetworkKeyInfo,
 };
