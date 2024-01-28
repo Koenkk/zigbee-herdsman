@@ -768,3 +768,19 @@ export class EmberSecurityManagerContext extends EzspStruct {
         ['psaKeyAlgPermission', basic.uint32_t],
     ];
 }
+
+/** This data structure contains the metadata pertaining to an network key */
+export class EmberSecurityManagerNetworkKeyInfo extends EzspStruct {
+    public networkKeySet: number;// boolean
+    public alternateNetworkKeySet: number;// boolean
+    public networkKeySequenceNumber: number;
+    public altNetworkKeySequenceNumber: number;
+    public networkKeyFrameCounter: number;
+    static _fields = [
+        ['networkKeySet', basic.uint8_t],
+        ['alternateNetworkKeySet', basic.uint8_t],
+        ['networkKeySequenceNumber', basic.uint8_t],
+        ['altNetworkKeySequenceNumber', basic.uint8_t],
+        ['networkKeyFrameCounter', basic.uint32_t],
+    ];
+}

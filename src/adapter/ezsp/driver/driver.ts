@@ -19,6 +19,7 @@ import {
     EmberKeyType,
     EmberDerivedKeyType,
     EmberStackError,
+    SLStatus,
 } from './types/named';
 import {Multicast} from './multicast';
 import {Waitress, Wait} from '../../../utils';
@@ -860,9 +861,23 @@ export class Driver extends EventEmitter {
             smc.flags = 0;
             smc.psaKeyAlgPermission = 0;
             const keyInfo = await this.ezsp.execCommand('exportKey', {context: smc});
-            console.assert(keyInfo.status === EmberStatus.SUCCESS, 
+            console.assert(keyInfo.status === SLStatus.SL_STATUS_OK, 
                 `exportKey(${EmberKeyType.valueToName(EmberKeyType, keyType)}) `
-                + `returned unexpected status: ${keyInfo.status}`);
+                + `returned unexpected SL status: ${keyInfo.status}`);
+            return keyInfo;
+        }
+    }
+
+    public async getNetworkKeyInfo(): Promise<EZSPFrameData> {
+        if (this.ezsp.ezspV < 13) {
+            throw new Error(`getNetKeyInfo(): Invalid call on EZSP < 13.`);
+        } else {
+            const keyInfo = await this.ezsp.execCommand('getNetworkKeyInfo');
+            console.assert(
+                keyInfo.status === SLStatus.SL_STATUS_OK, 
+                `getNetworkKeyInfo() returned unexpected SL status: ${keyInfo.status}`
+            );
+
             return keyInfo;
         }
     }

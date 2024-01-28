@@ -79,6 +79,8 @@ import {/* Basic Types */
     EmberNeighbors,
     EmberRoutingTable,
     EmberSecurityManagerContext,
+    EmberSecurityManagerNetworkKeyInfo,
+    SLStatus,
 } from './types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -1191,7 +1193,15 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
         },
         response: {
             keyData: EmberKeyData,
-            status: EmberStatus
+            status: SLStatus,
+        },
+    },
+    getNetworkKeyInfo: {
+        ID: 0x0116,
+        request: null,
+        response: {
+            status: SLStatus,
+            networkKeyInfo: EmberSecurityManagerNetworkKeyInfo,
         },
     },
     switchNetworkKeyHandler: {
