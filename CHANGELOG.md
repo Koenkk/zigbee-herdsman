@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.33.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.2...v0.33.3) (2024-01-28)
+
+
+### Bug Fixes
+
+* Remove IKEA specific pm25 measuredValue attribute ([#890](https://github.com/Koenkk/zigbee-herdsman/issues/890)) ([e8387ff](https://github.com/Koenkk/zigbee-herdsman/commit/e8387fff9a3e3297511656318a1737e296ca2f03))
+* Some more backup support for EZSP 13+ ([#888](https://github.com/Koenkk/zigbee-herdsman/issues/888)) ([9b6c04b](https://github.com/Koenkk/zigbee-herdsman/commit/9b6c04b2a3cb77ab309e6e87a96ea155894b36c0))
+
 ## [0.33.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.1...v0.33.2) (2024-01-24)
 
 
