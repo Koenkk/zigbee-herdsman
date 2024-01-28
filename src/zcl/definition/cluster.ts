@@ -4621,7 +4621,7 @@ const Cluster: {
             }
         },
     },
-    aqaraOpple: {
+    manuSpecificLumi: {
         ID: 0xFCC0,
         manufacturerCode: ManufacturerCode.LUMI_UNITED_TECH,
         attributes: {
