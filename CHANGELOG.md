@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.33.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.3...v0.33.4) (2024-01-29)
+
+
+### Bug Fixes
+
+* EZSP: cleaned up awaits ([#894](https://github.com/Koenkk/zigbee-herdsman/issues/894)) ([d2d27d7](https://github.com/Koenkk/zigbee-herdsman/commit/d2d27d73b01babc8bc3d9db7edbae9ee9604c6c6))
+
 ## [0.33.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.2...v0.33.3) (2024-01-28)
 
 
