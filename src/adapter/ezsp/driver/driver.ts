@@ -326,6 +326,7 @@ export class Driver extends EventEmitter {
                 this.handleNodeLeft(frame.newNodeId, frame.newNodeEui64);
             } else {
                 if (frame.status === EmberDeviceUpdate.STANDARD_SECURITY_UNSECURED_JOIN) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.cleanupTClinkKey(frame.newNodeEui64);
                 }
                 if (frame.policyDecision !== EmberJoinDecision.DENY_JOIN) {
@@ -360,6 +361,7 @@ export class Driver extends EventEmitter {
                 if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
                     const apsFrame = frame.apsFrame;
                     if (apsFrame.destinationEndpoint == 255) {
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         this.multicast.subscribe(apsFrame.groupId, 1);
                     }
                 }
@@ -435,7 +437,7 @@ export class Driver extends EventEmitter {
         // this.eui64ToRelays.set(ieee.toString(), relays);
     }
 
-    private async handleRouteError(status: EmberStatus, nwk: number): Promise<void> {
+    private handleRouteError(status: EmberStatus, nwk: number): void {
         // todo
         debug.log(`handleRouteError: nwk=${nwk}, status=${status}`);
         //this.waitress.reject({address: nwk, payload: null, frame: null}, 'Route error');
@@ -443,7 +445,7 @@ export class Driver extends EventEmitter {
         // this.eui64ToRelays.set(ieee.toString(), null);
     }
 
-    private async handleNetworkStatus(errorCode: EmberStackError, nwk: number): Promise<void> {
+    private handleNetworkStatus(errorCode: EmberStackError, nwk: number): void {
         // todo
         // <== Frame: e19401c4000684c5
         // <== 0xc4: {
@@ -482,6 +484,7 @@ export class Driver extends EventEmitter {
             if ((Buffer.from((ieee as EmberEUI64).value)).indexOf(Buffer.from(rec.prefix)) == 0) {
                 // set ManufacturerCode
                 debug.log(`handleNodeJoined: change ManufacturerCode for ieee ${ieee} to ${rec.mfgId}`);
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.resetMfgId(rec.mfgId);
                 break;
             }
@@ -791,7 +794,7 @@ export class Driver extends EventEmitter {
         }
     }
 
-    private async handleGPMessage(frame: EZSPFrameData): Promise<void> {
+    private handleGPMessage(frame: EZSPFrameData): void {
         // Commissioning
         if (frame.gpdCommandId == 0xE0) {
             let data = frame.payload.subarray(5);

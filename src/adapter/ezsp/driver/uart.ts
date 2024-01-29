@@ -154,7 +154,7 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    private onParsed(frame: NpiFrame): void {
+    private async onParsed(frame: NpiFrame): Promise<void> {
         try {
             frame.checkCRC();
         } catch (error) {
@@ -185,7 +185,7 @@ export class SerialDriver extends EventEmitter {
                 this.handleRSTACK(frame);
                 break;
             case FrameType.ERROR:
-                this.handleError(frame);
+                await this.handleError(frame);
                 break;
             default:
                 debug(`UNKNOWN FRAME RECEIVED: ${frame}`);
