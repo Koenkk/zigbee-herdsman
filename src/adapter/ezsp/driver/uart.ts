@@ -72,9 +72,15 @@ export class SerialDriver extends EventEmitter {
             autoOpen: false,
             parity: 'none',
             stopBits: 1,
-            xon: true,
-            xoff: true,
+            xon: false,
+            xoff: false,
         };
+
+        // enable software flow control if RTS/CTS not enabled in config
+        if (!options.rtscts) {
+            options.xon = true;
+            options.xoff = true;
+        }
 
         debug(`Opening SerialPort with ${JSON.stringify(options)}`);
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -84,7 +90,7 @@ export class SerialDriver extends EventEmitter {
         this.writer = new Writer();
         this.writer.pipe(this.serialPort);
 
-        this.parser = new Parser();
+        this.parser = new Parser(!options.rtscts);// flag unhandled XON/XOFF in logs if software flow control enabled
         this.serialPort.pipe(this.parser);
         this.parser.on('parsed', this.onParsed.bind(this));
 
