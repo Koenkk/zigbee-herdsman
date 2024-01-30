@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.33.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.4...v0.33.5) (2024-01-30)
+
+
+### Bug Fixes
+
+* EZSP: Enable software flow control only if RTS/CTS not enabled. ([#897](https://github.com/Koenkk/zigbee-herdsman/issues/897)) ([a0f2ce9](https://github.com/Koenkk/zigbee-herdsman/commit/a0f2ce97ddf1d71b7d404741e0881fb0ba5dac68))
+* **ignore:** Replace aqaraOpple cluster name with manuSpecificLumi ([#892](https://github.com/Koenkk/zigbee-herdsman/issues/892)) ([c887b15](https://github.com/Koenkk/zigbee-herdsman/commit/c887b15ba23a46aee765b383ebc946b8e8401365))
+
 ## [0.33.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.3...v0.33.4) (2024-01-29)
 
 
