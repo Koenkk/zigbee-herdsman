@@ -8,14 +8,21 @@ const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
 
 export class Parser extends stream.Transform {
     private buffer: Buffer;
+    private flagXONXOFF: boolean;
 
-    public constructor() {
+    public constructor(flagXONXOFF: boolean = false) {
         super();
 
+        this.flagXONXOFF = flagXONXOFF;
         this.buffer = Buffer.from([]);
     }
 
     public _transform(chunk: Buffer, _: string, cb: () => void): void {
+        if (this.flagXONXOFF && (chunk.indexOf(consts.XON) >= 0 || chunk.indexOf(consts.XOFF) >= 0)) {
+            // XXX: should really throw, but just assert for now to flag potential problematic setups
+            console.assert(false, `Host driver did not remove XON/XOFF from input stream. Driver not setup for XON/XOFF?`);
+        }
+
         if (chunk.indexOf(consts.CANCEL) >= 0) {
             this.buffer = Buffer.from([]);
             chunk = chunk.subarray(chunk.lastIndexOf(consts.CANCEL) + 1);
