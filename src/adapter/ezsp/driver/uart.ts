@@ -78,6 +78,7 @@ export class SerialDriver extends EventEmitter {
 
         // enable software flow control if RTS/CTS not enabled in config
         if (!options.rtscts) {
+            debug(`RTS/CTS config is off, enabling software flow control.`);
             options.xon = true;
             options.xoff = true;
         }
