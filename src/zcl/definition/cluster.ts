@@ -2918,11 +2918,11 @@ const Cluster: {
                     {name: 'squawkinfo', type: DataType.uint8},
                 ],
             },
-            boschOutdoorSiren: {                                                
-                ID: 240,                                                        
-                parameters: [                                                   
-                    { name: 'data', type: DataType.uint8 },           
-                ],                                                              
+            boschOutdoorSiren: {
+                ID: 240,
+                parameters: [
+                    { name: 'data', type: DataType.uint8 },
+                ],
             },
         },
         commandsResponse: {
