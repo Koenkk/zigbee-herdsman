@@ -437,6 +437,7 @@ class ZStackAdapter extends Adapter {
                 let doAssocRemove = false;
                 if (!assocRemove && dataConfirmResult === ZnpCommandStatus.MAC_TRANSACTION_EXPIRED &&
                     dataRequestAttempt >= 1 && this.supportsAssocRemove()) {
+                    /* istanbul ignore else */
                     if (!process.env['DISABLE_ASSOC_GET']) {
                         const match =  await this.znp.request(
                             Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
@@ -506,6 +507,7 @@ class ZStackAdapter extends Adapter {
                     // No response could be because the radio of the end device is turned off:
                     // Sometimes the coordinator does not properly set the PENDING flag.
                     // Try to rewrite the device entry in the association table, this fixes it sometimes.
+                    /* istanbul ignore else */
                     if (!process.env['DISABLE_ASSOC_GET']) {
                         const match =  await this.znp.request(
                             Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
