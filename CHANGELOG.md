@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.33.6](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.5...v0.33.6) (2024-02-02)
+
+
+### Bug Fixes
+
+* **ignore:** Add `boschOutdoorSiren` command ([#900](https://github.com/Koenkk/zigbee-herdsman/issues/900)) ([5bb789a](https://github.com/Koenkk/zigbee-herdsman/commit/5bb789a635b973d08a063066364addcb11dc6aee))
+* **ignore:** Allow to disable assoc get ([5c242c8](https://github.com/Koenkk/zigbee-herdsman/commit/5c242c87f31878ea6297441655beb839834bcfc7))
+
 ## [0.33.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.4...v0.33.5) (2024-01-30)
 
 
