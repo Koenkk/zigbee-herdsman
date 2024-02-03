@@ -8,11 +8,7 @@ It was originally forked from zigbee-shepherd with the goal to refactor it to im
 
 # API Documentation
 
-* [Class Controller](docs/api/classes/_src_controller_controller_.controller.md)
-* [Events emitted by Controller](docs/api/modules/_src_controller_events_.md)
-* [Class Device](docs/api/classes/_src_controller_model_device_.device.md)
-* [Class Endpoint](docs/api/classes/_src_controller_model_endpoint_.endpoint.md)
-* [Class Group](docs/api/classes/_src_controller_model_group_.group.md)
+For automatically generated API reference documentation, see: [tsdocs.dev](https://tsdocs.dev/docs/zigbee-herdsman).
 
 
 # Changelog
@@ -47,7 +43,7 @@ It was originally forked from zigbee-shepherd with the goal to refactor it to im
 
 ## Zigbee2MQTT
 
-[Zigbee2MQTT](https://github.com/Koenkk/zigbee2mqtt) is a Zigbee to MQTT gateway. It bridges events and allows you to control your Zigbee devices via MQTT. Allows you to use your Zigbee devices without the vendors or propritary and closed sources bridges or gateways. Zigbee2MQTT also keeps track of the state of the system and the capabilities of connected devices. It uses zigbee-herdsman as a module to handle low-level core Zigbee communication. 
+[Zigbee2MQTT](https://github.com/Koenkk/zigbee2mqtt) is a Zigbee to MQTT gateway. It bridges events and allows you to control your Zigbee devices via MQTT. Allows you to use your Zigbee devices without the vendors or propritary and closed sources bridges or gateways. Zigbee2MQTT also keeps track of the state of the system and the capabilities of connected devices. It uses zigbee-herdsman and [zigbee-herdsman-converters](https://github.com/Koenkk/zigbee-herdsman-converters) as modules to handle low-level core Zigbee communication. 
 
 ## ioBroker
 
