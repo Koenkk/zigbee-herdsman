@@ -396,7 +396,7 @@ export class SerialDriver extends EventEmitter {
                 debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
 
                 try {
-                    await Wait(500);
+                    await Wait(800);// cooldown
                     const waiter = this.waitFor(nextSeq);
                     debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`);
                     this.writer.sendData(randData, seq, 1, ackSeq);

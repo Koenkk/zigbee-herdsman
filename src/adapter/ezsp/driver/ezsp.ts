@@ -14,16 +14,16 @@ import {
 } from './commands';
 import {
     EmberStatus,
-    EmberOutgoingMessageType,
     EzspPolicyId,
     EzspDecisionId,
     EzspDecisionBitmask,
+    EzspValueId,
     EmberConcentratorType,
     EzspConfigId,
-    EmberZdoConfigurationFlags
+    EmberZdoConfigurationFlags,
 } from './types/named';
 import {EventEmitter} from 'events';
-import {EmberApsFrame, EmberNetworkParameters} from './types/struct';
+import {EmberNetworkParameters} from './types/struct';
 import {Queue, Waitress, Wait} from '../../../utils';
 import Debug from "debug";
 import {SerialPortOptions} from '../../tstype';
@@ -46,10 +46,8 @@ const MAX_WATCHDOG_FAILURES = 4;
 //const RESET_ATTEMPT_BACKOFF_TIME = 5;
 const WATCHDOG_WAKE_PERIOD = 10;  // in sec
 //const EZSP_COUNTER_CLEAR_INTERVAL = 180;  // Clear counters every n * WATCHDOG_WAKE_PERIOD
-const EZSP_DEFAULT_RADIUS = 0;
-const EZSP_MULTICAST_NON_MEMBER_RADIUS = 3;
 
-const CONFIG_IDS_PRE_V9: number[][] = [
+const CONFIG_IDS_PRE_V9: readonly [EzspConfigId, number][] = [
     [EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90],
     [EzspConfigId.CONFIG_TRUST_CENTER_ADDRESS_CACHE_SIZE, 2],
     //[EzspConfigId.CONFIG_SUPPORTED_NETWORKS, 1],
@@ -83,7 +81,8 @@ const CONFIG_IDS_PRE_V9: number[][] = [
  * Can only decrease "NCP Memory Allocation" configs at runtime from V9 on.
  * @see https://www.silabs.com/documents/public/release-notes/emberznet-release-notes-7.0.1.0.pdf
  */
-const CONFIG_IDS_CURRENT: number[][] = [
+const CONFIG_IDS_CURRENT: readonly [EzspConfigId, number][] = [
+    [EzspConfigId.CONFIG_RETRY_QUEUE_SIZE, 16],
     [EzspConfigId.CONFIG_TC_REJOINS_USING_WELL_KNOWN_KEY_TIMEOUT_S, 90],
     [EzspConfigId.CONFIG_FRAGMENT_DELAY_MS, 50],
     [EzspConfigId.CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD, 2],
@@ -97,7 +96,25 @@ const CONFIG_IDS_CURRENT: number[][] = [
     [EzspConfigId.CONFIG_FRAGMENT_WINDOW_SIZE, 1],
 ];
 
-const POLICY_IDS_PRE_V8: number[][] = [
+/**
+ * Zigbeed-specific configuration
+ * Since these are currently not overriden, by above configs,
+ * don't need to trigger NCP calls for nothing, just here in case that changes.
+ * @source Unify SDK
+ */
+// const CONFIG_IDS_ZIGBEED: readonly [EzspConfigId, number][] = [
+//     [EzspConfigId.CONFIG_BINDING_TABLE_SIZE, 128],
+//     [EzspConfigId.CONFIG_KEY_TABLE_SIZE, 128],
+//     [EzspConfigId.CONFIG_MAX_END_DEVICE_CHILDREN, 64],
+//     [EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT, 32],
+//     [EzspConfigId.CONFIG_NEIGHBOR_TABLE_SIZE, 26],
+//     [EzspConfigId.CONFIG_SOURCE_ROUTE_TABLE_SIZE, 254],
+//     [EzspConfigId.CONFIG_ROUTE_TABLE_SIZE, 254],
+//     [EzspConfigId.CONFIG_DISCOVERY_TABLE_SIZE, 64],
+//     [EzspConfigId.CONFIG_MAC_FILTER_TABLE_SIZE, 32],
+// ];
+
+const POLICY_IDS_PRE_V8: readonly [EzspPolicyId, number][] = [
     // [EzspPolicyId.BINDING_MODIFICATION_POLICY,
     //     EzspDecisionId.DISALLOW_BINDING_MODIFICATION],
     // [EzspPolicyId.UNICAST_REPLIES_POLICY, EzspDecisionId.HOST_WILL_NOT_SUPPLY_REPLY],
@@ -112,7 +129,7 @@ const POLICY_IDS_PRE_V8: number[][] = [
     [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
 ];
 
-const POLICY_IDS_CURRENT: number[][] = [
+const POLICY_IDS_CURRENT: readonly [EzspPolicyId, number][] = [
     [EzspPolicyId.APP_KEY_REQUEST_POLICY, EzspDecisionId.DENY_APP_KEY_REQUESTS],
     [EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS],
     [EzspPolicyId.TRUST_CENTER_POLICY, EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS],
@@ -322,8 +339,6 @@ export class EZSPZDOResponseFrameData {
 export class Ezsp extends EventEmitter {
     ezspV = 4;
     cmdSeq = 0;  // command sequence
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    // COMMANDS_BY_ID = new Map<number, { name: string, inArgs: any[], outArgs: any[] }>();
     private serialDriver: SerialDriver;
     private waitress: Waitress<EZSPFrame, EZSPWaitressMatcher>;
     private queue: Queue;
@@ -332,6 +347,7 @@ export class Ezsp extends EventEmitter {
 
     constructor() {
         super();
+
         this.queue = new Queue();
         this.waitress = new Waitress<EZSPFrame, EZSPWaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
@@ -498,21 +514,19 @@ export class Ezsp extends EventEmitter {
         return response.payload.status;
     }
 
-    async setConfigurationValue(configId: number, value: number): Promise<void> {
-        const configName = EzspConfigId.valueToName(EzspConfigId, configId);
-        debug.log(`Set ${configName} = ${value}`);
+    async setConfigurationValue(configId: EzspConfigId, value: number): Promise<void> {
+        const cmdStr = `[EzspConfigId] Set ${EzspConfigId.valueToName(EzspConfigId, configId)} = ${value}`;
+        debug.log(cmdStr);
         const ret = await this.execCommand('setConfigurationValue', {configId: configId, value: value});
-        console.assert(ret.status === EmberStatus.SUCCESS,
-            `Command (setConfigurationValue(${configName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`);
+        console.assert(ret.status === EmberStatus.SUCCESS, `${cmdStr} returned unexpected state: ${JSON.stringify(ret)}`);
     }
 
-    async getConfigurationValue(configId: number): Promise<number> {
-        const configName = EzspConfigId.valueToName(EzspConfigId, configId);
-        debug.log(`Get ${configName}`);
+    async getConfigurationValue(configId: EzspConfigId): Promise<number> {
+        const cmdStr = `[EzspConfigId] Get ${EzspConfigId.valueToName(EzspConfigId, configId)}`;
+        debug.log(cmdStr);
         const ret = await this.execCommand('getConfigurationValue', {configId: configId});
-        console.assert(ret.status === EmberStatus.SUCCESS,
-            `Command (getConfigurationValue(${configName})) returned unexpected state: ${JSON.stringify(ret)}`);
-        debug.log(`Got ${configName} = ${ret.value}`);
+        console.assert(ret.status === EmberStatus.SUCCESS, `${cmdStr} returned unexpected state: ${JSON.stringify(ret)}`);
+        debug.log(`${cmdStr} ==> ${ret.value}`);
         return ret.value;
     }
 
@@ -542,32 +556,28 @@ export class Ezsp extends EventEmitter {
         return ret;
     }
 
-    async setValue(valueId: t.EzspValueId, value: number): Promise<EZSPFrameData> {
-        const valueName = t.EzspValueId.valueToName(t.EzspValueId, valueId);
-        debug.log(`Set ${valueName} = ${value}`);
+    async setValue(valueId: EzspValueId, value: number): Promise<EZSPFrameData> {
+        const cmdStr = `[EzspValueId] Set ${EzspValueId.valueToName(EzspValueId, valueId)} = ${value}`;
+        debug.log(cmdStr);
         const ret = await this.execCommand('setValue', {valueId, value});
-        console.assert(ret.status === EmberStatus.SUCCESS,
-            `Command (setValue(${valueName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`);
-
+        console.assert(ret.status === EmberStatus.SUCCESS, `${cmdStr} returned unexpected state: ${JSON.stringify(ret)}`);
         return ret;
     }
 
-    async getValue(valueId: t.EzspValueId): Promise<Buffer> {
-        const valueName = t.EzspValueId.valueToName(t.EzspValueId, valueId);
-        debug.log(`Get ${valueName}`);
+    async getValue(valueId: EzspValueId): Promise<Buffer> {
+        const cmdStr = `[EzspValueId] Get ${EzspValueId.valueToName(EzspValueId, valueId)}`;
+        debug.log(cmdStr);
         const ret = await this.execCommand('getValue', {valueId});
-        console.assert(ret.status === EmberStatus.SUCCESS,
-            `Command (getValue(${valueName})) returned unexpected state: ${JSON.stringify(ret)}`);
-        debug.log(`Got ${valueName} = ${ret.value}`);
+        console.assert(ret.status === EmberStatus.SUCCESS, `${cmdStr} returned unexpected state: ${JSON.stringify(ret)}`);
+        debug.log(`${cmdStr} ==> ${ret.value}`);
         return ret.value;
     }
 
     async setPolicy(policyId: EzspPolicyId, value: number): Promise<EZSPFrameData> {
-        const policyName = EzspPolicyId.valueToName(EzspPolicyId, policyId);
-        debug.log(`Set ${policyName} = ${value}`);
+        const cmdStr = `[EzspPolicyId] Set ${EzspPolicyId.valueToName(EzspPolicyId, policyId)} = ${value}`;
+        debug.log(cmdStr);
         const ret = await this.execCommand('setPolicy', {policyId: policyId, decisionId: value});
-        console.assert(ret.status === EmberStatus.SUCCESS,
-            `Command (setPolicy(${policyName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`);
+        console.assert(ret.status === EmberStatus.SUCCESS, `${cmdStr} returned unexpected state: ${JSON.stringify(ret)}`);
         return ret;
     }
 
@@ -578,7 +588,7 @@ export class Ezsp extends EventEmitter {
             try {
                 await this.setConfigurationValue(confName, value);
             } catch (error) {
-                debug.error(`setConfigurationValue(${confName}, ${value}) error: ${error} ${error.stack}`);
+                debug.error(`[EzspConfigId] Set ${confName} = ${value}; error: ${error} ${error.stack}`);
             }
         }
     }
@@ -591,14 +601,9 @@ export class Ezsp extends EventEmitter {
             try {
                 await this.setPolicy(policy, value);
             } catch (error) {
-                debug.error(`setPolicy(${policy}, ${value}) error: ${error} ${error.stack}`);
+                debug.error(`[EzspPolicyId] Set ${policy} = ${value}; error: ${error} ${error.stack}`);
             }
         }
-    }
-
-    public makeZDOframe(name: string|number, params: ParamsDesc): Buffer {
-        const frmData = new EZSPZDORequestFrameData(name, true, params);
-        return frmData.serialize();
     }
 
     private makeFrame(name: string, params: ParamsDesc, seq: number): Buffer {
@@ -643,56 +648,32 @@ export class Ezsp extends EventEmitter {
                 return response.payload;
             } catch (error) {
                 this.waitress.remove(waiter.ID);
-                throw new Error(`Failure send ${name}:` + JSON.stringify(data));
+
+                throw new Error(`Failure to send ${name}: ${JSON.stringify(data)}`);
             }
         });
     }
 
     async formNetwork(params: EmberNetworkParameters): Promise<number> {
         const waiter = this.waitFor("stackStatusHandler", null);
-        const v = await this.execCommand("formNetwork", {parameters: params});
+        const formNwkStatus = await this.execCommand("formNetwork", {parameters: params});
 
-        if ((v.status !== EmberStatus.SUCCESS)) {
+        if (formNwkStatus.status !== EmberStatus.SUCCESS) {
             this.waitress.remove(waiter.ID);
 
-            debug.error("Failure forming network: " + JSON.stringify(v));
-
-            throw new Error(("Failure forming network: " + JSON.stringify(v)));
+            throw new Error(`Failure forming network: ${JSON.stringify(formNwkStatus)}`);
         }
 
         const response = await waiter.start().promise;
 
-        if ((response.payload.status !== EmberStatus.NETWORK_UP)) {
-            debug.error("Wrong network status: " + JSON.stringify(response.payload));
-
-            throw new Error(("Wrong network status: " + JSON.stringify(response.payload)));
+        if (response.payload.status !== EmberStatus.NETWORK_UP) {
+            throw new Error(`Wrong network status: ${JSON.stringify(response.payload)}`);
         }
 
         return response.payload.status;
     }
 
-    public sendUnicast(direct: EmberOutgoingMessageType, nwk: number, apsFrame:
-            EmberApsFrame, seq: number, data: Buffer): Promise<EZSPFrameData> {
-        return this.execCommand('sendUnicast', {
-            type: direct,
-            indexOrDestination: nwk,
-            apsFrame: apsFrame,
-            messageTag: seq,
-            message: data
-        });
-    }
-
-    public sendMulticast(apsFrame: EmberApsFrame, seq: number, data: Buffer): Promise<EZSPFrameData> {
-        return this.execCommand('sendMulticast', {
-            apsFrame: apsFrame,
-            hops: EZSP_DEFAULT_RADIUS,
-            nonmemberRadius: EZSP_MULTICAST_NON_MEMBER_RADIUS,
-            messageTag: seq,
-            message: data
-        });
-    }
-
-    public async setSourceRouting(): Promise<void> {
+    public async setSourceRouting(): Promise<boolean> {
         const res = await this.execCommand('setConcentrator', {
             on: true,
             concentratorType: EmberConcentratorType.HIGH_RAM_CONCENTRATOR,
@@ -703,26 +684,19 @@ export class Ezsp extends EventEmitter {
             maxHops: 0,
         });
 
-        debug.log("Set concentrator type: %s", JSON.stringify(res));
+        if (res.status === EmberStatus.SUCCESS) {
+            debug.log(`Set concentrator type to HIGH_RAM_CONCENTRATOR.`);
 
-        if (res.status != EmberStatus.SUCCESS) {
-            debug.log("Couldn't set concentrator type %s: %s", true, JSON.stringify(res));
+            if (this.ezspV >= 8) {
+                await this.execCommand('setSourceRouteDiscoveryMode', {mode: 1});
+            }
+
+            return true;
+        } else {
+            debug.log(`Failed to set concentrator type, status=${res.status}.`);
+
+            return false;
         }
-
-        if (this.ezspV >= 8) {
-            await this.execCommand('setSourceRouteDiscoveryMode', {mode: 1});
-        }
-    }
-
-    public sendBroadcast(destination: number, apsFrame: EmberApsFrame, seq: number, data: Buffer)
-        : Promise<EZSPFrameData> {
-        return this.execCommand('sendBroadcast', {
-            destination: destination,
-            apsFrame: apsFrame,
-            radius: EZSP_DEFAULT_RADIUS,
-            messageTag: seq,
-            message: data
-        });
     }
 
     public waitFor(frameId: string|number, sequence: number | null, timeout = 10000)

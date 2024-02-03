@@ -79,9 +79,16 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
         return this._value;
     }
 
-    public toString(): string {
+    /**
+     * Hex representation of the internal value.
+     * @param prefixed If true, prefix the returned string with `0x`, Defaults to false.
+     * @returns 
+     */
+    public toString(prefixed: boolean = false): string {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        return Buffer.from(this._value as any).toString('hex');
+        const buf = Buffer.from(this._value as any).toString('hex');
+
+        return prefixed ? `0x${buf}` : buf;
     }
 }
 
@@ -1800,39 +1807,39 @@ export class EmberApsOption extends basic.uint16_t {
     // Options to use when sending a message.
 
     // No options.
-    static APS_OPTION_NONE = 0x0000;
+    static NONE = 0x0000;
     // UNKNOWN: Discovered while receiving data
-    static APS_OPTION_UNKNOWN = 0x0008;
+    static UNKNOWN = 0x0008;
     // Send the message using APS Encryption, using the Link Key shared with the
     // destination node to encrypt the data at the APS Level.
-    static APS_OPTION_ENCRYPTION = 0x0020;
+    static ENCRYPTION = 0x0020;
     // Resend the message using the APS retry mechanism.
-    static APS_OPTION_RETRY = 0x0040;
+    static RETRY = 0x0040;
     // Causes a route discovery to be initiated if no route to the destination
     // is known.
-    static APS_OPTION_ENABLE_ROUTE_DISCOVERY = 0x0100;
+    static ENABLE_ROUTE_DISCOVERY = 0x0100;
     // Causes a route discovery to be initiated even if one is known.
-    static APS_OPTION_FORCE_ROUTE_DISCOVERY = 0x0200;
+    static FORCE_ROUTE_DISCOVERY = 0x0200;
     // Include the source EUI64 in the network frame.
-    static APS_OPTION_SOURCE_EUI64 = 0x0400;
+    static SOURCE_EUI64 = 0x0400;
     // Include the destination EUI64 in the network frame.
-    static APS_OPTION_DESTINATION_EUI64 = 0x0800;
+    static DESTINATION_EUI64 = 0x0800;
     // Send a ZDO request to discover the node ID of the destination, if it is
     // not already know.
-    static APS_OPTION_ENABLE_ADDRESS_DISCOVERY = 0x1000;
+    static ENABLE_ADDRESS_DISCOVERY = 0x1000;
     // Reserved.
-    static APS_OPTION_POLL_RESPONSE = 0x2000;
+    static POLL_RESPONSE = 0x2000;
     // This incoming message is a ZDO request not handled by the EmberZNet
     // stack, and the application is responsible for sending a ZDO response.
     // This flag is used only when the ZDO is configured to have requests
     // handled by the application. See the CONFIG_APPLICATION_ZDO_FLAGS
     // configuration parameter for more information.
-    static APS_OPTION_ZDO_RESPONSE_REQUIRED = 0x4000;
+    static ZDO_RESPONSE_REQUIRED = 0x4000;
     // This message is part of a fragmented message. This option may only be set
     // for unicasts. The groupId field gives the index of this fragment in the
     // low-order byte. If the low-order byte is zero this is the first fragment
     // and the high-order byte contains the number of fragments in the message.
-    static APS_OPTION_FRAGMENT = 0x8000;
+    static FRAGMENT = 0x8000;
 }
 
 
