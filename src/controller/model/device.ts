@@ -764,10 +764,10 @@ class Device extends Entity {
 
             await Entity.adapter.sendZclFrameToAll(242, frame, 242);
         } else await Entity.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
-        await this.removeFromDatabase();
+        this.removeFromDatabase();
     }
 
-    public async removeFromDatabase(): Promise<void> {
+    public removeFromDatabase(): void {
         Device.loadFromDatabaseIfNecessary();
 
         for (const endpoint of this.endpoints) {

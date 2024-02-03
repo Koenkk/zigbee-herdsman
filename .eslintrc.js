@@ -18,5 +18,6 @@ module.exports = {
         "max-len": ["error", { "code": 150 }],
         "no-return-await": "error",
         "object-curly-spacing": ["error", "never"],
+        "@typescript-eslint/no-floating-promises": "error",
     }
 }

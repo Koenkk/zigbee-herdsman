@@ -780,6 +780,7 @@ class ZStackAdapter extends Adapter {
                         // If a device announces multiple times in a very short time, it makes no sense
                         // to rediscover the route every time.
                         const debouncer = debounce(() => {
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             this.queue.execute<void>(async () => {
                                 /* istanbul ignore next */
                                 this.discoverRoute(payload.networkAddress, false).catch(() => {});
