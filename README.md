@@ -8,7 +8,7 @@ It was originally forked from zigbee-shepherd with the goal to refactor it to im
 
 # API Documentation
 
-For automatically generated API reference documentation, see: [https://tsdocs.dev/docs/zigbee-herdsman/](tsdocs.dev).
+For automatically generated API reference documentation, see: [tsdocs.dev](https://tsdocs.dev/docs/zigbee-herdsman).
 
 
 # Changelog
