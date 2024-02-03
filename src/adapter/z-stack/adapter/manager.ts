@@ -430,6 +430,7 @@ export class ZnpAdapterManager {
      */
     private async registerEndpoints(): Promise<void> {
         const activeEpResponse = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'activeEpRsp');
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: 0, nwkaddrofinterest: 0});
         const activeEp = await activeEpResponse.start().promise;
 

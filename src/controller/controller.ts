@@ -750,7 +750,7 @@ class Controller extends events.EventEmitter {
 
 
         if (this.isZclDataPayload(dataPayload, dataType)) {
-            device.onZclData(dataPayload, endpoint);
+            await device.onZclData(dataPayload, endpoint);
         }
     }
 }

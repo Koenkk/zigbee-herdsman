@@ -2445,7 +2445,7 @@ describe('Controller', () => {
             linkquality: 52,
             groupID: undefined,
         });
-        await new Promise (process.nextTick);
+        await flushPromises();
         expect(device._checkinInterval).toStrictEqual(51);
         expect(device.pendingRequestTimeout).toStrictEqual(51000);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
@@ -4870,7 +4870,6 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x174');
-        const target = controller.getDeviceByIeeeAddr('0x129');
         await device.interview();
         const endpoint = device.getEndpoint(1);
         mocksendZclFrameToEndpoint.mockClear();
@@ -4909,7 +4908,7 @@ describe('Controller', () => {
             groupID: undefined,
         });
 
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
 
         const checkinrsp = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(checkinrsp[0]).toBe('0x174');
