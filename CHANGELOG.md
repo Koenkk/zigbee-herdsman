@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.33.8](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.7...v0.33.8) (2024-02-04)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#908](https://github.com/Koenkk/zigbee-herdsman/issues/908)) ([43f6ab7](https://github.com/Koenkk/zigbee-herdsman/commit/43f6ab7338ceceaee1dc8c6a4f6a1919e3bcbfd2))
+* Remove manufaturer code from StelproOutdoorTemp https://github.com/Koenkk/zigbee2mqtt/issues/21152 ([18af8be](https://github.com/Koenkk/zigbee-herdsman/commit/18af8beeff91911784a3c0aca12c0efa225a6adb))
+
 ## [0.33.7](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.6...v0.33.7) (2024-02-02)
 
 
