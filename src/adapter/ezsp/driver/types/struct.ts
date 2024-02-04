@@ -15,7 +15,7 @@ export class EzspStruct {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(cls: any, data: Buffer): [any, rest: Buffer] {
         const r = new cls();
         for (const [field_name, field_type] of cls._fields) {
             let v;

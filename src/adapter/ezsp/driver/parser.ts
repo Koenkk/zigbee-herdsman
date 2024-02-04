@@ -1,8 +1,8 @@
 /* istanbul ignore file */
 import * as stream from 'stream';
-import * as consts from './consts';
+import {ASH_XON, ASH_XOFF, ASH_ESCAPE, ASH_CANCEL, ASH_SUBSTITUTE, ASH_FLAG, ASH_FLIP} from './consts';
 import Debug from "debug";
-import Frame from './frame';
+import {AshFrame} from './frame';
 
 const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
 
@@ -18,19 +18,25 @@ export class Parser extends stream.Transform {
     }
 
     public _transform(chunk: Buffer, _: string, cb: () => void): void {
-        if (this.flagXONXOFF && (chunk.indexOf(consts.XON) >= 0 || chunk.indexOf(consts.XOFF) >= 0)) {
+        if (this.flagXONXOFF && (chunk.indexOf(ASH_XON) >= 0 || chunk.indexOf(ASH_XOFF) >= 0)) {
             // XXX: should really throw, but just assert for now to flag potential problematic setups
             console.assert(false, `Host driver did not remove XON/XOFF from input stream. Driver not setup for XON/XOFF?`);
         }
 
-        if (chunk.indexOf(consts.CANCEL) >= 0) {
+        // XXX: detect possible ASH_WAKE?
+
+        if (chunk.indexOf(ASH_CANCEL) >= 0) {
             this.buffer = Buffer.from([]);
-            chunk = chunk.subarray(chunk.lastIndexOf(consts.CANCEL) + 1);
+            chunk = chunk.subarray(chunk.lastIndexOf(ASH_CANCEL) + 1);
+
+            debug(`Frame in progress cancelled.`);
         }
 
-        if (chunk.indexOf(consts.SUBSTITUTE) >= 0) {
+        if (chunk.indexOf(ASH_SUBSTITUTE) >= 0) {
             this.buffer = Buffer.from([]);
-            chunk = chunk.subarray(chunk.indexOf(consts.FLAG) + 1);
+            chunk = chunk.subarray(chunk.indexOf(ASH_FLAG) + 1);
+
+            debug(`Received frame with comm error.`);
         }
 
         debug(`<-- [${chunk.toString('hex')}]`);
@@ -43,23 +49,18 @@ export class Parser extends stream.Transform {
 
     private parseNext(): void {
         if (this.buffer.length) {
-            const place = this.buffer.indexOf(consts.FLAG);
+            const place = this.buffer.indexOf(ASH_FLAG);
 
             if (place >= 0) {
                 const frameLength = place + 1;
 
                 if (this.buffer.length >= frameLength) {
-                    const frameBuffer = this.unstuff(this.buffer.subarray(0, frameLength));
+                    const unstuffedBuf = this.unstuff(this.buffer.subarray(0, frameLength));
+                    const frame = AshFrame.fromBuffer(unstuffedBuf);
 
-                    try {
-                        const frame = Frame.fromBuffer(frameBuffer);
-
-                        if (frame) {
-                            debug(`--> parsed ${frame}`);
-                            this.emit('parsed', frame);
-                        }
-                    } catch (error) {
-                        debug(`--> error ${error.stack}`);
+                    if (frame) {
+                        debug(`--> parsed ${frame}`);
+                        this.emit('parsed', frame);
                     }
 
                     this.buffer = this.buffer.subarray(frameLength);
@@ -69,26 +70,28 @@ export class Parser extends stream.Transform {
         }
     }
 
-    private unstuff(s: Buffer): Buffer {
-        /* Unstuff (unescape) a string after receipt */
+    /**
+     * Unstuff (unescape reserved bytes) a buffer after receipt
+     */
+    private unstuff(buf: Buffer): Buffer {
         let escaped = false;
-        const out = Buffer.alloc(s.length);
+        const out = Buffer.alloc(buf.length);
         let outIdx = 0;
 
-        for (let idx = 0; idx < s.length; idx += 1) {
-            const c = s[idx];
+        for (let idx = 0; idx < buf.length; idx += 1) {
+            const b = buf[idx];
 
             if (escaped) {
-                out.writeUInt8(c ^ consts.STUFF, outIdx++);
+                out.writeUInt8(b ^ ASH_FLIP, outIdx++);
 
                 escaped = false;
             } else {
-                if (c === consts.ESCAPE) {
+                if (b === ASH_ESCAPE) {
                     escaped = true;
-                } else if (c === consts.XOFF || c === consts.XON) {
+                } else if (b === ASH_XOFF || b === ASH_XON) {
                     // skip
                 } else {
-                    out.writeUInt8(c, outIdx++);
+                    out.writeUInt8(b, outIdx++);
                 }
             }
         }

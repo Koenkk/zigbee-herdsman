@@ -1,8 +1,9 @@
 /* istanbul ignore file */
 import * as stream from 'stream';
-import * as consts from './consts';
-import {crc16ccitt} from './utils';
+import {ASH_ESCAPE, ASH_CANCEL, ASH_FLAG, RESERVED, ASH_FLIP, ASH_WAKE} from './consts';
 import Debug from "debug";
+import {AshFrame} from './frame';
+import {ASH_FRMNUM_BIT, ASH_RFLAG_BIT, AshFrameType} from './consts';
 
 const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
 
@@ -15,52 +16,87 @@ export class Writer extends stream.Readable {
     public _read(): void {
     }
 
+    /**
+     * Construct & write a acknowledgement (ACK) frame
+     */
     public sendACK(ackNum: number): void {
-        /* Construct a acknowledgement frame */
-        const ackFrame = this.makeFrame((0b10000000 | ackNum));
+        debug(`--> ACK num=${ackNum}`);
+        const ackFrame = this.makeFrame((AshFrameType.ACK | ackNum));
+
         this.writeBuffer(ackFrame);
     }
 
+    /**
+     * Construct & write a negative acknowledgement (NAK) frame
+     */
     public sendNAK(ackNum: number): void {
-        /* Construct a negative acknowledgement frame */
-        const nakFrame = this.makeFrame((0b10100000 | ackNum));
+        debug(`--> NAK num=${ackNum}`);
+        const nakFrame = this.makeFrame((AshFrameType.NAK | ackNum));
+
         this.writeBuffer(nakFrame);
     }
 
+    /**
+     * Construct & write a reset (RST) frame
+     */
     public sendReset(): void {
-        /* Construct a reset frame */
-        const rstFrame = Buffer.concat([Buffer.from([consts.CANCEL]), this.makeFrame(0xC0)]);
+        debug(`--> RST`);
+        const rstFrame = Buffer.concat([Buffer.from([ASH_CANCEL]), this.makeFrame(AshFrameType.RST)]);
+
         this.writeBuffer(rstFrame);
     }
 
-    public sendData(data: Buffer, seq: number, rxmit: number, ackSeq: number): void {
-        /* Construct a data frame */
-        const control = (((seq << 4) | (rxmit << 3)) | ackSeq);
+    /**
+     * Construct & write a DATA frame
+     */
+    public sendData(data: Buffer, seq: number, reTx: number, ackSeq: number): void {
+        debug(`--> DATA Seq=${seq}, ACKSeq=${ackSeq} ReTx=${reTx}; data: ${data.toString('hex')}`);
+        const control = (((seq << ASH_FRMNUM_BIT) | (reTx << ASH_RFLAG_BIT)) | ackSeq);
         const dataFrame = this.makeFrame(control, data);
+
         this.writeBuffer(dataFrame);
     }
 
-    private stuff(s: Iterable<number>): Buffer {
-        /* Byte stuff (escape) a string for transmission */
+    /**
+     * Wakes up the NCP by sending two 0xFF bytes. When the NCP wakes, it sends back an 0xFF byte.
+     * XXX: not supported for now.
+     */
+    public sendWake(): void {
+        debug(`--> WAKE`);
+
+        this.writeBuffer(Buffer.from([ASH_WAKE, ASH_WAKE]));
+    }
+
+    /**
+     * Byte stuff (escape reserved bytes) a buffer for transmission.
+     * @param buf
+     */
+    private stuff(buf: Buffer): Buffer {
         const out = Buffer.alloc(256);
         let outIdx = 0;
-        for (const c of s) {
-            if (consts.RESERVED.includes(c)) {
-                out.writeUInt8(consts.ESCAPE, outIdx++);
-                out.writeUInt8(c ^ consts.STUFF, outIdx++);
+
+        for (const b of buf) {
+            if (RESERVED.includes(b)) {
+                out.writeUInt8(ASH_ESCAPE, outIdx++);
+                out.writeUInt8(b ^ ASH_FLIP, outIdx++);
             } else {
-                out.writeUInt8(c, outIdx++);
+                out.writeUInt8(b, outIdx++);
             }
         }
+
         return out.subarray(0, outIdx);
     }
 
+    /**
+     * Make a full frame with valid CRC & FLAG from given control and data fields.
+     * @param control
+     * @param data Omitted in non-data frames
+     */
     private makeFrame(control: number, data?: Buffer): Buffer {
-        /* Construct a frame */
         const ctrl = Buffer.from([control]);
         const frm = (data) ? Buffer.concat([ctrl, data]) : ctrl;
-        const crc = crc16ccitt(frm, 65535);
-        const crcArr = Buffer.from([(crc >> 8), (crc % 256)]);
-        return Buffer.concat([this.stuff(Buffer.concat([frm, crcArr])), Buffer.from([consts.FLAG])]);
+        const crcArr = AshFrame.computeCrc(frm);
+
+        return Buffer.concat([this.stuff(Buffer.concat([frm, crcArr])), Buffer.from([ASH_FLAG])]);
     }
 }

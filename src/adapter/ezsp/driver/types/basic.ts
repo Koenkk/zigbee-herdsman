@@ -15,7 +15,7 @@ export class int_t {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(cls: any, data: Buffer): [number, rest: Buffer] {
         return [cls._signed ? data.readIntLE(0, cls._size) : data.readUIntLE(0, cls._size), data.subarray(cls._size)];
     }
 
@@ -98,7 +98,7 @@ export class LVBytes {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(cls: any, data: Buffer): [Buffer, rest: Buffer] {
         const l = data.readIntLE(0, 1);
         const s = data.subarray(1, (l + 1));
         return [s, data.subarray((l + 1))];
@@ -113,7 +113,7 @@ export abstract class List {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(cls: any, data: Buffer): [any[], rest: Buffer] {
         let item;
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const r: any[] = [];
@@ -134,7 +134,7 @@ class _LVList extends List {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(cls: any, data: Buffer): [any[], rest: Buffer] {
         let item, length;
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const r: any[] = [];
@@ -181,7 +181,7 @@ class _FixedList extends List {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(cls: any, data: Buffer): [any[], rest: Buffer] {
         let item;
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const r: any[] = [];
@@ -214,7 +214,7 @@ export class Bytes {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(cls: any, data: Buffer): [Buffer] {
         return [data];
     }
 }

@@ -6,24 +6,13 @@ import SocketPortUtils from '../../socketPortUtils';
 import {Queue, Waitress, Wait} from '../../../utils';
 import {Writer}  from './writer';
 import {Parser}  from './parser';
-import {Frame as NpiFrame, FrameType} from './frame';
+import {AshFrame} from './frame';
+import {AshFrameType} from './consts';
 import Debug from "debug";
 import {SerialPortOptions} from '../../tstype';
 
 const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
 
-
-enum NcpResetCode {
-    RESET_UNKNOWN_REASON = 0x00,
-    RESET_EXTERNAL = 0x01,
-    RESET_POWER_ON = 0x02,
-    RESET_WATCHDOG = 0x03,
-    RESET_ASSERT = 0x06,
-    RESET_BOOTLOADER = 0x09,
-    RESET_SOFTWARE = 0x0B,
-    ERROR_EXCEEDED_MAXIMUM_ACK_TIMEOUT_COUNT = 0x51,
-    ERROR_UNKNOWN_EM3XX_ERROR = 0x80,
-}
 
 type EZSPPacket = {
     sequence: number
@@ -161,13 +150,12 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    private async onParsed(frame: NpiFrame): Promise<void> {
+    private async onParsed(frame: AshFrame): Promise<void> {
         try {
             frame.checkCRC();
         } catch (error) {
             debug(error);
 
-            // send NAK
             this.writer.sendNAK(this.recvSeq);
             // skip handler
             return;
@@ -176,129 +164,123 @@ export class SerialDriver extends EventEmitter {
         try {
             /* Frame receive handler */
             switch (frame.type) {
-            case FrameType.DATA:
+            case AshFrameType.DATA:
                 this.handleDATA(frame);
                 break;
-            case FrameType.ACK:
+            case AshFrameType.ACK:
                 this.handleACK(frame);
                 break;
-            case FrameType.NAK:
+            case AshFrameType.NAK:
                 this.handleNAK(frame);
                 break;
-            case FrameType.RST:
-                this.handleRST(frame);
-                break;
-            case FrameType.RSTACK:
+            // case AshFrameType.RST:// This is Host ==> NCP only.
+            //     break;
+            case AshFrameType.RSTACK:
                 this.handleRSTACK(frame);
                 break;
-            case FrameType.ERROR:
-                await this.handleError(frame);
+            case AshFrameType.ERROR:
+                await this.handleERROR(frame);
+                break;
+            case AshFrameType.INVALID:
+                debug(`<-- INVALID ASH Frame received, illegal control or length [${frame.toString()}]`);
                 break;
             default:
-                debug(`UNKNOWN FRAME RECEIVED: ${frame}`);
+                debug(`UNKNOWN FRAME RECEIVED [${frame.toString()}]`);
             }
 
         } catch (error) {
-            debug(`Error while parsing to NpiFrame '${error.stack}'`);
+            debug(`Error while handling AshFrame '${error.stack}'`);
         }
     }
 
-    private handleDATA(frame: NpiFrame): void {
-        /* Data frame receive handler */
-        const frmNum = (frame.control & 0x70) >> 4;
-        const reTx = (frame.control & 0x08) >> 3;
+    /**
+     * DATA Frame: Carries all EZSP frames.
+     * @param frame 
+     * @returns 
+     */
+    private handleDATA(frame: AshFrame): void {
+        debug(`<-- DATA (${frame.frameNum},${frame.ackNum},${frame.rFlag}): ${frame}`);
 
-        debug(`<-- DATA (${frmNum},${frame.control & 0x07},${reTx}): ${frame}`);
-
-        this.recvSeq = (frmNum + 1) & 7; // next
-
-        debug(`--> ACK  (${this.recvSeq})`);
+        this.recvSeq = frame.nextAckNum;
 
         this.writer.sendACK(this.recvSeq);
 
         const handled = this.handleACK(frame);
 
-        if (reTx && !handled) {
-            // if the package is resent and did not expect it, 
-            // then will skip it - already processed it earlier
+        if (frame.rFlag && !handled) {
+            // if the packet is resent and did not expect it, then will skip it - already processed it earlier
             debug(`Skipping the packet as repeated (${this.recvSeq})`);
 
             return;
         }
 
+        // skip control byte, and take out flag, crc low, crc high from end
         const data = frame.buffer.subarray(1, -3);
 
-        this.emit('received', NpiFrame.makeRandomizedBuffer(data));
+        this.emit('received', AshFrame.makeRandomizedBuffer(data));
     }
 
-    private handleACK(frame: NpiFrame): boolean {
-        /* Handle an acknowledgement frame */
+    /**
+     * ACK: Frame: Acknowledges receipt of a valid DATA frame.
+     * @param frame 
+     * @returns 
+     */
+    private handleACK(frame: AshFrame): boolean {
         // next number after the last accepted frame
-        this.ackSeq = frame.control & 0x07;
+        this.ackSeq = frame.ackNum;
 
         debug(`<-- ACK (${this.ackSeq}): ${frame}`);
 
         const handled = this.waitress.resolve({sequence: this.ackSeq});
 
         if (!handled && this.sendSeq !== this.ackSeq) {
-            debug(`Unexpected packet sequence ${this.ackSeq} | ${this.sendSeq}`);
+            debug(`<-- ACK Out of sequence; got ${this.ackSeq}, expected ${this.sendSeq}`);
         }
 
         return handled;
     }
 
-    private handleNAK(frame: NpiFrame): void {
-        /* Handle negative acknowledgment frame */
-        const nakNum = frame.control & 0x07;
+    /**
+     * NAK Frame: Indicates receipt of a DATA frame with an error or that was discarded due to lack of memory.
+     * @param frame 
+     */
+    private handleNAK(frame: AshFrame): void {
+        debug(`<-- NAK (${frame.ackNum}): ${frame}`);
 
-        debug(`<-- NAK (${nakNum}): ${frame}`);
-
-        const handled = this.waitress.reject({sequence: nakNum}, 'Recv NAK frame');
+        const handled = this.waitress.reject({sequence: frame.ackNum}, 'Received NAK frame');
 
         if (!handled) {
-            // send NAK
-            debug(`NAK Unexpected packet sequence ${nakNum}`);
-        } else {
-            debug(`NAK Expected packet sequence ${nakNum}`);
+            debug(`<-- NAK Out of sequence ${frame.ackNum}`);
         }
     }
 
-    private handleRST(frame: NpiFrame): void {
-        debug(`<-- RST:  ${frame}`);
-    }
-
-    private handleRSTACK(frame: NpiFrame): void {
-        /* Reset acknowledgement frame receive handler */
-        let code;
+    /**
+     * RSTACK Frame: Informs the Host that the NCP has reset and the reason for the reset.
+     * @param frame 
+     * @returns 
+     */
+    private handleRSTACK(frame: AshFrame): void {
         this.sendSeq = 0;
         this.recvSeq = 0;
 
-        debug(`<-- RSTACK ${frame}`);
+        debug(`<-- RSTACK Version: ${frame.ashVersion} Reason: ${frame.resetCodeString} Frame: ${frame}`);
 
-        try {
-            code = NcpResetCode[frame.buffer[2]];
-        } catch (e) {
-            code = NcpResetCode.ERROR_UNKNOWN_EM3XX_ERROR;
-        }
-
-        debug(`RSTACK Version: ${frame.buffer[1]} Reason: ${code.toString()} frame: ${frame}`);
-
-        if (NcpResetCode[<number>code].toString() !== NcpResetCode.RESET_SOFTWARE.toString()) {
+        if (!frame.isRSTACKResetSoftware()) {
             return;
         }
 
         this.waitress.resolve({sequence: -1});
     }
 
-    private async handleError(frame: NpiFrame): Promise<void> {
-        debug(`<-- Error ${frame}`);
-
-        try {
-            // send reset
-            await this.reset();
-        } catch (error) {
-            debug(`Failed to reset on Error Frame: ${error}`);
-        }
+    /**
+     * ERROR Frame: Informs the Host that the NCP detected a fatal error and is in the FAILED state.
+     * After receiving this, NCP won't respond to anything but a RST frame (or asserted nRESET pin).
+     * @param frame 
+     */
+    private async handleERROR(frame: AshFrame): Promise<void> {
+        debug(`<-- ERROR Version: ${frame.ashVersion} Code: ${frame.errorCode} Frame: ${frame}`);
+        console.log(`[NCP ERROR] ${frame.errorCode}. Trying to reset...`);
+        await this.reset();
     }
 
     async reset(): Promise<void> {
@@ -308,19 +290,19 @@ export class SerialDriver extends EventEmitter {
 
         return this.queue.execute<void>(async (): Promise<void> => {
             try {
-                debug(`--> Write reset`);
                 const waiter = this.waitFor(-1, 10000);
 
                 this.writer.sendReset();
-                debug(`-?- waiting reset`);
+
+                debug(`-?- RST waiting`);
                 await waiter.start().promise;
-                debug(`-+- waiting reset success`);
+                debug(`-+- RST waiting success`);
             } catch (e) {
-                debug(`--> Error: ${e}`);
+                debug(`--> RST error: ${e}`);
 
                 this.emit('reset');
 
-                throw new Error(`Reset error: ${e}`);
+                throw new Error(`RST error: ${e}`);
             }
         });
     }
@@ -381,32 +363,28 @@ export class SerialDriver extends EventEmitter {
         const ackSeq = this.recvSeq;
 
         return this.queue.execute<void>(async (): Promise<void> => {
-            const randData = NpiFrame.makeRandomizedBuffer(data);
+            const randData = AshFrame.makeRandomizedBuffer(data);
 
             try {
                 const waiter = this.waitFor(nextSeq);
-                debug(`--> DATA (${seq},${ackSeq},0): ${data.toString('hex')}`);
+
                 this.writer.sendData(randData, seq, 0, ackSeq);
-                debug(`-?- waiting (${nextSeq})`);
+                debug(`-?- DATA waiting for NextSeq=${nextSeq}`);
                 await waiter.start().promise;
-                debug(`-+- waiting (${nextSeq}) success`);
+                debug(`-+- DATA waiting success for NextSeq=${nextSeq}`);
             } catch (e1) {
-                debug(`--> Error: ${e1}`);
-                debug(`-!- break waiting (${nextSeq})`);
-                debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`);
+                debug(`--> DATA Seq=${seq}, ACKSeq=${ackSeq} ReTx=0; Error ${e1}; data: ${data.toString('hex')}`);
 
                 try {
                     await Wait(800);// cooldown
                     const waiter = this.waitFor(nextSeq);
-                    debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`);
+
                     this.writer.sendData(randData, seq, 1, ackSeq);
-                    debug(`-?- rewaiting (${nextSeq})`);
+                    debug(`-?- DATA rewaiting for NextSeq=${nextSeq}`);
                     await waiter.start().promise;
-                    debug(`-+- rewaiting (${nextSeq}) success`);
+                    debug(`-+- DATA rewaiting success for NextSeq=${nextSeq}`);
                 } catch (e2) {
-                    debug(`--> Error: ${e2}`);
-                    debug(`-!- break rewaiting (${nextSeq})`);
-                    debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
+                    debug(`--> DATA Seq=${seq}, ACKSeq=${ackSeq} ReTx=1; Error ${e2}; data: ${data.toString('hex')}`);
 
                     this.emit('reset');
 

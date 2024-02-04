@@ -27,6 +27,23 @@ import {EmberNetworkParameters} from './types/struct';
 import {Queue, Waitress, Wait} from '../../../utils';
 import Debug from "debug";
 import {SerialPortOptions} from '../../tstype';
+import {
+    EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX,
+    EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX,
+    EZSP_EXTENDED_FRAME_CONTROL_RESERVED_MASK,
+    EZSP_EXTENDED_FRAME_FORMAT_VERSION,
+    EZSP_EXTENDED_FRAME_FORMAT_VERSION_MASK,
+    EZSP_FRAME_CONTROL_DIRECTION_MASK,
+    EZSP_FRAME_CONTROL_INDEX,
+    EZSP_FRAME_CONTROL_OVERFLOW,
+    EZSP_FRAME_CONTROL_OVERFLOW_MASK,
+    EZSP_FRAME_CONTROL_RESPONSE,
+    EZSP_FRAME_CONTROL_TRUNCATED,
+    EZSP_FRAME_CONTROL_TRUNCATED_MASK,
+    EZSP_FRAME_ID_INDEX,
+    EZSP_PARAMETERS_INDEX,
+    EZSP_SEQUENCE_INDEX
+} from './consts';
 
 
 const debug = {
@@ -156,33 +173,97 @@ export class EZSPFrameData {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     [name: string]: any;
 
-    static createFrame(
-        ezspv: number, frame_id: number, isRequest: boolean, params: ParamsDesc | Buffer
-    ): EZSPFrameData {
+    static createFrame(ezspv: number, frame_id: number, isRequest: boolean, params: ParamsDesc | Buffer): EZSPFrameData {
         const names = FRAME_NAMES_BY_ID[frame_id];
+
         if (!names) {
             throw new Error(`Unrecognized frame FrameID ${frame_id}`);
         }
+
         let frm: EZSPFrameData;
+
         names.every((frameName)=>{
             const frameDesc = EZSPFrameData.getFrame(frameName);
+
             if ((frameDesc.maxV && frameDesc.maxV < ezspv) || (frameDesc.minV && frameDesc.minV > ezspv)) {
                 return true;
             }
+
             try {
                 frm = new EZSPFrameData(frameName, isRequest, params);
             } catch (error) {
                 debug.error(`Frame ${frameName} parsing error: ${error.stack}`);
                 return true;
             }
+
             return false;
         });
+
         return frm;
+    }
+
+    /**
+     * Validate the information available in the incoming frame, and create an EZSPFrameData if valid.
+     * @param rawData Full data buffer as received by UART layer (needed to check validity).
+     * @returns EzspStatus of the operation, anything but SUCCESS should result in the frame being reject.
+     * @returns EZSPFrameData The actual frame data, if valid, else null.
+     */
+    static createValidReceivedFrame(ezspv: number, rawData: Buffer): [t.EzspStatus, EZSPFrameData] {
+        let frameControl: number;
+        let frameId: number;
+
+        // extended vs legacy EZSP frame format detection
+        if ((rawData[EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX] & EZSP_EXTENDED_FRAME_FORMAT_VERSION_MASK) === EZSP_EXTENDED_FRAME_FORMAT_VERSION) {
+            // Extended: [Sequence: 1] [Frame Control: 2] [Frame ID: 2] [Parameters*]
+            [frameControl, rawData] = t.uint16_t.deserialize(t.uint16_t, rawData.subarray(EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX));// + HB_INDEX
+
+            if (((frameControl >> 8) & 0xFF) & EZSP_EXTENDED_FRAME_CONTROL_RESERVED_MASK) {
+                return [t.EzspStatus.ERROR_UNSUPPORTED_CONTROL, null];
+            }
+
+            [frameId, rawData] = t.uint16_t.deserialize(t.uint16_t, rawData);// EZSP_EXTENDED_FRAME_ID_LB_INDEX + HB_INDEX
+            // rawBuffer now starts at EZSP_EXTENDED_PARAMETERS_INDEX
+        } else {
+            // Legacy: [Sequence: 1] [Frame Control: 1] [Frame ID: 1] [Parameters*]
+            frameControl = rawData[EZSP_FRAME_CONTROL_INDEX];
+            frameId = rawData[EZSP_FRAME_ID_INDEX];
+            rawData = rawData.subarray(EZSP_PARAMETERS_INDEX);
+        }
+
+        // check control information
+        if (frameId === FRAMES.invalidCommand.ID) {
+            return [rawData[0], null];
+        }
+
+        if ((frameControl & EZSP_FRAME_CONTROL_DIRECTION_MASK) !== EZSP_FRAME_CONTROL_RESPONSE) {
+            return [t.EzspStatus.ERROR_WRONG_DIRECTION, null];
+        }
+
+        if ((frameControl & EZSP_FRAME_CONTROL_TRUNCATED_MASK) === EZSP_FRAME_CONTROL_TRUNCATED) {
+            return [t.EzspStatus.ERROR_TRUNCATED, null];
+        }
+
+        if ((frameControl & EZSP_FRAME_CONTROL_OVERFLOW_MASK) === EZSP_FRAME_CONTROL_OVERFLOW) {
+            return [t.EzspStatus.ERROR_OVERFLOW, null];
+        }
+
+        // if ((frameControl & EZSP_FRAME_CONTROL_PENDING_CB_MASK) === EZSP_FRAME_CONTROL_PENDING_CB) {
+        //     // ncpHasCallbacks = true;
+        // } else {
+        //     // ncpHasCallbacks = false;
+        // }
+
+        // rawData is no longer "raw" after deserializing, may still be null if frame not supported by Z2M yet
+        return [t.EzspStatus.SUCCESS, EZSPFrameData.createFrame(ezspv, frameId, false, rawData)];
     }
 
     static getFrame(name: string): EZSPFrameDesc {
         const frameDesc = FRAMES[name];
-        if (!frameDesc) throw new Error(`Unrecognized frame from FrameID ${name}`);
+
+        if (!frameDesc) {
+            throw new Error(`Unrecognized frame from FrameID ${name}`);
+        }
+
         return frameDesc;
     }
 
@@ -193,8 +274,10 @@ export class EZSPFrameData {
         this._isRequest_ = isRequest;
         const frame = EZSPFrameData.getFrame(key);
         const frameDesc = (this._isRequest_) ? frame.request || {} : frame.response || {};
+
         if (Buffer.isBuffer(params)) {
             let data = params;
+
             for (const prop of Object.getOwnPropertyNames(frameDesc)) {
                 [this[prop], data] = frameDesc[prop].deserialize(frameDesc[prop], data);
             }
@@ -209,9 +292,11 @@ export class EZSPFrameData {
         const frame = EZSPFrameData.getFrame(this._cls_);
         const frameDesc = (this._isRequest_) ? frame.request || {} : frame.response || {};
         const result = [];
+
         for (const prop of Object.getOwnPropertyNames(frameDesc)) {
             result.push(frameDesc[prop].serialize(frameDesc[prop], this[prop]));
         }
+
         return Buffer.concat(result);
     }
 
@@ -224,7 +309,6 @@ export class EZSPFrameData {
     }
 }
 
-
 export class EZSPZDORequestFrameData {
     _cls_: string;
     _id_: number;
@@ -235,7 +319,11 @@ export class EZSPZDORequestFrameData {
     static getFrame(key: string|number): EZSPFrameDesc {
         const name = (typeof key == 'string') ? key : ZDOREQUEST_NAME_BY_ID[key];
         const frameDesc = ZDOREQUESTS[name];
-        if (!frameDesc) throw new Error(`Unrecognized ZDOFrame from FrameID ${key}`);
+
+        if (!frameDesc) {
+            throw new Error(`Unrecognized ZDOFrame from FrameID ${key}`);
+        }
+
         return frameDesc;
     }
 
@@ -251,8 +339,10 @@ export class EZSPZDORequestFrameData {
         this._isRequest_ = isRequest;
         const frame = EZSPZDORequestFrameData.getFrame(key);
         const frameDesc = (this._isRequest_) ? frame.request || {} : frame.response || {};
+
         if (Buffer.isBuffer(params)) {
             let data = params;
+
             for (const prop of Object.getOwnPropertyNames(frameDesc)) {
                 [this[prop], data] = frameDesc[prop].deserialize(frameDesc[prop], data);
             }
@@ -267,9 +357,11 @@ export class EZSPZDORequestFrameData {
         const frame = EZSPZDORequestFrameData.getFrame(this._cls_);
         const frameDesc = (this._isRequest_) ? frame.request || {} : frame.response || {};
         const result = [];
+
         for (const prop of Object.getOwnPropertyNames(frameDesc)) {
             result.push(frameDesc[prop].serialize(frameDesc[prop], this[prop]));
         }
+
         return Buffer.concat(result);
     }
 
@@ -291,7 +383,11 @@ export class EZSPZDOResponseFrameData {
     static getFrame(key: string|number): ParamsDesc {
         const name = (typeof key == 'string') ? key : ZDORESPONSE_NAME_BY_ID[key];
         const frameDesc = ZDORESPONSES[name];
-        if (!frameDesc) throw new Error(`Unrecognized ZDOFrame from FrameID ${key}`);
+
+        if (!frameDesc) {
+            throw new Error(`Unrecognized ZDOFrame from FrameID ${key}`);
+        }
+
         return frameDesc.params;
     }
 
@@ -305,8 +401,10 @@ export class EZSPZDOResponseFrameData {
         }
         
         const frameDesc = EZSPZDOResponseFrameData.getFrame(key);
+
         if (Buffer.isBuffer(params)) {
             let data = params;
+
             for (const prop of Object.getOwnPropertyNames(frameDesc)) {
                 [this[prop], data] = frameDesc[prop].deserialize(frameDesc[prop], data);
             }
@@ -320,9 +418,11 @@ export class EZSPZDOResponseFrameData {
     serialize(): Buffer {
         const frameDesc = EZSPZDOResponseFrameData.getFrame(this._cls_);
         const result = [];
+
         for (const prop of Object.getOwnPropertyNames(frameDesc)) {
             result.push(frameDesc[prop].serialize(frameDesc[prop], this[prop]));
         }
+
         return Buffer.concat(result);
     }
 
@@ -337,8 +437,8 @@ export class EZSPZDOResponseFrameData {
 
 
 export class Ezsp extends EventEmitter {
-    ezspV = 4;
-    cmdSeq = 0;  // command sequence
+    ezspV = 8;// XXX: avoid a second NCP call in majority of cases by using "most popular" version instead of 4?
+    cmdSeq = 0;// command sequence
     private serialDriver: SerialDriver;
     private waitress: Waitress<EZSPFrame, EZSPWaitressMatcher>;
     private queue: Queue;
@@ -417,47 +517,60 @@ export class Ezsp extends EventEmitter {
      * @param data 
      */
     private onFrameReceived(data: Buffer): void {
-        debug.log(`<== Frame: ${data.toString('hex')}`);
+        debug.log(`<== EZSPFrame ${data.toString('hex')}`);
+        const sequence = data[EZSP_SEQUENCE_INDEX];
+        const [status, frm] = EZSPFrameData.createValidReceivedFrame(this.ezspV, data);
 
-        let frameId: number;
-        const sequence = data[0];
-
-        if ((this.ezspV < 8)) {
-            [frameId, data] = [data[2], data.subarray(3)];
-        } else {
-            [[frameId], data] = t.deserialize(data.subarray(3), [t.uint16_t]);
-        }
-
-        if ((frameId === 255)) {
-            frameId = 0;
-
-            if ((data.length > 1)) {
-                frameId = data[1];
-                data = data.subarray(2);
+        if (status !== t.EzspStatus.SUCCESS) {
+            // already logged
+            switch (status) {
+            case t.EzspStatus.ERROR_UNSUPPORTED_CONTROL: {
+                // XXX: SDK resets NCP upon receiving this
+                debug.error(`Received frame with unsupported control.`);
+                break;
             }
-        }
+            case t.EzspStatus.ERROR_WRONG_DIRECTION: {
+                debug.error(`Received frame with EzspStatus.ERROR_WRONG_DIRECTION in control.`);
+                // XXX: SDK resets NCP upon receiving this
+                break;
+            }
+            case t.EzspStatus.ERROR_TRUNCATED: {
+                debug.error(`Received frame with EzspStatus.ERROR_TRUNCATED in control.`);
+                console.log(`[WARNING] NCP may be running out of buffers. Remediate network congestion, if present.`);
+                // XXX: SDK resets NCP upon receiving this
+                break;
+            }
+            case t.EzspStatus.ERROR_OVERFLOW: {
+                debug.error(`Received frame with EzspStatus.ERROR_OVERFLOW in control.`);
+                console.log(`[ERROR] NCP has run out of buffers, causing general malfunction. Remediate network congestion, if present.`);
+                // XXX: hold the host from sending frames for a short duration?
+                break;
+            }
+            default: {
+                debug.error(`Received invalidCommand(0x0058) with reason=${t.EzspStatus.valueToName(t.EzspStatus, status)}.`);
+                // XXX: SDK resets NCP upon receiving this, depending on "reason"
+                break;
+            }
+            }
 
-        const frm = EZSPFrameData.createFrame(this.ezspV, frameId, false, data);
-        
-        if (!frm) {
-            debug.error(`Unparsed frame 0x${frameId.toString(16)}. Skipped`);
+            // XXX: handle possible NCP reset for "bad cases" @see EZSPFrameData.validateAndCreateReceivedFrame
             return;
         }
-        
-        debug.log(`<== 0x${frameId.toString(16)}: ${JSON.stringify(frm)}`);
-        
-        const handled = this.waitress.resolve({
-            frameId,
-            frameName: frm.name,
-            sequence,
-            payload: frm
-        });
+
+        if (!frm) {
+            debug.error(`Skipping unparsed frame. ${data.toString('hex')}`);
+            return;
+        }
+
+        debug.log(`<== ${frm.name}: ${JSON.stringify(frm)}`);
+
+        const handled = this.waitress.resolve({frameId: frm.id, frameName: frm.name, sequence, payload: frm});
 
         if (!handled) {
             this.emit('frame', frm.name, frm);
         }
 
-        if ((frameId === 0)) {
+        if (frm.id === 0) {
             this.ezspV = frm.protocolVersion;
         }
     }
@@ -569,7 +682,7 @@ export class Ezsp extends EventEmitter {
         debug.log(cmdStr);
         const ret = await this.execCommand('getValue', {valueId});
         console.assert(ret.status === EmberStatus.SUCCESS, `${cmdStr} returned unexpected state: ${JSON.stringify(ret)}`);
-        debug.log(`${cmdStr} ==> ${ret.value}`);
+        debug.log(`${cmdStr} ==> ${(ret.value as Buffer).toString('hex')}`);
         return ret.value;
     }
 
