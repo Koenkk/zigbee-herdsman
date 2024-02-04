@@ -2019,7 +2019,7 @@ const Cluster: {
             SinopeBacklight: {ID: 1026, type: DataType.enum8, manufacturerCode: ManufacturerCode.Sinope},
             SinopeAuxCycleOutput: {ID: 1028, type: DataType.uint16, manufacturerCode: ManufacturerCode.Sinope},
             StelproSystemMode: {ID: 0x401c, type: DataType.enum8},
-            StelproOutdoorTemp: {ID: 0x4001, type: DataType.int16, manufacturerCode: ManufacturerCode.Stelpro},
+            StelproOutdoorTemp: {ID: 0x4001, type: DataType.int16},
             viessmannWindowOpenInternal: {ID: 0x4000, type: DataType.enum8, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
             viessmannWindowOpenForce: {ID: 0x4003, type: DataType.boolean, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
             viessmannAssemblyMode: {ID: 0x4012, type: DataType.boolean, manufacturerCode: ManufacturerCode.VIESSMAN_ELEKTRO},
