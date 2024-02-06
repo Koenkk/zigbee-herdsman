@@ -43,6 +43,7 @@
     "@babel/core": "*",
     "@babel/preset-env": "*",
     "@babel/preset-typescript": "*",
+    "@serialport/binding-mock": "^10.2.2",
     "@types/debounce": "^1.2.4",
     "@types/debug": "*",
     "@types/jest": "*",
