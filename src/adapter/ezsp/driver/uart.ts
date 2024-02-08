@@ -44,6 +44,7 @@ export class SerialDriver extends EventEmitter {
     private sendSeq = 0; // next frame number to send
     private recvSeq = 0; // next frame number to receive
     private ackSeq = 0;  // next number after the last accepted frame
+    private recvReject = false;
     private waitress: Waitress<EZSPPacket, EZSPPacketMatcher>;
     private queue: Queue;
 
@@ -210,6 +211,24 @@ export class SerialDriver extends EventEmitter {
 
         debug(`<-- DATA (${frmNum},${frame.control & 0x07},${reTx}): ${frame}`);
 
+        if(this.recvSeq != frmNum){
+            if(reTx || this.recvReject){
+                debug(`Unexpected DATA packet sequence ${frmNum} | ${this.sendSeq} : rejecting packet`);
+            }
+            else {
+              debug(`Unexpected DATA packet sequence ${frmNum} | ${this.sendSeq} : Sending NAK & & rejecting packet`);
+              this.writer.sendNAK(this.recvSeq);
+              this.recvReject=true;
+            }
+            return;
+        }
+        else{
+            if (!reTx && this.recvReject){
+                 debug(`DATA packet sequence ${frmNum} : clear reject`);
+                 this.recvReject=false;
+            }
+        }
+
         this.recvSeq = (frmNum + 1) & 7; // next
 
         debug(`--> ACK  (${this.recvSeq})`);
@@ -272,6 +291,7 @@ export class SerialDriver extends EventEmitter {
         let code;
         this.sendSeq = 0;
         this.recvSeq = 0;
+        this.recvReject = false;
 
         debug(`<-- RSTACK ${frame}`);
 
