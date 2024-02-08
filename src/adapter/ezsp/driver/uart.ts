@@ -216,7 +216,7 @@ export class SerialDriver extends EventEmitter {
                 debug(`Unexpected DATA packet sequence ${frmNum} | ${this.sendSeq} : rejecting packet`);
             }
             else {
-              debug(`Unexpected DATA packet sequence ${frmNum} | ${this.sendSeq} : Sending NAK & & rejecting packet`);
+              debug(`Unexpected DATA packet sequence ${frmNum} | ${this.sendSeq} : Sending NAK & rejecting packet`);
               this.writer.sendNAK(this.recvSeq);
               this.recvReject=true;
             }
