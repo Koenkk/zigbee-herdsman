@@ -4282,13 +4282,13 @@ const Cluster: {
             unknown2: {ID: 256, type: DataType.uint8}, // readOnly *testing*
             floorControlMode: {ID: 261, type: DataType.enum8},  // airFloorMode
             auxOutputMode: {ID: 262, type: DataType.enum8},
-            FloorTemperature: {ID: 263, type: DataType.int16},          
+            floorTemperature: {ID: 263, type: DataType.int16},          
             ambiantMaxHeatSetpointLimit: {ID: 264, type: DataType.int16},
             floorMinHeatSetpointLimit: {ID: 265, type: DataType.int16},
             floorMaxHeatSetpointLimit: {ID: 266, type: DataType.int16},
             temperatureSensor: {ID: 267, type: DataType.enum8},
             floorLimitStatus: {ID: 268, type: DataType.enum8},
-            RoomTemperature: {ID: 269, type: DataType.int16},            
+            roomTemperature: {ID: 269, type: DataType.int16},            
             timeFormatToDisplay: {ID: 276, type: DataType.enum8},
             GFCiStatus: {ID: 277, type: DataType.enum8},
             auxConnectedLoad: {ID: 280, type: DataType.uint16},
