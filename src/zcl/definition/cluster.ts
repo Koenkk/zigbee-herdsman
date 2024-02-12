@@ -5020,6 +5020,10 @@ const Cluster: {
         manufacturerCode: ManufacturerCode.SCHNEIDER,
         attributes: {
             SwitchIndication: {ID: 0x0000, type: DataType.enum8},
+            UpSceneID: {ID: 0x0010, type: DataType.uint8},
+            UpGroupID: {ID: 0x0011, type: DataType.uint16},
+            DownSceneID: {ID: 0x0020, type: DataType.uint8},
+            DownGroupID: {ID: 0x0021, type: DataType.uint16},
             SwitchActions: {ID: 0x0001, type: DataType.enum8},
         },
         commands: {},
