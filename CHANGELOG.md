@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.33.9](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.8...v0.33.9) (2024-02-13)
+
+
+### Bug Fixes
+
+* Add 2 new attributes to manuSpecificSinope ([#912](https://github.com/Koenkk/zigbee-herdsman/issues/912)) ([3325997](https://github.com/Koenkk/zigbee-herdsman/commit/3325997da3afa94c2dd500b808c1261ba0a8abf8))
+* Add more attributes to clipsalWiserSwitchConfigurationClusterServer ([#915](https://github.com/Koenkk/zigbee-herdsman/issues/915)) ([472bce9](https://github.com/Koenkk/zigbee-herdsman/commit/472bce952e7db1d4b29ffbec0ab536bbc2462198))
+* **ignore:** update dependencies ([#914](https://github.com/Koenkk/zigbee-herdsman/issues/914)) ([fc19b3d](https://github.com/Koenkk/zigbee-herdsman/commit/fc19b3dc8250184645528cd312fd8de5d390d237))
+* Revert Deconz changes of https://github.com/Koenkk/zigbee-herdsman/pull/859 in an attempt to fix https://github.com/Koenkk/zigbee2mqtt/issues/21162 ([818f2cc](https://github.com/Koenkk/zigbee-herdsman/commit/818f2cc4c28af2a57a615b0ec9ac84bfb98e7d1c))
+
 ## [0.33.8](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.7...v0.33.8) (2024-02-04)
 
 
