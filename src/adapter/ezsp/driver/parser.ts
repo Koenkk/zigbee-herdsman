@@ -7,14 +7,14 @@ import Frame from './frame';
 const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
 
 export class Parser extends stream.Transform {
-    private buffer: Buffer;
+    private tail: Buffer[];
     private flagXONXOFF: boolean;
 
     public constructor(flagXONXOFF: boolean = false) {
         super();
 
         this.flagXONXOFF = flagXONXOFF;
-        this.buffer = Buffer.from([]);
+        this.tail = [];
     }
 
     public _transform(chunk: Buffer, _: string, cb: () => void): void {
@@ -24,80 +24,64 @@ export class Parser extends stream.Transform {
         }
 
         if (chunk.indexOf(consts.CANCEL) >= 0) {
-            this.buffer = Buffer.from([]);
+            this.reset();
             chunk = chunk.subarray(chunk.lastIndexOf(consts.CANCEL) + 1);
         }
 
         if (chunk.indexOf(consts.SUBSTITUTE) >= 0) {
-            this.buffer = Buffer.from([]);
+            this.reset();
             chunk = chunk.subarray(chunk.indexOf(consts.FLAG) + 1);
         }
 
         debug(`<-- [${chunk.toString('hex')}]`);
 
-        this.buffer = Buffer.concat([this.buffer, chunk]);
+        let delimiterPlace = chunk.indexOf(consts.FLAG);
 
-        this.parseNext();
+        while (delimiterPlace >= 0) {
+            const buffer = chunk.subarray(0, delimiterPlace + 1);
+            const frameBuffer = Buffer.from([...this.unstuff(Buffer.concat([...this.tail, buffer]))]);
+            this.reset();
+
+            try {
+                const frame = Frame.fromBuffer(frameBuffer);
+
+                if (frame) {
+                    this.emit('parsed', frame);
+                }
+
+            } catch (error) {
+                debug(`<-- error ${error.stack}`);
+            }
+
+            chunk = chunk.subarray(delimiterPlace + 1);
+            delimiterPlace = chunk.indexOf(consts.FLAG);
+        }
+
+        this.tail.push(chunk);
         cb();
     }
-
-    private parseNext(): void {
-        if (this.buffer.length) {
-            const place = this.buffer.indexOf(consts.FLAG);
-
-            if (place >= 0) {
-                const frameLength = place + 1;
-
-                if (this.buffer.length >= frameLength) {
-                    const frameBuffer = this.unstuff(this.buffer.subarray(0, frameLength));
-
-                    try {
-                        const frame = Frame.fromBuffer(frameBuffer);
-
-                        if (frame) {
-                            debug(`--> parsed ${frame}`);
-                            this.emit('parsed', frame);
-                        }
-                    } catch (error) {
-                        debug(`--> error ${error.stack}`);
-                    }
-
-                    this.buffer = this.buffer.subarray(frameLength);
-                    this.parseNext();
-                }
-            }
-        }
-    }
-
-    private unstuff(s: Buffer): Buffer {
-        /* Unstuff (unescape) a string after receipt */
+ 
+    private* unstuff(buffer: Buffer): Generator<number> {
+        /* Unstuff (unescape) a buffer after receipt */
         let escaped = false;
-        const out = Buffer.alloc(s.length);
-        let outIdx = 0;
-
-        for (let idx = 0; idx < s.length; idx += 1) {
-            const c = s[idx];
-
+        for (const byte of buffer) {
             if (escaped) {
-                out.writeUInt8(c ^ consts.STUFF, outIdx++);
-
+                yield byte ^ consts.STUFF;
                 escaped = false;
             } else {
-                if (c === consts.ESCAPE) {
+                if (byte === consts.ESCAPE) {
                     escaped = true;
-                } else if (c === consts.XOFF || c === consts.XON) {
+                } else if (byte === consts.XOFF || byte === consts.XON) {
                     // skip
                 } else {
-                    out.writeUInt8(c, outIdx++);
+                    yield byte;
                 }
             }
         }
-
-        return out.subarray(0, outIdx);
     }
 
     public reset(): void {
-        // clear buffer
-        this.buffer = Buffer.from([]);
+        // clear tail
+        this.tail.length = 0;
     }
 }

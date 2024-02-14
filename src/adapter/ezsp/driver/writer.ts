@@ -40,27 +40,24 @@ export class Writer extends stream.Readable {
         this.writeBuffer(dataFrame);
     }
 
-    private stuff(s: Iterable<number>): Buffer {
+    private* stuff (buffer: number[]): Generator<number> {
         /* Byte stuff (escape) a string for transmission */
-        const out = Buffer.alloc(256);
-        let outIdx = 0;
-        for (const c of s) {
-            if (consts.RESERVED.includes(c)) {
-                out.writeUInt8(consts.ESCAPE, outIdx++);
-                out.writeUInt8(c ^ consts.STUFF, outIdx++);
+        for (const byte of buffer) {
+            if (consts.RESERVED.includes(byte)) {
+                yield consts.ESCAPE;
+                yield byte ^ consts.STUFF;
             } else {
-                out.writeUInt8(c, outIdx++);
+                yield byte;
             }
         }
-        return out.subarray(0, outIdx);
     }
 
     private makeFrame(control: number, data?: Buffer): Buffer {
         /* Construct a frame */
-        const ctrl = Buffer.from([control]);
-        const frm = (data) ? Buffer.concat([ctrl, data]) : ctrl;
+        const frm = [control, ...(data || [])];
         const crc = crc16ccitt(frm, 65535);
-        const crcArr = Buffer.from([(crc >> 8), (crc % 256)]);
-        return Buffer.concat([this.stuff(Buffer.concat([frm, crcArr])), Buffer.from([consts.FLAG])]);
+        frm.push(crc >> 8);
+        frm.push(crc % 256);
+        return Buffer.from([...this.stuff(frm), consts.FLAG]);
     }
 }

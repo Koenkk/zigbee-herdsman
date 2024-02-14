@@ -44,6 +44,7 @@ export class SerialDriver extends EventEmitter {
     private sendSeq = 0; // next frame number to send
     private recvSeq = 0; // next frame number to receive
     private ackSeq = 0;  // next number after the last accepted frame
+    private rejectCondition = false;
     private waitress: Waitress<EZSPPacket, EZSPPacketMatcher>;
     private queue: Queue;
 
@@ -161,19 +162,10 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    private async onParsed(frame: NpiFrame): Promise<void> {
+    private onParsed(frame: NpiFrame): void {
         try {
             frame.checkCRC();
-        } catch (error) {
-            debug(error);
 
-            // send NAK
-            this.writer.sendNAK(this.recvSeq);
-            // skip handler
-            return;
-        }
-
-        try {
             /* Frame receive handler */
             switch (frame.type) {
             case FrameType.DATA:
@@ -192,14 +184,22 @@ export class SerialDriver extends EventEmitter {
                 this.handleRSTACK(frame);
                 break;
             case FrameType.ERROR:
-                await this.handleError(frame);
+                this.handleError(frame);
                 break;
             default:
+                this.rejectCondition = true;
                 debug(`UNKNOWN FRAME RECEIVED: ${frame}`);
             }
 
         } catch (error) {
+            this.rejectCondition = true;
+            debug(error);
             debug(`Error while parsing to NpiFrame '${error.stack}'`);
+        }
+
+        if (this.rejectCondition) {
+            // send NAK
+            this.writer.sendNAK(this.recvSeq);
         }
     }
 
@@ -209,6 +209,22 @@ export class SerialDriver extends EventEmitter {
         const reTx = (frame.control & 0x08) >> 3;
 
         debug(`<-- DATA (${frmNum},${frame.control & 0x07},${reTx}): ${frame}`);
+
+        // Expected package {recvSeq}, but received {frmNum}
+        // This happens when the chip sends us a reTx packet, but we are waiting for the next one
+        if (this.recvSeq != frmNum) {
+            if (reTx) {
+                // if the reTx flag is set, then this is a packet replay
+                debug(`Unexpected DATA packet sequence ${frmNum} | ${this.recvSeq}: packet replay`);
+            } else {
+                // otherwise, the sequence of packets is out of order - send NAK is needed
+                debug(`Unexpected DATA packet sequence ${frmNum} | ${this.recvSeq}: reject condition`);
+                this.rejectCondition = true;
+                return;
+            }
+        }
+
+        this.rejectCondition = false;
 
         this.recvSeq = (frmNum + 1) & 7; // next
 
@@ -241,6 +257,9 @@ export class SerialDriver extends EventEmitter {
         const handled = this.waitress.resolve({sequence: this.ackSeq});
 
         if (!handled && this.sendSeq !== this.ackSeq) {
+            // Packet confirmation received for {ackSeq}, but was expected {sendSeq}
+            // This happens when the chip has not yet received of the packet {sendSeq} from us,
+            // but has already sent us the next one.
             debug(`Unexpected packet sequence ${this.ackSeq} | ${this.sendSeq}`);
         }
 
@@ -272,6 +291,7 @@ export class SerialDriver extends EventEmitter {
         let code;
         this.sendSeq = 0;
         this.recvSeq = 0;
+        this.rejectCondition = false;
 
         debug(`<-- RSTACK ${frame}`);
 
