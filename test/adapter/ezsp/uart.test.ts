@@ -45,6 +45,10 @@ jest.mock('../../../src/adapter/serialPort', () => {
     };
 });
 
+jest.mock('../../../src/utils/wait', () => {
+    return () => {};
+});
+
 let writeBufferSpy;
 
 const mocks = [
