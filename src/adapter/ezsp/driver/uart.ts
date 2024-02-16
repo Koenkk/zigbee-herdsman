@@ -9,6 +9,7 @@ import {Parser}  from './parser';
 import {Frame as NpiFrame, FrameType} from './frame';
 import Debug from "debug";
 import {SerialPortOptions} from '../../tstype';
+import wait from '../../../utils/wait';
 
 const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
 
@@ -325,19 +326,22 @@ export class SerialDriver extends EventEmitter {
         debug('Uart reseting');
         this.parser.reset();
         this.queue.clear();
+        this.sendSeq = 0;
+        this.recvSeq = 0;        
 
         return this.queue.execute<void>(async (): Promise<void> => {
             try {
                 debug(`--> Write reset`);
                 const waiter = this.waitFor(-1, 10000);
-                this.sendSeq = 0;
-                this.recvSeq = 0;
                 this.rejectCondition = false;
         
                 this.writer.sendReset();
                 debug(`-?- waiting reset`);
                 await waiter.start().promise;
                 debug(`-+- waiting reset success`);
+
+                await wait(4000);
+
             } catch (e) {
                 debug(`--> Error: ${e}`);
 
@@ -430,9 +434,9 @@ export class SerialDriver extends EventEmitter {
                     debug(`--> Error: ${e2}`);
                     debug(`-!- break rewaiting (${nextSeq})`);
                     debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`);
-
-                    this.emit('reset');
-
+                    if (this.initialized) {
+                        this.emit('reset');
+                    }
                     throw new Error(`sendDATA error: try 1: ${e1}, try 2: ${e2}`);
                 }
             }
