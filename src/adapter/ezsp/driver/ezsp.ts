@@ -344,6 +344,11 @@ export class Ezsp extends EventEmitter {
     public async connect(options: SerialPortOptions): Promise<void> {
         let lastError = null;
 
+        const resetForReconnect = () => {
+            throw new Error("Failure to connect");
+        };
+        this.serialDriver.on('reset', resetForReconnect);
+
         for (let i = 1; i <= MAX_SERIAL_CONNECT_ATTEMPTS; i++) {
             try {
                 await this.serialDriver.connect(options);
@@ -359,6 +364,8 @@ export class Ezsp extends EventEmitter {
                 lastError = error;
             }
         }
+
+        this.serialDriver.off('reset', resetForReconnect);
 
         if (!this.serialDriver.isInitialized()) {
             throw new Error("Failure to connect", {cause: lastError});

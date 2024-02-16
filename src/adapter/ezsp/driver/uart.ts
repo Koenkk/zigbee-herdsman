@@ -163,6 +163,7 @@ export class SerialDriver extends EventEmitter {
     }
 
     private async onParsed(frame: NpiFrame): Promise<void> {
+        const rejectCondition = this.rejectCondition;
         try {
             frame.checkCRC();
 
@@ -197,7 +198,8 @@ export class SerialDriver extends EventEmitter {
             debug(`Error while parsing to NpiFrame '${error.stack}'`);
         }
 
-        if (this.rejectCondition) {
+        // We send NAK only if the rejectCondition was set in the current processing
+        if (!rejectCondition && this.rejectCondition) {
             // send NAK
             this.writer.sendNAK(this.recvSeq);
         }
@@ -217,7 +219,7 @@ export class SerialDriver extends EventEmitter {
                 // if the reTx flag is set, then this is a packet replay
                 debug(`Unexpected DATA packet sequence ${frmNum} | ${this.recvSeq}: packet replay`);
             } else {
-                // otherwise, the sequence of packets is out of order - send NAK is needed
+                // otherwise, the sequence of packets is out of order - skip or send NAK is needed
                 debug(`Unexpected DATA packet sequence ${frmNum} | ${this.recvSeq}: reject condition`);
                 this.rejectCondition = true;
                 return;
@@ -289,8 +291,6 @@ export class SerialDriver extends EventEmitter {
     private handleRSTACK(frame: NpiFrame): void {
         /* Reset acknowledgement frame receive handler */
         let code;
-        this.sendSeq = 0;
-        this.recvSeq = 0;
         this.rejectCondition = false;
 
         debug(`<-- RSTACK ${frame}`);
@@ -330,7 +330,10 @@ export class SerialDriver extends EventEmitter {
             try {
                 debug(`--> Write reset`);
                 const waiter = this.waitFor(-1, 10000);
-
+                this.sendSeq = 0;
+                this.recvSeq = 0;
+                this.rejectCondition = false;
+        
                 this.writer.sendReset();
                 debug(`-?- waiting reset`);
                 await waiter.start().promise;
@@ -436,7 +439,7 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    public waitFor(sequence: number, timeout = 2000)
+    public waitFor(sequence: number, timeout = 4000)
         : { start: () => { promise: Promise<EZSPPacket>; ID: number }; ID: number } {
         return this.waitress.waitFor({sequence}, timeout);
     }
