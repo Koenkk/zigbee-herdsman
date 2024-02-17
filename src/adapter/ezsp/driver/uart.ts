@@ -340,7 +340,7 @@ export class SerialDriver extends EventEmitter {
                 await waiter.start().promise;
                 debug(`-+- waiting reset success`);
 
-                await wait(4000);
+                await wait(2000);
 
             } catch (e) {
                 debug(`--> Error: ${e}`);
