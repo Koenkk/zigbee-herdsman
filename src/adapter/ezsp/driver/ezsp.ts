@@ -329,6 +329,7 @@ export class Ezsp extends EventEmitter {
     private queue: Queue;
     private watchdogTimer: NodeJS.Timeout;
     private failures = 0;
+    private inResetingProcess = false;
 
     constructor() {
         super();
@@ -343,6 +344,11 @@ export class Ezsp extends EventEmitter {
 
     public async connect(options: SerialPortOptions): Promise<void> {
         let lastError = null;
+
+        const resetForReconnect = (): void => {
+            throw new Error("Failure to connect");
+        };
+        this.serialDriver.on('reset', resetForReconnect);
 
         for (let i = 1; i <= MAX_SERIAL_CONNECT_ATTEMPTS; i++) {
             try {
@@ -360,9 +366,13 @@ export class Ezsp extends EventEmitter {
             }
         }
 
+        this.serialDriver.off('reset', resetForReconnect);
+
         if (!this.serialDriver.isInitialized()) {
             throw new Error("Failure to connect", {cause: lastError});
         }
+
+        this.inResetingProcess = false;
 
         this.serialDriver.on('reset', this.onSerialReset.bind(this));
 
@@ -374,14 +384,21 @@ export class Ezsp extends EventEmitter {
         }
     }
 
+    public isInitialized(): boolean {
+        return this.serialDriver?.isInitialized();
+    }
+    
     private onSerialReset(): void {
         debug.log('onSerialReset()');
+        this.inResetingProcess = true;
         this.emit('reset');
     }
 
     private onSerialClose(): void {
         debug.log('onSerialClose()');
-        this.emit('close');
+        if (!this.inResetingProcess) {
+            this.emit('close');
+        }
     }
 
     public async close(emitClose: boolean): Promise<void> {
@@ -746,17 +763,24 @@ export class Ezsp extends EventEmitter {
     private async watchdogHandler(): Promise<void> {
         debug.log(`Time to watchdog ... ${this.failures}`);
 
+        if (this.inResetingProcess) {
+            debug.log('The reset process is in progress...');
+            return;
+        }
+
         try {
             await this.execCommand('nop');
         } catch (error) {
             debug.error(`Watchdog heartbeat timeout ${error.stack}`);
 
-            this.failures += 1;
+            if (!this.inResetingProcess) {
+                this.failures += 1;
 
-            if (this.failures > MAX_WATCHDOG_FAILURES) {
-                this.failures = 0;
+                if (this.failures > MAX_WATCHDOG_FAILURES) {
+                    this.failures = 0;
 
-                this.emit('reset');
+                    this.emit('reset');
+                }
             }
         }
     }

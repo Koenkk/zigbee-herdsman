@@ -115,7 +115,12 @@ export class Driver extends EventEmitter {
         try {
             // don't emit 'close' on stop since we don't want this to bubble back up as 'disconnected' to the controller.
             await this.stop(false);
+        } catch (err) {
+            debug.error(`Stop error ${err.stack}`);
+        }
+        try {
             await Wait(1000);
+            debug.log(`Startup again.`);
             await this.startup();
         } catch (err) {
             debug.error(`Reset error ${err.stack}`);

@@ -249,24 +249,26 @@ class EZSPAdapter extends Adapter {
     }
 
     public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
-        return this.queue.execute<void>(async () => {
-            this.checkInterpanLock();
-            if (seconds) {
-                this.driver.preJoining();
-            }
-            if (networkAddress) {
-                const result = await this.driver.zdoRequest(
-                    networkAddress, EmberZDOCmd.Mgmt_Permit_Joining_req,
-                    EmberZDOCmd.Mgmt_Permit_Joining_rsp,
-                    {duration: seconds, tcSignificant: false}
-                );
-                if (result.status !== EmberStatus.SUCCESS) {
-                    throw new Error(`permitJoin for '${networkAddress}' failed`);
+        if (this.driver.ezsp.isInitialized()) {
+            return this.queue.execute<void>(async () => {
+                this.checkInterpanLock();
+                if (seconds) {
+                    this.driver.preJoining();
                 }
-            } else {
-                await this.driver.permitJoining(seconds);
-            }
-        });
+                if (networkAddress) {
+                    const result = await this.driver.zdoRequest(
+                        networkAddress, EmberZDOCmd.Mgmt_Permit_Joining_req,
+                        EmberZDOCmd.Mgmt_Permit_Joining_rsp,
+                        {duration: seconds, tcSignificant: false}
+                    );
+                    if (result.status !== EmberStatus.SUCCESS) {
+                        throw new Error(`permitJoin for '${networkAddress}' failed`);
+                    }
+                } else {
+                    await this.driver.permitJoining(seconds);
+                }
+            });
+        }
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
@@ -626,7 +628,9 @@ class EZSPAdapter extends Adapter {
     }
 
     public async backup(): Promise<Models.Backup> {
-        return this.backupMan.createBackup();
+        if (this.driver.ezsp.isInitialized()) {
+            return this.backupMan.createBackup();
+        }
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
