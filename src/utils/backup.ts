@@ -111,6 +111,10 @@ export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.B
         znp: {
             version: backup.metadata.internal?.znpVersion || undefined,
             trustCenterLinkKeySeed: tclkSeedString ? Buffer.from(tclkSeedString, "hex") : undefined,
+        },
+        ezsp: {
+            version: backup.metadata.internal?.ezspVersion || undefined,
+            hashed_tclk: backup.stack_specific?.ezsp?.hashed_tclk ? Buffer.from(backup.stack_specific.ezsp.hashed_tclk, "hex") : undefined,
         }
     };
 };

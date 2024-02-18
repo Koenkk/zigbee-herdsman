@@ -3717,7 +3717,7 @@ describe('Controller', () => {
         mockDeconzAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         let error;
         try {await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'efr'}, null, null)} catch (e) {error = e;}
-        expect(error).toStrictEqual(new Error(`Adapter 'efr' does not exists, possible options: zstack, deconz, zigate, ezsp`));
+        expect(error).toStrictEqual(new Error(`Adapter 'efr' does not exists, possible options: zstack, deconz, zigate, ezsp, ember`));
     });
 
     it('Emit read from device', async () => {
