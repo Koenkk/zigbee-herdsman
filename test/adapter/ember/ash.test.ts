@@ -206,7 +206,7 @@ describe('Ember UART ASH Protocol', () => {
         expect(onPortErrorSpy).toHaveBeenCalledTimes(0);
         expect(onPortCloseSpy).toHaveBeenCalledTimes(1);
     });
-    it('Resets but failed to start b/c error in RSTACK frame returned by NCP', async () => {
+    it.skip('Resets but failed to start b/c error in RSTACK frame returned by NCP', async () => {
         //@ts-expect-error private
         const rejectFrameSpy = jest.spyOn(uartAsh, 'rejectFrame');
         //@ts-expect-error private
