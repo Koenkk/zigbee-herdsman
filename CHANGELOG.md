@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.34.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.0...v0.34.1) (2024-02-18)
+
+
+### Bug Fixes
+
+* **ignore:** temp fix for broken test ([4e6ee7a](https://github.com/Koenkk/zigbee-herdsman/commit/4e6ee7af191e32f48e3a4be501ab683c9b685b4c))
+
 ## [0.34.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.9...v0.34.0) (2024-02-18)
 
 
