@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.34.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.9...v0.34.0) (2024-02-18)
+
+
+### Features
+
+* Add new `ember` adapter implementation, targeting EZSP 13 and above ([#918](https://github.com/Koenkk/zigbee-herdsman/issues/918)) ([c36d051](https://github.com/Koenkk/zigbee-herdsman/commit/c36d051e0a0e20654ff716b17cde783e5b3a4989))
+
+
+### Bug Fixes
+
+* EZSP: Some refactoring of UART level and packet processing. ([#916](https://github.com/Koenkk/zigbee-herdsman/issues/916)) ([e397e38](https://github.com/Koenkk/zigbee-herdsman/commit/e397e38849ff937acbf0aef9da69fa51ac3f0f7b))
+* **ignore:** update dependencies ([#917](https://github.com/Koenkk/zigbee-herdsman/issues/917)) ([e164b9c](https://github.com/Koenkk/zigbee-herdsman/commit/e164b9ce0b28fb95d67a1d9f2df06c057568cfc2))
+
 ## [0.33.9](https://github.com/Koenkk/zigbee-herdsman/compare/v0.33.8...v0.33.9) (2024-02-13)
 
 
