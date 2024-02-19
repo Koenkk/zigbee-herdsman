@@ -330,10 +330,6 @@ export class Driver extends EventEmitter {
             if (frame.status === EmberDeviceUpdate.DEVICE_LEFT) {
                 this.handleNodeLeft(frame.newNodeId, frame.newNodeEui64);
             } else {
-                if (frame.status === EmberDeviceUpdate.STANDARD_SECURITY_UNSECURED_JOIN) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.cleanupTClinkKey(frame.newNodeEui64);
-                }
                 if (frame.policyDecision !== EmberJoinDecision.DENY_JOIN) {
                     this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
                 }
@@ -416,15 +412,6 @@ export class Driver extends EventEmitter {
             // <=== Application frame 155 (zigbeeKeyEstablishmentHandler)   parsed: 144,253,159,255,254,8,189,46,6 +2ms
             // Unhandled frame zigbeeKeyEstablishmentHandler
             debug.log(`Unhandled frame ${frameName}`);
-        }
-    }
-
-    private async cleanupTClinkKey(ieee: EmberEUI64): Promise<void> {
-        // Remove tc link_key for the given device.
-        const index = (await this.ezsp.execCommand('findKeyTableEntry', {address: ieee, linkKey: true})).index;
-
-        if (index != 0xFF) {
-            await this.ezsp.execCommand('eraseKeyTableEntry', {index: index});
         }
     }
 
@@ -703,20 +690,24 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async preJoining(): Promise<void> {
-        const ieee = new EmberEUI64('0xFFFFFFFFFFFFFFFF');
-        const linkKey = new EmberKeyData();
-        linkKey.contents = Buffer.from("ZigBeeAlliance09");
-        const result = await this.addTransientLinkKey(ieee, linkKey);
+    public async preJoining(seconds: number): Promise<void> {
+        if (seconds) {
+            const ieee = new EmberEUI64('0xFFFFFFFFFFFFFFFF');
+            const linkKey = new EmberKeyData();
+            linkKey.contents = Buffer.from("ZigBeeAlliance09");
+            const result = await this.addTransientLinkKey(ieee, linkKey);
 
-        if (result.status !== EmberStatus.SUCCESS) {
-            throw new Error(`Add Transient Link Key for '${ieee}' failed`);
-        }
+            if (result.status !== EmberStatus.SUCCESS) {
+                throw new Error(`Add Transient Link Key for '${ieee}' failed`);
+            }
 
-        if (this.ezsp.ezspV >= 8) {
-            await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
-                EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
-            //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
+            if (this.ezsp.ezspV >= 8) {
+                await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
+                    EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
+                //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
+            }
+        } else {
+            await this.ezsp.execCommand('clearTransientLinkKeys');
         }
     }
 
