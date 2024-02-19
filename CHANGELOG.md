@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.34.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.1...v0.34.2) (2024-02-19)
+
+
+### Bug Fixes
+
+* EZSP adapter fixes ([#921](https://github.com/Koenkk/zigbee-herdsman/issues/921)) ([6bb05c7](https://github.com/Koenkk/zigbee-herdsman/commit/6bb05c7a098812600df1b74c93142852962639f4))
+
 ## [0.34.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.0...v0.34.1) (2024-02-18)
 
 
