@@ -1047,13 +1047,12 @@ export class EmberAdapter extends Adapter {
                     + `with status=${EzspStatus[status]}.`);
             }
 
-            status = (await this.emberSetEzspPolicy(
-                EzspPolicyId.APP_KEY_REQUEST_POLICY,
-                STACK_CONFIGS[this.stackConfig].KEY_TABLE_SIZE ? EzspDecisionId.ALLOW_APP_KEY_REQUESTS : EzspDecisionId.DENY_APP_KEY_REQUESTS,
-            ));
+            const appKeyPolicy = STACK_CONFIGS[this.stackConfig].KEY_TABLE_SIZE
+                ? EzspDecisionId.ALLOW_APP_KEY_REQUESTS : EzspDecisionId.DENY_APP_KEY_REQUESTS;
+            status = (await this.emberSetEzspPolicy(EzspPolicyId.APP_KEY_REQUEST_POLICY, appKeyPolicy));
 
             if (status !== EzspStatus.SUCCESS) {
-                throw new Error(`[INIT TC] Failed to set EzspPolicyId APP_KEY_REQUEST_POLICY to DENY_APP_KEY_REQUESTS `
+                throw new Error(`[INIT TC] Failed to set EzspPolicyId APP_KEY_REQUEST_POLICY to ${EzspDecisionId[appKeyPolicy]} `
                     + `with status=${EzspStatus[status]}.`);
             }
 
@@ -1091,6 +1090,7 @@ export class EmberAdapter extends Adapter {
             debug(`[INIT TC] Current network config=${JSON.stringify(this.networkOptions)}`);
             debug(`[INIT TC] Current NCP network: nodeType=${EmberNodeType[nodeType]} params=${JSON.stringify(netParams)}`);
 
+            // XXX: should not force a form when it's only a channel change, just change the channel, wait a sec, then continue the logic
             if ((npStatus === EmberStatus.SUCCESS) && (nodeType === EmberNodeType.COORDINATOR) && (this.networkOptions.panID === netParams.panId)
                 && (equals(this.networkOptions.extendedPanID, netParams.extendedPanId))
                 && (this.networkOptions.channelList.includes(netParams.radioChannel))) {
