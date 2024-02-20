@@ -539,7 +539,7 @@ describe('Controller', () => {
         restoreMocksendZclFrameToEndpoint();
     });
 
-    it.skip('Call controller constructor options mixed with default options', async () => {
+    it('Call controller constructor options mixed with default options', async () => {
         await controller.start();
         expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, {"disableLED": false}, undefined);
     });
