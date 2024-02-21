@@ -7538,7 +7538,7 @@ export class Ezsp extends EventEmitter {
             + `[sequenceNumber=${sequenceNumber}], [addr=${addr}], [gpdfSecurityLevel=${gpdfSecurityLevel}], `
             + `[gpdfSecurityKeyType=${gpdfSecurityKeyType}], [autoCommissioning=${autoCommissioning}], [bidirectionalInfo=${bidirectionalInfo}], `
             + `[gpdSecurityFrameCounter=${gpdSecurityFrameCounter}], [gpdCommandId=${gpdCommandId}], [mic=${mic}], `
-            + `[proxyTableIndex=${proxyTableIndex}], [gpdCommandPayload=${gpdCommandPayload}]`);
+            + `[proxyTableIndex=${proxyTableIndex}], [gpdCommandPayload=${gpdCommandPayload.toString('hex')}]`);
 
         // TODO: triple-checking required here
         if (gpdCommandPayload.length) {
