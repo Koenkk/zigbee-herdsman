@@ -649,64 +649,46 @@ export class EmberAdapter extends Adapter {
     /**
      * Emitted from @see Ezsp.ezspGpepIncomingMessageHandler
      * 
-     * @param sender uint32_t or EmberEUI64 depending on `EmberGpApplicationId`. See emitter
-     * @param gpdCommandId 
-     * @param gpdLink 
      * @param sequenceNumber 
-     * @param deviceId 
-     * @param options 
-     * @param key 
-     * @param counter 
+     * @param commandIdentifier 
+     * @param sourceId 
+     * @param frameCounter 
+     * @param gpdCommandId 
+     * @param gpdCommandPayload 
+     * @param gpdLink 
      */
-    private async onGreenpowerMessage(sender: number | EmberEUI64, gpdCommandId: number, gpdLink: number, sequenceNumber: number, deviceId?: number,
-        options?: number, key?: EmberKeyData, counter?: number): Promise<void> {
-        // TODO: all this stuff needs triple-checking, also with upstream (not really multi-adapter at first glance?)
-        //       more params avail in EZSP handler
-        switch (gpdCommandId) {
-        case 0xE0: {
-            if (!key) {
-                return;
-            }
+    private async onGreenpowerMessage(sequenceNumber: number, commandIdentifier: number, sourceId: number, frameCounter: number,
+        gpdCommandId: number, gpdCommandPayload: Buffer, gpdLink: number) : Promise<void> {
+        try {
+            const gpdHeader = Buffer.alloc(15);
+            gpdHeader.writeUInt8(0b00000001, 0);// frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
+            gpdHeader.writeUInt8(sequenceNumber, 1);// transactionSequenceNumber
+            gpdHeader.writeUInt8(commandIdentifier, 2);// commandIdentifier
+            gpdHeader.writeUInt16LE(0, 3);// options XXX: bypassed, same as deconz https://github.com/Koenkk/zigbee-herdsman/pull/536
+            gpdHeader.writeUInt32LE(sourceId, 5);// srcID
+            // omitted: gpdIEEEAddr ieeeAddr
+            // omitted: gpdEndpoint uint8
+            gpdHeader.writeUInt32LE(frameCounter, 9);// frameCounter
+            gpdHeader.writeUInt8(gpdCommandId, 13);// commandID
+            gpdHeader.writeUInt8(gpdCommandPayload.length, 14);// payloadSize
 
-            // commissioning notification
-            const gpdMessage = {
-                // gppNwkAddr: ?,// XXX
-                commandID: gpdCommandId,
-                commandFrame: {options: options, securityKey: key.contents, deviceID: deviceId, outgoingCounter: counter},
-                // XXX: Z2M seems to want only sourceId, but it isn't always present..? @see ezspGpepIncomingMessageHandler
-                srcID: sender,
-            };
-            const zclFrame = ZclFrame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true, null, sequenceNumber, 'commissioningNotification',
-                Cluster.greenPower.ID, gpdMessage);
+            const gpFrame = ZclFrame.fromBuffer(Cluster.greenPower.ID, Buffer.concat([gpdHeader, gpdCommandPayload]));
             const payload: ZclDataPayload = {
-                frame: zclFrame,
-                address: sender,
+                frame: gpFrame,
+                address: sourceId,
                 endpoint: GP_ENDPOINT,
                 linkquality: gpdLink,
-                groupID: null,
-                wasBroadcast: true,
+                groupID: this.greenPowerGroup,
+                // XXX: upstream sends to `gppNwkAddr` if `wasBroadcast` is false, even if `gppNwkAddr` is null
+                wasBroadcast: (gpFrame.Payload.gppNwkAddr != null) ? false : true,
                 destinationEndpoint: GP_ENDPOINT,
             };
 
+            this.oneWaitress.resolveZCL(payload);
             this.emit(Events.zclData, payload);
-        }
-        default:{// XXX: all the rest in one basket?
-            const gpdMessage = {commandID: gpdCommandId, srcID: sender};// same as above about `srcID`
-            const zclFrame = ZclFrame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true, null, sequenceNumber, 'notification',
-                Cluster.greenPower.ID, gpdMessage);
-
-            const payload: ZclDataPayload = {
-                frame: zclFrame,
-                address: sender,
-                endpoint: GP_ENDPOINT,
-                linkquality: gpdLink,
-                groupID: null,
-                wasBroadcast: true,
-                destinationEndpoint: GP_ENDPOINT,
-            };
-
-            this.emit(Events.zclData, payload);
-        }
+        } catch (err) {
+            console.error(`<~x~ [GP] Failed creating ZCL payload. Skipping. ${err}`);
+            return;
         }
     }
 
