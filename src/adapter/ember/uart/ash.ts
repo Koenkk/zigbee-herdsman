@@ -261,7 +261,15 @@ export class UartAsh extends EventEmitter {
 
     public counters: UartAshCounters;
 
+    /**
+     * Errors reported by the NCP.
+     * The `NcpFailedCode` from the frame reporting this is logged before this is set to make it clear where it failed:
+     * - The NCP sent an ERROR frame during the initial reset sequence (before CONNECTED state)
+     * - The NCP sent an ERROR frame
+     * - The NCP sent an unexpected RSTACK
+     */
     private ncpError: EzspStatus;
+    /** Errors reported by the Host. */
     private hostError: EzspStatus;
     /** sendExec() state variable */
     private sendState: SendState;
@@ -588,11 +596,18 @@ export class UartAsh extends EventEmitter {
             if (this.flags & Flag.CONNECTED) {
                 this.counters.rxCancelled += 1;
 
-                console.warn(`Frame(s) in progress cancelled. ${buffer.subarray(0, iCAN).toString('hex')}`);
+                console.warn(`Frame(s) in progress cancelled in [${buffer.toString('hex')}]`);
             }
 
             // get rid of everything up to the CAN flag and start reading frame from there, no need to loop through bytes in vain
             buffer = buffer.subarray(iCAN + 1);
+        }
+
+        if (!buffer.length) {
+            // skip any CANCEL that results in empty frame (have yet to see one, but just in case...)
+            // shouldn't happen for any other reason, unless receiving bad stuff from port?
+            debug(`Received empty frame. Skipping.`);
+            return;
         }
 
         const status = this.receiveFrame(buffer);
@@ -1068,7 +1083,8 @@ export class UartAsh extends EventEmitter {
 
                 return EzspStatus.SUCCESS;
             } else if (frameType === AshFrameType.ERROR) {
-                return this.ncpDisconnect(this.rxSHBuffer[2]);
+                console.error(`Received ERROR from NCP while connecting, with code=${NcpFailedCode[this.rxSHBuffer[2]]}.`);
+                return this.ncpDisconnect(EzspStatus.ASH_NCP_FATAL_ERROR);
             }
 
             return EzspStatus.ASH_IN_PROGRESS;
@@ -1177,12 +1193,14 @@ export class UartAsh extends EventEmitter {
             break;
         case AshFrameType.RSTACK:
             // unexpected ncp reset
-            this.ncpError = this.rxSHBuffer[2];
+            console.error(`Received unexpected reset from NCP, with reason=${NcpFailedCode[this.rxSHBuffer[2]]}.`);
+            this.ncpError = EzspStatus.ASH_NCP_FATAL_ERROR;
 
             return this.hostDisconnect(EzspStatus.ASH_ERROR_NCP_RESET);
         case AshFrameType.ERROR:
             // ncp error
-            return this.ncpDisconnect(this.rxSHBuffer[2]);
+            console.error(`Received ERROR from NCP, with code=${NcpFailedCode[this.rxSHBuffer[2]]}.`);
+            return this.ncpDisconnect(EzspStatus.ASH_NCP_FATAL_ERROR);
         case AshFrameType.INVALID:
             // reject invalid frames
             debug(`<-x- [FRAME type=${frameTypeStr}] Rejecting. ${this.rxSHBuffer.toString('hex')}`);
@@ -1210,7 +1228,7 @@ export class UartAsh extends EventEmitter {
      * @returns 
      */
     private readFrame(buffer: Buffer): EzspStatus {
-        let status: EzspStatus;
+        let status: EzspStatus = EzspStatus.ERROR_INVALID_CALL;// no actual data to read, something's very wrong
         let index: number = 0;
         // let inByte: number = 0x00;
         let outByte: number = 0x00;
@@ -1388,7 +1406,7 @@ export class UartAsh extends EventEmitter {
         this.flags = 0;
         this.ncpError = error;
 
-        console.error(`ASH disconnected: ${EzspStatus[error]} | NCP status: ${EzspStatus[this.ncpError]}`);
+        console.error(`ASH disconnected | NCP status: ${EzspStatus[this.ncpError]}`);
 
         this.emit(AshEvents.ncpError, error);
 

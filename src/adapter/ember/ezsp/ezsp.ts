@@ -242,7 +242,7 @@ export enum EzspEvents {
     MESSAGE_SENT_DELIVERY_FAILED = 'MESSAGE_SENT_DELIVERY_FAILED',
 
     //-- ezspGpepIncomingMessageHandler
-    /** params => sender: number | EmberEUI64, gpdCommandId: number, gpdLink: number, sequenceNumber: number, deviceId?: number, options?: number, key?: EmberKeyData, counter?: number */
+    /** params => sequenceNumber: number, commandIdentifier: number, sourceId: number, frameCounter: number, gpdCommandId: number, gpdCommandPayload: Buffer, gpdLink: number */
     GREENPOWER_MESSAGE = 'GREENPOWER_MESSAGE',
 }
 /* eslint-enable max-len */
@@ -7535,59 +7535,39 @@ export class Ezsp extends EventEmitter {
         gpdfSecurityLevel: EmberGpSecurityLevel, gpdfSecurityKeyType: EmberGpKeyType, autoCommissioning: boolean, bidirectionalInfo: number,
         gpdSecurityFrameCounter: number, gpdCommandId: number, mic: number, proxyTableIndex: number, gpdCommandPayload: Buffer): void {
         debug(`ezspGpepIncomingMessageHandler(): callback called with: [status=${EmberStatus[status]}], [gpdLink=${gpdLink}], `
-            + `[sequenceNumber=${sequenceNumber}], [addr=${addr}], [gpdfSecurityLevel=${gpdfSecurityLevel}], `
+            + `[sequenceNumber=${sequenceNumber}], [addr=${JSON.stringify(addr)}], [gpdfSecurityLevel=${gpdfSecurityLevel}], `
             + `[gpdfSecurityKeyType=${gpdfSecurityKeyType}], [autoCommissioning=${autoCommissioning}], [bidirectionalInfo=${bidirectionalInfo}], `
             + `[gpdSecurityFrameCounter=${gpdSecurityFrameCounter}], [gpdCommandId=${gpdCommandId}], [mic=${mic}], `
-            + `[proxyTableIndex=${proxyTableIndex}], [gpdCommandPayload=${gpdCommandPayload}]`);
+            + `[proxyTableIndex=${proxyTableIndex}], [gpdCommandPayload=${gpdCommandPayload.toString('hex')}]`);
 
-        // TODO: triple-checking required here
-        if (gpdCommandPayload.length) {
-            const gpdBuffalo = new EzspBuffalo(gpdCommandPayload, 0);
-
-            switch (gpdCommandId) {
-            case 0xE0: {
-                // commissioning notification
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const st = gpdBuffalo.readUInt8();
-                const deviceId = gpdBuffalo.readUInt8();
-                const options = gpdBuffalo.readUInt8();
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const extOptions = gpdBuffalo.readUInt8();
-                const key = gpdBuffalo.readEmberKeyData();
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const mic = gpdBuffalo.readUInt32();
-                const counter = gpdBuffalo.readUInt32();
-
-                this.emit(
-                    EzspEvents.GREENPOWER_MESSAGE,
-                    (addr.applicationId === EmberGpApplicationId.SOURCE_ID) ? addr.sourceId : addr.gpdIeeeAddress,
-                    gpdCommandId,
-                    gpdLink,
-                    sequenceNumber,
-                    deviceId,
-                    options,
-                    key,
-                    counter
-                );
-                break;
-            }
-            default: {
-                // notification
-                this.emit(
-                    EzspEvents.GREENPOWER_MESSAGE,
-                    (addr.applicationId === EmberGpApplicationId.SOURCE_ID) ? addr.sourceId : addr.gpdIeeeAddress,
-                    gpdCommandId,
-                    gpdLink,
-                    sequenceNumber,
-                    null,
-                    null,
-                    null,
-                    null
-                );
-                break;
-            }
-            }
+        if (addr.applicationId === EmberGpApplicationId.IEEE_ADDRESS) {
+            // XXX: don't bother parsing for upstream for now, since it will be rejected
+            console.error(`<=== [GP] Received IEEE address type in message. Support not implemented upstream. Dropping.`);
+            return;
         }
+
+        let commandIdentifier = Cluster.greenPower.commands.notification.ID;
+
+        if (gpdCommandId === 0xE0) {
+            if (!gpdCommandPayload.length) {
+                // XXX: seem to be receiving duplicate commissioningNotification from some devices, second one with empty payload?
+                //      this will mess with the process no doubt, so dropping them
+                return;
+            }
+
+            commandIdentifier = Cluster.greenPower.commands.commissioningNotification.ID;
+        }
+
+        this.emit(
+            EzspEvents.GREENPOWER_MESSAGE,
+            sequenceNumber,
+            commandIdentifier,
+            addr.sourceId,
+            gpdSecurityFrameCounter,
+            gpdCommandId,
+            gpdCommandPayload,
+            gpdLink,
+        );
     }
 
     /**
