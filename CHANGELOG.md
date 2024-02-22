@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.34.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.2...v0.34.3) (2024-02-22)
+
+
+### Bug Fixes
+
+* Ember: improve errors & checks + GreenPower support ([#924](https://github.com/Koenkk/zigbee-herdsman/issues/924)) ([9aa1aa6](https://github.com/Koenkk/zigbee-herdsman/commit/9aa1aa6bf10ebbbeae3016edcc5bfeb8699c87cb))
+
 ## [0.34.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.1...v0.34.2) (2024-02-19)
 
 
