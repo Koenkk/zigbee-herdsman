@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.34.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.3...v0.34.4) (2024-02-23)
+
+
+### Bug Fixes
+
+* Ember: Fix install code CRC validation. ([#926](https://github.com/Koenkk/zigbee-herdsman/issues/926)) ([79478eb](https://github.com/Koenkk/zigbee-herdsman/commit/79478ebbeee8190c4b7ff1541a9ab29a0965227a))
+
 ## [0.34.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.2...v0.34.3) (2024-02-22)
 
 
