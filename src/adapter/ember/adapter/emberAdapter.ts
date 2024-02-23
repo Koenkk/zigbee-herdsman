@@ -2940,22 +2940,13 @@ export class EmberAdapter extends Adapter {
             throw new Error(`[ADD INSTALL CODE] Failed for "${ieeeAddress}"; no code given.`);
         }
 
-        let validInstallCodeSize = false;
-
-        for (const validCodeSize of EMBER_INSTALL_CODE_SIZES) {
-            if (key.length === validCodeSize) {
-                validInstallCodeSize = true;
-                break;
-            }
-        }
-
-        if (!validInstallCodeSize) {
+        if (EMBER_INSTALL_CODE_SIZES.indexOf(key.length) === -1) {
             throw new Error(`[ADD INSTALL CODE] Failed for "${ieeeAddress}"; invalid code size.`);
         }
 
-        // Reverse the bits in a byte
+        // Reverse the bits in a byte (uint8_t)
         const reverse = (b: number): number => {
-            return ((b * 0x0802 & 0x22110) | (b * 0x8020 & 0x88440)) * 0x10101 >> 16;
+            return (((b * 0x0802 & 0x22110) | (b * 0x8020 & 0x88440)) * 0x10101 >> 16) & 0xFF;
         };
         let crc = 0xFFFF;// uint16_t
 
@@ -2965,7 +2956,7 @@ export class EmberAdapter extends Adapter {
             crc = halCommonCrc16(reverse(key[index]), crc);
         }
 
-        crc = ~highLowToInt(reverse(lowByte(crc)), reverse(highByte(crc)));
+        crc = (~highLowToInt(reverse(lowByte(crc)), reverse(highByte(crc)))) & 0xFFFF;
 
         if (key[key.length - EMBER_INSTALL_CODE_CRC_SIZE] !== lowByte(crc) || key[key.length - EMBER_INSTALL_CODE_CRC_SIZE + 1] !== highByte(crc)) {
             throw new Error(`[ADD INSTALL CODE] Failed for "${ieeeAddress}"; invalid code CRC.`);
