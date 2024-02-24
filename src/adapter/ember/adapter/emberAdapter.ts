@@ -148,7 +148,6 @@ import {
     GP_ENDPOINT,
     EMBER_ALL_802_15_4_CHANNELS_MASK,
     ZIGBEE_PROFILE_INTEROPERABILITY_LINK_KEY,
-    HA_PROFILE_ID,
 } from "../consts";
 import {EmberRequestQueue} from "./requestQueue";
 import {FIXED_ENDPOINTS} from "./endpoints";
@@ -2995,19 +2994,21 @@ export class EmberAdapter extends Adapter {
     /** WARNING: Adapter impl. Starts timer immediately upon returning */
     public waitFor(networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction, transactionSequenceNumber: number,
         clusterID: number, commandIdentifier: number, timeout: number): {promise: Promise<ZclDataPayload>; cancel: () => void;} {
+        const sourceEndpointInfo = FIXED_ENDPOINTS[0];
         const waiter = this.oneWaitress.waitFor<ZclDataPayload>({
             target: networkAddress,
             apsFrame: {
                 clusterId: clusterID,
-                profileId: HA_PROFILE_ID,// XXX: ok? only used by OTA upstream
+                profileId: sourceEndpointInfo.profileId,// XXX: only used by OTA upstream
                 sequence: 0,// set by stack
-                sourceEndpoint: endpoint,
-                destinationEndpoint: 0,
+                sourceEndpoint: sourceEndpointInfo.endpoint,
+                destinationEndpoint: endpoint,
                 groupId: 0,
                 options: EmberApsOption.NONE,
             },
             zclSequence: transactionSequenceNumber,
-        }, timeout || DEFAULT_ZCL_REQUEST_TIMEOUT * 3);// XXX: since this is used by OTA..?
+            commandIdentifier,
+        }, timeout || DEFAULT_ZCL_REQUEST_TIMEOUT * 3);// XXX: since this is used by OTA...
 
         return {
             cancel: (): void => this.oneWaitress.remove(waiter.id),
@@ -3652,6 +3653,7 @@ export class EmberAdapter extends Adapter {
                             target: networkAddress,
                             apsFrame,
                             zclSequence: zclFrame.Header.transactionSequenceNumber,
+                            commandIdentifier: commandResponseId,
                         }, timeout || DEFAULT_ZCL_REQUEST_TIMEOUT));
 
                         resolve(result);
@@ -3903,6 +3905,7 @@ export class EmberAdapter extends Adapter {
                         target: null,
                         apsFrame: apsFrame,
                         zclSequence: zclFrame.Header.transactionSequenceNumber,
+                        commandIdentifier: command.response,
                     }, timeout || DEFAULT_ZCL_REQUEST_TIMEOUT * 2));// XXX: touchlink timeout?
 
                     resolve(result);

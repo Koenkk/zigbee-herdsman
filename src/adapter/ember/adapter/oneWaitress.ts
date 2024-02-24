@@ -13,9 +13,12 @@ type OneWaitressMatcher = {
      */
     target?: EmberNodeId,
     apsFrame: EmberApsFrame,
-    /** Cluster ID for when the response doesn't match the request. Takes priority over apsFrame.clusterId. */
+    /** Cluster ID for when the response doesn't match the request. Takes priority over apsFrame.clusterId. Should be mostly for ZDO requests. */
     responseClusterId?: number,
-    zclSequence?: number;
+    /** ZCL frame transaction sequence number */
+    zclSequence?: number,
+    /** Expected command ID for ZCL commands */
+    commandIdentifier?: number,
 };
 
 type OneWaitressEventMatcher = {
@@ -142,6 +145,7 @@ export class EmberOneWaitress {
             // no target in touchlink, also no APS sequence, but use the ZCL one instead
             if (((waiter.matcher.apsFrame.profileId === TOUCHLINK_PROFILE_ID) || (payload.address === waiter.matcher.target))
                 && (!waiter.matcher.zclSequence || (payload.frame.Header.transactionSequenceNumber === waiter.matcher.zclSequence))
+                && (!waiter.matcher.commandIdentifier || (payload.frame.Header.commandIdentifier === waiter.matcher.commandIdentifier))
                 && (payload.frame.Cluster.ID === waiter.matcher.apsFrame.clusterId)
                 && (payload.endpoint === waiter.matcher.apsFrame.destinationEndpoint)) {
                 clearTimeout(waiter.timer);
