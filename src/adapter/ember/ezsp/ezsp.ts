@@ -4554,7 +4554,7 @@ export class Ezsp extends EventEmitter {
                 break;
             }
             default: {
-                console.log(`<=== [ZDO clusterId=${apsFrame.clusterId}] Support not implemented`);
+                console.log(`<=== [ZDO clusterId=${apsFrame.clusterId}] Support not implemented upstream.`);
                 break;
             }
             }
