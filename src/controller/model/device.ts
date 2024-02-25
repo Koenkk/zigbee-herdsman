@@ -308,10 +308,12 @@ class Device extends Entity {
         const isDefaultResponse = frame.isGlobal() && frame.getCommand().name === 'defaultRsp';
         const commandHasResponse = frame.getCommand().hasOwnProperty('response');
         const disableDefaultResponse = frame.Header.frameControl.disableDefaultResponse;
+        /* istanbul ignore next */
+        const disableTuyaDefaultResponse = endpoint.getDevice().manufacturerName?.startsWith('_TZ') && process.env['DISABLE_TUYA_DEFAULT_RESPONSE'];
         // Sometimes messages are received twice, prevent responding twice
         const alreadyResponded = this._lastDefaultResponseSequenceNumber === frame.Header.transactionSequenceNumber;
         if (this.type !== 'GreenPower' && !dataPayload.wasBroadcast && !disableDefaultResponse && !isDefaultResponse && 
-            !commandHasResponse && !this._skipDefaultResponse && !alreadyResponded) {
+            !commandHasResponse && !this._skipDefaultResponse && !alreadyResponded && !disableTuyaDefaultResponse) {
             try {
                 this._lastDefaultResponseSequenceNumber = frame.Header.transactionSequenceNumber;
                 // In the ZCL it is not documented what the direction of the default response should be
