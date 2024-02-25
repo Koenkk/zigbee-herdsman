@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.34.7](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.6...v0.34.7) (2024-02-25)
+
+
+### Bug Fixes
+
+* Ember: reworked errors in ASH protocol ([#932](https://github.com/Koenkk/zigbee-herdsman/issues/932)) ([bf070cd](https://github.com/Koenkk/zigbee-herdsman/commit/bf070cd7614cbe16900d387901848e16aa62136b))
+
 ## [0.34.6](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.5...v0.34.6) (2024-02-25)
 
 
