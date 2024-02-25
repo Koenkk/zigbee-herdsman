@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.34.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.4...v0.34.5) (2024-02-25)
+
+
+### Bug Fixes
+
+* Ember: fixed OTA response matching ([#928](https://github.com/Koenkk/zigbee-herdsman/issues/928)) ([01dbe18](https://github.com/Koenkk/zigbee-herdsman/commit/01dbe1868537e3637c16682d587f8d37871ab739))
+* **ignore:** update dependencies ([#929](https://github.com/Koenkk/zigbee-herdsman/issues/929)) ([7e99154](https://github.com/Koenkk/zigbee-herdsman/commit/7e99154e0c592d4dcbe9d17bc6b87eb0952088f3))
+
 ## [0.34.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.3...v0.34.4) (2024-02-23)
 
 
