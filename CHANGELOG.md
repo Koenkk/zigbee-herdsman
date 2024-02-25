@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.34.6](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.5...v0.34.6) (2024-02-25)
+
+
+### Bug Fixes
+
+* **ignore:** Add `DISABLE_TUYA_DEFAULT_RESPONSE` option ([c6ff266](https://github.com/Koenkk/zigbee-herdsman/commit/c6ff266f66c47d6b46745040eaaa973cd7a84407))
+* **ignore:** Remove DISABLE_ASSOC_GET ([4ed739b](https://github.com/Koenkk/zigbee-herdsman/commit/4ed739bc1a45d58207607feeb06fb1f3d530a1e5))
+
 ## [0.34.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.4...v0.34.5) (2024-02-25)
 
 
