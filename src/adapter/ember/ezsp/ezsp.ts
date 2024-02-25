@@ -295,8 +295,7 @@ export class Ezsp extends EventEmitter {
         this.buffalo = new EzspBuffalo(this.frameContents);
 
         this.ash = new UartAsh(options);
-        this.ash.on(AshEvents.hostError, this.onAshHostError.bind(this));
-        this.ash.on(AshEvents.ncpError, this.onAshNCPError.bind(this));
+        this.ash.on(AshEvents.rxError, this.onAshRxError.bind(this));
         this.ash.on(AshEvents.frame, this.onAshFrame.bind(this));
     }
 
@@ -343,6 +342,7 @@ export class Ezsp extends EventEmitter {
         for (let i = 0; i < MAX_INIT_ATTEMPTS; i++) {
             status = await this.ash.resetNcp();
 
+            // fail early if we couldn't even get the port set up
             if (status !== EzspStatus.SUCCESS) {
                 return status;
             }
@@ -386,11 +386,7 @@ export class Ezsp extends EventEmitter {
         return this.ash.connected;
     }
 
-    private onAshHostError(status: EzspStatus): void {
-        this.ezspErrorHandler(status);
-    }
-
-    private onAshNCPError(status: EzspStatus): void {
+    private onAshRxError(status: EzspStatus): void {
         this.ezspErrorHandler(status);
     }
 
@@ -577,7 +573,7 @@ export class Ezsp extends EventEmitter {
             }));
 
             if (status !== EzspStatus.SUCCESS) {
-                throw status;
+                throw new Error(EzspStatus[status]);
             }
         } catch (err) {
             debug(`=x=> ${this.frameToString} Error: ${err}`);
