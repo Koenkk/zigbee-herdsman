@@ -61,10 +61,8 @@ const ashGetACKNum = (ctrl: number): number => ((ctrl & ASH_ACKNUM_MASK) >> ASH_
 
 
 export enum AshEvents {
-    /** When the host detects a fatal error */
-    hostError = 'hostError',
-    /** When the NCP reports a fatal error */
-    ncpError = 'ncpError',
+    /** When the ASH protocol detects an error while receiving a frame. NOTE: TX errors are handled by the EZSP layer. */
+    rxError = 'rxError',
     /** When a frame has been parsed and queued in the rxQueue. */
     frame = 'frame',
 }
@@ -471,6 +469,10 @@ export class UartAsh extends EventEmitter {
         }
     }
 
+    /**
+     * Init the serial or socket port and hook parser/writer.
+     * NOTE: This is the only function that throws/rejects in the ASH layer (caught by resetNcp and turned into an EzspStatus).
+     */
     private async initPort(): Promise<void> {
         if (!SocketPortUtils.isTcpPath(this.portOptions.path)) {
             if (this.serialPort != null) {
@@ -612,10 +614,15 @@ export class UartAsh extends EventEmitter {
 
         const status = this.receiveFrame(buffer);
 
-        if (status === EzspStatus.SUCCESS) {
-            // ?
-        } else if ((status !== EzspStatus.ASH_IN_PROGRESS) && (status !== EzspStatus.NO_RX_DATA)) {
-            throw new Error(EzspStatus[status]);
+        if ((status !== EzspStatus.SUCCESS) && (status !== EzspStatus.ASH_IN_PROGRESS) && (status !== EzspStatus.NO_RX_DATA)) {
+            if (this.flags & Flag.CONNECTED) {
+                console.error(`Error while parsing received frame, status=${EzspStatus[status]}.`);
+                // if we're connected (not in reset) and get here, we need to reset
+                this.emit(AshEvents.rxError, EzspStatus.HOST_FATAL_ERROR);
+                return;
+            } else {
+                debug(`Error while parsing received frame in NOT_CONNECTED state (flags=${this.flags}), status=${EzspStatus[status]}.`);
+            }
         }
     }
 
@@ -642,12 +649,16 @@ export class UartAsh extends EventEmitter {
 
         this.sendExec();
 
-        // block til RSTACK or timeout
+        // block til RSTACK, fatal error or timeout
+        // NOTE: on average, this seems to take around 1000ms when successful
         for (let i = 0; i < CONFIG_TIME_RST; i += CONFIG_TIME_RST_CHECK) {
             if ((this.flags & Flag.CONNECTED)) {
                 console.log(`======== ASH started ========`);
 
                 return EzspStatus.SUCCESS;
+            } else if ((this.hostError !== EzspStatus.NO_ERROR) || (this.ncpError !== EzspStatus.NO_ERROR)) {
+                // don't wait for inevitable fail, bail early, let retry logic in EZSP layer do its thing
+                break;
             }
 
             debug(`Waiting for RSTACK... ${i}/${CONFIG_TIME_RST}`);
@@ -1030,7 +1041,8 @@ export class UartAsh extends EventEmitter {
         case EzspStatus.ASH_ERROR_XON_XOFF:
             return this.hostDisconnect(status);
         default:
-            throw new Error(`Unhandled error while receiving frame.`);
+            console.error(`Unhandled error while receiving frame, status=${EzspStatus[status]}.`);
+            return this.hostDisconnect(EzspStatus.HOST_FATAL_ERROR);
         }
 
         // Got a complete frame - validate its control and length.
@@ -1392,8 +1404,6 @@ export class UartAsh extends EventEmitter {
 
         console.error(`ASH disconnected: ${EzspStatus[error]} | NCP status: ${EzspStatus[this.ncpError]}`);
         
-        this.emit(AshEvents.hostError, error);
-
         return EzspStatus.HOST_FATAL_ERROR;
     }
 
@@ -1407,8 +1417,6 @@ export class UartAsh extends EventEmitter {
         this.ncpError = error;
 
         console.error(`ASH disconnected | NCP status: ${EzspStatus[this.ncpError]}`);
-
-        this.emit(AshEvents.ncpError, error);
 
         return EzspStatus.ASH_NCP_FATAL_ERROR;
     }
