@@ -437,17 +437,14 @@ class ZStackAdapter extends Adapter {
                 let doAssocRemove = false;
                 if (!assocRemove && dataConfirmResult === ZnpCommandStatus.MAC_TRANSACTION_EXPIRED &&
                     dataRequestAttempt >= 1 && this.supportsAssocRemove()) {
-                    /* istanbul ignore else */
-                    if (!process.env['DISABLE_ASSOC_GET']) {
-                        const match =  await this.znp.request(
-                            Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
-                        );
-    
-                        if (match.payload.nwkaddr !== 0xFFFE && match.payload.noderelation !== 255) {
-                            doAssocRemove = true;
-                            assocRestore =
-                                {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation};
-                        }
+                    const match =  await this.znp.request(
+                        Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
+                    );
+
+                    if (match.payload.nwkaddr !== 0xFFFE && match.payload.noderelation !== 255) {
+                        doAssocRemove = true;
+                        assocRestore =
+                            {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation};
                     }
 
                     assocRemove = true;
@@ -507,24 +504,20 @@ class ZStackAdapter extends Adapter {
                     // No response could be because the radio of the end device is turned off:
                     // Sometimes the coordinator does not properly set the PENDING flag.
                     // Try to rewrite the device entry in the association table, this fixes it sometimes.
-                    /* istanbul ignore else */
-                    if (!process.env['DISABLE_ASSOC_GET']) {
-                        const match =  await this.znp.request(
-                            Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
+                    const match =  await this.znp.request(
+                        Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
+                    );
+                    debug(`Response timeout recovery: Node relation ${
+                        match.payload.noderelation} (${ieeeAddr} / ${match.payload.nwkaddr})`);
+                    if (this.supportsAssocAdd() && this.supportsAssocRemove() &&
+                        match.payload.nwkaddr !== 0xFFFE && match.payload.noderelation == 1
+                    ) {
+                        debug(`Response timeout recovery: Rewrite association table entry (${ieeeAddr})`);
+                        await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
+                        await this.znp.request(Subsystem.UTIL, 'assocAdd',
+                            {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation}
                         );
-                        debug(`Response timeout recovery: Node relation ${
-                            match.payload.noderelation} (${ieeeAddr} / ${match.payload.nwkaddr})`);
-                        if (this.supportsAssocAdd() && this.supportsAssocRemove() &&
-                            match.payload.nwkaddr !== 0xFFFE && match.payload.noderelation == 1
-                        ) {
-                            debug(`Response timeout recovery: Rewrite association table entry (${ieeeAddr})`);
-                            await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
-                            await this.znp.request(Subsystem.UTIL, 'assocAdd',
-                                {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation}
-                            );
-                        }
                     }
-
                     // No response could be of invalid route, e.g. when message is send to wrong parent of end device.
                     await this.discoverRoute(networkAddress);
                     return this.sendZclFrameToEndpointInternal(
