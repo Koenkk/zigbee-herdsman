@@ -414,13 +414,13 @@ export class EmberAdapter extends Adapter {
     private readonly ezsp: Ezsp;
     private version: {ezsp: number, revision: string} & EmberVersion;
 
-    private requestQueue: EmberRequestQueue;
-    private oneWaitress: EmberOneWaitress;
+    private readonly requestQueue: EmberRequestQueue;
+    private readonly oneWaitress: EmberOneWaitress;
     /** Periodically retrieve counters then clear them. */
     private watchdogCountersHandle: NodeJS.Timeout;
 
     /** Hold ZDO request in process. */
-    private zdoRequestBuffalo: EzspBuffalo;
+    private readonly zdoRequestBuffalo: EzspBuffalo;
     /** Sequence number used for ZDO requests. static uint8_t  */
     private zdoRequestSequence: number;
     /** Default radius used for broadcast ZDO requests. uint8_t */

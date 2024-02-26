@@ -281,15 +281,15 @@ export class UartAsh extends EventEmitter {
     public ncpHasCallbacks: boolean;
 
     /** Transmit buffers */
-    private txPool: EzspBuffer[];
-    public txQueue: EzspQueue;
-    public reTxQueue: EzspQueue;
-    public txFree: EzspFreeList;
+    private readonly txPool: EzspBuffer[];
+    public readonly txQueue: EzspQueue;
+    public readonly reTxQueue: EzspQueue;
+    public readonly txFree: EzspFreeList;
 
     /** Receive buffers */
-    private rxPool: EzspBuffer[];
-    public rxQueue: EzspQueue;
-    public rxFree: EzspFreeList;
+    private readonly rxPool: EzspBuffer[];
+    public readonly rxQueue: EzspQueue;
+    public readonly rxFree: EzspFreeList;
 
     constructor(options: SerialPortOptions) {
         super();
@@ -365,8 +365,6 @@ export class UartAsh extends EventEmitter {
     private initVariables(): void {
         this.closing = false;
 
-        this.serialPort = null;
-        this.socketPort = null;
         this.writer = null;
         this.parser = null;
         this.txSHBuffer = Buffer.alloc(SH_TX_BUFFER_LEN);
@@ -474,11 +472,9 @@ export class UartAsh extends EventEmitter {
      * NOTE: This is the only function that throws/rejects in the ASH layer (caught by resetNcp and turned into an EzspStatus).
      */
     private async initPort(): Promise<void> {
-        if (!SocketPortUtils.isTcpPath(this.portOptions.path)) {
-            if (this.serialPort != null) {
-                this.serialPort.close();
-            }
+        await this.closePort();// will do nothing if nothing's open
 
+        if (!SocketPortUtils.isTcpPath(this.portOptions.path)) {
             const serialOpts = {
                 path: this.portOptions.path,
                 baudRate: typeof this.portOptions.baudRate === 'number' ? this.portOptions.baudRate : 115200, 
@@ -503,7 +499,7 @@ export class UartAsh extends EventEmitter {
                 serialOpts.binding = this.portOptions.binding;
             }
 
-            debug(`Opening SerialPort with ${JSON.stringify(serialOpts)}`);
+            debug(`Opening serial port with ${JSON.stringify(serialOpts)}`);
             this.serialPort = new SerialPort(serialOpts);
 
             this.writer = new AshWriter({highWaterMark: CONFIG_HIGHWATER_MARK});
@@ -515,7 +511,7 @@ export class UartAsh extends EventEmitter {
 
             try {
                 await this.serialPort.asyncOpen();
-                debug('Serialport opened');
+                debug('Serial port opened');
 
                 this.serialPort.once('close', this.onPortClose.bind(this));
                 this.serialPort.on('error', this.onPortError.bind(this));
@@ -525,10 +521,6 @@ export class UartAsh extends EventEmitter {
                 throw error;
             }
         } else {
-            if (this.socketPort != null) {
-                this.socketPort.destroy();
-            }
-
             const info = SocketPortUtils.parseTcpPath(this.portOptions.path);
             debug(`Opening TCP socket with ${info.host}:${info.port}`);
 
@@ -675,14 +667,24 @@ export class UartAsh extends EventEmitter {
         this.closing = true;
 
         this.printCounters();
+        await this.closePort();
+        this.initVariables();
 
+        console.log(`======== ASH stopped ========`);
+    }
+
+    /**
+     * Close port and remove listeners.
+     * Does nothing if port not defined/open.
+     */
+    public async closePort(): Promise<void> {
         if (this.serialPort?.isOpen) {
             try {
                 await this.serialPort.asyncFlushAndClose();
 
                 debug(`Serial port closed.`);
             } catch (err) {
-                debug(`Failed to close serial port ${err}.`);
+                console.error(`Failed to close serial port ${err}.`);
             }
 
             this.serialPort.removeAllListeners();
@@ -692,9 +694,6 @@ export class UartAsh extends EventEmitter {
 
             debug(`Socket port closed.`);
         }
-
-        this.initVariables();
-        console.log(`======== ASH stopped ========`);
     }
 
     /**
@@ -726,6 +725,8 @@ export class UartAsh extends EventEmitter {
 
             return EzspStatus.SUCCESS;
         } catch (err) {
+            console.error(`Failed to init port with error ${err}`);
+
             this.hostError = status;
 
             return EzspStatus.HOST_FATAL_ERROR;
