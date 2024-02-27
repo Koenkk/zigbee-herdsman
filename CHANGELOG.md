@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.34.9](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.8...v0.34.9) (2024-02-27)
+
+
+### Bug Fixes
+
+* EZSP: fix pairing via routers not possible ([#938](https://github.com/Koenkk/zigbee-herdsman/issues/938)) ([b004cf8](https://github.com/Koenkk/zigbee-herdsman/commit/b004cf827da04eb78e7658776bd2726289797b16))
+
 ## [0.34.8](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.7...v0.34.8) (2024-02-26)
 
 
