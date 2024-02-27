@@ -5029,6 +5029,17 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    clipsalWiserFanSwitchConfigurationCluster: {
+        ID: 0xFC04,
+        manufacturerCode: ManufacturerCode.SCHNEIDER,
+        attributes: {
+            SwitchIndication: {ID: 0x0002, type: DataType.uint8},
+            SwitchOrientation: {ID: 0x0060, type: DataType.uint8},
+
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     sprutDevice: {
         ID: 26112,
         manufacturerCode: 26214,
