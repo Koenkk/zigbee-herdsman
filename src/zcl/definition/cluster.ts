@@ -5033,8 +5033,8 @@ const Cluster: {
         ID: 0xFC04,
         manufacturerCode: ManufacturerCode.SCHNEIDER,
         attributes: {
-            switchIndication: {ID: 0x0002, type: DataType.uint8},
-	        switchOrientation: {ID: 0x0060, type: DataType.uint8},
+			switchIndication: {ID: 0x0002, type: DataType.uint8},
+			switchOrientation: {ID: 0x0060, type: DataType.uint8},
 
         },
         commands: {},
