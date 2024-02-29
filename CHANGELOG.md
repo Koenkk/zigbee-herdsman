@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.35.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.9...v0.35.0) (2024-02-29)
+
+
+### Features
+
+* Add manuSpecificSchneiderFanSwitchConfiguration ([#937](https://github.com/Koenkk/zigbee-herdsman/issues/937)) ([adcfd61](https://github.com/Koenkk/zigbee-herdsman/commit/adcfd61699833ac1aba9ffde62e441a11ac5e60c))
+
 ## [0.34.9](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.8...v0.34.9) (2024-02-27)
 
 
