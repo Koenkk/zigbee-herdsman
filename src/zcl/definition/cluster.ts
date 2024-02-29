@@ -5029,6 +5029,16 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    manuSpecificSchneiderFanSwitchConfiguration: {
+        ID: 0xFC04,
+        manufacturerCode: ManufacturerCode.SCHNEIDER,
+        attributes: {
+            ledIndication: {ID: 0x0002, type: DataType.uint8},
+            switchOrientation: {ID: 0x0060, type: DataType.uint8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     sprutDevice: {
         ID: 26112,
         manufacturerCode: 26214,
