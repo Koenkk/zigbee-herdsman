@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.35.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.35.0...v0.35.1) (2024-03-01)
+
+
+### Bug Fixes
+
+* Refactor names to follow convention in SchneiderSwitch cluster ([#942](https://github.com/Koenkk/zigbee-herdsman/issues/942)) ([91190b2](https://github.com/Koenkk/zigbee-herdsman/commit/91190b2c42f6738e326221f5e10348561df84864))
+
 ## [0.35.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.34.9...v0.35.0) (2024-02-29)
 
 
