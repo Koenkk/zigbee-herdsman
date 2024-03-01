@@ -5015,7 +5015,7 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
-    clipsalWiserSwitchConfigurationClusterServer: {
+    manuSpecificSchneiderLightSwitchConfiguration: {
         ID: 0xFF17,
         manufacturerCode: ManufacturerCode.SCHNEIDER,
         attributes: {
