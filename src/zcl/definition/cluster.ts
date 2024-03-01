@@ -5019,7 +5019,7 @@ const Cluster: {
         ID: 0xFF17,
         manufacturerCode: ManufacturerCode.SCHNEIDER,
         attributes: {
-            SwitchIndication: {ID: 0x0000, type: DataType.enum8},
+            ledIndication: {ID: 0x0000, type: DataType.enum8},
             UpSceneID: {ID: 0x0010, type: DataType.uint8},
             UpGroupID: {ID: 0x0011, type: DataType.uint16},
             DownSceneID: {ID: 0x0020, type: DataType.uint8},
@@ -5034,7 +5034,7 @@ const Cluster: {
         manufacturerCode: ManufacturerCode.SCHNEIDER,
         attributes: {
             ledIndication: {ID: 0x0002, type: DataType.uint8},
-            switchOrientation: {ID: 0x0060, type: DataType.uint8},
+            ledOrientation: {ID: 0x0060, type: DataType.uint8},
         },
         commands: {},
         commandsResponse: {},
