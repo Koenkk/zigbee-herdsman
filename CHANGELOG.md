@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.35.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.35.1...v0.35.2) (2024-03-02)
+
+
+### Bug Fixes
+
+* Ember: skip port re-init on reset retry ([#945](https://github.com/Koenkk/zigbee-herdsman/issues/945)) ([2a3a98b](https://github.com/Koenkk/zigbee-herdsman/commit/2a3a98beea9b3314dbb5fd976e3a6234b2bb264e))
+
 ## [0.35.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.35.0...v0.35.1) (2024-03-01)
 
 
