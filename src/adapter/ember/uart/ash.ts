@@ -318,7 +318,7 @@ export class UartAsh extends EventEmitter {
             return false;
         }
 
-        return this.serialPort != null ? this.serialPort.isOpen : !this.socketPort?.closed;
+        return SocketPortUtils.isTcpPath(this.portOptions.path) ? !this.socketPort?.closed : !!this.serialPort?.isOpen;
     }
 
     /**
@@ -365,8 +365,6 @@ export class UartAsh extends EventEmitter {
     private initVariables(): void {
         this.closing = false;
 
-        this.writer = null;
-        this.parser = null;
         this.txSHBuffer = Buffer.alloc(SH_TX_BUFFER_LEN);
         this.rxSHBuffer = Buffer.alloc(SH_RX_BUFFER_LEN);
         this.ackTimer = 0;
@@ -627,7 +625,7 @@ export class UartAsh extends EventEmitter {
      * - EzspStatus.ASH_NCP_FATAL_ERROR)
      */
     public async start(): Promise<EzspStatus> {
-        if (this.closing || (this.flags & Flag.CONNECTED)) {
+        if (!this.portOpen || (this.flags & Flag.CONNECTED)) {
             return EzspStatus.ERROR_INVALID_CALL;
         }
 
@@ -719,7 +717,9 @@ export class UartAsh extends EventEmitter {
 
         // ask ncp to reset itself using RST frame
         try {
-            await this.initPort();
+            if (!this.portOpen) {
+                await this.initPort();
+            }
 
             this.flags = Flag.RST | Flag.CAN;
 
