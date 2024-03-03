@@ -16,8 +16,8 @@ import {Queue, Waitress, Wait, RealpathSync} from '../../../utils';
 import * as Models from "../../../models";
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
-import {EZSPAdapterBackup} from './backup';
 import {EZSPZDOResponseFrameData} from '../driver/ezsp';
+import {LoggerStub} from "../../../controller/logger-stub";
 
 
 const autoDetectDefinitions = [
@@ -38,14 +38,14 @@ class EZSPAdapter extends Adapter {
     private driver: Driver;
     private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
     private interpanLock: boolean;
-    private backupMan: EZSPAdapterBackup;
     private queue: Queue;
     private closing: boolean;
 
 
     public constructor(networkOptions: NetworkOptions,
-        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions,
+        logger?: LoggerStub) {
+        super(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
 
         this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
@@ -57,12 +57,12 @@ class EZSPAdapter extends Adapter {
         debug(`Adapter concurrent: ${concurrent}`);
         this.queue = new Queue(concurrent);
 
-        this.driver = new Driver(this.serialPortOptions, this.networkOptions, this.greenPowerGroup);
+        this.driver = new Driver(this.serialPortOptions, this.networkOptions, this.greenPowerGroup,
+            backupPath, this.logger);
         this.driver.on('close', this.onDriverClose.bind(this));
         this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
         this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
         this.driver.on('incomingMessage', this.processMessage.bind(this));
-        this.backupMan = new EZSPAdapterBackup(this.driver, backupPath);
     }
 
     private async processMessage(frame: EmberIncomingMessage): Promise<void> {
@@ -630,12 +630,12 @@ class EZSPAdapter extends Adapter {
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return (this.driver?.ezsp?.ezspV < 13);
+        return true;
     }
 
     public async backup(): Promise<Models.Backup> {
         if (this.driver.ezsp.isInitialized()) {
-            return this.backupMan.createBackup();
+            return this.driver.backupMan.createBackup();
         }
     }
 
