@@ -509,7 +509,7 @@ export class UartAsh extends EventEmitter {
 
             try {
                 await this.serialPort.asyncOpen();
-                debug('Serial port opened');
+                debug(`Serial port opened: ${JSON.stringify(await this.serialPort.asyncGet())}`);
 
                 this.serialPort.once('close', this.onPortClose.bind(this));
                 this.serialPort.on('error', this.onPortError.bind(this));
@@ -631,10 +631,14 @@ export class UartAsh extends EventEmitter {
 
         console.log(`======== ASH starting ========`);
 
-        if (this.serialPort != null) {
-            this.serialPort.flush();// clear read/write buffers
-        } else {
-            // XXX: Socket equiv?
+        try {
+            if (this.serialPort != null) {
+                await this.serialPort.asyncFlush();// clear read/write buffers
+            } else {
+                // XXX: Socket equiv?
+            }
+        } catch (err) {
+            console.error(`Error while flushing before start: ${err}`);
         }
 
         this.sendExec();
