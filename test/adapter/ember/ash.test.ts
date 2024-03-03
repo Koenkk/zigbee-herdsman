@@ -183,6 +183,8 @@ describe('Ember UART ASH Protocol', () => {
         expect(uartAsh.portOpen).toBeTruthy();
 
         //@ts-expect-error private
+        jest.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(jest.fn());
+        //@ts-expect-error private
         uartAsh.serialPort.port.emitData(Buffer.from(RECD_RSTACK_BYTES));
         const startResult = (await uartAsh.start());
 
@@ -222,6 +224,8 @@ describe('Ember UART ASH Protocol', () => {
         badCrcRSTACK[badCrcRSTACK.length - 2] = 0;// throw CRC low
 
         //@ts-expect-error private
+        jest.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(jest.fn());
+        //@ts-expect-error private
         uartAsh.serialPort.port.emitData(badCrcRSTACK);
         const startResult = (await uartAsh.start());
 
@@ -239,6 +243,8 @@ describe('Ember UART ASH Protocol', () => {
     describe('In CONNECTED state...', () => {
         beforeEach(async () => {
             const resetResult = (await uartAsh.resetNcp());
+            //@ts-expect-error private
+            jest.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(jest.fn());
             //@ts-expect-error private
             uartAsh.serialPort.port.emitData(Buffer.from(RECD_RSTACK_BYTES));
             const startResult = (await uartAsh.start());
