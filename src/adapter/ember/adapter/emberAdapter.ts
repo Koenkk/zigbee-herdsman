@@ -451,13 +451,13 @@ export class EmberAdapter extends Adapter {
         // TODO config
         this.concentratorType = EMBER_HIGH_RAM_CONCENTRATOR;
 
-        // TODO: config dispatch interval, tested at 100, 80, 60
-        this.requestQueue = new EmberRequestQueue(60);
+        const delay = (typeof this.adapterOptions.delay === 'number') ? Math.min(Math.max(this.adapterOptions.delay, 5), 60) : 5;
+
+        this.requestQueue = new EmberRequestQueue(delay);
         this.oneWaitress = new EmberOneWaitress();
         this.zdoRequestBuffalo = new EzspBuffalo(Buffer.alloc(EZSP_MAX_FRAME_LENGTH));
 
-        // TODO: config tick interval, tested at 500, 300, 100, 60, 30, all work fine and only really noticeable with interviews
-        this.ezsp = new Ezsp(60, serialPortOptions);
+        this.ezsp = new Ezsp(delay, serialPortOptions);
 
         this.ezsp.on(EzspEvents.STACK_STATUS, this.onStackStatus.bind(this));
 
@@ -2331,40 +2331,26 @@ export class EmberAdapter extends Adapter {
 
     /**
      * ZDO
-     * @brief Send a request to remove a binding entry with the specified
-     * contents from the specified node.
+     * Common logic used by `emberBindRequest` & `emberUnbindRequest`.
+     * 
+     * @param target 
+     * @param bindClusterId 
+     * @param source 
+     * @param sourceEndpoint 
+     * @param clusterId 
+     * @param type 
+     * @param destination 
+     * @param groupAddress 
+     * @param destinationEndpoint 
+     * @param options 
      *
-     * @param target          The node on which the binding will be removed.
-     * @param source          The source EUI64 in the binding entry.
-     * @param sourceEndpoint  The source endpoint in the binding entry.
-     * @param clusterId       The cluster ID in the binding entry.
-     * @param type            The type of binding, either ::UNICAST_BINDING,
-     *  ::MULTICAST_BINDING, or ::UNICAST_MANY_TO_ONE_BINDING.
-     *  ::UNICAST_MANY_TO_ONE_BINDING is an Ember-specific extension
-     *  and should be used only when the target is an Ember device.
-     * @param destination     The destination EUI64 in the binding entry for the
-     *   ::UNICAST_BINDING or ::UNICAST_MANY_TO_ONE_BINDING.
-     * @param groupAddress    The group address for the ::MULTICAST_BINDING.
-     * @param destinationEndpoint  The destination endpoint in the binding entry for
-     *   the ::UNICAST_BINDING or ::UNICAST_MANY_TO_ONE_BINDING.
-     * @param options         The options to use when sending the request. See
-     * emberSendUnicast() for a description.
-     *
-     * @return An ::EmberStatus value.
+     * @returns An ::EmberStatus value.
      * - ::EMBER_SUCCESS
      * - ::EMBER_NO_BUFFERS
-     * _ ::EMBER_NETWORK_DOWN
+     * - ::EMBER_NETWORK_DOWN
      * - ::EMBER_NETWORK_BUSY
-     * @param target
-     * @param bindClusterId 
-     * @param source
-     * @param sourceEndpoint uint8_t
-     * @param clusterId uint16_t
-     * @param type uint8_t
-     * @param destination
-     * @param groupAddress uint16_t
-     * @param destinationEndpoint uint8_t
-     * @param options
+     * @returns APS frame created for the request
+     * @returns The tag used on the message.
      */
     private async emberSendZigDevBindRequest(target: EmberNodeId, bindClusterId: number, source: EmberEUI64, sourceEndpoint: number,
         clusterId: number, type: number, destination: EmberEUI64, groupAddress: EmberMulticastId, destinationEndpoint: number,
@@ -2412,8 +2398,13 @@ export class EmberAdapter extends Adapter {
      * @param options  The options to use when sending the request. See
      * emberSendUnicast() for a description.
      *
-     * @return An EmberStatus value. ::EMBER_SUCCESS, ::EMBER_NO_BUFFERS,
-     * ::EMBER_NETWORK_DOWN or ::EMBER_NETWORK_BUSY.
+     * @returns An ::EmberStatus value.
+     * - ::EMBER_SUCCESS
+     * - ::EMBER_NO_BUFFERS
+     * - ::EMBER_NETWORK_DOWN
+     * - ::EMBER_NETWORK_BUSY
+     * @returns APS frame created for the request
+     * @returns The tag used on the message.
      */
     private async emberBindRequest(target: EmberNodeId, source: EmberEUI64, sourceEndpoint: number, clusterId: number, type: number,
         destination: EmberEUI64, groupAddress: EmberMulticastId, destinationEndpoint: number, options: EmberApsOption)
@@ -2455,11 +2446,13 @@ export class EmberAdapter extends Adapter {
      * @param options         The options to use when sending the request. See
      * emberSendUnicast() for a description.
      *
-     * @return An ::EmberStatus value.
+     * @returns An ::EmberStatus value.
      * - ::EMBER_SUCCESS
      * - ::EMBER_NO_BUFFERS
-     * _ ::EMBER_NETWORK_DOWN
+     * - ::EMBER_NETWORK_DOWN
      * - ::EMBER_NETWORK_BUSY
+     * @returns APS frame created for the request
+     * @returns The tag used on the message.
      */
     private async emberUnbindRequest(target: EmberNodeId, source: EmberEUI64, sourceEndpoint: number, clusterId: number, type: number,
         destination: EmberEUI64, groupAddress: EmberMulticastId, destinationEndpoint: number, options: EmberApsOption)
