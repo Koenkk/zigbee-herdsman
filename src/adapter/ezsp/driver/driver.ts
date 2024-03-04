@@ -884,8 +884,13 @@ export class Driver extends EventEmitter {
         if (this.ezsp.ezspV < 13) {
             return this.ezsp.execCommand('getKey', {keyType});
         } else {
+            // Mapping EmberKeyType to SecManKeyType (ezsp13)
+            const SecManKeyType = {
+                [EmberKeyType.TRUST_CENTER_LINK_KEY]: 2,
+                [EmberKeyType.CURRENT_NETWORK_KEY]: 1,
+            }
             const smc = new EmberSecurityManagerContext();
-            smc.type = keyType;
+            smc.type = SecManKeyType[keyType as number];
             smc.index = 0;
             smc.derivedType = EmberDerivedKeyType.NONE;
             smc.eui64 = new EmberEUI64('0x0000000000000000');
