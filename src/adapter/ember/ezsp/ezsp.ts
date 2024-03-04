@@ -290,7 +290,7 @@ export class Ezsp extends EventEmitter {
     constructor(tickInterval: number, options: SerialPortOptions) {
         super();
 
-        this.tickInterval = tickInterval || 60;
+        this.tickInterval = tickInterval || 5;
         this.frameContents = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
         this.buffalo = new EzspBuffalo(this.frameContents);
 

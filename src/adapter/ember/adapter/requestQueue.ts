@@ -31,7 +31,7 @@ export class EmberRequestQueue {
     private priorityQueue: EmberRequestQueueEntry[];
 
     constructor(dispatchInterval: number) {
-        this.dispatchInterval = dispatchInterval || 60;
+        this.dispatchInterval = dispatchInterval || 5;
         this.dispatching = false;
         this.queue = [];
         this.priorityQueue = [];
