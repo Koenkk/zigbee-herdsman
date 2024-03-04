@@ -888,7 +888,7 @@ export class Driver extends EventEmitter {
             const SecManKeyType = {
                 [EmberKeyType.TRUST_CENTER_LINK_KEY]: 2,
                 [EmberKeyType.CURRENT_NETWORK_KEY]: 1,
-            }
+            };
             const smc = new EmberSecurityManagerContext();
             smc.type = SecManKeyType[keyType as number];
             smc.index = 0;
