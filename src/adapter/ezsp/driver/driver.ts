@@ -222,6 +222,9 @@ export class Driver extends EventEmitter {
         };
 
         if (await this.needsToBeInitialised(this.nwkOpt)) {
+            // need to check the backup
+            const restore = await this.needsToBeRestore(this.nwkOpt);
+
             const res = await this.ezsp.execCommand('networkState');
 
             debug.log(`Network state ${res.status}`);
@@ -234,14 +237,15 @@ export class Driver extends EventEmitter {
                 console.assert(st == EmberStatus.NETWORK_DOWN, `leaveNetwork returned unexpected status: ${st}`);
             }
 
-            // need to check the backup
-            if (await this.needsToBeRestore(this.nwkOpt)) {
+            if (restore) {
                 // restore
-                await this.restoreNetwork();
+                debug.log("Restore network from backup");
+                await this.formNetwork(true);
                 result = 'restored';
             } else {
                 // reset
-                await this.formNetwork();
+                debug.log("Form network");
+                await this.formNetwork(false);
                 result = 'reset';
             }
         }
@@ -292,51 +296,39 @@ export class Driver extends EventEmitter {
         return !valid;
     }
 
-    private async formNetwork(): Promise<void> {
-        let status;
-        status = (await this.ezsp.execCommand('clearKeyTable')).status;
-        console.assert(status == EmberStatus.SUCCESS,
-            `Command clearKeyTable returned unexpected state: ${status}`);
+    private async formNetwork(restore: boolean): Promise<void> {
+        let backup;
         await this.ezsp.execCommand('clearTransientLinkKeys');
 
-        const panID = this.nwkOpt.panID;
-        const extendedPanID = this.nwkOpt.extendedPanID;
-        const initial_security_state: EmberInitialSecurityState = ember_security(Buffer.from(this.nwkOpt.networkKey));
-        status = await this.ezsp.setInitialSecurityState(initial_security_state);
+        let initial_security_state: EmberInitialSecurityState;
+        if (restore) {
+            backup = await this.backupMan.getStoredBackup();
+            initial_security_state = ember_security(backup.networkOptions.networkKey);
+            initial_security_state.bitmask |= EmberInitialSecurityBitmask.NO_FRAME_COUNTER_RESET;
+            initial_security_state.networkKeySequenceNumber = backup.networkKeyInfo.sequenceNumber;
+            initial_security_state.preconfiguredKey.contents = backup.ezsp.hashed_tclk;
+        } else {
+            await this.ezsp.execCommand('clearKeyTable');
+            initial_security_state = ember_security(Buffer.from(this.nwkOpt.networkKey));
+        }
+        await this.ezsp.setInitialSecurityState(initial_security_state);
+            
         const parameters: EmberNetworkParameters = new EmberNetworkParameters();
-        parameters.panId = panID;
-        parameters.extendedPanId = Buffer.from(extendedPanID);
         parameters.radioTxPower = 5;
-        parameters.radioChannel = this.nwkOpt.channelList[0];
         parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
         parameters.nwkManagerId = 0;
         parameters.nwkUpdateId = 0;
         parameters.channels = 0x07FFF800; // all channels
-
-        await this.ezsp.formNetwork(parameters);
-        await this.ezsp.setValue(EzspValueId.VALUE_STACK_TOKEN_WRITING, 1);
-    }
-
-    private async restoreNetwork(): Promise<void> {
-        const backup = await this.backupMan.getStoredBackup();
-        
-        await this.ezsp.execCommand('clearTransientLinkKeys');
-
-        const initial_security_state: EmberInitialSecurityState = ember_security(backup.networkOptions.networkKey);
-        initial_security_state.bitmask |= EmberInitialSecurityBitmask.NO_FRAME_COUNTER_RESET;
-        initial_security_state.networkKeySequenceNumber = backup.networkKeyInfo.sequenceNumber;
-        initial_security_state.preconfiguredKey.contents = backup.ezsp.hashed_tclk;
-        
-        await this.ezsp.setInitialSecurityState(initial_security_state);
-        const parameters: EmberNetworkParameters = new EmberNetworkParameters();
-        parameters.panId = backup.networkOptions.panId;
-        parameters.extendedPanId = backup.networkOptions.extendedPanId;
-        parameters.radioTxPower = 5;
-        parameters.radioChannel = this.nwkOpt.channelList[0];
-        parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
-        parameters.nwkManagerId = 0;
-        parameters.nwkUpdateId = backup.networkUpdateId;
-        parameters.channels = 0x07FFF800; // all channels
+        if (restore) {
+            parameters.panId = backup.networkOptions.panId;
+            parameters.extendedPanId = backup.networkOptions.extendedPanId;
+            parameters.radioChannel = backup.logicalChannel;
+            parameters.nwkUpdateId = backup.networkUpdateId;
+        } else {
+            parameters.radioChannel = this.nwkOpt.channelList[0];
+            parameters.panId = this.nwkOpt.panID;
+            parameters.extendedPanId = Buffer.from(this.nwkOpt.extendedPanID);    
+        }
 
         await this.ezsp.formNetwork(parameters);
         await this.ezsp.setValue(EzspValueId.VALUE_STACK_TOKEN_WRITING, 1);
