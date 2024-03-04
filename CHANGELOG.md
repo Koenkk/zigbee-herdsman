@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.35.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.35.2...v0.35.3) (2024-03-04)
+
+
+### Bug Fixes
+
+* Cleanup SerialPort async wrappers ([#949](https://github.com/Koenkk/zigbee-herdsman/issues/949)) ([cbd68df](https://github.com/Koenkk/zigbee-herdsman/commit/cbd68dfc3c195ae2158a06277497714e7252924e))
+* Ember: Drastically lower default requests & callbacks processing delay & use existing setting for customization. ([#951](https://github.com/Koenkk/zigbee-herdsman/issues/951)) ([810266a](https://github.com/Koenkk/zigbee-herdsman/commit/810266a34c00c4c44d27ee51c4dfc10dd7f38649))
+* **ignore:** update dependencies ([#947](https://github.com/Koenkk/zigbee-herdsman/issues/947)) ([795c944](https://github.com/Koenkk/zigbee-herdsman/commit/795c9446783e7ecd06a1d03e912e09a9e5b01228))
+
 ## [0.35.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.35.1...v0.35.2) (2024-03-02)
 
 
