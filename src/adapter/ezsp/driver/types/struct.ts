@@ -31,7 +31,7 @@ export class EzspStruct {
 }
 
 export class EmberNetworkParameters extends EzspStruct {
-    public extendedPanId: number[];
+    public extendedPanId: Buffer;
     public panId: number;
     public radioTxPower: number;
     public radioChannel: number;
