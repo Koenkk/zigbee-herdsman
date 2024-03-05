@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.36.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.35.3...v0.36.0) (2024-03-05)
+
+
+### Features
+
+* EZSP: Network restore from backup ([#950](https://github.com/Koenkk/zigbee-herdsman/issues/950)) ([1260ff1](https://github.com/Koenkk/zigbee-herdsman/commit/1260ff16e1c4f805480dd444f04afc4959d71a4e))
+
+
+### Bug Fixes
+
+* Ember: comments/logging cleanups. ([#952](https://github.com/Koenkk/zigbee-herdsman/issues/952)) ([52a0ff2](https://github.com/Koenkk/zigbee-herdsman/commit/52a0ff2a5e98699535c812a3cfd68ac7b0ea3b40))
+
 ## [0.35.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.35.2...v0.35.3) (2024-03-04)
 
 
