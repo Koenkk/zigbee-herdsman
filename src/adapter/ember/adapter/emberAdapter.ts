@@ -2198,7 +2198,7 @@ export class EmberAdapter extends Adapter {
         this.zdoRequestBuffalo.writeUInt8(outClusters.length);
         this.zdoRequestBuffalo.writeListUInt16(outClusters);
 
-        debug(`~~~> [ZDO MATCH DESCRIPTOR target=${target} profile=${profile} inClusters=${inClusters} outClusters=${outClusters}]`);
+        debug(`~~~> [ZDO MATCH_DESCRIPTORS_REQUEST target=${target} profile=${profile} inClusters=${inClusters} outClusters=${outClusters}]`);
         return this.sendZDORequestBuffer(target, MATCH_DESCRIPTORS_REQUEST, options);
     }
 
@@ -2227,7 +2227,7 @@ export class EmberAdapter extends Adapter {
         this.zdoRequestBuffalo.writeUInt8(reportKids ? 1 : 0);
         this.zdoRequestBuffalo.writeUInt8(childStartIndex);
 
-        debug(`~~~> [ZDO NETWORK ADDRESS target=${target} reportKids=${reportKids} childStartIndex=${childStartIndex}]`);
+        debug(`~~~> [ZDO NETWORK_ADDRESS_REQUEST target=${target} reportKids=${reportKids} childStartIndex=${childStartIndex}]`);
         return this.sendZDORequestBuffer(EMBER_RX_ON_WHEN_IDLE_BROADCAST_ADDRESS, NETWORK_ADDRESS_REQUEST, EmberApsOption.SOURCE_EUI64);
     }
 
@@ -2249,15 +2249,15 @@ export class EmberAdapter extends Adapter {
      * - ::EMBER_NETWORK_DOWN
      * - ::EMBER_NETWORK_BUSY
      */
-    private async emberIeeeAddressRequest(target: EmberNodeId, reportKids: boolean, childStartIndex: number,
-        options: EmberApsOption): Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
+    private async emberIeeeAddressRequest(target: EmberNodeId, reportKids: boolean, childStartIndex: number, options: EmberApsOption)
+        : Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
         this.zdoRequestBuffalo.setPosition(ZDO_MESSAGE_OVERHEAD);
 
         this.zdoRequestBuffalo.writeUInt16(target);
         this.zdoRequestBuffalo.writeUInt8(reportKids ? 1 : 0);
         this.zdoRequestBuffalo.writeUInt8(childStartIndex);
 
-        debug(`~~~> [ZDO IEEE ADDRESS target=${target} reportKids=${reportKids} childStartIndex=${childStartIndex}]`);
+        debug(`~~~> [ZDO IEEE_ADDRESS_REQUEST target=${target} reportKids=${reportKids} childStartIndex=${childStartIndex}]`);
         return this.sendZDORequestBuffer(target, IEEE_ADDRESS_REQUEST, options);
     }
 
@@ -2277,7 +2277,7 @@ export class EmberAdapter extends Adapter {
         this.zdoRequestBuffalo.writeUInt8(reportKids ? 1 : 0);
         this.zdoRequestBuffalo.writeUInt8(childStartIndex);
 
-        debug(`~~~> [ZDO IEEE ADDRESS targetNodeIdOfRequest=${targetNodeIdOfRequest} discoveryNodeId=${discoveryNodeId} `
+        debug(`~~~> [ZDO IEEE_ADDRESS_REQUEST targetNodeIdOfRequest=${targetNodeIdOfRequest} discoveryNodeId=${discoveryNodeId} `
             + `reportKids=${reportKids} childStartIndex=${childStartIndex}]`);
         return this.sendZDORequestBuffer(targetNodeIdOfRequest, IEEE_ADDRESS_REQUEST, options);
     }
@@ -2325,7 +2325,7 @@ export class EmberAdapter extends Adapter {
         this.zdoRequestBuffalo.writeUInt16(target);
         this.zdoRequestBuffalo.writeUInt8(targetEndpoint);
 
-        debug(`~~~> [ZDO SIMPLE DESCRIPTOR target=${target} targetEndpoint=${targetEndpoint}]`);
+        debug(`~~~> [ZDO SIMPLE_DESCRIPTOR_REQUEST target=${target} targetEndpoint=${targetEndpoint}]`);
         return this.sendZDORequestBuffer(target, SIMPLE_DESCRIPTOR_REQUEST, options);
     }
 
@@ -2409,7 +2409,7 @@ export class EmberAdapter extends Adapter {
     private async emberBindRequest(target: EmberNodeId, source: EmberEUI64, sourceEndpoint: number, clusterId: number, type: number,
         destination: EmberEUI64, groupAddress: EmberMulticastId, destinationEndpoint: number, options: EmberApsOption)
         : Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        debug(`~~~> [ZDO BIND target=${target} source=${source} sourceEndpoint=${sourceEndpoint} clusterId=${clusterId} type=${type} `
+        debug(`~~~> [ZDO BIND_REQUEST target=${target} source=${source} sourceEndpoint=${sourceEndpoint} clusterId=${clusterId} type=${type} `
             + `destination=${destination} groupAddress=${groupAddress} destinationEndpoint=${destinationEndpoint}]`);
         return this.emberSendZigDevBindRequest(
             target,
@@ -2457,7 +2457,7 @@ export class EmberAdapter extends Adapter {
     private async emberUnbindRequest(target: EmberNodeId, source: EmberEUI64, sourceEndpoint: number, clusterId: number, type: number,
         destination: EmberEUI64, groupAddress: EmberMulticastId, destinationEndpoint: number, options: EmberApsOption)
         : Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        debug(`~~~> [ZDO UNBIND target=${target} source=${source} sourceEndpoint=${sourceEndpoint} clusterId=${clusterId} type=${type} `
+        debug(`~~~> [ZDO UNBIND_REQUEST target=${target} source=${source} sourceEndpoint=${sourceEndpoint} clusterId=${clusterId} type=${type} `
             + `destination=${destination} groupAddress=${groupAddress} destinationEndpoint=${destinationEndpoint}]`);
         return this.emberSendZigDevBindRequest(
             target,
@@ -2488,7 +2488,7 @@ export class EmberAdapter extends Adapter {
      */
     private async emberActiveEndpointsRequest(target: EmberNodeId, options: EmberApsOption)
         : Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        debug(`~~~> [ZDO ACTIVE ENDPOINTS target=${target}]`);
+        debug(`~~~> [ZDO ACTIVE_ENDPOINTS_REQUEST target=${target}]`);
         return this.emberSendZigDevRequestTarget(target, ACTIVE_ENDPOINTS_REQUEST, options);
     }
 
@@ -2510,7 +2510,7 @@ export class EmberAdapter extends Adapter {
      */
     private async emberPowerDescriptorRequest(target: EmberNodeId, options: EmberApsOption)
         : Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        debug(`~~~> [ZDO POWER DESCRIPTOR target=${target}]`);
+        debug(`~~~> [ZDO POWER_DESCRIPTOR_REQUEST target=${target}]`);
         return this.emberSendZigDevRequestTarget(target, POWER_DESCRIPTOR_REQUEST, options);
     }
 
@@ -2531,7 +2531,7 @@ export class EmberAdapter extends Adapter {
      */
     private async emberNodeDescriptorRequest(target: EmberNodeId, options: EmberApsOption)
         : Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        debug(`~~~> [ZDO NODE DESCRIPTOR target=${target}]`);
+        debug(`~~~> [ZDO NODE_DESCRIPTOR_REQUEST target=${target}]`);
         return this.emberSendZigDevRequestTarget(target, NODE_DESCRIPTOR_REQUEST, options);
     }
 
@@ -2554,7 +2554,7 @@ export class EmberAdapter extends Adapter {
      */
     private async emberLqiTableRequest(target: EmberNodeId, startIndex: number, options: EmberApsOption)
         : Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        debug(`~~~> [ZDO LQI TABLE target=${target} startIndex=${startIndex}]`);
+        debug(`~~~> [ZDO LQI_TABLE_REQUEST target=${target} startIndex=${startIndex}]`);
         return this.emberTableRequest(LQI_TABLE_REQUEST, target, startIndex, options);
     }
 
@@ -2577,7 +2577,7 @@ export class EmberAdapter extends Adapter {
      */
     private async emberRoutingTableRequest(target: EmberNodeId, startIndex: number, options: EmberApsOption)
         : Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        debug(`~~~> [ZDO ROUTING TABLE target=${target} startIndex=${startIndex}]`);
+        debug(`~~~> [ZDO ROUTING_TABLE_REQUEST target=${target} startIndex=${startIndex}]`);
         return this.emberTableRequest(ROUTING_TABLE_REQUEST, target, startIndex, options);
     }
 
@@ -2601,7 +2601,7 @@ export class EmberAdapter extends Adapter {
      */
     private async emberBindingTableRequest(target: EmberNodeId, startIndex: number, options: EmberApsOption)
         : Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        debug(`~~~> [ZDO BINDING TABLE target=${target} startIndex=${startIndex}]`);
+        debug(`~~~> [ZDO BINDING_TABLE_REQUEST target=${target} startIndex=${startIndex}]`);
         return this.emberTableRequest(BINDING_TABLE_REQUEST, target, startIndex, options);
     }
 
@@ -2648,7 +2648,7 @@ export class EmberAdapter extends Adapter {
         this.zdoRequestBuffalo.writeIeeeAddr(deviceAddress);
         this.zdoRequestBuffalo.writeUInt8(leaveRequestFlags);
 
-        debug(`~~~> [ZDO LEAVE target=${target} deviceAddress=${deviceAddress} leaveRequestFlags=${leaveRequestFlags}]`);
+        debug(`~~~> [ZDO LEAVE_REQUEST target=${target} deviceAddress=${deviceAddress} leaveRequestFlags=${leaveRequestFlags}]`);
         return this.sendZDORequestBuffer(target, LEAVE_REQUEST, options);
     }
 
@@ -2676,7 +2676,7 @@ export class EmberAdapter extends Adapter {
         this.zdoRequestBuffalo.writeUInt8(duration);
         this.zdoRequestBuffalo.writeUInt8(authentication);
 
-        debug(`~~~> [ZDO PERMIT JOINING target=${target} duration=${duration} authentication=${authentication}]`);
+        debug(`~~~> [ZDO PERMIT_JOINING_REQUEST target=${target} duration=${duration} authentication=${authentication}]`);
         return this.sendZDORequestBuffer(target, PERMIT_JOINING_REQUEST, options);
     }
 
