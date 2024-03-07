@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.36.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.36.0...v0.36.1) (2024-03-07)
+
+
+### Bug Fixes
+
+* Ember: fix coordinator-only permit join ([#958](https://github.com/Koenkk/zigbee-herdsman/issues/958)) ([836f35c](https://github.com/Koenkk/zigbee-herdsman/commit/836f35c534f8f958570d3e1cf6ef8edf35bde573))
+* Ember: ZDO Match logging for req/rsp ([#956](https://github.com/Koenkk/zigbee-herdsman/issues/956)) ([8ed75ff](https://github.com/Koenkk/zigbee-herdsman/commit/8ed75ffd68366ae7b183995ececc32ffd4485820))
+
 ## [0.36.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.35.3...v0.36.0) (2024-03-05)
 
 
