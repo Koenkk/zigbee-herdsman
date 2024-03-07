@@ -3034,8 +3034,8 @@ export class EmberAdapter extends Adapter {
             }
         };
 
-        // NOTE: can't ZDO PJ on coordinator, so if network address is null or zero (coordinator), using local permit join
         if (networkAddress) {
+            // specific device that is not `Coordinator`
             return new Promise<void>((resolve, reject): void => {
                 this.requestQueue.enqueue(
                     async (): Promise<EmberStatus> => {
@@ -3070,7 +3070,7 @@ export class EmberAdapter extends Adapter {
                 );
             });
         } else {
-            // no device specified to open, open coordinator + broadcast
+            // coordinator-only, or all
             return new Promise<void>((resolve, reject): void => {
                 this.requestQueue.enqueue(
                     async (): Promise<EmberStatus> => {
@@ -3083,8 +3083,12 @@ export class EmberAdapter extends Adapter {
                             return pjStatus;
                         }
 
+                        // local permit join if `Coordinator`-only requested, else local + broadcast
                         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = (await this.emberPermitJoining(seconds, true/*broadcast*/));
+                        const [status, apsFrame, messageTag] = (await this.emberPermitJoining(
+                            seconds,
+                            (networkAddress === ZIGBEE_COORDINATOR_ADDRESS) ? false : true,
+                        ));
 
                         if (status !== EmberStatus.SUCCESS) {
                             console.error(`[ZDO] Failed permit joining request with status=${EmberStatus[status]}.`);
