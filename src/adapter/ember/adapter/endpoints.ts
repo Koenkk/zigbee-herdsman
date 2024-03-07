@@ -1,6 +1,6 @@
 import Cluster from '../../../zcl/definition/cluster';
 import {GP_ENDPOINT, GP_PROFILE_ID, HA_PROFILE_ID} from '../consts';
-import {ClusterId, ProfileId} from '../types';
+import {ClusterId, EmberMulticastId, ProfileId} from '../types';
 
 
 type FixedEndpointInfo = {
@@ -13,11 +13,13 @@ type FixedEndpointInfo = {
     /** Version of the device. uint8_t */
     deviceVersion: number,
     /** List of server clusters. */
-    inClusterList:  ClusterId[],
+    inClusterList: readonly ClusterId[],
     /** List of client clusters. */
-    outClusterList:  ClusterId[],
+    outClusterList: readonly ClusterId[],
     /** Network index for this endpoint. uint8_t */
     networkIndex: number,
+    /** Multicast group IDs to register in the multicast table */
+    multicastIds: readonly EmberMulticastId[],
 };
 
 
@@ -63,6 +65,9 @@ export const FIXED_ENDPOINTS: readonly FixedEndpointInfo[] = [
             Cluster.touchlink.ID,// 0x1000, // touchlink
         ],
         networkIndex: 0x00,
+        // Cluster spec 3.7.2.4.1: group identifier 0x0000 is reserved for the global scene used by the OnOff cluster.
+        // - IKEA sending state updates via MULTICAST(0x0000) https://github.com/Koenkk/zigbee-herdsman/issues/954
+        multicastIds: [0],
     },
     {// green power
         endpoint: GP_ENDPOINT,
@@ -76,5 +81,6 @@ export const FIXED_ENDPOINTS: readonly FixedEndpointInfo[] = [
             Cluster.greenPower.ID,// 0x0021,// Green Power
         ],
         networkIndex: 0x00,
+        multicastIds: [0x0B84],
     },
 ];

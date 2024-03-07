@@ -1884,13 +1884,15 @@ export enum EmberBindingType {
     UNUSED_BINDING      = 0,
     /** A unicast binding whose 64-bit identifier is the destination EUI64. */
     UNICAST_BINDING     = 1,
-    /** A unicast binding whose 64-bit identifier is the many-to-one
-     * destination EUI64.  Route discovery should be disabled when sending
-     * unicasts via many-to-one bindings. */
+    /**
+     * A unicast binding whose 64-bit identifier is the many-to-one destination EUI64.
+     * Route discovery should be disabled when sending unicasts via many-to-one bindings.
+     */
     MANY_TO_ONE_BINDING = 2,
-    /** A multicast binding whose 64-bit identifier is the group address. This
-     * binding can be used to send messages to the group and to receive
-     * messages sent to the group. */
+    /**
+     * A multicast binding whose 64-bit identifier is the group address.
+     * This binding can be used to send messages to the group and to receive messages sent to the group.
+     */
     MULTICAST_BINDING   = 3,
 };
 
@@ -1902,17 +1904,13 @@ export enum EmberOutgoingMessageType {
     VIA_ADDRESS_TABLE,
     /** Unicast sent using an entry in the binding table. */
     VIA_BINDING,
-    /** Multicast message.  This value is passed to emberMessageSentHandler() only.
-     * It may not be passed to emberSendUnicast(). */
+    /** Multicast message. This value is passed to emberMessageSentHandler() only. It may not be passed to emberSendUnicast(). */
     MULTICAST,
-    /** An aliased multicast message.  This value is passed to emberMessageSentHandler() only.
-     * It may not be passed to emberSendUnicast(). */
+    /** An aliased multicast message. This value is passed to emberMessageSentHandler() only. It may not be passed to emberSendUnicast(). */
     MULTICAST_WITH_ALIAS,
-    /** An aliased Broadcast message.  This value is passed to emberMessageSentHandler() only.
-     * It may not be passed to emberSendUnicast(). */
+    /** An aliased Broadcast message. This value is passed to emberMessageSentHandler() only. It may not be passed to emberSendUnicast(). */
     BROADCAST_WITH_ALIAS,
-    /** A broadcast message.  This value is passed to emberMessageSentHandler() only.
-     * It may not be passed to emberSendUnicast(). */
+    /** A broadcast message. This value is passed to emberMessageSentHandler() only. It may not be passed to emberSendUnicast(). */
     BROADCAST
 };
 

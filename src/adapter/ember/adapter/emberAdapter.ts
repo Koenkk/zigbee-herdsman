@@ -348,7 +348,7 @@ const STACK_CONFIGS = {
         /** <0-255> (Default: 0) @see EzspConfigId.SOURCE_ROUTE_TABLE_SIZE */
         SOURCE_ROUTE_TABLE_SIZE: 200,// Z3GatewayGPCombo: 100, darkxst: 200
         /** <1-250> (Default: 8) @see EzspConfigId.MULTICAST_TABLE_SIZE */
-        MULTICAST_TABLE_SIZE: 16,// darkxst: 16
+        MULTICAST_TABLE_SIZE: 16,// darkxst: 16, NOTE: should always be at least enough to register FIXED_ENDPOINTS multicastIds
     },
     "zigbeed": {
         ADDRESS_TABLE_SIZE: 128,
@@ -435,12 +435,6 @@ export class EmberAdapter extends Adapter {
     private networkCache: NetworkCache;
 
     private defaultApsOptions: EmberApsOption;
-
-    /**
-     * Mirrors the NCP multicast table. null === not in use.
-     * Index 0 is Green Power and must always remain there.
-     */
-    private multicastTable: EmberMulticastTableEntry[];
 
     constructor(networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string,
         adapterOptions: TsType.AdapterOptions, logger?: LoggerStub) {
@@ -759,9 +753,6 @@ export class EmberAdapter extends Adapter {
 
         this.defaultApsOptions = (EmberApsOption.RETRY | EmberApsOption.ENABLE_ROUTE_DISCOVERY | EmberApsOption.ENABLE_ADDRESS_DISCOVERY);
 
-        // always at least length==1 because of allowed MULTICAST_TABLE_SIZE range
-        this.multicastTable = new Array<EmberMulticastTableEntry>(STACK_CONFIGS[this.stackConfig].MULTICAST_TABLE_SIZE).fill(null);
-
         this.ezsp.once(EzspEvents.ncpNeedsResetAndInit, this.onNcpNeedsResetAndInit.bind(this));
     }
 
@@ -961,6 +952,8 @@ export class EmberAdapter extends Adapter {
      * Register fixed endpoints and set any related multicast entries that need to be.
      */
     private async registerFixedEndpoints(): Promise<void> {
+        let mcTableIdx = 0;
+
         for (const ep of FIXED_ENDPOINTS) {
             if (ep.networkIndex !== 0x00) {
                 debug(`Multi-network not currently supported. Skipping endpoint ${JSON.stringify(ep)}.`);
@@ -978,8 +971,8 @@ export class EmberAdapter extends Adapter {
                     ep.profileId,
                     ep.deviceId,
                     ep.deviceVersion,
-                    ep.inClusterList,
-                    ep.outClusterList,
+                    ep.inClusterList.slice(),// copy
+                    ep.outClusterList.slice(),// copy
                 ));
 
                 if (status === EzspStatus.SUCCESS) {
@@ -991,22 +984,20 @@ export class EmberAdapter extends Adapter {
                 debug(`Endpoint "${ep.endpoint}" already registered.`);
             }
 
-            if (ep.endpoint === GP_ENDPOINT) {
-                const gpMulticastEntry: EmberMulticastTableEntry = {
-                    multicastId: this.greenPowerGroup,
+            for (const multicastId of ep.multicastIds) {
+                const multicastEntry: EmberMulticastTableEntry = {
+                    multicastId,
                     endpoint: ep.endpoint,
                     networkIndex: ep.networkIndex,
                 };
 
-                const status = (await this.ezsp.ezspSetMulticastTableEntry(0, gpMulticastEntry));
+                const status = (await this.ezsp.ezspSetMulticastTableEntry(mcTableIdx++, multicastEntry));
 
                 if (status !== EmberStatus.SUCCESS) {
-                    throw new Error(`Failed to register group "Green Power" in multicast table with status=${EmberStatus[status]}.`);
+                    throw new Error(`Failed to register group "${multicastId}" in multicast table with status=${EmberStatus[status]}.`);
                 }
 
-                // NOTE: ensure GP is always added first in the table
-                this.multicastTable[0] = gpMulticastEntry;
-                debug(`Registered multicast table entry: ${JSON.stringify(gpMulticastEntry)}.`);
+                debug(`Registered multicast table entry: ${JSON.stringify(multicastEntry)}.`);
             }
         }
     }
@@ -1501,104 +1492,6 @@ export class EmberAdapter extends Adapter {
         this.requestQueue.startDispatching();
 
         this.watchdogCountersHandle = setInterval(this.watchdogCounters.bind(this), WATCHDOG_COUNTERS_FEED_INTERVAL);
-    }
-
-    /**
-     * Handle changes in groups that needs to be propagated to the NCP multicast table.
-     * 
-     * XXX: Since Z2M doesn't explicitly check-in downstream when groups are created/removed, we look at outgoing genGroups commands.
-     * If the NCP doesn't know about groups, it can miss messages from some devices (remotes for example), so we add it...
-     * 
-     * @param commandId 
-     * @param groupId
-     */
-    private async onGroupChange(commandId: number, groupId?: number): Promise<void> {
-        switch (commandId) {
-        case Cluster.genGroups.commands.add.ID: {
-            // check if group already in multicast table, should not happen...
-            const existingIndex = this.multicastTable.findIndex((e) => ((e != null) && (e.multicastId === groupId)));
-
-            if (existingIndex == -1) {
-                // find first unused index
-                const newEntryIndex = this.multicastTable.findIndex((e) => (!e));
-
-                if (newEntryIndex != -1) {
-                    const newEntry: EmberMulticastTableEntry = {
-                        multicastId: groupId,
-                        endpoint: FIXED_ENDPOINTS[0].endpoint,
-                        networkIndex: FIXED_ENDPOINTS[0].networkIndex,
-                    };
-                    const status = (await this.ezsp.ezspSetMulticastTableEntry(newEntryIndex, newEntry));
-
-                    if (status !== EmberStatus.SUCCESS) {
-                        console.error(
-                            `Failed to register group "${groupId}" in multicast table at index "${newEntryIndex}" with status=${EmberStatus[status]}.`
-                        );
-                    } else {
-                        debug(`Registered multicast table entry: ${JSON.stringify(newEntry)}.`);
-                    }
-
-                    // always assume "it worked" to keep sync with Z2M first, NCP second, otherwise trouble might arise... should always work anyway
-                    this.multicastTable[newEntryIndex] = newEntry;
-                } else {
-                    console.warn(`Coordinator multicast table is full (max: ${STACK_CONFIGS[this.stackConfig].MULTICAST_TABLE_SIZE}). `
-                        + `Some devices in new groups may not work properly, including in group "${groupId}". `
-                        + `If that happens, please remove groups to be below the limit. `
-                        + `Removed groups are only removed from coordinator after a Zigbee2MQTT restart.`);
-                }
-            } else {
-                debug(`Added group "${groupId}", but local table says it is already registered at index "${existingIndex}". Skipping.`);
-            }
-            break;
-        }
-        // NOTE: Can't remove groups, since we watch from command exec to group members, that would trigger from any removed member,
-        //       even though the group might still exist...
-        //       Leaving this here (since it's done...), just in case we get better notifications for groups from upstream.
-        // case Cluster.genGroups.commands.remove.ID: {
-        //     const entryIndex = this.multicastTable.findIndex((e) => ((e != null) && (e.multicastId === groupId)));
-
-        //     // just in case, never remove GP at i zero, should never be the case...
-        //     if (entryIndex > 0) {
-        //         const entry = this.multicastTable[entryIndex];
-        //         entry.endpoint = 0;// signals "not in use" in the stack
-        //         const status = (await this.ezsp.ezspSetMulticastTableEntry(entryIndex, entry));
-
-        //         if (status !== EmberStatus.SUCCESS) {
-        //             console.error(`Failed to remove multicast table entry at index "${entryIndex}" for group "${groupId}".`);
-        //         } else {
-        //             debug(`Removed multicast table entry at index "${entryIndex}".`);
-        //         }
-
-        //         // always assume "it worked" to keep sync with Z2M first, NCP second, otherwise trouble might arise... should always work anyway
-        //         this.multicastTable[entryIndex] = null;
-        //     } else {
-        //         debug(`Removed group "${groupId}", but local table did not have a reference to it.`);
-        //     }
-        //     break;
-        // }
-        // case Cluster.genGroups.commands.removeAll.ID: {
-        //     // this can create quite a few NCP calls, but hopefully shouldn't happen often
-        //     // always skip green power at i==0
-        //     for (let i = 1; i < this.multicastTable.length; i++) {
-        //         const entry = this.multicastTable[i];
-
-        //         if (entry != null) {
-        //             entry.endpoint = 0;// signals "not in use" in the stack
-        //             const status = (await this.ezsp.ezspSetMulticastTableEntry(i, entry));
-
-        //             if (status !== EmberStatus.SUCCESS) {
-        //                 console.error(`Failed to remove multicast entry at index "${i}" with status=${EmberStatus[status]}.`);
-        //             } else {
-        //                 debug(`Removed multicast table entry at index "${i}".`);
-        //             }
-        //         }
-
-        //         this.multicastTable[i] = null;
-        //     }
-
-        //     break;
-        // }
-        }
     }
 
     //---- START Events
@@ -2740,8 +2633,8 @@ export class EmberAdapter extends Adapter {
                                 profileID: ep.profileId,
                                 ID: ep.endpoint,
                                 deviceID: ep.deviceId,
-                                inputClusters: ep.inClusterList,
-                                outputClusters: ep.outClusterList,
+                                inputClusters: ep.inClusterList.slice(),// copy
+                                outputClusters: ep.outClusterList.slice(),// copy
                             };
                         }),
                     });
@@ -3621,11 +3514,6 @@ export class EmberAdapter extends Adapter {
                         if (data.length > maxPayloadLength) {
                             return EmberStatus.MESSAGE_TOO_LONG;// queue will reject
                         }
-                    }
-
-                    // track group changes in NCP multicast table
-                    if (apsFrame.clusterId === Cluster.genGroups.ID) {
-                        await this.onGroupChange(command.ID, zclFrame.Payload.groupid);
                     }
 
                     debug(`~~~> [ZCL to=${networkAddress} apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.Header)}]`);
