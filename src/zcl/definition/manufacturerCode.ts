@@ -1062,6 +1062,8 @@ const knownManufacturerCodes = {
     SPRUT_DEVICE: 0x6666,
     /** NodOn */
     NODON: 0x128B,
+    /** eWeLink */
+    EWELINK: 0x1286,
 };
 
 export default {

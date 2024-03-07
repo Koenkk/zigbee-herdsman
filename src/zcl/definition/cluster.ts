@@ -5781,6 +5781,26 @@ const Cluster: {
         },
         commandsResponse: {},
     },
+    manuSpecificEWeLink: {
+        ID: 0xfc11,
+        manufacturerCode: ManufacturerCode.EWELINK,
+        attributes: {
+            childLock: {ID: 0x0000, type: DataType.boolean},
+            tamper: {ID: 0x2000, type: DataType.uint8},
+            illumination: {ID: 0x2001, type: DataType.uint8},
+            openWindow: {ID: 0x6000, type: DataType.boolean},
+            frostProtectionTemperature: {ID: 0x6002, type: DataType.int16},
+            idleSteps: {ID: 0x6003, type: DataType.uint16},
+            closingSteps: {ID: 0x6004, type: DataType.uint16},
+            valveOpeningLimitVoltage: {ID: 0x6005, type: DataType.uint16},
+            valveClosingLimitVoltage: {ID: 0x6006, type: DataType.uint16},
+            valveMotorRunningVoltage: {ID: 0x6007, type: DataType.uint16},
+            valveOpeningDegree: {ID: 0x600B, type: DataType.uint8},
+            valveClosingDegree: {ID: 0x600C, type: DataType.uint8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
 };
 
 export default Cluster;
