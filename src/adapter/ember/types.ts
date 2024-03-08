@@ -322,21 +322,21 @@ export type EmberBindingTableEntry = {
     type: EmberBindingType ,
     /** The endpoint on the local node. uint8_t */
     local: number,
-    /** A cluster ID that matches one from the local endpoint's simple descriptor.
-     * This cluster ID is set by the provisioning application to indicate which
-     * part an endpoint's functionality is bound to this particular remote node
-     * and is used to distinguish between unicast and multicast bindings. Note
-     * that a binding can be used to to send messages with any cluster ID, not
-     * just that listed in the binding.
+    /**
+     * A cluster ID that matches one from the local endpoint's simple descriptor.
+     * This cluster ID is set by the provisioning application to indicate which part an endpoint's functionality is bound
+     * to this particular remote node and is used to distinguish between unicast and multicast bindings.
+     * Note that a binding can be used to to send messages with any cluster ID, not just that listed in the binding.
      * uint16_t
     */
     clusterId: number,
-    /** The endpoint on the remote node (specified by \c identifier). uint8_t */
+    /** The endpoint on the remote node (specified by identifier). uint8_t */
     remote: number,
-    /** A 64-bit identifier.  This is either:
+    /**
+     * A 64-bit identifier. This is either:
      * - The destination EUI64, for unicasts.
      * - A 16-bit multicast group address, for multicasts.
-    */
+     */
     identifier: EmberEUI64,
     /** The index of the network the binding belongs to. uint8_t */
     networkIndex: number,
