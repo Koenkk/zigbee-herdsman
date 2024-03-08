@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.36.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.36.1...v0.36.2) (2024-03-08)
+
+
+### Bug Fixes
+
+* Ember: Reworked multicast registration on coordinator ([#959](https://github.com/Koenkk/zigbee-herdsman/issues/959)) ([1f9ada9](https://github.com/Koenkk/zigbee-herdsman/commit/1f9ada9ba7a45417118a27140434ceb6c8feef6e))
+
 ## [0.36.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.36.0...v0.36.1) (2024-03-07)
 
 
