@@ -471,10 +471,13 @@ class Controller extends events.EventEmitter {
         debug.log(`Device leave '${payload.ieeeAddr}'`);
 
         const device = Device.byIeeeAddr(payload.ieeeAddr);
-        if (device) {
-            debug.log(`Removing device from database '${payload.ieeeAddr}'`);
-            device.removeFromDatabase();
+        if (!device) {
+            debug.log(`Device leave is from unknown device '${payload.ieeeAddr}'`);
+            return;
         }
+
+        debug.log(`Removing device from database '${payload.ieeeAddr}'`);
+        device.removeFromDatabase();
 
         const data: Events.DeviceLeavePayload = {ieeeAddr: payload.ieeeAddr};
         this.selfAndDeviceEmit(device, Events.Events.deviceLeave, data);
