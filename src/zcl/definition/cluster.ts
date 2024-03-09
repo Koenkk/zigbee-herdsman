@@ -4212,7 +4212,7 @@ const Cluster: {
     },
     manuSpecificPhilips: {
         ID: 0xFC00,
-        manufacturerCode: ManufacturerCode.PHILIPS,
+        manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
         attributes: {
             config: {ID: 49, type: DataType.bitmap16},
         },
@@ -4234,7 +4234,7 @@ const Cluster: {
     },
     manuSpecificPhilips2: {
         ID: 0xFC03,
-        manufacturerCode: ManufacturerCode.PHILIPS,
+        manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
         attributes: {
             state: {ID: 0x0002, type: DataType.octetStr},
         },
