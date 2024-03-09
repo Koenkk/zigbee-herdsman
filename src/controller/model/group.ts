@@ -88,6 +88,9 @@ class Group extends Entity {
 
     public static create(groupID: number): Group {
         assert(typeof groupID === 'number', 'GroupID must be a number');
+        // Don't allow groupID 0, from the spec:
+        // "Scene identifier 0x00, along with group identifier 0x0000, is reserved for the global scene used by the OnOff cluster"
+        assert(groupID >= 1, 'GroupID must be at least 1');
         Group.loadFromDatabaseIfNecessary();
         if (Group.groups[groupID]) {
             throw new Error(`Group with groupID '${groupID}' already exists`);
