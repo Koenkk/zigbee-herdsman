@@ -11,7 +11,7 @@ interface KeyValue {[s: string]: number | string}
 // if the header is lacking the information.
 function getCluster(frame: ZclFrame, deviceManufacturerID: number): Cluster {
     let cluster = frame.Cluster;
-    if (!frame?.Header?.manufacturerCode && frame?.Cluster && deviceManufacturerID == ManufacturerCode.LegrandNetatmo) {
+    if (!frame?.Header?.manufacturerCode && frame?.Cluster && deviceManufacturerID == ManufacturerCode.LEGRAND_GROUP) {
         cluster = ZclUtils.getCluster(frame.Cluster.ID, deviceManufacturerID);
     }
     return cluster;
