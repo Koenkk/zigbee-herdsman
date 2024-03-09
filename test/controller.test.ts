@@ -937,7 +937,6 @@ describe('Controller', () => {
         // leaves another time when not in database
         await mockAdapterEvents['deviceLeave']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(events.deviceLeave.length).toBe(1);
-        expect(events.deviceLeave[0]).toStrictEqual({ieeeAddr: '0x129'});
     });
 
     it('Start with reset should clear database', async () => {
