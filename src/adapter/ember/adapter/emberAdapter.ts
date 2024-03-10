@@ -304,11 +304,15 @@ const BROADCAST_NETWORK_KEY_SWITCH_WAIT_TIME = 15000;
 
 /**
  * Stack configuration values for various supported stacks.
+ * 
+ * https://github.com/darkxst/silabs-firmware-builder/tree/main/manifests
+ * https://github.com/NabuCasa/silabs-firmware/wiki/Zigbee-EmberZNet-NCP-firmware-configuration#skyconnect
+ * https://github.com/SiliconLabs/UnifySDK/blob/main/applications/zigbeed/project_files/zigbeed.slcp
  */
 const STACK_CONFIGS = {
     "default": {
         /** <1-250> (Default: 2) @see EzspConfigId.ADDRESS_TABLE_SIZE */
-        ADDRESS_TABLE_SIZE: 16,// zigpc: 32, darkxst: 16
+        ADDRESS_TABLE_SIZE: 16,// zigpc: 32, darkxst: 16, nabucasa: 16
         /** <0-4> (Default: 2) @see EzspConfigId.TRUST_CENTER_ADDRESS_CACHE_SIZE */
         TRUST_CENTER_ADDRESS_CACHE_SIZE: 2,
         /** (Default: USE_TOKEN) @see EzspConfigId.TX_POWER_MODE */
@@ -320,7 +324,7 @@ const STACK_CONFIGS = {
         /** <-> (Default: ) @see EzspConfigId.SECURITY_LEVEL */
         SECURITY_LEVEL: SECURITY_LEVEL_Z3,
         /** (Default: KEEP_ALIVE_SUPPORT_ALL) @see EzspValueId.END_DEVICE_KEEP_ALIVE_SUPPORT_MODE */
-        END_DEVICE_KEEP_ALIVE_SUPPORT_MODE: EmberKeepAliveMode.KEEP_ALIVE_SUPPORT_ALL,// zigpc: KEEP_ALIVE_SUPPORT_ALL
+        END_DEVICE_KEEP_ALIVE_SUPPORT_MODE: EmberKeepAliveMode.KEEP_ALIVE_SUPPORT_ALL,
         /** <-> (Default: MAXIMUM_APS_PAYLOAD_LENGTH) @see EzspValueId.MAXIMUM_INCOMING_TRANSFER_SIZE */
         MAXIMUM_INCOMING_TRANSFER_SIZE: MAXIMUM_APS_PAYLOAD_LENGTH,
         /** <-> (Default: MAXIMUM_APS_PAYLOAD_LENGTH) @see EzspValueId.MAXIMUM_OUTGOING_TRANSFER_SIZE */
@@ -328,27 +332,27 @@ const STACK_CONFIGS = {
         /** <-> (Default: 10000) @see EzspValueId.TRANSIENT_DEVICE_TIMEOUT */
         TRANSIENT_DEVICE_TIMEOUT: 10000,
         /** <0-127> (Default: 2) @see EzspConfigId.BINDING_TABLE_SIZE */
-        BINDING_TABLE_SIZE: 5,// zigpc: 2, Z3GatewayGPCombo: 5
+        BINDING_TABLE_SIZE: 16,// zigpc: 2, Z3GatewayGPCombo: 5, nabucasa: 32
         /** <0-127> (Default: 0) @see EzspConfigId.KEY_TABLE_SIZE */
         KEY_TABLE_SIZE: 0,// zigpc: 4
         /** <6-64> (Default: 6) @see EzspConfigId.MAX_END_DEVICE_CHILDREN */
-        MAX_END_DEVICE_CHILDREN: 6,// zigpc: 6
+        MAX_END_DEVICE_CHILDREN: 32,// zigpc: 6, nabucasa: 32, Dongle-E (Sonoff firmware): 32
         /** <1-255> (Default: 10) @see EzspConfigId.APS_UNICAST_MESSAGE_COUNT */
-        APS_UNICAST_MESSAGE_COUNT: 20,// zigpc: 10, darkxst: 20
+        APS_UNICAST_MESSAGE_COUNT: 20,// zigpc: 10, darkxst: 20, nabucasa: 20
         /** <15-254> (Default: 15) @see EzspConfigId.BROADCAST_TABLE_SIZE */
         BROADCAST_TABLE_SIZE: 15,// zigpc: 15, Z3GatewayGPCombo: 35 - NOTE: Sonoff Dongle-E fails at 35
         /** [1, 16, 26] (Default: 16). @see EzspConfigId.NEIGHBOR_TABLE_SIZE */
-        NEIGHBOR_TABLE_SIZE: 26,// zigpc: 16, darkxst: 26
+        NEIGHBOR_TABLE_SIZE: 26,// zigpc: 16, darkxst: 26, nabucasa: 26
         /** (Default: 8) @see EzspConfigId.END_DEVICE_POLL_TIMEOUT */
         END_DEVICE_POLL_TIMEOUT: 8,// zigpc: 8
         /** <0-65535> (Default: 300) @see EzspConfigId.TRANSIENT_KEY_TIMEOUT_S */
         TRANSIENT_KEY_TIMEOUT_S: 300,// zigpc: 65535
         /** <-> (Default: 16) @see EzspConfigId.RETRY_QUEUE_SIZE */
-        RETRY_QUEUE_SIZE: 16,
+        RETRY_QUEUE_SIZE: 16,// nabucasa: 16
         /** <0-255> (Default: 0) @see EzspConfigId.SOURCE_ROUTE_TABLE_SIZE */
-        SOURCE_ROUTE_TABLE_SIZE: 200,// Z3GatewayGPCombo: 100, darkxst: 200
+        SOURCE_ROUTE_TABLE_SIZE: 200,// Z3GatewayGPCombo: 100, darkxst: 200, nabucasa: 200
         /** <1-250> (Default: 8) @see EzspConfigId.MULTICAST_TABLE_SIZE */
-        MULTICAST_TABLE_SIZE: 16,// darkxst: 16, NOTE: should always be at least enough to register FIXED_ENDPOINTS multicastIds
+        MULTICAST_TABLE_SIZE: 16,// darkxst: 16, nabucasa: 16 - NOTE: should always be at least enough to register FIXED_ENDPOINTS multicastIds
     },
     "zigbeed": {
         ADDRESS_TABLE_SIZE: 128,
@@ -372,19 +376,17 @@ const STACK_CONFIGS = {
         RETRY_QUEUE_SIZE: 16,
         SOURCE_ROUTE_TABLE_SIZE: 254,
         MULTICAST_TABLE_SIZE: 128,
-        /*
-        ROUTE_TABLE_SIZE: 254,
-        DISCOVERY_TABLE_SIZE: 64,
-        PACKET_BUFFER_COUNT: 255,
-        CUSTOM_MAC_FILTER_TABLE_SIZE: 64,
-        MAC_FILTER_TABLE_SIZE: 32,
-        CHILD_TABLE_SIZE: 64,
-        PLUGIN_ZIGBEE_PRO_STACK_CHILD_TABLE_SIZE: 64,
-        APS_MESSAGE_COUNT: 64,
-        */
     },
 };
 
+/**
+ * NOTE: This from SDK is currently ignored here because of issue in below link:
+ * - BUGZID 12261: Concentrators use MTORRs for route discovery and should not enable route discovery in the APS options.
+ * - https://community.silabs.com/s/question/0D58Y00008DRfDCSA1/coordinator-cant-send-unicast-to-sleepy-node-after-reboot?language=en_US
+ * 
+ * No issue have been linked to this at the moment, so keeping ENABLE_ROUTE_DISCOVERY just in case...
+ */
+const DEFAULT_APS_OPTIONS = (EmberApsOption.RETRY | EmberApsOption.ENABLE_ROUTE_DISCOVERY | EmberApsOption.ENABLE_ADDRESS_DISCOVERY);
 /**
  * Enabling this allows to immediately reject requests that won't be able to get to their destination.
  * However, it causes more NCP calls, notably to get the source route overhead.
@@ -434,8 +436,6 @@ export class EmberAdapter extends Adapter {
      */
     private networkCache: NetworkCache;
 
-    private defaultApsOptions: EmberApsOption;
-
     constructor(networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string,
         adapterOptions: TsType.AdapterOptions, logger?: LoggerStub) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
@@ -446,6 +446,8 @@ export class EmberAdapter extends Adapter {
         this.concentratorType = EMBER_HIGH_RAM_CONCENTRATOR;
 
         const delay = (typeof this.adapterOptions.delay === 'number') ? Math.min(Math.max(this.adapterOptions.delay, 5), 60) : 5;
+
+        debug(`Using delay=${delay}.`);
 
         this.requestQueue = new EmberRequestQueue(delay);
         this.oneWaitress = new EmberOneWaitress();
@@ -687,6 +689,7 @@ export class EmberAdapter extends Adapter {
 
     /**
      * Emitted from @see Ezsp.ezspTrustCenterJoinHandler
+     * Also from @see Ezsp.ezspIdConflictHandler as a DEVICE_LEFT
      * 
      * @param newNodeId 
      * @param newNodeEui64 
@@ -697,7 +700,6 @@ export class EmberAdapter extends Adapter {
     private async onTrustCenterJoin(newNodeId: EmberNodeId, newNodeEui64: EmberEUI64, status: EmberDeviceUpdate,
         policyDecision: EmberJoinDecision, parentOfNewNodeId: EmberNodeId): Promise<void> {
         if (status === EmberDeviceUpdate.DEVICE_LEFT) {
-            // NOTE: `policyDecision` here is NO_ACTION and `parentOfNewNodeId` is 65535
             const payload: DeviceLeavePayload = {
                 networkAddress: newNodeId,
                 ieeeAddr: newNodeEui64,
@@ -750,8 +752,6 @@ export class EmberAdapter extends Adapter {
         this.interpanLock = false;
 
         this.networkCache = initNetworkCache();
-
-        this.defaultApsOptions = (EmberApsOption.RETRY | EmberApsOption.ENABLE_ROUTE_DISCOVERY | EmberApsOption.ENABLE_ADDRESS_DISCOVERY);
 
         this.ezsp.once(EzspEvents.ncpNeedsResetAndInit, this.onNcpNeedsResetAndInit.bind(this));
     }
@@ -1838,7 +1838,7 @@ export class EmberAdapter extends Adapter {
 
         if (broadcastMgmtPermitJoin) {
             // `authentication`: TC significance always 1 (zb specs)
-            [status, apsFrame, messageTag] = (await this.emberPermitJoiningRequest(EMBER_BROADCAST_ADDRESS, duration, 1, this.defaultApsOptions));
+            [status, apsFrame, messageTag] = (await this.emberPermitJoiningRequest(EMBER_BROADCAST_ADDRESS, duration, 1, DEFAULT_APS_OPTIONS));
         }
 
         return [status, apsFrame, messageTag];
@@ -3021,7 +3021,7 @@ export class EmberAdapter extends Adapter {
 
         const request = async (startIndex: number): Promise<[EmberStatus, tableEntries: number, entryCount: number]> => {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const [reqStatus, apsFrame, messageTag] = (await this.emberLqiTableRequest(networkAddress, startIndex, this.defaultApsOptions));
+            const [reqStatus, apsFrame, messageTag] = (await this.emberLqiTableRequest(networkAddress, startIndex, DEFAULT_APS_OPTIONS));
 
             if (reqStatus !== EmberStatus.SUCCESS) {
                 console.error(`[ZDO] Failed LQI request for "${networkAddress}" (index "${startIndex}") with status=${EmberStatus[reqStatus]}.`);
@@ -3085,7 +3085,7 @@ export class EmberAdapter extends Adapter {
 
         const request = async (startIndex: number): Promise<[EmberStatus, tableEntries: number, entryCount: number]> => {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const [reqStatus, apsFrame, messageTag] = (await this.emberRoutingTableRequest(networkAddress, startIndex, this.defaultApsOptions));
+            const [reqStatus, apsFrame, messageTag] = (await this.emberRoutingTableRequest(networkAddress, startIndex, DEFAULT_APS_OPTIONS));
 
             if (reqStatus !== EmberStatus.SUCCESS) {
                 console.error(
@@ -3151,7 +3151,7 @@ export class EmberAdapter extends Adapter {
                     this.checkInterpanLock();
 
                     /* eslint-disable @typescript-eslint/no-unused-vars */
-                    const [status, apsFrame, messageTag] = (await this.emberNodeDescriptorRequest(networkAddress, this.defaultApsOptions));
+                    const [status, apsFrame, messageTag] = (await this.emberNodeDescriptorRequest(networkAddress, DEFAULT_APS_OPTIONS));
 
                     if (status !== EmberStatus.SUCCESS) {
                         console.error(`[ZDO] Failed node descriptor for "${networkAddress}" with status=${EmberStatus[status]}.`);
@@ -3202,7 +3202,7 @@ export class EmberAdapter extends Adapter {
                     this.checkInterpanLock();
 
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = (await this.emberActiveEndpointsRequest(networkAddress, this.defaultApsOptions));
+                    const [status, apsFrame, messageTag] = (await this.emberActiveEndpointsRequest(networkAddress, DEFAULT_APS_OPTIONS));
 
                     if (status !== EmberStatus.SUCCESS) {
                         console.error(`[ZDO] Failed active endpoints request for "${networkAddress}" with status=${EmberStatus[status]}.`);
@@ -3235,7 +3235,7 @@ export class EmberAdapter extends Adapter {
                     const [status, apsFrame, messageTag] = (await this.emberSimpleDescriptorRequest(
                         networkAddress,
                         endpointID,
-                        this.defaultApsOptions
+                        DEFAULT_APS_OPTIONS
                     ));
 
                     if (status !== EmberStatus.SUCCESS) {
@@ -3285,7 +3285,7 @@ export class EmberAdapter extends Adapter {
                             destinationAddressOrGroup,
                             null,// doesn't matter
                             destinationEndpoint,
-                            this.defaultApsOptions,
+                            DEFAULT_APS_OPTIONS,
                         ));
 
                         if (status !== EmberStatus.SUCCESS) {
@@ -3323,7 +3323,7 @@ export class EmberAdapter extends Adapter {
                             null,// doesn't matter
                             destinationAddressOrGroup,
                             destinationEndpoint,// doesn't matter
-                            this.defaultApsOptions,
+                            DEFAULT_APS_OPTIONS,
                         ));
 
                         if (status !== EmberStatus.SUCCESS) {
@@ -3368,7 +3368,7 @@ export class EmberAdapter extends Adapter {
                             destinationAddressOrGroup,
                             null,// doesn't matter
                             destinationEndpoint,
-                            this.defaultApsOptions,
+                            DEFAULT_APS_OPTIONS,
                         ));
 
                         if (status !== EmberStatus.SUCCESS) {
@@ -3407,7 +3407,7 @@ export class EmberAdapter extends Adapter {
                             null,// doesn't matter
                             destinationAddressOrGroup,
                             destinationEndpoint,// doesn't matter
-                            this.defaultApsOptions,
+                            DEFAULT_APS_OPTIONS,
                         ));
 
                         if (status !== EmberStatus.SUCCESS) {
@@ -3444,7 +3444,7 @@ export class EmberAdapter extends Adapter {
                         networkAddress,
                         ieeeAddr,
                         EmberLeaveRequestFlags.WITHOUT_REJOIN,
-                        this.defaultApsOptions
+                        DEFAULT_APS_OPTIONS
                     ));
 
                     if (status !== EmberStatus.SUCCESS) {
@@ -3489,7 +3489,7 @@ export class EmberAdapter extends Adapter {
             clusterId: zclFrame.Cluster.ID,
             sourceEndpoint: sourceEndpointInfo.endpoint,
             destinationEndpoint: (typeof endpoint === 'number') ? endpoint : FIXED_ENDPOINTS[0].endpoint,
-            options: this.defaultApsOptions,
+            options: DEFAULT_APS_OPTIONS,
             groupId: 0,
             sequence: 0,// set by stack
         };
@@ -3561,7 +3561,7 @@ export class EmberAdapter extends Adapter {
             clusterId: zclFrame.Cluster.ID,
             sourceEndpoint: sourceEndpointInfo.endpoint,
             destinationEndpoint: FIXED_ENDPOINTS[0].endpoint,
-            options: this.defaultApsOptions,
+            options: DEFAULT_APS_OPTIONS,
             groupId: groupID,
             sequence: 0,// set by stack
         };
@@ -3617,7 +3617,7 @@ export class EmberAdapter extends Adapter {
             clusterId: zclFrame.Cluster.ID,
             sourceEndpoint: sourceEndpointInfo.endpoint,
             destinationEndpoint: (typeof endpoint === 'number') ? endpoint : FIXED_ENDPOINTS[0].endpoint,
-            options: this.defaultApsOptions,
+            options: DEFAULT_APS_OPTIONS,
             groupId: EMBER_RX_ON_WHEN_IDLE_BROADCAST_ADDRESS,
             sequence: 0,// set by stack
         };
