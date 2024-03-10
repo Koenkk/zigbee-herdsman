@@ -472,7 +472,7 @@ class Controller extends events.EventEmitter {
 
         const device = Device.byIeeeAddr(payload.ieeeAddr);
         if (!device) {
-            debug.log(`Device leave is from unknown device '${payload.ieeeAddr}'`);
+            debug.log(`Device leave is from unknown or already deleted device '${payload.ieeeAddr}'`);
             return;
         }
 
