@@ -4715,7 +4715,7 @@ const Cluster: {
         ID: 0xe001,
         attributes: {
             powerOnBehavior: {ID: 0xd010, type: DataType.enum8},
-            switchLink: {ID: 0xd020, type: DataType.enum8},
+            switchMode: {ID: 0xd020, type: DataType.enum8},
             switchType: {ID: 0xd030, type: DataType.enum8},
         },
         commands: {
