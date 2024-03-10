@@ -4637,6 +4637,9 @@ const Cluster: {
             illuminance: {ID: 0x0112, type: DataType.uint32},
             displayUnit: {ID: 0x0114, type: DataType.uint8},
             airQuality: {ID: 0x0129, type: DataType.uint8},
+            curtainReverse: {ID: 0x0400, type: DataType.boolean},
+            curtainHandOpen: {ID: 0x0401, type: DataType.boolean},
+            curtainCalibrated: {ID: 0x0402, type: DataType.boolean},
         },
         commands: {},
         commandsResponse: {}
