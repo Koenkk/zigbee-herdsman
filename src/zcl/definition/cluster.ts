@@ -504,6 +504,12 @@ const Cluster: {
                     {name: 'offwaittime', type: DataType.uint16},
                 ],
             },
+            tuyaAction: {
+                ID: 0xFD,
+                parameters: [
+                    {name: 'value', type: DataType.uint8},
+                ],
+            },
         },
         commandsResponse: {
         },
@@ -4708,8 +4714,9 @@ const Cluster: {
     manuSpecificTuya_3: {
         ID: 0xe001,
         attributes: {
-            switchType: {ID: 0xd030, type: DataType.enum8},
             powerOnBehavior: {ID: 0xd010, type: DataType.enum8},
+            switchMode: {ID: 0xd020, type: DataType.enum8},
+            switchType: {ID: 0xd030, type: DataType.enum8},
         },
         commands: {
             setOptions1: {
