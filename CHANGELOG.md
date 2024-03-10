@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.37.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.36.2...v0.37.0) (2024-03-10)
+
+
+### Features
+
+* Add more attributes for manuSpecificLumi ([#966](https://github.com/Koenkk/zigbee-herdsman/issues/966)) ([68d97d8](https://github.com/Koenkk/zigbee-herdsman/commit/68d97d81ce32ca257483348bbb7d56bb45178a3c))
+* Update manufaturer codes ([#963](https://github.com/Koenkk/zigbee-herdsman/issues/963)) ([641c51b](https://github.com/Koenkk/zigbee-herdsman/commit/641c51b44c4b0b363e193af01808c1081279f94a))
+
+
+### Bug Fixes
+
+* Don't allow groupID 0 ([#961](https://github.com/Koenkk/zigbee-herdsman/issues/961)) ([f5270fe](https://github.com/Koenkk/zigbee-herdsman/commit/f5270fe37c0765dfeee3bc4b027b3fd89bd76525))
+* Don't emit deviceLeave event for devices that already left ([#965](https://github.com/Koenkk/zigbee-herdsman/issues/965)) ([d17319e](https://github.com/Koenkk/zigbee-herdsman/commit/d17319eb538584efdbc10f0714f385f4d182a021))
+* **ignore:** update dependencies ([#967](https://github.com/Koenkk/zigbee-herdsman/issues/967)) ([e9c94c9](https://github.com/Koenkk/zigbee-herdsman/commit/e9c94c9a792c881c41fce32cf2ff808f3301d3f0))
+* **ignore:** update for d17319eb538584efdbc10f0714f385f4d182a021 ([83e11d0](https://github.com/Koenkk/zigbee-herdsman/commit/83e11d07e46fc09e7a17714042fee04603a74027))
+* Update Status against ZCL spec ([#964](https://github.com/Koenkk/zigbee-herdsman/issues/964)) ([b380e58](https://github.com/Koenkk/zigbee-herdsman/commit/b380e58833aaa1a4499bfe1ddc337d87e1121e61))
+
 ## [0.36.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.36.1...v0.36.2) (2024-03-08)
 
 
