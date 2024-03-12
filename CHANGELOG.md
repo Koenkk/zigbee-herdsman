@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.38.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.37.0...v0.38.0) (2024-03-12)
+
+
+### Features
+
+* Add `tuyaAction` command ([#968](https://github.com/Koenkk/zigbee-herdsman/issues/968)) ([b0781d2](https://github.com/Koenkk/zigbee-herdsman/commit/b0781d2bdecdbc9fa8c68e129675722cc12d001d))
+
+
+### Bug Fixes
+
+* Ember: increase default NCP config + edge case device leave support ([#970](https://github.com/Koenkk/zigbee-herdsman/issues/970)) ([16a68ea](https://github.com/Koenkk/zigbee-herdsman/commit/16a68eacfaaa4c09eac1adb9b9564a477673f561))
+
 ## [0.37.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.36.2...v0.37.0) (2024-03-10)
 
 
