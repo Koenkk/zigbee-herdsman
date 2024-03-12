@@ -470,16 +470,16 @@ class Controller extends events.EventEmitter {
     private onDeviceLeave(payload: AdapterEvents.DeviceLeavePayload): void {
         debug.log(`Device leave '${payload.ieeeAddr}'`);
 
-        const device = Device.byIeeeAddr(payload.ieeeAddr);
+        const device = payload.ieeeAddr ? Device.byIeeeAddr(payload.ieeeAddr) : Device.byNetworkAddress(payload.networkAddress);
         if (!device) {
-            debug.log(`Device leave is from unknown or already deleted device '${payload.ieeeAddr}'`);
+            debug.log(`Device leave is from unknown or already deleted device '${payload.ieeeAddr ?? payload.networkAddress}'`);
             return;
         }
 
-        debug.log(`Removing device from database '${payload.ieeeAddr}'`);
+        debug.log(`Removing device from database '${device.ieeeAddr}'`);
         device.removeFromDatabase();
 
-        const data: Events.DeviceLeavePayload = {ieeeAddr: payload.ieeeAddr};
+        const data: Events.DeviceLeavePayload = {ieeeAddr: device.ieeeAddr};
         this.selfAndDeviceEmit(device, Events.Events.deviceLeave, data);
     }
 

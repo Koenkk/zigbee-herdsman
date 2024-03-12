@@ -10,25 +10,28 @@ enum Events {
     deviceLeave = "deviceLeave"
 }
 
-interface DeviceJoinedPayload {
+type DeviceJoinedPayload = {
     networkAddress: number;
     ieeeAddr: string;
-}
+};
 
-interface DeviceAnnouncePayload {
+type DeviceAnnouncePayload = {
     networkAddress: number;
     ieeeAddr: string;
-}
+};
 
-interface NetworkAddressPayload {
+type NetworkAddressPayload = {
     networkAddress: number;
     ieeeAddr: string;
-}
+};
 
-interface DeviceLeavePayload {
-    networkAddress: number;
+type DeviceLeavePayload = {
+    networkAddress?: number;
     ieeeAddr: string;
-}
+} | {
+    networkAddress: number;
+    ieeeAddr?: string;
+};
 
 interface ZclDataPayload {
     address: number | string;

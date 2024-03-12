@@ -939,6 +939,21 @@ describe('Controller', () => {
         expect(events.deviceLeave.length).toBe(1);
     });
 
+    it('Device leave event with only nwk addr and remove from database', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(controller.getDeviceByNetworkAddress(129)).toBeInstanceOf(Device);
+        expect(events.deviceLeave.length).toBe(0);
+        await mockAdapterEvents['deviceLeave']({networkAddress: 129, ieeeAddr: null});
+        expect(events.deviceLeave.length).toBe(1);
+        expect(events.deviceLeave[0]).toStrictEqual({ieeeAddr: '0x129'});
+        expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
+
+        // leaves another time when not in database
+        await mockAdapterEvents['deviceLeave']({networkAddress: 129, ieeeAddr: null});
+        expect(events.deviceLeave.length).toBe(1);
+    });
+
     it('Start with reset should clear database', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
