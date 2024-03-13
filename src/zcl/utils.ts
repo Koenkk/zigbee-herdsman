@@ -1,6 +1,12 @@
 
+import {Device} from '../controller/model';
 import {DataType, Cluster, Foundation} from './definition';
+import {ClusterDefinition} from './definition/tstype';
 import * as TsType from './tstype';
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import mixin from 'mixin-deep';
 
 const DataTypeValueType = {
     discrete: [
@@ -31,27 +37,45 @@ function IsDataTypeAnalogOrDiscrete(dataType: DataType): 'ANALOG' | 'DISCRETE' {
     }
 }
 
-function getCluster(key: string | number, manufacturerCode: number = null): TsType.Cluster {
+function getClusterName(definitions: { [s: string]: ClusterDefinition; }, key: string | number, manufacturerCode: number = null): string {
     let name: string;
 
     if (typeof key === 'number') {
         if (manufacturerCode) {
-            name = Object.entries(Cluster)
+            name = Object.entries(definitions)
                 .find((e) => e[1].ID === key && e[1].manufacturerCode === manufacturerCode)?.[0];
         } 
         
         if (!name) {
-            name = Object.entries(Cluster).find((e) => e[1].ID === key && !e[1].manufacturerCode)?.[0];
+            name = Object.entries(definitions).find((e) => e[1].ID === key && !e[1].manufacturerCode)?.[0];
         }
 
         if (!name) {
-            name = Object.entries(Cluster).find((e) => e[1].ID === key)?.[0];
+            name = Object.entries(definitions).find((e) => e[1].ID === key)?.[0];
         }
     } else {
         name = key;
     }
 
+    return name;
+}
+
+function getCluster(key: string | number, manufacturerCode: number = null, device: Device = null): TsType.Cluster {
+    let name = getClusterName(Cluster, key, manufacturerCode);
+
     let cluster = Cluster[name];
+
+    if (device?.specificClusterDefinitions) {
+        const specificName = getClusterName(device.specificClusterDefinitions, key, manufacturerCode);
+        const specificCluster = device.specificClusterDefinitions[specificName];
+        if (specificCluster) {
+            if (cluster) {
+                mixin(cluster, specificCluster);
+            } else {
+                cluster = specificCluster;
+            }
+        }
+    }
 
     if (!cluster) {
         if (typeof key === 'number') {

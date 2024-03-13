@@ -8,6 +8,11 @@ import Debug from "debug";
 import * as Zcl from '../../zcl';
 import assert from 'assert';
 import {ZclFrameConverter} from '../helpers';
+import {ClusterDefinition} from '../../zcl/definition/tstype';
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import mixin from 'mixin-deep';
 
 /**
  * @ignore
@@ -56,6 +61,7 @@ class Device extends Entity {
     private _lastDefaultResponseSequenceNumber: number;
     private _checkinInterval: number;
     private _pendingRequestTimeout: number;
+    private _specificClusterDefinitions: { [s: string]: ClusterDefinition; };
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -108,6 +114,7 @@ class Device extends Entity {
     };
     get pendingRequestTimeout(): number {return this._pendingRequestTimeout;}
     set pendingRequestTimeout(pendingRequestTimeout: number) {this._pendingRequestTimeout = pendingRequestTimeout;}
+    get specificClusterDefinitions(): { [s: string]: ClusterDefinition } {return this._specificClusterDefinitions;}
 
     public meta: KeyValue;
 
@@ -331,6 +338,13 @@ class Device extends Entity {
                 debug.error(`Default response to ${this.ieeeAddr} failed`);
             }
         }
+    }
+
+    public addSpecificClusterDefinitions(definitions: { [s: string]: ClusterDefinition }): void {
+        if (!this._specificClusterDefinitions) {
+            this._specificClusterDefinitions = {};
+        }
+        mixin(this._specificClusterDefinitions, definitions);
     }
 
     /*
