@@ -14,15 +14,6 @@ export const TOUCHLINK_PROFILE_ID = 0xC05E;
 /** The profile ID used to address all the public profiles. */
 export const WILDCARD_PROFILE_ID = 0xFFFF;
 
-/** Ember Corporation's Manufacturer ID allocated by the Zigbee alliance. This shall not change. */
-export const EMBER_COMPANY_MANUFACTURER_CODE = 0x1002;
-
-/**
- * The MFG code set by AppBuilder for use in the App Framework (AF).
- * If not set by AppBuilder we default it to 0x0000. The customer should be setting this value.
- */
-export const MANUFACTURER_CODE = 0x1049;
-
 /** The network ID of the coordinator in a ZigBee network is 0x0000. */
 export const ZIGBEE_COORDINATOR_ADDRESS = 0x0000;
 
