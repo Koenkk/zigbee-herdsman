@@ -154,7 +154,7 @@ class DeconzAdapter extends Adapter {
             } else {
                 this.joinPermitted = true;
             }
-            this.driver.writeParameterRequest(PARAM.PARAM.Network.PERMIT_JOIN, seconds);
+            await this.driver.writeParameterRequest(PARAM.PARAM.Network.PERMIT_JOIN, seconds);
 
             debug("PERMIT_JOIN - " + seconds + " seconds");
         } catch (error) {
