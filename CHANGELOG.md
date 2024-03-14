@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.38.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.38.0...v0.38.1) (2024-03-14)
+
+
+### Bug Fixes
+
+* Conbee: fix sporadic `UnhandledPromiseRejection` error when permit join is enabled https://github.com/Koenkk/zigbee2mqtt/issues/21696 ([fe9cab9](https://github.com/Koenkk/zigbee-herdsman/commit/fe9cab9f0a5041ba7764cbf432010c8ed63130c9))
+
 ## [0.38.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.37.0...v0.38.0) (2024-03-12)
 
 
