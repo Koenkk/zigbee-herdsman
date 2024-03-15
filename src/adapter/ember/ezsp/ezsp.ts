@@ -4093,7 +4093,7 @@ export class Ezsp extends EventEmitter {
         debug(`ezspIncomingMessageHandler(): callback called with: [type=${EmberIncomingMessageType[type]}], [apsFrame=${JSON.stringify(apsFrame)}], `
             + `[lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}], [sender=${sender}], [bindingIndex=${bindingIndex}], `
             + `[addressIndex=${addressIndex}], [messageContents=${messageContents.toString('hex')}]`);
-        // from protocol\zigbee\app\util\zigbee-framework\zigbee-device-host.h
+
         if (apsFrame.profileId === ZDO_PROFILE_ID) {
             const zdoBuffalo = new EzspBuffalo(messageContents, ZDO_MESSAGE_OVERHEAD);// set pos to skip `transaction sequence number`
 
@@ -4551,7 +4551,7 @@ export class Ezsp extends EventEmitter {
                 break;
             }
             default: {
-                console.log(`<=== [ZDO clusterId=${apsFrame.clusterId}] Support not implemented upstream.`);
+                console.log(`<=== [ZDO clusterId=${apsFrame.clusterId} sender=${sender}] Support not implemented upstream.`);
                 break;
             }
             }

@@ -8,7 +8,7 @@ import {BackupUtils, RealpathSync, Wait} from "../../../utils";
 import {Adapter, TsType} from "../..";
 import {LoggerStub} from "../../../controller/logger-stub";
 import {Backup, UnifiedBackupStorage} from "../../../models";
-import {FrameType, Direction, ZclFrame, Foundation} from "../../../zcl";
+import {FrameType, Direction, ZclFrame, Foundation, ManufacturerCode} from "../../../zcl";
 import Cluster from "../../../zcl/definition/cluster";
 import {
     DeviceAnnouncePayload,
@@ -122,7 +122,6 @@ import {
     EMBER_SLEEPY_BROADCAST_ADDRESS,
     EMBER_INSTALL_CODE_CRC_SIZE,
     EMBER_INSTALL_CODE_SIZES,
-    MANUFACTURER_CODE,
     EMBER_NUM_802_15_4_CHANNELS,
     EMBER_MIN_802_15_4_CHANNEL_NUMBER,
     ZIGBEE_COORDINATOR_ADDRESS,
@@ -154,8 +153,7 @@ import {FIXED_ENDPOINTS} from "./endpoints";
 import {aesMmoHashInit, initNetworkCache, initSecurityManagerContext} from "../utils/initters";
 import {randomBytes} from "crypto";
 import {EmberOneWaitress} from "./oneWaitress";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import {EmberTokensManager} from "./tokensManager";
+// import {EmberTokensManager} from "./tokensManager";
 
 const debug = Debug('zigbee-herdsman:adapter:ember:adapter');
 
@@ -401,6 +399,17 @@ const DEFAULT_ZCL_REQUEST_TIMEOUT = 15000;//msec
 const DEFAULT_NETWORK_REQUEST_TIMEOUT = 10000;// nothing on the network to bother requests, should be much faster than this
 /** Time between watchdog counters reading/clearing */
 const WATCHDOG_COUNTERS_FEED_INTERVAL = 3600000;// every hour...
+/** Default manufacturer code reported by coordinator. */
+const DEFAULT_MANUFACTURER_CODE = ManufacturerCode.SILICON_LABORATORIES;
+/**
+ * Workaround for devices that require a specific manufacturer code to be reported by coordinator while interviewing...
+ * - Lumi/Aqara devices do not work properly otherwise (missing features): https://github.com/Koenkk/zigbee2mqtt/issues/9274
+ */
+const WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE: {[ieeePrefix: string]: ManufacturerCode} = {
+    // NOTE: Lumi has a new prefix registered since 2021, in case they start using that one with new devices, it might need to be added here too...
+    //       "0x18c23c" https://maclookup.app/vendors/lumi-united-technology-co-ltd
+    "0x54ef44": ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN,
+};
 
 /**
  * Relay calls between Z2M and EZSP-layer and handle any error that might occur via queue & waitress.
@@ -408,10 +417,12 @@ const WATCHDOG_COUNTERS_FEED_INTERVAL = 3600000;// every hour...
  * Anything post `start` that requests anything from the EZSP layer must run through the request queue for proper execution flow.
  */
 export class EmberAdapter extends Adapter {
+    /** Current manufacturer code assigned to the coordinator. Used for join workarounds... */
+    private manufacturerCode: ManufacturerCode;
     /** Key in STACK_CONFIGS */
     public readonly stackConfig: 'default' | 'zigbeed';
     /** EMBER_LOW_RAM_CONCENTRATOR or EMBER_HIGH_RAM_CONCENTRATOR. */
-    private concentratorType: number;
+    private readonly concentratorType: number;
 
     private readonly ezsp: Ezsp;
     private version: {ezsp: number, revision: string} & EmberVersion;
@@ -494,7 +505,7 @@ export class EmberAdapter extends Adapter {
                     const setJPstatus = (await this.emberSetJoinPolicy(EmberJoinDecision.USE_PRECONFIGURED_KEY));
 
                     if (setJPstatus !== EzspStatus.SUCCESS) {
-                        console.error(`[ZDO] Failed set join policy for with status=${EzspStatus[setJPstatus]}.`);
+                        console.error(`[ZDO] Failed set join policy with status=${EzspStatus[setJPstatus]}.`);
                         return EmberStatus.ERR_FATAL;
                     }
 
@@ -713,9 +724,28 @@ export class EmberAdapter extends Adapter {
                     ieeeAddr: newNodeEui64,
                 };
 
-                this.emit(Events.deviceJoined, payload);
+                // set workaround manuf code if necessary, or revert to default if previous joined device required workaround and new one does not
+                const joinManufCode = WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE[newNodeEui64.substring(0, 8)] ?? DEFAULT_MANUFACTURER_CODE;
+
+                if (this.manufacturerCode !== joinManufCode) {
+                    this.requestQueue.enqueue(
+                        async (): Promise<EmberStatus> => {
+                            debug(`[WORKAROUND] Setting coordinator manufacturer code to ${ManufacturerCode[joinManufCode]}.`);
+                            await this.ezsp.ezspSetManufacturerCode(joinManufCode);
+
+                            this.manufacturerCode = joinManufCode;
+
+                            this.emit(Events.deviceJoined, payload);
+                            return EmberStatus.SUCCESS;
+                        },
+                        console.error,// no reject, just log error if any
+                        true,// prioritize just to avoid delays if queue is busy
+                    );
+                } else {
+                    this.emit(Events.deviceJoined, payload);
+                }
             } else {
-                console.log(`[TRUST CENTER] Device ${newNodeId}:${newNodeEui64} was denied joining via ${parentOfNewNodeId}.`);
+                console.warn(`[TRUST CENTER] Device ${newNodeId}:${newNodeEui64} was denied joining via ${parentOfNewNodeId}.`);
             }
         }
     }
@@ -752,6 +782,7 @@ export class EmberAdapter extends Adapter {
         this.interpanLock = false;
 
         this.networkCache = initNetworkCache();
+        this.manufacturerCode = DEFAULT_MANUFACTURER_CODE;// will be set in NCP in initEzsp
 
         this.ezsp.once(EzspEvents.ncpNeedsResetAndInit, this.onNcpNeedsResetAndInit.bind(this));
     }
@@ -869,9 +900,7 @@ export class EmberAdapter extends Adapter {
             lowHighBytes(STACK_CONFIGS[this.stackConfig].TRANSIENT_DEVICE_TIMEOUT)
         );
 
-        // Set the manufacturing code. This is defined by ZigBee document 053874r10
-        // Ember's ID is 0x1002 and is the default, but this can be overridden in App Builder.
-        await this.ezsp.ezspSetManufacturerCode(MANUFACTURER_CODE);
+        await this.ezsp.ezspSetManufacturerCode(this.manufacturerCode);
 
         // network security init
         await this.emberSetEzspConfigValue(EzspConfigId.STACK_PROFILE, STACK_CONFIGS[this.stackConfig].STACK_PROFILE);
@@ -1314,11 +1343,11 @@ export class EmberAdapter extends Adapter {
             }
 
             if (!data.stack_specific?.ezsp || !data.metadata.internal.ezspVersion) {
-                throw new Error(`[BACKUP] Specified backup is not EZSP.`);
+                throw new Error(`[BACKUP] Current backup file is not for EmberZNet stack.`);
             }
 
             if (data.metadata.internal.ezspVersion < BACKUP_OLDEST_SUPPORTED_EZSP_VERSION) {
-                throw new Error(`[BACKUP] Specified backup is not a supported EZSP version (min: ${BACKUP_OLDEST_SUPPORTED_EZSP_VERSION}).`);
+                throw new Error(`[BACKUP] Current backup file is from an unsupported EZSP version (min: ${BACKUP_OLDEST_SUPPORTED_EZSP_VERSION}).`);
             }
 
             return BackupUtils.fromUnifiedBackup(data);
@@ -1653,29 +1682,18 @@ export class EmberAdapter extends Adapter {
         const [status, versionStruct] = (await this.ezsp.ezspGetVersionStruct());
 
         if (status !== EzspStatus.SUCCESS) {
-            // NCP has old style version number
-            debug(`NCP has old-style version number.`);
-            this.version = {
-                ezsp: ncpEzspProtocolVer,
-                revision: `${ncpStackVer}`,
-                major: ncpStackVer,
-                minor: 0,
-                patch: 0,
-                special: 0,
-                build: 0,
-                type: EmberVersionType.GA,// default...
-            };
-        } else {
-            // NCP has new style version number
-            this.version = {
-                ezsp: ncpEzspProtocolVer,
-                revision: `${versionStruct.major}.${versionStruct.minor}.${versionStruct.patch} [${EmberVersionType[versionStruct.type]}]`,
-                ...versionStruct,
-            };
+            // Should never happen with support of only EZSP v13+
+            throw new Error(`NCP has old-style version number. Not supported.`);
+        }
 
-            if (versionStruct.type !== EmberVersionType.GA) {
-                console.warn(`NCP is running a non-GA version (${EmberVersionType[versionStruct.type]}).`);
-            }
+        this.version = {
+            ezsp: ncpEzspProtocolVer,
+            revision: `${versionStruct.major}.${versionStruct.minor}.${versionStruct.patch} [${EmberVersionType[versionStruct.type]}]`,
+            ...versionStruct,
+        };
+
+        if (versionStruct.type !== EmberVersionType.GA) {
+            console.warn(`NCP is running a non-GA version (${EmberVersionType[versionStruct.type]}).`);
         }
 
         debug(`NCP version info: ${JSON.stringify(this.version)}`);
@@ -2627,7 +2645,7 @@ export class EmberAdapter extends Adapter {
                     resolve({
                         ieeeAddr,
                         networkAddress: ZIGBEE_COORDINATOR_ADDRESS,
-                        manufacturerID: MANUFACTURER_CODE,
+                        manufacturerID: DEFAULT_MANUFACTURER_CODE,
                         endpoints: FIXED_ENDPOINTS.map((ep) => {
                             return {
                                 profileID: ep.profileId,
@@ -2647,7 +2665,7 @@ export class EmberAdapter extends Adapter {
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
-        return {type: `EZSP v${this.version.ezsp}`, meta: this.version};
+        return {type: `EmberZNet`, meta: this.version};
     }
 
     // queued
@@ -2914,6 +2932,13 @@ export class EmberAdapter extends Adapter {
                 debug(`[ZDO] Pre joining import transient key status=${SLStatus[impKeyStatus]}.`);
                 return impKeyStatus === SLStatus.OK ? EmberStatus.SUCCESS : EmberStatus.ERR_FATAL;
             } else {
+                if (this.manufacturerCode !== DEFAULT_MANUFACTURER_CODE) {
+                    debug(`[WORKAROUND] Reverting coordinator manufacturer code to default.`);
+                    await this.ezsp.ezspSetManufacturerCode(DEFAULT_MANUFACTURER_CODE);
+
+                    this.manufacturerCode = DEFAULT_MANUFACTURER_CODE;
+                }
+
                 await this.ezsp.ezspClearTransientLinkKeys();
 
                 const setJPstatus = (await this.emberSetJoinPolicy(EmberJoinDecision.ALLOW_REJOINS_ONLY));
