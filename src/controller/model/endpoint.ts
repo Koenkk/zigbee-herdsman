@@ -897,6 +897,33 @@ class Endpoint extends Entity {
             }
         }
     }
+
+    public async generalCommand(
+        clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
+    ): Promise<void | AdapterEvents.ZclDataPayload> {
+        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const command = Zcl.Utils.getGlobalCommand(commandKey);
+        options = this.getOptionsWithDefaults(
+            options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
+            options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+            command.name, cluster.name, payload, options.reservedBits
+        );
+
+        const log = `General command ${this.deviceIeeeAddress}/${this.ID} ` +
+            `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
+        debug.info(log);
+
+        try {
+            return await this.sendRequest(frame, options);
+        } catch (error) {
+            error.message = `${log} failed (${error.message})`;
+            debug.error(error.message);
+            throw error;
+        }
+    }
 }
 
 export default Endpoint;
