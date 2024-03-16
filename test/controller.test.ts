@@ -5055,6 +5055,18 @@ describe('Controller', () => {
         expect(events.message[0].data).toMatchObject({calibrationMode:4});
         expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal:4});
     });
+
+    it('generalCommand', async () => {
+        await controller.start();
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(null)
+        let error;
+        try {await endpoint.generalCommand('genOnOff', 'discover', {startAttrId: 1, maxAttrIds: 255})} catch (e) {error = e}
+        expect(error).toBeUndefined();
+    });
 });
 
 
