@@ -47,6 +47,7 @@ const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockAdapterSetTransmitPower = jest.fn();
+const mockAdapterSwitchChannel = jest.fn();
 const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
     ieeeAddr: '0x123',
     networkAddress: 123,
@@ -346,6 +347,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             getNetworkParameters: mockAdapterGetNetworkParameters,
             waitFor: mockAdapterWaitFor,
             setTransmitPower: mockAdapterSetTransmitPower,
+            switchChannel: mockAdapterSwitchChannel,
             nodeDescriptor: async (networkAddress) => {
                 const descriptor = mockDevices[networkAddress].nodeDescriptor;
                 if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
@@ -795,6 +797,16 @@ describe('Controller', () => {
         });
 
         expect(Device.byIeeeAddr('0x129').modelID).toBe('new.model.id');
+    });
+
+    it('Switch channel', async () => {
+        await controller.start();
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
+        await controller.switchChannel(25);
+        expect(mockAdapterSwitchChannel).toHaveBeenCalledWith(25);
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 25, extendedPanID: 3});
+        mockAdapterGetNetworkParameters.mockClear();// other test uses calls, so clear what was called here
     });
 
     it('Set transmit power', async () => {
