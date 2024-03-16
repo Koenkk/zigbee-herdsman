@@ -813,12 +813,26 @@ describe('Controller', () => {
         expect(Device.byIeeeAddr('0x129').modelID).toBe('new.model.id');
     });
 
+    it ('Schedule switch channel manually', async () => {
+        // workaround setTimeout
+        const scheduleSwitchChannelSpy = jest.spyOn(controller, 'scheduleSwitchChannel').mockImplementationOnce(() => {
+            mockAdapterSwitchChannel(20);
+            controller.networkParametersCached = null;
+            mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 20});
+        });
+        await controller.start();
+        await controller.scheduleSwitchChannel();
+        expect(mockAdapterSwitchChannel).toHaveBeenCalledWith(20);
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 20, extendedPanID: 3});
+    });
+
     it ('Schedule switch channel if supported', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
         // workaround setTimeout
         const scheduleSwitchChannelSpy = jest.spyOn(controller, 'scheduleSwitchChannel').mockImplementationOnce(() => {
             mockAdapterSwitchChannel(controller.options.network.channelList[0]);
             controller.networkParametersCached = null;
+            mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 15});
         });
         // from 25 to 15 (default in test controller options)
         mockAdapterSupportsSwitchChannel.mockReturnValueOnce(true);
