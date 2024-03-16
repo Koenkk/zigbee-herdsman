@@ -711,6 +711,11 @@ class EZSPAdapter extends Adapter {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public async switchChannel(newChannel: number): Promise<void> {
+        return Promise.reject(new Error("Not supported"));
+    }
+
     public async setTransmitPower(value: number): Promise<void> {
         debug(`setTransmitPower to ${value}`);
         return this.queue.execute<void>(async () => {

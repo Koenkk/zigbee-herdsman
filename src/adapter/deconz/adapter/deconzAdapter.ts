@@ -1042,6 +1042,10 @@ class DeconzAdapter extends Adapter {
         throw new Error("not supported");
     }
 
+    public async switchChannel(newChannel: number): Promise<void> {
+        throw new Error("not supported");
+    }
+
     public async setTransmitPower(value: number): Promise<void> {
         throw new Error("not supported");
     }

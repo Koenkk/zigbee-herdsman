@@ -184,6 +184,18 @@ class Controller extends events.EventEmitter {
             databaseCoordinator.changeIeeeAddress(coordinator.ieeeAddr);
         }
 
+        if (startResult === 'resumed') {
+            const netParams = (await this.getNetworkParameters());
+
+            if (this.options.network.channelList[0] !== netParams.channel) {
+                debug.log(`Scheduling switch channel broadcast in 3min.`);
+                // NOTE: stacks that won't support channel switching will not report as 'resumed', they'll have 'reset'/'restored'
+                //       so here we're certain that `switchChannel` is implemented for whatever adapter we are on
+                // Set switch to 3min after start.
+                setTimeout(() => this.switchChannel(this.options.network.channelList[0]), 180000);
+            }
+        }
+
         // Set backup timer to 1 day.
         this.backupTimer = setInterval(() => this.backup(), 86400000);
 
@@ -412,6 +424,15 @@ class Controller extends events.EventEmitter {
      */
     public createGroup(groupID: number): Group {
         return Group.create(groupID);
+    }
+
+    /**
+     * Broadcast a network-wide channel change.
+     */
+    public async switchChannel(newChannel: number): Promise<void> {
+        await this.adapter.switchChannel(newChannel);
+
+        this.networkParametersCached = null;// invalidate cache
     }
 
     /**
