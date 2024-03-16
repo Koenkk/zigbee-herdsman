@@ -206,6 +206,10 @@ class ZiGateAdapter extends Adapter {
         throw new Error("This adapter does not support backup");
     };
 
+    public async supportsSwitchChannel(): Promise<boolean> {
+        return false;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async switchChannel(newChannel: number): Promise<void> {
         throw new Error("not supported");

@@ -2861,6 +2861,10 @@ export class EmberAdapter extends Adapter {
         });
     }
 
+    public async supportsSwitchChannel(): Promise<boolean> {
+        return true;
+    }
+
     // queued
     public async switchChannel(newChannel: number): Promise<void> {
         return new Promise<void>((resolve, reject): void => {

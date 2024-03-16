@@ -918,6 +918,10 @@ class ZStackAdapter extends Adapter {
         });
     }
 
+    public async supportsSwitchChannel(): Promise<boolean> {
+        return false;
+    }
+
     public async switchChannel(newChannel: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
