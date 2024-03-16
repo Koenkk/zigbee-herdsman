@@ -1000,10 +1000,10 @@ class DeconzAdapter extends Adapter {
                 await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
                 await this.sleep(2000);
                 
-                let panid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
-                let expanid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
-                let channel: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
-                let networkKey: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.NETWORK_KEY);
+                panid = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
+                expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
+                channel = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
+                networkKey = await this.driver.readParameterRequest(PARAM.PARAM.Network.NETWORK_KEY);
             }
             
             return {
