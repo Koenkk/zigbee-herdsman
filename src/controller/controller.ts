@@ -188,11 +188,11 @@ class Controller extends events.EventEmitter {
             const netParams = (await this.getNetworkParameters());
 
             if (this.options.network.channelList[0] !== netParams.channel) {
-                debug.log(`Scheduling switch channel broadcast in 3min.`);
+                debug.log(`Scheduling switch channel broadcast in 60 seconds.`);
                 // NOTE: stacks that won't support channel switching will not report as 'resumed', they'll have 'reset'/'restored'
-                //       so here we're certain that `switchChannel` is implemented for whatever adapter we are on
-                // Set switch to 3min after start.
-                setTimeout(() => this.switchChannel(this.options.network.channelList[0]), 180000);
+                //       or matching channel, so here we're certain that `switchChannel` is implemented for whatever adapter we are on
+                // Set switch to 60 seconds after start.
+                setTimeout(() => this.switchChannel(this.options.network.channelList[0]), 60000);
             }
         }
 

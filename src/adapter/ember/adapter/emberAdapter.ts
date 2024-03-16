@@ -523,6 +523,12 @@ export class EmberAdapter extends Adapter {
             console.log(`[STACK STATUS] Network closed.`);
             break;
         }
+        case EmberStatus.CHANNEL_CHANGED: {
+            // invalidate cache
+            this.networkCache.parameters.radioChannel = INVALID_RADIO_CHANNEL;
+            console.log(`[STACK STATUS] Channel changed.`);
+            break;
+        }
         default: {
             debug(`[STACK STATUS] ${EmberStatus[status]}.`);
             break;
@@ -2873,9 +2879,6 @@ export class EmberAdapter extends Adapter {
                         console.error(`[ZDO] Failed broadcast channel change to "${newChannel}" with status=${EmberStatus[status]}.`);
                         return status;
                     }
-
-                    // invalidate cache
-                    this.networkCache.parameters.radioChannel = INVALID_RADIO_CHANNEL;
 
                     resolve();
                     return EmberStatus.SUCCESS;
