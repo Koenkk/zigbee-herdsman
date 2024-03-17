@@ -502,7 +502,7 @@ class Endpoint extends Entity {
         );
 
         const log = `ReadResponse ${this.deviceIeeeAddress}/${this.ID} ` +
-            `${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
+            `${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify({...options, transactionSequenceNumber})})`;
         debug.info(log);
 
         try {
