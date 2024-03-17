@@ -30,6 +30,8 @@ interface RoutingTable {
     table: {destinationAddress: number; status: string; nextHop: number}[];
 }
 
+type CustomReadResponse = (frame: Zcl.ZclFrame, endpoint: Endpoint) => boolean;
+
 class Device extends Entity {
     private readonly ID: number;
     private _applicationVersion?: number;
@@ -52,6 +54,7 @@ class Device extends Entity {
     private _linkquality?: number;
     private _skipDefaultResponse: boolean;
     private _skipTimeResponse: boolean;
+    private _customReadResponse?: CustomReadResponse;
     private _deleted: boolean;
     private _lastDefaultResponseSequenceNumber: number;
     private _checkinInterval: number;
@@ -101,6 +104,8 @@ class Device extends Entity {
     set skipDefaultResponse(skipDefaultResponse: boolean) {this._skipDefaultResponse = skipDefaultResponse;}
     get skipTimeResponse(): boolean {return this._skipTimeResponse;}
     set skipTimeResponse(skipTimeResponse: boolean) {this._skipTimeResponse = skipTimeResponse;}
+    get customReadResponse(): CustomReadResponse {return this._customReadResponse;}
+    set customReadResponse(customReadResponse: CustomReadResponse) {this._customReadResponse = customReadResponse;}
     get checkinInterval(): number {return this._checkinInterval;}
     set checkinInterval(checkinInterval: number) {
         this._checkinInterval = checkinInterval;
@@ -230,18 +235,20 @@ class Device extends Entity {
         }
 
         // Reponse to read requests
-        if (frame.isGlobal() && frame.isCommand('read')) {
+        if (frame.isGlobal() && frame.isCommand('read') && !(this._customReadResponse?.(frame, endpoint))) {
             const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
             const attributes: {[s: string]: KeyValue} = {
                 ...endpoint.clusters,
-                genTime: {attributes: {
-                    timeStatus: 3, // Time-master + synchronised
-                    time: time,
-                    timeZone: ((new Date()).getTimezoneOffset() * -1) * 60,
-                    localTime: time - (new Date()).getTimezoneOffset() * 60,
-                    lastSetTime: time,
-                    validUntilTime: time + (24 * 60 * 60), // valid for 24 hours
-                }},
+                genTime: {
+                    attributes: {
+                        timeStatus: 3, // Time-master + synchronised
+                        time: time,
+                        timeZone: ((new Date()).getTimezoneOffset() * -1) * 60,
+                        localTime: time - (new Date()).getTimezoneOffset() * 60,
+                        lastSetTime: time,
+                        validUntilTime: time + (24 * 60 * 60), // valid for 24 hours
+                    },
+                },
             };
 
             if (frame.Cluster.name in attributes && (frame.Cluster.name !== 'genTime' || !this._skipTimeResponse)) {
