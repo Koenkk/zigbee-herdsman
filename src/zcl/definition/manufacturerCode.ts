@@ -720,8 +720,11 @@ enum ManufacturerCode {
     RESERVED_9 = 0xFFFE,
     RESERVED_10 = 0xFFFF,
 
-    // Custom
-    SPRUT_DEVICE = 0x6666,
+    // Non-CSA-assigned codes
+    CUSTOM_PERENIO = 0x007B,
+    CUSTOM_LIVOLO = 0x1AD2,
+    CUSTOM_SPRUT_DEVICE = 0x6666,
+    CUSTOM_LYTKO = 0x7777,
 };
 
 export default ManufacturerCode;
