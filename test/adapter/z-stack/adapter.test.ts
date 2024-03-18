@@ -2067,17 +2067,17 @@ describe("zstack-adapter", () => {
         expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'resetReq', {type: 0});
     });
 
-    it('Supports switch channel', async () => {
+    it('Supports change channel', async () => {
         basicMocks();
         await adapter.start();
-        expect(await adapter.supportsSwitchChannel()).toBeFalsy();
+        expect(await adapter.supportsChangeChannel()).toBeFalsy();
     });
 
-    it('Switch channel', async () => {
+    it('Change channel', async () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
-        await adapter.switchChannel(25);
+        await adapter.changeChannel(25);
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtNwkUpdateReq', {dstaddr: 0xFFFF, dstaddrmode: 15, channelmask: 0x2000000, scanduration: 0xFE});
     });

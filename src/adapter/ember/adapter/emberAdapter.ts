@@ -153,7 +153,7 @@ import {EmberRequestQueue} from "./requestQueue";
 import {FIXED_ENDPOINTS} from "./endpoints";
 import {aesMmoHashInit, initNetworkCache, initSecurityManagerContext} from "../utils/initters";
 import {randomBytes} from "crypto";
-import {EmberOneWaitress} from "./oneWaitress";
+import {EmberOneWaitress, OneWaitressEvents} from "./oneWaitress";
 // import {EmberTokensManager} from "./tokensManager";
 
 const debug = Debug('zigbee-herdsman:adapter:ember:adapter');
@@ -226,14 +226,6 @@ enum RoutingTableStatus {
     RESERVED1 = 0x5,
     RESERVED2 = 0x6,
     RESERVED3 = 0x7,
-};
-
-/** Events specific to OneWaitress usage. */
-enum OneWaitressEvents {
-    STACK_STATUS_NETWORK_UP = 'STACK_STATUS_NETWORK_UP',
-    STACK_STATUS_NETWORK_DOWN = 'STACK_STATUS_NETWORK_DOWN',
-    STACK_STATUS_NETWORK_OPENED = 'STACK_STATUS_NETWORK_OPENED',
-    STACK_STATUS_NETWORK_CLOSED = 'STACK_STATUS_NETWORK_CLOSED',
 };
 
 enum NetworkInitAction {
@@ -524,6 +516,7 @@ export class EmberAdapter extends Adapter {
             break;
         }
         case EmberStatus.CHANNEL_CHANGED: {
+            this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_CHANNEL_CHANGED);
             // invalidate cache
             this.networkCache.parameters.radioChannel = INVALID_RADIO_CHANNEL;
             console.log(`[STACK STATUS] Channel changed.`);
@@ -2861,12 +2854,12 @@ export class EmberAdapter extends Adapter {
         });
     }
 
-    public async supportsSwitchChannel(): Promise<boolean> {
+    public async supportsChangeChannel(): Promise<boolean> {
         return true;
     }
 
     // queued
-    public async switchChannel(newChannel: number): Promise<void> {
+    public async changeChannel(newChannel: number): Promise<void> {
         return new Promise<void>((resolve, reject): void => {
             this.requestQueue.enqueue(
                 async (): Promise<EmberStatus> => {
@@ -2883,6 +2876,12 @@ export class EmberAdapter extends Adapter {
                         console.error(`[ZDO] Failed broadcast channel change to "${newChannel}" with status=${EmberStatus[status]}.`);
                         return status;
                     }
+
+                    await this.oneWaitress.startWaitingForEvent(
+                        {eventName: OneWaitressEvents.STACK_STATUS_CHANNEL_CHANGED},
+                        DEFAULT_NETWORK_REQUEST_TIMEOUT * 2,// observed to ~9sec
+                        '[ZDO] Change Channel',
+                    );
 
                     resolve();
                     return EmberStatus.SUCCESS;

@@ -1042,11 +1042,11 @@ class DeconzAdapter extends Adapter {
         throw new Error("not supported");
     }
 
-    public async supportsSwitchChannel(): Promise<boolean> {
+    public async supportsChangeChannel(): Promise<boolean> {
         return false;
     }
 
-    public async switchChannel(newChannel: number): Promise<void> {
+    public async changeChannel(newChannel: number): Promise<void> {
         throw new Error("not supported");
     }
 

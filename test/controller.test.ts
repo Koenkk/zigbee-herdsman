@@ -47,8 +47,8 @@ const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockAdapterSetTransmitPower = jest.fn();
-const mockAdapterSupportsSwitchChannel = jest.fn().mockReturnValue(false);
-const mockAdapterSwitchChannel = jest.fn();
+const mockAdapterSupportsChangeChannel = jest.fn().mockReturnValue(false);
+const mockAdapterChangeChannel = jest.fn();
 const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
     ieeeAddr: '0x123',
     networkAddress: 123,
@@ -154,7 +154,7 @@ const mocksClear = [
     mockRestoreChannelInterPAN,
     mockAddInstallCode,
     mockAdapterGetNetworkParameters,
-    mockAdapterSwitchChannel,
+    mockAdapterChangeChannel,
 ];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
@@ -360,8 +360,8 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             getNetworkParameters: mockAdapterGetNetworkParameters,
             waitFor: mockAdapterWaitFor,
             setTransmitPower: mockAdapterSetTransmitPower,
-            supportsSwitchChannel: mockAdapterSupportsSwitchChannel,
-            switchChannel: mockAdapterSwitchChannel,
+            supportsChangeChannel: mockAdapterSupportsChangeChannel,
+            changeChannel: mockAdapterChangeChannel,
             nodeDescriptor: async (networkAddress) => {
                 const descriptor = mockDevices[networkAddress].nodeDescriptor;
                 if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
@@ -813,51 +813,40 @@ describe('Controller', () => {
         expect(Device.byIeeeAddr('0x129').modelID).toBe('new.model.id');
     });
 
-    it ('Schedule switch channel manually', async () => {
-        // workaround setTimeout
-        const scheduleSwitchChannelSpy = jest.spyOn(controller, 'scheduleSwitchChannel').mockImplementationOnce(() => {
-            mockAdapterSwitchChannel(20);
-            controller.networkParametersCached = null;
-            mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 20});
-        });
+    it ('Change channel', async () => {
         await controller.start();
-        await controller.scheduleSwitchChannel();
-        expect(mockAdapterSwitchChannel).toHaveBeenCalledWith(20);
+        controller.options.network.channelList[0] = 20;
+        await controller.changeChannel();
+        expect(mockAdapterChangeChannel).toHaveBeenCalledWith(20);
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 20});
         expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 20, extendedPanID: 3});
     });
 
-    it ('Schedule switch channel if supported', async () => {
+    it ('Change channel on start if supported', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        // workaround setTimeout
-        const scheduleSwitchChannelSpy = jest.spyOn(controller, 'scheduleSwitchChannel').mockImplementationOnce(() => {
-            mockAdapterSwitchChannel(controller.options.network.channelList[0]);
-            controller.networkParametersCached = null;
-            mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 15});
-        });
-        // from 25 to 15 (default in test controller options)
-        mockAdapterSupportsSwitchChannel.mockReturnValueOnce(true);
+        mockAdapterSupportsChangeChannel.mockReturnValueOnce(true);
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
-        expect(mockAdapterSwitchChannel).toHaveBeenCalledWith(15);
+        expect(mockAdapterChangeChannel).toHaveBeenCalledWith(15);
         expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
     });
 
-    it ('Does not schedule switch channel if not changed', async () => {
+    it ('Does not change channel on start if not changed', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterSupportsSwitchChannel.mockReturnValueOnce(true);
+        mockAdapterSupportsChangeChannel.mockReturnValueOnce(true);
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
-        expect(mockAdapterSwitchChannel).toHaveBeenCalledTimes(0);
+        expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(0);
     });
 
-    it ('Does not schedule switch channel if not supported', async () => {
+    it ('Does not change channel on start if not supported', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterSupportsSwitchChannel.mockReturnValueOnce(false);
+        mockAdapterSupportsChangeChannel.mockReturnValueOnce(false);
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(0);
-        expect(mockAdapterSwitchChannel).toHaveBeenCalledTimes(0);
+        expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(0);
         // get rid of the mockReturnValueOnce that was never called
         mockAdapterGetNetworkParameters();
     });

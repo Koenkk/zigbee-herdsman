@@ -918,11 +918,11 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async supportsSwitchChannel(): Promise<boolean> {
+    public async supportsChangeChannel(): Promise<boolean> {
         return false;
     }
 
-    public async switchChannel(newChannel: number): Promise<void> {
+    public async changeChannel(newChannel: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
@@ -930,12 +930,14 @@ class ZStackAdapter extends Adapter {
                 dstaddr: 0xFFFF,// broadcast with sleepy
                 dstaddrmode: AddressMode.ADDR_BROADCAST,
                 channelmask: [newChannel].reduce((a, c) => a + (1 << c), 0),
-                scanduration: 0xFE,/*switch channel*/
+                scanduration: 0xFE,// change channel
                 // scancount: null,// TODO: what's "not present" here?
                 // nwkmanageraddr: null,// TODO: what's "not present" here?
             };
 
             await this.znp.request(Subsystem.ZDO, 'mgmtNwkUpdateReq', payload);
+            // wait for the broadcast to propagate and the adapter to actually change
+            await Wait(10000);
         });
     }
 

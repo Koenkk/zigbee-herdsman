@@ -131,6 +131,15 @@ class Controller extends events.EventEmitter {
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
         const startResult = await this.adapter.start();
         debug.log(`Started with result '${startResult}'`);
+
+        if ((startResult === 'resumed') && (await this.adapter.supportsChangeChannel())) {
+            const netParams = (await this.getNetworkParameters());
+
+            if (this.options.network.channelList[0] !== netParams.channel) {
+                await this.changeChannel();
+            }
+        }
+
         Entity.injectAdapter(this.adapter);
 
         // log injection
@@ -182,14 +191,6 @@ class Controller extends events.EventEmitter {
         if (databaseCoordinator.ieeeAddr !== coordinator.ieeeAddr) {
             debug.log(`Coordinator address changed, updating to '${coordinator.ieeeAddr}'`);
             databaseCoordinator.changeIeeeAddress(coordinator.ieeeAddr);
-        }
-
-        if ((startResult === 'resumed') && (await this.adapter.supportsSwitchChannel())) {
-            const netParams = (await this.getNetworkParameters());
-
-            if (this.options.network.channelList[0] !== netParams.channel) {
-                this.scheduleSwitchChannel();
-            }
         }
 
         // Set backup timer to 1 day.
@@ -425,14 +426,11 @@ class Controller extends events.EventEmitter {
     /**
      * Broadcast a network-wide channel change.
      */
-    private scheduleSwitchChannel(): void {
-        debug.log(`Scheduling switch channel broadcast in 60 seconds.`);
+    private async changeChannel(): Promise<void> {
+        debug.log(`Broadcasting change channel to '${this.options.network.channelList[0]}'.`);
+        await this.adapter.changeChannel(this.options.network.channelList[0]);
 
-        setTimeout(async () => {
-            await this.adapter.switchChannel(this.options.network.channelList[0]);
-
-            this.networkParametersCached = null;// invalidate cache
-        }, 60000);
+        this.networkParametersCached = null;// invalidate cache
     }
 
     /**
