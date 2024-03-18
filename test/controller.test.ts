@@ -3239,7 +3239,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.writeResponse('genBasic', 99, {zclVersion: {status: 0x01}})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`WriteResponse 0x129/1 genBasic({"zclVersion":{"status":1}}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`WriteResponse 0x129/1 genBasic({"zclVersion":{"status":1}}, undefined) failed (timeout occurred)`));
     });
 
     it('Read from endpoint with string', async () => {
@@ -3960,7 +3960,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.command('genOnOff', 'toggle', {})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Command 0x129/1 genOnOff.toggle({}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":false,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Command 0x129/1 genOnOff.toggle({}, undefined) failed (timeout occurred)`));
     });
 
     it('Endpoint commandResponse error', async () => {
@@ -4004,7 +4004,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.defaultResponse(1, 0, 1, 3)} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`DefaultResponse 0x129/1 1(1, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`DefaultResponse 0x129/1 1(1, undefined) failed (timeout occurred)`));
     });
 
     it('DefaultResponse error when transactionSequenceNumber provided through options', async () => {
@@ -4048,7 +4048,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.readResponse('genOnOff', 1, [{onOff: 1}])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ReadResponse 0x129/1 genOnOff([{"onOff":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ReadResponse 0x129/1 genOnOff([{"onOff":1}], undefined) failed (timeout occurred)`));
     });
 
     it('Read error', async () => {
@@ -4136,7 +4136,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.writeStructured('genPowerCfg', {})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`WriteStructured 0x129/1 genPowerCfg({}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`WriteStructured 0x129/1 genPowerCfg({}, undefined) failed (timeout occurred)`));
     });
 
     it('Green power', async () => {
@@ -4553,7 +4553,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.report('genOnOff', {onOff: 1})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`Report to 0x129/1 genOnOff({"onOff":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Report to 0x129/1 genOnOff({"onOff":1}, undefined) failed (timeout occurred)`));
     });
 
     it('Write to device with pendingRequestTimeout > 0', async () => {
@@ -5056,7 +5056,7 @@ describe('Controller', () => {
         expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal:4});
     });
 
-    it('generalCommand', async () => {
+    it('zclCommand', async () => {
         await controller.start();
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -5064,11 +5064,11 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
         let error;
-        try {await endpoint.generalCommand('genOnOff', 'discover', {startAttrId: 1, maxAttrIds: 255})} catch (e) {error = e}
+        try {await endpoint.zclCommand('genOnOff', 'discover', {startAttrId: 1, maxAttrIds: 255})} catch (e) {error = e}
         expect(error).toBeUndefined();
     });
 
-    it('generalCommand with error', async () => {
+    it('zclCommand with error', async () => {
         await controller.start();
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -5076,8 +5076,8 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
-        try {await endpoint.generalCommand('genOnOff', 'discover', {startAttrId: 1, maxAttrIds: 255})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`General command 0x129/1 genOnOff.discover({"startAttrId":1,"maxAttrIds":255}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        try {await endpoint.zclCommand('genOnOff', 'discover', {startAttrId: 1, maxAttrIds: 255}, undefined, Zcl.FrameType.GLOBAL, true)} catch (e) {error = e}
+        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genOnOff.discover({"startAttrId":1,"maxAttrIds":255}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 });
 

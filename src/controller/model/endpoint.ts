@@ -323,7 +323,6 @@ class Endpoint extends Entity {
         clusterKey: number | string, attributes: KeyValue, options?: Options
     ): Promise<void> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
-        options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (cluster.hasAttribute(nameOrID)) {
@@ -341,13 +340,7 @@ class Endpoint extends Entity {
         debug.info(log);
 
         try {
-            const frame = Zcl.ZclFrame.create(
-                Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
-                options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-                "report", cluster.ID, payload, options.reservedBits
-            );
-
-            await this.sendRequest(frame, options);
+            await this.zclCommand(clusterKey, "report", payload, options);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -375,20 +368,16 @@ class Endpoint extends Entity {
                 throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
             }
         }
-
+        
         const log = `Write ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
         debug.info(log);
 
         try {
-            const frame = Zcl.ZclFrame.create(
-                Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
-                options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-                options.writeUndiv ? "writeUndiv" : "write", cluster.ID, payload, options.reservedBits
-            );
+            const result = await this.zclCommand(clusterKey, options.writeUndiv ? "writeUndiv" : "write",
+                payload, options);
 
-            const result = await this.sendRequest(frame, options);
-            if (!options.disableResponse) {
+            if (result && !options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
             }
         } catch (error) {
@@ -403,7 +392,6 @@ class Endpoint extends Entity {
     ): Promise<void> {
         assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
         const cluster = Zcl.Utils.getCluster(clusterKey);
-        options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
         const payload: {status: number; attrId: number}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (value.hasOwnProperty('status')) {    
@@ -420,17 +408,13 @@ class Endpoint extends Entity {
 	    }
         }
 
-        const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
-            options.manufacturerCode, transactionSequenceNumber, 'writeRsp', cluster.ID, payload, options.reservedBits
-        );
-
         const log = `WriteResponse ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
         debug.info(log);
 
         try {
-            await this.sendRequest(frame, options);
+            await this.zclCommand(clusterKey, 'writeRsp', payload,
+                {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber});
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -452,20 +436,14 @@ class Endpoint extends Entity {
             payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
         }
 
-        const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
-            options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(), 'read',
-            cluster.ID, payload, options.reservedBits
-        );
-
         const log = `Read ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
         debug.info(log);
 
         try {
-            const result = await this.sendRequest(frame, options);
+            const result = await this.zclCommand(clusterKey, 'read', payload, options);
 
-            if (!options.disableResponse) {
+            if (result && !options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
                 return ZclFrameConverter.attributeKeyValue(result.frame, this.getDevice().manufacturerID);
             } else {
@@ -482,8 +460,8 @@ class Endpoint extends Entity {
         clusterKey: number | string, transactionSequenceNumber: number, attributes: KeyValue, options?: Options
     ): Promise<void> {
         assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
+
         const cluster = Zcl.Utils.getCluster(clusterKey);
-        options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
         const payload: {attrId: number; status: number; dataType: number; attrData: number | string}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (cluster.hasAttribute(nameOrID)) {
@@ -496,17 +474,13 @@ class Endpoint extends Entity {
             }
         }
 
-        const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
-            options.manufacturerCode, transactionSequenceNumber, 'readRsp', cluster.ID, payload, options.reservedBits
-        );
-
         const log = `ReadResponse ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
         debug.info(log);
 
         try {
-            await this.sendRequest(frame, options);
+            await this.zclCommand(clusterKey, 'readRsp', payload,
+                {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber});
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -602,19 +576,14 @@ class Endpoint extends Entity {
         commandID: number, status: number, clusterID: number, transactionSequenceNumber: number, options?: Options
     ): Promise<void> {
         assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
-        options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, null);
         const payload = {cmdId: commandID, statusCode: status};
-        const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
-            options.manufacturerCode, transactionSequenceNumber, 'defaultRsp', clusterID, payload, options.reservedBits
-        );
-
         const log = `DefaultResponse ${this.deviceIeeeAddress}/${this.ID} ` +
             `${clusterID}(${commandID}, ${JSON.stringify(options)})`;
         debug.info(log);
 
         try {
-            await this.sendRequest(frame, options);
+            await this.zclCommand(clusterID, 'defaultRsp', payload,
+                {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber});
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             debug.error(error.message);
@@ -655,20 +624,14 @@ class Endpoint extends Entity {
             };
         });
 
-        const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
-            options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-            'configReport', cluster.ID, payload, options.reservedBits
-        );
-
         const log = `ConfigureReporting ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}(${JSON.stringify(items)}, ${JSON.stringify(options)})`;
         debug.info(log);
 
         try {
-            const result = await this.sendRequest(frame, options);
+            const result = await this.zclCommand(clusterKey, 'configReport', payload, options);
 
-            if (!options.disableResponse) {
+            if (result && !options.disableResponse) {
                 this.checkStatus(result.frame.Payload);
             }
 
@@ -698,23 +661,12 @@ class Endpoint extends Entity {
     }
 
     public async writeStructured(clusterKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
-        const cluster = Zcl.Utils.getCluster(clusterKey);
-        options = this.getOptionsWithDefaults(
-            options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-
-        const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
-            options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-            `writeStructured`, cluster.ID, payload, options.reservedBits
-        );
-
         const log = `WriteStructured ${this.deviceIeeeAddress}/${this.ID} ` +
-            `${cluster.name}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
+            `${clusterKey}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
         debug.info(log);
 
         try {
-            await this.sendRequest(frame, options);
-
+            await this.zclCommand(clusterKey, 'writeStructured', payload, options);
             // TODO: support `writeStructuredResponse`
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
@@ -726,25 +678,12 @@ class Endpoint extends Entity {
     public async command(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
     ): Promise<void | KeyValue> {
-        const cluster = Zcl.Utils.getCluster(clusterKey);
-        const command = cluster.getCommand(commandKey);
-        const hasResponse = command.hasOwnProperty('response');
-        options = this.getOptionsWithDefaults(
-            options, hasResponse, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-
-        const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.SPECIFIC, options.direction, options.disableDefaultResponse,
-            options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-            command.name, cluster.name, payload, options.reservedBits
-        );
-
         const log = `Command ${this.deviceIeeeAddress}/${this.ID} ` +
-            `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
+            `${clusterKey}.${commandKey}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
         debug.info(log);
 
         try {
-            const result = await this.sendRequest(frame, options);
-
+            const result = await this.zclCommand(clusterKey, commandKey, payload, options, Zcl.FrameType.SPECIFIC);
             if (result) {
                 return result.frame.Payload;
             }
@@ -898,29 +837,35 @@ class Endpoint extends Entity {
         }
     }
 
-    public async generalCommand(
+    public async zclCommand(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
+        frameType: Zcl.FrameType = Zcl.FrameType.GLOBAL, logError: boolean = false,
     ): Promise<void | AdapterEvents.ZclDataPayload> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
-        const command = Zcl.Utils.getGlobalCommand(commandKey);
+        const command = (frameType == Zcl.FrameType.GLOBAL)
+            ? Zcl.Utils.getGlobalCommand(commandKey)
+            : cluster.getCommand(commandKey);
+        const hasResponse = (frameType == Zcl.FrameType.GLOBAL) ? true : command.hasOwnProperty('response');
         options = this.getOptionsWithDefaults(
-            options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+            options, hasResponse, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
 
         const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.GLOBAL, options.direction, options.disableDefaultResponse,
+            frameType, options.direction, options.disableDefaultResponse,
             options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
             command.name, cluster.name, payload, options.reservedBits
         );
 
-        const log = `General command ${this.deviceIeeeAddress}/${this.ID} ` +
+        const log = `ZCL command ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
         debug.info(log);
 
         try {
             return await this.sendRequest(frame, options);
         } catch (error) {
-            error.message = `${log} failed (${error.message})`;
-            debug.error(error.message);
+            if (logError) {
+                error.message = `${log} failed (${error.message})`;
+                debug.error(error.message);
+            }
             throw error;
         }
     }
