@@ -5791,6 +5791,19 @@ const Cluster: {
         },
         commandsResponse: {},
     },
+    manuSpecificSonoff: {
+        ID: 0xFC11,
+        attributes: {},
+        commands: {
+            protocolData: {
+                ID: 0x01,
+                parameters: [
+                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+        },
+        commandsResponse: {},
+    },
 };
 
 export default Cluster;
