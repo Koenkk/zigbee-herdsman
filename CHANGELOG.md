@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.39.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.38.1...v0.39.0) (2024-03-19)
+
+
+### Features
+
+* Base support for channel switching without re-pairing, support it for Ember adapter ([#977](https://github.com/Koenkk/zigbee-herdsman/issues/977)) ([5693789](https://github.com/Koenkk/zigbee-herdsman/commit/56937898aa432c486f0b41682b32c31e03091903))
+* Support custom read responses ([#982](https://github.com/Koenkk/zigbee-herdsman/issues/982)) ([1c196df](https://github.com/Koenkk/zigbee-herdsman/commit/1c196dfa24c1521b60a04486edb411ee0186e3d0))
+
+
+### Bug Fixes
+
+* Added non-CSA-assigned manufacturer codes currently used ([#976](https://github.com/Koenkk/zigbee-herdsman/issues/976)) ([85447fb](https://github.com/Koenkk/zigbee-herdsman/commit/85447fbc839fd5d0b42fc7708c2b61486368b3f8))
+* Ember: workaround Aqara, Lumi devices not working properly ([#974](https://github.com/Koenkk/zigbee-herdsman/issues/974)) ([e3b17c2](https://github.com/Koenkk/zigbee-herdsman/commit/e3b17c2b2c833b5b80f7b4d70394fdfc627094d7))
+* Fix `transactionSequenceNumber` not logged with readResponse ([#981](https://github.com/Koenkk/zigbee-herdsman/issues/981)) ([778cbad](https://github.com/Koenkk/zigbee-herdsman/commit/778cbad85912189b7df629d6f2b3dce645616138))
+* **ignore:** update dependencies ([#980](https://github.com/Koenkk/zigbee-herdsman/issues/980)) ([f0b7f43](https://github.com/Koenkk/zigbee-herdsman/commit/f0b7f435f43538df338c685b5c407c896709f660))
+
 ## [0.38.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.38.0...v0.38.1) (2024-03-14)
 
 
