@@ -1985,6 +1985,30 @@ describe('Controller', () => {
         expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":40,"manufacturerCode":null,"commandIdentifier":1},"Cluster":{"ID":10,"attributes":{"time":{"ID":0,"type":226,"name":"time"},"timeStatus":{"ID":1,"type":24,"name":"timeStatus"},"timeZone":{"ID":2,"type":43,"name":"timeZone"},"dstStart":{"ID":3,"type":35,"name":"dstStart"},"dstEnd":{"ID":4,"type":35,"name":"dstEnd"},"dstShift":{"ID":5,"type":43,"name":"dstShift"},"standardTime":{"ID":6,"type":35,"name":"standardTime"},"localTime":{"ID":7,"type":35,"name":"localTime"},"lastSetTime":{"ID":8,"type":226,"name":"lastSetTime"},"validUntilTime":{"ID":9,"type":226,"name":"validUntilTime"}},"name":"genTime","commands":{},"commandsResponse":{}},"Command":{"ID":1,"name":"readRsp","parameters":[{"name":"attrId","type":33},{"name":"status","type":32},{"name":"dataType","type":32,"conditions":[{"type":"statusEquals","value":0}]},{"name":"attrData","type":1000,"conditions":[{"type":"statusEquals","value":0}]}]}});
     });
 
+    it('Allow to override read response through `device.customReadResponse`', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        mocksendZclFrameToEndpoint.mockClear();
+
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        device.customReadResponse = jest.fn().mockReturnValue(true);
+
+        const payload = {
+            wasBroadcast: false,
+            address: 129,
+            frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 9}]),
+            endpoint: 1,
+            linkquality: 19,
+            groupID: 10,
+        };
+
+        await mockAdapterEvents['zclData'](payload);
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+        expect(device.customReadResponse).toHaveBeenCalledTimes(1);
+        expect(device.customReadResponse).toHaveBeenCalledWith(payload.frame, device.getEndpoint(1))
+    });
+
     it('Respond to read of attribute', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
