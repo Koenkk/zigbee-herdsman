@@ -114,7 +114,8 @@ import {
     SIMPLE_DESCRIPTOR_RESPONSE,
     BIND_RESPONSE,
     UNBIND_RESPONSE,
-    LEAVE_RESPONSE
+    LEAVE_RESPONSE,
+    NWK_UPDATE_REQUEST
 } from "../zdo";
 import {
     EMBER_BROADCAST_ADDRESS,
@@ -152,7 +153,7 @@ import {EmberRequestQueue} from "./requestQueue";
 import {FIXED_ENDPOINTS} from "./endpoints";
 import {aesMmoHashInit, initNetworkCache, initSecurityManagerContext} from "../utils/initters";
 import {randomBytes} from "crypto";
-import {EmberOneWaitress} from "./oneWaitress";
+import {EmberOneWaitress, OneWaitressEvents} from "./oneWaitress";
 // import {EmberTokensManager} from "./tokensManager";
 
 const debug = Debug('zigbee-herdsman:adapter:ember:adapter');
@@ -225,14 +226,6 @@ enum RoutingTableStatus {
     RESERVED1 = 0x5,
     RESERVED2 = 0x6,
     RESERVED3 = 0x7,
-};
-
-/** Events specific to OneWaitress usage. */
-enum OneWaitressEvents {
-    STACK_STATUS_NETWORK_UP = 'STACK_STATUS_NETWORK_UP',
-    STACK_STATUS_NETWORK_DOWN = 'STACK_STATUS_NETWORK_DOWN',
-    STACK_STATUS_NETWORK_OPENED = 'STACK_STATUS_NETWORK_OPENED',
-    STACK_STATUS_NETWORK_CLOSED = 'STACK_STATUS_NETWORK_CLOSED',
 };
 
 enum NetworkInitAction {
@@ -520,6 +513,13 @@ export class EmberAdapter extends Adapter {
         case EmberStatus.NETWORK_CLOSED: {
             this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_CLOSED);
             console.log(`[STACK STATUS] Network closed.`);
+            break;
+        }
+        case EmberStatus.CHANNEL_CHANGED: {
+            this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_CHANNEL_CHANGED);
+            // invalidate cache
+            this.networkCache.parameters.radioChannel = INVALID_RADIO_CHANNEL;
+            console.log(`[STACK STATUS] Channel changed.`);
             break;
         }
         default: {
@@ -1093,8 +1093,7 @@ export class EmberAdapter extends Adapter {
 
             // XXX: should not force a form when it's only a channel change, just change the channel, wait a sec, then continue the logic
             if ((npStatus === EmberStatus.SUCCESS) && (nodeType === EmberNodeType.COORDINATOR) && (this.networkOptions.panID === netParams.panId)
-                && (equals(this.networkOptions.extendedPanID, netParams.extendedPanId))
-                && (this.networkOptions.channelList.includes(netParams.radioChannel))) {
+                && (equals(this.networkOptions.extendedPanID, netParams.extendedPanId))) {
                 // config matches adapter so far, no error, we can check the network key
                 const context = initSecurityManagerContext();
                 context.coreKeyType = SecManKeyType.NETWORK;
@@ -1157,8 +1156,6 @@ export class EmberAdapter extends Adapter {
                 console.log(`[INIT TC] No valid backup found.`);
                 action = NetworkInitAction.FORM_CONFIG;
             }
-        } else {
-            action = NetworkInitAction.DONE;// just to be clear
         }
 
         //---- from here on, we assume everything is in place for whatever decision was taken above
@@ -2591,6 +2588,51 @@ export class EmberAdapter extends Adapter {
         return this.sendZDORequestBuffer(target, PERMIT_JOINING_REQUEST, options);
     }
 
+    /**
+     * ZDO 
+     * 
+     * @see NWK_UPDATE_REQUEST
+     * 
+     * @param target 
+     * @param scanChannels uint8_t[]
+     * @param duration uint8_t 
+     * @param count uint8_t
+     * @param manager 
+     */
+    private async emberNetworkUpdateRequest(target: EmberNodeId, scanChannels: number[], duration: number, count: number | null,
+        manager: EmberNodeId | null, options: EmberApsOption): Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
+        this.zdoRequestBuffalo.setPosition(ZDO_MESSAGE_OVERHEAD);
+
+        this.zdoRequestBuffalo.writeUInt32(scanChannels.reduce((a, c) => a + (1 << c), 0));// to uint32_t
+        this.zdoRequestBuffalo.writeUInt8(duration);
+
+        if (count != null) {
+            this.zdoRequestBuffalo.writeUInt8(count);
+        }
+
+        if (manager != null) {
+            this.zdoRequestBuffalo.writeUInt16(manager);
+        }
+
+        debug(`~~~> [ZDO NWK_UPDATE_REQUEST target=${target} scanChannels=${scanChannels} duration=${duration} count=${count} manager=${manager}]`);
+        return this.sendZDORequestBuffer(target, NWK_UPDATE_REQUEST, options);
+    }
+
+    private async emberScanChannelsRequest(target: EmberNodeId, scanChannels: number[], duration: number, count: number, options: EmberApsOption):
+        Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
+        return this.emberNetworkUpdateRequest(target, scanChannels, duration, count, null, options);
+    }
+
+    private async emberChannelChangeRequest(target: EmberNodeId, channel: number, options: EmberApsOption):
+        Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
+        return this.emberNetworkUpdateRequest(target, [channel], 0xFE, null, null, options);
+    }
+
+    private async emberSetActiveChannelsAndNwkManagerIdRequest(target: EmberNodeId, scanChannels: number[], manager: EmberNodeId,
+        options: EmberApsOption): Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
+        return this.emberNetworkUpdateRequest(target, scanChannels, 0xFF, null, manager, options);
+    }
+
     //---- END Ember ZDO
 
     //-- START Adapter implementation
@@ -2795,16 +2837,53 @@ export class EmberAdapter extends Adapter {
 
                     // first call will cache for the others, but in all likelihood, it will all be from freshly cached after init
                     // since Controller caches this also.
+                    const channel = (await this.emberGetRadioChannel());
                     const panID = (await this.emberGetPanId());
                     const extendedPanID = (await this.emberGetExtendedPanId());
-                    const channel = (await this.emberGetRadioChannel());
 
                     resolve({
-                        panID: panID,
+                        panID,
                         extendedPanID: parseInt(Buffer.from(extendedPanID).toString('hex'), 16),
-                        channel: channel,
+                        channel,
                     });
 
+                    return EmberStatus.SUCCESS;
+                },
+                reject,
+            );
+        });
+    }
+
+    public async supportsChangeChannel(): Promise<boolean> {
+        return true;
+    }
+
+    // queued
+    public async changeChannel(newChannel: number): Promise<void> {
+        return new Promise<void>((resolve, reject): void => {
+            this.requestQueue.enqueue(
+                async (): Promise<EmberStatus> => {
+                    this.checkInterpanLock();
+
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const [status, apsFrame, messageTag] = (await this.emberChannelChangeRequest(
+                        EMBER_SLEEPY_BROADCAST_ADDRESS,
+                        newChannel,
+                        DEFAULT_APS_OPTIONS,
+                    ));
+
+                    if (status !== EmberStatus.SUCCESS) {
+                        console.error(`[ZDO] Failed broadcast channel change to "${newChannel}" with status=${EmberStatus[status]}.`);
+                        return status;
+                    }
+
+                    await this.oneWaitress.startWaitingForEvent(
+                        {eventName: OneWaitressEvents.STACK_STATUS_CHANNEL_CHANGED},
+                        DEFAULT_NETWORK_REQUEST_TIMEOUT * 2,// observed to ~9sec
+                        '[ZDO] Change Channel',
+                    );
+
+                    resolve();
                     return EmberStatus.SUCCESS;
                 },
                 reject,

@@ -47,6 +47,8 @@ const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockAdapterSetTransmitPower = jest.fn();
+const mockAdapterSupportsChangeChannel = jest.fn().mockReturnValue(false);
+const mockAdapterChangeChannel = jest.fn();
 const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
     ieeeAddr: '0x123',
     networkAddress: 123,
@@ -141,7 +143,19 @@ const restoreMocksendZclFrameToEndpoint = () => {
     })
 }
 
-const mocksClear = [mocksendZclFrameToEndpoint, mockAdapterReset, mocksendZclFrameToGroup, mockSetChannelInterPAN, mocksendZclFrameInterPANToIeeeAddr, mocksendZclFrameInterPANBroadcast, mockRestoreChannelInterPAN, mockAddInstallCode];
+const mocksClear = [
+    mockAdapterStart,
+    mocksendZclFrameToEndpoint,
+    mockAdapterReset,
+    mocksendZclFrameToGroup,
+    mockSetChannelInterPAN,
+    mocksendZclFrameInterPANToIeeeAddr,
+    mocksendZclFrameInterPANBroadcast,
+    mockRestoreChannelInterPAN,
+    mockAddInstallCode,
+    mockAdapterGetNetworkParameters,
+    mockAdapterChangeChannel,
+];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
 const equalsPartial = (object, expected) => {
@@ -346,6 +360,8 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             getNetworkParameters: mockAdapterGetNetworkParameters,
             waitFor: mockAdapterWaitFor,
             setTransmitPower: mockAdapterSetTransmitPower,
+            supportsChangeChannel: mockAdapterSupportsChangeChannel,
+            changeChannel: mockAdapterChangeChannel,
             nodeDescriptor: async (networkAddress) => {
                 const descriptor = mockDevices[networkAddress].nodeDescriptor;
                 if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
@@ -460,7 +476,7 @@ ZiGateAdapter.isValidPath = mockZiGateAdapterIsValidPath;
 ZiGateAdapter.autoDetectPath = mockZiGateAdapterAutoDetectPath;
 
 const mocksRestore = [
-    mockAdapterStart, mockAdapterPermitJoin, mockAdapterStop, mockAdapterRemoveDevice, mocksendZclFrameToAll,
+    mockAdapterPermitJoin, mockAdapterStop, mockAdapterRemoveDevice, mocksendZclFrameToAll,
     mockZStackAdapterIsValidPath, mockZStackAdapterAutoDetectPath,
     mockDeconzAdapterIsValidPath, mockDeconzAdapterAutoDetectPath,
     mockZiGateAdapterIsValidPath, mockZiGateAdapterAutoDetectPath,
@@ -512,6 +528,8 @@ describe('Controller', () => {
     });
 
     beforeEach(async () => {
+        mocksRestore.forEach((m) => m.mockRestore());
+        mocksClear.forEach((m) => m.mockClear());
         // @ts-ignore
         mockDevices[174].attributes[1].checkinInterval = default174CheckinInterval;
         zclTransactionSequenceNumber.number = 1;
@@ -534,8 +552,6 @@ describe('Controller', () => {
         controller.on('deviceAnnounce', (device) => events.deviceAnnounce.push(device));
         controller.on('deviceLeave', (device) => events.deviceLeave.push(device));
         controller.on('message', (message) => events.message.push(message));
-        mocksRestore.forEach((m) => m.mockRestore());
-        mocksClear.forEach((m) => m.mockClear());
         restoreMocksendZclFrameToEndpoint();
     });
 
@@ -795,6 +811,44 @@ describe('Controller', () => {
         });
 
         expect(Device.byIeeeAddr('0x129').modelID).toBe('new.model.id');
+    });
+
+    it ('Change channel', async () => {
+        await controller.start();
+        controller.options.network.channelList[0] = 20;
+        await controller.changeChannel();
+        expect(mockAdapterChangeChannel).toHaveBeenCalledWith(20);
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 20});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 20, extendedPanID: 3});
+    });
+
+    it ('Change channel on start if supported', async () => {
+        mockAdapterStart.mockReturnValueOnce('resumed');
+        mockAdapterSupportsChangeChannel.mockReturnValueOnce(true);
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
+        await controller.start();
+        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
+        expect(mockAdapterChangeChannel).toHaveBeenCalledWith(15);
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
+    });
+
+    it ('Does not change channel on start if not changed', async () => {
+        mockAdapterStart.mockReturnValueOnce('resumed');
+        mockAdapterSupportsChangeChannel.mockReturnValueOnce(true);
+        await controller.start();
+        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
+        expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(0);
+    });
+
+    it ('Does not change channel on start if not supported', async () => {
+        mockAdapterStart.mockReturnValueOnce('resumed');
+        mockAdapterSupportsChangeChannel.mockReturnValueOnce(false);
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
+        await controller.start();
+        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(0);
+        expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(0);
+        // get rid of the mockReturnValueOnce that was never called
+        mockAdapterGetNetworkParameters();
     });
 
     it('Set transmit power', async () => {

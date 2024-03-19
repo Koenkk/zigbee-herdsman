@@ -6,6 +6,15 @@ import {EmberApsFrame, EmberNodeId} from "../types";
 import {EmberZdoStatus} from "../zdo";
 
 
+/** Events specific to OneWaitress usage. */
+export enum OneWaitressEvents {
+    STACK_STATUS_NETWORK_UP = 'STACK_STATUS_NETWORK_UP',
+    STACK_STATUS_NETWORK_DOWN = 'STACK_STATUS_NETWORK_DOWN',
+    STACK_STATUS_NETWORK_OPENED = 'STACK_STATUS_NETWORK_OPENED',
+    STACK_STATUS_NETWORK_CLOSED = 'STACK_STATUS_NETWORK_CLOSED',
+    STACK_STATUS_CHANNEL_CHANGED = 'STACK_STATUS_CHANNEL_CHANGED',
+};
+
 type OneWaitressMatcher = {
     /**
      * Matches `indexOrDestination` in `ezspMessageSentHandler` or `sender` in `ezspIncomingMessageHandler`

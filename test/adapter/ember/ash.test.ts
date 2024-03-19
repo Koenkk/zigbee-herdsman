@@ -20,6 +20,8 @@ import {lowByte} from '../../../src/adapter/ember/utils/math';
 import {EzspFrameID} from '../../../src/adapter/ember/ezsp/enums.ts';
 import {Wait} from '../../../src/utils/';
 
+const consoleLogNative = console.log;
+
 // XXX: Below are copies from uart>ash.ts, should be kept in sync (avoids export)
 /** max frames sent without being ACKed (1-7) */
 const CONFIG_TX_K = 3;
@@ -72,9 +74,11 @@ describe('Ember UART ASH Protocol', () => {
 
     beforeAll(async () => {
         jest.useRealTimers();// messes with serialport promise handling otherwise?
+        console.log = jest.fn();
     });
     afterAll(async () => {
         jest.useRealTimers();
+        console.log = consoleLogNative;
     });
     beforeEach(() => {
         for (const mock of mocks) {
