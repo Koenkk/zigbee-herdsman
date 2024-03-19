@@ -53,7 +53,6 @@ class Device extends Entity {
     private _zclVersion?: number;
     private _linkquality?: number;
     private _skipDefaultResponse: boolean;
-    private _skipTimeResponse: boolean;
     private _customReadResponse?: CustomReadResponse;
     private _deleted: boolean;
     private _lastDefaultResponseSequenceNumber: number;
@@ -102,8 +101,6 @@ class Device extends Entity {
     set linkquality(linkquality: number) {this._linkquality = linkquality;}
     get skipDefaultResponse(): boolean {return this._skipDefaultResponse;}
     set skipDefaultResponse(skipDefaultResponse: boolean) {this._skipDefaultResponse = skipDefaultResponse;}
-    get skipTimeResponse(): boolean {return this._skipTimeResponse;}
-    set skipTimeResponse(skipTimeResponse: boolean) {this._skipTimeResponse = skipTimeResponse;}
     get customReadResponse(): CustomReadResponse {return this._customReadResponse;}
     set customReadResponse(customReadResponse: CustomReadResponse) {this._customReadResponse = customReadResponse;}
     get checkinInterval(): number {return this._checkinInterval;}
@@ -163,7 +160,6 @@ class Device extends Entity {
         this._interviewCompleted = interviewCompleted;
         this._interviewing = false;
         this._skipDefaultResponse = false;
-        this._skipTimeResponse = false;
         this.meta = meta;
         this._lastSeen = lastSeen;
         this._checkinInterval = checkinInterval;
@@ -251,7 +247,7 @@ class Device extends Entity {
                 },
             };
 
-            if (frame.Cluster.name in attributes && (frame.Cluster.name !== 'genTime' || !this._skipTimeResponse)) {
+            if (frame.Cluster.name in attributes) {
                 const response: KeyValue = {};
                 for (const entry of frame.Payload) {
                     if (frame.Cluster.hasAttribute(entry.attrId)) {
