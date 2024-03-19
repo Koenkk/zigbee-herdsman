@@ -827,6 +827,7 @@ const baseZnpRequestMock = new ZnpRequestMockBuilder()
         lastStartIndex = payload.startindex;
         return {};
     })
+    .handle(Subsystem.ZDO, "mgmtNwkUpdateReq", () => ({}))
     .handle(Subsystem.AF, "interPanCtl", () => ({}))
     .handle(Subsystem.ZDO, "extRouteDisc", () => ({}))
     .handle(Subsystem.ZDO, "nwkAddrReq", () => ({}))
@@ -2064,6 +2065,21 @@ describe("zstack-adapter", () => {
         await adapter.reset('hard');
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'resetReq', {type: 0});
+    });
+
+    it('Supports change channel', async () => {
+        basicMocks();
+        await adapter.start();
+        expect(await adapter.supportsChangeChannel()).toBeFalsy();
+    });
+
+    it('Change channel', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        await adapter.changeChannel(25);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtNwkUpdateReq', {dstaddr: 0xFFFF, dstaddrmode: 15, channelmask: 0x2000000, scanduration: 0xFE});
     });
 
     it('Set transmit power', async () => {

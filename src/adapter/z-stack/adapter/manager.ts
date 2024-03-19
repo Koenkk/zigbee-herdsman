@@ -139,7 +139,7 @@ export class ZnpAdapterManager {
         /* istanbul ignore next */
         const configMatchesAdapter = (
             nib &&
-            Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList) &&
+            Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList) &&// TODO: remove?
             this.nwkOptions.panId === nib.nwkPanId &&
             (
                 this.nwkOptions.extendedPanId.equals(nib.extendedPANID) ||

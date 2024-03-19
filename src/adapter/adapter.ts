@@ -171,6 +171,10 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
 
+    public abstract supportsChangeChannel(): Promise<boolean>;
+
+    public abstract changeChannel(newChannel: number): Promise<void>;
+
     public abstract setTransmitPower(value: number): Promise<void>;
 
     public abstract addInstallCode(ieeeAddress: string, key: Buffer): Promise<void>;
