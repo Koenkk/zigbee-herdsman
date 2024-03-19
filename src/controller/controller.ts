@@ -132,6 +132,9 @@ class Controller extends events.EventEmitter {
         const startResult = await this.adapter.start();
         debug.log(`Started with result '${startResult}'`);
 
+        // Check if we have to change the channel, only do this when adapter `resumed` because:
+        // - `getNetworkParameters` might be return wrong info because it needs to propogate after backup restore
+        // - If result is not `resumed` (`reset` or `restored`), the adapter should comission with the channel from `this.options.network`
         if ((startResult === 'resumed') && (await this.adapter.supportsChangeChannel())) {
             const netParams = (await this.getNetworkParameters());
 
