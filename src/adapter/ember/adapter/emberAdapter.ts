@@ -444,8 +444,9 @@ export class EmberAdapter extends Adapter {
         adapterOptions: TsType.AdapterOptions, logger?: LoggerStub) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
 
-        // TODO config, should be fine like this for now?
-        this.stackConfig = SocketPortUtils.isTcpPath(serialPortOptions.path) ? 'zigbeed' : 'default';
+        // TODO config
+        // XXX: 'zigbeed': 4.4.x/7.4.x not supported by multiprotocol at the moment, will need refactoring when/if support is added
+        this.stackConfig = 'default';
         // TODO config
         this.concentratorType = EMBER_HIGH_RAM_CONCENTRATOR;
 
