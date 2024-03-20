@@ -131,6 +131,18 @@ class Controller extends events.EventEmitter {
         debug.log(`Starting with options '${JSON.stringify(this.options)}'`);
         const startResult = await this.adapter.start();
         debug.log(`Started with result '${startResult}'`);
+
+        // Check if we have to change the channel, only do this when adapter `resumed` because:
+        // - `getNetworkParameters` might be return wrong info because it needs to propogate after backup restore
+        // - If result is not `resumed` (`reset` or `restored`), the adapter should comission with the channel from `this.options.network`
+        if ((startResult === 'resumed') && (await this.adapter.supportsChangeChannel())) {
+            const netParams = (await this.getNetworkParameters());
+
+            if (this.options.network.channelList[0] !== netParams.channel) {
+                await this.changeChannel();
+            }
+        }
+
         Entity.injectAdapter(this.adapter);
 
         // log injection
@@ -412,6 +424,16 @@ class Controller extends events.EventEmitter {
      */
     public createGroup(groupID: number): Group {
         return Group.create(groupID);
+    }
+
+    /**
+     * Broadcast a network-wide channel change.
+     */
+    private async changeChannel(): Promise<void> {
+        debug.log(`Broadcasting change channel to '${this.options.network.channelList[0]}'.`);
+        await this.adapter.changeChannel(this.options.network.channelList[0]);
+
+        this.networkParametersCached = null;// invalidate cache
     }
 
     /**

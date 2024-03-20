@@ -1548,13 +1548,14 @@ const Definition: {
         },
         {
             name: 'mgmtNwkUpdateReq',
-            ID: 55,
+            ID: 55,// TODO: 0x0038 => 56??
             type: CommandType.SREQ,
             request: [
                 {name: 'dstaddr', parameterType: ParameterType.UINT16},
                 {name: 'dstaddrmode', parameterType: ParameterType.UINT8},
                 {name: 'channelmask', parameterType: ParameterType.UINT32},
                 {name: 'scanduration', parameterType: ParameterType.UINT8},
+                // TODO: below two have various combinations of present/not present depending on scanduration
                 {name: 'scancount', parameterType: ParameterType.UINT8},
                 {name: 'nwkmanageraddr', parameterType: ParameterType.UINT16},
             ],

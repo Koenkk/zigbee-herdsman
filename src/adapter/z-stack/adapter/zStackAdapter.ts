@@ -918,6 +918,29 @@ class ZStackAdapter extends Adapter {
         });
     }
 
+    public async supportsChangeChannel(): Promise<boolean> {
+        return false;
+    }
+
+    public async changeChannel(newChannel: number): Promise<void> {
+        return this.queue.execute<void>(async () => {
+            this.checkInterpanLock();
+
+            const payload = {
+                dstaddr: 0xFFFF,// broadcast with sleepy
+                dstaddrmode: AddressMode.ADDR_BROADCAST,
+                channelmask: [newChannel].reduce((a, c) => a + (1 << c), 0),
+                scanduration: 0xFE,// change channel
+                // scancount: null,// TODO: what's "not present" here?
+                // nwkmanageraddr: null,// TODO: what's "not present" here?
+            };
+
+            await this.znp.request(Subsystem.ZDO, 'mgmtNwkUpdateReq', payload);
+            // wait for the broadcast to propagate and the adapter to actually change
+            await Wait(10000);
+        });
+    }
+
     public async setTransmitPower(value: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value});

@@ -206,6 +206,15 @@ class ZiGateAdapter extends Adapter {
         throw new Error("This adapter does not support backup");
     };
 
+    public async supportsChangeChannel(): Promise<boolean> {
+        return false;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public async changeChannel(newChannel: number): Promise<void> {
+        throw new Error("not supported");
+    };
+
     public async setTransmitPower(value: number): Promise<void> {
         debug.log('setTransmitPower, %o', arguments);
         return this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: value})
