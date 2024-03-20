@@ -742,12 +742,9 @@ class Endpoint extends Entity {
         checkStatus: boolean = false, frameType: Zcl.FrameType = Zcl.FrameType.GLOBAL,
     ): Promise<void | AdapterEvents.ZclDataPayload> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
-        const command = (frameType == Zcl.FrameType.GLOBAL)
-            ? Zcl.Utils.getGlobalCommand(commandKey)
-            : cluster.getCommand(commandKey);
+        const command = (frameType == Zcl.FrameType.GLOBAL) ? Zcl.Utils.getGlobalCommand(commandKey) : cluster.getCommand(commandKey);
         const hasResponse = (frameType == Zcl.FrameType.GLOBAL) ? true : command.hasOwnProperty('response');
-        options = this.getOptionsWithDefaults(
-            options, hasResponse, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+        options = this.getOptionsWithDefaults(options, hasResponse, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
 
         const frame = Zcl.ZclFrame.create(
             frameType, options.direction, options.disableDefaultResponse,
