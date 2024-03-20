@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.39.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.39.0...v0.39.1) (2024-03-20)
+
+
+### Bug Fixes
+
+* Action command 2 for Tuya-based device ([#987](https://github.com/Koenkk/zigbee-herdsman/issues/987)) ([4135128](https://github.com/Koenkk/zigbee-herdsman/commit/41351280a89c292999d61f133aa4096c9fa40d47))
+* Ember: remove `zigbeed` stack detection ([#986](https://github.com/Koenkk/zigbee-herdsman/issues/986)) ([126e926](https://github.com/Koenkk/zigbee-herdsman/commit/126e92653805ebca789af67880bb29cba68b0913))
+* Remove `skipTimeResponse` in favour `customReadResponse` ([#984](https://github.com/Koenkk/zigbee-herdsman/issues/984)) ([029903d](https://github.com/Koenkk/zigbee-herdsman/commit/029903d92e46a04e390a1ba40e5ca8af956aa11a))
+
 ## [0.39.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.38.1...v0.39.0) (2024-03-19)
 
 
