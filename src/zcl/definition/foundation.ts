@@ -160,17 +160,57 @@ const Foundation: {
             {name: 'elementData', type: BuffaloZclDataType.USE_DATA_TYPE},
         ]
     },
-
+    discoverCommands: {
+        ID: 17,
+        parseStrategy: 'flat',
+        parameters: [
+            {name: 'startCmdId', type: DataType.uint8},
+            {name: 'maxCmdIds', type: DataType.uint8},
+        ],
+    },
+    discoverCommandsRsp: {
+        ID: 18,
+        parseStrategy: 'oneof',
+        parameters: [
+            {name: 'cmdId', type: DataType.uint8},
+        ],
+    },
+    discoverCommandsGen: {
+        ID: 19,
+        parseStrategy: 'flat',
+        parameters: [
+            {name: 'startCmdId', type: DataType.uint8},
+            {name: 'maxCmdIds', type: DataType.uint8},
+        ],
+    },
+    discoverCommandsGenRsp: {
+        ID: 20,
+        parseStrategy: 'oneof',
+        parameters: [
+            {name: 'cmdId', type: DataType.uint8},
+        ],
+    },
+    discoverExt: {
+        ID: 21,
+        parseStrategy: 'flat',
+        parameters: [
+            {name: 'startAttrId', type: DataType.uint16},
+            {name: 'maxAttrIds', type: DataType.uint8},
+        ],
+    },
+    discoverExtRsp: {
+        ID: 22,
+        parseStrategy: 'oneof',
+        parameters: [
+            {name: 'attrId', type: DataType.uint16},
+            {name: 'dataType', type: DataType.uint8},
+            {name: 'access', type: DataType.uint8},
+        ],
+    },
     /**
      * TODO: not all commands are supported yet, missing:
      * - 14: readStruct
      * - 16: writeStructRsp
-     * - 17: discoverCommandsReceived
-     * - 18: discoverCommandsReceivedResponse
-     * - 19: discoverCommandsGenerated
-     * - 20: discoverCommandsGeneratedResponse
-     * - 21: discoverAttributesExtended
-     * - 22: discoverAttributesExtendedResponse
      */
 };
 
