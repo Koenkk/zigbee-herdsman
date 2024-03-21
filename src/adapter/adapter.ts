@@ -2,12 +2,9 @@ import * as TsType from './tstype';
 import {ZclDataPayload} from './events';
 import events from 'events';
 import {ZclFrame, FrameType, Direction} from '../zcl';
-import Debug from "debug";
-import {LoggerStub} from "../controller/logger-stub";
 import * as Models from "../models";
 import Bonjour, {Service} from 'bonjour-service';
-
-const debug = Debug("zigbee-herdsman:adapter");
+import {logger} from '../utils/logger';
 
 abstract class Adapter extends events.EventEmitter {
     public readonly greenPowerGroup = 0x0b84;
@@ -15,18 +12,14 @@ abstract class Adapter extends events.EventEmitter {
     protected adapterOptions: TsType.AdapterOptions;
     protected serialPortOptions: TsType.SerialPortOptions;
     protected backupPath: string;
-    protected logger?: LoggerStub;
 
-    protected constructor(
-        networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string,
-        adapterOptions: TsType.AdapterOptions, logger?: LoggerStub)
-    {
+    protected constructor(networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string,
+        adapterOptions: TsType.AdapterOptions) {
         super();
         this.networkOptions = networkOptions;
         this.adapterOptions = adapterOptions;
         this.serialPortOptions = serialPortOptions;
         this.backupPath = backupPath;
-        this.logger = logger;
     }
 
     /**
@@ -38,7 +31,6 @@ abstract class Adapter extends events.EventEmitter {
         serialPortOptions: TsType.SerialPortOptions,
         backupPath: string,
         adapterOptions: TsType.AdapterOptions,
-        logger?: LoggerStub,
     ): Promise<Adapter> {
         const {ZStackAdapter} = await import('./z-stack/adapter');
         const {DeconzAdapter} = await import('./deconz/adapter');
@@ -68,11 +60,11 @@ abstract class Adapter extends events.EventEmitter {
         let adapter: AdapterImplementation = adapters[0];
 
         if (!serialPortOptions.path) {
-            debug('No path provided, auto detecting path');
+            logger.debug('No path provided, auto detecting path', 'zigbee-herdsman:adapter');
             for (const candidate of adapters) {
                 const path = await candidate.autoDetectPath();
                 if (path) {
-                    debug(`Auto detected path '${path}' from adapter '${candidate.name}'`);
+                    logger.debug(`Auto detected path '${path}' from adapter '${candidate.name}'`, 'zigbee-herdsman:adapter');
                     serialPortOptions.path = path;
                     adapter = candidate;
                     break;
@@ -116,7 +108,7 @@ abstract class Adapter extends events.EventEmitter {
                                     && serialPortOptions.adapter !== 'auto') {
                                 adapter = adapterLookup[serialPortOptions.adapter];
                                 resolve(
-                                    new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger)
+                                    new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions)
                                 );
                             } else {
                                 reject(new Error(`Adapter ${serialPortOptions.adapter} is not supported.`));
@@ -142,17 +134,17 @@ abstract class Adapter extends events.EventEmitter {
                 // Determine adapter to use
                 for (const candidate of adapters) {
                     if (await candidate.isValidPath(serialPortOptions.path)) {
-                        debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
+                        logger.debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`, 'zigbee-herdsman:adapter');
                         adapter = candidate;
                         break;
                     }
                 }
             } catch (error) {
-                debug(`Failed to validate path: '${error}'`);
+                logger.debug(`Failed to validate path: '${error}'`, 'zigbee-herdsman:adapter');
             }
         }
 
-        return new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
+        return new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
     }
 
     public abstract start(): Promise<TsType.StartResult>;

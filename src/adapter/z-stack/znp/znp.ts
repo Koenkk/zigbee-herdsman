@@ -19,7 +19,7 @@ import {Subsystem, Type} from '../unpi/constants';
 import net from 'net';
 import events from 'events';
 import Equals from 'fast-deep-equal/es6';
-import Debug from "debug";
+import {logger} from '../../../utils/logger';
 
 const {COMMON: {ZnpCommandStatus}, Utils: {statusDescription}} = Constants;
 
@@ -29,14 +29,7 @@ const timeouts = {
     default: 10000,
 };
 
-const debug = {
-    error: Debug('zigbee-herdsman:adapter:zStack:znp:error'),
-    timeout: Debug('zigbee-herdsman:adapter:zStack:znp:timeout'),
-    log: Debug('zigbee-herdsman:adapter:zStack:znp:log'),
-    SREQ: Debug('zigbee-herdsman:adapter:zStack:znp:SREQ'),
-    AREQ: Debug('zigbee-herdsman:adapter:zStack:znp:AREQ'),
-    SRSP: Debug('zigbee-herdsman:adapter:zStack:znp:SRSP'),
-};
+const cLogger = logger.child({service: 'zigbee-herdsman:zstack:znp'});
 
 interface WaitressMatcher {
     type: Type;
@@ -82,13 +75,13 @@ class Znp extends events.EventEmitter {
 
     private log(type: Type, message: string): void {
         if (type === Type.SRSP) {
-            debug.SRSP(message);
+            cLogger.debug(`SRSP: ${message}`);
         } else if (type === Type.AREQ) {
-            debug.AREQ(message);
+            cLogger.debug(`AREQ: ${message}`);
         } else {
             /* istanbul ignore else */
             if (type === Type.SREQ) {
-                debug.SREQ(message);
+                cLogger.debug(`SREQ: ${message}`);
             } else {
                 throw new Error(`Unknown type '${type}'`);
             }
@@ -104,7 +97,7 @@ class Znp extends events.EventEmitter {
             this.waitress.resolve(object);
             this.emit('received', object);
         } catch (error) {
-            debug.error(`Error while parsing to ZpiObject '${error.stack}'`);
+            cLogger.error(`Error while parsing to ZpiObject '${error.stack}'`);
         }
     }
 
@@ -113,11 +106,11 @@ class Znp extends events.EventEmitter {
     }
 
     private onPortError(error: Error): void {
-        debug.error(`Port error: ${error}`);
+        cLogger.error(`Port error: ${error}`);
     }
 
     private onPortClose(): void {
-        debug.log('Port closed');
+        cLogger.info('Port closed');
         this.initialized = false;
         this.emit('close');
     }
@@ -129,7 +122,7 @@ class Znp extends events.EventEmitter {
     private async openSerialPort(): Promise<void> {
         const options = {path: this.path, baudRate: this.baudRate, rtscts: this.rtscts, autoOpen: false};
 
-        debug.log(`Opening SerialPort with ${JSON.stringify(options)}`);
+        cLogger.info(`Opening SerialPort with ${JSON.stringify(options)}`);
         this.serialPort = new SerialPort(options);
 
         this.unpiWriter = new UnpiWriter();
@@ -143,7 +136,7 @@ class Znp extends events.EventEmitter {
 
         try {
             await this.serialPort.asyncOpen();
-            debug.log('Serialport opened');
+            cLogger.info('Serialport opened');
 
             this.serialPort.once('close', this.onPortClose.bind(this));
             this.serialPort.once('error', this.onPortError.bind(this));
@@ -164,7 +157,7 @@ class Znp extends events.EventEmitter {
 
     private async openSocketPort(): Promise<void> {
         const info = SocketPortUtils.parseTcpPath(this.path);
-        debug.log(`Opening TCP socket with ${info.host}:${info.port}`);
+        cLogger.info(`Opening TCP socket with ${info.host}:${info.port}`);
 
         this.socketPort = new net.Socket();
         this.socketPort.setNoDelay(true);
@@ -179,13 +172,13 @@ class Znp extends events.EventEmitter {
 
         return new Promise((resolve, reject): void => {
             this.socketPort.on('connect', function() {
-                debug.log('Socket connected');
+                cLogger.info('Socket connected');
             });
 
             // eslint-disable-next-line
             const self = this;
             this.socketPort.on('ready', async function() {
-                debug.log('Socket ready');
+                cLogger.info('Socket ready');
                 await self.skipBootloader();
                 self.initialized = true;
                 resolve();
@@ -194,7 +187,7 @@ class Znp extends events.EventEmitter {
             this.socketPort.once('close', this.onPortClose.bind(this));
 
             this.socketPort.on('error', function () {
-                debug.log('Socket error');
+                cLogger.info('Socket error');
                 reject(new Error(`Error while opening socket`));
                 self.initialized = false;
             });
@@ -211,13 +204,13 @@ class Znp extends events.EventEmitter {
             // Send magic byte: https://github.com/Koenkk/zigbee2mqtt/issues/1343 to bootloader
             // and give ZNP 1 second to start.
             try {
-                debug.log('Writing CC2530/CC2531 skip bootloader payload');
+                cLogger.info('Writing CC2530/CC2531 skip bootloader payload');
                 this.unpiWriter.writeBuffer(Buffer.from([0xef]));
                 await Wait(1000);
                 await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, null, 250);
             } catch (error) {
                 // Skip bootloader on some CC2652 devices (e.g. zzh-p)
-                debug.log('Skip bootloader for CC2652/CC1352');
+                cLogger.info('Skip bootloader for CC2652/CC1352');
                 if (this.serialPort) {
                     await this.setSerialPortOptions({dtr: false, rts: false});
                     await Wait(150);
@@ -247,7 +240,7 @@ class Znp extends events.EventEmitter {
         try {
             return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
         } catch (error) {
-            debug.error(`Failed to determine if path is valid: '${error}'`);
+            cLogger.error(`Failed to determine if path is valid: '${error}'`);
             return false;
         }
     }
@@ -264,7 +257,7 @@ class Znp extends events.EventEmitter {
     }
 
     public async close(): Promise<void> {
-        debug.log('closing');
+        cLogger.info('closing');
         this.queue.clear();
 
         if (this.initialized) {

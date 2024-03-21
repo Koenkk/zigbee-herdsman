@@ -4,12 +4,9 @@ import crypto from 'crypto';
 import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber';
 import events from 'events';
 import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
-import Debug from "debug";
+import {logger} from '../utils/logger';
 
-const debug = {
-    info: Debug('zigbee-herdsman:controller:greenpower'),
-    error: Debug('zigbee-herdsman:controller:greenpower'),
-};
+const cLogger = logger.child({service: 'zigbee-herdsman:controller:greenpower'});
 
 const zigBeeLinkKey = Buffer.from([
     0x5A, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6C, 0x6C, 0x69, 0x61, 0x6E, 0x63, 0x65, 0x30, 0x39
@@ -49,7 +46,7 @@ class GreenPower extends events.EventEmitter {
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private async sendPairingCommand(payload: any, dataPayload: AdapterEvents.ZclDataPayload): Promise<any> {
-        debug.info("Payload.Options: " + payload.options + " wasBroadcast: " + dataPayload.wasBroadcast);
+        cLogger.info("Payload.Options: " + payload.options + " wasBroadcast: " + dataPayload.wasBroadcast);
         
         // Set sink address based on communication mode
         switch ((payload.options >> 5) & 3) {
@@ -66,7 +63,7 @@ class GreenPower extends events.EventEmitter {
             break;
         /* istanbul ignore next */
         default:
-            debug.error("Unhandled applicationID: " + (payload.options & 7));
+            cLogger.error("Unhandled applicationID: " + (payload.options & 7));
             return;
         }
 
@@ -95,14 +92,14 @@ class GreenPower extends events.EventEmitter {
             switch(dataPayload.frame.Payload.commandID) {
             /* istanbul ignore next */
             case undefined:
-                debug.error("GP Undefined Command");
+                cLogger.error("GP Undefined Command");
                 break;
             case 0xE0: // GP Commissioning
-                debug.info("GP Commissioning");
+                cLogger.info("GP Commissioning");
     
                 /* istanbul ignore if */
                 if (typeof dataPayload.address !== 'number') {
-                    debug.info("Warning: commissioning request with string type address");
+                    cLogger.info("Warning: commissioning request with string type address");
                     break;
                 }
     
@@ -114,7 +111,7 @@ class GreenPower extends events.EventEmitter {
     
                 // RX capable GPD needs GP Commissioning Reply
                 if (rxOnCap) {
-                    debug.info("RxOnCap set -> supports bidirectional communication");
+                    cLogger.info("RxOnCap set -> supports bidirectional communication");
                     // NOTE: currently encryption is disabled for RX capable GPDs
     
                     const networkParameters = await this.adapter.getNetworkParameters();
@@ -178,15 +175,15 @@ class GreenPower extends events.EventEmitter {
             
             /* istanbul ignore next */
             case 0xE2: // GP Success
-                debug.info("GP Success");
+                cLogger.info("GP Success");
                 if (typeof dataPayload.address !== 'number') {
-                    debug.info("Warning: commissioning request with string type address");
+                    cLogger.info("Warning: commissioning request with string type address");
                     break;
                 }
     
                 break;
             case 0xE3: // GP Channel Request
-                debug.info("GP Channel Request");
+                cLogger.info("GP Channel Request");
                 const networkParameters = await this.adapter.getNetworkParameters();
                 // Channel notification
                 payload = {
@@ -213,12 +210,11 @@ class GreenPower extends events.EventEmitter {
             case 0xA1: // GP Manufacturer-specific Attribute Reporting
                 break;
             default:
-                debug.info("Unhandled Zigbee GreenPower command: 0x" + 
-                    dataPayload.frame.Payload.commandID.toString(16));
+                cLogger.info(`Unhandled Zigbee GreenPower command: 0x${dataPayload.frame.Payload.commandID.toString(16)}`);
             }
         } catch (error) {
             /* istanbul ignore next */
-            debug.error(`onZclGreenPowerData failed with error '${error}'`);
+            cLogger.error(`onZclGreenPowerData failed with error '${error}'`);
         }
     }
 

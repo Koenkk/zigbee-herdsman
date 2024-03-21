@@ -4,9 +4,7 @@ import * as stream from 'stream';
 // @ts-ignore
 import slip from 'slip';
 import Frame from './frame';
-import Debug from "debug";
-
-const debug = Debug('zigbee-herdsman:deconz:driver:parser');
+import {logger} from '../../../utils/logger';
 
 class Parser extends stream.Transform {
     private buffer: Buffer;
@@ -26,18 +24,18 @@ class Parser extends stream.Transform {
     }
 
     private onMessage(message: Uint8Array): void {
-        //debug(`message received: ${message}`);
+        //logger.debug(`message received: ${message}`, 'zigbee-herdsman:deconz:driver:parser');
         this.emit('parsed', message);
     }
 
     private onError(_: Uint8Array, error: string): void {
-        debug(`<-- error '${error}'`);
+        logger.debug(`<-- error '${error}'`, 'zigbee-herdsman:deconz:driver:parser');
     }
 
     public _transform(chunk: Buffer, _: string, cb: Function): void {
-        //debug(`<-- [${[...chunk]}]`);
+        //logger.debug(`<-- [${[...chunk]}]`, 'zigbee-herdsman:deconz:driver:parser');
         this.decoder.decode(chunk);
-        //debug(`<-- [${[...chunk]}]`);
+        //logger.debug(`<-- [${[...chunk]}]`, 'zigbee-herdsman:deconz:driver:parser');
         cb();
     }
 }

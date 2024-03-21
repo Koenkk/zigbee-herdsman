@@ -1,10 +1,6 @@
 import fs from 'fs';
-import Debug from "debug";
 import {DatabaseEntry, EntityType} from './tstype';
-
-const debug = {
-    log: Debug('zigbee-herdsman:controller:database:log'),
-};
+import {logger} from '../utils/logger';
 
 class Database {
     private entries: {[id: number]: DatabaseEntry};
@@ -78,7 +74,7 @@ class Database {
     }
 
     public write(): void {
-        debug.log(`Writing database to '${this.path}'`);
+        logger.debug(`Writing database to '${this.path}'`, 'zigbee-herdsman:controller:database');
         const lines = [];
         for (const DatabaseEntry of Object.values(this.entries)) {
             const json = JSON.stringify(DatabaseEntry);

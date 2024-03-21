@@ -5,12 +5,9 @@ import * as Zcl from '../../zcl';
 import Endpoint from './endpoint';
 import Device from './device';
 import assert from 'assert';
-import Debug from "debug";
+import {logger} from '../../utils/logger';
 
-const debug = {
-    info: Debug('zigbee-herdsman:controller:group'),
-    error: Debug('zigbee-herdsman:controller:group'),
-};
+const cLogger = logger.child({service: 'zigbee-herdsman:controller:group'});
 
 interface Options {
     manufacturerCode?: number;
@@ -162,7 +159,7 @@ class Group extends Entity {
         }
 
         const log = `Write ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
-        debug.info(log);
+        cLogger.debug(log);
 
         try {
             const frame = Zcl.ZclFrame.create(
@@ -173,7 +170,7 @@ class Group extends Entity {
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            debug.error(error.message);
+            cLogger.error(error.message);
             throw error;
         }
     }
@@ -195,13 +192,13 @@ class Group extends Entity {
         );
 
         const log = `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
-        debug.info(log);
+        cLogger.debug(log);
 
         try {
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            debug.error(error.message);
+            cLogger.error(error.message);
             throw error;
         }
     }
@@ -214,7 +211,7 @@ class Group extends Entity {
         const command = cluster.getCommand(commandKey);
 
         const log = `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
-        debug.info(log);
+        cLogger.debug(log);
 
         try {
             const frame = Zcl.ZclFrame.create(
@@ -225,7 +222,7 @@ class Group extends Entity {
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            debug.error(error.message);
+            cLogger.error(error.message);
             throw error;
         }
     }
