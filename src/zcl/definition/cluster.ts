@@ -510,6 +510,12 @@ const Cluster: {
                     {name: 'value', type: DataType.uint8},
                 ],
             },
+            tuyaAction2: {
+                ID: 0xFC,
+                parameters: [
+                    {name: 'value', type: DataType.uint8},
+                ],
+            },
         },
         commandsResponse: {
         },

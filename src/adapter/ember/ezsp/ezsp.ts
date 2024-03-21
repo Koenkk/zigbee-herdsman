@@ -87,7 +87,6 @@ import {
 } from "../types";
 import {
     EmberZdoStatus,
-    ZDOLQITableEntry,
     ACTIVE_ENDPOINTS_RESPONSE,
     BINDING_TABLE_RESPONSE,
     BIND_RESPONSE,
@@ -102,11 +101,13 @@ import {
     ROUTING_TABLE_RESPONSE,
     SIMPLE_DESCRIPTOR_RESPONSE,
     UNBIND_RESPONSE,
-    ZDORoutingTableEntry,
     ZDO_MESSAGE_OVERHEAD,
     ZDO_PROFILE_ID,
-    ZDOBindingTableEntry,
     END_DEVICE_ANNOUNCE,
+    PARENT_ANNOUNCE_RESPONSE,
+    ZDOLQITableEntry,
+    ZDORoutingTableEntry,
+    ZDOBindingTableEntry,
     IEEEAddressResponsePayload,
     NetworkAddressResponsePayload,
     MatchDescriptorsResponsePayload,
@@ -117,7 +118,8 @@ import {
     LQITableResponsePayload,
     RoutingTableResponsePayload,
     BindingTableResponsePayload,
-    EndDeviceAnnouncePayload
+    EndDeviceAnnouncePayload,
+    ParentAnnounceResponsePayload
 } from "../zdo";
 import {
     EZSP_FRAME_CONTROL_ASYNCH_CB,
@@ -4102,7 +4104,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE status=${status}]`);
+                    debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE status=${EmberZdoStatus[status]}]`);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     // 64-bit address for the remote device
@@ -4130,7 +4132,7 @@ export class Ezsp extends EventEmitter {
                         assocDevList = zdoBuffalo.readListUInt16({length: assocDevCount});
                     }
 
-                    debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE status=${status} eui64=${eui64} nodeId=${nodeId} startIndex=${startIndex} `
+                    debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE status=${EmberZdoStatus[status]} eui64=${eui64} nodeId=${nodeId} startIndex=${startIndex} `
                         + `assocDevList=${assocDevList}]`);
                     debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE] Support not implemented upstream`);
 
@@ -4144,7 +4146,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO NETWORK_ADDRESS_RESPONSE status=${status}]`);
+                    debug(`<=== [ZDO NETWORK_ADDRESS_RESPONSE status=${EmberZdoStatus[status]}]`);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     // 64-bit address for the remote device
@@ -4172,8 +4174,8 @@ export class Ezsp extends EventEmitter {
                         assocDevList = zdoBuffalo.readListUInt16({length: assocDevCount});
                     }
 
-                    debug(`<=== [ZDO NETWORK_ADDRESS_RESPONSE status=${status} eui64=${eui64} nodeId=${nodeId} startIndex=${startIndex} `
-                        + `assocDevList=${assocDevList}]`);
+                    debug(`<=== [ZDO NETWORK_ADDRESS_RESPONSE status=${EmberZdoStatus[status]} eui64=${eui64} nodeId=${nodeId} `
+                        + `startIndex=${startIndex} assocDevList=${assocDevList}]`);
 
                     const payload: NetworkAddressResponsePayload = {eui64, nodeId, assocDevList};
 
@@ -4185,14 +4187,14 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO MATCH_DESCRIPTORS_RESPONSE status=${status}]`);
+                    debug(`<=== [ZDO MATCH_DESCRIPTORS_RESPONSE status=${EmberZdoStatus[status]}]`);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
                     const endpointCount = zdoBuffalo.readUInt8();
                     const endpointList = zdoBuffalo.readListUInt8({length: endpointCount});
 
-                    debug(`<=== [ZDO MATCH_DESCRIPTORS_RESPONSE status=${status} nodeId=${nodeId} endpointList=${endpointList}]`);
+                    debug(`<=== [ZDO MATCH_DESCRIPTORS_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpointList=${endpointList}]`);
                     debug(`<=== [ZDO MATCH_DESCRIPTORS_RESPONSE] Support not implemented upstream`);
 
                     const payload: MatchDescriptorsResponsePayload = {nodeId, endpointList};
@@ -4205,7 +4207,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO SIMPLE_DESCRIPTOR_RESPONSE status=${status}]`);
+                    debug(`<=== [ZDO SIMPLE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]}]`);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
@@ -4221,8 +4223,9 @@ export class Ezsp extends EventEmitter {
                     const outClusterCount = zdoBuffalo.readUInt8();
                     const outClusterList = zdoBuffalo.readListUInt16({length: outClusterCount});
 
-                    debug(`<=== [ZDO SIMPLE_DESCRIPTOR_RESPONSE status=${status} nodeId=${nodeId} endpoint=${endpoint} profileId=${profileId} `
-                        + `deviceId=${deviceId} deviceVersion=${deviceVersion} inClusterList=${inClusterList} outClusterList=${outClusterList}]`);
+                    debug(`<=== [ZDO SIMPLE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpoint=${endpoint} `
+                        + `profileId=${profileId} deviceId=${deviceId} deviceVersion=${deviceVersion} inClusterList=${inClusterList} `
+                        + `outClusterList=${outClusterList}]`);
 
                     const payload: SimpleDescriptorResponsePayload = {
                         nodeId, 
@@ -4241,7 +4244,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO NODE_DESCRIPTOR_RESPONSE status=${status}]`);
+                    debug(`<=== [ZDO NODE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]}]`);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
@@ -4296,7 +4299,7 @@ export class Ezsp extends EventEmitter {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const descCapFlags = zdoBuffalo.readUInt8();
 
-                    debug(`<=== [ZDO NODE_DESCRIPTOR_RESPONSE status=${status} nodeId=${nodeId} logicalType=${logicalType} `
+                    debug(`<=== [ZDO NODE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} logicalType=${logicalType} `
                         + `freqBand=${freqBand} macCapFlags=${byteToBits(macCapFlags)} manufacturerCode=${manufacturerCode} maxBufSize=${maxBufSize} `
                         + `maxIncTxSize=${maxIncTxSize} stackRevision=${stackRevision} maxOutTxSize=${maxOutTxSize}]`);
 
@@ -4316,7 +4319,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO POWER_DESCRIPTOR_RESPONSE status=${status}]`);
+                    debug(`<=== [ZDO POWER_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]}]`);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
@@ -4340,8 +4343,8 @@ export class Ezsp extends EventEmitter {
                     // All other values reserved
                     const [currentPowerSource, currentPowerSourceLevel] = lowHighBits(zdoBuffalo.readUInt8());
 
-                    debug(`<=== [ZDO POWER_DESCRIPTOR_RESPONSE status=${status} nodeId=${nodeId} currentPowerMode=${currentPowerMode} `
-                        + `availPowerSources=${availPowerSources} currentPowerSource=${currentPowerSource} `
+                    debug(`<=== [ZDO POWER_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} `
+                        + `currentPowerMode=${currentPowerMode} availPowerSources=${availPowerSources} currentPowerSource=${currentPowerSource} `
                         + `currentPowerSourceLevel=${currentPowerSourceLevel}]`);
                     debug(`<=== [ZDO POWER_DESCRIPTOR_RESPONSE] Support not implemented upstream`);
 
@@ -4361,14 +4364,14 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO ACTIVE_ENDPOINTS_RESPONSE status=${status}]`);
+                    debug(`<=== [ZDO ACTIVE_ENDPOINTS_RESPONSE status=${EmberZdoStatus[status]}]`);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
                     const endpointCount = zdoBuffalo.readUInt8();
                     const endpointList = zdoBuffalo.readListUInt8({length: endpointCount});
 
-                    debug(`<=== [ZDO ACTIVE_ENDPOINTS_RESPONSE status=${status} nodeId=${nodeId} endpointList=${endpointList}]`);
+                    debug(`<=== [ZDO ACTIVE_ENDPOINTS_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpointList=${endpointList}]`);
 
                     const payload: ActiveEndpointsResponsePayload = {nodeId, endpointList};
 
@@ -4380,7 +4383,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO LQI_TABLE_RESPONSE status=${status}]`);
+                    debug(`<=== [ZDO LQI_TABLE_RESPONSE status=${EmberZdoStatus[status]}]`);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     // 0x00-0xFF, total number of neighbor table entries within the remote device
@@ -4417,8 +4420,8 @@ export class Ezsp extends EventEmitter {
                         });
                     }
 
-                    debug(`<=== [ZDO LQI_TABLE_RESPONSE status=${status} neighborTableEntries=${neighborTableEntries} startIndex=${startIndex} `
-                        + `entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`);
+                    debug(`<=== [ZDO LQI_TABLE_RESPONSE status=${EmberZdoStatus[status]} neighborTableEntries=${neighborTableEntries} `
+                        + `startIndex=${startIndex} entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`);
 
                     const payload: LQITableResponsePayload = {neighborTableEntries, entryList};
 
@@ -4430,7 +4433,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO ROUTING_TABLE_RESPONSE status=${status}]`);
+                    debug(`<=== [ZDO ROUTING_TABLE_RESPONSE status=${EmberZdoStatus[status]}]`);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     // 0x00-0xFF, total number of routing table entries within the remote device
@@ -4459,8 +4462,8 @@ export class Ezsp extends EventEmitter {
                         });
                     }
 
-                    debug(`<=== [ZDO ROUTING_TABLE_RESPONSE status=${status} routingTableEntries=${routingTableEntries} startIndex=${startIndex} `
-                        + `entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`);
+                    debug(`<=== [ZDO ROUTING_TABLE_RESPONSE status=${EmberZdoStatus[status]} routingTableEntries=${routingTableEntries} `
+                        + `startIndex=${startIndex} entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`);
 
                     const payload: RoutingTableResponsePayload = {routingTableEntries, entryList};
     
@@ -4472,7 +4475,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO BINDING_TABLE_RESPONSE status=${status}]`);
+                    debug(`<=== [ZDO BINDING_TABLE_RESPONSE status=${EmberZdoStatus[status]}]`);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const bindingTableEntries = zdoBuffalo.readUInt8();
@@ -4498,8 +4501,8 @@ export class Ezsp extends EventEmitter {
                         });
                     }
 
-                    debug(`<=== [ZDO BINDING_TABLE_RESPONSE status=${status} bindingTableEntries=${bindingTableEntries} startIndex=${startIndex} `
-                        + `entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`);
+                    debug(`<=== [ZDO BINDING_TABLE_RESPONSE status=${EmberZdoStatus[status]} bindingTableEntries=${bindingTableEntries} `
+                        + `startIndex=${startIndex} entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`);
                     debug(`<=== [ZDO BINDING_TABLE_RESPONSE] Support not implemented upstream`);
 
                     const payload: BindingTableResponsePayload = {bindingTableEntries, entryList};
@@ -4511,28 +4514,28 @@ export class Ezsp extends EventEmitter {
             case BIND_RESPONSE: {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
-                debug(`<=== [ZDO BIND_RESPONSE status=${status}]`);
+                debug(`<=== [ZDO BIND_RESPONSE status=${EmberZdoStatus[status]}]`);
                 this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame);
                 break;
             }
             case UNBIND_RESPONSE:{
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
-                debug(`<=== [ZDO UNBIND_RESPONSE status=${status}]`);
+                debug(`<=== [ZDO UNBIND_RESPONSE status=${EmberZdoStatus[status]}]`);
                 this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame);
                 break;
             }
             case LEAVE_RESPONSE: {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
-                debug(`<=== [ZDO LEAVE_RESPONSE status=${status}]`);
+                debug(`<=== [ZDO LEAVE_RESPONSE status=${EmberZdoStatus[status]}]`);
                 this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame);
                 break;
             }
             case PERMIT_JOINING_RESPONSE: {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
-                debug(`<=== [ZDO PERMIT_JOINING_RESPONSE status=${status}]`);
+                debug(`<=== [ZDO PERMIT_JOINING_RESPONSE status=${EmberZdoStatus[status]}]`);
                 this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame);
                 break;
             }
@@ -4549,6 +4552,32 @@ export class Ezsp extends EventEmitter {
                 // this one gets its own event since its purpose is to pass an event up to Z2M
                 this.emit(EzspEvents.END_DEVICE_ANNOUNCE, sender, apsFrame, payload);
                 break;
+            }
+            case PARENT_ANNOUNCE_RESPONSE: {
+                const status: EmberZdoStatus = zdoBuffalo.readUInt8();
+
+                if (status !== EmberZdoStatus.ZDP_SUCCESS) {
+                    // status should always be NOT_SUPPORTED here
+                    debug(`<=== [ZDO PARENT_ANNOUNCE_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
+                } else {
+                    const numberOfChildren = zdoBuffalo.readUInt8();
+                    const children: EmberEUI64[] = [];
+
+                    for (let i = 0; i < numberOfChildren; i++) {
+                        const childEui64 = zdoBuffalo.readIeeeAddr();
+
+                        children.push(childEui64);
+                    }
+
+                    debug(`<=== [ZDO PARENT_ANNOUNCE_RESPONSE status=${EmberZdoStatus[status]} numberOfChildren=${numberOfChildren} `
+                        + `children=${children}]`);
+                    debug(`<=== [ZDO PARENT_ANNOUNCE_RESPONSE] Support not implemented upstream`);
+
+                    const payload: ParentAnnounceResponsePayload = {children};
+
+                    this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, payload);
+                }
             }
             default: {
                 console.log(`<=== [ZDO clusterId=${apsFrame.clusterId} sender=${sender}] Support not implemented upstream.`);

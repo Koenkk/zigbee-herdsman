@@ -147,6 +147,7 @@ const CommandsLookup: {[s: string]: MessagePayloadType} = {
 
     // Tuya
     'tuyaAction': 'commandTuyaAction',
+    'tuyaAction2': 'commandTuyaAction2',
 };
 
 type MessagePayloadType =
@@ -174,7 +175,7 @@ type MessagePayloadType =
     'commandZosungSendIRCode01' | 'commandZosungSendIRCode02'|'commandZosungSendIRCode04' | 'zosungSendIRCode03Resp' | 
     'zosungSendIRCode05Resp' | 'commandMcuGatewayConnectionStatus' | 'commandSchneiderWiserThermostatBoost' | 
 	'transferDataResp' | 'commandAction1' | 'commandAction2' | 'commandAction3' | 'commandAction4' | 'commandAction6' |
-    'commandTuyaAction';
+    'commandTuyaAction' | 'commandTuyaAction2';
 
 interface MessagePayload {
     type: MessagePayloadType;
