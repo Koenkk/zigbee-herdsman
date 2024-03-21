@@ -335,7 +335,7 @@ class Endpoint extends Entity {
             }
         }
 
-        await this.zclCommand(clusterKey, "report", payload, options);
+        await this.zclCommand(clusterKey, "report", payload, options, attributes);
     }
 
     public async write(
@@ -359,7 +359,7 @@ class Endpoint extends Entity {
             }
         }
         
-        await this.zclCommand(clusterKey, options.writeUndiv ? "writeUndiv" : "write", payload, options, true);
+        await this.zclCommand(clusterKey, options.writeUndiv ? "writeUndiv" : "write", payload, options, attributes, true);
     }
 
     public async writeResponse(
@@ -384,7 +384,7 @@ class Endpoint extends Entity {
         }
 
         await this.zclCommand(clusterKey, 'writeRsp', payload,
-            {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber});
+            {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber}, attributes);
     }
 
     public async read(
@@ -401,7 +401,7 @@ class Endpoint extends Entity {
             payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
         }
 
-        const result = await this.zclCommand(clusterKey, 'read', payload, options, true);
+        const result = await this.zclCommand(clusterKey, 'read', payload, options, attributes, true);
 
         if (result) {
             return ZclFrameConverter.attributeKeyValue(result.frame, this.getDevice().manufacturerID);
@@ -429,7 +429,7 @@ class Endpoint extends Entity {
         }
 
         await this.zclCommand(clusterKey, 'readRsp', payload,
-            {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber});
+            {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber}, attributes);
     }
 
     public addBinding(clusterKey: number | string, target: Endpoint | Group | number): void {
@@ -558,7 +558,7 @@ class Endpoint extends Entity {
             };
         });
 
-        await this.zclCommand(clusterKey, 'configReport', payload, options, true);
+        await this.zclCommand(clusterKey, 'configReport', payload, options, items, true);
 
         for (const e of payload) {
             this._configuredReportings = this._configuredReportings.filter((c) => !(
@@ -588,7 +588,7 @@ class Endpoint extends Entity {
     public async command(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
     ): Promise<void | KeyValue> {
-        const result = await this.zclCommand(clusterKey, commandKey, payload, options, false, Zcl.FrameType.SPECIFIC);
+        const result = await this.zclCommand(clusterKey, commandKey, payload, options, null, false, Zcl.FrameType.SPECIFIC);
         if (result) {
             return result.frame.Payload;
         }
@@ -739,7 +739,7 @@ class Endpoint extends Entity {
 
     public async zclCommand(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
-        checkStatus: boolean = false, frameType: Zcl.FrameType = Zcl.FrameType.GLOBAL,
+        logPayload?: KeyValue, checkStatus: boolean = false, frameType: Zcl.FrameType = Zcl.FrameType.GLOBAL
     ): Promise<void | AdapterEvents.ZclDataPayload> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = (frameType == Zcl.FrameType.GLOBAL) ? Zcl.Utils.getGlobalCommand(commandKey) : cluster.getCommand(commandKey);
@@ -753,7 +753,7 @@ class Endpoint extends Entity {
         );
 
         const log = `ZCL command ${this.deviceIeeeAddress}/${this.ID} ` +
-            `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
+            `${cluster.name}.${command.name}(${JSON.stringify((logPayload) ? logPayload : payload)}, ${JSON.stringify(options)})`;
         debug.info(log);
 
         try {

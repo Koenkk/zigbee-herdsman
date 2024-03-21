@@ -2866,7 +2866,7 @@ describe('Controller', () => {
             error = e;
         }
         expect(error instanceof Zcl.ZclStatusError).toBeTruthy();
-        expect(error.message).toStrictEqual(`ZCL command 0x129/1 genPowerCfg.configReport([{\"direction\":0,\"attrId\":1,\"dataType\":32,\"minRepIntval\":1,\"maxRepIntval\":10,\"repChange\":1}], {\"timeout\":10000,\"disableResponse\":false,\"disableRecovery\":false,\"disableDefaultResponse\":true,\"direction\":0,\"srcEndpoint\":null,\"reservedBits\":0,\"manufacturerCode\":null,\"transactionSequenceNumber\":null,\"writeUndiv\":false}) failed (Status 'FAILURE')`);
+        expect(error.message).toStrictEqual(`ZCL command 0x129/1 genPowerCfg.configReport([{\"attribute\":\"mainsFrequency\",\"minimumReportInterval\":1,\"maximumReportInterval\":10,\"reportableChange\":1}], {\"timeout\":10000,\"disableResponse\":false,\"disableRecovery\":false,\"disableDefaultResponse\":true,\"direction\":0,\"srcEndpoint\":null,\"reservedBits\":0,\"manufacturerCode\":null,\"transactionSequenceNumber\":null,\"writeUndiv\":false}) failed (Status 'FAILURE')`);
         expect(error.code).toBe(1);
     });
 
@@ -2891,7 +2891,7 @@ describe('Controller', () => {
             error = e;
         }
         expect(error instanceof Zcl.ZclStatusError).toBeTruthy();
-        expect(error.message).toStrictEqual(`ZCL command 0x129/1 genPowerCfg.configReport([{\"direction\":0,\"attrId\":1,\"dataType\":32,\"minRepIntval\":1,\"maxRepIntval\":10,\"repChange\":1}], {\"timeout\":10000,\"disableResponse\":false,\"disableRecovery\":false,\"disableDefaultResponse\":true,\"direction\":0,\"srcEndpoint\":null,\"reservedBits\":0,\"manufacturerCode\":null,\"transactionSequenceNumber\":null,\"writeUndiv\":false}) failed (Status 'FAILURE')`);
+        expect(error.message).toStrictEqual(`ZCL command 0x129/1 genPowerCfg.configReport([{\"attribute\":\"mainsFrequency\",\"minimumReportInterval\":1,\"maximumReportInterval\":10,\"reportableChange\":1}], {\"timeout\":10000,\"disableResponse\":false,\"disableRecovery\":false,\"disableDefaultResponse\":true,\"direction\":0,\"srcEndpoint\":null,\"reservedBits\":0,\"manufacturerCode\":null,\"transactionSequenceNumber\":null,\"writeUndiv\":false}) failed (Status 'FAILURE')`);
         expect(error.code).toBe(1);
     });
 
@@ -3288,7 +3288,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.writeResponse('genBasic', 99, {zclVersion: {status: 0x01}})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genBasic.writeRsp([{"attrId":0,"status":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":99,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genBasic.writeRsp({"zclVersion":{"status":1}}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":99,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Read from endpoint with string', async () => {
@@ -4040,7 +4040,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.configureReporting('genOnOff', [{attribute: 'onOff', minimumReportInterval: 0, maximumReportInterval: 2, reportableChange: 10}])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genOnOff.configReport([{"direction":0,"attrId":0,"dataType":16,"minRepIntval":0,"maxRepIntval":2,"repChange":10}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genOnOff.configReport([{"attribute":"onOff","minimumReportInterval":0,"maximumReportInterval":2,"reportableChange":10}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('DefaultResponse error', async () => {
@@ -4095,7 +4095,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.readResponse('genOnOff', 1, [{onOff: 1}])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genOnOff.readRsp([{"attrId":0,"status":0}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":1,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genOnOff.readRsp([{"onOff":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":1,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Read error', async () => {
@@ -4106,7 +4106,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.read('genOnOff', ['onOff'])} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genOnOff.read([{"attrId":0}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genOnOff.read(["onOff"], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Read with disable response', async () => {
@@ -4128,7 +4128,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.write('genOnOff', {onOff: 1})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genOnOff.write([{"attrId":0,"attrData":1,"dataType":16}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genOnOff.write({"onOff":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Write with disable response', async () => {
@@ -4600,7 +4600,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {await endpoint.report('genOnOff', {onOff: 1})} catch (e) {error = e}
-        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genOnOff.report([{"attrId":0,"attrData":1,"dataType":16}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`ZCL command 0x129/1 genOnOff.report({"onOff":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (timeout occurred)`));
     });
 
     it('Write to device with pendingRequestTimeout > 0', async () => {
@@ -4656,7 +4656,7 @@ describe('Controller', () => {
         try {
             await endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendPolicy: 'immediate'});
         } catch (error) {
-            expect(error.message).toStrictEqual(`ZCL command 0x129/1 genOnOff.write([{\"attrId\":0,\"attrData\":1,\"dataType\":16}], {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false,"sendPolicy":"immediate"}) failed (Dogs barking too hard)`);
+            expect(error.message).toStrictEqual(`ZCL command 0x129/1 genOnOff.write({\"onOff\":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false,"sendPolicy":"immediate"}) failed (Dogs barking too hard)`);
         }
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         expect(endpoint.pendingRequests.size).toStrictEqual(1);
@@ -4714,7 +4714,7 @@ describe('Controller', () => {
             error = e;
         }
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
-        expect(error.message).toStrictEqual(`ZCL command 0x129/1 genOnOff.write([{\"attrId\":0,\"attrData\":1,\"dataType\":16}], {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
+        expect(error.message).toStrictEqual(`ZCL command 0x129/1 genOnOff.write({\"onOff\":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"srcEndpoint":null,"reservedBits":0,"manufacturerCode":null,"transactionSequenceNumber":null,"writeUndiv":false}) failed (Dogs barking too hard)`);
     });
 
     it('Write to device with pendingRequestTimeout > 0, replace queued messages', async () => {
