@@ -5,13 +5,13 @@ import BuffaloZiGate, {BuffaloZiGateOptions} from './buffaloZiGate';
 import {ZiGateCommandCode, ZiGateMessageCode, ZiGateObjectPayload} from "./constants";
 import {ZiGateMessage, ZiGateMessageParameter} from "./messageType";
 import {ZiGateCommand, ZiGateCommandParameter, ZiGateCommandType} from "./commandType";
-import {Debug} from '../debug';
+import {logger} from '../../../utils/logger';
 
 type ZiGateCode = ZiGateCommandCode | ZiGateMessageCode;
 type ZiGateParameter = ZiGateCommandParameter | ZiGateMessageParameter;
 
 
-const debug = Debug('driver:ziGateObject');
+const cLogger = logger.child({service: 'zigbee-herdsman:zigate:object'});
 
 const BufferAndListTypes = [
     'BUFFER', 'BUFFER8', 'BUFFER16',
@@ -111,17 +111,14 @@ class ZiGateObject {
             try {
                 result[parameter.name] = buffalo.read(parameter.parameterType, options);
             } catch (e) {
-                debug.error(e.stack);
+                cLogger.error(e.stack);
             }
         }
 
         if (buffalo.isMore()) {
             let bufferString = buffalo.getBuffer().toString('hex');
-            debug.error(
-                "Last bytes of data were not parsed \x1b[32m%s\x1b[31m%s\x1b[0m ",
-                bufferString.slice(0, (buffalo.getPosition() * 2)).replace(/../g, "$& "),
-                bufferString.slice(buffalo.getPosition() * 2).replace(/../g, "$& ")
-            )
+            cLogger.error(`Last bytes of data were not parsed \x1b[32m${bufferString.slice(0, (buffalo.getPosition() * 2)).replace(/../g, "$& ")}`
+                + `\x1b[31m${bufferString.slice(buffalo.getPosition() * 2).replace(/../g, "$& ")}\x1b[0m `);
         }
 
         return result;

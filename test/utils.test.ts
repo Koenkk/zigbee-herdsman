@@ -1,5 +1,15 @@
 import "regenerator-runtime/runtime";
 import {IsNumberArray, Wait, Queue, Waitress, AssertString} from '../src/utils';
+import {logger, setLogger} from '../src/utils/logger';
+
+
+const mockLogger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn(),
+    error: jest.fn(),
+    child: jest.fn(),
+};
 
 describe('Utils', () => {
     it('IsNumberArray valid', () => {
@@ -147,5 +157,58 @@ describe('Utils', () => {
         await job2Result;
         expect(finished).toEqual([4, 1, 2, 3]);
         expect(queue.count()).toBe(5);
+    });
+
+    it('Logs with default', () => {
+        const debug = jest.spyOn(console, "debug").mockImplementation(() => {});
+        const info = jest.spyOn(console, "info").mockImplementation(() => {});
+        const warning = jest.spyOn(console, "warn").mockImplementation(() => {});
+        const error = jest.spyOn(console, "error").mockImplementation(() => {});
+
+        logger.debug('debug');
+        expect(debug).toHaveBeenCalledWith('debug');
+
+        logger.info('info');
+        expect(info).toHaveBeenCalledWith('info');
+
+        logger.warning('warning');
+        expect(warning).toHaveBeenCalledWith('warning');
+
+        logger.error('error');
+        expect(error).toHaveBeenCalledWith('error');
+
+        const child = logger.child({service: 'test'});
+
+        child.debug('debug');
+        expect(debug).toHaveBeenCalledWith({service: 'test'}, 'debug');
+
+        child.info('info');
+        expect(info).toHaveBeenCalledWith({service: 'test'}, 'info');
+
+        child.warning('warning');
+        expect(warning).toHaveBeenCalledWith({service: 'test'}, 'warning');
+
+        child.error('error');
+        expect(error).toHaveBeenCalledWith({service: 'test'}, 'error');
+
+        debug.mockReset();
+        info.mockReset();
+        warning.mockReset();
+        error.mockReset();
+    });
+
+    it('Logs', () => {
+        setLogger(mockLogger);
+        expect(logger).toEqual(mockLogger);
+        logger.debug('debug');
+        expect(mockLogger.debug).toHaveBeenCalledWith('debug');
+        logger.info('info');
+        expect(mockLogger.info).toHaveBeenCalledWith('info');
+        logger.warning('warning');
+        expect(mockLogger.warning).toHaveBeenCalledWith('warning');
+        logger.error('error', 'zh');
+        expect(mockLogger.error).toHaveBeenCalledWith('error', 'zh');
+        logger.child({service: 'zh'});
+        expect(mockLogger.child).toHaveBeenCalledWith({service: 'zh'});
     });
 });

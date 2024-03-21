@@ -1,12 +1,9 @@
+import {logger} from '../../utils/logger';
 import * as Zcl from '../../zcl';
 import {Endpoint} from '../model';
 import Request from './request';
-import Debug from "debug";
 
-const debug = {
-    info: Debug('zigbee-herdsman:helpers:requestQueue'),
-    error: Debug('zigbee-herdsman:helpers:requestQeue'),
-};
+const cLogger = logger.child({service: 'zigbee-herdsman:controller:requestqueue'});
 
 type Mutable<T> = { -readonly [P in keyof T ]: T[P] };
 
@@ -30,7 +27,7 @@ class RequestQueue extends Set<Request> {
         if (this.size === 0) return;
 
         if (!fastPolling && this.sendInProgress) {
-            debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): sendPendingRequests already in progress`);
+            cLogger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): sendPendingRequests already in progress`);
             return;
         }
         this.sendInProgress = true;
@@ -39,25 +36,25 @@ class RequestQueue extends Set<Request> {
         const now = Date.now();
         for (const request of this) {
             if (now > request.expires) {
-                debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): discard after timeout. ` +
+                cLogger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): discard after timeout. ` +
                 `Size before: ${this.size}`);
                 request.reject();
                 this.delete(request);
             }
         }
 
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send pending requests (` +
+        cLogger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send pending requests (` +
             `${this.size}, ${fastPolling})`);
 
         for (const request of this) {
             if (fastPolling || request.sendPolicy !== 'bulk') {
                 try {
                     const result = await request.send();
-                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`);
+                    cLogger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`);
                     request.resolve(result);
                     this.delete(request);
                 } catch (error) {
-                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ` +
+                    cLogger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ` +
                         `${(request.expires - now) / 1000} seconds`);
                 }
             }
@@ -66,7 +63,7 @@ class RequestQueue extends Set<Request> {
     }
 
     public async queue<Type>(request: Request<Type>): Promise<Type> {
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Sending when active. ` +
+        cLogger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Sending when active. ` +
             `Expires: ${request.expires}`);
         return new Promise((resolve, reject): void =>  {
             request.addCallbacks(resolve, reject);
@@ -83,7 +80,7 @@ class RequestQueue extends Set<Request> {
         const payload = newRequest.frame.Payload;
         const commandID = newRequest.frame.getCommand().ID;
 
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): ZCL ${newRequest.frame.getCommand().name} ` +
+        cLogger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): ZCL ${newRequest.frame.getCommand().name} ` +
             `command, filter requests. Before: ${this.size}`);
 
         for (const request of this) {
@@ -98,7 +95,7 @@ class RequestQueue extends Set<Request> {
                 /* istanbul ignore else */
                 if (newRequest.sendPolicy === 'keep-payload'
                     && JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
-                    debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Merge duplicate request`);
+                    cLogger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Merge duplicate request`);
                     this.delete(request);
                     newRequest.moveCallbacks(request);
                 }
@@ -107,7 +104,7 @@ class RequestQueue extends Set<Request> {
                     const filteredPayload = request.frame.Payload.filter((oldEl: {attrId: number}) =>
                         !payload.find((newEl: {attrId: number}) => oldEl.attrId === newEl.attrId));
                     if (filteredPayload.length == 0) {
-                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Remove & reject request`);
+                        cLogger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Remove & reject request`);
                         if( JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
                             newRequest.moveCallbacks(request);
                         } else {
@@ -117,13 +114,13 @@ class RequestQueue extends Set<Request> {
                     } else if (newRequest.sendPolicy !== 'keep-cmd-undiv') {
                         // remove all duplicate attributes if we shall not write undivided
                         (request.frame as Mutable<Zcl.ZclFrame>).Payload = filteredPayload;
-                        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): `
+                        cLogger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): `
                             + `Remove commands from request`);
                     }
                 }
             }
         }
-        debug.info(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): After: ${this.size}`);
+        cLogger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): After: ${this.size}`);
     }
 }
 

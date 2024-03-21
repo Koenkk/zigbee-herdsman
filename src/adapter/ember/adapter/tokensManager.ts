@@ -1,5 +1,4 @@
 /* istanbul ignore file */
-import Debug from "debug";
 import {initSecurityManagerContext} from "../utils/initters";
 import {BLANK_EUI64} from "../consts";
 import {EMBER_ENCRYPTION_KEY_SIZE, EUI64_SIZE} from "../ezsp/consts";
@@ -7,8 +6,9 @@ import {EmberStatus, EzspStatus, SLStatus, SecManFlag, SecManKeyType} from "../e
 import {EzspValueId} from "../ezsp/enums";
 import {EmberTokenData, SecManKey} from "../types";
 import {Ezsp} from "../ezsp/ezsp";
+import {logger} from "../../../utils/logger";
 
-const debug = Debug('zigbee-herdsman:adapter:ember:adapter:tokens');
+const cLogger = logger.child({service: 'zigbee-herdsman:ember:tokens'});
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 //------------------------------------------------------------------------------
@@ -341,7 +341,7 @@ export class EmberTokensManager {
      * @return Saved tokens buffer or null.
      */
     public static async saveTokens(ezsp: Ezsp, localEui64: Buffer): Promise<Buffer> {
-        console.log(`[TOKENS] Saving tokens...`);
+        cLogger.info(`[TOKENS] Saving tokens...`);
         const tokenCount = (await ezsp.ezspGetTokenCount());
 
         if (tokenCount) {
@@ -350,7 +350,7 @@ export class EmberTokensManager {
             // Don't compile for scripted test or any non-host code due to linker issues.
             const hasSecureStorage: boolean = (await EmberTokensManager.ncpUsesPSAKeyStorage(ezsp));
 
-            debug(`[TOKENS] Saving ${tokenCount} tokens, ${hasSecureStorage ? "with" : "without"} secure storage.`);
+            cLogger.debug(`[TOKENS] Saving ${tokenCount} tokens, ${hasSecureStorage ? "with" : "without"} secure storage.`);
 
             for (let i = 0; i < tokenCount; i++) {
                 const [tiStatus, tokenInfo] = (await ezsp.ezspGetTokenInfo(i));
@@ -372,12 +372,11 @@ export class EmberTokensManager {
                                 await EmberTokensManager.saveKeysToData(ezsp, tokenData, tokenInfo.nvm3Key, arrayIndex);
 
                                 // ensure the token data was retrieved properly, length should match the size announced by the token info
-                                console.assert(
-                                    tokenData.data.length === tokenInfo.size,
-                                    `[TOKENS] Mismatch in token data size; got ${tokenData.data.length}, expected ${tokenInfo.size}.`
-                                );
+                                if (tokenData.data.length !== tokenInfo.size) {
+                                    cLogger.error(`[TOKENS] Mismatch in token data size; got ${tokenData.data.length}, expected ${tokenInfo.size}.`);
+                                }
                             }
-                            // debug(`[TOKENS] TOKEN nvm3Key=${DEBUG_TOKEN_STRINGS[tokenInfo.nvm3Key]} size=${tokenInfo.size} `
+                            // cLogger.debug(`[TOKENS] TOKEN nvm3Key=${DEBUG_TOKEN_STRINGS[tokenInfo.nvm3Key]} size=${tokenInfo.size} `
                             //     + `arraySize=${tokenInfo.arraySize} token=${tokenData.data.toString('hex')}`);
 
                             // Check the Key to see if the token to save is restoredEui64, in that case
@@ -388,19 +387,19 @@ export class EmberTokensManager {
                                 && (tokenData.data ===  BLANK_EUI64_BUF)) {
                                 // Special case : Save the node EUI64 on the restoredEui64 token while saving.
                                 tokenData.data.set(localEui64);
-                                debug(`[TOKENS] Saved node EUI64 in place of blank RESTORED EUI64.`);
+                                cLogger.debug(`[TOKENS] Saved node EUI64 in place of blank RESTORED EUI64.`);
                             }
 
                             outputToken.set(tokenData.data, writeOffset);
                             writeOffset += tokenData.size;
                         } else {
-                            console.error(`[TOKENS] Failed to get token data at index ${arrayIndex} with status=${EmberStatus[tdStatus]}.`);
+                            cLogger.error(`[TOKENS] Failed to get token data at index ${arrayIndex} with status=${EmberStatus[tdStatus]}.`);
                         }
                     }
 
                     chunks.push(outputToken);
                 } else {
-                    console.error(`[TOKENS] Failed to get token info at index ${i} with status=${EmberStatus[tiStatus]}.`);
+                    cLogger.error(`[TOKENS] Failed to get token info at index ${i} with status=${EmberStatus[tiStatus]}.`);
                 }
             }
 
@@ -408,7 +407,7 @@ export class EmberTokensManager {
         } else {
             // ezspGetTokenCount == 0 OR (ezspGetTokenInfo|ezspGetTokenData|ezspSetTokenData return LIBRARY_NOT_PRESENT)
             // ezspTokenFactoryReset will do nothing.
-            console.error(`[TOKENS] Saving tokens not supported by NCP (not NVM3-based).`);
+            cLogger.error(`[TOKENS] Saving tokens not supported by NCP (not NVM3-based).`);
         }
 
         return null;
@@ -428,13 +427,13 @@ export class EmberTokensManager {
             throw new Error(`[TOKENS] Restore tokens buffer empty.`);
         }
 
-        console.log(`[TOKENS] Restoring tokens...`);
+        cLogger.info(`[TOKENS] Restoring tokens...`);
 
         let readOffset: number = 0;
         const inTokenCount = inBuffer.readUInt8(readOffset++);
         const hasSecureStorage: boolean = (await EmberTokensManager.ncpUsesPSAKeyStorage(ezsp));
 
-        debug(`[TOKENS] Restoring ${inTokenCount} tokens, ${hasSecureStorage ? "with" : "without"} secure storage.`);
+        cLogger.debug(`[TOKENS] Restoring ${inTokenCount} tokens, ${hasSecureStorage ? "with" : "without"} secure storage.`);
 
         for (let i = 0; i < inTokenCount; i++) {
             const [tiStatus, tokenInfo] = (await ezsp.ezspGetTokenInfo(i));
@@ -458,15 +457,14 @@ export class EmberTokensManager {
 
                     const status = (await ezsp.ezspSetTokenData(nvm3Key, arrayIndex, tokenData)) as EmberStatus;
 
-                    console.assert(
-                        status === EmberStatus.SUCCESS,
-                        `[TOKENS] Failed to set token data for key "${nvm3Key}" with status=${EmberStatus[status]}.`
-                    );
+                    if (status !== EmberStatus.SUCCESS) {
+                        cLogger.error(`[TOKENS] Failed to set token data for key "${nvm3Key}" with status=${EmberStatus[status]}.`);
+                    }
 
                     readOffset += tokenData.size;
                 }
             } else {
-                console.error(`[TOKENS] Failed to get token info at index ${i} with status=${EmberStatus[tiStatus]}.`);
+                cLogger.error(`[TOKENS] Failed to get token info at index ${i} with status=${EmberStatus[tiStatus]}.`);
             }
         }
 
@@ -746,7 +744,7 @@ export class EmberTokensManager {
             throw new Error(`[TOKENS] Restore tokens buffer empty.`);
         }
 
-        console.log(`[TOKENS] Restoring tokens to Zigbeed...`);
+        cLogger.info(`[TOKENS] Restoring tokens to Zigbeed...`);
 
         let readOffset: number = 0;
         const inTokenCount = inBuffer.readUInt8(readOffset++);
@@ -766,10 +764,11 @@ export class EmberTokensManager {
                 const creator = EmberTokensManager.getCreatorFromNvm3Key(nvm3Key);// uint16_t
                 const status = (await ezsp.ezspSetTokenData(creator, arrayIndex, tokenData));
 
-                console.assert(
-                    status === EmberStatus.SUCCESS,
-                    `[TOKENS] Failed to set Zigbeed token data for key "${nvm3Key}" creator "${creator}" with status=${EmberStatus[status]}.`
-                );
+                if (status !== EmberStatus.SUCCESS) {
+                    cLogger.error(
+                        `[TOKENS] Failed to set Zigbeed token data for key "${nvm3Key}" creator "${creator}" with status=${EmberStatus[status]}.`
+                    );
+                }
 
                 readOffset += tokenData.size;
             }

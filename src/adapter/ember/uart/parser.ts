@@ -1,9 +1,7 @@
 /* istanbul ignore file */
-import Debug from "debug";
 import {Transform, TransformCallback, TransformOptions} from "stream";
 import {AshReservedByte} from "./enums";
-
-const debug = Debug('zigbee-herdsman:adapter:ember:uart:ash:parser');
+import {logger} from "../../../utils/logger";
 
 export class AshParser extends Transform {
     private buffer: Buffer;
@@ -23,7 +21,7 @@ export class AshParser extends Transform {
             const frame = data.subarray(0, position + 1);
 
             setImmediate((): void => {
-                debug(`<<<< [FRAME raw=${frame.toString('hex')}]`);
+                logger.debug(`<<<< [FRAME raw=${frame.toString('hex')}]`, 'zigbee-herdsman:ember:uart:ash:parser');
                 this.push(frame);
             });
 

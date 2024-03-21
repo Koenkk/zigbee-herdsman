@@ -3,7 +3,6 @@
 
 import {DelimiterParser} from '@serialport/parser-delimiter'
 import {EventEmitter} from 'events';
-import {Debug} from '../debug';
 import {SerialPort} from '../../serialPort';
 import SerialPortUtils from "../../serialPortUtils";
 import SocketPortUtils from "../../socketPortUtils";
@@ -17,8 +16,9 @@ import Waitress from "../../../utils/waitress";
 import {equal, ZiGateResponseMatcher, ZiGateResponseMatcherRule} from "./commandType";
 import ZiGateFrame from "./frame";
 import {Buffalo} from "../../../buffalo";
+import {logger} from '../../../utils/logger';
 
-const debug = Debug('driver');
+const cLogger = logger.child({service: 'zigbee-herdsman:zigate:driver'});
 
 const autoDetectDefinitions = [
     {manufacturer: 'zigate_PL2303', vendorId: '067b', productId: '2303'},
@@ -87,20 +87,18 @@ export default class ZiGate extends EventEmitter {
         const waitersId: number[] = [];
         return await this.queue.execute(async () => {
             try {
-                debug.log(
+                cLogger.debug(
                     'Send command \x1b[32m>>>> '
                     + ZiGateCommandCode[code]
                     + ' 0x' + zeroPad(code)
-                    + ' <<<<\x1b[0m \nPayload: %o',
-                    payload
-                );
+                    + ` <<<<\x1b[0m \nPayload: ${JSON.stringify(payload)}`);
                 const ziGateObject = ZiGateObject.createRequest(code, payload);
                 const frame = ziGateObject.toZiGateFrame();
-                debug.log('%o', frame);
+                cLogger.debug(`${JSON.stringify(frame)}`);
 
                 const sendBuffer = frame.toBuffer();
-                debug.log('<-- send command ', sendBuffer);
-                debug.log(`DisableResponse: ${disableResponse}`);
+                cLogger.debug(`<-- send command ${sendBuffer.toString('hex')}`);
+                cLogger.debug(`DisableResponse: ${disableResponse}`);
 
                 if (!disableResponse && Array.isArray(ziGateObject.command.response)) {
                     ziGateObject.command.response.forEach((rules) => {
@@ -143,7 +141,7 @@ export default class ZiGate extends EventEmitter {
                 }
                 return Promise.race(waiters);
             } catch (e) {
-                debug.error('sendCommand error:', e);
+                cLogger.error(`sendCommand error ${e}`);
                 return Promise.reject(new Error('sendCommand error: ' + e));
             }
         });
@@ -165,7 +163,7 @@ export default class ZiGate extends EventEmitter {
     }
 
     public async close(): Promise<void> {
-        debug.info('closing');
+        cLogger.info('closing');
         this.queue.clear();
 
         if (this.initialized) {
@@ -214,7 +212,7 @@ export default class ZiGate extends EventEmitter {
 
         try {
             await this.serialPort.asyncOpen();
-            debug.log('Serialport opened');
+            cLogger.debug('Serialport opened');
 
             this.serialPort.once('close', this.onPortClose.bind(this));
             this.serialPort.once('error', this.onPortError.bind(this));
@@ -233,7 +231,7 @@ export default class ZiGate extends EventEmitter {
 
     private async openSocketPort(): Promise<void> {
         const info = SocketPortUtils.parseTcpPath(this.path);
-        debug.log(`Opening TCP socket with ${info.host}:${info.port}`);
+        cLogger.debug(`Opening TCP socket with ${info.host}:${info.port}`);
 
         this.socketPort = new net.Socket();
         this.socketPort.setNoDelay(true);
@@ -248,14 +246,14 @@ export default class ZiGate extends EventEmitter {
         this.portWrite = this.socketPort;
         return new Promise((resolve, reject): void => {
             this.socketPort.on('connect', function () {
-                debug.log('Socket connected');
+                cLogger.debug('Socket connected');
             });
 
             // eslint-disable-next-line
             const self = this;
 
             this.socketPort.on('ready', async function () {
-                debug.log('Socket ready');
+                cLogger.debug('Socket ready');
                 self.initialized = true;
                 resolve();
             });
@@ -263,7 +261,7 @@ export default class ZiGate extends EventEmitter {
             this.socketPort.once('close', this.onPortClose.bind(this));
 
             this.socketPort.on('error', (error) => {
-                debug.log('Socket error', error);
+                cLogger.error(`Socket error ${error}`);
                 // reject(new Error(`Error while opening socket`));
                 reject();
                 self.initialized = false;
@@ -274,18 +272,18 @@ export default class ZiGate extends EventEmitter {
     }
 
     private onPortError(error: Error): void {
-        debug.error(`Port error: ${error}`);
+        cLogger.error(`Port error: ${error}`);
     }
 
     private onPortClose(): void {
-        debug.log('Port closed');
+        cLogger.debug('Port closed');
         this.initialized = false;
         this.emit('close');
     }
 
     private onSerialData(buffer: Buffer): void {
         try {
-            // debug.log(`--- parseNext `, buffer);
+            // cLogger.debug(`--- parseNext `, buffer);
 
             const frame = new ZiGateFrame(buffer);
             if (!(frame instanceof ZiGateFrame)) return; // @Todo fix
@@ -293,11 +291,11 @@ export default class ZiGate extends EventEmitter {
             const code = frame.readMsgCode();
             const msgName = (ZiGateMessageCode[code] ? ZiGateMessageCode[code] : '') + ' 0x' + zeroPad(code);
 
-            debug.log(`--> parsed frame \x1b[1;34m>>>> ${msgName} <<<<\x1b[0m `);
+            cLogger.debug(`--> parsed frame \x1b[1;34m>>>> ${msgName} <<<<\x1b[0m `);
 
             try {
                 const ziGateObject = ZiGateObject.fromZiGateFrame(frame);
-                debug.log('%o', ziGateObject.payload);
+                cLogger.debug(`${JSON.stringify(ziGateObject.payload)}`);
                 this.waitress.resolve(ziGateObject);
 
                 switch (code) {
@@ -320,13 +318,13 @@ export default class ZiGate extends EventEmitter {
                                     );
                                     this.emit('received', {ziGateObject, zclFrame});
                                 } catch (error) {
-                                    debug.error("could not parse zclFrame: " + error);
+                                    cLogger.error("could not parse zclFrame: " + error);
                                     this.emit('receivedRaw', {ziGateObject});
                                 }
                                 break;
                             default:
 
-                                debug.error("not implemented profile: " + ziGateObject.payload.profileID);
+                                cLogger.error("not implemented profile: " + ziGateObject.payload.profileID);
                         }
                         break;
                     case ZiGateMessageCode.LeaveIndication:
@@ -338,11 +336,11 @@ export default class ZiGate extends EventEmitter {
                 }
 
             } catch (error) {
-                debug.error('Parsing error: %o', error)
+                cLogger.error(`Parsing error: ${error}`);
             }
 
         } catch (error) {
-            debug.error(`Error while parsing Frame '${error.stack}'`);
+            cLogger.error(`Error while parsing Frame '${error.stack}'`);
         }
     }
 

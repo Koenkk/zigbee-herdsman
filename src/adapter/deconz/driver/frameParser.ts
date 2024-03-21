@@ -7,8 +7,9 @@ import { busyQueue, apsBusyQueue, readyToSend, enableRTS, disableRTS, enableRtsT
 import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin, ParamNetworkKey, gpDataInd } from './constants';
 import * as Events from '../../events';
 import {ZclFrame} from '../../../zcl';
-import Debug from 'debug';
-const debug = Debug('zigbee-herdsman:deconz:frameParser');
+import {logger} from '../../../utils/logger';
+
+const cLogger = logger.child({service: 'zigbee-herdsman:deconz:frameparser'});
 
 interface lastReceivedGpInd {
     srcId: number;
@@ -32,15 +33,15 @@ function parseReadParameterResponse(view: DataView) : Command {
                 result = "0" + result;
             }
             result = "0x" + result;
-            debug(`MAC: ${result}`);
+            cLogger.debug(`MAC: ${result}`);
             return result;
         case PARAM.PARAM.Network.PAN_ID:
             const panId: ParamPanId = view.getUint16(8, littleEndian);
-            debug('PANID: ' + panId.toString(16));
+            cLogger.debug('PANID: ' + panId.toString(16));
             return panId;
         case PARAM.PARAM.Network.NWK_ADDRESS:
             const nwkAddr: ParamNwkAddr = view.getUint16(8, littleEndian);
-            debug('NWKADDR: ' + nwkAddr.toString(16));
+            cLogger.debug('NWKADDR: ' + nwkAddr.toString(16));
             return nwkAddr;
         case PARAM.PARAM.Network.EXT_PAN_ID:
             const extPanId: ParamExtPanId = view.getBigUint64(8, littleEndian).toString(16);
@@ -49,7 +50,7 @@ function parseReadParameterResponse(view: DataView) : Command {
                 res = "0" + res;
             }
             res = "0x" + res;
-            debug(`EXT_PANID: ${res}`);
+            cLogger.debug(`EXT_PANID: ${res}`);
             return res;
         case PARAM.PARAM.Network.APS_EXT_PAN_ID:
             const apsExtPanId: ParamExtPanId = view.getBigUint64(8, littleEndian).toString(16);
@@ -58,7 +59,7 @@ function parseReadParameterResponse(view: DataView) : Command {
                 resAEPID = "0" + resAEPID;
             }
             resAEPID = "0x" + resAEPID;
-            debug(`APS_EXT_PANID: ${resAEPID}`);
+            cLogger.debug(`APS_EXT_PANID: ${resAEPID}`);
             return resAEPID;
         case PARAM.PARAM.Network.NETWORK_KEY:
             const networkKey1 = view.getBigUint64(9).toString(16);
@@ -71,40 +72,40 @@ function parseReadParameterResponse(view: DataView) : Command {
             while (res2.length < 16) {
                 res2 = "0" + res2;
             }
-            debug('NETWORK_KEY: hidden');
+            cLogger.debug('NETWORK_KEY: hidden');
             return "0x"+res1+res2;
         case PARAM.PARAM.Network.CHANNEL:
             const channel: ParamChannel = view.getUint8(8);
-            debug('CHANNEL: ' + channel);
+            cLogger.debug('CHANNEL: ' + channel);
             return channel;
         case PARAM.PARAM.Network.CHANNEL_MASK:
             const chMask: ParamChannelMask = view.getUint32(8, littleEndian);
-            debug('CHANNELMASK: ' + chMask.toString(16));
+            cLogger.debug('CHANNELMASK: ' + chMask.toString(16));
             return chMask;
         case PARAM.PARAM.Network.PERMIT_JOIN:
             const permitJoin: ParamPermitJoin = view.getUint8(8);
-            debug('PERMIT_JOIN: ' + permitJoin);
+            cLogger.debug('PERMIT_JOIN: ' + permitJoin);
             return permitJoin;
         case PARAM.PARAM.Network.WATCHDOG_TTL:
             const ttl: ParamPermitJoin = view.getUint32(8);
-            debug('WATCHDOG_TTL: ' + ttl);
+            cLogger.debug('WATCHDOG_TTL: ' + ttl);
             return ttl;
         default:
             //throw new Error(`unknown parameter id ${parameterId}`);
-            debug(`unknown parameter id ${parameterId}`);
+            cLogger.debug(`unknown parameter id ${parameterId}`);
             return null;
     }
 }
 
 function parseReadFirmwareResponse(view : DataView) : number[] {
     const fw = [view.getUint8(5), view.getUint8(6), view.getUint8(7), view.getUint8(8)];
-    debug("read firmware version response - version: " + fw);
+    cLogger.debug("read firmware version response - version: " + fw);
     return fw;
 }
 
 function parseDeviceStateResponse(view : DataView) : number {
     const flag = view.getUint8(5);
-    debug("device state: " + flag.toString(2));
+    cLogger.debug("device state: " + flag.toString(2));
     frameParserEvents.emit('receivedDataNotification', flag);
     return flag;
 }
@@ -112,7 +113,7 @@ function parseDeviceStateResponse(view : DataView) : number {
 function parseChangeNetworkStateResponse(view : DataView) : number {
     const status = view.getUint8(2);
     const state = view.getUint8(5);
-    debug("change network state - status: " + status + " new state: " + state);
+    cLogger.debug("change network state - status: " + status + " new state: " + state);
     return state;
 }
 
@@ -127,7 +128,7 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
 
         if (response.status !== 0) {
             if (response.status !== 5) {
-                debug("DATA_CONFIRM RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
+                cLogger.debug("DATA_CONFIRM RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
             }
             return null;
         }
@@ -177,22 +178,22 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
         // TODO timeout (at driver.ts)
         if (response.confirmStatus !== 0) {
             // reject if status is not SUCCESS
-            //debug("REJECT APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
+            //cLogger.debug("REJECT APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
             req.reject(response.confirmStatus);
         } else {
-            //debug("RESOLVE APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
+            //cLogger.debug("RESOLVE APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus);
             req.resolve(response.confirmStatus);
         }
 
         //remove from busyqueue
         apsBusyQueue.splice(i, 1);
 
-        debug("DATA_CONFIRM RESPONSE - destAddr: 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus);
+        cLogger.debug("DATA_CONFIRM RESPONSE - destAddr: 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus);
         frameParserEvents.emit('receivedDataNotification', response.deviceState);
 
         return response;
     } catch (error) {
-        debug("DATA_CONFIRM RESPONSE - " + error);
+        cLogger.debug("DATA_CONFIRM RESPONSE - " + error);
         return null;
     }
 }
@@ -209,7 +210,7 @@ function parseReadReceivedDataResponse(view : DataView) : object {
 
         if (response.status != 0) {
             if (response.status !== 5) {
-                debug("DATA_INDICATION RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
+                cLogger.debug("DATA_INDICATION RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status);
             }
             return null;
         }
@@ -276,13 +277,13 @@ function parseReadReceivedDataResponse(view : DataView) : object {
         for (let l = 0; l <= (8 - newStatus.length); l++) {
             newStatus = "0" + newStatus;
         }
-        debug("DATA_INDICATION RESPONSE - seqNr. " + response.seqNr + " srcAddr: 0x" + srcAddr + " destAddr: 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16) + " lqi: " + response.lqi);
-        debug("response payload: " + payload);
+        cLogger.debug("DATA_INDICATION RESPONSE - seqNr. " + response.seqNr + " srcAddr: 0x" + srcAddr + " destAddr: 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16) + " lqi: " + response.lqi);
+        cLogger.debug("response payload: " + payload);
         frameParserEvents.emit('receivedDataPayload', response);
         frameParserEvents.emit('receivedDataNotification', response.deviceState);
         return response;
     } catch (error) {
-        debug("DATA_INDICATION RESPONSE - " + error);
+        cLogger.debug("DATA_INDICATION RESPONSE - " + error);
         return null;
     }
 }
@@ -292,11 +293,11 @@ function parseEnqueueSendDataResponse(view : DataView) : number {
         const status = view.getUint8(2);
         const requestId = view.getUint8(8);
         const deviceState = view.getUint8(7);
-        debug("DATA_REQUEST RESPONSE - request id: " + requestId + " status: " + status);
+        cLogger.debug("DATA_REQUEST RESPONSE - request id: " + requestId + " status: " + status);
         frameParserEvents.emit('receivedDataNotification', deviceState);
         return deviceState;
     } catch (error) {
-        debug("parseEnqueueSendDataResponse - " + error);
+        cLogger.debug("parseEnqueueSendDataResponse - " + error);
         return null;
     }
 }
@@ -304,10 +305,10 @@ function parseEnqueueSendDataResponse(view : DataView) : number {
 function parseWriteParameterResponse(view : DataView) : number {
     try {
         const parameterId = view.getUint8(7);
-        debug(`write parameter response - parameter id: ${parameterId} - status: ${view.getUint8(2)}`);
+        cLogger.debug(`write parameter response - parameter id: ${parameterId} - status: ${view.getUint8(2)}`);
         return parameterId;
     } catch (error) {
-        debug("parseWriteParameterResponse - " + error);
+        cLogger.debug("parseWriteParameterResponse - " + error);
         return null;
     }
 }
@@ -315,11 +316,11 @@ function parseWriteParameterResponse(view : DataView) : number {
 function parseReceivedDataNotification(view : DataView) : number {
     try {    
         const deviceState = view.getUint8(5);
-        debug("DEVICE_STATE changed: " + deviceState.toString(2));
+        cLogger.debug("DEVICE_STATE changed: " + deviceState.toString(2));
         frameParserEvents.emit('receivedDataNotification', deviceState);
         return deviceState;
     } catch (error) {
-        debug("parseReceivedDataNotification - " + error);
+        cLogger.debug("parseReceivedDataNotification - " + error);
         return null;
     }
 }
@@ -330,7 +331,7 @@ function parseGreenPowerDataIndication(view : DataView) : object {
         ind.seqNr = view.getUint8(1);
 
         if (view.byteLength < 30) {
-        debug("GP data notification");
+        cLogger.debug("GP data notification");
         ind.id = 0x00; // 0 = notification, 4 = commissioning
         ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
         ind.options = 0; view.getUint16(7, littleEndian); // frame ctrl field(7) ext.fcf(8)
@@ -347,7 +348,7 @@ function parseGreenPowerDataIndication(view : DataView) : object {
         }
         ind.commandFrame = payload;
         } else {
-        debug("GP commissioning notification");
+        cLogger.debug("GP commissioning notification");
         ind.id = 0x04; // 0 = notification, 4 = commissioning
         ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
         ind.options = view.getUint16(14, littleEndian); // opt(14) ext.opt(15)
@@ -372,30 +373,30 @@ function parseGreenPowerDataIndication(view : DataView) : object {
         lastReceivedGpInd.srcId = ind.srcId;
         lastReceivedGpInd.commandId = ind.commandId;
         lastReceivedGpInd.frameCounter = ind.frameCounter;
-        //debug(`GP_DATA_INDICATION - src id: ${ind.srcId} cmd id: ${ind.commandId} frameCounter: ${ind.frameCounter}`);
-        debug(`GP_DATA_INDICATION - src id: 0x${ind.srcId.toString(16)} cmd id: 0x${ind.commandId.toString(16)} frameCounter: 0x${ind.frameCounter.toString(16)}`);
+        //cLogger.debug(`GP_DATA_INDICATION - src id: ${ind.srcId} cmd id: ${ind.commandId} frameCounter: ${ind.frameCounter}`);
+        cLogger.debug(`GP_DATA_INDICATION - src id: 0x${ind.srcId.toString(16)} cmd id: 0x${ind.commandId.toString(16)} frameCounter: 0x${ind.frameCounter.toString(16)}`);
         frameParserEvents.emit('receivedGreenPowerIndication', ind);
         }
         return ind;
     } catch (error) {
-        debug("GREEN_POWER INDICATION - " + error);
+        cLogger.debug("GREEN_POWER INDICATION - " + error);
         return null;
     }
 }
 
 function parseMacPollCommand(view : DataView) : number {
-    //debug("Received command MAC_POLL");
+    //cLogger.debug("Received command MAC_POLL");
     return 28;
 }
 
 function parseBeaconRequest(view : DataView) : number {
-    debug("Received Beacon Request");
+    cLogger.debug("Received Beacon Request");
     return 31;
 }
 
 function parseUnknownCommand(view : DataView) : number {
     const id = view.getUint8(0);
-    debug(`received unknown command - id ${id}`);
+    cLogger.debug(`received unknown command - id ${id}`);
     return id;
 }
 function getParserForCommandId(id: Number) : Function {
@@ -432,7 +433,7 @@ function getParserForCommandId(id: Number) : Function {
 
 async function processFrame(frame: Uint8Array) : Promise<void> {
     const [seqNumber, status, command, commandId] = await parseFrame(frame);
-    //debug(`process frame with seq: ${seqNumber} status: ${status}`);
+    //cLogger.debug(`process frame with seq: ${seqNumber} status: ${status}`);
 
     let queue = busyQueue;
 
@@ -461,17 +462,17 @@ async function processFrame(frame: Uint8Array) : Promise<void> {
     queue.splice(i, 1);
     if (status !== 0) {
         // reject if status is not SUCCESS
-        //debug("REJECT REQUEST");
+        //cLogger.debug("REJECT REQUEST");
         req.reject({status});
     } else {
-        //debug("RESOLVE REQUEST");
+        //cLogger.debug("RESOLVE REQUEST");
         req.resolve(command);
     }
 }
 
 function parseFrame(frame: Uint8Array) : [number, number, Command, number] {
     if (frame.length < MIN_BUFFER_SIZE) {
-        debug("received frame size to small - discard frame");
+        cLogger.debug("received frame size to small - discard frame");
         return [null, null, null, null];
     }
 

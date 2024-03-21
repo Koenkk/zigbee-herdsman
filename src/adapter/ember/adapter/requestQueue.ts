@@ -1,8 +1,8 @@
 /* istanbul ignore file */
-import Debug from "debug";
+import {logger} from "../../../utils/logger";
 import {EmberStatus, EzspStatus} from "../enums";
 
-const debug = Debug('zigbee-herdsman:adapter:ember:queue');
+const cLogger = logger.child({service: 'zigbee-herdsman:ember:queue'});
 
 interface EmberRequestQueueEntry {
     /**
@@ -51,7 +51,7 @@ export class EmberRequestQueue {
     public stopDispatching(): void {
         clearInterval(this.dispatchHandler);
 
-        debug(`Dispatching stopped; queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}`);
+        cLogger.debug(`Dispatching stopped; queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}`);
     }
 
     /**
@@ -61,7 +61,7 @@ export class EmberRequestQueue {
     public startDispatching(): void {
         this.dispatchHandler = setInterval(this.dispatch.bind(this), this.dispatchInterval);
 
-        debug(`Dispatching started.`);
+        cLogger.debug(`Dispatching started.`);
     }
 
     /**
@@ -77,7 +77,7 @@ export class EmberRequestQueue {
      * @returns new length of the queue.
      */
     public enqueue(func: () => Promise<EmberStatus>, reject: (reason: Error) => void, prioritize: boolean = false): number {
-        debug(`Status queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}.`);
+        cLogger.debug(`Status queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}.`);
         return (prioritize ? this.priorityQueue : this.queue).push({
             sendAttempts: 0,
             func,
@@ -118,10 +118,10 @@ export class EmberRequestQueue {
                 const status: EmberStatus = (await entry.func());
 
                 if ((status === EmberStatus.MAX_MESSAGE_LIMIT_REACHED) || (status === EmberStatus.NETWORK_BUSY)) {
-                    debug(`Dispatching deferred: NCP busy.`);
+                    cLogger.debug(`Dispatching deferred: NCP busy.`);
                     this.defer(NETWORK_BUSY_DEFER_MSEC);
                 } else if (status === EmberStatus.NETWORK_DOWN) {
-                    debug(`Dispatching deferred: Network not ready`);
+                    cLogger.debug(`Dispatching deferred: Network not ready`);
                     this.defer(NETWORK_DOWN_DEFER_MSEC);
                 } else {
                     // success
@@ -133,10 +133,10 @@ export class EmberRequestQueue {
                 }
             } catch (err) {// message is EzspStatus string from ezsp${x} commands, except for stuff rejected by OneWaitress, but that's never "retry"
                 if (err.message === EzspStatus[EzspStatus.NO_TX_SPACE]) {
-                    debug(`Dispatching deferred: Host busy.`);
+                    cLogger.debug(`Dispatching deferred: Host busy.`);
                     this.defer(NETWORK_BUSY_DEFER_MSEC);
                 } else if (err.message === EzspStatus[EzspStatus.NOT_CONNECTED]) {
-                    debug(`Dispatching deferred: Network not ready`);
+                    cLogger.debug(`Dispatching deferred: Network not ready`);
                     this.defer(NETWORK_DOWN_DEFER_MSEC);
                 } else {
                     (fromPriorityQueue ? this.priorityQueue : this.queue).shift();

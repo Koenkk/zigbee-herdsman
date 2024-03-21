@@ -4,6 +4,7 @@ import {ZclDataPayload} from "../../events";
 import {TOUCHLINK_PROFILE_ID} from "../consts";
 import {EmberApsFrame, EmberNodeId} from "../types";
 import {EmberZdoStatus} from "../zdo";
+import {logger} from '../../../utils/logger';
 
 
 /** Events specific to OneWaitress usage. */
@@ -130,7 +131,10 @@ export class EmberOneWaitress {
                 } else if (status === EmberZdoStatus.ZDP_NO_ENTRY) {
                     // XXX: bypassing fail here since Z2M seems to trigger ZDO remove-type commands without checking current state
                     //      Z2M also fails with ZCL payload NOT_FOUND though. This should be removed once upstream fixes that.
-                    console.log(`[ZDO] Received status ZDP_NO_ENTRY for "${sender}" cluster "${apsFrame.clusterId}". Ignoring.`);
+                    logger.info(
+                        `[ZDO] Received status ZDP_NO_ENTRY for "${sender}" cluster "${apsFrame.clusterId}". Ignoring.`,
+                        'zigbee-herdsman:ember:waitress'
+                    );
                     waiter.resolve(payload);
                 } else {
                     waiter.reject(new Error(`[ZDO] Failed response by NCP for "${sender}" cluster "${apsFrame.clusterId}" `
