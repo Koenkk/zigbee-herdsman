@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.40.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.39.1...v0.40.0) (2024-03-21)
+
+
+### Features
+
+* Add `zclCommand`  ([#978](https://github.com/Koenkk/zigbee-herdsman/issues/978)) ([b688219](https://github.com/Koenkk/zigbee-herdsman/commit/b6882196fbf11d7483b05f6276637881f2241903))
+
 ## [0.39.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.39.0...v0.39.1) (2024-03-20)
 
 
