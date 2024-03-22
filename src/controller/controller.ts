@@ -482,7 +482,7 @@ class Controller extends events.EventEmitter {
     }
 
     private onDeviceLeave(payload: AdapterEvents.DeviceLeavePayload): void {
-        cLogger.info(`Device leave '${payload.ieeeAddr}'`);
+        cLogger.debug(`Device leave '${payload.ieeeAddr}'`);
 
         const device = payload.ieeeAddr ? Device.byIeeeAddr(payload.ieeeAddr) : Device.byNetworkAddress(payload.networkAddress);
         if (!device) {
@@ -498,7 +498,7 @@ class Controller extends events.EventEmitter {
     }
 
     private async onAdapterDisconnected(): Promise<void> {
-        cLogger.warning(`Adapter disconnected`);
+        cLogger.debug(`Adapter disconnected`);
 
         await catcho(() => this.adapter.stop(), 'Failed to stop adapter on disconnect');
 
@@ -506,7 +506,7 @@ class Controller extends events.EventEmitter {
     }
 
     private async onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): Promise<void> {
-        cLogger.info(`Green power device '${JSON.stringify(payload)}' joined`);
+        cLogger.debug(`Green power device '${JSON.stringify(payload)}' joined`);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
         let ieeeAddr = payload.sourceID.toString(16);
@@ -547,7 +547,7 @@ class Controller extends events.EventEmitter {
     }
 
     private async onDeviceJoined(payload: AdapterEvents.DeviceJoinedPayload): Promise<void> {
-        cLogger.info(`Device '${payload.ieeeAddr}' joined`);
+        cLogger.debug(`Device '${payload.ieeeAddr}' joined`);
 
         if (this.options.acceptJoiningDeviceHandler) {
             if (!(await this.options.acceptJoiningDeviceHandler(payload.ieeeAddr))) {

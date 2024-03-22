@@ -46,7 +46,7 @@ class GreenPower extends events.EventEmitter {
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private async sendPairingCommand(payload: any, dataPayload: AdapterEvents.ZclDataPayload): Promise<any> {
-        cLogger.info("Payload.Options: " + payload.options + " wasBroadcast: " + dataPayload.wasBroadcast);
+        cLogger.debug(`Payload.Options: ${payload.options} wasBroadcast: ${dataPayload.wasBroadcast}`);
         
         // Set sink address based on communication mode
         switch ((payload.options >> 5) & 3) {
@@ -63,7 +63,7 @@ class GreenPower extends events.EventEmitter {
             break;
         /* istanbul ignore next */
         default:
-            cLogger.error("Unhandled applicationID: " + (payload.options & 7));
+            cLogger.error(`Unhandled applicationID: ${(payload.options & 7)}`);
             return;
         }
 
@@ -80,8 +80,7 @@ class GreenPower extends events.EventEmitter {
         if (dataPayload.wasBroadcast) {
             return this.adapter.sendZclFrameToAll(242, frame, 242);
         } else {
-            return this.adapter.sendZclFrameToEndpoint(null,
-                dataPayload.frame.Payload.gppNwkAddr, 242, frame, 10000, false, false, 242);
+            return this.adapter.sendZclFrameToEndpoint(null, dataPayload.frame.Payload.gppNwkAddr, 242, frame, 10000, false, false, 242);
         }
     }
 
@@ -92,28 +91,28 @@ class GreenPower extends events.EventEmitter {
             switch(dataPayload.frame.Payload.commandID) {
             /* istanbul ignore next */
             case undefined:
-                cLogger.error("GP Undefined Command");
+                cLogger.error(`Received undefined command from '${dataPayload.address}'`);
                 break;
             case 0xE0: // GP Commissioning
-                cLogger.info("GP Commissioning");
-    
+                cLogger.info(`Received commissioning from '${dataPayload.address}'`);
+
                 /* istanbul ignore if */
                 if (typeof dataPayload.address !== 'number') {
-                    cLogger.warning("Commissioning request with string type address unsupported");
+                    cLogger.error(`Commissioning request with string type address unsupported for '${dataPayload.address}'`);
                     break;
                 }
-    
+
                 const rxOnCap = dataPayload.frame.Payload.commandFrame.options & 0b10;
-    
+
                 const key = this.encryptSecurityKey(
                     dataPayload.frame.Payload.srcID, dataPayload.frame.Payload.commandFrame.securityKey
                 );
-    
+
                 // RX capable GPD needs GP Commissioning Reply
                 if (rxOnCap) {
                     cLogger.debug("RxOnCap set -> supports bidirectional communication");
                     // NOTE: currently encryption is disabled for RX capable GPDs
-    
+
                     const networkParameters = await this.adapter.getNetworkParameters();
                     // Commissioning reply
                     payload = {
@@ -129,19 +128,19 @@ class GreenPower extends events.EventEmitter {
                             // keyMic: dataPayload.frame.Payload.commandFrame.keyMic,
                         }
                     };
-    
+
                     const frame = Zcl.ZclFrame.create(
                         Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
                         null, ZclTransactionSequenceNumber.next(), 'response', 33, payload
                     );
                     await this.adapter.sendZclFrameToAll(242, frame, 242);
-    
+
                     payload = {
                         options: 0b0000000110101000, // Disable encryption
                         srcID: dataPayload.frame.Payload.srcID,
                         deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
                     };
-        
+
                     await this.sendPairingCommand(payload, dataPayload);
                 } else {
                     // Communication mode:
@@ -151,7 +150,7 @@ class GreenPower extends events.EventEmitter {
                     if (dataPayload.wasBroadcast) {
                         opt = 0b1110010101001000;
                     }
-    
+
                     payload = {
                         options: opt,
                         srcID: dataPayload.frame.Payload.srcID,
@@ -160,30 +159,24 @@ class GreenPower extends events.EventEmitter {
     
                         gpdKey: [...key],
                     };
-    
+
                     await this.sendPairingCommand(payload, dataPayload);
                 }
-                
+
                 const eventData: GreenPowerDeviceJoinedPayload = {
                     sourceID: dataPayload.frame.Payload.srcID,
                     deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
                     networkAddress: dataPayload.frame.Payload.srcID & 0xFFFF,
                 };
                 this.emit(GreenPowerEvents.deviceJoined, eventData);
-    
+
                 break;
-            
             /* istanbul ignore next */
             case 0xE2: // GP Success
-                cLogger.info("GP Success");
-                if (typeof dataPayload.address !== 'number') {
-                    cLogger.warning("Commissioning request with string type address unsupported");
-                    break;
-                }
-    
+                cLogger.debug(`Received success from '${dataPayload.address}'`);
                 break;
             case 0xE3: // GP Channel Request
-                cLogger.info("GP Channel Request");
+                cLogger.debug(`Received channel request from '${dataPayload.address}'`);
                 const networkParameters = await this.adapter.getNetworkParameters();
                 // Channel notification
                 payload = {
@@ -198,23 +191,24 @@ class GreenPower extends events.EventEmitter {
                         options: networkParameters.channel - 11,
                     }
                 };
-    
+
                 const frame = Zcl.ZclFrame.create(
                     Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
                     null, ZclTransactionSequenceNumber.next(), 'response', 33, payload
                 );
-    
+
                 await this.adapter.sendZclFrameToAll(242, frame, 242);
                 break;
             /* istanbul ignore next */
             case 0xA1: // GP Manufacturer-specific Attribute Reporting
                 break;
             default:
-                cLogger.info(`Unhandled Zigbee GreenPower command: 0x${dataPayload.frame.Payload.commandID.toString(16)}`);
+                // NOTE: this is spammy because it logs everything that is handed back to Controller without special processing here
+                cLogger.debug(`Received unhandled command '0x${dataPayload.frame.Payload.commandID.toString(16)}' from '${dataPayload.address}'`);
             }
         } catch (error) {
             /* istanbul ignore next */
-            cLogger.error(`onZclGreenPowerData failed with error '${error}'`);
+            cLogger.error(error);
         }
     }
 
