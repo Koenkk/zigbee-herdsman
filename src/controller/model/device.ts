@@ -300,7 +300,7 @@ class Device extends Entity {
                 }
             } catch (error) {
                 /* istanbul ignore next */
-                cLogger.error(`Handling of poll check-in form ${this.ieeeAddr} failed`);
+                cLogger.error(`Handling of poll check-in from ${this.ieeeAddr} failed`);
             }
         }
 

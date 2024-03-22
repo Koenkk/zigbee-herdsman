@@ -33,7 +33,7 @@ class Touchlink {
 
         try {
             for (const channel of scanChannels) {
-                cLogger.debug(`Set InterPAN channel to '${channel}'`);
+                cLogger.info(`Set InterPAN channel to '${channel}'`);
                 await this.adapter.setChannelInterPAN(channel);
 
                 try {
@@ -45,11 +45,11 @@ class Touchlink {
                     AssertString(response.address);
                     result.push({ieeeAddr: response.address, channel});
                 } catch (error) {
-                    cLogger.debug(`Scan request failed or was not answered: '${error}'`);
+                    cLogger.warning(`Scan request failed or was not answered: '${error}'`);
                 }
             }
         } finally {
-            cLogger.debug(`Restore InterPAN channel`);
+            cLogger.info(`Restore InterPAN channel`);
             await this.adapter.restoreChannelInterPAN();
             this.lock(false);
         }
@@ -63,7 +63,7 @@ class Touchlink {
         try {
             const transaction = this.transactionNumber();
 
-            cLogger.debug(`Set InterPAN channel to '${channel}'`);
+            cLogger.info(`Set InterPAN channel to '${channel}'`);
             await this.adapter.setChannelInterPAN(channel);
 
             await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(transaction), 500);
@@ -72,7 +72,7 @@ class Touchlink {
             cLogger.debug(`Identifying '${ieeeAddr}'`);
             await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(transaction), ieeeAddr);
         } finally {
-            cLogger.debug(`Restore InterPAN channel`);
+            cLogger.info(`Restore InterPAN channel`);
             await this.adapter.restoreChannelInterPAN();
             this.lock(false);
         }
@@ -83,7 +83,7 @@ class Touchlink {
         try {
             const transaction = this.transactionNumber();
 
-            cLogger.debug(`Set InterPAN channel to '${channel}'`);
+            cLogger.info(`Set InterPAN channel to '${channel}'`);
             await this.adapter.setChannelInterPAN(channel);
 
             await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(transaction), 500);
@@ -98,7 +98,7 @@ class Touchlink {
                 this.createResetFactoryNewRequestFrame(transaction), ieeeAddr
             );
         } finally {
-            cLogger.debug(`Restore InterPAN channel`);
+            cLogger.info(`Restore InterPAN channel`);
             await this.adapter.restoreChannelInterPAN();
             this.lock(false);
         }
@@ -112,7 +112,7 @@ class Touchlink {
 
         try {
             for (const channel of scanChannels) {
-                cLogger.debug(`Set InterPAN channel to '${channel}'`);
+                cLogger.info(`Set InterPAN channel to '${channel}'`);
                 await this.adapter.setChannelInterPAN(channel);
 
                 try {
@@ -138,13 +138,13 @@ class Touchlink {
                     );
                     done = true;
                 } catch (error) {
-                    cLogger.debug(`Scan request failed or was not answered: '${error}'`);
+                    cLogger.warning(`Scan request failed or was not answered: '${error}'`);
                 }
 
                 if (done) break;
             }
         } finally {
-            cLogger.debug(`Restore InterPAN channel`);
+            cLogger.info(`Restore InterPAN channel`);
             await this.adapter.restoreChannelInterPAN();
             this.lock(false);
         }

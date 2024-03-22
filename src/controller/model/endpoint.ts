@@ -285,24 +285,24 @@ class Endpoint extends Entity {
             || !this.getDevice().pendingRequestTimeout) {
             if (this.getDevice().pendingRequestTimeout > 0)
             {
-                cLogger.info(logPrefix + `send ${frame.getCommand().name} request immediately ` +
+                cLogger.debug(logPrefix + `send ${frame.getCommand().name} request immediately ` +
                     `(sendPolicy=${options.sendPolicy})`);
             }
             return request.send();
         }
         // If this is a bulk message, we queue directly.
         if (request.sendPolicy === 'bulk') {
-            cLogger.info(logPrefix + `queue request (${this.pendingRequests.size})))`);
+            cLogger.debug(logPrefix + `queue request (${this.pendingRequests.size})))`);
             return this.pendingRequests.queue(request);
         }
 
         try {
-            cLogger.info(logPrefix + `send request`);
+            cLogger.debug(logPrefix + `send request`);
             return await request.send();
         } catch(error) {
             // If we got a failed transaction, the device is likely sleeping.
             // Queue for transmission later.
-            cLogger.info(logPrefix + `queue request (transaction failed)`);
+            cLogger.debug(logPrefix + `queue request (transaction failed)`);
             return this.pendingRequests.queue(request);
         }
     }
@@ -471,7 +471,7 @@ class Endpoint extends Entity {
             this.addBinding(clusterKey, target);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.error(error.message);
+            cLogger.error(error);
             throw error;
         }
     }
@@ -508,7 +508,7 @@ class Endpoint extends Entity {
             }
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.error(error.message);
+            cLogger.error(error);
             throw error;
         }
     }
@@ -608,7 +608,7 @@ class Endpoint extends Entity {
 
         const log = `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
-        cLogger.info(log);
+        cLogger.debug(log);
 
         try {
             await this.sendRequest(frame, options, async (f) => {
@@ -624,7 +624,7 @@ class Endpoint extends Entity {
             });
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.error(error.message);
+            cLogger.error(error);
             throw error;
         }
     }
@@ -751,7 +751,7 @@ class Endpoint extends Entity {
 
         const log = `ZCL command ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify((logPayload) ? logPayload : payload)}, ${JSON.stringify(options)})`;
-        debug.info(log);
+        cLogger.debug(log);
 
         try {
             const result = await this.sendRequest(frame, options);
@@ -761,7 +761,7 @@ class Endpoint extends Entity {
             return result;
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            debug.error(error.message);
+            cLogger.error(error);
             throw error;
         }
     }

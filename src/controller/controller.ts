@@ -106,8 +106,7 @@ class Controller extends events.EventEmitter {
         }
 
         if (this.options.network.panID >= 0xFFFF || this.options.network.panID <= 0) {
-            throw new Error(`PanID must have a value of 0x0001 (1) - 0xFFFE (65534), ` +
-                `got ${this.options.network.panID}.`);
+            throw new Error(`PanID must have a value of 0x0001 (1) - 0xFFFE (65534), got ${this.options.network.panID}.`);
         }
     }
 
@@ -337,7 +336,7 @@ class Controller extends events.EventEmitter {
             const tmpBackupPath = this.options.backupPath + '.tmp';
             fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
             fs.renameSync(tmpBackupPath, this.options.backupPath);
-            cLogger.debug(`Wrote coordinator backup to '${this.options.backupPath}'`);
+            cLogger.info(`Wrote coordinator backup to '${this.options.backupPath}'`);
         }
     }
 
@@ -423,7 +422,7 @@ class Controller extends events.EventEmitter {
      * Broadcast a network-wide channel change.
      */
     private async changeChannel(): Promise<void> {
-        cLogger.debug(`Broadcasting change channel to '${this.options.network.channelList[0]}'.`);
+        cLogger.info(`Broadcasting change channel to '${this.options.network.channelList[0]}'.`);
         await this.adapter.changeChannel(this.options.network.channelList[0]);
 
         this.networkParametersCached = null;// invalidate cache
@@ -483,7 +482,7 @@ class Controller extends events.EventEmitter {
     }
 
     private onDeviceLeave(payload: AdapterEvents.DeviceLeavePayload): void {
-        cLogger.debug(`Device leave '${payload.ieeeAddr}'`);
+        cLogger.info(`Device leave '${payload.ieeeAddr}'`);
 
         const device = payload.ieeeAddr ? Device.byIeeeAddr(payload.ieeeAddr) : Device.byNetworkAddress(payload.networkAddress);
         if (!device) {
@@ -499,7 +498,7 @@ class Controller extends events.EventEmitter {
     }
 
     private async onAdapterDisconnected(): Promise<void> {
-        cLogger.debug(`Adapter disconnected'`);
+        cLogger.warning(`Adapter disconnected`);
 
         await catcho(() => this.adapter.stop(), 'Failed to stop adapter on disconnect');
 
@@ -507,7 +506,7 @@ class Controller extends events.EventEmitter {
     }
 
     private async onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): Promise<void> {
-        cLogger.debug(`Green power device '${JSON.stringify(payload)}' joined`);
+        cLogger.info(`Green power device '${JSON.stringify(payload)}' joined`);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
         let ieeeAddr = payload.sourceID.toString(16);
@@ -531,7 +530,7 @@ class Controller extends events.EventEmitter {
             const deviceInterviewPayload: Events.DeviceInterviewPayload = {status: 'successful', device};
             this.selfAndDeviceEmit(device, Events.Events.deviceInterview, deviceInterviewPayload);
         } else if (device.isDeleted) {
-            cLogger.debug(`Deleted green power device '${ieeeAddr}' joined`);
+            cLogger.debug(`Deleted green power device '${ieeeAddr}' joined, undeleting`);
 
             device.undelete(true);
 
@@ -548,7 +547,7 @@ class Controller extends events.EventEmitter {
     }
 
     private async onDeviceJoined(payload: AdapterEvents.DeviceJoinedPayload): Promise<void> {
-        cLogger.debug(`Device '${payload.ieeeAddr}' joined`);
+        cLogger.info(`Device '${payload.ieeeAddr}' joined`);
 
         if (this.options.acceptJoiningDeviceHandler) {
             if (!(await this.options.acceptJoiningDeviceHandler(payload.ieeeAddr))) {
@@ -571,7 +570,7 @@ class Controller extends events.EventEmitter {
             );
             this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
         } else if (device.isDeleted) {
-            cLogger.debug(`Delete device '${payload.ieeeAddr}' joined, undeleting`);
+            cLogger.debug(`Deleted device '${payload.ieeeAddr}' joined, undeleting`);
             device.undelete();
             this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
         }
@@ -592,12 +591,12 @@ class Controller extends events.EventEmitter {
 
         if (!device.interviewCompleted && !device.interviewing) {
             const payloadStart: Events.DeviceInterviewPayload = {status: 'started', device};
-            cLogger.debug(`Interview '${device.ieeeAddr}' start`);
+            cLogger.info(`Interview for '${device.ieeeAddr}' started`);
             this.selfAndDeviceEmit(device, Events.Events.deviceInterview, payloadStart);
 
             try {
                 await device.interview();
-                cLogger.debug(`Succesfully interviewed '${device.ieeeAddr}'`);
+                cLogger.info(`Succesfully interviewed '${device.ieeeAddr}'`);
                 const event: Events.DeviceInterviewPayload = {status: 'successful', device};
                 this.selfAndDeviceEmit(device, Events.Events.deviceInterview, event);
             } catch (error) {

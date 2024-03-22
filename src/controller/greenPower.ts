@@ -99,7 +99,7 @@ class GreenPower extends events.EventEmitter {
     
                 /* istanbul ignore if */
                 if (typeof dataPayload.address !== 'number') {
-                    cLogger.info("Warning: commissioning request with string type address");
+                    cLogger.warning("Commissioning request with string type address unsupported");
                     break;
                 }
     
@@ -111,7 +111,7 @@ class GreenPower extends events.EventEmitter {
     
                 // RX capable GPD needs GP Commissioning Reply
                 if (rxOnCap) {
-                    cLogger.info("RxOnCap set -> supports bidirectional communication");
+                    cLogger.debug("RxOnCap set -> supports bidirectional communication");
                     // NOTE: currently encryption is disabled for RX capable GPDs
     
                     const networkParameters = await this.adapter.getNetworkParameters();
@@ -177,7 +177,7 @@ class GreenPower extends events.EventEmitter {
             case 0xE2: // GP Success
                 cLogger.info("GP Success");
                 if (typeof dataPayload.address !== 'number') {
-                    cLogger.info("Warning: commissioning request with string type address");
+                    cLogger.warning("Commissioning request with string type address unsupported");
                     break;
                 }
     
