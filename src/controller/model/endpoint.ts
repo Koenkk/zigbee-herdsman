@@ -460,7 +460,7 @@ class Endpoint extends Entity {
 
         const log = `Bind ${this.deviceIeeeAddress}/${this.ID} ${cluster.name} from ` +
             `'${target instanceof Endpoint ? `${destinationAddress}/${target.ID}` : destinationAddress}'`;
-        cLogger.info(log);
+        cLogger.debug(log);
 
         try {
             await Entity.adapter.bind(
@@ -471,7 +471,7 @@ class Endpoint extends Entity {
             this.addBinding(clusterKey, target);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.error(error);
+            cLogger.debug(error);
             throw error;
         }
     }
@@ -489,7 +489,7 @@ class Endpoint extends Entity {
 
         const log = `Unbind ${this.deviceIeeeAddress}/${this.ID} ${cluster.name} from ` +
             `'${target instanceof Endpoint ? `${destinationAddress}/${target.ID}` : destinationAddress}'`;
-        cLogger.info(log);
+        cLogger.debug(log);
 
         try {
             await Entity.adapter.unbind(
@@ -508,7 +508,7 @@ class Endpoint extends Entity {
             }
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.error(error);
+            cLogger.debug(error);
             throw error;
         }
     }
@@ -624,7 +624,7 @@ class Endpoint extends Entity {
             });
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.error(error);
+            cLogger.debug(error);
             throw error;
         }
     }
@@ -761,7 +761,7 @@ class Endpoint extends Entity {
             return result;
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.error(error);
+            cLogger.debug(error);
             throw error;
         }
     }

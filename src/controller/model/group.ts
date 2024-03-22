@@ -170,7 +170,7 @@ class Group extends Entity {
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.error(error);
+            cLogger.debug(error);
             throw error;
         }
     }
@@ -198,7 +198,7 @@ class Group extends Entity {
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.error(error);
+            cLogger.debug(error);
             throw error;
         }
     }
@@ -222,7 +222,7 @@ class Group extends Entity {
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.error(error);
+            cLogger.debug(error);
             throw error;
         }
     }
