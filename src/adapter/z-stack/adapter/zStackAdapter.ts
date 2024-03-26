@@ -793,6 +793,12 @@ class ZStackAdapter extends Adapter {
                 };
 
                 this.emit(Events.Events.networkAddress, payload);
+            } else if (object.command === 'concentratorIndCb') {
+                const payload: Events.NetworkAddressPayload = {
+                    networkAddress: object.payload.srcaddr,
+                    ieeeAddr: object.payload.extaddr,
+                };
+                this.emit(Events.Events.networkAddress, payload);
             } else {
                 /* istanbul ignore else */
                 if (object.command === 'leaveInd') {
