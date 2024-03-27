@@ -2,6 +2,7 @@
 import {Readable, ReadableOptions} from "stream";
 import {logger} from "../../../utils/logger";
 
+const NS = 'zigbee-herdsman:ember:uart:ash:writer';
 
 export class AshWriter extends Readable {
     private bytesToWrite: number[];
@@ -16,7 +17,7 @@ export class AshWriter extends Readable {
         const buffer = Buffer.from(this.bytesToWrite);
         this.bytesToWrite = [];
 
-        logger.debug(`>>>> [FRAME raw=${buffer.toString('hex')}]`, 'zigbee-herdsman:ember:uart:ash:writer');
+        logger.debug(`>>>> [FRAME raw=${buffer.toString('hex')}]`, NS);
 
         // this.push(buffer);
         this.emit('data', buffer);

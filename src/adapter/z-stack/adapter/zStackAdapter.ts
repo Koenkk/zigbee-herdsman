@@ -17,7 +17,7 @@ import * as Models from "../../../models";
 import assert from 'assert';
 import {logger} from '../../../utils/logger';
 
-const cLogger = logger.child({service: "zigbee-herdsman:zstack"});
+const NS = "zigbee-herdsman:zstack";
 const Subsystem = UnpiConstants.Subsystem;
 const Type = UnpiConstants.Type;
 const {ZnpCommandStatus, AddressMode} = Constants.COMMON;
@@ -106,7 +106,7 @@ class ZStackAdapter extends Adapter {
         try {
             this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
         } catch (e) {
-            cLogger.debug(`Failed to get zStack version, assuming 1.2`);
+            logger.debug(`Failed to get zStack version, assuming 1.2`, NS);
             this.version = {"transportrev":2, "product":0, "majorrel":2, "minorrel":0, "maintrel":0, "revision":""};
         }
 
@@ -114,11 +114,11 @@ class ZStackAdapter extends Adapter {
             this.adapterOptions.concurrent :
             (this.version.product === ZnpVersion.zStack3x0 ? 16 : 2);
 
-        cLogger.debug(`Adapter concurrent: ${concurrent}`);
+        logger.debug(`Adapter concurrent: ${concurrent}`, NS);
 
         this.queue = new Queue(concurrent);
 
-        cLogger.debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`);
+        logger.debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`, NS);
         this.adapterManager = new ZnpAdapterManager(
             this.znp,
             {
@@ -253,7 +253,7 @@ class ZStackAdapter extends Adapter {
          * NOTE: There are cases where multiple nwkAddrRsp are recevied with different network addresses,
          * this is currently not handled, the first nwkAddrRsp is taken.
          */
-        cLogger.debug("Request network address of '%s'", ieeeAddr);
+        logger.debug(`Request network address of '${ieeeAddr}'`, NS);
         const response = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'nwkAddrRsp', {ieeeaddr: ieeeAddr});
         await this.znp.request(Subsystem.ZDO, 'nwkAddrReq', {ieeeaddr: ieeeAddr, reqtype: 0, startindex: 0});
         const result = await response.start().promise;
@@ -269,7 +269,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private async discoverRoute(networkAddress: number, wait=true): Promise<void> {
-        cLogger.debug(`Discovering route to ${networkAddress}`);
+        logger.debug(`Discovering route to ${networkAddress}`, NS);
         const payload =  {dstAddr: networkAddress, options: 0, radius: Constants.AF.DEFAULT_RADIUS};
         await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
 
@@ -285,7 +285,7 @@ class ZStackAdapter extends Adapter {
                 const result = await this.nodeDescriptorInternal(networkAddress);
                 return result;
             } catch (error) {
-                cLogger.debug(`Node descriptor request for '${networkAddress}' failed (${error}), retry`);
+                logger.debug(`Node descriptor request for '${networkAddress}' failed (${error}), retry`, NS);
                 // Doing a route discovery after simple descriptor request fails makes it succeed sometimes.
                 // https://github.com/Koenkk/zigbee2mqtt/issues/3276
                 await this.discoverRoute(networkAddress);
@@ -363,8 +363,8 @@ class ZStackAdapter extends Adapter {
         dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
         assocRestore: {ieeeadr: string, nwkaddr: number, noderelation: number}
     ): Promise<Events.ZclDataPayload> {
-        cLogger.debug(`sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} `
-            + `(${responseAttempt},${dataRequestAttempt},${this.queue.count()})`);
+        logger.debug(`sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} `
+            + `(${responseAttempt},${dataRequestAttempt},${this.queue.count()})`, NS);
         let response = null;
         const command = zclFrame.getCommand();
         if (command.hasOwnProperty('response') && disableResponse === false) {
@@ -387,7 +387,7 @@ class ZStackAdapter extends Adapter {
 
         if (dataConfirmResult !== ZnpCommandStatus.SUCCESS) {
             // In case dataConfirm timesout (= null) or gives an error, try to recover
-            cLogger.debug(`Data confirm error (${ieeeAddr}:${networkAddress},${dataConfirmResult},${dataRequestAttempt})`);
+            logger.debug(`Data confirm error (${ieeeAddr}:${networkAddress},${dataConfirmResult},${dataRequestAttempt})`, NS);
             if (response !== null) response.cancel();
 
             /**
@@ -396,7 +396,7 @@ class ZStackAdapter extends Adapter {
              * Re-add the device to the assoc table, otherwise we will never be able to reach it anymore.
              */
             if (assocRemove && assocRestore && this.supportsAssocAdd()) {
-                cLogger.debug('assocAdd(%s)', assocRestore.ieeeadr);
+                logger.debug(`assocAdd(${assocRestore.ieeeadr})`, NS);
                 await this.znp.request(Subsystem.UTIL, 'assocAdd', assocRestore);
                 assocRestore = null;
             }
@@ -460,7 +460,7 @@ class ZStackAdapter extends Adapter {
                      * z-stack-firmware firmware version. In case it's not supported by the coordinator we will
                      * automatically timeout after 60000ms.
                      */
-                    cLogger.debug('assocRemove(%s)', ieeeAddr);
+                    logger.debug(`assocRemove(${ieeeAddr})`, NS);
                     await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
                 } else if (!discoveredRoute && dataRequestAttempt >= 1) {
                     discoveredRoute = true;
@@ -471,14 +471,16 @@ class ZStackAdapter extends Adapter {
                         checkedNetworkAddress = true;
                         const actualNetworkAddress = await this.requestNetworkAddress(ieeeAddr);
                         if (networkAddress !== actualNetworkAddress) {
-                            cLogger.debug(`Failed because request was done with wrong network address`);
+                            logger.debug(`Failed because request was done with wrong network address`, NS);
                             discoveredRoute = true;
                             networkAddress = actualNetworkAddress;
                             await this.discoverRoute(actualNetworkAddress);
-                        } else {cLogger.debug('Network address did not change');}
+                        } else {
+                            logger.debug('Network address did not change', NS);
+                        }
                     } catch {}
                 } else {
-                    cLogger.debug('Wait 2000ms');
+                    logger.debug('Wait 2000ms', NS);
                     await Wait(2000);
                 }
 
@@ -495,7 +497,7 @@ class ZStackAdapter extends Adapter {
                 const result = await response.start().promise;
                 return result;
             } catch (error) {
-                cLogger.debug(`Response timeout (${ieeeAddr}:${networkAddress},${responseAttempt})`);
+                logger.debug(`Response timeout (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
                 if (responseAttempt < 1 && !disableRecovery) {
                     // No response could be because the radio of the end device is turned off:
                     // Sometimes the coordinator does not properly set the PENDING flag.
@@ -503,12 +505,12 @@ class ZStackAdapter extends Adapter {
                     const match =  await this.znp.request(
                         Subsystem.UTIL, 'assocGetWithAddress',{extaddr: ieeeAddr, nwkaddr: networkAddress}
                     );
-                    cLogger.debug(`Response timeout recovery: Node relation ${
-                        match.payload.noderelation} (${ieeeAddr} / ${match.payload.nwkaddr})`);
+                    logger.debug(`Response timeout recovery: Node relation ${
+                        match.payload.noderelation} (${ieeeAddr} / ${match.payload.nwkaddr})`, NS);
                     if (this.supportsAssocAdd() && this.supportsAssocRemove() &&
                         match.payload.nwkaddr !== 0xFFFE && match.payload.noderelation == 1
                     ) {
-                        cLogger.debug(`Response timeout recovery: Rewrite association table entry (${ieeeAddr})`);
+                        logger.debug(`Response timeout recovery: Rewrite association table entry (${ieeeAddr})`, NS);
                         await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
                         await this.znp.request(Subsystem.UTIL, 'assocAdd',
                             {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation}
@@ -793,7 +795,7 @@ class ZStackAdapter extends Adapter {
                 /* istanbul ignore else */
                 if (object.command === 'leaveInd') {
                     if (object.payload.rejoin) {
-                        cLogger.debug(`Device leave: Got leave indication with rejoin=true, nothing to do`);
+                        logger.debug(`Device leave: Got leave indication with rejoin=true, nothing to do`, NS);
                     } else {
                         const payload: Events.DeviceLeavePayload = {
                             networkAddress: object.payload.srcaddr,

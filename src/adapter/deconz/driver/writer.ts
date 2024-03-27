@@ -6,10 +6,12 @@ import Frame from './frame';
 import slip from 'slip';
 import {logger} from '../../../utils/logger';
 
+const NS = 'zigbee-herdsman:deconz:driver:writer';
+
 class Writer extends stream.Readable {
     public writeFrame(frame: Frame): void {
         const buffer = slip.encode(frame.toBuffer());
-        logger.debug(`--> frame [${[...buffer]}]`, 'zigbee-herdsman:deconz:driver:writer');
+        logger.debug(`--> frame [${[...buffer]}]`, NS);
         this.push(buffer);
     }
 

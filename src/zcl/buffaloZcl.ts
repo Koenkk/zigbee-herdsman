@@ -4,6 +4,8 @@ import {DataType} from './definition';
 import {BuffaloZclOptions, StructuredIndicatorType, StructuredSelector, ZclArray} from './tstype';
 import * as Utils from './utils';
 
+const NS = 'zigbee-herdsman:controller:buffalozcl';
+
 interface KeyValue {[s: string | number]: number | string}
 
 const aliases: {[s: string]: string} = {
@@ -409,7 +411,7 @@ class BuffaloZcl extends Buffalo {
                 try {
                     attribute = cluster.getAttribute(attributeID).name;
                 } catch {
-                    logger.info("Unknown attribute " + attributeID + " in cluster " + cluster.name, 'zigbee-herdsman:controller:buffalozcl');
+                    logger.info("Unknown attribute " + attributeID + " in cluster " + cluster.name, NS);
                 }
 
                 frame.attributes[attribute] = this.read(DataType[type], options);

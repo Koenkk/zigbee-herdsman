@@ -8,7 +8,6 @@ const mockLogger = {
     info: jest.fn(),
     warning: jest.fn(),
     error: jest.fn(),
-    child: jest.fn(),
 };
 
 describe('Utils', () => {
@@ -166,30 +165,28 @@ describe('Utils', () => {
         const error = jest.spyOn(console, "error").mockImplementation(() => {});
 
         logger.debug('debug');
-        expect(debug).toHaveBeenCalledWith('debug');
+        expect(debug).toHaveBeenCalledWith('zigbee-herdsman: debug');
+
+        logger.debug('debug', 'mock-ns');
+        expect(debug).toHaveBeenCalledWith('mock-ns: debug');
 
         logger.info('info');
-        expect(info).toHaveBeenCalledWith('info');
+        expect(info).toHaveBeenCalledWith('zigbee-herdsman: info');
+
+        logger.info('info', 'mock-ns');
+        expect(info).toHaveBeenCalledWith('mock-ns: info');
 
         logger.warning('warning');
-        expect(warning).toHaveBeenCalledWith('warning');
+        expect(warning).toHaveBeenCalledWith('zigbee-herdsman: warning');
+
+        logger.warning('warning', 'mock-ns');
+        expect(warning).toHaveBeenCalledWith('mock-ns: warning');
 
         logger.error('error');
-        expect(error).toHaveBeenCalledWith('error');
+        expect(error).toHaveBeenCalledWith('zigbee-herdsman: error');
 
-        const child = logger.child({service: 'test'});
-
-        child.debug('debug');
-        expect(debug).toHaveBeenCalledWith({service: 'test'}, 'debug');
-
-        child.info('info');
-        expect(info).toHaveBeenCalledWith({service: 'test'}, 'info');
-
-        child.warning('warning');
-        expect(warning).toHaveBeenCalledWith({service: 'test'}, 'warning');
-
-        child.error('error');
-        expect(error).toHaveBeenCalledWith({service: 'test'}, 'error');
+        logger.error('error', 'mock-ns');
+        expect(error).toHaveBeenCalledWith('mock-ns: error');
 
         debug.mockReset();
         info.mockReset();
@@ -208,7 +205,5 @@ describe('Utils', () => {
         expect(mockLogger.warning).toHaveBeenCalledWith('warning');
         logger.error('error', 'zh');
         expect(mockLogger.error).toHaveBeenCalledWith('error', 'zh');
-        logger.child({service: 'zh'});
-        expect(mockLogger.child).toHaveBeenCalledWith({service: 'zh'});
     });
 });

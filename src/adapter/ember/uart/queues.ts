@@ -2,6 +2,7 @@
 import {logger} from "../../../utils/logger";
 import {EZSP_MAX_FRAME_LENGTH} from "../ezsp/consts";
 
+const NS = 'zigbee-herdsman:ember:uart:queues';
 
 /**
  * Buffer to hold a DATA frame.
@@ -232,7 +233,7 @@ export class EzspFreeList {
                 buf.data = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
 
                 const e = new Error();
-                logger.error(`Pre-allocated buffer had improper size and had to be re-allocated. ${e.stack}`, 'zigbee-herdsman:ember:uart:queues');
+                logger.error(`Pre-allocated buffer had improper size and had to be re-allocated. ${e.stack}`, NS);
             } else {
                 // (void) memset(buffer->data, 0, EZSP_MAX_FRAME_LENGTH);
                 buf.data.fill(0);

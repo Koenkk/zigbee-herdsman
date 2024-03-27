@@ -3,7 +3,7 @@
 
 import {logger} from "../../../utils/logger";
 
-const cLogger = logger.child({service: 'zigbee-herdsman:zigate:frame'});
+const NS = 'zigbee-herdsman:zigate:frame';
 
 enum ZiGateFrameChunkSize {
     UInt8 = 1,
@@ -80,12 +80,12 @@ export default class ZiGateFrame {
     constructor(frame?: Buffer) {
         if (frame !== undefined) {
             const decodedFrame = decodeFrame(frame);
-            // cLogger.log(`decoded frame >>> %o`, decodedFrame);
+            // logger.debug(`decoded frame >>> %o`, decodedFrame, NS);
             // Due to ZiGate incoming frames with erroneous msg length
             this.msgLengthOffset = -1;
 
             if (!ZiGateFrame.isValid(frame)) {
-                cLogger.error('Provided frame is not a valid ZiGate frame.');
+                logger.error('Provided frame is not a valid ZiGate frame.', NS);
                 return;
             }
 
@@ -93,13 +93,13 @@ export default class ZiGateFrame {
 
             try {
                 if(this.readMsgCode() !== 0x8001)
-                    cLogger.info(`${JSON.stringify(this)}`);
+                    logger.info(`${JSON.stringify(this)}`, NS);
             } catch (e) {
-                cLogger.error(e)
+                logger.error(e, NS);
             }
 
             if (this.readChecksum() !== this.calcChecksum()) {
-                cLogger.error(`Provided frame has an invalid checksum.`);
+                logger.error(`Provided frame has an invalid checksum.`, NS);
                 return;
             }
         }

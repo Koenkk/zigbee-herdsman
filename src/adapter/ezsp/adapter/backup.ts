@@ -13,6 +13,8 @@ import {fs} from "mz";
 import {BackupUtils} from "../../../utils";
 import {logger} from '../../../utils/logger';
 
+const NS = 'zigbee-herdsman:ezsp:backup';
+
 export class EZSPAdapterBackup {
     private driver: Driver;
     private defaultPath: string;
@@ -23,7 +25,7 @@ export class EZSPAdapterBackup {
     }
 
     public async createBackup(): Promise<Models.Backup> {
-        logger.debug("creating backup", 'zigbee-herdsman:ezsp:backup');
+        logger.debug("creating backup", NS);
         const version: number = await this.driver.ezsp.version();
         const linkResult = await this.driver.getKey(EmberKeyType.TRUST_CENTER_LINK_KEY);
         const netParams = await this.driver.ezsp.execCommand('getNetworkParameters');

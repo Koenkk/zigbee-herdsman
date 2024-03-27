@@ -19,7 +19,6 @@ const mockLogger = {
     info: jest.fn(),
     warning: jest.fn(),
     error: jest.fn(),
-    child: jest.fn(),
 };
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 const mockSetTimeout = () => setTimeout = jest.fn().mockImplementation((r) => r());
@@ -1169,6 +1168,14 @@ jest.mock('../../../src/utils/queue', () => {
 Znp.isValidPath = jest.fn().mockReturnValue(true);
 Znp.autoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
 
+
+const mocksClear = [
+    mockLogger.debug,
+    mockLogger.info,
+    mockLogger.warning,
+    mockLogger.error,
+];
+
 describe("zstack-adapter", () => {
     let adapter: ZStackAdapter;
 
@@ -1186,6 +1193,7 @@ describe("zstack-adapter", () => {
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {concurrent: 3});
         mockZnpWaitForDefault();
         mocks.forEach((m) => m.mockRestore());
+        mocksClear.forEach((m) => m.mockClear());
         mockQueueExecute.mockClear();
         mockZnpWaitFor.mockClear();
         dataConfirmCode = 0;
@@ -1611,14 +1619,14 @@ describe("zstack-adapter", () => {
         adapter = new ZStackAdapter(networkOptionsMismatched, serialPortOptions, backupFile, {concurrent: 3});
         mockZnpRequestWith(commissioned3AlignedRequestMock);
         await expect(adapter.start()).rejects.toThrow("startup failed - configuration-adapter mismatch - see logs above for more information");
-        // expect(mockLogger.error.mock.calls[0][0]).toBe("Configuration is not consistent with adapter state/backup!");
-        // expect(mockLogger.error.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
-        // expect(mockLogger.error.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
-        // expect(mockLogger.error.mock.calls[3][0]).toBe("- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d");
-        // expect(mockLogger.error.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
-        // expect(mockLogger.error.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
-        // expect(mockLogger.error.mock.calls[6][0]).toMatch(`If you wish to re\-commission your network, please remove coordinator backup at ${backupFile}`);
-        // expect(mockLogger.error.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
+        expect(mockLogger.error.mock.calls[0][0]).toBe("Configuration is not consistent with adapter state/backup!");
+        expect(mockLogger.error.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
+        expect(mockLogger.error.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
+        expect(mockLogger.error.mock.calls[3][0]).toBe("- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d");
+        expect(mockLogger.error.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
+        expect(mockLogger.error.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
+        expect(mockLogger.error.mock.calls[6][0]).toMatch(`If you wish to re-commission your network, please remove coordinator backup at ${backupFile}`);
+        expect(mockLogger.error.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
     });
 
     it("should start with runInconsistent option with 3.0.x adapter - commissioned, config-adapter mismatch", async () => {
@@ -1629,15 +1637,15 @@ describe("zstack-adapter", () => {
         mockZnpRequestWith(commissioned3AlignedRequestMock);
         const result = await adapter.start();
         expect(result).toBe("resumed");
-        // expect(mockLogger.error.mock.calls[0][0]).toBe("Configuration is not consistent with adapter state/backup!");
-        // expect(mockLogger.error.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
-        // expect(mockLogger.error.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
-        // expect(mockLogger.error.mock.calls[3][0]).toBe("- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d");
-        // expect(mockLogger.error.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
-        // expect(mockLogger.error.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
-        // expect(mockLogger.error.mock.calls[6][0]).toMatch(`If you wish to re\-commission your network, please remove coordinator backup at ${backupFile}`);
-        // expect(mockLogger.error.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
-        // expect(mockLogger.error.mock.calls[8][0]).toBe("Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.");
+        expect(mockLogger.error.mock.calls[0][0]).toBe("Configuration is not consistent with adapter state/backup!");
+        expect(mockLogger.error.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
+        expect(mockLogger.error.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
+        expect(mockLogger.error.mock.calls[3][0]).toBe("- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d");
+        expect(mockLogger.error.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
+        expect(mockLogger.error.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
+        expect(mockLogger.error.mock.calls[6][0]).toMatch(`If you wish to re-commission your network, please remove coordinator backup at ${backupFile}`);
+        expect(mockLogger.error.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
+        expect(mockLogger.error.mock.calls[8][0]).toBe("Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.");
     });
 
     it("should start with 3.0.x adapter - backward-compat - reversed extended pan id", async () => {
@@ -1653,7 +1661,7 @@ describe("zstack-adapter", () => {
         );
         const result = await adapter.start();
         expect(result).toBe("resumed");
-        // expect(mockLogger.warning.mock.calls[0][0]).toBe("Extended PAN ID is reversed (expected=00124b0009d69f77, actual=779fd609004b1200)");
+        expect(mockLogger.warning.mock.calls[0][0]).toBe("Extended PAN ID is reversed (expected=00124b0009d69f77, actual=779fd609004b1200)");
     });
 
     it("should restore unified backup with 3.0.x adapter - commissioned, mismatched adapter-config, matching config-backup", async () => {

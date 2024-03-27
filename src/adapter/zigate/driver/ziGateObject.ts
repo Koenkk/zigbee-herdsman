@@ -11,7 +11,7 @@ type ZiGateCode = ZiGateCommandCode | ZiGateMessageCode;
 type ZiGateParameter = ZiGateCommandParameter | ZiGateMessageParameter;
 
 
-const cLogger = logger.child({service: 'zigbee-herdsman:zigate:object'});
+const NS = 'zigbee-herdsman:zigate:object';
 
 const BufferAndListTypes = [
     'BUFFER', 'BUFFER8', 'BUFFER16',
@@ -111,14 +111,14 @@ class ZiGateObject {
             try {
                 result[parameter.name] = buffalo.read(parameter.parameterType, options);
             } catch (e) {
-                cLogger.error(e.stack);
+                logger.error(e.stack, NS);
             }
         }
 
         if (buffalo.isMore()) {
             let bufferString = buffalo.getBuffer().toString('hex');
-            cLogger.error(`Last bytes of data were not parsed \x1b[32m${bufferString.slice(0, (buffalo.getPosition() * 2)).replace(/../g, "$& ")}`
-                + `\x1b[31m${bufferString.slice(buffalo.getPosition() * 2).replace(/../g, "$& ")}\x1b[0m `);
+            logger.error(`Last bytes of data were not parsed \x1b[32m${bufferString.slice(0, (buffalo.getPosition() * 2)).replace(/../g, "$& ")}`
+                + `\x1b[31m${bufferString.slice(buffalo.getPosition() * 2).replace(/../g, "$& ")}\x1b[0m `, NS);
         }
 
         return result;

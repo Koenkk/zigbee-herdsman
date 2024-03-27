@@ -4,9 +4,11 @@ import * as consts from './consts';
 import {crc16ccitt} from './utils';
 import {logger} from '../../../utils/logger';
 
+const NS = 'zigbee-herdsman:ezsp:uart';
+
 export class Writer extends stream.Readable {
     public writeBuffer(buffer: Buffer): void {
-        logger.debug(`--> [${buffer.toString('hex')}]`, 'zigbee-herdsman:ezsp:uart');
+        logger.debug(`--> [${buffer.toString('hex')}]`, NS);
         this.push(buffer);
     }
 

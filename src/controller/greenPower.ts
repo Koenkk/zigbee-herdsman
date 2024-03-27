@@ -6,7 +6,7 @@ import events from 'events';
 import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import {logger} from '../utils/logger';
 
-const cLogger = logger.child({service: 'zigbee-herdsman:controller:greenpower'});
+const NS = 'zigbee-herdsman:controller:greenpower';
 
 const zigBeeLinkKey = Buffer.from([
     0x5A, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6C, 0x6C, 0x69, 0x61, 0x6E, 0x63, 0x65, 0x30, 0x39
@@ -46,7 +46,7 @@ class GreenPower extends events.EventEmitter {
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private async sendPairingCommand(payload: any, dataPayload: AdapterEvents.ZclDataPayload): Promise<any> {
-        cLogger.debug(`Payload.Options: ${payload.options} wasBroadcast: ${dataPayload.wasBroadcast}`);
+        logger.debug(`Payload.Options: ${payload.options} wasBroadcast: ${dataPayload.wasBroadcast}`, NS);
         
         // Set sink address based on communication mode
         switch ((payload.options >> 5) & 3) {
@@ -63,7 +63,7 @@ class GreenPower extends events.EventEmitter {
             break;
         /* istanbul ignore next */
         default:
-            cLogger.error(`Unhandled applicationID: ${(payload.options & 7)}`);
+            logger.error(`Unhandled applicationID: ${(payload.options & 7)}`, NS);
             return;
         }
 
@@ -91,14 +91,14 @@ class GreenPower extends events.EventEmitter {
             switch(dataPayload.frame.Payload.commandID) {
             /* istanbul ignore next */
             case undefined:
-                cLogger.error(`Received undefined command from '${dataPayload.address}'`);
+                logger.error(`Received undefined command from '${dataPayload.address}'`, NS);
                 break;
             case 0xE0: // GP Commissioning
-                cLogger.info(`Received commissioning from '${dataPayload.address}'`);
+                logger.info(`Received commissioning from '${dataPayload.address}'`, NS);
 
                 /* istanbul ignore if */
                 if (typeof dataPayload.address !== 'number') {
-                    cLogger.error(`Commissioning request with string type address unsupported for '${dataPayload.address}'`);
+                    logger.error(`Commissioning request with string type address unsupported for '${dataPayload.address}'`, NS);
                     break;
                 }
 
@@ -110,7 +110,7 @@ class GreenPower extends events.EventEmitter {
 
                 // RX capable GPD needs GP Commissioning Reply
                 if (rxOnCap) {
-                    cLogger.debug("RxOnCap set -> supports bidirectional communication");
+                    logger.debug("RxOnCap set -> supports bidirectional communication", NS);
                     // NOTE: currently encryption is disabled for RX capable GPDs
 
                     const networkParameters = await this.adapter.getNetworkParameters();
@@ -173,10 +173,10 @@ class GreenPower extends events.EventEmitter {
                 break;
             /* istanbul ignore next */
             case 0xE2: // GP Success
-                cLogger.debug(`Received success from '${dataPayload.address}'`);
+                logger.debug(`Received success from '${dataPayload.address}'`, NS);
                 break;
             case 0xE3: // GP Channel Request
-                cLogger.debug(`Received channel request from '${dataPayload.address}'`);
+                logger.debug(`Received channel request from '${dataPayload.address}'`, NS);
                 const networkParameters = await this.adapter.getNetworkParameters();
                 // Channel notification
                 payload = {
@@ -204,11 +204,11 @@ class GreenPower extends events.EventEmitter {
                 break;
             default:
                 // NOTE: this is spammy because it logs everything that is handed back to Controller without special processing here
-                cLogger.debug(`Received unhandled command '0x${dataPayload.frame.Payload.commandID.toString(16)}' from '${dataPayload.address}'`);
+                logger.debug(`Received unhandled command '0x${dataPayload.frame.Payload.commandID.toString(16)}' from '${dataPayload.address}'`, NS);
             }
         } catch (error) {
             /* istanbul ignore next */
-            cLogger.error(error);
+            logger.error(error, NS);
         }
     }
 

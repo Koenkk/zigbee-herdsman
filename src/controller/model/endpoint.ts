@@ -11,7 +11,7 @@ import Device from './device';
 import assert from 'assert';
 import {logger} from '../../utils/logger';
 
-const cLogger = logger.child({service: 'zigbee-herdsman:controller:endpoint'});
+const NS = 'zigbee-herdsman:controller:endpoint';
 
 export interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
@@ -285,24 +285,23 @@ class Endpoint extends Entity {
             || !this.getDevice().pendingRequestTimeout) {
             if (this.getDevice().pendingRequestTimeout > 0)
             {
-                cLogger.debug(logPrefix + `send ${frame.getCommand().name} request immediately ` +
-                    `(sendPolicy=${options.sendPolicy})`);
+                logger.debug(logPrefix + `send ${frame.getCommand().name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
             }
             return request.send();
         }
         // If this is a bulk message, we queue directly.
         if (request.sendPolicy === 'bulk') {
-            cLogger.debug(logPrefix + `queue request (${this.pendingRequests.size})))`);
+            logger.debug(logPrefix + `queue request (${this.pendingRequests.size})`, NS);
             return this.pendingRequests.queue(request);
         }
 
         try {
-            cLogger.debug(logPrefix + `send request`);
+            logger.debug(logPrefix + `send request`, NS);
             return await request.send();
         } catch(error) {
             // If we got a failed transaction, the device is likely sleeping.
             // Queue for transmission later.
-            cLogger.debug(logPrefix + `queue request (transaction failed)`);
+            logger.debug(logPrefix + `queue request (transaction failed)`, NS);
             return this.pendingRequests.queue(request);
         }
     }
@@ -460,7 +459,7 @@ class Endpoint extends Entity {
 
         const log = `Bind ${this.deviceIeeeAddress}/${this.ID} ${cluster.name} from ` +
             `'${target instanceof Endpoint ? `${destinationAddress}/${target.ID}` : destinationAddress}'`;
-        cLogger.debug(log);
+        logger.debug(log, NS);
 
         try {
             await Entity.adapter.bind(
@@ -471,7 +470,7 @@ class Endpoint extends Entity {
             this.addBinding(clusterKey, target);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.debug(error);
+            logger.debug(error, NS);
             throw error;
         }
     }
@@ -489,7 +488,7 @@ class Endpoint extends Entity {
 
         const log = `Unbind ${this.deviceIeeeAddress}/${this.ID} ${cluster.name} from ` +
             `'${target instanceof Endpoint ? `${destinationAddress}/${target.ID}` : destinationAddress}'`;
-        cLogger.debug(log);
+        logger.debug(log, NS);
 
         try {
             await Entity.adapter.unbind(
@@ -508,7 +507,7 @@ class Endpoint extends Entity {
             }
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.debug(error);
+            logger.debug(error, NS);
             throw error;
         }
     }
@@ -608,7 +607,7 @@ class Endpoint extends Entity {
 
         const log = `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(options)})`;
-        cLogger.debug(log);
+        logger.debug(log, NS);
 
         try {
             await this.sendRequest(frame, options, async (f) => {
@@ -624,7 +623,7 @@ class Endpoint extends Entity {
             });
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.debug(error);
+            logger.debug(error, NS);
             throw error;
         }
     }
@@ -751,7 +750,7 @@ class Endpoint extends Entity {
 
         const log = `ZCL command ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify((logPayload) ? logPayload : payload)}, ${JSON.stringify(options)})`;
-        cLogger.debug(log);
+        logger.debug(log, NS);
 
         try {
             const result = await this.sendRequest(frame, options);
@@ -761,7 +760,7 @@ class Endpoint extends Entity {
             return result;
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            cLogger.debug(error);
+            logger.debug(error, NS);
             throw error;
         }
     }

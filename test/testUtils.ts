@@ -17,19 +17,6 @@ const ieeeaAddr2 = {
     hex: [0x00, 0x12, 0x5b, 0x00, 0x12, 0x01, 0x44, 0xaf],
 };
 
-export const logger = {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warning: jest.fn(),
-    error: jest.fn(),
-    child: () => ({
-        debug: jest.fn(),
-        info: jest.fn(),
-        warning: jest.fn(),
-        error: jest.fn(),
-    }),
-};
-
 export {
     duplicateArray, ieeeaAddr1, ieeeaAddr2,
 }

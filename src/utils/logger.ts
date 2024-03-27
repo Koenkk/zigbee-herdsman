@@ -1,22 +1,15 @@
 export interface Logger {
-    debug: (message: string, service?: string) => void;
-    info: (message: string, service?: string) => void;
-    warning: (message: string, service?: string) => void;
-    error: (message: string | Error, service?: string) => void;
-    child: (options?: object) => Omit<Logger, 'child'>;
+    debug: (message: string, namespace?: string) => void;
+    info: (message: string, namespace?: string) => void;
+    warning: (message: string, namespace?: string) => void;
+    error: (message: string | Error, namespace?: string) => void;
 }
 
 export let logger: Logger = {
-    debug: (message) => console.debug(message),
-    info: (message) => console.info(message),
-    warning: (message) => console.warn(message),
-    error: (message) => console.error(message),
-    child: (options) => ({
-        debug: (message) => console.debug(options, message),
-        info: (message) => console.info(options, message),
-        warning: (message) => console.warn(options, message),
-        error: (message) => console.error(options, message),
-    }),
+    debug: (message, namespace = 'zigbee-herdsman') => console.debug(`${namespace}: ${message}`),
+    info: (message, namespace = 'zigbee-herdsman') => console.info(`${namespace}: ${message}`),
+    warning: (message, namespace = 'zigbee-herdsman') => console.warn(`${namespace}: ${message}`),
+    error: (message, namespace = 'zigbee-herdsman') => console.error(`${namespace}: ${message}`),
 };
 
 export function setLogger(l: Logger): void {

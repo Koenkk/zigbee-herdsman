@@ -29,7 +29,7 @@ import {SerialPortOptions} from '../../tstype';
 import {logger} from '../../../utils/logger';
 
 
-const cLogger = logger.child({service: 'zigbee-herdsman:ezsp:ezsp'});
+const NS = 'zigbee-herdsman:ezsp:ezsp';
 
 
 const MAX_SERIAL_CONNECT_ATTEMPTS = 4;
@@ -153,7 +153,7 @@ export class EZSPFrameData {
             try {
                 frm = new EZSPFrameData(frameName, isRequest, params);
             } catch (error) {
-                cLogger.error(`Frame ${frameName} parsing error: ${error.stack}`);
+                logger.error(`Frame ${frameName} parsing error: ${error.stack}`, NS);
                 return true;
             }
             return false;
@@ -353,11 +353,11 @@ export class Ezsp extends EventEmitter {
                 await this.serialDriver.connect(options);
                 break;
             } catch (error) {
-                cLogger.error(`Connection attempt ${i} error: ${error.stack}`);
+                logger.error(`Connection attempt ${i} error: ${error.stack}`, NS);
 
                 if (i < MAX_SERIAL_CONNECT_ATTEMPTS) {
                     await Wait(SERIAL_CONNECT_NEW_ATTEMPT_MIN_DELAY * i);
-                    cLogger.info(`Next attempt ${i+1}`);
+                    logger.info(`Next attempt ${i+1}`, NS);
                 }
 
                 lastError = error;
@@ -387,20 +387,20 @@ export class Ezsp extends EventEmitter {
     }
     
     private onSerialReset(): void {
-        cLogger.info('onSerialReset()');
+        logger.info('onSerialReset()', NS);
         this.inResetingProcess = true;
         this.emit('reset');
     }
 
     private onSerialClose(): void {
-        cLogger.info('onSerialClose()');
+        logger.info('onSerialClose()', NS);
         if (!this.inResetingProcess) {
             this.emit('close');
         }
     }
 
     public async close(emitClose: boolean): Promise<void> {
-        cLogger.info('Closing Ezsp');
+        logger.info('Closing Ezsp', NS);
 
         clearTimeout(this.watchdogTimer);
         this.queue.clear();
@@ -416,7 +416,7 @@ export class Ezsp extends EventEmitter {
      * @param data 
      */
     private onFrameReceived(data: Buffer): void {
-        cLogger.info(`<== Frame: ${data.toString('hex')}`);
+        logger.info(`<== Frame: ${data.toString('hex')}`, NS);
 
         let frameId: number;
         const sequence = data[0];
@@ -439,11 +439,11 @@ export class Ezsp extends EventEmitter {
         const frm = EZSPFrameData.createFrame(this.ezspV, frameId, false, data);
         
         if (!frm) {
-            cLogger.error(`Unparsed frame 0x${frameId.toString(16)}. Skipped`);
+            logger.error(`Unparsed frame 0x${frameId.toString(16)}. Skipped`, NS);
             return;
         }
         
-        cLogger.info(`<== 0x${frameId.toString(16)}: ${JSON.stringify(frm)}`);
+        logger.info(`<== 0x${frameId.toString(16)}: ${JSON.stringify(frm)}`, NS);
         
         const handled = this.waitress.resolve({
             frameId,
@@ -466,7 +466,7 @@ export class Ezsp extends EventEmitter {
         const result = await this.execCommand("version", {desiredProtocolVersion: version});
  
         if ((result.protocolVersion !== version)) {
-            cLogger.info("Switching to eszp version %d", result.protocolVersion);
+            logger.info(`Switching to eszp version ${result.protocolVersion}`, NS);
  
             await this.execCommand("version", {desiredProtocolVersion: result.protocolVersion});
         }
@@ -478,11 +478,11 @@ export class Ezsp extends EventEmitter {
         const waiter = this.waitFor("stackStatusHandler", null);
         const result = await this.execCommand("networkInit");
 
-        cLogger.info('network init result: ', JSON.stringify(result));
+        logger.info(`Network init result: ${JSON.stringify(result)}`, NS);
 
         if ((result.status !== EmberStatus.SUCCESS)) {
             this.waitress.remove(waiter.ID);
-            cLogger.info("Failure to init network");
+            logger.info("Failure to init network", NS);
             return false;
         }
 
@@ -495,19 +495,20 @@ export class Ezsp extends EventEmitter {
         const waiter = this.waitFor("stackStatusHandler", null);
         const result = await this.execCommand("leaveNetwork");
 
-        cLogger.info('network init result', JSON.stringify(result));
+        logger.info(`Network init result: ${JSON.stringify(result)}`, NS);
 
         if ((result.status !== EmberStatus.SUCCESS)) {
             this.waitress.remove(waiter.ID);
-            cLogger.info("Failure to leave network");
+            logger.info("Failure to leave network", NS);
             throw new Error(("Failure to leave network: " + JSON.stringify(result)));
         }
 
         const response = await waiter.start().promise;
 
         if ((response.payload.status !== EmberStatus.NETWORK_DOWN)) {
-            cLogger.info("Wrong network status: " + JSON.stringify(response.payload));
-            throw new Error(("Wrong network status: " + JSON.stringify(response.payload)));
+            const msg = `Wrong network status: ${JSON.stringify(response.payload)}`;
+            logger.info(msg, NS);
+            throw new Error(msg);
         }
 
         return response.payload.status;
@@ -515,25 +516,25 @@ export class Ezsp extends EventEmitter {
 
     async setConfigurationValue(configId: number, value: number): Promise<void> {
         const configName = EzspConfigId.valueToName(EzspConfigId, configId);
-        cLogger.info(`Set ${configName} = ${value}`);
+        logger.info(`Set ${configName} = ${value}`, NS);
         const ret = await this.execCommand('setConfigurationValue', {configId: configId, value: value});
         
         if (ret.status !== EmberStatus.SUCCESS) {
-            cLogger.error(`Command (setConfigurationValue(${configName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`);
+            logger.error(`Command (setConfigurationValue(${configName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`, NS);
         }
 
     }
 
     async getConfigurationValue(configId: number): Promise<number> {
         const configName = EzspConfigId.valueToName(EzspConfigId, configId);
-        cLogger.info(`Get ${configName}`);
+        logger.info(`Get ${configName}`, NS);
         const ret = await this.execCommand('getConfigurationValue', {configId: configId});
         
         if (ret.status !== EmberStatus.SUCCESS) {
-            cLogger.error(`Command (getConfigurationValue(${configName})) returned unexpected state: ${JSON.stringify(ret)}`);
+            logger.error(`Command (getConfigurationValue(${configName})) returned unexpected state: ${JSON.stringify(ret)}`, NS);
         }
 
-        cLogger.info(`Got ${configName} = ${ret.value}`);
+        logger.info(`Got ${configName} = ${ret.value}`, NS);
         return ret.value;
     }
 
@@ -546,7 +547,7 @@ export class Ezsp extends EventEmitter {
         const ret = await this.execCommand('setMulticastTableEntry', {index: index, value: entry});
         
         if (ret.status !== EmberStatus.SUCCESS) {
-            cLogger.error(`Command (setMulticastTableEntry) returned unexpected state: ${JSON.stringify(ret)}`);
+            logger.error(`Command (setMulticastTableEntry) returned unexpected state: ${JSON.stringify(ret)}`, NS);
         }
 
         return ret.status;
@@ -556,7 +557,7 @@ export class Ezsp extends EventEmitter {
         const ret = await this.execCommand('setInitialSecurityState', {state: entry});
         
         if (ret.success !== EmberStatus.SUCCESS) {
-            cLogger.error(`Command (setInitialSecurityState) returned unexpected state: ${JSON.stringify(ret)}`);
+            logger.error(`Command (setInitialSecurityState) returned unexpected state: ${JSON.stringify(ret)}`, NS);
         }
 
         return ret.success;
@@ -566,7 +567,7 @@ export class Ezsp extends EventEmitter {
         const ret = await this.execCommand('getCurrentSecurityState');
         
         if (ret.status !== EmberStatus.SUCCESS) {
-            cLogger.error(`Command (getCurrentSecurityState) returned unexpected state: ${JSON.stringify(ret)}`);
+            logger.error(`Command (getCurrentSecurityState) returned unexpected state: ${JSON.stringify(ret)}`, NS);
         }
 
         return ret;
@@ -574,11 +575,11 @@ export class Ezsp extends EventEmitter {
 
     async setValue(valueId: t.EzspValueId, value: number): Promise<EZSPFrameData> {
         const valueName = t.EzspValueId.valueToName(t.EzspValueId, valueId);
-        cLogger.info(`Set ${valueName} = ${value}`);
+        logger.info(`Set ${valueName} = ${value}`, NS);
         const ret = await this.execCommand('setValue', {valueId, value});
         
         if (ret.status !== EmberStatus.SUCCESS) {
-            cLogger.error(`Command (setValue(${valueName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`);
+            logger.error(`Command (setValue(${valueName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`, NS);
         }
 
 
@@ -587,24 +588,24 @@ export class Ezsp extends EventEmitter {
 
     async getValue(valueId: t.EzspValueId): Promise<Buffer> {
         const valueName = t.EzspValueId.valueToName(t.EzspValueId, valueId);
-        cLogger.info(`Get ${valueName}`);
+        logger.info(`Get ${valueName}`, NS);
         const ret = await this.execCommand('getValue', {valueId});
         
         if (ret.status !== EmberStatus.SUCCESS) {
-            cLogger.error(`Command (getValue(${valueName})) returned unexpected state: ${JSON.stringify(ret)}`);
+            logger.error(`Command (getValue(${valueName})) returned unexpected state: ${JSON.stringify(ret)}`, NS);
         }
 
-        cLogger.info(`Got ${valueName} = ${ret.value}`);
+        logger.info(`Got ${valueName} = ${ret.value}`, NS);
         return ret.value;
     }
 
     async setPolicy(policyId: EzspPolicyId, value: number): Promise<EZSPFrameData> {
         const policyName = EzspPolicyId.valueToName(EzspPolicyId, policyId);
-        cLogger.info(`Set ${policyName} = ${value}`);
+        logger.info(`Set ${policyName} = ${value}`, NS);
         const ret = await this.execCommand('setPolicy', {policyId: policyId, decisionId: value});
         
         if (ret.status !== EmberStatus.SUCCESS) {
-            cLogger.error(`Command (setPolicy(${policyName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`);
+            logger.error(`Command (setPolicy(${policyName}, ${value})) returned unexpected state: ${JSON.stringify(ret)}`, NS);
         }
 
         return ret;
@@ -617,7 +618,7 @@ export class Ezsp extends EventEmitter {
             try {
                 await this.setConfigurationValue(confName, value);
             } catch (error) {
-                cLogger.error(`setConfigurationValue(${confName}, ${value}) error: ${error} ${error.stack}`);
+                logger.error(`setConfigurationValue(${confName}, ${value}) error: ${error} ${error.stack}`, NS);
             }
         }
     }
@@ -630,7 +631,7 @@ export class Ezsp extends EventEmitter {
             try {
                 await this.setPolicy(policy, value);
             } catch (error) {
-                cLogger.error(`setPolicy(${policy}, ${value}) error: ${error} ${error.stack}`);
+                logger.error(`setPolicy(${policy}, ${value}) error: ${error} ${error.stack}`, NS);
             }
         }
     }
@@ -643,7 +644,7 @@ export class Ezsp extends EventEmitter {
     private makeFrame(name: string, params: ParamsDesc, seq: number): Buffer {
         const frmData = new EZSPFrameData(name, true, params);
 
-        cLogger.info(`==> ${JSON.stringify(frmData)}`);
+        logger.info(`==> ${JSON.stringify(frmData)}`, NS);
 
         const frame = [(seq & 255)];
 
@@ -663,7 +664,7 @@ export class Ezsp extends EventEmitter {
     }
 
     public async execCommand(name: string, params: ParamsDesc = null): Promise<EZSPFrameData> {
-        cLogger.info(`==> ${name}: ${JSON.stringify(params)}`);
+        logger.info(`==> ${name}: ${JSON.stringify(params)}`, NS);
 
         if (!this.serialDriver.isInitialized()) {
             throw new Error('Connection not initialized');
@@ -694,7 +695,7 @@ export class Ezsp extends EventEmitter {
         if ((v.status !== EmberStatus.SUCCESS)) {
             this.waitress.remove(waiter.ID);
 
-            cLogger.error("Failure forming network: " + JSON.stringify(v));
+            logger.error("Failure forming network: " + JSON.stringify(v), NS);
 
             throw new Error(("Failure forming network: " + JSON.stringify(v)));
         }
@@ -702,7 +703,7 @@ export class Ezsp extends EventEmitter {
         const response = await waiter.start().promise;
 
         if ((response.payload.status !== EmberStatus.NETWORK_UP)) {
-            cLogger.error("Wrong network status: " + JSON.stringify(response.payload));
+            logger.error("Wrong network status: " + JSON.stringify(response.payload), NS);
 
             throw new Error(("Wrong network status: " + JSON.stringify(response.payload)));
         }
@@ -742,10 +743,10 @@ export class Ezsp extends EventEmitter {
             maxHops: 0,
         });
 
-        cLogger.info("Set concentrator type: %s", JSON.stringify(res));
+        logger.info(`Set concentrator type: ${JSON.stringify(res)}`, NS);
 
         if (res.status != EmberStatus.SUCCESS) {
-            cLogger.info(`Couldn't set concentrator ${JSON.stringify(res)}`);
+            logger.info(`Couldn't set concentrator ${JSON.stringify(res)}`, NS);
         }
 
         if (this.ezspV >= 8) {
@@ -783,17 +784,17 @@ export class Ezsp extends EventEmitter {
     }
 
     private async watchdogHandler(): Promise<void> {
-        cLogger.info(`Time to watchdog ... ${this.failures}`);
+        logger.info(`Time to watchdog ... ${this.failures}`, NS);
 
         if (this.inResetingProcess) {
-            cLogger.info('The reset process is in progress...');
+            logger.info('The reset process is in progress...', NS);
             return;
         }
 
         try {
             await this.execCommand('nop');
         } catch (error) {
-            cLogger.error(`Watchdog heartbeat timeout ${error.stack}`);
+            logger.error(`Watchdog heartbeat timeout ${error.stack}`, NS);
 
             if (!this.inResetingProcess) {
                 this.failures += 1;

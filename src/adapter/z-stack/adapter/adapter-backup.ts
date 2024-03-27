@@ -12,7 +12,7 @@ import {ZnpVersion} from "./tstype";
 import {AddressManagerUser, SecurityManagerAuthenticationOption} from "../structs";
 import {logger} from "../../../utils/logger";
 
-const cLogger = logger.child({service: 'zigbee-herdsman:zstack:backup'});
+const NS = 'zigbee-herdsman:zstack:backup';
 
 /**
  * Class providing ZNP adapter backup and restore procedures based mostly on NV memory manipulation.
@@ -60,7 +60,7 @@ export class AdapterBackup {
      * Creates a new backup from connected ZNP adapter and returns it in internal backup model format.
      */
     public async createBackup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup> {
-        cLogger.debug("creating backup");
+        logger.debug("creating backup", NS);
         const version: ZnpVersion = await this.getAdapterVersion();
 
         /* get adapter ieee address */
@@ -69,14 +69,14 @@ export class AdapterBackup {
             throw new Error("Failed to read adapter IEEE address");
         }
         const ieeeAddress = Buffer.from(ieeeAddressResponse.payload.extaddress.split("0x")[1], "hex");
-        cLogger.debug("fetched adapter ieee address");
+        logger.debug("fetched adapter ieee address", NS);
 
         /* get adapter nib */
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
         if (!nib) {
             throw new Error("Cannot backup - adapter not commissioned");
         }
-        cLogger.debug("fetched adapter nib");
+        logger.debug("fetched adapter nib", NS);
 
         /* get adapter active key information */
         let activeKeyInfo;
@@ -91,23 +91,23 @@ export class AdapterBackup {
         if (!activeKeyInfo) {
             throw new Error("Cannot backup - missing active key info");
         }
-        cLogger.debug("fetched adapter active key information");
+        logger.debug("fetched adapter active key information", NS);
 
         /* get adapter security data */
         const preconfiguredKeyEnabled = await this.nv.readItem(NvItemsIds.PRECFGKEYS_ENABLE, 0);
-        cLogger.debug("fetched adapter pre-configured key");
+        logger.debug("fetched adapter pre-configured key", NS);
         const addressManagerTable = await this.getAddressManagerTable(version);
-        cLogger.debug(`fetched adapter address manager table (capacity=${addressManagerTable?.capacity || 0}, used=${addressManagerTable?.usedCount || 0})`);
+        logger.debug(`fetched adapter address manager table (capacity=${addressManagerTable?.capacity || 0}, used=${addressManagerTable?.usedCount || 0})`, NS);
         const securityManagerTable = await this.getSecurityManagerTable();
-        cLogger.debug(`fetched adapter security manager table (capacity=${securityManagerTable?.usedCount || 0}, used=${securityManagerTable?.usedCount || 0})`);
+        logger.debug(`fetched adapter security manager table (capacity=${securityManagerTable?.usedCount || 0}, used=${securityManagerTable?.usedCount || 0})`, NS);
         const apsLinkKeyDataTable = await this.getApsLinkKeyDataTable(version);
-        cLogger.debug(`fetched adapter aps link key data table (capacity=${apsLinkKeyDataTable?.usedCount || 0}, used=${apsLinkKeyDataTable?.usedCount || 0})`);
+        logger.debug(`fetched adapter aps link key data table (capacity=${apsLinkKeyDataTable?.usedCount || 0}, used=${apsLinkKeyDataTable?.usedCount || 0})`, NS);
         const tclkSeed = version === ZnpVersion.zStack12 ? null : await this.nv.readItem(NvItemsIds.TCLK_SEED, 0, Structs.nwkKey);
-        cLogger.debug("fetched adapter tclk seed");
+        logger.debug("fetched adapter tclk seed", NS);
         const tclkTable = await this.getTclkTable(version);
-        cLogger.debug(`fetched adapter tclk table (capacity=${tclkTable?.usedCount || 0}, used=${tclkTable?.usedCount || 0})`);
+        logger.debug(`fetched adapter tclk table (capacity=${tclkTable?.usedCount || 0}, used=${tclkTable?.usedCount || 0})`, NS);
         const secMaterialTable = await this.getNetworkSecurityMaterialTable(version);
-        cLogger.debug(`fetched adapter network security material table (capacity=${secMaterialTable?.usedCount || 0}, used=${secMaterialTable?.usedCount || 0})`);
+        logger.debug(`fetched adapter network security material table (capacity=${secMaterialTable?.usedCount || 0}, used=${secMaterialTable?.usedCount || 0})`, NS);
 
         /* examine network security material table */
         const genericExtendedPanId = Buffer.alloc(8, 0xff);
@@ -207,13 +207,14 @@ export class AdapterBackup {
                 d.linkKey && ieeeAddressesInDatabase.includes(`0x${d.ieeeAddress.toString("hex")}`) &&
                 !backup.devices.find((dd) => d.ieeeAddress.equals(dd.ieeeAddress)));
             const missingStr = missing.map((d) => `0x${d.ieeeAddress.toString('hex')}`).join(', ');
-            cLogger.debug(
+            logger.debug(
                 `Following devices with link key are missing from new backup but present in old backup and database, ` +
-                `adding them back: ${missingStr}`
+                `adding them back: ${missingStr}`,
+                NS,
             );
             backup.devices = [...backup.devices, ...missing];
         } catch (error) {
-            cLogger.debug(`Failed to read old backup, not checking for missing routers: ${error}`);
+            logger.debug(`Failed to read old backup, not checking for missing routers: ${error}`, NS);
         }
 
         return backup;
@@ -225,7 +226,7 @@ export class AdapterBackup {
      * @param backup Backup to restore to connected adapter.
      */
     public async restoreBackup(backup: Models.Backup): Promise<void> {
-        cLogger.debug("restoring backup");
+        logger.debug("restoring backup", NS);
         const version: ZnpVersion = await this.getAdapterVersion();
         /* istanbul ignore next */
         if (version === ZnpVersion.zStack12) {
@@ -254,12 +255,12 @@ export class AdapterBackup {
         const currentApsLinkKeyDataTable = await this.getApsLinkKeyDataTable(version);
         const currentTclkTable = await this.getTclkTable(version);
         const currentNwkSecMaterialTable = await this.getNetworkSecurityMaterialTable(version);
-        cLogger.debug(`got target adapter table sizes:`);
-        cLogger.debug(` - address manager table: ${currentAddressManagerTable.capacity}`);
-        cLogger.debug(` - security manager table: ${currentSecurityManagerTable.capacity}`);
-        cLogger.debug(` - aps link key data table: ${currentApsLinkKeyDataTable.capacity}`);
-        cLogger.debug(` - tclk table: ${currentTclkTable.capacity}`);
-        cLogger.debug(` - network security material table: ${currentNwkSecMaterialTable.capacity}`);
+        logger.debug(`got target adapter table sizes:`, NS);
+        logger.debug(` - address manager table: ${currentAddressManagerTable.capacity}`, NS);
+        logger.debug(` - security manager table: ${currentSecurityManagerTable.capacity}`, NS);
+        logger.debug(` - aps link key data table: ${currentApsLinkKeyDataTable.capacity}`, NS);
+        logger.debug(` - tclk table: ${currentTclkTable.capacity}`, NS);
+        logger.debug(` - network security material table: ${currentNwkSecMaterialTable.capacity}`, NS);
 
         /* prepare table structures */
         const addressManagerTable = Structs.addressManagerTable(currentAddressManagerTable.capacity);
@@ -316,7 +317,7 @@ export class AdapterBackup {
                         tclkEntry.rxFrmCntr = device.linkKey.rxCounter;
                         tclkEntry.txFrmCntr = device.linkKey.txCounter + 2500;
                         linkKeyProcessed = true;
-                        cLogger.debug(`successfully recovered link key for ${device.ieeeAddress.toString("hex")} using tclk seed (shift=${recoveredSeedShift})`);
+                        logger.debug(`successfully recovered link key for ${device.ieeeAddress.toString("hex")} using tclk seed (shift=${recoveredSeedShift})`, NS);
                     }
                 }
 
@@ -341,7 +342,7 @@ export class AdapterBackup {
                     sme.authenticationOption = SecurityManagerAuthenticationOption.AuthenticatedCBCK;
 
                     linkKeyProcessed = true;
-                    cLogger.debug(`successfully recovered link key for ${device.ieeeAddress.toString("hex")} using aps key data table`);
+                    logger.debug(`successfully recovered link key for ${device.ieeeAddress.toString("hex")} using aps key data table`, NS);
                 }
             }
         }

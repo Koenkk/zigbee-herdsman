@@ -3,6 +3,8 @@ import {DataStart, SOF, MinMessageLength, PositionDataLength} from './constants'
 import Frame from './frame';
 import {logger} from '../../../utils/logger';
 
+const NS = 'zigbee-herdsman:zstack:unpi:parser';
+
 class Parser extends stream.Transform {
     private buffer: Buffer;
 
@@ -12,14 +14,14 @@ class Parser extends stream.Transform {
     }
 
     public _transform(chunk: Buffer, _: string, cb: () => void): void {
-        logger.debug(`<-- [${[...chunk]}]`, 'zigbee-herdsman:zstack:unpi:parser');
+        logger.debug(`<-- [${[...chunk]}]`, NS);
         this.buffer = Buffer.concat([this.buffer, chunk]);
         this.parseNext();
         cb();
     }
 
     private parseNext(): void {
-        logger.debug(`--- parseNext [${[...this.buffer]}]`, 'zigbee-herdsman:zstack:unpi:parser');
+        logger.debug(`--- parseNext [${[...this.buffer]}]`, NS);
 
         if (this.buffer.length !== 0 && this.buffer.readUInt8(0) !== SOF) {
             // Buffer doesn't start with SOF, skip till SOF.
@@ -39,10 +41,10 @@ class Parser extends stream.Transform {
 
                 try {
                     const frame = Frame.fromBuffer(dataLength, fcsPosition, frameBuffer);
-                    logger.debug(`--> parsed ${frame}`, 'zigbee-herdsman:zstack:unpi:parser');
+                    logger.debug(`--> parsed ${frame}`, NS);
                     this.emit('parsed', frame);
                 } catch (error) {
-                    logger.debug(`--> error ${error.stack}`, 'zigbee-herdsman:zstack:unpi:parser');
+                    logger.debug(`--> error ${error.stack}`, NS);
                 }
 
                 this.buffer = this.buffer.slice(frameLength, this.buffer.length);

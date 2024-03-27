@@ -6,6 +6,8 @@ import * as Models from "../models";
 import Bonjour, {Service} from 'bonjour-service';
 import {logger} from '../utils/logger';
 
+const NS = 'zigbee-herdsman:adapter';
+
 abstract class Adapter extends events.EventEmitter {
     public readonly greenPowerGroup = 0x0b84;
     protected networkOptions: TsType.NetworkOptions;
@@ -60,11 +62,11 @@ abstract class Adapter extends events.EventEmitter {
         let adapter: AdapterImplementation = adapters[0];
 
         if (!serialPortOptions.path) {
-            logger.debug('No path provided, auto detecting path', 'zigbee-herdsman:adapter');
+            logger.debug('No path provided, auto detecting path', NS);
             for (const candidate of adapters) {
                 const path = await candidate.autoDetectPath();
                 if (path) {
-                    logger.debug(`Auto detected path '${path}' from adapter '${candidate.name}'`, 'zigbee-herdsman:adapter');
+                    logger.debug(`Auto detected path '${path}' from adapter '${candidate.name}'`, NS);
                     serialPortOptions.path = path;
                     adapter = candidate;
                     break;
@@ -85,7 +87,7 @@ abstract class Adapter extends events.EventEmitter {
             const bj = new Bonjour();
             const mdnsTimeout = 2000; // timeout for mdns scan
 
-            logger.info(`Starting mdns discovery for coordinator: ${mdnsDevice}`);
+            logger.info(`Starting mdns discovery for coordinator: ${mdnsDevice}`, NS);
             await new Promise((resolve, reject) => {
                 bj.findOne({type: mdnsDevice}, mdnsTimeout, function (service: Service) {
                     if (service) {
@@ -95,10 +97,10 @@ abstract class Adapter extends events.EventEmitter {
                             const mdnsAdapter = (service.txt.radio_type == 'znp' ?
                                 'zstack' : service.txt.radio_type) as TsType.SerialPortOptions['adapter'];
                             const mdnsBaud = parseInt(service.txt.baud_rate);
-                            logger.info(`Coordinator Ip: ${mdnsIp}`);
-                            logger.info(`Coordinator Port: ${mdnsPort}`);
-                            logger.info(`Coordinator Radio: ${mdnsAdapter}`);
-                            logger.info(`Coordinator Baud: ${mdnsBaud}\n`);
+                            logger.info(`Coordinator Ip: ${mdnsIp}`, NS);
+                            logger.info(`Coordinator Port: ${mdnsPort}`, NS);
+                            logger.info(`Coordinator Radio: ${mdnsAdapter}`, NS);
+                            logger.info(`Coordinator Baud: ${mdnsBaud}\n`, NS);
                             bj.destroy();
                             serialPortOptions.path = `tcp://${mdnsIp}:${mdnsPort}`;
                             serialPortOptions.adapter = mdnsAdapter;
@@ -134,13 +136,13 @@ abstract class Adapter extends events.EventEmitter {
                 // Determine adapter to use
                 for (const candidate of adapters) {
                     if (await candidate.isValidPath(serialPortOptions.path)) {
-                        logger.debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`, 'zigbee-herdsman:adapter');
+                        logger.debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`, NS);
                         adapter = candidate;
                         break;
                     }
                 }
             } catch (error) {
-                logger.debug(`Failed to validate path: '${error}'`, 'zigbee-herdsman:adapter');
+                logger.debug(`Failed to validate path: '${error}'`, NS);
             }
         }
 

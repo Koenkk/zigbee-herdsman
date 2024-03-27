@@ -26,12 +26,6 @@ const mockLogger = {
     info: jest.fn(),
     warning: jest.fn(),
     error: jest.fn(),
-    child: jest.fn().mockImplementation((options) => ({
-        debug: jest.fn(),
-        info: jest.fn(),
-        warning: jest.fn(),
-        error: jest.fn(),
-    })),
 };
 
 let skipWait = true;
@@ -172,7 +166,6 @@ const mocksClear = [
     mockLogger.info,
     mockLogger.warning,
     mockLogger.error,
-    mockLogger.child,
 ];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
