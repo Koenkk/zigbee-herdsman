@@ -1,5 +1,14 @@
 import "regenerator-runtime/runtime";
 import {IsNumberArray, Wait, Queue, Waitress, AssertString} from '../src/utils';
+import {logger, setLogger} from '../src/utils/logger';
+
+
+const mockLogger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn(),
+    error: jest.fn(),
+};
 
 describe('Utils', () => {
     it('IsNumberArray valid', () => {
@@ -147,5 +156,54 @@ describe('Utils', () => {
         await job2Result;
         expect(finished).toEqual([4, 1, 2, 3]);
         expect(queue.count()).toBe(5);
+    });
+
+    it('Logs with default', () => {
+        const debug = jest.spyOn(console, "debug").mockImplementation(() => {});
+        const info = jest.spyOn(console, "info").mockImplementation(() => {});
+        const warning = jest.spyOn(console, "warn").mockImplementation(() => {});
+        const error = jest.spyOn(console, "error").mockImplementation(() => {});
+
+        logger.debug('debug');
+        expect(debug).toHaveBeenCalledWith('zigbee-herdsman: debug');
+
+        logger.debug('debug', 'mock-ns');
+        expect(debug).toHaveBeenCalledWith('mock-ns: debug');
+
+        logger.info('info');
+        expect(info).toHaveBeenCalledWith('zigbee-herdsman: info');
+
+        logger.info('info', 'mock-ns');
+        expect(info).toHaveBeenCalledWith('mock-ns: info');
+
+        logger.warning('warning');
+        expect(warning).toHaveBeenCalledWith('zigbee-herdsman: warning');
+
+        logger.warning('warning', 'mock-ns');
+        expect(warning).toHaveBeenCalledWith('mock-ns: warning');
+
+        logger.error('error');
+        expect(error).toHaveBeenCalledWith('zigbee-herdsman: error');
+
+        logger.error('error', 'mock-ns');
+        expect(error).toHaveBeenCalledWith('mock-ns: error');
+
+        debug.mockReset();
+        info.mockReset();
+        warning.mockReset();
+        error.mockReset();
+    });
+
+    it('Logs', () => {
+        setLogger(mockLogger);
+        expect(logger).toEqual(mockLogger);
+        logger.debug('debug');
+        expect(mockLogger.debug).toHaveBeenCalledWith('debug');
+        logger.info('info');
+        expect(mockLogger.info).toHaveBeenCalledWith('info');
+        logger.warning('warning');
+        expect(mockLogger.warning).toHaveBeenCalledWith('warning');
+        logger.error('error', 'zh');
+        expect(mockLogger.error).toHaveBeenCalledWith('error', 'zh');
     });
 });

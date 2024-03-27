@@ -9,7 +9,7 @@ export class EzspStruct {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         return Buffer.concat(cls._fields.map((field: any[]) => {
             const value = obj[field[0]];
-            console.assert(field[1]);
+            // console.assert(field[1]);
             return field[1].serialize(field[1], value);
         }));
     }
@@ -649,7 +649,7 @@ export class EmberMultiAddress extends EzspStruct {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         return Buffer.concat(fields.map((field: any[]) => {
             const value = obj[field[0]];
-            console.assert(field[1]);
+            // console.assert(field[1]);
             return field[1].serialize(field[1], value);
         }));
     }

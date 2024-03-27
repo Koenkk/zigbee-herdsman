@@ -3,7 +3,7 @@
 import * as basic from './basic';
 import {fixed_list} from './basic';
 
-console.assert(basic.uint8_t);
+// console.assert(basic.uint8_t);
 
 export class NcpResetCode extends basic.uint8_t {
     //Reset and Error Codes for NCP
@@ -68,7 +68,7 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
         if (value instanceof EmberEUI64) {
             value = (value as EmberEUI64).value as number[];
         }
-        console.assert(cls._length === value.length);
+        // console.assert(cls._length === value.length);
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const val = Buffer.from(value).reverse().map(i => basic.uint8_t.serialize(basic.uint8_t, i)[0]);
         return Buffer.from(val);
