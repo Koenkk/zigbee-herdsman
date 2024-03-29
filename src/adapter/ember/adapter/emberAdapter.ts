@@ -797,15 +797,11 @@ export class EmberAdapter extends Adapter {
 
         await this.onNCPPreReset();
 
-        try {
-            // NOTE: something deep in this call can throw too
-            const result = (await this.ezsp.start());
+        // NOTE: something deep in this call can throw too
+        const startResult = (await this.ezsp.start());
 
-            if (result !== EzspStatus.SUCCESS) {
-                throw new Error(`Failed to start EZSP layer with status=${EzspStatus[result]}.`);
-            }
-        } catch (err) {
-            throw err;
+        if (startResult !== EzspStatus.SUCCESS) {
+            throw new Error(`Failed to start EZSP layer with status=${EzspStatus[startResult]}.`);
         }
 
         // call before any other command, else fails

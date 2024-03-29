@@ -298,7 +298,7 @@ export class Ezsp extends EventEmitter {
         this.buffalo = new EzspBuffalo(this.frameContents);
 
         this.ash = new UartAsh(options);
-        this.ash.on(AshEvents.rxError, this.onAshRxError.bind(this));
+        this.ash.on(AshEvents.fatalError, this.onAshFatalError.bind(this));
         this.ash.on(AshEvents.frame, this.onAshFrame.bind(this));
     }
 
@@ -389,8 +389,8 @@ export class Ezsp extends EventEmitter {
         return this.ash.connected;
     }
 
-    private onAshRxError(status: EzspStatus): void {
-        this.ezspErrorHandler(status);
+    private onAshFatalError(status: EzspStatus): void {
+        this.emit(EzspEvents.ncpNeedsResetAndInit, status);
     }
 
     private onAshFrame(): void {
