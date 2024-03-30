@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.40.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.40.1...v0.40.2) (2024-03-29)
+
+
+### Bug Fixes
+
+* Ember: bugfixes ([#993](https://github.com/Koenkk/zigbee-herdsman/issues/993)) ([ca5fa57](https://github.com/Koenkk/zigbee-herdsman/commit/ca5fa57732d248aa6cb10b0cc54b875a659c906c))
+
+## [0.40.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.40.0...v0.40.1) (2024-03-28)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#990](https://github.com/Koenkk/zigbee-herdsman/issues/990)) ([aac0732](https://github.com/Koenkk/zigbee-herdsman/commit/aac0732de2d3f0f88df5526adc54b54c607d4917))
+* ZStack: emit network address change event on concentratorIndCb ([#992](https://github.com/Koenkk/zigbee-herdsman/issues/992)) ([10e42fd](https://github.com/Koenkk/zigbee-herdsman/commit/10e42fdc0cdbc0c00360b03954101532dda02a99))
+
 ## [0.40.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.39.1...v0.40.0) (2024-03-21)
 
 

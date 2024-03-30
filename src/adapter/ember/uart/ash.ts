@@ -61,8 +61,8 @@ const ashGetACKNum = (ctrl: number): number => ((ctrl & ASH_ACKNUM_MASK) >> ASH_
 
 
 export enum AshEvents {
-    /** When the ASH protocol detects an error while receiving a frame. NOTE: TX errors are handled by the EZSP layer. */
-    rxError = 'rxError',
+    /** When the ASH protocol detects a fatal error (bubbles up to restart adapter). */
+    fatalError = 'fatalError',
     /** When a frame has been parsed and queued in the rxQueue. */
     frame = 'frame',
 }
@@ -318,7 +318,11 @@ export class UartAsh extends EventEmitter {
             return false;
         }
 
-        return SocketPortUtils.isTcpPath(this.portOptions.path) ? !this.socketPort?.closed : !!this.serialPort?.isOpen;
+        if (SocketPortUtils.isTcpPath(this.portOptions.path)) {
+            return this.socketPort && !this.socketPort.closed;
+        } else {
+            return this.serialPort && this.serialPort.isOpen;
+        }
     }
 
     /**
@@ -572,8 +576,7 @@ export class UartAsh extends EventEmitter {
      */
     private async onPortError(error: Error): Promise<void> {
         logger.info(`Port error: ${error}`, NS);
-        this.hostDisconnect(EzspStatus.ERROR_SERIAL_INIT);
-        await this.stop();
+        this.emit(AshEvents.fatalError, EzspStatus.ERROR_SERIAL_INIT);
     }
 
     /**
@@ -608,7 +611,7 @@ export class UartAsh extends EventEmitter {
             if (this.flags & Flag.CONNECTED) {
                 logger.error(`Error while parsing received frame, status=${EzspStatus[status]}.`, NS);
                 // if we're connected (not in reset) and get here, we need to reset
-                this.emit(AshEvents.rxError, EzspStatus.HOST_FATAL_ERROR);
+                this.emit(AshEvents.fatalError, EzspStatus.HOST_FATAL_ERROR);
                 return;
             } else {
                 logger.debug(`Error while parsing received frame in NOT_CONNECTED state (flags=${this.flags}), status=${EzspStatus[status]}.`, NS);
