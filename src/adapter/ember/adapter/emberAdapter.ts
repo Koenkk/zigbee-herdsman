@@ -504,7 +504,7 @@ export class EmberAdapter extends Adapter {
 
                     return EmberStatus.SUCCESS;
                 },
-                logger.error,// no reject, just log error if any
+                (e) => logger.error(e, NS),// no reject, just log error if any
                 true,// prioritize just to avoid delays if queue is busy
             );
             logger.info(`[STACK STATUS] Network opened.`, NS);
@@ -738,7 +738,7 @@ export class EmberAdapter extends Adapter {
                             this.emit(Events.deviceJoined, payload);
                             return EmberStatus.SUCCESS;
                         },
-                        logger.error,// no reject, just log error if any
+                        (e) => logger.error(e, NS),// no reject, just log error if any
                         true,// prioritize just to avoid delays if queue is busy
                     );
                 } else {
@@ -766,7 +766,7 @@ export class EmberAdapter extends Adapter {
 
                 return EmberStatus.SUCCESS;
             },
-            logger.error,// no reject, just log error if any
+            (e) => logger.error(e, NS), // no reject, just log error if any
         );
     }
 
