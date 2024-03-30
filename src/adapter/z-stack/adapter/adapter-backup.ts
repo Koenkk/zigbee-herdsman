@@ -12,7 +12,7 @@ import {ZnpVersion} from "./tstype";
 import {AddressManagerUser, SecurityManagerAuthenticationOption} from "../structs";
 import {logger} from "../../../utils/logger";
 
-const NS = 'zigbee-herdsman:zstack:backup';
+const NS = 'zh:zstack:backup';
 
 /**
  * Class providing ZNP adapter backup and restore procedures based mostly on NV memory manipulation.

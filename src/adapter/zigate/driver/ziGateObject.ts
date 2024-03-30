@@ -11,7 +11,7 @@ type ZiGateCode = ZiGateCommandCode | ZiGateMessageCode;
 type ZiGateParameter = ZiGateCommandParameter | ZiGateMessageParameter;
 
 
-const NS = 'zigbee-herdsman:zigate:object';
+const NS = 'zh:zigate:object';
 
 const BufferAndListTypes = [
     'BUFFER', 'BUFFER8', 'BUFFER16',

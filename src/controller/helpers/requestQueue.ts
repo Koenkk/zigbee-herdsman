@@ -3,7 +3,7 @@ import * as Zcl from '../../zcl';
 import {Endpoint} from '../model';
 import Request from './request';
 
-const NS = 'zigbee-herdsman:controller:requestqueue';
+const NS = 'zh:controller:requestqueue';
 
 type Mutable<T> = { -readonly [P in keyof T ]: T[P] };
 

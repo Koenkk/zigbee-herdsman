@@ -29,7 +29,7 @@ import {ParamsDesc} from './commands';
 import {EZSPAdapterBackup} from '../adapter/backup';
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:ezsp:driver';
+const NS = 'zh:ezsp:driver';
 
 interface AddEndpointParameters {
     endpoint?: number,

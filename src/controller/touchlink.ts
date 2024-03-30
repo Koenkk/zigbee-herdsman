@@ -3,7 +3,7 @@ import * as Zcl from '../zcl';
 import {Wait, AssertString} from '../utils';
 import {logger} from '../utils/logger';
 
-const NS = 'zigbee-herdsman:controller:touchlink';
+const NS = 'zh:controller:touchlink';
 const scanChannels = [11, 15, 20, 25, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24, 26];
 
 class Touchlink {

@@ -6,7 +6,7 @@ import {EmberApsFrame, EmberNodeId} from "../types";
 import {EmberZdoStatus} from "../zdo";
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:ember:waitress';
+const NS = 'zh:ember:waitress';
 
 /** Events specific to OneWaitress usage. */
 export enum OneWaitressEvents {

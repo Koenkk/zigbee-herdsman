@@ -17,7 +17,7 @@ import SocketPortUtils from '../../socketPortUtils';
 import {EZSPZDOResponseFrameData} from '../driver/ezsp';
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:ezsp';
+const NS = 'zh:ezsp';
 
 const autoDetectDefinitions = [
     {manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4'},  // Sonoff ZBDongle-E

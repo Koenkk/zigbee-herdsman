@@ -45,7 +45,7 @@ import {AshParser} from "./parser";
 import {Wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 
-const NS = 'zigbee-herdsman:ember:uart:ash';
+const NS = 'zh:ember:uart:ash';
 
 
 /** ASH get rflag in control byte */

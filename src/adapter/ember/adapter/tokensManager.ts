@@ -8,7 +8,7 @@ import {EmberTokenData, SecManKey} from "../types";
 import {Ezsp} from "../ezsp/ezsp";
 import {logger} from "../../../utils/logger";
 
-const NS = 'zigbee-herdsman:ember:tokens';
+const NS = 'zh:ember:tokens';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 //------------------------------------------------------------------------------

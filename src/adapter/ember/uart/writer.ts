@@ -2,7 +2,7 @@
 import {Readable, ReadableOptions} from "stream";
 import {logger} from "../../../utils/logger";
 
-const NS = 'zigbee-herdsman:ember:uart:ash:writer';
+const NS = 'zh:ember:uart:ash:writer';
 
 export class AshWriter extends Readable {
     private bytesToWrite: number[];

@@ -7,7 +7,7 @@ import Device from './device';
 import assert from 'assert';
 import {logger} from '../../utils/logger';
 
-const NS = 'zigbee-herdsman:controller:group';
+const NS = 'zh:controller:group';
 
 interface Options {
     manufacturerCode?: number;

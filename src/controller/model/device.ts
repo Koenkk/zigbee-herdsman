@@ -14,7 +14,7 @@ import {logger} from '../../utils/logger';
  */
 const OneJanuary2000 = new Date('January 01, 2000 00:00:00 UTC+00:00').getTime();
 
-const NS = 'zigbee-herdsman:controller:device';
+const NS = 'zh:controller:device';
 
 interface LQI {
     neighbors: {

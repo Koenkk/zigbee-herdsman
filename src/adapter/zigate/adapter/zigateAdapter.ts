@@ -21,7 +21,7 @@ import {Buffalo} from "../../../buffalo";
 import * as Models from "../../../models";
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:zigate';
+const NS = 'zh:zigate';
 const default_bind_group = 901;  // https://github.com/Koenkk/zigbee-herdsman-converters/blob/master/lib/constants.js#L3
 interface WaitressMatcher {
     address: number | string;

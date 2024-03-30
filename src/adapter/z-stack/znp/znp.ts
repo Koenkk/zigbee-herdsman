@@ -29,7 +29,7 @@ const timeouts = {
     default: 10000,
 };
 
-const NS = 'zigbee-herdsman:zstack:znp';
+const NS = 'zh:zstack:znp';
 
 interface WaitressMatcher {
     type: Type;

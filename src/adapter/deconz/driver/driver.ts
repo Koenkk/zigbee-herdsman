@@ -16,7 +16,7 @@ import { Command, Request, parameterT, ApsDataRequest, ReceivedDataResponse, Dat
 import slip from 'slip';
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:deconz:driver';
+const NS = 'zh:deconz:driver';
 
 const autoDetectDefinitions = [
     {manufacturer: 'dresden elektronik ingenieurtechnik GmbH', vendorId: '1cf1', productId: '0030'}, // Conbee II

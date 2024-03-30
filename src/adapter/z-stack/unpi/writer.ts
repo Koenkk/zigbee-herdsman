@@ -2,7 +2,7 @@ import * as stream from 'stream';
 import Frame from './frame';
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:zstack:unpi:writer';
+const NS = 'zh:zstack:unpi:writer';
 
 class Writer extends stream.Readable {
     public writeFrame(frame: Frame): void {

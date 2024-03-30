@@ -4,7 +4,7 @@ import * as consts from './consts';
 import Frame from './frame';
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:ezsp:uart';
+const NS = 'zh:ezsp:uart';
 
 export class Parser extends stream.Transform {
     private tail: Buffer[];

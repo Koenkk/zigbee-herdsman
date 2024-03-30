@@ -6,7 +6,7 @@ import * as Models from "../models";
 import Bonjour, {Service} from 'bonjour-service';
 import {logger} from '../utils/logger';
 
-const NS = 'zigbee-herdsman:adapter';
+const NS = 'zh:adapter';
 
 abstract class Adapter extends events.EventEmitter {
     public readonly greenPowerGroup = 0x0b84;

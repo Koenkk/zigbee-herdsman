@@ -155,7 +155,7 @@ import {EmberOneWaitress, OneWaitressEvents} from "./oneWaitress";
 import {logger} from "../../../utils/logger";
 // import {EmberTokensManager} from "./tokensManager";
 
-const NS = 'zigbee-herdsman:ember';
+const NS = 'zh:ember';
 
 export type NetworkCache = {
     //-- basic network info

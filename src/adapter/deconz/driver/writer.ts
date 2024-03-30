@@ -6,7 +6,7 @@ import Frame from './frame';
 import slip from 'slip';
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:deconz:driver:writer';
+const NS = 'zh:deconz:driver:writer';
 
 class Writer extends stream.Readable {
     public writeFrame(frame: Frame): void {

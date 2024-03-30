@@ -2,7 +2,7 @@ import fs from 'fs';
 import {DatabaseEntry, EntityType} from './tstype';
 import {logger} from '../utils/logger';
 
-const NS = 'zigbee-herdsman:controller:database';
+const NS = 'zh:controller:database';
 
 class Database {
     private entries: {[id: number]: DatabaseEntry};

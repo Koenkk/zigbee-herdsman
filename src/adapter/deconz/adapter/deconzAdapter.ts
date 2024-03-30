@@ -18,7 +18,7 @@ import { Command, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, Data
 import * as Models from "../../../models";
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:deconz';
+const NS = 'zh:deconz';
 var frameParser = require('../driver/frameParser');
 
 interface WaitressMatcher {

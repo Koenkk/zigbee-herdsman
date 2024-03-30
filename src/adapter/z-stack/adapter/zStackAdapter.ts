@@ -17,7 +17,7 @@ import * as Models from "../../../models";
 import assert from 'assert';
 import {logger} from '../../../utils/logger';
 
-const NS = "zigbee-herdsman:zstack";
+const NS = "zh:zstack";
 const Subsystem = UnpiConstants.Subsystem;
 const Type = UnpiConstants.Type;
 const {ZnpCommandStatus, AddressMode} = Constants.COMMON;

@@ -4,7 +4,7 @@ import {DataType} from './definition';
 import {BuffaloZclOptions, StructuredIndicatorType, StructuredSelector, ZclArray} from './tstype';
 import * as Utils from './utils';
 
-const NS = 'zigbee-herdsman:controller:buffalozcl';
+const NS = 'zh:controller:buffalozcl';
 
 interface KeyValue {[s: string | number]: number | string}
 

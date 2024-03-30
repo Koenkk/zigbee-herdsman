@@ -6,7 +6,7 @@ import events from 'events';
 import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import {logger} from '../utils/logger';
 
-const NS = 'zigbee-herdsman:controller:greenpower';
+const NS = 'zh:controller:greenpower';
 
 const zigBeeLinkKey = Buffer.from([
     0x5A, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6C, 0x6C, 0x69, 0x61, 0x6E, 0x63, 0x65, 0x30, 0x39

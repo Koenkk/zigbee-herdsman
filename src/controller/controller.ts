@@ -18,7 +18,7 @@ import mixin from 'mixin-deep';
 import Group from './model/group';
 import {logger} from '../utils/logger';
 
-const NS = 'zigbee-herdsman:controller';
+const NS = 'zh:controller';
 
 interface Options {
     network: AdapterTsType.NetworkOptions;

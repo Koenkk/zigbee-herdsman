@@ -5,7 +5,7 @@ import {EzspConfigId} from './types';
 import {EmberStatus} from './types/named';
 import {EmberMulticastTableEntry} from './types/struct';
 
-const NS = 'zigbee-herdsman:ezsp:cast';
+const NS = 'zh:ezsp:cast';
 
 
 export class Multicast {

@@ -9,7 +9,7 @@ import * as Events from '../../events';
 import {ZclFrame} from '../../../zcl';
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:deconz:frameparser';
+const NS = 'zh:deconz:frameparser';
 
 interface lastReceivedGpInd {
     srcId: number;

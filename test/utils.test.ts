@@ -165,25 +165,25 @@ describe('Utils', () => {
         const error = jest.spyOn(console, "error").mockImplementation(() => {});
 
         logger.debug('debug');
-        expect(debug).toHaveBeenCalledWith('zigbee-herdsman: debug');
+        expect(debug).toHaveBeenCalledWith('zh: debug');
 
         logger.debug('debug', 'mock-ns');
         expect(debug).toHaveBeenCalledWith('mock-ns: debug');
 
         logger.info('info');
-        expect(info).toHaveBeenCalledWith('zigbee-herdsman: info');
+        expect(info).toHaveBeenCalledWith('zh: info');
 
         logger.info('info', 'mock-ns');
         expect(info).toHaveBeenCalledWith('mock-ns: info');
 
         logger.warning('warning');
-        expect(warning).toHaveBeenCalledWith('zigbee-herdsman: warning');
+        expect(warning).toHaveBeenCalledWith('zh: warning');
 
         logger.warning('warning', 'mock-ns');
         expect(warning).toHaveBeenCalledWith('mock-ns: warning');
 
         logger.error('error');
-        expect(error).toHaveBeenCalledWith('zigbee-herdsman: error');
+        expect(error).toHaveBeenCalledWith('zh: error');
 
         logger.error('error', 'mock-ns');
         expect(error).toHaveBeenCalledWith('mock-ns: error');

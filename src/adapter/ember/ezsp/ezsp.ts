@@ -183,7 +183,7 @@ import {
 import {FIXED_ENDPOINTS} from "../adapter/endpoints";
 import {logger} from "../../../utils/logger";
 
-const NS = 'zigbee-herdsman:ember:ezsp';
+const NS = 'zh:ember:ezsp';
 
 
 /**

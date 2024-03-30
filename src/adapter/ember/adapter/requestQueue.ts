@@ -2,7 +2,7 @@
 import {logger} from "../../../utils/logger";
 import {EmberStatus, EzspStatus} from "../enums";
 
-const NS = 'zigbee-herdsman:ember:queue';
+const NS = 'zh:ember:queue';
 
 interface EmberRequestQueueEntry {
     /**

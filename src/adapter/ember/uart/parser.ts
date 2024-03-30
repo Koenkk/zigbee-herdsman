@@ -3,7 +3,7 @@ import {Transform, TransformCallback, TransformOptions} from "stream";
 import {AshReservedByte} from "./enums";
 import {logger} from "../../../utils/logger";
 
-const NS = 'zigbee-herdsman:ember:uart:ash:parser';
+const NS = 'zh:ember:uart:ash:parser';
 
 export class AshParser extends Transform {
     private buffer: Buffer;

@@ -18,7 +18,7 @@ import ZiGateFrame from "./frame";
 import {Buffalo} from "../../../buffalo";
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:zigate:driver';
+const NS = 'zh:zigate:driver';
 
 const autoDetectDefinitions = [
     {manufacturer: 'zigate_PL2303', vendorId: '067b', productId: '2303'},

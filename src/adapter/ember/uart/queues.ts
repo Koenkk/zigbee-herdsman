@@ -2,7 +2,7 @@
 import {logger} from "../../../utils/logger";
 import {EZSP_MAX_FRAME_LENGTH} from "../ezsp/consts";
 
-const NS = 'zigbee-herdsman:ember:uart:queues';
+const NS = 'zh:ember:uart:queues';
 
 /**
  * Buffer to hold a DATA frame.

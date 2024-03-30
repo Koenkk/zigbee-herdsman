@@ -17,7 +17,7 @@ import {Wait} from "../../../utils";
 import {Endpoints} from "./endpoints";
 import {logger} from "../../../utils/logger";
 
-const NS = 'zigbee-herdsman:adapter:zstack:manager';
+const NS = 'zh:adapter:zstack:manager';
 
 /**
  * Startup strategy is internally used to determine required startup method.

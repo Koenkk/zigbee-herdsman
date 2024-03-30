@@ -29,7 +29,7 @@ import {SerialPortOptions} from '../../tstype';
 import {logger} from '../../../utils/logger';
 
 
-const NS = 'zigbee-herdsman:ezsp:ezsp';
+const NS = 'zh:ezsp:ezsp';
 
 
 const MAX_SERIAL_CONNECT_ATTEMPTS = 4;

@@ -11,7 +11,7 @@ import {SerialPortOptions} from '../../tstype';
 import wait from '../../../utils/wait';
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:ezsp:uart';
+const NS = 'zh:ezsp:uart';
 
 
 enum NcpResetCode {

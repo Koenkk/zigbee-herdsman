@@ -3,7 +3,7 @@
 
 import {logger} from "../../../utils/logger";
 
-const NS = 'zigbee-herdsman:zigate:frame';
+const NS = 'zh:zigate:frame';
 
 enum ZiGateFrameChunkSize {
     UInt8 = 1,

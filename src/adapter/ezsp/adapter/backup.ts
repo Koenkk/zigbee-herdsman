@@ -13,7 +13,7 @@ import {fs} from "mz";
 import {BackupUtils} from "../../../utils";
 import {logger} from '../../../utils/logger';
 
-const NS = 'zigbee-herdsman:ezsp:backup';
+const NS = 'zh:ezsp:backup';
 
 export class EZSPAdapterBackup {
     private driver: Driver;
