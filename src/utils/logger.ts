@@ -6,10 +6,10 @@ export interface Logger {
 }
 
 export let logger: Logger = {
-    debug: (message, namespace = 'zigbee-herdsman') => console.debug(`${namespace}: ${message}`),
-    info: (message, namespace = 'zigbee-herdsman') => console.info(`${namespace}: ${message}`),
-    warning: (message, namespace = 'zigbee-herdsman') => console.warn(`${namespace}: ${message}`),
-    error: (message, namespace = 'zigbee-herdsman') => console.error(`${namespace}: ${message}`),
+    debug: (message, namespace) => console.debug(`${namespace}: ${message}`),
+    info: (message, namespace) => console.info(`${namespace}: ${message}`),
+    warning: (message, namespace) => console.warn(`${namespace}: ${message}`),
+    error: (message, namespace) => console.error(`${namespace}: ${message}`),
 };
 
 export function setLogger(l: Logger): void {

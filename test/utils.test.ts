@@ -158,51 +158,15 @@ describe('Utils', () => {
         expect(queue.count()).toBe(5);
     });
 
-    it('Logs with default', () => {
-        const debug = jest.spyOn(console, "debug").mockImplementation(() => {});
-        const info = jest.spyOn(console, "info").mockImplementation(() => {});
-        const warning = jest.spyOn(console, "warn").mockImplementation(() => {});
-        const error = jest.spyOn(console, "error").mockImplementation(() => {});
-
-        logger.debug('debug');
-        expect(debug).toHaveBeenCalledWith('zh: debug');
-
-        logger.debug('debug', 'mock-ns');
-        expect(debug).toHaveBeenCalledWith('mock-ns: debug');
-
-        logger.info('info');
-        expect(info).toHaveBeenCalledWith('zh: info');
-
-        logger.info('info', 'mock-ns');
-        expect(info).toHaveBeenCalledWith('mock-ns: info');
-
-        logger.warning('warning');
-        expect(warning).toHaveBeenCalledWith('zh: warning');
-
-        logger.warning('warning', 'mock-ns');
-        expect(warning).toHaveBeenCalledWith('mock-ns: warning');
-
-        logger.error('error');
-        expect(error).toHaveBeenCalledWith('zh: error');
-
-        logger.error('error', 'mock-ns');
-        expect(error).toHaveBeenCalledWith('mock-ns: error');
-
-        debug.mockReset();
-        info.mockReset();
-        warning.mockReset();
-        error.mockReset();
-    });
-
     it('Logs', () => {
         setLogger(mockLogger);
         expect(logger).toEqual(mockLogger);
-        logger.debug('debug');
-        expect(mockLogger.debug).toHaveBeenCalledWith('debug');
-        logger.info('info');
-        expect(mockLogger.info).toHaveBeenCalledWith('info');
-        logger.warning('warning');
-        expect(mockLogger.warning).toHaveBeenCalledWith('warning');
+        logger.debug('debug', 'zh');
+        expect(mockLogger.debug).toHaveBeenCalledWith('debug', 'zh');
+        logger.info('info', 'zh');
+        expect(mockLogger.info).toHaveBeenCalledWith('info', 'zh');
+        logger.warning('warning', 'zh');
+        expect(mockLogger.warning).toHaveBeenCalledWith('warning', 'zh');
         logger.error('error', 'zh');
         expect(mockLogger.error).toHaveBeenCalledWith('error', 'zh');
     });
