@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.40.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.40.1...v0.40.2) (2024-03-29)
+
+
+### Bug Fixes
+
+* Ember: bugfixes ([#993](https://github.com/Koenkk/zigbee-herdsman/issues/993)) ([ca5fa57](https://github.com/Koenkk/zigbee-herdsman/commit/ca5fa57732d248aa6cb10b0cc54b875a659c906c))
+
 ## [0.40.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.40.0...v0.40.1) (2024-03-28)
 
 
