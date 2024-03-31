@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.40.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.40.2...v0.40.3) (2024-03-31)
+
+
+### Bug Fixes
+
+* Ember: boost stack config. ([#996](https://github.com/Koenkk/zigbee-herdsman/issues/996)) ([96b2b13](https://github.com/Koenkk/zigbee-herdsman/commit/96b2b136ed7205c92e9adfe42d4d7d58847dfebb))
+* **ignore:** update dependencies ([#995](https://github.com/Koenkk/zigbee-herdsman/issues/995)) ([ccfb8fd](https://github.com/Koenkk/zigbee-herdsman/commit/ccfb8fdaebe272b4f1cd1b68c397d83a15ef5878))
+
 ## [0.40.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.40.1...v0.40.2) (2024-03-29)
 
 
