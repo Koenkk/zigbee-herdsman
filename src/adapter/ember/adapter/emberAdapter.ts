@@ -323,13 +323,13 @@ const STACK_CONFIGS = {
         /** <-> (Default: 10000) @see EzspValueId.TRANSIENT_DEVICE_TIMEOUT */
         TRANSIENT_DEVICE_TIMEOUT: 10000,
         /** <0-127> (Default: 2) @see EzspConfigId.BINDING_TABLE_SIZE */
-        BINDING_TABLE_SIZE: 16,// zigpc: 2, Z3GatewayGPCombo: 5, nabucasa: 32
+        BINDING_TABLE_SIZE: 32,// zigpc: 2, Z3GatewayGPCombo: 5, nabucasa: 32
         /** <0-127> (Default: 0) @see EzspConfigId.KEY_TABLE_SIZE */
         KEY_TABLE_SIZE: 0,// zigpc: 4
         /** <6-64> (Default: 6) @see EzspConfigId.MAX_END_DEVICE_CHILDREN */
         MAX_END_DEVICE_CHILDREN: 32,// zigpc: 6, nabucasa: 32, Dongle-E (Sonoff firmware): 32
         /** <1-255> (Default: 10) @see EzspConfigId.APS_UNICAST_MESSAGE_COUNT */
-        APS_UNICAST_MESSAGE_COUNT: 20,// zigpc: 10, darkxst: 20, nabucasa: 20
+        APS_UNICAST_MESSAGE_COUNT: 32,// zigpc: 10, darkxst: 20, nabucasa: 20
         /** <15-254> (Default: 15) @see EzspConfigId.BROADCAST_TABLE_SIZE */
         BROADCAST_TABLE_SIZE: 15,// zigpc: 15, Z3GatewayGPCombo: 35 - NOTE: Sonoff Dongle-E fails at 35
         /** [1, 16, 26] (Default: 16). @see EzspConfigId.NEIGHBOR_TABLE_SIZE */
@@ -1088,7 +1088,6 @@ export class EmberAdapter extends Adapter {
             debug(`[INIT TC] Current network config=${JSON.stringify(this.networkOptions)}`);
             debug(`[INIT TC] Current NCP network: nodeType=${EmberNodeType[nodeType]} params=${JSON.stringify(netParams)}`);
 
-            // XXX: should not force a form when it's only a channel change, just change the channel, wait a sec, then continue the logic
             if ((npStatus === EmberStatus.SUCCESS) && (nodeType === EmberNodeType.COORDINATOR) && (this.networkOptions.panID === netParams.panId)
                 && (equals(this.networkOptions.extendedPanID, netParams.extendedPanId))) {
                 // config matches adapter so far, no error, we can check the network key
