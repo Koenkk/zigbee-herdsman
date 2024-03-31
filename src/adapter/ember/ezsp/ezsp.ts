@@ -174,7 +174,6 @@ import {
     LONG_DEST_FRAME_CONTROL,
     MAC_ACK_REQUIRED,
     MIN_STUB_APS_SIZE,
-    NULL_NODE_ID,
     SHORT_DEST_FRAME_CONTROL,
     STUB_NWK_FRAME_CONTROL,
     STUB_NWK_SIZE,
@@ -5049,8 +5048,10 @@ export class Ezsp extends EventEmitter {
         debug(`ezspIdConflictHandler(): callback called with: [id=${id}]`);
         console.error(`An ID conflict was detected for network address "${id}". Corresponding devices removed from the network.`);
 
+        // XXX: this is currently causing more problems than not doing it, so disabled for now.
+        //      devices should rejoin on ID conflict anyway, so the database isn't out of sync for very long.
         // hijacking the event from `ezspTrustCenterJoinHandler`, and forging a DEVICE_LEFT to avoid another event ending up doing the same logic
-        this.emit(EzspEvents.TRUST_CENTER_JOIN, id, null, EmberDeviceUpdate.DEVICE_LEFT, EmberJoinDecision.NO_ACTION, NULL_NODE_ID);
+        // this.emit(EzspEvents.TRUST_CENTER_JOIN, id, null, EmberDeviceUpdate.DEVICE_LEFT, EmberJoinDecision.NO_ACTION, NULL_NODE_ID);
     }
 
     /**
