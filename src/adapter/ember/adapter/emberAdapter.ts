@@ -57,7 +57,6 @@ import {
     EmberDeviceUpdate,
     EzspNetworkScanType,
     EmberIncomingMessageType,
-    EmberCounterType,
 } from "../enums";
 import {
     EmberAesMmoHashContext,
@@ -756,13 +755,7 @@ export class EmberAdapter extends Adapter {
                 // listed as per EmberCounterType
                 const counters = (await this.ezsp.ezspReadAndClearCounters());
 
-                let countersLogString = "[NCP COUNTERS] ";
-
-                for (let i = 0; i < EmberCounterType.COUNT; i++) {
-                    countersLogString += `${EmberCounterType[i]}: ${counters[i]} | `;
-                }
-
-                logger.info(countersLogString, NS);
+                logger.info(`[NCP COUNTERS] ${counters.join(',')}`, NS);
 
                 return EmberStatus.SUCCESS;
             },
