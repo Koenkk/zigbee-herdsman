@@ -749,7 +749,7 @@ class Endpoint extends Entity {
         const frame = Zcl.ZclFrame.create(
             frameType, options.direction, options.disableDefaultResponse,
             options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-            command.name, cluster.name, payload, options.reservedBits
+            command.name, cluster.ID, payload, options.reservedBits
         );
 
         const log = `ZCL command ${this.deviceIeeeAddress}/${this.ID} ` +
