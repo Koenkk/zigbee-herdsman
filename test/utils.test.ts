@@ -159,6 +159,19 @@ describe('Utils', () => {
     });
 
     it('Logs', () => {
+        const debugSpy = jest.spyOn(console, "debug");
+        const infoSpy = jest.spyOn(console, "info");
+        const warningSpy = jest.spyOn(console, "warn");
+        const errorSpy = jest.spyOn(console, "error");
+        logger.debug('debug', 'zh');
+        expect(debugSpy).toHaveBeenCalledWith('zh: debug');
+        logger.info('info', 'zh');
+        expect(infoSpy).toHaveBeenCalledWith('zh: info');
+        logger.warning('warning', 'zh');
+        expect(warningSpy).toHaveBeenCalledWith('zh: warning');
+        logger.error('error', 'zh');
+        expect(errorSpy).toHaveBeenCalledWith('zh: error');
+
         setLogger(mockLogger);
         expect(logger).toEqual(mockLogger);
         logger.debug('debug', 'zh');
