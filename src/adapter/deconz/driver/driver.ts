@@ -1,6 +1,5 @@
 /* istanbul ignore file */
 /* eslint-disable */
-import Debug from 'debug';
 import events from 'events';
 import Writer from './writer';
 import Parser from './parser';
@@ -15,8 +14,9 @@ import { Command, Request, parameterT, ApsDataRequest, ReceivedDataResponse, Dat
 
 // @ts-ignore
 import slip from 'slip';
+import {logger} from '../../../utils/logger';
 
-const debug = Debug('zigbee-herdsman:deconz:driver');
+const NS = 'zh:deconz:driver';
 
 const autoDetectDefinitions = [
     {manufacturer: 'dresden elektronik ingenieurtechnik GmbH', vendorId: '1cf1', productId: '0030'}, // Conbee II
@@ -96,10 +96,10 @@ class Driver extends events.EventEmitter {
                 .then(result => {})
                 .catch(error => {
                     //try again
-                    debug("try again to reset watchdog");
+                    logger.debug("try again to reset watchdog", NS);
                     that.writeParameterRequest(0x26, 600)
                     .then(result => {})
-                    .catch(error => {debug("warning watchdog was not reset");});
+                    .catch(error => {logger.debug("warning watchdog was not reset", NS);});
                 });
              }, (1000 * 60 * 8)); // 8 minutes
 
@@ -125,11 +125,11 @@ class Driver extends events.EventEmitter {
     
     protected catchPromise(val: any) {
         return Promise.resolve(val)
-            .catch(err => debug(`Promise was caught with reason: ${err}`));
+            .catch(err => logger.debug(`Promise was caught with reason: ${err}`, NS));
     }
 
     public setDelay(delay: number): void {
-        debug(`Set delay to ${delay}`);
+        logger.debug(`Set delay to ${delay}`, NS);
         this.DELAY = delay;
         this.READY_TO_SEND_TIMEOUT = delay;
         this.PROCESS_QUEUES = delay;
@@ -174,7 +174,7 @@ class Driver extends events.EventEmitter {
     }
 
     private onPortClose(): void {
-        debug('Port closed');
+        logger.debug('Port closed', NS);
         this.initialized = false;
         this.emit('close');
     }
@@ -185,7 +185,7 @@ class Driver extends events.EventEmitter {
     }
 
     public openSerialPort(baudrate: number): Promise<void> {
-        debug(`Opening with ${this.path}`);
+        logger.debug(`Opening with ${this.path}`, NS);
         this.serialPort = new SerialPort({path: this.path, baudRate: baudrate, autoOpen: false}); //38400 RaspBee //115200 ConBee3
 
         this.writer = new Writer();
@@ -205,7 +205,7 @@ class Driver extends events.EventEmitter {
                         this.serialPort.close();
                     }
                 } else {
-                    debug('Serialport opened');
+                    logger.debug('Serialport opened', NS);
                     this.initialized = true;
                     resolve();
                 }
@@ -215,7 +215,7 @@ class Driver extends events.EventEmitter {
 
     private async openSocketPort(): Promise<void> {
         const info = SocketPortUtils.parseTcpPath(this.path);
-        debug(`Opening TCP socket with ${info.host}:${info.port}`);
+        logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
         this.socketPort = new net.Socket();
         this.socketPort.setNoDelay(true);
         this.socketPort.setKeepAlive(true, 15000);
@@ -229,13 +229,13 @@ class Driver extends events.EventEmitter {
 
         return new Promise((resolve, reject): void => {
             this.socketPort.on('connect', function() {
-                debug('Socket connected');
+                logger.debug('Socket connected', NS);
             });
 
             // eslint-disable-next-line
             const self = this;
             this.socketPort.on('ready', async function() {
-                debug('Socket ready');
+                logger.debug('Socket ready', NS);
                 self.initialized = true;
                 resolve();
             });
@@ -243,7 +243,7 @@ class Driver extends events.EventEmitter {
             this.socketPort.once('close', this.onPortClose);
 
             this.socketPort.on('error', function () {
-                debug('Socket error');
+                logger.debug('Socket error', NS);
                 reject(new Error(`Error while opening socket`));
                 self.initialized = false;
             });
@@ -280,7 +280,7 @@ class Driver extends events.EventEmitter {
     public readParameterRequest(parameterId: number) : Promise<Command> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            //debug(`push read parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId}`);
+            //logger.debug(`push read parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId}`, NS);
             const ts = 0;
             const commandId = PARAM.PARAM.FrameType.ReadParameter;
             const req: Request = {commandId, parameterId, seqNumber, resolve, reject, ts};
@@ -291,7 +291,7 @@ class Driver extends events.EventEmitter {
     public writeParameterRequest(parameterId: number, parameter: parameterT) : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            //debug(`push write parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId} parameter: ${parameter}`);
+            //logger.debug(`push write parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId} parameter: ${parameter}`, NS);
             const ts = 0;
             const commandId = PARAM.PARAM.FrameType.WriteParameter;
             const req: Request = {commandId, parameterId, parameter, seqNumber, resolve, reject, ts};
@@ -302,7 +302,7 @@ class Driver extends events.EventEmitter {
     public readFirmwareVersionRequest() : Promise<number[]> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            //debug(`push read firmware version request to queue. seqNr: ${seqNumber}`);
+            //logger.debug(`push read firmware version request to queue. seqNr: ${seqNumber}`, NS);
             const ts = 0;
             const commandId = PARAM.PARAM.FrameType.ReadFirmwareVersion;
             const req: Request = {commandId, seqNumber, resolve, reject, ts};
@@ -330,7 +330,7 @@ class Driver extends events.EventEmitter {
         } else {
             parameterLength = this.getLengthOfParameter(parameterId);
         }
-        //debug("SEND WRITE_PARAMETER Request - parameter id: " + parameterId + " value: " + value.toString(16) + " length: " + parameterLength);
+        //logger.debug("SEND WRITE_PARAMETER Request - parameter id: " + parameterId + " value: " + value.toString(16) + " length: " + parameterLength, NS);
 
         const payloadLength = 1 + parameterLength;
         const frameLength = 7 + payloadLength;
@@ -388,7 +388,7 @@ class Driver extends events.EventEmitter {
     private sendReadFirmwareVersionRequest(seqNumber: number) {
         /* command id, sequence number, 0, framelength(U16) */
         const requestFrame = [PARAM.PARAM.FrameType.ReadFirmwareVersion, seqNumber, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00];
-        //debug(requestFrame);
+        //logger.debug(requestFrame, NS);
         this.sendRequest(requestFrame);
     }
 
@@ -406,13 +406,13 @@ class Driver extends events.EventEmitter {
         if ( this.portType === 'serial') {
             this.serialPort.write(slipframe, function(err) {
                 if (err) {
-                    debug("Error writing serial Port: " + err.message);
+                    logger.debug("Error writing serial Port: " + err.message, NS);
                 }
             });
         } else {
             this.socketPort.write(slipframe, function(err) {
                 if (err) {
-                    debug("Error writing socket Port: " + err.message);
+                    logger.debug("Error writing socket Port: " + err.message, NS);
                 }
             });
         }
@@ -430,23 +430,23 @@ class Driver extends events.EventEmitter {
 
         switch (req.commandId) {
             case PARAM.PARAM.FrameType.ReadParameter:
-                debug(`send read parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId}`);
+                logger.debug(`send read parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId}`, NS);
                 this.sendReadParameterRequest(req.parameterId, req.seqNumber);
                 break;
             case PARAM.PARAM.FrameType.WriteParameter:
-                debug(`send write parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId} param: ${req.parameter}`);
+                logger.debug(`send write parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId} param: ${req.parameter}`, NS);
                 this.sendWriteParameterRequest(req.parameterId, req.parameter, req.seqNumber);
                 break;
             case PARAM.PARAM.FrameType.ReadFirmwareVersion:
-                debug(`send read firmware version request from queue. seqNr: ${req.seqNumber}`);
+                logger.debug(`send read firmware version request from queue. seqNr: ${req.seqNumber}`, NS);
                 this.sendReadFirmwareVersionRequest(req.seqNumber);
                 break;
             case PARAM.PARAM.FrameType.ReadDeviceState:
-                debug(`send read device state from queue. seqNr: ${req.seqNumber}`);
+                logger.debug(`send read device state from queue. seqNr: ${req.seqNumber}`, NS);
                 this.sendReadDeviceStateRequest(req.seqNumber);
                 break;
             case PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE:
-                debug(`send change network state request from queue. seqNr: ${req.seqNumber}`);
+                logger.debug(`send change network state request from queue. seqNr: ${req.seqNumber}`, NS);
                 this.sendChangeNetworkStateRequest(req.seqNumber, req.networkState);
                 break;
             default:
@@ -464,7 +464,7 @@ class Driver extends events.EventEmitter {
             const now = Date.now();
 
             if ((now - req.ts) > 10000) {
-                debug(`Timeout for request - CMD: 0x${req.commandId.toString(16)} seqNr: ${req.seqNumber}`);
+                logger.debug(`Timeout for request - CMD: 0x${req.commandId.toString(16)} seqNr: ${req.seqNumber}`, NS);
                 //remove from busyQueue
                 busyQueue.splice(i, 1);
                 timeoutCounter++;
@@ -476,7 +476,7 @@ class Driver extends events.EventEmitter {
                 req.reject("TIMEOUT");
                 if (timeoutCounter >= 2) {
                     timeoutCounter = 0;
-                    debug("too many timeouts - restart serial connecion");
+                    logger.debug("too many timeouts - restart serial connecion", NS);
                     if (this.serialPort?.isOpen) {
                         this.serialPort.close();
                     }
@@ -492,7 +492,7 @@ class Driver extends events.EventEmitter {
     public changeNetworkStateRequest(networkState: number) : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            //debug(`push change network state request to apsQueue. seqNr: ${seqNumber}`);
+            //logger.debug(`push change network state request to apsQueue. seqNr: ${seqNumber}`, NS);
             const ts = 0;
             const commandId = PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE;
             const req: Request = {commandId, networkState, seqNumber, resolve, reject, ts};
@@ -508,7 +508,7 @@ class Driver extends events.EventEmitter {
     private deviceStateRequest() {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            //debug(`DEVICE_STATE Request - seqNr: ${seqNumber}`);
+            //logger.debug(`DEVICE_STATE Request - seqNr: ${seqNumber}`, NS);
             const ts = 0;
             const commandId = PARAM.PARAM.FrameType.ReadDeviceState;
             const req: Request = {commandId, seqNumber, resolve, reject, ts};
@@ -523,14 +523,14 @@ class Driver extends events.EventEmitter {
         this.configChanged = (currentDeviceStatus >> 4) & 0x01;
         this.apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
 
-        debug("networkstate: " + networkState + " apsDataConfirm: " + this.apsDataConfirm + " apsDataIndication: " + this.apsDataIndication +
-            " configChanged: " + this.configChanged + " apsRequestFreeSlots: " + this.apsRequestFreeSlots);
+        logger.debug("networkstate: " + networkState + " apsDataConfirm: " + this.apsDataConfirm + " apsDataIndication: " + this.apsDataIndication +
+            " configChanged: " + this.configChanged + " apsRequestFreeSlots: " + this.apsRequestFreeSlots, NS);
     }
 
     private async handleDeviceStatus() {
         if (this.apsDataConfirm === 1) {
             try {
-                debug("query aps data confirm");
+                logger.debug("query aps data confirm", NS);
                 this.apsDataConfirm = 0;
                 const x = await this.querySendDataStateRequest();
             } catch (e) {
@@ -541,7 +541,7 @@ class Driver extends events.EventEmitter {
         }
         if (this.apsDataIndication === 1) {
             try {
-                debug("query aps data indication");
+                logger.debug("query aps data indication", NS);
                 this.apsDataIndication = 0;
                 const x = await this.readReceivedDataRequest();
             } catch (e) {
@@ -559,7 +559,7 @@ class Driver extends events.EventEmitter {
     private readReceivedDataRequest() : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            //debug(`push read received data request to apsQueue. seqNr: ${seqNumber}`);
+            //logger.debug(`push read received data request to apsQueue. seqNr: ${seqNumber}`, NS);
             const ts = 0;
             const commandId = PARAM.PARAM.APS.DATA_INDICATION;
             const req: Request = {commandId, seqNumber, resolve, reject, ts};
@@ -571,7 +571,7 @@ class Driver extends events.EventEmitter {
     public enqueueSendDataRequest(request: ApsDataRequest) : Promise<void | ReceivedDataResponse> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            //debug(`push enqueue send data request to apsQueue. seqNr: ${seqNumber}`);
+            //logger.debug(`push enqueue send data request to apsQueue. seqNr: ${seqNumber}`, NS);
             const ts = 0;
             const requestId = request.requestId;
             const commandId = PARAM.PARAM.APS.DATA_REQUEST;
@@ -584,7 +584,7 @@ class Driver extends events.EventEmitter {
     private querySendDataStateRequest() : Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
-            //debug(`push query send data state request to apsQueue. seqNr: ${seqNumber}`);
+            //logger.debug(`push query send data state request to apsQueue. seqNr: ${seqNumber}`, NS);
             const ts = 0;
             const commandId = PARAM.PARAM.APS.DATA_CONFIRM;
             const req: Request = {commandId, seqNumber, resolve, reject, ts};
@@ -598,7 +598,7 @@ class Driver extends events.EventEmitter {
         }
 
         if (this.apsRequestFreeSlots !== 1) {
-            debug("no free slots. Delay sending of APS Request");
+            logger.debug("no free slots. Delay sending of APS Request", NS);
             await this.sleep(1000);
             return;
         }
@@ -610,7 +610,7 @@ class Driver extends events.EventEmitter {
             case PARAM.PARAM.APS.DATA_REQUEST:
 
                 if (readyToSend === false) { // wait until last request was confirmed or given time elapsed
-                    debug("delay sending of APS Request");
+                    logger.debug("delay sending of APS Request", NS);
                     apsQueue.unshift(req);
                     break;
                 } else {
@@ -638,7 +638,7 @@ class Driver extends events.EventEmitter {
 
         switch (req.commandId) {
             case PARAM.PARAM.APS.DATA_INDICATION:
-                //debug(`read received data request. seqNr: ${req.seqNumber}`);
+                //logger.debug(`read received data request. seqNr: ${req.seqNumber}`, NS);
                 if (this.DELAY === 0) {
                     this.sendReadReceivedDataRequest(req.seqNumber);
                 } else {
@@ -646,7 +646,7 @@ class Driver extends events.EventEmitter {
                 }
                 break;
             case PARAM.PARAM.APS.DATA_CONFIRM:
-                //debug(`query send data state request. seqNr: ${req.seqNumber}`);
+                //logger.debug(`query send data state request. seqNr: ${req.seqNumber}`, NS);
                 if (this.DELAY === 0) {
                     this.sendQueryDataStateRequest(req.seqNumber);
                 } else {
@@ -660,13 +660,13 @@ class Driver extends events.EventEmitter {
     }
 
     private sendQueryDataStateRequest(seqNumber: number) {
-        debug(`DATA_CONFIRM - sending data state request - SeqNr. ${seqNumber}`);
+        logger.debug(`DATA_CONFIRM - sending data state request - SeqNr. ${seqNumber}`, NS);
         const requestFrame = [PARAM.PARAM.APS.DATA_CONFIRM, seqNumber, 0x00, 0x07, 0x00, 0x00, 0x00];
         this.sendRequest(requestFrame);
     }
 
     private sendReadReceivedDataRequest(seqNumber: number) {
-        debug(`DATA_INDICATION - sending read data request - SeqNr. ${seqNumber}`);
+        logger.debug(`DATA_INDICATION - sending read data request - SeqNr. ${seqNumber}`, NS);
         // payloadlength = 0, flag = none
         const requestFrame = [PARAM.PARAM.APS.DATA_INDICATION, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, 0x01];
         this.sendRequest(requestFrame);
@@ -696,7 +696,7 @@ class Driver extends events.EventEmitter {
             dest += request.destEndpoint;
         }
 
-        debug(`DATA_REQUEST - destAddr: 0x${dest} SeqNr. ${seqNumber} request id: ${request.requestId}`);
+        logger.debug(`DATA_REQUEST - destAddr: 0x${dest} SeqNr. ${seqNumber} request id: ${request.requestId}`, NS);
         const requestFrame = [PARAM.PARAM.APS.DATA_REQUEST, seqNumber, 0x00, frameLength & 0xff, (frameLength >> 8) & 0xff,
             payloadLength & 0xff, (payloadLength >> 8) & 0xff,
             request.requestId, 0x00, request.destAddrMode].concat(
@@ -717,7 +717,7 @@ class Driver extends events.EventEmitter {
                 timeout = req.request.timeout * 1000; // seconds * 1000 = milliseconds
             }
             if ((now - req.ts) > timeout) {
-                debug(`Timeout for aps request CMD: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`);
+                logger.debug(`Timeout for aps request CMD: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`, NS);
                 //remove from busyQueue
                 apsBusyQueue.splice(i, 1);
                 req.reject(new Error("APS TIMEOUT"));

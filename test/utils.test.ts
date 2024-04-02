@@ -1,5 +1,14 @@
 import "regenerator-runtime/runtime";
 import {IsNumberArray, Wait, Queue, Waitress, AssertString} from '../src/utils';
+import {logger, setLogger} from '../src/utils/logger';
+
+
+const mockLogger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn(),
+    error: jest.fn(),
+};
 
 describe('Utils', () => {
     it('IsNumberArray valid', () => {
@@ -147,5 +156,31 @@ describe('Utils', () => {
         await job2Result;
         expect(finished).toEqual([4, 1, 2, 3]);
         expect(queue.count()).toBe(5);
+    });
+
+    it('Logs', () => {
+        const debugSpy = jest.spyOn(console, "debug");
+        const infoSpy = jest.spyOn(console, "info");
+        const warningSpy = jest.spyOn(console, "warn");
+        const errorSpy = jest.spyOn(console, "error");
+        logger.debug('debug', 'zh');
+        expect(debugSpy).toHaveBeenCalledWith('zh: debug');
+        logger.info('info', 'zh');
+        expect(infoSpy).toHaveBeenCalledWith('zh: info');
+        logger.warning('warning', 'zh');
+        expect(warningSpy).toHaveBeenCalledWith('zh: warning');
+        logger.error('error', 'zh');
+        expect(errorSpy).toHaveBeenCalledWith('zh: error');
+
+        setLogger(mockLogger);
+        expect(logger).toEqual(mockLogger);
+        logger.debug('debug', 'zh');
+        expect(mockLogger.debug).toHaveBeenCalledWith('debug', 'zh');
+        logger.info('info', 'zh');
+        expect(mockLogger.info).toHaveBeenCalledWith('info', 'zh');
+        logger.warning('warning', 'zh');
+        expect(mockLogger.warning).toHaveBeenCalledWith('warning', 'zh');
+        logger.error('error', 'zh');
+        expect(mockLogger.error).toHaveBeenCalledWith('error', 'zh');
     });
 });

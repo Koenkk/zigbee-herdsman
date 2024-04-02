@@ -1,5 +1,4 @@
 /* istanbul ignore file */
-import Debug from "debug";
 import {Driver} from '../driver';
 import * as Models from "../../../models";
 import {
@@ -12,11 +11,13 @@ import {
 import {channelsMask2list} from '../driver/utils';
 import {fs} from "mz";
 import {BackupUtils} from "../../../utils";
+import {logger} from '../../../utils/logger';
+
+const NS = 'zh:ezsp:backup';
 
 export class EZSPAdapterBackup {
     private driver: Driver;
     private defaultPath: string;
-    private debug = Debug("zigbee-herdsman:adapter:ezsp:backup");
 
     public constructor(driver: Driver, path: string) {
         this.driver = driver;
@@ -24,7 +25,7 @@ export class EZSPAdapterBackup {
     }
 
     public async createBackup(): Promise<Models.Backup> {
-        this.debug("creating backup");
+        logger.debug("creating backup", NS);
         const version: number = await this.driver.ezsp.version();
         const linkResult = await this.driver.getKey(EmberKeyType.TRUST_CENTER_LINK_KEY);
         const netParams = await this.driver.ezsp.execCommand('getNetworkParameters');

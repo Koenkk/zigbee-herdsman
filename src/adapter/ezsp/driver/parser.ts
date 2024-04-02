@@ -1,10 +1,10 @@
 /* istanbul ignore file */
 import * as stream from 'stream';
 import * as consts from './consts';
-import Debug from "debug";
 import Frame from './frame';
+import {logger} from '../../../utils/logger';
 
-const debug = Debug('zigbee-herdsman:adapter:ezsp:uart');
+const NS = 'zh:ezsp:uart';
 
 export class Parser extends stream.Transform {
     private tail: Buffer[];
@@ -20,7 +20,7 @@ export class Parser extends stream.Transform {
     public _transform(chunk: Buffer, _: string, cb: () => void): void {
         if (this.flagXONXOFF && (chunk.indexOf(consts.XON) >= 0 || chunk.indexOf(consts.XOFF) >= 0)) {
             // XXX: should really throw, but just assert for now to flag potential problematic setups
-            console.assert(false, `Host driver did not remove XON/XOFF from input stream. Driver not setup for XON/XOFF?`);
+            logger.error(`Host driver did not remove XON/XOFF from input stream. Driver not setup for XON/XOFF?`, NS);
         }
 
         if (chunk.indexOf(consts.CANCEL) >= 0) {
@@ -33,7 +33,7 @@ export class Parser extends stream.Transform {
             chunk = chunk.subarray(chunk.indexOf(consts.FLAG) + 1);
         }
 
-        debug(`<-- [${chunk.toString('hex')}]`);
+        logger.debug(`<-- [${chunk.toString('hex')}]`, NS);
 
         let delimiterPlace = chunk.indexOf(consts.FLAG);
 
@@ -50,7 +50,7 @@ export class Parser extends stream.Transform {
                 }
 
             } catch (error) {
-                debug(`<-- error ${error.stack}`);
+                logger.debug(`<-- error ${error.stack}`, NS);
             }
 
             chunk = chunk.subarray(delimiterPlace + 1);

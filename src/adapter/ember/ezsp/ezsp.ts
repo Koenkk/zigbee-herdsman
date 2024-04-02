@@ -1,5 +1,4 @@
 /* istanbul ignore file */
-import Debug from "debug";
 import EventEmitter from "events";
 import {SerialPortOptions} from "../../tstype";
 import Cluster from "../../../zcl/definition/cluster";
@@ -181,8 +180,9 @@ import {
     WILDCARD_PROFILE_ID
 } from "../consts";
 import {FIXED_ENDPOINTS} from "../adapter/endpoints";
+import {logger} from "../../../utils/logger";
 
-const debug = Debug('zigbee-herdsman:adapter:ember:ezsp');
+const NS = 'zh:ember:ezsp';
 
 
 /**
@@ -335,7 +335,7 @@ export class Ezsp extends EventEmitter {
     }
 
     public async start(): Promise<EzspStatus> {
-        console.log(`======== EZSP starting ========`);
+        logger.info(`======== EZSP starting ========`, NS);
 
         this.initVariables();
 
@@ -352,7 +352,7 @@ export class Ezsp extends EventEmitter {
             status = await this.ash.start();
 
             if (status === EzspStatus.SUCCESS) {
-                console.log(`======== EZSP started ========`);
+                logger.info(`======== EZSP started ========`, NS);
                 this.registerHandlers();
                 return status;
             }
@@ -375,7 +375,7 @@ export class Ezsp extends EventEmitter {
         clearInterval(this.tickHandle);
 
         this.initVariables();
-        console.log(`======== EZSP stopped ========`);
+        logger.info(`======== EZSP stopped ========`, NS);
     }
 
     /**
@@ -418,14 +418,14 @@ export class Ezsp extends EventEmitter {
         if (status === EzspStatus.ERROR_QUEUE_FULL) {
             this.counterErrQueueFull += 1;
 
-            console.error(`NCP Queue full (counter: ${this.counterErrQueueFull}). ${lastFrameStr}`);
+            logger.error(`NCP Queue full (counter: ${this.counterErrQueueFull}). ${lastFrameStr}`, NS);
         } else if (status === EzspStatus.ERROR_OVERFLOW) {
-            console.error(
-                `The NCP has run out of buffers, causing general malfunction. Remediate network congestion, if present. `
-                + lastFrameStr
+            logger.error(
+                `The NCP has run out of buffers, causing general malfunction. Remediate network congestion, if present. ${lastFrameStr}`,
+                NS,
             );
         } else {
-            console.error(`ERROR Transaction failure; status=${EzspStatus[status]}. ${lastFrameStr}`);
+            logger.error(`ERROR Transaction failure; status=${EzspStatus[status]}. ${lastFrameStr}`, NS);
         }
 
         // Do not reset if this is a decryption failure, as we ignored the packet
@@ -468,7 +468,7 @@ export class Ezsp extends EventEmitter {
 
     private startCommand(command: number): void {
         if (this.sendingCommand) {
-            console.error(`[SEND COMMAND] Cannot send second one before processing response from first one.`);
+            logger.error(`[SEND COMMAND] Cannot send second one before processing response from first one.`, NS);
             throw new Error(EzspStatus[EzspStatus.ERROR_INVALID_CALL]);
         }
 
@@ -516,7 +516,7 @@ export class Ezsp extends EventEmitter {
      */
     private async sendCommand(): Promise<EzspStatus> {
         if (!this.checkConnection()) {
-            debug("[SEND COMMAND] NOT CONNECTED");
+            logger.debug(`[SEND COMMAND] NOT CONNECTED`, NS);
             return EzspStatus.NOT_CONNECTED;
         }
 
@@ -549,7 +549,7 @@ export class Ezsp extends EventEmitter {
 
         let status: EzspStatus;
 
-        debug(`===> ${this.frameToString}`);
+        logger.debug(`===> ${this.frameToString}`, NS);
 
         try {
             status = await (new Promise<EzspStatus>((resolve, reject: (reason: Error) => void): void => {
@@ -578,7 +578,7 @@ export class Ezsp extends EventEmitter {
                 throw new Error(EzspStatus[status]);
             }
         } catch (err) {
-            debug(`=x=> ${this.frameToString} Error: ${err}`);
+            logger.debug(`=x=> ${this.frameToString} Error: ${err}`, NS);
 
             this.ezspErrorHandler(status);
         }
@@ -607,7 +607,7 @@ export class Ezsp extends EventEmitter {
             // While we are waiting for a response to a command, we use the asynch callback flag to ignore asynchronous callbacks.
             // This allows our caller to assume that no callbacks will appear between sending a command and receiving its response.
             if (this.waitingForResponse && (buffer.data[EZSP_FRAME_CONTROL_INDEX] & EZSP_FRAME_CONTROL_ASYNCH_CB)) {
-                debug(`Skipping async callback while waiting for response to command.`);
+                logger.debug(`Skipping async callback while waiting for response to command.`, NS);
 
                 if (this.ash.rxFree.length === 0) {
                     dropBuffer = buffer;
@@ -620,7 +620,7 @@ export class Ezsp extends EventEmitter {
 
                 this.frameLength = buffer.len;
 
-                debug(`<=== ${this.frameToString}`);// raw=${this.frameContents.subarray(0, this.frameLength).toString('hex')}`);
+                logger.debug(`<=== ${this.frameToString}`, NS);
 
                 this.ash.rxFree.freeBuffer(buffer);
 
@@ -634,7 +634,7 @@ export class Ezsp extends EventEmitter {
             this.ash.rxQueue.removeEntry(dropBuffer);
             this.ash.rxFree.freeBuffer(dropBuffer);
 
-            debug(`ERROR Host receive queue full. Dropping received callback: ${dropBuffer.data.toString('hex')}`);
+            logger.debug(`ERROR Host receive queue full. Dropping received callback: ${dropBuffer.data.toString('hex')}`, NS);
 
             this.ezspErrorHandler(EzspStatus.ERROR_QUEUE_FULL);
         }
@@ -687,7 +687,7 @@ export class Ezsp extends EventEmitter {
         }
 
         if (status !== EzspStatus.SUCCESS) {
-            debug(`[RESPONSE RECEIVED] ERROR ${EzspStatus[status]}`);
+            logger.debug(`[RESPONSE RECEIVED] ERROR ${EzspStatus[status]}`, NS);
             this.ezspErrorHandler(status);
         }
 
@@ -1134,7 +1134,10 @@ export class Ezsp extends EventEmitter {
         apsFrame.sequence = apsSequence;
 
         // NOTE: match `~~~>` from adapter since this is just a wrapper for it
-        debug(`~~~> [SENT type=${EmberOutgoingMessageType[type]} apsSequence=${apsSequence} messageTag=${messageTag} status=${EmberStatus[status]}]`);
+        logger.debug(
+            `~~~> [SENT type=${EmberOutgoingMessageType[type]} apsSequence=${apsSequence} messageTag=${messageTag} status=${EmberStatus[status]}]`,
+            NS,
+        );
         return [status, messageTag];
     }
 
@@ -1753,7 +1756,7 @@ export class Ezsp extends EventEmitter {
      * Indicates that there are currently no pending callbacks.
      */
     ezspNoCallbacks(): void {
-        debug(`ezspNoCallbacks(): callback called`);
+        logger.debug(`ezspNoCallbacks(): callback called`, NS);
     }
 
     /**
@@ -1898,7 +1901,7 @@ export class Ezsp extends EventEmitter {
      * @param tokenAddress uint16_t The address of the stack token that has changed.
      */
     ezspStackTokenChangedHandler(tokenAddress: number): void {
-        debug(`ezspStackTokenChangedHandler(): callback called with: [tokenAddress=${tokenAddress}]`);
+        logger.debug(`ezspStackTokenChangedHandler(): callback called with: [tokenAddress=${tokenAddress}]`, NS);
     }
 
     /**
@@ -1983,7 +1986,7 @@ export class Ezsp extends EventEmitter {
      * @param timerId uint8_t Which timer generated the callback (0 or 1).
      */
     ezspTimerHandler(timerId: number): void {
-        debug(`ezspTimerHandler(): callback called with: [timerId=${timerId}]`);
+        logger.debug(`ezspTimerHandler(): callback called with: [timerId=${timerId}]`, NS);
     }
 
     /**
@@ -2050,7 +2053,7 @@ export class Ezsp extends EventEmitter {
      * @param type Type of Counter
      */
     ezspCounterRolloverHandler(type: EmberCounterType): void {
-        debug(`ezspCounterRolloverHandler(): callback called with: [type=${EmberCounterType[type]}]`);
+        logger.debug(`ezspCounterRolloverHandler(): callback called with: [type=${EmberCounterType[type]}]`, NS);
     }
 
     /**
@@ -2153,7 +2156,7 @@ export class Ezsp extends EventEmitter {
      * @param payload uint8_t * The payload of the custom frame.
      */
     ezspCustomFrameHandler(payloadLength: number, payload: number[]): void {
-        debug(`ezspCustomFrameHandler(): callback called with: [payloadLength=${payloadLength}], [payload=${payload}]`);
+        logger.debug(`ezspCustomFrameHandler(): callback called with: [payloadLength=${payloadLength}], [payload=${payload}]`, NS);
     }
 
     /**
@@ -2319,7 +2322,7 @@ export class Ezsp extends EventEmitter {
      * @param status Stack status
      */
     ezspStackStatusHandler(status: EmberStatus): void {
-        debug(`ezspStackStatusHandler(): callback called with: [status=${EmberStatus[status]}]`);
+        logger.debug(`ezspStackStatusHandler(): callback called with: [status=${EmberStatus[status]}]`, NS);
 
         this.emit(EzspEvents.STACK_STATUS, status);
     }
@@ -2368,8 +2371,8 @@ export class Ezsp extends EventEmitter {
      * @param maxRssiValue int8_t The maximum RSSI value found on the channel.
      */
     ezspEnergyScanResultHandler(channel: number, maxRssiValue: number): void {
-        debug(`ezspEnergyScanResultHandler(): callback called with: [channel=${channel}], [maxRssiValue=${maxRssiValue}]`);
-        console.log(`Energy scan for channel ${channel} reports max RSSI value at ${maxRssiValue}.`);
+        logger.debug(`ezspEnergyScanResultHandler(): callback called with: [channel=${channel}], [maxRssiValue=${maxRssiValue}]`, NS);
+        logger.info(`Energy scan for channel ${channel} reports max RSSI value at ${maxRssiValue}.`, NS);
     }
 
     /**
@@ -2381,8 +2384,8 @@ export class Ezsp extends EventEmitter {
      * @param lastHopRssi int8_t The energy level (in units of dBm) observed during the reception.
      */
     ezspNetworkFoundHandler(networkFound: EmberZigbeeNetwork, lastHopLqi: number, lastHopRssi: number): void {
-        debug(`ezspNetworkFoundHandler(): callback called with: [networkFound=${networkFound}], `
-            + `[lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}]`);
+        logger.debug(`ezspNetworkFoundHandler(): callback called with: [networkFound=${networkFound}], `
+            + `[lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}]`, NS);
     }
     
     /**
@@ -2394,7 +2397,7 @@ export class Ezsp extends EventEmitter {
      * error conditions signify a failure to scan on the channel specified.
      */
     ezspScanCompleteHandler(channel: number, status: EmberStatus): void {
-        debug(`ezspScanCompleteHandler(): callback called with: [channel=${channel}], [status=${EmberStatus[status]}]`);
+        logger.debug(`ezspScanCompleteHandler(): callback called with: [channel=${channel}], [status=${EmberStatus[status]}]`, NS);
     }
 
     /**
@@ -2405,7 +2408,7 @@ export class Ezsp extends EventEmitter {
      * @param channel uint8_t The channel that the unused panID was found on.
      */
     ezspUnusedPanIdFoundHandler(panId: EmberPanId, channel: number): void {
-        debug(`ezspUnusedPanIdFoundHandler(): callback called with: [panId=${panId}], [channel=${channel}]`);
+        logger.debug(`ezspUnusedPanIdFoundHandler(): callback called with: [panId=${panId}], [channel=${channel}]`, NS);
     }
 
     /**
@@ -2618,8 +2621,8 @@ export class Ezsp extends EventEmitter {
      * @param childType The node type of the child.
      */
     ezspChildJoinHandler(index: number, joining: boolean, childId: EmberNodeId, childEui64: EmberEUI64, childType: EmberNodeType): void {
-        debug(`ezspChildJoinHandler(): callback called with: [index=${index}], [joining=${joining}], `
-            + `[childId=${childId}], [childEui64=${childEui64}], [childType=${childType}]`);
+        logger.debug(`ezspChildJoinHandler(): callback called with: [index=${index}], [joining=${joining}], `
+            + `[childId=${childId}], [childEui64=${childEui64}], [childType=${childType}]`, NS);
     }
     
     /**
@@ -3389,8 +3392,8 @@ export class Ezsp extends EventEmitter {
     */
     ezspDutyCycleHandler(channelPage: number, channel: number, state: EmberDutyCycleState, totalDevices: number,
         arrayOfDeviceDutyCycles: EmberPerDeviceDutyCycle[]): void {
-        debug(`ezspDutyCycleHandler(): callback called with: [channelPage=${channelPage}], [channel=${channel}], `
-            + `[state=${state}], [totalDevices=${totalDevices}], [arrayOfDeviceDutyCycles=${arrayOfDeviceDutyCycles}]`);
+        logger.debug(`ezspDutyCycleHandler(): callback called with: [channelPage=${channelPage}], [channel=${channel}], `
+            + `[state=${state}], [totalDevices=${totalDevices}], [arrayOfDeviceDutyCycles=${arrayOfDeviceDutyCycles}]`, NS);
     }
     
     /**
@@ -3655,8 +3658,8 @@ export class Ezsp extends EventEmitter {
      * @param policyDecision EMBER_SUCCESS if the binding was added to the table and any other status if not.
      */
     ezspRemoteSetBindingHandler(entry: EmberBindingTableEntry, index: number, policyDecision: EmberStatus): void {
-        debug(`ezspRemoteSetBindingHandler(): callback called with: [entry=${entry}], [index=${index}], `
-            + `[policyDecision=${EmberStatus[policyDecision]}]`);
+        logger.debug(`ezspRemoteSetBindingHandler(): callback called with: [entry=${entry}], [index=${index}], `
+            + `[policyDecision=${EmberStatus[policyDecision]}]`, NS);
     }
 
     /**
@@ -3669,7 +3672,7 @@ export class Ezsp extends EventEmitter {
      * @param policyDecision EMBER_SUCCESS if the binding was removed from the table and any other status if not.
      */
     ezspRemoteDeleteBindingHandler(index: number, policyDecision: EmberStatus): void {
-        debug(`ezspRemoteDeleteBindingHandler(): callback called with: [index=${index}], [policyDecision=${EmberStatus[policyDecision]}]`);
+        logger.debug(`ezspRemoteDeleteBindingHandler(): callback called with: [index=${index}], [policyDecision=${EmberStatus[policyDecision]}]`, NS);
     }
 
     //-----------------------------------------------------------------------------
@@ -3951,9 +3954,12 @@ export class Ezsp extends EventEmitter {
      */
     ezspMessageSentHandler(type: EmberOutgoingMessageType, indexOrDestination: number, apsFrame: EmberApsFrame, messageTag: number,
         status: EmberStatus, messageContents: Buffer): void {
-        debug(`ezspMessageSentHandler(): callback called with: [type=${EmberOutgoingMessageType[type]}], [indexOrDestination=${indexOrDestination}], `
+        logger.debug(
+            `ezspMessageSentHandler(): callback called with: [type=${EmberOutgoingMessageType[type]}], [indexOrDestination=${indexOrDestination}], `
             + `[apsFrame=${JSON.stringify(apsFrame)}], [messageTag=${messageTag}], [status=${EmberStatus[status]}], `
-            + `[messageContents=${messageContents.toString('hex')}]`);
+            + `[messageContents=${messageContents.toString('hex')}]`,
+            NS,
+        );
 
         if (status === EmberStatus.DELIVERY_FAILED) {
             // no ACK was received from the destination
@@ -4050,7 +4056,7 @@ export class Ezsp extends EventEmitter {
      *   - EMBER_MAC_NO_ACK_RECEIVED - The poll message was sent but not acknowledged by the parent.
      */
     ezspPollCompleteHandler(status: EmberStatus): void {
-        debug(`ezspPollCompleteHandler(): callback called with: [status=${EmberStatus[status]}]`);
+        logger.debug(`ezspPollCompleteHandler(): callback called with: [status=${EmberStatus[status]}]`, NS);
     }
 
     /**
@@ -4060,7 +4066,7 @@ export class Ezsp extends EventEmitter {
      * @param transmitExpected True if transmit is expected, false otherwise.
      */
     ezspPollHandler(childId: EmberNodeId, transmitExpected: boolean): void {
-        debug(`ezspPollHandler(): callback called with:  [childId=${childId}], [transmitExpected=${transmitExpected}]`);
+        logger.debug(`ezspPollHandler(): callback called with:  [childId=${childId}], [transmitExpected=${transmitExpected}]`, NS);
     }
 
     /**
@@ -4072,7 +4078,7 @@ export class Ezsp extends EventEmitter {
      * @param senderEui64 The EUI64 of the sender
      */
     ezspIncomingSenderEui64Handler(senderEui64: EmberEUI64): void {
-        debug(`ezspIncomingSenderEui64Handler(): callback called with: [senderEui64=${senderEui64}]`);
+        logger.debug(`ezspIncomingSenderEui64Handler(): callback called with: [senderEui64=${senderEui64}]`, NS);
     }
 
     /**
@@ -4091,9 +4097,12 @@ export class Ezsp extends EventEmitter {
      */
     ezspIncomingMessageHandler(type: EmberIncomingMessageType, apsFrame: EmberApsFrame, lastHopLqi: number, lastHopRssi: number,
         sender: EmberNodeId, bindingIndex: number, addressIndex: number, messageContents: Buffer): void {
-        debug(`ezspIncomingMessageHandler(): callback called with: [type=${EmberIncomingMessageType[type]}], [apsFrame=${JSON.stringify(apsFrame)}], `
+        logger.debug(
+            `ezspIncomingMessageHandler(): callback called with: [type=${EmberIncomingMessageType[type]}], [apsFrame=${JSON.stringify(apsFrame)}], `
             + `[lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}], [sender=${sender}], [bindingIndex=${bindingIndex}], `
-            + `[addressIndex=${addressIndex}], [messageContents=${messageContents.toString('hex')}]`);
+            + `[addressIndex=${addressIndex}], [messageContents=${messageContents.toString('hex')}]`,
+            NS,
+        );
 
         if (apsFrame.profileId === ZDO_PROFILE_ID) {
             const zdoBuffalo = new EzspBuffalo(messageContents, ZDO_MESSAGE_OVERHEAD);// set pos to skip `transaction sequence number`
@@ -4103,7 +4112,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    logger.debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     // 64-bit address for the remote device
@@ -4131,9 +4140,9 @@ export class Ezsp extends EventEmitter {
                         assocDevList = zdoBuffalo.readListUInt16({length: assocDevCount});
                     }
 
-                    debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE status=${EmberZdoStatus[status]} eui64=${eui64} nodeId=${nodeId} startIndex=${startIndex} `
-                        + `assocDevList=${assocDevList}]`);
-                    debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE] Support not implemented upstream`);
+                    logger.debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE status=${EmberZdoStatus[status]} eui64=${eui64} nodeId=${nodeId} `
+                        + `startIndex=${startIndex} assocDevList=${assocDevList}]`, NS);
+                    logger.debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE] Support not implemented upstream`, NS);
 
                     const payload: IEEEAddressResponsePayload = {eui64, nodeId, assocDevList};
 
@@ -4145,7 +4154,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO NETWORK_ADDRESS_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    logger.debug(`<=== [ZDO NETWORK_ADDRESS_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     // 64-bit address for the remote device
@@ -4173,8 +4182,8 @@ export class Ezsp extends EventEmitter {
                         assocDevList = zdoBuffalo.readListUInt16({length: assocDevCount});
                     }
 
-                    debug(`<=== [ZDO NETWORK_ADDRESS_RESPONSE status=${EmberZdoStatus[status]} eui64=${eui64} nodeId=${nodeId} `
-                        + `startIndex=${startIndex} assocDevList=${assocDevList}]`);
+                    logger.debug(`<=== [ZDO NETWORK_ADDRESS_RESPONSE status=${EmberZdoStatus[status]} eui64=${eui64} nodeId=${nodeId} `
+                        + `startIndex=${startIndex} assocDevList=${assocDevList}]`, NS);
 
                     const payload: NetworkAddressResponsePayload = {eui64, nodeId, assocDevList};
 
@@ -4186,15 +4195,18 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO MATCH_DESCRIPTORS_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    logger.debug(`<=== [ZDO MATCH_DESCRIPTORS_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
                     const endpointCount = zdoBuffalo.readUInt8();
                     const endpointList = zdoBuffalo.readListUInt8({length: endpointCount});
 
-                    debug(`<=== [ZDO MATCH_DESCRIPTORS_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpointList=${endpointList}]`);
-                    debug(`<=== [ZDO MATCH_DESCRIPTORS_RESPONSE] Support not implemented upstream`);
+                    logger.debug(
+                        `<=== [ZDO MATCH_DESCRIPTORS_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpointList=${endpointList}]`,
+                        NS,
+                    );
+                    logger.debug(`<=== [ZDO MATCH_DESCRIPTORS_RESPONSE] Support not implemented upstream`, NS);
 
                     const payload: MatchDescriptorsResponsePayload = {nodeId, endpointList};
 
@@ -4206,7 +4218,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO SIMPLE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    logger.debug(`<=== [ZDO SIMPLE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
@@ -4222,9 +4234,9 @@ export class Ezsp extends EventEmitter {
                     const outClusterCount = zdoBuffalo.readUInt8();
                     const outClusterList = zdoBuffalo.readListUInt16({length: outClusterCount});
 
-                    debug(`<=== [ZDO SIMPLE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpoint=${endpoint} `
+                    logger.debug(`<=== [ZDO SIMPLE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpoint=${endpoint} `
                         + `profileId=${profileId} deviceId=${deviceId} deviceVersion=${deviceVersion} inClusterList=${inClusterList} `
-                        + `outClusterList=${outClusterList}]`);
+                        + `outClusterList=${outClusterList}]`, NS);
 
                     const payload: SimpleDescriptorResponsePayload = {
                         nodeId, 
@@ -4243,7 +4255,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO NODE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    logger.debug(`<=== [ZDO NODE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
@@ -4298,9 +4310,9 @@ export class Ezsp extends EventEmitter {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const descCapFlags = zdoBuffalo.readUInt8();
 
-                    debug(`<=== [ZDO NODE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} logicalType=${logicalType} `
+                    logger.debug(`<=== [ZDO NODE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} logicalType=${logicalType} `
                         + `freqBand=${freqBand} macCapFlags=${byteToBits(macCapFlags)} manufacturerCode=${manufacturerCode} maxBufSize=${maxBufSize} `
-                        + `maxIncTxSize=${maxIncTxSize} stackRevision=${stackRevision} maxOutTxSize=${maxOutTxSize}]`);
+                        + `maxIncTxSize=${maxIncTxSize} stackRevision=${stackRevision} maxOutTxSize=${maxOutTxSize}]`, NS);
 
                     const payload: NodeDescriptorResponsePayload = {
                         nodeId,
@@ -4318,7 +4330,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO POWER_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    logger.debug(`<=== [ZDO POWER_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
@@ -4342,10 +4354,10 @@ export class Ezsp extends EventEmitter {
                     // All other values reserved
                     const [currentPowerSource, currentPowerSourceLevel] = lowHighBits(zdoBuffalo.readUInt8());
 
-                    debug(`<=== [ZDO POWER_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} `
+                    logger.debug(`<=== [ZDO POWER_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} `
                         + `currentPowerMode=${currentPowerMode} availPowerSources=${availPowerSources} currentPowerSource=${currentPowerSource} `
-                        + `currentPowerSourceLevel=${currentPowerSourceLevel}]`);
-                    debug(`<=== [ZDO POWER_DESCRIPTOR_RESPONSE] Support not implemented upstream`);
+                        + `currentPowerSourceLevel=${currentPowerSourceLevel}]`, NS);
+                    logger.debug(`<=== [ZDO POWER_DESCRIPTOR_RESPONSE] Support not implemented upstream`, NS);
 
                     const payload: PowerDescriptorResponsePayload = {
                         nodeId,
@@ -4363,14 +4375,17 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO ACTIVE_ENDPOINTS_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    logger.debug(`<=== [ZDO ACTIVE_ENDPOINTS_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
                     const endpointCount = zdoBuffalo.readUInt8();
                     const endpointList = zdoBuffalo.readListUInt8({length: endpointCount});
 
-                    debug(`<=== [ZDO ACTIVE_ENDPOINTS_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpointList=${endpointList}]`);
+                    logger.debug(
+                        `<=== [ZDO ACTIVE_ENDPOINTS_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpointList=${endpointList}]`,
+                        NS,
+                    );
 
                     const payload: ActiveEndpointsResponsePayload = {nodeId, endpointList};
 
@@ -4382,7 +4397,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO LQI_TABLE_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    logger.debug(`<=== [ZDO LQI_TABLE_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     // 0x00-0xFF, total number of neighbor table entries within the remote device
@@ -4419,8 +4434,8 @@ export class Ezsp extends EventEmitter {
                         });
                     }
 
-                    debug(`<=== [ZDO LQI_TABLE_RESPONSE status=${EmberZdoStatus[status]} neighborTableEntries=${neighborTableEntries} `
-                        + `startIndex=${startIndex} entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`);
+                    logger.debug(`<=== [ZDO LQI_TABLE_RESPONSE status=${EmberZdoStatus[status]} neighborTableEntries=${neighborTableEntries} `
+                        + `startIndex=${startIndex} entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`, NS);
 
                     const payload: LQITableResponsePayload = {neighborTableEntries, entryList};
 
@@ -4432,7 +4447,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO ROUTING_TABLE_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    logger.debug(`<=== [ZDO ROUTING_TABLE_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     // 0x00-0xFF, total number of routing table entries within the remote device
@@ -4461,8 +4476,8 @@ export class Ezsp extends EventEmitter {
                         });
                     }
 
-                    debug(`<=== [ZDO ROUTING_TABLE_RESPONSE status=${EmberZdoStatus[status]} routingTableEntries=${routingTableEntries} `
-                        + `startIndex=${startIndex} entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`);
+                    logger.debug(`<=== [ZDO ROUTING_TABLE_RESPONSE status=${EmberZdoStatus[status]} routingTableEntries=${routingTableEntries} `
+                        + `startIndex=${startIndex} entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`, NS);
 
                     const payload: RoutingTableResponsePayload = {routingTableEntries, entryList};
     
@@ -4474,7 +4489,7 @@ export class Ezsp extends EventEmitter {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
-                    debug(`<=== [ZDO BINDING_TABLE_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    logger.debug(`<=== [ZDO BINDING_TABLE_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const bindingTableEntries = zdoBuffalo.readUInt8();
@@ -4500,9 +4515,9 @@ export class Ezsp extends EventEmitter {
                         });
                     }
 
-                    debug(`<=== [ZDO BINDING_TABLE_RESPONSE status=${EmberZdoStatus[status]} bindingTableEntries=${bindingTableEntries} `
-                        + `startIndex=${startIndex} entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`);
-                    debug(`<=== [ZDO BINDING_TABLE_RESPONSE] Support not implemented upstream`);
+                    logger.debug(`<=== [ZDO BINDING_TABLE_RESPONSE status=${EmberZdoStatus[status]} bindingTableEntries=${bindingTableEntries} `
+                        + `startIndex=${startIndex} entryCount=${entryCount} entryList=${JSON.stringify(entryList)}]`, NS);
+                    logger.debug(`<=== [ZDO BINDING_TABLE_RESPONSE] Support not implemented upstream`, NS);
 
                     const payload: BindingTableResponsePayload = {bindingTableEntries, entryList};
     
@@ -4513,28 +4528,28 @@ export class Ezsp extends EventEmitter {
             case BIND_RESPONSE: {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
-                debug(`<=== [ZDO BIND_RESPONSE status=${EmberZdoStatus[status]}]`);
+                logger.debug(`<=== [ZDO BIND_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                 this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame);
                 break;
             }
             case UNBIND_RESPONSE:{
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
-                debug(`<=== [ZDO UNBIND_RESPONSE status=${EmberZdoStatus[status]}]`);
+                logger.debug(`<=== [ZDO UNBIND_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                 this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame);
                 break;
             }
             case LEAVE_RESPONSE: {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
-                debug(`<=== [ZDO LEAVE_RESPONSE status=${EmberZdoStatus[status]}]`);
+                logger.debug(`<=== [ZDO LEAVE_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                 this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame);
                 break;
             }
             case PERMIT_JOINING_RESPONSE: {
                 const status: EmberZdoStatus = zdoBuffalo.readUInt8();
 
-                debug(`<=== [ZDO PERMIT_JOINING_RESPONSE status=${EmberZdoStatus[status]}]`);
+                logger.debug(`<=== [ZDO PERMIT_JOINING_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                 this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame);
                 break;
             }
@@ -4544,7 +4559,7 @@ export class Ezsp extends EventEmitter {
                 /** @see MACCapabilityFlags */
                 const capabilities = zdoBuffalo.readUInt8();
 
-                debug(`<=== [ZDO END_DEVICE_ANNOUNCE nodeId=${nodeId} eui64=${eui64} capabilities=${byteToBits(capabilities)}]`);
+                logger.debug(`<=== [ZDO END_DEVICE_ANNOUNCE nodeId=${nodeId} eui64=${eui64} capabilities=${byteToBits(capabilities)}]`, NS);
 
                 const payload: EndDeviceAnnouncePayload = {nodeId, eui64, capabilities: getMacCapFlags(capabilities)};
 
@@ -4557,7 +4572,7 @@ export class Ezsp extends EventEmitter {
 
                 if (status !== EmberZdoStatus.ZDP_SUCCESS) {
                     // status should always be NOT_SUPPORTED here
-                    debug(`<=== [ZDO PARENT_ANNOUNCE_RESPONSE status=${EmberZdoStatus[status]}]`);
+                    logger.debug(`<=== [ZDO PARENT_ANNOUNCE_RESPONSE status=${EmberZdoStatus[status]}]`, NS);
                     this.emit(EzspEvents.ZDO_RESPONSE, status, sender, apsFrame, null);
                 } else {
                     const numberOfChildren = zdoBuffalo.readUInt8();
@@ -4569,9 +4584,9 @@ export class Ezsp extends EventEmitter {
                         children.push(childEui64);
                     }
 
-                    debug(`<=== [ZDO PARENT_ANNOUNCE_RESPONSE status=${EmberZdoStatus[status]} numberOfChildren=${numberOfChildren} `
-                        + `children=${children}]`);
-                    debug(`<=== [ZDO PARENT_ANNOUNCE_RESPONSE] Support not implemented upstream`);
+                    logger.debug(`<=== [ZDO PARENT_ANNOUNCE_RESPONSE status=${EmberZdoStatus[status]} numberOfChildren=${numberOfChildren} `
+                        + `children=${children}]`, NS);
+                    logger.debug(`<=== [ZDO PARENT_ANNOUNCE_RESPONSE] Support not implemented upstream`, NS);
 
                     const payload: ParentAnnounceResponsePayload = {children};
 
@@ -4579,7 +4594,7 @@ export class Ezsp extends EventEmitter {
                 }
             }
             default: {
-                console.log(`<=== [ZDO clusterId=${apsFrame.clusterId} sender=${sender}] Support not implemented upstream.`);
+                logger.info(`<=== [ZDO clusterId=${apsFrame.clusterId} sender=${sender}] Support not implemented upstream.`, NS);
                 break;
             }
             }
@@ -4619,7 +4634,7 @@ export class Ezsp extends EventEmitter {
      *        for this discovery arrive, but the callback is made only once.
      */
     ezspIncomingManyToOneRouteRequestHandler(source: EmberNodeId, longId: EmberEUI64, cost: number): void {
-        debug(`ezspIncomingManyToOneRouteRequestHandler(): callback called with: [source=${source}], [longId=${longId}], [cost=${cost}]`);
+        logger.debug(`ezspIncomingManyToOneRouteRequestHandler(): callback called with: [source=${source}], [longId=${longId}], [cost=${cost}]`, NS);
     }
 
     /**
@@ -4648,7 +4663,7 @@ export class Ezsp extends EventEmitter {
      * @param target The short id of the remote node.
      */
     ezspIncomingRouteErrorHandler(status: EmberStatus, target: EmberNodeId): void {
-        debug(`ezspIncomingRouteErrorHandler(): callback called with: [status=${EmberStatus[status]}], [target=${target}]`);
+        logger.debug(`ezspIncomingRouteErrorHandler(): callback called with: [status=${EmberStatus[status]}], [target=${target}]`, NS);
         // NOTE: This can trigger immediately after removal of a device with status MAC_INDIRECT_TIMEOUT
     }
 
@@ -4666,8 +4681,8 @@ export class Ezsp extends EventEmitter {
      * @param target The short ID of the remote node
      */
     ezspIncomingNetworkStatusHandler(errorCode: EmberStackError, target: EmberNodeId): void {
-        debug(`ezspIncomingNetworkStatusHandler(): callback called with: [errorCode=${EmberStackError[errorCode]}], [target=${target}]`);
-        console.log(`Received network/route error ${EmberStackError[errorCode]} for "${target}".`);
+        logger.debug(`ezspIncomingNetworkStatusHandler(): callback called with: [errorCode=${EmberStackError[errorCode]}], [target=${target}]`, NS);
+        logger.warning(`Received network/route error ${EmberStackError[errorCode]} for "${target}".`, NS);
     }
 
     /**
@@ -4683,8 +4698,8 @@ export class Ezsp extends EventEmitter {
      */
     ezspIncomingRouteRecordHandler(source: EmberNodeId, sourceEui: EmberEUI64, lastHopLqi: number,
         lastHopRssi: number, relayCount: number, relayList: number[]): void {
-        debug(`ezspIncomingRouteRecordHandler(): callback called with: [source=${source}], [sourceEui=${sourceEui}], `
-            + `[lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}], [relayCount=${relayCount}], [relayList=${relayList}]`);
+        logger.debug(`ezspIncomingRouteRecordHandler(): callback called with: [source=${source}], [sourceEui=${sourceEui}], `
+            + `[lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}], [relayCount=${relayCount}], [relayList=${relayList}]`, NS);
         // XXX: could at least trigger a `Events.lastSeenChanged` but this is not currently being listened to at the adapter level
     }
 
@@ -5045,8 +5060,8 @@ export class Ezsp extends EventEmitter {
      * @param id The short id for which a conflict was detected
      */
     ezspIdConflictHandler(id: EmberNodeId): void {
-        debug(`ezspIdConflictHandler(): callback called with: [id=${id}]`);
-        console.error(`An ID conflict was detected for network address "${id}". Corresponding devices removed from the network.`);
+        logger.debug(`ezspIdConflictHandler(): callback called with: [id=${id}]`, NS);
+        logger.error(`An ID conflict was detected for network address "${id}". Corresponding devices removed from the network.`, NS);
 
         // XXX: this is currently causing more problems than not doing it, so disabled for now.
         //      devices should rejoin on ID conflict anyway, so the database isn't out of sync for very long.
@@ -5128,8 +5143,8 @@ export class Ezsp extends EventEmitter {
      * @param messageContents uint8_t * The raw message that was received.
      */
     ezspMacPassthroughMessageHandler(messageType: EmberMacPassthroughType, lastHopLqi: number, lastHopRssi: number, messageContents: Buffer): void {
-        debug(`ezspMacPassthroughMessageHandler(): callback called with: [messageType=${messageType}], [lastHopLqi=${lastHopLqi}], `
-            + `[lastHopRssi=${lastHopRssi}], [messageContents=${messageContents.toString('hex')}]`);
+        logger.debug(`ezspMacPassthroughMessageHandler(): callback called with: [messageType=${messageType}], [lastHopLqi=${lastHopLqi}], `
+            + `[lastHopRssi=${lastHopRssi}], [messageContents=${messageContents.toString('hex')}]`, NS);
     }
 
     /**
@@ -5145,9 +5160,9 @@ export class Ezsp extends EventEmitter {
      */
     ezspMacFilterMatchMessageHandler(filterIndexMatch: number, legacyPassthroughType: EmberMacPassthroughType, lastHopLqi: number,
         lastHopRssi: number, messageContents: Buffer): void {
-        debug(`ezspMacFilterMatchMessageHandler(): callback called with: [filterIndexMatch=${filterIndexMatch}], `
+        logger.debug(`ezspMacFilterMatchMessageHandler(): callback called with: [filterIndexMatch=${filterIndexMatch}], `
             + `[legacyPassthroughType=${legacyPassthroughType}], [lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}], `
-            + `[messageContents=${messageContents.toString('hex')}]`);
+            + `[messageContents=${messageContents.toString('hex')}]`, NS);
 
         // TODO: needs triple-checking, this is only valid for InterPAN messages
         const msgBuffalo = new EzspBuffalo(messageContents, 0);
@@ -5165,7 +5180,7 @@ export class Ezsp extends EventEmitter {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             destAddress = msgBuffalo.readUInt16();
         } else {
-            debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN macFrameControl "${macFrameControl}".`);
+            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN macFrameControl "${macFrameControl}".`, NS);
             return;
         }
 
@@ -5176,7 +5191,7 @@ export class Ezsp extends EventEmitter {
         let remainingLength = msgBuffalo.getBufferLength() - msgBuffalo.getPosition();
 
         if (remainingLength < (STUB_NWK_SIZE + MIN_STUB_APS_SIZE)) {
-            debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length "${remainingLength}".`);
+            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length "${remainingLength}".`, NS);
             return;
         }
 
@@ -5184,7 +5199,7 @@ export class Ezsp extends EventEmitter {
         remainingLength -= 2;// read 2 more bytes before APS stuff
 
         if (nwkFrameControl !== STUB_NWK_FRAME_CONTROL) {
-            debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN nwkFrameControl "${nwkFrameControl}".`);
+            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN nwkFrameControl "${nwkFrameControl}".`, NS);
             return;
         }
 
@@ -5192,7 +5207,7 @@ export class Ezsp extends EventEmitter {
 
         if ((apsFrameControl & ~(INTERPAN_APS_FRAME_DELIVERY_MODE_MASK) & ~(INTERPAN_APS_FRAME_SECURITY))
             !== INTERPAN_APS_FRAME_CONTROL_NO_DELIVERY_MODE) {
-            debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN apsFrameControl "${apsFrameControl}".`);
+            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN apsFrameControl "${apsFrameControl}".`, NS);
             return;
         }
 
@@ -5203,14 +5218,14 @@ export class Ezsp extends EventEmitter {
         case EmberInterpanMessageType.UNICAST:
         case EmberInterpanMessageType.BROADCAST: {
             if (remainingLength < INTERPAN_APS_UNICAST_BROADCAST_SIZE) {
-                debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length "${remainingLength}".`);
+                logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length "${remainingLength}".`, NS);
                 return;
             }
             break;
         }
         case EmberInterpanMessageType.MULTICAST: {
             if (remainingLength < INTERPAN_APS_MULTICAST_SIZE) {
-                debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length "${remainingLength}".`);
+                logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length "${remainingLength}".`, NS);
                 return;
             }
 
@@ -5218,7 +5233,7 @@ export class Ezsp extends EventEmitter {
             break;
         }
         default: {
-            debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN messageType "${messageType}".`);
+            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN messageType "${messageType}".`, NS);
             return;
         }
         }
@@ -5239,7 +5254,7 @@ export class Ezsp extends EventEmitter {
      * @param status EMBER_SUCCESS if the transmission was successful, or EMBER_DELIVERY_FAILED if not
      */
     ezspRawTransmitCompleteHandler(status: EmberStatus): void {
-        debug(`ezspRawTransmitCompleteHandler(): callback called with: [status=${EmberStatus[status]}]`);
+        logger.debug(`ezspRawTransmitCompleteHandler(): callback called with: [status=${EmberStatus[status]}]`, NS);
     }
 
     /**
@@ -5395,7 +5410,7 @@ export class Ezsp extends EventEmitter {
          */
         // NOTE: added for good measure
         if (context.coreKeyType === SecManKeyType.INTERNAL) {
-            console.assert(false, `ezspImportKey cannot use INTERNAL key type.`);
+            logger.error(`ezspImportKey cannot use INTERNAL key type.`, NS);
             return [null, SLStatus.INVALID_PARAMETER];
         }
 
@@ -5460,7 +5475,7 @@ export class Ezsp extends EventEmitter {
          */
         // NOTE: added for good measure
         if (context.coreKeyType === SecManKeyType.INTERNAL) {
-            console.assert(false, `ezspImportKey cannot use INTERNAL key type.`);
+            logger.error(`ezspImportKey cannot use INTERNAL key type.`, NS);
             return SLStatus.INVALID_PARAMETER;
         }
 
@@ -5487,7 +5502,7 @@ export class Ezsp extends EventEmitter {
      * @param sequenceNumber uint8_t The sequence number of the new network key.
      */
     ezspSwitchNetworkKeyHandler(sequenceNumber: number): void {
-        debug(`ezspSwitchNetworkKeyHandler(): callback called with: [sequenceNumber=${sequenceNumber}]`);
+        logger.debug(`ezspSwitchNetworkKeyHandler(): callback called with: [sequenceNumber=${sequenceNumber}]`, NS);
     }
 
     /**
@@ -5644,7 +5659,7 @@ export class Ezsp extends EventEmitter {
      * @param status This is the status indicating what was established or why the key establishment failed.
      */
     ezspZigbeeKeyEstablishmentHandler(partner: EmberEUI64, status: EmberKeyStatus): void {
-        debug(`ezspZigbeeKeyEstablishmentHandler(): callback called with: [partner=${partner}], [status=${EmberKeyStatus[status]}]`);
+        logger.debug(`ezspZigbeeKeyEstablishmentHandler(): callback called with: [partner=${partner}], [status=${EmberKeyStatus[status]}]`, NS);
         // NOTE: For security reasons, any valid `partner` (not wildcard) that return with a status=TC_REQUESTER_VERIFY_KEY_TIMEOUT
         //       are kicked off the network for posing a risk, unless HA devices allowed (as opposed to Z3)
         //       and always if status=TC_REQUESTER_VERIFY_KEY_FAILURE
@@ -6025,9 +6040,9 @@ export class Ezsp extends EventEmitter {
      */
     ezspTrustCenterJoinHandler(newNodeId: EmberNodeId, newNodeEui64: EmberEUI64, status: EmberDeviceUpdate,
         policyDecision: EmberJoinDecision, parentOfNewNodeId: EmberNodeId): void {
-        debug(`ezspTrustCenterJoinHandler(): callback called with: [newNodeId=${newNodeId}], [newNodeEui64=${newNodeEui64}], `
+        logger.debug(`ezspTrustCenterJoinHandler(): callback called with: [newNodeId=${newNodeId}], [newNodeEui64=${newNodeEui64}], `
             + `[status=${EmberDeviceUpdate[status]}], [policyDecision=${EmberJoinDecision[policyDecision]}], `
-            + `[parentOfNewNodeId=${parentOfNewNodeId}]`);
+            + `[parentOfNewNodeId=${parentOfNewNodeId}]`, NS);
         // NOTE: this is mostly just passing stuff up to Z2M, so use only one emit for all, let adapter do the rest, no parsing needed
         this.emit(EzspEvents.TRUST_CENTER_JOIN, newNodeId, newNodeEui64, status, policyDecision, parentOfNewNodeId);
     }
@@ -6188,7 +6203,10 @@ export class Ezsp extends EventEmitter {
      * @param ephemeralPublicKey EmberPublicKeyData * The generated ephemeral public key.
      */
     ezspGenerateCbkeKeysHandler(status: EmberStatus, ephemeralPublicKey: EmberPublicKeyData): void {
-        debug(`ezspGenerateCbkeKeysHandler(): callback called with: [status=${EmberStatus[status]}], [ephemeralPublicKey=${ephemeralPublicKey}]`);
+        logger.debug(
+            `ezspGenerateCbkeKeysHandler(): callback called with: [status=${EmberStatus[status]}], [ephemeralPublicKey=${ephemeralPublicKey}]`,
+            NS,
+        );
     }
 
     /**
@@ -6229,8 +6247,8 @@ export class Ezsp extends EventEmitter {
      * @param responderSmac EmberSmacData * The calculated value of the responder's SMAC
      */
     ezspCalculateSmacsHandler(status: EmberStatus, initiatorSmac: EmberSmacData, responderSmac: EmberSmacData): void {
-        debug(`ezspCalculateSmacsHandler(): callback called with: [status=${EmberStatus[status]}], [initiatorSmac=${initiatorSmac}], `
-            + `[responderSmac=${responderSmac}]`);
+        logger.debug(`ezspCalculateSmacsHandler(): callback called with: [status=${EmberStatus[status]}], [initiatorSmac=${initiatorSmac}], `
+            + `[responderSmac=${responderSmac}]`, NS);
     }
 
     /**
@@ -6261,8 +6279,8 @@ export class Ezsp extends EventEmitter {
      * @param ephemeralPublicKey EmberPublicKey283k1Data * The generated ephemeral public key.
      */
     ezspGenerateCbkeKeysHandler283k1(status: EmberStatus, ephemeralPublicKey: EmberPublicKey283k1Data): void {
-        debug(`ezspGenerateCbkeKeysHandler283k1(): callback called with: [status=${EmberStatus[status]}], `
-            + `[ephemeralPublicKey=${ephemeralPublicKey}]`);
+        logger.debug(`ezspGenerateCbkeKeysHandler283k1(): callback called with: [status=${EmberStatus[status]}], `
+            + `[ephemeralPublicKey=${ephemeralPublicKey}]`, NS);
     }
 
     /**
@@ -6304,8 +6322,8 @@ export class Ezsp extends EventEmitter {
      * @param responderSmac EmberSmacData * The calculated value of the responder's SMAC
      */
     ezspCalculateSmacsHandler283k1(status: EmberStatus, initiatorSmac: EmberSmacData, responderSmac: EmberSmacData): void {
-        debug(`ezspCalculateSmacsHandler283k1(): callback called with: [status=${EmberStatus[status]}], [initiatorSmac=${initiatorSmac}], `
-            + `[responderSmac=${responderSmac}]`);
+        logger.debug(`ezspCalculateSmacsHandler283k1(): callback called with: [status=${EmberStatus[status]}], [initiatorSmac=${initiatorSmac}], `
+            + `[responderSmac=${responderSmac}]`, NS);
     }
 
     /**
@@ -6450,7 +6468,10 @@ export class Ezsp extends EventEmitter {
      * @param messageContents uint8_t *The message and attached which includes the original message and the appended signature.
      */
     ezspDsaSignHandler(status: EmberStatus, messageContents: Buffer): void {
-        debug(`ezspDsaSignHandler(): callback called with: [status=${EmberStatus[status]}], [messageContents=${messageContents.toString('hex')}]`);
+        logger.debug(
+            `ezspDsaSignHandler(): callback called with: [status=${EmberStatus[status]}], [messageContents=${messageContents.toString('hex')}]`,
+            NS,
+        );
     }
 
     /**
@@ -6489,7 +6510,7 @@ export class Ezsp extends EventEmitter {
      * @param status The result of the DSA verification operation.
      */
     ezspDsaVerifyHandler(status: EmberStatus): void {
-        debug(`ezspDsaVerifyHandler(): callback called with: [status=${EmberStatus[status]}]`);
+        logger.debug(`ezspDsaVerifyHandler(): callback called with: [status=${EmberStatus[status]}]`, NS);
     }
 
     /**
@@ -6791,8 +6812,8 @@ export class Ezsp extends EventEmitter {
      * @param packetContents uint8_t * The received packet (last 2 bytes are not FCS / CRC and may be discarded)
      */
     ezspMfglibRxHandler(linkQuality: number, rssi: number, packetLength: number, packetContents: number[]): void {
-        debug(`ezspMfglibRxHandler(): callback called with: [linkQuality=${linkQuality}], [rssi=${rssi}], `
-            + `[packetLength=${packetLength}], [packetContents=${packetContents}]`);
+        logger.debug(`ezspMfglibRxHandler(): callback called with: [linkQuality=${linkQuality}], [rssi=${rssi}], `
+            + `[packetLength=${packetLength}], [packetContents=${packetContents}]`, NS);
         // gecko_sdk_4.4.0\protocol\zigbee\app\framework\plugin\manufacturing-library-cli\manufacturing-library-cli-host.c
     }
 
@@ -6891,8 +6912,8 @@ export class Ezsp extends EventEmitter {
      * @param messageContents uint8_t *The bootload message that was sent.
      */
     ezspIncomingBootloadMessageHandler(longId: EmberEUI64, lastHopLqi: number, lastHopRssi: number, messageContents: Buffer): void {
-        debug(`ezspIncomingBootloadMessageHandler(): callback called with: [longId=${longId}], [lastHopLqi=${lastHopLqi}], `
-            + `[lastHopRssi=${lastHopRssi}], [messageContents=${messageContents.toString('hex')}]`);
+        logger.debug(`ezspIncomingBootloadMessageHandler(): callback called with: [longId=${longId}], [lastHopLqi=${lastHopLqi}], `
+            + `[lastHopRssi=${lastHopRssi}], [messageContents=${messageContents.toString('hex')}]`, NS);
     }
 
     /**
@@ -6905,8 +6926,8 @@ export class Ezsp extends EventEmitter {
      * @param messageContents uint8_t * The message that was sent.
      */
     ezspBootloadTransmitCompleteHandler(status: EmberStatus, messageContents: Buffer): void {
-        debug(`ezspBootloadTransmitCompleteHandler(): callback called with: [status=${EmberStatus[status]}], `
-            + `[messageContents=${messageContents.toString('hex')}]`);
+        logger.debug(`ezspBootloadTransmitCompleteHandler(): callback called with: [status=${EmberStatus[status]}], `
+            + `[messageContents=${messageContents.toString('hex')}]`, NS);
     }
 
     /**
@@ -7056,8 +7077,8 @@ export class Ezsp extends EventEmitter {
      */
     ezspZllNetworkFoundHandler(networkInfo: EmberZllNetwork, isDeviceInfoNull: boolean, deviceInfo: EmberZllDeviceInfoRecord,
         lastHopLqi: number, lastHopRssi: number): void {
-        debug(`ezspZllNetworkFoundHandler(): callback called with: [networkInfo=${networkInfo}], [isDeviceInfoNull=${isDeviceInfoNull}], `
-            + `[deviceInfo=${deviceInfo}], [lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}]`);
+        logger.debug(`ezspZllNetworkFoundHandler(): callback called with: [networkInfo=${networkInfo}], [isDeviceInfoNull=${isDeviceInfoNull}], `
+            + `[deviceInfo=${deviceInfo}], [lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}]`, NS);
     }
 
     /**
@@ -7066,7 +7087,7 @@ export class Ezsp extends EventEmitter {
      * @param status Status of the operation.
      */
     ezspZllScanCompleteHandler(status: EmberStatus): void {
-        debug(`ezspZllScanCompleteHandler(): callback called with: [status=${EmberStatus[status]}]`);
+        logger.debug(`ezspZllScanCompleteHandler(): callback called with: [status=${EmberStatus[status]}]`, NS);
     }
 
     /**
@@ -7078,8 +7099,8 @@ export class Ezsp extends EventEmitter {
      * @param lastHopRssi int8_t The energy level (in units of dBm) observed during reception.
      */
     ezspZllAddressAssignmentHandler(addressInfo: EmberZllAddressAssignment, lastHopLqi: number, lastHopRssi: number): void {
-        debug(`ezspZllAddressAssignmentHandler(): callback called with: [addressInfo=${addressInfo}], [lastHopLqi=${lastHopLqi}], `
-            + `[lastHopRssi=${lastHopRssi}]`);
+        logger.debug(`ezspZllAddressAssignmentHandler(): callback called with: [addressInfo=${addressInfo}], [lastHopLqi=${lastHopLqi}], `
+            + `[lastHopRssi=${lastHopRssi}]`, NS);
     }
 
     /**
@@ -7088,7 +7109,7 @@ export class Ezsp extends EventEmitter {
      * @param networkInfo EmberZllNetwork * Information about the network.
      */
     ezspZllTouchLinkTargetHandler(networkInfo: EmberZllNetwork): void {
-        debug(`ezspZllTouchLinkTargetHandler(): callback called with: [networkInfo=${networkInfo}]`);
+        logger.debug(`ezspZllTouchLinkTargetHandler(): callback called with: [networkInfo=${networkInfo}]`, NS);
     }
 
     /**
@@ -7540,7 +7561,7 @@ export class Ezsp extends EventEmitter {
      * @param gpepHandle uint8_t The handle of the GPDF.
      */
     ezspDGpSentHandler(status: EmberStatus, gpepHandle: number): void {
-        debug(`ezspDGpSentHandler(): callback called with: [status=${EmberStatus[status]}], [gpepHandle=${gpepHandle}]`);
+        logger.debug(`ezspDGpSentHandler(): callback called with: [status=${EmberStatus[status]}], [gpepHandle=${gpepHandle}]`, NS);
     }
 
     /**
@@ -7564,15 +7585,15 @@ export class Ezsp extends EventEmitter {
     ezspGpepIncomingMessageHandler(status: EmberStatus, gpdLink: number, sequenceNumber: number, addr: EmberGpAddress,
         gpdfSecurityLevel: EmberGpSecurityLevel, gpdfSecurityKeyType: EmberGpKeyType, autoCommissioning: boolean, bidirectionalInfo: number,
         gpdSecurityFrameCounter: number, gpdCommandId: number, mic: number, proxyTableIndex: number, gpdCommandPayload: Buffer): void {
-        debug(`ezspGpepIncomingMessageHandler(): callback called with: [status=${EmberStatus[status]}], [gpdLink=${gpdLink}], `
+        logger.debug(`ezspGpepIncomingMessageHandler(): callback called with: [status=${EmberStatus[status]}], [gpdLink=${gpdLink}], `
             + `[sequenceNumber=${sequenceNumber}], [addr=${JSON.stringify(addr)}], [gpdfSecurityLevel=${EmberGpSecurityLevel[gpdfSecurityLevel]}], `
             + `[gpdfSecurityKeyType=${EmberGpKeyType[gpdfSecurityKeyType]}], [autoCommissioning=${autoCommissioning}], `
             + `[bidirectionalInfo=${bidirectionalInfo}], [gpdSecurityFrameCounter=${gpdSecurityFrameCounter}], [gpdCommandId=${gpdCommandId}], `
-            + `[mic=${mic}], [proxyTableIndex=${proxyTableIndex}], [gpdCommandPayload=${gpdCommandPayload.toString('hex')}]`);
+            + `[mic=${mic}], [proxyTableIndex=${proxyTableIndex}], [gpdCommandPayload=${gpdCommandPayload.toString('hex')}]`, NS);
 
         if (addr.applicationId === EmberGpApplicationId.IEEE_ADDRESS) {
             // XXX: don't bother parsing for upstream for now, since it will be rejected
-            console.error(`<=== [GP] Received IEEE address type in message. Support not implemented upstream. Dropping.`);
+            logger.error(`<=== [GP] Received IEEE address type in message. Support not implemented upstream. Dropping.`, NS);
             return;
         }
 

@@ -17,9 +17,16 @@ import * as Models from "../src/models";
 import * as Utils from "../src/utils";
 import { isTypedArray } from "util/types";
 import Bonjour, {BrowserConfig, Service} from 'bonjour-service';
-import {LoggerStub} from "../src/controller/logger-stub";
+import {setLogger} from "../src/utils/logger";
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
+
+const mockLogger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn(),
+    error: jest.fn(),
+};
 
 let skipWait = true;
 Wait.mockImplementation((milliseconds) => {
@@ -155,6 +162,10 @@ const mocksClear = [
     mockAddInstallCode,
     mockAdapterGetNetworkParameters,
     mockAdapterChangeChannel,
+    mockLogger.debug,
+    mockLogger.info,
+    mockLogger.warning,
+    mockLogger.error,
 ];
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 
@@ -520,6 +531,7 @@ describe('Controller', () => {
         jest.useFakeTimers({doNotFake: ['setTimeout']});
         Date.now = jest.fn()
         Date.now.mockReturnValue(150);
+        setLogger(mockLogger);
         dummyBackup = await Utils.BackupUtils.toUnifiedBackup(mockDummyBackup);
     });
 
@@ -557,7 +569,7 @@ describe('Controller', () => {
 
     it('Call controller constructor options mixed with default options', async () => {
         await controller.start();
-        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, {"disableLED": false}, undefined);
+        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, {"disableLED": false});
     });
 
     it('Call controller constructor error on invalid channel', async () => {
@@ -3531,85 +3543,50 @@ describe('Controller', () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
         await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null, null);
         expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/bla');
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null, undefined);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter create continue when is valid path fails', async () => {
         mockZStackAdapterIsValidPath.mockImplementationOnce(() => {throw new Error('failed')});
         await Adapter.create(null, {path: '/dev/bla', baudRate: 100, rtscts: false, adapter: null}, null, null);
         expect(mockZStackAdapterIsValidPath).toHaveBeenCalledWith('/dev/bla');
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null, undefined);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/bla", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter create auto detect', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(true);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null, null);
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null, undefined);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter mdns timeout test', async () => {
         const fakeAdapterName = 'mdns_test_device';
-        const mockLoggerDebug = jest.fn();
-        const mockLoggerInfo = jest.fn();
-        const mockLoggerWarn = jest.fn();
-        const mockLoggerError = jest.fn();
-        const mockLogger: LoggerStub = {
-            debug: mockLoggerDebug,
-            info: mockLoggerInfo,
-            warn: mockLoggerWarn,
-            error: mockLoggerError
-        };
-        let error;
+
         try {
-            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null);
         } catch(e) {
-            error = e;
+            expect(e).toStrictEqual(new Error(`Coordinator [${fakeAdapterName}] not found after timeout of 2000ms!`));
         }
-        expect(error).toStrictEqual(new Error(`Coordinator [${fakeAdapterName}] not found after timeout of 2000ms!`));
     });
 
     it('Adapter mdns without type test', async () => {
         const fakeAdapterName = '';
-        const mockLoggerDebug = jest.fn();
-        const mockLoggerInfo = jest.fn();
-        const mockLoggerWarn = jest.fn();
-        const mockLoggerError = jest.fn();
-        const mockLogger: LoggerStub = {
-            debug: mockLoggerDebug,
-            info: mockLoggerInfo,
-            warn: mockLoggerWarn,
-            error: mockLoggerError
-        };
-        let error;
+
         try {
-            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null,);
         } catch(e) {
-            error = e;
+            expect(e).toStrictEqual(new Error(
+                `No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`
+            ));
         }
-        expect(error).toStrictEqual(new Error(
-            `No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`
-        ));
     });
 
     it('Adapter mdns wrong Zeroconf test', async () => {
         const fakeAdapterName = 'mdns_test_device';
         const fakeIp = '111.111.111.111';
         const fakePort = 6638;
-        const fakeRadio = 'znp';
-        const fakeRadioDetected = fakeRadio == 'znp' ? 'zstack' : fakeRadio;
         const fakeBaud = '115200';
-
-        const mockLoggerDebug = jest.fn();
-        const mockLoggerInfo = jest.fn();
-        const mockLoggerWarn = jest.fn();
-        const mockLoggerError = jest.fn();
-        const mockLogger: LoggerStub = {
-            debug: mockLoggerDebug,
-            info: mockLoggerInfo,
-            warn: mockLoggerWarn,
-            error: mockLoggerError
-        };
 
         Bonjour.prototype.findOne = function(opts?: BrowserConfig | undefined, timeout?: number, callback?: CallableFunction) {
             setTimeout(() => {
@@ -3617,20 +3594,17 @@ describe('Controller', () => {
             }, 200);
         }
 
-        let error;
         try {
-            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null);
         } catch(e) {
-            error = e;
+            expect(e).toStrictEqual(new Error(
+                `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
+                `txt.radio_type, got: undefined\n` +
+                `txt.baud_rate, got: 115200\n` +
+                `address, got: 111.111.111.111\n` +
+                `port, got: 6638`
+            ));
         }
-        expect(error).toStrictEqual(new Error(
-            `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
-            `txt.radio_type, got: undefined\n` +
-            `txt.baud_rate, got: 115200\n` +
-            `address, got: 111.111.111.111\n` +
-            `port, got: 6638`
-        ));
-        
     });
 
     it('Adapter mdns detection ezsp test', async () => {
@@ -3638,19 +3612,7 @@ describe('Controller', () => {
         const fakeIp = '111.111.111.111';
         const fakePort = 6638;
         const fakeRadio = 'ezsp';
-        const fakeRadioDetected = fakeRadio == 'znp' ? 'zstack' : fakeRadio;
         const fakeBaud = '115200';
-
-        const mockLoggerDebug = jest.fn();
-        const mockLoggerInfo = jest.fn();
-        const mockLoggerWarn = jest.fn();
-        const mockLoggerError = jest.fn();
-        const mockLogger: LoggerStub = {
-            debug: mockLoggerDebug,
-            info: mockLoggerInfo,
-            warn: mockLoggerWarn,
-            error: mockLoggerError
-        };
 
         Bonjour.prototype.findOne = function(opts?: BrowserConfig | undefined, timeout?: number, callback?: CallableFunction) {
             setTimeout(() => {
@@ -3658,13 +3620,13 @@ describe('Controller', () => {
             }, 200);
         }
 
-        await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+        await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null);
 
-        expect(mockLoggerInfo.mock.calls[0][0]).toBe(`Starting mdns discovery for coordinator: ${fakeAdapterName}`);
-        expect(mockLoggerInfo.mock.calls[1][0]).toBe(`Coordinator Ip: ${fakeIp}`);
-        expect(mockLoggerInfo.mock.calls[2][0]).toBe(`Coordinator Port: ${fakePort}`);
-        expect(mockLoggerInfo.mock.calls[3][0]).toBe(`Coordinator Radio: ${fakeRadioDetected}`);
-        expect(mockLoggerInfo.mock.calls[4][0]).toBe(`Coordinator Baud: ${fakeBaud}\n`);
+        expect(mockLogger.info.mock.calls[0][0]).toBe(`Starting mdns discovery for coordinator: ${fakeAdapterName}`);
+        expect(mockLogger.info.mock.calls[1][0]).toBe(`Coordinator Ip: ${fakeIp}`);
+        expect(mockLogger.info.mock.calls[2][0]).toBe(`Coordinator Port: ${fakePort}`);
+        expect(mockLogger.info.mock.calls[3][0]).toBe(`Coordinator Radio: ${fakeRadio}`);
+        expect(mockLogger.info.mock.calls[4][0]).toBe(`Coordinator Baud: ${fakeBaud}\n`);
         
     });
 
@@ -3675,34 +3637,17 @@ describe('Controller', () => {
         const fakeRadio = 'auto';
         const fakeBaud = '115200';
 
-        const mockLoggerDebug = jest.fn();
-        const mockLoggerInfo = jest.fn();
-        const mockLoggerWarn = jest.fn();
-        const mockLoggerError = jest.fn();
-        const mockLogger: LoggerStub = {
-            debug: mockLoggerDebug,
-            info: mockLoggerInfo,
-            warn: mockLoggerWarn,
-            error: mockLoggerError
-        };
-
         Bonjour.prototype.findOne = function(opts?: BrowserConfig | undefined, timeout?: number, callback?: CallableFunction) {
             setTimeout(() => {
                 callback({name: 'fakeAdapter', type: fakeAdapterName, port: fakePort, addresses: [fakeIp], txt: {radio_type: fakeRadio, baud_rate: fakeBaud}});
             }, 200);
         }
 
-        let error;
         try {
-            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+            await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null);
         } catch (e) {
-            error = e;
+            expect(e).toStrictEqual(new Error(`Adapter ${fakeRadio} is not supported.`));
         }
-
-        expect(error).toStrictEqual(new Error(
-            `Adapter ${fakeRadio} is not supported.`
-        ));
-        
     });
 
     it('Adapter mdns detection zstack test', async () => {
@@ -3710,19 +3655,7 @@ describe('Controller', () => {
         const fakeIp = '111.111.111.111';
         const fakePort = 6638;
         const fakeRadio = 'znp';
-        const fakeRadioDetected = fakeRadio == 'znp' ? 'zstack' : fakeRadio;
         const fakeBaud = '115200';
-
-        const mockLoggerDebug = jest.fn();
-        const mockLoggerInfo = jest.fn();
-        const mockLoggerWarn = jest.fn();
-        const mockLoggerError = jest.fn();
-        const mockLogger: LoggerStub = {
-            debug: mockLoggerDebug,
-            info: mockLoggerInfo,
-            warn: mockLoggerWarn,
-            error: mockLoggerError
-        };
 
         Bonjour.prototype.findOne = function(opts?: BrowserConfig | undefined, timeout?: number, callback?: CallableFunction) {
             setTimeout(() => {
@@ -3730,34 +3663,31 @@ describe('Controller', () => {
             }, 200);
         }
 
-        await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null, mockLogger);
+        await Adapter.create(null, {path: `mdns://${fakeAdapterName}`, baudRate: 100, rtscts: false, adapter: null}, null, null);
 
-        expect(mockLoggerInfo.mock.calls[0][0]).toBe(`Starting mdns discovery for coordinator: ${fakeAdapterName}`);
-        expect(mockLoggerInfo.mock.calls[1][0]).toBe(`Coordinator Ip: ${fakeIp}`);
-        expect(mockLoggerInfo.mock.calls[2][0]).toBe(`Coordinator Port: ${fakePort}`);
-        expect(mockLoggerInfo.mock.calls[3][0]).toBe(`Coordinator Radio: ${fakeRadioDetected}`);
-        expect(mockLoggerInfo.mock.calls[4][0]).toBe(`Coordinator Baud: ${fakeBaud}\n`);
-        
+        expect(mockLogger.info.mock.calls[0][0]).toBe(`Starting mdns discovery for coordinator: ${fakeAdapterName}`);
+        expect(mockLogger.info.mock.calls[1][0]).toBe(`Coordinator Ip: ${fakeIp}`);
+        expect(mockLogger.info.mock.calls[2][0]).toBe(`Coordinator Port: ${fakePort}`);
+        expect(mockLogger.info.mock.calls[3][0]).toBe(`Coordinator Radio: zstack`);
+        expect(mockLogger.info.mock.calls[4][0]).toBe(`Coordinator Baud: ${fakeBaud}\n`);
     });
 
     it('Adapter create auto detect nothing found', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(false);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce(null);
 
-        let error;
         try {
             await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null, null);
         } catch(e) {
-            error = e;
+            expect(e).toStrictEqual(new Error('No path provided and failed to auto detect path'));
         }
-        expect(error).toStrictEqual(new Error('No path provided and failed to auto detect path'));
     });
 
     it('Adapter create with unknown path should take ZStackAdapter by default', async () => {
         mockZStackAdapterIsValidPath.mockReturnValueOnce(false);
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: null}, null, null);
-        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null, undefined);
+        expect(ZStackAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: null}, null, null);
     });
 
     it('Adapter create should be able to specify adapter', async () => {
@@ -3768,9 +3698,9 @@ describe('Controller', () => {
         mockZiGateAdapterIsValidPath.mockReturnValueOnce(false);
         mockZiGateAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'deconz'}, null, null);
-        expect(DeconzAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'deconz'}, null, null, undefined);
+        expect(DeconzAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'deconz'}, null, null);
         await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'zigate'}, null, null);
-        expect(ZiGateAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'zigate'}, null, null, undefined);
+        expect(ZiGateAdapter).toHaveBeenCalledWith(null, {"baudRate": 100, "path": "/dev/test", "rtscts": false, adapter: 'zigate'}, null, null);
     });
 
     it('Adapter create should throw on uknown adapter', async () => {
@@ -3778,9 +3708,12 @@ describe('Controller', () => {
         mockZStackAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
         mockDeconzAdapterIsValidPath.mockReturnValueOnce(false);
         mockDeconzAdapterAutoDetectPath.mockReturnValueOnce('/dev/test');
-        let error;
-        try {await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'efr'}, null, null)} catch (e) {error = e;}
-        expect(error).toStrictEqual(new Error(`Adapter 'efr' does not exists, possible options: zstack, deconz, zigate, ezsp, ember`));
+
+        try {
+            await Adapter.create(null, {path: null, baudRate: 100, rtscts: false, adapter: 'efr'}, null, null)
+        } catch (e) {
+            expect(e).toStrictEqual(new Error(`Adapter 'efr' does not exists, possible options: zstack, deconz, zigate, ezsp, ember`));
+        }
     });
 
     it('Emit read from device', async () => {
