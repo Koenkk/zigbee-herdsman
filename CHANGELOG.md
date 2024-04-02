@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.41.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.40.3...v0.41.0) (2024-04-02)
+
+
+### Features
+
+* Improve logging ([#989](https://github.com/Koenkk/zigbee-herdsman/issues/989)) ([0cf7b45](https://github.com/Koenkk/zigbee-herdsman/commit/0cf7b45981cfe4840986121574c88f6437be8b15))
+
 ## [0.40.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.40.2...v0.40.3) (2024-03-31)
 
 

@@ -85,7 +85,7 @@
     "clean": "rimraf temp coverage dist",
     "prepack": "npm run clean && npm run build"
   },
-  "version": "0.40.3",
+  "version": "0.41.0",
   "jest": {
     "coverageThreshold": {
       "global": {
