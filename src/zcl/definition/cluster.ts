@@ -5375,7 +5375,7 @@ const Cluster: {
     },
     manuSpecificBosch: {
         ID: 0xe000,
-        manufacturerCode: ManufacturerCode.BOSCH_SECURITY_SYSTEMS_INC,
+        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
         attributes: {
             sensitivity: {ID: 0x4003, type: 0x21},
         },
@@ -5389,7 +5389,7 @@ const Cluster: {
     },
     manuSpecificBosch3: {
         ID: 0xe002,
-        manufacturerCode: ManufacturerCode.BOSCH_SECURITY_SYSTEMS_INC,
+        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
         attributes: {
             humidity       : {ID: 0x4000, type: 0x21},
             unknown1       : {ID: 0x4001, type: 0x21},
@@ -5410,7 +5410,7 @@ const Cluster: {
     },
     manuSpecificBosch5: {
         ID: 0xe004,
-        manufacturerCode: ManufacturerCode.BOSCH_SECURITY_SYSTEMS_INC,
+        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
         attributes: {
             unknown_attribute: {ID: 0x4000, type: DataType.bitmap8}, // 0,1 ??? read during pairing
             pre_alarm: {ID: 0x4001, type: DataType.bitmap8}, // 0,1 on/off
@@ -5420,7 +5420,7 @@ const Cluster: {
     },
     manuSpecificBosch7: {
         ID: 0xe006,
-        manufacturerCode: ManufacturerCode.BOSCH_SECURITY_SYSTEMS_INC,
+        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
         attributes: {
             unknown1:  {ID: 0x5003, type: 0x28}, // perhaps signal strength? -7?
             unknown2:  {ID: 0x5004, type: 0x20}, // ????
@@ -5436,7 +5436,7 @@ const Cluster: {
     },
     manuSpecificBosch8: {
         ID: 0xe007,
-        manufacturerCode: ManufacturerCode.BOSCH_SECURITY_SYSTEMS_INC,
+        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
         attributes: {
             alarm_status: {ID: 0x5000, type: DataType.bitmap32},
         },
@@ -5452,7 +5452,7 @@ const Cluster: {
     },
     manuSpecificBosch9: {
         ID: 0xfca1,
-        manufacturerCode: ManufacturerCode.BOSCH_SECURITY_SYSTEMS_INC,
+        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
         attributes: {},
         commands: {
             confirmButtonPressed: {
@@ -5472,7 +5472,7 @@ const Cluster: {
     },
     manuSpecificBosch10: {
         ID: 0xfca0,
-        manufacturerCode: ManufacturerCode.BOSCH_SECURITY_SYSTEMS_INC,
+        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
         attributes: {
             deviceMode: {ID: 0x0000, type: DataType.enum8},
             switchType: {ID: 0x0001, type: DataType.enum8},
