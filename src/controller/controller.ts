@@ -444,6 +444,7 @@ class Controller extends events.EventEmitter {
             return;
         }
 
+        device.updateLastSeen();
         this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged,
             {device, reason: 'networkAddress'} as Events.LastSeenChangedPayload);
 
