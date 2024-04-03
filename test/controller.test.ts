@@ -501,6 +501,7 @@ const events = {
     deviceLeave: [],
     message: [],
     permitJoinChanged: [],
+    lastSeenChanged: [],
 }
 
 const backupPath = getTempFile('backup');
@@ -564,6 +565,7 @@ describe('Controller', () => {
         controller.on('deviceAnnounce', (device) => events.deviceAnnounce.push(device));
         controller.on('deviceLeave', (device) => events.deviceLeave.push(device));
         controller.on('message', (message) => events.message.push(message));
+        controller.on('lastSeenChanged', (device) => events.lastSeenChanged.push(device));
         restoreMocksendZclFrameToEndpoint();
     });
 
@@ -987,6 +989,15 @@ describe('Controller', () => {
     it('Network address event from unknown device', async () => {
         await controller.start();
         await mockAdapterEvents['networkAddress']({networkAddress: 19321, ieeeAddr: '0x19321'});
+    });
+
+    it('Network address event should update the last seen value', async () =>  {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        Date.now = jest.fn()
+        Date.now.mockReturnValue(200);
+        await mockAdapterEvents['networkAddress']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(events.lastSeenChanged[1].device.lastSeen).toBe(200);
     });
 
     it('Device leave event and remove from database', async () => {
