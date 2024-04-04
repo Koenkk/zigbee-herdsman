@@ -5400,7 +5400,7 @@ const Cluster: {
             battery        : {ID: 0x4006, type: DataType.uint16},
             unknown3       : {ID: 0x4007, type: DataType.uint16},
             unknown4       : {ID: 0x4008, type: DataType.uint16},
-            pressure       : {ID: 0x4009, type: DataType.uint16},
+            pressure       : {ID: 0x4009, type: DataType.uint16}, // Not yet confirmed
             unknown6       : {ID: 0x400a, type: DataType.uint16},
             unknown7       : {ID: 0x400b, type: DataType.uint16},
             unknown8       : {ID: 0x400c, type: DataType.uint16},
@@ -5412,8 +5412,8 @@ const Cluster: {
         ID: 0xe004,
         manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
         attributes: {
-            unknown1: {ID: 0x4000, type: DataType.bitmap8}, // 0,1 ??? read during pairing
-            preAlarm: {ID: 0x4001, type: DataType.bitmap8}, // 0,1 on/off
+            unknown_attribute: {ID: 0x4000, type: DataType.bitmap8}, // 0,1 ??? read during pairing
+            pre_alarm: {ID: 0x4001, type: DataType.bitmap8}, // 0,1 on/off
         },
         commands: {},
         commandsResponse: {},
@@ -5438,7 +5438,7 @@ const Cluster: {
         ID: 0xe007,
         manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
         attributes: {
-            alarmStatus: {ID: 0x5000, type: DataType.bitmap32},
+            alarm_status: {ID: 0x5000, type: DataType.bitmap32},
         },
         commands: { /////////// VALIDATED  ////////////
             burglarAlarm: {
