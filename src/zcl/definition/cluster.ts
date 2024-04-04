@@ -5484,6 +5484,15 @@ const Cluster: {
         commands: {},
         commandsResponse: {},
     },
+    manuSpecificBosch11: {
+        ID: 0xfcac,
+        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
+        attributes: {
+            alarmOnMotion: {ID: 0x0003, type: DataType.boolean},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     manuSpecificAssaDoorLock: {
         ID: 0xFC00,
         attributes: {
