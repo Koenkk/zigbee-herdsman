@@ -5061,7 +5061,7 @@ export class Ezsp extends EventEmitter {
      */
     ezspIdConflictHandler(id: EmberNodeId): void {
         logger.debug(`ezspIdConflictHandler(): callback called with: [id=${id}]`, NS);
-        logger.error(`An ID conflict was detected for network address "${id}". Corresponding devices removed from the network.`, NS);
+        logger.warning(`An ID conflict was detected for network address "${id}". Corresponding devices kicked from the network.`, NS);
 
         // XXX: this is currently causing more problems than not doing it, so disabled for now.
         //      devices should rejoin on ID conflict anyway, so the database isn't out of sync for very long.
@@ -6814,7 +6814,6 @@ export class Ezsp extends EventEmitter {
     ezspMfglibRxHandler(linkQuality: number, rssi: number, packetLength: number, packetContents: number[]): void {
         logger.debug(`ezspMfglibRxHandler(): callback called with: [linkQuality=${linkQuality}], [rssi=${rssi}], `
             + `[packetLength=${packetLength}], [packetContents=${packetContents}]`, NS);
-        // gecko_sdk_4.4.0\protocol\zigbee\app\framework\plugin\manufacturing-library-cli\manufacturing-library-cli-host.c
     }
 
     //-----------------------------------------------------------------------------

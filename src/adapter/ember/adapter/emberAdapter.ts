@@ -492,20 +492,24 @@ export class EmberAdapter extends Adapter {
         }
         case EmberStatus.NETWORK_OPENED: {
             this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_OPENED);
-            this.requestQueue.enqueue(
-                async (): Promise<EmberStatus> => {
-                    const setJPstatus = (await this.emberSetJoinPolicy(EmberJoinDecision.USE_PRECONFIGURED_KEY));
 
-                    if (setJPstatus !== EzspStatus.SUCCESS) {
-                        logger.error(`[ZDO] Failed set join policy with status=${EzspStatus[setJPstatus]}.`, NS);
-                        return EmberStatus.ERR_FATAL;
-                    }
+            await new Promise<void>((resolve, reject): void => {
+                this.requestQueue.enqueue(
+                    async (): Promise<EmberStatus> => {
+                        const setJPstatus = (await this.emberSetJoinPolicy(EmberJoinDecision.USE_PRECONFIGURED_KEY));
 
-                    return EmberStatus.SUCCESS;
-                },
-                (e) => logger.error(e, NS),// no reject, just log error if any
-                true,// prioritize just to avoid delays if queue is busy
-            );
+                        if (setJPstatus !== EzspStatus.SUCCESS) {
+                            logger.error(`[ZDO] Failed set join policy with status=${EzspStatus[setJPstatus]}.`, NS);
+                            return EmberStatus.ERR_FATAL;
+                        }
+
+                        resolve();
+                        return EmberStatus.SUCCESS;
+                    },
+                    reject,
+                    true,/*prioritize*/
+                );
+            });
             logger.info(`[STACK STATUS] Network opened.`, NS);
             break;
         }
@@ -546,7 +550,7 @@ export class EmberAdapter extends Adapter {
         case EmberOutgoingMessageType.MULTICAST_WITH_ALIAS: {
             // BC/MC not checking for message sent, avoid unnecessary waitress lookups
             logger.error(`Delivery of ${EmberOutgoingMessageType[type]} failed for "${indexOrDestination}" `
-            + `[apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}]`, NS);
+                + `[apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}]`, NS);
             break;
         }
         default: {
@@ -727,19 +731,22 @@ export class EmberAdapter extends Adapter {
                 const joinManufCode = WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE[newNodeEui64.substring(0, 8)] ?? DEFAULT_MANUFACTURER_CODE;
 
                 if (this.manufacturerCode !== joinManufCode) {
-                    this.requestQueue.enqueue(
-                        async (): Promise<EmberStatus> => {
-                            logger.debug(`[WORKAROUND] Setting coordinator manufacturer code to ${ManufacturerCode[joinManufCode]}.`, NS);
-                            await this.ezsp.ezspSetManufacturerCode(joinManufCode);
+                    await new Promise<void>((resolve, reject): void => {
+                        this.requestQueue.enqueue(
+                            async (): Promise<EmberStatus> => {
+                                logger.debug(`[WORKAROUND] Setting coordinator manufacturer code to ${ManufacturerCode[joinManufCode]}.`, NS);
+                                await this.ezsp.ezspSetManufacturerCode(joinManufCode);
 
-                            this.manufacturerCode = joinManufCode;
+                                this.manufacturerCode = joinManufCode;
 
-                            this.emit(Events.deviceJoined, payload);
-                            return EmberStatus.SUCCESS;
-                        },
-                        (e) => logger.error(e, NS),// no reject, just log error if any
-                        true,// prioritize just to avoid delays if queue is busy
-                    );
+                                this.emit(Events.deviceJoined, payload);
+                                resolve();
+                                return EmberStatus.SUCCESS;
+                            },
+                            reject,
+                            true,/*prioritize*/
+                        );
+                    });
                 } else {
                     this.emit(Events.deviceJoined, payload);
                 }
@@ -750,17 +757,20 @@ export class EmberAdapter extends Adapter {
     }
 
     private async watchdogCounters(): Promise<void> {
-        this.requestQueue.enqueue(
-            async (): Promise<EmberStatus> => {
-                // listed as per EmberCounterType
-                const counters = (await this.ezsp.ezspReadAndClearCounters());
+        await new Promise<void>((resolve, reject): void => {
+            this.requestQueue.enqueue(
+                async (): Promise<EmberStatus> => {
+                    // listed as per EmberCounterType
+                    const counters = (await this.ezsp.ezspReadAndClearCounters());
 
-                logger.info(`[NCP COUNTERS] ${counters.join(',')}`, NS);
+                    logger.info(`[NCP COUNTERS] ${counters.join(',')}`, NS);
 
-                return EmberStatus.SUCCESS;
-            },
-            (e) => logger.error(e, NS), // no reject, just log error if any
-        );
+                    resolve();
+                    return EmberStatus.SUCCESS;
+                },
+                reject,
+            );
+        });
     }
 
     private initVariables(): void {
@@ -1432,7 +1442,7 @@ export class EmberAdapter extends Adapter {
             }
         }
 
-        logger.debug(`[BACKUP] Imported ${backupData.length} keys.`, NS);
+        logger.info(`[BACKUP] Imported ${backupData.length} keys.`, NS);
     }
 
     /**
@@ -1701,8 +1711,11 @@ export class EmberAdapter extends Adapter {
             // can be ZLL where not all NCPs need or support it.
             logger.warning(`[EzspConfigId] Unsupported configuration ID ${EzspConfigId[configId]} by NCP.`, NS);
         } else if  (status !== EzspStatus.SUCCESS) {
-            // don't fail in case a set value gets called "out of time"
-            logger.error(`[EzspConfigId] Failed to SET "${EzspConfigId[configId]}" TO "${value}" with status=${EzspStatus[status]}.`, NS);
+            logger.warning(
+                `[EzspConfigId] Failed to SET "${EzspConfigId[configId]}" TO "${value}" with status=${EzspStatus[status]}. `
+                    + `Firmware value will be used instead.`,
+                NS,
+            );
         }
 
         return status;
@@ -2364,7 +2377,7 @@ export class EmberAdapter extends Adapter {
         : Promise<[EmberStatus, apsFrame: EmberApsFrame, messageTag: number]> {
         logger.debug(
             `~~~> [ZDO UNBIND_REQUEST target=${target} source=${source} sourceEndpoint=${sourceEndpoint} clusterId=${clusterId} type=${type} `
-            + `destination=${destination} groupAddress=${groupAddress} destinationEndpoint=${destinationEndpoint}]`,
+                + `destination=${destination} groupAddress=${groupAddress} destinationEndpoint=${destinationEndpoint}]`,
             NS,
         );
         return this.emberSendZigDevBindRequest(
@@ -2767,7 +2780,6 @@ export class EmberAdapter extends Adapter {
                     //     this.ezsp,
                     //     Buffer.from(this.networkCache.eui64.substring(2/*0x*/), 'hex').reverse()
                     // ));
-                    // logger.info(tokensBuf.toString('hex'), NS);
 
                     let context: SecManContext = initSecurityManagerContext();
                     context.coreKeyType = SecManKeyType.TC_LINK;
@@ -2825,7 +2837,7 @@ export class EmberAdapter extends Adapter {
                     return EmberStatus.SUCCESS;
                 },
                 reject,
-                true,// takes prio
+                true,/*prioritize*/
             );
         });
 

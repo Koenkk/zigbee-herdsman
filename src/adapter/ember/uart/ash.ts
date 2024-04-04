@@ -490,7 +490,7 @@ export class UartAsh extends EventEmitter {
 
             // enable software flow control if RTS/CTS not enabled in config
             if (!serialOpts.rtscts) {
-                logger.debug(`RTS/CTS config is off, enabling software flow control.`, NS);
+                logger.info(`RTS/CTS config is off, enabling software flow control.`, NS);
                 serialOpts.xon = true;
                 serialOpts.xoff = true;
             }
@@ -513,7 +513,7 @@ export class UartAsh extends EventEmitter {
 
             try {
                 await this.serialPort.asyncOpen();
-                logger.debug(`Serial port opened: ${JSON.stringify(await this.serialPort.asyncGet())}`, NS);
+                logger.info(`Serial port opened`, NS);
 
                 this.serialPort.once('close', this.onPortClose.bind(this));
                 this.serialPort.on('error', this.onPortError.bind(this));
@@ -545,10 +545,10 @@ export class UartAsh extends EventEmitter {
                 };
 
                 this.socketPort.on('connect', () => {
-                    logger.debug('Socket connected', NS);
+                    logger.debug(`Socket connected`, NS);
                 });
                 this.socketPort.on('ready', async (): Promise<void> => {
-                    logger.debug('Socket ready', NS);
+                    logger.info(`Socket ready`, NS);
                     this.socketPort.removeListener('error', openError);
                     this.socketPort.once('close', this.onPortClose.bind(this));
                     this.socketPort.on('error', this.onPortError.bind(this));
@@ -686,8 +686,6 @@ export class UartAsh extends EventEmitter {
         if (this.serialPort?.isOpen) {
             try {
                 await this.serialPort.asyncFlushAndClose();
-
-                logger.debug(`Serial port closed.`, NS);
             } catch (err) {
                 logger.error(`Failed to close serial port ${err}.`, NS);
             }
@@ -696,8 +694,6 @@ export class UartAsh extends EventEmitter {
         } else if (this.socketPort != null && !this.socketPort.closed) {
             this.socketPort.destroy();
             this.socketPort.removeAllListeners();
-
-            logger.debug(`Socket port closed.`, NS);
         }
     }
 
@@ -1374,7 +1370,6 @@ export class UartAsh extends EventEmitter {
                 this.flags &= ~Flag.NR;
 
                 this.stopNrTimer(); // needed??
-                // logger.debug(`READY - Signaling NCP`, NS);// spams-a-lot
             }
 
             // Force an ACK (or possibly NAK) if we need to send an updated nFlag
