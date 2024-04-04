@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.41.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.41.1...v0.41.2) (2024-04-04)
+
+
+### Bug Fixes
+
+* Ember: fixed logging levels ([#1006](https://github.com/Koenkk/zigbee-herdsman/issues/1006)) ([8a6bba8](https://github.com/Koenkk/zigbee-herdsman/commit/8a6bba895294d6c8f6f07f302961e773893c7d36))
+
+## [0.41.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.41.0...v0.41.1) (2024-04-03)
+
+
+### Bug Fixes
+
+* Set correct manufacturerCode for Bosch ([#1003](https://github.com/Koenkk/zigbee-herdsman/issues/1003)) ([4e7e1d6](https://github.com/Koenkk/zigbee-herdsman/commit/4e7e1d6f3867921287a1e793a7427fb720340822))
+* Update last seen on network address events ([#1004](https://github.com/Koenkk/zigbee-herdsman/issues/1004)) ([a45aff4](https://github.com/Koenkk/zigbee-herdsman/commit/a45aff48b31310b2b2aef5dbb9b33567dab97f1a))
+
 ## [0.41.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.40.3...v0.41.0) (2024-04-02)
 
 

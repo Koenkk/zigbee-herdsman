@@ -141,8 +141,8 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 for (const item of frame.Payload) {
                     payload.push({attrId: item.attrId, status: configureReportStatus, direction: 1})
                 }
-    
-                
+
+
             }
             // @ts-ignore
             return {frame: new ZclFrame(null, payload, frame.Cluster)};
@@ -501,6 +501,7 @@ const events = {
     deviceLeave: [],
     message: [],
     permitJoinChanged: [],
+    lastSeenChanged: [],
 }
 
 const backupPath = getTempFile('backup');
@@ -564,6 +565,7 @@ describe('Controller', () => {
         controller.on('deviceAnnounce', (device) => events.deviceAnnounce.push(device));
         controller.on('deviceLeave', (device) => events.deviceLeave.push(device));
         controller.on('message', (message) => events.message.push(message));
+        controller.on('lastSeenChanged', (device) => events.lastSeenChanged.push(device));
         restoreMocksendZclFrameToEndpoint();
     });
 
@@ -987,6 +989,15 @@ describe('Controller', () => {
     it('Network address event from unknown device', async () => {
         await controller.start();
         await mockAdapterEvents['networkAddress']({networkAddress: 19321, ieeeAddr: '0x19321'});
+    });
+
+    it('Network address event should update the last seen value', async () =>  {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        Date.now = jest.fn()
+        Date.now.mockReturnValue(200);
+        await mockAdapterEvents['networkAddress']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(events.lastSeenChanged[1].device.lastSeen).toBe(200);
     });
 
     it('Device leave event and remove from database', async () => {
@@ -3239,7 +3250,7 @@ describe('Controller', () => {
         expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":99,"manufacturerCode":null,"commandIdentifier":4},"Payload":[{"attrId":85,"status":1}],"Cluster":{"ID":0,"attributes":{"zclVersion":{"ID":0,"type":32,"name":"zclVersion"},"appVersion":{"ID":1,"type":32,"name":"appVersion"},"schneiderMeterRadioPower": {"ID": 57856,"manufacturerCode": 4190,"name": "schneiderMeterRadioPower","type": 40},"stackVersion":{"ID":2,"type":32,"name":"stackVersion"},"hwVersion":{"ID":3,"type":32,"name":"hwVersion"},"manufacturerName":{"ID":4,"type":66,"name":"manufacturerName"},"modelId":{"ID":5,"type":66,"name":"modelId"},"dateCode":{"ID":6,"type":66,"name":"dateCode"},"powerSource":{"ID":7,"type":48,"name":"powerSource"},"appProfileVersion":{"ID":8,"type":48,"name":"appProfileVersion"},"swBuildId":{"ID":16384,"type":66,"name":"swBuildId"},"locationDesc":{"ID":16,"type":66,"name":"locationDesc"},"physicalEnv":{"ID":17,"type":48,"name":"physicalEnv"},"develcoPrimaryHwVersion":{"ID": 32800,"manufacturerCode": 4117,"name": "develcoPrimaryHwVersion","type": 65,},"develcoPrimarySwVersion":{"ID": 32768,"manufacturerCode": 4117,"name": "develcoPrimarySwVersion","type": 65,},"develcoLedControl":{"ID":33024,"manufacturerCode":4117,"name":"develcoLedControl","type":24,},"deviceEnabled":{"ID":18,"type":16,"name":"deviceEnabled"},"alarmMask":{"ID":19,"type":24,"name":"alarmMask"},"disableLocalConfig":{"ID":20,"type":24,"name":"disableLocalConfig"}},"name":"genBasic","commands":{"resetFactDefault":{"ID":0,"parameters":[],"name":"resetFactDefault"},"tuyaSetup":{"ID":240,"parameters":[],"name":"tuyaSetup"}},"commandsResponse":{}},"Command":{"ID":4,"name":"writeRsp","parameters":[{"name":"status","type":32},{"conditions":[{"type":"statusNotEquals","value":0}],"name":"attrId","type":33}]}});
         expect(call[4]).toBe(10000);
     });
-    
+
     it('Write response to endpoint with unknown string attribute', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -3263,7 +3274,7 @@ describe('Controller', () => {
         expect(error.message).toStrictEqual(`Use parameter`)
         expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
     });
-    
+
     it('Write response to endpoint with no status attribute specified', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -3627,7 +3638,7 @@ describe('Controller', () => {
         expect(mockLogger.info.mock.calls[2][0]).toBe(`Coordinator Port: ${fakePort}`);
         expect(mockLogger.info.mock.calls[3][0]).toBe(`Coordinator Radio: ${fakeRadio}`);
         expect(mockLogger.info.mock.calls[4][0]).toBe(`Coordinator Baud: ${fakeBaud}\n`);
-        
+
     });
 
     it('Adapter mdns detection unsupported adapter test', async () => {
@@ -4338,7 +4349,7 @@ describe('Controller', () => {
 
 
         const response = mockZclFrame.create(1, 1, true, null, 4, 'response', 33, payload);
-        
+
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(response));
@@ -4469,7 +4480,7 @@ describe('Controller', () => {
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(removeFrame));
         expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
-        expect(controller.getDeviceByIeeeAddr('0x00000000017171f8')).toBeUndefined(); 
+        expect(controller.getDeviceByIeeeAddr('0x00000000017171f8')).toBeUndefined();
 
         expect(Device.byIeeeAddr('0x00000000017171f8')).toBeUndefined();
         expect(deepClone(Device.byIeeeAddr('0x00000000017171f8', true))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false}}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":false,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":true,"meta":{}});
@@ -4574,7 +4585,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
     });
 
-    
+
     it('Write to device with pendingRequestTimeout > 0, override default sendPolicy', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x129'});
@@ -4617,7 +4628,7 @@ describe('Controller', () => {
             return f;
         };
         endpoint.pendingRequests.add(new Request(async () => {}, [], 100, undefined, undefined, () => {}, () => {}));
- 
+
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Cats barking too hard');});
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard');});

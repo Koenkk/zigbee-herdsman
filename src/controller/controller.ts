@@ -222,7 +222,7 @@ class Controller extends events.EventEmitter {
             ieeeAddr = aqaraMatch[1];
             key = aqaraMatch[2];
         } else {
-            assert(installCode.length === 95 || installCode.length === 91, 
+            assert(installCode.length === 95 || installCode.length === 91,
                 `Unsupported install code, got ${installCode.length} chars, expected 95 or 91`);
             const keyStart = installCode.length - (installCode.length === 95 ? 36 : 32);
             ieeeAddr = installCode.substring(keyStart - 19, keyStart - 3);
@@ -444,7 +444,8 @@ class Controller extends events.EventEmitter {
             return;
         }
 
-        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, 
+        device.updateLastSeen();
+        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged,
             {device, reason: 'networkAddress'} as Events.LastSeenChangedPayload);
 
         if (device.networkAddress !== payload.networkAddress) {
@@ -467,7 +468,7 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
-        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, 
+        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged,
                 {device, reason: 'deviceAnnounce'} as Events.LastSeenChangedPayload);
         device.implicitCheckin();
 
@@ -552,7 +553,7 @@ class Controller extends events.EventEmitter {
         if (this.options.acceptJoiningDeviceHandler) {
             if (!(await this.options.acceptJoiningDeviceHandler(payload.ieeeAddr))) {
                 logger.debug(`Device '${payload.ieeeAddr}' rejected by handler, removing it`, NS);
-                await catcho(() => this.adapter.removeDevice(payload.networkAddress, payload.ieeeAddr), 
+                await catcho(() => this.adapter.removeDevice(payload.networkAddress, payload.ieeeAddr),
                     'Failed to remove rejected device');
                 return;
             } else {
@@ -585,7 +586,7 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
-        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, 
+        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged,
             {device, reason: 'deviceJoined'} as Events.LastSeenChangedPayload);
         device.implicitCheckin();
 
@@ -642,7 +643,7 @@ class Controller extends events.EventEmitter {
 
         let device = gpDevice ? gpDevice : (typeof dataPayload.address === 'string' ?
             Device.byIeeeAddr(dataPayload.address) : Device.byNetworkAddress(dataPayload.address));
-        
+
         /**
          * Handling of re-transmitted Xiaomi messages.
          * https://github.com/Koenkk/zigbee2mqtt/issues/1238
@@ -756,10 +757,10 @@ class Controller extends events.EventEmitter {
             };
 
             this.selfAndDeviceEmit(device, Events.Events.message, eventData);
-            this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, 
+            this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged,
                 {device, reason: 'messageEmitted'} as Events.LastSeenChangedPayload);
         } else {
-            this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, 
+            this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged,
                 {device, reason: 'messageNonEmitted'} as Events.LastSeenChangedPayload);
         }
 
