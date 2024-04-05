@@ -21,8 +21,6 @@ export const NETWORK_DOWN_DEFER_MSEC = 1500;
 
 export class EmberRequestQueue {
     private readonly dispatchInterval: number;
-    /** Interval handler that manages `dispatch()` */
-    private dispatchHandler: NodeJS.Timeout;
     /** If true, the queue is currently busy dispatching. */
     private dispatching: boolean;
     /** The queue holding requests to be sent. */
@@ -49,7 +47,7 @@ export class EmberRequestQueue {
      * Prevent sending requests (usually due to NCP being reset).
      */
     public stopDispatching(): void {
-        clearInterval(this.dispatchHandler);
+        this.dispatching = false;
 
         logger.debug(`Dispatching stopped; queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}`, NS);
     }
@@ -59,7 +57,9 @@ export class EmberRequestQueue {
      * Must be called after init.
      */
     public startDispatching(): void {
-        this.dispatchHandler = setInterval(this.dispatch.bind(this), this.dispatchInterval);
+        this.dispatching = true;
+
+        setTimeout(this.dispatch.bind(this), 0);
 
         logger.debug(`Dispatching started.`, NS);
     }
@@ -96,8 +96,8 @@ export class EmberRequestQueue {
      * 
      * WARNING: Because of this logic for "internal retries", any error thrown by `func` will not immediatedly bubble back to Adapter/Controller
      */
-    public async dispatch(): Promise<void> {
-        if (this.dispatching) {
+    private async dispatch(): Promise<void> {
+        if (!this.dispatching) {
             return;
         }
 
@@ -110,7 +110,6 @@ export class EmberRequestQueue {
         }
 
         if (entry) {
-            this.dispatching = true;
             entry.sendAttempts++;
 
             // NOTE: refer to `enqueue()` comment to keep logic in sync with expectations, adjust comment on change.
@@ -142,9 +141,11 @@ export class EmberRequestQueue {
                     (fromPriorityQueue ? this.priorityQueue : this.queue).shift();
                     entry.reject(err);
                 }
-            } finally {
-                this.dispatching = false;
             }
+        }
+
+        if (this.dispatching) {
+            setTimeout(this.dispatch.bind(this), this.dispatchInterval);
         }
     }
 
@@ -152,7 +153,7 @@ export class EmberRequestQueue {
      * Defer dispatching for the specified duration (in msec).
      * @param msec 
      */
-    public defer(msec: number): void {
+    private defer(msec: number): void {
         this.stopDispatching();
 
         setTimeout(this.startDispatching.bind(this), msec);
