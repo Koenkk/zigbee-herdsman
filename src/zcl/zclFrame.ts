@@ -49,15 +49,12 @@ class ZclFrame {
                 cluster.getCommand(commandKey) : cluster.getCommandResponse(commandKey);
         }
 
-        const header: ZclHeader = {
-            frameControl: {
-                reservedBits, frameType, direction, disableDefaultResponse,
-                manufacturerSpecific: manufacturerCode != null,
-            },
-            transactionSequenceNumber,
+        const header = new ZclHeader(
+            {reservedBits, frameType, direction, disableDefaultResponse, manufacturerSpecific: manufacturerCode != null},
             manufacturerCode,
-            commandIdentifier: command.ID,
-        };
+            transactionSequenceNumber,
+            command.ID,
+        );
 
         return new ZclFrame(header, payload, cluster, command);
     }
@@ -157,13 +154,12 @@ class ZclFrame {
     /**
      * Parsing
      */
-    public static fromBuffer(clusterID: number, buffer: Buffer): ZclFrame {
+    public static fromBuffer(clusterID: number, header: ZclHeader, buffer: Buffer): ZclFrame {
         if (buffer.length < MINIMAL_FRAME_LENGTH) {
             throw new Error("ZclFrame length is lower than minimal length");
         }
 
-        const buffalo = new BuffaloZcl(buffer);
-        const header = this.parseHeader(buffalo);
+        const buffalo = new BuffaloZcl(buffer, header.getLength());
 
         let command: TsType.Command = null;
         if (header.frameControl.frameType === FrameType.GLOBAL) {
@@ -181,27 +177,6 @@ class ZclFrame {
         const payload = this.parsePayload(header, cluster, buffalo);
 
         return new ZclFrame(header, payload, cluster, command);
-    }
-
-    private static parseHeader(buffalo: BuffaloZcl): ZclHeader {
-        const frameControlValue = buffalo.readUInt8();
-        const frameControl = {
-            frameType: frameControlValue & 0x03,
-            manufacturerSpecific: ((frameControlValue >> 2) & 0x01) === 1,
-            direction: (frameControlValue >> 3) & 0x01,
-            disableDefaultResponse: ((frameControlValue >> 4) & 0x01) === 1,
-            reservedBits: frameControlValue >> 5,
-        };
-
-        let manufacturerCode = null;
-        if (frameControl.manufacturerSpecific) {
-            manufacturerCode = buffalo.readUInt16();
-        }
-
-        const transactionSequenceNumber = buffalo.readUInt8();
-        const commandIdentifier = buffalo.readUInt8();
-
-        return {frameControl, transactionSequenceNumber, manufacturerCode, commandIdentifier};
     }
 
     private static parsePayload(header: ZclHeader, cluster: TsType.Cluster, buffalo: BuffaloZcl): ZclPayload {

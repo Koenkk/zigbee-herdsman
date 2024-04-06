@@ -8,7 +8,7 @@ import * as Events from '../../events';
 import Adapter from '../../adapter';
 import {Znp, ZpiObject} from '../znp';
 import {Constants as UnpiConstants} from '../unpi';
-import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
+import {ZclFrame, FrameType, Direction, Foundation, ZclHeader} from '../../../zcl';
 import {Queue, Waitress, Wait} from '../../../utils';
 import * as Constants from '../constants';
 import debounce from 'debounce';
@@ -828,33 +828,27 @@ class ZStackAdapter extends Adapter {
             if (object.subsystem === Subsystem.AF) {
                 /* istanbul ignore else */
                 if (object.command === 'incomingMsg' || object.command === 'incomingMsgExt') {
+                    let header: ZclHeader = undefined;
                     try {
-                        const payload: Events.ZclDataPayload = {
-                            frame: ZclFrame.fromBuffer(object.payload.clusterid, object.payload.data),
-                            address: object.payload.srcaddr,
-                            endpoint: object.payload.srcendpoint,
-                            linkquality: object.payload.linkquality,
-                            groupID: object.payload.groupid,
-                            wasBroadcast: object.payload.wasbroadcast === 1,
-                            destinationEndpoint: object.payload.dstendpoint,
-                        };
-
-                        this.waitress.resolve(payload);
-                        this.emit(Events.Events.zclData, payload);
+                        header = ZclHeader.fromBuffer(object.payload.data);
                     } catch (error) {
-                        const payload: Events.RawDataPayload = {
-                            clusterID: object.payload.clusterid,
-                            data: object.payload.data,
-                            address: object.payload.srcaddr,
-                            endpoint: object.payload.srcendpoint,
-                            linkquality: object.payload.linkquality,
-                            groupID: object.payload.groupid,
-                            wasBroadcast: object.payload.wasbroadcast === 1,
-                            destinationEndpoint: object.payload.dstendpoint,
-                        };
-
-                        this.emit(Events.Events.rawData, payload);
+                        logger.debug(`Failed to parse header: ${error}`, NS);
                     }
+
+                    const payload: Events.ZclDataPayload = {
+                        clusterID: object.payload.clusterid,
+                        data: object.payload.data,
+                        zclFrameHeader: header,
+                        address: object.payload.srcaddr,
+                        endpoint: object.payload.srcendpoint,
+                        linkquality: object.payload.linkquality,
+                        groupID: object.payload.groupid,
+                        wasBroadcast: object.payload.wasbroadcast === 1,
+                        destinationEndpoint: object.payload.dstendpoint,
+                    };
+
+                    this.waitress.resolve(payload);
+                    this.emit(Events.Events.data, payload);
                 }
             }
         }
@@ -1102,14 +1096,14 @@ class ZStackAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        const transactionSequenceNumber = payload.frame.Header.transactionSequenceNumber;
+        const transactionSequenceNumber = payload.zclFrameHeader?.transactionSequenceNumber;
         return (!matcher.address || payload.address === matcher.address) &&
             payload.endpoint === matcher.endpoint &&
             (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            payload.frame.Cluster.ID === matcher.clusterID &&
-            matcher.frameType === payload.frame.Header.frameControl.frameType &&
-            matcher.commandIdentifier === payload.frame.Header.commandIdentifier &&
-            matcher.direction === payload.frame.Header.frameControl.direction;
+            payload.clusterID === matcher.clusterID &&
+            matcher.frameType === payload.zclFrameHeader?.frameControl.frameType &&
+            matcher.commandIdentifier === payload.zclFrameHeader?.commandIdentifier &&
+            matcher.direction === payload.zclFrameHeader?.frameControl.direction;
     }
 
     private checkInterpanLock(): void {

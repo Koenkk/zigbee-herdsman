@@ -6,14 +6,13 @@ import SocketPortUtils from '../../socketPortUtils';
 import {BackupUtils, RealpathSync, Wait} from "../../../utils";
 import {Adapter, TsType} from "../..";
 import {Backup, UnifiedBackupStorage} from "../../../models";
-import {FrameType, Direction, ZclFrame, Foundation, ManufacturerCode} from "../../../zcl";
+import {FrameType, Direction, ZclFrame, ZclHeader, Foundation, ManufacturerCode} from "../../../zcl";
 import Cluster from "../../../zcl/definition/cluster";
 import {
     DeviceAnnouncePayload,
     DeviceJoinedPayload,
     DeviceLeavePayload,
     Events,
-    RawDataPayload,
     ZclDataPayload
 } from "../../events";
 import {halCommonCrc16, highByte, highLowToInt, lowByte, lowHighBytes} from "../utils/math";
@@ -601,33 +600,27 @@ export class EmberAdapter extends Adapter {
      */
     private async onIncomingMessage(type: EmberIncomingMessageType, apsFrame: EmberApsFrame, lastHopLqi: number, sender: EmberNodeId,
         messageContents: Buffer): Promise<void> {
+        let header: ZclHeader = undefined;
         try {
-            const payload: ZclDataPayload = {
-                address: sender,
-                frame: ZclFrame.fromBuffer(apsFrame.clusterId, messageContents),
-                endpoint: apsFrame.sourceEndpoint,
-                linkquality: lastHopLqi,
-                groupID: apsFrame.groupId,
-                wasBroadcast: ((type === EmberIncomingMessageType.BROADCAST) || (type === EmberIncomingMessageType.BROADCAST_LOOPBACK)),
-                destinationEndpoint: apsFrame.destinationEndpoint,
-            };
-
-            this.oneWaitress.resolveZCL(payload);
-            this.emit(Events.zclData, payload);
+            header = ZclHeader.fromBuffer(messageContents);
         } catch (error) {
-            const payload: RawDataPayload = {
-                clusterID: apsFrame.clusterId,
-                address: sender,
-                data: messageContents,
-                endpoint: apsFrame.sourceEndpoint,
-                linkquality: lastHopLqi,
-                groupID: apsFrame.groupId,
-                wasBroadcast: ((type === EmberIncomingMessageType.BROADCAST) || (type === EmberIncomingMessageType.BROADCAST_LOOPBACK)),
-                destinationEndpoint: apsFrame.destinationEndpoint,
-            };
-
-            this.emit(Events.rawData, payload);
+            logger.debug(`Failed to parse header: ${error}`, NS);
         }
+
+        const payload: ZclDataPayload = {
+            clusterID: apsFrame.clusterId,
+            zclFrameHeader: header,
+            address: sender,
+            data: messageContents,
+            endpoint: apsFrame.sourceEndpoint,
+            linkquality: lastHopLqi,
+            groupID: apsFrame.groupId,
+            wasBroadcast: ((type === EmberIncomingMessageType.BROADCAST) || (type === EmberIncomingMessageType.BROADCAST_LOOPBACK)),
+            destinationEndpoint: apsFrame.destinationEndpoint,
+        };
+
+        this.oneWaitress.resolveZCL(payload);
+        this.emit(Events.data, payload);
     }
 
     /**
@@ -642,7 +635,9 @@ export class EmberAdapter extends Adapter {
     private async onTouchlinkMessage(sourcePanId: EmberPanId, sourceAddress: EmberEUI64, groupId: number | null, lastHopLqi: number,
         messageContents: Buffer): Promise<void> {
         const payload: ZclDataPayload = {
-            frame: ZclFrame.fromBuffer(Cluster.touchlink.ID, messageContents),
+            clusterID: Cluster.touchlink.ID,
+            data: messageContents,
+            zclFrameHeader: ZclHeader.fromBuffer(messageContents),
             address: sourceAddress,
             endpoint: 1,// arbitrary since not sent over-the-air
             linkquality: lastHopLqi,
@@ -652,7 +647,7 @@ export class EmberAdapter extends Adapter {
         };
 
         this.oneWaitress.resolveZCL(payload);
-        this.emit(Events.zclData, payload);
+        this.emit(Events.data, payload);
     }
 
     /**
@@ -681,9 +676,13 @@ export class EmberAdapter extends Adapter {
             gpdHeader.writeUInt8(gpdCommandId, 13);// commandID
             gpdHeader.writeUInt8(gpdCommandPayload.length, 14);// payloadSize
 
-            const gpFrame = ZclFrame.fromBuffer(Cluster.greenPower.ID, Buffer.concat([gpdHeader, gpdCommandPayload]));
+            const data = Buffer.concat([gpdHeader, gpdCommandPayload]);
+            const header = ZclHeader.fromBuffer(data);
+            const gpFrame = ZclFrame.fromBuffer(Cluster.greenPower.ID, header, data);
             const payload: ZclDataPayload = {
-                frame: gpFrame,
+                zclFrameHeader: header,
+                data,
+                clusterID: Cluster.greenPower.ID,
                 address: sourceId,
                 endpoint: GP_ENDPOINT,
                 linkquality: gpdLink,
@@ -694,7 +693,7 @@ export class EmberAdapter extends Adapter {
             };
 
             this.oneWaitress.resolveZCL(payload);
-            this.emit(Events.zclData, payload);
+            this.emit(Events.data, payload);
         } catch (err) {
             logger.error(`<~x~ [GP] Failed creating ZCL payload. Skipping. ${err}`, NS);
             return;
