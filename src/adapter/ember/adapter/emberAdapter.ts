@@ -678,7 +678,6 @@ export class EmberAdapter extends Adapter {
 
             const data = Buffer.concat([gpdHeader, gpdCommandPayload]);
             const header = ZclHeader.fromBuffer(data);
-            const gpFrame = ZclFrame.fromBuffer(Cluster.greenPower.ID, header, data);
             const payload: ZclDataPayload = {
                 zclFrameHeader: header,
                 data,
@@ -687,8 +686,7 @@ export class EmberAdapter extends Adapter {
                 endpoint: GP_ENDPOINT,
                 linkquality: gpdLink,
                 groupID: this.greenPowerGroup,
-                // XXX: upstream sends to `gppNwkAddr` if `wasBroadcast` is false, even if `gppNwkAddr` is null
-                wasBroadcast: (gpFrame.Payload.gppNwkAddr != null) ? false : true,
+                wasBroadcast: true,
                 destinationEndpoint: GP_ENDPOINT,
             };
 

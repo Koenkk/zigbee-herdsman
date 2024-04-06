@@ -110,20 +110,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer report', () => {
-        const buffer = [0x18, 0x4a, 0x0a, 0x55, 0x00, 0x39, 0x00, 0x00, 0x00, 0x00];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genAnalogInput").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 10,
-            frameControl: {
+        const buffer = Buffer.from([0x18, 0x4a, 0x0a, 0x55, 0x00, 0x39, 0x00, 0x00, 0x00, 0x00]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genAnalogInput").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 74,
-        };
+            null,
+            74,
+            10
+        );
 
         const payload = [{
             attrData: 0,
@@ -140,20 +139,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer tradfriArrowSingle', () => {
-        const buffer = [0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genScenes").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 7,
-            frameControl: {
+        const buffer = Buffer.from([0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genScenes").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 0,
                 disableDefaultResponse: false,
                 frameType: 1,
                 manufacturerSpecific: true,
             },
-            manufacturerCode: 4476,
-            transactionSequenceNumber: 29,
-        };
+            4476,
+            29,
+            7
+        );
 
         const payload = {value: 256, value2: 13};
 
@@ -164,20 +162,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer genGroups getMembership', () => {
-        const buffer = [0x11, 0x7c, 0x02, 2, 10, 0, 20, 0];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genGroups").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 2,
-            frameControl: {
+        const buffer = Buffer.from([0x11, 0x7c, 0x02, 2, 10, 0, 20, 0]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genGroups").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 0,
                 disableDefaultResponse: true,
                 frameType: 1,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 124,
-        };
+            null,
+            124,
+            2
+        );
 
         const payload = {groupcount: 2, grouplist: [10, 20]};
 
@@ -186,20 +183,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer genGroups getMembership', () => {
-        const buffer = [0x19, 0x7c, 0x03, 0, 10, 0];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genGroups").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 3,
-            frameControl: {
+        const buffer = Buffer.from([0x19, 0x7c, 0x03, 0, 10, 0]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genGroups").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 1,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 124,
-        };
+            null,
+            124,
+            3
+        );
 
         const payload = {groupid: 10, status: 0};
 
@@ -208,20 +204,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer occupancy report', () => {
-        const buffer = [24,169,10,0,0,24,1];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 10,
-            frameControl: {
+        const buffer = Buffer.from([24,169,10,0,0,24,1]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 169,
-        };
+            null,
+            169,
+            10
+        );
 
         const payload = [{ attrId: 0, dataType: 24, attrData: 1 }];
 
@@ -230,20 +225,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer configReportRsp - short', () => {
-        const buffer = [0x08, 0x01, 0x07, 0x00];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 7,
-            frameControl: {
+        const buffer = Buffer.from([0x08, 0x01, 0x07, 0x00]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 1,
-        };
+            null,
+            1,
+            7
+        );
 
         const payload = [{status: 0}];
 
@@ -252,20 +246,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer configReportRsp - long', () => {
-        const buffer = [0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 7,
-            frameControl: {
+        const buffer = Buffer.from([0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 1,
-        };
+            null,
+            1,
+            7
+        );
 
         const payload = [{status: 0, direction:1, attrId: 0x1234}, {status: 1, direction:1, attrId: 0x1235}];
 
@@ -274,20 +267,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer configReportRsp (hvacThermostat)', () => {
-        const buffer = [0x18, 0x03, 0x07, 0x00, 0x00, 0x12, 0x00];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 7,
-            frameControl: {
+        const buffer = Buffer.from([0x18, 0x03, 0x07, 0x00, 0x00, 0x12, 0x00]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 3,
-        };
+            null,
+            3,
+            7
+        );
 
         const payload = [{status:0, direction: 0, attrId: 18}];
 
@@ -296,16 +288,16 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
-        const bufferHeat = [9, 7, 0, 6, 64, 1, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8];
-        const frameHeat = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(bufferHeat));
+        const bufferHeat = Buffer.from([9, 7, 0, 6, 64, 1, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8]);
+        const frameHeat = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Zcl.ZclHeader.fromBuffer(bufferHeat), bufferHeat);
         expect(frameHeat.Payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:1, transitions: [{transitionTime:360,heatSetpoint:2300},{transitionTime:570,heatSetpoint:2200},{transitionTime:720,heatSetpoint:2150},{transitionTime:840,heatSetpoint:2150},{transitionTime:990,heatSetpoint:2300},{transitionTime:1380,heatSetpoint:2100}]});
 
-        const bufferCool = [9, 7, 0, 6, 64, 2, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8];
-        const frameCool = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(bufferCool));
+        const bufferCool = Buffer.from([9, 7, 0, 6, 64, 2, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8]);
+        const frameCool = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Zcl.ZclHeader.fromBuffer(bufferCool), bufferCool);
         expect(frameCool.Payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:2, transitions: [{transitionTime:360,coolSetpoint:2300},{transitionTime:570,coolSetpoint:2200},{transitionTime:720,coolSetpoint:2150},{transitionTime:840,coolSetpoint:2150},{transitionTime:990,coolSetpoint:2300},{transitionTime:1380,coolSetpoint:2100}]});
 
-        const bufferHeatAndCool = [9, 7, 0, 1, 64, 3, 104, 1, 252, 8, 58, 2];
-        const frameHeatAndCool = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Buffer.from(bufferHeatAndCool));
+        const bufferHeatAndCool = Buffer.from([9, 7, 0, 1, 64, 3, 104, 1, 252, 8, 58, 2]);
+        const frameHeatAndCool = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Zcl.ZclHeader.fromBuffer(bufferHeatAndCool), bufferHeatAndCool);
         expect(frameHeatAndCool.Payload).toStrictEqual({numoftrans:1, dayofweek:64, mode:3, transitions: [{transitionTime:360,coolSetpoint:570, heatSetpoint: 2300}]});
     });
 
@@ -324,20 +316,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer configReportRsp failed', () => {
-        const buffer = [0x08, 0x01, 0x07, 0x02, 0x01, 0x01, 0x01];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 7,
-            frameControl: {
+        const buffer = Buffer.from([0x08, 0x01, 0x07, 0x02, 0x01, 0x01, 0x01]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 1,
-        };
+            null,
+            1,
+            7
+        );
 
         const payload = [{status: 2, direction: 1, attrId: 257}];
 
@@ -346,20 +337,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer defaultRsp', () => {
-        const buffer = [0x18, 0x04, 0x0b, 0x0c, 0x82];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 11,
-            frameControl: {
+        const buffer = Buffer.from([0x18, 0x04, 0x0b, 0x0c, 0x82]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 4,
-        };
+            null,
+            4,
+            11
+        );
 
         const payload = {cmdId: 12, statusCode: 130};
 
@@ -368,20 +358,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer xiaomiStruct', () => {
-        const buffer = [28,95,17,3,10,5,0,66,21,108,117,109,105,46,115,101,110,115,111,114,95,119,108,101,97,107,46,97,113,49,1,255,66,34,1,33,213,12,3,40,33,4,33,168,19,5,33,43,0,6,36,0,0,5,0,0,8,33,4,2,10,33,0,0,100,16,0];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 10,
-            frameControl: {
+        const buffer = Buffer.from([28,95,17,3,10,5,0,66,21,108,117,109,105,46,115,101,110,115,111,114,95,119,108,101,97,107,46,97,113,49,1,255,66,34,1,33,213,12,3,40,33,4,33,168,19,5,33,43,0,6,36,0,0,5,0,0,8,33,4,2,10,33,0,0,100,16,0]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
                 manufacturerSpecific: true,
             },
-            manufacturerCode: 4447,
-            transactionSequenceNumber: 3,
-        };
+            4447,
+            3,
+            10
+        );
 
         const payload = [{"attrId":5,"dataType":66,"attrData":"lumi.sensor_wleak.aq1"},{"attrId":65281,"dataType":66,"attrData":{"1":3285,"3":33,"4":5032,"5":43,"6":[0,327680],"8":516,"10":0,"100":0}}];
 
@@ -390,20 +379,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer struct', () => {
-        const buffer = [28,52,18,194,10,2,255,76,6,0,16,1,33,206,11,33,168,67,36,1,0,0,0,0,33,48,2,32,86];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 10,
-            frameControl: {
+        const buffer = Buffer.from([28,52,18,194,10,2,255,76,6,0,16,1,33,206,11,33,168,67,36,1,0,0,0,0,33,48,2,32,86]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
                 manufacturerSpecific: true,
             },
-            manufacturerCode: 4660,
-            transactionSequenceNumber: 194,
-        };
+            4660,
+            194,
+            10
+        );
 
         const payload = [
             {
@@ -434,20 +422,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer discoverRsp', () => {
-        const buffer = [24,23,13,0,32,0,32,33,0,32,49,0,48,51,0,32,53,0,24];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 13,
-            frameControl: {
+        const buffer = Buffer.from([24,23,13,0,32,0,32,33,0,32,49,0,48,51,0,32,53,0,24]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 23,
-        };
+            null,
+            23,
+            13
+        );
 
         const payload = {"discComplete":0,"attrInfos":[{"attrId":32,"dataType":32},{"attrId":33,"dataType":32},{"attrId":49,"dataType":48},{"attrId":51,"dataType":32},{"attrId":53,"dataType":24}]};
 
@@ -458,27 +445,26 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer error on malformed', () => {
-        const buffer = [0x08, 0x01];
+        const buffer = Buffer.from([0x08, 0x01]);
         expect(() => {
-            Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Buffer.from(buffer));
-        }).toThrowError("ZclFrame length is lower than minimal length");
+            Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        }).toThrowError("ZclHeader length is lower than minimal length");
     });
 
     it('ZclFrame from buffer readRsp failed', () => {
-        const buffer = [8, 1, 1, 1, 0, 2];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 1,
-            frameControl: {
+        const buffer = Buffer.from([8, 1, 1, 1, 0, 2]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 1,
-        };
+            null,
+            1,
+            1
+        );
 
         const payload = [{status: 2, attrId: 1}];
 
@@ -487,20 +473,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer readRsp success', () => {
-        const buffer = [8, 1, 1, 1, 0, 0, 32, 3];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 1,
-            frameControl: {
+        const buffer = Buffer.from([8, 1, 1, 1, 0, 0, 32, 3]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 1,
-        };
+            null,
+            1,
+            1
+        );
 
         const payload = [{status: Zcl.Status.SUCCESS, attrId: 1, dataType: Zcl.DataType.uint8, attrData: 3}];
 
@@ -509,20 +494,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer GDP commission', () => {
-        const buffer = [0x11, 0x00, 0x04, 0x00, 0x00, 0xfe, 0xf4, 0x46, 0x00, 0xf9, 0x00, 0x00, 0x00, 0xe0, 0x1b, 0x02, 0x81, 0xf2, 0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab, 0xa4, 0x46, 0xd4, 0xd5, 0xf9, 0x01, 0x00, 0x00];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 4,
-            frameControl: {
+        const buffer = Buffer.from([0x11, 0x00, 0x04, 0x00, 0x00, 0xfe, 0xf4, 0x46, 0x00, 0xf9, 0x00, 0x00, 0x00, 0xe0, 0x1b, 0x02, 0x81, 0xf2, 0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab, 0xa4, 0x46, 0xd4, 0xd5, 0xf9, 0x01, 0x00, 0x00]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 0,
                 disableDefaultResponse: true,
                 frameType: 1,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 0,
-        };
+            null,
+            0,
+            4
+        );
 
         const payload = {
             options: 0,
@@ -554,20 +538,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer GDP scene 0', () => {
-        const buffer = [0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 0,
-            frameControl: {
+        const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 0,
                 disableDefaultResponse: true,
                 frameType: 1,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 0,
-        };
+            null,
+            0,
+            0
+        );
 
         const payload = {
             srcID: 4650238,
@@ -583,20 +566,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer GDP with extra data', () => {
-        const buffer = [0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff, 0x01];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 0,
-            frameControl: {
+        const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff, 0x01]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 0,
                 disableDefaultResponse: true,
                 frameType: 1,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 0,
-        };
+            null,
+            0,
+            0
+        );
 
         const payload = {
             srcID: 4650238,
@@ -612,20 +594,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer GDP pairing', () => {
-        const buffer = [0x19, 0x17, 0x01, 0x68, 0xe5, 0x00, 0xf8, 0x71, 0x71, 0x01, 0x47, 0x65, 0xa1, 0x1c, 0x00, 0x4b, 0x12, 0x00, 0x00, 0x00, 0x02, 0x1c, 0x12, 0x00, 0x00, 0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1,0,0,0,0,0,0];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 1,
-            frameControl: {
+        const buffer = Buffer.from([0x19, 0x17, 0x01, 0x68, 0xe5, 0x00, 0xf8, 0x71, 0x71, 0x01, 0x47, 0x65, 0xa1, 0x1c, 0x00, 0x4b, 0x12, 0x00, 0x00, 0x00, 0x02, 0x1c, 0x12, 0x00, 0x00, 0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1,0,0,0,0,0,0]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("greenPower").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 1,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 23,
-        };
+            null,
+            23,
+            1
+        );
 
         const payload = {
             options: 0x00e568,
@@ -642,20 +623,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer readRsp alias type', () => {
-        const buffer = [8, 1, 1, 1, 0, 0, 8, 3];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 1,
-            frameControl: {
+        const buffer = Buffer.from([8, 1, 1, 1, 0, 0, 8, 3]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 1,
-        };
+            null,
+            1,
+            1
+        );
 
         const payload = [{status: Zcl.Status.SUCCESS, attrId: 1, dataType: Zcl.DataType.data8, attrData: 3}];
 
@@ -664,20 +644,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer configReportRsp server to client', () => {
-        const buffer = [8, 1, 6, 1, 1, 0, 10, 10];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 6,
-            frameControl: {
+        const buffer = Buffer.from([8, 1, 6, 1, 1, 0, 10, 10]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 1,
-        };
+            null,
+            1,
+            6
+        );
 
         const payload = [{attrId: 1, direction: 1, timeout: 2570}];
 
@@ -686,20 +665,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer configReportRsp client to server analog', () => {
-        const buffer = [8, 1, 6, 0, 0, 1, 32, 1, 0, 10, 0, 20];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 6,
-            frameControl: {
+        const buffer = Buffer.from([8, 1, 6, 0, 0, 1, 32, 1, 0, 10, 0, 20]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 1,
-        };
+            null,
+            1,
+            6
+        );
 
         const payload = [{attrId: 256, dataType: 32, direction: 0, maxRepIntval: 10, minRepIntval: 1, repChange: 20,}];
 
@@ -708,20 +686,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer configReportRsp client to server analog', () => {
-        const buffer = [8, 1, 6, 0, 0, 1, 8, 1, 0, 10, 0];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 6,
-            frameControl: {
+        const buffer = Buffer.from([8, 1, 6, 0, 0, 1, 8, 1, 0, 10, 0]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: false,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 1,
-        };
+            null,
+            1,
+            6
+        );
 
         const payload = [{attrId: 256, dataType: 8, direction: 0, maxRepIntval: 10, minRepIntval: 1}];
 
@@ -730,20 +707,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer readRsp', () => {
-        const buffer = [24,7,1,5,0,0,66,30,84,82,65,68,70,82,73,32,98,117,108,98,32,69,50,55,32,87,83,32,111,112,97,108,32,57,56,48,108,109,6,0,0,66,8,50,48,49,55,48,51,51,49,7,0,0,48,1,10,0,0,65,15,76,69,68,49,53,52,53,71,49,50,69,50,55,69,85];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 1,
-            frameControl: {
+        const buffer = Buffer.from([24,7,1,5,0,0,66,30,84,82,65,68,70,82,73,32,98,117,108,98,32,69,50,55,32,87,83,32,111,112,97,108,32,57,56,48,108,109,6,0,0,66,8,50,48,49,55,48,51,51,49,7,0,0,48,1,10,0,0,65,15,76,69,68,49,53,52,53,71,49,50,69,50,55,69,85]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 1,
                 disableDefaultResponse: true,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 7,
-        };
+            null,
+            7,
+            1
+        );
 
         const payload = [{"attrId":5,"status":0,"dataType":66,"attrData":"TRADFRI bulb E27 WS opal 980lm"},{"attrId":6,"status":0,"dataType":66,"attrData":"20170331"},{"attrId":7,"status":0,"dataType":48,"attrData":1},{"attrId":10,"status":0,"dataType":65,"attrData":Buffer.from([76,69,68,49,53,52,53,71,49,50,69,50,55,69,85])}];
 
@@ -771,7 +747,7 @@ describe('Zcl', () => {
 
     it('ZclFrame with Ubisys (manufacturer specific) cluster fromBuffer', () => {
         const buffer = Buffer.from([0x04, 0xf2, 0x10, 0x08, 0x01, 0x00, 0x00, 0x00, 0x20, 0x01])
-        const frame = Zcl.ZclFrame.fromBuffer(0xfc00, buffer);
+        const frame = Zcl.ZclFrame.fromBuffer(0xfc00, Zcl.ZclHeader.fromBuffer(buffer), buffer);
         expect(frame.Cluster.name).toBe('manuSpecificUbisysDeviceSetup');
     });
 
@@ -787,19 +763,18 @@ describe('Zcl', () => {
 
     it('ZclFrame from buffer with reservered bits', () => {
         const buffer = Buffer.from([224,8,12,0,0,240]);
-        const frame = Zcl.ZclFrame.fromBuffer(0, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 12,
-            frameControl: {
+        const frame = Zcl.ZclFrame.fromBuffer(0, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 7,
                 direction: 0,
                 disableDefaultResponse: false,
                 frameType: 0,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 8,
-        };
+            null,
+            8,
+            12
+        );
 
         const payload = {startAttrId: 0, maxAttrIds: 240};
 
@@ -978,20 +953,19 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer ssIasAce arm command', () => {
-        const buffer = [1,87,0,0,6,49,50,51,52,53,54,0];
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("ssIasAce").ID, Buffer.from(buffer));
-        const header = {
-            commandIdentifier: 0,
-            frameControl: {
+        const buffer = Buffer.from([1,87,0,0,6,49,50,51,52,53,54,0]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("ssIasAce").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
+        const header = new Zcl.ZclHeader({
                 reservedBits: 0,
                 direction: 0,
                 disableDefaultResponse: false,
                 frameType: 1,
                 manufacturerSpecific: false,
             },
-            manufacturerCode: null,
-            transactionSequenceNumber: 87,
-        };
+            null,
+            87,
+            0
+        );
 
         const payload = {
             armmode: 0,
@@ -1598,8 +1572,8 @@ describe('Zcl', () => {
     });
     
     it('ZclFrame parse MiBoxer zone configuration command', () => {
-        const zoneConfigPayload = [0x11, 0x01, 0xf0, 0x08, 0x84, 0x2b, 0x01, 0x98, 0x2b, 0x02, 0xac, 0x2b, 0x03, 0xc0, 0x2b, 0x04, 0xd4, 0x2b, 0x05, 0xe8, 0x2b, 0x06, 0xfc, 0x2b, 0x07, 0x10, 0x2c, 0x08];
-        const zoneConfigFrame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genGroups").ID, Buffer.from(zoneConfigPayload));
+        const zoneConfigPayload = Buffer.from([0x11, 0x01, 0xf0, 0x08, 0x84, 0x2b, 0x01, 0x98, 0x2b, 0x02, 0xac, 0x2b, 0x03, 0xc0, 0x2b, 0x04, 0xd4, 0x2b, 0x05, 0xe8, 0x2b, 0x06, 0xfc, 0x2b, 0x07, 0x10, 0x2c, 0x08]);
+        const zoneConfigFrame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genGroups").ID, Zcl.ZclHeader.fromBuffer(zoneConfigPayload), zoneConfigPayload);
         expect(zoneConfigFrame.Payload.zones).toStrictEqual([
             {zoneNum: 1, groupId: 0x2b84},
             {zoneNum: 2, groupId: 0x2b98},

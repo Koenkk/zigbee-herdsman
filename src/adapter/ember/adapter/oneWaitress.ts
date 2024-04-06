@@ -147,6 +147,8 @@ export class EmberOneWaitress {
     }
 
     public resolveZCL(payload: ZclDataPayload): boolean {
+        if (!payload.zclFrameHeader) return false;
+
         for (const [index, waiter] of this.waiters.entries()) {
             if (waiter.timedout) {
                 this.waiters.delete(index);
@@ -155,8 +157,8 @@ export class EmberOneWaitress {
 
             // no target in touchlink, also no APS sequence, but use the ZCL one instead
             if (((waiter.matcher.apsFrame.profileId === TOUCHLINK_PROFILE_ID) || (payload.address === waiter.matcher.target))
-                && (!waiter.matcher.zclSequence || (payload.zclFrameHeader?.transactionSequenceNumber === waiter.matcher.zclSequence))
-                && (!waiter.matcher.commandIdentifier || (payload.zclFrameHeader?.commandIdentifier === waiter.matcher.commandIdentifier))
+                && (!waiter.matcher.zclSequence || (payload.zclFrameHeader.transactionSequenceNumber === waiter.matcher.zclSequence))
+                && (!waiter.matcher.commandIdentifier || (payload.zclFrameHeader.commandIdentifier === waiter.matcher.commandIdentifier))
                 && (payload.clusterID === waiter.matcher.apsFrame.clusterId)
                 && (payload.endpoint === waiter.matcher.apsFrame.destinationEndpoint)) {
                 clearTimeout(waiter.timer);

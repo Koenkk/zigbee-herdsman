@@ -1096,14 +1096,15 @@ class ZStackAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        const transactionSequenceNumber = payload.zclFrameHeader?.transactionSequenceNumber;
+        if (!payload.zclFrameHeader) return false;
+        const transactionSequenceNumber = payload.zclFrameHeader.transactionSequenceNumber;
         return (!matcher.address || payload.address === matcher.address) &&
             payload.endpoint === matcher.endpoint &&
             (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
             payload.clusterID === matcher.clusterID &&
-            matcher.frameType === payload.zclFrameHeader?.frameControl.frameType &&
-            matcher.commandIdentifier === payload.zclFrameHeader?.commandIdentifier &&
-            matcher.direction === payload.zclFrameHeader?.frameControl.direction;
+            matcher.frameType === payload.zclFrameHeader.frameControl.frameType &&
+            matcher.commandIdentifier === payload.zclFrameHeader.commandIdentifier &&
+            matcher.direction === payload.zclFrameHeader.frameControl.direction;
     }
 
     private checkInterpanLock(): void {

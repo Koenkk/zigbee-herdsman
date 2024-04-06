@@ -4,7 +4,7 @@ import * as TsType from '../../tstype';
 import {ActiveEndpoints, DeviceType, LQI, LQINeighbor, NodeDescriptor, SimpleDescriptor} from '../../tstype';
 import * as Events from '../../events';
 import Adapter from '../../adapter';
-import {Direction, Foundation, FrameType, ZclFrame} from '../../../zcl';
+import {Direction, Foundation, FrameType, ZclFrame, ZclHeader} from '../../../zcl';
 import {Queue, Wait, Waitress} from '../../../utils';
 import Driver from '../driver/zigate';
 import {
@@ -55,8 +55,7 @@ class ZiGateAdapter extends Adapter {
             this.waitressValidator, this.waitressTimeoutFormatter
         );
 
-        this.driver.on('received', this.zclDataListener.bind(this));
-        this.driver.on('receivedRaw', this.rawDataListener.bind(this));
+        this.driver.on('received', this.dataListener.bind(this));
         this.driver.on('LeaveIndication', this.leaveIndicationListener.bind(this));
         this.driver.on('DeviceAnnounce', this.deviceAnnounceListener.bind(this));
         this.driver.on('close', this.onZiGateClose.bind(this));
@@ -743,37 +742,27 @@ class ZiGateAdapter extends Adapter {
         }
     }
 
-    private zclDataListener(data: { ziGateObject: ZiGateObject, zclFrame: ZclFrame }): void {
-        if (data.zclFrame instanceof ZclFrame) {
-            const payload: Events.ZclDataPayload = {
-                address: <number>data.ziGateObject.payload.sourceAddress,
-                frame: data.zclFrame,
-                endpoint: <number>data.ziGateObject.payload.sourceEndpoint,
-                linkquality: data.ziGateObject.frame.readRSSI(),
-                groupID: null, // @todo
-                wasBroadcast: false, // TODO
-                destinationEndpoint: <number>data.ziGateObject.payload.destinationEndpoint,
-            };
-            this.waitress.resolve(payload);
-            this.emit(Events.Events.zclData, payload)
-        } else {
-            logger.error(`msg not zclFrame ${JSON.stringify(data.zclFrame)}`, NS);
+    private dataListener(data: { ziGateObject: ZiGateObject }): void {
+        let header: ZclHeader = undefined;
+        try {
+            header = ZclHeader.fromBuffer(data.ziGateObject.payload.payload);
+        } catch (error) {
+            logger.debug(`Failed to parse header: ${error}`, NS);
         }
-    }
 
-    private rawDataListener(data: { ziGateObject: ZiGateObject }): void {
-        const payload: Events.RawDataPayload = {
-            clusterID: <number>data.ziGateObject.payload.clusterID,
-            data: <Buffer>data.ziGateObject.payload.payload,
+        const payload: Events.ZclDataPayload = {
             address: <number>data.ziGateObject.payload.sourceAddress,
+            clusterID: data.ziGateObject.payload.clusterID,
+            data: data.ziGateObject.payload.payload,
+            zclFrameHeader: header,
             endpoint: <number>data.ziGateObject.payload.sourceEndpoint,
             linkquality: data.ziGateObject.frame.readRSSI(),
-            groupID: null,
+            groupID: null, // @todo
             wasBroadcast: false, // TODO
             destinationEndpoint: <number>data.ziGateObject.payload.destinationEndpoint,
         };
-
-        this.emit(Events.Events.rawData, payload);
+        this.waitress.resolve(payload);
+        this.emit(Events.Events.data, payload);
     }
 
     private leaveIndicationListener(data: { ziGateObject: ZiGateObject }): void {
@@ -792,14 +781,15 @@ class ZiGateAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        const transactionSequenceNumber = payload.frame.Header.transactionSequenceNumber;
+        if (!payload.zclFrameHeader) return false;
+        const transactionSequenceNumber = payload.zclFrameHeader.transactionSequenceNumber;
         return (!matcher.address || payload.address === matcher.address) &&
             matcher.endpoint === payload.endpoint &&
             (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            matcher.clusterID === payload.frame.Cluster.ID &&
-            matcher.frameType === payload.frame.Header.frameControl.frameType &&
-            matcher.commandIdentifier === payload.frame.Header.commandIdentifier &&
-            matcher.direction === payload.frame.Header.frameControl.direction;
+            matcher.clusterID === payload.clusterID &&
+            matcher.frameType === payload.zclFrameHeader.frameControl.frameType &&
+            matcher.commandIdentifier === payload.zclFrameHeader.commandIdentifier &&
+            matcher.direction === payload.zclFrameHeader.frameControl.direction;
     }
 
     private onZiGateClose(): void {

@@ -311,16 +311,7 @@ export default class ZiGate extends EventEmitter {
                                 }
                                 break;
                             case 0x0104:
-                                try {
-                                    const zclFrame = ZclFrame.fromBuffer(
-                                        <number>ziGateObject.payload.clusterID,
-                                        <Buffer>ziGateObject.payload.payload
-                                    );
-                                    this.emit('received', {ziGateObject, zclFrame});
-                                } catch (error) {
-                                    logger.error("could not parse zclFrame: " + error, NS);
-                                    this.emit('receivedRaw', {ziGateObject});
-                                }
+                                this.emit('received', {ziGateObject});
                                 break;
                             default:
 

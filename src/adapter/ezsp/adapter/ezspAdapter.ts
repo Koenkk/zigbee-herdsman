@@ -8,7 +8,7 @@ import Adapter from '../../adapter';
 
 import {Driver, EmberIncomingMessage} from '../driver';
 import {EmberZDOCmd, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
-import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
+import {ZclFrame, FrameType, Direction, Foundation, ZclHeader} from '../../../zcl';
 import * as Events from '../../events';
 import {Queue, Waitress, Wait, RealpathSync} from '../../../utils';
 import * as Models from "../../../models";
@@ -77,36 +77,32 @@ class EZSPAdapter extends Adapter {
                 this.driver.handleNodeJoined(nwk, ieee);
             }
         } else if (frame.apsFrame.profileId == 260 || frame.apsFrame.profileId == 0xFFFF) {
+            let header: ZclHeader = undefined;
             try {
-                const payload: Events.ZclDataPayload = {
-                    frame: ZclFrame.fromBuffer(frame.apsFrame.clusterId, frame.message),
-                    address: frame.sender,
-                    endpoint: frame.apsFrame.sourceEndpoint,
-                    linkquality: frame.lqi,
-                    groupID: frame.apsFrame.groupId,
-                    wasBroadcast: false, // TODO
-                    destinationEndpoint: frame.apsFrame.destinationEndpoint,
-                };
-
-                this.waitress.resolve(payload);
-                this.emit(Events.Events.zclData, payload);
+                header = ZclHeader.fromBuffer(frame.message);
             } catch (error) {
-                const payload: Events.RawDataPayload = {
-                    clusterID: frame.apsFrame.clusterId,
-                    data: frame.message,
-                    address: frame.sender,
-                    endpoint: frame.apsFrame.sourceEndpoint,
-                    linkquality: frame.lqi,
-                    groupID: frame.apsFrame.groupId,
-                    wasBroadcast: false, // TODO
-                    destinationEndpoint: frame.apsFrame.destinationEndpoint,
-                };
-
-                this.emit(Events.Events.rawData, payload);
+                logger.debug(`Failed to parse header: ${error}`, NS);
             }
+
+            const payload: Events.ZclDataPayload = {
+                clusterID: frame.apsFrame.clusterId,
+                zclFrameHeader: header,
+                data: frame.message,
+                address: frame.sender,
+                endpoint: frame.apsFrame.sourceEndpoint,
+                linkquality: frame.lqi,
+                groupID: frame.apsFrame.groupId,
+                wasBroadcast: false, // TODO
+                destinationEndpoint: frame.apsFrame.destinationEndpoint,
+            };
+
+            this.waitress.resolve(payload);
+            this.emit(Events.Events.data, payload);
         } else if (frame.apsFrame.profileId == 0xc05e && frame.senderEui64) {  // ZLL Frame
             const payload: Events.ZclDataPayload = {
-                frame: ZclFrame.fromBuffer(frame.apsFrame.clusterId, frame.message),
+                clusterID: frame.apsFrame.clusterId,
+                zclFrameHeader: ZclHeader.fromBuffer(frame.message),
+                data: frame.message,
                 address: `0x${frame.senderEui64.toString()}`,
                 endpoint: 0xFE,
                 linkquality: frame.lqi,
@@ -116,19 +112,16 @@ class EZSPAdapter extends Adapter {
             };
 
             this.waitress.resolve(payload);
-            this.emit(Events.Events.zclData, payload);
+            this.emit(Events.Events.data, payload);
         } else if (frame.apsFrame.profileId == 0xA1E0) {  // GP Frame
             // Only handle when clusterId == 33 (greenPower), some devices send messages with this profileId
             // while the cluster is not greenPower
             // https://github.com/Koenkk/zigbee2mqtt/issues/20838
             if (frame.apsFrame.clusterId === 33) {
-                const zclFrame = ZclFrame.create(
-                    FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true,
-                    null, frame.apsFrame.sequence,
-                    (frame.messageType == 0xE0) ? 'commissioningNotification' : 'notification',
-                    frame.apsFrame.clusterId, frame.message);
                 const payload: Events.ZclDataPayload = {
-                    frame: zclFrame,
+                    zclFrameHeader: ZclHeader.fromBuffer(frame.message),
+                    clusterID: frame.apsFrame.clusterId,
+                    data: frame.message,
                     address: frame.sender,
                     endpoint: frame.apsFrame.sourceEndpoint,
                     linkquality: frame.lqi,
@@ -138,7 +131,7 @@ class EZSPAdapter extends Adapter {
                 };
     
                 this.waitress.resolve(payload);
-                this.emit(Events.Events.zclData, payload);
+                this.emit(Events.Events.data, payload);
             } else {
                 logger.debug(`Ignoring GP frame because clusterId is not greenPower`, NS);
             }
@@ -763,12 +756,13 @@ class EZSPAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        const transactionSequenceNumber = payload.frame.Header.transactionSequenceNumber;
+        if (!payload.zclFrameHeader) return false;
+        const transactionSequenceNumber = payload.zclFrameHeader.transactionSequenceNumber;
         return (!matcher.address || payload.address === matcher.address) &&
             payload.endpoint === matcher.endpoint &&
             (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            payload.frame.Cluster.ID === matcher.clusterID &&
-            matcher.commandIdentifier === payload.frame.Header.commandIdentifier;
+            payload.clusterID === matcher.clusterID &&
+            matcher.commandIdentifier === payload.zclFrameHeader.commandIdentifier;
     }
 }
 
