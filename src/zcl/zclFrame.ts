@@ -36,7 +36,7 @@ class ZclFrame {
      * Creating
      */
     public static create(
-        frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number,
+        frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number | null,
         transactionSequenceNumber: number, commandKey: number | string, clusterKey: number | string,
         payload: ZclPayload, reservedBits = 0
     ): ZclFrame {

@@ -755,9 +755,10 @@ class Endpoint extends Entity {
 
         try {
             const result = await this.sendRequest(frame, options);
-            const resultFrame = Zcl.ZclFrame.fromBuffer(result.clusterID, result.zclFrameHeader, result.data);
+            let resultFrame: Zcl.ZclFrame = undefined;
             if (result && checkStatus && !options.disableResponse) {
-                this.checkStatus(frame.Payload);
+                resultFrame = Zcl.ZclFrame.fromBuffer(result.clusterID, result.zclFrameHeader, result.data);
+                this.checkStatus(resultFrame.Payload);
             }
             return resultFrame;
         } catch (error) {

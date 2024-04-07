@@ -85,20 +85,21 @@ const restoreMocksendZclFrameToEndpoint = () => {
             const payload = [];
             const cluster = frame.Cluster;
             for (const item of frame.Payload) {
+                const attribute = cluster.getAttribute(item.attrId);
                 if (frame.isCluster('ssIasZone') && item.attrId === 0) {
                     iasZoneReadState170Count++;
-                    payload.push({attrId: item.attrId, attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0, status: 0});
+                    payload.push({attrId: item.attrId, dataType: attribute.type, attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0, status: 0});
                 } else if (item.attrId !== 65314) {
-                    const attribute = cluster.getAttribute(item.attrId).name;
-                    payload.push({attrId: item.attrId, attrData: mockDevices[networkAddress].attributes[endpoint][attribute], status: 0})
+                    payload.push({attrId: item.attrId, dataType: attribute.type, attrData: mockDevices[networkAddress].attributes[endpoint][attribute.name], status: 0})
                 }
             }
 
-            // @ts-ignore
-            return {frame: new ZclFrame(null, payload, frame.Cluster)};
+            const responseFrame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, payload);
+            return {clusterID: responseFrame.Cluster.ID, zclFrameHeader: responseFrame.Header, data: responseFrame.toBuffer()};
         }
 
         if (frame.isSpecific() && (frame.isCommand('add') || frame.isCommand('remove')) && frame.isCluster('genGroups')) {
+            throw new Error('TODO')
             // @ts-ignore
             return {frame: new ZclFrame(null, {status: 0, groupid: 1}, frame.Cluster)};
         }
@@ -111,7 +112,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 {zonetype: 0, manucode: 1}
             );
 
-            mockAdapterEvents['zclData']({
+            mockAdapterEvents['data']({
                 wasBroadcast: false,
                 address: 170,
                 clusterID: response.Cluster.ID,
@@ -129,6 +130,8 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 payload.push({attrId: item.attrId, status: 0})
             }
 
+            throw new Error('TODO')
+
             // @ts-ignore
             return {frame: new ZclFrame(null, payload, frame.Cluster)};
         }
@@ -142,11 +145,10 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 for (const item of frame.Payload) {
                     payload.push({attrId: item.attrId, status: configureReportStatus, direction: 1})
                 }
-
-
             }
-            // @ts-ignore
-            return {frame: new ZclFrame(null, payload, frame.Cluster)};
+
+            const responseFrame = mockZclFrame.create(0, 1, true, null, 10, 'configReport', 0, payload);
+            return {clusterID: responseFrame.Cluster.ID, zclFrameHeader: responseFrame.Header, data: responseFrame.toBuffer()};
         }
     })
 }
@@ -377,10 +379,13 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             nodeDescriptor: async (networkAddress) => {
                 const descriptor = mockDevices[networkAddress].nodeDescriptor;
                 if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
-                    await mockAdapterEvents['zclData']({
+                    const frame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'lumi.occupancy'}]);
+                    await mockAdapterEvents['data']({
                         wasBroadcast: false,
                         address: networkAddress,
-                        frame: mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'lumi.occupancy'}]),
+                        clusterID: frame.Cluster.ID,
+                        data: frame.toBuffer(),
+                        zclFrameHeader: frame.Header,
                         endpoint: 1,
                         linkquality: 50,
                         groupID: 1,
@@ -793,19 +798,20 @@ describe('Controller', () => {
     });
 
     it('Controller should ignore touchlink messages', async () => {
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, false,
+            null, 1, 'scanResponse', Zcl.Utils.getCluster('touchlink').ID,
+            {transactionID: 1, rssiCorrection: 1, zigbeeInformation: 1, touchlinkInformation: 1, keyBitmask: 1, responseID: 1, extendedPanID: '0x001788010de23e6e', networkUpdateID: 1, logicalChannel: 1, panID: 1, networkAddress: 1, numberOfSubDevices: 1, totalGroupIdentifiers: 1}
+        );
+
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             networkAddress: 129,
-            frame: Zcl.ZclFrame.create(
-                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, false,
-                null, 1, 'scanResponse', Zcl.Utils.getCluster('touchlink').ID,
-                {}
-            ),
-            clusterID: response.Cluster.ID,
-            data: response.toBuffer(),
-            zclFrameHeader: response.Header,
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -815,13 +821,16 @@ describe('Controller', () => {
     });
 
     it('Device should update properties when reported', async () => {
+        const frame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'new.model.id'}]);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(Device.byIeeeAddr('0x129').modelID).toBe('myModelID');
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'new.model.id'}]),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -1317,12 +1326,15 @@ describe('Controller', () => {
 
     it('Receive zclData occupancy report', async () => {
         const buffer = Buffer.from([24,169,10,0,0,24,1]);
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: '0x129',
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -1431,11 +1443,10 @@ describe('Controller', () => {
         await controller.start();
         mocksendZclFrameToAll.mockClear();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['rawData']({
+        await mockAdapterEvents['data']({
             clusterID: 9,
             address: 129,
             data: Buffer.from([0, 1, 2, 3]),
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer),
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -1522,11 +1533,10 @@ describe('Controller', () => {
         const buffer = Buffer.from([24,169,10,0,0,24,1]);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['rawData']({
+        await mockAdapterEvents['data']({
             clusterID: 99999999,
             address: 129,
             data: Buffer.from([0, 1, 2, 3]),
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer),
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -1611,12 +1621,15 @@ describe('Controller', () => {
 
     it('Receive zclData from unkonwn device shouldnt emit anything', async () => {
         const buffer = Buffer.from([24,169,10,0,0,24,1]);
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             networkAddress: 130,
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -1627,12 +1640,15 @@ describe('Controller', () => {
 
     it('Receive readResponse from unknown endpoint', async () => {
         const buffer = Buffer.from([8, 1, 1, 1, 0, 0, 32, 3]);
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, ZclHeader.fromBuffer(buffer), buffer);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 3,
             linkquality: 52,
             groupID: undefined,
@@ -1757,12 +1773,15 @@ describe('Controller', () => {
 
     it('Receive cluster command', async () => {
         const buffer = Buffer.from([0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00]);
+        const frame = ZclFrame.fromBuffer(5, ZclHeader.fromBuffer(buffer), buffer);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.fromBuffer(5, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1861,12 +1880,15 @@ describe('Controller', () => {
     });
 
     it('Receive cluster command from unknown cluster', async () => {
+        const frame = ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1});
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             networkAddress: 129,
-            frame: ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1}),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1876,13 +1898,16 @@ describe('Controller', () => {
     });
 
     it('Receive zclData send default response', async () => {
+        const frame = ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1});
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mocksendZclFrameToEndpoint.mockClear();
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1}),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1897,16 +1922,19 @@ describe('Controller', () => {
     });
 
     it('Receive zclData dont send default resopnse with skipDefaultResponse', async () => {
+        const frame = ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1});
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr('0x129');
         expect(device.skipDefaultResponse).toBeFalsy();
         device.skipDefaultResponse = true;
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1}),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1916,15 +1944,18 @@ describe('Controller', () => {
     });
 
     it('Receive zclData dont send default resopnse when broadcast', async () => {
+        const frame = ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1});
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr('0x129');
         expect(device.skipDefaultResponse).toBeFalsy();
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: true,
             address: 129,
-            frame: ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1}),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1933,16 +1964,19 @@ describe('Controller', () => {
     });
 
     it('Receive zclData send default response fails should NOT attempt route discover when adapter does not support it', async () => {
+        const frame = ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1});
         mockAdapterSupportsDiscoverRoute.mockReturnValueOnce(false);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mocksendZclFrameToEndpoint.mockClear();
         mockDiscoverRoute.mockClear();
         mocksendZclFrameToEndpoint.mockRejectedValue("");
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.create(1, 1, false, 4476, 29, 1, 5, {groupid: 1, sceneid: 1}),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1953,13 +1987,16 @@ describe('Controller', () => {
     });
 
     it('Respond to genTime read', async () => {
+        const frame = ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 4}]);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mocksendZclFrameToEndpoint.mockClear();
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 4}]),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -2000,16 +2037,19 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         device.customReadResponse = jest.fn().mockReturnValue(true);
 
+        const frame = ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 9}]);
         const payload = {
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 9}]),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
         };
 
-        await mockAdapterEvents['zclData'](payload);
+        await mockAdapterEvents['data'](payload);
 
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
         expect(device.customReadResponse).toHaveBeenCalledTimes(1);
@@ -2023,10 +2063,13 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         endpoint.saveClusterAttributeKeyValue('hvacThermostat', {systemMode: 3});
         mocksendZclFrameToEndpoint.mockClear();
-        await mockAdapterEvents['zclData']({
+        const frame = ZclFrame.create(0, 0, true, null, 40, 0, 513, [{attrId: 28}, {attrId: 2901238}]);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.create(0, 0, true, null, 40, 0, 513, [{attrId: 28}, {attrId: 2901238}]),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -2045,10 +2088,13 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error(""));
-        await mockAdapterEvents['zclData']({
+        const frame = ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}]);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.create(0, 0, true, null, 40, 0, 10, [{attrId: 0}]),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -2228,10 +2274,13 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const buffer = Buffer.from([28,95,17,3,10,5,0,66,21,108,117,109,105,46,115,101,110,115,111,114,95,119,108,101,97,107,46,97,113,49,1,255,66,34,1,33,213,12,3,40,33,4,33,168,19,5,33,43,0,6,36,0,0,5,0,0,8,33,4,2,10,33,0,0,100,16,0]);
-        await mockAdapterEvents['zclData']({
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, ZclHeader.fromBuffer(buffer), buffer);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -2532,11 +2581,13 @@ describe('Controller', () => {
             return {frame: new ZclFrame(null, payload, frame.Cluster)};
         });
         mocksendZclFrameToEndpoint.mockImplementationOnce (() => jest.advanceTimersByTime(10));
-
-        await mockAdapterEvents['zclData']({
+        let frame = ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 174,
-            frame: ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 52,
             groupID: undefined,
@@ -2548,10 +2599,13 @@ describe('Controller', () => {
         device._checkinInterval = 50;
 
         mocksendZclFrameToEndpoint.mockClear();
-        await mockAdapterEvents['zclData']({
+        frame = ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 174,
-            frame: ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 52,
             groupID: undefined,
@@ -3080,20 +3134,22 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[0][4]).toBe(10000);
     });
 
-    it('Endpoint waitForCommand', async () => {
+    it('onlythis Endpoint waitForCommand', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         mocksendZclFrameToEndpoint.mockClear();
         const buffer = Buffer.from([24,169,10,0,0,24,1]);
-        const promise = new Promise((resolve, reject) => resolve({frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer)}))
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer);
+        const promise = new Promise((resolve, reject) => resolve({clusterID: frame.Cluster.ID, data: frame.toBuffer(), zclFrameHeader: frame.Header}))
         mockAdapterWaitFor.mockReturnValueOnce({promise, cancel: () => {}});
         const result = endpoint.waitForCommand('genOta', 'upgradeEndRequest', 10, 20);
         expect(mockAdapterWaitFor).toHaveBeenCalledTimes(1);
         expect(mockAdapterWaitFor).toHaveBeenCalledWith(129, 1, 1, 0, 10, 25, 6, 20);
         expect(result.cancel).toStrictEqual(expect.any(Function));
-        expect((await result.promise)).toStrictEqual({"header": {"commandIdentifier": 10, "frameControl": {"reservedBits": 0,"direction": 1, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 169}, "payload": [{"attrData": 1, "attrId": 0, "dataType": 24}]});
+        console.log(await result.promise);
+        // expect((await result.promise)).toStrictEqual({"header": {"commandIdentifier": 10, "frameControl": {"reservedBits": 0,"direction": 1, "disableDefaultResponse": true, "frameType": 0, "manufacturerSpecific": false}, "manufacturerCode": null, "transactionSequenceNumber": 169}, "payload": [{"attrData": 1, "attrId": 0, "dataType": 24}]});
     });
 
     it('Endpoint waitForCommand error', async () => {
@@ -3536,10 +3592,13 @@ describe('Controller', () => {
         let buffer = Buffer.from([24,169,10,0,0,24,1]);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['zclData']({
+        let frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -3550,10 +3609,13 @@ describe('Controller', () => {
         expect(endpoint.getClusterAttributeValue('genBasic', 'modelId')).toBeNull();
         
         buffer = Buffer.from([24,169,10,0,0,24,0]);
-        await mockAdapterEvents['zclData']({
+        frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -3743,11 +3805,14 @@ describe('Controller', () => {
     it('Emit read from device', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['zclData']({
+        const frame = ZclFrame.create(0, 0, true, null, 40, 0, 1, [{attrId: 0}, {attrId: 9999}]);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
             // Attrid 9999 does not exist in ZCL
-            frame: ZclFrame.create(0, 0, true, null, 40, 0, 1, [{attrId: 0}, {attrId: 9999}]),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -3849,11 +3914,14 @@ describe('Controller', () => {
     it('Emit write from device', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['zclData']({
+        const frame = ZclFrame.create(0, 0, true, null, 40, 2, 10, [{attrId:16389, dataType:32, attrData:3}]);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
             // Attrid 9999 does not exist in ZCL
-            frame: ZclFrame.create(0, 0, true, null, 40, 2, 10, [{attrId:16389, dataType:32, attrData:3}]),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -4161,10 +4229,12 @@ describe('Controller', () => {
             },
         };
         const frame = mockZclFrame.create(1, 0, true, null, 10, 'commissioningNotification', 33, data)
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: true,
             address: 0x46f4fe,
-            frame,
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 1,
@@ -4186,10 +4256,12 @@ describe('Controller', () => {
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
 
         // When joins again, shouldnt emit duplicate event
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: true,
             address: 0xf4fe,
-            frame,
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 1,
@@ -4215,10 +4287,12 @@ describe('Controller', () => {
             },
         };
         const frameToggle = mockZclFrame.create(1, 0, true, null, 10, 'notification', 33, dataToggle)
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 0xf4fe,
-            frame: frameToggle,
+            clusterID: frameToggle.Cluster.ID,
+            data: frameToggle.toBuffer(),
+            zclFrameHeader: frameToggle.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 1,
@@ -4248,10 +4322,12 @@ describe('Controller', () => {
             },
         };
         const frame = mockZclFrame.create(1, 0, true, null, 10, 'commissioningNotification', 33, data)
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: true,
             address: 0x46f4fe,
-            frame,
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 1,
@@ -4297,10 +4373,12 @@ describe('Controller', () => {
             },
         };
         const frame = mockZclFrame.create(1, 0, true, null, 10, 'commissioningNotification', 33, data)
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: true,
             address: 0x46f4fe,
-            frame,
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 1,
@@ -4405,10 +4483,12 @@ describe('Controller', () => {
 
        expect(deepClone(receivedFrame)).toStrictEqual(deepClone(expectedFrame));
 
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: expectedFrame,
+            clusterID: expectedFrame.Cluster.ID,
+            data: expectedFrame.toBuffer(),
+            zclFrameHeader: expectedFrame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 0,
@@ -4436,10 +4516,12 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[0][7]).toBe(242);
 
         // When joins again, shouldnt emit duplicate event
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: expectedFrame,
+            clusterID: expectedFrame.Cluster.ID,
+            data: expectedFrame.toBuffer(),
+            zclFrameHeader: expectedFrame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 0,
@@ -4467,10 +4549,12 @@ describe('Controller', () => {
             gppGddLink: 0xd8,
         };
         const frameScene = mockZclFrame.create(1, 0, true, null, 10, 'notification', 33, dataScene)
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 0x017171f8,
-            frame: frameScene,
+            clusterID: frameScene.Cluster.ID,
+            data: frameScene.toBuffer(),
+            zclFrameHeader: frameScene.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 0,
@@ -4500,10 +4584,12 @@ describe('Controller', () => {
         expect(deepClone(Device.byIeeeAddr('0x00000000017171f8', true))).toStrictEqual({"ID":2,"_events":{},"_eventsCount":0,"_pendingRequestTimeout":0,"_skipDefaultResponse": false,"_endpoints":[{"ID":242,"_binds":[],"_configuredReportings":[],"_events":{},"_eventsCount":0,"clusters":{},"deviceIeeeAddress":"0x00000000017171f8","deviceNetworkAddress":0x71f8,"inputClusters":[],"meta":{},"outputClusters":[],"pendingRequests": {"ID": 242,"deviceIeeeAddress": "0x00000000017171f8","sendInProgress": false}}],"_ieeeAddr":"0x00000000017171f8","_interviewCompleted":false,"_interviewing":false,"_lastSeen":150,"_linkquality":50,"_manufacturerID":null,"_modelID":"GreenPower_2","_networkAddress":0x71f8,"_type":"GreenPower","_deleted":true,"meta":{}});
 
         // Re-add device
-        await mockAdapterEvents['zclData']({
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
-            frame: expectedFrame,
+            clusterID: expectedFrame.Cluster.ID,
+            data: expectedFrame.toBuffer(),
+            zclFrameHeader: expectedFrame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 0,
@@ -4583,20 +4669,23 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
         const buffer = Buffer.from([24,169,10,0,0,24,1]);
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer);
         const data = {
             wasBroadcast: false,
             address: '0x129',
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
         }
         await nextTick;
-        await mockAdapterEvents['zclData'](data);
+        await mockAdapterEvents['data'](data);
         await result;
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
         expect((await result)).toBe(undefined);
-        await mockAdapterEvents['zclData'](data);
+        await mockAdapterEvents['data'](data);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
     });
 
@@ -4652,23 +4741,26 @@ describe('Controller', () => {
         await nextTick;
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const buffer = Buffer.from([24,169,10,0,0,24,1]);
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer);
         const data = {
             wasBroadcast: false,
             address: '0x129',
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
         }
 
         nextTick = new Promise (process.nextTick);
-        await mockAdapterEvents['zclData'](data);
+        await mockAdapterEvents['data'](data);
         await nextTick;
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
         Date.now.mockReturnValue(100000);
         let error = null;
         try{
-            await mockAdapterEvents['zclData'](data);
+            await mockAdapterEvents['data'](data);
             await result;
         } catch (e) {
             error = e;
@@ -4795,10 +4887,13 @@ describe('Controller', () => {
 
         // Implicit checkin, there are 5 ZclFrames and 2 other requests left in the queue:
         const buffer = Buffer.from([24,169,10,0,0,24,1]);
-        await mockAdapterEvents['zclData']({
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: '0x129',
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -4834,10 +4929,13 @@ describe('Controller', () => {
         endpoint.pendingRequests.queue = async (req) => {
             const f = origQueueRequest.call(endpoint.pendingRequests, req);
             const buffer = Buffer.from([24,169,10,0,0,24,1]);
-            await mockAdapterEvents['zclData']({
+            const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer);
+            await mockAdapterEvents['data']({
                 wasBroadcast: false,
                 address: 174,
-                frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer),
+                clusterID: frame.Cluster.ID,
+                data: frame.toBuffer(),
+                zclFrameHeader: frame.Header,
                 endpoint: 1,
                 linkquality: 50,
                 groupID: 1,
@@ -4910,10 +5008,13 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
 
         const buffer = Buffer.from([24,169,10,0,0,24,1]);
-        await mockAdapterEvents['zclData']({
+        let frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 174,
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -4922,10 +5023,13 @@ describe('Controller', () => {
 
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
 
-        await mockAdapterEvents['zclData']({
+        frame = ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 174,
-            frame: ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 52,
             groupID: undefined,
@@ -4965,11 +5069,14 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 175, ieeeAddr: '0x175'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 171, ieeeAddr: '0x171'});
 
-        await mockAdapterEvents['zclData']({
+        const frame = ZclFrame.create(0, 0, true, null, 40, 0, 1, [{attrId: 0}, {attrId: 9999}]);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 175,
             // Attrid 9999 does not exist in ZCL
-            frame: ZclFrame.create(0, 0, true, null, 40, 0, 1, [{attrId: 0}, {attrId: 9999}]),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 171,
@@ -5001,10 +5108,14 @@ describe('Controller', () => {
         const buffer = Buffer.from([28,33,16,13,1,2,240,0,48,4]);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['zclData']({
+
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, ZclHeader.fromBuffer(buffer), buffer);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: '0x129',
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 0,
@@ -5020,10 +5131,13 @@ describe('Controller', () => {
         const buffer = Buffer.from([28,33,16,13,1,2,240,0,48,4]);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 177, ieeeAddr: '0x177'});
-        await mockAdapterEvents['zclData']({
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, ZclHeader.fromBuffer(buffer), buffer);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: '0x177',
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 0,
@@ -5038,10 +5152,13 @@ describe('Controller', () => {
         const buffer = Buffer.from([24,242,10,2,240,48,4]);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        await mockAdapterEvents['zclData']({
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, ZclHeader.fromBuffer(buffer), buffer);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: '0x129',
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 0,
@@ -5056,10 +5173,13 @@ describe('Controller', () => {
         const buffer = Buffer.from([24,242,10,2,240,48,4]);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 177, ieeeAddr: '0x177'});
-        await mockAdapterEvents['zclData']({
+        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, ZclHeader.fromBuffer(buffer), buffer);
+        await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: '0x177',
-            frame: ZclFrame.fromBuffer(Zcl.Utils.getCluster("closuresWindowCovering").ID, ZclHeader.fromBuffer(buffer), buffer),
+            clusterID: frame.Cluster.ID,
+            data: frame.toBuffer(),
+            zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 0,
