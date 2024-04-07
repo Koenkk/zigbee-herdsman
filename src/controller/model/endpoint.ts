@@ -584,7 +584,7 @@ class Endpoint extends Entity {
     ): Promise<void | KeyValue> {
         const frame = await this.zclCommand(clusterKey, commandKey, payload, options, null, false, Zcl.FrameType.SPECIFIC);
         if (frame) {
-            return frame;
+            return frame.Payload;
         }
     }
 
@@ -639,7 +639,7 @@ class Endpoint extends Entity {
         const promise = new Promise<{header: Zcl.ZclHeader; payload: KeyValue}>((resolve, reject) => {
             waiter.promise.then(
                 (payload) => {
-                    const frame = Zcl.ZclFrame.fromBuffer(payload.clusterID, payload.zclFrameHeader, payload.data).Payload;
+                    const frame = Zcl.ZclFrame.fromBuffer(payload.clusterID, payload.zclFrameHeader, payload.data);
                     resolve({header: frame.Header, payload: frame.Payload});
                 },
                 (error) => reject(error),
