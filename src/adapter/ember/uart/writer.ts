@@ -1,8 +1,8 @@
 /* istanbul ignore file */
 import {Readable, ReadableOptions} from "stream";
-import {logger} from "../../../utils/logger";
+// import {logger} from "../../../utils/logger";
 
-const NS = 'zh:ember:uart:ash:writer';
+// const NS = 'zh:ember:uart:ash:writer';
 
 export class AshWriter extends Readable {
     private bytesToWrite: number[];
@@ -17,7 +17,8 @@ export class AshWriter extends Readable {
         const buffer = Buffer.from(this.bytesToWrite);
         this.bytesToWrite = [];
 
-        logger.debug(`>>>> [FRAME raw=${buffer.toString('hex')}]`, NS);
+        // expensive and very verbose, enable locally only if necessary
+        // logger.debug(`>>>> [FRAME raw=${buffer.toString('hex')}]`, NS);
 
         // this.push(buffer);
         this.emit('data', buffer);

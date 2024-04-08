@@ -671,7 +671,7 @@ export class UartAsh extends EventEmitter {
     public async stop(): Promise<void> {
         this.closing = true;
 
-        this.printCounters();
+        this.logCounters();
         await this.closePort();
         this.initVariables();
 
@@ -1880,28 +1880,74 @@ export class UartAsh extends EventEmitter {
     }
 
     /**
-     * Prints counters in a nicely formatted table.
+     * Read and clear ASH layer counters in the same manner as the NCP ones.
+     * @returns 
      */
-    private printCounters(): void {
-        logger.info(`Total frames: RX=${this.counters.rxAllFrames}, TX=${this.counters.txAllFrames}`, NS);
-        logger.info(`Cancelled   : RX=${this.counters.rxCancelled}, TX=${this.counters.txCancelled}`, NS);
-        logger.info(`DATA frames : RX=${this.counters.rxDataFrames}, TX=${this.counters.txDataFrames}`, NS);
-        logger.info(`DATA bytes  : RX=${this.counters.rxData}, TX=${this.counters.txData}`, NS);
-        logger.info(`Retry frames: RX=${this.counters.rxReDataFrames}, TX=${this.counters.txReDataFrames}`, NS);
-        logger.info(`ACK frames  : RX=${this.counters.rxAckFrames}, TX=${this.counters.txAckFrames}`, NS);
-        logger.info(`NAK frames  : RX=${this.counters.rxNakFrames}, TX=${this.counters.txNakFrames}`, NS);
-        logger.info(`nRdy frames : RX=${this.counters.rxN1Frames}, TX=${this.counters.txN1Frames}`, NS);
+    public readAndClearCounters(): number[] {
+        const counters = [
+            this.counters.txData,
+            this.counters.txAllFrames,
+            this.counters.txDataFrames,
+            this.counters.txAckFrames,
+            this.counters.txNakFrames,
+            this.counters.txReDataFrames,
+            this.counters.txN1Frames,
+            this.counters.txCancelled,
 
-        logger.info(`CRC errors      : RX=${this.counters.rxCrcErrors}`, NS);
-        logger.info(`Comm errors     : RX=${this.counters.rxCommErrors}`, NS);
-        logger.info(`Length < minimum: RX=${this.counters.rxTooShort}`, NS);
-        logger.info(`Length > maximum: RX=${this.counters.rxTooLong}`, NS);
-        logger.info(`Bad controls    : RX=${this.counters.rxBadControl}`, NS);
-        logger.info(`Bad lengths     : RX=${this.counters.rxBadLength}`, NS);
-        logger.info(`Bad ACK numbers : RX=${this.counters.rxBadAckNumber}`, NS);
-        logger.info(`Out of buffers  : RX=${this.counters.rxNoBuffer}`, NS);
-        logger.info(`Retry dupes     : RX=${this.counters.rxDuplicates}`, NS);
-        logger.info(`Out of sequence : RX=${this.counters.rxOutOfSequence}`, NS);
-        logger.info(`ACK timeouts    : RX=${this.counters.rxAckTimeouts}`, NS);
+            this.counters.rxData,
+            this.counters.rxAllFrames,
+            this.counters.rxDataFrames,
+            this.counters.rxAckFrames,
+            this.counters.rxNakFrames,
+            this.counters.rxReDataFrames,
+            this.counters.rxN1Frames,
+            this.counters.rxCancelled,
+
+            this.counters.rxCrcErrors,
+            this.counters.rxCommErrors,
+            this.counters.rxTooShort,
+            this.counters.rxTooLong,
+            this.counters.rxBadControl,
+            this.counters.rxBadLength,
+            this.counters.rxBadAckNumber,
+            this.counters.rxNoBuffer,
+            this.counters.rxDuplicates,
+            this.counters.rxOutOfSequence,
+            this.counters.rxAckTimeouts,
+        ];
+
+        for (const c in this.counters) {
+            this.counters[c as keyof UartAshCounters] = 0;
+        }
+
+        return counters;
+    }
+
+    /**
+     * Log counters (pretty-formatted) as they are since last time they were cleared.
+     * Used on ASH layer stop to get 'pre-stop state'.
+     */
+    private logCounters(): void {
+        logger.info(`ASH COUNTERS since last clear:`, NS);
+        logger.info(`  Total frames: RX=${this.counters.rxAllFrames}, TX=${this.counters.txAllFrames}`, NS);
+        logger.info(`  Cancelled   : RX=${this.counters.rxCancelled}, TX=${this.counters.txCancelled}`, NS);
+        logger.info(`  DATA frames : RX=${this.counters.rxDataFrames}, TX=${this.counters.txDataFrames}`, NS);
+        logger.info(`  DATA bytes  : RX=${this.counters.rxData}, TX=${this.counters.txData}`, NS);
+        logger.info(`  Retry frames: RX=${this.counters.rxReDataFrames}, TX=${this.counters.txReDataFrames}`, NS);
+        logger.info(`  ACK frames  : RX=${this.counters.rxAckFrames}, TX=${this.counters.txAckFrames}`, NS);
+        logger.info(`  NAK frames  : RX=${this.counters.rxNakFrames}, TX=${this.counters.txNakFrames}`, NS);
+        logger.info(`  nRdy frames : RX=${this.counters.rxN1Frames}, TX=${this.counters.txN1Frames}`, NS);
+
+        logger.info(`  CRC errors      : RX=${this.counters.rxCrcErrors}`, NS);
+        logger.info(`  Comm errors     : RX=${this.counters.rxCommErrors}`, NS);
+        logger.info(`  Length < minimum: RX=${this.counters.rxTooShort}`, NS);
+        logger.info(`  Length > maximum: RX=${this.counters.rxTooLong}`, NS);
+        logger.info(`  Bad controls    : RX=${this.counters.rxBadControl}`, NS);
+        logger.info(`  Bad lengths     : RX=${this.counters.rxBadLength}`, NS);
+        logger.info(`  Bad ACK numbers : RX=${this.counters.rxBadAckNumber}`, NS);
+        logger.info(`  Out of buffers  : RX=${this.counters.rxNoBuffer}`, NS);
+        logger.info(`  Retry dupes     : RX=${this.counters.rxDuplicates}`, NS);
+        logger.info(`  Out of sequence : RX=${this.counters.rxOutOfSequence}`, NS);
+        logger.info(`  ACK timeouts    : RX=${this.counters.rxAckTimeouts}`, NS);
     }
 }

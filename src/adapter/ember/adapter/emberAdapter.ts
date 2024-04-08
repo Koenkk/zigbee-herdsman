@@ -761,9 +761,13 @@ export class EmberAdapter extends Adapter {
             this.requestQueue.enqueue(
                 async (): Promise<EmberStatus> => {
                     // listed as per EmberCounterType
-                    const counters = (await this.ezsp.ezspReadAndClearCounters());
+                    const ncpCounters = (await this.ezsp.ezspReadAndClearCounters());
 
-                    logger.info(`[NCP COUNTERS] ${counters.join(',')}`, NS);
+                    logger.info(`[NCP COUNTERS] ${ncpCounters.join(',')}`, NS);
+
+                    const ashCounters = this.ezsp.ash.readAndClearCounters();
+
+                    logger.info(`[ASH COUNTERS] ${ashCounters.join(',')}`, NS);
 
                     resolve();
                     return EmberStatus.SUCCESS;
