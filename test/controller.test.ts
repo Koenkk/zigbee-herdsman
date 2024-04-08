@@ -535,7 +535,7 @@ describe('Controller', () => {
         jest.useFakeTimers({doNotFake: ['setTimeout']});
         Date.now = jest.fn()
         Date.now.mockReturnValue(150);
-        // setLogger(mockLogger);
+        setLogger(mockLogger);
         dummyBackup = await Utils.BackupUtils.toUnifiedBackup(mockDummyBackup);
     });
 
@@ -2061,7 +2061,7 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         endpoint.saveClusterAttributeKeyValue('hvacThermostat', {systemMode: 3});
         mocksendZclFrameToEndpoint.mockClear();
-        const frame = ZclFrame.create(0, 0, true, null, 40, 0, 513, [{attrId: 28}, {attrId: 2901238}]);
+        const frame = ZclFrame.create(0, 0, true, null, 40, 0, 513, [{attrId: 28}, {attrId: 290}]);
         await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,

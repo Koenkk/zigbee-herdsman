@@ -663,7 +663,7 @@ class Controller extends events.EventEmitter {
 
         device.updateLastSeen();
         //no implicit checkin for genPollCtrl data because it might interfere with the explicit checkin
-        if (frame?.isCluster("genPollCtrl")) {
+        if (!frame?.isCluster("genPollCtrl")) {
             device.implicitCheckin();
         }
         device.linkquality = dataPayload.linkquality;
