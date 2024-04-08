@@ -28,7 +28,7 @@ export class Multicast {
         );
         for (let i = 0; i < size; i++) {
             const entry = await this.driver.ezsp.getMulticastTableEntry(i);
-            logger.info(`MulticastTableEntry[${i}] = ${entry}`, NS);
+            logger.debug(`MulticastTableEntry[${i}] = ${entry}`, NS);
             if (entry.endpoint !== 0) {
                 this._multicast[entry.multicastId] = [entry, i];
             } else {
@@ -50,7 +50,7 @@ export class Multicast {
 
     public async subscribe(group_id: number, endpoint: number): Promise<EmberStatus> {
         if (this._multicast.hasOwnProperty(group_id)) {
-            logger.info(`${group_id} is already subscribed`, NS);
+            logger.debug(`${group_id} is already subscribed`, NS);
             return EmberStatus.SUCCESS;
         }
 
@@ -62,16 +62,16 @@ export class Multicast {
             entry.networkIndex = 0;
             const status = await this.driver.ezsp.setMulticastTableEntry(idx, entry);
             if (status !== EmberStatus.SUCCESS) {
-                logger.info(`Set MulticastTableEntry #${idx} for ${entry.multicastId} multicast id: ${status}`, NS);
+                logger.error(`Set MulticastTableEntry #${idx} for ${entry.multicastId} multicast id: ${status}`, NS);
                 this._available.push(idx);
                 return status;
             }
 
             this._multicast[entry.multicastId] = [entry, idx];
-            logger.info(`Set MulticastTableEntry #${idx} for ${entry.multicastId} multicast id: ${status}`, NS);
+            logger.debug(`Set MulticastTableEntry #${idx} for ${entry.multicastId} multicast id: ${status}`, NS);
             return status;
         } catch (e) {
-            logger.info("No more available slots MulticastId subscription", NS);
+            logger.error("No more available slots MulticastId subscription", NS);
             return EmberStatus.INDEX_OUT_OF_RANGE;
         }
     }

@@ -357,7 +357,7 @@ export class Ezsp extends EventEmitter {
 
                 if (i < MAX_SERIAL_CONNECT_ATTEMPTS) {
                     await Wait(SERIAL_CONNECT_NEW_ATTEMPT_MIN_DELAY * i);
-                    logger.info(`Next attempt ${i+1}`, NS);
+                    logger.debug(`Next attempt ${i+1}`, NS);
                 }
 
                 lastError = error;
@@ -387,20 +387,20 @@ export class Ezsp extends EventEmitter {
     }
     
     private onSerialReset(): void {
-        logger.info('onSerialReset()', NS);
+        logger.debug('onSerialReset()', NS);
         this.inResetingProcess = true;
         this.emit('reset');
     }
 
     private onSerialClose(): void {
-        logger.info('onSerialClose()', NS);
+        logger.debug('onSerialClose()', NS);
         if (!this.inResetingProcess) {
             this.emit('close');
         }
     }
 
     public async close(emitClose: boolean): Promise<void> {
-        logger.info('Closing Ezsp', NS);
+        logger.debug('Closing Ezsp', NS);
 
         clearTimeout(this.watchdogTimer);
         this.queue.clear();
@@ -416,7 +416,7 @@ export class Ezsp extends EventEmitter {
      * @param data 
      */
     private onFrameReceived(data: Buffer): void {
-        logger.info(`<== Frame: ${data.toString('hex')}`, NS);
+        logger.debug(`<== Frame: ${data.toString('hex')}`, NS);
 
         let frameId: number;
         const sequence = data[0];
@@ -443,7 +443,7 @@ export class Ezsp extends EventEmitter {
             return;
         }
         
-        logger.info(`<== 0x${frameId.toString(16)}: ${JSON.stringify(frm)}`, NS);
+        logger.debug(`<== 0x${frameId.toString(16)}: ${JSON.stringify(frm)}`, NS);
         
         const handled = this.waitress.resolve({
             frameId,
@@ -466,7 +466,7 @@ export class Ezsp extends EventEmitter {
         const result = await this.execCommand("version", {desiredProtocolVersion: version});
  
         if ((result.protocolVersion !== version)) {
-            logger.info(`Switching to eszp version ${result.protocolVersion}`, NS);
+            logger.debug(`Switching to eszp version ${result.protocolVersion}`, NS);
  
             await this.execCommand("version", {desiredProtocolVersion: result.protocolVersion});
         }
@@ -478,11 +478,11 @@ export class Ezsp extends EventEmitter {
         const waiter = this.waitFor("stackStatusHandler", null);
         const result = await this.execCommand("networkInit");
 
-        logger.info(`Network init result: ${JSON.stringify(result)}`, NS);
+        logger.debug(`Network init result: ${JSON.stringify(result)}`, NS);
 
         if ((result.status !== EmberStatus.SUCCESS)) {
             this.waitress.remove(waiter.ID);
-            logger.info("Failure to init network", NS);
+            logger.error("Failure to init network", NS);
             return false;
         }
 
@@ -495,11 +495,11 @@ export class Ezsp extends EventEmitter {
         const waiter = this.waitFor("stackStatusHandler", null);
         const result = await this.execCommand("leaveNetwork");
 
-        logger.info(`Network init result: ${JSON.stringify(result)}`, NS);
+        logger.debug(`Network init result: ${JSON.stringify(result)}`, NS);
 
         if ((result.status !== EmberStatus.SUCCESS)) {
             this.waitress.remove(waiter.ID);
-            logger.info("Failure to leave network", NS);
+            logger.debug("Failure to leave network", NS);
             throw new Error(("Failure to leave network: " + JSON.stringify(result)));
         }
 
@@ -507,7 +507,7 @@ export class Ezsp extends EventEmitter {
 
         if ((response.payload.status !== EmberStatus.NETWORK_DOWN)) {
             const msg = `Wrong network status: ${JSON.stringify(response.payload)}`;
-            logger.info(msg, NS);
+            logger.debug(msg, NS);
             throw new Error(msg);
         }
 
@@ -516,7 +516,7 @@ export class Ezsp extends EventEmitter {
 
     async setConfigurationValue(configId: number, value: number): Promise<void> {
         const configName = EzspConfigId.valueToName(EzspConfigId, configId);
-        logger.info(`Set ${configName} = ${value}`, NS);
+        logger.debug(`Set ${configName} = ${value}`, NS);
         const ret = await this.execCommand('setConfigurationValue', {configId: configId, value: value});
         
         if (ret.status !== EmberStatus.SUCCESS) {
@@ -527,14 +527,14 @@ export class Ezsp extends EventEmitter {
 
     async getConfigurationValue(configId: number): Promise<number> {
         const configName = EzspConfigId.valueToName(EzspConfigId, configId);
-        logger.info(`Get ${configName}`, NS);
+        logger.debug(`Get ${configName}`, NS);
         const ret = await this.execCommand('getConfigurationValue', {configId: configId});
         
         if (ret.status !== EmberStatus.SUCCESS) {
             logger.error(`Command (getConfigurationValue(${configName})) returned unexpected state: ${JSON.stringify(ret)}`, NS);
         }
 
-        logger.info(`Got ${configName} = ${ret.value}`, NS);
+        logger.debug(`Got ${configName} = ${ret.value}`, NS);
         return ret.value;
     }
 
@@ -575,7 +575,7 @@ export class Ezsp extends EventEmitter {
 
     async setValue(valueId: t.EzspValueId, value: number): Promise<EZSPFrameData> {
         const valueName = t.EzspValueId.valueToName(t.EzspValueId, valueId);
-        logger.info(`Set ${valueName} = ${value}`, NS);
+        logger.debug(`Set ${valueName} = ${value}`, NS);
         const ret = await this.execCommand('setValue', {valueId, value});
         
         if (ret.status !== EmberStatus.SUCCESS) {
@@ -588,20 +588,20 @@ export class Ezsp extends EventEmitter {
 
     async getValue(valueId: t.EzspValueId): Promise<Buffer> {
         const valueName = t.EzspValueId.valueToName(t.EzspValueId, valueId);
-        logger.info(`Get ${valueName}`, NS);
+        logger.debug(`Get ${valueName}`, NS);
         const ret = await this.execCommand('getValue', {valueId});
         
         if (ret.status !== EmberStatus.SUCCESS) {
             logger.error(`Command (getValue(${valueName})) returned unexpected state: ${JSON.stringify(ret)}`, NS);
         }
 
-        logger.info(`Got ${valueName} = ${ret.value}`, NS);
+        logger.debug(`Got ${valueName} = ${ret.value}`, NS);
         return ret.value;
     }
 
     async setPolicy(policyId: EzspPolicyId, value: number): Promise<EZSPFrameData> {
         const policyName = EzspPolicyId.valueToName(EzspPolicyId, policyId);
-        logger.info(`Set ${policyName} = ${value}`, NS);
+        logger.debug(`Set ${policyName} = ${value}`, NS);
         const ret = await this.execCommand('setPolicy', {policyId: policyId, decisionId: value});
         
         if (ret.status !== EmberStatus.SUCCESS) {
@@ -644,7 +644,7 @@ export class Ezsp extends EventEmitter {
     private makeFrame(name: string, params: ParamsDesc, seq: number): Buffer {
         const frmData = new EZSPFrameData(name, true, params);
 
-        logger.info(`==> ${JSON.stringify(frmData)}`, NS);
+        logger.debug(`==> ${JSON.stringify(frmData)}`, NS);
 
         const frame = [(seq & 255)];
 
@@ -664,7 +664,7 @@ export class Ezsp extends EventEmitter {
     }
 
     public async execCommand(name: string, params: ParamsDesc = null): Promise<EZSPFrameData> {
-        logger.info(`==> ${name}: ${JSON.stringify(params)}`, NS);
+        logger.debug(`==> ${name}: ${JSON.stringify(params)}`, NS);
 
         if (!this.serialDriver.isInitialized()) {
             throw new Error('Connection not initialized');
@@ -743,10 +743,10 @@ export class Ezsp extends EventEmitter {
             maxHops: 0,
         });
 
-        logger.info(`Set concentrator type: ${JSON.stringify(res)}`, NS);
+        logger.debug(`Set concentrator type: ${JSON.stringify(res)}`, NS);
 
         if (res.status != EmberStatus.SUCCESS) {
-            logger.info(`Couldn't set concentrator ${JSON.stringify(res)}`, NS);
+            logger.error(`Couldn't set concentrator ${JSON.stringify(res)}`, NS);
         }
 
         if (this.ezspV >= 8) {
@@ -784,10 +784,10 @@ export class Ezsp extends EventEmitter {
     }
 
     private async watchdogHandler(): Promise<void> {
-        logger.info(`Time to watchdog ... ${this.failures}`, NS);
+        logger.debug(`Time to watchdog ... ${this.failures}`, NS);
 
         if (this.inResetingProcess) {
-            logger.info('The reset process is in progress...', NS);
+            logger.debug('The reset process is in progress...', NS);
             return;
         }
 
