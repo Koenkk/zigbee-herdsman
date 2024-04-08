@@ -1,9 +1,9 @@
 /* istanbul ignore file */
 import {Transform, TransformCallback, TransformOptions} from "stream";
 import {AshReservedByte} from "./enums";
-import {logger} from "../../../utils/logger";
+// import {logger} from "../../../utils/logger";
 
-const NS = 'zh:ember:uart:ash:parser';
+// const NS = 'zh:ember:uart:ash:parser';
 
 export class AshParser extends Transform {
     private buffer: Buffer;
@@ -23,7 +23,8 @@ export class AshParser extends Transform {
             const frame = data.subarray(0, position + 1);
 
             setImmediate((): void => {
-                logger.debug(`<<<< [FRAME raw=${frame.toString('hex')}]`, NS);
+                // expensive and very verbose, enable locally only if necessary
+                // logger.debug(`<<<< [FRAME raw=${frame.toString('hex')}]`, NS);
                 this.push(frame);
             });
 
