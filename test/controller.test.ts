@@ -2273,11 +2273,12 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const buffer = Buffer.from([28,95,17,3,10,5,0,66,21,108,117,109,105,46,115,101,110,115,111,114,95,119,108,101,97,107,46,97,113,49,1,255,66,34,1,33,213,12,3,40,33,4,33,168,19,5,33,43,0,6,36,0,0,5,0,0,8,33,4,2,10,33,0,0,100,16,0]);
         const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, ZclHeader.fromBuffer(buffer), buffer);
+        jest.spyOn(ZclFrame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write isn't supported for this payload
         await mockAdapterEvents['data']({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.Cluster.ID,
-            data: frame.toBuffer(),
+            data: null, // null intentionally
             zclFrameHeader: frame.Header,
             endpoint: 1,
             linkquality: 50,
@@ -2411,7 +2412,7 @@ describe('Controller', () => {
                     "manufacturerSpecific": true,
                 },
             },
-         };
+        };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 
@@ -2574,9 +2575,9 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockReturnValueOnce (null);
         mocksendZclFrameToEndpoint.mockImplementationOnce((ieeeAddr, networkAddress, endpoint, frame: ZclFrame) => {
-            const payload = [];
-            payload.push({"attrId":0,"status":0,"dataType":35,"attrData":204});
-            return {frame: new ZclFrame(null, payload, frame.Cluster)};
+            const payload = [{"attrId":0,"status":0,"dataType":35,"attrData":204}];
+            const responseFrame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', frame.Cluster.ID, payload);
+            return {zclFrameHeader: responseFrame.Header, data: responseFrame.toBuffer(), clusterID: frame.Cluster.ID};
         });
         mocksendZclFrameToEndpoint.mockImplementationOnce (() => jest.advanceTimersByTime(10));
         let frame = ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0);
