@@ -85,12 +85,14 @@ const restoreMocksendZclFrameToEndpoint = () => {
             const payload = [];
             const cluster = frame.Cluster;
             for (const item of frame.Payload) {
+                if (item.attrId !== 65314) {
                 const attribute = cluster.getAttribute(item.attrId);
                 if (frame.isCluster('ssIasZone') && item.attrId === 0) {
                     iasZoneReadState170Count++;
                     payload.push({attrId: item.attrId, dataType: attribute.type, attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0, status: 0});
-                } else if (item.attrId !== 65314) {
+                    } else {
                     payload.push({attrId: item.attrId, dataType: attribute.type, attrData: mockDevices[networkAddress].attributes[endpoint][attribute.name], status: 0})
+                    }
                 }
             }
 
@@ -135,16 +137,19 @@ const restoreMocksendZclFrameToEndpoint = () => {
 
         if (frame.isGlobal() && frame.isCommand('configReport')) {
             let payload;
+            let cmd;
             if (configureReportDefaultRsp) {
                 payload = {cmdId: 1, statusCode: configureReportStatus}
+                cmd = 'defaultRsp';
             } else {
                 payload = [];
+                cmd = 'configReportRsp';
                 for (const item of frame.Payload) {
                     payload.push({attrId: item.attrId, status: configureReportStatus, direction: 1})
                 }
             }
 
-            const responseFrame = mockZclFrame.create(0, 1, true, null, 10, 'configReport', 0, payload);
+            const responseFrame = mockZclFrame.create(0, 1, true, null, 10, cmd, 0, payload);
             return {clusterID: responseFrame.Cluster.ID, zclFrameHeader: responseFrame.Header, data: responseFrame.toBuffer()};
         }
     })
@@ -4804,10 +4809,16 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Error eight')});
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {});
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {throw new Error('Dogs barking too hard')});
-        mocksendZclFrameToEndpoint.mockReturnValueOnce( {frame: {Payload: new Array( {"attrId": 1, "attrData": "one", "status": 0})}});
-        mocksendZclFrameToEndpoint.mockReturnValueOnce( {frame: {Payload: new Array( {"attrId": 2, "attrData": "two", "status": 0})}});
-        mocksendZclFrameToEndpoint.mockReturnValueOnce( {frame: {Payload: new Array( {"attrId": 3, "attrData": "three", "status": 0})}});
-        mocksendZclFrameToEndpoint.mockReturnValueOnce( {frame: {Payload: new Array( {"attrId": 4, "attrData": "four", "status": 0})}});
+
+        const createResponse = (attrData: number) => {
+            const frame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 'genOnOff', [{attrId: 16385, dataType: 33, attrData, status: 0}]);
+            return {clusterID: frame.Cluster.ID, zclFrameHeader: frame.Header, data: frame.toBuffer()};;
+        }
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(1));
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(2));
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(3));
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(4));
+
         let result1, result2: Promise <any>;
         let nextTick = new Promise (process.nextTick);
         endpoint.write('genOnOff', {onOff: 0, startUpOnOff: 0}, {disableResponse: true});
@@ -4905,8 +4916,8 @@ describe('Controller', () => {
         });
 
         await result4;
-        expect(result4).resolves.toStrictEqual({"3": "three"});
-        expect(result5).resolves.toStrictEqual({"3": "three"});
+        expect(result4).resolves.toStrictEqual({"onTime": 3});
+        expect(result5).resolves.toStrictEqual({"onTime": 3});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(13);
         expect(mocksendZclFrameToEndpoint.mock.calls[8][3].Payload).toStrictEqual ([{"attrData": 0, "attrId": 16387, "dataType": 48}]);
         expect(mocksendZclFrameToEndpoint.mock.calls[9][3].Payload).toStrictEqual ([{"attrData": 1, "attrId": 0, "dataType": 16}]);
@@ -5002,8 +5013,8 @@ describe('Controller', () => {
 
         // onZclData is called via mockAdapterEvents, but we need to wait until it has finished
         const origOnZclData = device.onZclData;
-        device.onZclData = async (payload, endpoint) => {
-            const f = origOnZclData.call(device, payload, endpoint);
+        device.onZclData = async (a, b, c) => {
+            const f = origOnZclData.call(device, a, b, c);
             jest.advanceTimersByTime(10);
             return f;
         };
