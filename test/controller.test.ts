@@ -1441,14 +1441,14 @@ describe('Controller', () => {
     });
 
     it('Receive raw data', async () => {
-        const buffer = Buffer.from([24,169,10,0,0,24,1]);
         await controller.start();
         mocksendZclFrameToAll.mockClear();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['data']({
             clusterID: 9,
             address: 129,
-            data: Buffer.from([0, 1, 2, 3]),
+            data: Buffer.from([0, 1]),
+            zclFrameHeader: new Zcl.ZclHeader({direction: 0, disableDefaultResponse: false, frameType: 1, manufacturerSpecific: false, reservedBits: 0}, 0, 1, 1),
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -1521,7 +1521,7 @@ describe('Controller', () => {
                 "meta":{},
             },
             "data": {
-                data: [0, 1, 2, 3],
+                data: [0, 1],
                 type: 'Buffer',
             },
             "linkquality":50,
