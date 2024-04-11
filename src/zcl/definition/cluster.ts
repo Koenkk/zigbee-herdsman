@@ -1,8 +1,8 @@
 /* eslint max-len: 0 */
-import DataType from './dataType';
-import {ParameterDefinition} from './tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
+import DataType from './dataType';
 import ManufacturerCode from './manufacturerCode';
+import {ParameterDefinition} from './tstype';
 
 interface AttributeDefinition {
     ID: number;
@@ -5805,6 +5805,17 @@ const Cluster: {
             },
         },
         commandsResponse: {},
+    },
+    manuSpecificThirdRealityPlug: {
+        ID: 0xff03,
+        manufacturerCode: ManufacturerCode.THIRD_REALITY_INC,
+        attributes: {
+            reset_summation_delivered: {ID: 0x0000, type: DataType.uint8},
+        },
+        commands: {
+        },
+        commandsResponse: {
+        },
     },
 };
 
