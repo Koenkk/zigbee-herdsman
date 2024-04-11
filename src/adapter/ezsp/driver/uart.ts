@@ -195,8 +195,8 @@ export class SerialDriver extends EventEmitter {
 
         } catch (error) {
             this.rejectCondition = true;
-            logger.debug(error, NS);
-            logger.debug(`Error while parsing to NpiFrame '${error.stack}'`, NS);
+            logger.error(error, NS);
+            logger.error(`Error while parsing to NpiFrame '${error.stack}'`, NS);
         }
 
         // We send NAK only if the rejectCondition was set in the current processing
@@ -318,7 +318,7 @@ export class SerialDriver extends EventEmitter {
             // send reset
             await this.reset();
         } catch (error) {
-            logger.debug(`Failed to reset on Error Frame: ${error}`, NS);
+            logger.error(`Failed to reset on Error Frame: ${error}`, NS);
         }
     }
 
@@ -343,7 +343,7 @@ export class SerialDriver extends EventEmitter {
                 await wait(2000);
 
             } catch (e) {
-                logger.debug(`--> Error: ${e}`, NS);
+                logger.error(`--> Error: ${e}`, NS);
 
                 this.emit('reset');
 
@@ -380,7 +380,7 @@ export class SerialDriver extends EventEmitter {
     }
 
     private onPortError(error: Error): void {
-        logger.debug(`Port error: ${error}`, NS);
+        logger.error(`Port error: ${error}`, NS);
     }
 
     private onPortClose(err: boolean | Error): void {
@@ -418,9 +418,9 @@ export class SerialDriver extends EventEmitter {
                 await waiter.start().promise;
                 logger.debug(`-+- waiting (${nextSeq}) success`, NS);
             } catch (e1) {
-                logger.debug(`--> Error: ${e1}`, NS);
-                logger.debug(`-!- break waiting (${nextSeq})`, NS);
-                logger.debug(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`, NS);
+                logger.error(`--> Error: ${e1}`, NS);
+                logger.error(`-!- break waiting (${nextSeq})`, NS);
+                logger.error(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`, NS);
 
                 try {
                     await Wait(500);
@@ -431,9 +431,9 @@ export class SerialDriver extends EventEmitter {
                     await waiter.start().promise;
                     logger.debug(`-+- rewaiting (${nextSeq}) success`, NS);
                 } catch (e2) {
-                    logger.debug(`--> Error: ${e2}`, NS);
-                    logger.debug(`-!- break rewaiting (${nextSeq})`, NS);
-                    logger.debug(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`, NS);
+                    logger.error(`--> Error: ${e2}`, NS);
+                    logger.error(`-!- break rewaiting (${nextSeq})`, NS);
+                    logger.error(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`, NS);
                     if (this.initialized) {
                         this.emit('reset');
                     }

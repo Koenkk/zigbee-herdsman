@@ -758,9 +758,13 @@ export class EmberAdapter extends Adapter {
             this.requestQueue.enqueue(
                 async (): Promise<EmberStatus> => {
                     // listed as per EmberCounterType
-                    const counters = (await this.ezsp.ezspReadAndClearCounters());
+                    const ncpCounters = (await this.ezsp.ezspReadAndClearCounters());
 
-                    logger.info(`[NCP COUNTERS] ${counters.join(',')}`, NS);
+                    logger.info(`[NCP COUNTERS] ${ncpCounters.join(',')}`, NS);
+
+                    const ashCounters = this.ezsp.ash.readAndClearCounters();
+
+                    logger.info(`[ASH COUNTERS] ${ashCounters.join(',')}`, NS);
 
                     resolve();
                     return EmberStatus.SUCCESS;
@@ -794,8 +798,6 @@ export class EmberAdapter extends Adapter {
     private async initEzsp(): Promise<TsType.StartResult> {
         let result: TsType.StartResult = "resumed";
 
-        await this.onNCPPreReset();
-
         // NOTE: something deep in this call can throw too
         const startResult = (await this.ezsp.start());
 
@@ -812,7 +814,6 @@ export class EmberAdapter extends Adapter {
 
         // WARNING: From here on EZSP commands that affect memory allocation on the NCP should no longer be called (like resizing tables)
 
-        await this.onNCPPostReset();
         await this.registerFixedEndpoints();
         this.clearNetworkCache();
 
@@ -835,6 +836,10 @@ export class EmberAdapter extends Adapter {
         this.networkCache.eui64 = (await this.ezsp.ezspGetEui64());
 
         logger.debug(`[INIT] Network Ready! ${JSON.stringify(this.networkCache)}`, NS);
+
+        this.watchdogCountersHandle = setInterval(this.watchdogCounters.bind(this), WATCHDOG_COUNTERS_FEED_INTERVAL);
+
+        this.requestQueue.startDispatching();
 
         return result;
     }
@@ -1497,22 +1502,6 @@ export class EmberAdapter extends Adapter {
             logger.error(`Failed to reset and init NCP. ${err}`, NS);
             this.emit(Events.disconnected);
         }
-    }
-
-    /**
-     * Called right before a NCP reset.
-     */
-    private async onNCPPreReset(): Promise<void> {
-        this.requestQueue.stopDispatching();
-    }
-
-    /**
-     * Called right after a NCP reset, right before the creation of endpoints.
-     */
-    private async onNCPPostReset(): Promise<void> {
-        this.requestQueue.startDispatching();
-
-        this.watchdogCountersHandle = setInterval(this.watchdogCounters.bind(this), WATCHDOG_COUNTERS_FEED_INTERVAL);
     }
 
     //---- START Events
@@ -2681,6 +2670,7 @@ export class EmberAdapter extends Adapter {
     }
 
     public async stop(): Promise<void> {
+        this.requestQueue.stopDispatching();
         await this.ezsp.stop();
 
         this.initVariables();
