@@ -65,7 +65,7 @@ class ZStackAdapter extends Adapter {
     private supportsLED: boolean = null;
     private interpanLock: boolean;
     private interpanEndpointRegistered: boolean;
-    private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
+    private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
@@ -76,7 +76,7 @@ class ZStackAdapter extends Adapter {
         this.interpanLock = false;
         this.interpanEndpointRegistered = false;
         this.closing = false;
-        this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
+        this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
 
@@ -347,8 +347,8 @@ class ZStackAdapter extends Adapter {
     public async sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
-    ): Promise<Events.ZclDataPayload> {
-        return this.queue.execute<Events.ZclDataPayload>(async () => {
+    ): Promise<Events.ZclPayload> {
+        return this.queue.execute<Events.ZclPayload>(async () => {
             this.checkInterpanLock();
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
@@ -362,7 +362,7 @@ class ZStackAdapter extends Adapter {
         timeout: number, disableResponse: boolean, disableRecovery: boolean, responseAttempt: number,
         dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
         assocRestore: {ieeeadr: string, nwkaddr: number, noderelation: number}
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
         logger.debug(`sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} `
             + `(${responseAttempt},${dataRequestAttempt},${this.queue.count()})`, NS);
         let response = null;
@@ -835,7 +835,7 @@ class ZStackAdapter extends Adapter {
                         logger.debug(`Failed to parse header: ${error}`, NS);
                     }
 
-                    const payload: Events.ZclDataPayload = {
+                    const payload: Events.ZclPayload = {
                         clusterID: object.payload.clusterid,
                         data: object.payload.data,
                         header: header,
@@ -892,8 +892,8 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclDataPayload> {
-        return this.queue.execute<Events.ZclDataPayload>(async () => {
+    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclPayload> {
+        return this.queue.execute<Events.ZclPayload>(async () => {
             const command = zclFrame.getCommand();
             if (!command.hasOwnProperty('response')) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
@@ -959,7 +959,7 @@ class ZStackAdapter extends Adapter {
     private waitForInternal(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): {start: () => {promise: Promise<Events.ZclDataPayload>}; cancel: () => void} {
+    ): {start: () => {promise: Promise<Events.ZclPayload>}; cancel: () => void} {
         const payload = {
             address: networkAddress, endpoint, clusterID, commandIdentifier, frameType, direction,
             transactionSequenceNumber,
@@ -973,7 +973,7 @@ class ZStackAdapter extends Adapter {
     public waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): {promise: Promise<Events.ZclDataPayload>; cancel: () => void} {
+    ): {promise: Promise<Events.ZclPayload>; cancel: () => void} {
         const waiter = this.waitForInternal(
             networkAddress, endpoint, frameType, direction, transactionSequenceNumber, clusterID,
             commandIdentifier, timeout,
@@ -1095,7 +1095,7 @@ class ZStackAdapter extends Adapter {
             ` - ${matcher.commandIdentifier} after ${timeout}ms`;
     }
 
-    private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
+    private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
         return payload.header &&
             (!matcher.address || payload.address === matcher.address) &&
             payload.endpoint === matcher.endpoint &&

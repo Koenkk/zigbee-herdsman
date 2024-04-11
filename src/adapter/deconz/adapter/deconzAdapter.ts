@@ -37,7 +37,7 @@ class DeconzAdapter extends Adapter {
     private frameParserEvent = frameParser.frameParserEvents;
     private joinPermitted: boolean;
     private fwVersion: CoordinatorVersion;
-    private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
+    private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
     private TX_OPTIONS = 0x00; // No APS ACKS
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
@@ -51,7 +51,7 @@ class DeconzAdapter extends Adapter {
         const delay = this.adapterOptions && typeof this.adapterOptions.delay === 'number' ?
             this.adapterOptions.delay : 0;
 
-        this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
+        this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
 
@@ -581,7 +581,7 @@ class DeconzAdapter extends Adapter {
     public waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): {promise: Promise<Events.ZclDataPayload>; cancel: () => void} {
+    ): {promise: Promise<Events.ZclPayload>; cancel: () => void} {
         const payload = {
             address: networkAddress, endpoint, clusterID, commandIdentifier, frameType, direction,
             transactionSequenceNumber,
@@ -594,7 +594,7 @@ class DeconzAdapter extends Adapter {
     public async sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
 
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
@@ -641,7 +641,7 @@ class DeconzAdapter extends Adapter {
                     const asdu = data.asduPayload;
                     const buffer = Buffer.from(asdu);
 
-                    const response: Events.ZclDataPayload = {
+                    const response: Events.ZclPayload = {
                         address: (data.srcAddrMode === 0x02) ? data.srcAddr16 : null,
                         data: buffer,
                         clusterID: zclFrame.Cluster.ID,
@@ -1025,13 +1025,13 @@ class DeconzAdapter extends Adapter {
 
     public async sendZclFrameInterPANBroadcast(
         zclFrame: ZclFrame, timeout: number
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
         throw new Error("not supported");
     }
 
     public async sendZclFrameInterPANBroadcastWithResponse(
         zclFrame: ZclFrame, timeout: number
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
         throw new Error("not supported");
     }
 
@@ -1082,7 +1082,7 @@ class DeconzAdapter extends Adapter {
         ind.commandId, ind.commandFrameSize].concat(ind.commandFrame);
 
         const payBuf = Buffer.from(gpFrame);
-        const payload: Events.ZclDataPayload = {
+        const payload: Events.ZclPayload = {
             header: ZclHeader.fromBuffer(payBuf),
             data: payBuf,
             clusterID: ind.clusterId,
@@ -1167,7 +1167,7 @@ class DeconzAdapter extends Adapter {
                 logger.debug(`Failed to parse header: ${error}`, NS);
             }
 
-            const payload: Events.ZclDataPayload = {
+            const payload: Events.ZclPayload = {
                 clusterID: resp.clusterId,
                 header: header,
                 data: payBuf,
@@ -1200,7 +1200,7 @@ class DeconzAdapter extends Adapter {
             ` - ${matcher.commandIdentifier} after ${timeout}ms`;
     }
 
-    private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
+    private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
         return payload.header &&
             (!matcher.address || payload.address === matcher.address) &&
             payload.endpoint === matcher.endpoint &&

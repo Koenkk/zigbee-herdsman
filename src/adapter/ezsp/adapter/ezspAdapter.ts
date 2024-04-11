@@ -35,7 +35,7 @@ interface WaitressMatcher {
 
 class EZSPAdapter extends Adapter {
     private driver: Driver;
-    private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
+    private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
     private interpanLock: boolean;
     private queue: Queue;
     private closing: boolean;
@@ -45,7 +45,7 @@ class EZSPAdapter extends Adapter {
         serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
 
-        this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
+        this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
         this.interpanLock = false;
@@ -84,7 +84,7 @@ class EZSPAdapter extends Adapter {
                 logger.debug(`Failed to parse header: ${error}`, NS);
             }
 
-            const payload: Events.ZclDataPayload = {
+            const payload: Events.ZclPayload = {
                 clusterID: frame.apsFrame.clusterId,
                 header: header,
                 data: frame.message,
@@ -99,7 +99,7 @@ class EZSPAdapter extends Adapter {
             this.waitress.resolve(payload);
             this.emit(Events.Events.data, payload);
         } else if (frame.apsFrame.profileId == 0xc05e && frame.senderEui64) {  // ZLL Frame
-            const payload: Events.ZclDataPayload = {
+            const payload: Events.ZclPayload = {
                 clusterID: frame.apsFrame.clusterId,
                 header: ZclHeader.fromBuffer(frame.message),
                 data: frame.message,
@@ -118,7 +118,7 @@ class EZSPAdapter extends Adapter {
             // while the cluster is not greenPower
             // https://github.com/Koenkk/zigbee2mqtt/issues/20838
             if (frame.apsFrame.clusterId === 33) {
-                const payload: Events.ZclDataPayload = {
+                const payload: Events.ZclPayload = {
                     header: ZclHeader.fromBuffer(frame.message),
                     clusterID: frame.apsFrame.clusterId,
                     data: frame.message,
@@ -427,8 +427,8 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
-    ): Promise<Events.ZclDataPayload> {
-        return this.queue.execute<Events.ZclDataPayload>(async () => {
+    ): Promise<Events.ZclPayload> {
+        return this.queue.execute<Events.ZclPayload>(async () => {
             this.checkInterpanLock();
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
@@ -442,7 +442,7 @@ class EZSPAdapter extends Adapter {
         timeout: number, disableResponse: boolean, disableRecovery: boolean, responseAttempt: number,
         dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
         assocRestore: { ieeeadr: string, nwkaddr: number, noderelation: number }
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
         if (ieeeAddr == null) {
             ieeeAddr = `0x${this.driver.ieee.toString()}`;
         }
@@ -667,8 +667,8 @@ class EZSPAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclDataPayload> {
-        return this.queue.execute<Events.ZclDataPayload>(async () => {
+    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclPayload> {
+        return this.queue.execute<Events.ZclPayload>(async () => {
             logger.debug(`sendZclFrameInterPANBroadcast`, NS);
             const command = zclFrame.getCommand();
             if (!command.hasOwnProperty('response')) {
@@ -726,7 +726,7 @@ class EZSPAdapter extends Adapter {
 
     private waitForInternal(
         networkAddress: number, endpoint: number, transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): { start: () => { promise: Promise<Events.ZclDataPayload> }; cancel: () => void } {
+    ): { start: () => { promise: Promise<Events.ZclPayload> }; cancel: () => void } {
         const payload = {
             address: networkAddress, endpoint, clusterID, commandIdentifier,
             transactionSequenceNumber,
@@ -740,7 +740,7 @@ class EZSPAdapter extends Adapter {
     public waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): { promise: Promise<Events.ZclDataPayload>; cancel: () => void } {
+    ): { promise: Promise<Events.ZclPayload>; cancel: () => void } {
         const waiter = this.waitForInternal(
             networkAddress, endpoint, transactionSequenceNumber, clusterID,
             commandIdentifier, timeout,
@@ -755,7 +755,7 @@ class EZSPAdapter extends Adapter {
             ` - ${matcher.commandIdentifier} after ${timeout}ms`;
     }
 
-    private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
+    private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
         return payload.header &&
             (!matcher.address || payload.address === matcher.address) &&
             payload.endpoint === matcher.endpoint &&

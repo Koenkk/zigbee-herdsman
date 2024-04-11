@@ -13,7 +13,7 @@ import {
     DeviceJoinedPayload,
     DeviceLeavePayload,
     Events,
-    ZclDataPayload
+    ZclPayload
 } from "../../events";
 import {halCommonCrc16, highByte, highLowToInt, lowByte, lowHighBytes} from "../utils/math";
 import {Ezsp, EzspEvents} from "../ezsp/ezsp";
@@ -607,7 +607,7 @@ export class EmberAdapter extends Adapter {
             logger.debug(`Failed to parse header: ${error}`, NS);
         }
 
-        const payload: ZclDataPayload = {
+        const payload: ZclPayload = {
             clusterID: apsFrame.clusterId,
             header: header,
             address: sender,
@@ -634,7 +634,7 @@ export class EmberAdapter extends Adapter {
      */
     private async onTouchlinkMessage(sourcePanId: EmberPanId, sourceAddress: EmberEUI64, groupId: number | null, lastHopLqi: number,
         messageContents: Buffer): Promise<void> {
-        const payload: ZclDataPayload = {
+        const payload: ZclPayload = {
             clusterID: Cluster.touchlink.ID,
             data: messageContents,
             header: ZclHeader.fromBuffer(messageContents),
@@ -678,7 +678,7 @@ export class EmberAdapter extends Adapter {
 
             const data = Buffer.concat([gpdHeader, gpdCommandPayload]);
             const header = ZclHeader.fromBuffer(data);
-            const payload: ZclDataPayload = {
+            const payload: ZclPayload = {
                 header: header,
                 data,
                 clusterID: Cluster.greenPower.ID,
@@ -2988,9 +2988,9 @@ export class EmberAdapter extends Adapter {
 
     /** WARNING: Adapter impl. Starts timer immediately upon returning */
     public waitFor(networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction, transactionSequenceNumber: number,
-        clusterID: number, commandIdentifier: number, timeout: number): {promise: Promise<ZclDataPayload>; cancel: () => void;} {
+        clusterID: number, commandIdentifier: number, timeout: number): {promise: Promise<ZclPayload>; cancel: () => void;} {
         const sourceEndpointInfo = FIXED_ENDPOINTS[0];
-        const waiter = this.oneWaitress.waitFor<ZclDataPayload>({
+        const waiter = this.oneWaitress.waitFor<ZclPayload>({
             target: networkAddress,
             apsFrame: {
                 clusterId: clusterID,
@@ -3589,7 +3589,7 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async sendZclFrameToEndpoint(ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
-        disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number): Promise<ZclDataPayload> {
+        disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number): Promise<ZclPayload> {
         const sourceEndpointInfo = typeof sourceEndpoint === 'number' ?
             FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
         const command = zclFrame.getCommand();
@@ -3618,7 +3618,7 @@ export class EmberAdapter extends Adapter {
 
         const data = zclFrame.toBuffer();
 
-        return new Promise<ZclDataPayload>((resolve, reject): void => {
+        return new Promise<ZclPayload>((resolve, reject): void => {
             this.requestQueue.enqueue(
                 async (): Promise<EmberStatus> => {
                     this.checkInterpanLock();
@@ -3654,7 +3654,7 @@ export class EmberAdapter extends Adapter {
 
                     if (commandResponseId != null) {
                         // NOTE: aps sequence number will have been set by send function
-                        const result = (await this.oneWaitress.startWaitingFor<ZclDataPayload>({
+                        const result = (await this.oneWaitress.startWaitingFor<ZclPayload>({
                             target: networkAddress,
                             apsFrame,
                             zclSequence: zclFrame.Header.transactionSequenceNumber,
@@ -3856,7 +3856,7 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
-    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<ZclDataPayload> {
+    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<ZclPayload> {
         const command = zclFrame.getCommand();
 
         if (!command.hasOwnProperty('response')) {
@@ -3874,7 +3874,7 @@ export class EmberAdapter extends Adapter {
             sequence: 0,// set by stack
         };
 
-        return new Promise<ZclDataPayload>((resolve, reject): void => {
+        return new Promise<ZclPayload>((resolve, reject): void => {
             this.requestQueue.enqueue(
                 async (): Promise<EmberStatus> => {
                     const msgBuffalo = new EzspBuffalo(Buffer.alloc(MAXIMUM_INTERPAN_LENGTH));
@@ -3906,7 +3906,7 @@ export class EmberAdapter extends Adapter {
 
                     // NOTE: can use ezspRawTransmitCompleteHandler if needed here
 
-                    const result = (await this.oneWaitress.startWaitingFor<ZclDataPayload>({
+                    const result = (await this.oneWaitress.startWaitingFor<ZclPayload>({
                         target: null,
                         apsFrame: apsFrame,
                         zclSequence: zclFrame.Header.transactionSequenceNumber,

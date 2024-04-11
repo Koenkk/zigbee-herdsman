@@ -41,7 +41,7 @@ const channelsToMask = (channels: number[]): number =>
 class ZiGateAdapter extends Adapter {
     private driver: Driver;
     private joinPermitted: boolean;
-    private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
+    private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
     private closing: boolean;
     private queue: Queue;
 
@@ -51,7 +51,7 @@ class ZiGateAdapter extends Adapter {
 
         this.joinPermitted = false;
         this.driver = new Driver(serialPortOptions.path, serialPortOptions);
-        this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
+        this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
 
@@ -508,8 +508,8 @@ class ZiGateAdapter extends Adapter {
     public async sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
-    ): Promise<Events.ZclDataPayload> {
-        return this.queue.execute<Events.ZclDataPayload>(async () => {
+    ): Promise<Events.ZclPayload> {
+        return this.queue.execute<Events.ZclPayload>(async () => {
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
                 disableRecovery, 0, 0, false, false
@@ -521,7 +521,7 @@ class ZiGateAdapter extends Adapter {
         ieeeAddr: string, networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean,
         responseAttempt: number, dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean,
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
         logger.debug(`sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} (${responseAttempt},${dataRequestAttempt},${this.queue.count()})`, NS);
         let response = null;
 
@@ -681,7 +681,7 @@ class ZiGateAdapter extends Adapter {
     public waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): { promise: Promise<Events.ZclDataPayload>; cancel: () => void } {
+    ): { promise: Promise<Events.ZclPayload>; cancel: () => void } {
         logger.debug(`waitForInternal ${JSON.stringify(arguments)}`, NS);
         const payload = {
             address: networkAddress,
@@ -721,7 +721,7 @@ class ZiGateAdapter extends Adapter {
 
     public async sendZclFrameInterPANBroadcast(
         zclFrame: ZclFrame, timeout: number
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
         logger.debug(`sendZclFrameInterPANBroadcast ${JSON.stringify(arguments)}`, NS);
         return Promise.reject("Not supported");
     };
@@ -750,7 +750,7 @@ class ZiGateAdapter extends Adapter {
             logger.debug(`Failed to parse header: ${error}`, NS);
         }
 
-        const payload: Events.ZclDataPayload = {
+        const payload: Events.ZclPayload = {
             address: <number>data.ziGateObject.payload.sourceAddress,
             clusterID: data.ziGateObject.payload.clusterID,
             data: data.ziGateObject.payload.payload,
@@ -780,7 +780,7 @@ class ZiGateAdapter extends Adapter {
             ` - ${matcher.commandIdentifier} after ${timeout}ms`;
     }
 
-    private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
+    private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
         return payload.header &&
             (!matcher.address || payload.address === matcher.address) &&
             matcher.endpoint === payload.endpoint &&

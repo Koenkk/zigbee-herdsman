@@ -210,7 +210,7 @@ class Device extends Entity {
         return this.endpoints.find(e => e.hasPendingRequests()) !== undefined;
     }
 
-    public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, frame: Zcl.ZclFrame, endpoint: Endpoint): Promise<void> {
+    public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame, endpoint: Endpoint): Promise<void> {
         // Update reportable properties
         if (frame.isCluster('genBasic') && (frame.isCommand('readRsp') || frame.isCommand('report'))) {
             for (const [key, val] of Object.entries(ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID))) {

@@ -263,7 +263,7 @@ class Endpoint extends Entity {
         return this.pendingRequests.send(fastPolling);
     }
 
-    private async sendRequest(frame: Zcl.ZclFrame, options: Options): Promise<AdapterEvents.ZclDataPayload>;
+    private async sendRequest(frame: Zcl.ZclFrame, options: Options): Promise<AdapterEvents.ZclPayload>;
     private async sendRequest<Type>(frame: Zcl.ZclFrame, options: Options,
         func: (frame: Zcl.ZclFrame) => Promise<Type>): Promise<Type>;
     private async sendRequest<Type>(frame: Zcl.ZclFrame, options: Options,

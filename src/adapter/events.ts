@@ -32,7 +32,7 @@ type DeviceLeavePayload = {
     ieeeAddr?: string;
 };
 
-interface ZclDataPayload {
+interface ZclPayload {
     clusterID: number;
     address: number | string;
     header: ZclHeader | undefined;
@@ -46,5 +46,5 @@ interface ZclDataPayload {
 }
 
 export {
-    Events, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload, NetworkAddressPayload, DeviceLeavePayload,
+    Events, DeviceJoinedPayload, ZclPayload, DeviceAnnouncePayload, NetworkAddressPayload, DeviceLeavePayload,
 };

@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 import equals from 'fast-deep-equal/es6';
-import {ZclDataPayload} from "../../events";
+import {ZclPayload} from "../../events";
 import {TOUCHLINK_PROFILE_ID} from "../consts";
 import {EmberApsFrame, EmberNodeId} from "../types";
 import {EmberZdoStatus} from "../zdo";
@@ -146,7 +146,7 @@ export class EmberOneWaitress {
         return false;
     }
 
-    public resolveZCL(payload: ZclDataPayload): boolean {
+    public resolveZCL(payload: ZclPayload): boolean {
         if (!payload.header) return false;
 
         for (const [index, waiter] of this.waiters.entries()) {

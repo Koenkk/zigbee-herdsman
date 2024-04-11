@@ -45,7 +45,7 @@ class GreenPower extends events.EventEmitter {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    private async sendPairingCommand(payload: any, dataPayload: AdapterEvents.ZclDataPayload, frame: Zcl.ZclFrame): Promise<any> {
+    private async sendPairingCommand(payload: any, dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame): Promise<any> {
         logger.debug(`Payload.Options: ${payload.options} wasBroadcast: ${dataPayload.wasBroadcast}`, NS);
         
         // Set sink address based on communication mode
@@ -84,7 +84,7 @@ class GreenPower extends events.EventEmitter {
         }
     }
 
-    public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclDataPayload, frame: Zcl.ZclFrame): Promise<void> {
+    public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame): Promise<void> {
         let payload = {};
 
         try {

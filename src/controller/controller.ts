@@ -611,7 +611,7 @@ class Controller extends events.EventEmitter {
         }
     }
 
-    private async onData(dataPayload: AdapterEvents.ZclDataPayload): Promise<void> {
+    private async onData(dataPayload: AdapterEvents.ZclPayload): Promise<void> {
         let frame: ZclFrame | undefined = undefined;
         if (dataPayload.header) {
             try {

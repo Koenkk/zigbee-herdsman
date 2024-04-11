@@ -10,7 +10,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as Zcl from '../../../src/zcl';
 import * as Constants from '../../../src/adapter/z-stack/constants';
-import {ZclDataPayload} from "../../../src/adapter/events";
+import {ZclPayload} from "../../../src/adapter/events";
 import {UnifiedBackupStorage} from "../../../src/models";
 import {setLogger} from "../../../src/utils/logger";
 
@@ -2860,7 +2860,7 @@ describe("zstack-adapter", () => {
         mockZnpRequest.mockClear();
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsgExt', payload: {clusterid: 4096, srcendpoint: 0xFE, srcaddr: 12394, linkquality: 101, groupid: 0, data: touchlinkScanResponse.toBuffer()}};
 
-        let result: ZclDataPayload | Promise<ZclDataPayload> = adapter.sendZclFrameInterPANBroadcast(touchlinkScanRequest, 1000);
+        let result: ZclPayload | Promise<ZclPayload> = adapter.sendZclFrameInterPANBroadcast(touchlinkScanRequest, 1000);
         znpReceived(object);
         result = await result;
 
