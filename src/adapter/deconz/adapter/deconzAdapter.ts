@@ -645,7 +645,7 @@ class DeconzAdapter extends Adapter {
                         address: (data.srcAddrMode === 0x02) ? data.srcAddr16 : null,
                         data: buffer,
                         clusterID: zclFrame.Cluster.ID,
-                        zclFrameHeader: ZclHeader.fromBuffer(buffer),
+                        header: ZclHeader.fromBuffer(buffer),
                         endpoint: data.srcEndpoint,
                         linkquality: data.lqi,
                         groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null,
@@ -1083,7 +1083,7 @@ class DeconzAdapter extends Adapter {
 
         const payBuf = Buffer.from(gpFrame);
         const payload: Events.ZclDataPayload = {
-            zclFrameHeader: ZclHeader.fromBuffer(payBuf),
+            header: ZclHeader.fromBuffer(payBuf),
             data: payBuf,
             clusterID: ind.clusterId,
             address: ind.srcId,
@@ -1169,7 +1169,7 @@ class DeconzAdapter extends Adapter {
 
             const payload: Events.ZclDataPayload = {
                 clusterID: resp.clusterId,
-                zclFrameHeader: header,
+                header: header,
                 data: payBuf,
                 address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
                 endpoint: resp.srcEndpoint,
@@ -1201,14 +1201,14 @@ class DeconzAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        return payload.zclFrameHeader &&
+        return payload.header &&
             (!matcher.address || payload.address === matcher.address) &&
             payload.endpoint === matcher.endpoint &&
-            (!matcher.transactionSequenceNumber || payload.zclFrameHeader.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
             payload.clusterID === matcher.clusterID &&
-            matcher.frameType === payload.zclFrameHeader.frameControl.frameType &&
-            matcher.commandIdentifier === payload.zclFrameHeader.commandIdentifier &&
-            matcher.direction === payload.zclFrameHeader.frameControl.direction;
+            matcher.frameType === payload.header.frameControl.frameType &&
+            matcher.commandIdentifier === payload.header.commandIdentifier &&
+            matcher.direction === payload.header.frameControl.direction;
     }
 }
 

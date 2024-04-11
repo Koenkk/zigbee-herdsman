@@ -86,7 +86,7 @@ class EZSPAdapter extends Adapter {
 
             const payload: Events.ZclDataPayload = {
                 clusterID: frame.apsFrame.clusterId,
-                zclFrameHeader: header,
+                header: header,
                 data: frame.message,
                 address: frame.sender,
                 endpoint: frame.apsFrame.sourceEndpoint,
@@ -101,7 +101,7 @@ class EZSPAdapter extends Adapter {
         } else if (frame.apsFrame.profileId == 0xc05e && frame.senderEui64) {  // ZLL Frame
             const payload: Events.ZclDataPayload = {
                 clusterID: frame.apsFrame.clusterId,
-                zclFrameHeader: ZclHeader.fromBuffer(frame.message),
+                header: ZclHeader.fromBuffer(frame.message),
                 data: frame.message,
                 address: `0x${frame.senderEui64.toString()}`,
                 endpoint: 0xFE,
@@ -119,7 +119,7 @@ class EZSPAdapter extends Adapter {
             // https://github.com/Koenkk/zigbee2mqtt/issues/20838
             if (frame.apsFrame.clusterId === 33) {
                 const payload: Events.ZclDataPayload = {
-                    zclFrameHeader: ZclHeader.fromBuffer(frame.message),
+                    header: ZclHeader.fromBuffer(frame.message),
                     clusterID: frame.apsFrame.clusterId,
                     data: frame.message,
                     address: frame.sender,
@@ -756,12 +756,12 @@ class EZSPAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        return payload.zclFrameHeader &&
+        return payload.header &&
             (!matcher.address || payload.address === matcher.address) &&
             payload.endpoint === matcher.endpoint &&
-            (!matcher.transactionSequenceNumber || payload.zclFrameHeader.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
             payload.clusterID === matcher.clusterID &&
-            matcher.commandIdentifier === payload.zclFrameHeader.commandIdentifier;
+            matcher.commandIdentifier === payload.header.commandIdentifier;
     }
 }
 

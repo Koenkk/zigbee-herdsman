@@ -639,7 +639,7 @@ class Endpoint extends Entity {
         const promise = new Promise<{header: Zcl.ZclHeader; payload: KeyValue}>((resolve, reject) => {
             waiter.promise.then(
                 (payload) => {
-                    const frame = Zcl.ZclFrame.fromBuffer(payload.clusterID, payload.zclFrameHeader, payload.data);
+                    const frame = Zcl.ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data);
                     resolve({header: frame.Header, payload: frame.Payload});
                 },
                 (error) => reject(error),
@@ -756,7 +756,7 @@ class Endpoint extends Entity {
         try {
             const result = await this.sendRequest(frame, options);
             if (result) {
-                const resultFrame = Zcl.ZclFrame.fromBuffer(result.clusterID, result.zclFrameHeader, result.data);
+                const resultFrame = Zcl.ZclFrame.fromBuffer(result.clusterID, result.header, result.data);
                 if (result && checkStatus && !options.disableResponse) {
                     this.checkStatus(resultFrame.Payload);
                 }

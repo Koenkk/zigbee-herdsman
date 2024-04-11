@@ -613,9 +613,9 @@ class Controller extends events.EventEmitter {
 
     private async onData(dataPayload: AdapterEvents.ZclDataPayload): Promise<void> {
         let frame: ZclFrame | undefined = undefined;
-        if (dataPayload.zclFrameHeader) {
+        if (dataPayload.header) {
             try {
-                frame = ZclFrame.fromBuffer(dataPayload.clusterID, dataPayload.zclFrameHeader, dataPayload.data);
+                frame = ZclFrame.fromBuffer(dataPayload.clusterID, dataPayload.header, dataPayload.data);
             } catch (error) {
                 logger.debug(`Failed to parse frame: ${error}`, NS);
             }

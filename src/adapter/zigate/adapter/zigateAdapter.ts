@@ -754,7 +754,7 @@ class ZiGateAdapter extends Adapter {
             address: <number>data.ziGateObject.payload.sourceAddress,
             clusterID: data.ziGateObject.payload.clusterID,
             data: data.ziGateObject.payload.payload,
-            zclFrameHeader: header,
+            header: header,
             endpoint: <number>data.ziGateObject.payload.sourceEndpoint,
             linkquality: data.ziGateObject.frame.readRSSI(),
             groupID: null, // @todo
@@ -781,14 +781,14 @@ class ZiGateAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        return payload.zclFrameHeader &&
+        return payload.header &&
             (!matcher.address || payload.address === matcher.address) &&
             matcher.endpoint === payload.endpoint &&
-            (!matcher.transactionSequenceNumber || payload.zclFrameHeader.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
             matcher.clusterID === payload.clusterID &&
-            matcher.frameType === payload.zclFrameHeader.frameControl.frameType &&
-            matcher.commandIdentifier === payload.zclFrameHeader.commandIdentifier &&
-            matcher.direction === payload.zclFrameHeader.frameControl.direction;
+            matcher.frameType === payload.header.frameControl.frameType &&
+            matcher.commandIdentifier === payload.header.commandIdentifier &&
+            matcher.direction === payload.header.frameControl.direction;
     }
 
     private onZiGateClose(): void {

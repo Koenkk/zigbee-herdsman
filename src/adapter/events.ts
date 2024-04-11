@@ -35,7 +35,7 @@ type DeviceLeavePayload = {
 interface ZclDataPayload {
     clusterID: number;
     address: number | string;
-    zclFrameHeader: ZclHeader | undefined;
+    header: ZclHeader | undefined;
     // This buffer contains the whole ZclFrame (including the ZclHeader)
     data: Buffer;
     endpoint: number;

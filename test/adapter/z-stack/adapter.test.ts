@@ -2683,7 +2683,7 @@ describe("zstack-adapter", () => {
         expect(zclData.address).toStrictEqual(2);
         expect(zclData.groupID).toStrictEqual(12);
         expect(zclData.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
-        expect(zclData.zclFrameHeader.commandIdentifier).toBe(1);
+        expect(zclData.header.commandIdentifier).toBe(1);
     });
 
     it('Incoming message raw (not ZCL)', async () => {
@@ -2866,7 +2866,7 @@ describe("zstack-adapter", () => {
 
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 4096, "data": touchlinkScanRequest.toBuffer(), "destendpoint": 254, "dstaddr": "0x000000000000ffff", "len": 9, "options": 0, "radius": 30, "srcendpoint": 12, "transid": 1, "dstaddrmode": 2, "dstpanid": 65535}, null);
-        expect(deepClone(result)).toStrictEqual({"clusterID":4096,"data":{"type":"Buffer","data":[9,12,1,1,0,0,0,10,5,6,12,0,11,0,0,0,51,205,217,4,1,33,23,0,1,12,13,0,5,0,10,5]},"zclFrameHeader":{"frameControl":{"frameType":1,"manufacturerSpecific":false,"direction":1,"disableDefaultResponse":false,"reservedBits":0},"manufacturerCode":null,"transactionSequenceNumber":12,"commandIdentifier":1},"address":12394,"endpoint":254,"linkquality":101,"groupID":0,"wasBroadcast":false});
+        expect(deepClone(result)).toStrictEqual({"clusterID":4096,"data":{"type":"Buffer","data":[9,12,1,1,0,0,0,10,5,6,12,0,11,0,0,0,51,205,217,4,1,33,23,0,1,12,13,0,5,0,10,5]},"header":{"frameControl":{"frameType":1,"manufacturerSpecific":false,"direction":1,"disableDefaultResponse":false,"reservedBits":0},"manufacturerCode":null,"transactionSequenceNumber":12,"commandIdentifier":1},"address":12394,"endpoint":254,"linkquality":101,"groupID":0,"wasBroadcast":false});
     });
 
     it('Send zcl frame interpan throw exception when command has no response', async () => {

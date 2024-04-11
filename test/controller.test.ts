@@ -97,12 +97,12 @@ const restoreMocksendZclFrameToEndpoint = () => {
             }
 
             const responseFrame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', frame.Cluster.ID, payload);
-            return {clusterID: responseFrame.Cluster.ID, zclFrameHeader: responseFrame.Header, data: responseFrame.toBuffer()};
+            return {clusterID: responseFrame.Cluster.ID, header: responseFrame.Header, data: responseFrame.toBuffer()};
         }
 
         if (frame.isSpecific() && (frame.isCommand('add') || frame.isCommand('remove')) && frame.isCluster('genGroups')) {
             const responseFrame = mockZclFrame.create(1, 1, true, null, 10, frame.getCommand().name + 'Rsp', frame.Cluster.ID, {status: 0, groupid: 1});
-            return {clusterID: frame.Cluster.ID, zclFrameHeader: responseFrame.Header, data: responseFrame.toBuffer()};
+            return {clusterID: frame.Cluster.ID, header: responseFrame.Header, data: responseFrame.toBuffer()};
         }
 
         if (networkAddress === 170 && frame.isGlobal() && frame.isCluster('ssIasZone') && frame.isCommand('write') && frame.Payload[0].attrId === 16) {
@@ -118,7 +118,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 address: 170,
                 clusterID: response.Cluster.ID,
                 data: response.toBuffer(),
-                zclFrameHeader: response.Header,
+                header: response.Header,
                 endpoint: 1,
                 linkquality: 50,
                 groupID: 1,
@@ -132,7 +132,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
             }
 
             const responseFrame = mockZclFrame.create(0, 1, true, null, 10, 'writeRsp', 0, payload);
-            return {clusterID: responseFrame.Cluster.ID, zclFrameHeader: responseFrame.Header, data: responseFrame.toBuffer()};
+            return {clusterID: responseFrame.Cluster.ID, header: responseFrame.Header, data: responseFrame.toBuffer()};
         }
 
         if (frame.isGlobal() && frame.isCommand('configReport')) {
@@ -150,7 +150,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
             }
 
             const responseFrame = mockZclFrame.create(0, 1, true, null, 10, cmd, 0, payload);
-            return {clusterID: responseFrame.Cluster.ID, zclFrameHeader: responseFrame.Header, data: responseFrame.toBuffer()};
+            return {clusterID: responseFrame.Cluster.ID, header: responseFrame.Header, data: responseFrame.toBuffer()};
         }
     })
 }
@@ -387,7 +387,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
                         address: networkAddress,
                         clusterID: frame.Cluster.ID,
                         data: frame.toBuffer(),
-                        zclFrameHeader: frame.Header,
+                        header: frame.Header,
                         endpoint: 1,
                         linkquality: 50,
                         groupID: 1,
@@ -813,7 +813,7 @@ describe('Controller', () => {
             networkAddress: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -832,7 +832,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -1336,7 +1336,7 @@ describe('Controller', () => {
             address: '0x129',
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -1448,7 +1448,7 @@ describe('Controller', () => {
             clusterID: 9,
             address: 129,
             data: Buffer.from([0, 1]),
-            zclFrameHeader: new Zcl.ZclHeader({direction: 0, disableDefaultResponse: false, frameType: 1, manufacturerSpecific: false, reservedBits: 0}, 0, 1, 1),
+            header: new Zcl.ZclHeader({direction: 0, disableDefaultResponse: false, frameType: 1, manufacturerSpecific: false, reservedBits: 0}, 0, 1, 1),
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -1631,7 +1631,7 @@ describe('Controller', () => {
             networkAddress: 130,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -1650,7 +1650,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 3,
             linkquality: 52,
             groupID: undefined,
@@ -1783,7 +1783,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1890,7 +1890,7 @@ describe('Controller', () => {
             networkAddress: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1909,7 +1909,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1936,7 +1936,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1957,7 +1957,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1978,7 +1978,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -1998,7 +1998,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -2045,7 +2045,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -2056,7 +2056,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
         expect(device.customReadResponse).toHaveBeenCalledTimes(1);
         expect(device.customReadResponse).toHaveBeenCalledWith(expect.any(ZclFrame), device.getEndpoint(1))
-        expect(device.customReadResponse.mock.calls[0][0].Header).toBe(payload.zclFrameHeader);
+        expect(device.customReadResponse.mock.calls[0][0].Header).toBe(payload.header);
     });
 
     it('Respond to read of attribute', async () => {
@@ -2072,7 +2072,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -2097,7 +2097,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -2284,7 +2284,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: null, // null intentionally
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -2582,7 +2582,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockImplementationOnce((ieeeAddr, networkAddress, endpoint, frame: ZclFrame) => {
             const payload = [{"attrId":0,"status":0,"dataType":35,"attrData":204}];
             const responseFrame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', frame.Cluster.ID, payload);
-            return {zclFrameHeader: responseFrame.Header, data: responseFrame.toBuffer(), clusterID: frame.Cluster.ID};
+            return {header: responseFrame.Header, data: responseFrame.toBuffer(), clusterID: frame.Cluster.ID};
         });
         mocksendZclFrameToEndpoint.mockImplementationOnce (() => jest.advanceTimersByTime(10));
         let frame = ZclFrame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, 1, 1, 'checkin', Zcl.Utils.getCluster("genPollCtrl").ID, {}, 0);
@@ -2591,7 +2591,7 @@ describe('Controller', () => {
             address: 174,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 52,
             groupID: undefined,
@@ -2609,7 +2609,7 @@ describe('Controller', () => {
             address: 174,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 52,
             groupID: undefined,
@@ -3155,7 +3155,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockClear();
         const buffer = Buffer.from([24,169,10,0,0,24,1]);
         const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing").ID, ZclHeader.fromBuffer(buffer), buffer);
-        const promise = new Promise((resolve, reject) => resolve({clusterID: frame.Cluster.ID, data: frame.toBuffer(), zclFrameHeader: frame.Header}))
+        const promise = new Promise((resolve, reject) => resolve({clusterID: frame.Cluster.ID, data: frame.toBuffer(), header: frame.Header}))
         mockAdapterWaitFor.mockReturnValueOnce({promise, cancel: () => {}});
         const result = endpoint.waitForCommand('genOta', 'upgradeEndRequest', 10, 20);
         expect(mockAdapterWaitFor).toHaveBeenCalledTimes(1);
@@ -3610,7 +3610,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -3627,7 +3627,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -3824,7 +3824,7 @@ describe('Controller', () => {
             // Attrid 9999 does not exist in ZCL
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -3933,7 +3933,7 @@ describe('Controller', () => {
             // Attrid 9999 does not exist in ZCL
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 10,
@@ -4247,7 +4247,7 @@ describe('Controller', () => {
             address: 0x46f4fe,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 1,
@@ -4275,7 +4275,7 @@ describe('Controller', () => {
             address: 0xf4fe,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 1,
@@ -4307,7 +4307,7 @@ describe('Controller', () => {
             address: 0xf4fe,
             clusterID: frameToggle.Cluster.ID,
             data: frameToggle.toBuffer(),
-            zclFrameHeader: frameToggle.Header,
+            header: frameToggle.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 1,
@@ -4343,7 +4343,7 @@ describe('Controller', () => {
             address: 0x46f4fe,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 1,
@@ -4395,7 +4395,7 @@ describe('Controller', () => {
             address: 0x46f4fe,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 1,
@@ -4505,7 +4505,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: expectedFrame.Cluster.ID,
             data: expectedFrame.toBuffer(),
-            zclFrameHeader: expectedFrame.Header,
+            header: expectedFrame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 0,
@@ -4539,7 +4539,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: expectedFrame.Cluster.ID,
             data: expectedFrame.toBuffer(),
-            zclFrameHeader: expectedFrame.Header,
+            header: expectedFrame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 0,
@@ -4572,7 +4572,7 @@ describe('Controller', () => {
             address: 0x017171f8,
             clusterID: frameScene.Cluster.ID,
             data: frameScene.toBuffer(),
-            zclFrameHeader: frameScene.Header,
+            header: frameScene.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 0,
@@ -4608,7 +4608,7 @@ describe('Controller', () => {
             address: 129,
             clusterID: expectedFrame.Cluster.ID,
             data: expectedFrame.toBuffer(),
-            zclFrameHeader: expectedFrame.Header,
+            header: expectedFrame.Header,
             endpoint: 242,
             linkquality: 50,
             groupID: 0,
@@ -4694,7 +4694,7 @@ describe('Controller', () => {
             address: '0x129',
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -4766,7 +4766,7 @@ describe('Controller', () => {
             address: '0x129',
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -4821,7 +4821,7 @@ describe('Controller', () => {
 
         const createResponse = (attrData: number) => {
             const frame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 'genOnOff', [{attrId: 16385, dataType: 33, attrData, status: 0}]);
-            return {clusterID: frame.Cluster.ID, zclFrameHeader: frame.Header, data: frame.toBuffer()};;
+            return {clusterID: frame.Cluster.ID, header: frame.Header, data: frame.toBuffer()};;
         }
         mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(1));
         mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(2));
@@ -4918,7 +4918,7 @@ describe('Controller', () => {
             address: '0x129',
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -4960,7 +4960,7 @@ describe('Controller', () => {
                 address: 174,
                 clusterID: frame.Cluster.ID,
                 data: frame.toBuffer(),
-                zclFrameHeader: frame.Header,
+                header: frame.Header,
                 endpoint: 1,
                 linkquality: 50,
                 groupID: 1,
@@ -5039,7 +5039,7 @@ describe('Controller', () => {
             address: 174,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 1,
@@ -5054,7 +5054,7 @@ describe('Controller', () => {
             address: 174,
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 52,
             groupID: undefined,
@@ -5101,7 +5101,7 @@ describe('Controller', () => {
             // Attrid 9999 does not exist in ZCL
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 19,
             groupID: 171,
@@ -5140,7 +5140,7 @@ describe('Controller', () => {
             address: '0x129',
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 0,
@@ -5162,7 +5162,7 @@ describe('Controller', () => {
             address: '0x177',
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 0,
@@ -5183,7 +5183,7 @@ describe('Controller', () => {
             address: '0x129',
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 0,
@@ -5204,7 +5204,7 @@ describe('Controller', () => {
             address: '0x177',
             clusterID: frame.Cluster.ID,
             data: frame.toBuffer(),
-            zclFrameHeader: frame.Header,
+            header: frame.Header,
             endpoint: 1,
             linkquality: 50,
             groupID: 0,

@@ -609,7 +609,7 @@ export class EmberAdapter extends Adapter {
 
         const payload: ZclDataPayload = {
             clusterID: apsFrame.clusterId,
-            zclFrameHeader: header,
+            header: header,
             address: sender,
             data: messageContents,
             endpoint: apsFrame.sourceEndpoint,
@@ -637,7 +637,7 @@ export class EmberAdapter extends Adapter {
         const payload: ZclDataPayload = {
             clusterID: Cluster.touchlink.ID,
             data: messageContents,
-            zclFrameHeader: ZclHeader.fromBuffer(messageContents),
+            header: ZclHeader.fromBuffer(messageContents),
             address: sourceAddress,
             endpoint: 1,// arbitrary since not sent over-the-air
             linkquality: lastHopLqi,
@@ -679,7 +679,7 @@ export class EmberAdapter extends Adapter {
             const data = Buffer.concat([gpdHeader, gpdCommandPayload]);
             const header = ZclHeader.fromBuffer(data);
             const payload: ZclDataPayload = {
-                zclFrameHeader: header,
+                header: header,
                 data,
                 clusterID: Cluster.greenPower.ID,
                 address: sourceId,
