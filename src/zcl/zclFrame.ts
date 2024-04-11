@@ -61,7 +61,7 @@ class ZclFrame {
 
     public toBuffer(): Buffer {
         const buffalo = new BuffaloZcl(Buffer.alloc(250));
-        this.writeHeader(buffalo);
+        this.Header.write(buffalo);
 
         if (this.Header.frameControl.frameType === FrameType.GLOBAL) {
             this.writePayloadGlobal(buffalo);
@@ -72,25 +72,6 @@ class ZclFrame {
         }
 
         return buffalo.getWritten();
-    }
-
-    private writeHeader(buffalo: BuffaloZcl): void {
-        const frameControl = (
-            (this.Header.frameControl.frameType & 0x03) |
-            (((this.Header.frameControl.manufacturerSpecific ? 1 : 0) << 2) & 0x04) |
-            ((this.Header.frameControl.direction << 3) & 0x08) |
-            (((this.Header.frameControl.disableDefaultResponse ? 1 : 0) << 4) & 0x10) |
-            ((this.Header.frameControl.reservedBits << 5) & 0xE0)
-        );
-
-        buffalo.writeUInt8(frameControl);
-
-        if (this.Header.frameControl.manufacturerSpecific) {
-            buffalo.writeUInt16(this.Header.manufacturerCode);
-        }
-
-        buffalo.writeUInt8(this.Header.transactionSequenceNumber);
-        buffalo.writeUInt8(this.Header.commandIdentifier);
     }
 
     private writePayloadGlobal(buffalo: BuffaloZcl): void {
