@@ -3071,6 +3071,15 @@ describe('Controller', () => {
         expect(deepClone(call[3])).toStrictEqual({"Header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":false},"transactionSequenceNumber":11,"manufacturerCode":null,"commandIdentifier":3},"Payload":{"groupid":4},"Cluster":{"ID":4,"attributes":{"nameSupport":{"ID":0,"type":24,"name":"nameSupport"}},"name":"genGroups","commands":{"add":{"ID":0,"response":0,"parameters":[{"name":"groupid","type":33},{"name":"groupname","type":66}],"name":"add"},"view":{"ID":1,"parameters":[{"name":"groupid","type":33}],"name":"view"},"getMembership":{"ID":2,"response":2,"parameters":[{"name":"groupcount","type":32},{"name":"grouplist","type":1002}],"name":"getMembership"},"miboxerSetZones":{"ID":240,"name":"miboxerSetZones","parameters":[{"name":"zones","type":1012}]},"remove":{"ID":3,"response":3,"parameters":[{"name":"groupid","type":33}],"name":"remove"},"removeAll":{"ID":4,"parameters":[],"name":"removeAll"},"addIfIdentifying":{"ID":5,"parameters":[{"name":"groupid","type":33},{"name":"groupname","type":66}],"name":"addIfIdentifying"}},"commandsResponse":{"addRsp":{"ID":0,"parameters":[{"name":"status","type":32},{"name":"groupid","type":33}],"name":"addRsp"},"viewRsp":{"ID":1,"parameters":[{"name":"status","type":32},{"name":"groupid","type":33},{"name":"groupname","type":66}],"name":"viewRsp"},"getMembershipRsp":{"ID":2,"parameters":[{"name":"capacity","type":32},{"name":"groupcount","type":32},{"name":"grouplist","type":1002}],"name":"getMembershipRsp"},"removeRsp":{"ID":3,"parameters":[{"name":"status","type":32},{"name":"groupid","type":33}],"name":"removeRsp"}}},"Command":{"ID":3,"response":3,"parameters":[{"name":"groupid","type":33}],"name":"remove"}});
     });
 
+    it('Command response', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const endpoint = device.getEndpoint(1);
+        const response = await endpoint.command('genGroups', 'add', {groupid: 1, groupname: ''});
+        expect(response).toStrictEqual({groupid: 1, status: 0});
+    });
+
     it('Group command', async () => {
         await controller.start();
         const group = await controller.createGroup(2);

@@ -781,11 +781,10 @@ class ZiGateAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        if (!payload.zclFrameHeader) return false;
-        const transactionSequenceNumber = payload.zclFrameHeader.transactionSequenceNumber;
-        return (!matcher.address || payload.address === matcher.address) &&
+        return payload.zclFrameHeader &&
+            (!matcher.address || payload.address === matcher.address) &&
             matcher.endpoint === payload.endpoint &&
-            (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+            (!matcher.transactionSequenceNumber || payload.zclFrameHeader.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
             matcher.clusterID === payload.clusterID &&
             matcher.frameType === payload.zclFrameHeader.frameControl.frameType &&
             matcher.commandIdentifier === payload.zclFrameHeader.commandIdentifier &&
