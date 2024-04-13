@@ -285,7 +285,7 @@ class Endpoint extends Entity {
             || !this.getDevice().pendingRequestTimeout) {
             if (this.getDevice().pendingRequestTimeout > 0)
             {
-                logger.debug(logPrefix + `send ${frame.getCommand().name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
+                logger.debug(logPrefix + `send ${frame.command.name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
             }
             return request.send();
         }
@@ -584,7 +584,7 @@ class Endpoint extends Entity {
     ): Promise<void | KeyValue> {
         const frame = await this.zclCommand(clusterKey, commandKey, payload, options, null, false, Zcl.FrameType.SPECIFIC);
         if (frame) {
-            return frame.Payload;
+            return frame.payload;
         }
     }
 
@@ -640,7 +640,7 @@ class Endpoint extends Entity {
             waiter.promise.then(
                 (payload) => {
                     const frame = Zcl.ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data);
-                    resolve({header: frame.Header, payload: frame.Payload});
+                    resolve({header: frame.header, payload: frame.payload});
                 },
                 (error) => reject(error),
             );
@@ -758,7 +758,7 @@ class Endpoint extends Entity {
             if (result) {
                 const resultFrame = Zcl.ZclFrame.fromBuffer(result.clusterID, result.header, result.data);
                 if (result && checkStatus && !options.disableResponse) {
-                    this.checkStatus(resultFrame.Payload);
+                    this.checkStatus(resultFrame.payload);
                 }
                 return resultFrame;
             }

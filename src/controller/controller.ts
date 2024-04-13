@@ -145,7 +145,7 @@ class Controller extends events.EventEmitter {
 
         // Register adapter events
         this.adapter.on(AdapterEvents.Events.deviceJoined, this.onDeviceJoined.bind(this));
-        this.adapter.on(AdapterEvents.Events.data, (data) => this.onData(data));
+        this.adapter.on(AdapterEvents.Events.zclPayload, this.onZclPayload.bind(this));
         this.adapter.on(AdapterEvents.Events.disconnected, this.onAdapterDisconnected.bind(this));
         this.adapter.on(AdapterEvents.Events.deviceAnnounce, this.onDeviceAnnounce.bind(this));
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
@@ -300,7 +300,7 @@ class Controller extends events.EventEmitter {
 
         // Unregister adapter events
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceJoined);
-        this.adapter.removeAllListeners(AdapterEvents.Events.data);
+        this.adapter.removeAllListeners(AdapterEvents.Events.zclPayload);
         this.adapter.removeAllListeners(AdapterEvents.Events.disconnected);
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceAnnounce);
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceLeave);
@@ -611,33 +611,33 @@ class Controller extends events.EventEmitter {
         }
     }
 
-    private async onData(dataPayload: AdapterEvents.ZclPayload): Promise<void> {
+    private async onZclPayload(payload: AdapterEvents.ZclPayload): Promise<void> {
         let frame: ZclFrame | undefined = undefined;
-        if (dataPayload.header) {
-            try {
-                frame = ZclFrame.fromBuffer(dataPayload.clusterID, dataPayload.header, dataPayload.data);
-            } catch (error) {
-                logger.debug(`Failed to parse frame: ${error}`, NS);
-            }
+
+        try {
+            frame = ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data);
+        } catch (error) {
+            logger.debug(`Failed to parse frame: ${error}`, NS);
         }
 
-        const logPayload = JSON.parse(JSON.stringify({...dataPayload, frame}));
-        delete logPayload.frame?.Cluster;
+        // /!\ stringify + parse + stringify
+        const logPayload = JSON.parse(JSON.stringify({...payload, frame}));
+        delete logPayload.frame?.cluster;
         logger.debug(`Received data '${JSON.stringify(logPayload)}'`, NS);
 
         let gpDevice = null;
 
-        if (frame?.Cluster.name === 'touchlink') {
+        if (frame?.cluster.name === 'touchlink') {
             // This is handled by touchlink
             return;
-        } else if (frame?.Cluster.name === 'greenPower') {
-            await this.greenPower.onZclGreenPowerData(dataPayload, frame);
+        } else if (frame?.cluster.name === 'greenPower') {
+            await this.greenPower.onZclGreenPowerData(payload, frame);
             // lookup encapsulated gpDevice for further processing
-            gpDevice = Device.byNetworkAddress(frame.Payload.srcID & 0xFFFF);
+            gpDevice = Device.byNetworkAddress(frame.payload.srcID & 0xFFFF);
         }
 
-        let device = gpDevice ? gpDevice : (typeof dataPayload.address === 'string' ?
-            Device.byIeeeAddr(dataPayload.address) : Device.byNetworkAddress(dataPayload.address));
+        let device = gpDevice ? gpDevice : (typeof payload.address === 'string' ?
+            Device.byIeeeAddr(payload.address) : Device.byNetworkAddress(payload.address));
 
         /**
          * Handling of re-transmitted Xiaomi messages.
@@ -651,13 +651,13 @@ class Controller extends events.EventEmitter {
          * Handling these message would result in false state updates.
          * The group ID attribute of these message defines the network address of the end device.
          */
-        if (device?.manufacturerName === 'LUMI' && device?.type == 'Router' && dataPayload.groupID) {
-            logger.debug(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${dataPayload.groupID}`, NS);
-            device = Device.byNetworkAddress(dataPayload.groupID);
+        if (device?.manufacturerName === 'LUMI' && device?.type == 'Router' && payload.groupID) {
+            logger.debug(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${payload.groupID}`, NS);
+            device = Device.byNetworkAddress(payload.groupID);
         }
 
         if (!device) {
-            logger.debug(`Data is from unknown device with address '${dataPayload.address}', skipping...`, NS);
+            logger.debug(`Data is from unknown device with address '${payload.address}', skipping...`, NS);
             return;
         }
 
@@ -666,16 +666,16 @@ class Controller extends events.EventEmitter {
         if (!frame?.isCluster("genPollCtrl")) {
             device.implicitCheckin();
         }
-        device.linkquality = dataPayload.linkquality;
+        device.linkquality = payload.linkquality;
 
-        let endpoint = device.getEndpoint(dataPayload.endpoint);
+        let endpoint = device.getEndpoint(payload.endpoint);
         if (!endpoint) {
             logger.debug(
-                `Data is from unknown endpoint '${dataPayload.endpoint}' from device with ` +
-                `network address '${dataPayload.address}', creating it...`,
+                `Data is from unknown endpoint '${payload.endpoint}' from device with ` +
+                `network address '${payload.address}', creating it...`,
                 NS,
             );
-            endpoint = device.createEndpoint(dataPayload.endpoint);
+            endpoint = device.createEndpoint(payload.endpoint);
         }
 
         // Parse command for event
@@ -689,13 +689,13 @@ class Controller extends events.EventEmitter {
         } = {};
 
         if (frame) {
-            const command = frame.getCommand();
-            clusterName = frame.Cluster.name;
-            meta.zclTransactionSequenceNumber = frame.Header.transactionSequenceNumber;
-            meta.manufacturerCode = frame.Header.manufacturerCode;
-            meta.frameControl = frame.Header.frameControl;
+            const command = frame.command;
+            clusterName = frame.cluster.name;
+            meta.zclTransactionSequenceNumber = frame.header.transactionSequenceNumber;
+            meta.manufacturerCode = frame.header.manufacturerCode;
+            meta.frameControl = frame.header.frameControl;
 
-            if (frame.isGlobal()) {
+            if (frame.header.isGlobal) {
                 if (frame.isCommand('report')) {
                     type = 'attributeReport';
                     data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID);
@@ -714,10 +714,10 @@ class Controller extends events.EventEmitter {
                 }
             } else {
                 /* istanbul ignore else */
-                if (frame.isSpecific()) {
+                if (frame.header.isSpecific) {
                     if (Events.CommandsLookup[command.name]) {
                         type = Events.CommandsLookup[command.name];
-                        data = frame.Payload;
+                        data = frame.payload;
                     } else {
                         logger.debug(`Skipping command '${command.name}' because it is missing from the lookup`, NS);
                     }
@@ -733,19 +733,19 @@ class Controller extends events.EventEmitter {
                     }
                 }
 
-                endpoint.saveClusterAttributeKeyValue(frame.Cluster.ID, data);
+                endpoint.saveClusterAttributeKeyValue(frame.cluster.ID, data);
             }
         } else {
             type = 'raw';
-            data = dataPayload.data;
-            const name = ZclUtils.getCluster(dataPayload.clusterID).name;
+            data = payload.data;
+            const name = ZclUtils.getCluster(payload.clusterID).name;
             clusterName = Number.isNaN(Number(name)) ? name : Number(name);
         }
 
         if (type && data) {
-            const endpoint = device.getEndpoint(dataPayload.endpoint);
-            const linkquality = dataPayload.linkquality;
-            const groupID = dataPayload.groupID;
+            const endpoint = device.getEndpoint(payload.endpoint);
+            const linkquality = payload.linkquality;
+            const groupID = payload.groupID;
             const eventData: Events.MessagePayload = {
                 type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName, meta
             };
@@ -760,7 +760,7 @@ class Controller extends events.EventEmitter {
 
 
         if (frame) {
-            await device.onZclData(dataPayload, frame, endpoint);
+            await device.onZclData(payload, frame, endpoint);
         }
     }
 }

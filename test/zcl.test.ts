@@ -130,10 +130,10 @@ describe('Zcl', () => {
             dataType: 57,
         }];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
-        expect(frame.isGlobal()).toBe(true);
-        expect(frame.isSpecific()).toBe(false);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
+        expect(frame.header.isGlobal).toBe(true);
+        expect(frame.header.isSpecific).toBe(false);
         expect(frame.isCluster("genAnalogInput")).toBe(true);
         expect(frame.isCommand('report')).toBe(true);
     });
@@ -155,10 +155,10 @@ describe('Zcl', () => {
 
         const payload = {value: 256, value2: 13};
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
-        expect(frame.getCommand().ID).toStrictEqual(7);
-        expect(frame.getCommand().name).toStrictEqual('tradfriArrowSingle');
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
+        expect(frame.command.ID).toStrictEqual(7);
+        expect(frame.command.name).toStrictEqual('tradfriArrowSingle');
     });
 
     it('ZclFrame from buffer genGroups getMembership', () => {
@@ -178,8 +178,8 @@ describe('Zcl', () => {
 
         const payload = {groupcount: 2, grouplist: [10, 20]};
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer genGroups getMembership', () => {
@@ -199,8 +199,8 @@ describe('Zcl', () => {
 
         const payload = {groupid: 10, status: 0};
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer occupancy report', () => {
@@ -220,8 +220,8 @@ describe('Zcl', () => {
 
         const payload = [{ attrId: 0, dataType: 24, attrData: 1 }];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer configReportRsp - short', () => {
@@ -241,8 +241,8 @@ describe('Zcl', () => {
 
         const payload = [{status: 0}];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer configReportRsp - long', () => {
@@ -262,8 +262,8 @@ describe('Zcl', () => {
 
         const payload = [{status: 0, direction:1, attrId: 0x1234}, {status: 1, direction:1, attrId: 0x1235}];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer configReportRsp (hvacThermostat)', () => {
@@ -283,22 +283,22 @@ describe('Zcl', () => {
 
         const payload = [{status:0, direction: 0, attrId: 18}];
 
-        expect(frame.Payload).toStrictEqual(payload);
-        expect(frame.Header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
     });
 
     it('ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
         const bufferHeat = Buffer.from([9, 7, 0, 6, 64, 1, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8]);
         const frameHeat = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Zcl.ZclHeader.fromBuffer(bufferHeat), bufferHeat);
-        expect(frameHeat.Payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:1, transitions: [{transitionTime:360,heatSetpoint:2300},{transitionTime:570,heatSetpoint:2200},{transitionTime:720,heatSetpoint:2150},{transitionTime:840,heatSetpoint:2150},{transitionTime:990,heatSetpoint:2300},{transitionTime:1380,heatSetpoint:2100}]});
+        expect(frameHeat.payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:1, transitions: [{transitionTime:360,heatSetpoint:2300},{transitionTime:570,heatSetpoint:2200},{transitionTime:720,heatSetpoint:2150},{transitionTime:840,heatSetpoint:2150},{transitionTime:990,heatSetpoint:2300},{transitionTime:1380,heatSetpoint:2100}]});
 
         const bufferCool = Buffer.from([9, 7, 0, 6, 64, 2, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8]);
         const frameCool = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Zcl.ZclHeader.fromBuffer(bufferCool), bufferCool);
-        expect(frameCool.Payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:2, transitions: [{transitionTime:360,coolSetpoint:2300},{transitionTime:570,coolSetpoint:2200},{transitionTime:720,coolSetpoint:2150},{transitionTime:840,coolSetpoint:2150},{transitionTime:990,coolSetpoint:2300},{transitionTime:1380,coolSetpoint:2100}]});
+        expect(frameCool.payload).toStrictEqual({numoftrans:6, dayofweek:64, mode:2, transitions: [{transitionTime:360,coolSetpoint:2300},{transitionTime:570,coolSetpoint:2200},{transitionTime:720,coolSetpoint:2150},{transitionTime:840,coolSetpoint:2150},{transitionTime:990,coolSetpoint:2300},{transitionTime:1380,coolSetpoint:2100}]});
 
         const bufferHeatAndCool = Buffer.from([9, 7, 0, 1, 64, 3, 104, 1, 252, 8, 58, 2]);
         const frameHeatAndCool = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("hvacThermostat").ID, Zcl.ZclHeader.fromBuffer(bufferHeatAndCool), bufferHeatAndCool);
-        expect(frameHeatAndCool.Payload).toStrictEqual({numoftrans:1, dayofweek:64, mode:3, transitions: [{transitionTime:360,coolSetpoint:570, heatSetpoint: 2300}]});
+        expect(frameHeatAndCool.payload).toStrictEqual({numoftrans:1, dayofweek:64, mode:3, transitions: [{transitionTime:360,coolSetpoint:570, heatSetpoint: 2300}]});
     });
 
     it('ZclFrame to buffer setWeeklyScheduleRsp (hvacThermostat)', () => {
@@ -332,8 +332,8 @@ describe('Zcl', () => {
 
         const payload = [{status: 2, direction: 1, attrId: 257}];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer defaultRsp', () => {
@@ -353,8 +353,8 @@ describe('Zcl', () => {
 
         const payload = {cmdId: 12, statusCode: 130};
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer xiaomiStruct', () => {
@@ -374,8 +374,8 @@ describe('Zcl', () => {
 
         const payload = [{"attrId":5,"dataType":66,"attrData":"lumi.sensor_wleak.aq1"},{"attrId":65281,"dataType":66,"attrData":{"1":3285,"3":33,"4":5032,"5":43,"6":[0,327680],"8":516,"10":0,"100":0}}];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer struct', () => {
@@ -417,8 +417,8 @@ describe('Zcl', () => {
             }
         ];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer discoverRsp', () => {
@@ -438,17 +438,17 @@ describe('Zcl', () => {
 
         const payload = {"discComplete":0,"attrInfos":[{"attrId":32,"dataType":32},{"attrId":33,"dataType":32},{"attrId":49,"dataType":48},{"attrId":51,"dataType":32},{"attrId":53,"dataType":24}]};
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
-        expect(frame.Cluster.name).toEqual('genPowerCfg');
-        expect(frame.getCommand().name).toEqual('discoverRsp');
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
+        expect(frame.cluster.name).toEqual('genPowerCfg');
+        expect(frame.command.name).toEqual('discoverRsp');
     });
 
     it('ZclFrame from buffer error on malformed', () => {
         const buffer = Buffer.from([0x08, 0x01]);
         expect(() => {
             Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genPowerCfg").ID, Zcl.ZclHeader.fromBuffer(buffer), buffer);
-        }).toThrowError("ZclHeader length is lower than minimal length");
+        }).toThrowError("Invalid ZclHeader");
     });
 
     it('ZclFrame from buffer readRsp failed', () => {
@@ -468,8 +468,8 @@ describe('Zcl', () => {
 
         const payload = [{status: 2, attrId: 1}];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer readRsp success', () => {
@@ -489,8 +489,8 @@ describe('Zcl', () => {
 
         const payload = [{status: Zcl.Status.SUCCESS, attrId: 1, dataType: Zcl.DataType.uint8, attrData: 3}];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer GDP commission', () => {
@@ -533,8 +533,8 @@ describe('Zcl', () => {
             },
         };
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer GDP scene 0', () => {
@@ -561,8 +561,8 @@ describe('Zcl', () => {
             payloadSize: 255,
         };
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer GDP with extra data', () => {
@@ -589,8 +589,8 @@ describe('Zcl', () => {
             payloadSize: 255,
         };
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer GDP pairing', () => {
@@ -618,8 +618,8 @@ describe('Zcl', () => {
             gpdKey: Buffer.from([0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1])
         };
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer readRsp alias type', () => {
@@ -639,8 +639,8 @@ describe('Zcl', () => {
 
         const payload = [{status: Zcl.Status.SUCCESS, attrId: 1, dataType: Zcl.DataType.data8, attrData: 3}];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer configReportRsp server to client', () => {
@@ -660,8 +660,8 @@ describe('Zcl', () => {
 
         const payload = [{attrId: 1, direction: 1, timeout: 2570}];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer configReportRsp client to server analog', () => {
@@ -681,8 +681,8 @@ describe('Zcl', () => {
 
         const payload = [{attrId: 256, dataType: 32, direction: 0, maxRepIntval: 10, minRepIntval: 1, repChange: 20,}];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer configReportRsp client to server analog', () => {
@@ -702,8 +702,8 @@ describe('Zcl', () => {
 
         const payload = [{attrId: 256, dataType: 8, direction: 0, maxRepIntval: 10, minRepIntval: 1}];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame from buffer readRsp', () => {
@@ -723,8 +723,8 @@ describe('Zcl', () => {
 
         const payload = [{"attrId":5,"status":0,"dataType":66,"attrData":"TRADFRI bulb E27 WS opal 980lm"},{"attrId":6,"status":0,"dataType":66,"attrData":"20170331"},{"attrId":7,"status":0,"dataType":48,"attrData":1},{"attrId":10,"status":0,"dataType":65,"attrData":Buffer.from([76,69,68,49,53,52,53,71,49,50,69,50,55,69,85])}];
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame with Ubisys (manufacturer specific) cluster create', () => {
@@ -733,7 +733,7 @@ describe('Zcl', () => {
             FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f2, 8, 'readRsp', 0xfc00, payload
         );
 
-        expect(frame.Cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+        expect(frame.cluster.name).toBe('manuSpecificUbisysDeviceSetup');
     });
 
     it('ZclFrame with Ubisys (manufacturer specific) cluster create with non Ubisys manufcode', () => {
@@ -742,13 +742,13 @@ describe('Zcl', () => {
             FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f3, 8, 'readRsp', 0xfc00, payload
         );
 
-        expect(frame.Cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+        expect(frame.cluster.name).toBe('manuSpecificUbisysDeviceSetup');
     });
 
     it('ZclFrame with Ubisys (manufacturer specific) cluster fromBuffer', () => {
         const buffer = Buffer.from([0x04, 0xf2, 0x10, 0x08, 0x01, 0x00, 0x00, 0x00, 0x20, 0x01])
         const frame = Zcl.ZclFrame.fromBuffer(0xfc00, Zcl.ZclHeader.fromBuffer(buffer), buffer);
-        expect(frame.Cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+        expect(frame.cluster.name).toBe('manuSpecificUbisysDeviceSetup');
     });
 
     it('ZclFrame to buffer with reservered bits', () => {
@@ -778,8 +778,8 @@ describe('Zcl', () => {
 
         const payload = {startAttrId: 0, maxAttrIds: 240};
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
     });
 
     it('ZclFrame to buffer discover', () => {
@@ -973,10 +973,10 @@ describe('Zcl', () => {
             zoneid: 0,
         };
 
-        expect(frame.Header).toStrictEqual(header);
-        expect(frame.Payload).toStrictEqual(payload);
-        expect(frame.isGlobal()).toBe(false);
-        expect(frame.isSpecific()).toBe(true);
+        expect(frame.header).toStrictEqual(header);
+        expect(frame.payload).toStrictEqual(payload);
+        expect(frame.header.isGlobal).toBe(false);
+        expect(frame.header.isSpecific).toBe(true);
         expect(frame.isCluster("ssIasAce")).toBe(true);
         expect(frame.isCommand('arm')).toBe(true);
     });
@@ -1574,7 +1574,7 @@ describe('Zcl', () => {
     it('ZclFrame parse MiBoxer zone configuration command', () => {
         const zoneConfigPayload = Buffer.from([0x11, 0x01, 0xf0, 0x08, 0x84, 0x2b, 0x01, 0x98, 0x2b, 0x02, 0xac, 0x2b, 0x03, 0xc0, 0x2b, 0x04, 0xd4, 0x2b, 0x05, 0xe8, 0x2b, 0x06, 0xfc, 0x2b, 0x07, 0x10, 0x2c, 0x08]);
         const zoneConfigFrame = Zcl.ZclFrame.fromBuffer(Zcl.Utils.getCluster("genGroups").ID, Zcl.ZclHeader.fromBuffer(zoneConfigPayload), zoneConfigPayload);
-        expect(zoneConfigFrame.Payload.zones).toStrictEqual([
+        expect(zoneConfigFrame.payload.zones).toStrictEqual([
             {zoneNum: 1, groupId: 0x2b84},
             {zoneNum: 2, groupId: 0x2b98},
             {zoneNum: 3, groupId: 0x2bac},
@@ -1624,5 +1624,15 @@ describe('Zcl', () => {
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(BuffaloZclDataType[BuffaloZclDataType.BUFFER], {});
         expect(value).toStrictEqual(Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05]));
+    });
+
+    it('ZclHeader return undefined when too short', () => {
+        const header = Zcl.ZclHeader.fromBuffer(Buffer.from([0, 8]));
+        expect(header).toStrictEqual(undefined);
+    });
+
+    it('ZclHeader return undefined when too short manufacturer specific', () => {
+        const header = Zcl.ZclHeader.fromBuffer(Buffer.from([4, 8, 3]));
+        expect(header).toStrictEqual(undefined);
     });
 });

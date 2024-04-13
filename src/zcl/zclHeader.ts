@@ -1,24 +1,35 @@
-import {FrameControl} from './definition';
+import {FrameControl, FrameType} from './definition';
 import BuffaloZcl from './buffaloZcl';
+import {logger} from '../utils/logger';
 
-const MINIMAL_HEADER_LENGTH = 3;
+const NS = 'zh:zcl:header';
+const HEADER_MINIMAL_LENGTH = 3;
+const HEADER_WITH_MANUF_LENGTH = HEADER_MINIMAL_LENGTH + 2;
 
 class ZclHeader {
     public readonly frameControl: FrameControl;
-    public readonly manufacturerCode: number;
+    public readonly manufacturerCode: number | null;
     public readonly transactionSequenceNumber: number;
     public readonly commandIdentifier: number;
 
-    constructor(frameControl: FrameControl, manufacturerCode: number, transactionSequenceNumber: number, commandIdentifier: number) {
+    constructor(frameControl: FrameControl, manufacturerCode: number | null, transactionSequenceNumber: number, commandIdentifier: number) {
         this.frameControl = frameControl;
         this.manufacturerCode = manufacturerCode;
         this.transactionSequenceNumber = transactionSequenceNumber;
         this.commandIdentifier = commandIdentifier;
     }
 
-    public getLength(): number {
-        // Returns the amount of bytes of this header
-        return 3 + (this.manufacturerCode === null ? 0 : 2);
+    /** Returns the amount of bytes used by this header */
+    get length(): number {
+        return this.manufacturerCode === null ? HEADER_MINIMAL_LENGTH : HEADER_WITH_MANUF_LENGTH;
+    }
+
+    get isGlobal(): boolean {
+        return this.frameControl.frameType === FrameType.GLOBAL;
+    }
+
+    get isSpecific(): boolean {
+        return this.frameControl.frameType === FrameType.SPECIFIC;
     }
 
     public write(buffalo: BuffaloZcl): void {
@@ -41,8 +52,10 @@ class ZclHeader {
     }
 
     public static fromBuffer(buffer: Buffer): ZclHeader {
-        if (buffer.length < MINIMAL_HEADER_LENGTH) {
-            throw new Error("ZclHeader length is lower than minimal length");
+        // Returns `undefined` in case the ZclHeader cannot be parsed.
+        if (buffer.length < HEADER_MINIMAL_LENGTH) {
+            logger.debug(`ZclHeader is too short.`, NS);
+            return undefined;
         }
 
         const buffalo = new BuffaloZcl(buffer);
@@ -55,8 +68,13 @@ class ZclHeader {
             reservedBits: frameControlValue >> 5,
         };
 
-        let manufacturerCode = null;
+        let manufacturerCode: number | null = null;
         if (frameControl.manufacturerSpecific) {
+            if (buffer.length < HEADER_WITH_MANUF_LENGTH) {
+                logger.debug(`ZclHeader is too short for control with manufacturer-specific.`, NS);
+                return undefined;
+            }
+
             manufacturerCode = buffalo.readUInt16();
         }
 

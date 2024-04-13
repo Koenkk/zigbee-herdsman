@@ -80,7 +80,7 @@ class GreenPower extends events.EventEmitter {
         if (dataPayload.wasBroadcast) {
             return this.adapter.sendZclFrameToAll(242, replyFrame, 242);
         } else {
-            return this.adapter.sendZclFrameToEndpoint(null, frame.Payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
+            return this.adapter.sendZclFrameToEndpoint(null, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
         }
     }
 
@@ -88,7 +88,7 @@ class GreenPower extends events.EventEmitter {
         let payload = {};
 
         try {
-            switch(frame.Payload.commandID) {
+            switch(frame.payload.commandID) {
             /* istanbul ignore next */
             case undefined:
                 logger.error(`Received undefined command from '${dataPayload.address}'`, NS);
@@ -102,10 +102,10 @@ class GreenPower extends events.EventEmitter {
                     break;
                 }
 
-                const rxOnCap = frame.Payload.commandFrame.options & 0b10;
+                const rxOnCap = frame.payload.commandFrame.options & 0b10;
 
                 const key = this.encryptSecurityKey(
-                    frame.Payload.srcID, frame.Payload.commandFrame.securityKey
+                    frame.payload.srcID, frame.payload.commandFrame.securityKey
                 );
 
                 // RX capable GPD needs GP Commissioning Reply
@@ -117,15 +117,15 @@ class GreenPower extends events.EventEmitter {
                     // Commissioning reply
                     payload = {
                         options: 0,
-                        tempMaster: frame.Payload.gppNwkAddr,
+                        tempMaster: frame.payload.gppNwkAddr,
                         tempMasterTx: networkParameters.channel - 11,
-                        srcID: frame.Payload.srcID,
+                        srcID: frame.payload.srcID,
                         gpdCmd: 0xf0,
                         gpdPayload: {
                             commandID: 0xf0,
                             options: 0b00000000, // Disable encryption
-                            // securityKey: [...frame.Payload.commandFrame.securityKey],
-                            // keyMic: frame.Payload.commandFrame.keyMic,
+                            // securityKey: [...frame.payload.commandFrame.securityKey],
+                            // keyMic: frame.payload.commandFrame.keyMic,
                         }
                     };
 
@@ -137,8 +137,8 @@ class GreenPower extends events.EventEmitter {
 
                     payload = {
                         options: 0b0000000110101000, // Disable encryption
-                        srcID: frame.Payload.srcID,
-                        deviceID: frame.Payload.commandFrame.deviceID,
+                        srcID: frame.payload.srcID,
+                        deviceID: frame.payload.commandFrame.deviceID,
                     };
 
                     await this.sendPairingCommand(payload, dataPayload, frame);
@@ -153,9 +153,9 @@ class GreenPower extends events.EventEmitter {
 
                     payload = {
                         options: opt,
-                        srcID: frame.Payload.srcID,
-                        deviceID: frame.Payload.commandFrame.deviceID,
-                        frameCounter: frame.Payload.commandFrame.outgoingCounter,
+                        srcID: frame.payload.srcID,
+                        deviceID: frame.payload.commandFrame.deviceID,
+                        frameCounter: frame.payload.commandFrame.outgoingCounter,
     
                         gpdKey: [...key],
                     };
@@ -164,9 +164,9 @@ class GreenPower extends events.EventEmitter {
                 }
 
                 const eventData: GreenPowerDeviceJoinedPayload = {
-                    sourceID: frame.Payload.srcID,
-                    deviceID: frame.Payload.commandFrame.deviceID,
-                    networkAddress: frame.Payload.srcID & 0xFFFF,
+                    sourceID: frame.payload.srcID,
+                    deviceID: frame.payload.commandFrame.deviceID,
+                    networkAddress: frame.payload.srcID & 0xFFFF,
                 };
                 this.emit(GreenPowerEvents.deviceJoined, eventData);
 
@@ -181,9 +181,9 @@ class GreenPower extends events.EventEmitter {
                 // Channel notification
                 payload = {
                     options: 0,
-                    tempMaster: frame.Payload.gppNwkAddr,
-                    tempMasterTx: frame.Payload.commandFrame.nextChannel,
-                    srcID: frame.Payload.srcID,
+                    tempMaster: frame.payload.gppNwkAddr,
+                    tempMasterTx: frame.payload.commandFrame.nextChannel,
+                    srcID: frame.payload.srcID,
                     gpdCmd: 0xf3,
     
                     gpdPayload: {
@@ -204,7 +204,7 @@ class GreenPower extends events.EventEmitter {
                 break;
             default:
                 // NOTE: this is spammy because it logs everything that is handed back to Controller without special processing here
-                logger.debug(`Received unhandled command '0x${frame.Payload.commandID.toString(16)}' from '${dataPayload.address}'`, NS);
+                logger.debug(`Received unhandled command '0x${frame.payload.commandID.toString(16)}' from '${dataPayload.address}'`, NS);
             }
         } catch (error) {
             /* istanbul ignore next */

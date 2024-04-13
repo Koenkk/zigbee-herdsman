@@ -3,7 +3,7 @@ import {ZclHeader} from '../zcl';
 enum Events {
     networkAddress = "networkAddress",
     deviceJoined = "deviceJoined",
-    data = "data",
+    zclPayload = "zclPayload",
     disconnected = "disconnected",
     deviceAnnounce = "deviceAnnounce",
     deviceLeave = "deviceLeave"

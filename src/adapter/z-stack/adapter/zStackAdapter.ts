@@ -366,22 +366,22 @@ class ZStackAdapter extends Adapter {
         logger.debug(`sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} `
             + `(${responseAttempt},${dataRequestAttempt},${this.queue.count()})`, NS);
         let response = null;
-        const command = zclFrame.getCommand();
+        const command = zclFrame.command;
         if (command.hasOwnProperty('response') && disableResponse === false) {
             response = this.waitForInternal(
-                networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
-                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
+                networkAddress, endpoint, zclFrame.header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
+                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, command.response, timeout
             );
-        } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
+        } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
             response = this.waitForInternal(
                 networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
-                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
+                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, Foundation.defaultRsp.ID,
                 timeout,
             );
         }
 
         const dataConfirmResult = await this.dataRequest(
-            networkAddress, endpoint, sourceEndpoint, zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS,
+            networkAddress, endpoint, sourceEndpoint, zclFrame.cluster.ID, Constants.AF.DEFAULT_RADIUS,
             zclFrame.toBuffer(), timeout
         );
 
@@ -536,7 +536,7 @@ class ZStackAdapter extends Adapter {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
-                AddressMode.ADDR_GROUP, groupID, 0xFF, 0, sourceEndpoint || 1, zclFrame.Cluster.ID,
+                AddressMode.ADDR_GROUP, groupID, 0xFF, 0, sourceEndpoint || 1, zclFrame.cluster.ID,
                 Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, true
             );
 
@@ -554,7 +554,7 @@ class ZStackAdapter extends Adapter {
             this.checkInterpanLock();
             await this.dataRequestExtended(
                 AddressMode.ADDR_16BIT, 0xFFFD, endpoint, 0, sourceEndpoint,
-                zclFrame.Cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, false, 0
+                zclFrame.cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, false, 0
             );
 
             /**
@@ -828,17 +828,10 @@ class ZStackAdapter extends Adapter {
             if (object.subsystem === Subsystem.AF) {
                 /* istanbul ignore else */
                 if (object.command === 'incomingMsg' || object.command === 'incomingMsgExt') {
-                    let header: ZclHeader = undefined;
-                    try {
-                        header = ZclHeader.fromBuffer(object.payload.data);
-                    } catch (error) {
-                        logger.debug(`Failed to parse header: ${error}`, NS);
-                    }
-
                     const payload: Events.ZclPayload = {
                         clusterID: object.payload.clusterid,
                         data: object.payload.data,
-                        header: header,
+                        header: ZclHeader.fromBuffer(object.payload.data),
                         address: object.payload.srcaddr,
                         endpoint: object.payload.srcendpoint,
                         linkquality: object.payload.linkquality,
@@ -848,7 +841,7 @@ class ZStackAdapter extends Adapter {
                     };
 
                     this.waitress.resolve(payload);
-                    this.emit(Events.Events.data, payload);
+                    this.emit(Events.Events.zclPayload, payload);
                 }
             }
         }
@@ -887,27 +880,27 @@ class ZStackAdapter extends Adapter {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 AddressMode.ADDR_64BIT, ieeeAddr, 0xFE, 0xFFFF,
-                12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, false,
+                12, zclFrame.cluster.ID, 30, zclFrame.toBuffer(), 10000, false,
             );
         });
     }
 
     public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclPayload> {
         return this.queue.execute<Events.ZclPayload>(async () => {
-            const command = zclFrame.getCommand();
+            const command = zclFrame.command;
             if (!command.hasOwnProperty('response')) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
             const response = this.waitForInternal(
-                null, 0xFE, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT, null,
-                zclFrame.Cluster.ID, command.response, timeout
+                null, 0xFE, zclFrame.header.frameControl.frameType, Direction.SERVER_TO_CLIENT, null,
+                zclFrame.cluster.ID, command.response, timeout
             );
 
             try {
                 await this.dataRequestExtended(
                     AddressMode.ADDR_16BIT, 0xFFFF, 0xFE, 0xFFFF,
-                    12, zclFrame.Cluster.ID, 30, zclFrame.toBuffer(), 10000, false,
+                    12, zclFrame.cluster.ID, 30, zclFrame.toBuffer(), 10000, false,
                 );
             } catch (error) {
                 response.cancel();

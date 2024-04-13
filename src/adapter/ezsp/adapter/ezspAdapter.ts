@@ -77,16 +77,9 @@ class EZSPAdapter extends Adapter {
                 this.driver.handleNodeJoined(nwk, ieee);
             }
         } else if (frame.apsFrame.profileId == 260 || frame.apsFrame.profileId == 0xFFFF) {
-            let header: ZclHeader = undefined;
-            try {
-                header = ZclHeader.fromBuffer(frame.message);
-            } catch (error) {
-                logger.debug(`Failed to parse header: ${error}`, NS);
-            }
-
             const payload: Events.ZclPayload = {
                 clusterID: frame.apsFrame.clusterId,
-                header: header,
+                header: ZclHeader.fromBuffer(frame.message),
                 data: frame.message,
                 address: frame.sender,
                 endpoint: frame.apsFrame.sourceEndpoint,
@@ -97,7 +90,7 @@ class EZSPAdapter extends Adapter {
             };
 
             this.waitress.resolve(payload);
-            this.emit(Events.Events.data, payload);
+            this.emit(Events.Events.zclPayload, payload);
         } else if (frame.apsFrame.profileId == 0xc05e && frame.senderEui64) {  // ZLL Frame
             const payload: Events.ZclPayload = {
                 clusterID: frame.apsFrame.clusterId,
@@ -112,7 +105,7 @@ class EZSPAdapter extends Adapter {
             };
 
             this.waitress.resolve(payload);
-            this.emit(Events.Events.data, payload);
+            this.emit(Events.Events.zclPayload, payload);
         } else if (frame.apsFrame.profileId == 0xA1E0) {  // GP Frame
             // Only handle when clusterId == 33 (greenPower), some devices send messages with this profileId
             // while the cluster is not greenPower
@@ -131,7 +124,7 @@ class EZSPAdapter extends Adapter {
                 };
     
                 this.waitress.resolve(payload);
-                this.emit(Events.Events.data, payload);
+                this.emit(Events.Events.zclPayload, payload);
             } else {
                 logger.debug(`Ignoring GP frame because clusterId is not greenPower`, NS);
             }
@@ -449,21 +442,21 @@ class EZSPAdapter extends Adapter {
         logger.debug(`sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} `
             + `(${responseAttempt},${dataRequestAttempt},${this.queue.count()}), timeout=${timeout}`, NS);
         let response = null;
-        const command = zclFrame.getCommand();
+        const command = zclFrame.command;
         if (command.hasOwnProperty('response') && disableResponse === false) {
             response = this.waitForInternal(
                 networkAddress, endpoint,
-                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
+                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, command.response, timeout
             );
-        } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
+        } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
             response = this.waitForInternal(
                 networkAddress, endpoint,
-                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
+                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, Foundation.defaultRsp.ID,
                 timeout,
             );
         }
 
-        const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID, disableResponse || zclFrame.Header.frameControl.disableDefaultResponse);
+        const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, disableResponse || zclFrame.header.frameControl.disableDefaultResponse);
         frame.profileId = 0x0104;
         frame.sourceEndpoint = sourceEndpoint || 0x01;
         frame.destinationEndpoint = endpoint;
@@ -501,7 +494,7 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
-            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID, false);
+            const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, false);
             frame.profileId = 0x0104;
             frame.sourceEndpoint =  0x01;
             frame.destinationEndpoint = 0x01;
@@ -520,7 +513,7 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
-            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID, false);
+            const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, false);
             frame.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xA1E0 : 0x0104;
             frame.sourceEndpoint =  sourceEndpoint;
             frame.destinationEndpoint = endpoint;
@@ -657,7 +650,7 @@ class EZSPAdapter extends Adapter {
                 frame.sourceAddress = this.driver.ieee;
                 frame.nwkFrameControl = 0x000b;
                 frame.appFrameControl = 0x03;
-                frame.clusterId = zclFrame.Cluster.ID;
+                frame.clusterId = zclFrame.cluster.ID;
                 frame.profileId = 0xc05e;
 
                 await this.driver.ieeerawrequest(frame, zclFrame.toBuffer());
@@ -670,13 +663,13 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclPayload> {
         return this.queue.execute<Events.ZclPayload>(async () => {
             logger.debug(`sendZclFrameInterPANBroadcast`, NS);
-            const command = zclFrame.getCommand();
+            const command = zclFrame.command;
             if (!command.hasOwnProperty('response')) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
             const response = this.waitForInternal(
-                null, 0xFE, null, zclFrame.Cluster.ID, command.response, timeout
+                null, 0xFE, null, zclFrame.cluster.ID, command.response, timeout
             );
 
             try {
@@ -688,7 +681,7 @@ class EZSPAdapter extends Adapter {
                 frame.ieeeAddress = this.driver.ieee;
                 frame.nwkFrameControl = 0x000b;
                 frame.appFrameControl = 0x0b;
-                frame.clusterId = zclFrame.Cluster.ID;
+                frame.clusterId = zclFrame.cluster.ID;
                 frame.profileId = 0xc05e;
 
                 await this.driver.rawrequest(frame, zclFrame.toBuffer());

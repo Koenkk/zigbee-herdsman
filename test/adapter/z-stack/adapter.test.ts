@@ -2675,7 +2675,7 @@ describe("zstack-adapter", () => {
         let zclData;
         const responseFrame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 100, 'readRsp', 0, [{attrId: 0, attrData: 2, dataType: 32, status: 0}]);
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsgExt', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()}};
-        adapter.on("data", (p) => {zclData = p;})
+        adapter.on("zclPayload", (p) => {zclData = p;})
         znpReceived(object);
         expect(zclData.endpoint).toStrictEqual(20);
         expect(zclData.groupID).toStrictEqual(12);
@@ -2691,7 +2691,7 @@ describe("zstack-adapter", () => {
         await adapter.start();
         let rawData;
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 1, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: Buffer.from([0x0, 0x1])}};
-        adapter.on("data", (p) => {rawData = p;})
+        adapter.on("zclPayload", (p) => {rawData = p;})
         znpReceived(object);
         expect(rawData.clusterID).toStrictEqual(1);
         expect(rawData.endpoint).toStrictEqual(20);
