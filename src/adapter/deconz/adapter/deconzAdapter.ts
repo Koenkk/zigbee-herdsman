@@ -1106,7 +1106,7 @@ class DeconzAdapter extends Adapter {
         if (resp != null) {
             srcAddr = (resp.srcAddr16 != null) ? resp.srcAddr16 : resp.srcAddr64;
             if (resp.profileId != 0x00) {
-                header = ZclHeader.fromBuffer(Buffer.from(resp.asduPayload));
+                header = ZclHeader.fromBuffer(payBuf);
             }
         }
 
