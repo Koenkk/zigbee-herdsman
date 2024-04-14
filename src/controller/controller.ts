@@ -620,10 +620,9 @@ class Controller extends events.EventEmitter {
             logger.debug(`Failed to parse frame: ${error}`, NS);
         }
 
-        // /!\ stringify + parse + stringify
-        const logPayload = JSON.parse(JSON.stringify({...payload, frame}));
-        delete logPayload.frame?.cluster;
-        logger.debug(`Received data '${JSON.stringify(logPayload)}'`, NS);
+        logger.debug(`Received payload: clusterID=${payload.clusterID}, address=${payload.address}, groupID=${payload.groupID}, `
+            + `endpoint=${payload.endpoint}, destinationEndpoint=${payload.destinationEndpoint}, wasBroadcast=${payload.wasBroadcast}, `
+            + `linkQuality=${payload.linkquality}, frame=${frame?.toString()}`, NS);
 
         let gpDevice = null;
 

@@ -1101,6 +1101,7 @@ class DeconzAdapter extends Adapter {
     private checkReceivedDataPayload(resp: ReceivedDataResponse) {
         let srcAddr: any = null;
         let header: ZclHeader = null;
+        const payBuf = Buffer.from(resp.asduPayload);
 
         if (resp != null) {
             srcAddr = (resp.srcAddr16 != null) ? resp.srcAddr16 : resp.srcAddr64;
@@ -1142,7 +1143,6 @@ class DeconzAdapter extends Adapter {
         // check unattended incomming messages
         if (resp != null && resp.profileId === 0x00 && resp.clusterId === 0x13) {
             // device Annce
-            const payBuf = Buffer.from(resp.asduPayload);
             const payload: Events.DeviceJoinedPayload = {
                 networkAddress: payBuf.readUInt16LE(1),
                 ieeeAddr: this.driver.macAddrArrayToString(resp.asduPayload.slice(3,11)),
@@ -1155,10 +1155,9 @@ class DeconzAdapter extends Adapter {
         }
 
         if (resp != null && resp.profileId != 0x00) {
-            const payBuf = Buffer.from(resp.asduPayload);
             const payload: Events.ZclPayload = {
                 clusterID: resp.clusterId,
-                header: ZclHeader.fromBuffer(payBuf),
+                header,
                 data: payBuf,
                 address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
                 endpoint: resp.srcEndpoint,

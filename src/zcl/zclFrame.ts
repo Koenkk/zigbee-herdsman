@@ -30,6 +30,10 @@ class ZclFrame {
         this.command = command;
     }
 
+    public toString(): string {
+        return JSON.stringify(this, ['header', 'payload', 'command']);
+    }
+
     /**
      * Creating
      */
@@ -61,9 +65,9 @@ class ZclFrame {
         const buffalo = new BuffaloZcl(Buffer.alloc(250));
         this.header.write(buffalo);
 
-        if (this.header.frameControl.frameType === FrameType.GLOBAL) {
+        if (this.header.isGlobal) {
             this.writePayloadGlobal(buffalo);
-        } else if (this.header.frameControl.frameType === FrameType.SPECIFIC) {
+        } else if (this.header.isSpecific) {
             this.writePayloadCluster(buffalo);
         } else {
             throw new Error(`Frametype '${this.header.frameControl.frameType}' not valid`);
@@ -145,7 +149,7 @@ class ZclFrame {
         );
 
         let command: TsType.Command = null;
-        if (header.frameControl.frameType === FrameType.GLOBAL) {
+        if (header.isGlobal) {
             command = Utils.getGlobalCommand(header.commandIdentifier);
         } else {
             command = header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
@@ -158,9 +162,9 @@ class ZclFrame {
     }
 
     private static parsePayload(header: ZclHeader, cluster: TsType.Cluster, buffalo: BuffaloZcl): ZclPayload {
-        if (header.frameControl.frameType === FrameType.GLOBAL) {
+        if (header.isGlobal) {
             return this.parsePayloadGlobal(header, buffalo);
-        } else if (header.frameControl.frameType === FrameType.SPECIFIC) {
+        } else if (header.isSpecific) {
             return this.parsePayloadCluster(header, cluster, buffalo);
         } else {
             throw new Error(`Unsupported frameType '${header.frameControl.frameType}'`);
