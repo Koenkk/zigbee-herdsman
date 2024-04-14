@@ -8,6 +8,7 @@ import * as Zcl from '../../zcl';
 import assert from 'assert';
 import {ZclFrameConverter} from '../helpers';
 import {logger} from '../../utils/logger';
+import {ClusterDefinition} from '../../zcl/definition/tstype';
 
 /**
  * @ignore
@@ -55,6 +56,7 @@ class Device extends Entity {
     private _lastDefaultResponseSequenceNumber: number;
     private _checkinInterval: number;
     private _pendingRequestTimeout: number;
+    private _customClusters: {[s: string]: ClusterDefinition} = {};
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -107,6 +109,8 @@ class Device extends Entity {
     };
     get pendingRequestTimeout(): number {return this._pendingRequestTimeout;}
     set pendingRequestTimeout(pendingRequestTimeout: number) {this._pendingRequestTimeout = pendingRequestTimeout;}
+    get customClusters(): {[s: string]: ClusterDefinition} {return this._customClusters;}
+    set customClusters(customClusters: {[s: string]: ClusterDefinition}) {this._customClusters = customClusters;}
 
     public meta: KeyValue;
 
@@ -749,8 +753,8 @@ class Device extends Entity {
             };
 
             const frame = Zcl.ZclFrame.create(
-                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-                null, ZclTransactionSequenceNumber.next(), 'pairing', 33, payload
+                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, null,
+                ZclTransactionSequenceNumber.next(), 'pairing', 33, payload, this.customClusters,
             );
 
             await Entity.adapter.sendZclFrameToAll(242, frame, 242);
