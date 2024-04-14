@@ -21,6 +21,31 @@ interface ParameterDefinition extends TsType.Parameter {
     type: DataType | BuffaloZclDataType;
 }
 
+interface AttributeDefinition {
+    ID: number;
+    type: DataType;
+    manufacturerCode?: number;
+}
+
+interface ClusterDefinition {
+    ID: number;
+    manufacturerCode?: number;
+    attributes: {[s: string]: AttributeDefinition};
+    commands: {
+        [s: string]: CommandDefinition;
+    };
+    commandsResponse: {
+        [s: string]: CommandDefinition;
+    };
+}
+
+interface CommandDefinition {
+    ID: number;
+    parameters: ParameterDefinition[];
+    response?: number;
+}
+
+
 export {
-    ParameterDefinition,
+    ParameterDefinition, ClusterDefinition, AttributeDefinition, CommandDefinition,
 };
