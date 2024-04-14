@@ -31,7 +31,7 @@ class ZclFrame {
     }
 
     public toString(): string {
-        return JSON.stringify(this, ['header', 'payload', 'command']);
+        return JSON.stringify({header: this.header, payload: this.payload, command: this.command});
     }
 
     /**
