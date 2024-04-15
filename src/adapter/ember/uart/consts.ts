@@ -7,7 +7,7 @@ import {EZSP_MAX_FRAME_LENGTH, EZSP_MIN_FRAME_LENGTH} from "../ezsp/consts";
  * because this in turn is the maximum number of callbacks that could be received between commands.
  * In reality a value of 20 is a generous allocation.
  */
-export const EZSP_HOST_RX_POOL_SIZE = 20;
+export const EZSP_HOST_RX_POOL_SIZE = 32;
 /**
  * The number of transmit buffers must be set to the number of receive buffers
  * -- to hold the immediate ACKs sent for each callabck frame received --

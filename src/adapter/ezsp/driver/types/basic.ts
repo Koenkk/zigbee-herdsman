@@ -108,7 +108,7 @@ export class LVBytes {
 export abstract class List {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     static serialize(cls: any, value: any[]): Buffer {
-        console.assert(((cls._length === null) || (cls.length === cls._length)));
+        // console.assert(((cls._length === null) || (cls.length === cls._length)));
         return Buffer.from(value.map(i => i.serialize(cls, i)));
     }
 

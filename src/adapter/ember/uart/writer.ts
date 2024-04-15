@@ -1,9 +1,8 @@
 /* istanbul ignore file */
-import Debug from "debug";
 import {Readable, ReadableOptions} from "stream";
+// import {logger} from "../../../utils/logger";
 
-const debug = Debug('zigbee-herdsman:adapter:ember:uart:ash:writer');
-
+// const NS = 'zh:ember:uart:ash:writer';
 
 export class AshWriter extends Readable {
     private bytesToWrite: number[];
@@ -18,7 +17,8 @@ export class AshWriter extends Readable {
         const buffer = Buffer.from(this.bytesToWrite);
         this.bytesToWrite = [];
 
-        debug(`>>>> [FRAME raw=${buffer.toString('hex')}]`);
+        // expensive and very verbose, enable locally only if necessary
+        // logger.debug(`>>>> [FRAME raw=${buffer.toString('hex')}]`, NS);
 
         // this.push(buffer);
         this.emit('data', buffer);

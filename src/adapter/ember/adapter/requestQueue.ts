@@ -1,8 +1,8 @@
 /* istanbul ignore file */
-import Debug from "debug";
+import {logger} from "../../../utils/logger";
 import {EmberStatus, EzspStatus} from "../enums";
 
-const debug = Debug('zigbee-herdsman:adapter:ember:queue');
+const NS = 'zh:ember:queue';
 
 interface EmberRequestQueueEntry {
     /**
@@ -21,8 +21,6 @@ export const NETWORK_DOWN_DEFER_MSEC = 1500;
 
 export class EmberRequestQueue {
     private readonly dispatchInterval: number;
-    /** Interval handler that manages `dispatch()` */
-    private dispatchHandler: NodeJS.Timeout;
     /** If true, the queue is currently busy dispatching. */
     private dispatching: boolean;
     /** The queue holding requests to be sent. */
@@ -49,9 +47,9 @@ export class EmberRequestQueue {
      * Prevent sending requests (usually due to NCP being reset).
      */
     public stopDispatching(): void {
-        clearInterval(this.dispatchHandler);
+        this.dispatching = false;
 
-        debug(`Dispatching stopped; queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}`);
+        logger.debug(`Dispatching stopped; queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}`, NS);
     }
 
     /**
@@ -59,9 +57,11 @@ export class EmberRequestQueue {
      * Must be called after init.
      */
     public startDispatching(): void {
-        this.dispatchHandler = setInterval(this.dispatch.bind(this), this.dispatchInterval);
+        this.dispatching = true;
 
-        debug(`Dispatching started.`);
+        setTimeout(this.dispatch.bind(this), 0);
+
+        logger.debug(`Dispatching started.`, NS);
     }
 
     /**
@@ -77,7 +77,7 @@ export class EmberRequestQueue {
      * @returns new length of the queue.
      */
     public enqueue(func: () => Promise<EmberStatus>, reject: (reason: Error) => void, prioritize: boolean = false): number {
-        debug(`Status queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}.`);
+        logger.debug(`Status queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}.`, NS);
         return (prioritize ? this.priorityQueue : this.queue).push({
             sendAttempts: 0,
             func,
@@ -96,8 +96,8 @@ export class EmberRequestQueue {
      * 
      * WARNING: Because of this logic for "internal retries", any error thrown by `func` will not immediatedly bubble back to Adapter/Controller
      */
-    public async dispatch(): Promise<void> {
-        if (this.dispatching) {
+    private async dispatch(): Promise<void> {
+        if (!this.dispatching) {
             return;
         }
 
@@ -110,7 +110,6 @@ export class EmberRequestQueue {
         }
 
         if (entry) {
-            this.dispatching = true;
             entry.sendAttempts++;
 
             // NOTE: refer to `enqueue()` comment to keep logic in sync with expectations, adjust comment on change.
@@ -118,10 +117,10 @@ export class EmberRequestQueue {
                 const status: EmberStatus = (await entry.func());
 
                 if ((status === EmberStatus.MAX_MESSAGE_LIMIT_REACHED) || (status === EmberStatus.NETWORK_BUSY)) {
-                    debug(`Dispatching deferred: NCP busy.`);
+                    logger.debug(`Dispatching deferred: NCP busy.`, NS);
                     this.defer(NETWORK_BUSY_DEFER_MSEC);
                 } else if (status === EmberStatus.NETWORK_DOWN) {
-                    debug(`Dispatching deferred: Network not ready`);
+                    logger.debug(`Dispatching deferred: Network not ready`, NS);
                     this.defer(NETWORK_DOWN_DEFER_MSEC);
                 } else {
                     // success
@@ -133,18 +132,20 @@ export class EmberRequestQueue {
                 }
             } catch (err) {// message is EzspStatus string from ezsp${x} commands, except for stuff rejected by OneWaitress, but that's never "retry"
                 if (err.message === EzspStatus[EzspStatus.NO_TX_SPACE]) {
-                    debug(`Dispatching deferred: Host busy.`);
+                    logger.debug(`Dispatching deferred: Host busy.`, NS);
                     this.defer(NETWORK_BUSY_DEFER_MSEC);
                 } else if (err.message === EzspStatus[EzspStatus.NOT_CONNECTED]) {
-                    debug(`Dispatching deferred: Network not ready`);
+                    logger.debug(`Dispatching deferred: Network not ready`, NS);
                     this.defer(NETWORK_DOWN_DEFER_MSEC);
                 } else {
                     (fromPriorityQueue ? this.priorityQueue : this.queue).shift();
                     entry.reject(err);
                 }
-            } finally {
-                this.dispatching = false;
             }
+        }
+
+        if (this.dispatching) {
+            setTimeout(this.dispatch.bind(this), this.dispatchInterval);
         }
     }
 
@@ -152,7 +153,7 @@ export class EmberRequestQueue {
      * Defer dispatching for the specified duration (in msec).
      * @param msec 
      */
-    public defer(msec: number): void {
+    private defer(msec: number): void {
         this.stopDispatching();
 
         setTimeout(this.startDispatching.bind(this), msec);

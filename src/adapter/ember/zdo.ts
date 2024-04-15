@@ -321,6 +321,11 @@ export type EndDeviceAnnouncePayload = {
     capabilities: MACCapabilityFlags,
 };
 
+/** @see PARENT_ANNOUNCE_RESPONSE */
+export type ParentAnnounceResponsePayload = {
+    children: EmberEUI64[],
+};
+
 /**
  * Defines for ZigBee device profile cluster IDs follow. These
  * include descriptions of the formats of the messages.
@@ -473,12 +478,12 @@ export const SYSTEM_SERVER_DISCOVERY_RESPONSE = 0x8015;
 // The response contains the list of children that the recipient now holds.
 /**
  * Request:  [transaction sequence number: 1]
- *           [number of children:1] [child EUI64:8] [child Age:4]*
+ *           [number of children:1] [child EUI64:8]*
  */
 export const PARENT_ANNOUNCE = 0x001F;
 /**
  * Response: [transaction sequence number: 1]
- *           [number of children:1] [child EUI64:8] [child Age:4]*
+ *           [status: 1] [number of children:1] [child EUI64:8]*
  */
 export const PARENT_ANNOUNCE_RESPONSE = 0x801F;
 
