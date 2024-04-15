@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.42.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.42.1...v0.42.2) (2024-04-15)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1017](https://github.com/Koenkk/zigbee-herdsman/issues/1017)) ([caaf520](https://github.com/Koenkk/zigbee-herdsman/commit/caaf520e31b816155aa45180929c47bbc0bf94af))
+* Move `ZclFrame.fromBuffer()` out of adapter code ([#1011](https://github.com/Koenkk/zigbee-herdsman/issues/1011)) ([d4796de](https://github.com/Koenkk/zigbee-herdsman/commit/d4796de200c1541489cfb219f639b8f84c00d1fc))
+
 ## [0.42.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.42.0...v0.42.1) (2024-04-08)
 
 
