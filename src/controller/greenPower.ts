@@ -45,7 +45,7 @@ class GreenPower extends events.EventEmitter {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    private async sendPairingCommand(payload: any, dataPayload: AdapterEvents.ZclDataPayload): Promise<any> {
+    private async sendPairingCommand(payload: any, dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame): Promise<any> {
         logger.debug(`Payload.Options: ${payload.options} wasBroadcast: ${dataPayload.wasBroadcast}`, NS);
         
         // Set sink address based on communication mode
@@ -67,7 +67,7 @@ class GreenPower extends events.EventEmitter {
             return;
         }
 
-        const frame = Zcl.ZclFrame.create(
+        const replyFrame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
             null, ZclTransactionSequenceNumber.next(), 'pairing', 33, payload
         );
@@ -78,17 +78,17 @@ class GreenPower extends events.EventEmitter {
         // the proxy MAY send it as unicast to selected proxy.
         // This attempts to mirror logic from commit 92f77cc5.
         if (dataPayload.wasBroadcast) {
-            return this.adapter.sendZclFrameToAll(242, frame, 242);
+            return this.adapter.sendZclFrameToAll(242, replyFrame, 242);
         } else {
-            return this.adapter.sendZclFrameToEndpoint(null, dataPayload.frame.Payload.gppNwkAddr, 242, frame, 10000, false, false, 242);
+            return this.adapter.sendZclFrameToEndpoint(null, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
         }
     }
 
-    public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclDataPayload): Promise<void> {
+    public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame): Promise<void> {
         let payload = {};
 
         try {
-            switch(dataPayload.frame.Payload.commandID) {
+            switch(frame.payload.commandID) {
             /* istanbul ignore next */
             case undefined:
                 logger.error(`Received undefined command from '${dataPayload.address}'`, NS);
@@ -102,10 +102,10 @@ class GreenPower extends events.EventEmitter {
                     break;
                 }
 
-                const rxOnCap = dataPayload.frame.Payload.commandFrame.options & 0b10;
+                const rxOnCap = frame.payload.commandFrame.options & 0b10;
 
                 const key = this.encryptSecurityKey(
-                    dataPayload.frame.Payload.srcID, dataPayload.frame.Payload.commandFrame.securityKey
+                    frame.payload.srcID, frame.payload.commandFrame.securityKey
                 );
 
                 // RX capable GPD needs GP Commissioning Reply
@@ -117,31 +117,31 @@ class GreenPower extends events.EventEmitter {
                     // Commissioning reply
                     payload = {
                         options: 0,
-                        tempMaster: dataPayload.frame.Payload.gppNwkAddr,
+                        tempMaster: frame.payload.gppNwkAddr,
                         tempMasterTx: networkParameters.channel - 11,
-                        srcID: dataPayload.frame.Payload.srcID,
+                        srcID: frame.payload.srcID,
                         gpdCmd: 0xf0,
                         gpdPayload: {
                             commandID: 0xf0,
                             options: 0b00000000, // Disable encryption
-                            // securityKey: [...dataPayload.frame.Payload.commandFrame.securityKey],
-                            // keyMic: dataPayload.frame.Payload.commandFrame.keyMic,
+                            // securityKey: [...frame.payload.commandFrame.securityKey],
+                            // keyMic: frame.payload.commandFrame.keyMic,
                         }
                     };
 
-                    const frame = Zcl.ZclFrame.create(
+                    const replyFrame = Zcl.ZclFrame.create(
                         Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
                         null, ZclTransactionSequenceNumber.next(), 'response', 33, payload
                     );
-                    await this.adapter.sendZclFrameToAll(242, frame, 242);
+                    await this.adapter.sendZclFrameToAll(242, replyFrame, 242);
 
                     payload = {
                         options: 0b0000000110101000, // Disable encryption
-                        srcID: dataPayload.frame.Payload.srcID,
-                        deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
+                        srcID: frame.payload.srcID,
+                        deviceID: frame.payload.commandFrame.deviceID,
                     };
 
-                    await this.sendPairingCommand(payload, dataPayload);
+                    await this.sendPairingCommand(payload, dataPayload, frame);
                 } else {
                     // Communication mode:
                     //  Broadcast: Groupcast to precommissioned ID (0b10)
@@ -153,20 +153,20 @@ class GreenPower extends events.EventEmitter {
 
                     payload = {
                         options: opt,
-                        srcID: dataPayload.frame.Payload.srcID,
-                        deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
-                        frameCounter: dataPayload.frame.Payload.commandFrame.outgoingCounter,
+                        srcID: frame.payload.srcID,
+                        deviceID: frame.payload.commandFrame.deviceID,
+                        frameCounter: frame.payload.commandFrame.outgoingCounter,
     
                         gpdKey: [...key],
                     };
 
-                    await this.sendPairingCommand(payload, dataPayload);
+                    await this.sendPairingCommand(payload, dataPayload, frame);
                 }
 
                 const eventData: GreenPowerDeviceJoinedPayload = {
-                    sourceID: dataPayload.frame.Payload.srcID,
-                    deviceID: dataPayload.frame.Payload.commandFrame.deviceID,
-                    networkAddress: dataPayload.frame.Payload.srcID & 0xFFFF,
+                    sourceID: frame.payload.srcID,
+                    deviceID: frame.payload.commandFrame.deviceID,
+                    networkAddress: frame.payload.srcID & 0xFFFF,
                 };
                 this.emit(GreenPowerEvents.deviceJoined, eventData);
 
@@ -181,9 +181,9 @@ class GreenPower extends events.EventEmitter {
                 // Channel notification
                 payload = {
                     options: 0,
-                    tempMaster: dataPayload.frame.Payload.gppNwkAddr,
-                    tempMasterTx: dataPayload.frame.Payload.commandFrame.nextChannel,
-                    srcID: dataPayload.frame.Payload.srcID,
+                    tempMaster: frame.payload.gppNwkAddr,
+                    tempMasterTx: frame.payload.commandFrame.nextChannel,
+                    srcID: frame.payload.srcID,
                     gpdCmd: 0xf3,
     
                     gpdPayload: {
@@ -192,19 +192,19 @@ class GreenPower extends events.EventEmitter {
                     }
                 };
 
-                const frame = Zcl.ZclFrame.create(
+                const replyFrame = Zcl.ZclFrame.create(
                     Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
                     null, ZclTransactionSequenceNumber.next(), 'response', 33, payload
                 );
 
-                await this.adapter.sendZclFrameToAll(242, frame, 242);
+                await this.adapter.sendZclFrameToAll(242, replyFrame, 242);
                 break;
             /* istanbul ignore next */
             case 0xA1: // GP Manufacturer-specific Attribute Reporting
                 break;
             default:
                 // NOTE: this is spammy because it logs everything that is handed back to Controller without special processing here
-                logger.debug(`Received unhandled command '0x${dataPayload.frame.Payload.commandID.toString(16)}' from '${dataPayload.address}'`, NS);
+                logger.debug(`Received unhandled command '0x${frame.payload.commandID.toString(16)}' from '${dataPayload.address}'`, NS);
             }
         } catch (error) {
             /* istanbul ignore next */

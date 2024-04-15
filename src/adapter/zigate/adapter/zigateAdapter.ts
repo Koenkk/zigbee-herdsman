@@ -4,7 +4,7 @@ import * as TsType from '../../tstype';
 import {ActiveEndpoints, DeviceType, LQI, LQINeighbor, NodeDescriptor, SimpleDescriptor} from '../../tstype';
 import * as Events from '../../events';
 import Adapter from '../../adapter';
-import {Direction, Foundation, FrameType, ZclFrame} from '../../../zcl';
+import {Direction, Foundation, FrameType, ZclFrame, ZclHeader} from '../../../zcl';
 import {Queue, Wait, Waitress} from '../../../utils';
 import Driver from '../driver/zigate';
 import {
@@ -41,7 +41,7 @@ const channelsToMask = (channels: number[]): number =>
 class ZiGateAdapter extends Adapter {
     private driver: Driver;
     private joinPermitted: boolean;
-    private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
+    private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
     private closing: boolean;
     private queue: Queue;
 
@@ -51,12 +51,11 @@ class ZiGateAdapter extends Adapter {
 
         this.joinPermitted = false;
         this.driver = new Driver(serialPortOptions.path, serialPortOptions);
-        this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
+        this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
 
-        this.driver.on('received', this.zclDataListener.bind(this));
-        this.driver.on('receivedRaw', this.rawDataListener.bind(this));
+        this.driver.on('received', this.dataListener.bind(this));
         this.driver.on('LeaveIndication', this.leaveIndicationListener.bind(this));
         this.driver.on('DeviceAnnounce', this.deviceAnnounceListener.bind(this));
         this.driver.on('close', this.onZiGateClose.bind(this));
@@ -509,8 +508,8 @@ class ZiGateAdapter extends Adapter {
     public async sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
-    ): Promise<Events.ZclDataPayload> {
-        return this.queue.execute<Events.ZclDataPayload>(async () => {
+    ): Promise<Events.ZclPayload> {
+        return this.queue.execute<Events.ZclPayload>(async () => {
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
                 disableRecovery, 0, 0, false, false
@@ -522,19 +521,19 @@ class ZiGateAdapter extends Adapter {
         ieeeAddr: string, networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean,
         responseAttempt: number, dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean,
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
         logger.debug(`sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} (${responseAttempt},${dataRequestAttempt},${this.queue.count()})`, NS);
         let response = null;
 
         const data = zclFrame.toBuffer();
-        const command = zclFrame.getCommand();
+        const command = zclFrame.command;
         const payload: RawAPSDataRequestPayload = {
             addressMode: ADDRESS_MODE.short, //nwk
             targetShortAddress: networkAddress,
             sourceEndpoint: sourceEndpoint || 0x01,
             destinationEndpoint: endpoint,
             profileID: 0x0104,
-            clusterID: zclFrame.Cluster.ID,
+            clusterID: zclFrame.cluster.ID,
             securityMode: 0x02,
             radius: 30,
             dataLength: data.length,
@@ -543,13 +542,13 @@ class ZiGateAdapter extends Adapter {
 
         if (command.hasOwnProperty('response') && disableResponse === false) {
             response = this.waitFor(
-                networkAddress, endpoint, zclFrame.Header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
-                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
+                networkAddress, endpoint, zclFrame.header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
+                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, command.response, timeout
             );
-        } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
+        } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
             response = this.waitFor(
                 networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
-                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
+                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, Foundation.defaultRsp.ID,
                 timeout,
             );
         }
@@ -607,7 +606,7 @@ class ZiGateAdapter extends Adapter {
                 sourceEndpoint: sourceEndpoint,
                 destinationEndpoint: endpoint,
                 profileID: /*sourceEndpoint === 242 ? 0xa1e0 :*/ 0x0104,
-                clusterID: zclFrame.Cluster.ID,
+                clusterID: zclFrame.cluster.ID,
                 securityMode: 0x02,
                 radius: 30,
                 dataLength: data.length,
@@ -630,7 +629,7 @@ class ZiGateAdapter extends Adapter {
                 sourceEndpoint: sourceEndpoint || 0x01,
                 destinationEndpoint: 0xFF,
                 profileID: 0x0104,
-                clusterID: zclFrame.Cluster.ID,
+                clusterID: zclFrame.cluster.ID,
                 securityMode: 0x02,
                 radius: 30,
                 dataLength: data.length,
@@ -682,7 +681,7 @@ class ZiGateAdapter extends Adapter {
     public waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): { promise: Promise<Events.ZclDataPayload>; cancel: () => void } {
+    ): { promise: Promise<Events.ZclPayload>; cancel: () => void } {
         logger.debug(`waitForInternal ${JSON.stringify(arguments)}`, NS);
         const payload = {
             address: networkAddress,
@@ -722,7 +721,7 @@ class ZiGateAdapter extends Adapter {
 
     public async sendZclFrameInterPANBroadcast(
         zclFrame: ZclFrame, timeout: number
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
         logger.debug(`sendZclFrameInterPANBroadcast ${JSON.stringify(arguments)}`, NS);
         return Promise.reject("Not supported");
     };
@@ -743,37 +742,20 @@ class ZiGateAdapter extends Adapter {
         }
     }
 
-    private zclDataListener(data: { ziGateObject: ZiGateObject, zclFrame: ZclFrame }): void {
-        if (data.zclFrame instanceof ZclFrame) {
-            const payload: Events.ZclDataPayload = {
-                address: <number>data.ziGateObject.payload.sourceAddress,
-                frame: data.zclFrame,
-                endpoint: <number>data.ziGateObject.payload.sourceEndpoint,
-                linkquality: data.ziGateObject.frame.readRSSI(),
-                groupID: null, // @todo
-                wasBroadcast: false, // TODO
-                destinationEndpoint: <number>data.ziGateObject.payload.destinationEndpoint,
-            };
-            this.waitress.resolve(payload);
-            this.emit(Events.Events.zclData, payload)
-        } else {
-            logger.error(`msg not zclFrame ${JSON.stringify(data.zclFrame)}`, NS);
-        }
-    }
-
-    private rawDataListener(data: { ziGateObject: ZiGateObject }): void {
-        const payload: Events.RawDataPayload = {
-            clusterID: <number>data.ziGateObject.payload.clusterID,
-            data: <Buffer>data.ziGateObject.payload.payload,
+    private dataListener(data: { ziGateObject: ZiGateObject }): void {
+        const payload: Events.ZclPayload = {
             address: <number>data.ziGateObject.payload.sourceAddress,
+            clusterID: data.ziGateObject.payload.clusterID,
+            data: data.ziGateObject.payload.payload,
+            header: ZclHeader.fromBuffer(data.ziGateObject.payload.payload),
             endpoint: <number>data.ziGateObject.payload.sourceEndpoint,
             linkquality: data.ziGateObject.frame.readRSSI(),
-            groupID: null,
+            groupID: null, // @todo
             wasBroadcast: false, // TODO
             destinationEndpoint: <number>data.ziGateObject.payload.destinationEndpoint,
         };
-
-        this.emit(Events.Events.rawData, payload);
+        this.waitress.resolve(payload);
+        this.emit(Events.Events.zclPayload, payload);
     }
 
     private leaveIndicationListener(data: { ziGateObject: ZiGateObject }): void {
@@ -791,15 +773,15 @@ class ZiGateAdapter extends Adapter {
             ` - ${matcher.commandIdentifier} after ${timeout}ms`;
     }
 
-    private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        const transactionSequenceNumber = payload.frame.Header.transactionSequenceNumber;
-        return (!matcher.address || payload.address === matcher.address) &&
+    private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
+        return payload.header &&
+            (!matcher.address || payload.address === matcher.address) &&
             matcher.endpoint === payload.endpoint &&
-            (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            matcher.clusterID === payload.frame.Cluster.ID &&
-            matcher.frameType === payload.frame.Header.frameControl.frameType &&
-            matcher.commandIdentifier === payload.frame.Header.commandIdentifier &&
-            matcher.direction === payload.frame.Header.frameControl.direction;
+            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+            matcher.clusterID === payload.clusterID &&
+            matcher.frameType === payload.header.frameControl.frameType &&
+            matcher.commandIdentifier === payload.header.commandIdentifier &&
+            matcher.direction === payload.header.frameControl.direction;
     }
 
     private onZiGateClose(): void {

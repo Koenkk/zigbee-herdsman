@@ -6,8 +6,6 @@ import {TsType as BuffaloTsType} from '../buffalo';
 import * as TsType from './tstype';
 import {TsType as DefinitionTsType, FrameType} from './definition';
 
-const MINIMAL_FRAME_LENGTH = 3;
-
 // eslint-disable-next-line
 type ZclPayload = any;
 
@@ -20,23 +18,27 @@ const ListTypes: number[] = [
 ];
 
 class ZclFrame {
-    public readonly Header: ZclHeader;
-    public readonly Payload: ZclPayload;
-    public readonly Cluster: TsType.Cluster;
-    private readonly Command: TsType.Command;
+    public readonly header: ZclHeader;
+    public readonly payload: ZclPayload;
+    public readonly cluster: TsType.Cluster;
+    public readonly command: TsType.Command;
 
     private constructor(header: ZclHeader, payload: ZclPayload, cluster: TsType.Cluster, command: TsType.Command) {
-        this.Header = header;
-        this.Payload = payload;
-        this.Cluster = cluster;
-        this.Command = command;
+        this.header = header;
+        this.payload = payload;
+        this.cluster = cluster;
+        this.command = command;
+    }
+
+    public toString(): string {
+        return JSON.stringify({header: this.header, payload: this.payload, command: this.command});
     }
 
     /**
      * Creating
      */
     public static create(
-        frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number,
+        frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number | null,
         transactionSequenceNumber: number, commandKey: number | string, clusterKey: number | string,
         payload: ZclPayload, reservedBits = 0
     ): ZclFrame {
@@ -49,58 +51,36 @@ class ZclFrame {
                 cluster.getCommand(commandKey) : cluster.getCommandResponse(commandKey);
         }
 
-        const header: ZclHeader = {
-            frameControl: {
-                reservedBits, frameType, direction, disableDefaultResponse,
-                manufacturerSpecific: manufacturerCode != null,
-            },
-            transactionSequenceNumber,
+        const header = new ZclHeader(
+            {reservedBits, frameType, direction, disableDefaultResponse, manufacturerSpecific: manufacturerCode != null},
             manufacturerCode,
-            commandIdentifier: command.ID,
-        };
+            transactionSequenceNumber,
+            command.ID,
+        );
 
         return new ZclFrame(header, payload, cluster, command);
     }
 
     public toBuffer(): Buffer {
         const buffalo = new BuffaloZcl(Buffer.alloc(250));
-        this.writeHeader(buffalo);
+        this.header.write(buffalo);
 
-        if (this.Header.frameControl.frameType === FrameType.GLOBAL) {
+        if (this.header.isGlobal) {
             this.writePayloadGlobal(buffalo);
-        } else if (this.Header.frameControl.frameType === FrameType.SPECIFIC) {
+        } else if (this.header.isSpecific) {
             this.writePayloadCluster(buffalo);
         } else {
-            throw new Error(`Frametype '${this.Header.frameControl.frameType}' not valid`);
+            throw new Error(`Frametype '${this.header.frameControl.frameType}' not valid`);
         }
 
         return buffalo.getWritten();
     }
 
-    private writeHeader(buffalo: BuffaloZcl): void {
-        const frameControl = (
-            (this.Header.frameControl.frameType & 0x03) |
-            (((this.Header.frameControl.manufacturerSpecific ? 1 : 0) << 2) & 0x04) |
-            ((this.Header.frameControl.direction << 3) & 0x08) |
-            (((this.Header.frameControl.disableDefaultResponse ? 1 : 0) << 4) & 0x10) |
-            ((this.Header.frameControl.reservedBits << 5) & 0xE0)
-        );
-
-        buffalo.writeUInt8(frameControl);
-
-        if (this.Header.frameControl.manufacturerSpecific) {
-            buffalo.writeUInt16(this.Header.manufacturerCode);
-        }
-
-        buffalo.writeUInt8(this.Header.transactionSequenceNumber);
-        buffalo.writeUInt8(this.Header.commandIdentifier);
-    }
-
     private writePayloadGlobal(buffalo: BuffaloZcl): void {
-        const command = Object.values(Foundation).find((c): boolean => c.ID === this.Command.ID);
+        const command = Object.values(Foundation).find((c): boolean => c.ID === this.command.ID);
 
         if (command.parseStrategy === 'repetitive') {
-            for (const entry of this.Payload) {
+            for (const entry of this.payload) {
                 for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
 
@@ -119,7 +99,7 @@ class ZclFrame {
             }
         } else if (command.parseStrategy === 'flat') {
             for (const parameter of command.parameters) {
-                buffalo.write(DataType[parameter.type], this.Payload[parameter.name], {});
+                buffalo.write(DataType[parameter.type], this.payload[parameter.name], {});
             }
         } else {
             /* istanbul ignore else */
@@ -127,9 +107,9 @@ class ZclFrame {
                 /* istanbul ignore else */
                 if ([Foundation.discoverRsp, Foundation.discoverCommandsRsp,
                     Foundation.discoverCommandsGenRsp, Foundation.discoverExtRsp].includes(command)) {
-                    buffalo.writeUInt8(this.Payload.discComplete);
+                    buffalo.writeUInt8(this.payload.discComplete);
 
-                    for (const entry of this.Payload.attrInfos) {
+                    for (const entry of this.payload.attrInfos) {
                         for (const parameter of command.parameters) {
                             buffalo.write(DataType[parameter.type], entry[parameter.name], {});
                         }
@@ -140,74 +120,51 @@ class ZclFrame {
     }
 
     private writePayloadCluster(buffalo: BuffaloZcl): void {
-        for (const parameter of this.Command.parameters) {
-            if (!ZclFrame.conditionsValid(parameter, this.Payload, null)) {
+        for (const parameter of this.command.parameters) {
+            if (!ZclFrame.conditionsValid(parameter, this.payload, null)) {
                 continue;
             }
 
-            if (!this.Payload.hasOwnProperty(parameter.name)) {
+            if (!this.payload.hasOwnProperty(parameter.name)) {
                 throw new Error(`Parameter '${parameter.name}' is missing`);
             }
 
             const typeStr = ZclFrame.getDataTypeString(parameter.type);
-            buffalo.write(typeStr, this.Payload[parameter.name], {});
+            buffalo.write(typeStr, this.payload[parameter.name], {});
         }
     }
 
     /**
      * Parsing
      */
-    public static fromBuffer(clusterID: number, buffer: Buffer): ZclFrame {
-        if (buffer.length < MINIMAL_FRAME_LENGTH) {
-            throw new Error("ZclFrame length is lower than minimal length");
+    public static fromBuffer(clusterID: number, header: ZclHeader, buffer: Buffer): ZclFrame {
+        if (!header) {
+            throw new Error("Invalid ZclHeader.");
         }
 
-        const buffalo = new BuffaloZcl(buffer);
-        const header = this.parseHeader(buffalo);
-
-        let command: TsType.Command = null;
-        if (header.frameControl.frameType === FrameType.GLOBAL) {
-            command = Utils.getGlobalCommand(header.commandIdentifier);
-        } else {
-            const cluster = Utils.getCluster(clusterID, header.manufacturerCode);
-            command = header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
-                cluster.getCommand(header.commandIdentifier) : cluster.getCommandResponse(header.commandIdentifier);
-        }
-
+        const buffalo = new BuffaloZcl(buffer, header.length);
         const cluster = Utils.getCluster(
             clusterID,
             header.frameControl.manufacturerSpecific ? header.manufacturerCode : null
         );
+
+        let command: TsType.Command = null;
+        if (header.isGlobal) {
+            command = Utils.getGlobalCommand(header.commandIdentifier);
+        } else {
+            command = header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
+                cluster.getCommand(header.commandIdentifier) : cluster.getCommandResponse(header.commandIdentifier);
+        }
+
         const payload = this.parsePayload(header, cluster, buffalo);
 
         return new ZclFrame(header, payload, cluster, command);
     }
 
-    private static parseHeader(buffalo: BuffaloZcl): ZclHeader {
-        const frameControlValue = buffalo.readUInt8();
-        const frameControl = {
-            frameType: frameControlValue & 0x03,
-            manufacturerSpecific: ((frameControlValue >> 2) & 0x01) === 1,
-            direction: (frameControlValue >> 3) & 0x01,
-            disableDefaultResponse: ((frameControlValue >> 4) & 0x01) === 1,
-            reservedBits: frameControlValue >> 5,
-        };
-
-        let manufacturerCode = null;
-        if (frameControl.manufacturerSpecific) {
-            manufacturerCode = buffalo.readUInt16();
-        }
-
-        const transactionSequenceNumber = buffalo.readUInt8();
-        const commandIdentifier = buffalo.readUInt8();
-
-        return {frameControl, transactionSequenceNumber, manufacturerCode, commandIdentifier};
-    }
-
     private static parsePayload(header: ZclHeader, cluster: TsType.Cluster, buffalo: BuffaloZcl): ZclPayload {
-        if (header.frameControl.frameType === FrameType.GLOBAL) {
+        if (header.isGlobal) {
             return this.parsePayloadGlobal(header, buffalo);
-        } else if (header.frameControl.frameType === FrameType.SPECIFIC) {
+        } else if (header.isSpecific) {
             return this.parsePayloadCluster(header, cluster, buffalo);
         } else {
             throw new Error(`Unsupported frameType '${header.frameControl.frameType}'`);
@@ -360,19 +317,11 @@ class ZclFrame {
         return true;
     }
 
-    public isSpecific(): boolean {
-        return this.Header.frameControl.frameType === FrameType.SPECIFIC;
-    }
-
-    public isGlobal(): boolean {
-        return this.Header.frameControl.frameType === FrameType.GLOBAL;
-    }
-
     // List of clusters is not completed, feel free to add more.
     public isCluster(
         clusterName: 'genTime' | 'genAnalogInput' | 'genBasic' | 'genGroups' | 'genPollCtrl' | 'ssIasZone'
     ): boolean {
-        return this.Cluster.name === clusterName;
+        return this.cluster.name === clusterName;
     }
 
     // List of commands is not completed, feel free to add more.
@@ -380,19 +329,7 @@ class ZclFrame {
         commandName: 'read' | 'report' | 'readRsp' | 'remove' | 'add' | 'write' | 'enrollReq' | 'configReport' |
             'checkin' | 'writeRsp'
     ): boolean {
-        return this.getCommand().name === commandName;
-    }
-
-    public getCommand(): TsType.Command {
-        let command: TsType.Command = null;
-        if (this.Header.frameControl.frameType === FrameType.GLOBAL) {
-            command = Utils.getGlobalCommand(this.Header.commandIdentifier);
-        } else {
-            command = this.Header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
-                this.Cluster.getCommand(this.Header.commandIdentifier) :
-                this.Cluster.getCommandResponse(this.Header.commandIdentifier);
-        }
-        return command;
+        return this.command.name === commandName;
     }
 }
 

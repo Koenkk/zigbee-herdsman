@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 import equals from 'fast-deep-equal/es6';
-import {ZclDataPayload} from "../../events";
+import {ZclPayload} from "../../events";
 import {TOUCHLINK_PROFILE_ID} from "../consts";
 import {EmberApsFrame, EmberNodeId} from "../types";
 import {EmberZdoStatus} from "../zdo";
@@ -146,7 +146,9 @@ export class EmberOneWaitress {
         return false;
     }
 
-    public resolveZCL(payload: ZclDataPayload): boolean {
+    public resolveZCL(payload: ZclPayload): boolean {
+        if (!payload.header) return false;
+
         for (const [index, waiter] of this.waiters.entries()) {
             if (waiter.timedout) {
                 this.waiters.delete(index);
@@ -155,9 +157,9 @@ export class EmberOneWaitress {
 
             // no target in touchlink, also no APS sequence, but use the ZCL one instead
             if (((waiter.matcher.apsFrame.profileId === TOUCHLINK_PROFILE_ID) || (payload.address === waiter.matcher.target))
-                && (!waiter.matcher.zclSequence || (payload.frame.Header.transactionSequenceNumber === waiter.matcher.zclSequence))
-                && (!waiter.matcher.commandIdentifier || (payload.frame.Header.commandIdentifier === waiter.matcher.commandIdentifier))
-                && (payload.frame.Cluster.ID === waiter.matcher.apsFrame.clusterId)
+                && (!waiter.matcher.zclSequence || (payload.header.transactionSequenceNumber === waiter.matcher.zclSequence))
+                && (!waiter.matcher.commandIdentifier || (payload.header.commandIdentifier === waiter.matcher.commandIdentifier))
+                && (payload.clusterID === waiter.matcher.apsFrame.clusterId)
                 && (payload.endpoint === waiter.matcher.apsFrame.destinationEndpoint)) {
                 clearTimeout(waiter.timer);
 
