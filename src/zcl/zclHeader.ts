@@ -51,7 +51,7 @@ class ZclHeader {
         buffalo.writeUInt8(this.commandIdentifier);
     }
 
-    public static fromBuffer(buffer: Buffer): ZclHeader {
+    public static fromBuffer(buffer: Buffer): ZclHeader | undefined {
         // Returns `undefined` in case the ZclHeader cannot be parsed.
         if (buffer.length < HEADER_MINIMAL_LENGTH) {
             logger.debug(`ZclHeader is too short.`, NS);
