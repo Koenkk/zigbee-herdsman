@@ -3,6 +3,7 @@ import DataType from './dataType';
 import {ParameterDefinition} from './tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
 import ManufacturerCode from './manufacturerCode';
+import {EmberZllDeviceInfoRecord} from '../../adapter/ezsp/driver/types';
 
 interface AttributeDefinition {
     ID: number;
@@ -5806,10 +5807,24 @@ const Cluster: {
         },
         commandsResponse: {},
     },
-    manuSpecificSonoff: {
+    manuSpecificeWeLink: {
         ID: 0xFC11,
-        attributes: {},
+        attributes: {
+            delayStartUpOnOffEnable: {ID: 0x0014, type: DataType.boolean},
+            delayStartUpOnOffTime: {ID: 0x0015, type: DataType.uint16},
+            externalSwitchTriggerType: {ID: 0x0016, type: DataType.uint8},
+            relaySeparationMode : {ID: 0x0017, type: DataType.boolean},
+        },
         commands: {
+            readRecord: {
+                ID: 0x00,
+                parameters: [
+                    {name: 'subCommand', type: DataType.uint8},
+                    {name: 'offset', type: DataType.uint8},
+                    {name: 'recordIndex', type: DataType.uint8},
+                    {name: 'timestamp', type: DataType.uint32},
+                ],
+            },
             protocolData: {
                 ID: 0x01,
                 parameters: [
@@ -5817,7 +5832,18 @@ const Cluster: {
                 ],
             },
         },
-        commandsResponse: {},
+        commandsResponse: {
+            readRecordRsp: {
+                ID: 0x00,
+                parameters: [
+                    {name: 'subCommand', type: DataType.uint8},
+                    {name: 'status', type: DataType.uint8},
+                    {name: 'offset', type: DataType.uint8},
+                    {name: 'recordIndex', type: DataType.uint8},                   
+                    {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+        },
     },
 };
 
