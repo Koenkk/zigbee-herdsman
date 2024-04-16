@@ -425,7 +425,7 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
-    private writeGdpFrame(value: GdpCommissioningReply | GdpChannelConfiguration | GdpCustomReply): void{
+    private writeGdpFrame(value: GdpCommissioningReply | GdpChannelConfiguration | GdpCustomReply): void {
         if (value.commandID == 0xF0) { // Commissioning Reply
             const v = <GdpCommissioningReply> value;
 

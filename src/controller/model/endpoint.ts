@@ -263,7 +263,7 @@ class Endpoint extends Entity {
         return this.pendingRequests.send(fastPolling);
     }
 
-    private async sendRequest(frame: Zcl.ZclFrame, options: Options): Promise<AdapterEvents.ZclDataPayload>;
+    private async sendRequest(frame: Zcl.ZclFrame, options: Options): Promise<AdapterEvents.ZclPayload>;
     private async sendRequest<Type>(frame: Zcl.ZclFrame, options: Options,
         func: (frame: Zcl.ZclFrame) => Promise<Type>): Promise<Type>;
     private async sendRequest<Type>(frame: Zcl.ZclFrame, options: Options,
@@ -285,7 +285,7 @@ class Endpoint extends Entity {
             || !this.getDevice().pendingRequestTimeout) {
             if (this.getDevice().pendingRequestTimeout > 0)
             {
-                logger.debug(logPrefix + `send ${frame.getCommand().name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
+                logger.debug(logPrefix + `send ${frame.command.name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
             }
             return request.send();
         }
@@ -397,12 +397,10 @@ class Endpoint extends Entity {
             payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
         }
 
-        const result = await this.zclCommand(clusterKey, 'read', payload, options, attributes, true);
+        const resultFrame = await this.zclCommand(clusterKey, 'read', payload, options, attributes, true);
 
-        if (result) {
-            return ZclFrameConverter.attributeKeyValue(result.frame, this.getDevice().manufacturerID);
-        } else {
-            return null;
+        if (resultFrame) {
+            return ZclFrameConverter.attributeKeyValue(resultFrame, this.getDevice().manufacturerID);
         }
     }
 
@@ -584,9 +582,9 @@ class Endpoint extends Entity {
     public async command(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
     ): Promise<void | KeyValue> {
-        const result = await this.zclCommand(clusterKey, commandKey, payload, options, null, false, Zcl.FrameType.SPECIFIC);
-        if (result) {
-            return result.frame.Payload;
+        const frame = await this.zclCommand(clusterKey, commandKey, payload, options, null, false, Zcl.FrameType.SPECIFIC);
+        if (frame) {
+            return frame.payload;
         }
     }
 
@@ -640,7 +638,10 @@ class Endpoint extends Entity {
 
         const promise = new Promise<{header: Zcl.ZclHeader; payload: KeyValue}>((resolve, reject) => {
             waiter.promise.then(
-                (payload) => resolve({header: payload.frame.Header, payload: payload.frame.Payload}),
+                (payload) => {
+                    const frame = Zcl.ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data);
+                    resolve({header: frame.header, payload: frame.payload});
+                },
                 (error) => reject(error),
             );
         });
@@ -736,7 +737,7 @@ class Endpoint extends Entity {
     public async zclCommand(
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
         logPayload?: KeyValue, checkStatus: boolean = false, frameType: Zcl.FrameType = Zcl.FrameType.GLOBAL
-    ): Promise<void | AdapterEvents.ZclDataPayload> {
+    ): Promise<void | Zcl.ZclFrame> {
         const cluster = Zcl.Utils.getCluster(clusterKey);
         const command = (frameType == Zcl.FrameType.GLOBAL) ? Zcl.Utils.getGlobalCommand(commandKey) : cluster.getCommand(commandKey);
         const hasResponse = (frameType == Zcl.FrameType.GLOBAL) ? true : command.hasOwnProperty('response');
@@ -754,10 +755,13 @@ class Endpoint extends Entity {
 
         try {
             const result = await this.sendRequest(frame, options);
-            if (result && checkStatus && !options.disableResponse) {
-                this.checkStatus(result.frame.Payload);
+            if (result) {
+                const resultFrame = Zcl.ZclFrame.fromBuffer(result.clusterID, result.header, result.data);
+                if (result && checkStatus && !options.disableResponse) {
+                    this.checkStatus(resultFrame.payload);
+                }
+                return resultFrame;
             }
-            return result;
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
             logger.debug(error, NS);

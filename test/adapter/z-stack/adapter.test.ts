@@ -10,7 +10,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as Zcl from '../../../src/zcl';
 import * as Constants from '../../../src/adapter/z-stack/constants';
-import {ZclDataPayload} from "../../../src/adapter/events";
+import {ZclPayload} from "../../../src/adapter/events";
 import {UnifiedBackupStorage} from "../../../src/models";
 import {setLogger} from "../../../src/utils/logger";
 
@@ -2423,7 +2423,8 @@ describe("zstack-adapter", () => {
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
         expect(result.address).toStrictEqual(2);
-        expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
+        expect(result.groupID).toStrictEqual(12);
+        expect(result.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
     });
 
     it('Send zcl frame network address and default response', async () => {
@@ -2452,7 +2453,8 @@ describe("zstack-adapter", () => {
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
         expect(result.address).toStrictEqual(2);
-        expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
+        expect(result.groupID).toStrictEqual(12);
+        expect(result.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
     });
 
     it('Send zcl frame network address data confirm fails with default response', async () => {
@@ -2673,13 +2675,15 @@ describe("zstack-adapter", () => {
         let zclData;
         const responseFrame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 100, 'readRsp', 0, [{attrId: 0, attrData: 2, dataType: 32, status: 0}]);
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsgExt', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()}};
-        adapter.on("zclData", (p) => {zclData = p;})
+        adapter.on("zclPayload", (p) => {zclData = p;})
         znpReceived(object);
         expect(zclData.endpoint).toStrictEqual(20);
         expect(zclData.groupID).toStrictEqual(12);
         expect(zclData.linkquality).toStrictEqual(101);
         expect(zclData.address).toStrictEqual(2);
-        expect(deepClone(zclData.frame)).toStrictEqual(deepClone(responseFrame));
+        expect(zclData.groupID).toStrictEqual(12);
+        expect(zclData.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
+        expect(zclData.header.commandIdentifier).toBe(1);
     });
 
     it('Incoming message raw (not ZCL)', async () => {
@@ -2687,7 +2691,7 @@ describe("zstack-adapter", () => {
         await adapter.start();
         let rawData;
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 1, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: Buffer.from([0x0, 0x1])}};
-        adapter.on("rawData", (p) => {rawData = p;})
+        adapter.on("zclPayload", (p) => {rawData = p;})
         znpReceived(object);
         expect(rawData.clusterID).toStrictEqual(1);
         expect(rawData.endpoint).toStrictEqual(20);
@@ -2856,13 +2860,13 @@ describe("zstack-adapter", () => {
         mockZnpRequest.mockClear();
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsgExt', payload: {clusterid: 4096, srcendpoint: 0xFE, srcaddr: 12394, linkquality: 101, groupid: 0, data: touchlinkScanResponse.toBuffer()}};
 
-        let result: ZclDataPayload | Promise<ZclDataPayload> = adapter.sendZclFrameInterPANBroadcast(touchlinkScanRequest, 1000);
+        let result: ZclPayload | Promise<ZclPayload> = adapter.sendZclFrameInterPANBroadcast(touchlinkScanRequest, 1000);
         znpReceived(object);
         result = await result;
 
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 4096, "data": touchlinkScanRequest.toBuffer(), "destendpoint": 254, "dstaddr": "0x000000000000ffff", "len": 9, "options": 0, "radius": 30, "srcendpoint": 12, "transid": 1, "dstaddrmode": 2, "dstpanid": 65535}, null);
-        expect(deepClone(result)).toStrictEqual({"wasBroadcast":false,"frame":{"Header":{"frameControl":{"frameType":1,"manufacturerSpecific":false,"direction":1,"disableDefaultResponse":false,"reservedBits":0},"transactionSequenceNumber":12,"manufacturerCode":null,"commandIdentifier":1},"Payload":{"transactionID":1,"rssiCorrection":10,"zigbeeInformation":5,"touchlinkInformation":6,"keyBitmask":12,"responseID":11,"extendedPanID":"0x0017210104d9cd33","networkUpdateID":1,"logicalChannel":12,"panID":13,"networkAddress":5,"numberOfSubDevices":10,"totalGroupIdentifiers":5},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32}],"name":"scanResponse"}}},"Command":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32}],"name":"scanResponse"}},"address":12394,"endpoint":254,"linkquality":101,"groupID":0});
+        expect(deepClone(result)).toStrictEqual({"clusterID":4096,"data":{"type":"Buffer","data":[9,12,1,1,0,0,0,10,5,6,12,0,11,0,0,0,51,205,217,4,1,33,23,0,1,12,13,0,5,0,10,5]},"header":{"frameControl":{"frameType":1,"manufacturerSpecific":false,"direction":1,"disableDefaultResponse":false,"reservedBits":0},"manufacturerCode":null,"transactionSequenceNumber":12,"commandIdentifier":1},"address":12394,"endpoint":254,"linkquality":101,"groupID":0,"wasBroadcast":false});
     });
 
     it('Send zcl frame interpan throw exception when command has no response', async () => {
@@ -2917,7 +2921,8 @@ describe("zstack-adapter", () => {
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
         expect(result.address).toStrictEqual(2);
-        expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
+        expect(result.groupID).toStrictEqual(12);
+        expect(result.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
     });
 
     it('Command should fail when in interpan', async () => {

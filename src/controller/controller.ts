@@ -6,7 +6,7 @@ import {ZclFrameConverter} from './helpers';
 import * as Events from './events';
 import {KeyValue, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import fs from 'fs';
-import {Utils as ZclUtils, FrameControl} from '../zcl';
+import {Utils as ZclUtils, FrameControl, ZclFrame} from '../zcl';
 import Touchlink from './touchlink';
 import GreenPower from './greenPower';
 import {BackupUtils} from "../utils";
@@ -145,8 +145,7 @@ class Controller extends events.EventEmitter {
 
         // Register adapter events
         this.adapter.on(AdapterEvents.Events.deviceJoined, this.onDeviceJoined.bind(this));
-        this.adapter.on(AdapterEvents.Events.zclData, (data) => this.onZclOrRawData('zcl', data));
-        this.adapter.on(AdapterEvents.Events.rawData, (data) => this.onZclOrRawData('raw', data));
+        this.adapter.on(AdapterEvents.Events.zclPayload, this.onZclPayload.bind(this));
         this.adapter.on(AdapterEvents.Events.disconnected, this.onAdapterDisconnected.bind(this));
         this.adapter.on(AdapterEvents.Events.deviceAnnounce, this.onDeviceAnnounce.bind(this));
         this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
@@ -301,8 +300,7 @@ class Controller extends events.EventEmitter {
 
         // Unregister adapter events
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceJoined);
-        this.adapter.removeAllListeners(AdapterEvents.Events.zclData);
-        this.adapter.removeAllListeners(AdapterEvents.Events.rawData);
+        this.adapter.removeAllListeners(AdapterEvents.Events.zclPayload);
         this.adapter.removeAllListeners(AdapterEvents.Events.disconnected);
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceAnnounce);
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceLeave);
@@ -613,36 +611,32 @@ class Controller extends events.EventEmitter {
         }
     }
 
-    private isZclDataPayload(
-        dataPayload: AdapterEvents.ZclDataPayload | AdapterEvents.RawDataPayload, type: 'zcl' | 'raw'
-    ): dataPayload is AdapterEvents.ZclDataPayload {
-        return type === 'zcl';
-    }
+    private async onZclPayload(payload: AdapterEvents.ZclPayload): Promise<void> {
+        let frame: ZclFrame | undefined = undefined;
 
-    private async onZclOrRawData(
-        dataType: 'zcl' | 'raw', dataPayload: AdapterEvents.ZclDataPayload | AdapterEvents.RawDataPayload
-    ): Promise<void> {
-        const logDataPayload = JSON.parse(JSON.stringify(dataPayload));
-        if (dataType === 'zcl') {
-            delete logDataPayload.frame.Cluster;
+        try {
+            frame = ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data);
+        } catch (error) {
+            logger.debug(`Failed to parse frame: ${error}`, NS);
         }
-        logger.debug(`Received '${dataType}' data '${JSON.stringify(logDataPayload)}'`, NS);
+
+        logger.debug(`Received payload: clusterID=${payload.clusterID}, address=${payload.address}, groupID=${payload.groupID}, `
+            + `endpoint=${payload.endpoint}, destinationEndpoint=${payload.destinationEndpoint}, wasBroadcast=${payload.wasBroadcast}, `
+            + `linkQuality=${payload.linkquality}, frame=${frame?.toString()}`, NS);
 
         let gpDevice = null;
 
-        if (this.isZclDataPayload(dataPayload, dataType)) {
-            if (dataPayload.frame.Cluster.name === 'touchlink') {
-                // This is handled by touchlink
-                return;
-            } else if (dataPayload.frame.Cluster.name === 'greenPower') {
-                await this.greenPower.onZclGreenPowerData(dataPayload);
-                // lookup encapsulated gpDevice for further processing
-                gpDevice = Device.byNetworkAddress(dataPayload.frame.Payload.srcID & 0xFFFF);
-            }
+        if (frame?.cluster.name === 'touchlink') {
+            // This is handled by touchlink
+            return;
+        } else if (frame?.cluster.name === 'greenPower') {
+            await this.greenPower.onZclGreenPowerData(payload, frame);
+            // lookup encapsulated gpDevice for further processing
+            gpDevice = Device.byNetworkAddress(frame.payload.srcID & 0xFFFF);
         }
 
-        let device = gpDevice ? gpDevice : (typeof dataPayload.address === 'string' ?
-            Device.byIeeeAddr(dataPayload.address) : Device.byNetworkAddress(dataPayload.address));
+        let device = gpDevice ? gpDevice : (typeof payload.address === 'string' ?
+            Device.byIeeeAddr(payload.address) : Device.byNetworkAddress(payload.address));
 
         /**
          * Handling of re-transmitted Xiaomi messages.
@@ -656,31 +650,31 @@ class Controller extends events.EventEmitter {
          * Handling these message would result in false state updates.
          * The group ID attribute of these message defines the network address of the end device.
          */
-        if (device?.manufacturerName === 'LUMI' && device?.type == 'Router' && dataPayload.groupID) {
-            logger.debug(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${dataPayload.groupID}`, NS);
-            device = Device.byNetworkAddress(dataPayload.groupID);
+        if (device?.manufacturerName === 'LUMI' && device?.type == 'Router' && payload.groupID) {
+            logger.debug(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${payload.groupID}`, NS);
+            device = Device.byNetworkAddress(payload.groupID);
         }
 
         if (!device) {
-            logger.debug(`'${dataType}' data is from unknown device with address '${dataPayload.address}', skipping...`, NS);
+            logger.debug(`Data is from unknown device with address '${payload.address}', skipping...`, NS);
             return;
         }
 
         device.updateLastSeen();
         //no implicit checkin for genPollCtrl data because it might interfere with the explicit checkin
-        if (!this.isZclDataPayload(dataPayload, dataType) || !dataPayload.frame.isCluster("genPollCtrl")) {
+        if (!frame?.isCluster("genPollCtrl")) {
             device.implicitCheckin();
         }
-        device.linkquality = dataPayload.linkquality;
+        device.linkquality = payload.linkquality;
 
-        let endpoint = device.getEndpoint(dataPayload.endpoint);
+        let endpoint = device.getEndpoint(payload.endpoint);
         if (!endpoint) {
             logger.debug(
-                `'${dataType}' data is from unknown endpoint '${dataPayload.endpoint}' from device with ` +
-                `network address '${dataPayload.address}', creating it...`,
+                `Data is from unknown endpoint '${payload.endpoint}' from device with ` +
+                `network address '${payload.address}', creating it...`,
                 NS,
             );
-            endpoint = device.createEndpoint(dataPayload.endpoint);
+            endpoint = device.createEndpoint(payload.endpoint);
         }
 
         // Parse command for event
@@ -693,37 +687,36 @@ class Controller extends events.EventEmitter {
             frameControl?: FrameControl;
         } = {};
 
-        if (this.isZclDataPayload(dataPayload, dataType)) {
-            const frame = dataPayload.frame;
-            const command = frame.getCommand();
-            clusterName = frame.Cluster.name;
-            meta.zclTransactionSequenceNumber = frame.Header.transactionSequenceNumber;
-            meta.manufacturerCode = frame.Header.manufacturerCode;
-            meta.frameControl = frame.Header.frameControl;
+        if (frame) {
+            const command = frame.command;
+            clusterName = frame.cluster.name;
+            meta.zclTransactionSequenceNumber = frame.header.transactionSequenceNumber;
+            meta.manufacturerCode = frame.header.manufacturerCode;
+            meta.frameControl = frame.header.frameControl;
 
-            if (frame.isGlobal()) {
+            if (frame.header.isGlobal) {
                 if (frame.isCommand('report')) {
                     type = 'attributeReport';
-                    data = ZclFrameConverter.attributeKeyValue(dataPayload.frame, device.manufacturerID);
+                    data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID);
                 } else if (frame.isCommand('read')) {
                     type = 'read';
-                    data = ZclFrameConverter.attributeList(dataPayload.frame, device.manufacturerID);
+                    data = ZclFrameConverter.attributeList(frame, device.manufacturerID);
                 } else if (frame.isCommand('write')) {
                     type = 'write';
-                    data = ZclFrameConverter.attributeKeyValue(dataPayload.frame, device.manufacturerID);
+                    data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID);
                 } else {
                     /* istanbul ignore else */
                     if (frame.isCommand('readRsp')) {
                         type = 'readResponse';
-                        data = ZclFrameConverter.attributeKeyValue(dataPayload.frame, device.manufacturerID);
+                        data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID);
                     }
                 }
             } else {
                 /* istanbul ignore else */
-                if (frame.isSpecific()) {
+                if (frame.header.isSpecific) {
                     if (Events.CommandsLookup[command.name]) {
                         type = Events.CommandsLookup[command.name];
-                        data = dataPayload.frame.Payload;
+                        data = frame.payload;
                     } else {
                         logger.debug(`Skipping command '${command.name}' because it is missing from the lookup`, NS);
                     }
@@ -739,19 +732,19 @@ class Controller extends events.EventEmitter {
                     }
                 }
 
-                endpoint.saveClusterAttributeKeyValue(frame.Cluster.ID, data);
+                endpoint.saveClusterAttributeKeyValue(frame.cluster.ID, data);
             }
         } else {
             type = 'raw';
-            data = dataPayload.data;
-            const name = ZclUtils.getCluster(dataPayload.clusterID).name;
+            data = payload.data;
+            const name = ZclUtils.getCluster(payload.clusterID).name;
             clusterName = Number.isNaN(Number(name)) ? name : Number(name);
         }
 
         if (type && data) {
-            const endpoint = device.getEndpoint(dataPayload.endpoint);
-            const linkquality = dataPayload.linkquality;
-            const groupID = dataPayload.groupID;
+            const endpoint = device.getEndpoint(payload.endpoint);
+            const linkquality = payload.linkquality;
+            const groupID = payload.groupID;
             const eventData: Events.MessagePayload = {
                 type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName, meta
             };
@@ -765,8 +758,8 @@ class Controller extends events.EventEmitter {
         }
 
 
-        if (this.isZclDataPayload(dataPayload, dataType)) {
-            await device.onZclData(dataPayload, endpoint);
+        if (frame) {
+            await device.onZclData(payload, frame, endpoint);
         }
     }
 }

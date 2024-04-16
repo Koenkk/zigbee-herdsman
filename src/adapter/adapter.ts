@@ -1,5 +1,5 @@
 import * as TsType from './tstype';
-import {ZclDataPayload} from './events';
+import {ZclPayload} from './events';
 import events from 'events';
 import {ZclFrame, FrameType, Direction} from '../zcl';
 import * as Models from "../models";
@@ -176,7 +176,7 @@ abstract class Adapter extends events.EventEmitter {
     public abstract waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): {promise: Promise<ZclDataPayload>; cancel: () => void};
+    ): {promise: Promise<ZclPayload>; cancel: () => void};
 
     /**
      * ZDO
@@ -215,7 +215,7 @@ abstract class Adapter extends events.EventEmitter {
     public abstract sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
-    ): Promise<ZclDataPayload>;
+    ): Promise<ZclPayload>;
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, sourceEndpoint?: number): Promise<void>;
 
@@ -231,7 +231,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract sendZclFrameInterPANBroadcast(
         zclFrame: ZclFrame, timeout: number
-    ): Promise<ZclDataPayload>;
+    ): Promise<ZclPayload>;
 
     public abstract restoreChannelInterPAN(): Promise<void>;
 

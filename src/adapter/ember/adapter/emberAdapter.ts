@@ -6,15 +6,14 @@ import SocketPortUtils from '../../socketPortUtils';
 import {BackupUtils, RealpathSync, Wait} from "../../../utils";
 import {Adapter, TsType} from "../..";
 import {Backup, UnifiedBackupStorage} from "../../../models";
-import {FrameType, Direction, ZclFrame, Foundation, ManufacturerCode} from "../../../zcl";
+import {FrameType, Direction, ZclFrame, ZclHeader, Foundation, ManufacturerCode} from "../../../zcl";
 import Cluster from "../../../zcl/definition/cluster";
 import {
     DeviceAnnouncePayload,
     DeviceJoinedPayload,
     DeviceLeavePayload,
     Events,
-    RawDataPayload,
-    ZclDataPayload
+    ZclPayload
 } from "../../events";
 import {halCommonCrc16, highByte, highLowToInt, lowByte, lowHighBytes} from "../utils/math";
 import {Ezsp, EzspEvents} from "../ezsp/ezsp";
@@ -601,33 +600,20 @@ export class EmberAdapter extends Adapter {
      */
     private async onIncomingMessage(type: EmberIncomingMessageType, apsFrame: EmberApsFrame, lastHopLqi: number, sender: EmberNodeId,
         messageContents: Buffer): Promise<void> {
-        try {
-            const payload: ZclDataPayload = {
-                address: sender,
-                frame: ZclFrame.fromBuffer(apsFrame.clusterId, messageContents),
-                endpoint: apsFrame.sourceEndpoint,
-                linkquality: lastHopLqi,
-                groupID: apsFrame.groupId,
-                wasBroadcast: ((type === EmberIncomingMessageType.BROADCAST) || (type === EmberIncomingMessageType.BROADCAST_LOOPBACK)),
-                destinationEndpoint: apsFrame.destinationEndpoint,
-            };
+        const payload: ZclPayload = {
+            clusterID: apsFrame.clusterId,
+            header: ZclHeader.fromBuffer(messageContents),
+            address: sender,
+            data: messageContents,
+            endpoint: apsFrame.sourceEndpoint,
+            linkquality: lastHopLqi,
+            groupID: apsFrame.groupId,
+            wasBroadcast: ((type === EmberIncomingMessageType.BROADCAST) || (type === EmberIncomingMessageType.BROADCAST_LOOPBACK)),
+            destinationEndpoint: apsFrame.destinationEndpoint,
+        };
 
-            this.oneWaitress.resolveZCL(payload);
-            this.emit(Events.zclData, payload);
-        } catch (error) {
-            const payload: RawDataPayload = {
-                clusterID: apsFrame.clusterId,
-                address: sender,
-                data: messageContents,
-                endpoint: apsFrame.sourceEndpoint,
-                linkquality: lastHopLqi,
-                groupID: apsFrame.groupId,
-                wasBroadcast: ((type === EmberIncomingMessageType.BROADCAST) || (type === EmberIncomingMessageType.BROADCAST_LOOPBACK)),
-                destinationEndpoint: apsFrame.destinationEndpoint,
-            };
-
-            this.emit(Events.rawData, payload);
-        }
+        this.oneWaitress.resolveZCL(payload);
+        this.emit(Events.zclPayload, payload);
     }
 
     /**
@@ -641,8 +627,10 @@ export class EmberAdapter extends Adapter {
      */
     private async onTouchlinkMessage(sourcePanId: EmberPanId, sourceAddress: EmberEUI64, groupId: number | null, lastHopLqi: number,
         messageContents: Buffer): Promise<void> {
-        const payload: ZclDataPayload = {
-            frame: ZclFrame.fromBuffer(Cluster.touchlink.ID, messageContents),
+        const payload: ZclPayload = {
+            clusterID: Cluster.touchlink.ID,
+            data: messageContents,
+            header: ZclHeader.fromBuffer(messageContents),
             address: sourceAddress,
             endpoint: 1,// arbitrary since not sent over-the-air
             linkquality: lastHopLqi,
@@ -652,7 +640,7 @@ export class EmberAdapter extends Adapter {
         };
 
         this.oneWaitress.resolveZCL(payload);
-        this.emit(Events.zclData, payload);
+        this.emit(Events.zclPayload, payload);
     }
 
     /**
@@ -681,20 +669,21 @@ export class EmberAdapter extends Adapter {
             gpdHeader.writeUInt8(gpdCommandId, 13);// commandID
             gpdHeader.writeUInt8(gpdCommandPayload.length, 14);// payloadSize
 
-            const gpFrame = ZclFrame.fromBuffer(Cluster.greenPower.ID, Buffer.concat([gpdHeader, gpdCommandPayload]));
-            const payload: ZclDataPayload = {
-                frame: gpFrame,
+            const data = Buffer.concat([gpdHeader, gpdCommandPayload]);
+            const payload: ZclPayload = {
+                header: ZclHeader.fromBuffer(data),
+                data,
+                clusterID: Cluster.greenPower.ID,
                 address: sourceId,
                 endpoint: GP_ENDPOINT,
                 linkquality: gpdLink,
                 groupID: this.greenPowerGroup,
-                // XXX: upstream sends to `gppNwkAddr` if `wasBroadcast` is false, even if `gppNwkAddr` is null
-                wasBroadcast: (gpFrame.Payload.gppNwkAddr != null) ? false : true,
+                wasBroadcast: true,
                 destinationEndpoint: GP_ENDPOINT,
             };
 
             this.oneWaitress.resolveZCL(payload);
-            this.emit(Events.zclData, payload);
+            this.emit(Events.zclPayload, payload);
         } catch (err) {
             logger.error(`<~x~ [GP] Failed creating ZCL payload. Skipping. ${err}`, NS);
             return;
@@ -2981,9 +2970,9 @@ export class EmberAdapter extends Adapter {
 
     /** WARNING: Adapter impl. Starts timer immediately upon returning */
     public waitFor(networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction, transactionSequenceNumber: number,
-        clusterID: number, commandIdentifier: number, timeout: number): {promise: Promise<ZclDataPayload>; cancel: () => void;} {
+        clusterID: number, commandIdentifier: number, timeout: number): {promise: Promise<ZclPayload>; cancel: () => void;} {
         const sourceEndpointInfo = FIXED_ENDPOINTS[0];
-        const waiter = this.oneWaitress.waitFor<ZclDataPayload>({
+        const waiter = this.oneWaitress.waitFor<ZclPayload>({
             target: networkAddress,
             apsFrame: {
                 clusterId: clusterID,
@@ -3582,21 +3571,21 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async sendZclFrameToEndpoint(ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
-        disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number): Promise<ZclDataPayload> {
+        disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number): Promise<ZclPayload> {
         const sourceEndpointInfo = typeof sourceEndpoint === 'number' ?
             FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
-        const command = zclFrame.getCommand();
+        const command = zclFrame.command;
         let commandResponseId: number = null;
 
         if (command.hasOwnProperty('response') && disableResponse === false) {
             commandResponseId = command.response;
-        } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
+        } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
             commandResponseId = Foundation.defaultRsp.ID;
         }
 
         const apsFrame: EmberApsFrame = {
             profileId: sourceEndpointInfo.profileId,
-            clusterId: zclFrame.Cluster.ID,
+            clusterId: zclFrame.cluster.ID,
             sourceEndpoint: sourceEndpointInfo.endpoint,
             destinationEndpoint: (typeof endpoint === 'number') ? endpoint : FIXED_ENDPOINTS[0].endpoint,
             options: DEFAULT_APS_OPTIONS,
@@ -3611,7 +3600,7 @@ export class EmberAdapter extends Adapter {
 
         const data = zclFrame.toBuffer();
 
-        return new Promise<ZclDataPayload>((resolve, reject): void => {
+        return new Promise<ZclPayload>((resolve, reject): void => {
             this.requestQueue.enqueue(
                 async (): Promise<EmberStatus> => {
                     this.checkInterpanLock();
@@ -3627,7 +3616,7 @@ export class EmberAdapter extends Adapter {
                     }
 
                     logger.debug(
-                        `~~~> [ZCL to=${networkAddress} apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.Header)}]`,
+                        `~~~> [ZCL to=${networkAddress} apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`,
                         NS,
                     );
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -3647,10 +3636,10 @@ export class EmberAdapter extends Adapter {
 
                     if (commandResponseId != null) {
                         // NOTE: aps sequence number will have been set by send function
-                        const result = (await this.oneWaitress.startWaitingFor<ZclDataPayload>({
+                        const result = (await this.oneWaitress.startWaitingFor<ZclPayload>({
                             target: networkAddress,
                             apsFrame,
-                            zclSequence: zclFrame.Header.transactionSequenceNumber,
+                            zclSequence: zclFrame.header.transactionSequenceNumber,
                             commandIdentifier: commandResponseId,
                         }, timeout || DEFAULT_ZCL_REQUEST_TIMEOUT));
 
@@ -3671,7 +3660,7 @@ export class EmberAdapter extends Adapter {
             FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
         const apsFrame: EmberApsFrame = {
             profileId: sourceEndpointInfo.profileId,
-            clusterId: zclFrame.Cluster.ID,
+            clusterId: zclFrame.cluster.ID,
             sourceEndpoint: sourceEndpointInfo.endpoint,
             destinationEndpoint: FIXED_ENDPOINTS[0].endpoint,
             options: DEFAULT_APS_OPTIONS,
@@ -3695,7 +3684,7 @@ export class EmberAdapter extends Adapter {
                         }
                     }
 
-                    logger.debug(`~~~> [ZCL GROUP apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.Header)}]`, NS);
+                    logger.debug(`~~~> [ZCL GROUP apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const [status, messageTag] = (await this.ezsp.send(
                         EmberOutgoingMessageType.MULTICAST,
@@ -3727,7 +3716,7 @@ export class EmberAdapter extends Adapter {
             FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
         const apsFrame: EmberApsFrame = {
             profileId: sourceEndpointInfo.profileId,
-            clusterId: zclFrame.Cluster.ID,
+            clusterId: zclFrame.cluster.ID,
             sourceEndpoint: sourceEndpointInfo.endpoint,
             destinationEndpoint: (typeof endpoint === 'number') ? endpoint : FIXED_ENDPOINTS[0].endpoint,
             options: DEFAULT_APS_OPTIONS,
@@ -3751,7 +3740,7 @@ export class EmberAdapter extends Adapter {
                         }
                     }
 
-                    logger.debug(`~~~> [ZCL BROADCAST apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.Header)}]`, NS);
+                    logger.debug(`~~~> [ZCL BROADCAST apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const [status, messageTag] = (await this.ezsp.send(
                         EmberOutgoingMessageType.BROADCAST,
@@ -3827,10 +3816,10 @@ export class EmberAdapter extends Adapter {
                     msgBuffalo.writeIeeeAddr(sourceEui64);// sourceAddress
                     msgBuffalo.writeUInt16(STUB_NWK_FRAME_CONTROL);// nwkFrameControl
                     msgBuffalo.writeUInt8((EmberInterpanMessageType.UNICAST | INTERPAN_APS_FRAME_TYPE));// apsFrameControl
-                    msgBuffalo.writeUInt16(zclFrame.Cluster.ID);
+                    msgBuffalo.writeUInt16(zclFrame.cluster.ID);
                     msgBuffalo.writeUInt16(TOUCHLINK_PROFILE_ID);
 
-                    logger.debug(`~~~> [ZCL TOUCHLINK to=${ieeeAddress} header=${JSON.stringify(zclFrame.Header)}]`, NS);
+                    logger.debug(`~~~> [ZCL TOUCHLINK to=${ieeeAddress} header=${JSON.stringify(zclFrame.header)}]`, NS);
                     const status = (await this.ezsp.ezspSendRawMessage(Buffer.concat([msgBuffalo.getWritten(), zclFrame.toBuffer()])));
 
                     if (status !== EmberStatus.SUCCESS) {
@@ -3849,8 +3838,8 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
-    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<ZclDataPayload> {
-        const command = zclFrame.getCommand();
+    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<ZclPayload> {
+        const command = zclFrame.command;
 
         if (!command.hasOwnProperty('response')) {
             throw new Error(`Command '${command.name}' has no response, cannot wait for response.`);
@@ -3859,7 +3848,7 @@ export class EmberAdapter extends Adapter {
         // just for waitress
         const apsFrame: EmberApsFrame = {
             profileId: TOUCHLINK_PROFILE_ID,
-            clusterId: zclFrame.Cluster.ID,
+            clusterId: zclFrame.cluster.ID,
             sourceEndpoint: 0,
             destinationEndpoint: 0,
             options: EmberApsOption.NONE,
@@ -3867,7 +3856,7 @@ export class EmberAdapter extends Adapter {
             sequence: 0,// set by stack
         };
 
-        return new Promise<ZclDataPayload>((resolve, reject): void => {
+        return new Promise<ZclPayload>((resolve, reject): void => {
             this.requestQueue.enqueue(
                 async (): Promise<EmberStatus> => {
                     const msgBuffalo = new EzspBuffalo(Buffer.alloc(MAXIMUM_INTERPAN_LENGTH));
@@ -3889,7 +3878,7 @@ export class EmberAdapter extends Adapter {
 
                     const data = Buffer.concat([msgBuffalo.getWritten(), zclFrame.toBuffer()]);
 
-                    logger.debug(`~~~> [ZCL TOUCHLINK BROADCAST header=${JSON.stringify(zclFrame.Header)}]`, NS);
+                    logger.debug(`~~~> [ZCL TOUCHLINK BROADCAST header=${JSON.stringify(zclFrame.header)}]`, NS);
                     const status = (await this.ezsp.ezspSendRawMessage(data));
 
                     if (status !== EmberStatus.SUCCESS) {
@@ -3899,10 +3888,10 @@ export class EmberAdapter extends Adapter {
 
                     // NOTE: can use ezspRawTransmitCompleteHandler if needed here
 
-                    const result = (await this.oneWaitress.startWaitingFor<ZclDataPayload>({
+                    const result = (await this.oneWaitress.startWaitingFor<ZclPayload>({
                         target: null,
                         apsFrame: apsFrame,
-                        zclSequence: zclFrame.Header.transactionSequenceNumber,
+                        zclSequence: zclFrame.header.transactionSequenceNumber,
                         commandIdentifier: command.response,
                     }, timeout || DEFAULT_ZCL_REQUEST_TIMEOUT * 2));// XXX: touchlink timeout?
 

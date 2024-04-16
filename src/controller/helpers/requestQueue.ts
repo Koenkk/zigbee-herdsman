@@ -70,39 +70,39 @@ class RequestQueue extends Set<Request> {
 
     public filter(newRequest: Request): void {
 
-        if(this.size === 0 || !(typeof newRequest.frame.getCommand === 'function')) {
+        if(this.size === 0 || !(newRequest.frame.command)) {
             return;
         }
-        const clusterID = newRequest.frame.Cluster.ID;
-        const payload = newRequest.frame.Payload;
-        const commandID = newRequest.frame.getCommand().ID;
+        const clusterID = newRequest.frame.cluster.ID;
+        const payload = newRequest.frame.payload;
+        const commandID = newRequest.frame.command.ID;
 
-        logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): ZCL ${newRequest.frame.getCommand().name} ` +
+        logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): ZCL ${newRequest.frame.command.name} ` +
             `command, filter requests. Before: ${this.size}`, NS);
 
         for (const request of this) {
-            if( request?.frame?.Cluster?.ID === undefined || typeof request.frame.getCommand !== 'function') {
+            if( request?.frame?.cluster?.ID === undefined || !request.frame.command) {
                 continue;
             }
             if (['bulk', 'queue', 'immediate'].includes(request.sendPolicy)) {
                 continue;
             }
             /* istanbul ignore else */
-            if(request.frame.Cluster.ID === clusterID && request.frame.getCommand().ID === commandID) {
+            if(request.frame.cluster.ID === clusterID && request.frame.command.ID === commandID) {
                 /* istanbul ignore else */
                 if (newRequest.sendPolicy === 'keep-payload'
-                    && JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
+                    && JSON.stringify(request.frame.payload) === JSON.stringify(payload)) {
                     logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Merge duplicate request`, NS);
                     this.delete(request);
                     newRequest.moveCallbacks(request);
                 }
                 else if ((newRequest.sendPolicy === 'keep-command' || newRequest.sendPolicy === 'keep-cmd-undiv') &&
-                        Array.isArray(request.frame.Payload)) {
-                    const filteredPayload = request.frame.Payload.filter((oldEl: {attrId: number}) =>
+                        Array.isArray(request.frame.payload)) {
+                    const filteredPayload = request.frame.payload.filter((oldEl: {attrId: number}) =>
                         !payload.find((newEl: {attrId: number}) => oldEl.attrId === newEl.attrId));
                     if (filteredPayload.length == 0) {
                         logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Remove & reject request`, NS);
-                        if( JSON.stringify(request.frame.Payload) === JSON.stringify(payload)) {
+                        if( JSON.stringify(request.frame.payload) === JSON.stringify(payload)) {
                             newRequest.moveCallbacks(request);
                         } else {
                             request.reject();
@@ -110,7 +110,7 @@ class RequestQueue extends Set<Request> {
                         this.delete(request);
                     } else if (newRequest.sendPolicy !== 'keep-cmd-undiv') {
                         // remove all duplicate attributes if we shall not write undivided
-                        (request.frame as Mutable<Zcl.ZclFrame>).Payload = filteredPayload;
+                        (request.frame as Mutable<Zcl.ZclFrame>).payload = filteredPayload;
                         logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Remove commands from request`, NS);
                     }
                 }

@@ -43,8 +43,8 @@ class Request<Type = any> {
         this.func = func;
         this.frame = frame;
         this.expires =  timeout + Date.now();
-        this.sendPolicy = sendPolicy ?? (typeof frame.getCommand !== 'function' ?
-            undefined : Request.defaultSendPolicy[frame.getCommand().ID]);
+        this.sendPolicy = sendPolicy ?? (!frame.command ?
+            undefined : Request.defaultSendPolicy[frame.command.ID]);
         this.resolveQueue = resolve === undefined ?
             new Array<(value: Type) => void>() : new Array<(value: Type) => void>(resolve);
         this.rejectQueue = reject === undefined ?
