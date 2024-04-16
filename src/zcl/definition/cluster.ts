@@ -3,7 +3,6 @@ import DataType from './dataType';
 import {ParameterDefinition} from './tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
 import ManufacturerCode from './manufacturerCode';
-import {EmberZllDeviceInfoRecord} from '../../adapter/ezsp/driver/types';
 
 interface AttributeDefinition {
     ID: number;
