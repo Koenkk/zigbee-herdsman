@@ -1101,7 +1101,7 @@ class DeconzAdapter extends Adapter {
     private checkReceivedDataPayload(resp: ReceivedDataResponse) {
         let srcAddr: any = null;
         let header: ZclHeader = null;
-        const payBuf = Buffer.from(resp.asduPayload);
+        const payBuf = resp != null ? Buffer.from(resp.asduPayload) : null;
 
         if (resp != null) {
             srcAddr = (resp.srcAddr16 != null) ? resp.srcAddr16 : resp.srcAddr64;
