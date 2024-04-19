@@ -1864,6 +1864,10 @@ const Cluster: {
             elkoLiftDriveDownTime: {ID: 0xE015, type: DataType.uint16, manufacturerCode: ManufacturerCode.ADEO},
             elkoTiltOpenCloseAndStepTime: {ID: 0xE016, type: DataType.uint16, manufacturerCode: ManufacturerCode.ADEO},
             elkoTiltPositionPercentageAfterMoveToLevel: {ID: 0xE017, type: DataType.uint8, manufacturerCode: ManufacturerCode.ADEO},
+            nodonCalibrationVerticalRunTimeUp: {ID: 0x0001, type: DataType.uint16, manufacturerCode: ManufacturerCode.NODON},
+            nodonCalibrationVerticalRunTimeDOwn: {ID: 0x0002, type: DataType.uint16, manufacturerCode: ManufacturerCode.NODON},
+            nodonCalibrationRotationRunTimeUp: {ID: 0x0003, type: DataType.uint16, manufacturerCode: ManufacturerCode.NODON},
+            nodonCalibrationRotationRunTimeDOwn: {ID: 0x0004, type: DataType.uint16, manufacturerCode: ManufacturerCode.NODON},
         },
         commands: {
             upOpen: {
