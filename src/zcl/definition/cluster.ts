@@ -4311,6 +4311,7 @@ const Cluster: {
             // attribute ID: 300's readable, returns a buffer
             reportLocalTemperature: {ID: 301, type: DataType.int16},
             // attribute ID: 512's readable
+            flowMeterConfig: {ID: 576, type: DataType.array},
             coldLoadPickupStatus: {ID: 643, type: DataType.uint8},
         },
         commands: {
