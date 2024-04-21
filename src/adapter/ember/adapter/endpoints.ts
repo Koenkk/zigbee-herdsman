@@ -67,7 +67,8 @@ export const FIXED_ENDPOINTS: readonly FixedEndpointInfo[] = [
         networkIndex: 0x00,
         // Cluster spec 3.7.2.4.1: group identifier 0x0000 is reserved for the global scene used by the OnOff cluster.
         // - IKEA sending state updates via MULTICAST(0x0000) https://github.com/Koenkk/zigbee-herdsman/issues/954
-        multicastIds: [0],
+        // - 901: defaultBindGroup
+        multicastIds: [0, 901],
     },
     {// green power
         endpoint: GP_ENDPOINT,
