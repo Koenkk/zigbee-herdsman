@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.42.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.42.4...v0.42.5) (2024-04-21)
+
+
+### Bug Fixes
+
+* Ember: Register default bind group in coordinator mc table. ([#1026](https://github.com/Koenkk/zigbee-herdsman/issues/1026)) ([2094a08](https://github.com/Koenkk/zigbee-herdsman/commit/2094a086342f174ce3ef8ccd14154d1cfe2d44a5))
+
 ## [0.42.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.42.3...v0.42.4) (2024-04-21)
 
 
