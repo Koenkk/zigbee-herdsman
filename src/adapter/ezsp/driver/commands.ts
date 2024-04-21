@@ -7,7 +7,6 @@ import {/* Basic Types */
     LVBytes,
     fixed_list,
     WordList,
-    Bytes,
 
     /* Named Types */
     EmberNodeId,
@@ -2252,11 +2251,9 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             bidirectionalInfo: uint8_t,
             gpdSecurityFrameCounter: uint32_t,
             gpdCommandId: uint8_t,
-            payload: Bytes,
-            // mic: uint32_t,
-            //attr: EmberGpSinkListEntry,
-            // proxyTableIndex: uint8_t,
-            // gpdCommandPayload: LVBytes
+            mic: uint32_t,
+            proxyTableIndex: uint8_t,
+            gpdCommandPayload: LVBytes,
         },
     },
     changeSourceRouteHandler: {
