@@ -9,7 +9,7 @@ export class EzspStruct {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         return Buffer.concat(cls._fields.map((field: any[]) => {
             const value = obj[field[0]];
-            console.assert(field[1]);
+            // console.assert(field[1]);
             return field[1].serialize(field[1], value);
         }));
     }
@@ -31,7 +31,7 @@ export class EzspStruct {
 }
 
 export class EmberNetworkParameters extends EzspStruct {
-    public extendedPanId: number[];
+    public extendedPanId: Buffer;
     public panId: number;
     public radioTxPower: number;
     public radioChannel: number;
@@ -649,7 +649,7 @@ export class EmberMultiAddress extends EzspStruct {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         return Buffer.concat(fields.map((field: any[]) => {
             const value = obj[field[0]];
-            console.assert(field[1]);
+            // console.assert(field[1]);
             return field[1].serialize(field[1], value);
         }));
     }
@@ -766,5 +766,21 @@ export class EmberSecurityManagerContext extends EzspStruct {
         ['flags', basic.uint8_t],
         // Algorithm to use with this key (for PSA APIs)
         ['psaKeyAlgPermission', basic.uint32_t],
+    ];
+}
+
+/** This data structure contains the metadata pertaining to an network key */
+export class EmberSecurityManagerNetworkKeyInfo extends EzspStruct {
+    public networkKeySet: number;// boolean
+    public alternateNetworkKeySet: number;// boolean
+    public networkKeySequenceNumber: number;
+    public altNetworkKeySequenceNumber: number;
+    public networkKeyFrameCounter: number;
+    static _fields = [
+        ['networkKeySet', basic.uint8_t],
+        ['alternateNetworkKeySet', basic.uint8_t],
+        ['networkKeySequenceNumber', basic.uint8_t],
+        ['altNetworkKeySequenceNumber', basic.uint8_t],
+        ['networkKeyFrameCounter', basic.uint32_t],
     ];
 }

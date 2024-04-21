@@ -1,13 +1,12 @@
 import * as TsType from './tstype';
-import {ZclDataPayload} from './events';
+import {ZclPayload} from './events';
 import events from 'events';
 import {ZclFrame, FrameType, Direction} from '../zcl';
-import Debug from "debug";
-import {LoggerStub} from "../controller/logger-stub";
 import * as Models from "../models";
 import Bonjour, {Service} from 'bonjour-service';
+import {logger} from '../utils/logger';
 
-const debug = Debug("zigbee-herdsman:adapter");
+const NS = 'zh:adapter';
 
 abstract class Adapter extends events.EventEmitter {
     public readonly greenPowerGroup = 0x0b84;
@@ -15,18 +14,14 @@ abstract class Adapter extends events.EventEmitter {
     protected adapterOptions: TsType.AdapterOptions;
     protected serialPortOptions: TsType.SerialPortOptions;
     protected backupPath: string;
-    protected logger?: LoggerStub;
 
-    protected constructor(
-        networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string,
-        adapterOptions: TsType.AdapterOptions, logger?: LoggerStub)
-    {
+    protected constructor(networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string,
+        adapterOptions: TsType.AdapterOptions) {
         super();
         this.networkOptions = networkOptions;
         this.adapterOptions = adapterOptions;
         this.serialPortOptions = serialPortOptions;
         this.backupPath = backupPath;
-        this.logger = logger;
     }
 
     /**
@@ -38,18 +33,18 @@ abstract class Adapter extends events.EventEmitter {
         serialPortOptions: TsType.SerialPortOptions,
         backupPath: string,
         adapterOptions: TsType.AdapterOptions,
-        logger?: LoggerStub,
     ): Promise<Adapter> {
         const {ZStackAdapter} = await import('./z-stack/adapter');
         const {DeconzAdapter} = await import('./deconz/adapter');
         const {ZiGateAdapter} = await import('./zigate/adapter');
         const {EZSPAdapter} = await import('./ezsp/adapter');
+        const {EmberAdapter} = await import('./ember/adapter');
         type AdapterImplementation = (typeof ZStackAdapter | typeof DeconzAdapter | typeof ZiGateAdapter
-            | typeof EZSPAdapter);
+            | typeof EZSPAdapter | typeof EmberAdapter);
 
         let adapters: AdapterImplementation[];
         const adapterLookup = {zstack: ZStackAdapter, deconz: DeconzAdapter, zigate: ZiGateAdapter,
-            ezsp: EZSPAdapter};
+            ezsp: EZSPAdapter, ember: EmberAdapter};
         if (serialPortOptions.adapter && serialPortOptions.adapter !== 'auto') {
             if (adapterLookup.hasOwnProperty(serialPortOptions.adapter)) {
                 adapters = [adapterLookup[serialPortOptions.adapter]];
@@ -67,11 +62,11 @@ abstract class Adapter extends events.EventEmitter {
         let adapter: AdapterImplementation = adapters[0];
 
         if (!serialPortOptions.path) {
-            debug('No path provided, auto detecting path');
+            logger.debug('No path provided, auto detecting path', NS);
             for (const candidate of adapters) {
                 const path = await candidate.autoDetectPath();
                 if (path) {
-                    debug(`Auto detected path '${path}' from adapter '${candidate.name}'`);
+                    logger.debug(`Auto detected path '${path}' from adapter '${candidate.name}'`, NS);
                     serialPortOptions.path = path;
                     adapter = candidate;
                     break;
@@ -92,7 +87,7 @@ abstract class Adapter extends events.EventEmitter {
             const bj = new Bonjour();
             const mdnsTimeout = 2000; // timeout for mdns scan
 
-            logger.info(`Starting mdns discovery for coordinator: ${mdnsDevice}`);
+            logger.info(`Starting mdns discovery for coordinator: ${mdnsDevice}`, NS);
             await new Promise((resolve, reject) => {
                 bj.findOne({type: mdnsDevice}, mdnsTimeout, function (service: Service) {
                     if (service) {
@@ -102,10 +97,10 @@ abstract class Adapter extends events.EventEmitter {
                             const mdnsAdapter = (service.txt.radio_type == 'znp' ?
                                 'zstack' : service.txt.radio_type) as TsType.SerialPortOptions['adapter'];
                             const mdnsBaud = parseInt(service.txt.baud_rate);
-                            logger.info(`Coordinator Ip: ${mdnsIp}`);
-                            logger.info(`Coordinator Port: ${mdnsPort}`);
-                            logger.info(`Coordinator Radio: ${mdnsAdapter}`);
-                            logger.info(`Coordinator Baud: ${mdnsBaud}\n`);
+                            logger.info(`Coordinator Ip: ${mdnsIp}`, NS);
+                            logger.info(`Coordinator Port: ${mdnsPort}`, NS);
+                            logger.info(`Coordinator Radio: ${mdnsAdapter}`, NS);
+                            logger.info(`Coordinator Baud: ${mdnsBaud}\n`, NS);
                             bj.destroy();
                             serialPortOptions.path = `tcp://${mdnsIp}:${mdnsPort}`;
                             serialPortOptions.adapter = mdnsAdapter;
@@ -115,7 +110,7 @@ abstract class Adapter extends events.EventEmitter {
                                     && serialPortOptions.adapter !== 'auto') {
                                 adapter = adapterLookup[serialPortOptions.adapter];
                                 resolve(
-                                    new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger)
+                                    new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions)
                                 );
                             } else {
                                 reject(new Error(`Adapter ${serialPortOptions.adapter} is not supported.`));
@@ -141,17 +136,17 @@ abstract class Adapter extends events.EventEmitter {
                 // Determine adapter to use
                 for (const candidate of adapters) {
                     if (await candidate.isValidPath(serialPortOptions.path)) {
-                        debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`);
+                        logger.debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`, NS);
                         adapter = candidate;
                         break;
                     }
                 }
             } catch (error) {
-                debug(`Failed to validate path: '${error}'`);
+                logger.debug(`Failed to validate path: '${error}'`, NS);
             }
         }
 
-        return new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
+        return new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
     }
 
     public abstract start(): Promise<TsType.StartResult>;
@@ -170,6 +165,10 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
 
+    public abstract supportsChangeChannel(): Promise<boolean>;
+
+    public abstract changeChannel(newChannel: number): Promise<void>;
+
     public abstract setTransmitPower(value: number): Promise<void>;
 
     public abstract addInstallCode(ieeeAddress: string, key: Buffer): Promise<void>;
@@ -177,7 +176,7 @@ abstract class Adapter extends events.EventEmitter {
     public abstract waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): {promise: Promise<ZclDataPayload>; cancel: () => void};
+    ): {promise: Promise<ZclPayload>; cancel: () => void};
 
     /**
      * ZDO
@@ -216,7 +215,7 @@ abstract class Adapter extends events.EventEmitter {
     public abstract sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
-    ): Promise<ZclDataPayload>;
+    ): Promise<ZclPayload>;
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, sourceEndpoint?: number): Promise<void>;
 
@@ -232,7 +231,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract sendZclFrameInterPANBroadcast(
         zclFrame: ZclFrame, timeout: number
-    ): Promise<ZclDataPayload>;
+    ): Promise<ZclPayload>;
 
     public abstract restoreChannelInterPAN(): Promise<void>;
 

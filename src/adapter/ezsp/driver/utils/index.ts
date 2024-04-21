@@ -50,7 +50,7 @@ export class Deferred<T> {
 }
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-function ember_security(config: Record<string, any>): EmberInitialSecurityState {
+function ember_security(networkKey: Buffer): EmberInitialSecurityState {
     const isc: EmberInitialSecurityState = new EmberInitialSecurityState();
     isc.bitmask = (EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY |
         EmberInitialSecurityBitmask.TRUST_CENTER_GLOBAL_LINK_KEY |
@@ -61,7 +61,7 @@ function ember_security(config: Record<string, any>): EmberInitialSecurityState 
     isc.preconfiguredKey = new EmberKeyData();
     isc.preconfiguredKey.contents = randomBytes(16);
     isc.networkKey = new EmberKeyData();
-    isc.networkKey.contents = config.networkKey;
+    isc.networkKey.contents = networkKey;
     isc.networkKeySequenceNumber = 0;
     isc.preconfiguredTrustCenterEui64 = new EmberEUI64([0, 0, 0, 0, 0, 0, 0, 0]);
     return isc;

@@ -23,31 +23,30 @@ export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends Ser
 
     public async asyncOpen(): Promise<void> {
         return new Promise((resolve, reject): void => {
-            this.open((error: Error | null): void => {
-                if (error) {
-                    reject(new Error(`Error while opening serialport '${error}'`));
-                } else {
-                    resolve();
-                }
-            });
+            this.open((err): void => (err ? reject(err) : resolve()));
+        });
+    }
+
+    public async asyncClose(): Promise<void> {
+        return new Promise((resolve, reject): void => {
+            this.close((err): void => (err ? reject(err) : resolve()));
+        });
+    }
+
+    public async asyncFlush(): Promise<void> {
+        return new Promise((resolve, reject): void => {
+            this.flush((err): void => (err ? reject(err) : resolve()));
         });
     }
 
     public async asyncFlushAndClose(): Promise<void> {
+        await this.asyncFlush();
+        await this.asyncClose();
+    }
+
+    public async asyncGet(): Promise<object> {
         return new Promise((resolve, reject): void => {
-            this.flush((flushError: Error | null): void => {
-                if (flushError) {
-                    reject(new Error(`Error while flushing serialport '${flushError}'`));
-                } else {
-                    this.close((closeError: Error | null): void => {
-                        if (closeError) {
-                            reject(new Error(`Error while closing serialport '${closeError}'`));
-                        } else {
-                            resolve();
-                        }
-                    });
-                }
-            });
+            this.get((err, options?): void => (err ? reject(err) : resolve(options)));
         })
     }
 }

@@ -1,48 +1,42 @@
-import {ZclFrame} from '../zcl';
+import {ZclHeader} from '../zcl';
 
 enum Events {
     networkAddress = "networkAddress",
     deviceJoined = "deviceJoined",
-    zclData = "zclData",
-    rawData = "rawData",
+    zclPayload = "zclPayload",
     disconnected = "disconnected",
     deviceAnnounce = "deviceAnnounce",
     deviceLeave = "deviceLeave"
 }
 
-interface DeviceJoinedPayload {
+type DeviceJoinedPayload = {
     networkAddress: number;
     ieeeAddr: string;
-}
+};
 
-interface DeviceAnnouncePayload {
+type DeviceAnnouncePayload = {
     networkAddress: number;
     ieeeAddr: string;
-}
+};
 
-interface NetworkAddressPayload {
+type NetworkAddressPayload = {
     networkAddress: number;
     ieeeAddr: string;
-}
+};
 
-interface DeviceLeavePayload {
-    networkAddress: number;
+type DeviceLeavePayload = {
+    networkAddress?: number;
     ieeeAddr: string;
-}
+} | {
+    networkAddress: number;
+    ieeeAddr?: string;
+};
 
-interface ZclDataPayload {
-    address: number | string;
-    frame: ZclFrame;
-    endpoint: number;
-    linkquality: number;
-    groupID: number;
-    wasBroadcast: boolean;
-    destinationEndpoint: number;
-}
-
-interface RawDataPayload {
+interface ZclPayload {
     clusterID: number;
     address: number | string;
+    header: ZclHeader | undefined;
+    // This buffer contains the whole ZclFrame (including the ZclHeader)
     data: Buffer;
     endpoint: number;
     linkquality: number;
@@ -52,6 +46,5 @@ interface RawDataPayload {
 }
 
 export {
-    Events, DeviceJoinedPayload, ZclDataPayload, DeviceAnnouncePayload, NetworkAddressPayload, DeviceLeavePayload,
-    RawDataPayload,
+    Events, DeviceJoinedPayload, ZclPayload, DeviceAnnouncePayload, NetworkAddressPayload, DeviceLeavePayload,
 };

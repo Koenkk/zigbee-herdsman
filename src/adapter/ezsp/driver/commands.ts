@@ -7,7 +7,6 @@ import {/* Basic Types */
     LVBytes,
     fixed_list,
     WordList,
-    Bytes,
 
     /* Named Types */
     EmberNodeId,
@@ -28,6 +27,7 @@ import {/* Basic Types */
     EzspMfgTokenId,
     EzspStatus,
     EmberStatus,
+    EmberStackError,
     EmberEventUnits,
     EmberNodeType,
     EmberNetworkStatus,
@@ -78,6 +78,8 @@ import {/* Basic Types */
     EmberNeighbors,
     EmberRoutingTable,
     EmberSecurityManagerContext,
+    EmberSecurityManagerNetworkKeyInfo,
+    SLStatus,
 } from './types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -1190,7 +1192,15 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
         },
         response: {
             keyData: EmberKeyData,
-            status: EmberStatus
+            status: SLStatus,
+        },
+    },
+    getNetworkKeyInfo: {
+        ID: 0x0116,
+        request: null,
+        response: {
+            status: SLStatus,
+            networkKeyInfo: EmberSecurityManagerNetworkKeyInfo,
         },
     },
     switchNetworkKeyHandler: {
@@ -2241,11 +2251,9 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             bidirectionalInfo: uint8_t,
             gpdSecurityFrameCounter: uint32_t,
             gpdCommandId: uint8_t,
-            payload: Bytes,
-            // mic: uint32_t,
-            //attr: EmberGpSinkListEntry,
-            // proxyTableIndex: uint8_t,
-            // gpdCommandPayload: LVBytes
+            mic: uint32_t,
+            proxyTableIndex: uint8_t,
+            gpdCommandPayload: LVBytes,
         },
     },
     changeSourceRouteHandler: {
@@ -2261,7 +2269,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
         ID: 0x00C4,
         request: null,
         response: {
-            errorCode: uint8_t,
+            errorCode: EmberStackError,
             target: EmberNodeId
         },
         minV: 9

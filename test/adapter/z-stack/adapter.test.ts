@@ -8,12 +8,18 @@ import {ZnpVersion} from "../../../src/adapter/z-stack/adapter/tstype";
 import * as Structs from "../../../src/adapter/z-stack/structs"
 import * as fs from "fs";
 import * as path from "path";
-import {LoggerStub} from "../../../src/controller/logger-stub";
 import * as Zcl from '../../../src/zcl';
 import * as Constants from '../../../src/adapter/z-stack/constants';
-import {ZclDataPayload} from "../../../src/adapter/events";
+import {ZclPayload} from "../../../src/adapter/events";
 import {UnifiedBackupStorage} from "../../../src/models";
+import {setLogger} from "../../../src/utils/logger";
 
+const mockLogger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn(),
+    error: jest.fn(),
+};
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 const mockSetTimeout = () => setTimeout = jest.fn().mockImplementation((r) => r());
 
@@ -827,6 +833,7 @@ const baseZnpRequestMock = new ZnpRequestMockBuilder()
         lastStartIndex = payload.startindex;
         return {};
     })
+    .handle(Subsystem.ZDO, "mgmtNwkUpdateReq", () => ({}))
     .handle(Subsystem.AF, "interPanCtl", () => ({}))
     .handle(Subsystem.ZDO, "extRouteDisc", () => ({}))
     .handle(Subsystem.ZDO, "nwkAddrReq", () => ({}))
@@ -1161,8 +1168,20 @@ jest.mock('../../../src/utils/queue', () => {
 Znp.isValidPath = jest.fn().mockReturnValue(true);
 Znp.autoDetectPath = jest.fn().mockReturnValue("/dev/autodetected");
 
+
+const mocksClear = [
+    mockLogger.debug,
+    mockLogger.info,
+    mockLogger.warning,
+    mockLogger.error,
+];
+
 describe("zstack-adapter", () => {
     let adapter: ZStackAdapter;
+
+    beforeAll(async() => {
+        setLogger(mockLogger);
+    });
 
     afterAll(async () => {
         jest.useRealTimers();
@@ -1174,6 +1193,7 @@ describe("zstack-adapter", () => {
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {concurrent: 3});
         mockZnpWaitForDefault();
         mocks.forEach((m) => m.mockRestore());
+        mocksClear.forEach((m) => m.mockClear());
         mockQueueExecute.mockClear();
         mockZnpWaitFor.mockClear();
         dataConfirmCode = 0;
@@ -1589,83 +1609,50 @@ describe("zstack-adapter", () => {
         fs.writeFileSync(backupFile, JSON.stringify(backup), "utf8");
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
         mockZnpRequestWith(empty3AlignedRequestMock);
-        await expect(adapter.start()).rejects.toThrowError("Backup corrupted - missing adapter IEEE address NV entry");
+        await expect(adapter.start()).rejects.toThrow("Backup corrupted - missing adapter IEEE address NV entry");
     });
 
     it("should fail to start with 3.0.x adapter - commissioned, config-adapter mismatch", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
 
-        const mockLoggerDebug = jest.fn();
-        const mockLoggerInfo = jest.fn();
-        const mockLoggerWarn = jest.fn();
-        const mockLoggerError = jest.fn();
-        const mockLogger: LoggerStub = {
-            debug: mockLoggerDebug,
-            info: mockLoggerInfo,
-            warn: mockLoggerWarn,
-            error: mockLoggerError
-        };
-
-        adapter = new ZStackAdapter(networkOptionsMismatched, serialPortOptions, backupFile, {concurrent: 3}, mockLogger);
+        adapter = new ZStackAdapter(networkOptionsMismatched, serialPortOptions, backupFile, {concurrent: 3});
         mockZnpRequestWith(commissioned3AlignedRequestMock);
-        await expect(adapter.start()).rejects.toThrowError("startup failed - configuration-adapter mismatch - see logs above for more information");
-        expect(mockLoggerError.mock.calls[0][0]).toBe("Configuration is not consistent with adapter state/backup!");
-        expect(mockLoggerError.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
-        expect(mockLoggerError.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
-        expect(mockLoggerError.mock.calls[3][0]).toBe("- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d");
-        expect(mockLoggerError.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
-        expect(mockLoggerError.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
-        expect(mockLoggerError.mock.calls[6][0]).toMatch(`If you wish to re\-commission your network, please remove coordinator backup at ${backupFile}`);
-        expect(mockLoggerError.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
+        await expect(adapter.start()).rejects.toThrow("startup failed - configuration-adapter mismatch - see logs above for more information");
+        expect(mockLogger.error.mock.calls[0][0]).toBe("Configuration is not consistent with adapter state/backup!");
+        expect(mockLogger.error.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
+        expect(mockLogger.error.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
+        expect(mockLogger.error.mock.calls[3][0]).toBe("- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d");
+        expect(mockLogger.error.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
+        expect(mockLogger.error.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
+        expect(mockLogger.error.mock.calls[6][0]).toMatch(`If you wish to re-commission your network, please remove coordinator backup at ${backupFile}`);
+        expect(mockLogger.error.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
     });
 
     it("should start with runInconsistent option with 3.0.x adapter - commissioned, config-adapter mismatch", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
 
-        const mockLoggerDebug = jest.fn();
-        const mockLoggerInfo = jest.fn();
-        const mockLoggerWarn = jest.fn();
-        const mockLoggerError = jest.fn();
-        const mockLogger: LoggerStub = {
-            debug: mockLoggerDebug,
-            info: mockLoggerInfo,
-            warn: mockLoggerWarn,
-            error: mockLoggerError
-        };
-
-        adapter = new ZStackAdapter(networkOptionsMismatched, serialPortOptions, backupFile, {concurrent: 3, forceStartWithInconsistentAdapterConfiguration: true}, mockLogger);
+        adapter = new ZStackAdapter(networkOptionsMismatched, serialPortOptions, backupFile, {concurrent: 3, forceStartWithInconsistentAdapterConfiguration: true});
         mockZnpRequestWith(commissioned3AlignedRequestMock);
         const result = await adapter.start();
         expect(result).toBe("resumed");
-        expect(mockLoggerError.mock.calls[0][0]).toBe("Configuration is not consistent with adapter state/backup!");
-        expect(mockLoggerError.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
-        expect(mockLoggerError.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
-        expect(mockLoggerError.mock.calls[3][0]).toBe("- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d");
-        expect(mockLoggerError.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
-        expect(mockLoggerError.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
-        expect(mockLoggerError.mock.calls[6][0]).toMatch(`If you wish to re\-commission your network, please remove coordinator backup at ${backupFile}`);
-        expect(mockLoggerError.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
-        expect(mockLoggerError.mock.calls[8][0]).toBe("Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.");
+        expect(mockLogger.error.mock.calls[0][0]).toBe("Configuration is not consistent with adapter state/backup!");
+        expect(mockLogger.error.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
+        expect(mockLogger.error.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
+        expect(mockLogger.error.mock.calls[3][0]).toBe("- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d");
+        expect(mockLogger.error.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
+        expect(mockLogger.error.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
+        expect(mockLogger.error.mock.calls[6][0]).toMatch(`If you wish to re-commission your network, please remove coordinator backup at ${backupFile}`);
+        expect(mockLogger.error.mock.calls[7][0]).toBe("Re-commissioning your network will require re-pairing of all devices!");
+        expect(mockLogger.error.mock.calls[8][0]).toBe("Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.");
     });
 
     it("should start with 3.0.x adapter - backward-compat - reversed extended pan id", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
 
-        const mockLoggerDebug = jest.fn();
-        const mockLoggerInfo = jest.fn();
-        const mockLoggerWarn = jest.fn();
-        const mockLoggerError = jest.fn();
-        const mockLogger: LoggerStub = {
-            debug: mockLoggerDebug,
-            info: mockLoggerInfo,
-            warn: mockLoggerWarn,
-            error: mockLoggerError
-        };
-
-        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3}, mockLogger);
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, backupFile, {concurrent: 3});
         const nib = Structs.nib(Buffer.from(commissioned3AlignedRequestMock.nvItems.find(item => item.id === NvItemsIds.NIB).value));
         nib.extendedPANID = nib.extendedPANID.reverse();
         mockZnpRequestWith(
@@ -1674,7 +1661,7 @@ describe("zstack-adapter", () => {
         );
         const result = await adapter.start();
         expect(result).toBe("resumed");
-        expect(mockLoggerWarn.mock.calls[0][0]).toBe("Extended PAN ID is reversed (expected=00124b0009d69f77, actual=779fd609004b1200)");
+        expect(mockLogger.warning.mock.calls[0][0]).toBe("Extended PAN ID is reversed (expected=00124b0009d69f77, actual=779fd609004b1200)");
     });
 
     it("should restore unified backup with 3.0.x adapter - commissioned, mismatched adapter-config, matching config-backup", async () => {
@@ -2066,6 +2053,21 @@ describe("zstack-adapter", () => {
         expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'resetReq', {type: 0});
     });
 
+    it('Supports change channel', async () => {
+        basicMocks();
+        await adapter.start();
+        expect(await adapter.supportsChangeChannel()).toBeFalsy();
+    });
+
+    it('Change channel', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        await adapter.changeChannel(25);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtNwkUpdateReq', {dstaddr: 0xFFFF, dstaddrmode: 15, channelmask: 0x2000000, scanduration: 0xFE});
+    });
+
     it('Set transmit power', async () => {
         basicMocks();
         await adapter.start();
@@ -2421,7 +2423,8 @@ describe("zstack-adapter", () => {
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
         expect(result.address).toStrictEqual(2);
-        expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
+        expect(result.groupID).toStrictEqual(12);
+        expect(result.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
     });
 
     it('Send zcl frame network address and default response', async () => {
@@ -2450,7 +2453,8 @@ describe("zstack-adapter", () => {
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
         expect(result.address).toStrictEqual(2);
-        expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
+        expect(result.groupID).toStrictEqual(12);
+        expect(result.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
     });
 
     it('Send zcl frame network address data confirm fails with default response', async () => {
@@ -2671,13 +2675,15 @@ describe("zstack-adapter", () => {
         let zclData;
         const responseFrame = Zcl.ZclFrame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 100, 'readRsp', 0, [{attrId: 0, attrData: 2, dataType: 32, status: 0}]);
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsgExt', payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()}};
-        adapter.on("zclData", (p) => {zclData = p;})
+        adapter.on("zclPayload", (p) => {zclData = p;})
         znpReceived(object);
         expect(zclData.endpoint).toStrictEqual(20);
         expect(zclData.groupID).toStrictEqual(12);
         expect(zclData.linkquality).toStrictEqual(101);
         expect(zclData.address).toStrictEqual(2);
-        expect(deepClone(zclData.frame)).toStrictEqual(deepClone(responseFrame));
+        expect(zclData.groupID).toStrictEqual(12);
+        expect(zclData.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
+        expect(zclData.header.commandIdentifier).toBe(1);
     });
 
     it('Incoming message raw (not ZCL)', async () => {
@@ -2685,7 +2691,7 @@ describe("zstack-adapter", () => {
         await adapter.start();
         let rawData;
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsg', payload: {clusterid: 1, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: Buffer.from([0x0, 0x1])}};
-        adapter.on("rawData", (p) => {rawData = p;})
+        adapter.on("zclPayload", (p) => {rawData = p;})
         znpReceived(object);
         expect(rawData.clusterID).toStrictEqual(1);
         expect(rawData.endpoint).toStrictEqual(20);
@@ -2760,6 +2766,16 @@ describe("zstack-adapter", () => {
         await adapter.start();
         let networkAddress;
         const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'nwkAddrRsp', payload: {nwkaddr: 124, ieeeaddr: '0x123'}};
+        adapter.on("networkAddress", (p) => {networkAddress = p;})
+        znpReceived(object);
+        expect(networkAddress).toStrictEqual({ieeeAddr: '0x123', networkAddress: 124});
+    });
+
+    it('Concentrator Callback Indication', async () => {
+        basicMocks();
+        await adapter.start();
+        let networkAddress;
+        const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'concentratorIndCb', payload: {srcaddr: 124, extaddr: '0x123'}};
         adapter.on("networkAddress", (p) => {networkAddress = p;})
         znpReceived(object);
         expect(networkAddress).toStrictEqual({ieeeAddr: '0x123', networkAddress: 124});
@@ -2844,13 +2860,13 @@ describe("zstack-adapter", () => {
         mockZnpRequest.mockClear();
         const object = {type: Type.AREQ, subsystem: Subsystem.AF, command: 'incomingMsgExt', payload: {clusterid: 4096, srcendpoint: 0xFE, srcaddr: 12394, linkquality: 101, groupid: 0, data: touchlinkScanResponse.toBuffer()}};
 
-        let result: ZclDataPayload | Promise<ZclDataPayload> = adapter.sendZclFrameInterPANBroadcast(touchlinkScanRequest, 1000);
+        let result: ZclPayload | Promise<ZclPayload> = adapter.sendZclFrameInterPANBroadcast(touchlinkScanRequest, 1000);
         znpReceived(object);
         result = await result;
 
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(4, "dataRequestExt", {"clusterid": 4096, "data": touchlinkScanRequest.toBuffer(), "destendpoint": 254, "dstaddr": "0x000000000000ffff", "len": 9, "options": 0, "radius": 30, "srcendpoint": 12, "transid": 1, "dstaddrmode": 2, "dstpanid": 65535}, null);
-        expect(deepClone(result)).toStrictEqual({"wasBroadcast":false,"frame":{"Header":{"frameControl":{"frameType":1,"manufacturerSpecific":false,"direction":1,"disableDefaultResponse":false,"reservedBits":0},"transactionSequenceNumber":12,"manufacturerCode":null,"commandIdentifier":1},"Payload":{"transactionID":1,"rssiCorrection":10,"zigbeeInformation":5,"touchlinkInformation":6,"keyBitmask":12,"responseID":11,"extendedPanID":"0x0017210104d9cd33","networkUpdateID":1,"logicalChannel":12,"panID":13,"networkAddress":5,"numberOfSubDevices":10,"totalGroupIdentifiers":5},"Cluster":{"ID":4096,"attributes":{},"name":"touchlink","commands":{"scanRequest":{"ID":0,"response":1,"parameters":[{"name":"transactionID","type":35},{"name":"zigbeeInformation","type":24},{"name":"touchlinkInformation","type":24}],"name":"scanRequest"},"identifyRequest":{"ID":6,"parameters":[{"name":"transactionID","type":35},{"name":"duration","type":33}],"name":"identifyRequest"},"resetToFactoryNew":{"ID":7,"parameters":[{"name":"transactionID","type":35}],"name":"resetToFactoryNew"}},"commandsResponse":{"scanResponse":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32}],"name":"scanResponse"}}},"Command":{"ID":1,"parameters":[{"name":"transactionID","type":35},{"name":"rssiCorrection","type":32},{"name":"zigbeeInformation","type":32},{"name":"touchlinkInformation","type":32},{"name":"keyBitmask","type":33},{"name":"responseID","type":35},{"name":"extendedPanID","type":240},{"name":"networkUpdateID","type":32},{"name":"logicalChannel","type":32},{"name":"panID","type":33},{"name":"networkAddress","type":33},{"name":"numberOfSubDevices","type":32},{"name":"totalGroupIdentifiers","type":32}],"name":"scanResponse"}},"address":12394,"endpoint":254,"linkquality":101,"groupID":0});
+        expect(deepClone(result)).toStrictEqual({"clusterID":4096,"data":{"type":"Buffer","data":[9,12,1,1,0,0,0,10,5,6,12,0,11,0,0,0,51,205,217,4,1,33,23,0,1,12,13,0,5,0,10,5]},"header":{"frameControl":{"frameType":1,"manufacturerSpecific":false,"direction":1,"disableDefaultResponse":false,"reservedBits":0},"manufacturerCode":null,"transactionSequenceNumber":12,"commandIdentifier":1},"address":12394,"endpoint":254,"linkquality":101,"groupID":0,"wasBroadcast":false});
     });
 
     it('Send zcl frame interpan throw exception when command has no response', async () => {
@@ -2905,7 +2921,8 @@ describe("zstack-adapter", () => {
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
         expect(result.address).toStrictEqual(2);
-        expect(deepClone(result.frame)).toStrictEqual(deepClone(responseFrame));
+        expect(result.groupID).toStrictEqual(12);
+        expect(result.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
     });
 
     it('Command should fail when in interpan', async () => {

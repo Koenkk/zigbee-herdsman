@@ -5,12 +5,9 @@ import * as Zcl from '../../zcl';
 import Endpoint from './endpoint';
 import Device from './device';
 import assert from 'assert';
-import Debug from "debug";
+import {logger} from '../../utils/logger';
 
-const debug = {
-    info: Debug('zigbee-herdsman:controller:group'),
-    error: Debug('zigbee-herdsman:controller:group'),
-};
+const NS = 'zh:controller:group';
 
 interface Options {
     manufacturerCode?: number;
@@ -88,6 +85,9 @@ class Group extends Entity {
 
     public static create(groupID: number): Group {
         assert(typeof groupID === 'number', 'GroupID must be a number');
+        // Don't allow groupID 0, from the spec:
+        // "Scene identifier 0x00, along with group identifier 0x0000, is reserved for the global scene used by the OnOff cluster"
+        assert(groupID >= 1, 'GroupID must be at least 1');
         Group.loadFromDatabaseIfNecessary();
         if (Group.groups[groupID]) {
             throw new Error(`Group with groupID '${groupID}' already exists`);
@@ -159,7 +159,7 @@ class Group extends Entity {
         }
 
         const log = `Write ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
-        debug.info(log);
+        logger.debug(log, NS);
 
         try {
             const frame = Zcl.ZclFrame.create(
@@ -170,7 +170,7 @@ class Group extends Entity {
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            debug.error(error.message);
+            logger.debug(error, NS);
             throw error;
         }
     }
@@ -192,13 +192,13 @@ class Group extends Entity {
         );
 
         const log = `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
-        debug.info(log);
+        logger.debug(log, NS);
 
         try {
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            debug.error(error.message);
+            logger.debug(error, NS);
             throw error;
         }
     }
@@ -211,7 +211,7 @@ class Group extends Entity {
         const command = cluster.getCommand(commandKey);
 
         const log = `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
-        debug.info(log);
+        logger.debug(log, NS);
 
         try {
             const frame = Zcl.ZclFrame.create(
@@ -222,7 +222,7 @@ class Group extends Entity {
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
-            debug.error(error.message);
+            logger.debug(error, NS);
             throw error;
         }
     }

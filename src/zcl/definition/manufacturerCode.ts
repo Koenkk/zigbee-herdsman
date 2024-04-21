@@ -1,1081 +1,730 @@
-// https://github.com/wireshark/wireshark/blob/master/epan/dissectors/packet-zbee.h
-const knownManufacturerCodes = {
-    PANASONIC_RF4CE: 0x0001,
-    SONY_RF4CE: 0x0002,
-    SAMSUNG_RF4CE: 0x0003,
-    PHILIPS_RF4CE: 0x0004,
-    FREESCALE_RF4CE: 0x0005,
-    OKI_SEMI_RF4CE: 0x0006,
-    TI_RF4CE: 0x0007,
-    /** Cirronet */
-    CIRRONET: 0x1000,
-    /** Chipcon */
-    CHIPCON: 0x1001,
-    /** Ember */
-    EMBER: 0x1002,
-    /** National Tech */
-    NTS: 0x1003,
-    /** Freescale */
-    FREESCALE: 0x1004,
-    /** IPCom */
-    IPCOM: 0x1005,
-    /** San Juan Software */
-    SAN_JUAN: 0x1006,
-    /** TUV */
-    TUV: 0x1007,
-    /** CompXs */
-    COMPXS: 0x1008,
-    /** BM SpA */
-    BM: 0x1009,
-    /** AwarePoint */
-    AWAREPOINT: 0x100a,
-    /** Philips */
-    PHILIPS: 0x100b,
-    /** Luxoft */
-    LUXOFT: 0x100c,
-    /** Korvin */
-    KORWIN: 0x100d,
-    /** One RF */
-    _1_RF: 0x100e,
-    /** Software Technology Group */
-    STG: 0x100f,
-    /** Telegesis */
-    TELEGESIS: 0x1010,
-    /** Visionic */
-    VISIONIC: 0x1011,
-    /** Insta */
-    INSTA: 0x1012,
-    /** Atalum */
-    ATALUM: 0x1013,
-    /** Atmel */
-    ATMEL: 0x1014,
-    /** Develco */
-    DEVELCO: 0x1015,
-    HONEYWELL1: 0x1016,
-    /** RadioPulse */
-    RADIO_PULSE: 0x1017,
-    /** Renesas */
-    RENESAS: 0x1018,
-    /** Xanadu Wireless */
-    XANADU: 0x1019,
-    /** NEC Engineering */
-    NEC: 0x101a,
-    /** Yamatake */
-    YAMATAKE: 0x101b,
-    /** Tendril */
-    TENDRIL: 0x101c,
-    /** Assa Abloy */
-    ASSA: 0x101d,
-    /** Maxstream */
-    MAXSTREAM: 0x101e,
-    /** Neurocom */
-    NEUROCOM: 0x101f,
-    /** Institute for Information Industry */
-    III: 0x1020,
-    /** Vantage Controls */
-    VANTAGE: 0x1021,
-    /** iControl */
-    ICONTROL: 0x1022,
-    /** Raymarine */
-    RAYMARINE: 0x1023,
-    /** LS Research */
-    LSR: 0x1024,
-    /** Onity */
-    ONITY: 0x1025,
-    /** Mono Products */
-    MONO: 0x1026,
-    /** RF Tech */
-    RFT: 0x1027,
-    /** Itron */
-    ITRON: 0x1028,
-    /** Tritech */
-    TRITECH: 0x1029,
-    /** Embedit */
-    EMBEDIT: 0x102a,
-    /** S3C */
-    S3C: 0x102b,
-    /** Siemens */
-    SIEMENS: 0x102c,
-    /** Mindtech */
-    MINDTECH: 0x102d,
-    /** LG Electronics */
-    LGE: 0x102e,
-    /** Mitsubishi */
-    MITSUBISHI: 0x102f,
-    /** Johnson Controls */
-    JOHNSON: 0x1030,
-    /** PRI */
-    PRI: 0x1031,
-    /** Knick */
-    KNICK: 0x1032,
-    /** Viconics */
-    VICONICS: 0x1033,
-    /** Flexipanel */
-    FLEXIPANEL: 0x1034,
-    /** Piasim Corporation */
-    PIASIM: 0x1035,
-    /** Trane */
-    TRANE: 0x1036,
-    /** Jennic */
-    JENNIC: 0x1037,
-    /** Living Independently */
-    LIG: 0x1038,
-    /** AlertMe */
-    ALERTME: 0x1039,
-    /** Daintree */
-    DAINTREE: 0x103a,
-    /** Aiji */
-    AIJI: 0x103b,
-    /** Telecom Italia */
-    TEL_ITALIA: 0x103c,
-    /** Mikrokrets */
-    MIKROKRETS: 0x103d,
-    /** Oki Semi */
-    OKI_SEMI: 0x103e,
-    /** Newport Electronics */
-    NEWPORT: 0x103f,
-    /** Control4 */
-    C4: 0x1040,
-    /** STMicro */
-    STM: 0x1041,
-    /** Ad-Sol Nissin */
-    ASN: 0x1042,
-    /** DCSI */
-    DCSI: 0x1043,
-    /** France Telecom */
-    FRANCE_TEL: 0x1044,
-    /** muNet */
-    MUNET: 0x1045,
-    /** Autani */
-    AUTANI: 0x1046,
-    /** Colorado vNet */
-    COL_VNET: 0x1047,
-    /** Aerocomm */
-    AEROCOMM: 0x1048,
-    /** Silicon Labs */
-    SI_LABS: 0x1049,
-    /** Inncom */
-    INNCOM: 0x104a,
-    /** Cannon */
-    CANNON: 0x104b,
-    /** Synapse */
-    SYNAPSE: 0x104c,
-    /** Fisher Pierce/Sunrise */
-    FPS: 0x104d,
-    /** CentraLite */
-    CLS: 0x104e,
-    /** Crane */
-    CRANE: 0x104F,
-    /** Mobilarm */
-    MOBILARM: 0x1050,
-    /** iMonitor */
-    IMONITOR: 0x1051,
-    /** Bartech */
-    BARTECH: 0x1052,
-    /** Meshnetics */
-    MESHNETICS: 0x1053,
-    /** LS Industrial */
-    LS_IND: 0x1054,
-    /** Cason */
-    CASON: 0x1055,
-    /** Wireless Glue */
-    WLESS_GLUE: 0x1056,
-    /** Elster */
-    ELSTER: 0x1057,
-    /** SMS Tec */
-    SMS_TEC: 0x1058,
-    /** Onset Computer */
-    ONSET: 0x1059,
-    /** Riga Development */
-    RIGA: 0x105a,
-    /** Energate */
-    ENERGATE: 0x105b,
-    /** ConMed Linvatec */
-    CONMED: 0x105c,
-    /** PowerMand */
-    POWERMAND: 0x105d,
-    /** Schneider Electric */
-    SCHNEIDER: 0x105e,
-    /** Eaton */
-    EATON: 0x105f,
-    /** Telular */
-    TELULAR: 0x1060,
-    /** Delphi Medical */
-    DELPHI: 0x1061,
-    /** EpiSensor */
-    EPISENSOR: 0x1062,
-    /** Landis+Gyr */
-    LANDIS_GYR: 0x1063,
-    /** Kaba Group */
-    KABA: 0x1064,
-    /** Shure */
-    SHURE: 0x1065,
-    /** Comverge */
-    COMVERGE: 0x1066,
-    /** DBS Lodging */
-    DBS_LODGING: 0x1067,
-    /** Energy Aware */
-    ENERGY_AWARE: 0x1068,
-    /** Hidalgo */
-    HIDALGO: 0x1069,
-    /** Air2App */
-    AIR2APP: 0x106a,
-    /** AMX */
-    AMX: 0x106b,
-    /** EDMI Pty */
-    EDMI: 0x106c,
-    /** Cyan Ltd */
-    CYAN: 0x106d,
-    /** System SPA */
-    SYS_SPA: 0x106e,
-    /** Telit */
-    TELIT: 0x106f,
-    /** Kaga Electronics */
-    KAGA: 0x1070,
-    /** 4-noks s.r.l. */
-    _4_NOKS: 0x1071,
-    /** Certicom */
-    CERTICOM: 0x1072,
-    /** Gridpoint */
-    GRIDPOINT: 0x1073,
-    /** Profile Systems */
-    PROFILE_SYS: 0x1074,
-    /** Compacta International */
-    COMPACTA: 0x1075,
-    /** Freestyle Technology */
-    FREESTYLE: 0x1076,
-    /** Alektrona */
-    ALEKTRONA: 0x1077,
-    /** Computime */
-    COMPUTIME: 0x1078,
-    /** Remote Technologies */
-    REMOTE_TECH: 0x1079,
-    /** Wavecom */
-    WAVECOM: 0x107a,
-    /** Energy Optimizers */
-    ENERGY: 0x107b,
-    /** GE */
-    GE: 0x107c,
-    /** Jetlun */
-    JETLUN: 0x107d,
-    /** Cipher Systems */
-    CIPHER: 0x107e,
-    /** Corporate Systems Eng */
-    CORPORATE: 0x107f,
-    /** ecobee */
-    ECOBEE: 0x1080,
-    /** SMK */
-    SMK: 0x1081,
-    /** Meshworks Wireless */
-    MESHWORKS: 0x1082,
-    /** Ellips B.V. */
-    ELLIPS: 0x1083,
-    /** Secure electrans */
-    SECURE: 0x1084,
-    /** CEDO */
-    CEDO: 0x1085,
-    /** Toshiba */
-    TOSHIBA: 0x1086,
-    /** Digi International */
-    DIGI: 0x1087,
-    /** Ubilogix */
-    UBILOGIX: 0x1088,
-    /** Echelon */
-    ECHELON: 0x1089,
-    /** Green Energy Options */
-    GREEN_ENERGY: 0x1090,
-    /** Silver Spring Networks */
-    SILVER_SPRING: 0x1091,
-    /** Black & Decker */
-    BLACK: 0x1092,
-    /** Aztech AssociatesInc. */
-    AZTECH_ASSOC: 0x1093,
-    /** A&D Co */
-    A_AND_D: 0x1094,
-    /** Rainforest Automation */
-    RAINFOREST: 0x1095,
-    /** Carrier Electronics */
-    CARRIER: 0x1096,
-    /** SyChip/Murata */
-    SYCHIP: 0x1097,
-    /** OpenPeak */
-    OPEN_PEAK: 0x1098,
-    /** Passive Systems */
-    PASSIVE: 0x1099,
-    /** MMBResearch */
-    MMB: 0x109a,
-    /** Leviton */
-    LEVITON: 0x109b,
-    /** Korea Electric Power Data Network */
-    KOREA_ELEC: 0x109c,
-    COMCAST1: 0x109d,
-    /** NEC Electronics */
-    NEC_ELEC: 0x109e,
-    /** Netvox */
-    NETVOX: 0x109f,
-    /** U-Control */
-    UCONTROL: 0x10a0,
-    /** Embedia Technologies */
-    EMBEDIA: 0x10a1,
-    /** Sensus */
-    SENSUS: 0x10a2,
-    /** SunriseTechnologies */
-    SUNRISE: 0x10a3,
-    /** MemtechCorp */
-    MEMTECH: 0x10a4,
-    /** Freebox */
-    FREEBOX: 0x10a5,
-    /** M2 Labs */
-    M2_LABS: 0x10a6,
-    /** BritishGas */
-    BRITISH_GAS: 0x10a7,
-    /** Sentec */
-    SENTEC: 0x10a8,
-    /** Navetas */
-    NAVETAS: 0x10a9,
-    /** Lightspeed Technologies */
-    LIGHTSPEED: 0x10aa,
-    /** Oki Electric */
-    OKI: 0x10ab,
-    /** Sistemas Inteligentes */
-    SISTEMAS: 0x10ac,
-    /** Dometic */
-    DOMETIC: 0x10ad,
-    /** Alps */
-    APLS: 0x10ae,
-    /** EnergyHub */
-    ENERGY_HUB: 0x10af,
-    /** Kamstrup */
-    KAMSTRUP: 0x10b0,
-    /** EchoStar */
-    ECHOSTAR: 0x10b1,
-    /** EnerNOC */
-    ENERNOC: 0x10b2,
-    /** Eltav */
-    ELTAV: 0x10b3,
-    /** Belkin */
-    BELKIN: 0x10b4,
-    /** XStreamHD Wireless */
-    XSTREAMHD: 0x10b5,
-    /** Saturn South */
-    SATURN_SOUTH: 0x10b6,
-    /** GreenTrapOnline */
-    GREENTRAP: 0x10b7,
-    /** SmartSynch */
-    SMARTSYNCH: 0x10b8,
-    /** Nyce Control */
-    NYCE: 0x10b9,
-    /** ICM Controls */
-    ICM_CONTROLS: 0x10ba,
-    /** Millennium Electronics */
-    MILLENNIUM: 0x10bb,
-    /** Motorola */
-    MOTOROLA: 0x10bc,
-    /** EmersonWhite-Rodgers */
-    EMERSON: 0x10bd,
-    /** Radio Thermostat */
-    RADIO_THERMOSTAT: 0x10be,
-    /** OMRONCorporation */
-    OMRON: 0x10bf,
-    /** GiiNii GlobalLimited */
-    GIINII: 0x10c0,
-    /** Fujitsu GeneralLimited */
-    FUJITSU: 0x10c1,
-    /** Peel Technologies */
-    PEEL: 0x10c2,
-    /** Accent */
-    ACCENT: 0x10c3,
-    /** ByteSnap Design */
-    BYTESNAP: 0x10c4,
-    /** NEC TOKIN Corporation */
-    NEC_TOKIN: 0x10c5,
-    /** G4S JusticeServices */
-    G4S_JUSTICE: 0x10c6,
-    /** Trilliant Networks */
-    TRILLIANT: 0x10c7,
-    /** Electrolux Italia */
-    ELECTROLUX: 0x10c8,
-    /** OnzoLtd */
-    ONZO: 0x10c9,
-    /** EnTekSystems */
-    ENTEK: 0x10ca,
-    PHILIPS2: 0x10cb,
-    /** MainstreamEngineering */
-    MAINSTREAM: 0x10cc,
-    /** IndesitCompany */
-    INDESIT: 0x10cd,
-    /** THINKECO */
-    THINKECO: 0x10ce,
-    /** 2D2C */
-    _2D2C: 0x10cf,
-    /** GreenPeak */
-    GREENPEAK: 0x10d0,
-    /** InterCEL */
-    INTERCEL: 0x10d1,
-    /** LG Electronics */
-    LG: 0x10d2,
-    /** Mitsumi Electric */
-    MITSUMI1: 0x10d3,
-    /** Mitsumi Electric */
-    MITSUMI2: 0x10d4,
-    /** Zentrum Mikroelektronik Dresden */
-    ZENTRUM: 0x10d5,
-    /** Nest Labs */
-    NEST: 0x10d6,
-    /** Exegin Technologies */
-    EXEGIN: 0x10d7,
-    HONEYWELL2: 0x10d8,
-    /** Takahata Precision */
-    TAKAHATA: 0x10d9,
-    /** Sumitomo Electric Networks */
-    SUMITOMO: 0x10da,
-    /** GE Energy */
-    GE_ENERGY: 0x10db,
-    /** GE Appliances */
-    GE_APPLIANCES: 0x10dc,
-    /** Radiocrafts AS */
-    RADIOCRAFTS: 0x10dd,
-    /** Ceiva */
-    CEIVA: 0x10de,
-    /** TEC CO Co., Ltd */
-    TEC_CO: 0x10df,
-    /** Chameleon Technology (UK) Ltd */
-    CHAMELEON: 0x10e0,
-    /** Samsung */
-    SAMSUNG: 0x10e1,
-    /** ruwido austria gmbh */
-    RUWIDO: 0x10e2,
-    HUAWEI_1: 0x10e3,
-    HUAWEI_2: 0x10e4,
-    /** Greenwave Reality */
-    GREENWAVE: 0x10e5,
-    /** BGlobal Metering Ltd */
-    BGLOBAL: 0x10e6,
-    /** Mindteck */
-    MINDTECK: 0x10e7,
-    /** Ingersoll-Rand */
-    INGERSOLL_RAND: 0x10e8,
-    /** Dius Computing Pty Ltd */
-    DIUS: 0x10e9,
-    /** Embedded Automation, Inc. */
-    EMBEDDED: 0x10ea,
-    /** ABB */
-    ABB: 0x10eb,
-    /** Sony */
-    SONY: 0x10ec,
-    /** Genus Power Infrastructures Limited */
-    GENUS: 0x10ed,
-    UNIVERSAL1: 0x10ee,
-    UNIVERSAL2: 0x10ef,
-    /** Metrum Technologies, LLC */
-    METRUM: 0x10f0,
-    /** Cisco */
-    CISCO: 0x10f1,
-    /** Ubisys technologies GmbH */
-    UBISYS: 0x10f2,
-    /** Consert */
-    CONSERT: 0x10f3,
-    /** Crestron Electronics */
-    CRESTRON: 0x10f4,
-    /** Enphase Energy */
-    ENPHASE: 0x10f5,
-    /** Invensys Controls */
-    INVENSYS: 0x10f6,
-    /** Mueller Systems, LLC */
-    MUELLER: 0x10f7,
-    /** AAC Technologies Holding */
-    AAC_TECH: 0x10f8,
-    /** U-NEXT Co., Ltd */
-    U_NEXT: 0x10f9,
-    /** Steelcase Inc. */
-    STEELCASE: 0x10fa,
-    /** Telematics Wireless */
-    TELEMATICS: 0x10fb,
-    /** Samil Power Co., Ltd */
-    SAMIL: 0x10fc,
-    /** Pace Plc */
-    PACE: 0x10fd,
-    /** Osborne Coinage Co. */
-    OSBORNE: 0x10fe,
-    /** Powerwatch */
-    POWERWATCH: 0x10ff,
-    /** CANDELED GmbH */
-    CANDELED: 0x1100,
-    /** FlexGrid S.R.L */
-    FLEXGRID: 0x1101,
-    /** Humax */
-    HUMAX: 0x1102,
-    /** Universal Devices */
-    UNIVERSAL: 0x1103,
-    /** Advanced Energy */
-    ADVANCED_ENERGY: 0x1104,
-    /** BEGA Gantenbrink-Leuchten */
-    BEGA: 0x1105,
-    /** Brunel University */
-    BRUNEL: 0x1106,
-    /** Panasonic R&D Center Singapore */
-    PANASONIC: 0x1107,
-    /** eSystems Research */
-    ESYSTEMS: 0x1108,
-    /** Panamax */
-    PANAMAX: 0x1109,
-    /** Physical Graph Corporation */
-    PHYSICAL: 0x110a,
-    /** EM-Lite Ltd. */
-    EM_LITE: 0x110b,
-    /** Osram Sylvania */
-    OSRAM: 0x110c,
-    /** 2 Save Energy Ltd. */
-    _2_SAVE: 0x110d,
-    /** Planet Innovation Products Pty Ltd */
-    PLANET: 0x110e,
-    /** Ambient Devices, Inc. */
-    AMBIENT: 0x110f,
-    /** Profalux */
-    PROFALUX: 0x1110,
-    /** Billion Electric Company (BEC) */
-    BILLION: 0x1111,
-    /** Embertec Pty Ltd */
-    EMBERTEC: 0x1112,
-    /** IT Watchdogs */
-    IT_WATCHDOGS: 0x1113,
-    /** Reloc */
-    RELOC: 0x1114,
-    /** Intel Corporation */
-    INTEL: 0x1115,
-    /** Trend Electronics Limited */
-    TREND: 0x1116,
-    /** Moxa */
-    MOXA: 0x1117,
-    /** QEES */
-    QEES: 0x1118,
-    /** SAYME Wireless Sensor Networks */
-    SAYME: 0x1119,
-    /** Pentair Aquatic Systems */
-    PENTAIR: 0x111a,
-    /** Orbit Irrigation */
-    ORBIT: 0x111b,
-    /** California Eastern Laboratories */
-    CALIFORNIA: 0x111c,
-    COMCAST2: 0x111d,
-    /** IDT Technology Limited */
-    IDT: 0x111e,
-    /** Pixela */
-    PIXELA: 0x111f,
-    /** TiVo */
-    TIVO: 0x1120,
-    /** Fidure */
-    FIDURE: 0x1121,
-    /** Marvell Semiconductor */
-    MARVELL: 0x1122,
-    /** Wasion Group */
-    WASION: 0x1123,
-    /** Jasco Products */
-    JASCO: 0x1124,
-    /** Shenzhen Kaifa Technology */
-    SHENZHEN: 0x1125,
-    /** Netcomm Wireless */
-    NETCOMM: 0x1126,
-    /** Define Instruments */
-    DEFINE: 0x1127,
-    /** In Home Displays */
-    IN_HOME_DISP: 0x1128,
-    /** Miele & Cie. KG */
-    MIELE: 0x1129,
-    /** Televes S.A. */
-    TELEVES: 0x112a,
-    /** Labelec */
-    LABELEC: 0x112b,
-    /** China Electronics Standardization Institute */
-    CHINA_ELEC: 0x112c,
-    /** Vectorform */
-    VECTORFORM: 0x112d,
-    /** Busch-Jaeger Elektro */
-    BUSCH_JAEGER: 0x112e,
-    /** Redpine Signals */
-    REDPINE: 0x112f,
-    /** Bridges Electronic Technology */
-    BRIDGES: 0x1130,
-    /** Sercomm */
-    SERCOMM: 0x1131,
-    /** WSH GmbH wirsindheller */
-    WSH: 0x1132,
-    /** Bosch Security Systems */
-    BOSCH: 0x1133,
-    /** eZEX Corporation */
-    EZEX: 0x1134,
-    /** Dresden Elektronik Ingenieurtechnik GmbH */
-    DRESDEN: 0x1135,
-    /** MEAZON S.A. */
-    MEAZON: 0x1136,
-    /** Crow Electronic Engineering */
-    CROW: 0x1137,
-    /** Harvard Engineering */
-    HARVARD: 0x1138,
-    /** Andson(Beijing) Technology */
-    ANDSON: 0x1139,
-    /** Adhoco AG */
-    ADHOCO: 0x113a,
-    /** Waxman Consumer Products Group */
-    WAXMAN: 0x113b,
-    /** Owon Technology */
-    OWON: 0x113c,
-    /** Hitron Technologies */
-    HITRON: 0x113d,
-    /** Scemtec Steuerungstechnik GmbH */
-    SCEMTEC: 0x113e,
-    /** Webee */
-    WEBEE: 0x113f,
-    /** Grid2Home */
-    GRID2HOME: 0x1140,
-    /** Telink Micro */
-    TELINK: 0x1141,
-    /** Jasmine Systems */
-    JASMINE: 0x1142,
-    /** Bidgely */
-    BIDGELY: 0x1143,
-    /** Lutron */
-    LUTRON: 0x1144,
-    /** IJENKO */
-    IJENKO: 0x1145,
-    /** Starfield Electronic */
-    STARFIELD: 0x1146,
-    /** TCP */
-    TCP: 0x1147,
-    /** Rogers Communications Partnership */
-    ROGERS: 0x1148,
-    /** Cree */
-    CREE: 0x1149,
-    /** Robert Bosch LLC */
-    ROBERT_BOSCH_LLC: 0x114a,
-    /** Ibis Networks */
-    IBIS: 0x114b,
-    /** Quirky */
-    QUIRKY: 0x114c,
-    /** Efergy Technologies */
-    EFERGY: 0x114d,
-    /** Smartlabs */
-    SMARTLABS: 0x114e,
-    /** Everspring Industry */
-    EVERSPRING: 0x114f,
-    /** Swann Communications */
-    SWANN: 0x1150,
-    /** Soneter */
-    SONETER: 0x1151,
-    /** Samsung SDS */
-    SAMSUNG_SDS: 0x1152,
-    /** Uniband Electronic Corporation */
-    UNIBAND_ELECTRO: 0x1153,
-    /** Accton Technology Corporation */
-    ACCTON_TECHNOLOGY: 0x1154,
-    /** Bosch Thermotechnik GmbH */
-    BOSCH_THERMOTECH: 0x1155,
-    /** Wincor Nixdorf Inc. */
-    WINCOR_NIXDORF: 0x1156,
-    /** Ohsung Electronics */
-    OHSUNG_ELECTRO: 0x1157,
-    /** Zen Within, Inc. */
-    ZEN_WITHIN: 0x1158,
-    /** Tech4home, Lda. */
-    TECH_4_HOME: 0x1159,
-    /** Nanoleaf */
-    NANOLEAF: 0x115A,
-    /** Keen Home, Inc. */
-    KEEN_HOME: 0x115B,
-    /** Poly-Control APS */
-    POLY_CONTROL: 0x115C,
-    /** Eastfield Lighting Co., Ltd Shenzhen */
-    EASTFIELD_LIGHT: 0x115D,
-    /** IP Datatel, Inc. */
-    IP_DATATEL: 0x115E,
-    /** Lumi United Techology, Ltd Shenzhen */
-    LUMI_UNITED_TECH: 0x115F,
-    /** Sengled Optoelectronics Corp */
-    SENGLED_OPTOELEC: 0x1160,
-    /** Remote Solution Co., Ltd. */
-    REMOTE_SOLUTION: 0x1161,
-    /** ABB Genway Xiamen Electrical Equipment Co., Ltd. */
-    ABB_GENWAY_XIAMEN: 0x1162,
-    /** Zhejiang Rexense Tech */
-    ZHEJIANG_REXENSE: 0x1163,
-    /** ForEE Technology */
-    FOREE_TECHNOLOGY: 0x1164,
-    /** Open Access Technology Intl. */
-    OPEN_ACCESS_TECH: 0x1165,
-    /** INNR Lighting BV */
-    INNR_LIGHTNING: 0x1166,
-    /** Techworld Industries */
-    TECHWORLD: 0x1167,
-    /** Leedarson Lighting Co., Ltd. */
-    LEEDARSON_LIGHT: 0x1168,
-    /** Arzel Zoning */
-    ARZEL_ZONING: 0x1169,
-    /** Holley Technology */
-    HOLLEY_TECH: 0x116A,
-    /** Beldon Technologies */
-    BELDON_TECH: 0x116B,
-    /** Flextronics */
-    FLEXTRONICS: 0x116C,
-    /** Shenzhen Meian */
-    SHENZHEN_MEIAN: 0x116D,
-    /** Lowes */
-    LOWES: 0x116E,
-    /** Sigma Connectivity */
-    SIGMA_CONNECT: 0x116F,
-    /** Wulian */
-    WULIAN: 0x1171,
-    /** Plugwise B.V. */
-    PLUGWISE_BV: 0x1172,
-    /** Titan Products */
-    TITAN_PRODUCTS: 0x1173,
-    /** Ecospectral */
-    ECOSPECTRAL: 0x1174,
-    /** D-Link */
-    D_LINK: 0x1175,
-    /** Technicolor Home USA */
-    TECHNICOLOR_HOME: 0x1176,
-    /** Opple Lighting */
-    OPPLE_LIGHTING: 0x1177,
-    /** Wistron NeWeb Corp. */
-    WISTRON_NEWEB: 0x1178,
-    /** QMotion Shades */
-    QMOTION_SHADES: 0x1179,
-    /** Insta Elektro GmbH */
-    INSTA_ELEKTRO: 0x117A,
-    /** Shanghai Vancount */
-    SHANGHAI_VANCOUNT: 0x117B,
-    /** Ikea of Sweden */
-    IKEA_OF_SWEDEN: 0x117C,
-    /** RT-RK */
-    RT_RK: 0x117D,
-    /** Shenzhen Feibit */
-    SHENZHEN_FEIBIT: 0x117E,
-    /** EuControls */
-    EU_CONTROLS: 0x117F,
-    /** Telkonet */
-    TELKONET: 0x1180,
-    /** Thermal Solution Resources */
-    THERMAL_SOLUTION: 0x1181,
-    /** PomCube */
-    POM_CUBE: 0x1182,
-    /** Ei Electronics */
-    EI_ELECTRONICS: 0x1183,
-    /** Optoga */
-    OPTOGA: 0x1184,
-    /** Stelpro */
-    STELPRO: 0x1185,
-    /** Lynxus Technologies Corp. */
-    LYNXUS_TECH: 0x1186,
-    /** Semiconductor Components */
-    SEMICONDUCTOR_COM: 0x1187,
-    /** TP-Link */
-    TP_LINK: 0x1188,
-    /** LEDVANCE LLC. */
-    LEDVANCE_LLC: 0x1189,
-    /** Nortek */
-    NORTEK: 0x118A,
-    /** iRevo/Assa Abbloy Korea */
-    IREVO_ASSA_ABBLOY: 0x118B,
-    /** Midea */
-    MIDEA: 0x118C,
-    /** ZF Friedrichshafen */
-    ZF_FRIEDRICHSHAF: 0x118D,
-    /** Checkit */
-    CHECKIT: 0x118E,
-    /** Aclara */
-    ACLARA: 0x118F,
-    /** Nokia */
-    NOKIA: 0x1190,
-    /** Goldcard High-tech Co., Ltd. */
-    GOLDCARD_HIGHTECH: 0x1191,
-    /** George Wilson Industries Ltd. */
-    GEORGE_WILSON: 0x1192,
-    /** EASY SAVER CO.,INC */
-    EASY_SAVER_CO: 0x1193,
-    /** ZTE Corporation */
-    ZTE_CORPORATION: 0x1194,
-    /** ARRIS */
-    ARRIS: 0x1195,
-    /** Reliance BIG TV */
-    RELIANCE_BIG_TV: 0x1196,
-    /** Insight Energy Ventures/Powerley */
-    INSIGHT_ENERGY: 0x1197,
-    /** Thomas Research Products (Hubbell Lighting Inc.) */
-    THOMAS_RESEARCH: 0x1198,
-    /** Li Seng Technology */
-    LI_SENG_TECH: 0x1199,
-    /** System Level Solutions Inc. */
-    SYSTEM_LEVEL_SOLU: 0x119A,
-    /** Matrix Labs */
-    MATRIX_LABS: 0x119B,
-    /** Sinope Technologies */
-    SINOPE_TECH: 0x119C,
-    /** Jiuzhou Greeble */
-    JIUZHOU_GREEBLE: 0x119D,
-    /** Guangzhou Lanvee Tech. Co. Ltd. */
-    GUANGZHOU_LANVEE: 0x119E,
-    /** Venstar */
-    VENSTAR: 0x119F,
-    /** SLV */
-    SLV: 0x1200,
-    /** Halo Smart Labs */
-    HALO_SMART_LABS: 0x1201,
-    /** Scout Security Inc. */
-    SCOUT_SECURITY: 0x1202,
-    /** Alibaba China Inc. */
-    ALIBABA_CHINA: 0x1203,
-    /** Resolution Products, Inc. */
-    RESOLUTION_PROD: 0x1204,
-    /** Smartlok Inc. */
-    SMARTLOK_INC: 0x1205,
-    /** Lux Products Corp. */
-    LUX_PRODUCTS_CORP: 0x1206,
-    /** Vimar SpA */
-    VIMAR_SPA: 0x1207,
-    /** Universal Lighting Technologies */
-    UNIVERSAL_LIGHT: 0x1208,
-    /** Robert Bosch, GmbH */
-    ROBERT_BOSCH_GMBH: 0x1209,
-    /** Accenture */
-    ACCENTURE: 0x120A,
-    /** Heiman Technology Co., Ltd. */
-    HEIMAN_TECHNOLOGY: 0x120B,
-    /** Shenzhen HOMA Technology Co., Ltd. */
-    SHENZHEN_HOMA: 0x120C,
-    /** Vision-Electronics Technology */
-    VISION_ELECTRO: 0x120D,
-    /** Lenovo */
-    LENOVO: 0x120E,
-    /** Presciense R&D */
-    PRESCIENSE_RD: 0x120F,
-    /** Shenzhen Seastar Intelligence Co., Ltd. */
-    SHENZHEN_SEASTAR: 0x1210,
-    /** Sensative AB */
-    SENSATIVE_AB: 0x1211,
-    /** SolarEdge */
-    SOLAREDGE: 0x1212,
-    /** Zipato */
-    ZIPATO: 0x1213,
-    /** China Fire & Security Sensing Manufacturing (iHorn) */
-    CHINA_FIRE_SEC: 0x1214,
-    /** Quby BV */
-    QUBY_BV: 0x1215,
-    /** Hangzhou Roombanker Technology Co., Ltd. */
-    HANGZHOU_ROOMBANK: 0x1216,
-    /** Amazon Lab126 */
-    AMAZON_LAB126: 0x1217,
-    /** Paulmann Licht GmbH */
-    PAULMANN_LICHT: 0x1218,
-    /** Shenzhen Orvibo Electronics Co. Ltd. */
-    SHENZHEN_ORVIBO: 0x1219,
-    /** TCI Telecommunications */
-    TCI_TELECOMM: 0x121A,
-    /** Mueller-Licht International Inc. */
-    MUELLER_LICHT_INT: 0x121B,
-    /** Aurora Limited */
-    AURORA_LIMITED: 0x121C,
-    /** SmartDCC */
-    SMART_DCC: 0x121D,
-    /** Shanghai UMEinfo Co. Ltd. */
-    SHANGHAI_UMEINFO: 0x121E,
-    /** carbonTRACK */
-    CARBON_TRACK: 0x121F,
-    /** Somfy */
-    SOMFY: 0x1220,
-    /** Viessmann Elektronik GmbH */
-    VIESSMAN_ELEKTRO: 0x1221,
-    /** Hildebrand Technology Ltd */
-    HILDEBRAND_TECH: 0x1222,
-    /** Onkyo Technology Corporation */
-    ONKYO_TECH: 0x1223,
-    /** Shenzhen Sunricher Technology Ltd. */
-    SHENZHEN_SUNRICH: 0x1224,
-    /** Xiu Xiu Technology Co., Ltd */
-    XIU_XIU_TECH: 0x1225,
-    /** Zumtobel Group */
-    ZUMTOBEL_GROUP: 0x1226,
-    /** Shenzhen Kaadas Intelligent Technology Co. Ltd */
-    SHENZHEN_KAADAS: 0x1227,
-    /** Shanghai Xiaoyan Technology Co. Ltd */
-    SHANGHAI_XIAOYAN: 0x1228,
-    /** Cypress Semiconductor */
-    CYPRESS_SEMICOND: 0x1229,
-    /** XAL GmbH */
-    XAL_GMBH: 0x122A,
-    /** Inergy Systems LLC */
-    INERGY_SYSTEMS: 0x122B,
-    /** Alfred Karcher GmbH & Co KG */
-    ALFRED_KARCHER: 0x122C,
-    /** Adurolight Manufacturing */
-    ADUROLIGHT_MANU: 0x122D,
-    /** Groupe Muller */
-    GROUPE_MULLER: 0x122E,
-    /** V-Mark Enterprises Inc. */
-    V_MARK_ENTERPRI: 0x122F,
-    /** Lead Energy AG */
-    LEAD_ENERGY_AG: 0x1230,
-    /** UIOT Group */
-    UIOT_GROUP: 0x1231,
-    /** Axxess Industries Inc. */
-    AXXESS_INDUSTRIES: 0x1232,
-    /** Third Reality Inc. */
-    THIRD_REALITY_INC: 0x1233,
-    /** DSR Corporation */
-    DSR_CORPORATION: 0x1234,
-    /** Guangzhou Vensi Intelligent Technology Co. Ltd. */
-    GUANGZHOU_VENSI: 0x1235,
-    /** Schlage Lock (Allegion) */
-    SCHLAGE_LOCK_ALL: 0x1236,
-    /** Net2Grid */
-    NET2GRID: 0x1237,
-    /** Airam Electric Oy Ab */
-    AIRAM_ELECTRIC: 0x1238,
-    /** IMMAX WPB CZ */
-    IMMAX_WPB_CZ: 0x1239,
-    /** ZIV Automation */
-    ZIV_AUTOMATION: 0x123A,
-    /** HangZhou iMagicTechnology Co., Ltd */
-    HANGZHOU_IMAGIC: 0x123B,
-    /** Xiamen Leelen Technology Co. Ltd. */
-    XIAMEN_LEELEN: 0x123C,
-    /** Overkiz SAS */
-    OVERKIZ_SAS: 0x123D,
-    /** Flonidan A/S */
-    FLONIDAN: 0x123E,
-    /** HDL Automation Co., Ltd. */
-    HDL_AUTOATION: 0x123F,
-    /** Ardomus Networks Corporation */
-    ARDOMUS_NETWORKS: 0x1240,
-    /** Samjin Co., Ltd. */
-    SAMJIN_CO: 0x1241,
-    /** Sprue Aegis PLC */
-    SPRUE_AEGIS_PLC: 0x1242,
-    /** Indra Sistemas, S.A. */
-    INDRA_SISTEMAS: 0x1243,
-    /** Shenzhen JBT Smart Lighting Co., Ltd. */
-    JBT_SMART_LIGHT: 0x1244,
-    /** GE Lighting & Current */
-    GE_LIGHTING_CURRE: 0x1245,
-    /** Danfoss A/S */
-    DANFOSS: 0x1246,
-    /** NIVISS PHP Sp. z o.o. Sp.k. */
-    NIVISS_PHP_SP: 0x1247,
-    /** Shenzhen Fengliyuan Energy Conservating Technology Co. Ltd */
-    FENGLIYUAN_ENERGY: 0x1248,
-    /** NEXELEC */
-    NEXELEC: 0x1249,
-    /** Sichuan Behome Prominent Technology Co., Ltd */
-    SICHUAN_BEHOME_PR: 0x124A,
-    /** Fujian Star-net Communication Co., Ltd. */
-    FUJIAN_STARNET: 0x124B,
-    /** Toshiba Visual Solutions Corporation */
-    TOSHIBA_VISUAL_SO: 0x124C,
-    /** Latchable, Inc. */
-    LATCHABLE_INC: 0x124D,
-    /** L&S Deutschland GmbH */
-    LS_DEUTSCHLAND: 0x124E,
-    /** Gledopto Co., Ltd. */
-    GLEDOPTO_CO_LTD: 0x124F,
-    /** The Home Depot */
-    THE_HOME_DEPOT: 0x1250,
-    /** Neonlite International Ltd. */
-    NEONLITE_INTERNAT: 0x1251,
-    /** Arlo Technologies, Inc. */
-    ARLO_TECHNOLOGIES: 0x1252,
-    /** Xingluo Technology Co., Ltd. */
-    XINGLUO_TECH: 0x1253,
-    /** Simon Electric (China) Co., Ltd. */
-    SIMON_ELECTRIC_CH: 0x1254,
-    /** Hangzhou Greatstar Industrial Co., Ltd. */
-    HANGZHOU_GREATSTA: 0x1255,
-    /** Sequentric Energy Systems, LLC */
-    SEQUENTRIC_ENERGY: 0x1256,
-    /** Solum Co., Ltd. */
-    SOLUM_CO_LTD: 0x1257,
-    /** Eaglerise Electric & Electronic (China) Co., Ltd. */
-    EAGLERISE_ELEC: 0x1258,
-    /** Fantem Technologies (Shenzhen) Co., Ltd. */
-    FANTEM_TECH: 0x1259,
-    /** Yunding Network Technology (Beijing) Co., Ltd. */
-    YUNDING_NETWORK: 0x125A,
-    /** Atlantic Group */
-    ATLANTIC_GROUP: 0x125B,
-    /** Xiamen Intretech, Inc. */
-    XIAMEN_INTRETECH: 0x125C,
-    /** Tuya Global Inc. */
-    TUYA_GLOBAL_INC: 0x125D,
-    /** Xiamen Dnake Intelligent Technology Co., Ltd */
-    XIAMEN_DNAKE_INTE: 0x125E,
-    /** Niko nv */
-    NIKO_NV: 0x125F,
-    /** Emporia Energy */
-    EMPORIA_ENERGY: 0x1260,
-    /** Sikom AS */
-    SIKOM_AS: 0x1261,
-    /** AXIS Labs, Inc. */
-    AXIS_LABS_INC: 0x1262,
-    /** Current Products Corporation */
-    CURRENT_PRODUCTS: 0x1263,
-    /** MeteRSit SRL */
-    METERSIT_SRL: 0x1264,
-    /** HORNBACH Baumarkt AG */
-    HORNBACH_BAUMARKT: 0x1265,
-    /** DiCEworld s.r.l. a socio unico */
-    DICEWORLD_SRL_A: 0x1266,
-    /** ARC Technology Co., Ltd */
-    ARC_TECHNOLOGY: 0x1267,
-    /** Hangzhou Konke Information Technology Co., Ltd. */
-    KONKE_INFORMATION: 0x1268,
-    /** SALTO Systems S.L. */
-    SALTO_SYSTEMS_SL: 0x1269,
-    /** Shenzhen Shyugj Technology Co., Ltd */
-    SHYUGJ_TECHNOLOGY: 0x126A,
-    /** Brayden Automation Corporation */
-    BRAYDEN_AUTOMA: 0x126B,
-    /** Environexus Pty. Ltd. */
-    ENVIRONEXUS_PTY: 0x126C,
-    /** Eltra nv/sa */
-    ELTRA_NV_SA: 0x126D,
-    /** Xiaomi Communications Co., Ltd. */
-    XIAMOMI_COMMUNI: 0x126E,
-    /** Shanghai Shuncom Electronic Technology Co., Ltd. */
-    SHUNCOM_ELECTRON: 0x126F,
-    /** Voltalis S.A */
-    VOLTALIS_SA: 0x1270,
-    /** FEELUX Co., Ltd. */
-    FEELUX_CO_LTD: 0x1271,
-    /** SmartPlus Inc. */
-    SMARTPLUS_INC: 0x1272,
-    /** Halemeier GmbH */
-    HALEMEIER_GMBH: 0x1273,
-    /** Trust International BBV */
-    TRUST_INTL: 0x1274,
-    /** Duke Energy Business Services LLC */
-    DUKE_ENERGY: 0x1275,
-    /** Calix, Inc. */
-    CALIX: 0x1276,
-    /** ADEO */
-    ADEO: 0x1277,
-    /** ELKO */
-    ELKO: 0x1277,
-    /** Sprut.device */
-    SPRUT_DEVICE: 0x6666,
-    /** NodOn */
-    NODON: 0x128B,
+/**
+ * https://github.com/SiliconLabs/gecko_sdk/blob/gsdk_4.4/app/zcl/manufacturers.xml
+ */
+enum ManufacturerCode {
+    MATTER_STANDARD = 0x0000,
+    PANASONIC = 0x0001,
+    SONY = 0x0002,
+    SAMSUNG = 0x0003,
+    PHILIPS_RF4CE = 0x0004,
+    FREESCALE_RF4CE = 0x0005,
+    OKI_SEMICONDUCTORS_RF4CE = 0x0006,
+    TEXAS_INSTRUMENTS = 0x0007,
+    CIRRONET = 0x1000,
+    CHIPCON = 0x1001,
+    EMBER = 0x1002,
+    NTS = 0x1003,
+    FREESCALE = 0x1004,
+    IP_COM = 0x1005,
+    SAN_JUAN_SOFTWARE = 0x1006,
+    TUV = 0x1007,
+    INTEGRATION = 0x1008,
+    BM_SPA = 0x1009,
+    AWAREPOINT = 0x100A,
+    SIGNIFY_NETHERLANDS_B_V = 0x100B,
+    LUXOFT = 0x100C,
+    KORWIN = 0x100D,
+    ONE_RF_TECHNOLOGY = 0x100E,
+    SOFTWARE_TECHNOLOGIES_GROUP = 0x100F,
+    TELEGESIS = 0x1010,
+    VISONIC = 0x1011,
+    INSTA = 0x1012,
+    ATALUM = 0x1013,
+    ATMEL = 0x1014,
+    DEVELCO = 0x1015,
+    HONEYWELL = 0x1016,
+    RADIOPULSE = 0x1017,
+    RENESAS = 0x1018,
+    XANADU_WIRELESS = 0x1019,
+    NEC_ENGINEERING = 0x101A,
+    YAMATAKE_CORPORATION = 0x101B,
+    TENDRIL_NETWORKS = 0x101C,
+    ASSA_ABLOY = 0x101D,
+    MAXSTREAM = 0x101E,
+    NEUROCOM = 0x101F,
+    INSTITUTE_FOR_INFORMATION_INDUSTRY = 0x1020,
+    LEGRAND_GROUP = 0x1021,
+    ICONTROL = 0x1022,
+    RAYMARINE = 0x1023,
+    LS_RESEARCH = 0x1024,
+    ONITY_INC = 0x1025,
+    MONO_PRODUCTS = 0x1026,
+    RF_TECHNOLOGIES = 0x1027,
+    ITRON = 0x1028,
+    TRITECH = 0x1029,
+    EMBEDIT_A_S = 0x102A,
+    S3C = 0x102B,
+    SIEMENS = 0x102C,
+    MINDTECH = 0x102D,
+    LG_ELECTRONICS = 0x102E,
+    MITSUBISHI_ELECTRIC_CORP = 0x102F,
+    JOHNSON_CONTROLS = 0x1030,
+    SECURE_METERS_UK_LTD = 0x1031,
+    KNICK = 0x1032,
+    VICONICS = 0x1033,
+    FLEXIPANEL = 0x1034,
+    PIASIM_CORPORATION_PTE_LTD = 0x1035,
+    TRANE = 0x1036,
+    NXP_SEMICONDUCTORS = 0x1037,
+    LIVING_INDEPENDENTLY_GROUP = 0x1038,
+    ALERTME_COM = 0x1039,
+    DAINTREE = 0x103A,
+    AIJI_SYSTEM = 0x103B,
+    TELECOM_ITALIA = 0x103C,
+    MIKROKRETS_AS = 0x103D,
+    OKI_SEMICONDUCTOR = 0x103E,
+    NEWPORT_ELECTONICS = 0x103F,
+    CONTROL_4 = 0x1040,
+    STMICROELECTRONICS = 0x1041,
+    AD_SOL_NISSIN_CORP = 0x1042,
+    DCSI = 0x1043,
+    FRANCE_TELECOM = 0x1044,
+    MUNET = 0x1045,
+    AUTANI_CORPORATION = 0x1046,
+    COLORADO_VNET = 0x1047,
+    AEROCOMM_INC = 0x1048,
+    SILICON_LABORATORIES = 0x1049,
+    INNCOM_INTERNATIONAL_INC = 0x104A,
+    COOPER_POWER_SYSTEMS = 0x104B,
+    SYNAPSE = 0x104C,
+    FISHER_PIERCE_SUNRISE = 0x104D,
+    CENTRALITE_SYSTEMS_INC = 0x104E,
+    CRANE_WIRELESS_MONITORING_SOLUTIONS = 0x104F,
+    MOBILARM_LIMITED = 0x1050,
+    IMONITOR_RESEARCH_LTD = 0x1051,
+    BARTECH = 0x1052,
+    MESHNETICS = 0x1053,
+    LS_INDUSTRIAL_SYSTEMS_CO_LTD = 0x1054,
+    CASON_ENGINEERING_PLC = 0x1055,
+    WIRELESS_GLUE_NETWORKS_INC = 0x1056,
+    ELSTER = 0x1057,
+    SMS_TECNOLOGIA_ELETRONICA = 0x1058,
+    ONSET_COMPUTER_CORPORATION = 0x1059,
+    RIGA_DEVELOPMENT = 0x105A,
+    ENERGATE = 0x105B,
+    CONMED_LINVATEC = 0x105C,
+    POWERMAND = 0x105D,
+    SCHNEIDER_ELECTRIC = 0x105E,
+    EATON_CORPORATION = 0x105F,
+    TELULAR_CORPORATION = 0x1060,
+    DELPHI_MEDICAL_SYSTEMS = 0x1061,
+    EPISENSOR_LIMITED = 0x1062,
+    LANDIS_GYR = 0x1063,
+    KABA_GROUP = 0x1064,
+    SHURE_INCORPORATED = 0x1065,
+    COMVERGE_INC = 0x1066,
+    DBS_LODGING_TECHNOLOGIES_LLC = 0x1067,
+    ENERGY_AWARE_TECHNOLOGY_INC = 0x1068,
+    HIDALGO_LIMITED = 0x1069,
+    AIR2APP = 0x106A,
+    AMX = 0x106B,
+    EDMI_PTY_LTD = 0x106C,
+    CYAN_LTD = 0x106D,
+    SYSTEM_SPA = 0x106E,
+    TELIT = 0x106F,
+    KAGA_ELECTRONICS = 0x1070,
+    ASTREL_GROUP_SRL = 0x1071,
+    CERTICOM = 0x1072,
+    GRIDPOINT = 0x1073,
+    PROFILE_SYSTEMS_LLC = 0x1074,
+    COMPACTA_INTERNATIONAL_LTD = 0x1075,
+    FREESTYLE_TECHNOLOGY_PTY_LTD = 0x1076,
+    ALEKTRONA = 0x1077,
+    COMPUTIME = 0x1078,
+    REMOTE_TECHNOLOGIES_INC = 0x1079,
+    WAVECOM_S_A = 0x107A,
+    ENERGY_OPTIMIZERS_LTD = 0x107B,
+    GE = 0x107C,
+    JETLUN = 0x107D,
+    CIPHER_SYSTEMS = 0x107E,
+    CORPORATE_SYSTEMS_ENGINEERING = 0x107F,
+    ECOBEE = 0x1080,
+    SMK = 0x1081,
+    MESHWORKS_WIRELESS_OY = 0x1082,
+    ELLIPS_B_V = 0x1083,
+    SECURE_ELECTRANS = 0x1084,
+    CEDO = 0x1085,
+    TOSHIBA = 0x1086,
+    DIGI_INTERNATIONAL = 0x1087,
+    UBILOGIX = 0x1088,
+    ECHELON = 0x1089,
+    GREEN_ENERGY_OPTIONS = 0x1090,
+    SILVER_SPRING_NETWORKS = 0x1091,
+    BLACK_AND_DECKER = 0x1092,
+    AZTECH_ASSOCIATES_INC = 0x1093,
+    AANDD_CO_LTD = 0x1094,
+    RAINFOREST_AUTOMATION = 0x1095,
+    CARRIER_ELECTRONICS = 0x1096,
+    SYCHIP_MURATA = 0x1097,
+    OPENPEAK = 0x1098,
+    PASSIVESYSTEMS = 0x1099,
+    MMB_RESEARCH = 0x109A,
+    LEVITON_MANUFACTURING_COMPANY = 0x109B,
+    KOREA_ELECTRIC_POWER_DATA_NETWORK_CO_LTD = 0x109C,
+    COMCAST = 0x109D,
+    NEC_ELECTRONICS = 0x109E,
+    NETVOX = 0x109F,
+    U_CONTROL = 0x10A0,
+    EMBEDIA_TECHNOLOGIES_CORP = 0x10A1,
+    SENSUS = 0x10A2,
+    SUNRISE_TECHNOLOGIES = 0x10A3,
+    MEMTECH_CORP = 0x10A4,
+    FREEBOX = 0x10A5,
+    M2_LABS_LTD = 0x10A6,
+    BRITISH_GAS = 0x10A7,
+    SENTEC_LTD = 0x10A8,
+    NAVETAS = 0x10A9,
+    LIGHTSPEED_TECHNOLOGIES = 0x10AA,
+    OKI_ELECTRIC_INDUSTRY_CO_LTD = 0x10AB,
+    S_I_SISTEMAS_INTELIGENTES_ELETRONICOS_LTDA = 0x10AC,
+    DOMETIC = 0x10AD,
+    ALPS = 0x10AE,
+    ENERGYHUB = 0x10AF,
+    KAMSTRUP = 0x10B0,
+    ECHOSTAR = 0x10B1,
+    ENERNOC = 0x10B2,
+    ELTAV = 0x10B3,
+    BELKIN = 0x10B4,
+    XSTREAMHD_WIRELESS_VENTURES = 0x10B5,
+    SATURN_SOUTH_PTY_LTD = 0x10B6,
+    GREENTRAPONLINE_A_S = 0x10B7,
+    SMARTSYNCH_INC = 0x10B8,
+    NYCE_CONTROL_INC = 0x10B9,
+    ICM_CONTROLS_CORP = 0x10BA,
+    MILLENNIUM_ELECTRONICS_PTY_LTD = 0x10BB,
+    MOTOROLA_INC = 0x10BC,
+    EMERSON_WHITE_RODGERS = 0x10BD,
+    RADIO_THERMOSTAT_COMPANY_OF_AMERICA = 0x10BE,
+    OMRON_CORPORATION = 0x10BF,
+    GIINII_GLOBAL_LIMITED = 0x10C0,
+    FUJITSU_GENERAL_LIMITED = 0x10C1,
+    PEEL_TECHNOLOGIES_INC = 0x10C2,
+    ACCENT_S_P_A = 0x10C3,
+    BYTESNAP_DESIGN_LTD = 0x10C4,
+    NEC_TOKIN_CORPORATION = 0x10C5,
+    G4S_JUSTICE_SERVICES = 0x10C6,
+    TRILLIANT_NETWORKS_INC = 0x10C7,
+    ELECTROLUX_ITALIA_S_P_A = 0x10C8,
+    ONZO_LTD = 0x10C9,
+    ENTEK_SYSTEMS = 0x10CA,
+    PHILIPS = 0x10CB,
+    MAINSTREAM_ENGINEERING = 0x10CC,
+    INDESIT_COMPANY = 0x10CD,
+    THINKECO_INC = 0x10CE,
+    TWODTWOC_INC = 0x10CF,
+    QORVO = 0x10D0,
+    INTERCEL = 0x10D1,
+    LG_ELECTRONICS_2 = 0x10D2,
+    MITSUMI_ELECTRIC_CO_LTD = 0x10D3,
+    MITSUMI_ELECTRIC_CO_LTD_2 = 0x10D4,
+    ZENTRUM_MIKROELEKTRONIK_DRESDEN_AG_ZMDI = 0x10D5,
+    NEST_LABS_INC = 0x10D6,
+    EXEGIN_TECHNOLOGIES_LTD = 0x10D7,
+    HONEYWELL_2 = 0x10D8,
+    TAKAHATA_PRECISION_CO_LTD = 0x10D9,
+    SUMITOMO_ELECTRIC_NETWORKS_INC = 0x10DA,
+    GE_ENERGY = 0x10DB,
+    GE_APPLIANCES = 0x10DC,
+    RADIOCRAFTS_AS = 0x10DD,
+    CEIVA = 0x10DE,
+    TECANDCO_CO_LTD = 0x10DF,
+    CHAMELEON_TECHNOLOGY_UK_LTD = 0x10E0,
+    SAMSUNG_2 = 0x10E1,
+    RUWIDO_AUSTRIA_GMBH = 0x10E2,
+    HUAWEI_TECHNOLOGIES_CO_LTD = 0x10E3,
+    HUAWEI_TECHNOLOGIES_CO_LTD_2 = 0x10E4,
+    GREENWAVE_REALITY = 0x10E5,
+    BGLOBAL_METERING_LTD = 0x10E6,
+    MINDTECK = 0x10E7,
+    INGERSOLL_RAND = 0x10E8,
+    DIUS_COMPUTING_PTY_LTD = 0x10E9,
+    EMBEDDED_AUTOMATION_INC = 0x10EA,
+    ABB = 0x10EB,
+    SONY_2 = 0x10EC,
+    GENUS_POWER_INFRASTRUCTURES_LIMITED = 0x10ED,
+    UNIVERSAL_ELECTRONICS_INC = 0x10EE,
+    UNIVERSAL_ELECTRONICS_INC_2 = 0x10EF,
+    METRUM_TECHNOLOGIES_LLC = 0x10F0,
+    CISCO = 0x10F1,
+    UBISYS_TECHNOLOGIES_GMBH = 0x10F2,
+    CONSERT = 0x10F3,
+    CRESTRON_ELECTRONICS = 0x10F4,
+    ENPHASE_ENERGY = 0x10F5,
+    INVENSYS_CONTROLS = 0x10F6,
+    MUELLER_SYSTEMS_LLC = 0x10F7,
+    AAC_TECHNOLOGIES_HOLDING = 0x10F8,
+    U_NEXT_CO_LTD = 0x10F9,
+    STEELCASE_INC = 0x10FA,
+    TELEMATICS_WIRELESS = 0x10FB,
+    SAMIL_POWER_CO_LTD = 0x10FC,
+    PACE_PLC = 0x10FD,
+    OSBORNE_COINAGE_CO = 0x10FE,
+    POWERWATCH = 0x10FF,
+    CANDELED_GMBH = 0x1100,
+    FLEXGRID_S_R_L = 0x1101,
+    HUMAX = 0x1102,
+    UNIVERSAL_DEVICES = 0x1103,
+    ADVANCED_ENERGY = 0x1104,
+    BEGA_GANTENBRINK_LEUCHTEN = 0x1105,
+    BRUNEL_UNIVERSITY = 0x1106,
+    PANASONIC_RANDD_CENTER_SINGAPORE = 0x1107,
+    ESYSTEMS_RESEARCH = 0x1108,
+    PANAMAX = 0x1109,
+    SMARTTHINGS_INC = 0x110A,
+    EM_LITE_LTD = 0x110B,
+    OSRAM_SYLVANIA = 0x110C,
+    TWO_SAVE_ENERGY_LTD = 0x110D,
+    PLANET_INNOVATION_PRODUCTS_PTY_LTD = 0x110E,
+    AMBIENT_DEVICES_INC = 0x110F,
+    PROFALUX = 0x1110,
+    BILLION_ELECTRIC_COMPANY_BEC = 0x1111,
+    EMBERTEC_PTY_LTD = 0x1112,
+    IT_WATCHDOGS = 0x1113,
+    RELOC = 0x1114,
+    INTEL_CORPORATION = 0x1115,
+    TREND_ELECTRONICS_LIMITED = 0x1116,
+    MOXA = 0x1117,
+    QEES = 0x1118,
+    SAYME_WIRELESS_SENSOR_NETWORKS = 0x1119,
+    PENTAIR_AQUATIC_SYSTEMS = 0x111A,
+    ORBIT_IRRIGATION = 0x111B,
+    CALIFORNIA_EASTERN_LABORATORIES = 0x111C,
+    COMCAST_2 = 0x111D,
+    IDT_TECHNOLOGY_LIMITED = 0x111E,
+    PIXELA_CORPORATION = 0x111F,
+    TIVO_INC = 0x1120,
+    FIDURE_CORP = 0x1121,
+    MARVELL_SEMICONDUCTOR_INC = 0x1122,
+    WASION_GROUP_LIMITED = 0x1123,
+    JASCO_PRODUCTS_COMPANY = 0x1124,
+    SHENZHEN_KAIFA_TECHNOLOGY_CHENGDU_CO_LTD = 0x1125,
+    NETCOMM_WIRELESS_LIMITED = 0x1126,
+    DEFINE_INSTRUMENTS_LIMITED = 0x1127,
+    IN_HOME_DISPLAYS_LTD = 0x1128,
+    MIELE_AND_CIE_KG = 0x1129,
+    TELEVES_S_A = 0x112A,
+    LABELEC = 0x112B,
+    CHINA_ELECTRONICS_STANDARDIZATION_INSTITUTE = 0x112C,
+    VECTORFORM_LLC = 0x112D,
+    BUSCH_JAEGER_ELEKTRO = 0x112E,
+    REDPINE_SIGNALS_INC = 0x112F,
+    BRIDGES_ELECTRONIC_TECHNOLOGY_PTY_LTD = 0x1130,
+    SERCOMM = 0x1131,
+    WSH_GMBH_WIRSINDHELLER = 0x1132,
+    BOSCH_SECURITY_SYSTEMS_INC = 0x1133,
+    EZEX_CORPORATION = 0x1134,
+    DRESDEN_ELEKTRONIK_INGENIEURTECHNIK_GMBH = 0x1135,
+    MEAZON_S_A = 0x1136,
+    CROW_ELECTRONIC_ENGINEERING_LTD = 0x1137,
+    HARVARD_ENGINEERING_PLC = 0x1138,
+    ANDSON_BEIJING_TECHNOLOGY_CO_LTD = 0x1139,
+    ADHOCO_AG = 0x113A,
+    WAXMAN_CONSUMER_PRODUCTS_GROUP_INC = 0x113B,
+    OWON_TECHNOLOGY_INC = 0x113C,
+    HITRON_TECHNOLOGIES_INC = 0x113D,
+    SCEMTEC_HARD_UND_SOFTWARE_FUR_MESS_UND_STEUERUNGSTECHNIK_GMBH = 0x113E,
+    WEBEE_LLC = 0x113F,
+    GRID2HOME_INC = 0x1140,
+    TELINK_MICRO = 0x1141,
+    JASMINE_SYSTEMS_INC = 0x1142,
+    BIDGELY = 0x1143,
+    LUTRON = 0x1144,
+    IJENKO = 0x1145,
+    STARFIELD_ELECTRONIC_LTD = 0x1146,
+    TCP_INC = 0x1147,
+    ROGERS_COMMUNICATIONS_PARTNERSHIP = 0x1148,
+    CREE_INC = 0x1149,
+    ROBERT_BOSCH_LLC = 0x114A,
+    IBIS_NETWORKS_INC = 0x114B,
+    QUIRKY_INC = 0x114C,
+    EFERGY_TECHNOLOGIES_LIMITED = 0x114D,
+    SMARTLABS_INC = 0x114E,
+    EVERSPRING_INDUSTRY_CO_LTD = 0x114F,
+    SWANN_COMMUNICATIONS_PTL_LTD = 0x1150,
+    SONETER = 0x1151,
+    SAMSUNG_SDS = 0x1152,
+    UNIBAND_ELECTRONIC_CORPORATION = 0x1153,
+    ACCTON_TECHNOLOGY_CORPORATION = 0x1154,
+    BOSCH_THERMOTECHNIK_GMBH = 0x1155,
+    WINCOR_NIXDORF_INC = 0x1156,
+    OHSUNG_ELECTRONICS = 0x1157,
+    ZEN_WITHIN_INC = 0x1158,
+    TECH4HOME_LDA = 0x1159,
+    NANOLEAF = 0x115A,
+    KEEN_HOME_INC = 0x115B,
+    POLY_CONTROL_APS = 0x115C,
+    EASTFIELD_LIGHTING_CO_LTD_SHENZHEN = 0x115D,
+    IP_DATATEL_INC = 0x115E,
+    LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN = 0x115F,
+    SENGLED_CO_LTD = 0x1160,
+    REMOTE_SOLUTION_CO_LTD = 0x1161,
+    ABB_GENWAY_XIAMEN_ELECTRICAL_EQUIPMENT_CO_LTD = 0x1162,
+    ZHEJIANG_REXENSE_TECH = 0x1163,
+    FOREE_TECHNOLOGY = 0x1164,
+    OPEN_ACCESS_TECHNOLOGY_INTL = 0x1165,
+    INNR_LIGHTING_BV = 0x1166,
+    TECHWORLD_INDUSTRIES = 0x1167,
+    LEEDARSON_LIGHTING_CO_LTD = 0x1168,
+    ARZEL_ZONING = 0x1169,
+    HOLLEY_TECHNOLOGY = 0x116A,
+    BELDON_TECHNOLOGIES = 0x116B,
+    FLEXTRONICS = 0x116C,
+    SHENZHEN_MEIAN = 0x116D,
+    LOWES = 0x116E,
+    SIGMA_CONNECTIVITY = 0x116F,
+    WULIAN = 0x1171,
+    PLUGWISE_B_V = 0x1172,
+    TITAN_PRODUCTS = 0x1173,
+    ECOSPECTRAL = 0x1174,
+    D_LINK = 0x1175,
+    TECHNICOLOR_HOME_USA = 0x1176,
+    OPPLE_LIGHTING = 0x1177,
+    WISTRON_NEWEB_CORP = 0x1178,
+    QMOTION_SHADES = 0x1179,
+    INSTA_GMBH = 0x117A,
+    SHANGHAI_VANCOUNT = 0x117B,
+    IKEA_OF_SWEDEN = 0x117C,
+    RT_RK = 0x117D,
+    SHENZHEN_FEIBIT = 0x117E,
+    EUCONTROLS = 0x117F,
+    TELKONET = 0x1180,
+    THERMAL_SOLUTION_RESOURCES = 0x1181,
+    POMCUBE = 0x1182,
+    EI_ELECTRONICS = 0x1183,
+    OPTOGA = 0x1184,
+    STELPRO = 0x1185,
+    LYNXUS_TECHNOLOGIES_CORP = 0x1186,
+    SEMICONDUCTOR_COMPONENTS = 0x1187,
+    TP_LINK = 0x1188,
+    LEDVANCE_GMBH = 0x1189,
+    NORTEK = 0x118A,
+    IREVO_ASSA_ABBLOY_KOREA = 0x118B,
+    MIDEA = 0x118C,
+    ZF_FRIEDRICHSHAFEN = 0x118D,
+    CHECKIT = 0x118E,
+    ACLARA = 0x118F,
+    NOKIA = 0x1190,
+    GOLDCARD_HIGH_TECH_CO_LTD = 0x1191,
+    GEORGE_WILSON_INDUSTRIES_LTD = 0x1192,
+    EASY_SAVER_CO_INC = 0x1193,
+    ZTE_CORPORATION = 0x1194,
+    ARRIS = 0x1195,
+    RELIANCE_BIG_TV = 0x1196,
+    INSIGHT_ENERGY_VENTURES_POWERLEY = 0x1197,
+    THOMAS_RESEARCH_PRODUCTS_HUBBELL_LIGHTING_INC = 0x1198,
+    LI_SENG_TECHNOLOGY = 0x1199,
+    SYSTEM_LEVEL_SOLUTIONS_INC = 0x119A,
+    MATRIX_LABS = 0x119B,
+    SINOPE_TECHNOLOGIES = 0x119C,
+    JIUZHOU_GREEBLE = 0x119D,
+    GUANGZHOU_LANVEE_TECH_CO_LTD = 0x119E,
+    VENSTAR = 0x119F,
+    SLV = 0x1200,
+    HALO_SMART_LABS = 0x1201,
+    SCOUT_SECURITY_INC = 0x1202,
+    ALIBABA_CHINA_INC = 0x1203,
+    RESOLUTION_PRODUCTS_INC = 0x1204,
+    SMARTLOK_INC = 0x1205,
+    LUX_PRODUCTS_CORP = 0x1206,
+    VIMAR_SPA = 0x1207,
+    UNIVERSAL_LIGHTING_TECHNOLOGIES = 0x1208,
+    ROBERT_BOSCH_GMBH = 0x1209,
+    ACCENTURE = 0x120A,
+    HEIMAN_TECHNOLOGY_CO_LTD = 0x120B,
+    SHENZHEN_HOMA_TECHNOLOGY_CO_LTD = 0x120C,
+    VISION_ELECTRONICS_TECHNOLOGY = 0x120D,
+    LENOVO = 0x120E,
+    PRESCIENSE_RANDD = 0x120F,
+    SHENZHEN_SEASTAR_INTELLIGENCE_CO_LTD = 0x1210,
+    SENSATIVE_AB = 0x1211,
+    SOLAREDGE = 0x1212,
+    ZIPATO = 0x1213,
+    CHINA_FIRE_AND_SECURITY_SENSING_MANUFACTURING_IHORN = 0x1214,
+    QUBY_BV = 0x1215,
+    HANGZHOU_ROOMBANKER_TECHNOLOGY_CO_LTD = 0x1216,
+    AMAZON_LAB126 = 0x1217,
+    PAULMANN_LICHT_GMBH = 0x1218,
+    SHENZHEN_ORVIBO_ELECTRONICS_CO_LTD = 0x1219,
+    TCI_TELECOMMUNICATIONS = 0x121A,
+    MUELLER_LICHT_INTERNATIONAL_INC = 0x121B,
+    AURORA_LIMITED = 0x121C,
+    SMARTDCC = 0x121D,
+    SHANGHAI_UMEINFO_CO_LTD = 0x121E,
+    CARBONTRACK = 0x121F,
+    SOMFY = 0x1220,
+    VIESSMANN_ELEKTRONIK_GMBH = 0x1221,
+    HILDEBRAND_TECHNOLOGY_LTD = 0x1222,
+    ONKYO_TECHNOLOGY_CORPORATION = 0x1223,
+    SHENZHEN_SUNRICHER_TECHNOLOGY_LTD = 0x1224,
+    XIU_XIU_TECHNOLOGY_CO_LTD = 0x1225,
+    ZUMTOBEL_GROUP = 0x1226,
+    SHENZHEN_KAADAS_INTELLIGENT_TECHNOLOGY_CO_LTD = 0x1227,
+    SHANGHAI_XIAOYAN_TECHNOLOGY_CO_LTD = 0x1228,
+    CYPRESS_SEMICONDUCTOR = 0x1229,
+    XAL_GMBH = 0x122A,
+    INERGY_SYSTEMS_LLC = 0x122B,
+    ALFRED_KARCHER_GMBH_AND_CO_KG = 0x122C,
+    ADUROLIGHT_MANUFACTURING = 0x122D,
+    GROUPE_MULLER = 0x122E,
+    V_MARK_ENTERPRISES_INC = 0x122F,
+    LEAD_ENERGY_AG = 0x1230,
+    ULTIMATE_IOT_HENAN_TECHNOLOGY_LTD = 0x1231,
+    AXXESS_INDUSTRIES_INC = 0x1232,
+    THIRD_REALITY_INC = 0x1233,
+    DSR_CORPORATION = 0x1234,
+    GUANGZHOU_VENSI_INTELLIGENT_TECHNOLOGY_CO_LTD = 0x1235,
+    SCHLAGE_LOCK_ALLEGION = 0x1236,
+    NET2GRID = 0x1237,
+    AIRAM_ELECTRIC_OY_AB = 0x1238,
+    IMMAX_WPB_CZ = 0x1239,
+    ZIV_AUTOMATION = 0x123A,
+    HANGZHOU_IMAGICTECHNOLOGY_CO_LTD = 0x123B,
+    XIAMEN_LEELEN_TECHNOLOGY_CO_LTD = 0x123C,
+    OVERKIZ_SAS = 0x123D,
+    FLONIDAN_A_S = 0x123E,
+    HDL_AUTOMATION_CO_LTD = 0x123F,
+    ARDOMUS_NETWORKS_CORPORATION = 0x1240,
+    SAMJIN_CO_LTD = 0x1241,
+    FIREANGEL_SAFETY_TECHNOLOGY_PLC = 0x1242,
+    INDRA_SISTEMAS_S_A = 0x1243,
+    SHENZHEN_JBT_SMART_LIGHTING_CO_LTD = 0x1244,
+    GE_LIGHTING_AND_CURRENT = 0x1245,
+    DANFOSS_A_S = 0x1246,
+    NIVISS_PHP_SP_Z_O_O_SP_K = 0x1247,
+    SHENZHEN_FENGLIYUAN_ENERGY_CONSERVATING_TECHNOLOGY_CO_LTD = 0x1248,
+    NEXELEC = 0x1249,
+    SICHUAN_BEHOME_PROMINENT_TECHNOLOGY_CO_LTD = 0x124A,
+    FUJIAN_STAR_NET_COMMUNICATION_CO_LTD = 0x124B,
+    TOSHIBA_VISUAL_SOLUTIONS_CORPORATION = 0x124C,
+    LATCHABLE_INC = 0x124D,
+    LANDS_DEUTSCHLAND_GMBH = 0x124E,
+    GLEDOPTO_CO_LTD = 0x124F,
+    THE_HOME_DEPOT = 0x1250,
+    NEONLITE_DISTRIBUTION_LIMITED = 0x1251,
+    ARLO_TECHNOLOGIES_INC = 0x1252,
+    XINGLUO_TECHNOLOGY_CO_LTD = 0x1253,
+    SIMON_ELECTRIC_CHINA_CO_LTD = 0x1254,
+    HANGZHOU_GREATSTAR_INDUSTRIAL_CO_LTD = 0x1255,
+    SEQUENTRIC_ENERGY_SYSTEMS_LLC = 0x1256,
+    SOLUM_CO_LTD = 0x1257,
+    EAGLERISE_ELECTRIC_AND_ELECTRONIC_CHINA_CO_LTD = 0x1258,
+    FANTEM_TECHNOLOGIES_SHENZHEN_CO_LTD = 0x1259,
+    YUNDING_NETWORK_TECHNOLOGY_BEIJING_CO_LTD = 0x125A,
+    ATLANTIC_GROUP = 0x125B,
+    XIAMEN_INTRETECH_INC = 0x125C,
+    TUYA_GLOBAL_INC = 0x125D,
+    DNAKE_XIAMEN_INTELLIGENT_TECHNOLOGY_CO_LTD = 0x125E,
+    NIKO_NV = 0x125F,
+    EMPORIA_ENERGY = 0x1260,
+    SIKOM_AS = 0x1261,
+    AXIS_LABS_INC = 0x1262,
+    CURRENT_PRODUCTS_CORPORATION = 0x1263,
+    METERSIT_SRL = 0x1264,
+    HORNBACH_BAUMARKT_AG = 0x1265,
+    DICEWORLD_S_R_L_A_SOCIO_UNICO = 0x1266,
+    ARC_TECHNOLOGY_CO_LTD = 0x1267,
+    HANGZHOU_KONKE_INFORMATION_TECHNOLOGY_CO_LTD = 0x1268,
+    SALTO_SYSTEMS_S_L = 0x1269,
+    SHENZHEN_SHYUGJ_TECHNOLOGY_CO_LTD = 0x126A,
+    BRAYDEN_AUTOMATION_CORPORATION = 0x126B,
+    ENVIRONEXUS_PTY_LTD = 0x126C,
+    ELTRA_NV_SA = 0x126D,
+    XIAOMI_COMMUNICATIONS_CO_LTD = 0x126E,
+    SHANGHAI_SHUNCOM_ELECTRONIC_TECHNOLOGY_CO_LTD = 0x126F,
+    VOLTALIS_S_A = 0x1270,
+    FEELUX_CO_LTD = 0x1271,
+    SMARTPLUS_INC = 0x1272,
+    HALEMEIER_GMBH = 0x1273,
+    TRUST_INTERNATIONAL_BV = 0x1274,
+    DUKE_ENERGY_BUSINESS_SERVICES_LLC = 0x1275,
+    CALIX_INC = 0x1276,
+    ADEO = 0x1277,
+    CONNECTED_RESPONSE_LIMITED = 0x1278,
+    STROYENERGOKOM_LTD = 0x1279,
+    LUMITECH_LIGHTING_SOLUTION_GMBH = 0x127A,
+    VERDANT_ENVIRONMENTAL_TECHNOLOGIES = 0x127B,
+    ALFRED_INTERNATIONAL_INC = 0x127C,
+    SANSI_LED_LIGHTING_CO_LTD = 0x127D,
+    MINDTREE_LIMITED = 0x127E,
+    NORDIC_SEMICONDUCTOR_ASA = 0x127F,
+    SITERWELL_ELECTRONICS_CO_LIMITED = 0x1280,
+    BRILONER_LEUCHTEN_GMBH_AND_CO_KG = 0x1281,
+    SHENZHEN_SEI_TECHNOLOGY_CO_LTD = 0x1282,
+    COPPER_LABS_INC = 0x1283,
+    DELTA_DORE = 0x1284,
+    HAGER_GROUP = 0x1285,
+    SHENZHEN_COOLKIT_TECHNOLOGY_CO_LTD = 0x1286,
+    HANGZHOU_SKY_LIGHTING_CO_LTD = 0x1287,
+    E_ON_SE = 0x1288,
+    LIDL_STIFTUNG_AND_CO_KG = 0x1289,
+    SICHUAN_CHANGHONG_NETWORK_TECHNOLOGIES_CO_LTD = 0x128A,
+    NODON = 0x128B,
+    JIANGXI_INNOTECH_TECHNOLOGY_CO_LTD = 0x128C,
+    MERCATOR_PTY_LTD = 0x128D,
+    BEIJING_RUYING_TECH_LIMITED = 0x128E,
+    EGLO_LEUCHTEN_GMBH = 0x128F,
+    PIETRO_FIORENTINI_S_P_A = 0x1290,
+    ZEHNDER_GROUP_VAUX_ANDIGNY = 0x1291,
+    BRK_BRANDS_INC = 0x1292,
+    ASKEY_COMPUTER_CORP = 0x1293,
+    PASSIVEBOLT_INC = 0x1294,
+    AVM_AUDIOVISUELLES_MARKETING_UND_COMPUTERSYSTEME_BERLIN = 0x1295,
+    NINGBO_SUNTECH_LIGHTING_TECHNOLOGY_CO_LTD = 0x1296,
+    SOCIÉTÉ_EN_COMMANDITE_STELLO = 0x1297,
+    VIVINT_SMART_HOME = 0x1298,
+    NAMRON_AS = 0x1299,
+    RADEMACHER_GERAETE_ELEKTRONIK_GMBH = 0x129A,
+    OMO_SYSTEMS_LTD = 0x129B,
+    SIGLIS_AG = 0x129C,
+    IMHOTEP_CREATION = 0x129D,
+    ICASA = 0x129E,
+    LEVEL_HOME_INC = 0x129F,
+    TIS_CONTROL_LIMITED = 0x1300,
+    RADISYS_INDIA_PVT_LTD = 0x1301,
+    VEEA_INC = 0x1302,
+    FELL_TECHNOLOGY_AS = 0x1303,
+    SOWILO_DESIGN_SERVICES_LTD = 0x1304,
+    LEXI_DEVICES_INC = 0x1305,
+    LIFI_LABS_INC_DBA_LIFX = 0x1306,
+    GRUNDFOS_HOLDING_A_S = 0x1307,
+    SOURCING_AND_CREATION = 0x1308,
+    KRAKEN_TECHNOLOGIES_LTD = 0x1309,
+    EVE_SYSTEMS = 0x130A,
+    LITE_ON_TECHNOLOGY_CORPORATION = 0x130B,
+    FOCALCREST_LIMITED = 0x130C,
+    BOUFFALO_LAB_NANJING_CO_LTD = 0x130D,
+    WYZE_LABS_INC = 0x130E,
+    Z_WAVE_EUROPE_GMBH = 0x130F,
+    AEOTEC_LIMITED = 0x1310,
+    NGSTB_COMPANY_LIMITED = 0x1311,
+    QINGDAO_YEELINK_INFORMATION_TECHNOLOGY_CO_LTD = 0x1312,
+    E_SMART_HOME_AUTOMATION_SYSTEMS_LIMITED = 0x1313,
+    FIBAR_GROUP_S_A = 0x1314,
+    PROLITECH_GMBH = 0x1315,
+    PANKORE_INTEGRATED_CIRCUIT_TECHNOLOGY_CO_LTD = 0x1316,
+    LOGITECH = 0x1317,
+    PIARO_INC = 0x1318,
+    MITSUBISHI_ELECTRIC_US_INC = 0x1319,
+    RESIDEO_TECHNOLOGIES_INC = 0x131A,
+    ESPRESSIF_SYSTEMS_SHANGHAI_CO_LTD = 0x131B,
+    HELLA_SONNEN_UND_WETTERSCHUTZTECHNIK_GMBH = 0x131C,
+    GEBERIT_INTERNATIONAL_AG = 0x131D,
+    CAME_S_P_A = 0x131E,
+    GUANGZHOU_ELITE_EDUCATION_AND_TECHNOLOGY_CO_LTD = 0x131F,
+    PHYPLUS_MICROELECTRONICS_LIMITED = 0x1320,
+    SHENZHEN_SONOFF_TECHNOLOGIES_CO_LTD = 0x1321,
+    SAFE4_SECURITY_GROUP = 0x1322,
+    SHANGHAI_MXCHIP_INFORMATION_TECHNOLOGY_CO_LTD = 0x1323,
+    HDC_I_CONTROLS = 0x1324,
+    ZUMA_ARRAY_LIMITED = 0x1325,
+    DECELECT = 0x1326,
+    MILL_INTERNATIONAL_AS = 0x1327,
+    HOMEWIZARD_BV = 0x1328,
+    SHENZHEN_TOPBAND_CO_LTD = 0x1329,
+    PRESSAC_COMMUNICATIONS_LTD = 0x132A,
+    ORIGIN_WIRELESS_INC = 0x132B,
+    CONNECTE_AS = 0x132C,
+    YOKIS = 0x132D,
+    XIAMEN_YANKON_ENERGETIC_LIGHTING_CO_LTD = 0x132E,
+    YANDEX_LLC = 0x132F,
+    CRITICAL_SOFTWARE_S_A = 0x1330,
+    NORTEK_CONTROL = 0x1331,
+    BRIGHTAI = 0x1332,
+    BECKER_ANTRIEBE_GMBH = 0x1333,
+    SHENZHEN_TCL_NEW_TECHNOLOGY_COMPANY_LIMITED = 0x1334,
+    DEXATEK_TECHNOLOGY_LTD = 0x1335,
+    ELELABS_INTERNATIONAL_LIMITED = 0x1336,
+    DATEK_WIRELESS_AS = 0x1337,
+    ALDES = 0x1338,
+    SAVANT_COMPANY = 0x1339,
+    ARISTON_THERMO_GROUP = 0x133A,
+    WAREMA_RENKHOFF_SE = 0x133B,
+    VTECH_HOLDINGS_LIMITED = 0x133C,
+    FUTUREHOME_AS = 0x133D,
+    COGNITIVE_SYSTEMS_CORP = 0x133E,
+    ASR_MICROELECTRONICS_SHENZHEN_CO_LTD = 0x133F,
+    AIRIOS = 0x1340,
+    GUANGDONG_OPPO_MOBILE_TELECOMMUNICATIONS_CORP_LTD = 0x1341,
+    BEKEN_CORPORATION = 0x1342,
+    CORSAIR = 0x1343,
+    ELTAKO_GMBH = 0x1344,
+    CHENGDU_MEROSS_TECHNOLOGY_CO_LTD = 0x1345,
+    RAFAEL_MICROELECTRONICS_INC = 0x1346,
+    AUG_WINKHUAS_GMBH_AND_CO_KG = 0x1347,
+    QINGDAO_HAIER_TECHNOLOGY_CO_LTD = 0x1348,
+    APPLE_INC = 0x1349,
+    ROLLEASE_ACMEDA = 0x134A,
+    NABU_CASA_INC = 0x134B,
+    SIMON_HOLDING = 0x134C,
+    KD_NAVIEN = 0x134D,
+    TADO_GMBH = 0x134E,
+    MEDIOLA_CONNECTED_LIVING_AG = 0x134F,
+    POLYNHOME = 0x1350,
+    HOORII_TECHNOLOGY_CO_LTD = 0x1351,
+    KIMIN_ELECTRONICS_CO_LTD = 0x1353,
+    ZYAX_AB = 0x1354,
+    BARACODA_SA = 0x1355,
+    LENNOX_INTERNATIONAL_INC = 0x1356,
+    TELEDATICS_INCORPORATED = 0x1357,
+    TOP_VICTORY_INVESTMENTS_LIMITED = 0x1358,
+    GOQUAL_INC = 0x1359,
+    SIEGENIA_AUBI_KG = 0x135A,
+    VIRTUAL_CONNECTED_CONTROLLING_SYSTEM_SINGAPORE_PTE_LTD = 0x135B,
+    GIGASET_COMMUNICATIONS_GMBH = 0x135C,
+    NUKI_HOME_SOLUTIONS_GMBH = 0x135D,
+    DEVICEBOOK_INC = 0x135E,
+    CONSUMER_2_0_INC_RENTLY = 0x135F,
+    EDISON_LABS_INC_DBA_ORRO = 0x1360,
+    INOVELLI = 0x1361,
+    DEVERITEC_GMBH = 0x1362,
+    CHARTER_COMMUNICATIONS = 0x1363,
+    MONOLITHIC_POWER_SYSTEMS_INC = 0x1364,
+    NINGBO_DOOYA_MECHANIC_AND_ELECTRONIC_TECHNOLOGY_CO_LTD = 0x1365,
+    SHENZHEN_SDMC_TECHNOLOGY_CO_LTD = 0x1366,
+    HP_INC = 0x1367,
+    MUI_LAB_INC = 0x1368,
+    BHTRONICS_S_R_L = 0x1369,
+    AKUVOX_XIAMEN_NETWORKS_CO_LTD = 0x136A,
+    GEWISS_S_P_A = 0x1994,
+    CLIMAX_TECHNOLOGY_CO_LTD = 0x2794,
+    GOOGLE_LLC = 0x6006,
+    CONNECTIVITY_STANDARDS_ALLIANCE = 0xC5A0,
+    CONNECTIVITY_STANDARDS_ALLIANCE_2 = 0xC5A1,
+    CONNECTIVITY_STANDARDS_ALLIANCE_3 = 0xC5A2,
+    CONNECTIVITY_STANDARDS_ALLIANCE_4 = 0xC5A3,
+    CONNECTIVITY_STANDARDS_ALLIANCE_5 = 0xC5A4,
+    CONNECTIVITY_STANDARDS_ALLIANCE_6 = 0xC5A5,
+    CONNECTIVITY_STANDARDS_ALLIANCE_7 = 0xC5A6,
+    CONNECTIVITY_STANDARDS_ALLIANCE_8 = 0xC5A7,
+    CONNECTIVITY_STANDARDS_ALLIANCE_9 = 0xC5A8,
+    CONNECTIVITY_STANDARDS_ALLIANCE_10 = 0xC5A9,
+    CONNECTIVITY_STANDARDS_ALLIANCE_11 = 0xC5AA,
+    CONNECTIVITY_STANDARDS_ALLIANCE_12 = 0xC5AB,
+    CONNECTIVITY_STANDARDS_ALLIANCE_13 = 0xC5AC,
+    CONNECTIVITY_STANDARDS_ALLIANCE_14 = 0xC5AD,
+    CONNECTIVITY_STANDARDS_ALLIANCE_15 = 0xC5AE,
+    CONNECTIVITY_STANDARDS_ALLIANCE_16 = 0xC5AF,
+    TEST_VENDOR_1 = 0xFFF1,
+    TEST_VENDOR_2 = 0xFFF2,
+    TEST_VENDOR_3 = 0xFFF3,
+    TEST_VENDOR_4 = 0xFFF4,
+    RESERVED = 0xFFF5,
+    RESERVED_1 = 0xFFF6,
+    RESERVED_2 = 0xFFF7,
+    RESERVED_3 = 0xFFF8,
+    RESERVED_4 = 0xFFF9,
+    RESERVED_5 = 0xFFFA,
+    RESERVED_6 = 0xFFFB,
+    RESERVED_7 = 0xFFFC,
+    RESERVED_8 = 0xFFFD,
+    RESERVED_9 = 0xFFFE,
+    RESERVED_10 = 0xFFFF,
+
+    // Non-CSA-assigned codes
+    CUSTOM_PERENIO = 0x007B,
+    CUSTOM_LIVOLO = 0x1AD2,
+    CUSTOM_SPRUT_DEVICE = 0x6666,
+    CUSTOM_LYTKO = 0x7777,
 };
 
-export default {
-    ...knownManufacturerCodes,
-    Centralite: knownManufacturerCodes.CLS,
-    Philips: knownManufacturerCodes.PHILIPS,
-    Sinope: knownManufacturerCodes.SINOPE_TECH,
-    Stelpro: knownManufacturerCodes.STELPRO,
-    Ubisys: knownManufacturerCodes.UBISYS,
-    LegrandNetatmo: knownManufacturerCodes.VANTAGE,
-    SmartThings: knownManufacturerCodes.PHYSICAL,
-    Heiman: knownManufacturerCodes.HEIMAN_TECHNOLOGY,
-    Develco: knownManufacturerCodes.DEVELCO,
-    SprutDevice: knownManufacturerCodes.SPRUT_DEVICE,
-    Bosch: knownManufacturerCodes.ROBERT_BOSCH_GMBH,
-    NodOn: knownManufacturerCodes.NODON,
-};
+export default ManufacturerCode;

@@ -2,24 +2,21 @@
 /* eslint-disable */
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
-    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
+    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, NetworkParameters,
     StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions,
 } from '../../tstype';
-import Debug from "debug";
 import Adapter from '../../adapter';
-const debug = Debug("zigbee-herdsman:deconz:adapter");
 import Driver from '../driver/driver';
-import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
+import {ZclFrame, FrameType, Direction, ZclHeader} from '../../../zcl';
 import * as Events from '../../events';
-import * as Zcl from '../../../zcl';
-import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from '../../../controller/tstype';
 import processFrame from '../driver/frameParser';
 import {Queue, Waitress, Wait} from '../../../utils';
 import PARAM from '../driver/constants';
-import { Command, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, gpDataInd } from '../driver/constants';
-import {LoggerStub} from "../../../controller/logger-stub";
+import { WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, gpDataInd } from '../driver/constants';
 import * as Models from "../../../models";
+import {logger} from '../../../utils/logger';
 
+const NS = 'zh:deconz';
 var frameParser = require('../driver/frameParser');
 
 interface WaitressMatcher {
@@ -40,13 +37,12 @@ class DeconzAdapter extends Adapter {
     private frameParserEvent = frameParser.frameParserEvents;
     private joinPermitted: boolean;
     private fwVersion: CoordinatorVersion;
-    private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
+    private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
     private TX_OPTIONS = 0x00; // No APS ACKS
 
-    public constructor(networkOptions: NetworkOptions,
-        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions, logger?: LoggerStub) {
+    public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
 
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions, logger);
+        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
 
         const concurrent = this.adapterOptions && this.adapterOptions.concurrent ?
             this.adapterOptions.concurrent : 2;
@@ -55,7 +51,7 @@ class DeconzAdapter extends Adapter {
         const delay = this.adapterOptions && typeof this.adapterOptions.delay === 'number' ?
             this.adapterOptions.delay : 0;
 
-        this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
+        this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
 
@@ -154,12 +150,12 @@ class DeconzAdapter extends Adapter {
             } else {
                 this.joinPermitted = true;
             }
-            this.driver.writeParameterRequest(PARAM.PARAM.Network.PERMIT_JOIN, seconds);
+            await this.driver.writeParameterRequest(PARAM.PARAM.Network.PERMIT_JOIN, seconds);
 
-            debug("PERMIT_JOIN - " + seconds + " seconds");
+            logger.debug("PERMIT_JOIN - " + seconds + " seconds", NS);
         } catch (error) {
             const msg = "PERMIT_JOIN FAILED - " + error;
-            debug(msg);
+            logger.debug(msg, NS);
             // try again
             this.permitJoin(seconds, networkAddress);
             //return Promise.reject(new Error(msg)); // do not reject
@@ -187,7 +183,7 @@ class DeconzAdapter extends Adapter {
                 this.fwVersion = {type: type, meta: meta};
                 return {type: type, meta: meta};
             } catch (error) {
-                debug("Get coordinator version Error: " + error);
+                logger.debug("Get coordinator version Error: " + error, NS);
             }
         }
     }
@@ -268,11 +264,11 @@ class DeconzAdapter extends Adapter {
                         }
                     }
 
-                    debug("LQI RESPONSE - addr: 0x" + networkAddress.toString(16) + " status: " + response.status + " read " + (response.tableListCount + response.startIndex) + "/" + response.tableEntrys + " entrys");
+                    logger.debug("LQI RESPONSE - addr: 0x" + networkAddress.toString(16) + " status: " + response.status + " read " + (response.tableListCount + response.startIndex) + "/" + response.tableEntrys + " entrys", NS);
                     return response;
                 } catch (error) {
                     const msg = "LQI REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
-                    debug(msg);
+                    logger.debug(msg, NS);
                     return Promise.reject(new Error(msg));
                 }
             };
@@ -362,11 +358,11 @@ class DeconzAdapter extends Adapter {
                         }
                     }
 
-                    debug("ROUTING_TABLE RESPONSE - addr: 0x" + networkAddress.toString(16) + " status: " + response.status + " read " + (response.tableListCount + response.startIndex) + "/" + response.tableEntrys + " entrys");
+                    logger.debug("ROUTING_TABLE RESPONSE - addr: 0x" + networkAddress.toString(16) + " status: " + response.status + " read " + (response.tableListCount + response.startIndex) + "/" + response.tableEntrys + " entrys", NS);
                     return response;
                 } catch (error) {
                     const msg = "ROUTING_TABLE REQUEST FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
-                    debug(msg);
+                    logger.debug(msg, NS);
                     return Promise.reject(new Error(msg));
                 }
             };
@@ -417,11 +413,11 @@ class DeconzAdapter extends Adapter {
             const type: DeviceType = (logicaltype === 1) ? 'Router' : (logicaltype === 2) ? 'EndDevice' : (logicaltype === 0) ? 'Coordinator' : 'Unknown';
             const manufacturer = buf.readUInt16LE(7);
 
-            debug("RECEIVING NODE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " type: " + type + " manufacturer: 0x" + manufacturer.toString(16));
+            logger.debug("RECEIVING NODE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " type: " + type + " manufacturer: 0x" + manufacturer.toString(16), NS);
             return {manufacturerCode: manufacturer, type};
         } catch (error) {
             const msg = "RECEIVING NODE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
-            debug(msg);
+            logger.debug(msg, NS);
             return Promise.reject(new Error(msg));
         }
     }
@@ -460,11 +456,11 @@ class DeconzAdapter extends Adapter {
             for (let i = 5; i < (epCount + 5); i++) {
                 epList.push(buf.readUInt8(i));
             }
-            debug("ACTIVE_ENDPOINTS - addr: 0x" + networkAddress.toString(16) + " EP list: " + epList);
+            logger.debug("ACTIVE_ENDPOINTS - addr: 0x" + networkAddress.toString(16) + " EP list: " + epList, NS);
             return {endpoints: epList};
         } catch (error) {
             const msg = "READING ACTIVE_ENDPOINTS FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
-            debug(msg);
+            logger.debug(msg, NS);
             return Promise.reject(new Error(msg));
         }
     }
@@ -520,17 +516,17 @@ class DeconzAdapter extends Adapter {
                 inputClusters: inClusters,
                 outputClusters: outClusters
             }
-            debug("RECEIVING SIMPLE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " EP:" + simpleDesc.endpointID + " inClusters: " + inClusters + " outClusters: " + outClusters);
+            logger.debug("RECEIVING SIMPLE_DESCRIPTOR - addr: 0x" + networkAddress.toString(16) + " EP:" + simpleDesc.endpointID + " inClusters: " + inClusters + " outClusters: " + outClusters, NS);
             return simpleDesc;
         } catch (error) {
             const msg = "RECEIVING SIMPLE_DESCRIPTOR FAILED - addr: 0x" + networkAddress.toString(16) + " " + error;
-            debug(msg);
+            logger.debug(msg, NS);
             return Promise.reject(new Error(msg));
         }
     }
 
     private async checkCoordinatorSimpleDescriptor(skip: boolean): Promise<void> {
-        debug("checking coordinator simple descriptor");
+        logger.debug("checking coordinator simple descriptor", NS);
         var simpleDesc: any = null;
         if (skip === false) {
             try {
@@ -542,15 +538,15 @@ class DeconzAdapter extends Adapter {
                 this.checkCoordinatorSimpleDescriptor(false);
                 return;
             }
-            debug("EP: " + simpleDesc.endpointID);
-            debug("profile ID: " + simpleDesc.profileID);
-            debug("device ID: " + simpleDesc.deviceID);
+            logger.debug("EP: " + simpleDesc.endpointID, NS);
+            logger.debug("profile ID: " + simpleDesc.profileID, NS);
+            logger.debug("device ID: " + simpleDesc.deviceID, NS);
             for (let i = 0; i < simpleDesc.inputClusters.length; i++) {
-                debug("input cluster: 0x" + simpleDesc.inputClusters[i].toString(16));
+                logger.debug("input cluster: 0x" + simpleDesc.inputClusters[i].toString(16), NS);
             }
 
             for (let o = 0; o < simpleDesc.outputClusters.length; o++) {
-                debug("output cluster: 0x" + simpleDesc.outputClusters[o].toString(16));
+                logger.debug("output cluster: 0x" + simpleDesc.outputClusters[o].toString(16), NS);
             }
 
             let ok = true;
@@ -559,7 +555,7 @@ class DeconzAdapter extends Adapter {
                     !simpleDesc.inputClusters.includes(0x19) || !simpleDesc.inputClusters.includes(0x0501) ||
                     !simpleDesc.outputClusters.includes(0x01) || !simpleDesc.outputClusters.includes(0x20) || !simpleDesc.outputClusters.includes(0x500) ||
                     !simpleDesc.outputClusters.includes(0x502)) {
-                    debug("missing cluster");
+                    logger.debug("missing cluster", NS);
                     ok = false;
                 }
 
@@ -569,23 +565,23 @@ class DeconzAdapter extends Adapter {
             }
         }
 
-        debug("setting new simple descriptor");
+        logger.debug("setting new simple descriptor", NS);
         try {        //[ sd1   ep    proId       devId       vers  #inCl iCl1        iCl2        iCl3        iCl4        iCl5        #outC oCl1        oCl2        oCl3        oCl4      ]
             const sd = [ 0x00, 0x01, 0x04, 0x01, 0x05, 0x00, 0x01, 0x05, 0x00, 0x00, 0x00, 0x06, 0x0A, 0x00, 0x19, 0x00, 0x01, 0x05, 0x04, 0x01, 0x00, 0x20, 0x00, 0x00, 0x05, 0x02, 0x05];
             const sd1 = sd.reverse();
             await this.driver.writeParameterRequest(PARAM.PARAM.STK.Endpoint, sd1);
         } catch (error) {
-            debug("error setting simple descriptor - try again");
+            logger.debug("error setting simple descriptor - try again", NS);
             this.checkCoordinatorSimpleDescriptor(true);
             return;
         }
-        debug("success setting simple descriptor");
+        logger.debug("success setting simple descriptor", NS);
     }
 
     public waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): {promise: Promise<Events.ZclDataPayload>; cancel: () => void} {
+    ): {promise: Promise<Events.ZclPayload>; cancel: () => void} {
         const payload = {
             address: networkAddress, endpoint, clusterID, commandIdentifier, frameType, direction,
             transactionSequenceNumber,
@@ -598,21 +594,21 @@ class DeconzAdapter extends Adapter {
     public async sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
 
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
 
         let pay = zclFrame.toBuffer();
-        //console.log("zclFramte.toBuffer:");
-        //console.log(pay);
+        //logger.info("zclFramte.toBuffer:", NS);
+        //logger.info(pay, NS);
 
         request.requestId = transactionID;
         request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
         request.destAddr16 = networkAddress;
         request.destEndpoint = endpoint;
         request.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104;
-        request.clusterId = zclFrame.Cluster.ID;
+        request.clusterId = zclFrame.cluster.ID;
         request.srcEndpoint = sourceEndpoint || 1;
         request.asduLength = pay.length;
         request.asduPayload = [... pay];
@@ -620,50 +616,51 @@ class DeconzAdapter extends Adapter {
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = timeout;
 
-        const command = zclFrame.getCommand();
+        const command = zclFrame.command;
         this.driver.enqueueSendDataRequest(request)
             .then(result => {
-                debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.Header.transactionSequenceNumber}`);
-                debug(command.hasOwnProperty('response') + ", " + zclFrame.Header.frameControl.disableDefaultResponse + ", " + disableResponse + ", " + request.timeout);
-                if (!command.hasOwnProperty('response') || zclFrame.Header.frameControl.disableDefaultResponse || !disableResponse) {
-                    debug(`resolve request (${zclFrame.Header.transactionSequenceNumber})`);
+                logger.debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.header.transactionSequenceNumber}`, NS);
+                logger.debug(command.hasOwnProperty('response') + ", " + zclFrame.header.frameControl.disableDefaultResponse + ", " + disableResponse + ", " + request.timeout, NS);
+                if (!command.hasOwnProperty('response') || zclFrame.header.frameControl.disableDefaultResponse || !disableResponse) {
+                    logger.debug(`resolve request (${zclFrame.header.transactionSequenceNumber})`, NS);
                     return Promise.resolve();
                 }
             })
             .catch(error => {
-                debug(`sendZclFrameToEndpoint ERROR (${zclFrame.Header.transactionSequenceNumber})`);
-                debug(error);
+                logger.debug(`sendZclFrameToEndpoint ERROR (${zclFrame.header.transactionSequenceNumber})`, NS);
+                logger.debug(error, NS);
                 //return Promise.reject(new Error("sendZclFrameToEndpoint ERROR " + error));
             });
         try {
                 let data = null;
-                if ((command.hasOwnProperty('response') && !disableResponse) || !zclFrame.Header.frameControl.disableDefaultResponse) {
-                    data = await this.waitForData(networkAddress, 0x104, zclFrame.Cluster.ID, zclFrame.Header.transactionSequenceNumber, request.timeout);
+                if ((command.hasOwnProperty('response') && !disableResponse) || !zclFrame.header.frameControl.disableDefaultResponse) {
+                    data = await this.waitForData(networkAddress, 0x104, zclFrame.cluster.ID, zclFrame.header.transactionSequenceNumber, request.timeout);
                 }
 
                 if (data !== null) {
                     const asdu = data.asduPayload;
                     const buffer = Buffer.from(asdu);
-                    const frame: ZclFrame = ZclFrame.fromBuffer(zclFrame.Cluster.ID, buffer);
 
-                    const response: Events.ZclDataPayload = {
+                    const response: Events.ZclPayload = {
                         address: (data.srcAddrMode === 0x02) ? data.srcAddr16 : null,
-                        frame: frame,
+                        data: buffer,
+                        clusterID: zclFrame.cluster.ID,
+                        header: ZclHeader.fromBuffer(buffer),
                         endpoint: data.srcEndpoint,
                         linkquality: data.lqi,
                         groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null,
                         wasBroadcast: data.srcAddrMode === 0x01 || data.srcAddrMode === 0xF,
                         destinationEndpoint: data.destEndpoint,
                     };
-                    debug(`response received (${zclFrame.Header.transactionSequenceNumber})`);
+                    logger.debug(`response received (${zclFrame.header.transactionSequenceNumber})`, NS);
                     return response;
                 } else {
-                    debug(`no response expected (${zclFrame.Header.transactionSequenceNumber})`);
+                    logger.debug(`no response expected (${zclFrame.header.transactionSequenceNumber})`, NS);
                     return null;
                 }
 
             } catch (error) {
-                throw new Error(`no response received (${zclFrame.Header.transactionSequenceNumber})`);
+                throw new Error(`no response received (${zclFrame.header.transactionSequenceNumber})`);
             }
     }
 
@@ -672,16 +669,16 @@ class DeconzAdapter extends Adapter {
         const request: ApsDataRequest = {};
         let pay = zclFrame.toBuffer();
 
-        debug("zclFrame to group - zclFrame.payload:");
-        debug(zclFrame.Payload);
-        //console.log("zclFramte.toBuffer:");
-        //console.log(pay);
+        logger.debug("zclFrame to group - zclFrame.payload:", NS);
+        logger.debug(zclFrame.payload, NS);
+        //logger.info("zclFramte.toBuffer:", NS);
+        //logger.info(pay, NS);
 
         request.requestId = transactionID;
         request.destAddrMode = PARAM.PARAM.addressMode.GROUP_ADDR;
         request.destAddr16 = groupID;
         request.profileId = 0x104;
-        request.clusterId = zclFrame.Cluster.ID;
+        request.clusterId = zclFrame.cluster.ID;
         request.srcEndpoint = 1;
         request.asduLength = pay.length;
         request.asduPayload = [... pay];
@@ -689,10 +686,10 @@ class DeconzAdapter extends Adapter {
         request.radius = PARAM.PARAM.txRadius.UNLIMITED;
 
         try {
-            debug(`sendZclFrameToGroup - message send`);
+            logger.debug(`sendZclFrameToGroup - message send`, NS);
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
-            //debug(`sendZclFrameToGroup ERROR: ${error}`);
+            //logger.debug(`sendZclFrameToGroup ERROR: ${error}`, NS);
             throw new Error(error);
         }
     }
@@ -702,15 +699,15 @@ class DeconzAdapter extends Adapter {
         const request: ApsDataRequest = {};
         let pay = zclFrame.toBuffer();
 
-        debug("zclFrame to all - zclFrame.payload:");
-        debug(zclFrame.Payload);
+        logger.debug("zclFrame to all - zclFrame.payload:", NS);
+        logger.debug(zclFrame.payload, NS);
 
         request.requestId = transactionID;
         request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
         request.destAddr16 = 0xFFFD;
         request.destEndpoint = endpoint;
         request.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104;
-        request.clusterId = zclFrame.Cluster.ID;
+        request.clusterId = zclFrame.cluster.ID;
         request.srcEndpoint = sourceEndpoint;
         request.asduLength = pay.length;
         request.asduPayload = [... pay];
@@ -718,10 +715,10 @@ class DeconzAdapter extends Adapter {
         request.radius = PARAM.PARAM.txRadius.UNLIMITED;
 
         try {
-            debug(`sendZclFrameToAll - message send`);
+            logger.debug(`sendZclFrameToAll - message send`, NS);
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
-            //debug(`sendZclFrameToAll ERROR: ${error}`);
+            //logger.debug(`sendZclFrameToAll ERROR: ${error}`, NS);
             throw new Error(error);
         }
     }
@@ -767,12 +764,12 @@ class DeconzAdapter extends Adapter {
         try {
             const d = await this.waitForData(destinationNetworkAddress, 0, 0x8021);
             const data = d.asduPayload;
-            debug("BIND RESPONSE - addr: 0x" + destinationNetworkAddress.toString(16) + " status: " + data[1]);
+            logger.debug("BIND RESPONSE - addr: 0x" + destinationNetworkAddress.toString(16) + " status: " + data[1], NS);
             if (data[1] !== 0) {
                 throw new Error("status: " + data[1]);
             }
         } catch (error) {
-            debug("BIND FAILED - addr: 0x" + destinationNetworkAddress.toString(16) + " " + error);
+            logger.debug("BIND FAILED - addr: 0x" + destinationNetworkAddress.toString(16) + " " + error, NS);
             throw new Error(error);
         }
     }
@@ -819,12 +816,12 @@ class DeconzAdapter extends Adapter {
         try {
             const d = await this.waitForData(destinationNetworkAddress, 0, 0x8022);
             const data = d.asduPayload;
-            debug("UNBIND RESPONSE - addr: 0x" + destinationNetworkAddress.toString(16) + " status: " + data[1]);
+            logger.debug("UNBIND RESPONSE - addr: 0x" + destinationNetworkAddress.toString(16) + " status: " + data[1], NS);
             if (data[1] !== 0) {
                 throw new Error("status: " + data[1]);
             }
         } catch (error) {
-            debug("UNBIND FAILED - addr: 0x" + destinationNetworkAddress.toString(16) + " " + error);
+            logger.debug("UNBIND FAILED - addr: 0x" + destinationNetworkAddress.toString(16) + " " + error, NS);
             throw new Error(error);
         }
     }
@@ -856,7 +853,7 @@ class DeconzAdapter extends Adapter {
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8034);
             const data = d.asduPayload;
-            debug("REMOVE_DEVICE - addr: 0x" + networkAddress.toString(16) + " status: " + data[1]);
+            logger.debug("REMOVE_DEVICE - addr: 0x" + networkAddress.toString(16) + " status: " + data[1], NS);
             const payload: Events.DeviceLeavePayload = {
                 networkAddress: networkAddress,
                 ieeeAddr: ieeeAddr,
@@ -866,7 +863,7 @@ class DeconzAdapter extends Adapter {
             }
             this.emit(Events.Events.deviceLeave, payload);
         } catch (error) {
-            debug("REMOVE_DEVICE FAILED - addr: 0x" + networkAddress.toString(16) + " " + error);
+            logger.debug("REMOVE_DEVICE FAILED - addr: 0x" + networkAddress.toString(16) + " " + error, NS);
             throw new Error(error);
         }
     }
@@ -889,7 +886,7 @@ class DeconzAdapter extends Adapter {
 
             // check current channel against configuration.yaml
             if (this.networkOptions.channelList[0] !== channel) {
-                debug("Channel in configuration.yaml (" + this.networkOptions.channelList[0] + ") differs from current channel (" + channel + "). Changing channel.");
+                logger.debug("Channel in configuration.yaml (" + this.networkOptions.channelList[0] + ") differs from current channel (" + channel + "). Changing channel.", NS);
 
                 let setChannelMask = 0;
                 switch (this.networkOptions.channelList[0]) {
@@ -950,47 +947,47 @@ class DeconzAdapter extends Adapter {
                     await this.sleep(500);
                     changed = true;
                 } catch (error) {
-                    debug("Could not set channel: " + error);
+                    logger.debug("Could not set channel: " + error, NS);
                 }
             }
 
             // check current panid against configuration.yaml
             if (this.networkOptions.panID !== panid) {
-                debug("panid in configuration.yaml (" + this.networkOptions.panID + ") differs from current panid (" + panid + "). Changing panid.");
+                logger.debug("panid in configuration.yaml (" + this.networkOptions.panID + ") differs from current panid (" + panid + "). Changing panid.", NS);
 
                 try {
                     await this.driver.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, this.networkOptions.panID);
                     await this.sleep(500);
                     changed = true;
                 } catch (error) {
-                    debug("Could not set panid: " + error);
+                    logger.debug("Could not set panid: " + error, NS);
                 }
             }
 
             // check current extended_panid against configuration.yaml
             if (this.driver.generalArrayToString(this.networkOptions.extendedPanID, 8) !== expanid) {
 
-                debug("extended panid in configuration.yaml (" + this.driver.macAddrArrayToString(this.networkOptions.extendedPanID) + ") differs from current extended panid (" + expanid + "). Changing extended panid.");
+                logger.debug("extended panid in configuration.yaml (" + this.driver.macAddrArrayToString(this.networkOptions.extendedPanID) + ") differs from current extended panid (" + expanid + "). Changing extended panid.", NS);
 
                 try {
                     await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID);
                     await this.sleep(500);
                     changed = true;
                 } catch (error) {
-                    debug("Could not set extended panid: " + error);
+                    logger.debug("Could not set extended panid: " + error, NS);
                 }
             }
 
             // check current network key against configuration.yaml
             if (this.driver.generalArrayToString(this.networkOptions.networkKey, 16) !== networkKey) {
-                debug("network key in configuration.yaml (hidden) differs from current network key (" + networkKey + "). Changing network key.");
+                logger.debug("network key in configuration.yaml (hidden) differs from current network key (" + networkKey + "). Changing network key.", NS);
 
                 try {
                     await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey);
                     await this.sleep(500);
                     changed = true;
                 } catch (error) {
-                    debug("Could not set network key: " + error);
+                    logger.debug("Could not set network key: " + error, NS);
                 }
             }
 
@@ -1000,10 +997,10 @@ class DeconzAdapter extends Adapter {
                 await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
                 await this.sleep(2000);
                 
-                let panid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
-                let expanid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
-                let channel: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
-                let networkKey: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.NETWORK_KEY);
+                panid = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
+                expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
+                channel = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
+                networkKey = await this.driver.readParameterRequest(PARAM.PARAM.Network.NETWORK_KEY);
             }
             
             return {
@@ -1013,7 +1010,7 @@ class DeconzAdapter extends Adapter {
             };
         } catch (error) {
             const msg = "get network parameters Error:" + error;
-            debug(msg);
+            logger.debug(msg, NS);
             return Promise.reject(new Error(msg));
         }
     }
@@ -1028,17 +1025,25 @@ class DeconzAdapter extends Adapter {
 
     public async sendZclFrameInterPANBroadcast(
         zclFrame: ZclFrame, timeout: number
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
         throw new Error("not supported");
     }
 
     public async sendZclFrameInterPANBroadcastWithResponse(
         zclFrame: ZclFrame, timeout: number
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
         throw new Error("not supported");
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {
+        throw new Error("not supported");
+    }
+
+    public async supportsChangeChannel(): Promise<boolean> {
+        return false;
+    }
+
+    public async changeChannel(newChannel: number): Promise<void> {
         throw new Error("not supported");
     }
 
@@ -1077,8 +1082,10 @@ class DeconzAdapter extends Adapter {
         ind.commandId, ind.commandFrameSize].concat(ind.commandFrame);
 
         const payBuf = Buffer.from(gpFrame);
-        const payload: Events.ZclDataPayload = {
-            frame: ZclFrame.fromBuffer(ind.clusterId, payBuf),
+        const payload: Events.ZclPayload = {
+            header: ZclHeader.fromBuffer(payBuf),
+            data: payBuf,
+            clusterID: ind.clusterId,
             address: ind.srcId,
             endpoint: 242, // GP endpoint
             linkquality: 127,
@@ -1088,21 +1095,18 @@ class DeconzAdapter extends Adapter {
         };
 
         this.waitress.resolve(payload);
-        this.emit(Events.Events.zclData, payload);
+        this.emit(Events.Events.zclPayload, payload);
     }
 
     private checkReceivedDataPayload(resp: ReceivedDataResponse) {
         let srcAddr: any = null;
-        let frame: ZclFrame = null;
+        let header: ZclHeader = null;
+        const payBuf = resp != null ? Buffer.from(resp.asduPayload) : null;
 
         if (resp != null) {
             srcAddr = (resp.srcAddr16 != null) ? resp.srcAddr16 : resp.srcAddr64;
             if (resp.profileId != 0x00) {
-                try {
-                    frame = ZclFrame.fromBuffer(resp.clusterId, Buffer.from(resp.asduPayload));
-                } catch (error) {
-                    debug("could not parse zclFrame: " + error);
-                }
+                header = ZclHeader.fromBuffer(payBuf);
             }
         }
 
@@ -1111,14 +1115,14 @@ class DeconzAdapter extends Adapter {
             const req: WaitForDataRequest = this.openRequestsQueue[i];
             if (srcAddr != null && req.addr === srcAddr && req.clusterId === resp.clusterId &&
                 req.profileId === resp.profileId) {
-                if (frame !== null && req.transactionSequenceNumber !== null && req.transactionSequenceNumber !== undefined) {
-                    if (req.transactionSequenceNumber === frame.Header.transactionSequenceNumber) {
-                        debug("resolve data request with transSeq Nr.: " + req.transactionSequenceNumber);
+                if (header !== null && req.transactionSequenceNumber !== null && req.transactionSequenceNumber !== undefined) {
+                    if (req.transactionSequenceNumber === header.transactionSequenceNumber) {
+                        logger.debug("resolve data request with transSeq Nr.: " + req.transactionSequenceNumber, NS);
                         this.openRequestsQueue.splice(i, 1);
                         req.resolve(resp);
                     }
                 } else {
-                    debug("resolve data request without a transSeq Nr.");
+                    logger.debug("resolve data request without a transSeq Nr.", NS);
                     this.openRequestsQueue.splice(i, 1);
                     req.resolve(resp);
                 }
@@ -1129,7 +1133,7 @@ class DeconzAdapter extends Adapter {
             // Default timeout: 60 seconds.
             // Comparison is negated to prevent orphans when invalid timeout is entered (resulting in NaN).
             if (!((now - req.ts) <= (req.timeout ?? 60000))) {
-                //debug("Timeout for request in openRequestsQueue addr: " + req.addr.toString(16) + " clusterId: " + req.clusterId.toString(16) + " profileId: " + req.profileId.toString(16));
+                //logger.debug("Timeout for request in openRequestsQueue addr: " + req.addr.toString(16) + " clusterId: " + req.clusterId.toString(16) + " profileId: " + req.profileId.toString(16), NS);
                 //remove from busyQueue
                 this.openRequestsQueue.splice(i, 1);
                 req.reject("waiting for response TIMEOUT");
@@ -1139,7 +1143,6 @@ class DeconzAdapter extends Adapter {
         // check unattended incomming messages
         if (resp != null && resp.profileId === 0x00 && resp.clusterId === 0x13) {
             // device Annce
-            const payBuf = Buffer.from(resp.asduPayload);
             const payload: Events.DeviceJoinedPayload = {
                 networkAddress: payBuf.readUInt16LE(1),
                 ieeeAddr: this.driver.macAddrArrayToString(resp.asduPayload.slice(3,11)),
@@ -1152,34 +1155,20 @@ class DeconzAdapter extends Adapter {
         }
 
         if (resp != null && resp.profileId != 0x00) {
-            const payBuf = Buffer.from(resp.asduPayload);
-            try {
-                const payload: Events.ZclDataPayload = {
-                    frame: ZclFrame.fromBuffer(resp.clusterId, payBuf),
-                    address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
-                    endpoint: resp.srcEndpoint,
-                    linkquality: resp.lqi,
-                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null,
-                    wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xF,
-                    destinationEndpoint: resp.destEndpoint,
-                };
+            const payload: Events.ZclPayload = {
+                clusterID: resp.clusterId,
+                header,
+                data: payBuf,
+                address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
+                endpoint: resp.srcEndpoint,
+                linkquality: resp.lqi,
+                groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null,
+                wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xF,
+                destinationEndpoint: resp.destEndpoint,
+            };
 
-                this.waitress.resolve(payload);
-                this.emit(Events.Events.zclData, payload);
-            } catch (error) {
-                const payload: Events.RawDataPayload = {
-                    clusterID: resp.clusterId,
-                    data: payBuf,
-                    address: (resp.destAddrMode === 0x03) ? resp.srcAddr64 : resp.srcAddr16,
-                    endpoint: resp.srcEndpoint,
-                    linkquality: resp.lqi,
-                    groupID: (resp.destAddrMode === 0x01) ? resp.destAddr16 : null,
-                    wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xF,
-                    destinationEndpoint: resp.destEndpoint,
-                };
-
-                this.emit(Events.Events.rawData, payload);
-            }
+            this.waitress.resolve(payload);
+            this.emit(Events.Events.zclPayload, payload);
         }
     }
 
@@ -1199,15 +1188,15 @@ class DeconzAdapter extends Adapter {
             ` - ${matcher.commandIdentifier} after ${timeout}ms`;
     }
 
-    private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        const transactionSequenceNumber = payload.frame.Header.transactionSequenceNumber;
-        return (!matcher.address || payload.address === matcher.address) &&
+    private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
+        return payload.header &&
+            (!matcher.address || payload.address === matcher.address) &&
             payload.endpoint === matcher.endpoint &&
-            (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            payload.frame.Cluster.ID === matcher.clusterID &&
-            matcher.frameType === payload.frame.Header.frameControl.frameType &&
-            matcher.commandIdentifier === payload.frame.Header.commandIdentifier &&
-            matcher.direction === payload.frame.Header.frameControl.direction;
+            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+            payload.clusterID === matcher.clusterID &&
+            matcher.frameType === payload.header.frameControl.frameType &&
+            matcher.commandIdentifier === payload.header.commandIdentifier &&
+            matcher.direction === payload.header.frameControl.direction;
     }
 }
 

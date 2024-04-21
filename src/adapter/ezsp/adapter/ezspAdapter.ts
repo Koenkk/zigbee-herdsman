@@ -1,28 +1,27 @@
 /* istanbul ignore file */
-/* eslint-disable */
 import {
     NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
-    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, Backup as BackupType, NetworkParameters,
+    ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, NetworkParameters,
     StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions
 } from '../../tstype';
-import Debug from "debug";
 import Adapter from '../../adapter';
 
-const debug = Debug("zigbee-herdsman:adapter:ezsp:debg");
 import {Driver, EmberIncomingMessage} from '../driver';
-import {EmberZDOCmd, EmberApsOption, uint16_t, EmberEUI64, EmberStatus, EmberKeyData} from '../driver/types';
-import {ZclFrame, FrameType, Direction, Foundation} from '../../../zcl';
+import {EmberZDOCmd, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
+import {ZclFrame, FrameType, Direction, Foundation, ZclHeader} from '../../../zcl';
 import * as Events from '../../events';
 import {Queue, Waitress, Wait, RealpathSync} from '../../../utils';
 import * as Models from "../../../models";
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
-import {EZSPAdapterBackup} from './backup';
+import {EZSPZDOResponseFrameData} from '../driver/ezsp';
+import {logger} from '../../../utils/logger';
 
+const NS = 'zh:ezsp';
 
 const autoDetectDefinitions = [
-    { manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4' },  // Sonoff ZBDongle-E
-    { manufacturer: 'Nabu Casa', vendorId: '10c4', productId: 'ea60' },  // Home Assistant SkyConnect
+    {manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4'},  // Sonoff ZBDongle-E
+    {manufacturer: 'Nabu Casa', vendorId: '10c4', productId: 'ea60'},  // Home Assistant SkyConnect
 ];
 
 
@@ -36,76 +35,67 @@ interface WaitressMatcher {
 
 class EZSPAdapter extends Adapter {
     private driver: Driver;
-    private waitress: Waitress<Events.ZclDataPayload, WaitressMatcher>;
+    private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
     private interpanLock: boolean;
-    private backupMan: EZSPAdapterBackup;
     private queue: Queue;
+    private closing: boolean;
 
 
     public constructor(networkOptions: NetworkOptions,
-                       serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
+        serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
 
-        this.waitress = new Waitress<Events.ZclDataPayload, WaitressMatcher>(
+        this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter
         );
         this.interpanLock = false;
+        this.closing = false;
 
         const concurrent = adapterOptions && adapterOptions.concurrent ? adapterOptions.concurrent : 8;
-        debug(`Adapter concurrent: ${concurrent}`);
+        logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
 
-        this.driver = new Driver(this.serialPortOptions, this.networkOptions, this.greenPowerGroup);
+        this.driver = new Driver(this.serialPortOptions, this.networkOptions, this.greenPowerGroup, backupPath);
+        this.driver.on('close', this.onDriverClose.bind(this));
         this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
         this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
         this.driver.on('incomingMessage', this.processMessage.bind(this));
-        this.backupMan = new EZSPAdapterBackup(this.driver, backupPath);
     }
 
-    private async processMessage(frame: EmberIncomingMessage) {
-        debug(`processMessage: ${JSON.stringify(frame)}`);
+    private async processMessage(frame: EmberIncomingMessage): Promise<void> {
+        logger.debug(`processMessage: ${JSON.stringify(frame)}`, NS);
         if (frame.apsFrame.profileId == 0) {
             if (
                 frame.apsFrame.clusterId == EmberZDOCmd.Device_annce &&
                 frame.apsFrame.destinationEndpoint == 0) {
                 let nwk, rst, ieee;
+                // eslint-disable-next-line prefer-const
                 [nwk, rst] = uint16_t.deserialize(uint16_t, frame.message.subarray(1));
                 [ieee, rst] = EmberEUI64.deserialize(EmberEUI64, rst as Buffer);
                 ieee = new EmberEUI64(ieee);
-                debug("ZDO Device announce: %s, %s", nwk, ieee.toString());
+                logger.debug(`ZDO Device announce: ${nwk}, ${ieee.toString()}`, NS);
                 this.driver.handleNodeJoined(nwk, ieee);
             }
         } else if (frame.apsFrame.profileId == 260 || frame.apsFrame.profileId == 0xFFFF) {
-            try {
-                const payload: Events.ZclDataPayload = {
-                    frame: ZclFrame.fromBuffer(frame.apsFrame.clusterId, frame.message),
-                    address: frame.sender,
-                    endpoint: frame.apsFrame.sourceEndpoint,
-                    linkquality: frame.lqi,
-                    groupID: frame.apsFrame.groupId,
-                    wasBroadcast: false, // TODO
-                    destinationEndpoint: frame.apsFrame.destinationEndpoint,
-                };
+            const payload: Events.ZclPayload = {
+                clusterID: frame.apsFrame.clusterId,
+                header: ZclHeader.fromBuffer(frame.message),
+                data: frame.message,
+                address: frame.sender,
+                endpoint: frame.apsFrame.sourceEndpoint,
+                linkquality: frame.lqi,
+                groupID: frame.apsFrame.groupId,
+                wasBroadcast: false, // TODO
+                destinationEndpoint: frame.apsFrame.destinationEndpoint,
+            };
 
-                this.waitress.resolve(payload);
-                this.emit(Events.Events.zclData, payload);
-            } catch (error) {
-                const payload: Events.RawDataPayload = {
-                    clusterID: frame.apsFrame.clusterId,
-                    data: frame.message,
-                    address: frame.sender,
-                    endpoint: frame.apsFrame.sourceEndpoint,
-                    linkquality: frame.lqi,
-                    groupID: frame.apsFrame.groupId,
-                    wasBroadcast: false, // TODO
-                    destinationEndpoint: frame.apsFrame.destinationEndpoint,
-                };
-
-                this.emit(Events.Events.rawData, payload);
-            }
+            this.waitress.resolve(payload);
+            this.emit(Events.Events.zclPayload, payload);
         } else if (frame.apsFrame.profileId == 0xc05e && frame.senderEui64) {  // ZLL Frame
-            const payload: Events.ZclDataPayload = {
-                frame: ZclFrame.fromBuffer(frame.apsFrame.clusterId, frame.message),
+            const payload: Events.ZclPayload = {
+                clusterID: frame.apsFrame.clusterId,
+                header: ZclHeader.fromBuffer(frame.message),
+                data: frame.message,
                 address: `0x${frame.senderEui64.toString()}`,
                 endpoint: 0xFE,
                 linkquality: frame.lqi,
@@ -115,47 +105,53 @@ class EZSPAdapter extends Adapter {
             };
 
             this.waitress.resolve(payload);
-            this.emit(Events.Events.zclData, payload);
+            this.emit(Events.Events.zclPayload, payload);
         } else if (frame.apsFrame.profileId == 0xA1E0) {  // GP Frame
-            const zclFrame = ZclFrame.create(
-                FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, true,
-                null, frame.apsFrame.sequence,
-                (frame.messageType == 0xE0) ? 'commissioningNotification' : 'notification',
-                frame.apsFrame.clusterId, frame.message);
-            const payload: Events.ZclDataPayload = {
-                frame: zclFrame,
-                address: frame.sender,
-                endpoint: frame.apsFrame.sourceEndpoint,
-                linkquality: frame.lqi,
-                groupID: null,
-                wasBroadcast: true,
-                destinationEndpoint: frame.apsFrame.sourceEndpoint,
-            };
-
-            this.waitress.resolve(payload);
-            this.emit(Events.Events.zclData, payload);
+            // Only handle when clusterId == 33 (greenPower), some devices send messages with this profileId
+            // while the cluster is not greenPower
+            // https://github.com/Koenkk/zigbee2mqtt/issues/20838
+            if (frame.apsFrame.clusterId === 33) {
+                const payload: Events.ZclPayload = {
+                    header: ZclHeader.fromBuffer(frame.message),
+                    clusterID: frame.apsFrame.clusterId,
+                    data: frame.message,
+                    address: frame.sender,
+                    endpoint: frame.apsFrame.sourceEndpoint,
+                    linkquality: frame.lqi,
+                    groupID: null,
+                    wasBroadcast: true,
+                    destinationEndpoint: frame.apsFrame.sourceEndpoint,
+                };
+    
+                this.waitress.resolve(payload);
+                this.emit(Events.Events.zclPayload, payload);
+            } else {
+                logger.debug(`Ignoring GP frame because clusterId is not greenPower`, NS);
+            }
         }
         this.emit('event', frame);
     }
 
-    private async handleDeviceJoin(arr: any[]) {
-        let [nwk, ieee] = arr;
-        debug('Device join request received: %s %s', nwk, ieee.toString('hex'));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private async handleDeviceJoin(arr: any[]): Promise<void> {
+        const [nwk, ieee] = arr;
+        logger.debug(`Device join request received: ${nwk} ${ieee.toString('hex')}`, NS);
         const payload: Events.DeviceJoinedPayload = {
             networkAddress: nwk,
             ieeeAddr: `0x${ieee.toString('hex')}`,
         };
 
         if (nwk == 0) {
-            const nd = await this.nodeDescriptor(nwk);
+            await this.nodeDescriptor(nwk);
         } else {
             this.emit(Events.Events.deviceJoined, payload);
         }
     }
 
-    private handleDeviceLeft(arr: any[]) {
-        let [nwk, ieee] = arr;
-        debug('Device left network request received: %s %s', nwk, ieee);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private handleDeviceLeft(arr: any[]): void {
+        const [nwk, ieee] = arr;
+        logger.debug(`Device left network request received: ${nwk} ${ieee}`, NS);
 
         const payload: Events.DeviceLeavePayload = {
             networkAddress: nwk,
@@ -168,15 +164,20 @@ class EZSPAdapter extends Adapter {
      * Adapter methods
      */
     public async start(): Promise<StartResult> {
-        try {
-            return await this.driver.startup();
-        } catch {
-            return await this.driver.reset();
-        }
+        return this.driver.startup();
     }
 
     public async stop(): Promise<void> {
+        this.closing = true;
         await this.driver.stop();
+    }
+
+    public async onDriverClose(): Promise<void> {
+        logger.debug(`onDriverClose()`, NS);
+
+        if (!this.closing) {
+            this.emit(Events.Events.disconnected);
+        }
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
@@ -188,7 +189,7 @@ class EZSPAdapter extends Adapter {
         try {
             return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
         } catch (error) {
-            debug(`Failed to determine if path is valid: '${error}'`);
+            logger.debug(`Failed to determine if path is valid: '${error}'`, NS);
             return false;
         }
     }
@@ -234,24 +235,26 @@ class EZSPAdapter extends Adapter {
     }
 
     public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
-        return this.queue.execute<void>(async () => {
-            this.checkInterpanLock();
-            if (seconds) {
-                this.driver.preJoining();
-            }
-            if (networkAddress) {
-                const result = await this.driver.zdoRequest(
-                    networkAddress, EmberZDOCmd.Mgmt_Permit_Joining_req,
-                    EmberZDOCmd.Mgmt_Permit_Joining_rsp,
-                    {duration: seconds, tcSignificant: false}
-                );
-                if (result.status !== EmberStatus.SUCCESS) {
-                    throw new Error(`permitJoin for '${networkAddress}' failed`);
+        if (this.driver.ezsp.isInitialized()) {
+            return this.queue.execute<void>(async () => {
+                this.checkInterpanLock();
+
+                await this.driver.preJoining(seconds);
+
+                if (networkAddress) {
+                    const result = await this.driver.zdoRequest(
+                        networkAddress, EmberZDOCmd.Mgmt_Permit_Joining_req,
+                        EmberZDOCmd.Mgmt_Permit_Joining_rsp,
+                        {duration: seconds, tcSignificant: false}
+                    );
+                    if (result.status !== EmberStatus.SUCCESS) {
+                        throw new Error(`permitJoin for '${networkAddress}' failed`);
+                    }
+                } else {
+                    await this.driver.permitJoining(seconds);
                 }
-            } else {
-                await this.driver.permitJoining(seconds);
-            }
-        });
+            });
+        }
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
@@ -265,6 +268,7 @@ class EZSPAdapter extends Adapter {
         await this.driver.addInstallCode(ieeeAddress, key);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async reset(type: 'soft' | 'hard'): Promise<void> {
         return Promise.reject(new Error("Not supported"));
     }
@@ -274,7 +278,7 @@ class EZSPAdapter extends Adapter {
             this.checkInterpanLock();
             const neighbors: LQINeighbor[] = [];
 
-            const request = async (startIndex: number): Promise<any> => {
+            const request = async (startIndex: number): Promise<EZSPZDOResponseFrameData> => {
                 const result = await this.driver.zdoRequest(
                     networkAddress, EmberZDOCmd.Mgmt_Lqi_req, EmberZDOCmd.Mgmt_Lqi_rsp,
                     {startindex: startIndex}
@@ -320,7 +324,7 @@ class EZSPAdapter extends Adapter {
             this.checkInterpanLock();
             const table: RoutingTableEntry[] = [];
 
-            const request = async (startIndex: number): Promise<any> => {
+            const request = async (startIndex: number): Promise<EZSPZDOResponseFrameData> => {
                 const result = await this.driver.zdoRequest(
                     networkAddress, EmberZDOCmd.Mgmt_Rtg_req, EmberZDOCmd.Mgmt_Rtg_rsp,
                     {startindex: startIndex}
@@ -362,11 +366,11 @@ class EZSPAdapter extends Adapter {
         return this.queue.execute<NodeDescriptor>(async () => {
             this.checkInterpanLock();
             try {
-                debug(`Requesting 'Node Descriptor' for '${networkAddress}'`);
+                logger.debug(`Requesting 'Node Descriptor' for '${networkAddress}'`, NS);
                 const result = await this.nodeDescriptorInternal(networkAddress);
                 return result;
             } catch (error) {
-                debug(`Node descriptor request for '${networkAddress}' failed (${error}), retry`);
+                logger.debug(`Node descriptor request for '${networkAddress}' failed (${error}), retry`, NS);
                 throw error;
             }
         });
@@ -385,7 +389,7 @@ class EZSPAdapter extends Adapter {
     }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
-        debug(`Requesting 'Active endpoints' for '${networkAddress}'`);
+        logger.debug(`Requesting 'Active endpoints' for '${networkAddress}'`, NS);
         return this.queue.execute<ActiveEndpoints>(async () => {
             const endpoints = await this.driver.zdoRequest(
                 networkAddress, EmberZDOCmd.Active_EP_req, EmberZDOCmd.Active_EP_rsp,
@@ -396,7 +400,7 @@ class EZSPAdapter extends Adapter {
     }
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
-        debug(`Requesting 'Simple Descriptor' for '${networkAddress}' endpoint ${endpointID}`);
+        logger.debug(`Requesting 'Simple Descriptor' for '${networkAddress}' endpoint ${endpointID}`, NS);
         return this.queue.execute<SimpleDescriptor>(async () => {
             this.checkInterpanLock();
             const descriptor = await this.driver.zdoRequest(
@@ -416,8 +420,8 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameToEndpoint(
         ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
-    ): Promise<Events.ZclDataPayload> {
-        return this.queue.execute<Events.ZclDataPayload>(async () => {
+    ): Promise<Events.ZclPayload> {
+        return this.queue.execute<Events.ZclPayload>(async () => {
             this.checkInterpanLock();
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr, networkAddress, endpoint, sourceEndpoint || 1, zclFrame, timeout, disableResponse,
@@ -431,28 +435,28 @@ class EZSPAdapter extends Adapter {
         timeout: number, disableResponse: boolean, disableRecovery: boolean, responseAttempt: number,
         dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
         assocRestore: { ieeeadr: string, nwkaddr: number, noderelation: number }
-    ): Promise<Events.ZclDataPayload> {
+    ): Promise<Events.ZclPayload> {
         if (ieeeAddr == null) {
             ieeeAddr = `0x${this.driver.ieee.toString()}`;
         }
-        debug('sendZclFrameToEndpointInternal %s:%i/%i (%i,%i,%i), timeout=%i',
-            ieeeAddr, networkAddress, endpoint, responseAttempt, dataRequestAttempt, this.queue.count(), timeout);
+        logger.debug(`sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} `
+            + `(${responseAttempt},${dataRequestAttempt},${this.queue.count()}), timeout=${timeout}`, NS);
         let response = null;
-        const command = zclFrame.getCommand();
+        const command = zclFrame.command;
         if (command.hasOwnProperty('response') && disableResponse === false) {
             response = this.waitForInternal(
                 networkAddress, endpoint,
-                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, command.response, timeout
+                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, command.response, timeout
             );
-        } else if (!zclFrame.Header.frameControl.disableDefaultResponse) {
+        } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
             response = this.waitForInternal(
                 networkAddress, endpoint,
-                zclFrame.Header.transactionSequenceNumber, zclFrame.Cluster.ID, Foundation.defaultRsp.ID,
+                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, Foundation.defaultRsp.ID,
                 timeout,
             );
         }
 
-        const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID, disableResponse || zclFrame.Header.frameControl.disableDefaultResponse);
+        const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, disableResponse || zclFrame.header.frameControl.disableDefaultResponse);
         frame.profileId = 0x0104;
         frame.sourceEndpoint = sourceEndpoint || 0x01;
         frame.destinationEndpoint = endpoint;
@@ -471,7 +475,7 @@ class EZSPAdapter extends Adapter {
                 const result = await response.start().promise;
                 return result;
             } catch (error) {
-                debug('Response timeout (%s:%d,%d)', ieeeAddr, networkAddress, responseAttempt);
+                logger.debug(`Response timeout (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
                 if (responseAttempt < 1 && !disableRecovery) {
                     return this.sendZclFrameToEndpointInternal(
                         ieeeAddr, networkAddress, endpoint, sourceEndpoint, zclFrame, timeout, disableResponse,
@@ -490,12 +494,13 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
-            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID, false);
+            const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, false);
             frame.profileId = 0x0104;
             frame.sourceEndpoint =  0x01;
             frame.destinationEndpoint = 0x01;
             frame.groupId = groupID;
-            const dataConfirmResult = await this.driver.mrequest(frame, zclFrame.toBuffer());
+            
+            await this.driver.mrequest(frame, zclFrame.toBuffer());
             /**
              * As a group command is not confirmed and thus immidiately returns
              * (contrary to network address requests) we will give the
@@ -508,12 +513,13 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
-            const frame = this.driver.makeApsFrame(zclFrame.Cluster.ID, false);
+            const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, false);
             frame.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xA1E0 : 0x0104;
             frame.sourceEndpoint =  sourceEndpoint;
             frame.destinationEndpoint = endpoint;
             frame.groupId = 0xFFFD;
-            const dataConfirmResult = await this.driver.mrequest(frame, zclFrame.toBuffer());
+            
+            await this.driver.mrequest(frame, zclFrame.toBuffer());
 
             /**
              * As a broadcast command is not confirmed and thus immidiately returns
@@ -538,14 +544,14 @@ class EZSPAdapter extends Adapter {
                 destAddr = {
                     addrmode: 0x01,
                     nwk: destinationAddressOrGroup,
-                }
+                };
             } else {
                 // 0x03 = 64-bit extended address for DstAddr and DstEndpoint present
                 destAddr = {
                     addrmode: 0x03,
                     ieee: new EmberEUI64(destinationAddressOrGroup as string),
                     endpoint: destinationEndpoint,
-                }
+                };
                 this.driver.setNode(destinationNetworkAddress, destAddr.ieee);
             }
             await this.driver.zdoRequest(
@@ -569,14 +575,14 @@ class EZSPAdapter extends Adapter {
                 destAddr = {
                     addrmode: 0x01,
                     nwk: destinationAddressOrGroup,
-                }
+                };
             } else {
                 // 0x03 = 64-bit extended address for DstAddr and DstEndpoint present
                 destAddr = {
                     addrmode: 0x03,
                     ieee: new EmberEUI64(destinationAddressOrGroup as string),
                     endpoint: destinationEndpoint,
-                }
+                };
                 this.driver.setNode(destinationNetworkAddress, destAddr.ieee);
             }
             await this.driver.zdoRequest(
@@ -607,11 +613,13 @@ class EZSPAdapter extends Adapter {
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return (this.driver?.ezsp?.ezspV < 13);
+        return true;
     }
 
     public async backup(): Promise<Models.Backup> {
-        return this.backupMan.createBackup();
+        if (this.driver.ezsp.isInitialized()) {
+            return this.driver.backupMan.createBackup();
+        }
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
@@ -632,7 +640,7 @@ class EZSPAdapter extends Adapter {
 
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
         return this.queue.execute<void>(async () => {
-            debug(`sendZclFrameInterPANToIeeeAddr to ${ieeeAddr}`);
+            logger.debug(`sendZclFrameInterPANToIeeeAddr to ${ieeeAddr}`, NS);
             try {
                 const frame = this.driver.makeEmberIeeeRawFrame();
                 frame.ieeeFrameControl = 0xcc21;
@@ -642,25 +650,26 @@ class EZSPAdapter extends Adapter {
                 frame.sourceAddress = this.driver.ieee;
                 frame.nwkFrameControl = 0x000b;
                 frame.appFrameControl = 0x03;
-                frame.clusterId = zclFrame.Cluster.ID;
+                frame.clusterId = zclFrame.cluster.ID;
                 frame.profileId = 0xc05e;
-                const dataConfirmResult = await this.driver.ieeerawrequest(frame, zclFrame.toBuffer());
+
+                await this.driver.ieeerawrequest(frame, zclFrame.toBuffer());
             } catch (error) {
                 throw error;
             }
         });
     }
 
-    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclDataPayload> {
-        return this.queue.execute<Events.ZclDataPayload>(async () => {
-            debug(`sendZclFrameInterPANBroadcast`);
-            const command = zclFrame.getCommand();
+    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclPayload> {
+        return this.queue.execute<Events.ZclPayload>(async () => {
+            logger.debug(`sendZclFrameInterPANBroadcast`, NS);
+            const command = zclFrame.command;
             if (!command.hasOwnProperty('response')) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
             const response = this.waitForInternal(
-                null, 0xFE, null, zclFrame.Cluster.ID, command.response, timeout
+                null, 0xFE, null, zclFrame.cluster.ID, command.response, timeout
             );
 
             try {
@@ -672,9 +681,10 @@ class EZSPAdapter extends Adapter {
                 frame.ieeeAddress = this.driver.ieee;
                 frame.nwkFrameControl = 0x000b;
                 frame.appFrameControl = 0x0b;
-                frame.clusterId = zclFrame.Cluster.ID;
+                frame.clusterId = zclFrame.cluster.ID;
                 frame.profileId = 0xc05e;
-                const dataConfirmResult = await this.driver.rawrequest(frame, zclFrame.toBuffer());
+
+                await this.driver.rawrequest(frame, zclFrame.toBuffer());
             } catch (error) {
                 response.cancel();
                 throw error;
@@ -684,8 +694,17 @@ class EZSPAdapter extends Adapter {
         });
     }
 
+    public async supportsChangeChannel(): Promise<boolean> {
+        return false;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public async changeChannel(newChannel: number): Promise<void> {
+        return Promise.reject(new Error("Not supported"));
+    }
+
     public async setTransmitPower(value: number): Promise<void> {
-        debug(`setTransmitPower to ${value}`);
+        logger.debug(`setTransmitPower to ${value}`, NS);
         return this.queue.execute<void>(async () => {
             await this.driver.setRadioPower(value);
         });
@@ -700,7 +719,7 @@ class EZSPAdapter extends Adapter {
 
     private waitForInternal(
         networkAddress: number, endpoint: number, transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): { start: () => { promise: Promise<Events.ZclDataPayload> }; cancel: () => void } {
+    ): { start: () => { promise: Promise<Events.ZclPayload> }; cancel: () => void } {
         const payload = {
             address: networkAddress, endpoint, clusterID, commandIdentifier,
             transactionSequenceNumber,
@@ -714,7 +733,7 @@ class EZSPAdapter extends Adapter {
     public waitFor(
         networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
-    ): { promise: Promise<Events.ZclDataPayload>; cancel: () => void } {
+    ): { promise: Promise<Events.ZclPayload>; cancel: () => void } {
         const waiter = this.waitForInternal(
             networkAddress, endpoint, transactionSequenceNumber, clusterID,
             commandIdentifier, timeout,
@@ -729,13 +748,13 @@ class EZSPAdapter extends Adapter {
             ` - ${matcher.commandIdentifier} after ${timeout}ms`;
     }
 
-    private waitressValidator(payload: Events.ZclDataPayload, matcher: WaitressMatcher): boolean {
-        const transactionSequenceNumber = payload.frame.Header.transactionSequenceNumber;
-        return (!matcher.address || payload.address === matcher.address) &&
+    private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
+        return payload.header &&
+            (!matcher.address || payload.address === matcher.address) &&
             payload.endpoint === matcher.endpoint &&
-            (!matcher.transactionSequenceNumber || transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            payload.frame.Cluster.ID === matcher.clusterID &&
-            matcher.commandIdentifier === payload.frame.Header.commandIdentifier;
+            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+            payload.clusterID === matcher.clusterID &&
+            matcher.commandIdentifier === payload.header.commandIdentifier;
     }
 }
 

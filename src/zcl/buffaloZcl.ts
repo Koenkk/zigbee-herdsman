@@ -1,13 +1,10 @@
 import {Buffalo, TsType} from '../buffalo';
+import {logger} from '../utils/logger';
 import {DataType} from './definition';
 import {BuffaloZclOptions, StructuredIndicatorType, StructuredSelector, ZclArray} from './tstype';
 import * as Utils from './utils';
-import Debug from "debug";
 
-const debug = {
-    info: Debug('zigbee-herdsman:controller:buffaloZcl'),
-    error: Debug('zigbee-herdsman:controller:buffaloZcl'),
-};
+const NS = 'zh:controller:buffalozcl';
 
 interface KeyValue {[s: string | number]: number | string}
 
@@ -414,7 +411,7 @@ class BuffaloZcl extends Buffalo {
                 try {
                     attribute = cluster.getAttribute(attributeID).name;
                 } catch {
-                    debug.info("Unknown attribute " + attributeID + " in cluster " + cluster.name);
+                    logger.info("Unknown attribute " + attributeID + " in cluster " + cluster.name, NS);
                 }
 
                 frame.attributes[attribute] = this.read(DataType[type], options);
@@ -428,7 +425,7 @@ class BuffaloZcl extends Buffalo {
         }
     }
 
-    private writeGdpFrame(value: GdpCommissioningReply | GdpChannelConfiguration | GdpCustomReply): void{
+    private writeGdpFrame(value: GdpCommissioningReply | GdpChannelConfiguration | GdpCustomReply): void {
         if (value.commandID == 0xF0) { // Commissioning Reply
             const v = <GdpCommissioningReply> value;
 

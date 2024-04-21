@@ -4,20 +4,17 @@ import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumbe
 import Endpoint from './endpoint';
 import Entity from './entity';
 import {Wait} from '../../utils';
-import Debug from "debug";
 import * as Zcl from '../../zcl';
 import assert from 'assert';
 import {ZclFrameConverter} from '../helpers';
+import {logger} from '../../utils/logger';
 
 /**
  * @ignore
  */
 const OneJanuary2000 = new Date('January 01, 2000 00:00:00 UTC+00:00').getTime();
 
-const debug = {
-    error: Debug('zigbee-herdsman:controller:device:error'),
-    log: Debug('zigbee-herdsman:controller:device:log'),
-};
+const NS = 'zh:controller:device';
 
 interface LQI {
     neighbors: {
@@ -29,6 +26,8 @@ interface LQI {
 interface RoutingTable {
     table: {destinationAddress: number; status: string; nextHop: number}[];
 }
+
+type CustomReadResponse = (frame: Zcl.ZclFrame, endpoint: Endpoint) => boolean;
 
 class Device extends Entity {
     private readonly ID: number;
@@ -51,7 +50,7 @@ class Device extends Entity {
     private _zclVersion?: number;
     private _linkquality?: number;
     private _skipDefaultResponse: boolean;
-    private _skipTimeResponse: boolean;
+    private _customReadResponse?: CustomReadResponse;
     private _deleted: boolean;
     private _lastDefaultResponseSequenceNumber: number;
     private _checkinInterval: number;
@@ -99,8 +98,8 @@ class Device extends Entity {
     set linkquality(linkquality: number) {this._linkquality = linkquality;}
     get skipDefaultResponse(): boolean {return this._skipDefaultResponse;}
     set skipDefaultResponse(skipDefaultResponse: boolean) {this._skipDefaultResponse = skipDefaultResponse;}
-    get skipTimeResponse(): boolean {return this._skipTimeResponse;}
-    set skipTimeResponse(skipTimeResponse: boolean) {this._skipTimeResponse = skipTimeResponse;}
+    get customReadResponse(): CustomReadResponse {return this._customReadResponse;}
+    set customReadResponse(customReadResponse: CustomReadResponse) {this._customReadResponse = customReadResponse;}
     get checkinInterval(): number {return this._checkinInterval;}
     set checkinInterval(checkinInterval: number) {
         this._checkinInterval = checkinInterval;
@@ -158,7 +157,6 @@ class Device extends Entity {
         this._interviewCompleted = interviewCompleted;
         this._interviewing = false;
         this._skipDefaultResponse = false;
-        this._skipTimeResponse = false;
         this.meta = meta;
         this._lastSeen = lastSeen;
         this._checkinInterval = checkinInterval;
@@ -212,9 +210,7 @@ class Device extends Entity {
         return this.endpoints.find(e => e.hasPendingRequests()) !== undefined;
     }
 
-    public async onZclData(dataPayload: AdapterEvents.ZclDataPayload, endpoint: Endpoint): Promise<void> {
-        const frame = dataPayload.frame;
-
+    public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame, endpoint: Endpoint): Promise<void> {
         // Update reportable properties
         if (frame.isCluster('genBasic') && (frame.isCommand('readRsp') || frame.isCommand('report'))) {
             for (const [key, val] of Object.entries(ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID))) {
@@ -223,58 +219,60 @@ class Device extends Entity {
         }
 
         // Respond to enroll requests
-        if (frame.isSpecific() && frame.isCluster('ssIasZone') && frame.isCommand('enrollReq')) {
-            debug.log(`IAS - '${this.ieeeAddr}' responding to enroll response`);
+        if (frame.header.isSpecific && frame.isCluster('ssIasZone') && frame.isCommand('enrollReq')) {
+            logger.debug(`IAS - '${this.ieeeAddr}' responding to enroll response`, NS);
             const payload = {enrollrspcode: 0, zoneid: 23};
             await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true});
         }
 
         // Reponse to read requests
-        if (frame.isGlobal() && frame.isCommand('read')) {
+        if (frame.header.isGlobal && frame.isCommand('read') && !(this._customReadResponse?.(frame, endpoint))) {
             const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
             const attributes: {[s: string]: KeyValue} = {
                 ...endpoint.clusters,
-                genTime: {attributes: {
-                    timeStatus: 3, // Time-master + synchronised
-                    time: time,
-                    timeZone: ((new Date()).getTimezoneOffset() * -1) * 60,
-                    localTime: time - (new Date()).getTimezoneOffset() * 60,
-                    lastSetTime: time,
-                    validUntilTime: time + (24 * 60 * 60), // valid for 24 hours
-                }},
+                genTime: {
+                    attributes: {
+                        timeStatus: 3, // Time-master + synchronised
+                        time: time,
+                        timeZone: ((new Date()).getTimezoneOffset() * -1) * 60,
+                        localTime: time - (new Date()).getTimezoneOffset() * 60,
+                        lastSetTime: time,
+                        validUntilTime: time + (24 * 60 * 60), // valid for 24 hours
+                    },
+                },
             };
 
-            if (frame.Cluster.name in attributes && (frame.Cluster.name !== 'genTime' || !this._skipTimeResponse)) {
+            if (frame.cluster.name in attributes) {
                 const response: KeyValue = {};
-                for (const entry of frame.Payload) {
-                    if (frame.Cluster.hasAttribute(entry.attrId)) {
-                        const name = frame.Cluster.getAttribute(entry.attrId).name;
-                        if (name in attributes[frame.Cluster.name].attributes) {
-                            response[name] = attributes[frame.Cluster.name].attributes[name];
+                for (const entry of frame.payload) {
+                    if (frame.cluster.hasAttribute(entry.attrId)) {
+                        const name = frame.cluster.getAttribute(entry.attrId).name;
+                        if (name in attributes[frame.cluster.name].attributes) {
+                            response[name] = attributes[frame.cluster.name].attributes[name];
                         }
                     }
                 }
 
                 try {
-                    await endpoint.readResponse(frame.Cluster.ID, frame.Header.transactionSequenceNumber, response,
+                    await endpoint.readResponse(frame.cluster.ID, frame.header.transactionSequenceNumber, response,
                         {srcEndpoint: dataPayload.destinationEndpoint});
                 } catch (error) {
-                    debug.error(`Read response to ${this.ieeeAddr} failed`);
+                    logger.error(`Read response to ${this.ieeeAddr} failed`, NS);
                 }
             }
 
         }
 
         // Handle check-in from sleeping end devices
-        if (frame.isSpecific() && frame.isCluster("genPollCtrl") && frame.isCommand("checkin")) {
+        if (frame.header.isSpecific && frame.isCluster("genPollCtrl") && frame.isCommand("checkin")) {
             try {
                 if (this.hasPendingRequests() || (this._checkinInterval === undefined)) {
                     const payload = {
                         startFastPolling: true,
                         fastPollTimeout: 0,
                     };
-                    debug.log(`check-in from ${this.ieeeAddr}: accepting fast-poll`);
-                    await endpoint.command(frame.Cluster.ID, 'checkinRsp', payload, {sendPolicy: 'immediate'});
+                    logger.debug(`check-in from ${this.ieeeAddr}: accepting fast-poll`, NS);
+                    await endpoint.command(frame.cluster.ID, 'checkinRsp', payload, {sendPolicy: 'immediate'});
 
                     // This is a good time to read the checkin interval if we haven't stored it previously
                     if (this._checkinInterval === undefined) {
@@ -282,51 +280,52 @@ class Device extends Entity {
                             await endpoint.read('genPollCtrl', ['checkinInterval'], {sendPolicy: 'immediate'});
                         this._checkinInterval = pollPeriod.checkinInterval / 4; // convert to seconds
                         this.resetPendingRequestTimeout();
-                        debug.log(`Request Queue (${
-                            this.ieeeAddr}): default expiration timeout set to ${this.pendingRequestTimeout}`);
+                        logger.debug(`Request Queue (${this.ieeeAddr}): default expiration timeout set to ${this.pendingRequestTimeout}`, NS);
                     }
                     await Promise.all(this.endpoints.map(async e => e.sendPendingRequests(true)));
                     // We *must* end fast-poll when we're done sending things. Otherwise
                     // we cause undue power-drain.
-                    debug.log(`check-in from ${this.ieeeAddr}: stopping fast-poll`);
-                    await endpoint.command(frame.Cluster.ID, 'fastPollStop', {}, {sendPolicy: 'immediate'});
+                    logger.debug(`check-in from ${this.ieeeAddr}: stopping fast-poll`, NS);
+                    await endpoint.command(frame.cluster.ID, 'fastPollStop', {}, {sendPolicy: 'immediate'});
                 } else {
                     const payload = {
                         startFastPolling: false,
                         fastPollTimeout: 0,
                     };
-                    debug.log(`check-in from ${this.ieeeAddr}: declining fast-poll`);
-                    await endpoint.command(frame.Cluster.ID, 'checkinRsp', payload, {sendPolicy: 'immediate'});
+                    logger.debug(`check-in from ${this.ieeeAddr}: declining fast-poll`, NS);
+                    await endpoint.command(frame.cluster.ID, 'checkinRsp', payload, {sendPolicy: 'immediate'});
                 }
             } catch (error) {
                 /* istanbul ignore next */
-                debug.error(`Handling of poll check-in form ${this.ieeeAddr} failed`);
+                logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed`, NS);
             }
         }
 
         // Send a default response if necessary.
-        const isDefaultResponse = frame.isGlobal() && frame.getCommand().name === 'defaultRsp';
-        const commandHasResponse = frame.getCommand().hasOwnProperty('response');
-        const disableDefaultResponse = frame.Header.frameControl.disableDefaultResponse;
+        const isDefaultResponse = frame.header.isGlobal && frame.command.name === 'defaultRsp';
+        const commandHasResponse = frame.command.hasOwnProperty('response');
+        const disableDefaultResponse = frame.header.frameControl.disableDefaultResponse;
+        /* istanbul ignore next */
+        const disableTuyaDefaultResponse = endpoint.getDevice().manufacturerName?.startsWith('_TZ') && process.env['DISABLE_TUYA_DEFAULT_RESPONSE'];
         // Sometimes messages are received twice, prevent responding twice
-        const alreadyResponded = this._lastDefaultResponseSequenceNumber === frame.Header.transactionSequenceNumber;
+        const alreadyResponded = this._lastDefaultResponseSequenceNumber === frame.header.transactionSequenceNumber;
         if (this.type !== 'GreenPower' && !dataPayload.wasBroadcast && !disableDefaultResponse && !isDefaultResponse && 
-            !commandHasResponse && !this._skipDefaultResponse && !alreadyResponded) {
+            !commandHasResponse && !this._skipDefaultResponse && !alreadyResponded && !disableTuyaDefaultResponse) {
             try {
-                this._lastDefaultResponseSequenceNumber = frame.Header.transactionSequenceNumber;
+                this._lastDefaultResponseSequenceNumber = frame.header.transactionSequenceNumber;
                 // In the ZCL it is not documented what the direction of the default response should be
                 // In https://github.com/Koenkk/zigbee2mqtt/issues/18096 a commandResponse (SERVER_TO_CLIENT)
                 // is send and the device expects a CLIENT_TO_SERVER back.
                 // Previously SERVER_TO_CLIENT was always used.
                 // Therefore for non-global commands we inverse the direction.                
-                const direction = frame.isGlobal() ? Zcl.Direction.SERVER_TO_CLIENT : (
-                    frame.Header.frameControl.direction === Zcl.Direction.CLIENT_TO_SERVER 
+                const direction = frame.header.isGlobal ? Zcl.Direction.SERVER_TO_CLIENT : (
+                    frame.header.frameControl.direction === Zcl.Direction.CLIENT_TO_SERVER 
                         ? Zcl.Direction.SERVER_TO_CLIENT : Zcl.Direction.CLIENT_TO_SERVER
                 );
                 await endpoint.defaultResponse(
-                    frame.getCommand().ID, 0, frame.Cluster.ID, frame.Header.transactionSequenceNumber, {direction});
+                    frame.command.ID, 0, frame.cluster.ID, frame.header.transactionSequenceNumber, {direction});
             } catch (error) {
-                debug.error(`Default response to ${this.ieeeAddr} failed`);
+                logger.error(`Default response to ${this.ieeeAddr} failed`, NS);
             }
         }
     }
@@ -359,7 +358,7 @@ class Device extends Entity {
                 pendingRequestTimeout = entry.checkinInterval * 1000; // milliseconds
             }
         }
-        debug.log (`Request Queue (${ieeeAddr}): default expiration timeout set to ${pendingRequestTimeout}`);
+        logger.debug(`Request Queue (${ieeeAddr}): default expiration timeout set to ${pendingRequestTimeout}`, NS);
 
         return new Device(
             entry.id, entry.type, ieeeAddr, networkAddress, entry.manufId, endpoints,
@@ -466,23 +465,23 @@ class Device extends Entity {
     public async interview(): Promise<void> {
         if (this.interviewing) {
             const message = `Interview - interview already in progress for '${this.ieeeAddr}'`;
-            debug.log(message);
+            logger.debug(message, NS);
             throw new Error(message);
         }
 
         let error;
         this._interviewing = true;
-        debug.log(`Interview - start device '${this.ieeeAddr}'`);
+        logger.debug(`Interview - start device '${this.ieeeAddr}'`, NS);
 
         try {
             await this.interviewInternal();
-            debug.log(`Interview - completed for device '${this.ieeeAddr}'`);
+            logger.debug(`Interview - completed for device '${this.ieeeAddr}'`, NS);
             this._interviewCompleted = true;
         } catch (e) {
             if (this.interviewQuirks()) {
-                debug.log(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${e}')`);
+                logger.debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${e}')`, NS);
             } else {
-                debug.log(`Interview - failed for device '${this.ieeeAddr}' with error '${e.stack}'`);
+                logger.debug(`Interview - failed for device '${this.ieeeAddr}' with error '${e.stack}'`, NS);
                 error = e;
             }
         } finally {
@@ -496,7 +495,7 @@ class Device extends Entity {
     }
 
     private interviewQuirks(): boolean {
-        debug.log(`Interview - quirks check for '${this.modelID}'-'${this.manufacturerName}'-'${this.type}'`);
+        logger.debug(`Interview - quirks check for '${this.modelID}'-'${this.manufacturerName}'-'${this.type}'`, NS);
 
         // TuYa devices are typically hard to interview. They also don't require a full interview to work correctly
         // e.g. no ias enrolling is required for the devices to work.
@@ -511,7 +510,7 @@ class Device extends Entity {
             this._powerSource = this._powerSource || 'Battery';
             this._interviewing = false;
             this._interviewCompleted = true;
-            debug.log(`Interview - quirks matched for TuYa end device`);
+            logger.debug(`Interview - quirks matched for TuYa end device`, NS);
             return true;
         }
 
@@ -538,17 +537,17 @@ class Device extends Entity {
         const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
         if (match) {
             const info = lookup[match];
-            debug.log(`Interview procedure failed but got modelID matching '${match}', assuming interview succeeded`);
+            logger.debug(`Interview procedure failed but got modelID matching '${match}', assuming interview succeeded`, NS);
             this._type = this._type === 'Unknown' ? info.type : this._type;
             this._manufacturerID = this._manufacturerID || info.manufacturerID;
             this._manufacturerName = this._manufacturerName || info.manufacturerName;
             this._powerSource = this._powerSource || info.powerSource;
             this._interviewing = false;
             this._interviewCompleted = true;
-            debug.log(`Interview - quirks matched on '${match}'`);
+            logger.debug(`Interview - quirks matched on '${match}'`, NS);
             return true;
         } else {
-            debug.log('Interview - quirks did not match');
+            logger.debug('Interview - quirks did not match', NS);
             return false;
         }
     }
@@ -558,7 +557,7 @@ class Device extends Entity {
             const nodeDescriptor = await Entity.adapter.nodeDescriptor(this.networkAddress);
             this._manufacturerID = nodeDescriptor.manufacturerCode;
             this._type = nodeDescriptor.type;
-            debug.log(`Interview - got node descriptor for device '${this.ieeeAddr}'`);
+            logger.debug(`Interview - got node descriptor for device '${this.ieeeAddr}'`, NS);
         };
 
         const hasNodeDescriptor = (): boolean => this._manufacturerID != null && this._type != null;
@@ -570,18 +569,16 @@ class Device extends Entity {
                     break;
                 } catch (error) {
                     if (this.interviewQuirks()) {
-                        debug.log(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${error}')`);
+                        logger.debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${error}')`, NS);
                         return;
                     } else {
                         // Most of the times the first node descriptor query fails and the seconds one succeeds.
-                        debug.log(
-                            `Interview - node descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`
-                        );
+                        logger.debug(`Interview - node descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`, NS);
                     }
                 }
             }
         } else {
-            debug.log(`Interview - skip node descriptor request for '${this.ieeeAddr}', already got it`);
+            logger.debug(`Interview - skip node descriptor request for '${this.ieeeAddr}', already got it`, NS);
         }
 
         if (!hasNodeDescriptor()) {
@@ -591,14 +588,14 @@ class Device extends Entity {
         if (this.manufacturerID === 4619 && this._type === 'EndDevice') {
             // Give TuYa end device some time to pair. Otherwise they leave immediately.
             // https://github.com/Koenkk/zigbee2mqtt/issues/5814
-            debug.log("Interview - Detected TuYa end device, waiting 10 seconds...");
+            logger.debug("Interview - Detected TuYa end device, waiting 10 seconds...", NS);
             await Wait(10000);
         } else if ([0, 4098].includes(this.manufacturerID)) {
             // Potentially a TuYa device, some sleep fast so make sure to read the modelId and manufacturerName quickly.
             // In case the device responds, the endoint and modelID/manufacturerName are set
             // in controller.onZclOrRawData()
             // https://github.com/Koenkk/zigbee2mqtt/issues/7553
-            debug.log("Interview - Detected potential TuYa end device, reading modelID and manufacturerName...");
+            logger.debug("Interview - Detected potential TuYa end device, reading modelID and manufacturerName...", NS);
             try {
                 const endpoint = Endpoint.create(1, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
                 const result = await endpoint.read('genBasic', ['modelId', 'manufacturerName'], 
@@ -607,7 +604,7 @@ class Device extends Entity {
                     .forEach((entry) => Device.ReportablePropertiesMapping[entry[0]].set(entry[1], this));
             } catch (error) {
                 /* istanbul ignore next */
-                debug.log(`Interview - TuYa read modelID and manufacturerName failed (${error})`);
+                logger.debug(`Interview - TuYa read modelID and manufacturerName failed (${error})`, NS);
             }
         }
 
@@ -619,7 +616,7 @@ class Device extends Entity {
                 activeEndpoints = await Entity.adapter.activeEndpoints(this.networkAddress);
                 break;
             } catch (error) {
-                debug.log(`Interview - active endpoints request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`);
+                logger.debug(`Interview - active endpoints request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`, NS);
             }
         }
         if (!activeEndpoints) {
@@ -634,7 +631,7 @@ class Device extends Entity {
         // into an error. Therefore we filter it, more info: https://github.com/Koenkk/zigbee-herdsman/issues/82
         activeEndpoints.endpoints.filter((e) => e !== 0 && !this.getEndpoint(e)).forEach((e) =>
             this._endpoints.push(Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr)));
-        debug.log(`Interview - got active endpoints for device '${this.ieeeAddr}'`);
+        logger.debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`, NS);
 
         for (const endpointID of activeEndpoints.endpoints.filter((e) => e !== 0)) {
             const endpoint = this.getEndpoint(endpointID);
@@ -643,7 +640,7 @@ class Device extends Entity {
             endpoint.deviceID = simpleDescriptor.deviceID;
             endpoint.inputClusters = simpleDescriptor.inputClusters;
             endpoint.outputClusters = simpleDescriptor.outputClusters;
-            debug.log(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`);
+            logger.debug(`Interview - got simple descriptor for endpoint '${endpoint.ID}' device '${this.ieeeAddr}'`, NS);
 
             // Read attributes, nice to have but not required for succesfull pairing as most of the attributes
             // are not mandatory in ZCL specification.
@@ -660,8 +657,7 @@ class Device extends Entity {
                                 // https://github.com/Koenkk/zigbee-herdsman-converters/issues/2485.
                                 // The modelID and manufacturerName are crucial for device identification, so retry.
                                 if (item.key === 'modelID' || item.key === 'manufacturerName') {
-                                    debug.log(`Interview - first ${item.key} retrieval attempt failed, ` +
-                                        `retrying after 10 seconds...`);
+                                    logger.debug(`Interview - first ${item.key} retrieval attempt failed, retrying after 10 seconds...`, NS);
                                     await Wait(10000);
                                     result = await endpoint.read('genBasic', [key], {sendPolicy: 'immediate'});
                                 } else {
@@ -670,12 +666,9 @@ class Device extends Entity {
                             }
 
                             item.set(result[key], this);
-                            debug.log(`Interview - got '${item.key}' for device '${this.ieeeAddr}'`);
+                            logger.debug(`Interview - got '${item.key}' for device '${this.ieeeAddr}'`, NS);
                         } catch (error) {
-                            debug.log(
-                                `Interview - failed to read attribute '${item.key}' from ` +
-                                    `endpoint '${endpoint.ID}' (${error})`
-                            );
+                            logger.debug(`Interview - failed to read attribute '${item.key}' from endpoint '${endpoint.ID}' (${error})`, NS);
                         }
                     }
                 }
@@ -686,18 +679,18 @@ class Device extends Entity {
 
         // Enroll IAS device
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
-            debug.log(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+            logger.debug(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`, NS);
 
             const stateBefore = await endpoint.read(
                 'ssIasZone', ['iasCieAddr', 'zoneState'], {sendPolicy: 'immediate'});
-            debug.log(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`);
+            logger.debug(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`, NS);
 
             // Do not enroll when device has already been enrolled
             if (stateBefore.zoneState !== 1 || stateBefore.iasCieAddr !== coordinator.ieeeAddr) {
-                debug.log(`Interview - IAS - not enrolled, enrolling`);
+                logger.debug(`Interview - IAS - not enrolled, enrolling`, NS);
 
                 await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr}, {sendPolicy: 'immediate'});
-                debug.log(`Interview - IAS - wrote iasCieAddr`);
+                logger.debug(`Interview - IAS - wrote iasCieAddr`, NS);
 
                 // There are 2 enrollment procedures:
                 // - Auto enroll: coordinator has to send enrollResponse without receiving an enroll request
@@ -706,7 +699,7 @@ class Device extends Entity {
                 //                  this case in hanled in onZclData().
                 // https://github.com/Koenkk/zigbee2mqtt/issues/4569#issuecomment-706075676
                 await Wait(500);
-                debug.log(`IAS - '${this.ieeeAddr}' sending enroll response (auto enroll)`);
+                logger.debug(`IAS - '${this.ieeeAddr}' sending enroll response (auto enroll)`, NS);
                 const payload = {enrollrspcode: 0, zoneid: 23};
                 await endpoint.command('ssIasZone', 'enrollRsp', payload,
                     {disableDefaultResponse: true, sendPolicy: 'immediate'});
@@ -716,7 +709,7 @@ class Device extends Entity {
                     await Wait(500);
                     const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'],
                         {sendPolicy: 'immediate'});
-                    debug.log(`Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`);
+                    logger.debug(`Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`, NS);
                     if (stateAfter.zoneState === 1) {
                         enrolled = true;
                         break;
@@ -724,21 +717,19 @@ class Device extends Entity {
                 }
 
                 if (enrolled) {
-                    debug.log(`Interview - IAS successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+                    logger.debug(`Interview - IAS successfully enrolled '${this.ieeeAddr}' endpoint '${endpoint.ID}'`, NS);
                 } else {
-                    throw new Error(
-                        `Interview failed because of failed IAS enroll (zoneState didn't change ('${this.ieeeAddr}')`
-                    );
+                    throw new Error(`Interview failed because of failed IAS enroll (zoneState didn't change ('${this.ieeeAddr}')`);
                 }
             } else {
-                debug.log(`Interview - IAS - already enrolled, skipping enroll`);
+                logger.debug(`Interview - IAS - already enrolled, skipping enroll`, NS);
             }
         }
 
         // Bind poll control
         try {
             for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))) {
-                debug.log(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`);
+                logger.debug(`Interview - Poll control - binding '${this.ieeeAddr}' endpoint '${endpoint.ID}'`, NS);
                 await endpoint.bind('genPollCtrl', coordinator.endpoints[0]);
                 const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval'], {sendPolicy: 'immediate'});
                 this._checkinInterval = pollPeriod.checkinInterval / 4; // convert to seconds
@@ -746,7 +737,7 @@ class Device extends Entity {
             }
         } catch (error) {
             /* istanbul ignore next */
-            debug.log(`Interview - failed to bind genPollCtrl (${error})`);
+            logger.debug(`Interview - failed to bind genPollCtrl (${error})`, NS);
         }
     }
 
@@ -764,10 +755,10 @@ class Device extends Entity {
 
             await Entity.adapter.sendZclFrameToAll(242, frame, 242);
         } else await Entity.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
-        await this.removeFromDatabase();
+        this.removeFromDatabase();
     }
 
-    public async removeFromDatabase(): Promise<void> {
+    public removeFromDatabase(): void {
         Device.loadFromDatabaseIfNecessary();
 
         for (const endpoint of this.endpoints) {

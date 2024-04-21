@@ -21,7 +21,7 @@ jobs:
     - name: Build
       run: npm run build
     - name: Test
-      run: npm run test-with-coverage
+      run: npm run test-with-coverage -- --testTimeout=10000 
     - name: Lint
       run: npm run eslint
     - name: Publish new release
