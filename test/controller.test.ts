@@ -2424,156 +2424,17 @@ describe('Controller', () => {
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 
-    it('onlythis Should allow to specific custom clusters', async () => {
+    it('onlythis Should allow to specify custom attribute for existing', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
-        device.customClusters.push(createCustomCluster(0, 'genBasic', null, {customAttr: {ID: 256, type: Zcl.DataType.uint8}}, {}, {}, true));
+        device.addCustomCluster('genBasic', {ID: 0, commands: {}, commandsResponse: {}, attributes: {customAttr: {ID: 256, type: Zcl.DataType.uint8}}});
         const buffer = Buffer.from([24,169,10,0,1,24,3,0,0,24,1]);
-        const frame = ZclFrame.fromBuffer(Zcl.Utils.getCluster("genBasic").ID, ZclHeader.fromBuffer(buffer), buffer);
-        jest.spyOn(ZclFrame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write isn't supported for this payload
-        await mockAdapterEvents['zclPayload']({
-            wasBroadcast: false,
-            address: 129,
-            clusterID: frame.cluster.ID,
-            data: null, // null intentionally
-            header: frame.header,
-            endpoint: 1,
-            linkquality: 50,
-            groupID: 1,
-        });
-
-
+        const header = ZclHeader.fromBuffer(buffer);
+        await mockAdapterEvents['zclPayload']({wasBroadcast: false, address: 129, clusterID: 0, data: buffer, header, endpoint: 1, linkquality: 50, groupID: 1});
         expect(events.message.length).toBe(1);
-        console.log(events.message[0].data)
-        // const expected = {
-        //     "cluster": 'genBasic',
-        //     "type":"attributeReport",
-        //     "device":{
-        //         "_events":{},"_eventsCount":0,
-        //         "_lastSeen": deepClone(Date.now()),
-        //         "_linkquality":50,
-        //         "_skipDefaultResponse": false,
-        //         "ID":2,
-        //         "_ieeeAddr":"0x129",
-        //         "_networkAddress":129,
-        //         "_endpoints":[
-        //             {
-        //                 "_events":{},"_eventsCount":0,
-        //             "ID":1,
-        //             "clusters": {
-        //                 "genBasic": {
-        //                     "attributes": {
-        //                         "65281": {
-        //                         "1": 3285,
-        //                         "10": 0,
-        //                         "100": 0,
-        //                         "3": 33,
-        //                         "4": 5032,
-        //                         "5": 43,
-        //                         "6": [
-        //                             0,
-        //                             327680,
-        //                         ],
-        //                         "8": 516,
-        //                         },
-        //                         "modelId": "lumi.sensor_wleak.aq1",
-        //                     },
-        //                 },
-        //             },
-        //             "inputClusters":[
-        //                 0,
-        //                 1
-        //             ],
-        //             "outputClusters":[
-        //                 2
-        //             ],
-        //             "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
-        //             "deviceNetworkAddress":129,
-        //             "deviceIeeeAddress":"0x129",
-        //             "_binds": [],
-        //             "_configuredReportings": [],
-        //             "meta":{},
-        //             "deviceID":5,
-        //             "profileID":99,
-        //             }
-        //         ],
-        //         "_type":"Router",
-        //         "_manufacturerID":1212,
-        //         "_manufacturerName":"KoenAndCo",
-        //         "meta": {},
-        //         "_powerSource":"Mains (single phase)",
-        //         "_modelID":"lumi.sensor_wleak.aq1",
-        //         "_applicationVersion":2,
-        //         "_stackVersion":101,
-        //         "_zclVersion":1,
-        //         "_hardwareVersion":3,"_events":{},"_eventsCount":0,
-        //         "_dateCode":"201901",
-        //         "_pendingRequestTimeout":0,
-        //         "_softwareBuildID":"1.01",
-        //         "_interviewCompleted":true,
-        //         "_interviewing":false,
-        //     },
-        //     "endpoint":{
-        //         "_events":{},"_eventsCount":0,
-        //         "ID":1,
-        //         "deviceID": 5,
-        //         "inputClusters":[0, 1],
-        //         "outputClusters":[2],
-        //         "pendingRequests": {"ID": 1,"deviceIeeeAddress": "0x129","sendInProgress": false},
-        //         "deviceNetworkAddress":129,
-        //         "deviceIeeeAddress":"0x129",
-        //         "_binds": [],
-        //         "_configuredReportings": [],
-        //         "profileID": 99,
-        //         "meta":{},
-        //         "clusters": {
-        //             "genBasic": {
-        //                 "attributes": {
-        //                     "65281": {
-        //                     "1": 3285,
-        //                     "10": 0,
-        //                     "100": 0,
-        //                     "3": 33,
-        //                     "4": 5032,
-        //                     "5": 43,
-        //                     "6": [
-        //                         0,
-        //                         327680,
-        //                     ],
-        //                     "8": 516,
-        //                     },
-        //                     "modelId": "lumi.sensor_wleak.aq1",
-        //                 },
-        //             },
-        //         },
-        //     },
-        //     "data":{ '65281':{
-        //         '1': 3285,
-        //         '3': 33,
-        //         '4': 5032,
-        //         '5': 43,
-        //         '6': [ 0, 327680 ],
-        //         '8': 516,
-        //         '10': 0,
-        //         '100': 0 },
-        //         modelId: 'lumi.sensor_wleak.aq1'
-        //     },
-        //     "linkquality":50,
-        //     "groupID":1,
-        //     "meta": {
-        //         "zclTransactionSequenceNumber": 3,
-        //         "manufacturerCode": 4447,
-        //         "frameControl": {
-        //             "reservedBits": 0,
-        //             "direction": 1,
-        //             "disableDefaultResponse": true,
-        //             "frameType": 0,
-        //             "manufacturerSpecific": true,
-        //         },
-        //     },
-        // };
-        // expect(deepClone(events.message[0])).toStrictEqual(expected);
+        expect(events.message[0].data).toStrictEqual({customAttr: 3, zclVersion: 1});
+        expect(events.message[0].cluster).toBe('genBasic');
     });
 
     it('Should roll-over transaction ID', async () => {

@@ -9,6 +9,7 @@ import assert from 'assert';
 import {ZclFrameConverter} from '../helpers';
 import {logger} from '../../utils/logger';
 import {ClusterDefinition} from '../../zcl/definition/tstype';
+import {Cluster} from '../../zcl';
 
 /**
  * @ignore
@@ -110,7 +111,6 @@ class Device extends Entity {
     get pendingRequestTimeout(): number {return this._pendingRequestTimeout;}
     set pendingRequestTimeout(pendingRequestTimeout: number) {this._pendingRequestTimeout = pendingRequestTimeout;}
     get customClusters(): {[s: string]: ClusterDefinition} {return this._customClusters;}
-    set customClusters(customClusters: {[s: string]: ClusterDefinition}) {this._customClusters = customClusters;}
 
     public meta: KeyValue;
 
@@ -801,6 +801,24 @@ class Device extends Entity {
         // possible.
         const endpoint = this.endpoints.find((ep) => ep.inputClusters.includes(0)) ?? this.endpoints[0];
         await endpoint.read('genBasic', ['zclVersion'], {disableRecovery});
+    }
+
+    public addCustomCluster(name: string, cluster: ClusterDefinition): void {
+        assert(!([Cluster['touchlink'].ID, Cluster['touchlink'].ID].includes(cluster.ID)),
+            'Overriding of greenPower or touchlink cluster is not supported');
+        if (name in Cluster) {
+            // Extend existing cluster
+            const existingCluster = Cluster[name];
+            assert(existingCluster.ID === cluster.ID, `Custom cluster ID (${cluster.ID}) should match existing cluster ID (${existingCluster.ID})`);
+            cluster = {
+                ID: cluster.ID,
+                manufacturerCode: cluster.manufacturerCode,
+                attributes: {...existingCluster.attributes, ...cluster.attributes},
+                commands: {...existingCluster.commands, ...cluster.commands},
+                commandsResponse: {...existingCluster.commandsResponse, ...cluster.commandsResponse},
+            };
+        }
+        this._customClusters[name] = cluster;
     }
 }
 

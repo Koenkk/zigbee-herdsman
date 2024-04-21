@@ -34,7 +34,7 @@ function IsDataTypeAnalogOrDiscrete(dataType: DataType): 'ANALOG' | 'DISCRETE' {
 function getClusterDefinition(
     key: string | number,
     manufacturerCode: number | null,
-    customClusters: {[s: string]: ClusterDefinition} | null,
+    customClusters: {[s: string]: ClusterDefinition} | undefined,
 ): {name: string, cluster: ClusterDefinition} {
     let name: string;
 
@@ -165,7 +165,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
 function getCluster(
     key: string | number,
     manufacturerCode: number | null,
-    customerClusters: {[s: string]: ClusterDefinition} | null
+    customerClusters: {[s: string]: ClusterDefinition} | undefined,
 ): TsType.Cluster {
     const {name, cluster} = getClusterDefinition(key, manufacturerCode, customerClusters);
     return createCluster(name, cluster, manufacturerCode);
@@ -208,4 +208,5 @@ export {
     getCluster,
     getGlobalCommand,
     IsDataTypeAnalogOrDiscrete,
+    createCluster,
 };

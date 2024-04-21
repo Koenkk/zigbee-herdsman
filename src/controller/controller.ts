@@ -6,7 +6,7 @@ import {ZclFrameConverter} from './helpers';
 import * as Events from './events';
 import {KeyValue, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import fs from 'fs';
-import {Utils as ZclUtils, FrameControl, ZclFrame} from '../zcl';
+import {Utils as ZclUtils, FrameControl, ZclFrame, Cluster} from '../zcl';
 import Touchlink from './touchlink';
 import GreenPower from './greenPower';
 import {BackupUtils} from "../utils";
@@ -612,31 +612,26 @@ class Controller extends events.EventEmitter {
     }
 
     private async onZclPayload(payload: AdapterEvents.ZclPayload): Promise<void> {
+        const parseFrame = (device: Device): ZclFrame | undefined => {
+            try {
+                return ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data, device?.customClusters);
+            } catch (error) {
+                logger.debug(`Failed to parse frame: ${error}`, NS);
+                return undefined;
+            }
+        };
+
         let frame: ZclFrame | undefined = undefined;
-
-        try {
-            frame = ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data);
-        } catch (error) {
-            logger.debug(`Failed to parse frame: ${error}`, NS);
-        }
-
-        logger.debug(`Received payload: clusterID=${payload.clusterID}, address=${payload.address}, groupID=${payload.groupID}, `
-            + `endpoint=${payload.endpoint}, destinationEndpoint=${payload.destinationEndpoint}, wasBroadcast=${payload.wasBroadcast}, `
-            + `linkQuality=${payload.linkquality}, frame=${frame?.toString()}`, NS);
-
-        let gpDevice = null;
-
-        if (frame?.cluster.name === 'touchlink') {
+        let device = typeof payload.address === 'string' ? Device.byIeeeAddr(payload.address) : Device.byNetworkAddress(payload.address);
+        if (payload.clusterID === Cluster['touchlink'].ID) {
             // This is handled by touchlink
             return;
-        } else if (frame?.cluster.name === 'greenPower') {
+        } else if (payload.clusterID === Cluster['greenPower'].ID) {
+            frame = parseFrame(device);
             await this.greenPower.onZclGreenPowerData(payload, frame);
             // lookup encapsulated gpDevice for further processing
-            gpDevice = Device.byNetworkAddress(frame.payload.srcID & 0xFFFF);
+            device = Device.byNetworkAddress(frame.payload.srcID & 0xFFFF);
         }
-
-        let device = gpDevice ? gpDevice : (typeof payload.address === 'string' ?
-            Device.byIeeeAddr(payload.address) : Device.byNetworkAddress(payload.address));
 
         /**
          * Handling of re-transmitted Xiaomi messages.
@@ -660,6 +655,7 @@ class Controller extends events.EventEmitter {
             return;
         }
 
+        frame = parseFrame(device);
         device.updateLastSeen();
         //no implicit checkin for genPollCtrl data because it might interfere with the explicit checkin
         if (!frame?.isCluster("genPollCtrl")) {
