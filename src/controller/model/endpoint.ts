@@ -400,7 +400,7 @@ class Endpoint extends Entity {
         const resultFrame = await this.zclCommand(clusterKey, 'read', payload, options, attributes, true);
 
         if (resultFrame) {
-            return ZclFrameConverter.attributeKeyValue(resultFrame, this.getDevice().manufacturerID);
+            return ZclFrameConverter.attributeKeyValue(resultFrame, this.getDevice().manufacturerID, this.getDevice().customClusters);
         }
     }
 

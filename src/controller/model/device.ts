@@ -10,6 +10,7 @@ import {ZclFrameConverter} from '../helpers';
 import {logger} from '../../utils/logger';
 import {ClusterDefinition} from '../../zcl/definition/tstype';
 import {Cluster} from '../../zcl';
+import {isClusterName} from '../../zcl/utils';
 
 /**
  * @ignore
@@ -217,7 +218,7 @@ class Device extends Entity {
     public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame, endpoint: Endpoint): Promise<void> {
         // Update reportable properties
         if (frame.isCluster('genBasic') && (frame.isCommand('readRsp') || frame.isCommand('report'))) {
-            for (const [key, val] of Object.entries(ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID))) {
+            for (const [key, val] of Object.entries(ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID, this.customClusters))) {
                 Device.ReportablePropertiesMapping[key]?.set(val, this);
             }
         }
@@ -804,11 +805,12 @@ class Device extends Entity {
     }
 
     public addCustomCluster(name: string, cluster: ClusterDefinition): void {
-        assert(!([Cluster['touchlink'].ID, Cluster['touchlink'].ID].includes(cluster.ID)),
+        assert(!([Cluster.touchlink.ID, Cluster.touchlink.ID].includes(cluster.ID)),
             'Overriding of greenPower or touchlink cluster is not supported');
-        if (name in Cluster) {
-            // Extend existing cluster
+        if (isClusterName(name)) {
             const existingCluster = Cluster[name];
+
+            // Extend existing cluster
             assert(existingCluster.ID === cluster.ID, `Custom cluster ID (${cluster.ID}) should match existing cluster ID (${existingCluster.ID})`);
             cluster = {
                 ID: cluster.ID,

@@ -623,10 +623,10 @@ class Controller extends events.EventEmitter {
 
         let frame: ZclFrame | undefined = undefined;
         let device = typeof payload.address === 'string' ? Device.byIeeeAddr(payload.address) : Device.byNetworkAddress(payload.address);
-        if (payload.clusterID === Cluster['touchlink'].ID) {
+        if (payload.clusterID === Cluster.touchlink.ID) {
             // This is handled by touchlink
             return;
-        } else if (payload.clusterID === Cluster['greenPower'].ID) {
+        } else if (payload.clusterID === Cluster.greenPower.ID) {
             frame = parseFrame(device);
             await this.greenPower.onZclGreenPowerData(payload, frame);
             // lookup encapsulated gpDevice for further processing
@@ -693,18 +693,18 @@ class Controller extends events.EventEmitter {
             if (frame.header.isGlobal) {
                 if (frame.isCommand('report')) {
                     type = 'attributeReport';
-                    data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID);
+                    data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID, device.customClusters);
                 } else if (frame.isCommand('read')) {
                     type = 'read';
-                    data = ZclFrameConverter.attributeList(frame, device.manufacturerID);
+                    data = ZclFrameConverter.attributeList(frame, device.manufacturerID, device.customClusters);
                 } else if (frame.isCommand('write')) {
                     type = 'write';
-                    data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID);
+                    data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID, device.customClusters);
                 } else {
                     /* istanbul ignore else */
                     if (frame.isCommand('readRsp')) {
                         type = 'readResponse';
-                        data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID);
+                        data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID, device.customClusters);
                     }
                 }
             } else {
@@ -733,7 +733,7 @@ class Controller extends events.EventEmitter {
         } else {
             type = 'raw';
             data = payload.data;
-            const name = ZclUtils.getCluster(payload.clusterID).name;
+            const name = ZclUtils.getCluster(payload.clusterID, device.manufacturerID, device.customClusters).name;
             clusterName = Number.isNaN(Number(name)) ? name : Number(name);
         }
 

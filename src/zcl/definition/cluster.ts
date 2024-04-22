@@ -1,13 +1,10 @@
 /* eslint max-len: 0 */
 import DataType from './dataType';
-import {ClusterDefinition} from './tstype';
+import {ClusterDefinition, ClusterName} from './tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
 import ManufacturerCode from './manufacturerCode';
 
-const Cluster: {
-    [s: string]: ClusterDefinition;
-}
-= {
+const Cluster: {[k in ClusterName]: ClusterDefinition} = {
     genBasic: {
         ID: 0,
         attributes: {

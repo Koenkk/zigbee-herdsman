@@ -1,5 +1,5 @@
 import {DataType, Cluster, Foundation} from './definition';
-import {ClusterDefinition} from './definition/tstype';
+import {ClusterDefinition, ClusterName} from './definition/tstype';
 import * as TsType from './tstype';
 
 const DataTypeValueType = {
@@ -38,7 +38,7 @@ function getClusterDefinition(
 ): {name: string, cluster: ClusterDefinition} {
     let name: string;
 
-    const clusters = {
+    const clusters: {[s: string]: ClusterDefinition} = {
         ...customClusters, // Custom clusters have a higher priority than Zcl clusters (custom cluster has a DIFFERENT name than Zcl clusters)
         ...Cluster,
         ...customClusters, // Custom clusters should override Zcl clusters (custom cluster has the SAME name than Zcl clusters)
@@ -204,9 +204,14 @@ function getGlobalCommand(key: number | string): TsType.Command {
     return result;
 }
 
+function isClusterName(name: string): name is ClusterName {
+    return (name in Cluster);
+}
+
 export {
     getCluster,
     getGlobalCommand,
     IsDataTypeAnalogOrDiscrete,
     createCluster,
+    isClusterName,
 };

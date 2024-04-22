@@ -35,10 +35,10 @@ export const Endpoints = [
         appprofid: 0x0104,
         appdeviceid: 0x0400,
         appnumoutclusters: 2,
-        appoutclusterlist: [Zcl.Utils.getCluster('ssIasZone').ID, Zcl.Utils.getCluster('ssIasWd').ID],
+        appoutclusterlist: [Zcl.Cluster.ssIasZone.ID, Zcl.Cluster.ssIasWd.ID],
         appnuminclusters: 2,
         // genTime required for https://github.com/Koenkk/zigbee2mqtt/issues/10816
-        appinclusterlist: [Zcl.Utils.getCluster('ssIasAce').ID, Zcl.Utils.getCluster('genTime').ID]
+        appinclusterlist: [Zcl.Cluster.ssIasAce.ID, Zcl.Cluster.genTime.ID]
 
     },
     // TERNCY: https://github.com/Koenkk/zigbee-herdsman/issues/82
@@ -49,7 +49,7 @@ export const Endpoints = [
         endpoint: 13,
         appprofid: 0x0104,
         appnuminclusters: 1,
-        appinclusterlist: [Zcl.Utils.getCluster('genOta').ID]
+        appinclusterlist: [Zcl.Cluster.genOta.ID]
     },
     // Insta/Jung/Gira: OTA fallback EP (since it's buggy in firmware 10023202 when it tries to find a matching EP for
     // OTA - it queries for ZLL profile, but then contacts with HA profile)
