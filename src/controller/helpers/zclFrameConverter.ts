@@ -10,17 +10,17 @@ interface KeyValue {[s: string]: number | string}
 // This leads to incorrect reported attribute names.
 // Remap the attributes using the target device's manufacturer ID
 // if the header is lacking the information.
-function getCluster(frame: ZclFrame, deviceManufacturerID: number, customerClusters: {[s: string]: ClusterDefinition} | undefined): Cluster {
+function getCluster(frame: ZclFrame, deviceManufacturerID: number, customClusters: {[s: string]: ClusterDefinition}): Cluster {
     let cluster = frame.cluster;
     if (!frame?.header?.manufacturerCode && frame?.cluster && deviceManufacturerID == ManufacturerCode.LEGRAND_GROUP) {
-        cluster = ZclUtils.getCluster(frame.cluster.ID, deviceManufacturerID, customerClusters);
+        cluster = ZclUtils.getCluster(frame.cluster.ID, deviceManufacturerID, customClusters);
     }
     return cluster;
 }
 
-function attributeKeyValue(frame: ZclFrame, deviceManufacturerID: number, customerClusters: {[s: string]: ClusterDefinition} | undefined): KeyValue {
+function attributeKeyValue(frame: ZclFrame, deviceManufacturerID: number, customClusters: {[s: string]: ClusterDefinition}): KeyValue {
     const payload: KeyValue = {};
-    const cluster = getCluster(frame, deviceManufacturerID, customerClusters);
+    const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 
     for (const item of frame.payload) {
         try {
@@ -33,13 +33,9 @@ function attributeKeyValue(frame: ZclFrame, deviceManufacturerID: number, custom
     return payload;
 }
 
-function attributeList(
-    frame: ZclFrame,
-    deviceManufacturerID: number,
-    customerClusters: {[s: string]: ClusterDefinition} | undefined,
-): Array<string | number> {
+function attributeList(frame: ZclFrame, deviceManufacturerID: number, customClusters: {[s: string]: ClusterDefinition}): Array<string | number> {
     const payload: Array<string | number> = [];
-    const cluster = getCluster(frame, deviceManufacturerID, customerClusters);
+    const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 
     for (const item of frame.payload) {
         try {

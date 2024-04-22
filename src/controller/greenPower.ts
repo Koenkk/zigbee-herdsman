@@ -5,6 +5,7 @@ import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber
 import events from 'events';
 import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import {logger} from '../utils/logger';
+import {Cluster} from '../zcl';
 
 const NS = 'zh:controller:greenpower';
 
@@ -69,7 +70,7 @@ class GreenPower extends events.EventEmitter {
 
         const replyFrame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-            null, ZclTransactionSequenceNumber.next(), 'pairing', 33, payload,
+            null, ZclTransactionSequenceNumber.next(), 'pairing', Cluster.greenPower.ID, payload,
             undefined,
         );
 
@@ -132,7 +133,7 @@ class GreenPower extends events.EventEmitter {
 
                     const replyFrame = Zcl.ZclFrame.create(
                         Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-                        null, ZclTransactionSequenceNumber.next(), 'response', 33, payload,
+                        null, ZclTransactionSequenceNumber.next(), 'response', Cluster.greenPower.ID, payload,
                         undefined,
                     );
                     await this.adapter.sendZclFrameToAll(242, replyFrame, 242);
@@ -196,7 +197,7 @@ class GreenPower extends events.EventEmitter {
 
                 const replyFrame = Zcl.ZclFrame.create(
                     Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-                    null, ZclTransactionSequenceNumber.next(), 'response', 33, payload,
+                    null, ZclTransactionSequenceNumber.next(), 'response', Cluster.greenPower.ID, payload,
                     undefined,
                 );
 
@@ -223,7 +224,7 @@ class GreenPower extends events.EventEmitter {
 
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-            null, ZclTransactionSequenceNumber.next(), 'commisioningMode', 33, payload,
+            null, ZclTransactionSequenceNumber.next(), 'commisioningMode', Cluster.greenPower.ID, payload,
             undefined,
         );
 

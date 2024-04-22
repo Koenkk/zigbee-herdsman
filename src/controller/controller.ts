@@ -656,6 +656,11 @@ class Controller extends events.EventEmitter {
         }
 
         frame = parseFrame(device);
+
+        logger.debug(`Received payload: clusterID=${payload.clusterID}, address=${payload.address}, groupID=${payload.groupID}, `
+            + `endpoint=${payload.endpoint}, destinationEndpoint=${payload.destinationEndpoint}, wasBroadcast=${payload.wasBroadcast}, `
+            + `linkQuality=${payload.linkquality}, frame=${frame?.toString()}`, NS);
+
         device.updateLastSeen();
         //no implicit checkin for genPollCtrl data because it might interfere with the explicit checkin
         if (!frame?.isCluster("genPollCtrl")) {

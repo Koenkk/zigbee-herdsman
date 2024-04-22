@@ -354,7 +354,7 @@ class Device extends Entity {
 
         // default: no timeout (messages expire immediately after first send attempt)
         let pendingRequestTimeout = 0;
-        if((endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))).length > 0) {
+        if((endpoints.filter((e): boolean => e.inputClusters.includes(Cluster.genPollCtrl.ID))).length > 0) {
             // default for devices that support genPollCtrl cluster (RX off when idle): 1 day
             pendingRequestTimeout = 86400000;
             /* istanbul ignore else */
