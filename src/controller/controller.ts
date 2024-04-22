@@ -17,6 +17,7 @@ import assert from 'assert';
 import mixin from 'mixin-deep';
 import Group from './model/group';
 import {logger} from '../utils/logger';
+import {ClusterDefinition} from '../zcl/definition/tstype';
 
 const NS = 'zh:controller';
 
@@ -612,9 +613,9 @@ class Controller extends events.EventEmitter {
     }
 
     private async onZclPayload(payload: AdapterEvents.ZclPayload): Promise<void> {
-        const parseFrame = (device: Device): ZclFrame | undefined => {
+        const parseFrame = (customClusters: {[s: string]: ClusterDefinition}): ZclFrame | undefined => {
             try {
-                return ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data, device?.customClusters);
+                return ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data, customClusters);
             } catch (error) {
                 logger.debug(`Failed to parse frame: ${error}`, NS);
                 return undefined;
@@ -622,40 +623,41 @@ class Controller extends events.EventEmitter {
         };
 
         let frame: ZclFrame | undefined = undefined;
-        let device = typeof payload.address === 'string' ? Device.byIeeeAddr(payload.address) : Device.byNetworkAddress(payload.address);
+        let device: Device = undefined;
         if (payload.clusterID === Cluster.touchlink.ID) {
             // This is handled by touchlink
             return;
         } else if (payload.clusterID === Cluster.greenPower.ID) {
-            frame = parseFrame(device);
+            // Custom clusters are not supported for Green Power since we need to parse the frame to get the device.
+            frame = parseFrame({});
             await this.greenPower.onZclGreenPowerData(payload, frame);
             // lookup encapsulated gpDevice for further processing
             device = Device.byNetworkAddress(frame.payload.srcID & 0xFFFF);
-        }
-
-        /**
-         * Handling of re-transmitted Xiaomi messages.
-         * https://github.com/Koenkk/zigbee2mqtt/issues/1238
-         * https://github.com/Koenkk/zigbee2mqtt/issues/3592
-         *
-         * Some Xiaomi router devices re-transmit messages from Xiaomi end devices.
-         * The network address of these message is set to the one of the Xiaomi router.
-         * Therefore it looks like if the message came from the Xiaomi router, while in
-         * fact it came from the end device.
-         * Handling these message would result in false state updates.
-         * The group ID attribute of these message defines the network address of the end device.
-         */
-        if (device?.manufacturerName === 'LUMI' && device?.type == 'Router' && payload.groupID) {
-            logger.debug(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${payload.groupID}`, NS);
-            device = Device.byNetworkAddress(payload.groupID);
+        } else {
+            /**
+             * Handling of re-transmitted Xiaomi messages.
+             * https://github.com/Koenkk/zigbee2mqtt/issues/1238
+             * https://github.com/Koenkk/zigbee2mqtt/issues/3592
+             *
+             * Some Xiaomi router devices re-transmit messages from Xiaomi end devices.
+             * The network address of these message is set to the one of the Xiaomi router.
+             * Therefore it looks like if the message came from the Xiaomi router, while in
+             * fact it came from the end device.
+             * Handling these message would result in false state updates.
+             * The group ID attribute of these message defines the network address of the end device.
+             */
+            device = typeof payload.address === 'string' ? Device.byIeeeAddr(payload.address) : Device.byNetworkAddress(payload.address);
+            if (device?.manufacturerName === 'LUMI' && device?.type == 'Router' && payload.groupID) {
+                logger.debug(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${payload.groupID}`, NS);
+                device = Device.byNetworkAddress(payload.groupID);
+            }
+            frame = parseFrame(device?.customClusters);
         }
 
         if (!device) {
             logger.debug(`Data is from unknown device with address '${payload.address}', skipping...`, NS);
             return;
         }
-
-        frame = parseFrame(device);
 
         logger.debug(`Received payload: clusterID=${payload.clusterID}, address=${payload.address}, groupID=${payload.groupID}, `
             + `endpoint=${payload.endpoint}, destinationEndpoint=${payload.destinationEndpoint}, wasBroadcast=${payload.wasBroadcast}, `

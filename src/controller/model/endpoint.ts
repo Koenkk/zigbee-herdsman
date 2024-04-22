@@ -712,7 +712,6 @@ class Endpoint extends Entity {
 
     private getCluster(clusterKey: number | string): Zcl.TsType.Cluster {
         const device = this.getDevice();
-        console.log(device, this.ID, this.deviceIeeeAddress);
         return Zcl.Utils.getCluster(clusterKey, device.manufacturerID, device.customClusters);
     }
 
