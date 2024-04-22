@@ -400,7 +400,7 @@ class BuffaloZcl extends Buffalo {
             const cluster = Utils.getCluster(
                 frame.clusterID,
                 frame.manufacturerCode,
-                null,
+                {},
             );
             
             while (this.position - start < options.payload.payloadSize) {
