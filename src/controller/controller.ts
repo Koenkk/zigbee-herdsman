@@ -17,7 +17,6 @@ import assert from 'assert';
 import mixin from 'mixin-deep';
 import Group from './model/group';
 import {logger} from '../utils/logger';
-import {CustomClusters} from '../zcl/definition/tstype';
 
 const NS = 'zh:controller';
 
