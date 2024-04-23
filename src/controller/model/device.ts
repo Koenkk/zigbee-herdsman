@@ -8,8 +8,8 @@ import * as Zcl from '../../zcl';
 import assert from 'assert';
 import {ZclFrameConverter} from '../helpers';
 import {logger} from '../../utils/logger';
-import {ClusterDefinition} from '../../zcl/definition/tstype';
-import {Cluster} from '../../zcl';
+import {ClusterDefinition, CustomClusters} from '../../zcl/definition/tstype';
+import {Clusters} from '../../zcl';
 import {isClusterName} from '../../zcl/utils';
 
 /**
@@ -58,7 +58,7 @@ class Device extends Entity {
     private _lastDefaultResponseSequenceNumber: number;
     private _checkinInterval: number;
     private _pendingRequestTimeout: number;
-    private _customClusters: {[s: string]: ClusterDefinition} = {};
+    private _customClusters: CustomClusters = {};
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -111,7 +111,7 @@ class Device extends Entity {
     };
     get pendingRequestTimeout(): number {return this._pendingRequestTimeout;}
     set pendingRequestTimeout(pendingRequestTimeout: number) {this._pendingRequestTimeout = pendingRequestTimeout;}
-    get customClusters(): {[s: string]: ClusterDefinition} {return this._customClusters;}
+    get customClusters(): CustomClusters {return this._customClusters;}
 
     public meta: KeyValue;
 
@@ -354,7 +354,7 @@ class Device extends Entity {
 
         // default: no timeout (messages expire immediately after first send attempt)
         let pendingRequestTimeout = 0;
-        if((endpoints.filter((e): boolean => e.inputClusters.includes(Cluster.genPollCtrl.ID))).length > 0) {
+        if((endpoints.filter((e): boolean => e.inputClusters.includes(Clusters.genPollCtrl.ID))).length > 0) {
             // default for devices that support genPollCtrl cluster (RX off when idle): 1 day
             pendingRequestTimeout = 86400000;
             /* istanbul ignore else */
@@ -406,14 +406,20 @@ class Device extends Entity {
         }
     }
 
-    public static byIeeeAddr(ieeeAddr: string, includeDeleted=false): Device {
+    public static find(ieeeOrNwkAddress: string | number, includeDeleted: boolean = false): Device {
+        return typeof ieeeOrNwkAddress === 'string' ? Device.byIeeeAddr(ieeeOrNwkAddress, includeDeleted)
+            : Device.byNetworkAddress(ieeeOrNwkAddress, includeDeleted);
+    }
+
+    public static byIeeeAddr(ieeeAddr: string, includeDeleted: boolean = false): Device {
         Device.loadFromDatabaseIfNecessary();
         const device = Device.devices[ieeeAddr];
         return device?._deleted && !includeDeleted ? undefined : device;
     }
 
-    public static byNetworkAddress(networkAddress: number): Device {
-        return Device.all().find(d => d.networkAddress === networkAddress);
+    public static byNetworkAddress(networkAddress: number, includeDeleted: boolean = false): Device {
+        Device.loadFromDatabaseIfNecessary();
+        return Object.values(Device.devices).find(d => (includeDeleted || !d._deleted) && d.networkAddress === networkAddress);
     }
 
     public static byType(type: DeviceType): Device[] {
@@ -805,10 +811,10 @@ class Device extends Entity {
     }
 
     public addCustomCluster(name: string, cluster: ClusterDefinition): void {
-        assert(!([Cluster.touchlink.ID, Cluster.touchlink.ID].includes(cluster.ID)),
+        assert(!([Clusters.touchlink.ID, Clusters.greenPower.ID].includes(cluster.ID)),
             'Overriding of greenPower or touchlink cluster is not supported');
         if (isClusterName(name)) {
-            const existingCluster = Cluster[name];
+            const existingCluster = Clusters[name];
 
             // Extend existing cluster
             assert(existingCluster.ID === cluster.ID, `Custom cluster ID (${cluster.ID}) should match existing cluster ID (${existingCluster.ID})`);

@@ -6,7 +6,7 @@ import {ZclFrameConverter} from './helpers';
 import * as Events from './events';
 import {KeyValue, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import fs from 'fs';
-import {Utils as ZclUtils, FrameControl, ZclFrame, Cluster} from '../zcl';
+import {Utils as ZclUtils, FrameControl, ZclFrame, Clusters} from '../zcl';
 import Touchlink from './touchlink';
 import GreenPower from './greenPower';
 import {BackupUtils} from "../utils";
@@ -17,7 +17,7 @@ import assert from 'assert';
 import mixin from 'mixin-deep';
 import Group from './model/group';
 import {logger} from '../utils/logger';
-import {ClusterDefinition} from '../zcl/definition/tstype';
+import {CustomClusters} from '../zcl/definition/tstype';
 
 const NS = 'zh:controller';
 
@@ -613,23 +613,20 @@ class Controller extends events.EventEmitter {
     }
 
     private async onZclPayload(payload: AdapterEvents.ZclPayload): Promise<void> {
-        const parseFrame = (customClusters: {[s: string]: ClusterDefinition}): ZclFrame | undefined => {
-            try {
-                return ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data, customClusters);
-            } catch (error) {
-                logger.debug(`Failed to parse frame: ${error}`, NS);
-                return undefined;
-            }
-        };
-
         let frame: ZclFrame | undefined = undefined;
         let device: Device = undefined;
-        if (payload.clusterID === Cluster.touchlink.ID) {
+        if (payload.clusterID === Clusters.touchlink.ID) {
             // This is handled by touchlink
             return;
-        } else if (payload.clusterID === Cluster.greenPower.ID) {
-            // Custom clusters are not supported for Green Power since we need to parse the frame to get the device.
-            frame = parseFrame({});
+        } else if (payload.clusterID === Clusters.greenPower.ID) {
+            try {
+                // Custom clusters are not supported for Green Power since we need to parse the frame to get the device.
+                frame = ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+            } catch (error) {
+                logger.debug(`Failed to parse frame green power frame, ignoring it: ${error}`, NS);
+                return;
+            }
+
             await this.greenPower.onZclGreenPowerData(payload, frame);
             // lookup encapsulated gpDevice for further processing
             device = Device.byNetworkAddress(frame.payload.srcID & 0xFFFF);
@@ -646,12 +643,16 @@ class Controller extends events.EventEmitter {
              * Handling these message would result in false state updates.
              * The group ID attribute of these message defines the network address of the end device.
              */
-            device = typeof payload.address === 'string' ? Device.byIeeeAddr(payload.address) : Device.byNetworkAddress(payload.address);
+            device = Device.find(payload.address);
             if (device?.manufacturerName === 'LUMI' && device?.type == 'Router' && payload.groupID) {
                 logger.debug(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${payload.groupID}`, NS);
                 device = Device.byNetworkAddress(payload.groupID);
             }
-            frame = parseFrame(device?.customClusters);
+            try {
+                frame = ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data, device?.customClusters);
+            } catch (error) {
+                logger.debug(`Failed to parse frame: ${error}`, NS);
+            }
         }
 
         if (!device) {

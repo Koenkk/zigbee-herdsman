@@ -4360,6 +4360,17 @@ describe('Controller', () => {
         await mockAdapterEvents['']
     });
 
+    it('Should ignore invalid green power frame', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        device.addCustomCluster('myCustomCluster', {ID: 9123, commands: {}, commandsResponse: {}, attributes: {superAttribute: {ID: 0, type: Zcl.DataType.uint8}}});
+        const buffer = Buffer.from([24,169,99,0,1,24,3,0,0,24,1]);
+        const header = ZclHeader.fromBuffer(buffer);
+        await mockAdapterEvents['zclPayload']({wasBroadcast: false, address: 129, clusterID: 33, data: buffer, header, endpoint: 1, linkquality: 50, groupID: 1});
+        expect(events.message.length).toBe(0);
+    });
+
     it('Green power channel request', async() => {
         await controller.start();
 

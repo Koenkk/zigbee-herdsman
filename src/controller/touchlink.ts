@@ -155,7 +155,7 @@ class Touchlink {
     private createScanRequestFrame(transaction: number): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
-            null, 0, 'scanRequest', Zcl.Cluster.touchlink.ID,
+            null, 0, 'scanRequest', Zcl.Clusters.touchlink.ID,
             {transactionID: transaction, zigbeeInformation: 4, touchlinkInformation: 18}, {},
         );
     }
@@ -163,7 +163,7 @@ class Touchlink {
     private createIdentifyRequestFrame(transaction: number): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
-            null, 0, 'identifyRequest', Zcl.Cluster.touchlink.ID,
+            null, 0, 'identifyRequest', Zcl.Clusters.touchlink.ID,
             {transactionID: transaction, duration: 65535}, {},
         );
     }
@@ -171,7 +171,7 @@ class Touchlink {
     private createResetFactoryNewRequestFrame(transaction: number): Zcl.ZclFrame {
         return Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true,
-            null, 0, 'resetToFactoryNew', Zcl.Cluster.touchlink.ID,
+            null, 0, 'resetToFactoryNew', Zcl.Clusters.touchlink.ID,
             {transactionID: transaction}, {},
         );
     }

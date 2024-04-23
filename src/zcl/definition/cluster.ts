@@ -4,7 +4,7 @@ import {ClusterDefinition, ClusterName} from './tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
 import ManufacturerCode from './manufacturerCode';
 
-const Cluster: {[k in ClusterName]: ClusterDefinition} = {
+const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
     genBasic: {
         ID: 0,
         attributes: {
@@ -5782,4 +5782,4 @@ const Cluster: {[k in ClusterName]: ClusterDefinition} = {
     },
 };
 
-export default Cluster;
+export default Clusters;

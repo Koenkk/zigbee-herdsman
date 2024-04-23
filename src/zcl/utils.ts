@@ -1,5 +1,5 @@
-import {DataType, Cluster, Foundation} from './definition';
-import {ClusterDefinition, ClusterName} from './definition/tstype';
+import {DataType, Clusters, Foundation} from './definition';
+import {ClusterDefinition, ClusterName, CustomClusters} from './definition/tstype';
 import * as TsType from './tstype';
 
 const DataTypeValueType = {
@@ -34,13 +34,13 @@ function IsDataTypeAnalogOrDiscrete(dataType: DataType): 'ANALOG' | 'DISCRETE' {
 function getClusterDefinition(
     key: string | number,
     manufacturerCode: number | null,
-    customClusters: {[s: string]: ClusterDefinition},
+    customClusters: CustomClusters,
 ): {name: string, cluster: ClusterDefinition} {
     let name: string;
 
-    const clusters: {[s: string]: ClusterDefinition} = {
+    const clusters: CustomClusters = {
         ...customClusters, // Custom clusters have a higher priority than Zcl clusters (custom cluster has a DIFFERENT name than Zcl clusters)
-        ...Cluster,
+        ...Clusters,
         ...customClusters, // Custom clusters should override Zcl clusters (custom cluster has the SAME name than Zcl clusters)
     };
 
@@ -165,7 +165,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
 function getCluster(
     key: string | number,
     manufacturerCode: number | null,
-    customClusters: {[s: string]: ClusterDefinition},
+    customClusters: CustomClusters,
 ): TsType.Cluster {
     const {name, cluster} = getClusterDefinition(key, manufacturerCode, customClusters);
     return createCluster(name, cluster, manufacturerCode);
@@ -205,7 +205,7 @@ function getGlobalCommand(key: number | string): TsType.Command {
 }
 
 function isClusterName(name: string): name is ClusterName {
-    return (name in Cluster);
+    return (name in Clusters);
 }
 
 export {

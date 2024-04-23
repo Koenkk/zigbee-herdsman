@@ -273,7 +273,8 @@ class Endpoint extends Entity {
                 options.disableResponse, options.disableRecovery, options.srcEndpoint) as Promise<Type>;
         }): Promise<Type> {
         const logPrefix = `Request Queue (${this.deviceIeeeAddress}/${this.ID}): `;
-        const request = new Request(func, frame, this.getDevice().pendingRequestTimeout, options.sendPolicy);
+        const device = this.getDevice();
+        const request = new Request(func, frame, device.pendingRequestTimeout, options.sendPolicy);
 
         if (request.sendPolicy !== 'bulk') {
             // Check if such a request is already in the queue and remove the old one(s) if necessary
@@ -281,10 +282,8 @@ class Endpoint extends Entity {
         }
 
         // send without queueing if sendPolicy is 'immediate' or if the device has no timeout set
-        if (request.sendPolicy === 'immediate'
-            || !this.getDevice().pendingRequestTimeout) {
-            if (this.getDevice().pendingRequestTimeout > 0)
-            {
+        if (request.sendPolicy === 'immediate' || !device.pendingRequestTimeout) {
+            if (device.pendingRequestTimeout > 0) {
                 logger.debug(logPrefix + `send ${frame.command.name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
             }
             return request.send();
@@ -386,7 +385,8 @@ class Endpoint extends Entity {
     public async read(
         clusterKey: number | string, attributes: (string | number)[], options?: Options
     ): Promise<KeyValue> {
-        const cluster = this.getCluster(clusterKey);
+        const device = this.getDevice();
+        const cluster = this.getCluster(clusterKey, device);
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         options.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
             cluster, attributes, options.manufacturerCode, 'read',
@@ -400,7 +400,7 @@ class Endpoint extends Entity {
         const resultFrame = await this.zclCommand(clusterKey, 'read', payload, options, attributes, true);
 
         if (resultFrame) {
-            return ZclFrameConverter.attributeKeyValue(resultFrame, this.getDevice().manufacturerID, this.getDevice().customClusters);
+            return ZclFrameConverter.attributeKeyValue(resultFrame, device.manufacturerID, device.customClusters);
         }
     }
 
@@ -593,14 +593,15 @@ class Endpoint extends Entity {
         transactionSequenceNumber?: number
     ): Promise<void | KeyValue> {
         assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
-        const cluster = this.getCluster(clusterKey);
+        const device = this.getDevice();
+        const cluster = this.getCluster(clusterKey, device);
         const command = cluster.getCommandResponse(commandKey);
         transactionSequenceNumber = transactionSequenceNumber || ZclTransactionSequenceNumber.next();
         options = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
 
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, options.direction, options.disableDefaultResponse, options.manufacturerCode,
-            transactionSequenceNumber, command.name, cluster.name, payload, this.getDevice().customClusters, options.reservedBits
+            transactionSequenceNumber, command.name, cluster.name, payload, device.customClusters, options.reservedBits
         );
 
         const log = `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
@@ -629,14 +630,14 @@ class Endpoint extends Entity {
     public waitForCommand(
         clusterKey: number | string, commandKey: number | string, transactionSequenceNumber: number, timeout: number,
     ): {promise: Promise<{header: Zcl.ZclHeader; payload: KeyValue}>; cancel: () => void} {
-        const cluster = this.getCluster(clusterKey);
+        const device = this.getDevice();
+        const cluster = this.getCluster(clusterKey, device);
         const command = cluster.getCommand(commandKey);
         const waiter = Entity.adapter.waitFor(
             this.deviceNetworkAddress, this.ID, Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER,
             transactionSequenceNumber, cluster.ID, command.ID, timeout
         );
 
-        const device = this.getDevice();
         const promise = new Promise<{header: Zcl.ZclHeader; payload: KeyValue}>((resolve, reject) => {
             waiter.promise.then(
                 (payload) => {
@@ -710,8 +711,8 @@ class Endpoint extends Entity {
         group.addMember(this);
     }
 
-    private getCluster(clusterKey: number | string): Zcl.TsType.Cluster {
-        const device = this.getDevice();
+    private getCluster(clusterKey: number | string, device: Device | undefined = undefined): Zcl.TsType.Cluster {
+        device = device ?? this.getDevice();
         return Zcl.Utils.getCluster(clusterKey, device.manufacturerID, device.customClusters);
     }
 
@@ -744,8 +745,8 @@ class Endpoint extends Entity {
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options,
         logPayload?: KeyValue, checkStatus: boolean = false, frameType: Zcl.FrameType = Zcl.FrameType.GLOBAL
     ): Promise<void | Zcl.ZclFrame> {
-        const cluster = this.getCluster(clusterKey);
         const device = this.getDevice();
+        const cluster = this.getCluster(clusterKey, device);
         const command = (frameType == Zcl.FrameType.GLOBAL) ? Zcl.Utils.getGlobalCommand(commandKey) : cluster.getCommand(commandKey);
         const hasResponse = (frameType == Zcl.FrameType.GLOBAL) ? true : command.hasOwnProperty('response');
         options = this.getOptionsWithDefaults(options, hasResponse, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);

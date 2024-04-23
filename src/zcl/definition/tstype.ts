@@ -30,18 +30,16 @@ interface AttributeDefinition {
 interface ClusterDefinition {
     ID: number;
     manufacturerCode?: number;
-    attributes: {[s: string]: AttributeDefinition};
-    commands: {
-        [s: string]: CommandDefinition;
-    };
-    commandsResponse: {
-        [s: string]: CommandDefinition;
-    };
+    attributes: Readonly<Record<string, Readonly<AttributeDefinition>>>;
+    commands: Readonly<Record<string, Readonly<CommandDefinition>>>;
+    commandsResponse: Readonly<Record<string, Readonly<CommandDefinition>>>;
 }
+
+interface CustomClusters {[k: string]: ClusterDefinition};
 
 interface CommandDefinition {
     ID: number;
-    parameters: ParameterDefinition[];
+    parameters: readonly ParameterDefinition[];
     response?: number;
 }
 
@@ -75,5 +73,5 @@ type ClusterName = (
 );
 
 export {
-    ParameterDefinition, ClusterDefinition, AttributeDefinition, CommandDefinition, ClusterName,
+    ParameterDefinition, ClusterDefinition, AttributeDefinition, CommandDefinition, ClusterName, CustomClusters,
 };
