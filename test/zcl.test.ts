@@ -755,7 +755,7 @@ describe('Zcl', () => {
         const expected = Buffer.from([224,8,12,0,0,240]);
         const payload = {startAttrId: 0, maxAttrIds: 240};
         const frame = Zcl.ZclFrame.create(
-            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, null, 8, 'discover', 0, payload, 7
+            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, null, 8, 'discover', 0, payload, {}, 7,
         );
 
         expect(frame.toBuffer()).toStrictEqual(expected);
@@ -947,7 +947,7 @@ describe('Zcl', () => {
         const payload = [
             {attrId: 0x0000, selector: null, elementData: [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]},
         ];
-        const frame = Zcl.ZclFrame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, 0x1ad2, 0xe9, 0x0f, 0, payload, 3);
+        const frame = Zcl.ZclFrame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, 0x1ad2, 0xe9, 0x0f, 0, payload, {}, 3);
 
         expect(frame.toBuffer()).toStrictEqual(expected);
     });

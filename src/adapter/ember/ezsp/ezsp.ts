@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import EventEmitter from "events";
 import {SerialPortOptions} from "../../tstype";
-import Cluster from "../../../zcl/definition/cluster";
+import Clusters from "../../../zcl/definition/cluster";
 import {byteToBits, getMacCapFlags, highByte, highLowToInt, lowByte, lowHighBits} from "../utils/math";
 import {
     EmberOutgoingMessageType,
@@ -5233,7 +5233,7 @@ export class Ezsp extends EventEmitter {
         const profileId = msgBuffalo.readUInt16();
         const payload = msgBuffalo.readRest();
 
-        if (profileId === TOUCHLINK_PROFILE_ID && clusterId === Cluster.touchlink.ID) {
+        if (profileId === TOUCHLINK_PROFILE_ID && clusterId === Clusters.touchlink.ID) {
             this.emit(EzspEvents.TOUCHLINK_MESSAGE, sourcePanId, sourceAddress, groupId, lastHopLqi, payload);
         }
     }
@@ -7587,7 +7587,7 @@ export class Ezsp extends EventEmitter {
             return;
         }
 
-        let commandIdentifier = Cluster.greenPower.commands.notification.ID;
+        let commandIdentifier = Clusters.greenPower.commands.notification.ID;
 
         if (gpdCommandId === 0xE0) {
             if (!gpdCommandPayload.length) {
@@ -7596,7 +7596,7 @@ export class Ezsp extends EventEmitter {
                 return;
             }
 
-            commandIdentifier = Cluster.greenPower.commands.commissioningNotification.ID;
+            commandIdentifier = Clusters.greenPower.commands.commissioningNotification.ID;
         }
 
         this.emit(

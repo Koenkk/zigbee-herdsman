@@ -28,7 +28,7 @@ import equals from 'fast-deep-equal/es6';
 import {ParamsDesc} from './commands';
 import {EZSPAdapterBackup} from '../adapter/backup';
 import {logger} from '../../../utils/logger';
-import Cluster from '../../../zcl/definition/cluster';
+import Clusters from '../../../zcl/definition/cluster';
 
 const NS = 'zh:ezsp:driv';
 
@@ -429,7 +429,7 @@ export class Driver extends EventEmitter {
         //     break;
         // }
         case (frameName == 'gpepIncomingMessageHandler'): {
-            let commandIdentifier = Cluster.greenPower.commands.notification.ID;
+            let commandIdentifier = Clusters.greenPower.commands.notification.ID;
 
             if (frame.gpdCommandId === 0xE0) {
                 if (!frame.gpdCommandPayload.length) {
@@ -438,7 +438,7 @@ export class Driver extends EventEmitter {
                     return;
                 }
 
-                commandIdentifier = Cluster.greenPower.commands.commissioningNotification.ID;
+                commandIdentifier = Clusters.greenPower.commands.commissioningNotification.ID;
             }
 
             const gpdHeader = Buffer.alloc(15);
