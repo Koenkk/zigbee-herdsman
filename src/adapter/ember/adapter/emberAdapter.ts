@@ -3711,7 +3711,7 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued, non-InterPAN
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, inclSleepyZED?: boolean): Promise<void> {
         const sourceEndpointInfo = typeof sourceEndpoint === 'number' ?
             FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
         const apsFrame: EmberApsFrame = {
@@ -3720,7 +3720,7 @@ export class EmberAdapter extends Adapter {
             sourceEndpoint: sourceEndpointInfo.endpoint,
             destinationEndpoint: (typeof endpoint === 'number') ? endpoint : FIXED_ENDPOINTS[0].endpoint,
             options: DEFAULT_APS_OPTIONS,
-            groupId: EMBER_RX_ON_WHEN_IDLE_BROADCAST_ADDRESS,
+            groupId: inclSleepyZED ? 0xFFFF : EMBER_RX_ON_WHEN_IDLE_BROADCAST_ADDRESS,
             sequence: 0,// set by stack
         };
         const data = zclFrame.toBuffer();
