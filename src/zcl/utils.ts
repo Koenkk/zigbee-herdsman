@@ -1,5 +1,5 @@
-
-import {DataType, Cluster, Foundation} from './definition';
+import {DataType, Clusters, Foundation} from './definition';
+import {ClusterDefinition, ClusterName, CustomClusters} from './definition/tstype';
 import * as TsType from './tstype';
 
 const DataTypeValueType = {
@@ -31,27 +31,37 @@ function IsDataTypeAnalogOrDiscrete(dataType: DataType): 'ANALOG' | 'DISCRETE' {
     }
 }
 
-function getCluster(key: string | number, manufacturerCode: number = null): TsType.Cluster {
+function getClusterDefinition(
+    key: string | number,
+    manufacturerCode: number | null,
+    customClusters: CustomClusters,
+): {name: string, cluster: ClusterDefinition} {
     let name: string;
+
+    const clusters: CustomClusters = {
+        ...customClusters, // Custom clusters have a higher priority than Zcl clusters (custom cluster has a DIFFERENT name than Zcl clusters)
+        ...Clusters,
+        ...customClusters, // Custom clusters should override Zcl clusters (custom cluster has the SAME name than Zcl clusters)
+    };
 
     if (typeof key === 'number') {
         if (manufacturerCode) {
-            name = Object.entries(Cluster)
+            name = Object.entries(clusters)
                 .find((e) => e[1].ID === key && e[1].manufacturerCode === manufacturerCode)?.[0];
         } 
         
         if (!name) {
-            name = Object.entries(Cluster).find((e) => e[1].ID === key && !e[1].manufacturerCode)?.[0];
+            name = Object.entries(clusters).find((e) => e[1].ID === key && !e[1].manufacturerCode)?.[0];
         }
 
         if (!name) {
-            name = Object.entries(Cluster).find((e) => e[1].ID === key)?.[0];
+            name = Object.entries(clusters).find((e) => e[1].ID === key)?.[0];
         }
     } else {
         name = key;
     }
 
-    let cluster = Cluster[name];
+    let cluster = clusters[name];
 
     if (!cluster) {
         if (typeof key === 'number') {
@@ -62,6 +72,10 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
         }
     }
 
+    return {name, cluster};
+}
+
+function createCluster(name: string, cluster: ClusterDefinition, manufacturerCode: number = null): TsType.Cluster {
     // eslint-disable-next-line
     let attributes: {[s: string]: TsType.Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).map(([k, v]): any => ({[k]: {...v, name: k}})));
     // eslint-disable-next-line
@@ -148,6 +162,15 @@ function getCluster(key: string | number, manufacturerCode: number = null): TsTy
     };
 }
 
+function getCluster(
+    key: string | number,
+    manufacturerCode: number | null,
+    customClusters: CustomClusters,
+): TsType.Cluster {
+    const {name, cluster} = getClusterDefinition(key, manufacturerCode, customClusters);
+    return createCluster(name, cluster, manufacturerCode);
+}
+
 function getGlobalCommand(key: number | string): TsType.Command {
     let name;
 
@@ -181,8 +204,14 @@ function getGlobalCommand(key: number | string): TsType.Command {
     return result;
 }
 
+function isClusterName(name: string): name is ClusterName {
+    return (name in Clusters);
+}
+
 export {
     getCluster,
     getGlobalCommand,
     IsDataTypeAnalogOrDiscrete,
+    createCluster,
+    isClusterName,
 };

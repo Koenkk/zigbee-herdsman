@@ -5,6 +5,7 @@ import BuffaloZcl from './buffaloZcl';
 import {TsType as BuffaloTsType} from '../buffalo';
 import * as TsType from './tstype';
 import {TsType as DefinitionTsType, FrameType} from './definition';
+import {CustomClusters} from './definition/tstype';
 
 // eslint-disable-next-line
 type ZclPayload = any;
@@ -40,9 +41,9 @@ class ZclFrame {
     public static create(
         frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number | null,
         transactionSequenceNumber: number, commandKey: number | string, clusterKey: number | string,
-        payload: ZclPayload, reservedBits = 0
+        payload: ZclPayload, customClusters: CustomClusters, reservedBits = 0
     ): ZclFrame {
-        const cluster = Utils.getCluster(clusterKey, manufacturerCode != null ? manufacturerCode : null);
+        const cluster = Utils.getCluster(clusterKey, manufacturerCode, customClusters);
         let command: TsType.Command = null;
         if (frameType === FrameType.GLOBAL) {
             command = Utils.getGlobalCommand(commandKey);
@@ -137,16 +138,13 @@ class ZclFrame {
     /**
      * Parsing
      */
-    public static fromBuffer(clusterID: number, header: ZclHeader, buffer: Buffer): ZclFrame {
+    public static fromBuffer(clusterID: number, header: ZclHeader, buffer: Buffer, customClusters: CustomClusters): ZclFrame {
         if (!header) {
             throw new Error("Invalid ZclHeader.");
         }
 
         const buffalo = new BuffaloZcl(buffer, header.length);
-        const cluster = Utils.getCluster(
-            clusterID,
-            header.frameControl.manufacturerSpecific ? header.manufacturerCode : null
-        );
+        const cluster = Utils.getCluster(clusterID, header.manufacturerCode, customClusters);
 
         let command: TsType.Command = null;
         if (header.isGlobal) {

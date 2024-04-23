@@ -7,7 +7,7 @@ import {BackupUtils, RealpathSync, Wait} from "../../../utils";
 import {Adapter, TsType} from "../..";
 import {Backup, UnifiedBackupStorage} from "../../../models";
 import {FrameType, Direction, ZclFrame, ZclHeader, Foundation, ManufacturerCode} from "../../../zcl";
-import Cluster from "../../../zcl/definition/cluster";
+import Clusters from "../../../zcl/definition/cluster";
 import {
     DeviceAnnouncePayload,
     DeviceJoinedPayload,
@@ -628,7 +628,7 @@ export class EmberAdapter extends Adapter {
     private async onTouchlinkMessage(sourcePanId: EmberPanId, sourceAddress: EmberEUI64, groupId: number | null, lastHopLqi: number,
         messageContents: Buffer): Promise<void> {
         const payload: ZclPayload = {
-            clusterID: Cluster.touchlink.ID,
+            clusterID: Clusters.touchlink.ID,
             data: messageContents,
             header: ZclHeader.fromBuffer(messageContents),
             address: sourceAddress,
@@ -673,7 +673,7 @@ export class EmberAdapter extends Adapter {
             const payload: ZclPayload = {
                 header: ZclHeader.fromBuffer(data),
                 data,
-                clusterID: Cluster.greenPower.ID,
+                clusterID: Clusters.greenPower.ID,
                 address: sourceId,
                 endpoint: GP_ENDPOINT,
                 linkquality: gpdLink,

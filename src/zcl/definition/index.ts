@@ -1,5 +1,5 @@
 import BuffaloZclDataType from './buffaloZclDataType';
-import Cluster from './cluster';
+import Clusters from './cluster';
 import Direction from './direction';
 import DataType from './dataType';
 import Foundation from './foundation';
@@ -12,6 +12,6 @@ import FrameControl from './frameControl';
 import EndpointDeviceType from './endpointDeviceType';
 
 export {
-    BuffaloZclDataType, Cluster, Direction, Foundation, Status, DataType, TsType, FrameType, PowerSource,
+    BuffaloZclDataType, Clusters, Direction, Foundation, Status, DataType, TsType, FrameType, PowerSource,
     ManufacturerCode, FrameControl, EndpointDeviceType,
 };
