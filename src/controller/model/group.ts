@@ -145,7 +145,7 @@ class Group extends Entity {
         clusterKey: number | string, attributes: KeyValue, options?: Options
     ): Promise<void> {
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const cluster = Zcl.Utils.getCluster(clusterKey, null, {});
         const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (cluster.hasAttribute(nameOrID)) {
@@ -165,7 +165,7 @@ class Group extends Entity {
             const frame = Zcl.ZclFrame.create(
                 Zcl.FrameType.GLOBAL, options.direction, true,
                 options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-                'write', cluster.ID, payload, options.reservedBits
+                'write', cluster.ID, payload, {}, options.reservedBits
             );
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
@@ -179,7 +179,7 @@ class Group extends Entity {
         clusterKey: number | string, attributes: (string | number)[], options?: Options
     ): Promise<void> {
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const cluster = Zcl.Utils.getCluster(clusterKey, null, {});
         const payload: {attrId: number}[] = [];
         for (const attribute of attributes) {
             payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
@@ -188,7 +188,7 @@ class Group extends Entity {
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.GLOBAL, options.direction, true,
             options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(), 'read',
-            cluster.ID, payload, options.reservedBits
+            cluster.ID, payload, {}, options.reservedBits
         );
 
         const log = `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
@@ -207,7 +207,7 @@ class Group extends Entity {
         clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options
     ): Promise<void> {
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey);
+        const cluster = Zcl.Utils.getCluster(clusterKey, null, {});
         const command = cluster.getCommand(commandKey);
 
         const log = `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
@@ -217,7 +217,7 @@ class Group extends Entity {
             const frame = Zcl.ZclFrame.create(
                 Zcl.FrameType.SPECIFIC, options.direction, true, options.manufacturerCode,
                 options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
-                command.ID, cluster.ID, payload, options.reservedBits
+                command.ID, cluster.ID, payload, {}, options.reservedBits
             );
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {

@@ -1,37 +1,10 @@
 /* eslint max-len: 0 */
 import DataType from './dataType';
-import {ParameterDefinition} from './tstype';
+import {ClusterDefinition, ClusterName} from './tstype';
 import BuffaloZclDataType from './buffaloZclDataType';
 import ManufacturerCode from './manufacturerCode';
 
-interface AttributeDefinition {
-    ID: number;
-    type: DataType;
-    manufacturerCode?: number;
-}
-
-interface ClusterDefinition {
-    ID: number;
-    manufacturerCode?: number;
-    attributes: {[s: string]: AttributeDefinition};
-    commands: {
-        [s: string]: CommandDefinition;
-    };
-    commandsResponse: {
-        [s: string]: CommandDefinition;
-    };
-}
-
-interface CommandDefinition {
-    ID: number;
-    parameters: ParameterDefinition[];
-    response?: number;
-}
-
-const Cluster: {
-    [s: string]: ClusterDefinition;
-}
-= {
+const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
     genBasic: {
         ID: 0,
         attributes: {
@@ -5809,4 +5782,4 @@ const Cluster: {
     },
 };
 
-export default Cluster;
+export default Clusters;
