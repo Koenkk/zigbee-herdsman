@@ -549,11 +549,11 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, inclSleepyZED?: boolean): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, broadcastAddress: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
-                AddressMode.ADDR_16BIT, inclSleepyZED ? 0xFFFF : 0xFFFD, endpoint, 0, sourceEndpoint,
+                AddressMode.ADDR_16BIT, broadcastAddress, endpoint, 0, sourceEndpoint,
                 zclFrame.cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, false, 0
             );
 
