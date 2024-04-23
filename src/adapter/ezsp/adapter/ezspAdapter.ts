@@ -510,14 +510,14 @@ class EZSPAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, inclSleepyZED?: boolean): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, false);
             frame.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xA1E0 : 0x0104;
             frame.sourceEndpoint =  sourceEndpoint;
             frame.destinationEndpoint = endpoint;
-            frame.groupId = 0xFFFD;
+            frame.groupId = inclSleepyZED ? 0xFFFF : 0xFFFD;
             
             await this.driver.mrequest(frame, zclFrame.toBuffer());
 
