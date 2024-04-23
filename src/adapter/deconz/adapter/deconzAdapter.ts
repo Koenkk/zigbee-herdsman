@@ -694,7 +694,7 @@ class DeconzAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, inclSleepyZED?: boolean): Promise<void> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
         let pay = zclFrame.toBuffer();
@@ -704,7 +704,7 @@ class DeconzAdapter extends Adapter {
 
         request.requestId = transactionID;
         request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
-        request.destAddr16 = 0xFFFD;
+        request.destAddr16 = inclSleepyZED ? 0xFFFF : 0xFFFD;
         request.destEndpoint = endpoint;
         request.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104;
         request.clusterId = zclFrame.cluster.ID;
