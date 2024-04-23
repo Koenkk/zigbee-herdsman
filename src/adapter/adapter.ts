@@ -219,7 +219,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, sourceEndpoint?: number): Promise<void>;
 
-    public abstract sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void>;
+    public abstract sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, inclSleepyZED?: boolean): Promise<void>;
 
     /**
      * InterPAN
