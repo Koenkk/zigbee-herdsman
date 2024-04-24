@@ -16,6 +16,7 @@ import {ZnpAdapterManager} from "./manager";
 import * as Models from "../../../models";
 import assert from 'assert';
 import {logger} from '../../../utils/logger';
+import {BroadcastAddress} from '../../../zspec/enums';
 
 const NS = "zh:zstack";
 const Subsystem = UnpiConstants.Subsystem;
@@ -549,11 +550,11 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, broadcastAddress: number): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
-                AddressMode.ADDR_16BIT, broadcastAddress, endpoint, 0, sourceEndpoint,
+                AddressMode.ADDR_16BIT, destination, endpoint, 0, sourceEndpoint,
                 zclFrame.cluster.ID, Constants.AF.DEFAULT_RADIUS, zclFrame.toBuffer(), 3000, false, 0
             );
 

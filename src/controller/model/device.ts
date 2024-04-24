@@ -11,6 +11,7 @@ import {logger} from '../../utils/logger';
 import {ClusterDefinition, CustomClusters} from '../../zcl/definition/tstype';
 import {Clusters} from '../../zcl';
 import {isClusterName} from '../../zcl/utils';
+import {BroadcastAddress} from '../../zspec/enums';
 
 /**
  * @ignore
@@ -764,7 +765,7 @@ class Device extends Entity {
                 ZclTransactionSequenceNumber.next(), 'pairing', 33, payload, this.customClusters,
             );
 
-            await Entity.adapter.sendZclFrameToAll(242, frame, 242);
+            await Entity.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else await Entity.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
         this.removeFromDatabase();
     }
@@ -827,6 +828,23 @@ class Device extends Entity {
             };
         }
         this._customClusters[name] = cluster;
+    }
+
+    public async triggerBroadcast(endpoint: number, sourceEndpoint: number, destination: BroadcastAddress, direction: Zcl.Direction,
+        commandKey: number | string, clusterKey: number | string, payload: unknown): Promise<void> {
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.SPECIFIC,
+            direction,
+            true,
+            this.manufacturerID,
+            ZclTransactionSequenceNumber.next(),
+            commandKey,
+            clusterKey,
+            payload,
+            this.customClusters,
+        );
+
+        await Entity.adapter.sendZclFrameToAll(endpoint, frame, sourceEndpoint, destination);
     }
 }
 

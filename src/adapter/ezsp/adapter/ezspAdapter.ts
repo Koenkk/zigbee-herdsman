@@ -16,6 +16,7 @@ import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import {EZSPZDOResponseFrameData} from '../driver/ezsp';
 import {logger} from '../../../utils/logger';
+import {BroadcastAddress} from '../../../zspec/enums';
 
 const NS = 'zh:ezsp';
 
@@ -510,14 +511,14 @@ class EZSPAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, broadcastAddress: number): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, false);
             frame.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xA1E0 : 0x0104;
             frame.sourceEndpoint =  sourceEndpoint;
             frame.destinationEndpoint = endpoint;
-            frame.groupId = broadcastAddress;
+            frame.groupId = destination;
             
             await this.driver.mrequest(frame, zclFrame.toBuffer());
 

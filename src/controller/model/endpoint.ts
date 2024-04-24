@@ -10,6 +10,7 @@ import Group from './group';
 import Device from './device';
 import assert from 'assert';
 import {logger} from '../../utils/logger';
+import {BroadcastAddress} from '../../zspec/enums';
 
 const NS = 'zh:controller:endpoint';
 
@@ -612,7 +613,7 @@ class Endpoint extends Entity {
             await this.sendRequest(frame, options, async (f) => {
                 // Broadcast Green Power responses
                 if (this.ID === 242) {
-                    await Entity.adapter.sendZclFrameToAll(242, f, 242);
+                    await Entity.adapter.sendZclFrameToAll(242, f, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
                 } else {
                     await Entity.adapter.sendZclFrameToEndpoint(
                         this.deviceIeeeAddress, this.deviceNetworkAddress, this.ID, f, options.timeout,

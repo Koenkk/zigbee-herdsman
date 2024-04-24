@@ -6,6 +6,7 @@ import events from 'events';
 import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import {logger} from '../utils/logger';
 import {Clusters} from '../zcl';
+import {BroadcastAddress} from '../zspec/enums';
 
 const NS = 'zh:controller:greenpower';
 
@@ -80,7 +81,7 @@ class GreenPower extends events.EventEmitter {
         // the proxy MAY send it as unicast to selected proxy.
         // This attempts to mirror logic from commit 92f77cc5.
         if (dataPayload.wasBroadcast) {
-            return this.adapter.sendZclFrameToAll(242, replyFrame, 242);
+            return this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             return this.adapter.sendZclFrameToEndpoint(null, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
         }
@@ -134,7 +135,7 @@ class GreenPower extends events.EventEmitter {
                         null, ZclTransactionSequenceNumber.next(), 'response', Clusters.greenPower.ID, payloadReply,
                         {},
                     );
-                    await this.adapter.sendZclFrameToAll(242, replyFrame, 242);
+                    await this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
 
                     const payloadPairing = {
                         options: 0b0000000110101000, // Disable encryption
@@ -199,7 +200,7 @@ class GreenPower extends events.EventEmitter {
                     {},
                 );
 
-                await this.adapter.sendZclFrameToAll(242, replyFrame, 242);
+                await this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
                 break;
             /* istanbul ignore next */
             case 0xA1: // GP Manufacturer-specific Attribute Reporting
@@ -227,7 +228,7 @@ class GreenPower extends events.EventEmitter {
         );
 
         if (networkAddress === null) {
-            await this.adapter.sendZclFrameToAll(242, frame, 242);
+            await this.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             await this.adapter.sendZclFrameToEndpoint(null, networkAddress,242,frame,10000,false,false,242);
         }
