@@ -8,13 +8,6 @@ import {logger} from '../utils/logger';
 
 const NS = 'zh:adapter';
 
-/** Broadcast to all routers. */
-export const BROADCAST_ADDRESS = 0xFFFC;
-/** Broadcast to all non-sleepy devices. */
-export const BROADCAST_RX_ON_WHEN_IDLE_ADDRESS = 0xFFFD;
-/** Broadcast to all devices, including sleepy end devices. */
-export const BROADCAST_SLEEPY_ADDRESS = 0xFFFF;
-
 abstract class Adapter extends events.EventEmitter {
     public readonly greenPowerGroup = 0x0b84;
     protected networkOptions: TsType.NetworkOptions;
@@ -228,7 +221,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract sendZclFrameToAll(
         endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number,
-        destinationBroadcastAddress: number = BROADCAST_ADDRESS,
+        broadcastAddress: number,
     ): Promise<void>;
 
     /**
