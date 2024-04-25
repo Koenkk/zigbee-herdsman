@@ -481,6 +481,7 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
                 ID: 0xFD,
                 parameters: [
                     {name: 'value', type: DataType.uint8},
+                    {name: 'data', type: BuffaloZclDataType.BUFFER},
                 ],
             },
             tuyaAction2: {
