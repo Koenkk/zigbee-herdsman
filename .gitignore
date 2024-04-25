@@ -5,3 +5,6 @@ dist/
 temp/
 .remote-sync.json
 tsconfig.tsbuildinfo
+
+# MacOS indexing files
+.DS_Store
