@@ -2461,11 +2461,11 @@ describe('Controller', () => {
         expect(events.message[0].cluster).toBe('myCustomCluster');
     });
 
-    it('Triggers broadcast from device', async () => {
+    it('Send broadcast to all devices', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
-        device.triggerBroadcast(255, 1, BroadcastAddress.SLEEPY, Zcl.Direction.CLIENT_TO_SERVER, 'boschSmokeDetectorSiren', Zcl.Clusters.ssIasZone.ID, {data: 0x0000});
+        device.broadcastCommand(255, 1, BroadcastAddress.SLEEPY, Zcl.Direction.CLIENT_TO_SERVER, 'boschSmokeDetectorSiren', Zcl.Clusters.ssIasZone.ID, {data: 0x0000});
         const sentFrame = mockZclFrame.create(
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,
