@@ -2469,7 +2469,8 @@ describe('Controller', () => {
         const sentFrame = mockZclFrame.create(
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,
-            true, device.manufacturerID,
+            true,
+            Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
             ZclTransactionSequenceNumber.number,
             'boschSmokeDetectorSiren',
             Zcl.Clusters.ssIasZone.ID,
