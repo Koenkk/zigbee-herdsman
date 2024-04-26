@@ -2465,7 +2465,8 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
-        device.broadcastCommand(255, 1, BroadcastAddress.SLEEPY, Zcl.Direction.CLIENT_TO_SERVER, 'boschSmokeDetectorSiren', Zcl.Clusters.ssIasZone.ID, {data: 0x0000});
+        const options = {manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH};
+        device.broadcastCommand(255, 1, BroadcastAddress.SLEEPY, Zcl.Clusters.ssIasZone.ID, 'boschSmokeDetectorSiren', {data: 0x0000}, options);
         const sentFrame = mockZclFrame.create(
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,

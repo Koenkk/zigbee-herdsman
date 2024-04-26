@@ -830,22 +830,35 @@ class Device extends Entity {
         this._customClusters[name] = cluster;
     }
 
-    public async broadcastCommand(endpoint: number, sourceEndpoint: number, destination: BroadcastAddress, direction: Zcl.Direction,
-        commandKey: number | string, clusterKey: number | string, payload: unknown): Promise<void> {
+    public async broadcastCommand(endpoint: number, sourceEndpoint: number, destination: BroadcastAddress,
+        clusterKey: number | string, commandKey: number | string, payload: unknown, options?: Options): Promise<void> {
+        options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const cluster = Zcl.Utils.getCluster(clusterKey, null, {});
-        const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.SPECIFIC,
-            direction,
-            true,
-            cluster.manufacturerCode,
-            ZclTransactionSequenceNumber.next(),
-            commandKey,
-            clusterKey,
-            payload,
-            this.customClusters,
-        );
+        const command = cluster.getCommand(commandKey);
 
-        await Entity.adapter.sendZclFrameToAll(endpoint, frame, sourceEndpoint, destination);
+        try {
+            const frame = Zcl.ZclFrame.create(
+                Zcl.FrameType.SPECIFIC, options.direction, true, options.manufacturerCode,
+                options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
+                command.ID, cluster.ID, payload, {}, options.reservedBits
+            );
+            await Entity.adapter.sendZclFrameToAll(endpoint, frame, sourceEndpoint, destination);
+        } catch (error) {
+            logger.debug(error, NS);
+        }
+    }
+
+    private getOptionsWithDefaults(
+        options: Options, direction: Zcl.Direction
+    ): Options {
+        const providedOptions = options || {};
+        return {
+            direction,
+            reservedBits: 0,
+            manufacturerCode: null,
+            transactionSequenceNumber: null,
+            ...providedOptions
+        };
     }
 }
 
