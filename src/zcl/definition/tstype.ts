@@ -1,5 +1,4 @@
 import DataType from './dataType';
-import BuffaloZclDataType from './buffaloZclDataType';
 import * as TsType from '../tstype';
 
 interface ParameterDefinition extends TsType.Parameter {
@@ -17,8 +16,6 @@ interface ParameterDefinition extends TsType.Parameter {
         size?: number;
         value?: number | string;
     }[];
-    name: string;
-    type: DataType | BuffaloZclDataType;
 }
 
 interface AttributeDefinition {

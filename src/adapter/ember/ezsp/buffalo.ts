@@ -221,7 +221,7 @@ export class EzspBuffalo extends Buffalo {
     }
 
     public readEmberNetworkParameters(): EmberNetworkParameters {
-        const extendedPanId = this.readListUInt8({length: EXTENDED_PAN_ID_SIZE});
+        const extendedPanId = this.readListUInt8(EXTENDED_PAN_ID_SIZE);
         const panId = this.readUInt16();
         const radioTxPower = this.readUInt8();
         const radioChannel = this.readUInt8();
@@ -586,7 +586,7 @@ export class EzspBuffalo extends Buffalo {
     public readEmberZigbeeNetwork(): EmberZigbeeNetwork {
         const channel = this.readUInt8();
         const panId = this.readUInt16();
-        const extendedPanId = this.readListUInt8({length: EXTENDED_PAN_ID_SIZE});
+        const extendedPanId = this.readListUInt8(EXTENDED_PAN_ID_SIZE);
         const allowingJoin = this.readUInt8();
         const stackProfile = this.readUInt8();
         const nwkUpdateId = this.readUInt8();
@@ -1146,7 +1146,7 @@ export class EzspBuffalo extends Buffalo {
         const hasCapacity = this.readUInt8() === 1 ? true : false;
         const panId = this.readUInt16();
         const sender = this.readUInt16();
-        const extendedPanId = this.readListUInt8({length: EXTENDED_PAN_ID_SIZE});
+        const extendedPanId = this.readListUInt8(EXTENDED_PAN_ID_SIZE);
         const index = this.readUInt8();
 
         return {
@@ -1205,7 +1205,7 @@ export class EzspBuffalo extends Buffalo {
         const hasCapacity = this.readUInt8() === 1 ? true : false;
         const panId = this.readUInt16();
         const sender = this.readUInt16();
-        const extendedPanId = this.readListUInt8({length: EXTENDED_PAN_ID_SIZE});
+        const extendedPanId = this.readListUInt8(EXTENDED_PAN_ID_SIZE);
 
         return {
             channel,

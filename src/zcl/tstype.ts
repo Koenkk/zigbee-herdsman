@@ -1,6 +1,5 @@
 import DataType from './definition/dataType';
 import BuffaloZclDataType from './definition/buffaloZclDataType';
-import {TsType as BuffaloTsType} from '../buffalo';
 
 interface Attribute {
     ID: number;
@@ -38,14 +37,21 @@ interface Cluster {
     getCommandResponse: (key: number | string) => Command;
 }
 
-interface BuffaloZclOptions extends BuffaloTsType.Options {
-    dataType?: string;
+interface BuffaloZclOptions {
+    length?: number;
+    payload?: {
+        mode?: number;// used to read ListThermoTransitions
+        numoftrans?: number;// used to read ListThermoTransitions
+        commandID?: number;// used to read GdpFrame
+        payloadSize?: number;// used to read GdpFrame
+    } & {[key: string]: unknown};
+    dataType?: DataType;
     attrId?: number;
 }
 
 interface ZclArray {
     elementType: DataType | keyof typeof DataType;
-    elements: BuffaloTsType.Value[];
+    elements: unknown[];
 }
 
 type DataTypeValueType = 'ANALOG' | 'DISCRETE';
