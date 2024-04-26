@@ -31,6 +31,13 @@ interface RoutingTable {
     table: {destinationAddress: number; status: string; nextHop: number}[];
 }
 
+interface Options {
+    manufacturerCode?: number;
+    direction?: Zcl.Direction;
+    reservedBits?: number;
+    transactionSequenceNumber?: number;
+}
+
 type CustomReadResponse = (frame: Zcl.ZclFrame, endpoint: Endpoint) => boolean;
 
 class Device extends Entity {
