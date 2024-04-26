@@ -832,7 +832,7 @@ class Device extends Entity {
 
     public async broadcastCommand(endpoint: number, sourceEndpoint: number, destination: BroadcastAddress, direction: Zcl.Direction,
         commandKey: number | string, clusterKey: number | string, payload: unknown): Promise<void> {
-        const cluster = Zcl.Utils.getCluster(clusterKey, this.manufacturerID, this.customClusters);
+        const cluster = Zcl.Utils.getCluster(clusterKey, null, {});
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC,
             direction,
