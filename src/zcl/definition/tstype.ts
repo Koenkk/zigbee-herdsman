@@ -57,7 +57,7 @@ type ClusterName = (
     | 'telecommunicationsChatting' | 'haApplianceIdentification' | 'haMeterIdentification' | 'haApplianceEventsAlerts' | 'haApplianceStatistics'
     | 'haElectricalMeasurement' | 'haDiagnostic' | 'touchlink' | 'manuSpecificIkeaAirPurifier' | 'msIkeaVocIndexMeasurement'
     | 'manuSpecificClusterAduroSmart' | 'manuSpecificOsram' | 'manuSpecificPhilips' | 'manuSpecificPhilips2' | 'manuSpecificSinope'
-    | 'manuSpecificUbisysDeviceSetup' | 'manuSpecificUbisysDimmerSetup' | 'manuSpecificLegrandDevices' | 'manuSpecificLegrandDevices2'
+    | 'manuSpecificLegrandDevices' | 'manuSpecificLegrandDevices2'
     | 'manuSpecificLegrandDevices3' | 'manuSpecificNiko1' | 'manuSpecificNiko2' | 'wiserDeviceInfo' | 'manuSpecificTuya' | 'manuSpecificLumi'
     | 'liXeePrivate' | 'manuSpecificTuya_2' | 'manuSpecificTuya_3' | 'manuSpecificCentraliteHumidity' | 'manuSpecificSmartThingsArrivalSensor'
     | 'manuSpecificSamsungAccelerometer' | 'heimanSpecificFormaldehydeMeasurement' | 'heimanSpecificAirQuality' | 'heimanSpecificScenes'

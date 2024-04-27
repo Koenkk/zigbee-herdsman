@@ -521,20 +521,6 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
             defaultMoveRate: {ID: 20, type: DataType.UINT16},
             startUpCurrentLevel: {ID: 16384, type: DataType.UINT8},
             elkoStartUpCurrentLevel: {ID: 0x4000, type: DataType.UINT8, manufacturerCode: ManufacturerCode.ADEO},
-            ubisysMinimumOnLevel: {ID: 0x0000, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysValveType: {ID: 0x0001, type: DataType.BITMAP8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysCyclePeriod: {ID: 0x0002, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysSeason: {ID: 0x0003, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysBackupLevel: {ID: 0x0004, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysAlternateBackupLevel: {ID: 0x0005, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysLowerRange: {ID: 0x0006, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysUpperRange: {ID: 0x0007, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysPumpThresholdOn: {ID: 0x0008, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysPumpThresholdOff: {ID: 0x0009, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysHeatingDemandEnableThreshold: {ID: 0x000A, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysHeatingDemandDisableThreshold: {ID: 0x000B, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysCoolingDemandEnableThreshold: {ID: 0x000C, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysCoolingDemandDisableThreshold: {ID: 0x000D, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
         },
         commands: {
             moveToLevel: {
@@ -1814,14 +1800,6 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
             windowCoveringMode: {ID: 23, type: DataType.BITMAP8},
             intermediateSetpointsLift: {ID: 24, type: DataType.OCTET_STR},
             intermediateSetpointsTilt: {ID: 25, type: DataType.OCTET_STR},
-            ubisysTurnaroundGuardTime: {ID: 0x1000, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysLiftToTiltTransitionSteps: {ID: 0x1001, type: DataType.UINT16, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysTotalSteps: {ID: 0x1002, type: DataType.UINT16, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysLiftToTiltTransitionSteps2: {ID: 0x1003, type: DataType.UINT16, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysTotalSteps2: {ID: 0x1004, type: DataType.UINT16, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysAdditionalSteps: {ID: 0x1005, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysInactivePowerThreshold: {ID: 0x1006, type: DataType.UINT16, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysStartupSteps: {ID: 0x1007, type: DataType.UINT16, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
             tuyaMovingState: {ID: 0xf000, type: DataType.ENUM8},
             tuyaCalibration: {ID: 0xf001, type: DataType.ENUM8},
             stepPositionLift: {ID: 0xf001, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.LEGRAND_GROUP},
@@ -2057,22 +2035,6 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
             elkoLastMessageStatus: {ID: 0x0419, type: DataType.UINT8},
             fourNoksHysteresisHigh: {ID: 0x0101, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ASTREL_GROUP_SRL},
             fourNoksHysteresisLow: {ID: 0x0102, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ASTREL_GROUP_SRL},
-            ubisysClassBTemperatureOffset: {ID: 0x0000, type: DataType.INT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysReturnFlowTemperatureWeight: {ID: 0x0001, type: DataType.INT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysRawOutdoorTemperature: {ID: 0x0002, type: DataType.STRUCT, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysRawLocalTemperatureA: {ID: 0x0003, type: DataType.STRUCT, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysRawLocalTemperatureB: {ID: 0x0004, type: DataType.STRUCT, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysRawForwardFlowTemperature: {ID: 0x0005, type: DataType.STRUCT, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysRawReturnFlowTemperature: {ID: 0x0006, type: DataType.STRUCT, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysInstalledExtensions: {ID: 0x0007, type: DataType.BITMAP64, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysTemperatureOffset: {ID: 0x0010, type: DataType.INT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysDefaultOccupiedHeatingSetpoint: {ID: 0x0011, type: DataType.INT16, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysVacationMode: {ID: 0x0012, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysRemoteTemperature: {ID: 0x0013, type: DataType.INT16, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysRemoteTemperatureValidDuration: {ID: 0x0014, type: DataType.UINT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysProportionalGain: {ID: 0x0020, type: DataType.INT16, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysProportionalShift: {ID: 0x0021, type: DataType.INT8, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
-            ubisysIntegralFactor: {ID: 0x0022, type: DataType.INT16, manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH},
         },
         commands: {
             setpointRaiseLower: {
@@ -4296,31 +4258,6 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
         },
         commandsResponse: {
         },
-    },
-    manuSpecificUbisysDeviceSetup: {
-        ID: 0xfc00,
-        // Doesn't use manufacturerCode: https://github.com/Koenkk/zigbee-herdsman-converters/pull/4412
-        attributes: {
-            inputConfigurations: {ID: 0x0000, type: DataType.ARRAY},
-            inputActions: {ID: 0x0001, type: DataType.ARRAY},
-        },
-        commands: {
-        },
-        commandsResponse: {
-        }
-    },
-    manuSpecificUbisysDimmerSetup: {
-        ID: 0xfc01,
-        manufacturerCode: ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH,
-        attributes: {
-            capabilities: {ID: 0x0000, type: DataType.BITMAP8},
-            status: {ID: 0x0001, type: DataType.BITMAP8},
-            mode: {ID: 0x0002, type: DataType.BITMAP8},
-        },
-        commands: {
-        },
-        commandsResponse: {
-        }
     },
     manuSpecificLegrandDevices: {
         ID: 0xfc01,
