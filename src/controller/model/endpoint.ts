@@ -777,6 +777,28 @@ class Endpoint extends Entity {
             throw error;
         }
     }
+
+    public async zclCommandBroadcast(endpoint: number, destination: BroadcastAddress, clusterKey: number | string,
+        commandKey: number | string, payload: unknown, options?: Options): Promise<void> {
+        const device = this.getDevice();
+        const cluster = this.getCluster(clusterKey, device);
+        const command = cluster.getCommand(commandKey);
+        options = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+        const sourceEndpoint = options.srcEndpoint ?? this.ID;
+
+        const frame = Zcl.ZclFrame.create(
+            Zcl.FrameType.SPECIFIC, options.direction, true, options.manufacturerCode,
+            options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+            command.name, cluster.name, payload, device.customClusters, options.reservedBits
+        );
+
+        const log = `ZCL command broadcast ${this.deviceIeeeAddress}/${sourceEndpoint} to ${destination}/${endpoint} ` +
+            `${cluster.name}.${command.name}(${JSON.stringify({payload, options})})`;
+        logger.debug(log, NS);
+
+        // if endpoint===0xFF ("broadcast endpoint"), deliver to all endpoints supporting cluster, should be avoided whenever possible
+        await Entity.adapter.sendZclFrameToAll(endpoint, frame, sourceEndpoint, destination);
+    }
 }
 
 export default Endpoint;

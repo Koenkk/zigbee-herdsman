@@ -31,13 +31,6 @@ interface RoutingTable {
     table: {destinationAddress: number; status: string; nextHop: number}[];
 }
 
-interface Options {
-    manufacturerCode?: number;
-    direction?: Zcl.Direction;
-    reservedBits?: number;
-    transactionSequenceNumber?: number;
-}
-
 type CustomReadResponse = (frame: Zcl.ZclFrame, endpoint: Endpoint) => boolean;
 
 class Device extends Entity {
@@ -835,35 +828,6 @@ class Device extends Entity {
             };
         }
         this._customClusters[name] = cluster;
-    }
-
-    public async zclCommandToAll(endpoint: number, sourceEndpoint: number, destination: BroadcastAddress,
-        clusterKey: number | string, commandKey: number | string, payload: unknown, options?: Options): Promise<void> {
-        const cluster = Zcl.Utils.getCluster(clusterKey, null, this.customClusters);
-        options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-
-        const log = `ZCL command broadcast to ${destination}/${endpoint} from ${this.ieeeAddr}/${sourceEndpoint} ` +
-            `${cluster.name}.${commandKey}(${JSON.stringify({payload, options})})`;
-        logger.debug(log, NS);
-
-        const frame = Zcl.ZclFrame.create(
-            Zcl.FrameType.SPECIFIC, options.direction, true, options.manufacturerCode,
-            options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-            commandKey, cluster.ID, payload, this.customClusters, options.reservedBits
-        );
-
-        await Entity.adapter.sendZclFrameToAll(endpoint, frame, sourceEndpoint, destination);
-    }
-
-    private getOptionsWithDefaults(options: Options, direction: Zcl.Direction, manufacturerCode?: Zcl.ManufacturerCode): Options {
-        const providedOptions = options || {};
-        return {
-            direction,
-            reservedBits: 0,
-            manufacturerCode: manufacturerCode ?? null,
-            transactionSequenceNumber: null,
-            ...providedOptions
-        };
     }
 }
 
