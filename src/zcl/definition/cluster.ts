@@ -4125,11 +4125,11 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
                     // e.g. https://github.com/Koenkk/zigbee2mqtt/issues/8535#issuecomment-909199162
                     // Since we don't have a way to deal with optional attributes yet and since we don't
                     // use these attributes anyway, disable them for now.
-                    // {name: 'endpointID', type: DataType.uint8},
-                    // {name: 'profileID', type: DataType.uint16},
-                    // {name: 'deviceID', type: DataType.uint16},
-                    // {name: 'version', type: DataType.uint8},
-                    // {name: 'groupIdentifierCount', type: DataType.uint8},
+                    // {name: 'endpointID', type: DataType.UINT8},
+                    // {name: 'profileID', type: DataType.UINT16},
+                    // {name: 'deviceID', type: DataType.UINT16},
+                    // {name: 'version', type: DataType.UINT8},
+                    // {name: 'groupIdentifierCount', type: DataType.UINT8},
                 ],
             },
         },
@@ -4244,7 +4244,7 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
         attributes: {
             // attribute ID :1's readable
             keypadLockout: {ID: 2, type: DataType.ENUM8},
-            // 'firmware number': {ID: 3, type: DataType.unknown},
+            // 'firmware number': {ID: 3, type: DataType.UNKNOWN},
             firmwareVersion: {ID: 4, type: DataType.CHAR_STR},
             outdoorTempToDisplay: {ID: 16, type: DataType.INT16},
             outdoorTempToDisplayTimeout: {ID: 17, type: DataType.UINT16},
@@ -5486,7 +5486,7 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
             allCodesLockout: {ID: 0x001A, type: DataType.BOOLEAN},
             oneTouchLocking: {ID: 0x001B, type: DataType.BOOLEAN},
             privacyButtonSetting: {ID: 0x001C, type: DataType.BOOLEAN},
-            /* enableLogging: {ID: 0x0020, type: DataType.boolean},*/ // marked in C4 driver as not supported
+            /* enableLogging: {ID: 0x0020, type: DataType.BOOLEAN},*/ // marked in C4 driver as not supported
             numberLogRecordsSupported: {ID: 0x0021, type: DataType.UINT16},
             numberPinsSupported: {ID: 0x0030, type: DataType.UINT8},
             numberScheduleSlotsPerUser: {ID: 0x0040, type: DataType.UINT8},
@@ -5669,25 +5669,25 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
             /* boltStateRsp: {
                 ID: 4,
                 parameters: [
-                    {name: 'state', type: DataType.uint8},
+                    {name: 'state', type: DataType.UINT8},
                 ],
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
             /* lockStatusReportRsp: {
                 ID: 5,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
+                    {name: 'status', type: DataType.UINT8},
                 ],
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
             /* handleStateRsp: {
                 ID: 6,
                 parameters: [
-                    {name: 'state', type: DataType.uint8},
+                    {name: 'state', type: DataType.UINT8},
                 ],
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
             /* userStatusRsp: {
                 ID: 7,
                 parameters: [
-                    {name: 'status', type: DataType.uint8},
+                    {name: 'status', type: DataType.UINT8},
                 ],
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
         },
