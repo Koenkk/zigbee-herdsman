@@ -6,17 +6,21 @@ import Status from './status';
 import Direction from './direction';
 import {ParameterDefinition} from './tstype';
 
+export type FoundationCommandName = (
+    'read' | 'readRsp' | 'write' | 'writeUndiv' | 'writeRsp' | 'writeNoRsp' | 'configReport' | 'configReportRsp' |
+    'readReportConfig' | 'readReportConfigRsp' | 'report' | 'defaultRsp' | 'discover' | 'discoverRsp' | 'readStructured' |
+    'writeStructured' | 'writeStructuredRsp' | 'discoverCommands' | 'discoverCommandsRsp' | 'discoverCommandsGen' |
+    'discoverCommandsGenRsp' | 'discoverExt' | 'discoverExtRsp'
+);
+
 interface FoundationDefinition {
     ID: number;
     parseStrategy: 'repetitive' | 'flat' | 'oneof';
-    parameters: ParameterDefinition[];
+    parameters: readonly ParameterDefinition[];
     response?: number;
 }
 
-const Foundation: {
-    [s: string]: FoundationDefinition;
-}
-= {
+const Foundation: Readonly<Record<FoundationCommandName, Readonly<FoundationDefinition>>> = {
     /** Read Attributes */
     read: {
         ID: 0x00,
@@ -164,7 +168,7 @@ const Foundation: {
             {name: 'dataType', type: DataType.UINT8},
         ],
     },
-    /* Read Attributes Structured */
+    /** Read Attributes Structured */
     readStructured: {
         ID: 0x0E,
         parseStrategy: 'repetitive',

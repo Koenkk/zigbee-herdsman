@@ -16,7 +16,7 @@ interface Parameter {
 interface Command {
     ID: number;
     name: string;
-    parameters: Parameter[];
+    parameters: readonly Parameter[];
     response?: number;
 }
 

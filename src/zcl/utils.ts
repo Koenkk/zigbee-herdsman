@@ -1,4 +1,5 @@
 import {DataType, Clusters, Foundation} from './definition';
+import {FoundationCommandName} from './definition/foundation';
 import {ClusterDefinition, ClusterName, CustomClusters} from './definition/tstype';
 import * as TsType from './tstype';
 
@@ -76,12 +77,18 @@ function getClusterDefinition(
 }
 
 function createCluster(name: string, cluster: ClusterDefinition, manufacturerCode: number = null): TsType.Cluster {
-    // eslint-disable-next-line
-    let attributes: {[s: string]: TsType.Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).map(([k, v]): any => ({[k]: {...v, name: k}})));
-    // eslint-disable-next-line
-    const commands: {[s: string]: TsType.Command} = Object.assign({}, ...Object.entries(cluster.commands).map(([k, v]): any => ({[k]: {...v, name: k}})));
-    // eslint-disable-next-line
-    const commandsResponse: {[s: string]: TsType.Command} = Object.assign({}, ...Object.entries(cluster.commandsResponse).map(([k, v]): any => ({[k]: {...v, name: k}})));
+    const attributes: {[s: string]: TsType.Attribute} = Object.assign(
+        {},
+        ...Object.entries(cluster.attributes).map(([k, v]) => ({[k]: {...v, name: k}}))
+    );
+    const commands: {[s: string]: TsType.Command} = Object.assign(
+        {},
+        ...Object.entries(cluster.commands).map(([k, v]) => ({[k]: {...v, name: k}}))
+    );
+    const commandsResponse: {[s: string]: TsType.Command} = Object.assign(
+        {},
+        ...Object.entries(cluster.commandsResponse).map(([k, v]) => ({[k]: {...v, name: k}}))
+    );
 
     const getAttributeInternal = (key: number | string): TsType.Attribute => {
         let result: TsType.Attribute = null;
@@ -172,17 +179,17 @@ function getCluster(
 }
 
 function getGlobalCommand(key: number | string): TsType.Command {
-    let name;
+    let name: FoundationCommandName;
 
     if (typeof key === 'number') {
         for (const commandName in Foundation) {
-            if (Foundation[commandName].ID === key) {
-                name = commandName;
+            if (Foundation[commandName as FoundationCommandName].ID === key) {
+                name = commandName as FoundationCommandName;
                 break;
             }
         }
     } else {
-        name = key;
+        name = key as FoundationCommandName;
     }
 
     const command = Foundation[name];
@@ -197,7 +204,7 @@ function getGlobalCommand(key: number | string): TsType.Command {
         parameters: command.parameters,
     };
 
-    if (command.hasOwnProperty('response')) {
+    if (command.response != undefined) {
         result.response = command.response;
     }
 

@@ -5,6 +5,7 @@ import BuffaloZcl from './buffaloZcl';
 import * as TsType from './tstype';
 import {TsType as DefinitionTsType, FrameType} from './definition';
 import {ClusterName, CustomClusters} from './definition/tstype';
+import {FoundationCommandName} from './definition/foundation';
 
 // eslint-disable-next-line
 type ZclPayload = any;
@@ -316,8 +317,7 @@ class ZclFrame {
 
     // List of commands is not completed, feel free to add more.
     public isCommand(
-        commandName: 'read' | 'report' | 'readRsp' | 'remove' | 'add' | 'write' | 'enrollReq' | 'configReport' |
-            'checkin' | 'writeRsp'
+        commandName: FoundationCommandName | 'remove' | 'add' | 'write' | 'enrollReq' | 'checkin'
     ): boolean {
         return this.command.name === commandName;
     }
