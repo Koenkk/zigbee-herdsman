@@ -629,12 +629,31 @@ class BuffaloZcl extends Buffalo {
     private writeStructuredSelector(value: StructuredSelector): void {
         if (value != null) {
             const indexes = value.indexes || [];
-            const indicatorType = value.indicatorType || StructuredIndicatorType.WriteWhole;
+            const indicatorType = value.indicatorType || StructuredIndicatorType.Whole;
             const indicator = indexes.length + indicatorType;
             this.writeUInt8(indicator);
             for (const index of indexes) {
                 this.writeUInt16(index);
             }
+        }
+    }
+
+    private readStructuredSelector(): StructuredSelector {
+        /** [0-15] range */
+        const indicator = this.readUInt8();
+
+        if (indicator === 0) {
+            // no indexes, whole attribute value is to be read
+            return {indicatorType: StructuredIndicatorType.Whole};
+        } else {
+            const indexes: StructuredSelector['indexes'] = [];
+    
+            for (let i = 0; i < indicator; i++) {
+                const index = this.readUInt16();
+                indexes.push(index);
+            }
+
+            return {indexes};
         }
     }
 
@@ -1057,10 +1076,9 @@ class BuffaloZcl extends Buffalo {
         case BuffaloZclDataType.GDP_FRAME: {
             return this.readGdpFrame(options);
         }
-        // NOTE: write only
-        // case BuffaloZclDataType.STRUCTURED_SELECTOR: {
-        //     break;
-        // }
+        case BuffaloZclDataType.STRUCTURED_SELECTOR: {
+            return this.readStructuredSelector();
+        }
         case BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES: {
             return this.readListTuyaDataPointValues();
         }

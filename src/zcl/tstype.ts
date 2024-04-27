@@ -56,10 +56,20 @@ interface ZclArray {
 
 type DataTypeValueType = 'ANALOG' | 'DISCRETE';
 
+/**
+ * The upper 4 bits of the Indicator subfield for Attributes Structured commands.
+ */
 enum StructuredIndicatorType {
-    WriteWhole = 0x00,
-    Add = 0x10,
-    Remove = 0x20,
+    /**
+     * Write: Only for attributes of type other than array, structure, set or bag
+     * 
+     * Read: Only for attributes of type other than array or structure
+     */
+    Whole = 0x00,
+    /** Add element to the set/bag */
+    WriteAdd = 0x10,
+    /** Remove element from the set/bag */
+    WriteRemove = 0x20,
 }
 
 interface StructuredSelector {

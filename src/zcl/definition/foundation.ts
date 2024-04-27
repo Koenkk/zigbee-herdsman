@@ -17,16 +17,18 @@ const Foundation: {
     [s: string]: FoundationDefinition;
 }
 = {
+    /** Read Attributes */
     read: {
-        ID: 0,
+        ID: 0x00,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
         ],
-        response: 1, // readRsp
+        response: 0x01, // readRsp
     },
+    /** Read Attributes Response */
     readRsp: {
-        ID: 1,
+        ID: 0x01,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
@@ -35,18 +37,20 @@ const Foundation: {
             {name: 'attrData', type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: 'statusEquals', value: Status.SUCCESS}]},
         ],
     },
+    /** Write Attributes */
     write: {
-        ID: 2,
+        ID: 0x02,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
             {name: 'dataType', type: DataType.UINT8},
             {name: 'attrData', type: BuffaloZclDataType.USE_DATA_TYPE},
         ],
-        response: 4, // writeRsp
+        response: 0x04, // writeRsp
     },
+    /** Write Attributes Undivided */
     writeUndiv: {
-        ID: 3,
+        ID: 0x03,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
@@ -54,16 +58,18 @@ const Foundation: {
             {name: 'attrData', type: BuffaloZclDataType.USE_DATA_TYPE},
         ],
     },
+    /** Write Attributes Response */
     writeRsp: {
-        ID: 4,
+        ID: 0x04,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'status', type: DataType.UINT8},
             {name: 'attrId', type: DataType.UINT16, conditions: [{type: 'statusNotEquals', value: Status.SUCCESS}]},
         ],
     },
+    /** Write Attributes No Response */
     writeNoRsp: {
-        ID: 5,
+        ID: 0x05,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
@@ -71,8 +77,9 @@ const Foundation: {
             {name: 'attrData', type: BuffaloZclDataType.USE_DATA_TYPE},
         ],
     },
+    /** Configure Reporting */
     configReport: {
-        ID: 6,
+        ID: 0x06,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'direction', type: DataType.UINT8},
@@ -83,10 +90,11 @@ const Foundation: {
             {name: 'repChange', type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: 'directionEquals', value: Direction.CLIENT_TO_SERVER}, {type: 'dataTypeValueTypeEquals', value: 'ANALOG'}]},
             {name: 'timeout', type: DataType.UINT16, conditions: [{type: 'directionEquals', value: Direction.SERVER_TO_CLIENT}]},
         ],
-        response: 7, // configReportRsp
+        response: 0x07, // configReportRsp
     },
+    /** Configure Reporting Response */
     configReportRsp: {
-        ID: 7,
+        ID: 0x07,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'status', type: DataType.UINT8},
@@ -96,16 +104,18 @@ const Foundation: {
             {name: 'attrId', type: DataType.UINT16, conditions: [{type: 'minimumRemainingBufferBytes', value: 2}]},
         ],
     },
+    /** Read Reporting Configuration */
     readReportConfig: {
-        ID: 8,
+        ID: 0x08,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'direction', type: DataType.UINT8},
             {name: 'attrId', type: DataType.UINT16},
         ],
     },
+    /** Read Reporting Configuration Response */
     readReportConfigRsp: {
-        ID: 9,
+        ID: 0x09,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'direction', type: DataType.UINT8},
@@ -117,8 +127,9 @@ const Foundation: {
             {name: 'timeout', type: DataType.UINT16, conditions: [{type: 'directionEquals', value: Direction.SERVER_TO_CLIENT}]},
         ],
     },
+    /** Report attributes */
     report: {
-        ID: 10,
+        ID: 0x0A,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
@@ -126,80 +137,112 @@ const Foundation: {
             {name: 'attrData', type: BuffaloZclDataType.USE_DATA_TYPE},
         ],
     },
+    /** Default Response */
     defaultRsp: {
-        ID: 11,
+        ID: 0x0B,
         parseStrategy: 'flat',
         parameters: [
             {name: 'cmdId', type: DataType.UINT8},
             {name: 'statusCode', type: DataType.UINT8},
         ],
     },
+    /** Discover Attributes */
     discover: {
-        ID: 12,
+        ID: 0x0C,
         parseStrategy: 'flat',
         parameters: [
             {name: 'startAttrId', type: DataType.UINT16},
             {name: 'maxAttrIds', type: DataType.UINT8},
         ],
     },
+    /** Discover Attributes Response */
     discoverRsp: {
-        ID: 13,
+        ID: 0x0D,
         parseStrategy: 'oneof',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
             {name: 'dataType', type: DataType.UINT8},
         ],
     },
+    /* Read Attributes Structured */
+    readStructured: {
+        ID: 0x0E,
+        parseStrategy: 'repetitive',
+        parameters: [
+            {name: 'attrId', type: DataType.UINT16},
+            {name: 'selector', type: BuffaloZclDataType.STRUCTURED_SELECTOR},
+        ],
+    },
+    /** Write Attributes Structured */
     writeStructured: {
-        ID: 15,
+        ID: 0x0F,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
             {name: 'selector', type: BuffaloZclDataType.STRUCTURED_SELECTOR},
             {name: 'dataType', type: DataType.UINT8},
             {name: 'elementData', type: BuffaloZclDataType.USE_DATA_TYPE},
-        ]
+        ],
+        response: 0x10,// writeStructuredRsp
     },
+    /** Write Attributes Structured response */
+    writeStructuredRsp: {
+        ID: 0x10,
+        parseStrategy: 'repetitive',
+        // contains only one SUCCESS record for all written attributes if all written successfully
+        parameters: [
+            {name: 'status', type: DataType.UINT8},
+            {name: 'attrId', type: DataType.UINT16, conditions: [{type: 'statusNotEquals', value: Status.SUCCESS}]},
+            // always one zero-octet if failed attribute not of type array or structure, otherwise can also be zero if no info on which element caused failure
+            {name: 'selector', type: BuffaloZclDataType.STRUCTURED_SELECTOR, conditions: [{type: 'statusNotEquals', value: Status.SUCCESS}]},
+        ],
+    },
+    /** Discover Commands Received */
     discoverCommands: {
-        ID: 17,
+        ID: 0x11,
         parseStrategy: 'flat',
         parameters: [
             {name: 'startCmdId', type: DataType.UINT8},
             {name: 'maxCmdIds', type: DataType.UINT8},
         ],
     },
+    /** Discover Commands Received Response */
     discoverCommandsRsp: {
-        ID: 18,
+        ID: 0x12,
         parseStrategy: 'oneof',
         parameters: [
             {name: 'cmdId', type: DataType.UINT8},
         ],
     },
+    /** Discover Commands Generated */
     discoverCommandsGen: {
-        ID: 19,
+        ID: 0x13,
         parseStrategy: 'flat',
         parameters: [
             {name: 'startCmdId', type: DataType.UINT8},
             {name: 'maxCmdIds', type: DataType.UINT8},
         ],
     },
+    /** Discover Commands Generated Response */
     discoverCommandsGenRsp: {
-        ID: 20,
+        ID: 0x14,
         parseStrategy: 'oneof',
         parameters: [
             {name: 'cmdId', type: DataType.UINT8},
         ],
     },
+    /** Discover Attributes Extended */
     discoverExt: {
-        ID: 21,
+        ID: 0x15,
         parseStrategy: 'flat',
         parameters: [
             {name: 'startAttrId', type: DataType.UINT16},
             {name: 'maxAttrIds', type: DataType.UINT8},
         ],
     },
+    /** Discover Attributes Extended Response */
     discoverExtRsp: {
-        ID: 22,
+        ID: 0x16,
         parseStrategy: 'oneof',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
@@ -207,11 +250,6 @@ const Foundation: {
             {name: 'access', type: DataType.UINT8},
         ],
     },
-    /**
-     * TODO: not all commands are supported yet, missing:
-     * - 14: readStruct
-     * - 16: writeStructRsp
-     */
 };
 
 export default Foundation;

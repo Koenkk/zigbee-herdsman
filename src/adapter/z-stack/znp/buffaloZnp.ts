@@ -196,21 +196,12 @@ class BuffaloZnp extends Buffalo {
         case ParameterType.LIST_UINT16: {
             return this.writeListUInt16(value);
         }
-        case ParameterType.LIST_ROUTING_TABLE: {
-            break;
-        }
-        case ParameterType.LIST_BIND_TABLE: {
-            break;
-        }
-        case ParameterType.LIST_NEIGHBOR_LQI: {
-            break;
-        }
-        case ParameterType.LIST_NETWORK: {
-            break;
-        }
-        case ParameterType.LIST_ASSOC_DEV: {
-            break;
-        }
+        // NOTE: not writable
+        // case ParameterType.LIST_ROUTING_TABLE:
+        // case ParameterType.LIST_BIND_TABLE:
+        // case ParameterType.LIST_NEIGHBOR_LQI:
+        // case ParameterType.LIST_NETWORK:
+        // case ParameterType.LIST_ASSOC_DEV:
         case ParameterType.INT8: {
             return this.writeInt8(value);
         }
