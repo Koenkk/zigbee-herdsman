@@ -2945,7 +2945,7 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         mocksendZclFrameToEndpoint.mockClear();
         await endpoint.configureReporting('hvacThermostat', [{
-            attribute: 'ubisysVacationMode',
+            attribute: 'viessmannWindowOpenInternal',
             minimumReportInterval: 1,
             maximumReportInterval: 10,
             reportableChange: 1,
@@ -2955,10 +2955,10 @@ describe('Controller', () => {
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1)
-        expect({...deepClone(call[3]), cluster: {}}).toStrictEqual({"cluster":{},"command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"conditions":[{"type":"directionEquals","value":0}],"name":"dataType","type":32},{"conditions":[{"type":"directionEquals","value":0}],"name":"minRepIntval","type":33},{"conditions":[{"type":"directionEquals","value":0}],"name":"maxRepIntval","type":33},{"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}],"name":"repChange","type":1000},{"conditions":[{"type":"directionEquals","value":1}],"name":"timeout","type":33}],"response":7},"header":{"commandIdentifier":6,"frameControl":{"direction":0,"disableDefaultResponse":true,"frameType":0,"manufacturerSpecific":true,"reservedBits":0},"manufacturerCode":4338,"transactionSequenceNumber":11},"payload":[{"attrId":18,"dataType":16,"direction":0,"maxRepIntval":10,"minRepIntval":1,"repChange":1}]});
+        expect({...deepClone(call[3]), cluster: {}}).toStrictEqual({"cluster":{},"command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"conditions":[{"type":"directionEquals","value":0}],"name":"dataType","type":32},{"conditions":[{"type":"directionEquals","value":0}],"name":"minRepIntval","type":33},{"conditions":[{"type":"directionEquals","value":0}],"name":"maxRepIntval","type":33},{"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}],"name":"repChange","type":1000},{"conditions":[{"type":"directionEquals","value":1}],"name":"timeout","type":33}],"response":7},"header":{"commandIdentifier":6,"frameControl":{"direction":0,"disableDefaultResponse":true,"frameType":0,"manufacturerSpecific":true,"reservedBits":0},"manufacturerCode":4641,"transactionSequenceNumber":11},"payload":[{"attrId":16384,"dataType":48,"direction":0,"maxRepIntval":10,"minRepIntval":1,"repChange":1}]});
 
         expect(endpoint.configuredReportings.length).toBe(1);
-        expect({...endpoint.configuredReportings[0], cluster: undefined}).toStrictEqual({"attribute":{"ID":18,"type":16,"manufacturerCode":4338,"name":"ubisysVacationMode"},"minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1, "cluster": undefined});
+        expect({...endpoint.configuredReportings[0], cluster: undefined}).toStrictEqual({"attribute":{"ID":16384,"type":48,"manufacturerCode":4641,"name":"viessmannWindowOpenInternal"},"minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1, "cluster": undefined});
     });
 
     it('Endpoint configure reporting with manufacturer attribute should throw exception', async () => {
@@ -2978,7 +2978,7 @@ describe('Controller', () => {
                     reportableChange: 1,
                 },
                 {
-                    attribute: 'ubisysRemoteTemperature',
+                    attribute: 'viessmannWindowOpenInternal',
                     minimumReportInterval: 1,
                     maximumReportInterval: 10,
                     reportableChange: 1,
@@ -3352,13 +3352,13 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         device._manufacturerID = 0x10f2;
         const endpoint = device.getEndpoint(1);
-        await endpoint.write('hvacThermostat', {'ubisysDefaultOccupiedHeatingSetpoint': 1800});
+        await endpoint.write('hvacThermostat', {'viessmannWindowOpenInternal': 1});
         expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect({...deepClone(call[3]), cluster: {}}).toStrictEqual({"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4338,"commandIdentifier":2},"payload":[{"attrId":17,"attrData":1800,"dataType":41}],"cluster":{},"command":{"ID":2,"name":"write","parameters":[{"name":"attrId","type":33},{"name":"dataType","type":32},{"name":"attrData","type":1000}],"response":4}});
+        expect({...deepClone(call[3]), cluster: {}}).toStrictEqual({"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4641,"commandIdentifier":2},"payload":[{"attrId":16384,"attrData":1,"dataType":48}],"cluster":{},"command":{"ID":2,"name":"write","parameters":[{"name":"attrId","type":33},{"name":"dataType","type":32},{"name":"attrData","type":1000}],"response":4}});
         expect(call[4]).toBe(10000);
     });
 
@@ -3399,7 +3399,7 @@ describe('Controller', () => {
         device._manufacturerID = 0x10f2;
         const endpoint = device.getEndpoint(1);
         let error;
-        try {await endpoint.write('hvacThermostat', {'occupiedHeatingSetpoint': 2000, 'ubisysDefaultOccupiedHeatingSetpoint': 1800}) } catch (e) {error = e}
+        try {await endpoint.write('hvacThermostat', {'occupiedHeatingSetpoint': 2000, 'viessmannWindowOpenInternal': 1}) } catch (e) {error = e}
         expect(error).toStrictEqual(new Error("Cannot have attributes with different manufacturerCode in single 'write' call"))
     });
 
@@ -3505,13 +3505,13 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         device._manufacturerID = 0x10f2;
         const endpoint = device.getEndpoint(1);
-        await endpoint.read('hvacThermostat', ['ubisysDefaultOccupiedHeatingSetpoint']);
+        await endpoint.read('hvacThermostat', ['viessmannWindowOpenInternal']);
         expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect({...deepClone(call[3]), cluster: {}}).toStrictEqual({"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4338,"commandIdentifier":0},"payload":[{"attrId":17}],"cluster":{},"command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}});
+        expect({...deepClone(call[3]), cluster: {}}).toStrictEqual({"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":true,"manufacturerSpecific":true},"transactionSequenceNumber":11,"manufacturerCode":4641,"commandIdentifier":0},"payload":[{"attrId":16384}],"cluster":{},"command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}});
         expect(call[4]).toBe(10000);
     });
 
@@ -3523,7 +3523,7 @@ describe('Controller', () => {
         device._manufacturerID = 0x10f2;
         const endpoint = device.getEndpoint(1);
         let error;
-        try { await endpoint.read('hvacThermostat', ['localTemp', 'ubisysRemoteTemperature']); } catch (e) { error = e };
+        try { await endpoint.read('hvacThermostat', ['localTemp', 'viessmannWindowOpenInternal']); } catch (e) { error = e };
         expect(error).toStrictEqual(new Error("Cannot have attributes with different manufacturerCode in single 'read' call"))
     });
 
