@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.44.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.43.1...v0.44.0) (2024-04-28)
+
+
+### Features
+
+* Add `zclCommandBroadcast` to endpoint ([#1028](https://github.com/Koenkk/zigbee-herdsman/issues/1028)) ([ccfd299](https://github.com/Koenkk/zigbee-herdsman/commit/ccfd2994124cdb0c43656cb82559acdf23baf7d6))
+
+
+### Bug Fixes
+
+* **ignore:** Export zspec https://github.com/Koenkk/zigbee-herdsman-converters/pull/7427 ([d661d73](https://github.com/Koenkk/zigbee-herdsman/commit/d661d737b3e6668434879d7e998ab8d8541a94a9))
+* **ignore:** update dependencies ([#1035](https://github.com/Koenkk/zigbee-herdsman/issues/1035)) ([7300ca4](https://github.com/Koenkk/zigbee-herdsman/commit/7300ca4fbed963c172895ed34851f91313f87867))
+
 ## [0.43.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.43.0...v0.43.1) (2024-04-25)
 
 
