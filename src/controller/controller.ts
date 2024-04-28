@@ -433,6 +433,13 @@ class Controller extends events.EventEmitter {
         return this.adapter.setTransmitPower(value);
     }
 
+    /**
+     * Get the used adapter name
+     */
+    public getAdapterName(): 'ZStackAdapter' | 'DeconzAdapter' | 'ZiGateAdapter' | 'EZSPAdapter' | 'EmberAdapter' {
+        return this.adapter.constructor.name as 'ZStackAdapter' | 'DeconzAdapter' | 'ZiGateAdapter' | 'EZSPAdapter' | 'EmberAdapter';
+    }
+
     private onNetworkAddress(payload: AdapterEvents.NetworkAddressPayload): void {
         logger.debug(`Network address '${payload.ieeeAddr}'`, NS);
         const device = Device.byIeeeAddr(payload.ieeeAddr);

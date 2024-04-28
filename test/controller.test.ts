@@ -56,6 +56,7 @@ const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockAdapterSetTransmitPower = jest.fn();
+const mockAdapterGetAdapterName = jest.fn();
 const mockAdapterSupportsChangeChannel = jest.fn().mockReturnValue(false);
 const mockAdapterChangeChannel = jest.fn();
 const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
@@ -379,6 +380,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             getNetworkParameters: mockAdapterGetNetworkParameters,
             waitFor: mockAdapterWaitFor,
             setTransmitPower: mockAdapterSetTransmitPower,
+            getAdapterName: mockAdapterGetAdapterName,
             supportsChangeChannel: mockAdapterSupportsChangeChannel,
             changeChannel: mockAdapterChangeChannel,
             nodeDescriptor: async (networkAddress) => {
@@ -889,6 +891,11 @@ describe('Controller', () => {
         await controller.start();
         await controller.setTransmitPower(15);
         expect(mockAdapterSetTransmitPower).toHaveBeenCalledWith(15);
+    });
+
+    it('Set transmit power', async () => {
+        mockAdapterGetAdapterName.mockReturnValueOnce('SuperAdapter');
+        expect(controller.getAdapterName()).toBe('SuperAdapter');
     });
 
     it('Get coordinator version', async () => {
