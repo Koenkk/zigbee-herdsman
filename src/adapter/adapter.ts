@@ -5,6 +5,7 @@ import {ZclFrame, FrameType, Direction} from '../zcl';
 import * as Models from "../models";
 import Bonjour, {Service} from 'bonjour-service';
 import {logger} from '../utils/logger';
+import {BroadcastAddress} from '../zspec/enums';
 
 const NS = 'zh:adapter';
 
@@ -219,7 +220,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, sourceEndpoint?: number): Promise<void>;
 
-    public abstract sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void>;
+    public abstract sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void>;
 
     /**
      * InterPAN

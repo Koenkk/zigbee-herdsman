@@ -20,6 +20,7 @@ import ZiGateObject from "../driver/ziGateObject";
 import {Buffalo} from "../../../buffalo";
 import * as Models from "../../../models";
 import {logger} from '../../../utils/logger';
+import {BroadcastAddress} from '../../../zspec/enums';
 
 const NS = 'zh:zigate';
 const default_bind_group = 901;  // https://github.com/Koenkk/zigbee-herdsman-converters/blob/master/lib/constants.js#L3
@@ -592,7 +593,7 @@ class ZiGateAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
         return this.queue.execute<void>(async () => {
             if (sourceEndpoint !== 0x01 /*&& sourceEndpoint !== 242*/) { // @todo on zigate firmware without gp causes hang
                 logger.error(`source endpoint ${sourceEndpoint}, not supported`, NS);
@@ -602,7 +603,7 @@ class ZiGateAdapter extends Adapter {
             const data = zclFrame.toBuffer();
             const payload: RawAPSDataRequestPayload = {
                 addressMode: ADDRESS_MODE.short, //nwk
-                targetShortAddress: 0xFFFD,
+                targetShortAddress: destination,
                 sourceEndpoint: sourceEndpoint,
                 destinationEndpoint: endpoint,
                 profileID: /*sourceEndpoint === 242 ? 0xa1e0 :*/ 0x0104,

@@ -18,6 +18,8 @@ import * as Utils from "../src/utils";
 import Bonjour, {BrowserConfig, Service} from 'bonjour-service';
 import {setLogger} from "../src/utils/logger";
 import {createCustomCluster} from "../src/zcl/utils";
+import {BroadcastAddress} from "../src/zspec/enums";
+import ZclTransactionSequenceNumber from "../src/controller/helpers/zclTransactionSequenceNumber";
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
 
@@ -2457,6 +2459,55 @@ describe('Controller', () => {
         expect(events.message.length).toBe(1);
         expect(events.message[0].data).toStrictEqual({superAttribute: 1, '256': 3});
         expect(events.message[0].cluster).toBe('myCustomCluster');
+    });
+
+    it('Send zcl command to all no options', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        device.getEndpoint(1).zclCommandBroadcast(255, BroadcastAddress.SLEEPY, Zcl.Clusters.ssIasZone.ID, 'boschSmokeDetectorSiren', {data: 0x0000});
+        const sentFrame = mockZclFrame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            null,
+            // @ts-expect-error private
+            ZclTransactionSequenceNumber.number,
+            'boschSmokeDetectorSiren',
+            Zcl.Clusters.ssIasZone.ID,
+            {data: 0x0000},
+            device.customClusters
+        );
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(255);
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(sentFrame));
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(1);
+        expect(mocksendZclFrameToAll.mock.calls[0][3]).toBe(BroadcastAddress.SLEEPY);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('Send zcl command to all with manufacturer option', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        const options = {manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH};
+        device.getEndpoint(1).zclCommandBroadcast(255, BroadcastAddress.SLEEPY, Zcl.Clusters.ssIasZone.ID, 'boschSmokeDetectorSiren', {data: 0x0000}, options);
+        const sentFrame = mockZclFrame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+            // @ts-expect-error private
+            ZclTransactionSequenceNumber.number,
+            'boschSmokeDetectorSiren',
+            Zcl.Clusters.ssIasZone.ID,
+            {data: 0x0000},
+            device.customClusters
+        );
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(255);
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(sentFrame));
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(1);
+        expect(mocksendZclFrameToAll.mock.calls[0][3]).toBe(BroadcastAddress.SLEEPY);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
     });
 
     it('Should roll-over transaction ID', async () => {

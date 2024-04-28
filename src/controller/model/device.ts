@@ -11,6 +11,7 @@ import {logger} from '../../utils/logger';
 import {ClusterDefinition, CustomClusters} from '../../zcl/definition/tstype';
 import {Clusters} from '../../zcl';
 import {isClusterName} from '../../zcl/utils';
+import {BroadcastAddress} from '../../zspec/enums';
 
 /**
  * @ignore
@@ -764,7 +765,7 @@ class Device extends Entity {
                 ZclTransactionSequenceNumber.next(), 'pairing', 33, payload, this.customClusters,
             );
 
-            await Entity.adapter.sendZclFrameToAll(242, frame, 242);
+            await Entity.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else await Entity.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
         this.removeFromDatabase();
     }

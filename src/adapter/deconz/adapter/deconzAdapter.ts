@@ -15,6 +15,7 @@ import PARAM from '../driver/constants';
 import { WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, gpDataInd } from '../driver/constants';
 import * as Models from "../../../models";
 import {logger} from '../../../utils/logger';
+import {BroadcastAddress} from '../../../zspec/enums';
 
 const NS = 'zh:deconz';
 var frameParser = require('../driver/frameParser');
@@ -694,7 +695,7 @@ class DeconzAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
         let pay = zclFrame.toBuffer();
@@ -704,7 +705,7 @@ class DeconzAdapter extends Adapter {
 
         request.requestId = transactionID;
         request.destAddrMode = PARAM.PARAM.addressMode.NWK_ADDR;
-        request.destAddr16 = 0xFFFD;
+        request.destAddr16 = destination;
         request.destEndpoint = endpoint;
         request.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104;
         request.clusterId = zclFrame.cluster.ID;

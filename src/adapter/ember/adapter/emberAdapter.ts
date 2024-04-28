@@ -151,6 +151,7 @@ import {aesMmoHashInit, initNetworkCache, initSecurityManagerContext} from "../u
 import {randomBytes} from "crypto";
 import {EmberOneWaitress, OneWaitressEvents} from "./oneWaitress";
 import {logger} from "../../../utils/logger";
+import {BroadcastAddress} from '../../../zspec/enums';
 // import {EmberTokensManager} from "./tokensManager";
 
 const NS = 'zh:ember';
@@ -3711,7 +3712,7 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued, non-InterPAN
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
         const sourceEndpointInfo = typeof sourceEndpoint === 'number' ?
             FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
         const apsFrame: EmberApsFrame = {
@@ -3720,7 +3721,7 @@ export class EmberAdapter extends Adapter {
             sourceEndpoint: sourceEndpointInfo.endpoint,
             destinationEndpoint: (typeof endpoint === 'number') ? endpoint : FIXED_ENDPOINTS[0].endpoint,
             options: DEFAULT_APS_OPTIONS,
-            groupId: EMBER_RX_ON_WHEN_IDLE_BROADCAST_ADDRESS,
+            groupId: destination,
             sequence: 0,// set by stack
         };
         const data = zclFrame.toBuffer();
