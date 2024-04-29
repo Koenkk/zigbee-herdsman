@@ -220,11 +220,12 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             {name: 'neighbourTableEntries', parameterType: ParameterType.UINT8}, // <Neighbour Table Entries : uint8_t>
             {name: 'neighbourTableListCount', parameterType: ParameterType.UINT8}, // <Neighbour Table List Count : uint8_t>
             {name: 'startIndex', parameterType: ParameterType.UINT8}, // <Start Index : uint8_t>
+            // XXX: broken? automatic ziGateObject parsing will always read below as-is, even if it's not supposed to
             // @TODO list TYPE
             // <List of Entries elements described below :>
             // Note: If Neighbour Table list count is 0, there are no elements in the list.
             {name: 'NWKAddress', parameterType: ParameterType.UINT16BE}, // NWK Address : uint16_t
-            {name: 'Extended PAN ID', parameterType: ParameterType.UINT64}, // Extended PAN ID : uint64_t
+            {name: 'Extended PAN ID', parameterType: ParameterType.IEEEADDR}, // Extended PAN ID : uint64_t
             {name: 'IEEE Address', parameterType: ParameterType.IEEEADDR}, // IEEE Address : uint64_t
             {name: 'Depth', parameterType: ParameterType.UINT8}, // Depth : uint_t
             {name: 'linkQuality', parameterType: ParameterType.UINT8}, // Link Quality : uint8_t

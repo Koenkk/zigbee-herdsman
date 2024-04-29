@@ -25,7 +25,6 @@ enum ParameterType {
     BUFFER_RAW = 247,
     UINT16BE = 248,
     UINT32BE = 249,
-    UINT64 = 250,
     LIST_UINT16BE = 251,
     MAYBE_UINT8 = 252,
     LOG_LEVEL = 253,
