@@ -25,7 +25,7 @@ class BuffaloZiGate extends Buffalo {
             return this.writeIeeeAddr(value);
         }
         case ParameterType.BUFFER: {
-            return this.writeBuffer(value, options.length);
+            return this.writeBuffer(value, value.length);
         }
         case ParameterType.BUFFER8: {
             return this.writeBuffer(value, 8);
@@ -88,7 +88,8 @@ class BuffaloZiGate extends Buffalo {
             return this.readIeeeAddr();
         }
         case ParameterType.BUFFER: {
-            return this.readBuffer(options.length);
+            // if length option not specified, read the whole buffer
+            return this.readBuffer(options.length ?? this.buffer.length);
         }
         case ParameterType.BUFFER8: {
             return this.readBuffer(8);
