@@ -55,7 +55,6 @@ class BuffaloZiGate extends Buffalo {
             return this.writeInt8(value);
         }
         case ParameterType.ADDRESS_WITH_TYPE_DEPENDENCY: {
-            // XXX: broken? addressMode not written
             const addressMode = this.buffer.readUInt8(this.position - 1);
             return addressMode == 3 ? this.writeIeeeAddr(value) : this.writeUInt16BE(value);
         }
