@@ -171,8 +171,7 @@ class BuffaloZiGate extends Buffalo {
 
     public writeRaw(value: Buffer): void {
         this.buffer.set(value, this.position);
-        // XXX: broken? position increased by 1 not by buffer.length
-        this.position++;
+        this.position += value.length;
     }
 
     public readUInt16BE(): number {
