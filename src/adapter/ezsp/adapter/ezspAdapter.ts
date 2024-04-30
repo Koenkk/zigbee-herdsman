@@ -40,6 +40,7 @@ class EZSPAdapter extends Adapter {
     private interpanLock: boolean;
     private queue: Queue;
     private closing: boolean;
+    private deprecatedTimer: NodeJS.Timeout;
 
 
     public constructor(networkOptions: NetworkOptions,
@@ -165,11 +166,19 @@ class EZSPAdapter extends Adapter {
      * Adapter methods
      */
     public async start(): Promise<StartResult> {
+        const logEzspDeprecated = (): void => {
+            const message = `Deprecated driver 'ezsp' currently in use, 'ember' will become the officially supported EmberZNet ` +
+                `driver in next release. If using Zigbee2MQTT see https://github.com/Koenkk/zigbee2mqtt/discussions/21462`;
+            logger.warning(message, NS);
+        };
+        logEzspDeprecated();
+        this.deprecatedTimer = setInterval(logEzspDeprecated, 60 * 60 * 1000); // Every 60 mins
         return this.driver.startup();
     }
 
     public async stop(): Promise<void> {
         this.closing = true;
+        clearInterval(this.deprecatedTimer);
         await this.driver.stop();
     }
 
