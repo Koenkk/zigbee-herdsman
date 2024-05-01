@@ -110,7 +110,7 @@ class RequestQueue extends Set<Request> {
                         this.delete(request);
                     } else if (newRequest.sendPolicy !== 'keep-cmd-undiv') {
                         // remove all duplicate attributes if we shall not write undivided
-                        (request.frame as Mutable<Zcl.ZclFrame>).payload = filteredPayload;
+                        (request.frame as Mutable<Zcl.Frame>).payload = filteredPayload;
                         logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Remove commands from request`, NS);
                     }
                 }

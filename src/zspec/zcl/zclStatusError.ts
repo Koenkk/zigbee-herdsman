@@ -1,6 +1,6 @@
-import Status from './definition/status';
+import {Status} from './definition/status';
 
-class ZclStatusError extends Error {
+export class ZclStatusError extends Error {
     public code: number;
 
     constructor (code: number) {
@@ -8,5 +8,3 @@ class ZclStatusError extends Error {
         this.code = code;
     }
 }
-
-export default ZclStatusError;

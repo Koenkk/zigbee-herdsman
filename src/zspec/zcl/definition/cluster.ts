@@ -1,10 +1,10 @@
 /* eslint max-len: 0 */
-import DataType from './dataType';
 import {ClusterDefinition, ClusterName} from './tstype';
-import BuffaloZclDataType from './buffaloZclDataType';
-import ManufacturerCode from './manufacturerCode';
+import {DataType, BuffaloZclDataType, ParameterCondition} from './enums';
+import {ManufacturerCode} from './manufacturerCode';
+import {Status} from './status';
 
-const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
+export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
     genBasic: {
         ID: 0,
         attributes: {
@@ -1113,10 +1113,10 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
                 ID: 2,
                 parameters: [
                     {name: 'status', type: DataType.UINT8},
-                    {name: 'manufacturerCode', type: DataType.UINT16, conditions: [{type: 'statusEquals', value: 0}]},
-                    {name: 'imageType', type: DataType.UINT16, conditions: [{type: 'statusEquals', value: 0}]},
-                    {name: 'fileVersion', type: DataType.UINT32, conditions: [{type: 'statusEquals', value: 0}]},
-                    {name: 'imageSize', type: DataType.UINT32, conditions: [{type: 'statusEquals', value: 0}]},
+                    {name: 'manufacturerCode', type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {name: 'imageType', type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {name: 'fileVersion', type: DataType.UINT32, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {name: 'imageSize', type: DataType.UINT32, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
                 ],
             },
             imageBlockResponse: {
@@ -1197,30 +1197,30 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
                 ID: 0,
                 parameters: [
                     {name: 'options', type: DataType.UINT16},
-                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
-                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
-                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
                     {name: 'frameCounter', type: DataType.UINT32},
                     {name: 'commandID', type: DataType.UINT8},
                     {name: 'payloadSize', type: DataType.UINT8},
                     {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
-                    {name: 'gppNwkAddr', type: DataType.UINT16,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x4000}]},
-                    {name: 'gppGddLink', type: DataType.UINT8,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x4000}]},
+                    {name: 'gppNwkAddr', type: DataType.UINT16,conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x4000}]},
+                    {name: 'gppGddLink', type: DataType.UINT8,conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x4000}]},
                 ],
             },
             commissioningNotification: {
                 ID: 4,
                 parameters: [
                     {name: 'options', type: DataType.UINT16},
-                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
-                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
-                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
                     {name: 'frameCounter', type: DataType.UINT32},
                     {name: 'commandID', type: DataType.UINT8},
                     {name: 'payloadSize', type: DataType.UINT8},
                     {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
-                    {name: 'gppNwkAddr', type: DataType.UINT16,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x800}]},
-                    {name: 'gppGddLink', type: DataType.UINT8,conditions: [{type: 'bitMaskSet', param:'options', mask: 0x800}]},
+                    {name: 'gppNwkAddr', type: DataType.UINT16,conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x800}]},
+                    {name: 'gppGddLink', type: DataType.UINT8,conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x800}]},
                 ],
             },
         },
@@ -1231,9 +1231,9 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
                     {name: 'options', type: DataType.UINT8},
                     {name: 'tempMaster', type: DataType.UINT16},
                     {name: 'tempMasterTx', type: DataType.UINT8},
-                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
-                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
-                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
                     {name: 'gpdCmd', type: DataType.UINT8},
                     {name: 'gpdPayload', type: BuffaloZclDataType.GDP_FRAME},
                 ],
@@ -1242,18 +1242,18 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
                 ID: 1,
                 parameters: [
                     {name: 'options', type: DataType.UINT24},
-                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b000}]},
-                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
-                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: 'bitFieldEnum', param:'options', offset: 0, size: 3, value: 0b010}]},
-                    {name: 'sinkIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b110}]},
-                    {name: 'sinkIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b000}]},
-                    {name: 'sinkNwkAddr', type: DataType.UINT16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b110}]},
-                    {name: 'sinkNwkAddr', type: DataType.UINT16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b000}]},
-                    {name: 'sinkGroupID', type: DataType.UINT16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b100}]},
-                    {name: 'sinkGroupID', type: DataType.UINT16, conditions: [{type: 'bitFieldEnum', param:'options', offset: 4, size: 3, value: 0b010}]},
-                    {name: 'deviceID', type: DataType.UINT8, conditions: [{type: 'bitMaskSet', param:'options', mask: 0x0008}]},
-                    {name: 'frameCounter', type: DataType.UINT32, conditions: [{type: 'bitMaskSet', param:'options', mask: 0x4000}]},
-                    {name: 'gpdKey', type: DataType.SEC_KEY, conditions: [{type: 'bitMaskSet', param:'options', mask: 0x8000}]},
+                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b000}]},
+                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {name: 'sinkIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b110}]},
+                    {name: 'sinkIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b000}]},
+                    {name: 'sinkNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b110}]},
+                    {name: 'sinkNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b000}]},
+                    {name: 'sinkGroupID', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b100}]},
+                    {name: 'sinkGroupID', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b010}]},
+                    {name: 'deviceID', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x0008}]},
+                    {name: 'frameCounter', type: DataType.UINT32, conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x4000}]},
+                    {name: 'gpdKey', type: DataType.SEC_KEY, conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x8000}]},
                 ],
             },
             commisioningMode: {
@@ -5723,5 +5723,3 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
         commandsResponse: {},
     },
 };
-
-export default Clusters;

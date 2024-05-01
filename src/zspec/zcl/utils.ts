@@ -1,32 +1,32 @@
-import {DataType, Clusters, Foundation} from './definition';
+import {Clusters} from './definition/cluster';
+import {Foundation} from './definition/foundation';
+import {DataType, DataTypeClass} from './definition/enums';
 import {FoundationCommandName} from './definition/foundation';
 import {ClusterDefinition, ClusterName, CustomClusters} from './definition/tstype';
-import * as TsType from './tstype';
+import * as TsType from './definition/tstype';
 
-const DataTypeValueType = {
-    discrete: [
-        DataType.DATA8, DataType.DATA16, DataType.DATA24, DataType.DATA32, DataType.DATA40,
-        DataType.DATA48, DataType.DATA56, DataType.DATA64, DataType.BOOLEAN,
-        DataType.BITMAP8, DataType.BITMAP16, DataType.BITMAP24, DataType.BITMAP32, DataType.BITMAP40,
-        DataType.BITMAP48, DataType.BITMAP56, DataType.BITMAP64, DataType.ENUM8, DataType.ENUM16,
-        DataType.OCTET_STR, DataType.CHAR_STR, DataType.LONG_OCTET_STR, DataType.LONG_CHAR_STR, DataType.ARRAY,
-        DataType.STRUCT, DataType.SET, DataType.BAG, DataType.CLUSTER_ID, DataType.ATTR_ID, DataType.BAC_OID,
-        DataType.IEEE_ADDR, DataType.SEC_KEY,
-    ],
-    analog:[
-        DataType.UINT8, DataType.UINT16, DataType.UINT24, DataType.UINT32, DataType.UINT40,
-        DataType.UINT48, DataType.UINT56,
-        DataType.INT8, DataType.INT16, DataType.INT24, DataType.INT32, DataType.INT40,
-        DataType.INT48, DataType.INT56, DataType.SEMI_PREC, DataType.SINGLE_PREC, DataType.DOUBLE_PREC,
-        DataType.TOD, DataType.DATE, DataType.UTC,
-    ],
-};
+const DATA_TYPE_CLASS_DISCRETE = [
+    DataType.DATA8, DataType.DATA16, DataType.DATA24, DataType.DATA32, DataType.DATA40,
+    DataType.DATA48, DataType.DATA56, DataType.DATA64, DataType.BOOLEAN,
+    DataType.BITMAP8, DataType.BITMAP16, DataType.BITMAP24, DataType.BITMAP32, DataType.BITMAP40,
+    DataType.BITMAP48, DataType.BITMAP56, DataType.BITMAP64, DataType.ENUM8, DataType.ENUM16,
+    DataType.OCTET_STR, DataType.CHAR_STR, DataType.LONG_OCTET_STR, DataType.LONG_CHAR_STR, DataType.ARRAY,
+    DataType.STRUCT, DataType.SET, DataType.BAG, DataType.CLUSTER_ID, DataType.ATTR_ID, DataType.BAC_OID,
+    DataType.IEEE_ADDR, DataType.SEC_KEY,
+];
+const DATA_TYPE_CLASS_ANALOG = [
+    DataType.UINT8, DataType.UINT16, DataType.UINT24, DataType.UINT32, DataType.UINT40,
+    DataType.UINT48, DataType.UINT56,
+    DataType.INT8, DataType.INT16, DataType.INT24, DataType.INT32, DataType.INT40,
+    DataType.INT48, DataType.INT56, DataType.SEMI_PREC, DataType.SINGLE_PREC, DataType.DOUBLE_PREC,
+    DataType.TOD, DataType.DATE, DataType.UTC,
+];
 
-function IsDataTypeAnalogOrDiscrete(dataType: DataType): 'ANALOG' | 'DISCRETE' {
-    if (DataTypeValueType.discrete.includes(dataType)) {
-        return 'DISCRETE';
-    } else if (DataTypeValueType.analog.includes(dataType)) {
-        return 'ANALOG';
+export function getDataTypeClass(dataType: DataType): DataTypeClass {
+    if (DATA_TYPE_CLASS_DISCRETE.includes(dataType)) {
+        return DataTypeClass.DISCRETE;
+    } else if (DATA_TYPE_CLASS_ANALOG.includes(dataType)) {
+        return DataTypeClass.ANALOG;
     } else {
         throw new Error(`Don't know value type for '${DataType[dataType]}'`);
     }
@@ -169,7 +169,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
     };
 }
 
-function getCluster(
+export function getCluster(
     key: string | number,
     manufacturerCode: number | null,
     customClusters: CustomClusters,
@@ -178,7 +178,7 @@ function getCluster(
     return createCluster(name, cluster, manufacturerCode);
 }
 
-function getGlobalCommand(key: number | string): TsType.Command {
+export function getGlobalCommand(key: number | string): TsType.Command {
     let name: FoundationCommandName;
 
     if (typeof key === 'number') {
@@ -211,14 +211,6 @@ function getGlobalCommand(key: number | string): TsType.Command {
     return result;
 }
 
-function isClusterName(name: string): name is ClusterName {
+export function isClusterName(name: string): name is ClusterName {
     return (name in Clusters);
 }
-
-export {
-    getCluster,
-    getGlobalCommand,
-    IsDataTypeAnalogOrDiscrete,
-    createCluster,
-    isClusterName,
-};

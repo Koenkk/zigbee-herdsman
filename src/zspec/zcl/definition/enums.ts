@@ -5,7 +5,7 @@
  * used to measure the value of properties in the real world that vary continuously over a range.
  * - Values of discrete data types only have meaning as individual values and may not be added or subtracted.
  */
-enum DataType {
+export enum DataType {
     /** length=0 */
     NO_DATA = 0x00,
 
@@ -131,4 +131,64 @@ enum DataType {
     UNKNOWN = 0xFF,
 }
 
-export default DataType;
+/** @TODO strings for backwards compat in tests. Should be moved to numbers. */
+export enum DataTypeClass {
+    ANALOG = 'ANALOG',
+    DISCRETE = 'DISCRETE',
+}
+
+export enum BuffaloZclDataType {
+    USE_DATA_TYPE = 1000,
+    LIST_UINT8 = 1001,
+    LIST_UINT16 = 1002,
+    LIST_UINT24 = 1003,
+    LIST_UINT32 = 1004,
+    LIST_ZONEINFO = 1005,
+    EXTENSION_FIELD_SETS = 1006,
+    LIST_THERMO_TRANSITIONS = 1007,
+    BUFFER = 1008,
+    GDP_FRAME = 1009,
+    STRUCTURED_SELECTOR = 1010,
+    LIST_TUYA_DATAPOINT_VALUES = 1011,
+    LIST_MIBOXER_ZONES = 1012,
+    BIG_ENDIAN_UINT24 = 1013,
+    MI_STRUCT = 1014,
+}
+
+/** @TODO strings for backwards compat in tests. Should be moved to numbers. */
+export enum ParameterCondition {
+    STATUS_EQUAL = 'statusEquals',
+    STATUS_NOT_EQUAL = 'statusNotEquals',
+    MINIMUM_REMAINING_BUFFER_BYTES = 'minimumRemainingBufferBytes',
+    DIRECTION_EQUAL = 'directionEquals',
+    BITMASK_SET = 'bitMaskSet',
+    BITFIELD_ENUM = 'bitFieldEnum',
+    DATA_TYPE_CLASS_EQUAL = 'dataTypeValueTypeEquals',
+}
+
+
+export enum FrameType {
+    GLOBAL = 0,
+    SPECIFIC = 1,
+}
+
+export enum Direction {
+    CLIENT_TO_SERVER = 0,
+    SERVER_TO_CLIENT = 1,
+}
+
+/**
+ * The upper 4 bits of the Indicator subfield for Attributes Structured commands.
+ */
+export enum StructuredIndicatorType {
+    /**
+     * Write: Only for attributes of type other than array, structure, set or bag
+     * 
+     * Read: Only for attributes of type other than array or structure
+     */
+    Whole = 0x00,
+    /** Add element to the set/bag */
+    WriteAdd = 0x10,
+    /** Remove element from the set/bag */
+    WriteRemove = 0x20,
+}

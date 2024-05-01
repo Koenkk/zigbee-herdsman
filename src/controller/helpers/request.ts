@@ -30,14 +30,14 @@ class Request<Type = any> {
         0x16: 'immediate',      // Discover Attributes Extended Response
     };
 
-    private func: (frame: Zcl.ZclFrame) => Promise<Type>;
-    frame: Zcl.ZclFrame;
+    private func: (frame: Zcl.Frame) => Promise<Type>;
+    frame: Zcl.Frame;
     expires: number;
     sendPolicy: SendPolicy;
     private resolveQueue: Array<(value: Type) => void>;
     private rejectQueue: Array <(error: Error) => void>;
     private lastError: Error;
-    constructor (func: (frame: Zcl.ZclFrame) => Promise<Type>, frame: Zcl.ZclFrame, timeout: number,
+    constructor (func: (frame: Zcl.Frame) => Promise<Type>, frame: Zcl.Frame, timeout: number,
         sendPolicy?: SendPolicy, lastError?: Error,
         resolve?:(value: Type) => void, reject?: (error: Error) => void) {
         this.func = func;

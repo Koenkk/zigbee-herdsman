@@ -6,7 +6,8 @@ import {ZclFrameConverter} from './helpers';
 import * as Events from './events';
 import {KeyValue, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import fs from 'fs';
-import {Utils as ZclUtils, FrameControl, ZclFrame, Clusters} from '../zspec/zcl';
+import * as Zcl from '../zspec/zcl';
+import {FrameControl} from '../zspec/zcl/definition/tstype';
 import Touchlink from './touchlink';
 import GreenPower from './greenPower';
 import {BackupUtils} from "../utils";
@@ -612,15 +613,15 @@ class Controller extends events.EventEmitter {
     }
 
     private async onZclPayload(payload: AdapterEvents.ZclPayload): Promise<void> {
-        let frame: ZclFrame | undefined = undefined;
+        let frame: Zcl.Frame | undefined = undefined;
         let device: Device = undefined;
-        if (payload.clusterID === Clusters.touchlink.ID) {
+        if (payload.clusterID === Zcl.Clusters.touchlink.ID) {
             // This is handled by touchlink
             return;
-        } else if (payload.clusterID === Clusters.greenPower.ID) {
+        } else if (payload.clusterID === Zcl.Clusters.greenPower.ID) {
             try {
                 // Custom clusters are not supported for Green Power since we need to parse the frame to get the device.
-                frame = ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+                frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             } catch (error) {
                 logger.debug(`Failed to parse frame green power frame, ignoring it: ${error}`, NS);
                 return;
@@ -648,7 +649,7 @@ class Controller extends events.EventEmitter {
                 device = Device.byNetworkAddress(payload.groupID);
             }
             try {
-                frame = ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data, device?.customClusters);
+                frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, device?.customClusters);
             } catch (error) {
                 logger.debug(`Failed to parse frame: ${error}`, NS);
             }
@@ -740,7 +741,7 @@ class Controller extends events.EventEmitter {
         } else {
             type = 'raw';
             data = payload.data;
-            const name = ZclUtils.getCluster(payload.clusterID, device.manufacturerID, device.customClusters).name;
+            const name = Zcl.Utils.getCluster(payload.clusterID, device.manufacturerID, device.customClusters).name;
             clusterName = Number.isNaN(Number(name)) ? name : Number(name);
         }
 

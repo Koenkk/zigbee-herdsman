@@ -1,7 +1,7 @@
 /**
  * https://github.com/SiliconLabs/gecko_sdk/blob/gsdk_4.4/app/zcl/manufacturers.xml
  */
-enum ManufacturerCode {
+export enum ManufacturerCode {
     MATTER_STANDARD = 0x0000,
     PANASONIC = 0x0001,
     SONY = 0x0002,
@@ -726,5 +726,3 @@ enum ManufacturerCode {
     CUSTOM_SPRUT_DEVICE = 0x6666,
     CUSTOM_LYTKO = 0x7777,
 };
-
-export default ManufacturerCode;

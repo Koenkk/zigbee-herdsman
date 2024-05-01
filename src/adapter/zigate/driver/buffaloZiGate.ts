@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 /* eslint-disable */
 import {Buffalo} from '../../../buffalo';
-import {BuffaloZclOptions} from '../../../zspec/zcl/tstype';
+import {BuffaloZclOptions} from '../../../zspec/zcl/definition/tstype';
 import {LOG_LEVEL} from "./constants";
 import ParameterType from './parameterType';
 

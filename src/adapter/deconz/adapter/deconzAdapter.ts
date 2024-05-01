@@ -7,7 +7,7 @@ import {
 } from '../../tstype';
 import Adapter from '../../adapter';
 import Driver from '../driver/driver';
-import {ZclFrame, FrameType, Direction, ZclHeader} from '../../../zspec/zcl';
+import * as Zcl from '../../../zspec/zcl';
 import * as Events from '../../events';
 import processFrame from '../driver/frameParser';
 import {Queue, Waitress, Wait} from '../../../utils';
@@ -24,7 +24,7 @@ interface WaitressMatcher {
     address: number | string;
     endpoint: number;
     transactionSequenceNumber?: number;
-    frameType: FrameType;
+    frameType: Zcl.FrameType;
     clusterID: number;
     commandIdentifier: number;
     direction: number;
@@ -580,7 +580,7 @@ class DeconzAdapter extends Adapter {
     }
 
     public waitFor(
-        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
+        networkAddress: number, endpoint: number, frameType: Zcl.FrameType, direction: Zcl.Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
     ): {promise: Promise<Events.ZclPayload>; cancel: () => void} {
         const payload = {
@@ -593,7 +593,7 @@ class DeconzAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
+        ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: Zcl.Frame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
     ): Promise<Events.ZclPayload> {
 
@@ -646,7 +646,7 @@ class DeconzAdapter extends Adapter {
                         address: (data.srcAddrMode === 0x02) ? data.srcAddr16 : null,
                         data: buffer,
                         clusterID: zclFrame.cluster.ID,
-                        header: ZclHeader.fromBuffer(buffer),
+                        header: Zcl.Header.fromBuffer(buffer),
                         endpoint: data.srcEndpoint,
                         linkquality: data.lqi,
                         groupID: (data.srcAddrMode === 0x01) ? data.srcAddr16 : null,
@@ -665,7 +665,7 @@ class DeconzAdapter extends Adapter {
             }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame): Promise<void> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
         let pay = zclFrame.toBuffer();
@@ -695,7 +695,7 @@ class DeconzAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
         let pay = zclFrame.toBuffer();
@@ -1020,18 +1020,18 @@ class DeconzAdapter extends Adapter {
         throw new Error("not supported");
     }
 
-    public async sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
+    public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
         throw new Error("not supported");
     }
 
     public async sendZclFrameInterPANBroadcast(
-        zclFrame: ZclFrame, timeout: number
+        zclFrame: Zcl.Frame, timeout: number
     ): Promise<Events.ZclPayload> {
         throw new Error("not supported");
     }
 
     public async sendZclFrameInterPANBroadcastWithResponse(
-        zclFrame: ZclFrame, timeout: number
+        zclFrame: Zcl.Frame, timeout: number
     ): Promise<Events.ZclPayload> {
         throw new Error("not supported");
     }
@@ -1052,7 +1052,7 @@ class DeconzAdapter extends Adapter {
         throw new Error("not supported");
     }
 
-    public async sendZclFrameInterPANIeeeAddr(zclFrame: ZclFrame, ieeeAddr: any): Promise<void> {
+    public async sendZclFrameInterPANIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: any): Promise<void> {
         throw new Error("not supported");
     }
 
@@ -1084,7 +1084,7 @@ class DeconzAdapter extends Adapter {
 
         const payBuf = Buffer.from(gpFrame);
         const payload: Events.ZclPayload = {
-            header: ZclHeader.fromBuffer(payBuf),
+            header: Zcl.Header.fromBuffer(payBuf),
             data: payBuf,
             clusterID: ind.clusterId,
             address: ind.srcId,
@@ -1101,13 +1101,13 @@ class DeconzAdapter extends Adapter {
 
     private checkReceivedDataPayload(resp: ReceivedDataResponse) {
         let srcAddr: any = null;
-        let header: ZclHeader = null;
+        let header: Zcl.Header = null;
         const payBuf = resp != null ? Buffer.from(resp.asduPayload) : null;
 
         if (resp != null) {
             srcAddr = (resp.srcAddr16 != null) ? resp.srcAddr16 : resp.srcAddr64;
             if (resp.profileId != 0x00) {
-                header = ZclHeader.fromBuffer(payBuf);
+                header = Zcl.Header.fromBuffer(payBuf);
             }
         }
 

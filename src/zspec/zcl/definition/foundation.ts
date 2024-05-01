@@ -1,10 +1,7 @@
 /* eslint max-len: 0 */
-
-import DataType from './dataType';
-import BuffaloZclDataType from './buffaloZclDataType';
-import Status from './status';
-import Direction from './direction';
 import {ParameterDefinition} from './tstype';
+import {DataType, BuffaloZclDataType, Direction, ParameterCondition, DataTypeClass} from './enums';
+import {Status} from './status';
 
 export type FoundationCommandName = (
     'read' | 'readRsp' | 'write' | 'writeUndiv' | 'writeRsp' | 'writeNoRsp' | 'configReport' | 'configReportRsp' |
@@ -20,7 +17,7 @@ interface FoundationDefinition {
     response?: number;
 }
 
-const Foundation: Readonly<Record<FoundationCommandName, Readonly<FoundationDefinition>>> = {
+export const Foundation: Readonly<Record<FoundationCommandName, Readonly<FoundationDefinition>>> = {
     /** Read Attributes */
     read: {
         ID: 0x00,
@@ -37,8 +34,8 @@ const Foundation: Readonly<Record<FoundationCommandName, Readonly<FoundationDefi
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
             {name: 'status', type: DataType.UINT8},
-            {name: 'dataType', type: DataType.UINT8, conditions: [{type: 'statusEquals', value: Status.SUCCESS}]},
-            {name: 'attrData', type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: 'statusEquals', value: Status.SUCCESS}]},
+            {name: 'dataType', type: DataType.UINT8, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+            {name: 'attrData', type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
         ],
     },
     /** Write Attributes */
@@ -68,7 +65,7 @@ const Foundation: Readonly<Record<FoundationCommandName, Readonly<FoundationDefi
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'status', type: DataType.UINT8},
-            {name: 'attrId', type: DataType.UINT16, conditions: [{type: 'statusNotEquals', value: Status.SUCCESS}]},
+            {name: 'attrId', type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_NOT_EQUAL, value: Status.SUCCESS}]},
         ],
     },
     /** Write Attributes No Response */
@@ -88,11 +85,11 @@ const Foundation: Readonly<Record<FoundationCommandName, Readonly<FoundationDefi
         parameters: [
             {name: 'direction', type: DataType.UINT8},
             {name: 'attrId', type: DataType.UINT16},
-            {name: 'dataType', type: DataType.UINT8, conditions: [{type: 'directionEquals', value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'minRepIntval', type: DataType.UINT16, conditions: [{type: 'directionEquals', value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'maxRepIntval', type: DataType.UINT16, conditions: [{type: 'directionEquals', value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'repChange', type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: 'directionEquals', value: Direction.CLIENT_TO_SERVER}, {type: 'dataTypeValueTypeEquals', value: 'ANALOG'}]},
-            {name: 'timeout', type: DataType.UINT16, conditions: [{type: 'directionEquals', value: Direction.SERVER_TO_CLIENT}]},
+            {name: 'dataType', type: DataType.UINT8, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
+            {name: 'minRepIntval', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
+            {name: 'maxRepIntval', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
+            {name: 'repChange', type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}, {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL, value: DataTypeClass.ANALOG}]},
+            {name: 'timeout', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.SERVER_TO_CLIENT}]},
         ],
         response: 0x07, // configReportRsp
     },
@@ -104,8 +101,8 @@ const Foundation: Readonly<Record<FoundationCommandName, Readonly<FoundationDefi
             {name: 'status', type: DataType.UINT8},
             // minimumRemainingBufferBytes: if direction is present, attrId is also present
             // https://github.com/Koenkk/zigbee-herdsman/pull/115
-            {name: 'direction', type: DataType.UINT8, conditions: [{type: 'minimumRemainingBufferBytes', value: 3}]},
-            {name: 'attrId', type: DataType.UINT16, conditions: [{type: 'minimumRemainingBufferBytes', value: 2}]},
+            {name: 'direction', type: DataType.UINT8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 3}]},
+            {name: 'attrId', type: DataType.UINT16, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 2}]},
         ],
     },
     /** Read Reporting Configuration */
@@ -124,11 +121,11 @@ const Foundation: Readonly<Record<FoundationCommandName, Readonly<FoundationDefi
         parameters: [
             {name: 'direction', type: DataType.UINT8},
             {name: 'attrId', type: DataType.UINT16},
-            {name: 'dataType', type: DataType.UINT8, conditions: [{type: 'directionEquals', value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'minRepIntval', type: DataType.UINT16, conditions: [{type: 'directionEquals', value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'maxRepIntval', type: DataType.UINT16, conditions: [{type: 'directionEquals', value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'repChange', type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: 'directionEquals', value: Direction.CLIENT_TO_SERVER}, {type: 'dataTypeValueTypeEquals', value: 'ANALOG'}]},
-            {name: 'timeout', type: DataType.UINT16, conditions: [{type: 'directionEquals', value: Direction.SERVER_TO_CLIENT}]},
+            {name: 'dataType', type: DataType.UINT8, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
+            {name: 'minRepIntval', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
+            {name: 'maxRepIntval', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
+            {name: 'repChange', type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}, {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL, value: DataTypeClass.ANALOG}]},
+            {name: 'timeout', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.SERVER_TO_CLIENT}]},
         ],
     },
     /** Report attributes */
@@ -196,9 +193,9 @@ const Foundation: Readonly<Record<FoundationCommandName, Readonly<FoundationDefi
         // contains only one SUCCESS record for all written attributes if all written successfully
         parameters: [
             {name: 'status', type: DataType.UINT8},
-            {name: 'attrId', type: DataType.UINT16, conditions: [{type: 'statusNotEquals', value: Status.SUCCESS}]},
+            {name: 'attrId', type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_NOT_EQUAL, value: Status.SUCCESS}]},
             // always one zero-octet if failed attribute not of type array or structure, otherwise can also be zero if no info on which element caused failure
-            {name: 'selector', type: BuffaloZclDataType.STRUCTURED_SELECTOR, conditions: [{type: 'statusNotEquals', value: Status.SUCCESS}]},
+            {name: 'selector', type: BuffaloZclDataType.STRUCTURED_SELECTOR, conditions: [{type: ParameterCondition.STATUS_NOT_EQUAL, value: Status.SUCCESS}]},
         ],
     },
     /** Discover Commands Received */
@@ -255,5 +252,3 @@ const Foundation: Readonly<Record<FoundationCommandName, Readonly<FoundationDefi
         ],
     },
 };
-
-export default Foundation;

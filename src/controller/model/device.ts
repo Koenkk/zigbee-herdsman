@@ -5,12 +5,10 @@ import Endpoint from './endpoint';
 import Entity from './entity';
 import {Wait} from '../../utils';
 import * as Zcl from '../../zspec/zcl';
+import {ClusterDefinition, CustomClusters} from '../../zspec/zcl/definition/tstype';
 import assert from 'assert';
 import {ZclFrameConverter} from '../helpers';
 import {logger} from '../../utils/logger';
-import {ClusterDefinition, CustomClusters} from '../../zspec/zcl/definition/tstype';
-import {Clusters} from '../../zspec/zcl';
-import {isClusterName} from '../../zspec/zcl/utils';
 import {BroadcastAddress} from '../../zspec/enums';
 
 /**
@@ -31,7 +29,7 @@ interface RoutingTable {
     table: {destinationAddress: number; status: string; nextHop: number}[];
 }
 
-type CustomReadResponse = (frame: Zcl.ZclFrame, endpoint: Endpoint) => boolean;
+type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
 class Device extends Entity {
     private readonly ID: number;
@@ -91,7 +89,7 @@ class Device extends Entity {
     }
     get powerSource(): string {return this._powerSource;}
     set powerSource(powerSource: string) {
-        this._powerSource = typeof powerSource === 'number' ? Zcl.PowerSource[powerSource & ~(1 << 7)] : powerSource;
+        this._powerSource = typeof powerSource === 'number' ? Zcl.POWER_SOURCES[powerSource & ~(1 << 7)] : powerSource;
     }
     get softwareBuildID(): string {return this._softwareBuildID;}
     set softwareBuildID(softwareBuildID: string) {this._softwareBuildID = softwareBuildID;}
@@ -194,7 +192,7 @@ class Device extends Entity {
 
     // There might be multiple endpoints with same DeviceId but it is not supported and first endpoint is returned
     public getEndpointByDeviceType(deviceType: string): Endpoint {
-        const deviceID = Zcl.EndpointDeviceType[deviceType];
+        const deviceID = Zcl.ENDPOINT_DEVICE_TYPE[deviceType];
         return this.endpoints.find((d): boolean => d.deviceID === deviceID);
     }
 
@@ -216,7 +214,7 @@ class Device extends Entity {
         return this.endpoints.find(e => e.hasPendingRequests()) !== undefined;
     }
 
-    public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame, endpoint: Endpoint): Promise<void> {
+    public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, endpoint: Endpoint): Promise<void> {
         // Update reportable properties
         if (frame.isCluster('genBasic') && (frame.isCommand('readRsp') || frame.isCommand('report'))) {
             for (const [key, val] of Object.entries(ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID, this.customClusters))) {
@@ -355,7 +353,7 @@ class Device extends Entity {
 
         // default: no timeout (messages expire immediately after first send attempt)
         let pendingRequestTimeout = 0;
-        if((endpoints.filter((e): boolean => e.inputClusters.includes(Clusters.genPollCtrl.ID))).length > 0) {
+        if((endpoints.filter((e): boolean => e.inputClusters.includes(Zcl.Clusters.genPollCtrl.ID))).length > 0) {
             // default for devices that support genPollCtrl cluster (RX off when idle): 1 day
             pendingRequestTimeout = 86400000;
             /* istanbul ignore else */
@@ -760,7 +758,7 @@ class Device extends Entity {
                 srcID: Number(this.ieeeAddr),
             };
 
-            const frame = Zcl.ZclFrame.create(
+            const frame = Zcl.Frame.create(
                 Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, null,
                 ZclTransactionSequenceNumber.next(), 'pairing', 33, payload, this.customClusters,
             );
@@ -812,10 +810,10 @@ class Device extends Entity {
     }
 
     public addCustomCluster(name: string, cluster: ClusterDefinition): void {
-        assert(!([Clusters.touchlink.ID, Clusters.greenPower.ID].includes(cluster.ID)),
+        assert(!([Zcl.Clusters.touchlink.ID, Zcl.Clusters.greenPower.ID].includes(cluster.ID)),
             'Overriding of greenPower or touchlink cluster is not supported');
-        if (isClusterName(name)) {
-            const existingCluster = Clusters[name];
+        if (Zcl.Utils.isClusterName(name)) {
+            const existingCluster = Zcl.Clusters[name];
 
             // Extend existing cluster
             assert(existingCluster.ID === cluster.ID, `Custom cluster ID (${cluster.ID}) should match existing cluster ID (${existingCluster.ID})`);

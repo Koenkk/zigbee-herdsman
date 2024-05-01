@@ -1,12 +1,28 @@
-import {FrameControl, FrameType} from './definition';
-import BuffaloZcl from './buffaloZcl';
+import {FrameControl} from './definition/tstype';
+import {FrameType} from './definition/enums';
+import {BuffaloZcl} from './buffaloZcl';
 import {logger} from '../../utils/logger';
 
 const NS = 'zh:zcl:header';
 const HEADER_MINIMAL_LENGTH = 3;
 const HEADER_WITH_MANUF_LENGTH = HEADER_MINIMAL_LENGTH + 2;
+/** ZCL Header frame control frame type */
+const HEADER_CTRL_FRAME_TYPE_MASK = 0x03;
+const HEADER_CTRL_FRAME_TYPE_BIT = 0;
+/** ZCL Header frame control manufacturer specific */
+const HEADER_CTRL_MANUF_SPE_MASK = 0x04;
+const HEADER_CTRL_MANUF_SPE_BIT = 2;
+/** ZCL Header frame control direction */
+const HEADER_CTRL_DIRECTION_MASK = 0x08;
+const HEADER_CTRL_DIRECTION_BIT = 3;
+/** ZCL Header frame control disable default response */
+const HEADER_CTRL_DISABLE_DEF_RESP_MASK = 0x10;
+const HEADER_CTRL_DISABLE_DEF_RESP_BIT = 4;
+/** ZCL Header frame control reserved */
+const HEADER_CTRL_RESERVED_MASK = 0xE0;
+const HEADER_CTRL_RESERVED_BIT = 5;
 
-class ZclHeader {
+export class ZclHeader {
     public readonly frameControl: FrameControl;
     public readonly manufacturerCode: number | null;
     public readonly transactionSequenceNumber: number;
@@ -34,11 +50,11 @@ class ZclHeader {
 
     public write(buffalo: BuffaloZcl): void {
         const frameControl = (
-            (this.frameControl.frameType & 0x03) |
-            (((this.frameControl.manufacturerSpecific ? 1 : 0) << 2) & 0x04) |
-            ((this.frameControl.direction << 3) & 0x08) |
-            (((this.frameControl.disableDefaultResponse ? 1 : 0) << 4) & 0x10) |
-            ((this.frameControl.reservedBits << 5) & 0xE0)
+            ((this.frameControl.frameType << HEADER_CTRL_FRAME_TYPE_BIT) & HEADER_CTRL_FRAME_TYPE_MASK) |
+            (((this.frameControl.manufacturerSpecific ? 1 : 0) << HEADER_CTRL_MANUF_SPE_BIT) & HEADER_CTRL_MANUF_SPE_MASK) |
+            ((this.frameControl.direction << HEADER_CTRL_DIRECTION_BIT) & HEADER_CTRL_DIRECTION_MASK) |
+            (((this.frameControl.disableDefaultResponse ? 1 : 0) << HEADER_CTRL_DISABLE_DEF_RESP_BIT) & HEADER_CTRL_DISABLE_DEF_RESP_MASK) |
+            ((this.frameControl.reservedBits << HEADER_CTRL_RESERVED_BIT) & HEADER_CTRL_RESERVED_MASK)
         );
 
         buffalo.writeUInt8(frameControl);
@@ -61,11 +77,11 @@ class ZclHeader {
         const buffalo = new BuffaloZcl(buffer);
         const frameControlValue = buffalo.readUInt8();
         const frameControl = {
-            frameType: frameControlValue & 0x03,
-            manufacturerSpecific: ((frameControlValue >> 2) & 0x01) === 1,
-            direction: (frameControlValue >> 3) & 0x01,
-            disableDefaultResponse: ((frameControlValue >> 4) & 0x01) === 1,
-            reservedBits: frameControlValue >> 5,
+            frameType: (frameControlValue & HEADER_CTRL_FRAME_TYPE_MASK) >> HEADER_CTRL_FRAME_TYPE_BIT,
+            manufacturerSpecific: ((frameControlValue & HEADER_CTRL_MANUF_SPE_MASK) >> HEADER_CTRL_MANUF_SPE_BIT) === 1,
+            direction: (frameControlValue & HEADER_CTRL_DIRECTION_MASK) >> HEADER_CTRL_DIRECTION_BIT,
+            disableDefaultResponse: ((frameControlValue & HEADER_CTRL_DISABLE_DEF_RESP_MASK) >> HEADER_CTRL_DISABLE_DEF_RESP_BIT) === 1,
+            reservedBits: (frameControlValue & HEADER_CTRL_RESERVED_MASK) >> HEADER_CTRL_RESERVED_BIT,
         };
 
         let manufacturerCode: number | null = null;
@@ -84,5 +100,3 @@ class ZclHeader {
         return new ZclHeader(frameControl, manufacturerCode, transactionSequenceNumber, commandIdentifier);
     }
 }
-
-export default ZclHeader;

@@ -1,8 +1,8 @@
 import {Buffalo} from '../../buffalo';
 import {IsNumberArray} from '../../utils';
 import {logger} from '../../utils/logger';
-import {BuffaloZclDataType, DataType} from './definition';
-import {BuffaloZclOptions, StructuredIndicatorType, StructuredSelector, ZclArray} from './tstype';
+import {BuffaloZclDataType, DataType, StructuredIndicatorType} from './definition/enums';
+import {BuffaloZclOptions, StructuredSelector, ZclArray} from './definition/tstype';
 import * as Utils from './utils';
 
 const NS = 'zh:controller:buffalozcl';
@@ -122,7 +122,7 @@ interface ZoneInfo {
     zoneStatus: number;
 }
 
-class BuffaloZcl extends Buffalo {
+export class BuffaloZcl extends Buffalo {
 
     // TODO: remove read/write int "SB" versions in favor of plain numbers, implemented in buffalo.ts
 
@@ -1092,5 +1092,3 @@ class BuffaloZcl extends Buffalo {
         throw new Error(`Read for '${type}' not available`);
     }
 }
-
-export default BuffaloZcl;

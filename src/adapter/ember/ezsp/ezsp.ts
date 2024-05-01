@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import EventEmitter from "events";
 import {SerialPortOptions} from "../../tstype";
-import Clusters from "../../../zspec/zcl/definition/cluster";
+import {Clusters} from "../../../zspec/zcl/definition/cluster";
 import {byteToBits, getMacCapFlags, highByte, highLowToInt, lowByte, lowHighBits} from "../utils/math";
 import {
     EmberOutgoingMessageType,

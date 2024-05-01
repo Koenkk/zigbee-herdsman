@@ -1,7 +1,7 @@
 import * as TsType from './tstype';
 import {ZclPayload} from './events';
 import events from 'events';
-import {ZclFrame, FrameType, Direction} from '../zspec/zcl';
+import * as Zcl from '../zspec/zcl';
 import * as Models from "../models";
 import Bonjour, {Service} from 'bonjour-service';
 import {logger} from '../utils/logger';
@@ -175,7 +175,7 @@ abstract class Adapter extends events.EventEmitter {
     public abstract addInstallCode(ieeeAddress: string, key: Buffer): Promise<void>;
 
     public abstract waitFor(
-        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
+        networkAddress: number, endpoint: number, frameType: Zcl.FrameType, direction: Zcl.Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
     ): {promise: Promise<ZclPayload>; cancel: () => void};
 
@@ -214,13 +214,13 @@ abstract class Adapter extends events.EventEmitter {
      */
 
     public abstract sendZclFrameToEndpoint(
-        ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
+        ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: Zcl.Frame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
     ): Promise<ZclPayload>;
 
-    public abstract sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, sourceEndpoint?: number): Promise<void>;
+    public abstract sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void>;
 
-    public abstract sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void>;
+    public abstract sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void>;
 
     /**
      * InterPAN
@@ -228,10 +228,10 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract setChannelInterPAN(channel: number): Promise<void>;
 
-    public abstract sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddress: string): Promise<void>;
+    public abstract sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void>;
 
     public abstract sendZclFrameInterPANBroadcast(
-        zclFrame: ZclFrame, timeout: number
+        zclFrame: Zcl.Frame, timeout: number
     ): Promise<ZclPayload>;
 
     public abstract restoreChannelInterPAN(): Promise<void>;
