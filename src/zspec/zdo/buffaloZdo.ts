@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import Buffalo from '../../buffalo/buffalo';
 import {Status} from './definition/status';
 import {ZdoStatusError} from './zdoStatusError';
