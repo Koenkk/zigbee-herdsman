@@ -1,9 +1,9 @@
 import {Status} from './definition/status';
 
 export class ZclStatusError extends Error {
-    public code: number;
+    public code: Status;
 
-    constructor (code: number) {
+    constructor (code: Status) {
         super(`Status '${Status[code]}'`);
         this.code = code;
     }
