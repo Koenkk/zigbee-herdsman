@@ -2,10 +2,10 @@ import {Direction, Foundation, DataType, BuffaloZclDataType} from './definition'
 import ZclHeader from './zclHeader';
 import * as Utils from './utils';
 import BuffaloZcl from './buffaloZcl';
-import {TsType as BuffaloTsType} from '../buffalo';
 import * as TsType from './tstype';
 import {TsType as DefinitionTsType, FrameType} from './definition';
-import {CustomClusters} from './definition/tstype';
+import {ClusterName, CustomClusters} from './definition/tstype';
+import {FoundationCommandName} from './definition/foundation';
 
 // eslint-disable-next-line
 type ZclPayload = any;
@@ -91,16 +91,15 @@ class ZclFrame {
 
                     if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && typeof entry.dataType === 'number') {
                         // We need to grab the dataType to parse useDataType
-                        options.dataType = DataType[entry.dataType];
+                        options.dataType = entry.dataType;
                     }
 
-                    const typeStr = ZclFrame.getDataTypeString(parameter.type);
-                    buffalo.write(typeStr, entry[parameter.name], options);
+                    buffalo.write(parameter.type, entry[parameter.name], options);
                 }
             }
         } else if (command.parseStrategy === 'flat') {
             for (const parameter of command.parameters) {
-                buffalo.write(DataType[parameter.type], this.payload[parameter.name], {});
+                buffalo.write(parameter.type, this.payload[parameter.name], {});
             }
         } else {
             /* istanbul ignore else */
@@ -112,7 +111,7 @@ class ZclFrame {
 
                     for (const entry of this.payload.attrInfos) {
                         for (const parameter of command.parameters) {
-                            buffalo.write(DataType[parameter.type], entry[parameter.name], {});
+                            buffalo.write(parameter.type, entry[parameter.name], {});
                         }
                     }
                 }
@@ -130,8 +129,7 @@ class ZclFrame {
                 throw new Error(`Parameter '${parameter.name}' is missing`);
             }
 
-            const typeStr = ZclFrame.getDataTypeString(parameter.type);
-            buffalo.write(typeStr, this.payload[parameter.name], {});
+            buffalo.write(parameter.type, this.payload[parameter.name], {});
         }
     }
 
@@ -175,7 +173,7 @@ class ZclFrame {
         const payload: ZclPayload = {};
 
         for (const parameter of command.parameters) {
-            const options: BuffaloTsType.Options = {payload};
+            const options: TsType.BuffaloZclOptions = {payload};
 
             if (!this.conditionsValid(parameter, payload, buffalo.getBuffer().length - buffalo.getPosition())) {
                 continue;
@@ -191,8 +189,7 @@ class ZclFrame {
                 }
             }
 
-            const typeStr = ZclFrame.getDataTypeString(parameter.type);
-            payload[parameter.name] = buffalo.read(typeStr, options);
+            payload[parameter.name] = buffalo.read(parameter.type, options);
         }
 
         return payload;
@@ -205,7 +202,8 @@ class ZclFrame {
             const payload = [];
 
             while (buffalo.isMore()) {
-                const entry: {[s: string]: BuffaloTsType.Value} = {};
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const entry: {[s: string]: any} = {};
 
                 for (const parameter of command.parameters) {
                     const options: TsType.BuffaloZclOptions = {};
@@ -216,20 +214,18 @@ class ZclFrame {
 
                     if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && typeof entry.dataType === 'number') {
                         // We need to grab the dataType to parse useDataType
-                        options.dataType = DataType[entry.dataType];
+                        options.dataType = entry.dataType;
 
-                        if (entry.dataType === DataType.charStr && entry.hasOwnProperty('attrId')) {
+                        if (entry.dataType === DataType.CHAR_STR && entry.hasOwnProperty('attrId')) {
                             // For Xiaomi struct parsing we need to pass the attributeID.
                             options.attrId = entry.attrId;
                         }
                     }
 
-                    const typeStr = DataType[parameter.type] != null ?
-                        DataType[parameter.type] : BuffaloZclDataType[parameter.type];
-                    entry[parameter.name] = buffalo.read(typeStr, options);
+                    entry[parameter.name] = buffalo.read(parameter.type, options);
 
                     // TODO: not needed, but temp workaroudn to make payload equal to that of zcl-packet
-                    if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && entry.dataType === DataType.struct) {
+                    if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && entry.dataType === DataType.STRUCT) {
                         entry['structElms'] = entry.attrData;
                         entry['numElms'] = entry.attrData.length;
                     }
@@ -240,10 +236,11 @@ class ZclFrame {
 
             return payload;
         } else if (command.parseStrategy === 'flat') {
-            const payload: {[s: string]: BuffaloTsType.Value} = {};
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const payload: {[s: string]: any} = {};
 
             for (const parameter of command.parameters) {
-                payload[parameter.name] = buffalo.read(DataType[parameter.type], {});
+                payload[parameter.name] = buffalo.read(parameter.type, {});
             }
 
             return payload;
@@ -253,15 +250,17 @@ class ZclFrame {
                 /* istanbul ignore else */
                 if ([Foundation.discoverRsp, Foundation.discoverCommandsRsp,
                     Foundation.discoverCommandsGenRsp, Foundation.discoverExtRsp].includes(command)) {
-                    const payload: {[s: string]: BuffaloTsType.Value} = {};
-                    payload.discComplete = buffalo.readUInt8();
-                    payload.attrInfos = [];
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const payload: {discComplete: number, attrInfos: {[k: string]: any}[]} = {
+                        discComplete: buffalo.readUInt8(),
+                        attrInfos: [],
+                    };
 
                     while (buffalo.isMore()) {
-                        const entry: {[s: string]: BuffaloTsType.Value} = {};
+                        const entry: typeof payload.attrInfos[number] = {};
 
                         for (const parameter of command.parameters) {
-                            entry[parameter.name] = buffalo.read(DataType[parameter.type], {});
+                            entry[parameter.name] = buffalo.read(parameter.type, {});
                         }
 
                         payload.attrInfos.push(entry);
@@ -276,9 +275,6 @@ class ZclFrame {
     /**
      * Utils
      */
-    private static getDataTypeString(dataType: DataType | BuffaloZclDataType): string {
-        return DataType[dataType] != null ? DataType[dataType] : BuffaloZclDataType[dataType];
-    }
 
     private static conditionsValid(
         parameter: DefinitionTsType.ParameterDefinition,
@@ -315,17 +311,13 @@ class ZclFrame {
         return true;
     }
 
-    // List of clusters is not completed, feel free to add more.
-    public isCluster(
-        clusterName: 'genTime' | 'genAnalogInput' | 'genBasic' | 'genGroups' | 'genPollCtrl' | 'ssIasZone'
-    ): boolean {
+    public isCluster(clusterName: ClusterName): boolean {
         return this.cluster.name === clusterName;
     }
 
     // List of commands is not completed, feel free to add more.
     public isCommand(
-        commandName: 'read' | 'report' | 'readRsp' | 'remove' | 'add' | 'write' | 'enrollReq' | 'configReport' |
-            'checkin' | 'writeRsp'
+        commandName: FoundationCommandName | 'remove' | 'add' | 'write' | 'enrollReq' | 'checkin'
     ): boolean {
         return this.command.name === commandName;
     }

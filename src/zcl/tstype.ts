@@ -1,6 +1,5 @@
 import DataType from './definition/dataType';
 import BuffaloZclDataType from './definition/buffaloZclDataType';
-import {TsType as BuffaloTsType} from '../buffalo';
 
 interface Attribute {
     ID: number;
@@ -17,7 +16,7 @@ interface Parameter {
 interface Command {
     ID: number;
     name: string;
-    parameters: Parameter[];
+    parameters: readonly Parameter[];
     response?: number;
 }
 
@@ -38,22 +37,39 @@ interface Cluster {
     getCommandResponse: (key: number | string) => Command;
 }
 
-interface BuffaloZclOptions extends BuffaloTsType.Options {
-    dataType?: string;
+interface BuffaloZclOptions {
+    length?: number;
+    payload?: {
+        mode?: number;// used to read ListThermoTransitions
+        numoftrans?: number;// used to read ListThermoTransitions
+        commandID?: number;// used to read GdpFrame
+        payloadSize?: number;// used to read GdpFrame
+    } & {[key: string]: unknown};
+    dataType?: DataType;
     attrId?: number;
 }
 
 interface ZclArray {
     elementType: DataType | keyof typeof DataType;
-    elements: BuffaloTsType.Value[];
+    elements: unknown[];
 }
 
 type DataTypeValueType = 'ANALOG' | 'DISCRETE';
 
+/**
+ * The upper 4 bits of the Indicator subfield for Attributes Structured commands.
+ */
 enum StructuredIndicatorType {
-    WriteWhole = 0x00,
-    Add = 0x10,
-    Remove = 0x20,
+    /**
+     * Write: Only for attributes of type other than array, structure, set or bag
+     * 
+     * Read: Only for attributes of type other than array or structure
+     */
+    Whole = 0x00,
+    /** Add element to the set/bag */
+    WriteAdd = 0x10,
+    /** Remove element from the set/bag */
+    WriteRemove = 0x20,
 }
 
 interface StructuredSelector {

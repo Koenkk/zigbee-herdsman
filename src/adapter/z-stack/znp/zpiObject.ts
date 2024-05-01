@@ -104,7 +104,7 @@ class ZpiObject {
                 }
             }
 
-            result[parameter.name] = buffalo.read(ParameterType[parameter.parameterType], options);
+            result[parameter.name] = buffalo.read(parameter.parameterType, options);
         }
 
         return result;
@@ -115,7 +115,7 @@ class ZpiObject {
 
         for (const parameter of this.parameters) {
             const value = this.payload[parameter.name];
-            buffalo.write(ParameterType[parameter.parameterType], value, {});
+            buffalo.write(parameter.parameterType, value, {});
         }
 
         return buffalo.getWritten();

@@ -1,56 +1,123 @@
 /* istanbul ignore file */
 /* eslint-disable */
-import {Buffalo, TsType as BuffaloTsType, TsType} from '../../../buffalo';
-import {Options, Value} from "../../../buffalo/tstype";
-import {IsNumberArray} from "../../../utils";
+import {Buffalo} from '../../../buffalo';
+import {BuffaloZclOptions} from '../../../zcl/tstype';
 import {LOG_LEVEL} from "./constants";
+import ParameterType from './parameterType';
 
-export interface BuffaloZiGateOptions extends BuffaloTsType.Options {
+export interface BuffaloZiGateOptions extends BuffaloZclOptions {
     startIndex?: number;
 }
 
 class BuffaloZiGate extends Buffalo {
-    public write(type: string, value: Value, options: Options): void {
-        if (type === 'RAW') {
-            this.buffer.set(value, this.position);
-            this.position++;
-        } else if (type === 'UINT16BE') {
-            this.writeUInt16BE(value);
-        } else if (type === 'UINT32BE') {
-            this.writeUInt32BE(value);
-        } else if (type === 'IEEADDR') {
-            this.readIeeeAddr();
-        } else if (type === 'ADDRESS_WITH_TYPE_DEPENDENCY') {
+    public write(type: ParameterType, value: any, options: BuffaloZiGateOptions): void {
+        switch (type) {
+        case ParameterType.UINT8: {
+            return this.writeUInt8(value);
+        }
+        case ParameterType.UINT16: {
+            return this.writeUInt16(value);
+        }
+        case ParameterType.UINT32: {
+            return this.writeUInt32(value);
+        }
+        case ParameterType.IEEEADDR: {
+            return this.writeIeeeAddr(value);
+        }
+        case ParameterType.BUFFER: {
+            return this.writeBuffer(value, value.length);
+        }
+        case ParameterType.BUFFER8: {
+            return this.writeBuffer(value, 8);
+        }
+        case ParameterType.BUFFER16: {
+            return this.writeBuffer(value, 16);
+        }
+        case ParameterType.BUFFER18: {
+            return this.writeBuffer(value, 18);
+        }
+        case ParameterType.BUFFER32: {
+            return this.writeBuffer(value, 32);
+        }
+        case ParameterType.BUFFER42: {
+            return this.writeBuffer(value, 42);
+        }
+        case ParameterType.BUFFER100: {
+            return this.writeBuffer(value, 100);
+        }
+        case ParameterType.LIST_UINT8: {
+            return this.writeListUInt8(value);
+        }
+        case ParameterType.LIST_UINT16: {
+            return this.writeListUInt16(value);
+        }
+        case ParameterType.INT8: {
+            return this.writeInt8(value);
+        }
+        case ParameterType.ADDRESS_WITH_TYPE_DEPENDENCY: {
             const addressMode = this.buffer.readUInt8(this.position - 1);
-            if (addressMode == 3) {
-                this.writeIeeeAddr(value)
-            } else {
-                this.writeUInt16BE(value);
-            }
-        } else if (type === 'BUFFER' && (Buffer.isBuffer(value) || IsNumberArray(value))) {
-            this.writeBuffer(value, value.length);
-        } else {
-            super.write(type, value, options);
+            return addressMode == 3 ? this.writeIeeeAddr(value) : this.writeUInt16BE(value);
         }
-    }
-
-    public static addressBufferToStringBE(buffer: Buffer): string {
-        let address = '0x';
-        for (let i = 0; i < buffer.length; i++) {
-            const value = buffer.readUInt8(i);
-            if (value <= 15) {
-                address += '0' + value.toString(16);
-            } else {
-                address += value.toString(16);
-            }
+        case ParameterType.RAW: {
+            return this.writeRaw(value);
+        }
+        case ParameterType.UINT16BE: {
+           return this.writeUInt16BE(value);
+        }
+        case ParameterType.UINT32BE: {
+           return this.writeUInt32BE(value);
+        }
         }
 
-        return address;
+        throw new Error(`Write for '${type}' not available`);
     }
 
-    public read(type: string, options: BuffaloZiGateOptions): TsType.Value {
-
-        if (type === 'MACCAPABILITY') {
+    public read(type: ParameterType, options: BuffaloZiGateOptions): any {
+        switch (type) {
+        case ParameterType.UINT8: {
+            return this.readUInt8();
+        }
+        case ParameterType.UINT16: {
+            return this.readUInt16();
+        }
+        case ParameterType.UINT32: {
+            return this.readUInt32();
+        }
+        case ParameterType.IEEEADDR: {
+            return this.readIeeeAddr();
+        }
+        case ParameterType.BUFFER: {
+            // if length option not specified, read the whole buffer
+            return this.readBuffer(options.length ?? this.buffer.length);
+        }
+        case ParameterType.BUFFER8: {
+            return this.readBuffer(8);
+        }
+        case ParameterType.BUFFER16: {
+            return this.readBuffer(16);
+        }
+        case ParameterType.BUFFER18: {
+            return this.readBuffer(18);
+        }
+        case ParameterType.BUFFER32: {
+            return this.readBuffer(32);
+        }
+        case ParameterType.BUFFER42: {
+            return this.readBuffer(42);
+        }
+        case ParameterType.BUFFER100: {
+            return this.readBuffer(100);
+        }
+        case ParameterType.LIST_UINT8: {
+            return this.readListUInt8(options.length);
+        }
+        case ParameterType.LIST_UINT16: {
+            return this.readListUInt16(options.length);
+        }
+        case ParameterType.INT8: {
+            return this.readInt8();
+        }
+        case ParameterType.MACCAPABILITY: {
             const result: { [k: string]: boolean | number } = {};
             const mac = this.readUInt8();
             //
@@ -70,45 +137,41 @@ class BuffaloZiGate extends Buffalo {
             // bit 7: 1 = joining device must be issued network address
 
             return result;
-        } else if (type === 'UINT16BE') {
-            return this.readUInt16BE();
-        } else if (type === 'UINT32BE') {
-            return this.readUInt32BE();
-        } else if (type === 'IEEADDR') {
-            return this.readIeeeAddr();
-        } else if (type === 'ADDRESS_WITH_TYPE_DEPENDENCY') {
-            // 		rep.addressSourceMode = Enum.ADDRESS_MODE(reader.nextUInt8());
-            // 		rep.addressSource = rep.addressSourceMode.name === 'short' ?
-            // 		reader.nextUInt16BE() : reader.nextBuffer(8).toString('hex');
-            //
+        }
+        case ParameterType.ADDRESS_WITH_TYPE_DEPENDENCY: {
             const addressMode = this.buffer.readUInt8(this.position - 1);
             return addressMode == 3 ? this.readIeeeAddr() : this.readUInt16BE();
-        } else if (type === 'BUFFER_RAW') {
-            const buffer = this.buffer.slice(this.position);
+        }
+        case ParameterType.UINT16BE: {
+           return this.readUInt16BE();
+        }
+        case ParameterType.UINT32BE: {
+           return this.readUInt32BE();
+        }
+        case ParameterType.BUFFER_RAW: {
+            const buffer = this.buffer.subarray(this.position);
             this.position += buffer.length;
             return buffer;
-        } else if (type === 'LOG_LEVEL') {
-            return LOG_LEVEL[this.readUInt8()];
-        } else if (type === 'STRING') {
-            const buffer = this.buffer.slice(this.position);
+        }
+        case ParameterType.STRING: {
+            const buffer = this.buffer.subarray(this.position);
             this.position += buffer.length;
             return unescape(buffer.toString());
-        } else if (type === 'MAYBE_UINT8') {
-            if (this.isMore()) return this.readUInt8();
-        } else {
-            return super.read(type, options);
         }
+        case ParameterType.LOG_LEVEL: {
+            return LOG_LEVEL[this.readUInt8()];
+        }
+        case ParameterType.MAYBE_UINT8: {
+            return this.isMore() ? this.readUInt8() : null;
+        }
+        }
+
+        throw new Error(`Read for '${type}' not available`);
     }
 
-    public writeIeeeAddr(value: string): void {
-        this.writeUInt32BE(parseInt(value.slice(2, 10), 16));
-        this.writeUInt32BE(parseInt(value.slice(10), 16));
-    }
-
-    public readIeeeAddr(): string {
-        const length = 8;
-        const value = this.readBuffer(length);
-        return BuffaloZiGate.addressBufferToStringBE(value);
+    public writeRaw(value: Buffer): void {
+        this.buffer.set(value, this.position);
+        this.position += value.length;
     }
 
     public readUInt16BE(): number {

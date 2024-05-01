@@ -2439,7 +2439,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
-        device.addCustomCluster('genBasic', {ID: 0, commands: {}, commandsResponse: {}, attributes: {customAttr: {ID: 256, type: Zcl.DataType.uint8}}});
+        device.addCustomCluster('genBasic', {ID: 0, commands: {}, commandsResponse: {}, attributes: {customAttr: {ID: 256, type: Zcl.DataType.UINT8}}});
         const buffer = Buffer.from([24,169,10,0,1,24,3,0,0,24,1]);
         const header = ZclHeader.fromBuffer(buffer);
         await mockAdapterEvents['zclPayload']({wasBroadcast: false, address: 129, clusterID: 0, data: buffer, header, endpoint: 1, linkquality: 50, groupID: 1});
@@ -2452,7 +2452,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
-        device.addCustomCluster('myCustomCluster', {ID: 9123, commands: {}, commandsResponse: {}, attributes: {superAttribute: {ID: 0, type: Zcl.DataType.uint8}}});
+        device.addCustomCluster('myCustomCluster', {ID: 9123, commands: {}, commandsResponse: {}, attributes: {superAttribute: {ID: 0, type: Zcl.DataType.UINT8}}});
         const buffer = Buffer.from([24,169,10,0,1,24,3,0,0,24,1]);
         const header = ZclHeader.fromBuffer(buffer);
         await mockAdapterEvents['zclPayload']({wasBroadcast: false, address: 129, clusterID: 9123, data: buffer, header, endpoint: 1, linkquality: 50, groupID: 1});
@@ -4415,7 +4415,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
-        device.addCustomCluster('myCustomCluster', {ID: 9123, commands: {}, commandsResponse: {}, attributes: {superAttribute: {ID: 0, type: Zcl.DataType.uint8}}});
+        device.addCustomCluster('myCustomCluster', {ID: 9123, commands: {}, commandsResponse: {}, attributes: {superAttribute: {ID: 0, type: Zcl.DataType.UINT8}}});
         const buffer = Buffer.from([24,169,99,0,1,24,3,0,0,24,1]);
         const header = ZclHeader.fromBuffer(buffer);
         await mockAdapterEvents['zclPayload']({wasBroadcast: false, address: 129, clusterID: 33, data: buffer, header, endpoint: 1, linkquality: 50, groupID: 1});

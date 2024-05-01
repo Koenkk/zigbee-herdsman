@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 /* eslint-disable */
 import {ZiGateCommandCode, ZiGateMessageCode, ZiGateObjectPayload} from "./constants";
+import ParameterType from "./parameterType";
 
 
 export interface PermitJoinPayload extends ZiGateObjectPayload {
@@ -24,7 +25,7 @@ export interface RawAPSDataRequestPayload extends ZiGateObjectPayload {
 
 export interface ZiGateCommandParameter {
     name: string;
-    parameterType: string;
+    parameterType: ParameterType;
 }
 
 export interface ZiGateCommandType {
@@ -63,7 +64,7 @@ export type ZiGateResponseMatcher = ZiGateResponseMatcherRule[];
 export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     [ZiGateCommandCode.SetDeviceType]: {  // 0x0023
         request: [
-            {name: 'deviceType', parameterType: 'UINT8'} //<device type: uint8_t>
+            {name: 'deviceType', parameterType: ParameterType.UINT8} //<device type: uint8_t>
         ],
     },
     [ZiGateCommandCode.StartNetwork]: { // 0x0024
@@ -123,13 +124,13 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     },
     [ZiGateCommandCode.SetTXpower]: { // SetTXpower
         request: [
-            {name: 'value', parameterType: 'UINT8'}
+            {name: 'value', parameterType: ParameterType.UINT8}
         ]
     },
     [ZiGateCommandCode.ManagementLQI]: { // 0x004E
         request: [
-            {name: 'targetAddress', parameterType: 'UINT16BE'}, //<Target Address : uint16_t>	Status
-            {name: 'startIndex', parameterType: 'UINT8'}, //<Start Index : uint8_t>
+            {name: 'targetAddress', parameterType: ParameterType.UINT16BE}, //<Target Address : uint16_t>	Status
+            {name: 'startIndex', parameterType: ParameterType.UINT8}, //<Start Index : uint8_t>
 
         ],
         response: [
@@ -154,8 +155,8 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     },
     [ZiGateCommandCode.SetSecurityStateKey]: { // 0x0022
         request: [
-            {name: 'keyType', parameterType: 'UINT8'}, // 	<key type: uint8_t>
-            {name: 'key', parameterType: 'BUFFER'}, //   <key: data>
+            {name: 'keyType', parameterType: ParameterType.UINT8}, // 	<key type: uint8_t>
+            {name: 'key', parameterType: ParameterType.BUFFER}, //   <key: data>
 
         ],
     },
@@ -169,26 +170,26 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     },
     [ZiGateCommandCode.RawMode]: {
         request: [
-            {name: 'enabled', parameterType: 'INT8'},
+            {name: 'enabled', parameterType: ParameterType.INT8},
         ]
     },
     [ZiGateCommandCode.SetExtendedPANID]: {
         request: [
-            {name: 'panId', parameterType: 'BUFFER'}, //<64-bit Extended PAN ID:uint64_t>
+            {name: 'panId', parameterType: ParameterType.BUFFER}, //<64-bit Extended PAN ID:uint64_t>
         ]
     },
     [ZiGateCommandCode.SetChannelMask]: {
         request: [
-            {name: 'channelMask', parameterType: 'UINT32BE'}, //<channel mask:uint32_t>
+            {name: 'channelMask', parameterType: ParameterType.UINT32BE}, //<channel mask:uint32_t>
         ]
     },
 
     [ZiGateCommandCode.ManagementLeaveRequest]: {
         request: [
-            {name: 'shortAddress', parameterType: 'UINT16BE'},
-            {name: 'extendedAddress', parameterType: 'IEEEADDR'}, // <extended address: uint64_t>
-            {name: 'rejoin', parameterType: 'UINT8'},
-            {name: 'removeChildren', parameterType: 'UINT8'}, // <Remove Children: uint8_t>
+            {name: 'shortAddress', parameterType: ParameterType.UINT16BE},
+            {name: 'extendedAddress', parameterType: ParameterType.IEEEADDR}, // <extended address: uint64_t>
+            {name: 'rejoin', parameterType: ParameterType.UINT8},
+            {name: 'removeChildren', parameterType: ParameterType.UINT8}, // <Remove Children: uint8_t>
         ],
         response: [
             [
@@ -218,8 +219,8 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
 
     [ZiGateCommandCode.RemoveDevice]: {
         request: [
-            {name: 'parentAddress', parameterType: 'IEEEADDR'}, // <parent address: uint64_t>
-            {name: 'extendedAddress', parameterType: 'IEEEADDR'}, // <extended address: uint64_t>
+            {name: 'parentAddress', parameterType: ParameterType.IEEEADDR}, // <parent address: uint64_t>
+            {name: 'extendedAddress', parameterType: ParameterType.IEEEADDR}, // <extended address: uint64_t>
         ],
         response: [
             [
@@ -237,26 +238,26 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     },
     [ZiGateCommandCode.PermitJoin]: {
         request: [
-            {name: 'targetShortAddress', parameterType: 'UINT16BE'}, //<target short address: uint16_t> -
+            {name: 'targetShortAddress', parameterType: ParameterType.UINT16BE}, //<target short address: uint16_t> -
             // broadcast 0xfffc
-            {name: 'interval', parameterType: 'UINT8'}, //<interval: uint8_t>
+            {name: 'interval', parameterType: ParameterType.UINT8}, //<interval: uint8_t>
             // 0 = Disable Joining
             // 1 – 254 = Time in seconds to allow joins
             // 255 = Allow all joins
-            // {name: 'TCsignificance', parameterType: 'UINT8'}, //<TCsignificance: uint8_t>
+            // {name: 'TCsignificance', parameterType: ParameterType.UINT8}, //<TCsignificance: uint8_t>
             // 0 = No change in authentication
             // 1 = Authentication policy as spec
         ]
     },
     [ZiGateCommandCode.PermitJoinStatus]: {
         request: [
-            {name: 'targetShortAddress', parameterType: 'UINT16BE'}, //<target short address: uint16_t> -
+            {name: 'targetShortAddress', parameterType: ParameterType.UINT16BE}, //<target short address: uint16_t> -
             // broadcast 0xfffc
-            {name: 'interval', parameterType: 'UINT8'}, //<interval: uint8_t>
+            {name: 'interval', parameterType: ParameterType.UINT8}, //<interval: uint8_t>
             // 0 = Disable Joining
             // 1 – 254 = Time in seconds to allow joins
             // 255 = Allow all joins
-            {name: 'TCsignificance', parameterType: 'UINT8'}, //<TCsignificance: uint8_t>
+            {name: 'TCsignificance', parameterType: ParameterType.UINT8}, //<TCsignificance: uint8_t>
             // 0 = No change in authentication
             // 1 = Authentication policy as spec
         ],
@@ -268,21 +269,21 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     },
     [ZiGateCommandCode.RawAPSDataRequest]: {
         request: [
-            {name: 'addressMode', parameterType: 'UINT8'}, // <address mode: uint8_t>
-            {name: 'targetShortAddress', parameterType: 'UINT16BE'}, // <target short address: uint16_t>
-            {name: 'sourceEndpoint', parameterType: 'UINT8'}, // <source endpoint: uint8_t>
-            {name: 'destinationEndpoint', parameterType: 'UINT8'}, // <destination endpoint: uint8_t>
-            {name: 'clusterID', parameterType: 'UINT16BE'}, // <cluster ID: uint16_t>
-            {name: 'profileID', parameterType: 'UINT16BE'}, // <profile ID: uint16_t>
-            {name: 'securityMode', parameterType: 'UINT8'}, // <security mode: uint8_t>
-            {name: 'radius', parameterType: 'UINT8'}, // <radius: uint8_t>
-            {name: 'dataLength', parameterType: 'UINT8'}, // <data length: uint8_t>
-            {name: 'data', parameterType: 'BUFFER'}, // <data: auint8_t>
+            {name: 'addressMode', parameterType: ParameterType.UINT8}, // <address mode: uint8_t>
+            {name: 'targetShortAddress', parameterType: ParameterType.UINT16BE}, // <target short address: uint16_t>
+            {name: 'sourceEndpoint', parameterType: ParameterType.UINT8}, // <source endpoint: uint8_t>
+            {name: 'destinationEndpoint', parameterType: ParameterType.UINT8}, // <destination endpoint: uint8_t>
+            {name: 'clusterID', parameterType: ParameterType.UINT16BE}, // <cluster ID: uint16_t>
+            {name: 'profileID', parameterType: ParameterType.UINT16BE}, // <profile ID: uint16_t>
+            {name: 'securityMode', parameterType: ParameterType.UINT8}, // <security mode: uint8_t>
+            {name: 'radius', parameterType: ParameterType.UINT8}, // <radius: uint8_t>
+            {name: 'dataLength', parameterType: ParameterType.UINT8}, // <data length: uint8_t>
+            {name: 'data', parameterType: ParameterType.BUFFER}, // <data: auint8_t>
         ],
     },
     [ZiGateCommandCode.NodeDescriptor]: {
         request: [
-            {name: 'targetShortAddress', parameterType: 'UINT16BE'}, // <target short address: uint16_t>
+            {name: 'targetShortAddress', parameterType: ParameterType.UINT16BE}, // <target short address: uint16_t>
         ],
         response: [
             [
@@ -306,7 +307,7 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     },
     [ZiGateCommandCode.ActiveEndpoint]: {
         request: [
-            {name: 'targetShortAddress', parameterType: 'UINT16BE'}, // <target short address: uint16_t>
+            {name: 'targetShortAddress', parameterType: ParameterType.UINT16BE}, // <target short address: uint16_t>
         ],
         response: [
             [
@@ -330,8 +331,8 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     },
     [ZiGateCommandCode.SimpleDescriptor]: {
         request: [
-            {name: 'targetShortAddress', parameterType: 'UINT16BE'}, // <target short address: uint16_t>
-            {name: 'endpoint', parameterType: 'UINT8'}, // <endpoint: uint8_t>
+            {name: 'targetShortAddress', parameterType: ParameterType.UINT16BE}, // <target short address: uint16_t>
+            {name: 'endpoint', parameterType: ParameterType.UINT8}, // <endpoint: uint8_t>
         ],
         response: [
             [
@@ -351,15 +352,15 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     },
     [ZiGateCommandCode.Bind]: {
         request: [
-            {name: 'targetExtendedAddress', parameterType: 'IEEEADDR'}, // <target extended address: uint64_t>
-            {name: 'targetEndpoint', parameterType: 'UINT8'}, // <target endpoint: uint8_t>
-            {name: 'clusterID', parameterType: 'UINT16BE'}, // <cluster ID: uint16_t>
-            {name: 'destinationAddressMode', parameterType: 'UINT8'}, // <destination address mode: uint8_t>
+            {name: 'targetExtendedAddress', parameterType: ParameterType.IEEEADDR}, // <target extended address: uint64_t>
+            {name: 'targetEndpoint', parameterType: ParameterType.UINT8}, // <target endpoint: uint8_t>
+            {name: 'clusterID', parameterType: ParameterType.UINT16BE}, // <cluster ID: uint16_t>
+            {name: 'destinationAddressMode', parameterType: ParameterType.UINT8}, // <destination address mode: uint8_t>
             {
                 name: 'destinationAddress',
-                parameterType: 'ADDRESS_WITH_TYPE_DEPENDENCY'
+                parameterType: ParameterType.ADDRESS_WITH_TYPE_DEPENDENCY
             }, // <destination address:uint16_t or uint64_t>
-            {name: 'destinationEndpoint', parameterType: 'UINT8'}, // <destination endpoint (
+            {name: 'destinationEndpoint', parameterType: ParameterType.UINT8}, // <destination endpoint (
             // value ignored for group address): uint8_t>
         ],
         response: [
@@ -389,15 +390,15 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     },
     [ZiGateCommandCode.UnBind]: {
         request: [
-            {name: 'targetExtendedAddress', parameterType: 'IEEEADDR'}, // <target extended address: uint64_t>
-            {name: 'targetEndpoint', parameterType: 'UINT8'}, // <target endpoint: uint8_t>
-            {name: 'clusterID', parameterType: 'UINT16BE'}, // <cluster ID: uint16_t>
-            {name: 'destinationAddressMode', parameterType: 'UINT8'}, // <destination address mode: uint8_t>
+            {name: 'targetExtendedAddress', parameterType: ParameterType.IEEEADDR}, // <target extended address: uint64_t>
+            {name: 'targetEndpoint', parameterType: ParameterType.UINT8}, // <target endpoint: uint8_t>
+            {name: 'clusterID', parameterType: ParameterType.UINT16BE}, // <cluster ID: uint16_t>
+            {name: 'destinationAddressMode', parameterType: ParameterType.UINT8}, // <destination address mode: uint8_t>
             {
                 name: 'destinationAddress',
-                parameterType: 'ADDRESS_WITH_TYPE_DEPENDENCY'
+                parameterType: ParameterType.ADDRESS_WITH_TYPE_DEPENDENCY
             }, // <destination address:uint16_t or uint64_t>
-            {name: 'destinationEndpoint', parameterType: 'UINT8'}, // <destination endpoint (
+            {name: 'destinationEndpoint', parameterType: ParameterType.UINT8}, // <destination endpoint (
             // value ignored for group address): uint8_t>
         ],
         response: [
@@ -427,11 +428,11 @@ export const ZiGateCommand: { [key: string]: ZiGateCommandType } = {
     },
     [ZiGateCommandCode.AddGroup]: {
         request: [
-            { name: 'addressMode', parameterType: 'UINT8' }, //<device type: uint8_t>
-            { name: 'shortAddress', parameterType: 'UINT16BE' },
-            { name: 'sourceEndpoint', parameterType: 'UINT8' },
-            { name: 'destinationEndpoint', parameterType: 'UINT8' },
-            { name: 'groupAddress', parameterType: 'UINT16BE' },
+            { name: 'addressMode', parameterType: ParameterType.UINT8 }, //<device type: uint8_t>
+            { name: 'shortAddress', parameterType: ParameterType.UINT16BE },
+            { name: 'sourceEndpoint', parameterType: ParameterType.UINT8 },
+            { name: 'destinationEndpoint', parameterType: ParameterType.UINT8 },
+            { name: 'groupAddress', parameterType: ParameterType.UINT16BE },
         ]
     }
 };

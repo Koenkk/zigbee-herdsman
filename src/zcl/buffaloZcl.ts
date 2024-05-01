@@ -1,6 +1,7 @@
-import {Buffalo, TsType} from '../buffalo';
+import {Buffalo} from '../buffalo';
+import {IsNumberArray} from '../utils';
 import {logger} from '../utils/logger';
-import {DataType} from './definition';
+import {BuffaloZclDataType, DataType} from './definition';
 import {BuffaloZclOptions, StructuredIndicatorType, StructuredSelector, ZclArray} from './tstype';
 import * as Utils from './utils';
 
@@ -8,51 +9,36 @@ const NS = 'zh:controller:buffalozcl';
 
 interface KeyValue {[s: string | number]: number | string}
 
-const aliases: {[s: string]: string} = {
-    'boolean': 'uint8',
-    'bitmap8': 'uint8',
-    'enum8': 'uint8',
-    'data8': 'uint8',
-    'data16': 'uint16',
-    'bitmap16': 'uint16',
-    'uint16': 'uint16',
-    'enum16': 'uint16',
-    'clusterId': 'uint16',
-    'attrId': 'uint16',
-    'data24': 'uint24',
-    'bitmap24': 'uint24',
-    'data32': 'uint32',
-    'bitmap32': 'uint32',
-    'uint32': 'uint32',
-    'tod': 'uint32',
-    'date': 'uint32',
-    'utc': 'uint32',
-    'bacOid': 'uint32',
-    'singlePrec': 'floatle',
-    'doublePrec': 'doublele',
-    'bitmap40': 'uint40',
-    'data40': 'uint40',
-    'bitmap48': 'uint48',
-    'data48': 'uint48',
-    'bitmap56': 'uint56',
-    'data56': 'uint56',
-    'bitmap64': 'uint64',
-    'data64': 'uint64',
-    'ieeeAddr': 'uint64',
-    'longOctetStr': 'longCharStr',
-    'secKey': 'buffer16',
-    'noData': 'EMPTY',
-    'unknown': 'EMPTY',
-    'bag': 'array',
-    'set': 'array',
+const SEC_KEY_LENGTH = 16;
+
+const extensionFieldSetsDateTypeLookup: {[key: number]: DataType[]} = {
+    6: [DataType.UINT8],
+    8: [DataType.UINT8],
+    258: [DataType.UINT8, DataType.UINT8],
+    768: [DataType.UINT16, DataType.UINT16, DataType.UINT16, DataType.UINT8, DataType.UINT8, DataType.UINT8, DataType.UINT16, DataType.UINT16],
 };
 
-const extensionFieldSetsDateTypeLookup: {[key: number]: string[]} = {
-    6: ['uint8'],
-    8: ['uint8'],
-    258: ['uint8', 'unit8'],
-    768: ['uint16', 'uint16', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16', 'uint16'],
-};
+interface ZclTimeOfDay {
+    /** [0-23] */
+    hours?: number,
+    /** [0-59] */
+    minutes?: number,
+    /** [0-59] */
+    seconds?: number,
+    /** [0-99] */
+    hundredths?: number,
+}
+
+interface ZclDate {
+    /** [1900-2155], converted to/from [0-255] => value+1900=year */
+    year?: number,
+    /** [1-12] */
+    month?: number,
+    /** [1-31] */
+    dayOfMonth?: number,
+    /** [1-7] */
+    dayOfWeek?: number,
+}
 
 interface ThermoTransition {
     transitionTime: number;
@@ -61,8 +47,8 @@ interface ThermoTransition {
 }
 
 interface Struct {
-    elmType: number;
-    elmVal: TsType.Value;
+    elmType: DataType;
+    elmVal: unknown;
 }
 
 interface Gdp {
@@ -117,7 +103,7 @@ interface GdpAttributeReport {
 interface ExtensionFieldSet {
     clstId: number;
     len: number;
-    extField: TsType.Value[];
+    extField: unknown[];
 }
 
 interface TuyaDataPointValue {
@@ -131,66 +117,136 @@ interface MiboxerZone {
     groupId: number;
 }
 
+interface ZoneInfo {
+    zoneID: number;
+    zoneStatus: number;
+}
+
 class BuffaloZcl extends Buffalo {
-    private readUseDataType(options: BuffaloZclOptions): TsType.Value {
-        return this.read(options.dataType, options);
+
+    // TODO: remove read/write int "SB" versions in favor of plain numbers, implemented in buffalo.ts
+
+    private writeUInt40SB(value: number[]): void {
+        this.writeUInt32(value[1]);
+        this.writeUInt8(value[0]);
     }
 
-    private writeUseDataType(value: string, options: BuffaloZclOptions): void {
-        this.write(options.dataType, value, options);
+    private readUInt40SB(): [number, number] {
+        const lsb = this.readUInt32();
+        const msb = this.readUInt8();
+        return [msb, lsb];
     }
 
-    private readArray(): TsType.Value[] {
-        const values: TsType.Value = [];
-
-        const elementType = DataType[this.readUInt8()];
-        const numberOfElements = this.readUInt16();
-
-        for (let i = 0; i < numberOfElements; i++) {
-            const value = this.read(elementType, {});
-            values.push(value);
-        }
-
-        return values;
+    private writeUInt48SB(value: number[]): void {
+        this.writeUInt32(value[1]);
+        this.writeUInt16(value[0]);
     }
 
-    private writeArray(value: ZclArray): void {
-        const elTypeNumeric = typeof value.elementType === 'number' ? value.elementType : DataType[value.elementType];
-        this.writeUInt8(elTypeNumeric);
-        this.writeUInt16(value.elements.length);
-        value.elements.forEach(element => {
-            this.write(DataType[elTypeNumeric], element, {});
-        });
+    private readUInt48SB(): [number, number] {
+        const lsb = this.readUInt32();
+        const msb = this.readUInt16();
+        return [msb, lsb];
     }
 
-    private readStruct(): Struct[] {
-        const values = [];
-        const numberOfElements = this.readUInt16();
+    private writeUInt56SB(value: number[]): void {
+        const temp = Buffer.alloc(8);
+        temp.writeUInt32LE(value[1], 0);
+        temp.writeUInt32LE(value[0], 4);
+        this.writeBuffer(temp.subarray(0, 7), 7);
+    }
 
-        for (let i = 0; i < numberOfElements; i++) {
-            const elementType = this.readUInt8();
-            const value = this.read(DataType[elementType], {});
-            values.push({elmType: elementType, elmVal: value});
-        }
+    private readUInt56SB(): [number, number, number] {
+        const lsb = this.readUInt32();
+        const xsb = this.readUInt16();
+        const msb = this.readUInt8();
+        return [msb, xsb, lsb];
+    }
 
-        return values;
+    private readUInt64SB(): string {
+        // XXX: not following pattern, should return as [msb, lsb]
+        return this.readIeeeAddr();
+    }
+
+    private writeUInt64SB(value: string): void {
+        // XXX: not following pattern, should pass as number[]
+        const msb = parseInt(value.slice(2,10), 16);
+        const lsb = parseInt(value.slice(10), 16);
+        this.writeUInt32(lsb);
+        this.writeUInt32(msb);
+    }
+
+    private writeInt40SB(value: number[]): void {
+        this.writeInt32(value[1]);
+        this.writeInt8(value[0]);
+    }
+
+    private readInt40SB(): [number, number] {
+        const lsb = this.readInt32();
+        const msb = this.readInt8();
+        return [msb, lsb];
+    }
+
+    private writeInt56SB(value: number[]): void {
+        const temp = Buffer.alloc(8);
+        temp.writeInt32LE(value[1], 0);
+        temp.writeInt32LE(value[0], 4);
+        this.writeBuffer(temp.subarray(0, 7), 7);
+    }
+
+    private readInt56SB(): [number, number, number] {
+        const lsb = this.readInt32();
+        const xsb = this.readInt16();
+        const msb = this.readInt8();
+        return [msb, xsb, lsb];
+    }
+
+    private writeInt64SB(value: number[]): void {
+        this.writeInt32(value[1]);
+        this.writeInt32(value[0]);
+    }
+
+    private readInt64SB(): [number, number] {
+        const lsb = this.readInt32();
+        const msb = this.readInt32();
+        return [msb, lsb];
+    }
+
+    private writeOctetStr(value: number[]): void {
+        // TODO: this does not allow "non-value" 0xFF
+        this.writeUInt8(value.length);
+        this.writeBuffer(value, value.length);
     }
 
     private readOctetStr(): Buffer {
         const length = this.readUInt8();
-        return this.readBuffer(length);
+        return (length < 0xFF) ? this.readBuffer(length) : Buffer.from([]);// non-value
+    }
+
+    private writeCharStr(value: string | number[]): void {
+        // TODO: this does not allow "non-value" 0xFF
+        if (typeof value === 'string') {
+            this.writeUInt8(value.length);
+            this.writeUtf8String(value);
+        } else {
+            this.writeBuffer(value, value.length);
+        }
     }
 
     private readCharStr(options: BuffaloZclOptions): Record<number, number | number[]> | string {
         const length = this.readUInt8();
 
+        // TODO: this workaround should be moved to a custom type
         if (options.attrId === 65281) {
             const value: Record<number, number | number[]> = {};
+
+            if (length === 0xFF) {
+                return value;
+            }
 
             // Xiaomi struct parsing
             for (let i = 0; i < length; i++) {
                 const index = this.readUInt8();
-                const dataType = DataType[this.readUInt8()];
+                const dataType = this.readUInt8();
                 value[index] = this.read(dataType, {});
 
                 if (this.position === this.buffer.length) {
@@ -200,50 +256,134 @@ class BuffaloZcl extends Buffalo {
 
             return value;
         } else {
-            return this.readUtf8String(length);
+            return (length < 0xFF) ? this.readUtf8String(length) : '';
         }
     }
 
-    private writeCharStr(value: string | number[]): void {
-        if (typeof value === 'string') {
-            this.writeUInt8(value.length);
-            this.writeUtf8String(value);
-        } else {
-            this.writeBuffer(value, value.length);
-        }
+    private writeLongOctetStr(value: number[]): void {
+        // TODO: this does not allow "non-value" 0xFF
+        this.writeUInt16(value.length);
+        this.writeBuffer(value, value.length);
     }
 
-    private readLongCharStr(): string {
+    private readLongOctetStr(): Buffer {
         const length = this.readUInt16();
-        return this.readUtf8String(length);
+        return (length < 0xFFFF) ? this.readBuffer(length) : Buffer.from([]);// non-value
     }
 
     private writeLongCharStr(value: string): void {
+        // TODO: this does not allow "non-value" 0xFF
         this.writeUInt16(value.length);
         this.writeUtf8String(value);
     }
 
-    private writeOctetStr(value: number[]): void {
-        this.writeUInt8(value.length);
-        this.writeBuffer(value, value.length);
+    private readLongCharStr(): string {
+        const length = this.readUInt16();
+        return (length < 0xFFFF) ? this.readUtf8String(length) : '';// non-value
     }
 
-    private readExtensionFieldSets(): ExtensionFieldSet[] {
-        const value = [];
+    private writeArray(value: ZclArray): void {
+        const elTypeNumeric = typeof value.elementType === 'number' ? value.elementType : DataType[value.elementType];
+        this.writeUInt8(elTypeNumeric);
+        // TODO: this does not allow writing "non-value" 0xFFFF
+        this.writeUInt16(value.elements.length);
 
-        while (this.isMore()) {
-            const clstId = this.readUInt16();
-            const len = this.readUInt8();
-            const end = this.getPosition() + len;
+        for (const element of value.elements) {
+            this.write(elTypeNumeric, element, {});
+        };
+    }
 
-            let index = 0;
-            const extField = [];
-            while (this.getPosition() < end) {
-                extField.push(this.read(extensionFieldSetsDateTypeLookup[clstId][index], null));
-                index++;
+    private readArray(): unknown[] {
+        const values: unknown[] = [];
+
+        const elementType = this.readUInt8();
+        const numberOfElements = this.readUInt16();
+
+        if (numberOfElements < 0xFFFF) {
+            for (let i = 0; i < numberOfElements; i++) {
+                const value = this.read(elementType, {});
+                values.push(value);
             }
+        }
 
-            value.push({extField, clstId, len});
+        return values;
+    }
+
+    private writeStruct(value: Struct[]): void {
+        // XXX: from ZCL spec: "The zeroth element may not be written to."
+        //      how does this translates to writing here?
+        // TODO: this does not allow writing "non-value" 0xFFFF
+        this.writeUInt16(value.length);
+
+        for (const v of value) {
+            this.writeUInt8(v.elmType);
+            this.write(v.elmType, v.elmVal, {});
+        }
+    }
+
+    private readStruct(): Struct[] {
+        const values: Struct[] = [];
+        const numberOfElements = this.readUInt16();
+
+        if (numberOfElements < 0xFFFF) {
+            for (let i = 0; i < numberOfElements; i++) {
+                const elementType = this.readUInt8();
+                const value = this.read(elementType, {});
+                values.push({elmType: elementType, elmVal: value});
+            }
+        }
+
+        return values;
+    }
+
+    private writeToD(value: ZclTimeOfDay): void {
+        this.writeUInt8(value.hours ?? 0xFF);
+        this.writeUInt8(value.minutes ?? 0xFF);
+        this.writeUInt8(value.seconds ?? 0xFF);
+        this.writeUInt8(value.hundredths ?? 0xFF);
+    }
+
+    private readToD(): ZclTimeOfDay {
+        const hours = this.readUInt8();
+        const minutes = this.readUInt8();
+        const seconds = this.readUInt8();
+        const hundredths = this.readUInt8();
+
+        return {hours, minutes, seconds, hundredths};
+    }
+
+    private writeDate(value: ZclDate): void {
+        this.writeUInt8(value.year != null ? (value.year - 1900) : 0xFF);
+        this.writeUInt8(value.month ?? 0xFF);
+        this.writeUInt8(value.dayOfMonth ?? 0xFF);
+        this.writeUInt8(value.dayOfWeek ?? 0xFF);
+    }
+
+    private readDate(): ZclDate {
+        const year = this.readUInt8() + 1900;
+        const month = this.readUInt8();
+        const dayOfMonth = this.readUInt8();
+        const dayOfWeek = this.readUInt8();
+
+        return {year, month, dayOfMonth, dayOfWeek};
+    }
+
+    //--- BuffaloZclDataType
+
+    private writeListZoneInfo(values: ZoneInfo[]): void {
+        for (const value of values) {
+            this.writeUInt8(value.zoneID);
+            this.writeUInt16(value.zoneStatus);
+        }
+    }
+
+    private readListZoneInfo(length: number): ZoneInfo[] {
+        const value: ZoneInfo[] = [];
+        for (let i = 0; i < length; i++) {
+            value.push({
+                zoneID: this.readUInt8(),
+                zoneStatus: this.readUInt16(),
+            });
         }
 
         return value;
@@ -254,34 +394,54 @@ class BuffaloZcl extends Buffalo {
             this.writeUInt16(value.clstId);
             this.writeUInt8(value.len);
             value.extField.forEach((entry, index) => {
-                this.write(extensionFieldSetsDateTypeLookup[value.clstId][index], entry, null);
+                this.write(extensionFieldSetsDateTypeLookup[value.clstId][index], entry, {});
             });
         }
     }
 
-    private writeListZoneInfo(values: {zoneID: number; zoneStatus: number}[]): void {
-        for (const value of values) {
-            this.writeUInt8(value.zoneID);
-            this.writeUInt16(value.zoneStatus);
-        }
-    }
+    private readExtensionFieldSets(): ExtensionFieldSet[] {
+        const value: ExtensionFieldSet[] = [];
 
-    private readListZoneInfo(options: TsType.Options): {zoneID: number, zoneStatus: number}[] {
-        const value = [];
-        for (let i = 0; i < options.length; i++) {
-            value.push({
-                zoneID: this.readUInt8(),
-                zoneStatus: this.readUInt16(),
-            });
+        while (this.isMore()) {
+            const clstId = this.readUInt16();
+            const len = this.readUInt8();
+            const end = this.getPosition() + len;
+
+            let index = 0;
+            const extField: unknown[] = [];
+            while (this.getPosition() < end) {
+                extField.push(this.read(extensionFieldSetsDateTypeLookup[clstId][index], {}));
+                index++;
+            }
+
+            value.push({extField, clstId, len});
         }
 
         return value;
     }
 
-    private readListThermoTransitions(options: TsType.Options): ThermoTransition[] {
-        const heat = options.payload['mode'] & 1;
-        const cool = options.payload['mode'] & 2;
-        const result = [];
+    private writeListThermoTransitions(value: ThermoTransition[]): void {
+        for (const entry of value) {
+            this.writeUInt16(entry.transitionTime);
+
+            if (entry.heatSetpoint != null) {
+                this.writeUInt16(entry.heatSetpoint);
+            }
+
+            if (entry.coolSetpoint != null) {
+                this.writeUInt16(entry.coolSetpoint);
+            }
+        }
+    }
+
+    private readListThermoTransitions(options: BuffaloZclOptions): ThermoTransition[] {
+        if (options.payload == null || options.payload.mode == null || options.payload.numoftrans == null) {
+            throw new Error('Cannot read LIST_THERMO_TRANSITIONS without required payload options specified');
+        }
+
+        const heat = options.payload.mode & 1;
+        const cool = options.payload.mode & 2;
+        const result: ThermoTransition[] = [];
 
         for (let i = 0; i < options.payload.numoftrans; i++) {
             const entry: ThermoTransition = {
@@ -302,24 +462,59 @@ class BuffaloZcl extends Buffalo {
         return result;
     }
 
-    private writeListThermoTransitions(value: ThermoTransition[]): void {
-        for (const entry of value) {
-            this.writeUInt16(entry.transitionTime);
+    private writeGdpFrame(value: GdpCommissioningReply | GdpChannelConfiguration | GdpCustomReply): void {
+        if (value.commandID == 0xF0) { // Commissioning Reply
+            const v = <GdpCommissioningReply> value;
 
-            if (entry.hasOwnProperty('heatSetpoint')) {
-                this.writeUInt16(entry.heatSetpoint);
+            const panIDPresent = v.options & (1 << 0);
+            const gpdSecurityKeyPresent = v.options & (1 << 1);
+            const gpdKeyEncryption = v.options & (1 << 2);
+            const securityLevel = v.options & (3 << 3) >> 3;
+
+            const hasGPDKeyMIC = gpdKeyEncryption && gpdSecurityKeyPresent;
+            const hasFrameCounter = gpdSecurityKeyPresent &&
+                    gpdKeyEncryption &&
+                    (securityLevel === 0b10 || securityLevel === 0b11);
+
+            this.writeUInt8(1 +
+                    (panIDPresent ? 2 : 0) +
+                    (gpdSecurityKeyPresent ? 16 : 0) +
+                    (hasGPDKeyMIC ? 4 : 0) +
+                    (hasFrameCounter ? 4 : 0)); // Length
+            this.writeUInt8(v.options);
+
+            if (panIDPresent) {
+                this.writeUInt16(v.panID);
             }
 
-            if (entry.hasOwnProperty('coolSetpoint')) {
-                this.writeUInt16(entry.coolSetpoint);
+            if (gpdSecurityKeyPresent) {
+                this.writeBuffer(v.securityKey, 16);
             }
+
+            if (hasGPDKeyMIC) {
+                this.writeUInt32(v.keyMic);
+            }
+
+            if (hasFrameCounter) {
+                this.writeUInt32(v.frameCounter);
+            }
+        } else if (value.commandID == 0xF3) { // Channel configuration
+            const v = <GdpChannelConfiguration> value;
+            this.writeUInt8(1);
+            this.writeUInt8(v.operationalChannel & 0xF | ((v.basic ? 1 : 0) << 4));
+        } else if (value.commandID == 0xF4 ||
+                value.commandID == 0xF5 ||
+                (value.commandID >= 0xF7 && value.commandID <= 0xFF)) {
+            // Other commands sent to GPD
+            const v = <GdpCustomReply> value;
+            this.writeUInt8(v.buffer.length);
+            this.writeBuffer(v.buffer, v.buffer.length);
         }
     }
 
-    private readGdpFrame(options: TsType.Options): Gdp | GdpChannelRequest | GdpAttributeReport |
-            {raw: Buffer} | Record<string, never> {
+    private readGdpFrame(options: BuffaloZclOptions): Gdp | GdpChannelRequest | GdpAttributeReport | {raw: Buffer} | Record<string, never> {
         // Commisioning
-        if (options.payload.commandID === 0xE0) {
+        if (options.payload?.commandID === 0xE0) {
             const frame = {
                 deviceID: this.readUInt8(),
                 options: this.readUInt8(),
@@ -382,14 +577,18 @@ class BuffaloZcl extends Buffalo {
 
             return frame;
         // Channel Request
-        } else if (options.payload.commandID === 0xE3) {
+        } else if (options.payload?.commandID === 0xE3) {
             const options = this.readUInt8();
             return {
                 nextChannel: options & 0xF,
-                nextNextChannel: options >> 4
+                nextNextChannel: options >> 4,
             };
         // Manufacturer-specific Attribute Reporting
-        } else if (options.payload.commandID == 0xA1) {
+        } else if (options.payload?.commandID == 0xA1) {
+            if (options.payload.payloadSize == null) {
+                throw new Error('Cannot read GDP_FRAME with commandID=0xA1 without payloadSize options specified');
+            }
+
             const start = this.position;
             const frame = {
                 manufacturerCode: this.readUInt16(),
@@ -402,7 +601,7 @@ class BuffaloZcl extends Buffalo {
                 frame.manufacturerCode,
                 {},
             );
-            
+
             while (this.position - start < options.payload.payloadSize) {
                 const attributeID = this.readUInt16();
                 const type = this.readUInt8();
@@ -415,69 +614,61 @@ class BuffaloZcl extends Buffalo {
                     logger.info("Unknown attribute " + attributeID + " in cluster " + cluster.name, NS);
                 }
 
-                frame.attributes[attribute] = this.read(DataType[type], options);
+                frame.attributes[attribute] = this.read(type, options);
             }
 
             return frame;
         } else if (this.position != this.buffer.length) {
-            return {raw: this.buffer.slice(this.position)};
+            return {raw: this.buffer.subarray(this.position)};
         } else {
             return {};
         }
     }
 
-    private writeGdpFrame(value: GdpCommissioningReply | GdpChannelConfiguration | GdpCustomReply): void {
-        if (value.commandID == 0xF0) { // Commissioning Reply
-            const v = <GdpCommissioningReply> value;
+    private writeStructuredSelector(value: StructuredSelector): void {
+        if (value != null) {
+            const indexes = value.indexes || [];
+            const indicatorType = value.indicatorType || StructuredIndicatorType.Whole;
+            const indicator = indexes.length + indicatorType;
+            this.writeUInt8(indicator);
+            for (const index of indexes) {
+                this.writeUInt16(index);
+            }
+        }
+    }
 
-            const panIDPresent = v.options & (1 << 0);
-            const gpdSecurityKeyPresent = v.options & (1 << 1);
-            const gpdKeyEncryption = v.options & (1 << 2);
-            const securityLevel = v.options & (3 << 3) >> 3;
+    private readStructuredSelector(): StructuredSelector {
+        /** [0-15] range */
+        const indicator = this.readUInt8();
 
-            const hasGPDKeyMIC = gpdKeyEncryption && gpdSecurityKeyPresent;
-            const hasFrameCounter = gpdSecurityKeyPresent &&
-                    gpdKeyEncryption &&
-                    (securityLevel === 0b10 || securityLevel === 0b11);
-
-            this.writeUInt8(1 +
-                    (panIDPresent ? 2 : 0) +
-                    (gpdSecurityKeyPresent ? 16 : 0) +
-                    (hasGPDKeyMIC ? 4 : 0) +
-                    (hasFrameCounter ? 4 : 0)); // Length
-            this.writeUInt8(v.options);
-
-            if (panIDPresent) {
-                this.writeUInt16(v.panID);
+        if (indicator === 0) {
+            // no indexes, whole attribute value is to be read
+            return {indicatorType: StructuredIndicatorType.Whole};
+        } else {
+            const indexes: StructuredSelector['indexes'] = [];
+    
+            for (let i = 0; i < indicator; i++) {
+                const index = this.readUInt16();
+                indexes.push(index);
             }
 
-            if (gpdSecurityKeyPresent) {
-                this.writeBuffer(v.securityKey, 16);
-            }
+            return {indexes};
+        }
+    }
 
-            if (hasGPDKeyMIC) {
-                this.writeUInt32(v.keyMic);
-            }
-
-            if (hasFrameCounter) {
-                this.writeUInt32(v.frameCounter);
-            }
-        } else if (value.commandID == 0xF3) { // Channel configuration
-            const v = <GdpChannelConfiguration> value;
-            this.writeUInt8(1);
-            this.writeUInt8(v.operationalChannel & 0xF | ((v.basic ? 1 : 0) << 4));
-        } else if (value.commandID == 0xF4 ||
-                value.commandID == 0xF5 ||
-                (value.commandID >= 0xF7 && value.commandID <= 0xFF)) {
-            // Other commands sent to GPD
-            const v = <GdpCustomReply> value;
-            this.writeUInt8(v.buffer.length);
-            this.writeBuffer(v.buffer, v.buffer.length);
+    private writeListTuyaDataPointValues(dpValues: TuyaDataPointValue[]): void {
+        for (const dpValue of dpValues) {
+            this.writeUInt8(dpValue.dp);
+            this.writeUInt8(dpValue.datatype);
+            const dataLen = dpValue.data.length;
+            this.writeUInt8((dataLen >> 8) & 0xFF);
+            this.writeUInt8(dataLen & 0xFF);
+            this.writeBuffer(dpValue.data, dataLen);
         }
     }
 
     private readListTuyaDataPointValues(): TuyaDataPointValue[] {
-        const value = [];
+        const value: TuyaDataPointValue[] = [];
 
         while (this.isMore()) {
             try {
@@ -494,19 +685,16 @@ class BuffaloZcl extends Buffalo {
         return value;
     }
 
-    private writeListTuyaDataPointValues(dpValues: TuyaDataPointValue[]): void {
-        for (const dpValue of dpValues) {
-            this.writeUInt8(dpValue.dp);
-            this.writeUInt8(dpValue.datatype);
-            const dataLen = dpValue.data.length;
-            this.writeUInt8((dataLen >> 8) & 0xFF);
-            this.writeUInt8(dataLen & 0xFF);
-            this.writeBuffer(dpValue.data, dataLen);
+    private writeListMiboxerZones(values: MiboxerZone[]): void {
+        this.writeUInt8(values.length);
+        for (const value of values) {
+            this.writeUInt16(value.groupId);
+            this.writeUInt8(value.zoneNum);
         }
     }
 
     private readListMiboxerZones(): MiboxerZone[] {
-        const value = [];
+        const value: MiboxerZone[] = [];
         const len = this.readUInt8();
         for (let i = 0; i < len; i++) {
             value.push({
@@ -517,175 +705,391 @@ class BuffaloZcl extends Buffalo {
         return value;
     }
 
-    private readBigEndianUInt24(): number {
-        return this.readBuffer(3).readUIntBE(0, 3);
-    }
-
-    private writeListMiboxerZones(values: MiboxerZone[]): void {
-        this.writeUInt8(values.length);
-        for (const value of values) {
-            this.writeUInt16(value.groupId);
-            this.writeUInt8(value.zoneNum);
-        }
-    }
-
     private writeBigEndianUInt24(value: number): void {
-        const buffer = Buffer.alloc(3);
-        buffer.writeUIntLE(value, 0, 3);
-        this.writeBuffer(buffer.reverse(), 3);
+        this.buffer.writeUIntBE(value, this.position, 3);
+        this.position += 3;
     }
 
-    private readUInt40(): [number, number] {
-        const lsb = this.readUInt32();
-        const msb = this.readUInt8();
-        return [msb, lsb];
+    private readBigEndianUInt24(): number {
+        const value = this.buffer.readUIntBE(this.position, 3);
+        this.position += 3;
+        return value;
     }
 
-    private writeUInt40(value: number[]): void {
-        this.writeUInt32(value[1]);
-        this.writeUInt8(value[0]);
-    }
-
-    private readUInt48(): [number, number] {
-        const lsb = this.readUInt32();
-        const msb = this.readUInt16();
-        return [msb, lsb];
-    }
-
-    private writeUInt48(value: number[]): void {
-        this.writeUInt32(value[1]);
-        this.writeUInt16(value[0]);
-    }
-
-    private readUInt56(): [number, number, number] {
-        const lsb = this.readUInt32();
-        const xsb = this.readUInt16();
-        const msb = this.readUInt8();
-        return [msb, xsb, lsb];
-    }
-
-    private writeUInt56(value: number[]): void {
-        const temp = Buffer.alloc(8);
-        temp.writeUInt32LE(value[1], 0);
-        temp.writeUInt32LE(value[0], 4);
-        this.writeBuffer(temp.slice(0, 7), 7);
-    }
-
-    private readUInt64(): string {
-        return this.readIeeeAddr();
-    }
-
-    private writeUInt64(value: string): void {
-        const msb = parseInt(value.slice(2,10), 16);
-        const lsb = parseInt(value.slice(10), 16);
-        this.writeUInt32(lsb);
-        this.writeUInt32(msb);
-    }
-
-    private writeStructuredSelector(
-        value: StructuredSelector,
-    ): void {
-        if (value != null) {
-            const indexes = value.indexes || [];
-            const indicatorType = value.indicatorType || StructuredIndicatorType.WriteWhole;
-            const indicator = indexes.length + indicatorType;
-            this.writeUInt8(indicator);
-            for (const index of indexes) {
-                this.writeUInt16(index);
-            }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public write(type: DataType | BuffaloZclDataType, value: any, options: BuffaloZclOptions): void {
+        switch (type) {
+        case DataType.NO_DATA:
+        case DataType.UNKNOWN: {
+            return;// nothing to write
         }
-    }
-
-    public write(type: string, value: TsType.Value, options: BuffaloZclOptions): void {
-        // TODO: write for the following is missing: struct
-        type = aliases[type] || type;
-
-        if (type === 'uint40') {
-            return this.writeUInt40(value);
-        } else if (type === 'EXTENSION_FIELD_SETS') {
-            return this.writeExtensionFieldSets(value);
-        } else if (type === 'LIST_ZONEINFO') {
-            return this.writeListZoneInfo(value);
-        } else if (type === 'LIST_THERMO_TRANSITIONS') {
-            return this.writeListThermoTransitions(value);
-        } else if (type === 'LIST_TUYA_DATAPOINT_VALUES') {
-            return this.writeListTuyaDataPointValues(value);
-        } else if (type === 'LIST_MIBOXER_ZONES') {
-            return this.writeListMiboxerZones(value);
-        } else if (type === 'BIG_ENDIAN_UINT24') {
-            return this.writeBigEndianUInt24(value);
-        } else if (type === 'GDP_FRAME') {
-            return this.writeGdpFrame(value);
-        } else if (type === 'uint48') {
-            return this.writeUInt48(value);
-        } else if (type === 'uint56') {
-            return this.writeUInt56(value);
-        } else if (type === 'uint64') {
-            return this.writeUInt64(value);
-        } else if (type === 'charStr') {
-            return this.writeCharStr(value);
-        } else if (type === 'longCharStr') {
-            return this.writeLongCharStr(value);
-        } else if (type === 'octetStr') {
+        case DataType.DATA8:
+        case DataType.BOOLEAN:
+        case DataType.BITMAP8:
+        case DataType.UINT8:
+        case DataType.ENUM8: {
+            return this.writeUInt8(value);
+        }
+        case DataType.DATA16:
+        case DataType.BITMAP16:
+        case DataType.UINT16:
+        case DataType.ENUM16:
+        case DataType.CLUSTER_ID:
+        case DataType.ATTR_ID: {
+            return this.writeUInt16(value);
+        }
+        case DataType.DATA24:
+        case DataType.BITMAP24:
+        case DataType.UINT24: {
+            return this.writeUInt24(value);
+        }
+        case DataType.DATA32:
+        case DataType.BITMAP32:
+        case DataType.UINT32:
+        case DataType.UTC:
+        case DataType.BAC_OID: {
+            return this.writeUInt32(value);
+        }
+        case DataType.DATA40:
+        case DataType.BITMAP40:
+        case DataType.UINT40: {
+            return this.writeUInt40SB(value);
+        }
+        case DataType.DATA48:
+        case DataType.BITMAP48:
+        case DataType.UINT48: {
+            return this.writeUInt48SB(value);
+        }
+        case DataType.DATA56:
+        case DataType.BITMAP56:
+        case DataType.UINT56: {
+            return this.writeUInt56SB(value);
+        }
+        case DataType.DATA64:
+        case DataType.BITMAP64:
+        case DataType.UINT64: {
+            return this.writeUInt64SB(value);
+        }
+        case DataType.INT8: {
+            return this.writeInt8(value);
+        }
+        case DataType.INT16: {
+            return this.writeInt16(value);
+        }
+        case DataType.INT24: {
+            return this.writeInt24(value);
+        }
+        case DataType.INT32: {
+            return this.writeInt32(value);
+        }
+        case DataType.INT40: {
+            return this.writeInt40SB(value);
+        }
+        case DataType.INT48: {
+            return this.writeInt48(value);
+        }
+        case DataType.INT56: {
+            return this.writeInt56SB(value);
+        }
+        case DataType.INT64: {
+            return this.writeInt64SB(value);
+        }
+        // case DataType.SEMI_PREC: {
+        //     // https://tc39.es/proposal-float16array/
+        //     // not currently used
+        //     return this.writeSemiFloatLE(value);
+        // }
+        case DataType.SINGLE_PREC: {
+            return this.writeFloatLE(value);
+        }
+        case DataType.DOUBLE_PREC: {
+            return this.writeDoubleLE(value);
+        }
+        case DataType.OCTET_STR: {
             return this.writeOctetStr(value);
-        } else if (type === 'array') {
+        }
+        case DataType.CHAR_STR: {
+            return this.writeCharStr(value);
+        }
+        case DataType.LONG_OCTET_STR: {
+            return this.writeLongOctetStr(value);
+        }
+        case DataType.LONG_CHAR_STR: {
+            return this.writeLongCharStr(value);
+        }
+        case DataType.ARRAY:
+        case DataType.SET:
+        case DataType.BAG: {
             return this.writeArray(value);
-        } else if (type === 'USE_DATA_TYPE') {
-            return this.writeUseDataType(value, options);
-        } else if (type == 'STRUCTURED_SELECTOR') {
+        }
+        case DataType.STRUCT: {
+            return this.writeStruct(value);
+        }
+        case DataType.TOD: {
+            return this.writeToD(value);
+        }
+        case DataType.DATE: {
+            return this.writeDate(value);
+        }
+        case DataType.IEEE_ADDR: {
+            return this.writeIeeeAddr(value);
+        }
+        case DataType.SEC_KEY: {
+            return this.writeBuffer(value, SEC_KEY_LENGTH);
+        }
+        case BuffaloZclDataType.USE_DATA_TYPE: {
+            if (options.dataType == null) {
+                if (Buffer.isBuffer(value) || IsNumberArray(value)) {
+                    return this.writeBuffer(value, value.length);
+                } else {
+                    throw new Error('Cannot write USE_DATA_TYPE without dataType option specified');
+                }
+            }
+
+            return this.write(options.dataType, value, options);
+        }
+        case BuffaloZclDataType.LIST_UINT8: {
+            return this.writeListUInt8(value);
+        }
+        case BuffaloZclDataType.LIST_UINT16: {
+            return this.writeListUInt16(value);
+        }
+        case BuffaloZclDataType.LIST_UINT24: {
+            return this.writeListUInt24(value);
+        }
+        case BuffaloZclDataType.LIST_UINT32: {
+            return this.writeListUInt32(value);
+        }
+        case BuffaloZclDataType.LIST_ZONEINFO: {
+            return this.writeListZoneInfo(value);
+        }
+        case BuffaloZclDataType.EXTENSION_FIELD_SETS: {
+            return this.writeExtensionFieldSets(value);
+        }
+        case BuffaloZclDataType.LIST_THERMO_TRANSITIONS: {
+            return this.writeListThermoTransitions(value);
+        }
+        case BuffaloZclDataType.BUFFER: {
+            return this.writeBuffer(value, value.length);
+        }
+        case BuffaloZclDataType.GDP_FRAME: {
+            return this.writeGdpFrame(value);
+        }
+        case BuffaloZclDataType.STRUCTURED_SELECTOR: {
             return this.writeStructuredSelector(value);
-        } else {
+        }
+        case BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES: {
+            return this.writeListTuyaDataPointValues(value);
+        }
+        case BuffaloZclDataType.LIST_MIBOXER_ZONES: {
+            return this.writeListMiboxerZones(value);
+        }
+        case BuffaloZclDataType.BIG_ENDIAN_UINT24: {
+            return this.writeBigEndianUInt24(value);
+        }
+        default: {
             // In case the type is undefined, write it as a buffer to easily allow for custom types
             // e.g. for https://github.com/Koenkk/zigbee-herdsman/issues/127
-            type = type === undefined ? 'BUFFER' : type;
-
-            // TODO: remove uppercase once dataTypes are snake case
-            return super.write(type.toUpperCase(), value, options);
+            if (Buffer.isBuffer(value) || IsNumberArray(value)) {
+                return this.writeBuffer(value, value.length);
+            }
         }
+        }
+
+        throw new Error(`Write for '${type}' not available`);
     }
 
-    public read(type: string, options: BuffaloZclOptions): TsType.Value {
-        type = aliases[type] || type;
-        if (type === 'USE_DATA_TYPE') {
-            return this.readUseDataType(options);
-        } else if (type === 'EXTENSION_FIELD_SETS') {
-            return this.readExtensionFieldSets();
-        } else if (type === 'LIST_ZONEINFO') {
-            return this.readListZoneInfo(options);
-        } else if (type === 'LIST_THERMO_TRANSITIONS') {
-            return this.readListThermoTransitions(options);
-        } else if (type === 'GDP_FRAME') {
-            return this.readGdpFrame(options);
-        } else if (type === 'LIST_TUYA_DATAPOINT_VALUES') {
-            return this.readListTuyaDataPointValues();
-        } else if (type === 'LIST_MIBOXER_ZONES') {
-            return this.readListMiboxerZones();
-        } else if (type === 'BIG_ENDIAN_UINT24') {
-            return this.readBigEndianUInt24();
-        } else if (type === 'uint40') {
-            return this.readUInt40();
-        } else if (type === 'uint48') {
-            return this.readUInt48();
-        } else if (type === 'uint56') {
-            return this.readUInt56();
-        } else if (type === 'uint64') {
-            return this.readUInt64();
-        } else if (type === 'octetStr') {
-            return this.readOctetStr();
-        } else if (type === 'charStr') {
-            return this.readCharStr(options);
-        } else if (type === 'longCharStr') {
-            return this.readLongCharStr();
-        } else if (type === 'array') {
-            return this.readArray();
-        } else if (type === 'struct') {
-            return this.readStruct();
-        } else if (type === 'BUFFER') {
-            return this.readBuffer(this.buffer.length);
-        } else {
-            // TODO: remove uppercase once dataTypes are snake case
-            return super.read(type.toUpperCase(), options);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public read(type: DataType | BuffaloZclDataType, options: BuffaloZclOptions): any {
+        switch (type) {
+        case DataType.NO_DATA:
+        case DataType.UNKNOWN: {
+            return;// nothing to write
         }
+        case DataType.DATA8:
+        case DataType.BOOLEAN:
+        case DataType.BITMAP8:
+        case DataType.UINT8:
+        case DataType.ENUM8: {
+            return this.readUInt8();
+        }
+        case DataType.DATA16:
+        case DataType.BITMAP16:
+        case DataType.UINT16:
+        case DataType.ENUM16:
+        case DataType.CLUSTER_ID:
+        case DataType.ATTR_ID: {
+            return this.readUInt16();
+        }
+        case DataType.DATA24:
+        case DataType.BITMAP24:
+        case DataType.UINT24: {
+            return this.readUInt24();
+        }
+        case DataType.DATA32:
+        case DataType.BITMAP32:
+        case DataType.UINT32:
+        case DataType.UTC:
+        case DataType.BAC_OID: {
+            return this.readUInt32();
+        }
+        case DataType.DATA40:
+        case DataType.BITMAP40:
+        case DataType.UINT40: {
+            return this.readUInt40SB();
+        }
+        case DataType.DATA48:
+        case DataType.BITMAP48:
+        case DataType.UINT48: {
+            return this.readUInt48SB();
+        }
+        case DataType.DATA56:
+        case DataType.BITMAP56:
+        case DataType.UINT56: {
+            return this.readUInt56SB();
+        }
+        case DataType.DATA64:
+        case DataType.BITMAP64:
+        case DataType.UINT64: {
+            return this.readUInt64SB();
+        }
+        case DataType.INT8: {
+            return this.readInt8();
+        }
+        case DataType.INT16: {
+            return this.readInt16();
+        }
+        case DataType.INT24: {
+            return this.readInt24();
+        }
+        case DataType.INT32: {
+            return this.readInt32();
+        }
+        case DataType.INT40: {
+            return this.readInt40SB();
+        }
+        case DataType.INT48: {
+            return this.readInt48();
+        }
+        case DataType.INT56: {
+            return this.readInt56SB();
+        }
+        case DataType.INT64: {
+            return this.readInt64SB();
+        }
+        // case DataType.SEMI_PREC: {
+        //     // https://tc39.es/proposal-float16array/
+        //     // not currently used
+        //     return this.readSemiFloatLE();
+        // }
+        case DataType.SINGLE_PREC: {
+            return this.readFloatLE();
+        }
+        case DataType.DOUBLE_PREC: {
+            return this.readDoubleLE();
+        }
+        case DataType.OCTET_STR: {
+            return this.readOctetStr();
+        }
+        case DataType.CHAR_STR: {
+            return this.readCharStr(options);
+        }
+        case DataType.LONG_OCTET_STR: {
+            return this.readLongOctetStr();
+        }
+        case DataType.LONG_CHAR_STR: {
+            return this.readLongCharStr();
+        }
+        case DataType.ARRAY:
+        case DataType.SET:
+        case DataType.BAG: {
+            return this.readArray();
+        }
+        case DataType.STRUCT: {
+            return this.readStruct();
+        }
+        case DataType.TOD: {
+            return this.readToD();
+        }
+        case DataType.DATE: {
+            return this.readDate();
+        }
+        case DataType.IEEE_ADDR: {
+            return this.readIeeeAddr();
+        }
+        case DataType.SEC_KEY: {
+            return this.readBuffer(SEC_KEY_LENGTH);
+        }
+        case BuffaloZclDataType.USE_DATA_TYPE: {
+            if (options.dataType == null) {
+                return this.readBuffer(options.length ?? this.buffer.length);
+            }
+
+            return this.read(options.dataType, options);
+        }
+        case BuffaloZclDataType.LIST_UINT8: {
+            if (options.length == null) {
+                throw new Error('Cannot read LIST_UINT8 without length option specified');
+            }
+
+            return this.readListUInt8(options.length);
+        }
+        case BuffaloZclDataType.LIST_UINT16: {
+            if (options.length == null) {
+                throw new Error('Cannot read LIST_UINT16 without length option specified');
+            }
+
+            return this.readListUInt16(options.length);
+        }
+        case BuffaloZclDataType.LIST_UINT24: {
+            if (options.length == null) {
+                throw new Error('Cannot read LIST_UINT24 without length option specified');
+            }
+
+            return this.readListUInt24(options.length);
+        }
+        case BuffaloZclDataType.LIST_UINT32: {
+            if (options.length == null) {
+                throw new Error('Cannot read LIST_UINT32 without length option specified');
+            }
+
+            return this.readListUInt32(options.length);
+        }
+        case BuffaloZclDataType.LIST_ZONEINFO: {
+            if (options.length == null) {
+                throw new Error('Cannot read LIST_ZONEINFO without length option specified');
+            }
+
+            return this.readListZoneInfo(options.length);
+        }
+        case BuffaloZclDataType.EXTENSION_FIELD_SETS: {
+            return this.readExtensionFieldSets();
+        }
+        case BuffaloZclDataType.LIST_THERMO_TRANSITIONS: {
+            return this.readListThermoTransitions(options);
+        }
+        case BuffaloZclDataType.BUFFER: {
+            // if length option not specified, read the whole buffer
+            return this.readBuffer(options.length ?? this.buffer.length);
+        }
+        case BuffaloZclDataType.GDP_FRAME: {
+            return this.readGdpFrame(options);
+        }
+        case BuffaloZclDataType.STRUCTURED_SELECTOR: {
+            return this.readStructuredSelector();
+        }
+        case BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES: {
+            return this.readListTuyaDataPointValues();
+        }
+        case BuffaloZclDataType.LIST_MIBOXER_ZONES: {
+            return this.readListMiboxerZones();
+        }
+        case BuffaloZclDataType.BIG_ENDIAN_UINT24: {
+            return this.readBigEndianUInt24();
+        }
+        }
+
+        throw new Error(`Read for '${type}' not available`);
     }
 }
 
