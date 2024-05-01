@@ -1,7 +1,7 @@
 import {DatabaseEntry, KeyValue} from '../tstype';
 import Entity from './entity';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
-import * as Zcl from '../../zcl';
+import * as Zcl from '../../zspec/zcl';
 import Endpoint from './endpoint';
 import Device from './device';
 import assert from 'assert';

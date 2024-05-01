@@ -1,5 +1,5 @@
 import {Adapter} from '../adapter';
-import * as Zcl from '../zcl';
+import * as Zcl from '../zspec/zcl';
 import {Wait, AssertString} from '../utils';
 import {logger} from '../utils/logger';
 

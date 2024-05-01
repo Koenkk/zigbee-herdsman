@@ -8,7 +8,7 @@ import * as Events from '../../events';
 import Adapter from '../../adapter';
 import {Znp, ZpiObject} from '../znp';
 import {Constants as UnpiConstants} from '../unpi';
-import {ZclFrame, FrameType, Direction, Foundation, ZclHeader} from '../../../zcl';
+import {ZclFrame, FrameType, Direction, Foundation, ZclHeader} from '../../../zspec/zcl';
 import {Queue, Waitress, Wait} from '../../../utils';
 import * as Constants from '../constants';
 import debounce from 'debounce';

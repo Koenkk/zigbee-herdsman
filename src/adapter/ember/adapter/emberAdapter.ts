@@ -6,8 +6,8 @@ import SocketPortUtils from '../../socketPortUtils';
 import {BackupUtils, RealpathSync, Wait} from "../../../utils";
 import {Adapter, TsType} from "../..";
 import {Backup, UnifiedBackupStorage} from "../../../models";
-import {FrameType, Direction, ZclFrame, ZclHeader, Foundation, ManufacturerCode} from "../../../zcl";
-import Clusters from "../../../zcl/definition/cluster";
+import {FrameType, Direction, ZclFrame, ZclHeader, Foundation, ManufacturerCode} from "../../../zspec/zcl";
+import Clusters from "../../../zspec/zcl/definition/cluster";
 import {
     DeviceAnnouncePayload,
     DeviceJoinedPayload,

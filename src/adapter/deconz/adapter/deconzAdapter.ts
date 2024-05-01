@@ -7,7 +7,7 @@ import {
 } from '../../tstype';
 import Adapter from '../../adapter';
 import Driver from '../driver/driver';
-import {ZclFrame, FrameType, Direction, ZclHeader} from '../../../zcl';
+import {ZclFrame, FrameType, Direction, ZclHeader} from '../../../zspec/zcl';
 import * as Events from '../../events';
 import processFrame from '../driver/frameParser';
 import {Queue, Waitress, Wait} from '../../../utils';

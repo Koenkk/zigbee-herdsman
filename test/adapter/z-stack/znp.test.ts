@@ -1,7 +1,6 @@
 import "regenerator-runtime/runtime";
 import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
 import {SerialPort} from '../../../src/adapter/serialPort';
-import net from 'net';
 import {Frame as UnpiFrame, Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';

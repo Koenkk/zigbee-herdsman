@@ -8,7 +8,7 @@ import {ZnpVersion} from "../../../src/adapter/z-stack/adapter/tstype";
 import * as Structs from "../../../src/adapter/z-stack/structs"
 import * as fs from "fs";
 import * as path from "path";
-import * as Zcl from '../../../src/zcl';
+import * as Zcl from '../../../src/zspec/zcl';
 import * as Constants from '../../../src/adapter/z-stack/constants';
 import {ZclPayload} from "../../../src/adapter/events";
 import {UnifiedBackupStorage} from "../../../src/models";

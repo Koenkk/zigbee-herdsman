@@ -1,5 +1,5 @@
 import {logger} from '../../utils/logger';
-import * as Zcl from '../../zcl';
+import * as Zcl from '../../zspec/zcl';
 import {Endpoint} from '../model';
 import Request from './request';
 

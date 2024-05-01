@@ -1,7 +1,6 @@
 import "regenerator-runtime/runtime";
 import {Buffalo} from '../src/buffalo';
-import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from './testUtils';
-import DataType from "../src/zcl/definition/dataType";
+import {ieeeaAddr1, ieeeaAddr2} from './testUtils';
 
 describe('Buffalo', () => {
     it('is more', () => {

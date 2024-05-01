@@ -4,7 +4,7 @@ import * as TsType from '../../tstype';
 import {ActiveEndpoints, DeviceType, LQI, LQINeighbor, NodeDescriptor, SimpleDescriptor} from '../../tstype';
 import * as Events from '../../events';
 import Adapter from '../../adapter';
-import {Direction, Foundation, FrameType, ZclFrame, ZclHeader} from '../../../zcl';
+import {Direction, Foundation, FrameType, ZclFrame, ZclHeader} from '../../../zspec/zcl';
 import {Queue, Wait, Waitress} from '../../../utils';
 import Driver from '../driver/zigate';
 import {

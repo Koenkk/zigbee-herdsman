@@ -1,11 +1,11 @@
 import {Adapter, Events as AdapterEvents} from '../adapter';
-import * as Zcl from '../zcl';
+import * as Zcl from '../zspec/zcl';
 import crypto from 'crypto';
 import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber';
 import events from 'events';
 import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import {logger} from '../utils/logger';
-import {Clusters} from '../zcl';
+import {Clusters} from '../zspec/zcl';
 import {BroadcastAddress} from '../zspec/enums';
 
 const NS = 'zh:controller:greenpower';
