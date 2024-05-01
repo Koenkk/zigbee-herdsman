@@ -8,7 +8,7 @@ import * as Events from '../../events';
 import Adapter from '../../adapter';
 import {Znp, ZpiObject} from '../znp';
 import {Constants as UnpiConstants} from '../unpi';
-import {ZclFrame, FrameType, Direction, Foundation, ZclHeader} from '../../../zspec/zcl';
+import * as Zcl from '../../../zspec/zcl';
 import {Queue, Waitress, Wait} from '../../../utils';
 import * as Constants from '../constants';
 import debounce from 'debounce';
@@ -38,7 +38,7 @@ interface WaitressMatcher {
     address: number | string;
     endpoint: number;
     transactionSequenceNumber?: number;
-    frameType: FrameType;
+    frameType: Zcl.FrameType;
     clusterID: number;
     commandIdentifier: number;
     direction: number;
@@ -346,7 +346,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
+        ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: Zcl.Frame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
     ): Promise<Events.ZclPayload> {
         return this.queue.execute<Events.ZclPayload>(async () => {
@@ -359,7 +359,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private async sendZclFrameToEndpointInternal(
-        ieeeAddr: string, networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame,
+        ieeeAddr: string, networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: Zcl.Frame,
         timeout: number, disableResponse: boolean, disableRecovery: boolean, responseAttempt: number,
         dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean, assocRemove: boolean,
         assocRestore: {ieeeadr: string, nwkaddr: number, noderelation: number}
@@ -370,13 +370,13 @@ class ZStackAdapter extends Adapter {
         const command = zclFrame.command;
         if (command.hasOwnProperty('response') && disableResponse === false) {
             response = this.waitForInternal(
-                networkAddress, endpoint, zclFrame.header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
+                networkAddress, endpoint, zclFrame.header.frameControl.frameType, Zcl.Direction.SERVER_TO_CLIENT,
                 zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, command.response, timeout
             );
         } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
             response = this.waitForInternal(
-                networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
-                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, Foundation.defaultRsp.ID,
+                networkAddress, endpoint, Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT,
+                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, Zcl.Foundation.defaultRsp.ID,
                 timeout,
             );
         }
@@ -533,7 +533,7 @@ class ZStackAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, sourceEndpoint?: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
@@ -550,7 +550,7 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
@@ -832,7 +832,7 @@ class ZStackAdapter extends Adapter {
                     const payload: Events.ZclPayload = {
                         clusterID: object.payload.clusterid,
                         data: object.payload.data,
-                        header: ZclHeader.fromBuffer(object.payload.data),
+                        header: Zcl.Header.fromBuffer(object.payload.data),
                         address: object.payload.srcaddr,
                         endpoint: object.payload.srcendpoint,
                         linkquality: object.payload.linkquality,
@@ -877,7 +877,7 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddr: string): Promise<void> {
+    public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 AddressMode.ADDR_64BIT, ieeeAddr, 0xFE, 0xFFFF,
@@ -886,7 +886,7 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<Events.ZclPayload> {
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
         return this.queue.execute<Events.ZclPayload>(async () => {
             const command = zclFrame.command;
             if (!command.hasOwnProperty('response')) {
@@ -894,7 +894,7 @@ class ZStackAdapter extends Adapter {
             }
 
             const response = this.waitForInternal(
-                null, 0xFE, zclFrame.header.frameControl.frameType, Direction.SERVER_TO_CLIENT, null,
+                null, 0xFE, zclFrame.header.frameControl.frameType, Zcl.Direction.SERVER_TO_CLIENT, null,
                 zclFrame.cluster.ID, command.response, timeout
             );
 
@@ -951,7 +951,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private waitForInternal(
-        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
+        networkAddress: number, endpoint: number, frameType: Zcl.FrameType, direction: Zcl.Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
     ): {start: () => {promise: Promise<Events.ZclPayload>}; cancel: () => void} {
         const payload = {
@@ -965,7 +965,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public waitFor(
-        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
+        networkAddress: number, endpoint: number, frameType: Zcl.FrameType, direction: Zcl.Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
     ): {promise: Promise<Events.ZclPayload>; cancel: () => void} {
         const waiter = this.waitForInternal(

@@ -6,8 +6,7 @@ import SocketPortUtils from '../../socketPortUtils';
 import {BackupUtils, RealpathSync, Wait} from "../../../utils";
 import {Adapter, TsType} from "../..";
 import {Backup, UnifiedBackupStorage} from "../../../models";
-import {FrameType, Direction, ZclFrame, ZclHeader, Foundation, ManufacturerCode} from "../../../zspec/zcl";
-import Clusters from "../../../zspec/zcl/definition/cluster";
+import * as Zcl from "../../../zspec/zcl";
 import {
     DeviceAnnouncePayload,
     DeviceJoinedPayload,
@@ -391,15 +390,15 @@ const DEFAULT_NETWORK_REQUEST_TIMEOUT = 10000;// nothing on the network to bothe
 /** Time between watchdog counters reading/clearing */
 const WATCHDOG_COUNTERS_FEED_INTERVAL = 3600000;// every hour...
 /** Default manufacturer code reported by coordinator. */
-const DEFAULT_MANUFACTURER_CODE = ManufacturerCode.SILICON_LABORATORIES;
+const DEFAULT_MANUFACTURER_CODE = Zcl.ManufacturerCode.SILICON_LABORATORIES;
 /**
  * Workaround for devices that require a specific manufacturer code to be reported by coordinator while interviewing...
  * - Lumi/Aqara devices do not work properly otherwise (missing features): https://github.com/Koenkk/zigbee2mqtt/issues/9274
  */
-const WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE: {[ieeePrefix: string]: ManufacturerCode} = {
+const WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE: {[ieeePrefix: string]: Zcl.ManufacturerCode} = {
     // NOTE: Lumi has a new prefix registered since 2021, in case they start using that one with new devices, it might need to be added here too...
     //       "0x18c23c" https://maclookup.app/vendors/lumi-united-technology-co-ltd
-    "0x54ef44": ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN,
+    "0x54ef44": Zcl.ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN,
 };
 
 /**
@@ -409,7 +408,7 @@ const WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE: {[ieeePrefix: string]: Manufact
  */
 export class EmberAdapter extends Adapter {
     /** Current manufacturer code assigned to the coordinator. Used for join workarounds... */
-    private manufacturerCode: ManufacturerCode;
+    private manufacturerCode: Zcl.ManufacturerCode;
     /** Key in STACK_CONFIGS */
     public readonly stackConfig: 'default' | 'zigbeed';
     /** EMBER_LOW_RAM_CONCENTRATOR or EMBER_HIGH_RAM_CONCENTRATOR. */
@@ -603,7 +602,7 @@ export class EmberAdapter extends Adapter {
         messageContents: Buffer): Promise<void> {
         const payload: ZclPayload = {
             clusterID: apsFrame.clusterId,
-            header: ZclHeader.fromBuffer(messageContents),
+            header: Zcl.Header.fromBuffer(messageContents),
             address: sender,
             data: messageContents,
             endpoint: apsFrame.sourceEndpoint,
@@ -629,9 +628,9 @@ export class EmberAdapter extends Adapter {
     private async onTouchlinkMessage(sourcePanId: EmberPanId, sourceAddress: EmberEUI64, groupId: number | null, lastHopLqi: number,
         messageContents: Buffer): Promise<void> {
         const payload: ZclPayload = {
-            clusterID: Clusters.touchlink.ID,
+            clusterID: Zcl.Clusters.touchlink.ID,
             data: messageContents,
-            header: ZclHeader.fromBuffer(messageContents),
+            header: Zcl.Header.fromBuffer(messageContents),
             address: sourceAddress,
             endpoint: 1,// arbitrary since not sent over-the-air
             linkquality: lastHopLqi,
@@ -672,9 +671,9 @@ export class EmberAdapter extends Adapter {
 
             const data = Buffer.concat([gpdHeader, gpdCommandPayload]);
             const payload: ZclPayload = {
-                header: ZclHeader.fromBuffer(data),
+                header: Zcl.Header.fromBuffer(data),
                 data,
-                clusterID: Clusters.greenPower.ID,
+                clusterID: Zcl.Clusters.greenPower.ID,
                 address: sourceId,
                 endpoint: GP_ENDPOINT,
                 linkquality: gpdLink,
@@ -724,7 +723,7 @@ export class EmberAdapter extends Adapter {
                     await new Promise<void>((resolve, reject): void => {
                         this.requestQueue.enqueue(
                             async (): Promise<EmberStatus> => {
-                                logger.debug(`[WORKAROUND] Setting coordinator manufacturer code to ${ManufacturerCode[joinManufCode]}.`, NS);
+                                logger.debug(`[WORKAROUND] Setting coordinator manufacturer code to ${Zcl.ManufacturerCode[joinManufCode]}.`, NS);
                                 await this.ezsp.ezspSetManufacturerCode(joinManufCode);
 
                                 this.manufacturerCode = joinManufCode;
@@ -2970,7 +2969,7 @@ export class EmberAdapter extends Adapter {
     }
 
     /** WARNING: Adapter impl. Starts timer immediately upon returning */
-    public waitFor(networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction, transactionSequenceNumber: number,
+    public waitFor(networkAddress: number, endpoint: number, frameType: Zcl.FrameType, direction: Zcl.Direction, transactionSequenceNumber: number,
         clusterID: number, commandIdentifier: number, timeout: number): {promise: Promise<ZclPayload>; cancel: () => void;} {
         const sourceEndpointInfo = FIXED_ENDPOINTS[0];
         const waiter = this.oneWaitress.waitFor<ZclPayload>({
@@ -3571,7 +3570,7 @@ export class EmberAdapter extends Adapter {
     //---- ZCL
 
     // queued, non-InterPAN
-    public async sendZclFrameToEndpoint(ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
+    public async sendZclFrameToEndpoint(ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: Zcl.Frame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number): Promise<ZclPayload> {
         const sourceEndpointInfo = typeof sourceEndpoint === 'number' ?
             FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
@@ -3581,7 +3580,7 @@ export class EmberAdapter extends Adapter {
         if (command.hasOwnProperty('response') && disableResponse === false) {
             commandResponseId = command.response;
         } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
-            commandResponseId = Foundation.defaultRsp.ID;
+            commandResponseId = Zcl.Foundation.defaultRsp.ID;
         }
 
         const apsFrame: EmberApsFrame = {
@@ -3656,7 +3655,7 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued, non-InterPAN
-    public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, sourceEndpoint?: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
         const sourceEndpointInfo = typeof sourceEndpoint === 'number' ?
             FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
         const apsFrame: EmberApsFrame = {
@@ -3712,7 +3711,7 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued, non-InterPAN
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
         const sourceEndpointInfo = typeof sourceEndpoint === 'number' ?
             FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
         const apsFrame: EmberApsFrame = {
@@ -3799,7 +3798,7 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
-    public async sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddress: string): Promise<void> {
+    public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
         return new Promise<void>((resolve, reject): void => {
             this.requestQueue.enqueue(
                 async (): Promise<EmberStatus> => {
@@ -3839,7 +3838,7 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
-    public async sendZclFrameInterPANBroadcast(zclFrame: ZclFrame, timeout: number): Promise<ZclPayload> {
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
         const command = zclFrame.command;
 
         if (!command.hasOwnProperty('response')) {

@@ -1,11 +1,9 @@
-import {Direction, Foundation, DataType, BuffaloZclDataType} from './definition';
-import ZclHeader from './zclHeader';
+import {Direction, FrameType, DataType, BuffaloZclDataType, ParameterCondition} from './definition/enums';
+import {ZclHeader} from './zclHeader';
 import * as Utils from './utils';
-import BuffaloZcl from './buffaloZcl';
-import * as TsType from './tstype';
-import {TsType as DefinitionTsType, FrameType} from './definition';
-import {ClusterName, CustomClusters} from './definition/tstype';
-import {FoundationCommandName} from './definition/foundation';
+import {BuffaloZcl} from './buffaloZcl';
+import {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from './definition/tstype';
+import {Foundation, FoundationCommandName} from './definition/foundation';
 
 // eslint-disable-next-line
 type ZclPayload = any;
@@ -18,13 +16,13 @@ const ListTypes: number[] = [
     BuffaloZclDataType.LIST_ZONEINFO,
 ];
 
-class ZclFrame {
+export class ZclFrame {
     public readonly header: ZclHeader;
     public readonly payload: ZclPayload;
-    public readonly cluster: TsType.Cluster;
-    public readonly command: TsType.Command;
+    public readonly cluster: Cluster;
+    public readonly command: Command;
 
-    private constructor(header: ZclHeader, payload: ZclPayload, cluster: TsType.Cluster, command: TsType.Command) {
+    private constructor(header: ZclHeader, payload: ZclPayload, cluster: Cluster, command: Command) {
         this.header = header;
         this.payload = payload;
         this.cluster = cluster;
@@ -44,7 +42,7 @@ class ZclFrame {
         payload: ZclPayload, customClusters: CustomClusters, reservedBits = 0
     ): ZclFrame {
         const cluster = Utils.getCluster(clusterKey, manufacturerCode, customClusters);
-        let command: TsType.Command = null;
+        let command: Command = null;
         if (frameType === FrameType.GLOBAL) {
             command = Utils.getGlobalCommand(commandKey);
         } else {
@@ -83,7 +81,7 @@ class ZclFrame {
         if (command.parseStrategy === 'repetitive') {
             for (const entry of this.payload) {
                 for (const parameter of command.parameters) {
-                    const options: TsType.BuffaloZclOptions = {};
+                    const options: BuffaloZclOptions = {};
 
                     if (!ZclFrame.conditionsValid(parameter, entry, null)) {
                         continue;
@@ -144,7 +142,7 @@ class ZclFrame {
         const buffalo = new BuffaloZcl(buffer, header.length);
         const cluster = Utils.getCluster(clusterID, header.manufacturerCode, customClusters);
 
-        let command: TsType.Command = null;
+        let command: Command = null;
         if (header.isGlobal) {
             command = Utils.getGlobalCommand(header.commandIdentifier);
         } else {
@@ -157,7 +155,7 @@ class ZclFrame {
         return new ZclFrame(header, payload, cluster, command);
     }
 
-    private static parsePayload(header: ZclHeader, cluster: TsType.Cluster, buffalo: BuffaloZcl): ZclPayload {
+    private static parsePayload(header: ZclHeader, cluster: Cluster, buffalo: BuffaloZcl): ZclPayload {
         if (header.isGlobal) {
             return this.parsePayloadGlobal(header, buffalo);
         } else if (header.isSpecific) {
@@ -167,13 +165,13 @@ class ZclFrame {
         }
     }
 
-    private static parsePayloadCluster(header: ZclHeader, cluster: TsType.Cluster,  buffalo: BuffaloZcl): ZclPayload {
+    private static parsePayloadCluster(header: ZclHeader, cluster: Cluster,  buffalo: BuffaloZcl): ZclPayload {
         const command = header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
             cluster.getCommand(header.commandIdentifier) : cluster.getCommandResponse(header.commandIdentifier);
         const payload: ZclPayload = {};
 
         for (const parameter of command.parameters) {
-            const options: TsType.BuffaloZclOptions = {payload};
+            const options: BuffaloZclOptions = {payload};
 
             if (!this.conditionsValid(parameter, payload, buffalo.getBuffer().length - buffalo.getPosition())) {
                 continue;
@@ -206,7 +204,7 @@ class ZclFrame {
                 const entry: {[s: string]: any} = {};
 
                 for (const parameter of command.parameters) {
-                    const options: TsType.BuffaloZclOptions = {};
+                    const options: BuffaloZclOptions = {};
 
                     if (!this.conditionsValid(parameter, entry, buffalo.getBuffer().length - buffalo.getPosition())) {
                         continue;
@@ -277,29 +275,27 @@ class ZclFrame {
      */
 
     private static conditionsValid(
-        parameter: DefinitionTsType.ParameterDefinition,
+        parameter: ParameterDefinition,
         entry: ZclPayload,
         remainingBufferBytes: number
     ): boolean {
         if (parameter.conditions) {
             const failedCondition = parameter.conditions.find((condition): boolean => {
-                if (condition.type === 'statusEquals') {
+                /* istanbul ignore else */
+                if (condition.type === ParameterCondition.STATUS_EQUAL) {
                     return entry.status !== condition.value;
-                } else if (condition.type == 'statusNotEquals') {
+                } else if (condition.type == ParameterCondition.STATUS_NOT_EQUAL) {
                     return entry.status === condition.value;
-                } else if (condition.type == 'directionEquals') {
+                } else if (condition.type == ParameterCondition.DIRECTION_EQUAL) {
                     return entry.direction !== condition.value;
-                } else if(condition.type == 'bitMaskSet') {
+                } else if(condition.type == ParameterCondition.BITMASK_SET) {
                     return (entry[condition.param] & condition.mask) !== condition.mask;
-                } else if(condition.type == 'bitFieldEnum') {
+                } else if(condition.type == ParameterCondition.BITFIELD_ENUM) {
                     return ((entry[condition.param] >> condition.offset) & ((1<<condition.size)-1)) !== condition.value;
-                } else if (remainingBufferBytes != null && condition.type == 'minimumRemainingBufferBytes') {
+                } else if (remainingBufferBytes != null && condition.type == ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES) {
                     return remainingBufferBytes < (condition.value as number);
-                } else  {
-                    /* istanbul ignore else */
-                    if (condition.type == 'dataTypeValueTypeEquals') {
-                        return Utils.IsDataTypeAnalogOrDiscrete(entry.dataType) !== condition.value;
-                    }
+                } else if (condition.type == ParameterCondition.DATA_TYPE_CLASS_EQUAL) {
+                    return Utils.getDataTypeClass(entry.dataType) !== condition.value;
                 }
             });
 
@@ -322,5 +318,3 @@ class ZclFrame {
         return this.command.name === commandName;
     }
 }
-
-export default ZclFrame;

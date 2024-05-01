@@ -1,4 +1,4 @@
-import {FrameControl} from "../zspec/zcl";
+import {FrameControl} from "../zspec/zcl/definition/tstype";
 import {Device, Endpoint} from "./model";
 import {KeyValue} from "./tstype";
 

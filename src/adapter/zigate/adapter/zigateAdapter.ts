@@ -4,7 +4,7 @@ import * as TsType from '../../tstype';
 import {ActiveEndpoints, DeviceType, LQI, LQINeighbor, NodeDescriptor, SimpleDescriptor} from '../../tstype';
 import * as Events from '../../events';
 import Adapter from '../../adapter';
-import {Direction, Foundation, FrameType, ZclFrame, ZclHeader} from '../../../zspec/zcl';
+import * as Zcl from '../../../zspec/zcl';
 import {Queue, Wait, Waitress} from '../../../utils';
 import Driver from '../driver/zigate';
 import {
@@ -28,7 +28,7 @@ interface WaitressMatcher {
     address: number | string;
     endpoint: number;
     transactionSequenceNumber?: number;
-    frameType: FrameType;
+    frameType: Zcl.FrameType;
     clusterID: number;
     commandIdentifier: number;
     direction: number;
@@ -507,7 +507,7 @@ class ZiGateAdapter extends Adapter {
     };
 
     public async sendZclFrameToEndpoint(
-        ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: ZclFrame, timeout: number,
+        ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: Zcl.Frame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number,
     ): Promise<Events.ZclPayload> {
         return this.queue.execute<Events.ZclPayload>(async () => {
@@ -519,7 +519,7 @@ class ZiGateAdapter extends Adapter {
     };
 
     private async sendZclFrameToEndpointInternal(
-        ieeeAddr: string, networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: ZclFrame, timeout: number,
+        ieeeAddr: string, networkAddress: number, endpoint: number, sourceEndpoint: number, zclFrame: Zcl.Frame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean,
         responseAttempt: number, dataRequestAttempt: number, checkedNetworkAddress: boolean, discoveredRoute: boolean,
     ): Promise<Events.ZclPayload> {
@@ -543,13 +543,13 @@ class ZiGateAdapter extends Adapter {
 
         if (command.hasOwnProperty('response') && disableResponse === false) {
             response = this.waitFor(
-                networkAddress, endpoint, zclFrame.header.frameControl.frameType, Direction.SERVER_TO_CLIENT,
+                networkAddress, endpoint, zclFrame.header.frameControl.frameType, Zcl.Direction.SERVER_TO_CLIENT,
                 zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, command.response, timeout
             );
         } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
             response = this.waitFor(
-                networkAddress, endpoint, FrameType.GLOBAL, Direction.SERVER_TO_CLIENT,
-                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, Foundation.defaultRsp.ID,
+                networkAddress, endpoint, Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT,
+                zclFrame.header.transactionSequenceNumber, zclFrame.cluster.ID, Zcl.Foundation.defaultRsp.ID,
                 timeout,
             );
         }
@@ -593,7 +593,7 @@ class ZiGateAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
         return this.queue.execute<void>(async () => {
             if (sourceEndpoint !== 0x01 /*&& sourceEndpoint !== 242*/) { // @todo on zigate firmware without gp causes hang
                 logger.error(`source endpoint ${sourceEndpoint}, not supported`, NS);
@@ -620,7 +620,7 @@ class ZiGateAdapter extends Adapter {
         });
     };
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: ZclFrame, sourceEndpoint?: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             logger.debug(`sendZclFrameToGroup ${JSON.stringify(arguments)}`, NS);
             const data = zclFrame.toBuffer();
@@ -680,7 +680,7 @@ class ZiGateAdapter extends Adapter {
     }
 
     public waitFor(
-        networkAddress: number, endpoint: number, frameType: FrameType, direction: Direction,
+        networkAddress: number, endpoint: number, frameType: Zcl.FrameType, direction: Zcl.Direction,
         transactionSequenceNumber: number, clusterID: number, commandIdentifier: number, timeout: number,
     ): { promise: Promise<Events.ZclPayload>; cancel: () => void } {
         logger.debug(`waitForInternal ${JSON.stringify(arguments)}`, NS);
@@ -715,13 +715,13 @@ class ZiGateAdapter extends Adapter {
         return Promise.reject("Not supported");
     };
 
-    public async sendZclFrameInterPANToIeeeAddr(zclFrame: ZclFrame, ieeeAddress: string): Promise<void> {
+    public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
         logger.debug(`sendZclFrameInterPANToIeeeAddr ${JSON.stringify(arguments)}`, NS);
         return Promise.reject("Not supported");
     };
 
     public async sendZclFrameInterPANBroadcast(
-        zclFrame: ZclFrame, timeout: number
+        zclFrame: Zcl.Frame, timeout: number
     ): Promise<Events.ZclPayload> {
         logger.debug(`sendZclFrameInterPANBroadcast ${JSON.stringify(arguments)}`, NS);
         return Promise.reject("Not supported");
@@ -748,7 +748,7 @@ class ZiGateAdapter extends Adapter {
             address: <number>data.ziGateObject.payload.sourceAddress,
             clusterID: data.ziGateObject.payload.clusterID,
             data: data.ziGateObject.payload.payload,
-            header: ZclHeader.fromBuffer(data.ziGateObject.payload.payload),
+            header: Zcl.Header.fromBuffer(data.ziGateObject.payload.payload),
             endpoint: <number>data.ziGateObject.payload.sourceEndpoint,
             linkquality: data.ziGateObject.frame.readRSSI(),
             groupID: null, // @todo

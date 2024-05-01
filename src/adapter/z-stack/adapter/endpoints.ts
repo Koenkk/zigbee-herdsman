@@ -1,5 +1,5 @@
 import * as Constants from '../constants';
-import {Clusters} from '../../../zspec/zcl/index';
+import {Clusters} from '../../../zspec/zcl/definition/cluster';
 
 const EndpointDefaults: {
     appdeviceid: number;

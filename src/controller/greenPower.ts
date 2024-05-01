@@ -5,7 +5,6 @@ import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber
 import events from 'events';
 import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import {logger} from '../utils/logger';
-import {Clusters} from '../zspec/zcl';
 import {BroadcastAddress} from '../zspec/enums';
 
 const NS = 'zh:controller:greenpower';
@@ -47,7 +46,7 @@ class GreenPower extends events.EventEmitter {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    private async sendPairingCommand(payload: any, dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame): Promise<any> {
+    private async sendPairingCommand(payload: any, dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame): Promise<any> {
         logger.debug(`Payload.Options: ${payload.options} wasBroadcast: ${dataPayload.wasBroadcast}`, NS);
         
         // Set sink address based on communication mode
@@ -69,9 +68,9 @@ class GreenPower extends events.EventEmitter {
             return;
         }
 
-        const replyFrame = Zcl.ZclFrame.create(
+        const replyFrame = Zcl.Frame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-            null, ZclTransactionSequenceNumber.next(), 'pairing', Clusters.greenPower.ID, payload,
+            null, ZclTransactionSequenceNumber.next(), 'pairing', Zcl.Clusters.greenPower.ID, payload,
             {},
         );
 
@@ -87,7 +86,7 @@ class GreenPower extends events.EventEmitter {
         }
     }
 
-    public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame): Promise<void> {
+    public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame): Promise<void> {
         try {
             switch(frame.payload.commandID) {
             /* istanbul ignore next */
@@ -130,9 +129,9 @@ class GreenPower extends events.EventEmitter {
                         }
                     };
 
-                    const replyFrame = Zcl.ZclFrame.create(
+                    const replyFrame = Zcl.Frame.create(
                         Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-                        null, ZclTransactionSequenceNumber.next(), 'response', Clusters.greenPower.ID, payloadReply,
+                        null, ZclTransactionSequenceNumber.next(), 'response', Zcl.Clusters.greenPower.ID, payloadReply,
                         {},
                     );
                     await this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
@@ -194,9 +193,9 @@ class GreenPower extends events.EventEmitter {
                     }
                 };
 
-                const replyFrame = Zcl.ZclFrame.create(
+                const replyFrame = Zcl.Frame.create(
                     Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-                    null, ZclTransactionSequenceNumber.next(), 'response', Clusters.greenPower.ID, payload,
+                    null, ZclTransactionSequenceNumber.next(), 'response', Zcl.Clusters.greenPower.ID, payload,
                     {},
                 );
 
@@ -221,9 +220,9 @@ class GreenPower extends events.EventEmitter {
             commisioningWindow: time,
         };
 
-        const frame = Zcl.ZclFrame.create(
+        const frame = Zcl.Frame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-            null, ZclTransactionSequenceNumber.next(), 'commisioningMode', Clusters.greenPower.ID, payload,
+            null, ZclTransactionSequenceNumber.next(), 'commisioningMode', Zcl.Clusters.greenPower.ID, payload,
             {},
         );
 
