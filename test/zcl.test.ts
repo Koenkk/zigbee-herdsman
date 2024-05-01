@@ -2054,9 +2054,9 @@ describe('Zcl', () => {
         expect(value).toStrictEqual('');
     });
 
-    it('BuffaloZcl read CHAR_STR non-value for attrId===65281', () => {
+    it('BuffaloZcl read MI_STRUCT non-value', () => {
         const buffalo = new BuffaloZcl(Buffer.from([0xFF]));
-        const value = buffalo.read(DataType.CHAR_STR, {attrId: 65281});
+        const value = buffalo.read(BuffaloZclDataType.MI_STRUCT, {});
         expect(value).toStrictEqual({});
     });
 

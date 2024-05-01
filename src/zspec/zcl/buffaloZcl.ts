@@ -1,22 +1,27 @@
+import {BuffaloZclOptions, StructuredSelector, ZclArray} from './definition/tstype';
+import {BuffaloZclDataType, DataType, StructuredIndicatorType} from './definition/enums';
 import {Buffalo} from '../../buffalo';
+import * as Utils from './utils';
 import {IsNumberArray} from '../../utils';
 import {logger} from '../../utils/logger';
-import {BuffaloZclDataType, DataType, StructuredIndicatorType} from './definition/enums';
-import {BuffaloZclOptions, StructuredSelector, ZclArray} from './definition/tstype';
-import * as Utils from './utils';
 
-const NS = 'zh:controller:buffalozcl';
+const NS = 'zh:zcl:buffalo';
 
 interface KeyValue {[s: string | number]: number | string}
 
 const SEC_KEY_LENGTH = 16;
 
-const extensionFieldSetsDateTypeLookup: {[key: number]: DataType[]} = {
+const EXTENSION_FIELD_SETS_DATA_TYPE: {[key: number]: DataType[]} = {
     6: [DataType.UINT8],
     8: [DataType.UINT8],
     258: [DataType.UINT8, DataType.UINT8],
     768: [DataType.UINT16, DataType.UINT16, DataType.UINT16, DataType.UINT8, DataType.UINT8, DataType.UINT8, DataType.UINT16, DataType.UINT16],
 };
+
+interface Struct {
+    elmType: DataType;
+    elmVal: unknown;
+}
 
 interface ZclTimeOfDay {
     /** [0-23] */
@@ -40,18 +45,24 @@ interface ZclDate {
     dayOfWeek?: number,
 }
 
+interface ZoneInfo {
+    zoneID: number;
+    zoneStatus: number;
+}
+
+interface ExtensionFieldSet {
+    clstId: number;
+    len: number;
+    extField: unknown[];
+}
+
 interface ThermoTransition {
     transitionTime: number;
     heatSetpoint?: number;
     coolSetpoint?: number;
 }
 
-interface Struct {
-    elmType: DataType;
-    elmVal: unknown;
-}
-
-interface Gdp {
+interface GPD {
     deviceID: number;
     options: number;
     extendedOptions: number;
@@ -69,18 +80,18 @@ interface Gdp {
     gpdClientClusters: Buffer;
 }
 
-interface GdpChannelRequest {
+interface GPDChannelRequest {
     nextChannel: number;
     nextNextChannel: number;
 }
 
-interface GdpChannelConfiguration {
+interface GPDChannelConfiguration {
     commandID: number;
     operationalChannel: number;
     basic: boolean;
 }
 
-interface GdpCommissioningReply {
+interface GPDCommissioningReply {
     commandID: number;
     options: number;
     panID: number;
@@ -89,21 +100,15 @@ interface GdpCommissioningReply {
     frameCounter: number;
 }
 
-interface GdpCustomReply {
+interface GPDCustomReply {
     commandID: number;
     buffer: Buffer;
 }
 
-interface GdpAttributeReport {
+interface GPDAttributeReport {
     manufacturerCode: number;
     clusterID: number;
     attributes: KeyValue;
-}
-
-interface ExtensionFieldSet {
-    clstId: number;
-    len: number;
-    extField: unknown[];
 }
 
 interface TuyaDataPointValue {
@@ -115,11 +120,6 @@ interface TuyaDataPointValue {
 interface MiboxerZone {
     zoneNum: number;
     groupId: number;
-}
-
-interface ZoneInfo {
-    zoneID: number;
-    zoneStatus: number;
 }
 
 export class BuffaloZcl extends Buffalo {
@@ -149,6 +149,7 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeUInt56SB(value: number[]): void {
+        // XXX: [uint32, uint32] param not following read return pattern [uint32, uint16, uint8]
         const temp = Buffer.alloc(8);
         temp.writeUInt32LE(value[1], 0);
         temp.writeUInt32LE(value[0], 4);
@@ -168,7 +169,7 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeUInt64SB(value: string): void {
-        // XXX: not following pattern, should pass as number[]
+        // XXX: not following pattern, should pass as number[uint32, uint32]
         const msb = parseInt(value.slice(2,10), 16);
         const lsb = parseInt(value.slice(10), 16);
         this.writeUInt32(lsb);
@@ -228,36 +229,15 @@ export class BuffaloZcl extends Buffalo {
             this.writeUInt8(value.length);
             this.writeUtf8String(value);
         } else {
+            // XXX: value.length not written?
             this.writeBuffer(value, value.length);
         }
     }
 
-    private readCharStr(options: BuffaloZclOptions): Record<number, number | number[]> | string {
+    private readCharStr(): string {
         const length = this.readUInt8();
 
-        // TODO: this workaround should be moved to a custom type
-        if (options.attrId === 65281) {
-            const value: Record<number, number | number[]> = {};
-
-            if (length === 0xFF) {
-                return value;
-            }
-
-            // Xiaomi struct parsing
-            for (let i = 0; i < length; i++) {
-                const index = this.readUInt8();
-                const dataType = this.readUInt8();
-                value[index] = this.read(dataType, {});
-
-                if (this.position === this.buffer.length) {
-                    break;
-                }
-            }
-
-            return value;
-        } else {
-            return (length < 0xFF) ? this.readUtf8String(length) : '';
-        }
+        return (length < 0xFF) ? this.readUtf8String(length) : '';
     }
 
     private writeLongOctetStr(value: number[]): void {
@@ -349,7 +329,12 @@ export class BuffaloZcl extends Buffalo {
         const seconds = this.readUInt8();
         const hundredths = this.readUInt8();
 
-        return {hours, minutes, seconds, hundredths};
+        return {
+            hours: hours < 0xFF ? hours : null,
+            minutes: minutes < 0xFF ? minutes : null,
+            seconds: seconds < 0xFF ? seconds : null,
+            hundredths: hundredths < 0xFF ? hundredths : null,
+        };
     }
 
     private writeDate(value: ZclDate): void {
@@ -360,12 +345,17 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private readDate(): ZclDate {
-        const year = this.readUInt8() + 1900;
+        const year = this.readUInt8();
         const month = this.readUInt8();
         const dayOfMonth = this.readUInt8();
         const dayOfWeek = this.readUInt8();
 
-        return {year, month, dayOfMonth, dayOfWeek};
+        return {
+            year: year < 0xFF ? year + 1900 : null,
+            month: month < 0xFF ? month : null,
+            dayOfMonth: dayOfMonth < 0xFF ? dayOfMonth : null,
+            dayOfWeek: dayOfWeek < 0xFF ? dayOfWeek : null,
+        };
     }
 
     //--- BuffaloZclDataType
@@ -393,24 +383,28 @@ export class BuffaloZcl extends Buffalo {
         for (const value of values) {
             this.writeUInt16(value.clstId);
             this.writeUInt8(value.len);
-            value.extField.forEach((entry, index) => {
-                this.write(extensionFieldSetsDateTypeLookup[value.clstId][index], entry, {});
-            });
+            let index = 0;
+
+            for (const entry of value.extField) {
+                this.write(EXTENSION_FIELD_SETS_DATA_TYPE[value.clstId][index], entry, {});
+                index++;
+            }
         }
     }
 
     private readExtensionFieldSets(): ExtensionFieldSet[] {
         const value: ExtensionFieldSet[] = [];
 
+        // XXX: doesn't work if buffer has more unrelated fields after this one
         while (this.isMore()) {
             const clstId = this.readUInt16();
             const len = this.readUInt8();
             const end = this.getPosition() + len;
-
             let index = 0;
             const extField: unknown[] = [];
+
             while (this.getPosition() < end) {
-                extField.push(this.read(extensionFieldSetsDateTypeLookup[clstId][index], {}));
+                extField.push(this.read(EXTENSION_FIELD_SETS_DATA_TYPE[clstId][index], {}));
                 index++;
             }
 
@@ -462,9 +456,9 @@ export class BuffaloZcl extends Buffalo {
         return result;
     }
 
-    private writeGdpFrame(value: GdpCommissioningReply | GdpChannelConfiguration | GdpCustomReply): void {
+    private writeGdpFrame(value: GPDCommissioningReply | GPDChannelConfiguration | GPDCustomReply): void {
         if (value.commandID == 0xF0) { // Commissioning Reply
-            const v = <GdpCommissioningReply> value;
+            const v = <GPDCommissioningReply> value;
 
             const panIDPresent = v.options & (1 << 0);
             const gpdSecurityKeyPresent = v.options & (1 << 1);
@@ -499,20 +493,20 @@ export class BuffaloZcl extends Buffalo {
                 this.writeUInt32(v.frameCounter);
             }
         } else if (value.commandID == 0xF3) { // Channel configuration
-            const v = <GdpChannelConfiguration> value;
+            const v = <GPDChannelConfiguration> value;
             this.writeUInt8(1);
             this.writeUInt8(v.operationalChannel & 0xF | ((v.basic ? 1 : 0) << 4));
         } else if (value.commandID == 0xF4 ||
                 value.commandID == 0xF5 ||
                 (value.commandID >= 0xF7 && value.commandID <= 0xFF)) {
             // Other commands sent to GPD
-            const v = <GdpCustomReply> value;
+            const v = <GPDCustomReply> value;
             this.writeUInt8(v.buffer.length);
             this.writeBuffer(v.buffer, v.buffer.length);
         }
     }
 
-    private readGdpFrame(options: BuffaloZclOptions): Gdp | GdpChannelRequest | GdpAttributeReport | {raw: Buffer} | Record<string, never> {
+    private readGdpFrame(options: BuffaloZclOptions): GPD | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {
         // Commisioning
         if (options.payload?.commandID === 0xE0) {
             const frame = {
@@ -618,7 +612,7 @@ export class BuffaloZcl extends Buffalo {
             }
 
             return frame;
-        } else if (this.position != this.buffer.length) {
+        } else if (this.isMore()) {
             return {raw: this.buffer.subarray(this.position)};
         } else {
             return {};
@@ -630,7 +624,9 @@ export class BuffaloZcl extends Buffalo {
             const indexes = value.indexes || [];
             const indicatorType = value.indicatorType || StructuredIndicatorType.Whole;
             const indicator = indexes.length + indicatorType;
+
             this.writeUInt8(indicator);
+
             for (const index of indexes) {
                 this.writeUInt16(index);
             }
@@ -644,15 +640,17 @@ export class BuffaloZcl extends Buffalo {
         if (indicator === 0) {
             // no indexes, whole attribute value is to be read
             return {indicatorType: StructuredIndicatorType.Whole};
-        } else {
+        } else if (indicator < StructuredIndicatorType.WriteAdd) {
             const indexes: StructuredSelector['indexes'] = [];
-    
+
             for (let i = 0; i < indicator; i++) {
                 const index = this.readUInt16();
                 indexes.push(index);
             }
 
             return {indexes};
+        } else {
+            throw new Error(`Read structured selector was outside [0-15] range.`);
         }
     }
 
@@ -661,6 +659,7 @@ export class BuffaloZcl extends Buffalo {
             this.writeUInt8(dpValue.dp);
             this.writeUInt8(dpValue.datatype);
             const dataLen = dpValue.data.length;
+            // UInt16BE
             this.writeUInt8((dataLen >> 8) & 0xFF);
             this.writeUInt8(dataLen & 0xFF);
             this.writeBuffer(dpValue.data, dataLen);
@@ -670,6 +669,7 @@ export class BuffaloZcl extends Buffalo {
     private readListTuyaDataPointValues(): TuyaDataPointValue[] {
         const value: TuyaDataPointValue[] = [];
 
+        // XXX: doesn't work if buffer has more unrelated fields after this one
         while (this.isMore()) {
             try {
                 const dp = this.readUInt8();
@@ -682,11 +682,13 @@ export class BuffaloZcl extends Buffalo {
                 break;
             }
         }
+
         return value;
     }
 
     private writeListMiboxerZones(values: MiboxerZone[]): void {
         this.writeUInt8(values.length);
+
         for (const value of values) {
             this.writeUInt16(value.groupId);
             this.writeUInt8(value.zoneNum);
@@ -696,12 +698,14 @@ export class BuffaloZcl extends Buffalo {
     private readListMiboxerZones(): MiboxerZone[] {
         const value: MiboxerZone[] = [];
         const len = this.readUInt8();
+
         for (let i = 0; i < len; i++) {
-            value.push({
-                groupId: this.readUInt16(),
-                zoneNum: this.readUInt8(),
-            });
+            const groupId = this.readUInt16();
+            const zoneNum = this.readUInt8();
+
+            value.push({groupId, zoneNum});
         }
+
         return value;
     }
 
@@ -713,6 +717,31 @@ export class BuffaloZcl extends Buffalo {
     private readBigEndianUInt24(): number {
         const value = this.buffer.readUIntBE(this.position, 3);
         this.position += 3;
+        return value;
+    }
+
+    // private writeMiStruct(value: Record<number, number | number[]>): {
+    //     XXX: read only?
+    // }
+
+    private readMiStruct(): Record<number, number | number[]> {
+        const length = this.readUInt8();
+        const value: Record<number, number | number[]> = {};
+
+        if (length === 0xFF) {
+            return value;
+        }
+
+        for (let i = 0; i < length; i++) {
+            const index = this.readUInt8();
+            const dataType = this.readUInt8();
+            value[index] = this.read(dataType, {});
+
+            if (this.position === this.buffer.length) {
+                break;
+            }
+        }
+
         return value;
     }
 
@@ -870,6 +899,7 @@ export class BuffaloZcl extends Buffalo {
             return this.writeListThermoTransitions(value);
         }
         case BuffaloZclDataType.BUFFER: {
+            // XXX: inconsistent with read that allows partial with options.length, here always "whole"
             return this.writeBuffer(value, value.length);
         }
         case BuffaloZclDataType.GDP_FRAME: {
@@ -992,7 +1022,7 @@ export class BuffaloZcl extends Buffalo {
             return this.readOctetStr();
         }
         case DataType.CHAR_STR: {
-            return this.readCharStr(options);
+            return this.readCharStr();
         }
         case DataType.LONG_OCTET_STR: {
             return this.readLongOctetStr();
@@ -1086,6 +1116,9 @@ export class BuffaloZcl extends Buffalo {
         }
         case BuffaloZclDataType.BIG_ENDIAN_UINT24: {
             return this.readBigEndianUInt24();
+        }
+        case BuffaloZclDataType.MI_STRUCT: {
+            return this.readMiStruct();
         }
         }
 

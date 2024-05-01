@@ -214,9 +214,9 @@ export class ZclFrame {
                         // We need to grab the dataType to parse useDataType
                         options.dataType = entry.dataType;
 
-                        if (entry.dataType === DataType.CHAR_STR && entry.hasOwnProperty('attrId')) {
-                            // For Xiaomi struct parsing we need to pass the attributeID.
-                            options.attrId = entry.attrId;
+                        if (entry.dataType === DataType.CHAR_STR && entry.attrId === 65281) {
+                            // [workaround] parse char str as Xiaomi struct
+                            options.dataType = BuffaloZclDataType.MI_STRUCT;
                         }
                     }
 
@@ -274,10 +274,10 @@ export class ZclFrame {
      * Utils
      */
 
-    private static conditionsValid(
+    public static conditionsValid(
         parameter: ParameterDefinition,
         entry: ZclPayload,
-        remainingBufferBytes: number
+        remainingBufferBytes: number | null
     ): boolean {
         if (parameter.conditions) {
             const failedCondition = parameter.conditions.find((condition): boolean => {
@@ -307,13 +307,13 @@ export class ZclFrame {
         return true;
     }
 
-    public isCluster(clusterName: ClusterName): boolean {
+    public isCluster(clusterName: FoundationCommandName | ClusterName): boolean {
         return this.cluster.name === clusterName;
     }
 
     // List of commands is not completed, feel free to add more.
     public isCommand(
-        commandName: FoundationCommandName | 'remove' | 'add' | 'write' | 'enrollReq' | 'checkin'
+        commandName: FoundationCommandName | 'remove' | 'add' | 'write' | 'enrollReq' | 'checkin' | 'getAlarm'
     ): boolean {
         return this.command.name === commandName;
     }
