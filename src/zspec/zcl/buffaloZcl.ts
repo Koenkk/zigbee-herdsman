@@ -1,6 +1,6 @@
-import {Buffalo} from '../buffalo';
-import {IsNumberArray} from '../utils';
-import {logger} from '../utils/logger';
+import {Buffalo} from '../../buffalo';
+import {IsNumberArray} from '../../utils';
+import {logger} from '../../utils/logger';
 import {BuffaloZclDataType, DataType} from './definition';
 import {BuffaloZclOptions, StructuredIndicatorType, StructuredSelector, ZclArray} from './tstype';
 import * as Utils from './utils';

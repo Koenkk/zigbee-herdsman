@@ -6,7 +6,7 @@ import {ZclFrameConverter} from './helpers';
 import * as Events from './events';
 import {KeyValue, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import fs from 'fs';
-import {Utils as ZclUtils, FrameControl, ZclFrame, Clusters} from '../zcl';
+import {Utils as ZclUtils, FrameControl, ZclFrame, Clusters} from '../zspec/zcl';
 import Touchlink from './touchlink';
 import GreenPower from './greenPower';
 import {BackupUtils} from "../utils";

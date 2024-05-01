@@ -1,4 +1,4 @@
-import Clusters from '../../../zcl/definition/cluster';
+import Clusters from '../../../zspec/zcl/definition/cluster';
 import {GP_ENDPOINT, GP_PROFILE_ID, HA_PROFILE_ID} from '../consts';
 import {ClusterId, EmberMulticastId, ProfileId} from '../types';
 

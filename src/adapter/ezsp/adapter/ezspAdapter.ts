@@ -8,7 +8,7 @@ import Adapter from '../../adapter';
 
 import {Driver, EmberIncomingMessage} from '../driver';
 import {EmberZDOCmd, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
-import {ZclFrame, FrameType, Direction, Foundation, ZclHeader} from '../../../zcl';
+import {ZclFrame, FrameType, Direction, Foundation, ZclHeader} from '../../../zspec/zcl';
 import * as Events from '../../events';
 import {Queue, Waitress, Wait, RealpathSync} from '../../../utils';
 import * as Models from "../../../models";

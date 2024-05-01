@@ -1,7 +1,7 @@
 import * as TsType from './tstype';
 import {ZclPayload} from './events';
 import events from 'events';
-import {ZclFrame, FrameType, Direction} from '../zcl';
+import {ZclFrame, FrameType, Direction} from '../zspec/zcl';
 import * as Models from "../models";
 import Bonjour, {Service} from 'bonjour-service';
 import {logger} from '../utils/logger';

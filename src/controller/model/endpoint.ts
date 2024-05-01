@@ -1,6 +1,6 @@
 import Entity from './entity';
 import {KeyValue, SendPolicy} from '../tstype';
-import * as Zcl from '../../zcl';
+import * as Zcl from '../../zspec/zcl';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import * as ZclFrameConverter from '../helpers/zclFrameConverter';
 import Request from '../helpers/request';

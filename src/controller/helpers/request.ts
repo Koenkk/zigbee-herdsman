@@ -1,5 +1,5 @@
 import {SendPolicy} from '../tstype';
-import * as Zcl from '../../zcl';
+import * as Zcl from '../../zspec/zcl';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 class Request<Type = any> {

@@ -1,6 +1,6 @@
 import {FrameControl, FrameType} from './definition';
 import BuffaloZcl from './buffaloZcl';
-import {logger} from '../utils/logger';
+import {logger} from '../../utils/logger';
 
 const NS = 'zh:zcl:header';
 const HEADER_MINIMAL_LENGTH = 3;

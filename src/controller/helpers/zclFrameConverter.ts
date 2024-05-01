@@ -1,7 +1,7 @@
-import {ZclFrame, Utils as ZclUtils} from '../../zcl';
-import {Cluster} from '../../zcl/tstype';
-import ManufacturerCode from '../../zcl/definition/manufacturerCode';
-import {CustomClusters} from '../../zcl/definition/tstype';
+import {ZclFrame, Utils as ZclUtils} from '../../zspec/zcl';
+import {Cluster} from '../../zspec/zcl/tstype';
+import ManufacturerCode from '../../zspec/zcl/definition/manufacturerCode';
+import {CustomClusters} from '../../zspec/zcl/definition/tstype';
 
 interface KeyValue {[s: string]: number | string}
 

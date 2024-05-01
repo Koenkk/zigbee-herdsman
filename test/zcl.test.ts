@@ -1,10 +1,10 @@
 import "regenerator-runtime/runtime";
-import * as Zcl from '../src/zcl';
-import {BuffaloZclDataType, DataType} from '../src/zcl/definition';
-import BuffaloZcl from '../src/zcl/buffaloZcl';
-import FrameType from "../src/zcl/definition/frameType";
-import Direction from "../src/zcl/definition/direction";
-import {StructuredIndicatorType} from "../src/zcl/tstype";
+import * as Zcl from '../src/zspec/zcl';
+import {BuffaloZclDataType, DataType} from '../src/zspec/zcl/definition';
+import BuffaloZcl from '../src/zspec/zcl/buffaloZcl';
+import FrameType from "../src/zspec/zcl/definition/frameType";
+import Direction from "../src/zspec/zcl/definition/direction";
+import {StructuredIndicatorType} from "../src/zspec/zcl/tstype";
 
 describe('Zcl', () => {
 

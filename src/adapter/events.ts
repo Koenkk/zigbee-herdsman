@@ -1,4 +1,4 @@
-import {ZclHeader} from '../zcl';
+import {ZclHeader} from '../zspec/zcl';
 
 enum Events {
     networkAddress = "networkAddress",

@@ -1,5 +1,5 @@
 import Controller from './controller/controller';
-import * as Zcl from './zcl';
+import * as Zcl from './zspec/zcl';
 import * as ZSpec from './zspec';
 import * as logger from './utils/logger';
 

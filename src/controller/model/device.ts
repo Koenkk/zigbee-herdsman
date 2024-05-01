@@ -4,13 +4,13 @@ import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumbe
 import Endpoint from './endpoint';
 import Entity from './entity';
 import {Wait} from '../../utils';
-import * as Zcl from '../../zcl';
+import * as Zcl from '../../zspec/zcl';
 import assert from 'assert';
 import {ZclFrameConverter} from '../helpers';
 import {logger} from '../../utils/logger';
-import {ClusterDefinition, CustomClusters} from '../../zcl/definition/tstype';
-import {Clusters} from '../../zcl';
-import {isClusterName} from '../../zcl/utils';
+import {ClusterDefinition, CustomClusters} from '../../zspec/zcl/definition/tstype';
+import {Clusters} from '../../zspec/zcl';
+import {isClusterName} from '../../zspec/zcl/utils';
 import {BroadcastAddress} from '../../zspec/enums';
 
 /**
