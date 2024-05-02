@@ -2,8 +2,7 @@ import {Clusters} from './definition/cluster';
 import {Foundation} from './definition/foundation';
 import {DataType, DataTypeClass} from './definition/enums';
 import {FoundationCommandName} from './definition/foundation';
-import {ClusterDefinition, ClusterName, CustomClusters} from './definition/tstype';
-import * as TsType from './definition/tstype';
+import {Attribute, Cluster, ClusterDefinition, ClusterName, Command, CustomClusters} from './definition/tstype';
 
 const DATA_TYPE_CLASS_DISCRETE = [
     DataType.DATA8, DataType.DATA16, DataType.DATA24, DataType.DATA32, DataType.DATA40,
@@ -32,37 +31,73 @@ export function getDataTypeClass(dataType: DataType): DataTypeClass {
     }
 }
 
-function getClusterDefinition(
-    key: string | number,
-    manufacturerCode: number | null,
-    customClusters: CustomClusters,
-): {name: string, cluster: ClusterDefinition} {
+function hasCustomClusters(customClusters: CustomClusters): boolean {
+    // XXX: was there a good reason to not set the parameter `customClusters` optional? it would allow simple undefined check
+    // below is twice faster than checking `Object.keys(customClusters).length`
+    for (const k in customClusters) return true;
+    return false;
+}
+
+function findClusterNameByID(id: number, manufacturerCode: number | null, clusters: CustomClusters): [name: string, partialMatch: boolean] {
+    let name: string;
+    // if manufacturer code is given, consider partial match if didn't match against manufacturer code
+    let partialMatch: boolean = (manufacturerCode != null);
+
+    for (const clusterName in clusters) {
+        const cluster = clusters[clusterName as ClusterName];
+
+        if (cluster.ID === id) {
+            // priority on first match when matching only ID
+            /* istanbul ignore else */
+            if (name == undefined) {
+                name = clusterName;
+            }
+
+            if (manufacturerCode && (cluster.manufacturerCode === manufacturerCode)) {
+                name = clusterName;
+                partialMatch = false;
+                break;
+            } else if (!cluster.manufacturerCode) {
+                name = clusterName;
+                break;
+            }
+        }
+    }
+
+    return [name, partialMatch];
+}
+
+function getClusterDefinition(key: string | number, manufacturerCode: number | null, customClusters: CustomClusters)
+    : {name: string, cluster: ClusterDefinition} {
     let name: string;
 
-    const clusters: CustomClusters = {
-        ...customClusters, // Custom clusters have a higher priority than Zcl clusters (custom cluster has a DIFFERENT name than Zcl clusters)
-        ...Clusters,
-        ...customClusters, // Custom clusters should override Zcl clusters (custom cluster has the SAME name than Zcl clusters)
-    };
-
     if (typeof key === 'number') {
-        if (manufacturerCode) {
-            name = Object.entries(clusters)
-                .find((e) => e[1].ID === key && e[1].manufacturerCode === manufacturerCode)?.[0];
-        } 
-        
-        if (!name) {
-            name = Object.entries(clusters).find((e) => e[1].ID === key && !e[1].manufacturerCode)?.[0];
-        }
+        let partialMatch: boolean;
+
+        // custom clusters have priority over Zcl clusters, except in case of better match (see below)
+        [name, partialMatch] = findClusterNameByID(key, manufacturerCode, customClusters);
 
         if (!name) {
-            name = Object.entries(clusters).find((e) => e[1].ID === key)?.[0];
+            [name, partialMatch] = findClusterNameByID(key, manufacturerCode, Clusters);
+        } else if (partialMatch) {
+            let zclName: string;
+            [zclName, partialMatch] = findClusterNameByID(key, manufacturerCode, Clusters);
+
+            // Zcl clusters contain a better match, use that one
+            if (zclName != undefined && !partialMatch) {
+                name = zclName;
+            }
         }
     } else {
         name = key;
     }
 
-    let cluster = clusters[name];
+    let cluster = (name != undefined) && hasCustomClusters(customClusters) ?
+        {
+            ...Clusters[name as ClusterName],
+            ...customClusters[name],// should override Zcl clusters
+        }
+        : Clusters[name as ClusterName];
 
     if (!cluster) {
         if (typeof key === 'number') {
@@ -76,39 +111,53 @@ function getClusterDefinition(
     return {name, cluster};
 }
 
-function createCluster(name: string, cluster: ClusterDefinition, manufacturerCode: number = null): TsType.Cluster {
-    const attributes: {[s: string]: TsType.Attribute} = Object.assign(
+function createCluster(name: string, cluster: ClusterDefinition, manufacturerCode: number = null): Cluster {
+    const attributes: {[s: string]: Attribute} = Object.assign(
         {},
         ...Object.entries(cluster.attributes).map(([k, v]) => ({[k]: {...v, name: k}}))
     );
-    const commands: {[s: string]: TsType.Command} = Object.assign(
+    const commands: {[s: string]: Command} = Object.assign(
         {},
         ...Object.entries(cluster.commands).map(([k, v]) => ({[k]: {...v, name: k}}))
     );
-    const commandsResponse: {[s: string]: TsType.Command} = Object.assign(
+    const commandsResponse: {[s: string]: Command} = Object.assign(
         {},
         ...Object.entries(cluster.commandsResponse).map(([k, v]) => ({[k]: {...v, name: k}}))
     );
 
-    const getAttributeInternal = (key: number | string): TsType.Attribute => {
-        let result: TsType.Attribute = null;
+    const getAttributeInternal = (key: number | string): Attribute => {
         if (typeof key === 'number') {
-            if (manufacturerCode) {
-                result = Object.values(attributes).find((a): boolean => {
-                    return a.ID === key && a.manufacturerCode === manufacturerCode;
-                });
+            let partialMatchAttr: Attribute = null;
+
+            for (const attrKey in attributes) {
+                const attr = attributes[attrKey];
+
+                if (attr.ID === key) {
+                    if (manufacturerCode && (attr.manufacturerCode === manufacturerCode)) {
+                        return attr;
+                    }
+
+                    if (attr.manufacturerCode == null) {
+                        partialMatchAttr = attr;
+                    }
+                }
             }
 
-            if (!result) {
-                result = Object.values(attributes).find((a): boolean => a.ID === key && a.manufacturerCode == null);
-            }
+            return partialMatchAttr;
         } else {
-            result = Object.values(attributes).find((a): boolean => a.name === key);
+            for (const attrKey in attributes) {
+                const attr = attributes[attrKey];
+
+                if (attr.name === key) {
+                    return attr;
+                }
+            }
         }
-        return result;
+
+        return null;
     };
 
-    const getAttribute = (key: number | string): TsType.Attribute => {
+    const getAttribute = (key: number | string): Attribute => {
         const result = getAttributeInternal(key);
         if (!result) {
             throw new Error(`Cluster '${name}' has no attribute '${key}'`);
@@ -122,36 +171,48 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
         return !!result;
     };
 
-    const getCommand = (key: number | string): TsType.Command => {
-        let result: TsType.Command = null;
-
+    const getCommand = (key: number | string): Command => {
         if (typeof key === 'number') {
-            result = Object.values(commands).find((a): boolean => a.ID === key);
+            for (const cmdKey in commands) {
+                const cmd = commands[cmdKey];
+
+                if (cmd.ID === key) {
+                    return cmd;
+                }
+            }
         } else {
-            result = Object.values(commands).find((a): boolean => a.name === key);
+            for (const cmdKey in commands) {
+                const cmd = commands[cmdKey];
+
+                if (cmd.name === key) {
+                    return cmd;
+                }
+            }
         }
 
-        if (!result) {
-            throw new Error(`Cluster '${name}' has no command '${key}'`);
-        }
-
-        return result;
+        throw new Error(`Cluster '${name}' has no command '${key}'`);
     };
 
-    const getCommandResponse = (key: number | string): TsType.Command => {
-        let result: TsType.Command = null;
-
+    const getCommandResponse = (key: number | string): Command => {
         if (typeof key === 'number') {
-            result = Object.values(commandsResponse).find((a): boolean => a.ID === key);
+            for (const cmdKey in commandsResponse) {
+                const cmd = commandsResponse[cmdKey];
+
+                if (cmd.ID === key) {
+                    return cmd;
+                }
+            }
         } else {
-            result = Object.values(commandsResponse).find((a): boolean => a.name === key);
+            for (const cmdKey in commandsResponse) {
+                const cmd = commandsResponse[cmdKey];
+
+                if (cmd.name === key) {
+                    return cmd;
+                }
+            }
         }
 
-        if (!result) {
-            throw new Error(`Cluster '${name}' has no command response '${key}'`);
-        }
-
-        return result;
+        throw new Error(`Cluster '${name}' has no command response '${key}'`);
     };
 
     return {
@@ -160,8 +221,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
         manufacturerCode: cluster.manufacturerCode,
         name,
         commands,
-        // eslint-disable-next-line
-        commandsResponse: Object.assign({}, ...Object.entries(cluster.commandsResponse).map(([k, v]): any => ({[k]: {...v, name: k}}))),
+        commandsResponse,
         getAttribute,
         hasAttribute,
         getCommand,
@@ -173,12 +233,12 @@ export function getCluster(
     key: string | number,
     manufacturerCode: number | null,
     customClusters: CustomClusters,
-): TsType.Cluster {
+): Cluster {
     const {name, cluster} = getClusterDefinition(key, manufacturerCode, customClusters);
     return createCluster(name, cluster, manufacturerCode);
 }
 
-export function getGlobalCommand(key: number | string): TsType.Command {
+export function getGlobalCommand(key: number | string): Command {
     let name: FoundationCommandName;
 
     if (typeof key === 'number') {
@@ -198,7 +258,7 @@ export function getGlobalCommand(key: number | string): TsType.Command {
         throw new Error(`Global command with key '${key}' does not exist`);
     }
 
-    const result: TsType.Command = {
+    const result: Command = {
         ID: command.ID,
         name,
         parameters: command.parameters,
