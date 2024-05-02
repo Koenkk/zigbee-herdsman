@@ -1,9 +1,5 @@
-import Controller from './controller/controller';
-import * as Zcl from './zspec/zcl';
-import * as ZSpec from './zspec';
-import * as logger from './utils/logger';
-
-export {Zcl, Controller, ZSpec};
-
-/* istanbul ignore next */
-export const setLogger = logger.setLogger;
+export {default as Controller} from './controller/controller';
+export * as Zcl from './zspec/zcl';
+export * as Zdo from './zspec/zdo';
+export * as ZSpec from './zspec';
+export {setLogger} from './utils/logger';
