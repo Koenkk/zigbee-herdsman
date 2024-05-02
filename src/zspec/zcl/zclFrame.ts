@@ -1,9 +1,10 @@
-import {Direction, FrameType, DataType, BuffaloZclDataType, ParameterCondition} from './definition/enums';
-import {ZclHeader} from './zclHeader';
 import * as Utils from './utils';
+import {BuffaloZclOptions, Cluster, Command, ClusterName, CustomClusters, ParameterDefinition} from './definition/tstype';
+import {Direction, DataType, BuffaloZclDataType, FrameType, ParameterCondition} from './definition/enums';
+import {FoundationCommandName, Foundation} from './definition/foundation';
+import {ZclHeader} from './zclHeader';
 import {BuffaloZcl} from './buffaloZcl';
-import {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from './definition/tstype';
-import {Foundation, FoundationCommandName} from './definition/foundation';
+import {Status} from './definition/status';
 
 // eslint-disable-next-line
 type ZclPayload = any;
@@ -123,7 +124,7 @@ export class ZclFrame {
                 continue;
             }
 
-            if (!this.payload.hasOwnProperty(parameter.name)) {
+            if (this.payload[parameter.name] == undefined) {
                 throw new Error(`Parameter '${parameter.name}' is missing`);
             }
 
@@ -223,6 +224,7 @@ export class ZclFrame {
                     entry[parameter.name] = buffalo.read(parameter.type, options);
 
                     // TODO: not needed, but temp workaroudn to make payload equal to that of zcl-packet
+                    // XXX: is this still needed?
                     if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && entry.dataType === DataType.STRUCT) {
                         entry['structElms'] = entry.attrData;
                         entry['numElms'] = entry.attrData.length;
@@ -280,28 +282,38 @@ export class ZclFrame {
         remainingBufferBytes: number | null
     ): boolean {
         if (parameter.conditions) {
-            const failedCondition = parameter.conditions.find((condition): boolean => {
-                /* istanbul ignore else */
-                if (condition.type === ParameterCondition.STATUS_EQUAL) {
-                    return entry.status !== condition.value;
-                } else if (condition.type == ParameterCondition.STATUS_NOT_EQUAL) {
-                    return entry.status === condition.value;
-                } else if (condition.type == ParameterCondition.DIRECTION_EQUAL) {
-                    return entry.direction !== condition.value;
-                } else if(condition.type == ParameterCondition.BITMASK_SET) {
-                    return (entry[condition.param] & condition.mask) !== condition.mask;
-                } else if(condition.type == ParameterCondition.BITFIELD_ENUM) {
-                    return ((entry[condition.param] >> condition.offset) & ((1<<condition.size)-1)) !== condition.value;
-                } else if (remainingBufferBytes != null && condition.type == ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES) {
-                    return remainingBufferBytes < (condition.value as number);
-                } else if (condition.type == ParameterCondition.DATA_TYPE_CLASS_EQUAL) {
-                    return Utils.getDataTypeClass(entry.dataType) !== condition.value;
+            for (const condition of parameter.conditions) {
+                switch (condition.type) {
+                case ParameterCondition.STATUS_EQUAL: {
+                    if ((entry.status as Status) !== condition.value) return false;
+                    break;
                 }
-            });
-
-            if (failedCondition) {
-                return false;
-            }
+                case ParameterCondition.STATUS_NOT_EQUAL: {
+                    if ((entry.status as Status) === condition.value) return false;
+                    break;
+                }
+                case ParameterCondition.DIRECTION_EQUAL: {
+                    if ((entry.direction as Direction) !== condition.value) return false;
+                    break;
+                }
+                case ParameterCondition.BITMASK_SET: {
+                    if ((entry[condition.param] & condition.mask) !== condition.mask) return false;
+                    break;
+                }
+                case ParameterCondition.BITFIELD_ENUM: {
+                    if (((entry[condition.param] >> condition.offset) & ((1 << condition.size) - 1)) !== condition.value) return false;
+                    break;
+                }
+                case ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES: {
+                    if (remainingBufferBytes != null && (remainingBufferBytes < (condition.value))) return false;
+                    break;
+                }
+                case ParameterCondition.DATA_TYPE_CLASS_EQUAL: {
+                    if (Utils.getDataTypeClass(entry.dataType) !== condition.value) return false;
+                    break;
+                }
+                }
+            };
         }
 
         return true;
