@@ -1,3 +1,4 @@
+import {ClusterId, EUI64, ExtendedPanId, NodeId, PanId, ProfileId} from '../../tstypes';
 import {
     JoiningPolicy,
     ActiveLinkKeyType,
@@ -95,16 +96,16 @@ export type LQITableEntry = {
      * 
      * 64-bit
      */
-    extendedPanId: number[];
+    extendedPanId: ExtendedPanId;
     /**
      * 64-bit IEEE address that is unique to every device.
      * If this value is unknown at the time of the request, this field shall be set to 0xffffffffffffffff.
      * 
      * 64-bit
      */
-    eui64: string;
+    eui64: EUI64;
     /** The 16-bit network address of the neighboring device. 16-bit */
-    nwkAddress: number;
+    nwkAddress: NodeId;
     /**
      * The type of the neighbor device:
      * 0x00 = ZigBee coordinator
@@ -166,7 +167,7 @@ export type LQITableEntry = {
 
 export type RoutingTableEntry = {
     /** 16-bit network address of this route */
-    destinationAddress: number;
+    destinationAddress: NodeId;
     /**
      * Status of the route
      * 0x0=ACTIVE.
@@ -205,11 +206,11 @@ export type RoutingTableEntry = {
 
 export type BindingTableEntry = {
     /** The source IEEE address for the binding entry. */
-    sourceEui64: string;
+    sourceEui64: EUI64;
     /** The source endpoint for the binding entry. */
     sourceEndpoint: number;
     /** The identifier of the cluster on the source device that is bound to the destination device. */
-    clusterId: number;
+    clusterId: ClusterId;
     /**
      * The addressing mode for the destination address. This field can take one of the non-reserved values from the following list:
      *   - 0x00 = reserved
@@ -220,7 +221,7 @@ export type BindingTableEntry = {
      */
     destAddrMode: number;
     /** The destination address for the binding entry. 2-byte or 8-byte */
-    dest: number | string;
+    dest: NodeId | EUI64;
     /**
      * This field shall be present only if the DstAddrMode field has a value of 0x03 and, if present,
      * shall be the destination endpoint for the binding entry.
@@ -230,9 +231,9 @@ export type BindingTableEntry = {
 
 export type NetworkAddressResponse = {
     /** 64-bit address for the Remote Device. */
-    eui64: string;
+    eui64: EUI64;
     /** 16-bit address for the Remote Device. */
-    nwkAddress: number;
+    nwkAddress: NodeId;
     /**
      * Starting index into the list of associated devices for this report.
      * If the RequestType in the request is Extended Response and there are no associated devices on the Remote Device,
@@ -247,23 +248,23 @@ export type NetworkAddressResponse = {
      * this field SHALL NOT be included in the frame.
      * If an error occurs or the Request Type in the request is for a Single Device Response, this field SHALL NOT be included in the frame.
      */
-    assocDevList: number[];
+    assocDevList: NodeId[];
 };
 
 export type IEEEAddressResponse = {
     /** @see NetworkAddressResponse.eui64 */
-    eui64: string;
+    eui64: EUI64;
     /** @see NetworkAddressResponse.nwkAddress */
-    nwkAddress: number;
+    nwkAddress: NodeId;
     /** @see NetworkAddressResponse.startIndex */
     startIndex: number;
     /** @see NetworkAddressResponse.assocDevList */
-    assocDevList: number[];
+    assocDevList: NodeId[];
 };
 
 export type NodeDescriptorResponse = {
     /** NWK address for the request. */
-    nwkAddress: number;
+    nwkAddress: NodeId;
     /** 000 == Zigbee Coordinator, 001 == Zigbee Router,  010 === Zigbee End Device, 011-111 === Reserved */
     logicalType: number;
     /** R23 and above (determined via other means if not). Indicates whether the device supports fragmentation at the APS layer. */
@@ -313,7 +314,7 @@ export type NodeDescriptorResponse = {
 
 export type PowerDescriptorResponse = {
     /** NWK address for the request. */
-    nwkAddress: number;
+    nwkAddress: NodeId;
     /**
      * - 0000 == receiver sync'ed with receiver on when idle subfield of the node descriptor
      * - 0001 == receiver comes on periodically as defined by the node power descriptor
@@ -348,7 +349,7 @@ export type PowerDescriptorResponse = {
 
 export type SimpleDescriptorResponse = {
     /** NWK address for the request. */
-    nwkAddress: number;
+    nwkAddress: NodeId;
     /**
      * Specifies the endpoint within the node to which this description refers.
      * Applications SHALL only use endpoints 1-254.
@@ -360,7 +361,7 @@ export type SimpleDescriptorResponse = {
      * Specifies the profile that is supported on this endpoint.
      * Profile identifiers SHALL be obtained from the Connectivity Standards Alliance.
      */
-    profileId: number;
+    profileId: ProfileId;
     /**
      * Specifies the device description supported on this endpoint.
      * Device description identifiers SHALL be obtained from the Connectivity Standards Alliance.
@@ -377,33 +378,33 @@ export type SimpleDescriptorResponse = {
      * Specifies the list of input clusters supported on this endpoint, for use during the service discovery and binding procedures.
      * The application input cluster list field SHALL be included only if the value of the application input cluster count field is greater than zero.
      */
-    inClusterList: number[];
+    inClusterList: ClusterId[];
     /**
      * Specifies the list of output clusters supported on this endpoint, for use during the service discovery and binding procedures.
      * The application output cluster list field SHALL be included only if the value of the application output cluster count field
      * is greater than zero.
      */
-    outClusterList: number[];
+    outClusterList: ClusterId[];
 };
 
 export type ActiveEndpointsResponse = {
     /** NWK address for the request. */
-    nwkAddress: number;
+    nwkAddress: NodeId;
     /** List of bytes each of which represents an 8-bit endpoint. */
     endpointList: number[];
 };
 
 export type MatchDescriptorsResponse = {
     /** NWK address for the request. */
-    nwkAddress: number;
+    nwkAddress: NodeId;
     /** List of bytes each of which represents an 8-bit endpoint. */
     endpointList: number[];
 };
 
 export type EndDeviceAnnounce = {
     /** NWK address for the request. */
-    nwkAddress: number;
-    eui64: string;
+    nwkAddress: NodeId;
+    eui64: EUI64;
     capabilities: MACCapabilityFlags;
 };
 
@@ -413,7 +414,7 @@ export type SystemServerDiscoveryResponse = {
 };
 
 export type ParentAnnounceResponse = {
-    children: string[];
+    children: EUI64[];
 };
 
 export type LQITableResponse = {
@@ -502,7 +503,7 @@ export type NwkIEEEJoiningListResponse = {
     /** The starting index in the mibIeeeJoiningList. This field SHALL be omitted if the entryListTotal is 0. */
     startIndex?: number;
     /** A list of IEEE addresses from the mibIeeeJoiningList. This field SHALL be omitted if the entryListTotal is 0. */
-    entryList?: string[];
+    entryList?: EUI64[];
 };
 
 export type NwkUnsolicitedEnhancedUpdateResponse = {
@@ -583,7 +584,7 @@ export type SupportedKeyNegotiationMethodsGlobalTLV = {
      */
     preSharedSecretsBitmask: number;
     /** XXX: Assumed optional from minimum length of TLV in spec */
-    sourceDeviceEui64?: string;
+    sourceDeviceEui64?: EUI64;
 };
 
 export type PanIdConflictReportGlobalTLV = {
@@ -593,7 +594,7 @@ export type PanIdConflictReportGlobalTLV = {
 
 export type NextPanIdChangeGlobalTLV = {
     /** 2-bytes in length and indicates the next channel that will be used once a Network Update command is received to change PAN IDs. */
-    panId: number;
+    panId: PanId;
 };
 
 export type NextChannelChangeGlobalTLV = {
@@ -639,7 +640,7 @@ export type RouterInformationGlobalTLV = {
 
 export type FragmentationParametersGlobalTLV = {
     /** This indicates the node ID of the device that the subsequent fragmentation parameters apply to. */
-    nwkAddress: number;
+    nwkAddress: NodeId;
     /**
      * This bitfield indicates what fragmentation options are supported by the device.
      * It has the following enumerated bits:
@@ -693,7 +694,7 @@ export type DeviceCapabilityExtensionGlobalTLV = {
  */
 export type ClearAllBindingsReqEUI64TLV = {
     /** A list of EUI64 that SHALL trigger corresponding bindings to be deleted. */
-    eui64List: string[];
+    eui64List: EUI64[];
 };
 
 export type BeaconSurveyConfigurationTLV = {
@@ -713,7 +714,7 @@ export type BeaconSurveyConfigurationTLV = {
 
 export type Curve25519PublicPointTLV = {
     /** This indicates the EUI64 of the device that generated the public point. */
-    eui64: string;
+    eui64: EUI64;
     /** The 32-byte Curve public point. */
     publicPoint: Buffer;
 };
@@ -725,7 +726,7 @@ export type AuthenticationTokenIdTLV = {
 
 export type TargetIEEEAddressTLV = {
     /** Extended address of the device whose security level is requested. */
-    ieee: string;
+    ieee: EUI64;
 };
 
 export type SelectedKeyNegotiationMethodTLV = {
@@ -738,17 +739,17 @@ export type SelectedKeyNegotiationMethodTLV = {
      */
     presharedSecret: SelectedPreSharedSecret;
     /** The value of the EUI64 of the device sending the message. This field SHALL always be present. */
-    sendingDeviceEui64: string;
+    sendingDeviceEui64: EUI64;
 };
 
 export type DeviceEUI64ListTLV = {
     /** A list of EUI64 that shall trigger decommissioning operations. Count: [0x00-0xFF] */
-    eui64List: string[];
+    eui64List: EUI64[];
 };
 
 export type APSFrameCounterChallengeTLV = {
     /** The EUI64 of the device that generated the frame. */
-    senderEui64: string;
+    senderEui64: EUI64;
     /**
      * A randomly generated 64-bit value sent to a device to prove they have the link key.
      * This allows the initiator to detect replayed challenge response frames.
@@ -758,7 +759,7 @@ export type APSFrameCounterChallengeTLV = {
 
 export type APSFrameCounterResponseTLV = {
     /** The EUI64 of the device that is responding to the Security_Challenge_req with its own challenge. */
-    responderEui64: string;
+    responderEui64: EUI64;
     /** A randomly generated 64-bit value previously received in the APSFrameCounterChallengeTLV. */
     receivedChallengeValue: Buffer;
     /** The current outgoing APS security frame counter held by the Responder EUI64 device. */
@@ -813,7 +814,7 @@ export type PotentialParentsTLV = {
 
 export type DeviceAuthenticationLevelTLV = {
     /** 64-bit address for the node that is being inquired about. */
-    remoteNodeIeee: string;
+    remoteNodeIeee: EUI64;
     /** This indicates the joining method that was used when the device joined the network. */
     initialJoinMethod: InitialJoinMethod;
     /** This indicates what Link Key update method was used to create the current active Link Key. */
