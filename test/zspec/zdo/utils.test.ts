@@ -42,7 +42,8 @@ describe('ZDO Utils', () => {
             primaryTrustCenter: 0, backupTrustCenter: 1, deprecated1: 0, deprecated2: 0, deprecated3: 0, deprecated4: 0,
             networkManager: 1, reserved1: 0, reserved2: 0, stackComplianceResivion: 21
         }],
-    ])('Gets server mask for %s', (value, expected) => {
+    ])('Gets & Creates server mask for %s', (value, expected) => {
         expect(Zdo.Utils.getServerMask(value)).toStrictEqual(expected);
+        expect(Zdo.Utils.createServerMask(expected)).toStrictEqual(value);
     });
 });

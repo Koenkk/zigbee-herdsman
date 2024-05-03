@@ -1,3 +1,5 @@
+import {ExtendedPanId} from "./tstypes";
+
 /** Current supported Zigbee revision: https://csa-iot.org/wp-content/uploads/2023/04/05-3474-23-csg-zigbee-specification-compressed.pdf */
 export const ZIGBEE_REVISION = 23;
 
@@ -38,7 +40,7 @@ export const PREFERRED_802_15_4_CHANNELS = [11, 14, 15, 19, 20, 24, 25];
 /** A blank (also used as "wildcard") EUI64 hex string prefixed with 0x */
 export const BLANK_EUI64 = "0xFFFFFFFFFFFFFFFF";
 /** A blank extended PAN ID. (null/not present) */
-export const BLANK_EXTENDED_PAN_ID: readonly number[] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+export const BLANK_EXTENDED_PAN_ID: Readonly<ExtendedPanId> = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 
 /** An invalid profile ID. This is a reserved profileId. */
 export const INVALID_PROFILE_ID = 0xFFFF;
