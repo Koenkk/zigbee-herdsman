@@ -2433,20 +2433,23 @@ describe('Controller', () => {
         expect(deepClone(events.message[0])).toStrictEqual(expected);
     });
 
-    it('Should allow to specify custom attribute for existing', async () => {
+    it('Should allow to specify custom attributes for existing cluster', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
-        device.addCustomCluster('genBasic', {ID: 0, commands: {}, commandsResponse: {}, attributes: {customAttr: {ID: 256, type: Zcl.DataType.UINT8}}});
-        const buffer = Buffer.from([24,169,10,0,1,24,3,0,0,24,1]);
+        device.addCustomCluster('genBasic', {ID: 0, commands: {}, commandsResponse: {}, attributes: {
+            customAttr: {ID: 256, type: Zcl.DataType.UINT8},
+            aDifferentZclVersion: {ID: 0, type: Zcl.DataType.UINT8},
+        }});
+        const buffer = Buffer.from([24,169,10,0,1,24,3,0,0,24,1,2,0,24,1]);
         const header = Zcl.Header.fromBuffer(buffer);
         await mockAdapterEvents['zclPayload']({wasBroadcast: false, address: 129, clusterID: 0, data: buffer, header, endpoint: 1, linkquality: 50, groupID: 1});
         expect(events.message.length).toBe(1);
-        expect(events.message[0].data).toStrictEqual({customAttr: 3, zclVersion: 1});
+        expect(events.message[0].data).toStrictEqual({customAttr: 3, aDifferentZclVersion: 1, stackVersion: 1});
         expect(events.message[0].cluster).toBe('genBasic');
     });
 
-    it('Should allow to specific custom cluster', async () => {
+    it('Should allow to specify custom cluster', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
