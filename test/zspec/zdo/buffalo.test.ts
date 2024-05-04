@@ -724,6 +724,53 @@ describe('ZDO Buffalo', () => {
         }).toThrow(new Zdo.StatusError(Zdo.Status.INV_REQUESTTYPE));
     });
 
+    it.each([
+        [Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, 'readNetworkAddressResponse'],
+        [Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, 'readIEEEAddressResponse'],
+        [Zdo.ClusterId.NODE_DESCRIPTOR_RESPONSE, 'readNodeDescriptorResponse'],
+        [Zdo.ClusterId.POWER_DESCRIPTOR_RESPONSE, 'readPowerDescriptorResponse'],
+        [Zdo.ClusterId.SIMPLE_DESCRIPTOR_RESPONSE, 'readSimpleDescriptorResponse'],
+        [Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE, 'readActiveEndpointsResponse'],
+        [Zdo.ClusterId.MATCH_DESCRIPTORS_RESPONSE, 'readMatchDescriptorsResponse'],
+        [Zdo.ClusterId.END_DEVICE_ANNOUNCE, 'readEndDeviceAnnounce'],
+        [Zdo.ClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE, 'readSystemServerDiscoveryResponse'],
+        [Zdo.ClusterId.PARENT_ANNOUNCE_RESPONSE, 'readParentAnnounceResponse'],
+        [Zdo.ClusterId.BIND_RESPONSE, 'readBindResponse'],
+        [Zdo.ClusterId.UNBIND_RESPONSE, 'readUnbindResponse'],
+        [Zdo.ClusterId.CLEAR_ALL_BINDINGS_RESPONSE, 'readClearAllBindingsResponse'],
+        [Zdo.ClusterId.LQI_TABLE_RESPONSE, 'readLQITableResponse'],
+        [Zdo.ClusterId.ROUTING_TABLE_RESPONSE, 'readRoutingTableResponse'],
+        [Zdo.ClusterId.BINDING_TABLE_RESPONSE, 'readBindingTableResponse'],
+        [Zdo.ClusterId.LEAVE_RESPONSE, 'readLeaveResponse'],
+        [Zdo.ClusterId.PERMIT_JOINING_RESPONSE, 'readPermitJoiningResponse'],
+        [Zdo.ClusterId.NWK_UPDATE_RESPONSE, 'readNwkUpdateResponse'],
+        [Zdo.ClusterId.NWK_ENHANCED_UPDATE_RESPONSE, 'readNwkEnhancedUpdateResponse'],
+        [Zdo.ClusterId.NWK_IEEE_JOINING_LIST_REPONSE, 'readNwkIEEEJoiningListResponse'],
+        [Zdo.ClusterId.NWK_UNSOLICITED_ENHANCED_UPDATE_RESPONSE, 'readNwkUnsolicitedEnhancedUpdateResponse'],
+        [Zdo.ClusterId.NWK_BEACON_SURVEY_RESPONSE, 'readNwkBeaconSurveyResponse'],
+        [Zdo.ClusterId.START_KEY_NEGOTIATION_RESPONSE, 'readStartKeyNegotiationResponse'],
+        [Zdo.ClusterId.RETRIEVE_AUTHENTICATION_TOKEN_RESPONSE, 'readRetrieveAuthenticationTokenResponse'],
+        [Zdo.ClusterId.GET_AUTHENTICATION_LEVEL_RESPONSE, 'readGetAuthenticationLevelResponse'],
+        [Zdo.ClusterId.SET_CONFIGURATION_RESPONSE, 'readSetConfigurationResponse'],
+        [Zdo.ClusterId.GET_CONFIGURATION_RESPONSE, 'readGetConfigurationResponse'],
+        [Zdo.ClusterId.START_KEY_UPDATE_RESPONSE, 'readStartKeyUpdateResponse'],
+        [Zdo.ClusterId.DECOMMISSION_RESPONSE, 'readDecommissionResponse'],
+        [Zdo.ClusterId.CHALLENGE_RESPONSE, 'readChallengeResponse'],
+    ])('Reads response by cluster ID %s', (clusterId, func) => {
+        // @ts-expect-error TS typing is lost here ;(
+        const readSpy = jest.spyOn(BuffaloZdo.prototype, func).mockImplementationOnce(jest.fn());// passing bogus data, don't want to actually call it
+        BuffaloZdo.readResponse(clusterId, Buffer.from([123]));
+        expect(readSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('Throws when reading unknown cluster ID', () => {
+        const clusterId = Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST;
+
+        expect(() => {
+            BuffaloZdo.readResponse(clusterId, Buffer.from([123]));
+        }).toThrow(`Unsupported response reading for cluster ID '${clusterId}'.`);
+    })
+
     it('readNetworkAddressResponse', () => {
         const buffer = Buffer.from([Zdo.Status.SUCCESS, ...IEEE_ADDRESS1_BYTES, ...NODE_ID1_BYTES]);
         expect(new BuffaloZdo(buffer).readNetworkAddressResponse()).toStrictEqual({

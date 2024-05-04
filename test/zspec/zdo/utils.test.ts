@@ -10,6 +10,21 @@ describe('ZDO Utils', () => {
     });
 
     it.each([
+        [Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST, Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE],
+        [Zdo.ClusterId.BINDING_TABLE_REQUEST, Zdo.ClusterId.BINDING_TABLE_RESPONSE],
+        [Zdo.ClusterId.CHALLENGE_REQUEST, Zdo.ClusterId.CHALLENGE_RESPONSE],
+        [Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, Zdo.ClusterId.NODE_DESCRIPTOR_RESPONSE],
+        [Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE],
+        [Zdo.ClusterId.END_DEVICE_ANNOUNCE, null],
+        [Zdo.ClusterId.NWK_UNSOLICITED_ENHANCED_UPDATE_RESPONSE, null],
+        [Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE, null],
+        [Zdo.ClusterId.CHALLENGE_RESPONSE, null],
+        [0x7999, null],
+    ])('Gets response cluster ID for request %s', (request, response) => {
+        expect(Zdo.Utils.getResponseClusterId(request)).toStrictEqual(response);
+    });
+
+    it.each([
         [0, {alternatePANCoordinator: 0, deviceType: 0, powerSource: 0, rxOnWhenIdle: 0, reserved1: 0, reserved2: 0, securityCapability: 0, allocateAddress: 0}],
         [0b00000001, {alternatePANCoordinator: 1, deviceType: 0, powerSource: 0, rxOnWhenIdle: 0, reserved1: 0, reserved2: 0, securityCapability: 0, allocateAddress: 0}],
         [0b00000010, {alternatePANCoordinator: 0, deviceType: 1, powerSource: 0, rxOnWhenIdle: 0, reserved1: 0, reserved2: 0, securityCapability: 0, allocateAddress: 0}],

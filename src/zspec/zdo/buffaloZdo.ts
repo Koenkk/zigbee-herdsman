@@ -73,6 +73,7 @@ import {logger} from '../../utils/logger';
 import {DEFAULT_ENCRYPTION_KEY_SIZE, EUI64_SIZE, EXTENDED_PAN_ID_SIZE, PAN_ID_SIZE} from '../consts';
 import * as Utils from './utils';
 import * as ZSpecUtils from '../utils';
+import {ClusterId as ZdoClusterId} from './definition/clusters';
 import {ClusterId, EUI64, NodeId, ProfileId} from '../tstypes';
 
 const NS = 'zh:zdo:buffalo';
@@ -1388,6 +1389,109 @@ export class BuffaloZdo extends Buffalo {
     }
 
     //-- RESPONSES
+
+    public static readResponse(clusterId: ZdoClusterId, buffer: Buffer): unknown {
+        const buffalo = new BuffaloZdo(buffer, ZDO_MESSAGE_OVERHEAD);// set pos to skip `transaction sequence number`
+
+        switch(clusterId) {
+        case ZdoClusterId.NETWORK_ADDRESS_RESPONSE: {
+            return buffalo.readNetworkAddressResponse();
+        }
+        case ZdoClusterId.IEEE_ADDRESS_RESPONSE: {
+            return buffalo.readIEEEAddressResponse();
+        }
+        case ZdoClusterId.NODE_DESCRIPTOR_RESPONSE: {
+            return buffalo.readNodeDescriptorResponse();
+        }
+        case ZdoClusterId.POWER_DESCRIPTOR_RESPONSE: {
+            return buffalo.readPowerDescriptorResponse();
+        }
+        case ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE: {
+            return buffalo.readSimpleDescriptorResponse();
+        }
+        case ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE: {
+            return buffalo.readActiveEndpointsResponse();
+        }
+        case ZdoClusterId.MATCH_DESCRIPTORS_RESPONSE: {
+            return buffalo.readMatchDescriptorsResponse();
+        }
+        case ZdoClusterId.END_DEVICE_ANNOUNCE: {
+            return buffalo.readEndDeviceAnnounce();
+        }
+        case ZdoClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE: {
+            return buffalo.readSystemServerDiscoveryResponse();
+        }
+        case ZdoClusterId.PARENT_ANNOUNCE_RESPONSE: {
+            return buffalo.readParentAnnounceResponse();
+        }
+        case ZdoClusterId.BIND_RESPONSE: {
+            return buffalo.readBindResponse();
+        }
+        case ZdoClusterId.UNBIND_RESPONSE: {
+            return buffalo.readUnbindResponse();
+        }
+        case ZdoClusterId.CLEAR_ALL_BINDINGS_RESPONSE: {
+            return buffalo.readClearAllBindingsResponse();
+        }
+        case ZdoClusterId.LQI_TABLE_RESPONSE: {
+            return buffalo.readLQITableResponse();
+        }
+        case ZdoClusterId.ROUTING_TABLE_RESPONSE: {
+            return buffalo.readRoutingTableResponse();
+        }
+        case ZdoClusterId.BINDING_TABLE_RESPONSE: {
+            return buffalo.readBindingTableResponse();
+        }
+        case ZdoClusterId.LEAVE_RESPONSE: {
+            return buffalo.readLeaveResponse();
+        }
+        case ZdoClusterId.PERMIT_JOINING_RESPONSE: {
+            return buffalo.readPermitJoiningResponse();
+        }
+        case ZdoClusterId.NWK_UPDATE_RESPONSE: {
+            return buffalo.readNwkUpdateResponse();
+        }
+        case ZdoClusterId.NWK_ENHANCED_UPDATE_RESPONSE: {
+            return buffalo.readNwkEnhancedUpdateResponse();
+        }
+        case ZdoClusterId.NWK_IEEE_JOINING_LIST_REPONSE: {
+            return buffalo.readNwkIEEEJoiningListResponse();
+        }
+        case ZdoClusterId.NWK_UNSOLICITED_ENHANCED_UPDATE_RESPONSE: {
+            return buffalo.readNwkUnsolicitedEnhancedUpdateResponse();
+        }
+        case ZdoClusterId.NWK_BEACON_SURVEY_RESPONSE: {
+            return buffalo.readNwkBeaconSurveyResponse();
+        }
+        case ZdoClusterId.START_KEY_NEGOTIATION_RESPONSE: {
+            return buffalo.readStartKeyNegotiationResponse();
+        }
+        case ZdoClusterId.RETRIEVE_AUTHENTICATION_TOKEN_RESPONSE: {
+            return buffalo.readRetrieveAuthenticationTokenResponse();
+        }
+        case ZdoClusterId.GET_AUTHENTICATION_LEVEL_RESPONSE: {
+            return buffalo.readGetAuthenticationLevelResponse();
+        }
+        case ZdoClusterId.SET_CONFIGURATION_RESPONSE: {
+            return buffalo.readSetConfigurationResponse();
+        }
+        case ZdoClusterId.GET_CONFIGURATION_RESPONSE: {
+            return buffalo.readGetConfigurationResponse();
+        }
+        case ZdoClusterId.START_KEY_UPDATE_RESPONSE: {
+            return buffalo.readStartKeyUpdateResponse();
+        }
+        case ZdoClusterId.DECOMMISSION_RESPONSE: {
+            return buffalo.readDecommissionResponse();
+        }
+        case ZdoClusterId.CHALLENGE_RESPONSE: {
+            return buffalo.readChallengeResponse();
+        }
+        default: {
+            throw new Error(`Unsupported response reading for cluster ID '${clusterId}'.`);
+        }
+        }
+    }
 
     /**
      * @see ClusterId.NETWORK_ADDRESS_RESPONSE

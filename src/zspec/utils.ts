@@ -1,4 +1,5 @@
 import {ALL_802_15_4_CHANNELS} from "./consts";
+import {BroadcastAddress} from "./enums";
 
 /**
  * Convert a channels array to a uint32 channel mask.
@@ -16,4 +17,9 @@ export const channelsToUInt32Mask = (channels: number[]): number => {
  */
 export const uint32MaskToChannels = (mask: number): number[] => {
     return ALL_802_15_4_CHANNELS.map((c: number) => ((2 ** c) & mask) ? c : null).filter((x) => x);
+};
+
+export const isBroadcastAddress = (address: number): boolean => {
+    return address === BroadcastAddress.DEFAULT || address === BroadcastAddress.RX_ON_WHEN_IDLE
+        || address === BroadcastAddress.SLEEPY || address === BroadcastAddress.LOW_POWER_ROUTERS;
 };
