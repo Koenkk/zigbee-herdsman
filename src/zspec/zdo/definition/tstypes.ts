@@ -137,7 +137,7 @@ export type LQITableEntry = {
      */
     relationship: number;
     /** This reserved bit shall be set to 0. 1-bit */
-    // reserved1: number;
+    reserved1: number;
     /**
      * An indication of whether the neighbor device is accepting join requests:
      * 0x00 = neighbor is not accepting join requests
@@ -148,7 +148,7 @@ export type LQITableEntry = {
      */
     permitJoining: number;
     /** Each of these reserved bits shall be set to 0. 6-bit */
-    // reserved2: number;
+    reserved2: number;
     /**
      * The tree depth of the neighbor device.
      * A value of 0x00 indicates that the device is the ZigBee coordinator for the network
@@ -199,7 +199,7 @@ export type RoutingTableEntry = {
      */
     routeRecordRequired: number;
     /** 2-bit */
-    // reserved: number;
+    reserved1: number;
     /** 16-bit network address of the next hop on the way to the destination. */
     nextHopAddress: number;
 };
@@ -310,6 +310,7 @@ export type NodeDescriptorResponse = {
      * Valid range of 0x0000-0x7fff.
      */
     maxOutTxSize: number;
+    deprecated1: number;
 } & TLVs;
 
 export type PowerDescriptorResponse = {
