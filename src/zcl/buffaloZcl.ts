@@ -611,7 +611,7 @@ class BuffaloZcl extends Buffalo {
                 try {
                     attribute = cluster.getAttribute(attributeID).name;
                 } catch {
-                    logger.info("Unknown attribute " + attributeID + " in cluster " + cluster.name, NS);
+                    logger.debug("Unknown attribute " + attributeID + " in cluster " + cluster.name, NS);
                 }
 
                 frame.attributes[attribute] = this.read(type, options);
