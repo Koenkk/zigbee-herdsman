@@ -1,4 +1,25 @@
+import {ClusterId} from './definition/clusters';
 import {MACCapabilityFlags, ServerMask} from './definition/tstypes';
+
+/**
+ * Get a the response cluster ID corresponding to a request.
+ * May be null if cluster does not have a response.
+ * @param requestClusterId 
+ * @returns 
+ */
+export const getResponseClusterId = (requestClusterId: ClusterId): ClusterId | null => {
+    if ((0x8000 < requestClusterId) || requestClusterId === ClusterId.END_DEVICE_ANNOUNCE) {
+        return null;
+    }
+
+    const responseClusterId = requestClusterId + 0x8000;
+
+    if (ClusterId[responseClusterId] == undefined) {
+        return null;
+    }
+
+    return responseClusterId;
+};
 
 /**
  * Get the values for the bitmap `Mac Capability Flags Field` as per spec.
