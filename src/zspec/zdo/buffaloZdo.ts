@@ -1,4 +1,3 @@
-/* istanbul ignore file */
 import Buffalo from '../../buffalo/buffalo';
 import {Status} from './definition/status';
 import {ZdoStatusError} from './zdoStatusError';
@@ -123,12 +122,12 @@ export class BuffaloZdo extends Buffalo {
 
     //-- GLOBAL TLVS
 
-    public writeManufacturerSpecificGlobalTLV(tlv: ManufacturerSpecificGlobalTLV): void {
+    private writeManufacturerSpecificGlobalTLV(tlv: ManufacturerSpecificGlobalTLV): void {
         this.writeUInt16(tlv.zigbeeManufacturerId);
         this.writeBuffer(tlv.additionalData, tlv.additionalData.length);
     }
 
-    public readManufacturerSpecificGlobalTLV(length: number): ManufacturerSpecificGlobalTLV {
+    private readManufacturerSpecificGlobalTLV(length: number): ManufacturerSpecificGlobalTLV {
         logger.debug(`readManufacturerSpecificGlobalTLV with length=${length}`, NS);
         if (length < 2) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected at least 2.`);
@@ -143,13 +142,16 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writeSupportedKeyNegotiationMethodsGlobalTLV(tlv: SupportedKeyNegotiationMethodsGlobalTLV): void {
+    private writeSupportedKeyNegotiationMethodsGlobalTLV(tlv: SupportedKeyNegotiationMethodsGlobalTLV): void {
         this.writeUInt8(tlv.keyNegotiationProtocolsBitmask);
         this.writeUInt8(tlv.preSharedSecretsBitmask);
-        this.writeIeeeAddr(tlv.sourceDeviceEui64);
+
+        if (tlv.sourceDeviceEui64) {
+            this.writeIeeeAddr(tlv.sourceDeviceEui64);
+        }
     }
 
-    public readSupportedKeyNegotiationMethodsGlobalTLV(length: number): SupportedKeyNegotiationMethodsGlobalTLV {
+    private readSupportedKeyNegotiationMethodsGlobalTLV(length: number): SupportedKeyNegotiationMethodsGlobalTLV {
         logger.debug(`readSupportedKeyNegotiationMethodsGlobalTLV with length=${length}`, NS);
         if (length < 2) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected at least 2.`);
@@ -157,7 +159,7 @@ export class BuffaloZdo extends Buffalo {
 
         const keyNegotiationProtocolsBitmask = this.readUInt8();
         const preSharedSecretsBitmask = this.readUInt8();
-        let sourceDeviceEui64: EUI64 = null;
+        let sourceDeviceEui64: EUI64;
 
         if (length >= (2 + EUI64_SIZE)) {
             sourceDeviceEui64 = this.readIeeeAddr();
@@ -170,11 +172,11 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writePanIdConflictReportGlobalTLV(tlv: PanIdConflictReportGlobalTLV): void {
+    private writePanIdConflictReportGlobalTLV(tlv: PanIdConflictReportGlobalTLV): void {
         this.writeUInt16(tlv.nwkPanIdConflictCount);
     }
 
-    public readPanIdConflictReportGlobalTLV(length: number): PanIdConflictReportGlobalTLV {
+    private readPanIdConflictReportGlobalTLV(length: number): PanIdConflictReportGlobalTLV {
         logger.debug(`readPanIdConflictReportGlobalTLV with length=${length}`, NS);
         if (length < 2) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected at least 2.`);
@@ -187,11 +189,11 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writeNextPanIdChangeGlobalTLV(tlv: NextPanIdChangeGlobalTLV): void {
+    private writeNextPanIdChangeGlobalTLV(tlv: NextPanIdChangeGlobalTLV): void {
         this.writeUInt16(tlv.panId);
     }
 
-    public readNextPanIdChangeGlobalTLV(length: number): NextPanIdChangeGlobalTLV {
+    private readNextPanIdChangeGlobalTLV(length: number): NextPanIdChangeGlobalTLV {
         logger.debug(`readNextPanIdChangeGlobalTLV with length=${length}`, NS);
         if (length < PAN_ID_SIZE) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected at least ${PAN_ID_SIZE}.`);
@@ -204,11 +206,11 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writeNextChannelChangeGlobalTLV(tlv: NextChannelChangeGlobalTLV): void {
+    private writeNextChannelChangeGlobalTLV(tlv: NextChannelChangeGlobalTLV): void {
         this.writeUInt32(tlv.channel);
     }
 
-    public readNextChannelChangeGlobalTLV(length: number): NextChannelChangeGlobalTLV {
+    private readNextChannelChangeGlobalTLV(length: number): NextChannelChangeGlobalTLV {
         logger.debug(`readNextChannelChangeGlobalTLV with length=${length}`, NS);
         if (length < 4) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected at least 4.`);
@@ -221,11 +223,11 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writeSymmetricPassphraseGlobalTLV(tlv: SymmetricPassphraseGlobalTLV): void {
+    private writeSymmetricPassphraseGlobalTLV(tlv: SymmetricPassphraseGlobalTLV): void {
         this.writeBuffer(tlv.passphrase, DEFAULT_ENCRYPTION_KEY_SIZE);
     }
 
-    public readSymmetricPassphraseGlobalTLV(length: number): SymmetricPassphraseGlobalTLV {
+    private readSymmetricPassphraseGlobalTLV(length: number): SymmetricPassphraseGlobalTLV {
         logger.debug(`readSymmetricPassphraseGlobalTLV with length=${length}`, NS);
         if (length < DEFAULT_ENCRYPTION_KEY_SIZE) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected at least ${DEFAULT_ENCRYPTION_KEY_SIZE}.`);
@@ -238,11 +240,11 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writeRouterInformationGlobalTLV(tlv: RouterInformationGlobalTLV): void {
+    private writeRouterInformationGlobalTLV(tlv: RouterInformationGlobalTLV): void {
         this.writeUInt16(tlv.bitmask);
     }
 
-    public readRouterInformationGlobalTLV(length: number): RouterInformationGlobalTLV {
+    private readRouterInformationGlobalTLV(length: number): RouterInformationGlobalTLV {
         logger.debug(`readRouterInformationGlobalTLV with length=${length}`, NS);
         if (length < 2) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected at least 2.`);
@@ -255,7 +257,7 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writeFragmentationParametersGlobalTLV(tlv: FragmentationParametersGlobalTLV): void {
+    private writeFragmentationParametersGlobalTLV(tlv: FragmentationParametersGlobalTLV): void {
         this.writeUInt16(tlv.nwkAddress);
 
         if (tlv.fragmentationOptions != undefined) {
@@ -267,15 +269,15 @@ export class BuffaloZdo extends Buffalo {
         }
     }
 
-    public readFragmentationParametersGlobalTLV(length: number): FragmentationParametersGlobalTLV {
+    private readFragmentationParametersGlobalTLV(length: number): FragmentationParametersGlobalTLV {
         logger.debug(`readFragmentationParametersGlobalTLV with length=${length}`, NS);
         if (length < 2) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected at least 2.`);
         }
 
         const nwkAddress = this.readUInt16();
-        let fragmentationOptions: number = null;
-        let maxIncomingTransferUnit: number = null;
+        let fragmentationOptions: number;
+        let maxIncomingTransferUnit: number;
 
         if (length >= 3) {
             fragmentationOptions = this.readUInt8();
@@ -292,11 +294,11 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writeJoinerEncapsulationGlobalTLV(encapsulationTLV: JoinerEncapsulationGlobalTLV): void {
+    private writeJoinerEncapsulationGlobalTLV(encapsulationTLV: JoinerEncapsulationGlobalTLV): void {
         this.writeGlobalTLVs(encapsulationTLV.additionalTLVs);
     }
 
-    public readJoinerEncapsulationGlobalTLV(length: number): JoinerEncapsulationGlobalTLV {
+    private readJoinerEncapsulationGlobalTLV(length: number): JoinerEncapsulationGlobalTLV {
         logger.debug(`readJoinerEncapsulationGlobalTLV with length=${length}`, NS);
         // at least the length of tagId+length for first encapsulated tlv, doesn't make sense otherwise
         if (length < 2) {
@@ -311,11 +313,11 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writeBeaconAppendixEncapsulationGlobalTLV(encapsulationTLV: BeaconAppendixEncapsulationGlobalTLV): void {
+    private writeBeaconAppendixEncapsulationGlobalTLV(encapsulationTLV: BeaconAppendixEncapsulationGlobalTLV): void {
         this.writeGlobalTLVs(encapsulationTLV.additionalTLVs);
     }
 
-    public readBeaconAppendixEncapsulationGlobalTLV(length: number): BeaconAppendixEncapsulationGlobalTLV {
+    private readBeaconAppendixEncapsulationGlobalTLV(length: number): BeaconAppendixEncapsulationGlobalTLV {
         logger.debug(`readBeaconAppendixEncapsulationGlobalTLV with length=${length}`, NS);
         // at least the length of tagId+length for first encapsulated tlv, doesn't make sense otherwise
         if (length < 2) {
@@ -332,11 +334,11 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writeConfigurationParametersGlobalTLV(configurationParameters: ConfigurationParametersGlobalTLV): void {
+    private writeConfigurationParametersGlobalTLV(configurationParameters: ConfigurationParametersGlobalTLV): void {
         this.writeUInt16(configurationParameters.configurationParameters);
     }
 
-    public readConfigurationParametersGlobalTLV(length: number): ConfigurationParametersGlobalTLV {
+    private readConfigurationParametersGlobalTLV(length: number): ConfigurationParametersGlobalTLV {
         logger.debug(`readConfigurationParametersGlobalTLV with length=${length}`, NS);
         if (length < 2) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected at least 2.`);
@@ -349,11 +351,11 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writeDeviceCapabilityExtensionGlobalTLV(tlv: DeviceCapabilityExtensionGlobalTLV): void {
+    private writeDeviceCapabilityExtensionGlobalTLV(tlv: DeviceCapabilityExtensionGlobalTLV): void {
         this.writeBuffer(tlv.data, tlv.data.length);
     }
 
-    public readDeviceCapabilityExtensionGlobalTLV(length: number): DeviceCapabilityExtensionGlobalTLV {
+    private readDeviceCapabilityExtensionGlobalTLV(length: number): DeviceCapabilityExtensionGlobalTLV {
         logger.debug(`readDeviceCapabilityExtensionGlobalTLV with length=${length}`, NS);
         const data = this.readBuffer(length);
 
@@ -474,24 +476,26 @@ export class BuffaloZdo extends Buffalo {
 
     //-- LOCAL TLVS
 
-    public readBeaconSurveyConfigurationTLV(length: number): BeaconSurveyConfigurationTLV {
-        logger.debug(`readBeaconSurveyConfigurationTLV with length=${length}`, NS);
-        const count = this.readUInt8();
+    // write only
+    // private readBeaconSurveyConfigurationTLV(length: number): BeaconSurveyConfigurationTLV {
+    //     logger.debug(`readBeaconSurveyConfigurationTLV with length=${length}`, NS);
+    //     const count = this.readUInt8();
 
-        if (length !== (1 + (count * 4) + 1)) {
-            throw new Error(`Malformed TLV. Invalid length '${length}', expected ${(1 + (count * 4) + 1)}.`);
-        }
+    //     /* istanbul ignore else */
+    //     if (length !== (1 + (count * 4) + 1)) {
+    //         throw new Error(`Malformed TLV. Invalid length '${length}', expected ${(1 + (count * 4) + 1)}.`);
+    //     }
 
-        const scanChannelList = this.readListUInt32(count);
-        const configurationBitmask = this.readUInt8();
+    //     const scanChannelList = this.readListUInt32(count);
+    //     const configurationBitmask = this.readUInt8();
 
-        return {
-            scanChannelList,
-            configurationBitmask,
-        };
-    }
+    //     return {
+    //         scanChannelList,
+    //         configurationBitmask,
+    //     };
+    // }
 
-    public readCurve25519PublicPointTLV(length: number): Curve25519PublicPointTLV {
+    private readCurve25519PublicPointTLV(length: number): Curve25519PublicPointTLV {
         logger.debug(`readCurve25519PublicPointTLV with length=${length}`, NS);
         if (length !== (EUI64_SIZE + CURVE_PUBLIC_POINT_SIZE)) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected ${(EUI64_SIZE + CURVE_PUBLIC_POINT_SIZE)}.`);
@@ -506,58 +510,64 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public readTargetIEEEAddressTLV(length: number): TargetIEEEAddressTLV {
-        logger.debug(`readTargetIEEEAddressTLV with length=${length}`, NS);
-        if (length !== EUI64_SIZE) {
-            throw new Error(`Malformed TLV. Invalid length '${length}', expected ${EUI64_SIZE}.`);
-        }
+    // write only
+    // private readTargetIEEEAddressTLV(length: number): TargetIEEEAddressTLV {
+    //     logger.debug(`readTargetIEEEAddressTLV with length=${length}`, NS);
+    //     /* istanbul ignore else */
+    //     if (length !== EUI64_SIZE) {
+    //         throw new Error(`Malformed TLV. Invalid length '${length}', expected ${EUI64_SIZE}.`);
+    //     }
 
-        const ieee = this.readIeeeAddr();
+    //     const ieee = this.readIeeeAddr();
 
-        return {
-            ieee,
-        };
-    }
+    //     return {
+    //         ieee,
+    //     };
+    // }
 
-    public readSelectedKeyNegotiationMethodTLV(length: number): SelectedKeyNegotiationMethodTLV {
-        logger.debug(`readSelectedKeyNegotiationMethodTLV with length=${length}`, NS);
-        if (length !== 10) {
-            throw new Error(`Malformed TLV. Invalid length '${length}', expected 10.`);
-        }
+    // write only
+    // private readSelectedKeyNegotiationMethodTLV(length: number): SelectedKeyNegotiationMethodTLV {
+    //     logger.debug(`readSelectedKeyNegotiationMethodTLV with length=${length}`, NS);
+    //     /* istanbul ignore else */
+    //     if (length !== 10) {
+    //         throw new Error(`Malformed TLV. Invalid length '${length}', expected 10.`);
+    //     }
 
-        const protocol = this.readUInt8();
-        const presharedSecret = this.readUInt8();
-        const sendingDeviceEui64 = this.readIeeeAddr();
+    //     const protocol = this.readUInt8();
+    //     const presharedSecret = this.readUInt8();
+    //     const sendingDeviceEui64 = this.readIeeeAddr();
 
-        return {
-            protocol,
-            presharedSecret,
-            sendingDeviceEui64,
-        };
-    }
+    //     return {
+    //         protocol,
+    //         presharedSecret,
+    //         sendingDeviceEui64,
+    //     };
+    // }
 
-    public readDeviceEUI64ListTLV(length: number): DeviceEUI64ListTLV {
-        logger.debug(`readDeviceEUI64ListTLV with length=${length}`, NS);
-        const count = this.readUInt8();
+    // write only
+    // private readDeviceEUI64ListTLV(length: number): DeviceEUI64ListTLV {
+    //     logger.debug(`readDeviceEUI64ListTLV with length=${length}`, NS);
+    //     const count = this.readUInt8();
 
-        if (length !== (1 + (count * EUI64_SIZE))) {
-            throw new Error(`Malformed TLV. Invalid length '${length}', expected ${(1 + (count * EUI64_SIZE))}.`);
-        }
+    //     /* istanbul ignore else */
+    //     if (length !== (1 + (count * EUI64_SIZE))) {
+    //         throw new Error(`Malformed TLV. Invalid length '${length}', expected ${(1 + (count * EUI64_SIZE))}.`);
+    //     }
 
-        const eui64List: DeviceEUI64ListTLV['eui64List'] = [];
+    //     const eui64List: DeviceEUI64ListTLV['eui64List'] = [];
 
-        for (let i = 0; i < count; i++) {
-            const eui64 = this.readIeeeAddr();
+    //     for (let i = 0; i < count; i++) {
+    //         const eui64 = this.readIeeeAddr();
 
-            eui64List.push(eui64);
-        }
+    //         eui64List.push(eui64);
+    //     }
 
-        return {
-            eui64List,
-        };
-    }
+    //     return {
+    //         eui64List,
+    //     };
+    // }
 
-    public readAPSFrameCounterResponseTLV(length: number): APSFrameCounterResponseTLV {
+    private readAPSFrameCounterResponseTLV(length: number): APSFrameCounterResponseTLV {
         logger.debug(`readAPSFrameCounterResponseTLV with length=${length}`, NS);
         if (length !== 32) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected 32.`);
@@ -578,7 +588,7 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public readBeaconSurveyResultsTLV(length: number): BeaconSurveyResultsTLV {
+    private readBeaconSurveyResultsTLV(length: number): BeaconSurveyResultsTLV {
         logger.debug(`readBeaconSurveyResultsTLV with length=${length}`, NS);
         if (length !== 4) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected 4.`);
@@ -597,7 +607,7 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public readPotentialParentsTLV(length: number): PotentialParentsTLV {
+    private readPotentialParentsTLV(length: number): PotentialParentsTLV {
         logger.debug(`readPotentialParentsTLV with length=${length}`, NS);
         if (length < 4) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected at least 4.`);
@@ -632,7 +642,7 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public readDeviceAuthenticationLevelTLV(length: number): DeviceAuthenticationLevelTLV {
+    private readDeviceAuthenticationLevelTLV(length: number): DeviceAuthenticationLevelTLV {
         logger.debug(`readDeviceAuthenticationLevelTLV with length=${length}`, NS);
         if (length !== 10) {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected 10.`);
@@ -649,7 +659,7 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public readProcessingStatusTLV(length: number): ProcessingStatusTLV {
+    private readProcessingStatusTLV(length: number): ProcessingStatusTLV {
         logger.debug(`readProcessingStatusTLV with length=${length}`, NS);
         const count = this.readUInt8();
 
@@ -704,6 +714,7 @@ export class BuffaloZdo extends Buffalo {
 
             const length = this.readUInt8() + 1;// add offset (spec quirk...)
 
+            console.log(this.position, length);
             // validation: invalid if not at least ${length} bytes to read
             if (!this.isMoreBy(length)) {
                 throw new Error(`Malformed TLV. Invalid data length for tagId=${tagId}, expected ${length}.`);
@@ -714,11 +725,13 @@ export class BuffaloZdo extends Buffalo {
             let tlv: TLV['tlv'] = null;
 
             if (tagId < GlobalTLV.MANUFACTURER_SPECIFIC) {
+                /* istanbul ignore else */
                 if (localTLVReaders) {
                     const localTLVReader = localTLVReaders.get(tagId);
 
+                    /* istanbul ignore else */
                     if (localTLVReader) {
-                        tlv = localTLVReader(length);
+                        tlv = localTLVReader.call(this, length);
                     } else {
                         logger.debug(`Local TLV found tagId=${tagId} but no reader given for it. Ignoring it.`, NS);
                     }
@@ -730,12 +743,15 @@ export class BuffaloZdo extends Buffalo {
             }
 
             // validation: unknown tag shall be ignored
+            /* istanbul ignore else */
             if (tlv != null) {
                 tlvs.push({
                     tagId,
                     length,
                     tlv,
                 });
+            } else {
+                logger.debug(`Unknown TLV tagId=${tagId}. Ignoring it.`, NS);
             }
 
             // ensure we're at the right position as dictated by the tlv length field, and not the tlv reader (should be the same if proper)
@@ -792,10 +808,12 @@ export class BuffaloZdo extends Buffalo {
         if (fragmentationParameters) {
             let length = 2;
             
+            /* istanbul ignore else */
             if (fragmentationParameters.fragmentationOptions) {
                 length += 1;
             }
 
+            /* istanbul ignore else */
             if (fragmentationParameters.maxIncomingTransferUnit) {
                 length += 2;
             }
@@ -1107,15 +1125,15 @@ export class BuffaloZdo extends Buffalo {
     /**
      * Shortcut for @see BuffaloZdo.buildNwkUpdateRequest
      */
-    public static buildChannelChangeRequest(channel: number): Buffer {
-        return BuffaloZdo.buildNwkUpdateRequest([channel], 0xFE, null, null, null);
+    public static buildChannelChangeRequest(channel: number, nwkUpdateId: number | null): Buffer {
+        return BuffaloZdo.buildNwkUpdateRequest([channel], 0xFE, null, nwkUpdateId, null);
     }
 
     /**
      * Shortcut for @see BuffaloZdo.buildNwkUpdateRequest
      */
-    public static buildSetActiveChannelsAndNwkManagerIdRequest(channels: number[], nwkManagerAddr: NodeId): Buffer {
-        return BuffaloZdo.buildNwkUpdateRequest(channels, 0xFF, null, null, nwkManagerAddr);
+    public static buildSetActiveChannelsAndNwkManagerIdRequest(channels: number[], nwkUpdateId: number | null, nwkManagerAddr: NodeId): Buffer {
+        return BuffaloZdo.buildNwkUpdateRequest(channels, 0xFF, null, nwkUpdateId, nwkManagerAddr);
     }
 
     /**
@@ -1170,6 +1188,7 @@ export class BuffaloZdo extends Buffalo {
             buffalo.writeUInt16(nwkManagerAddr);
         }
 
+        /* istanbul ignore else */
         if (configurationBitmask != null) {
             buffalo.writeUInt8(configurationBitmask);
         }
@@ -1319,10 +1338,12 @@ export class BuffaloZdo extends Buffalo {
         {
             let length = 2;
 
+            /* istanbul ignore else */
             if (fragmentationParameters.fragmentationOptions) {
                 length += 1;
             }
 
+            /* istanbul ignore else */
             if (fragmentationParameters.maxIncomingTransferUnit) {
                 length += 2;
             }
@@ -1452,8 +1473,7 @@ export class BuffaloZdo extends Buffalo {
             const maxIncTxSize = this.readUInt16();
             const serverMask = Utils.getServerMask(this.readUInt16());
             const maxOutTxSize = this.readUInt16();
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const descCapFlags = this.readUInt8();// deprecated
+            const deprecated1 = this.readUInt8();
             // Global: FragmentationParametersGlobalTLV
             const tlvs: TLV[] = this.readTLVs();
 
@@ -1469,6 +1489,7 @@ export class BuffaloZdo extends Buffalo {
                 maxIncTxSize,
                 serverMask,
                 maxOutTxSize,
+                deprecated1,
                 tlvs,
             };
         }
@@ -1635,6 +1656,7 @@ export class BuffaloZdo extends Buffalo {
     public readBindResponse(): void {
         const status: Status = this.readUInt8();
 
+        /* istanbul ignore else */
         if (status !== Status.SUCCESS) {
             // NOT_SUPPORTED, INVALID_EP, TABLE_FULL, or NOT_AUTHORIZED
             throw new ZdoStatusError(status);
@@ -1648,6 +1670,7 @@ export class BuffaloZdo extends Buffalo {
     public readUnbindResponse(): void {
         const status: Status = this.readUInt8();
 
+        /* istanbul ignore else */
         if (status !== Status.SUCCESS) {
             // NOT_SUPPORTED, INVALID_EP, NO_ENTRY or NOT_AUTHORIZED
             throw new ZdoStatusError(status);
@@ -1661,6 +1684,7 @@ export class BuffaloZdo extends Buffalo {
     public readClearAllBindingsResponse(): void {
         const status: Status = this.readUInt8();
 
+        /* istanbul ignore else */
         if (status !== Status.SUCCESS) {
             // NOT_SUPPORTED, NOT_AUTHORIZED, INV_REQUESTTYPE, or NO_MATCH.
             throw new ZdoStatusError(status);
@@ -1699,9 +1723,9 @@ export class BuffaloZdo extends Buffalo {
                     deviceType: deviceTypeByte & 0x03,
                     rxOnWhenIdle: (deviceTypeByte & 0x0C) >> 2,
                     relationship: (deviceTypeByte & 0x70) >> 4,
-                    // reserved1: (deviceTypeByte & 0x10) >> 7,
+                    reserved1: (deviceTypeByte & 0x10) >> 7,
                     permitJoining: permitJoiningByte & 0x03,
-                    // reserved2: (permitJoiningByte & 0xFC) >> 2,
+                    reserved2: (permitJoiningByte & 0xFC) >> 2,
                     depth,
                     lqi,
                 });
@@ -1742,7 +1766,7 @@ export class BuffaloZdo extends Buffalo {
                     memoryConstrained: (statusByte & 0x08) >> 3,
                     manyToOne: (statusByte & 0x10) >> 4,
                     routeRecordRequired: (statusByte & 0x20) >> 5,
-                    // reserved: (statusByte & 0xC0) >> 6,
+                    reserved1: (statusByte & 0xC0) >> 6,
                     nextHopAddress,
                 });
             }
@@ -1804,6 +1828,7 @@ export class BuffaloZdo extends Buffalo {
     public readLeaveResponse(): void {
         const status: Status = this.readUInt8();
 
+        /* istanbul ignore else */
         if (status !== Status.SUCCESS) {
             // NOT_SUPPORTED, NOT_AUTHORIZED or any status code returned from the NLMELEAVE.confirm primitive.
             throw new ZdoStatusError(status);
@@ -1817,6 +1842,7 @@ export class BuffaloZdo extends Buffalo {
     public readPermitJoiningResponse(): void {
         const status: Status = this.readUInt8();
 
+        /* istanbul ignore else */
         if (status !== Status.SUCCESS) {
             // INV_REQUESTTYPE, NOT_AUTHORIZED, or any status code returned from the NLME-PERMIT-JOINING.confirm primitive.
             throw new ZdoStatusError(status);
@@ -1894,7 +1920,7 @@ export class BuffaloZdo extends Buffalo {
 
             if (entryListTotal > 0) {
                 startIndex = this.readUInt8();
-                const entryCount = this.readUInt8();// XXX: duplicate of entryListTotal in spec?
+                const entryCount = this.readUInt8();
                 entryList = [];
 
                 for (let i = 0; i < entryCount; i++) {
@@ -1995,9 +2021,8 @@ export class BuffaloZdo extends Buffalo {
         if (status !== Status.SUCCESS) {
             throw new ZdoStatusError(status);
         } else {
-            // TODO
-            const localTLVs = new Map<number, LocalTLVReader>();
-            const tlvs: TLV[] = this.readTLVs(localTLVs);
+            // no local TLV
+            const tlvs: TLV[] = this.readTLVs();
 
             return {
                 tlvs,
@@ -2075,6 +2100,7 @@ export class BuffaloZdo extends Buffalo {
     public readStartKeyUpdateResponse(): void {
         const status: Status = this.readUInt8();
 
+        /* istanbul ignore else */
         if (status !== Status.SUCCESS) {
             // INV_REQUESTTYPE, NOT_AUTHORIZED or NOT_SUPPORTED
             throw new ZdoStatusError(status);
@@ -2088,6 +2114,7 @@ export class BuffaloZdo extends Buffalo {
     public readDecommissionResponse(): void {
         const status: Status = this.readUInt8();
 
+        /* istanbul ignore else */
         if (status !== Status.SUCCESS) {
             // INV_REQUESTTYPE, NOT_AUTHORIZED or NOT_SUPPORTED
             throw new ZdoStatusError(status);
