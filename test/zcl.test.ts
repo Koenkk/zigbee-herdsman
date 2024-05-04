@@ -726,28 +726,28 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame with Ubisys (manufacturer specific) cluster create', () => {
-        const payload = [{attrId: 0x0000, status: 0, attrData: 1, dataType: 32}];
+    it('ZclFrame with Assa (manufacturer specific) cluster create', () => {
+        const payload = [{attrId: 0x0012, status: 0, attrData: 1, dataType: 32}];
         const frame = Zcl.ZclFrame.create(
-            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f2, 8, 'readRsp', 0xfc00, payload, {},
+            FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x101D, 8, 'readRsp', 0xfc00, payload, {},
         );
 
-        expect(frame.cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+        expect(frame.cluster.name).toBe('manuSpecificAssaDoorLock');
     });
 
-    it('ZclFrame with Ubisys (manufacturer specific) cluster create with non Ubisys manufcode', () => {
-        const payload = [{attrId: 0x0000, status: 0, attrData: 1, dataType: 32}];
+    it('ZclFrame with Assa (manufacturer specific) cluster create with non Assamanufcode', () => {
+        const payload = [{attrId: 0x0012, status: 0, attrData: 1, dataType: 32}];
         const frame = Zcl.ZclFrame.create(
             FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f3, 8, 'readRsp', 0xfc00, payload, {},
         );
 
-        expect(frame.cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+        expect(frame.cluster.name).toBe('manuSpecificAssaDoorLock');
     });
 
-    it('ZclFrame with Ubisys (manufacturer specific) cluster fromBuffer', () => {
+    it('ZclFrame with Assa (manufacturer specific) cluster fromBuffer', () => {
         const buffer = Buffer.from([0x04, 0xf2, 0x10, 0x08, 0x01, 0x00, 0x00, 0x00, 0x20, 0x01])
         const frame = Zcl.ZclFrame.fromBuffer(0xfc00, Zcl.ZclHeader.fromBuffer(buffer)!, buffer, {});
-        expect(frame.cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+        expect(frame.cluster.name).toBe('manuSpecificAssaDoorLock');
     });
 
     it('ZclFrame to buffer with reservered bits', () => {
@@ -1627,7 +1627,7 @@ describe('Zcl', () => {
     it('Zcl utils get cluster without manufacturerCode', () => {
         const cluster = Zcl.Utils.getCluster(0xfc00, null, {});
         expect(cluster.ID).toBe(0xfc00);
-        expect(cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+        expect(cluster.name).toBe('manuSpecificAssaDoorLock');
     });
 
     it('Zcl utils get cluster with manufacturerCode', () => {
@@ -1639,19 +1639,19 @@ describe('Zcl', () => {
     it('Zcl utils get cluster manufacturerCode', () => {
         const cluster = Zcl.Utils.getCluster(0xfc00, 0x10f2, {});
         expect(cluster.ID).toBe(0xfc00);
-        expect(cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+        expect(cluster.name).toBe('manuSpecificAssaDoorLock');
     });
 
     it('Zcl utils get cluster manufacturerCode wrong', () => {
         const cluster = Zcl.Utils.getCluster(0xfc00, 123, {});
         expect(cluster.ID).toBe(0xfc00);
-        expect(cluster.name).toBe('manuSpecificUbisysDeviceSetup');
+        expect(cluster.name).toBe('manuSpecificAssaDoorLock');
     });
 
     it('Zcl utils get cluster attributes manufacturerCode', () => {
-        const cluster = Zcl.Utils.getCluster('closuresWindowCovering', 0x10f2, {});
-        const attribute = cluster.getAttribute(0x1000);
-        expect(attribute).toStrictEqual({"ID": 4096, "manufacturerCode": 4338, "name": "ubisysTurnaroundGuardTime", "type": 32});
+        const cluster = Zcl.Utils.getCluster('closuresWindowCovering', 0x1021);
+        const attribute = cluster.getAttribute(0xf004);
+        expect(attribute).toStrictEqual({"ID": 0xf004, "manufacturerCode": 0x1021, "name": "stepPositionTilt", "type": 48});
     });
 
     it('Zcl utils get cluster attributes manufacturerCode wrong', () => {
