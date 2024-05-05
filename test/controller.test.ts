@@ -2462,6 +2462,19 @@ describe('Controller', () => {
         expect(events.message[0].cluster).toBe('myCustomCluster');
     });
 
+    it('Should allow to specify custom cluster as override for Zcl cluster', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        device.addCustomCluster('myCustomCluster', {ID: Zcl.Clusters.genBasic.ID, commands: {}, commandsResponse: {}, attributes: {customAttr: {ID: 256, type: Zcl.DataType.UINT8}}});
+        const buffer = Buffer.from([24,169,10,0,1,24,3,0,0,24,1]);
+        const header = Zcl.Header.fromBuffer(buffer);
+        await mockAdapterEvents['zclPayload']({wasBroadcast: false, address: 129, clusterID: Zcl.Clusters.genBasic.ID, data: buffer, header, endpoint: 1, linkquality: 50, groupID: 1});
+        expect(events.message.length).toBe(1);
+        expect(events.message[0].data).toStrictEqual({customAttr: 3, 0: 1/*zclVersion no longer recognized, cluster is overridden*/});
+        expect(events.message[0].cluster).toBe('myCustomCluster');
+    });
+
     it('Send zcl command to all no options', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
