@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.46.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.1...v0.46.2) (2024-05-05)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1046](https://github.com/Koenkk/zigbee-herdsman/issues/1046)) ([440bb5c](https://github.com/Koenkk/zigbee-herdsman/commit/440bb5c67c00bb6910f2dd021c1fb9b81e02318e))
+* Move `Unknown attribute` log to debug https://github.com/Koenkk/zigbee2mqtt/issues/22396 ([70e6a9f](https://github.com/Koenkk/zigbee-herdsman/commit/70e6a9fa2f68a8d2eeb141a6b241850f58b2a580))
+
 ## [0.46.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.0...v0.46.1) (2024-05-04)
 
 
