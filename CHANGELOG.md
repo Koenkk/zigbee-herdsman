@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.46.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.2...v0.46.3) (2024-05-05)
+
+
+### Bug Fixes
+
+* Add `commandMoveToHueAndSaturation` https://github.com/Koenkk/zigbee2mqtt/issues/22467 ([9caef05](https://github.com/Koenkk/zigbee-herdsman/commit/9caef0516ea546de3ce34c5852887ae426a5a2ec))
+
 ## [0.46.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.1...v0.46.2) (2024-05-05)
 
 
