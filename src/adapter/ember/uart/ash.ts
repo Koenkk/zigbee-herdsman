@@ -644,11 +644,11 @@ export class UartAsh extends EventEmitter {
             logger.error(`Error while flushing before start: ${err}`, NS);
         }
 
-        this.sendExec();
-
         // block til RSTACK, fatal error or timeout
         // NOTE: on average, this seems to take around 1000ms when successful
         for (let i = 0; i < CONFIG_TIME_RST; i += CONFIG_TIME_RST_CHECK) {
+            this.sendExec();
+
             if ((this.flags & Flag.CONNECTED)) {
                 logger.info(`======== ASH started ========`, NS);
 
