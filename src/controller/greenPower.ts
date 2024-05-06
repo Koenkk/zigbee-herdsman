@@ -89,7 +89,8 @@ class GreenPower extends events.EventEmitter {
 
     public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame): Promise<void> {
         try {
-            switch(frame.payload.commandID) {
+            const commandID = frame.payload.commandID  ?? frame.header.commandIdentifier;
+            switch(commandID) {
             /* istanbul ignore next */
             case undefined:
                 logger.error(`Received undefined command from '${dataPayload.address}'`, NS);
@@ -207,7 +208,7 @@ class GreenPower extends events.EventEmitter {
                 break;
             default:
                 // NOTE: this is spammy because it logs everything that is handed back to Controller without special processing here
-                logger.debug(`Received unhandled command '0x${frame.payload.commandID.toString(16)}' from '${dataPayload.address}'`, NS);
+                logger.debug(`Received unhandled command '0x${commandID.toString(16)}' from '${dataPayload.address}'`, NS);
             }
         } catch (error) {
             /* istanbul ignore next */
