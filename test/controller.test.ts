@@ -4425,6 +4425,25 @@ describe('Controller', () => {
         await mockAdapterEvents['']
     });
 
+    it('Should handle comissioning frame gracefully', async () => {
+        await controller.start();
+        const buffer = Buffer.from([25,10,2,11,254,0]);
+        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.ZclHeader.fromBuffer(buffer)!, buffer, {});
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: true,
+            address: 0x46f4fe,
+            clusterID: frame.cluster.ID,
+            data: buffer,
+            header: frame.header,
+            endpoint: 242,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(mockLogger.error).toHaveBeenCalledTimes(0);
+        expect(mockLogger.debug).toHaveBeenCalledWith(`Received unhandled command '0x2' from '4650238'`, `zh:controller:greenpower`);
+    });
+
     it('Should ignore invalid green power frame', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
