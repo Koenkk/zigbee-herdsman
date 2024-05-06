@@ -4428,7 +4428,7 @@ describe('Controller', () => {
     it('Should handle comissioning frame gracefully', async () => {
         await controller.start();
         const buffer = Buffer.from([25,10,2,11,254,0]);
-        const frame = Zcl.ZclFrame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.ZclHeader.fromBuffer(buffer)!, buffer, {});
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
             address: 0x46f4fe,
