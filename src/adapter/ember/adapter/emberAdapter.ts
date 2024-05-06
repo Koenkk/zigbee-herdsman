@@ -2914,29 +2914,31 @@ export class EmberAdapter extends Adapter {
     // queued
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
         if (!key) {
-            throw new Error(`[ADD INSTALL CODE] Failed for "${ieeeAddress}"; no code given.`);
+            throw new Error(`[ADD INSTALL CODE] Failed for '${ieeeAddress}'; no code given.`);
         }
 
-        if (EMBER_INSTALL_CODE_SIZES.indexOf(key.length) === -1) {
-            throw new Error(`[ADD INSTALL CODE] Failed for "${ieeeAddress}"; invalid code size.`);
-        }
+        // codes with CRC, check CRC before sending to NCP, otherwise let NCP handle
+        if (EMBER_INSTALL_CODE_SIZES.indexOf(key.length) !== -1) {
+            // Reverse the bits in a byte (uint8_t)
+            const reverse = (b: number): number => {
+                return (((b * 0x0802 & 0x22110) | (b * 0x8020 & 0x88440)) * 0x10101 >> 16) & 0xFF;
+            };
+            let crc = 0xFFFF;// uint16_t
 
-        // Reverse the bits in a byte (uint8_t)
-        const reverse = (b: number): number => {
-            return (((b * 0x0802 & 0x22110) | (b * 0x8020 & 0x88440)) * 0x10101 >> 16) & 0xFF;
-        };
-        let crc = 0xFFFF;// uint16_t
+            // Compute the CRC and verify that it matches.
+            // The bit reversals, byte swap, and ones' complement are due to differences between halCommonCrc16 and the Smart Energy version.
+            for (let index = 0; index < (key.length - EMBER_INSTALL_CODE_CRC_SIZE); index++) {
+                crc = halCommonCrc16(reverse(key[index]), crc);
+            }
 
-        // Compute the CRC and verify that it matches.
-        // The bit reversals, byte swap, and ones' complement are due to differences between halCommonCrc16 and the Smart Energy version.
-        for (let index = 0; index < (key.length - EMBER_INSTALL_CODE_CRC_SIZE); index++) {
-            crc = halCommonCrc16(reverse(key[index]), crc);
-        }
+            crc = (~highLowToInt(reverse(lowByte(crc)), reverse(highByte(crc)))) & 0xFFFF;
 
-        crc = (~highLowToInt(reverse(lowByte(crc)), reverse(highByte(crc)))) & 0xFFFF;
-
-        if (key[key.length - EMBER_INSTALL_CODE_CRC_SIZE] !== lowByte(crc) || key[key.length - EMBER_INSTALL_CODE_CRC_SIZE + 1] !== highByte(crc)) {
-            throw new Error(`[ADD INSTALL CODE] Failed for "${ieeeAddress}"; invalid code CRC.`);
+            if (key[key.length - EMBER_INSTALL_CODE_CRC_SIZE] !== lowByte(crc)
+                || key[key.length - EMBER_INSTALL_CODE_CRC_SIZE + 1] !== highByte(crc)) {
+                throw new Error(`[ADD INSTALL CODE] Failed for '${ieeeAddress}'; invalid code CRC.`);
+            } else {
+                logger.debug(`[ADD INSTALL CODE] CRC validated for '${ieeeAddress}'.`, NS);
+            }
         }
 
         return new Promise<void>((resolve, reject): void => {
@@ -2946,7 +2948,7 @@ export class EmberAdapter extends Adapter {
                     const [aesStatus, keyContents] = (await this.emberAesHashSimple(key));
 
                     if (aesStatus !== EmberStatus.SUCCESS) {
-                        logger.error(`[ADD INSTALL CODE] Failed AES hash for "${ieeeAddress}" with status=${EmberStatus[aesStatus]}.`, NS);
+                        logger.error(`[ADD INSTALL CODE] Failed AES hash for '${ieeeAddress}' with status=${EmberStatus[aesStatus]}.`, NS);
                         return aesStatus;
                     }
 
@@ -2955,9 +2957,9 @@ export class EmberAdapter extends Adapter {
                     const impStatus = (await this.ezsp.ezspImportTransientKey(ieeeAddress, {contents: keyContents}, SecManFlag.NONE));
 
                     if (impStatus == SLStatus.OK) {
-                        logger.debug(`[ADD INSTALL CODE] Success for "${ieeeAddress}".`, NS);
+                        logger.debug(`[ADD INSTALL CODE] Success for '${ieeeAddress}'.`, NS);
                     } else {
-                        logger.error(`[ADD INSTALL CODE] Failed for "${ieeeAddress}" with status=${SLStatus[impStatus]}.`, NS);
+                        logger.error(`[ADD INSTALL CODE] Failed for '${ieeeAddress}' with status=${SLStatus[impStatus]}.`, NS);
                         return EmberStatus.ERR_FATAL;
                     }
 
@@ -3733,7 +3735,7 @@ export class EmberAdapter extends Adapter {
 
                     if (CHECK_APS_PAYLOAD_LENGTH) {
                         const maxPayloadLength = (
-                            await this.maximumApsPayloadLength(EmberOutgoingMessageType.BROADCAST, EMBER_RX_ON_WHEN_IDLE_BROADCAST_ADDRESS, apsFrame)
+                            await this.maximumApsPayloadLength(EmberOutgoingMessageType.BROADCAST, destination, apsFrame)
                         );
 
                         if (data.length > maxPayloadLength) {
@@ -3745,7 +3747,7 @@ export class EmberAdapter extends Adapter {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const [status, messageTag] = (await this.ezsp.send(
                         EmberOutgoingMessageType.BROADCAST,
-                        EMBER_RX_ON_WHEN_IDLE_BROADCAST_ADDRESS,
+                        destination,
                         apsFrame,
                         data,
                         0,// alias

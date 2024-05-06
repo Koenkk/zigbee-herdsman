@@ -44,3 +44,14 @@ export const NCP_ACK_FIRST = [
     0x59,// CRC Low
     AshReservedByte.FLAG
 ];
+/**
+ * ACK sent by ASH (Z2M) after RSTACK received.
+ * 
+ * ACK(0)+
+ */
+export const ASH_ACK_FIRST = [
+    AshFrameType.ACK,
+    0x70,// CRC High
+    0x78,// CRC Low
+    AshReservedByte.FLAG
+];

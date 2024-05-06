@@ -14,13 +14,11 @@ import {EzspStatus} from "../../../src/adapter/ember/enums";
 import {EzspBuffer} from "../../../src/adapter/ember/uart/queues";
 import {UartAsh} from "../../../src/adapter/ember/uart/ash";
 import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from "../../../src/adapter/ember/uart/consts";
-import {RECD_RSTACK_BYTES, SEND_RST_BYTES, NCP_ACK_FIRST, adapterSONOFFDongleE} from "./consts";
+import {RECD_RSTACK_BYTES, SEND_RST_BYTES, NCP_ACK_FIRST, adapterSONOFFDongleE, ASH_ACK_FIRST} from "./consts";
 import {EzspBuffalo} from "../../../src/adapter/ember/ezsp/buffalo.ts";
 import {lowByte} from '../../../src/adapter/ember/utils/math';
 import {EzspFrameID} from '../../../src/adapter/ember/ezsp/enums.ts';
 import {Wait} from '../../../src/utils/';
-
-const consoleLogNative = console.log;
 
 // XXX: Below are copies from uart>ash.ts, should be kept in sync (avoids export)
 /** max frames sent without being ACKed (1-7) */
@@ -74,11 +72,9 @@ describe('Ember UART ASH Protocol', () => {
 
     beforeAll(async () => {
         jest.useRealTimers();// messes with serialport promise handling otherwise?
-        console.log = jest.fn();
     });
     afterAll(async () => {
         jest.useRealTimers();
-        console.log = consoleLogNative;
     });
     beforeEach(() => {
         for (const mock of mocks) {
@@ -156,6 +152,7 @@ describe('Ember UART ASH Protocol', () => {
         expect(uartAsh.txQueue.length).toStrictEqual(2);
         expect(uartAsh.txFree.length).toStrictEqual(TX_POOL_BUFFERS - 2);
     });
+
     it('Reaches CONNECTED state', async () => {
         //@ts-expect-error private
         const initVariablesSpy = jest.spyOn(uartAsh, 'initVariables');
@@ -193,18 +190,20 @@ describe('Ember UART ASH Protocol', () => {
         const startResult = (await uartAsh.start());
 
         expect(startResult).toStrictEqual(EzspStatus.SUCCESS);
-        expect(sendExecSpy).toHaveBeenCalledTimes(1);
+        expect(sendExecSpy).toHaveBeenCalled();
+        await new Promise(setImmediate);// flush
         //@ts-expect-error private
-        expect(uartAsh.serialPort.port.lastWrite).toStrictEqual(Buffer.from(SEND_RST_BYTES));
+        expect(uartAsh.serialPort.port.recording).toStrictEqual(Buffer.from([...SEND_RST_BYTES, ...ASH_ACK_FIRST]))
         expect(uartAsh.connected).toBeTruthy();
-        expect(uartAsh.counters.txAllFrames).toStrictEqual(1);// RST
+        expect(uartAsh.counters.txAllFrames).toStrictEqual(2);// RST + ACK
+        expect(uartAsh.counters.txAckFrames).toStrictEqual(1);// post-RSTACK ACK
         expect(uartAsh.counters.rxAllFrames).toStrictEqual(1);// RSTACK
 
-        Object.keys(uartAsh.counters).forEach((key) => {
-            if (key !== 'txAllFrames' && key !== 'rxAllFrames') {
+        for (const key in uartAsh.counters) {
+            if (key !== 'txAllFrames' && key !== 'rxAllFrames' && key !== 'txAckFrames') {
                 expect(uartAsh.counters[key]).toStrictEqual(0);
             }
-        });
+        }
 
         await uartAsh.stop();
 
@@ -212,6 +211,7 @@ describe('Ember UART ASH Protocol', () => {
         expect(onPortErrorSpy).toHaveBeenCalledTimes(0);
         expect(onPortCloseSpy).toHaveBeenCalledTimes(1);
     });
+
     it.skip('Resets but failed to start b/c error in RSTACK frame returned by NCP', async () => {
         //@ts-expect-error private
         const rejectFrameSpy = jest.spyOn(uartAsh, 'rejectFrame');
@@ -244,6 +244,7 @@ describe('Ember UART ASH Protocol', () => {
         expect(receiveFrameSpy).toHaveLastReturnedWith(EzspStatus.NO_RX_DATA);
         expect(uartAsh.connected).toBeFalsy();
     });
+
     describe('In CONNECTED state...', () => {
         beforeEach(async () => {
             const resetResult = (await uartAsh.resetNcp());
