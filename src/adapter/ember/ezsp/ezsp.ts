@@ -4674,7 +4674,7 @@ export class Ezsp extends EventEmitter {
      */
     ezspIncomingNetworkStatusHandler(errorCode: EmberStackError, target: EmberNodeId): void {
         logger.debug(`ezspIncomingNetworkStatusHandler(): callback called with: [errorCode=${EmberStackError[errorCode]}], [target=${target}]`, NS);
-        logger.warning(`Received network/route error ${EmberStackError[errorCode]} for "${target}".`, NS);
+        logger.info(`Received network/route error ${EmberStackError[errorCode]} for "${target}".`, NS);
     }
 
     /**
