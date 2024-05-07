@@ -492,24 +492,6 @@ export class EmberAdapter extends Adapter {
         }
         case EmberStatus.NETWORK_OPENED: {
             this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_OPENED);
-
-            await new Promise<void>((resolve, reject): void => {
-                this.requestQueue.enqueue(
-                    async (): Promise<EmberStatus> => {
-                        const setJPstatus = (await this.emberSetJoinPolicy(EmberJoinDecision.USE_PRECONFIGURED_KEY));
-
-                        if (setJPstatus !== EzspStatus.SUCCESS) {
-                            logger.error(`[ZDO] Failed set join policy with status=${EzspStatus[setJPstatus]}.`, NS);
-                            return EmberStatus.ERR_FATAL;
-                        }
-
-                        resolve();
-                        return EmberStatus.SUCCESS;
-                    },
-                    reject,
-                    true,/*prioritize*/
-                );
-            });
             logger.info(`[STACK STATUS] Network opened.`, NS);
             break;
         }
@@ -3005,8 +2987,19 @@ export class EmberAdapter extends Adapter {
                 const plaintextKey: SecManKey = {contents: Buffer.from(ZIGBEE_PROFILE_INTEROPERABILITY_LINK_KEY)};
                 const impKeyStatus = (await this.ezsp.ezspImportTransientKey(BLANK_EUI64, plaintextKey, SecManFlag.NONE));
 
-                logger.debug(`[ZDO] Pre joining import transient key status=${SLStatus[impKeyStatus]}.`, NS);
-                return impKeyStatus === SLStatus.OK ? EmberStatus.SUCCESS : EmberStatus.ERR_FATAL;
+                if (impKeyStatus !== SLStatus.OK) {
+                    logger.error(`[ZDO] Failed import transient key with status=${SLStatus[impKeyStatus]}.`, NS);
+                    return EmberStatus.ERR_FATAL;
+                }
+
+                const setJPstatus = (await this.emberSetJoinPolicy(EmberJoinDecision.USE_PRECONFIGURED_KEY));
+
+                if (setJPstatus !== EzspStatus.SUCCESS) {
+                    logger.error(`[ZDO] Failed set join policy with status=${EzspStatus[setJPstatus]}.`, NS);
+                    return EmberStatus.ERR_FATAL;
+                }
+
+                return EmberStatus.SUCCESS;
             } else {
                 if (this.manufacturerCode !== DEFAULT_MANUFACTURER_CODE) {
                     logger.debug(`[WORKAROUND] Reverting coordinator manufacturer code to default.`, NS);
