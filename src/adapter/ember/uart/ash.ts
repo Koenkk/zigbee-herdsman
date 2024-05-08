@@ -62,9 +62,9 @@ const ashGetACKNum = (ctrl: number): number => ((ctrl & ASH_ACKNUM_MASK) >> ASH_
 
 export enum AshEvents {
     /** When the ASH protocol detects a fatal error (bubbles up to restart adapter). */
-    fatalError = 'fatalError',
+    FATAL_ERROR = 'fatalError',
     /** When a frame has been parsed and queued in the rxQueue. */
-    frame = 'frame',
+    FRAME = 'frame',
 }
 
 type UartAshCounters = {
@@ -576,7 +576,7 @@ export class UartAsh extends EventEmitter {
      */
     private async onPortError(error: Error): Promise<void> {
         logger.info(`Port error: ${error}`, NS);
-        this.emit(AshEvents.fatalError, EzspStatus.ERROR_SERIAL_INIT);
+        this.emit(AshEvents.FATAL_ERROR, EzspStatus.ERROR_SERIAL_INIT);
     }
 
     /**
@@ -608,14 +608,9 @@ export class UartAsh extends EventEmitter {
         const status = this.receiveFrame(buffer);
 
         if ((status !== EzspStatus.SUCCESS) && (status !== EzspStatus.ASH_IN_PROGRESS) && (status !== EzspStatus.NO_RX_DATA)) {
-            if (this.flags & Flag.CONNECTED) {
-                logger.error(`Error while parsing received frame, status=${EzspStatus[status]}.`, NS);
-                // if we're connected (not in reset) and get here, we need to reset
-                this.emit(AshEvents.fatalError, EzspStatus.HOST_FATAL_ERROR);
-                return;
-            } else {
-                logger.debug(`Error while parsing received frame in NOT_CONNECTED state (flags=${this.flags}), status=${EzspStatus[status]}.`, NS);
-            }
+            logger.error(`Error while parsing received frame, status=${EzspStatus[status]}.`, NS);
+            this.emit(AshEvents.FATAL_ERROR, EzspStatus.HOST_FATAL_ERROR);
+            return;
         }
     }
 
@@ -1178,7 +1173,7 @@ export class UartAsh extends EventEmitter {
                 this.counters.rxData += this.rxDataBuffer.len;
 
                 setImmediate(() => {
-                    this.emit(AshEvents.frame);
+                    this.emit(AshEvents.FRAME);
                 });
                 return EzspStatus.SUCCESS;
             } else {
