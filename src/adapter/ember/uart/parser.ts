@@ -22,11 +22,9 @@ export class AshParser extends Transform {
             // emit the frame via 'data' event
             const frame = data.subarray(0, position + 1);
 
-            setImmediate((): void => {
-                // expensive and very verbose, enable locally only if necessary
-                // logger.debug(`<<<< [FRAME raw=${frame.toString('hex')}]`, NS);
-                this.push(frame);
-            });
+            // expensive and very verbose, enable locally only if necessary
+            // logger.debug(`<<<< [FRAME raw=${frame.toString('hex')}]`, NS);
+            this.push(frame);
 
             // remove the frame from internal buffer (set below)
             data = data.subarray(position + 1);

@@ -286,7 +286,7 @@ export class Ezsp extends EventEmitter {
 
     /** Counter for Queue Full errors */
     public counterErrQueueFull: number;
-    
+
     /** Handle used to tick for possible received callbacks */
     private tickHandle: NodeJS.Timeout;
 
@@ -298,8 +298,7 @@ export class Ezsp extends EventEmitter {
         this.buffalo = new EzspBuffalo(this.frameContents);
 
         this.ash = new UartAsh(options);
-        this.ash.on(AshEvents.fatalError, this.onAshFatalError.bind(this));
-        this.ash.on(AshEvents.frame, this.onAshFrame.bind(this));
+        this.ash.on(AshEvents.FRAME, this.onAshFrame.bind(this));
     }
 
     /**
@@ -325,6 +324,7 @@ export class Ezsp extends EventEmitter {
         }
 
         clearTimeout(this.tickHandle);
+        this.ash.removeAllListeners(AshEvents.FATAL_ERROR);
 
         this.frameContents.fill(0);
         this.frameLength = 0;
@@ -358,6 +358,8 @@ export class Ezsp extends EventEmitter {
 
             if (status === EzspStatus.SUCCESS) {
                 logger.info(`======== EZSP started ========`, NS);
+                // registered after reset sequence to avoid bubbling up to adapter before this point
+                this.ash.on(AshEvents.FATAL_ERROR, this.onAshFatalError.bind(this));
                 this.tick();
                 return status;
             }

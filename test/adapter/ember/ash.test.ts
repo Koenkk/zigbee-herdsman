@@ -1,5 +1,5 @@
 import {OpenOptions} from '@serialport/stream'
-import {MockBinding, MockBindingInterface} from '@serialport/binding-mock'
+import {MockBinding, MockPortBinding} from '@serialport/binding-mock'
 import {
     EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX,
     EZSP_FRAME_CONTROL_COMMAND,
@@ -14,7 +14,13 @@ import {EzspStatus} from "../../../src/adapter/ember/enums";
 import {EzspBuffer} from "../../../src/adapter/ember/uart/queues";
 import {UartAsh} from "../../../src/adapter/ember/uart/ash";
 import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from "../../../src/adapter/ember/uart/consts";
-import {RECD_RSTACK_BYTES, SEND_RST_BYTES, NCP_ACK_FIRST, adapterSONOFFDongleE, ASH_ACK_FIRST} from "./consts";
+import {
+    RECD_RSTACK_BYTES,
+    SEND_RST_BYTES,
+    SEND_ACK_FIRST_BYTES,
+    adapterSONOFFDongleE,
+    ASH_ACK_FIRST_BYTES,
+} from "./consts";
 import {EzspBuffalo} from "../../../src/adapter/ember/ezsp/buffalo.ts";
 import {lowByte} from '../../../src/adapter/ember/utils/math';
 import {EzspFrameID} from '../../../src/adapter/ember/ezsp/enums.ts';
@@ -58,7 +64,7 @@ const mockSerialPortErrorEvent = jest.fn();
 const mocks = [mockSerialPortCloseEvent, mockSerialPortErrorEvent];
 
 describe('Ember UART ASH Protocol', () => {
-    const openOpts: OpenOptions<MockBindingInterface> = {path: '/dev/ttyACM0', baudRate: 115200, binding: MockBinding};
+    const openOpts: OpenOptions<MockPortBinding> = {path: '/dev/ttyACM0', baudRate: 115200, binding: MockBinding};
     /**
      * Mock binding provides:
      * 
@@ -193,7 +199,7 @@ describe('Ember UART ASH Protocol', () => {
         expect(sendExecSpy).toHaveBeenCalled();
         await new Promise(setImmediate);// flush
         //@ts-expect-error private
-        expect(uartAsh.serialPort.port.recording).toStrictEqual(Buffer.from([...SEND_RST_BYTES, ...ASH_ACK_FIRST]))
+        expect(uartAsh.serialPort.port.recording).toStrictEqual(Buffer.from([...SEND_RST_BYTES, ...ASH_ACK_FIRST_BYTES]))
         expect(uartAsh.connected).toBeTruthy();
         expect(uartAsh.counters.txAllFrames).toStrictEqual(2);// RST + ACK
         expect(uartAsh.counters.txAckFrames).toStrictEqual(1);// post-RSTACK ACK
@@ -309,7 +315,7 @@ describe('Ember UART ASH Protocol', () => {
             await Wait(10);
 
             //@ts-expect-error private
-            uartAsh.serialPort.port.emitData(Buffer.from(NCP_ACK_FIRST));// just an ACK, doesn't matter what it is
+            uartAsh.serialPort.port.emitData(Buffer.from(SEND_ACK_FIRST_BYTES));// just an ACK, doesn't matter what it is
 
             await Wait(10);// force wait new frame
 
