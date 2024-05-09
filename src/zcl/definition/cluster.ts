@@ -5726,19 +5726,19 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
     manuSpecificeWeLink: {
         ID: 0xFC11,
         attributes: {
-            delayStartUpOnOffEnable: {ID: 0x0014, type: DataType.boolean},
-            delayStartUpOnOffTime: {ID: 0x0015, type: DataType.uint16},
-            externalSwitchTriggerType: {ID: 0x0016, type: DataType.uint8},
-            relaySeparationMode : {ID: 0x0017, type: DataType.boolean},
+            delayStartUpOnOffEnable: {ID: 0x0014, type: DataType.BOOLEAN},
+            delayStartUpOnOffTime: {ID: 0x0015, type: DataType.UINT16},
+            externalSwitchTriggerType: {ID: 0x0016, type: DataType.UINT8},
+            relaySeparationMode : {ID: 0x0017, type: DataType.BOOLEAN},
         },
         commands: {
             readRecord: {
                 ID: 0x00,
                 parameters: [
-                    {name: 'subCommand', type: DataType.uint8},
-                    {name: 'offset', type: DataType.uint8},
-                    {name: 'recordIndex', type: DataType.uint8},
-                    {name: 'timestamp', type: DataType.uint32},
+                    {name: 'subCommand', type: DataType.UINT8},
+                    {name: 'offset', type: DataType.UINT8},
+                    {name: 'recordIndex', type: DataType.UINT8},
+                    {name: 'timestamp', type: DataType.UINT32},
                 ],
             },
             protocolData: {
@@ -5752,10 +5752,10 @@ const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
             readRecordRsp: {
                 ID: 0x00,
                 parameters: [
-                    {name: 'subCommand', type: DataType.uint8},
-                    {name: 'status', type: DataType.uint8},
-                    {name: 'offset', type: DataType.uint8},
-                    {name: 'recordIndex', type: DataType.uint8},                   
+                    {name: 'subCommand', type: DataType.UINT8},
+                    {name: 'status', type: DataType.UINT8},
+                    {name: 'offset', type: DataType.UINT8},
+                    {name: 'recordIndex', type: DataType.UINT8},                   
                     {name: 'data', type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },

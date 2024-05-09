@@ -67,6 +67,7 @@ type ClusterName = (
     | 'manuSpecificInovelli' | 'owonClearMetering' | 'zosungIRTransmit' | 'zosungIRControl' | 'manuSpecificBosch' | 'manuSpecificBosch3'
     | 'manuSpecificBosch5' | 'manuSpecificBosch7' | 'manuSpecificBosch8' | 'manuSpecificBosch9' | 'manuSpecificBosch10' | 'manuSpecificBosch11'
     | 'manuSpecificAssaDoorLock' | 'manuSpecificDoorman' | 'manuSpecificNodOnPilotWire' | 'manuSpecificProfalux1' | 'manuSpecificAmazonWWAH'
+    | 'manuSpecificeWeLink'
 );
 
 export {
