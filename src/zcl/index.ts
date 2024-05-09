@@ -1,5 +1,5 @@
 import * as Utils from './utils';
-import Cluster from './definition/cluster';
+import Clusters from './definition/cluster';
 import Status from './definition/status';
 import Direction from './definition/direction';
 import FrameType from './definition/frameType';
@@ -15,7 +15,7 @@ import ZclStatusError from './zclStatusError';
 import * as TsType from './tstype';
 
 export {
-    Cluster,
+    Clusters,
     Direction,
     FrameType,
     Status,

@@ -16,6 +16,7 @@ import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import {EZSPZDOResponseFrameData} from '../driver/ezsp';
 import {logger} from '../../../utils/logger';
+import {BroadcastAddress} from '../../../zspec/enums';
 
 const NS = 'zh:ezsp';
 
@@ -39,6 +40,7 @@ class EZSPAdapter extends Adapter {
     private interpanLock: boolean;
     private queue: Queue;
     private closing: boolean;
+    private deprecatedTimer: NodeJS.Timeout;
 
 
     public constructor(networkOptions: NetworkOptions,
@@ -164,11 +166,19 @@ class EZSPAdapter extends Adapter {
      * Adapter methods
      */
     public async start(): Promise<StartResult> {
+        const logEzspDeprecated = (): void => {
+            const message = `Deprecated driver 'ezsp' currently in use, 'ember' will become the officially supported EmberZNet ` +
+                `driver in next release. If using Zigbee2MQTT see https://github.com/Koenkk/zigbee2mqtt/discussions/21462`;
+            logger.warning(message, NS);
+        };
+        logEzspDeprecated();
+        this.deprecatedTimer = setInterval(logEzspDeprecated, 60 * 60 * 1000); // Every 60 mins
         return this.driver.startup();
     }
 
     public async stop(): Promise<void> {
         this.closing = true;
+        clearInterval(this.deprecatedTimer);
         await this.driver.stop();
     }
 
@@ -510,14 +520,14 @@ class EZSPAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number): Promise<void> {
+    public async sendZclFrameToAll(endpoint: number, zclFrame: ZclFrame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, false);
             frame.profileId = sourceEndpoint === 242 && endpoint === 242 ? 0xA1E0 : 0x0104;
             frame.sourceEndpoint =  sourceEndpoint;
             frame.destinationEndpoint = endpoint;
-            frame.groupId = 0xFFFD;
+            frame.groupId = destination;
             
             await this.driver.mrequest(frame, zclFrame.toBuffer());
 

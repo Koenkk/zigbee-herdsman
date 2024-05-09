@@ -1,63 +1,134 @@
+/**
+ * This is the specification-defined data types. It should not contain "custom" types and is expected to have [0x00-0xFF] values.
+ * 
+ * - Values of analog types may be added to or subtracted from other values of the same type and are typically
+ * used to measure the value of properties in the real world that vary continuously over a range.
+ * - Values of discrete data types only have meaning as individual values and may not be added or subtracted.
+ */
 enum DataType {
-    // TODO: refactor to snake casing
-    noData = 0,
-    data8 = 8,
-    data16 = 9,
-    data24 = 10,
-    data32 = 11,
-    data40 = 12,
-    data48 = 13,
-    data56 = 14,
-    data64 = 15,
-    boolean = 16,
-    bitmap8 = 24,
-    bitmap16 = 25,
-    bitmap24 = 26,
-    bitmap32 = 27,
-    bitmap40 = 28,
-    bitmap48 = 29,
-    bitmap56 = 30,
-    bitmap64 = 31,
-    uint8 = 32,
-    uint16 = 33,
-    uint24 = 34,
-    uint32 = 35,
-    uint40 = 36,
-    uint48 = 37,
-    uint56 = 38,
-    uint64 = 39,
-    int8 = 40,
-    int16 = 41,
-    int24 = 42,
-    int32 = 43,
-    int48 = 45,
-    enum8 = 48,
-    enum16 = 49,
-    singlePrec = 57,
-    doublePrec = 58,
-    octetStr = 65,
-    charStr = 66,
-    longOctetStr = 67,
-    longCharStr = 68,
-    array = 72,
-    struct = 76,
-    set = 80,
-    bag = 81,
-    tod = 224,
-    date = 225,
-    utc = 226,
-    clusterId = 232,
-    attrId = 233,
-    bacOid = 234,
-    ieeeAddr = 240,
-    secKey = 241,
-    unknown = 255,
+    /** length=0 */
+    NO_DATA = 0x00,
 
-    // TODO: ones below are not in BuffaloZcl and thus cannot be parsed/written
-    int40 = 44,
-    int56 = 46,
-    int64 = 47,
-    semiPrec = 56,
+    /** class=discrete, length=1 */
+    DATA8 = 0x08,
+    /** class=discrete, length=2 */
+    DATA16 = 0x09,
+    /** class=discrete, length=3 */
+    DATA24 = 0x0A,
+    /** class=discrete, length=4 */
+    DATA32 = 0x0B,
+    /** class=discrete, length=5 */
+    DATA40 = 0x0C,
+    /** class=discrete, length=6 */
+    DATA48 = 0x0D,
+    /** class=discrete, length=7 */
+    DATA56 = 0x0E,
+    /** class=discrete, length=8 */
+    DATA64 = 0x0F,
+    /** 0x00=false, 0x01=true, class=discrete, length=1, non-value=0xFF */
+    BOOLEAN = 0x10,
+
+    /** class=discrete, length=1 */
+    BITMAP8 = 0x18,
+    /** class=discrete, length=2 */
+    BITMAP16 = 0x19,
+    /** class=discrete, length=3 */
+    BITMAP24 = 0x1A,
+    /** class=discrete, length=4 */
+    BITMAP32 = 0x1B,
+    /** class=discrete, length=5 */
+    BITMAP40 = 0x1C,
+    /** class=discrete, length=6 */
+    BITMAP48 = 0x1D,
+    /** class=discrete, length=7 */
+    BITMAP56 = 0x1E,
+    /** class=discrete, length=8 */
+    BITMAP64 = 0x1F,
+    /** class=discrete, length=1, non-value=0xFF */
+    UINT8 = 0x20,
+    /** class=analog, length=2, non-value=0xFFFF */
+    UINT16 = 0x21,
+    /** class=analog, length=3, non-value=0xFFFFFF */
+    UINT24 = 0x22,
+    /** class=analog, length=4, non-value=0xFFFFFFFF */
+    UINT32 = 0x23,
+    /** class=analog, length=5, non-value=0xFFFFFFFFFF */
+    UINT40 = 0x24,
+    /** class=analog, length=6, non-value=0xFFFFFFFFFFFF */
+    UINT48 = 0x25,
+    /** class=analog, length=7, non-value=0xFFFFFFFFFFFFFF */
+    UINT56 = 0x26,
+    /** class=analog, length=8, non-value=0xFFFFFFFFFFFFFFFF */
+    UINT64 = 0x27,
+    /** class=analog, length=1, non-value=0x80 */
+    INT8 = 0x28,
+    /** class=analog, length=2, non-value=0x8000 */
+    INT16 = 0x29,
+    /** class=analog, length=3, non-value=0x800000 */
+    INT24 = 0x2A,
+    /** class=analog, length=4, non-value=0x80000000 */
+    INT32 = 0x2B,
+    /** class=analog, length=5, non-value=0x8000000000 */
+    INT40 = 0x2C,
+    /** class=analog, length=6, non-value=0x800000000000 */
+    INT48 = 0x2D,
+    /** class=analog, length=7, non-value=0x80000000000000 */
+    INT56 = 0x2E,
+    /** class=analog, length=8, non-value=0x8000000000000000 */
+    INT64 = 0x2F,
+    /** class=discrete, length=1, non-value=0xFF */
+    ENUM8 = 0x30,
+    /** class=discrete, length=2, non-value=0xFF */
+    ENUM16 = 0x31,
+
+    /** class=analog, length=2, non-value=NaN */
+    SEMI_PREC = 0x38,
+    /** class=analog, length=4, non-value=NaN */
+    SINGLE_PREC = 0x39,
+    /** class=analog, length=8, non-value=NaN */
+    DOUBLE_PREC = 0x3A,
+
+    /** class=composite, length=0x00-0xFE, non-value=0xFF */
+    OCTET_STR = 0x41,
+    /** class=composite, length=0x00-0xFE, non-value=0xFF */
+    CHAR_STR = 0x42,
+    /** class=composite, length=0x0000-0xFFFE, non-value=0xFFFF */
+    LONG_OCTET_STR = 0x43,
+    /** class=composite, length=0x0000-0xFFFE, non-value=0xFFFF */
+    LONG_CHAR_STR = 0x44,
+
+    /** class=composite, length=variable, non-value=[0]==0xFFFF */
+    ARRAY = 0x48,
+
+    /** class=composite, length=variable, non-value=(length) */
+    STRUCT = 0x4C,
+
+    /** class=composite, length=max(0xFFFE * DataType) non-value=(length=0xFFFF) */
+    SET = 0x50,
+    /** @see SET Same but allows duplicate values */
+    BAG = 0x51,
+
+    /** Time of Day, @see ZclTimeOfDay , class=analog, length=4, unused-subfield=0xFF, non-value=0xFFFFFFFF */
+    TOD = 0xE0,
+    /** @see ZclDate , class=analog, length=4, unused-subfield=0xFF, non-value=0xFFFFFFFF */
+    DATE = 0xE1,
+    /** Number of seconds since 2000-01-01 00:00:00 UTC, class=analog, length=4, non-value=0xFFFFFFFF */
+    UTC = 0xE2,
+
+    /** Defined in 2.6.1.3 of ZCL spec, class=discrete, length=2, non-value=0xFFFF */
+    CLUSTER_ID = 0xE8,
+    /** Defined in 2.6.1.4 of ZCL spec, class=discrete, length=2, non-value=0xFFFF */
+    ATTR_ID = 0xE9,
+    /** BACnet OID, allow internetworking (format defined in BACnet ref), class=discrete, length=4, non-value=0xFFFFFFFF */
+    BAC_OID = 0xEA,
+
+    /** class=discrete, length=8, non-value=0xFFFFFFFFFFFFFFFF */
+    IEEE_ADDR = 0xF0,
+    /** Any 128-bit value, class=discrete, length=16 */
+    SEC_KEY = 0xF1,
+
+    /** length=0 */
+    UNKNOWN = 0xFF,
 }
 
 export default DataType;

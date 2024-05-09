@@ -5,6 +5,7 @@ import net from 'net';
 import {Frame as UnpiFrame, Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
+import ParameterType from "../../../src/adapter/z-stack/znp/parameterType";
 
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
@@ -907,10 +908,104 @@ describe('ZNP', () => {
         });
     });
 
+    it('Cant read unsupported type', () => {
+        expect(() => {
+            const buffalo = new BuffaloZnp(Buffer.alloc(0));
+            // @ts-expect-error invalid typing
+            buffalo.read(9999, {});
+        }).toThrow(new Error("Read for '9999' not available"));
+    })
+
+    it('UINT8 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(3), 1);
+        buffalo.write(ParameterType.UINT8, 240, {});
+        expect(buffalo.getPosition()).toEqual(2);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xF0, 0x00]))
+    });
+
+    it('UINT8 read', () => {
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, 0x03, 0x00, 0x00]), 1);
+        const value = buffalo.read(ParameterType.UINT8, {});
+        expect(buffalo.getPosition()).toEqual(2);
+        expect(value).toStrictEqual(3);
+    });
+
+    it('INT8 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(3), 1);
+        buffalo.write(ParameterType.INT8, 127, {});
+        expect(buffalo.getPosition()).toEqual(2);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x7F, 0x00]))
+    });
+
+    it('INT8 read', () => {
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, 0xF0, 0x00, 0x00]), 1);
+        const value = buffalo.read(ParameterType.INT8, {});
+        expect(buffalo.getPosition()).toEqual(2);
+        expect(value).toStrictEqual(-16);
+    });
+
+    it('UINT16 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(3), 1);
+        buffalo.write(ParameterType.UINT16, 1020, {});
+        expect(buffalo.getPosition()).toEqual(3);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xFC, 0x03]))
+    });
+
+    it('UINT16 read', () => {
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, 0x03, 0xFF, 0x00]), 1);
+        const value = buffalo.read(ParameterType.UINT16, {});
+        expect(buffalo.getPosition()).toEqual(3);
+        expect(value).toStrictEqual(65283);
+    });
+
+    it('UINT32 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(6), 2);
+        buffalo.write(ParameterType.UINT32, 1065283, {});
+        expect(buffalo.getPosition()).toEqual(6);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00, 0x43, 0x41, 0x10, 0x00]))
+    });
+
+    it('UINT32 read', () => {
+        const buffalo = new BuffaloZnp(Buffer.from([0x01, 0x03, 0xFF, 0xFF]));
+        const value = buffalo.read(ParameterType.UINT32, {});
+        expect(buffalo.getPosition()).toEqual(4);
+        expect(value).toStrictEqual(4294902529);
+    });
+
+    it('LIST_UINT8 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(4), 1);
+        const payload = [200, 100];
+        buffalo.write(ParameterType.LIST_UINT8, payload, {});
+        expect(buffalo.getPosition()).toStrictEqual(3);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xC8, 0x64, 0x00]));
+    });
+
+    it('LIST_UINT8 read', () => {
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, 0x00, 0x04, 0x08]), 2);
+        const value = buffalo.read(ParameterType.LIST_UINT8, {length: 2});
+        expect(buffalo.getPosition()).toStrictEqual(4);
+        expect(value).toStrictEqual([4, 8]);
+    });
+
+    it('LIST_UINT16 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(5), 1);
+        const payload = [1024, 2048];
+        buffalo.write(ParameterType.LIST_UINT16, payload, {});
+        expect(buffalo.getPosition()).toStrictEqual(5);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00, 0x04, 0x00, 0x08]));
+    });
+
+    it('LIST_UINT16 read', () => {
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, 0x00, 0x04, 0x00, 0x08]), 1);
+        const value = buffalo.read(ParameterType.LIST_UINT16, {length: 2});
+        expect(buffalo.getPosition()).toStrictEqual(5);
+        expect(value).toStrictEqual([1024, 2048]);
+    });
+
     it('LIST_ROUTING_TABLE write', () => {
         expect(() => {
             const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write('LIST_ROUTING_TABLE', [], {});
+            buffalo.write(ParameterType.LIST_ROUTING_TABLE, [], {});
         }).toThrow();
     });
 
@@ -922,7 +1017,7 @@ describe('ZNP', () => {
         ]);
 
         const buffalo = new BuffaloZnp(buffer, 1);
-        const value = buffalo.read('LIST_ROUTING_TABLE', {length: 2});
+        const value = buffalo.read(ParameterType.LIST_ROUTING_TABLE, {length: 2});
         expect(buffalo.getPosition()).toStrictEqual(11);
         expect(value).toStrictEqual([
             {
@@ -941,7 +1036,7 @@ describe('ZNP', () => {
     it('LIST_BIND_TABLE write', () => {
         expect(() => {
             const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write('LIST_BIND_TABLE', [], {})
+            buffalo.write(ParameterType.LIST_BIND_TABLE, [], {})
         }).toThrow();
     });
 
@@ -954,7 +1049,7 @@ describe('ZNP', () => {
         ]);
 
         const buffalo = new BuffaloZnp(buffer, 1);
-        const value = buffalo.read('LIST_BIND_TABLE', {length: 2});
+        const value = buffalo.read(ParameterType.LIST_BIND_TABLE, {length: 2});
         expect(buffalo.getPosition()).toStrictEqual(42);
         expect(value).toStrictEqual([
            {
@@ -978,7 +1073,7 @@ describe('ZNP', () => {
     it('LIST_NEIGHBOR_LQI write', () => {
         expect(() => {
             const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write('LIST_NEIGHBOR_LQI', [], {})
+            buffalo.write(ParameterType.LIST_NEIGHBOR_LQI, [], {})
         }).toThrow();
     });
 
@@ -991,7 +1086,7 @@ describe('ZNP', () => {
         ]);
 
         const buffalo = new BuffaloZnp(buffer, 1);
-        const value = buffalo.read('LIST_NEIGHBOR_LQI', {length: 2});
+        const value = buffalo.read(ParameterType.LIST_NEIGHBOR_LQI, {length: 2});
         expect(buffalo.getPosition()).toStrictEqual(45);
         expect(value).toStrictEqual([
             {
@@ -1022,7 +1117,7 @@ describe('ZNP', () => {
     it('LIST_NETWORK write', () => {
         expect(() => {
             const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write('LIST_NETWORK', [], {})
+            buffalo.write(ParameterType.LIST_NETWORK, [], {})
         }).toThrow();
     });
 
@@ -1035,7 +1130,7 @@ describe('ZNP', () => {
         ]);
 
         const buffalo = new BuffaloZnp(buffer, 1);
-        const value = buffalo.read('LIST_NETWORK', {length: 2});
+        const value = buffalo.read(ParameterType.LIST_NETWORK, {length: 2});
         expect(buffalo.getPosition()).toStrictEqual(13);
         expect(value).toStrictEqual([
             {
@@ -1062,7 +1157,7 @@ describe('ZNP', () => {
     it('LIST_ASSOC_DEV write', () => {
         expect(() => {
             const bufallo = new BuffaloZnp(Buffer.alloc(10), 1);
-            bufallo.write('LIST_ASSOC_DEV', [], {})
+            bufallo.write(ParameterType.LIST_ASSOC_DEV, [], {})
         }).toThrow();
     });
 
@@ -1074,7 +1169,7 @@ describe('ZNP', () => {
         ]);
 
         const buffalo = new BuffaloZnp(buffer);
-        const value = buffalo.read('LIST_ASSOC_DEV', {length: 3, startIndex: 0});
+        const value = buffalo.read(ParameterType.LIST_ASSOC_DEV, {length: 3, startIndex: 0});
         expect(buffalo.getPosition()).toStrictEqual(6);
         expect(value).toStrictEqual([
             4101,
@@ -1088,13 +1183,164 @@ describe('ZNP', () => {
         const payload5 = duplicateArray(5, [0x10, 0x10]);
 
         const buffalo1 = new BuffaloZnp(Buffer.from(payload35));
-        const value1 = buffalo1.read('LIST_ASSOC_DEV', {length: 40, startIndex: 0});
+        const value1 = buffalo1.read(ParameterType.LIST_ASSOC_DEV, {length: 40, startIndex: 0});
         expect(buffalo1.getPosition()).toStrictEqual(70);
         expect(value1).toStrictEqual(duplicateArray(35, [4112]));
 
         const buffalo2 = new BuffaloZnp(Buffer.from(payload5));
-        const value2 = buffalo2.read('LIST_ASSOC_DEV', {length: 40, startIndex: 35});
+        const value2 = buffalo2.read(ParameterType.LIST_ASSOC_DEV, {length: 40, startIndex: 35});
         expect(buffalo2.getPosition()).toStrictEqual(10);
         expect(value2).toStrictEqual(duplicateArray(5, [4112]));
+    });
+
+    it('BUFFER8 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(9), 1);
+        const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
+        buffalo.write(ParameterType.BUFFER8, payload, {});
+        expect(buffalo.getPosition()).toStrictEqual(9);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload]))
+    });
+
+    it('BUFFER8 write length consistent', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(9));
+        const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]);
+        expect(() => {
+            buffalo.write(ParameterType.BUFFER8, payload, {});
+        }).toThrow();
+    });
+
+    it('BUFFER8 read', () => {
+        const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09]);
+        const buffalo = new BuffaloZnp(buffer, 2);
+        const value = buffalo.read(ParameterType.BUFFER8, {});
+        expect(buffalo.getPosition()).toEqual(10);
+        expect(value).toStrictEqual(buffer.subarray(2, 11));
+    });
+
+    it('BUFFER16 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(20), 1);
+        const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
+        buffalo.write(ParameterType.BUFFER16, Buffer.from([...payload, ...payload]), {});
+        expect(buffalo.getPosition()).toStrictEqual(17);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00, 0x00, 0x00]))
+    });
+
+    it('BUFFER16 read', () => {
+        const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, ...payload, ...payload]), 1);
+        const value = buffalo.read(ParameterType.BUFFER16, {});
+        expect(buffalo.getPosition()).toEqual(17);
+        expect(value).toStrictEqual(Buffer.from([...payload, ...payload]));
+    });
+
+    it('BUFFER18 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(20), 1);
+        const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
+        buffalo.write(ParameterType.BUFFER18, Buffer.from([...payload, ...payload]), {});
+        expect(buffalo.getPosition()).toStrictEqual(19);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00]))
+    });
+
+    it('BUFFER18 read', () => {
+        const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, ...payload, ...payload]), 1)
+        const value = buffalo.read(ParameterType.BUFFER18, {});
+        expect(buffalo.getPosition()).toStrictEqual(19);
+        expect(value).toStrictEqual(Buffer.from([...payload, ...payload]));
+    });
+
+    it('BUFFER32 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(34), 1);
+        const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
+        buffalo.write(ParameterType.BUFFER32, Buffer.from([...payload, ...payload, ...payload, ...payload]), {});
+        expect(buffalo.getPosition()).toStrictEqual(33);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, 0x00]))
+    });
+
+    it('BUFFER32 read', () => {
+        const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload]), 1)
+        const value = buffalo.read(ParameterType.BUFFER32, {});
+        expect(buffalo.getPosition()).toStrictEqual(33);
+        expect(value).toStrictEqual(Buffer.from([...payload, ...payload, ...payload, ...payload]));
+    });
+
+    it('BUFFER42 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(44), 1);
+        const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
+        buffalo.write(ParameterType.BUFFER42, Buffer.from([...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xFF]), {});
+        expect(buffalo.getPosition()).toStrictEqual(43);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xFF, 0x00]))
+    });
+
+    it('BUFFER42 read', () => {
+        const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, ...payload, 0x08, 0x09]), 1)
+        const value = buffalo.read(ParameterType.BUFFER42, {});
+        expect(buffalo.getPosition()).toStrictEqual(43);
+        expect(value).toStrictEqual(Buffer.from([...payload, ...payload, ...payload, ...payload, ...payload, 0x08, 0x09]));
+    });
+
+    it('BUFFER100 write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(100), 0);
+        let payload = duplicateArray(20, [0x00, 0x01, 0x02, 0x03, 0x04]);
+        buffalo.write(ParameterType.BUFFER100, Buffer.from(payload), {});
+        expect(buffalo.getPosition()).toStrictEqual(100);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from(payload))
+    });
+
+    it('BUFFER100 read', () => {
+        let payload = duplicateArray(20, [0x00, 0x01, 0x02, 0x03, 0x04]);
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, ...payload]), 1);
+        const value = buffalo.read(ParameterType.BUFFER100, {});
+        expect(buffalo.getPosition()).toStrictEqual(101);
+        expect(value).toStrictEqual(Buffer.from(payload));
+    });
+
+    it('BUFFER write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(9), 1);
+        const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
+        buffalo.write(ParameterType.BUFFER, payload, {});
+        expect(buffalo.getPosition()).toStrictEqual(9);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload]))
+    });
+
+    it('BUFFER read', () => {
+        const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09]);
+        const buffalo = new BuffaloZnp(buffer, 2);
+        const value = buffalo.read(ParameterType.BUFFER, {length: 1});
+        expect(buffalo.getPosition()).toEqual(3);
+        expect(value).toStrictEqual(buffer.subarray(2, 3));
+    });
+
+    it('IEEEADDR write', () => {
+        const buffalo = new BuffaloZnp(Buffer.alloc(8));
+        buffalo.write(ParameterType.IEEEADDR, ieeeaAddr1.string, {});
+        expect(buffalo.getPosition()).toEqual(8);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from(ieeeaAddr1.hex))
+    });
+
+    it('IEEEADDR read', () => {
+        const buffalo = new BuffaloZnp(Buffer.from(ieeeaAddr2.hex));
+        const value = buffalo.read(ParameterType.IEEEADDR, {});
+        expect(buffalo.getPosition()).toEqual(8);
+        expect(value).toStrictEqual(ieeeaAddr2.string);
+    });
+
+    it.each([
+        ParameterType.BUFFER, ParameterType.LIST_UINT8, ParameterType.LIST_UINT16, ParameterType.LIST_ROUTING_TABLE,
+        ParameterType.LIST_BIND_TABLE, ParameterType.LIST_NEIGHBOR_LQI, ParameterType.LIST_NETWORK, ParameterType.LIST_ASSOC_DEV
+    ])('Throws when read is missing required length option - param %s', (type) => {
+        expect(() => {
+            const buffalo = new BuffaloZnp(Buffer.alloc(1));
+            buffalo.read(type, {});
+        }).toThrow(`Cannot read ${ParameterType[type]} without length option specified`);
+    });
+
+    it('Throws when read LIST_ASSOC_DEV is missing required start index option', () => {
+        expect(() => {
+            const buffalo = new BuffaloZnp(Buffer.alloc(1));
+            buffalo.read(ParameterType.LIST_ASSOC_DEV, {length: 1});
+        }).toThrow(`Cannot read LIST_ASSOC_DEV without startIndex option specified`);
     });
 });

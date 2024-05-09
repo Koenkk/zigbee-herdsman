@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import * as TsType from './../../tstype';
 import {Ezsp, EZSPFrameData, EZSPZDOResponseFrameData} from './ezsp';
-import {EmberStatus, EmberNodeType, uint16_t, uint8_t, uint32_t, EmberZDOCmd, EmberApsOption, EmberKeyData,
+import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption, EmberKeyData,
     EmberJoinDecision} from './types';
 import {EventEmitter} from "events";
 import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState, EmberKeyStruct,
@@ -28,6 +28,7 @@ import equals from 'fast-deep-equal/es6';
 import {ParamsDesc} from './commands';
 import {EZSPAdapterBackup} from '../adapter/backup';
 import {logger} from '../../../utils/logger';
+import Clusters from '../../../zcl/definition/cluster';
 
 const NS = 'zh:ezsp:driv';
 
@@ -428,7 +429,43 @@ export class Driver extends EventEmitter {
         //     break;
         // }
         case (frameName == 'gpepIncomingMessageHandler'): {
-            this.handleGPMessage(frame);
+            let commandIdentifier = Clusters.greenPower.commands.notification.ID;
+
+            if (frame.gpdCommandId === 0xE0) {
+                if (!frame.gpdCommandPayload.length) {
+                    // XXX: seem to be receiving duplicate commissioningNotification from some devices, second one with empty payload?
+                    //      this will mess with the process no doubt, so dropping them
+                    return;
+                }
+
+                commandIdentifier = Clusters.greenPower.commands.commissioningNotification.ID;
+            }
+
+            const gpdHeader = Buffer.alloc(15);
+            gpdHeader.writeUInt8(0b00000001, 0);// frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
+            gpdHeader.writeUInt8(frame.sequenceNumber, 1);// transactionSequenceNumber
+            gpdHeader.writeUInt8(commandIdentifier, 2);// commandIdentifier
+            gpdHeader.writeUInt16LE(0, 3);// options XXX: bypassed, same as deconz https://github.com/Koenkk/zigbee-herdsman/pull/536
+            gpdHeader.writeUInt32LE(frame.srcId, 5);// srcID
+            // omitted: gpdIEEEAddr ieeeAddr
+            // omitted: gpdEndpoint uint8
+            gpdHeader.writeUInt32LE(frame.gpdSecurityFrameCounter, 9);// frameCounter
+            gpdHeader.writeUInt8(frame.gpdCommandId, 13);// commandID
+            gpdHeader.writeUInt8(frame.gpdCommandPayload.length, 14);// payloadSize
+
+            const gpdMessage = {
+                messageType: frame.gpdCommandId,
+                apsFrame: {
+                    profileId: 0xA1E0,
+                    sourceEndpoint: 242,
+                    clusterId: 0x0021,
+                    sequence: frame.sequenceNumber,
+                }, 
+                lqi: frame.gpdLink,
+                message: Buffer.concat([gpdHeader, frame.gpdCommandPayload]),
+                sender: frame.addr,
+            };
+            this.emit('incomingMessage', gpdMessage);
             break;
         }
         default:
@@ -818,63 +855,6 @@ export class Driver extends EventEmitter {
             }
         } else {
             throw new Error(`Add install code for '${ieeeAddress}' failed`);
-        }
-    }
-
-    private handleGPMessage(frame: EZSPFrameData): void {
-        // Commissioning
-        if (frame.gpdCommandId == 0xE0) {
-            let data = frame.payload.subarray(5);
-            /* eslint-disable */
-            let st, deviceId, options, extOptions, key, mic, counter;
-            [st, data] = uint8_t.deserialize(uint8_t, data);
-            [deviceId, data] = uint8_t.deserialize(uint8_t, data);
-            [options, data] = uint8_t.deserialize(uint8_t, data);
-            [extOptions, data] = uint8_t.deserialize(uint8_t, data);
-            [key, data] = EmberKeyData.deserialize(EmberKeyData, data);
-            [mic, data] = uint32_t.deserialize(uint32_t, data);
-            [counter, data] = uint32_t.deserialize(uint32_t, data);
-            /* eslint-enable */
-            const gpdMessage = {
-                messageType: frame.gpdCommandId,
-                apsFrame: {
-                    profileId: 0xA1E0,
-                    sourceEndpoint: 242,
-                    clusterId: 0x0021,
-                    sequence: frame.sequenceNumber,
-                }, 
-                lqi: frame.gpdLink,
-                message: {
-                    commandID: frame.gpdCommandId,
-                    commandFrame: {
-                        options: options,
-                        securityKey: Buffer.from(key.contents),
-                        deviceID: deviceId,
-                        outgoingCounter: counter,
-                    },
-                    srcID: frame.srcId,
-                },
-                sender: frame.addr,
-            };
-            this.emit('incomingMessage', gpdMessage);
-        } else {
-            const gpdMessage = {
-                messageType: frame.gpdCommandId,
-                apsFrame: {
-                    profileId: 0xA1E0,
-                    sourceEndpoint: 242,
-                    clusterId: 0x0021,
-                    sequence: frame.sequenceNumber,
-                }, 
-                lqi: frame.gpdLink,
-                message: {
-                    commandID: frame.gpdCommandId,
-                    frameCounter: frame.sequenceNumber,
-                    srcID: frame.srcId,
-                },
-                sender: frame.addr,
-            };
-            this.emit('incomingMessage', gpdMessage);
         }
     }
 

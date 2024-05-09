@@ -19,6 +19,16 @@ enum ParameterType {
     MACCAPABILITY = 100,
     ADDRESS_WITH_TYPE_DEPENDENCY = 101,
     RAW = 102,
+
+    // /!\ TODO missing but used in code, IDs assigned for proper compiling, NOT based on spec, needs updating
+    // /!\      some also don't have proper read/write in BuffaloZiGate
+    BUFFER_RAW = 247,
+    UINT16BE = 248,
+    UINT32BE = 249,
+    LIST_UINT16BE = 251,
+    MAYBE_UINT8 = 252,
+    LOG_LEVEL = 253,
+    STRING = 254,
 }
 
 export default ParameterType;

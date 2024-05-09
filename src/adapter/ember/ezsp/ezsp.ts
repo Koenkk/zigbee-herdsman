@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import EventEmitter from "events";
 import {SerialPortOptions} from "../../tstype";
-import Cluster from "../../../zcl/definition/cluster";
+import Clusters from "../../../zcl/definition/cluster";
 import {byteToBits, getMacCapFlags, highByte, highLowToInt, lowByte, lowHighBits} from "../utils/math";
 import {
     EmberOutgoingMessageType,
@@ -146,6 +146,7 @@ import {
     EZSP_FRAME_CONTROL_PENDING_CB_MASK,
     EZSP_FRAME_CONTROL_PENDING_CB,
     EXTENDED_PAN_ID_SIZE,
+    EMBER_ENCRYPTION_KEY_SIZE,
 } from "./consts";
 import {
     EmberLeaveReason,
@@ -285,7 +286,7 @@ export class Ezsp extends EventEmitter {
 
     /** Counter for Queue Full errors */
     public counterErrQueueFull: number;
-    
+
     /** Handle used to tick for possible received callbacks */
     private tickHandle: NodeJS.Timeout;
 
@@ -297,8 +298,7 @@ export class Ezsp extends EventEmitter {
         this.buffalo = new EzspBuffalo(this.frameContents);
 
         this.ash = new UartAsh(options);
-        this.ash.on(AshEvents.fatalError, this.onAshFatalError.bind(this));
-        this.ash.on(AshEvents.frame, this.onAshFrame.bind(this));
+        this.ash.on(AshEvents.FRAME, this.onAshFrame.bind(this));
     }
 
     /**
@@ -324,6 +324,7 @@ export class Ezsp extends EventEmitter {
         }
 
         clearTimeout(this.tickHandle);
+        this.ash.removeAllListeners(AshEvents.FATAL_ERROR);
 
         this.frameContents.fill(0);
         this.frameLength = 0;
@@ -357,6 +358,8 @@ export class Ezsp extends EventEmitter {
 
             if (status === EzspStatus.SUCCESS) {
                 logger.info(`======== EZSP started ========`, NS);
+                // registered after reset sequence to avoid bubbling up to adapter before this point
+                this.ash.on(AshEvents.FATAL_ERROR, this.onAshFatalError.bind(this));
                 this.tick();
                 return status;
             }
@@ -719,7 +722,7 @@ export class Ezsp extends EventEmitter {
         }
         case EzspFrameID.CUSTOM_FRAME_HANDLER: {
             const payloadLength = this.buffalo.readUInt8();
-            const payload = this.buffalo.readListUInt8({length: payloadLength});
+            const payload = this.buffalo.readListUInt8(payloadLength);
             this.ezspCustomFrameHandler(payloadLength, payload);
             break;
         }
@@ -856,7 +859,7 @@ export class Ezsp extends EventEmitter {
             const lastHopLqi = this.buffalo.readUInt8();
             const lastHopRssi = this.buffalo.readUInt8();
             const relayCount = this.buffalo.readUInt8();
-            const relayList = this.buffalo.readListUInt16({length: relayCount});//this.buffalo.readListUInt8({length: (relayCount * 2)});
+            const relayList = this.buffalo.readListUInt16(relayCount);//this.buffalo.readListUInt8(relayCount * 2);
             this.ezspIncomingRouteRecordHandler(source, sourceEui, lastHopLqi, lastHopRssi, relayCount, relayList);
             break;
         }
@@ -948,7 +951,7 @@ export class Ezsp extends EventEmitter {
             const linkQuality = this.buffalo.readUInt8();
             const rssi = this.buffalo.readUInt8();
             const packetLength = this.buffalo.readUInt8();
-            const packetContents = this.buffalo.readListUInt8({length: packetLength});
+            const packetContents = this.buffalo.readListUInt8(packetLength);
             this.ezspMfglibRxHandler(linkQuality, rssi, packetLength, packetContents);
             break;
         }
@@ -1401,7 +1404,7 @@ export class Ezsp extends EventEmitter {
             throw EzspStatus.ERROR_INVALID_VALUE;
         }
 
-        const data = this.buffalo.readListUInt8({length: readLength});
+        const data = this.buffalo.readListUInt8(readLength);
 
         return [status, dataType, readLength, data];
     }
@@ -1585,7 +1588,7 @@ export class Ezsp extends EventEmitter {
             throw EzspStatus.ERROR_INVALID_VALUE;
         }
 
-        const value = this.buffalo.readListUInt8({length: valueLength});
+        const value = this.buffalo.readListUInt8(valueLength);
 
         return [status, valueLength, value];
     }
@@ -1626,7 +1629,7 @@ export class Ezsp extends EventEmitter {
             throw EzspStatus.ERROR_INVALID_VALUE;
         }
 
-        const value = this.buffalo.readListUInt8({length: valueLength});
+        const value = this.buffalo.readListUInt8(valueLength);
 
         return [status, valueLength, value];
     }
@@ -1789,7 +1792,7 @@ export class Ezsp extends EventEmitter {
         }
 
         const status: EmberStatus = this.buffalo.readUInt8();
-        const tokenData = this.buffalo.readListUInt8({length: 8});
+        const tokenData = this.buffalo.readListUInt8(8);
 
         return [status, tokenData];
     }
@@ -1855,7 +1858,7 @@ export class Ezsp extends EventEmitter {
             throw EzspStatus.ERROR_INVALID_VALUE;
         }
 
-        const tokenData = this.buffalo.readListUInt8({length: tokenDataLength});
+        const tokenData = this.buffalo.readListUInt8(tokenDataLength);
 
         return [tokenDataLength, tokenData];
     }
@@ -2014,7 +2017,7 @@ export class Ezsp extends EventEmitter {
             throw new Error(EzspStatus[sendStatus]);
         }
 
-        const values = this.buffalo.readListUInt16({length: EmberCounterType.COUNT});
+        const values = this.buffalo.readListUInt16(EmberCounterType.COUNT);
 
         return values;
     }
@@ -2032,7 +2035,7 @@ export class Ezsp extends EventEmitter {
             throw new Error(EzspStatus[sendStatus]);
         }
     
-        const values = this.buffalo.readListUInt16({length: EmberCounterType.COUNT});
+        const values = this.buffalo.readListUInt16(EmberCounterType.COUNT);
 
         return values;
     }
@@ -3366,7 +3369,7 @@ export class Ezsp extends EventEmitter {
         }
 
         const status: EmberStatus = this.buffalo.readUInt8();
-        const arrayOfDeviceDutyCycles = this.buffalo.readListUInt8({length: 134});
+        const arrayOfDeviceDutyCycles = this.buffalo.readListUInt8(134);
 
         return [status, arrayOfDeviceDutyCycles];
     }
@@ -4128,7 +4131,7 @@ export class Ezsp extends EventEmitter {
                         assocDevCount = zdoBuffalo.readUInt8();
                         startIndex = zdoBuffalo.readUInt8();
 
-                        assocDevList = zdoBuffalo.readListUInt16({length: assocDevCount});
+                        assocDevList = zdoBuffalo.readListUInt16(assocDevCount);
                     }
 
                     logger.debug(`<=== [ZDO IEEE_ADDRESS_RESPONSE status=${EmberZdoStatus[status]} eui64=${eui64} nodeId=${nodeId} `
@@ -4170,7 +4173,7 @@ export class Ezsp extends EventEmitter {
                         assocDevCount = zdoBuffalo.readUInt8();
                         startIndex = zdoBuffalo.readUInt8();
 
-                        assocDevList = zdoBuffalo.readListUInt16({length: assocDevCount});
+                        assocDevList = zdoBuffalo.readListUInt16(assocDevCount);
                     }
 
                     logger.debug(`<=== [ZDO NETWORK_ADDRESS_RESPONSE status=${EmberZdoStatus[status]} eui64=${eui64} nodeId=${nodeId} `
@@ -4191,7 +4194,7 @@ export class Ezsp extends EventEmitter {
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
                     const endpointCount = zdoBuffalo.readUInt8();
-                    const endpointList = zdoBuffalo.readListUInt8({length: endpointCount});
+                    const endpointList = zdoBuffalo.readListUInt8(endpointCount);
 
                     logger.debug(
                         `<=== [ZDO MATCH_DESCRIPTORS_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpointList=${endpointList}]`,
@@ -4221,9 +4224,9 @@ export class Ezsp extends EventEmitter {
                     // values 0000-1111, others reserved
                     const deviceVersion = zdoBuffalo.readUInt8();
                     const inClusterCount = zdoBuffalo.readUInt8();
-                    const inClusterList = zdoBuffalo.readListUInt16({length: inClusterCount});
+                    const inClusterList = zdoBuffalo.readListUInt16(inClusterCount);
                     const outClusterCount = zdoBuffalo.readUInt8();
-                    const outClusterList = zdoBuffalo.readListUInt16({length: outClusterCount});
+                    const outClusterList = zdoBuffalo.readListUInt16(outClusterCount);
 
                     logger.debug(`<=== [ZDO SIMPLE_DESCRIPTOR_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpoint=${endpoint} `
                         + `profileId=${profileId} deviceId=${deviceId} deviceVersion=${deviceVersion} inClusterList=${inClusterList} `
@@ -4371,7 +4374,7 @@ export class Ezsp extends EventEmitter {
                 } else {
                     const nodeId = zdoBuffalo.readUInt16();
                     const endpointCount = zdoBuffalo.readUInt8();
-                    const endpointList = zdoBuffalo.readListUInt8({length: endpointCount});
+                    const endpointList = zdoBuffalo.readListUInt8(endpointCount);
 
                     logger.debug(
                         `<=== [ZDO ACTIVE_ENDPOINTS_RESPONSE status=${EmberZdoStatus[status]} nodeId=${nodeId} endpointList=${endpointList}]`,
@@ -4402,7 +4405,7 @@ export class Ezsp extends EventEmitter {
                     const entryList: ZDOLQITableEntry[] = [];
 
                     for (let i = 0; i < entryCount; i++) {
-                        const extendedPanId = zdoBuffalo.readListUInt8({length: EXTENDED_PAN_ID_SIZE});
+                        const extendedPanId = zdoBuffalo.readListUInt8(EXTENDED_PAN_ID_SIZE);
                         const eui64 = zdoBuffalo.readIeeeAddr();
                         const nodeId = zdoBuffalo.readUInt16();
                         const deviceTypeByte = zdoBuffalo.readUInt8();
@@ -4673,7 +4676,7 @@ export class Ezsp extends EventEmitter {
      */
     ezspIncomingNetworkStatusHandler(errorCode: EmberStackError, target: EmberNodeId): void {
         logger.debug(`ezspIncomingNetworkStatusHandler(): callback called with: [errorCode=${EmberStackError[errorCode]}], [target=${target}]`, NS);
-        logger.warning(`Received network/route error ${EmberStackError[errorCode]} for "${target}".`, NS);
+        logger.info(`Received network/route error ${EmberStackError[errorCode]} for "${target}".`, NS);
     }
 
     /**
@@ -5233,7 +5236,7 @@ export class Ezsp extends EventEmitter {
         const profileId = msgBuffalo.readUInt16();
         const payload = msgBuffalo.readRest();
 
-        if (profileId === TOUCHLINK_PROFILE_ID && clusterId === Cluster.touchlink.ID) {
+        if (profileId === TOUCHLINK_PROFILE_ID && clusterId === Clusters.touchlink.ID) {
             this.emit(EzspEvents.TOUCHLINK_MESSAGE, sourcePanId, sourceAddress, groupId, lastHopLqi, payload);
         }
     }
@@ -6937,7 +6940,7 @@ export class Ezsp extends EventEmitter {
             throw new Error(EzspStatus[sendStatus]);
         }
 
-        const ciphertext = this.buffalo.readListUInt8({length: 16});
+        const ciphertext = this.buffalo.readListUInt8(EMBER_ENCRYPTION_KEY_SIZE);
 
         return ciphertext;
     }
@@ -7587,7 +7590,7 @@ export class Ezsp extends EventEmitter {
             return;
         }
 
-        let commandIdentifier = Cluster.greenPower.commands.notification.ID;
+        let commandIdentifier = Clusters.greenPower.commands.notification.ID;
 
         if (gpdCommandId === 0xE0) {
             if (!gpdCommandPayload.length) {
@@ -7596,7 +7599,7 @@ export class Ezsp extends EventEmitter {
                 return;
             }
 
-            commandIdentifier = Cluster.greenPower.commands.commissioningNotification.ID;
+            commandIdentifier = Clusters.greenPower.commands.commissioningNotification.ID;
         }
 
         this.emit(

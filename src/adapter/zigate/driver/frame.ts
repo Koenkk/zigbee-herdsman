@@ -93,7 +93,7 @@ export default class ZiGateFrame {
 
             try {
                 if(this.readMsgCode() !== 0x8001)
-                    logger.info(`${JSON.stringify(this)}`, NS);
+                    logger.debug(`${JSON.stringify(this)}`, NS);
             } catch (e) {
                 logger.error(e, NS);
             }

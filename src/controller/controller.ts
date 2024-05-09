@@ -6,7 +6,7 @@ import {ZclFrameConverter} from './helpers';
 import * as Events from './events';
 import {KeyValue, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import fs from 'fs';
-import {Utils as ZclUtils, FrameControl, ZclFrame} from '../zcl';
+import {Utils as ZclUtils, FrameControl, ZclFrame, Clusters} from '../zcl';
 import Touchlink from './touchlink';
 import GreenPower from './greenPower';
 import {BackupUtils} from "../utils";
@@ -613,52 +613,55 @@ class Controller extends events.EventEmitter {
 
     private async onZclPayload(payload: AdapterEvents.ZclPayload): Promise<void> {
         let frame: ZclFrame | undefined = undefined;
-
-        try {
-            frame = ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data);
-        } catch (error) {
-            logger.debug(`Failed to parse frame: ${error}`, NS);
-        }
-
-        logger.debug(`Received payload: clusterID=${payload.clusterID}, address=${payload.address}, groupID=${payload.groupID}, `
-            + `endpoint=${payload.endpoint}, destinationEndpoint=${payload.destinationEndpoint}, wasBroadcast=${payload.wasBroadcast}, `
-            + `linkQuality=${payload.linkquality}, frame=${frame?.toString()}`, NS);
-
-        let gpDevice = null;
-
-        if (frame?.cluster.name === 'touchlink') {
+        let device: Device = undefined;
+        if (payload.clusterID === Clusters.touchlink.ID) {
             // This is handled by touchlink
             return;
-        } else if (frame?.cluster.name === 'greenPower') {
+        } else if (payload.clusterID === Clusters.greenPower.ID) {
+            try {
+                // Custom clusters are not supported for Green Power since we need to parse the frame to get the device.
+                frame = ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+            } catch (error) {
+                logger.debug(`Failed to parse frame green power frame, ignoring it: ${error}`, NS);
+                return;
+            }
+
             await this.greenPower.onZclGreenPowerData(payload, frame);
             // lookup encapsulated gpDevice for further processing
-            gpDevice = Device.byNetworkAddress(frame.payload.srcID & 0xFFFF);
-        }
-
-        let device = gpDevice ? gpDevice : (typeof payload.address === 'string' ?
-            Device.byIeeeAddr(payload.address) : Device.byNetworkAddress(payload.address));
-
-        /**
-         * Handling of re-transmitted Xiaomi messages.
-         * https://github.com/Koenkk/zigbee2mqtt/issues/1238
-         * https://github.com/Koenkk/zigbee2mqtt/issues/3592
-         *
-         * Some Xiaomi router devices re-transmit messages from Xiaomi end devices.
-         * The network address of these message is set to the one of the Xiaomi router.
-         * Therefore it looks like if the message came from the Xiaomi router, while in
-         * fact it came from the end device.
-         * Handling these message would result in false state updates.
-         * The group ID attribute of these message defines the network address of the end device.
-         */
-        if (device?.manufacturerName === 'LUMI' && device?.type == 'Router' && payload.groupID) {
-            logger.debug(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${payload.groupID}`, NS);
-            device = Device.byNetworkAddress(payload.groupID);
+            device = Device.byNetworkAddress(frame.payload.srcID & 0xFFFF);
+        } else {
+            /**
+             * Handling of re-transmitted Xiaomi messages.
+             * https://github.com/Koenkk/zigbee2mqtt/issues/1238
+             * https://github.com/Koenkk/zigbee2mqtt/issues/3592
+             *
+             * Some Xiaomi router devices re-transmit messages from Xiaomi end devices.
+             * The network address of these message is set to the one of the Xiaomi router.
+             * Therefore it looks like if the message came from the Xiaomi router, while in
+             * fact it came from the end device.
+             * Handling these message would result in false state updates.
+             * The group ID attribute of these message defines the network address of the end device.
+             */
+            device = Device.find(payload.address);
+            if (device?.manufacturerName === 'LUMI' && device?.type == 'Router' && payload.groupID) {
+                logger.debug(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${payload.groupID}`, NS);
+                device = Device.byNetworkAddress(payload.groupID);
+            }
+            try {
+                frame = ZclFrame.fromBuffer(payload.clusterID, payload.header, payload.data, device?.customClusters);
+            } catch (error) {
+                logger.debug(`Failed to parse frame: ${error}`, NS);
+            }
         }
 
         if (!device) {
             logger.debug(`Data is from unknown device with address '${payload.address}', skipping...`, NS);
             return;
         }
+
+        logger.debug(`Received payload: clusterID=${payload.clusterID}, address=${payload.address}, groupID=${payload.groupID}, `
+            + `endpoint=${payload.endpoint}, destinationEndpoint=${payload.destinationEndpoint}, wasBroadcast=${payload.wasBroadcast}, `
+            + `linkQuality=${payload.linkquality}, frame=${frame?.toString()}`, NS);
 
         device.updateLastSeen();
         //no implicit checkin for genPollCtrl data because it might interfere with the explicit checkin
@@ -697,18 +700,18 @@ class Controller extends events.EventEmitter {
             if (frame.header.isGlobal) {
                 if (frame.isCommand('report')) {
                     type = 'attributeReport';
-                    data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID);
+                    data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID, device.customClusters);
                 } else if (frame.isCommand('read')) {
                     type = 'read';
-                    data = ZclFrameConverter.attributeList(frame, device.manufacturerID);
+                    data = ZclFrameConverter.attributeList(frame, device.manufacturerID, device.customClusters);
                 } else if (frame.isCommand('write')) {
                     type = 'write';
-                    data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID);
+                    data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID, device.customClusters);
                 } else {
                     /* istanbul ignore else */
                     if (frame.isCommand('readRsp')) {
                         type = 'readResponse';
-                        data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID);
+                        data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID, device.customClusters);
                     }
                 }
             } else {
@@ -737,7 +740,7 @@ class Controller extends events.EventEmitter {
         } else {
             type = 'raw';
             data = payload.data;
-            const name = ZclUtils.getCluster(payload.clusterID).name;
+            const name = ZclUtils.getCluster(payload.clusterID, device.manufacturerID, device.customClusters).name;
             clusterName = Number.isNaN(Number(name)) ? name : Number(name);
         }
 

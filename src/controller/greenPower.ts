@@ -5,6 +5,8 @@ import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber
 import events from 'events';
 import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 import {logger} from '../utils/logger';
+import {Clusters} from '../zcl';
+import {BroadcastAddress} from '../zspec/enums';
 
 const NS = 'zh:controller:greenpower';
 
@@ -69,7 +71,8 @@ class GreenPower extends events.EventEmitter {
 
         const replyFrame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-            null, ZclTransactionSequenceNumber.next(), 'pairing', 33, payload
+            null, ZclTransactionSequenceNumber.next(), 'pairing', Clusters.greenPower.ID, payload,
+            {},
         );
 
 
@@ -78,17 +81,16 @@ class GreenPower extends events.EventEmitter {
         // the proxy MAY send it as unicast to selected proxy.
         // This attempts to mirror logic from commit 92f77cc5.
         if (dataPayload.wasBroadcast) {
-            return this.adapter.sendZclFrameToAll(242, replyFrame, 242);
+            return this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             return this.adapter.sendZclFrameToEndpoint(null, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
         }
     }
 
     public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame): Promise<void> {
-        let payload = {};
-
         try {
-            switch(frame.payload.commandID) {
+            const commandID = frame.payload.commandID  ?? frame.header.commandIdentifier;
+            switch(commandID) {
             /* istanbul ignore next */
             case undefined:
                 logger.error(`Received undefined command from '${dataPayload.address}'`, NS);
@@ -115,7 +117,7 @@ class GreenPower extends events.EventEmitter {
 
                     const networkParameters = await this.adapter.getNetworkParameters();
                     // Commissioning reply
-                    payload = {
+                    const payloadReply = {
                         options: 0,
                         tempMaster: frame.payload.gppNwkAddr,
                         tempMasterTx: networkParameters.channel - 11,
@@ -131,17 +133,18 @@ class GreenPower extends events.EventEmitter {
 
                     const replyFrame = Zcl.ZclFrame.create(
                         Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-                        null, ZclTransactionSequenceNumber.next(), 'response', 33, payload
+                        null, ZclTransactionSequenceNumber.next(), 'response', Clusters.greenPower.ID, payloadReply,
+                        {},
                     );
-                    await this.adapter.sendZclFrameToAll(242, replyFrame, 242);
+                    await this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
 
-                    payload = {
+                    const payloadPairing = {
                         options: 0b0000000110101000, // Disable encryption
                         srcID: frame.payload.srcID,
                         deviceID: frame.payload.commandFrame.deviceID,
                     };
 
-                    await this.sendPairingCommand(payload, dataPayload, frame);
+                    await this.sendPairingCommand(payloadPairing, dataPayload, frame);
                 } else {
                     // Communication mode:
                     //  Broadcast: Groupcast to precommissioned ID (0b10)
@@ -151,7 +154,7 @@ class GreenPower extends events.EventEmitter {
                         opt = 0b1110010101001000;
                     }
 
-                    payload = {
+                    const payload = {
                         options: opt,
                         srcID: frame.payload.srcID,
                         deviceID: frame.payload.commandFrame.deviceID,
@@ -179,7 +182,7 @@ class GreenPower extends events.EventEmitter {
                 logger.debug(`Received channel request from '${dataPayload.address}'`, NS);
                 const networkParameters = await this.adapter.getNetworkParameters();
                 // Channel notification
-                payload = {
+                const payload = {
                     options: 0,
                     tempMaster: frame.payload.gppNwkAddr,
                     tempMasterTx: frame.payload.commandFrame.nextChannel,
@@ -194,17 +197,18 @@ class GreenPower extends events.EventEmitter {
 
                 const replyFrame = Zcl.ZclFrame.create(
                     Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-                    null, ZclTransactionSequenceNumber.next(), 'response', 33, payload
+                    null, ZclTransactionSequenceNumber.next(), 'response', Clusters.greenPower.ID, payload,
+                    {},
                 );
 
-                await this.adapter.sendZclFrameToAll(242, replyFrame, 242);
+                await this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
                 break;
             /* istanbul ignore next */
             case 0xA1: // GP Manufacturer-specific Attribute Reporting
                 break;
             default:
                 // NOTE: this is spammy because it logs everything that is handed back to Controller without special processing here
-                logger.debug(`Received unhandled command '0x${frame.payload.commandID.toString(16)}' from '${dataPayload.address}'`, NS);
+                logger.debug(`Received unhandled command '0x${commandID.toString(16)}' from '${dataPayload.address}'`, NS);
             }
         } catch (error) {
             /* istanbul ignore next */
@@ -220,11 +224,12 @@ class GreenPower extends events.EventEmitter {
 
         const frame = Zcl.ZclFrame.create(
             Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-            null, ZclTransactionSequenceNumber.next(), 'commisioningMode', 33, payload
+            null, ZclTransactionSequenceNumber.next(), 'commisioningMode', Clusters.greenPower.ID, payload,
+            {},
         );
 
         if (networkAddress === null) {
-            await this.adapter.sendZclFrameToAll(242, frame, 242);
+            await this.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             await this.adapter.sendZclFrameToEndpoint(null, networkAddress,242,frame,10000,false,false,242);
         }

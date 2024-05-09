@@ -6,6 +6,7 @@ import {ZiGateCommandCode, ZiGateMessageCode, ZiGateObjectPayload} from "./const
 import {ZiGateMessage, ZiGateMessageParameter} from "./messageType";
 import {ZiGateCommand, ZiGateCommandParameter, ZiGateCommandType} from "./commandType";
 import {logger} from '../../../utils/logger';
+import ParameterType from './parameterType';
 
 type ZiGateCode = ZiGateCommandCode | ZiGateMessageCode;
 type ZiGateParameter = ZiGateCommandParameter | ZiGateMessageParameter;
@@ -13,12 +14,10 @@ type ZiGateParameter = ZiGateCommandParameter | ZiGateMessageParameter;
 
 const NS = 'zh:zigate:object';
 
-const BufferAndListTypes = [
-    'BUFFER', 'BUFFER8', 'BUFFER16',
-    'BUFFER18', 'BUFFER32', 'BUFFER42',
-    'BUFFER100', 'LIST_UINT16', 'LIST_ROUTING_TABLE',
-    'LIST_BIND_TABLE', 'LIST_NEIGHBOR_LQI', 'LIST_NETWORK',
-    'LIST_ASSOC_DEV', 'LIST_UINT8',
+const BufferAndListTypes: ParameterType[] = [
+    ParameterType.BUFFER, ParameterType.BUFFER8, ParameterType.BUFFER16,
+    ParameterType.BUFFER18, ParameterType.BUFFER32, ParameterType.BUFFER42,
+    ParameterType.BUFFER100, ParameterType.LIST_UINT16, ParameterType.LIST_UINT8,
 ];
 
 class ZiGateObject {
@@ -117,7 +116,7 @@ class ZiGateObject {
 
         if (buffalo.isMore()) {
             let bufferString = buffalo.getBuffer().toString('hex');
-            logger.error(`Last bytes of data were not parsed \x1b[32m${bufferString.slice(0, (buffalo.getPosition() * 2)).replace(/../g, "$& ")}`
+            logger.debug(`Last bytes of data were not parsed \x1b[32m${bufferString.slice(0, (buffalo.getPosition() * 2)).replace(/../g, "$& ")}`
                 + `\x1b[31m${bufferString.slice(buffalo.getPosition() * 2).replace(/../g, "$& ")}\x1b[0m `, NS);
         }
 

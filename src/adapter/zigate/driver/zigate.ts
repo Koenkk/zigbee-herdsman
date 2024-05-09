@@ -315,7 +315,7 @@ export default class ZiGate extends EventEmitter {
                                 break;
                             default:
 
-                                logger.error("not implemented profile: " + ziGateObject.payload.profileID, NS);
+                                logger.debug("not implemented profile: " + ziGateObject.payload.profileID, NS);
                         }
                         break;
                     case ZiGateMessageCode.LeaveIndication:

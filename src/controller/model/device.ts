@@ -8,6 +8,10 @@ import * as Zcl from '../../zcl';
 import assert from 'assert';
 import {ZclFrameConverter} from '../helpers';
 import {logger} from '../../utils/logger';
+import {ClusterDefinition, CustomClusters} from '../../zcl/definition/tstype';
+import {Clusters} from '../../zcl';
+import {isClusterName} from '../../zcl/utils';
+import {BroadcastAddress} from '../../zspec/enums';
 
 /**
  * @ignore
@@ -55,6 +59,7 @@ class Device extends Entity {
     private _lastDefaultResponseSequenceNumber: number;
     private _checkinInterval: number;
     private _pendingRequestTimeout: number;
+    private _customClusters: CustomClusters = {};
 
     // Getters/setters
     get ieeeAddr(): string {return this._ieeeAddr;}
@@ -107,6 +112,7 @@ class Device extends Entity {
     };
     get pendingRequestTimeout(): number {return this._pendingRequestTimeout;}
     set pendingRequestTimeout(pendingRequestTimeout: number) {this._pendingRequestTimeout = pendingRequestTimeout;}
+    get customClusters(): CustomClusters {return this._customClusters;}
 
     public meta: KeyValue;
 
@@ -213,7 +219,7 @@ class Device extends Entity {
     public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.ZclFrame, endpoint: Endpoint): Promise<void> {
         // Update reportable properties
         if (frame.isCluster('genBasic') && (frame.isCommand('readRsp') || frame.isCommand('report'))) {
-            for (const [key, val] of Object.entries(ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID))) {
+            for (const [key, val] of Object.entries(ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID, this.customClusters))) {
                 Device.ReportablePropertiesMapping[key]?.set(val, this);
             }
         }
@@ -349,7 +355,7 @@ class Device extends Entity {
 
         // default: no timeout (messages expire immediately after first send attempt)
         let pendingRequestTimeout = 0;
-        if((endpoints.filter((e): boolean => e.supportsInputCluster('genPollCtrl'))).length > 0) {
+        if((endpoints.filter((e): boolean => e.inputClusters.includes(Clusters.genPollCtrl.ID))).length > 0) {
             // default for devices that support genPollCtrl cluster (RX off when idle): 1 day
             pendingRequestTimeout = 86400000;
             /* istanbul ignore else */
@@ -401,14 +407,20 @@ class Device extends Entity {
         }
     }
 
-    public static byIeeeAddr(ieeeAddr: string, includeDeleted=false): Device {
+    public static find(ieeeOrNwkAddress: string | number, includeDeleted: boolean = false): Device {
+        return typeof ieeeOrNwkAddress === 'string' ? Device.byIeeeAddr(ieeeOrNwkAddress, includeDeleted)
+            : Device.byNetworkAddress(ieeeOrNwkAddress, includeDeleted);
+    }
+
+    public static byIeeeAddr(ieeeAddr: string, includeDeleted: boolean = false): Device {
         Device.loadFromDatabaseIfNecessary();
         const device = Device.devices[ieeeAddr];
         return device?._deleted && !includeDeleted ? undefined : device;
     }
 
-    public static byNetworkAddress(networkAddress: number): Device {
-        return Device.all().find(d => d.networkAddress === networkAddress);
+    public static byNetworkAddress(networkAddress: number, includeDeleted: boolean = false): Device {
+        Device.loadFromDatabaseIfNecessary();
+        return Object.values(Device.devices).find(d => (includeDeleted || !d._deleted) && d.networkAddress === networkAddress);
     }
 
     public static byType(type: DeviceType): Device[] {
@@ -749,11 +761,11 @@ class Device extends Entity {
             };
 
             const frame = Zcl.ZclFrame.create(
-                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true,
-                null, ZclTransactionSequenceNumber.next(), 'pairing', 33, payload
+                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, null,
+                ZclTransactionSequenceNumber.next(), 'pairing', 33, payload, this.customClusters,
             );
 
-            await Entity.adapter.sendZclFrameToAll(242, frame, 242);
+            await Entity.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else await Entity.adapter.removeDevice(this.networkAddress, this.ieeeAddr);
         this.removeFromDatabase();
     }
@@ -797,6 +809,25 @@ class Device extends Entity {
         // possible.
         const endpoint = this.endpoints.find((ep) => ep.inputClusters.includes(0)) ?? this.endpoints[0];
         await endpoint.read('genBasic', ['zclVersion'], {disableRecovery});
+    }
+
+    public addCustomCluster(name: string, cluster: ClusterDefinition): void {
+        assert(!([Clusters.touchlink.ID, Clusters.greenPower.ID].includes(cluster.ID)),
+            'Overriding of greenPower or touchlink cluster is not supported');
+        if (isClusterName(name)) {
+            const existingCluster = Clusters[name];
+
+            // Extend existing cluster
+            assert(existingCluster.ID === cluster.ID, `Custom cluster ID (${cluster.ID}) should match existing cluster ID (${existingCluster.ID})`);
+            cluster = {
+                ID: cluster.ID,
+                manufacturerCode: cluster.manufacturerCode,
+                attributes: {...existingCluster.attributes, ...cluster.attributes},
+                commands: {...existingCluster.commands, ...cluster.commands},
+                commandsResponse: {...existingCluster.commandsResponse, ...cluster.commandsResponse},
+            };
+        }
+        this._customClusters[name] = cluster;
     }
 }
 

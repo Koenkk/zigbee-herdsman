@@ -1,5 +1,117 @@
 # Changelog
 
+## [0.46.6](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.5...v0.46.6) (2024-05-09)
+
+
+### Bug Fixes
+
+* Ember: fix for some startup issues, with associated tests. ([#1053](https://github.com/Koenkk/zigbee-herdsman/issues/1053)) ([3ab71b4](https://github.com/Koenkk/zigbee-herdsman/commit/3ab71b46bffda76b430b0471b971a246ca492a1d))
+
+## [0.46.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.4...v0.46.5) (2024-05-08)
+
+
+### Bug Fixes
+
+* Ember: fix permit join denied for single-device (zdo) ([#1052](https://github.com/Koenkk/zigbee-herdsman/issues/1052)) ([6bddc23](https://github.com/Koenkk/zigbee-herdsman/commit/6bddc234c825421e3bf259ad484c0052144c7fd0))
+* Move `Received network/route error` to `info` ([#1050](https://github.com/Koenkk/zigbee-herdsman/issues/1050)) ([f36c56d](https://github.com/Koenkk/zigbee-herdsman/commit/f36c56d06dca9ee02c766d82bfde17e41cf27605))
+
+## [0.46.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.3...v0.46.4) (2024-05-06)
+
+
+### Bug Fixes
+
+* Add `motDEtat` to `liXeePrivate` cluster https://github.com/Koenkk/zigbee2mqtt/issues/21825 ([a731e60](https://github.com/Koenkk/zigbee-herdsman/commit/a731e604991d8b47ebe86e894d2ca44954ea2109))
+* Fix `Received undefined command from '0'` https://github.com/Koenkk/zigbee2mqtt/issues/22140 ([2a7ce14](https://github.com/Koenkk/zigbee-herdsman/commit/2a7ce14df8a22d833c0fc9e027b08c5680af8b0f))
+* Fixes for `ember` ([#1049](https://github.com/Koenkk/zigbee-herdsman/issues/1049)) ([0d5ef04](https://github.com/Koenkk/zigbee-herdsman/commit/0d5ef04995f491b1cca5025336d7f43f3010ea81))
+
+## [0.46.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.2...v0.46.3) (2024-05-05)
+
+
+### Bug Fixes
+
+* Add `commandMoveToHueAndSaturation` https://github.com/Koenkk/zigbee2mqtt/issues/22467 ([9caef05](https://github.com/Koenkk/zigbee-herdsman/commit/9caef0516ea546de3ce34c5852887ae426a5a2ec))
+
+## [0.46.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.1...v0.46.2) (2024-05-05)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1046](https://github.com/Koenkk/zigbee-herdsman/issues/1046)) ([440bb5c](https://github.com/Koenkk/zigbee-herdsman/commit/440bb5c67c00bb6910f2dd021c1fb9b81e02318e))
+* Move `Unknown attribute` log to debug https://github.com/Koenkk/zigbee2mqtt/issues/22396 ([70e6a9f](https://github.com/Koenkk/zigbee-herdsman/commit/70e6a9fa2f68a8d2eeb141a6b241850f58b2a580))
+
+## [0.46.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.0...v0.46.1) (2024-05-04)
+
+
+### Bug Fixes
+
+* **ignore:** remove all ubisys custom cluster/attributes ([#1034](https://github.com/Koenkk/zigbee-herdsman/issues/1034)) ([0e54023](https://github.com/Koenkk/zigbee-herdsman/commit/0e5402332b5d6c19575e859057b8a1d43da28f1f))
+* Move some ZiGate log statement to debug ([#1043](https://github.com/Koenkk/zigbee-herdsman/issues/1043)) ([44235eb](https://github.com/Koenkk/zigbee-herdsman/commit/44235eb67861e6f65ab23463c22042d68f5a0918))
+
+## [0.46.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.45.0...v0.46.0) (2024-05-01)
+
+
+### Features
+
+* ZCL types revamp ([#1033](https://github.com/Koenkk/zigbee-herdsman/issues/1033)) ([f88b4d6](https://github.com/Koenkk/zigbee-herdsman/commit/f88b4d64ed6e96e52b709fa98c7110686e84180c))
+
+## [0.45.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.44.0...v0.45.0) (2024-04-30)
+
+
+### Features
+
+* Log EZSP adapter deprecated ([#1039](https://github.com/Koenkk/zigbee-herdsman/issues/1039)) ([d55a267](https://github.com/Koenkk/zigbee-herdsman/commit/d55a267cc9c6e6f655d9a349493ccfb25d5b5832))
+
+## [0.44.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.43.1...v0.44.0) (2024-04-28)
+
+
+### Features
+
+* Add `zclCommandBroadcast` to endpoint ([#1028](https://github.com/Koenkk/zigbee-herdsman/issues/1028)) ([ccfd299](https://github.com/Koenkk/zigbee-herdsman/commit/ccfd2994124cdb0c43656cb82559acdf23baf7d6))
+
+
+### Bug Fixes
+
+* **ignore:** Export zspec https://github.com/Koenkk/zigbee-herdsman-converters/pull/7427 ([d661d73](https://github.com/Koenkk/zigbee-herdsman/commit/d661d737b3e6668434879d7e998ab8d8541a94a9))
+* **ignore:** update dependencies ([#1035](https://github.com/Koenkk/zigbee-herdsman/issues/1035)) ([7300ca4](https://github.com/Koenkk/zigbee-herdsman/commit/7300ca4fbed963c172895ed34851f91313f87867))
+
+## [0.43.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.43.0...v0.43.1) (2024-04-25)
+
+
+### Bug Fixes
+
+* Improve `tuyaAction` parsing ([#1030](https://github.com/Koenkk/zigbee-herdsman/issues/1030)) ([7867154](https://github.com/Koenkk/zigbee-herdsman/commit/786715424e15f78b5320c96558633429a9dcd8ba))
+* update msOccupancySensing definition ([#1031](https://github.com/Koenkk/zigbee-herdsman/issues/1031)) ([687527e](https://github.com/Koenkk/zigbee-herdsman/commit/687527ed37bc06ccccb30e866ee41c31b02e11e6))
+
+## [0.43.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.42.5...v0.43.0) (2024-04-23)
+
+
+### Features
+
+* Support custom clusters ([#1019](https://github.com/Koenkk/zigbee-herdsman/issues/1019)) ([d845f29](https://github.com/Koenkk/zigbee-herdsman/commit/d845f299ca44ba9ffccbb06f1e85081389a3281d))
+
+## [0.42.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.42.4...v0.42.5) (2024-04-21)
+
+
+### Bug Fixes
+
+* Ember: Register default bind group in coordinator mc table. ([#1026](https://github.com/Koenkk/zigbee-herdsman/issues/1026)) ([2094a08](https://github.com/Koenkk/zigbee-herdsman/commit/2094a086342f174ce3ef8ccd14154d1cfe2d44a5))
+
+## [0.42.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.42.3...v0.42.4) (2024-04-21)
+
+
+### Bug Fixes
+
+* Add `flowMeterConfig` to `manuSpecificSinope` ([#1025](https://github.com/Koenkk/zigbee-herdsman/issues/1025)) ([47cd267](https://github.com/Koenkk/zigbee-herdsman/commit/47cd2677abbedd887931a4decff4749046a5ac2c))
+* EZSP: fix frombuffer refactor GP ([#1023](https://github.com/Koenkk/zigbee-herdsman/issues/1023)) ([bd4f476](https://github.com/Koenkk/zigbee-herdsman/commit/bd4f476a5db756072955eebac2c83ceaec9d9743))
+* **ignore:** update dependencies ([#1022](https://github.com/Koenkk/zigbee-herdsman/issues/1022)) ([181703b](https://github.com/Koenkk/zigbee-herdsman/commit/181703b8e38779ae9e93defa570810b890dd916b))
+
+## [0.42.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.42.2...v0.42.3) (2024-04-18)
+
+
+### Bug Fixes
+
+* `Cannot read properties of null (reading 'asduPayload')` for Deconz adapter https://github.com/Koenkk/zigbee2mqtt/issues/22233 ([332c038](https://github.com/Koenkk/zigbee-herdsman/commit/332c0388ffc84cf645e6923debc21c54ce1d3424))
+
 ## [0.42.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.42.1...v0.42.2) (2024-04-15)
 
 

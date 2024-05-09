@@ -1,10 +1,10 @@
-import {TsType as BuffaloTsType} from '../../../buffalo';
+import ParameterType from './parameterType';
 
 type MtType = number|number[]|string|Buffer|{[s: string]: number|string}[];
 
 interface MtParameter {
     name: string;
-    parameterType: number;
+    parameterType: ParameterType;
 }
 
 interface MtCmd {
@@ -18,7 +18,8 @@ interface MtCmd {
 // eslint-disable-next-line
 type ZpiObjectPayload = any;
 
-interface BuffaloZnpOptions extends BuffaloTsType.Options {
+interface BuffaloZnpOptions {
+    length?: number;
     startIndex?: number;
 }
 
