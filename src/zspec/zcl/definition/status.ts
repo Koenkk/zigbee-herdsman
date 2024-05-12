@@ -1,4 +1,4 @@
-enum Status {
+export enum Status {
     /**  Operation was successful. */
     SUCCESS = 0x00,
     /**  Operation was not successful. */
@@ -67,5 +67,3 @@ enum Status {
     UNSUPPORTED_CLUSTER = 0xc3,
     LIMIT_REACHED = 0xc4,// DEPRECATED in favor of SUCCESS
 }
-
-export default Status;

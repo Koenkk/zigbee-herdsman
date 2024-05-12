@@ -28,7 +28,7 @@ import equals from 'fast-deep-equal/es6';
 import {ParamsDesc} from './commands';
 import {EZSPAdapterBackup} from '../adapter/backup';
 import {logger} from '../../../utils/logger';
-import Clusters from '../../../zcl/definition/cluster';
+import {Clusters} from '../../../zspec/zcl/definition/cluster';
 
 const NS = 'zh:ezsp:driv';
 

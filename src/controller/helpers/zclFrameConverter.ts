@@ -1,7 +1,5 @@
-import {ZclFrame, Utils as ZclUtils} from '../../zcl';
-import {Cluster} from '../../zcl/tstype';
-import ManufacturerCode from '../../zcl/definition/manufacturerCode';
-import {CustomClusters} from '../../zcl/definition/tstype';
+import * as Zcl from '../../zspec/zcl';
+import {Cluster, CustomClusters} from '../../zspec/zcl/definition/tstype';
 
 interface KeyValue {[s: string]: number | string}
 
@@ -10,15 +8,15 @@ interface KeyValue {[s: string]: number | string}
 // This leads to incorrect reported attribute names.
 // Remap the attributes using the target device's manufacturer ID
 // if the header is lacking the information.
-function getCluster(frame: ZclFrame, deviceManufacturerID: number, customClusters: CustomClusters): Cluster {
+function getCluster(frame: Zcl.Frame, deviceManufacturerID: number, customClusters: CustomClusters): Cluster {
     let cluster = frame.cluster;
-    if (!frame?.header?.manufacturerCode && frame?.cluster && deviceManufacturerID == ManufacturerCode.LEGRAND_GROUP) {
-        cluster = ZclUtils.getCluster(frame.cluster.ID, deviceManufacturerID, customClusters);
+    if (!frame?.header?.manufacturerCode && frame?.cluster && deviceManufacturerID == Zcl.ManufacturerCode.LEGRAND_GROUP) {
+        cluster = Zcl.Utils.getCluster(frame.cluster.ID, deviceManufacturerID, customClusters);
     }
     return cluster;
 }
 
-function attributeKeyValue(frame: ZclFrame, deviceManufacturerID: number, customClusters: CustomClusters): KeyValue {
+function attributeKeyValue(frame: Zcl.Frame, deviceManufacturerID: number, customClusters: CustomClusters): KeyValue {
     const payload: KeyValue = {};
     const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 
@@ -33,7 +31,7 @@ function attributeKeyValue(frame: ZclFrame, deviceManufacturerID: number, custom
     return payload;
 }
 
-function attributeList(frame: ZclFrame, deviceManufacturerID: number, customClusters: CustomClusters): Array<string | number> {
+function attributeList(frame: Zcl.Frame, deviceManufacturerID: number, customClusters: CustomClusters): Array<string | number> {
     const payload: Array<string | number> = [];
     const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 

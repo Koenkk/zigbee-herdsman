@@ -1,7 +1,7 @@
 import {DatabaseEntry, KeyValue} from '../tstype';
 import Entity from './entity';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
-import * as Zcl from '../../zcl';
+import * as Zcl from '../../zspec/zcl';
 import Endpoint from './endpoint';
 import Device from './device';
 import assert from 'assert';
@@ -162,7 +162,7 @@ class Group extends Entity {
         logger.debug(log, NS);
 
         try {
-            const frame = Zcl.ZclFrame.create(
+            const frame = Zcl.Frame.create(
                 Zcl.FrameType.GLOBAL, options.direction, true,
                 options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
                 'write', cluster.ID, payload, {}, options.reservedBits
@@ -185,7 +185,7 @@ class Group extends Entity {
             payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
         }
 
-        const frame = Zcl.ZclFrame.create(
+        const frame = Zcl.Frame.create(
             Zcl.FrameType.GLOBAL, options.direction, true,
             options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(), 'read',
             cluster.ID, payload, {}, options.reservedBits
@@ -214,7 +214,7 @@ class Group extends Entity {
         logger.debug(log, NS);
 
         try {
-            const frame = Zcl.ZclFrame.create(
+            const frame = Zcl.Frame.create(
                 Zcl.FrameType.SPECIFIC, options.direction, true, options.manufacturerCode,
                 options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
                 command.ID, cluster.ID, payload, {}, options.reservedBits

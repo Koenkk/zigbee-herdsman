@@ -7,10 +7,16 @@
  * Broadcasting to end devices is both significantly more resource-intensive and significantly less reliable than broadcasting to routers.
  */
 export enum BroadcastAddress {
-    /** Broadcast to all routers. */
+    // Reserved = 0xfff8,
+    // Reserved = 0xfff9,
+    // Reserved = 0xfffa,
+    /** Low power routers only */
+    LOW_POWER_ROUTERS = 0xFFFB,
+    /** All routers and coordinator */
     DEFAULT = 0xFFFC,
-    /** Broadcast to all non-sleepy devices. */
+    /** macRxOnWhenIdle = TRUE (all non-sleepy devices) */
     RX_ON_WHEN_IDLE = 0xFFFD,
-    /** Broadcast to all devices, including sleepy end devices. */
+    // Reserved = 0xFFFE,
+    /** All devices in PAN (including sleepy end devices) */
     SLEEPY = 0xFFFF,
 };

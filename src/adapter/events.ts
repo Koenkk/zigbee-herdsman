@@ -1,4 +1,4 @@
-import {ZclHeader} from '../zcl';
+import {Header as ZclHeader} from '../zspec/zcl';
 
 enum Events {
     networkAddress = "networkAddress",
@@ -36,7 +36,7 @@ interface ZclPayload {
     clusterID: number;
     address: number | string;
     header: ZclHeader | undefined;
-    // This buffer contains the whole ZclFrame (including the ZclHeader)
+    // This buffer contains the whole Zcl.Frame (including the ZclHeader)
     data: Buffer;
     endpoint: number;
     linkquality: number;

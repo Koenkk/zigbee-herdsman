@@ -6,7 +6,6 @@ import PARAM from './constants';
 import { busyQueue, apsBusyQueue, readyToSend, enableRTS, disableRTS, enableRtsTimeout } from './driver';
 import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin, ParamNetworkKey, gpDataInd } from './constants';
 import * as Events from '../../events';
-import {ZclFrame} from '../../../zcl';
 import {logger} from '../../../utils/logger';
 
 const NS = 'zh:deconz:frameparser';

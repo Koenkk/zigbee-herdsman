@@ -11,7 +11,6 @@ import {Queue, Wait} from "../../../utils";
 import {SerialPortOptions} from "../../tstype";
 import {STATUS, ZiGateCommandCode, ZiGateMessageCode, ZiGateObjectPayload} from "./constants";
 import ZiGateObject from "./ziGateObject";
-import {ZclFrame} from "../../../zcl";
 import Waitress from "../../../utils/waitress";
 import {equal, ZiGateResponseMatcher, ZiGateResponseMatcherRule} from "./commandType";
 import ZiGateFrame from "./frame";
