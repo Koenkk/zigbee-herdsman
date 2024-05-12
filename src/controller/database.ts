@@ -7,9 +7,11 @@ const NS = 'zh:controller:database';
 class Database {
     private entries: {[id: number]: DatabaseEntry};
     private path: string;
+    private nextID: number;
 
     private constructor(entries: {[id: number]: DatabaseEntry}, path: string) {
         this.entries = entries;
+        this.nextID = Object.keys(entries).length;
         this.path = path;
     }
 
@@ -68,11 +70,9 @@ class Database {
     }
 
     public newID(): number {
-        for (let i = 1; i < 100000; i++) {
-            if (!this.entries[i]) {
-                return i;
-            }
-        }
+        const next = this.nextID;
+        this.nextID += 1;
+        return next;
     }
 
     public write(): void {
