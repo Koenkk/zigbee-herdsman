@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.47.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.6...v0.47.0) (2024-05-12)
+
+
+### Features
+
+* Zigbee specification revamp ([#1042](https://github.com/Koenkk/zigbee-herdsman/issues/1042)) ([7316247](https://github.com/Koenkk/zigbee-herdsman/commit/73162478f5e5c3d9058bfada27dfff52b9d2c612))
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1056](https://github.com/Koenkk/zigbee-herdsman/issues/1056)) ([de8c862](https://github.com/Koenkk/zigbee-herdsman/commit/de8c862c494f31b7d3783175ec4695792610a352))
+
 ## [0.46.6](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.5...v0.46.6) (2024-05-09)
 
 
