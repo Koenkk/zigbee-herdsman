@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.47.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.47.0...v0.47.1) (2024-05-13)
+
+
+### Bug Fixes
+
+* Fix `DatabaseEntry with ID already exists` https://github.com/Koenkk/zigbee2mqtt/issues/22584 ([953a2b4](https://github.com/Koenkk/zigbee-herdsman/commit/953a2b4f1dbaa0c558d8950e7e9e83447ac663a2))
+* **ignore:** fix 953a2b4f1dbaa0c558d8950e7e9e83447ac663a2 ([b2ed451](https://github.com/Koenkk/zigbee-herdsman/commit/b2ed451d3ae7a5aeb2cf5b8d53cca52c692364dc))
+
 ## [0.47.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.46.6...v0.47.0) (2024-05-12)
 
 
