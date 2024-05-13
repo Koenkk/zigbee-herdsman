@@ -95,6 +95,7 @@ export interface Cluster {
 
 export interface ClusterDefinition {
     ID: number;
+    name?: string;
     manufacturerCode?: number;
     attributes: Readonly<Record<string, Readonly<AttributeDefinition>>>;
     commands: Readonly<Record<string, Readonly<CommandDefinition>>>;
