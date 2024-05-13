@@ -11,7 +11,7 @@ class Database {
 
     private constructor(entries: {[id: number]: DatabaseEntry}, path: string) {
         this.entries = entries;
-        this.nextID = Object.keys(entries).length;
+        this.nextID = Object.keys(entries).length + 1;
         this.path = path;
     }
 
