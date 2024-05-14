@@ -7,11 +7,11 @@ const NS = 'zh:controller:database';
 class Database {
     private entries: {[id: number]: DatabaseEntry};
     private path: string;
-    private nextID: number;
+    private maxId: number;
 
     private constructor(entries: {[id: number]: DatabaseEntry}, path: string) {
         this.entries = entries;
-        this.nextID = Object.keys(entries).length + 1;
+        this.maxId = Math.max(...Object.keys(entries).map((t) => Number(t)), 0);
         this.path = path;
     }
 
@@ -70,9 +70,8 @@ class Database {
     }
 
     public newID(): number {
-        const next = this.nextID;
-        this.nextID += 1;
-        return next;
+        this.maxId += 1;
+        return this.maxId;
     }
 
     public write(): void {
