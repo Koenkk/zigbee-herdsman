@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.47.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.47.1...v0.47.2) (2024-05-14)
+
+
+### Bug Fixes
+
+* **ignore:** improve 953a2b4f1dbaa0c558d8950e7e9e83447ac663a2 ([b192ac1](https://github.com/Koenkk/zigbee-herdsman/commit/b192ac174e11b15968979aaad8b49fce60bf9f37))
+
 ## [0.47.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.47.0...v0.47.1) (2024-05-13)
 
 
