@@ -733,14 +733,14 @@ export class Ezsp extends EventEmitter {
         }
         case EzspFrameID.ENERGY_SCAN_RESULT_HANDLER: {
             const channel = this.buffalo.readUInt8();
-            const maxRssiValue = this.buffalo.readUInt8();
+            const maxRssiValue = this.buffalo.readInt8();
             this.ezspEnergyScanResultHandler(channel, maxRssiValue);
             break;
         }
         case EzspFrameID.NETWORK_FOUND_HANDLER: {
             const networkFound: EmberZigbeeNetwork = this.buffalo.readEmberZigbeeNetwork();
             const lastHopLqi = this.buffalo.readUInt8();
-            const lastHopRssi = this.buffalo.readUInt8();
+            const lastHopRssi = this.buffalo.readInt8();
             this.ezspNetworkFoundHandler(networkFound, lastHopLqi, lastHopRssi);
             break;
         }
@@ -817,7 +817,7 @@ export class Ezsp extends EventEmitter {
             const type: EmberIncomingMessageType = this.buffalo.readUInt8();
             const apsFrame: EmberApsFrame = this.buffalo.readEmberApsFrame();
             const lastHopLqi = this.buffalo.readUInt8();
-            const lastHopRssi = this.buffalo.readUInt8();
+            const lastHopRssi = this.buffalo.readInt8();
             const sender: EmberNodeId = this.buffalo.readUInt16();
             const bindingIndex = this.buffalo.readUInt8();
             const addressIndex = this.buffalo.readUInt8();
@@ -857,7 +857,7 @@ export class Ezsp extends EventEmitter {
             const source: EmberNodeId = this.buffalo.readUInt16();
             const sourceEui: EmberEUI64 = this.buffalo.readIeeeAddr();
             const lastHopLqi = this.buffalo.readUInt8();
-            const lastHopRssi = this.buffalo.readUInt8();
+            const lastHopRssi = this.buffalo.readInt8();
             const relayCount = this.buffalo.readUInt8();
             const relayList = this.buffalo.readListUInt16(relayCount);//this.buffalo.readListUInt8(relayCount * 2);
             this.ezspIncomingRouteRecordHandler(source, sourceEui, lastHopLqi, lastHopRssi, relayCount, relayList);
@@ -871,7 +871,7 @@ export class Ezsp extends EventEmitter {
         case EzspFrameID.MAC_PASSTHROUGH_MESSAGE_HANDLER: {
             const messageType: EmberMacPassthroughType = this.buffalo.readUInt8();
             const lastHopLqi = this.buffalo.readUInt8();
-            const lastHopRssi = this.buffalo.readUInt8();
+            const lastHopRssi = this.buffalo.readInt8();
             const messageContents = this.buffalo.readPayload();
             this.ezspMacPassthroughMessageHandler(messageType, lastHopLqi, lastHopRssi, messageContents);
             break;
@@ -880,7 +880,7 @@ export class Ezsp extends EventEmitter {
             const filterIndexMatch = this.buffalo.readUInt8();
             const legacyPassthroughType: EmberMacPassthroughType = this.buffalo.readUInt8();
             const lastHopLqi = this.buffalo.readUInt8();
-            const lastHopRssi = this.buffalo.readUInt8();
+            const lastHopRssi = this.buffalo.readInt8();
             const messageContents = this.buffalo.readPayload();
             this.ezspMacFilterMatchMessageHandler(filterIndexMatch, legacyPassthroughType, lastHopLqi, lastHopRssi, messageContents);
             break;
@@ -949,7 +949,7 @@ export class Ezsp extends EventEmitter {
         }
         case EzspFrameID.MFGLIB_RX_HANDLER: {
             const linkQuality = this.buffalo.readUInt8();
-            const rssi = this.buffalo.readUInt8();
+            const rssi = this.buffalo.readInt8();
             const packetLength = this.buffalo.readUInt8();
             const packetContents = this.buffalo.readListUInt8(packetLength);
             this.ezspMfglibRxHandler(linkQuality, rssi, packetLength, packetContents);
@@ -958,7 +958,7 @@ export class Ezsp extends EventEmitter {
         case EzspFrameID.INCOMING_BOOTLOAD_MESSAGE_HANDLER: {
             const longId: EmberEUI64 = this.buffalo.readIeeeAddr();
             const lastHopLqi = this.buffalo.readUInt8();
-            const lastHopRssi = this.buffalo.readUInt8();
+            const lastHopRssi = this.buffalo.readInt8();
             const messageContents = this.buffalo.readPayload();
             this.ezspIncomingBootloadMessageHandler(longId, lastHopLqi, lastHopRssi, messageContents);
             break;
@@ -974,7 +974,7 @@ export class Ezsp extends EventEmitter {
             const isDeviceInfoNull: boolean = this.buffalo.readUInt8() === 1 ? true : false;
             const deviceInfo: EmberZllDeviceInfoRecord = this.buffalo.readEmberZllDeviceInfoRecord();
             const lastHopLqi = this.buffalo.readUInt8();
-            const lastHopRssi = this.buffalo.readUInt8();
+            const lastHopRssi = this.buffalo.readInt8();
             this.ezspZllNetworkFoundHandler(networkInfo, isDeviceInfoNull, deviceInfo, lastHopLqi, lastHopRssi);
             break;
         }
@@ -986,7 +986,7 @@ export class Ezsp extends EventEmitter {
         case EzspFrameID.ZLL_ADDRESS_ASSIGNMENT_HANDLER: {
             const addressInfo: EmberZllAddressAssignment = this.buffalo.readEmberZllAddressAssignment();
             const lastHopLqi = this.buffalo.readUInt8();
-            const lastHopRssi = this.buffalo.readUInt8();
+            const lastHopRssi = this.buffalo.readInt8();
             this.ezspZllAddressAssignmentHandler(addressInfo, lastHopLqi, lastHopRssi);
             break;
         }
@@ -2366,7 +2366,7 @@ export class Ezsp extends EventEmitter {
      */
     ezspEnergyScanResultHandler(channel: number, maxRssiValue: number): void {
         logger.debug(`ezspEnergyScanResultHandler(): callback called with: [channel=${channel}], [maxRssiValue=${maxRssiValue}]`, NS);
-        logger.info(`Energy scan for channel ${channel} reports max RSSI value at ${maxRssiValue}.`, NS);
+        logger.info(`Energy scan for channel ${channel} reports max RSSI value at ${maxRssiValue} dBm.`, NS);
     }
 
     /**
@@ -2514,7 +2514,7 @@ export class Ezsp extends EventEmitter {
         this.startCommand(EzspFrameID.JOIN_NETWORK_DIRECTLY);
         this.buffalo.writeUInt8(localNodeType);
         this.buffalo.writeEmberBeaconData(beacon);
-        this.buffalo.writeUInt8(radioTxPower);
+        this.buffalo.writeInt8(radioTxPower);
         this.buffalo.writeUInt8(clearBeaconsAfterNetworkUp ? 1 : 0);
 
         const sendStatus: EzspStatus = await this.sendCommand();
@@ -3030,7 +3030,7 @@ export class Ezsp extends EventEmitter {
      */
     async ezspSetRadioPower(power: number): Promise<EmberStatus> {
         this.startCommand(EzspFrameID.SET_RADIO_POWER);
-        this.buffalo.writeUInt8(power);
+        this.buffalo.writeInt8(power);
     
         const sendStatus: EzspStatus = await this.sendCommand();
 
@@ -3176,7 +3176,7 @@ export class Ezsp extends EventEmitter {
         this.buffalo.writeUInt8(phyIndex);
         this.buffalo.writeUInt8(page);
         this.buffalo.writeUInt8(channel);
-        this.buffalo.writeUInt8(power);
+        this.buffalo.writeInt8(power);
         this.buffalo.writeUInt8(bitmask);
     
         const sendStatus: EzspStatus = await this.sendCommand();
@@ -3224,7 +3224,7 @@ export class Ezsp extends EventEmitter {
     async ezspMultiPhySetRadioPower(phyIndex: number, power: number): Promise<EmberStatus> {
         this.startCommand(EzspFrameID.MULTI_PHY_SET_RADIO_POWER);
         this.buffalo.writeUInt8(phyIndex);
-        this.buffalo.writeUInt8(power);
+        this.buffalo.writeInt8(power);
     
         const sendStatus: EzspStatus = await this.sendCommand();
 
@@ -6768,7 +6768,7 @@ export class Ezsp extends EventEmitter {
     async mfglibSetPower(txPowerMode: EmberTXPowerMode, power: number): Promise<EmberStatus> {
         this.startCommand(EzspFrameID.MFGLIB_SET_POWER);
         this.buffalo.writeUInt16(txPowerMode);
-        this.buffalo.writeUInt8(power);
+        this.buffalo.writeInt8(power);
     
         const sendStatus: EzspStatus = await this.sendCommand();
 
@@ -6793,7 +6793,7 @@ export class Ezsp extends EventEmitter {
             throw new Error(EzspStatus[sendStatus]);
         }
     
-        const power = this.buffalo.readUInt8();
+        const power = this.buffalo.readInt8();
         return power;
     }
 
@@ -6961,7 +6961,7 @@ export class Ezsp extends EventEmitter {
         this.startCommand(EzspFrameID.ZLL_NETWORK_OPS);
         this.buffalo.writeEmberZllNetwork(networkInfo);
         this.buffalo.writeUInt8(op);
-        this.buffalo.writeUInt8(radioTxPower);
+        this.buffalo.writeInt8(radioTxPower);
 
         const sendStatus: EzspStatus = await this.sendCommand();
 
@@ -7026,7 +7026,7 @@ export class Ezsp extends EventEmitter {
     async ezspZllStartScan(channelMask: number, radioPowerForScan: number, nodeType: EmberNodeType): Promise<EmberStatus> {
         this.startCommand(EzspFrameID.ZLL_START_SCAN);
         this.buffalo.writeUInt32(channelMask);
-        this.buffalo.writeUInt8(radioPowerForScan);
+        this.buffalo.writeInt8(radioPowerForScan);
         this.buffalo.writeUInt8(nodeType);
     
         const sendStatus: EzspStatus = await this.sendCommand();
