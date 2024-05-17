@@ -13,17 +13,12 @@ coordinator.on('message', async (msg) => {
 })
 
 coordinator
-  .start((err) => {
-    if (err) {
-      console.error(err)
-      process.exit(1)
-    }
-  })
-  .then(async () => {
+  .start()
+  .then(() => {
     console.log('started with device', SERIAL)
-    coordinator.permitJoin(600, (err) => {
-      if (err) {
-        console.error(err)
-      }
-    })
+    return coordinator.permitJoin(true, null, 600)
+  })
+  .catch((err) => {
+    console.error(err)
+    process.exit(1)
   })
