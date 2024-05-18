@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.48.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.47.2...v0.48.0) (2024-05-18)
+
+
+### Features
+
+* Ember: change default APS options to follow silabs impl. ([#1065](https://github.com/Koenkk/zigbee-herdsman/issues/1065)) ([6408a05](https://github.com/Koenkk/zigbee-herdsman/commit/6408a05073bb0c7a1315dfa73c330e4b0a277ee8))
+* Optimize adapter disconnected state ([#1066](https://github.com/Koenkk/zigbee-herdsman/issues/1066)) ([54ea6ac](https://github.com/Koenkk/zigbee-herdsman/commit/54ea6ac7fca802f0a897224fd6e5a41ef7c61de5))
+
+
+### Bug Fixes
+
+* Ember: fix some int8 read/written as uint8 ([#1062](https://github.com/Koenkk/zigbee-herdsman/issues/1062)) ([bceec88](https://github.com/Koenkk/zigbee-herdsman/commit/bceec8821845d07d9d7a6ad160995d4f9735b8a0))
+
 ## [0.47.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.47.1...v0.47.2) (2024-05-14)
 
 
