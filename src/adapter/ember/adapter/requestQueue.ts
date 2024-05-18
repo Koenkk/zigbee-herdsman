@@ -49,7 +49,7 @@ export class EmberRequestQueue {
     public stopDispatching(): void {
         this.dispatching = false;
 
-        logger.debug(`Dispatching stopped; queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}`, NS);
+        logger.info(`Request dispatching stopped; queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}`, NS);
     }
 
     /**
@@ -61,7 +61,7 @@ export class EmberRequestQueue {
 
         setTimeout(this.dispatch.bind(this), 0);
 
-        logger.debug(`Dispatching started.`, NS);
+        logger.info(`Request dispatching started.`, NS);
     }
 
     /**

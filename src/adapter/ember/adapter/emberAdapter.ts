@@ -368,13 +368,11 @@ const STACK_CONFIGS = {
 };
 
 /**
- * NOTE: This from SDK is currently ignored here because of issue in below link:
+ * NOTE: This from SDK:
  * - BUGZID 12261: Concentrators use MTORRs for route discovery and should not enable route discovery in the APS options.
  * - https://community.silabs.com/s/question/0D58Y00008DRfDCSA1/coordinator-cant-send-unicast-to-sleepy-node-after-reboot?language=en_US
- * 
- * No issue have been linked to this at the moment, so keeping ENABLE_ROUTE_DISCOVERY just in case...
  */
-const DEFAULT_APS_OPTIONS = (EmberApsOption.RETRY | EmberApsOption.ENABLE_ROUTE_DISCOVERY | EmberApsOption.ENABLE_ADDRESS_DISCOVERY);
+const DEFAULT_APS_OPTIONS = (EmberApsOption.RETRY | EmberApsOption.ENABLE_ADDRESS_DISCOVERY);
 /**
  * Enabling this allows to immediately reject requests that won't be able to get to their destination.
  * However, it causes more NCP calls, notably to get the source route overhead.
