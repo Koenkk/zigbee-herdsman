@@ -535,9 +535,7 @@ const options = {
 const databaseContents = () => fs.readFileSync(options.databasePath).toString();
 
 describe('Controller', () => {
-    let controller: {
-        getDeviceByIeeeAddr(ieeeAddr: string): Device
-    };
+    let controller: Controller;
 
     beforeAll(async () => {
         jest.useFakeTimers({doNotFake: ['setTimeout']});
@@ -582,7 +580,7 @@ describe('Controller', () => {
 
     it('Call controller constructor options mixed with default options', async () => {
         await controller.start();
-        expect(ZStackAdapter).toBeCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, {"disableLED": false});
+        expect(ZStackAdapter).toHaveBeenCalledWith({"networkKeyDistribute":false,"networkKey":[1,3,5,7,9,11,13,15,0,2,4,6,8,10,12,13],"panID":6755,"extendedPanID":[221,221,221,221,221,221,221,221],"channelList":[15]}, {"baudRate": 115200, "path": "/dummy/conbee", "rtscts": true, "adapter": null}, backupPath, {"disableLED": false});
     });
 
     it('Call controller constructor error on invalid channel', async () => {
@@ -622,18 +620,26 @@ describe('Controller', () => {
     });
 
     it('Controller stop, should create backup', async () => {
+        // @ts-expect-error private
+        const databaseSaveSpy = jest.spyOn(controller, 'databaseSave');
         await controller.start();
+        // @ts-expect-error private
+        databaseSaveSpy.mockClear();
         if (fs.existsSync(options.backupPath)) fs.unlinkSync(options.backupPath);
         expect(controller.isStopping()).toBeFalsy();
+        expect(controller.isAdapterDisconnected()).toBeFalsy();
         await controller.stop();
-        expect(mockAdapterPermitJoin).toBeCalledWith(0, null);
+        expect(controller.isStopping()).toBeTruthy();
+        expect(controller.isAdapterDisconnected()).toBeTruthy();
+        expect(mockAdapterPermitJoin).toHaveBeenCalledWith(0, null);
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(dummyBackup)));
-        expect(mockAdapterStop).toBeCalledTimes(1);
+        expect(mockAdapterStop).toHaveBeenCalledTimes(1);
+        expect(databaseSaveSpy).toHaveBeenCalledTimes(1);
     });
 
     it('Controller start', async () => {
         await controller.start();
-        expect(mockAdapterStart).toBeCalledTimes(1);
+        expect(mockAdapterStart).toHaveBeenCalledTimes(1);
         expect(deepClone(controller.getDevicesByType('Coordinator')[0])).toStrictEqual({
             ID: 1,
             "_events":{},"_eventsCount":0,
@@ -1117,7 +1123,7 @@ describe('Controller', () => {
     it('Controller permit joining', async () => {
         await controller.start();
         await controller.permitJoin(true);
-        expect(mockAdapterPermitJoin).toBeCalledTimes(1);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
         expect(mockAdapterPermitJoin.mock.calls[0][0]).toBe(254);
         expect(events.permitJoinChanged.length).toBe(1);
         expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual', timeout: undefined});
@@ -1134,22 +1140,22 @@ describe('Controller', () => {
         jest.advanceTimersByTime(210 * 1000);
         await flushPromises();
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(2);
-        expect(mockAdapterPermitJoin).toBeCalledTimes(2);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(2);
         expect(mockAdapterPermitJoin.mock.calls[1][0]).toBe(254);
         jest.advanceTimersByTime(210 * 1000);
         await flushPromises();
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(3);
-        expect(mockAdapterPermitJoin).toBeCalledTimes(3);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(3);
         expect(mockAdapterPermitJoin.mock.calls[2][0]).toBe(254);
         expect(events.permitJoinChanged.length).toBe(1);
         expect(controller.getPermitJoin()).toBe(true);
 
         // Disable
         await controller.permitJoin(false);
-        expect(mockAdapterPermitJoin).toBeCalledTimes(4);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(4);
         expect(mockAdapterPermitJoin.mock.calls[3][0]).toBe(0);
         jest.advanceTimersByTime(210 * 1000);
-        expect(mockAdapterPermitJoin).toBeCalledTimes(4);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(4);
         expect(events.permitJoinChanged.length).toBe(2);
         expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false, reason: 'manual', timeout: undefined});
         expect(controller.getPermitJoin()).toBe(false);
@@ -1160,19 +1166,19 @@ describe('Controller', () => {
         expect(mocksendZclFrameToAll.mock.calls[3][0]).toBe(242);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[3][1])).toStrictEqual(deepClone(commissionFrameDisable));
         expect(mocksendZclFrameToAll.mock.calls[3][2]).toBe(242);
-        expect(mocksendZclFrameToAll).toBeCalledTimes(4);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(4);
     });
 
     it('Controller permit joining through specific device', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await controller.permitJoin(true, controller.getDeviceByIeeeAddr('0x129'));
-        expect(mockAdapterPermitJoin).toBeCalledTimes(1);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
         expect(mockAdapterPermitJoin.mock.calls[0][0]).toBe(254);
         expect(mockAdapterPermitJoin.mock.calls[0][1]).toBe(129);
 
         jest.advanceTimersByTime(210 * 1000);
-        expect(mockAdapterPermitJoin).toBeCalledTimes(2);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(2);
         expect(mockAdapterPermitJoin.mock.calls[1][0]).toBe(254);
         expect(mockAdapterPermitJoin.mock.calls[1][1]).toBe(129);
     });
@@ -1180,7 +1186,7 @@ describe('Controller', () => {
     it('Controller permit joining for specific time', async () => {
         await controller.start();
         await controller.permitJoin(true, null, 10);
-        expect(mockAdapterPermitJoin).toBeCalledTimes(1);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
         expect(mockAdapterPermitJoin.mock.calls[0][0]).toBe(254);
         expect(events.permitJoinChanged.length).toBe(1);
         expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, reason: 'manual', timeout: 10});
@@ -1191,7 +1197,7 @@ describe('Controller', () => {
         expect(controller.getPermitJoinTimeout()).toBe(5);
         jest.advanceTimersByTime(7 * 1000);
         await flushPromises();
-        expect(mockAdapterPermitJoin).toBeCalledTimes(2);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(2);
         expect(mockAdapterPermitJoin.mock.calls[1][0]).toBe(0);
         expect(events.permitJoinChanged.length).toBe(11);
         expect(events.permitJoinChanged[5]).toStrictEqual({permitted: true, reason: 'manual', timeout: 5});
@@ -1209,22 +1215,39 @@ describe('Controller', () => {
     it('Soft reset', async () => {
         await controller.start();
         await controller.reset('soft');
-        expect(mockAdapterReset).toBeCalledTimes(1);
+        expect(mockAdapterReset).toHaveBeenCalledTimes(1);
         expect(mockAdapterReset).toHaveBeenCalledWith('soft');
     });
 
     it('Hard reset', async () => {
         await controller.start();
         await controller.reset('hard');
-        expect(mockAdapterReset).toBeCalledTimes(1);
+        expect(mockAdapterReset).toHaveBeenCalledTimes(1);
         expect(mockAdapterReset).toHaveBeenCalledWith('hard');
     });
 
-    it('Device announce event', async () => {
+    it('Adapter disconnected event', async () => {
+        // @ts-expect-error private
+        const databaseSaveSpy = jest.spyOn(controller, 'databaseSave');
+        const backupSpy = jest.spyOn(controller, 'backup');
         await controller.start();
+        // @ts-expect-error private
+        databaseSaveSpy.mockClear();
+        backupSpy.mockClear();
+        expect(controller.isStopping()).toBeFalsy();
+        expect(controller.isAdapterDisconnected()).toBeFalsy();
+
         await mockAdapterEvents['disconnected']();
-        expect(mockAdapterStop).toBeCalledTimes(1);
         expect(events.adapterDisconnected.length).toBe(1);
+        expect(controller.isAdapterDisconnected()).toBeTruthy();
+
+        // mock z2m layer responding to disconnected event
+        await controller.stop();
+        expect(controller.isStopping()).toBeTruthy();
+        expect(mockAdapterStop).toHaveBeenCalledTimes(1);// once in event only (with catcho)
+        expect(mockAdapterPermitJoin).not.toHaveBeenCalled();
+        expect(backupSpy).not.toHaveBeenCalled();
+        expect(databaseSaveSpy).toHaveBeenCalledTimes(1);
     });
 
     it('Device joins another time with different network address', async () => {
@@ -1924,7 +1947,7 @@ describe('Controller', () => {
             groupID: 10,
         });
 
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -1951,7 +1974,7 @@ describe('Controller', () => {
             groupID: 10,
         });
         expect(device.skipDefaultResponse).toBeTruthy();
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
     it('Receive zclData dont send default resopnse when broadcast', async () => {
@@ -1971,7 +1994,7 @@ describe('Controller', () => {
             linkquality: 19,
             groupID: 10,
         });
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
     it('Receive zclData send default response fails should NOT attempt route discover when adapter does not support it', async () => {
@@ -1993,8 +2016,8 @@ describe('Controller', () => {
             groupID: 10,
         });
 
-        expect(mockDiscoverRoute).toBeCalledTimes(0);
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mockDiscoverRoute).toHaveBeenCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
     });
 
     it('Respond to genTime read', async () => {
@@ -2013,7 +2036,7 @@ describe('Controller', () => {
             groupID: 10,
         });
 
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe('0x129');
         expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
@@ -2087,7 +2110,7 @@ describe('Controller', () => {
             groupID: 10,
         });
 
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -2112,7 +2135,7 @@ describe('Controller', () => {
             groupID: 10,
         });
 
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
     });
 
     it('TuYa end devices joins, stops responding after 1 requests, should read modelID and manufacturerName immediately on second pair', async () => {
@@ -2126,7 +2149,7 @@ describe('Controller', () => {
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x173')
         expect(events.deviceInterview[1].status).toBe('failed')
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x173')
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         expect(controller.getDeviceByIeeeAddr('0x173').modelID).toBe(undefined)
         expect(controller.getDeviceByIeeeAddr('0x173').manufacturerName).toBe(undefined)
 
@@ -2141,7 +2164,7 @@ describe('Controller', () => {
         expect(events.deviceInterview[2].device._ieeeAddr).toBe('0x173')
         expect(events.deviceInterview[3].status).toBe('successful')
         expect(events.deviceInterview[3].device._ieeeAddr).toBe('0x173')
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(2);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
 
         expect(controller.getDeviceByIeeeAddr('0x173').modelID).toBe('TS0203')
         expect(controller.getDeviceByIeeeAddr('0x173').manufacturerName).toBe('_TYZB01_xph99wvr')
@@ -2535,7 +2558,7 @@ describe('Controller', () => {
         for (let i = 0; i < 300; i++) {
             await endpoint.read('genBasic', ['modelId']);
         }
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(300);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(300);
 
         const ids = [];
         for (let i = 0; i < 300; i++) {
@@ -2593,8 +2616,8 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x140'});
         const device = controller.getDeviceByIeeeAddr('0x140');
         await device.removeFromNetwork();
-        expect(mockAdapterRemoveDevice).toBeCalledTimes(1);
-        expect(mockAdapterRemoveDevice).toBeCalledWith(140, '0x140');
+        expect(mockAdapterRemoveDevice).toHaveBeenCalledTimes(1);
+        expect(mockAdapterRemoveDevice).toHaveBeenCalledWith(140, '0x140');
         expect(controller.getDeviceByIeeeAddr('0x140')).toBeUndefined();
         // shouldn't throw when removing from database when not in
         await device.removeFromDatabase();
@@ -2656,7 +2679,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x176');
         mocksendZclFrameToEndpoint.mockClear();
         const result = await device.ping();
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x176');
         expect(call[1]).toBe(176);
@@ -2761,13 +2784,13 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         await endpoint.bind('genBasic', target);
         expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(0), target}]));
-        expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
+        expect(mockAdapterBind).toHaveBeenCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
 
         // Should bind another time but not add it to the binds
         mockAdapterBind.mockClear();
         await endpoint.bind('genBasic', target);
         expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(0), target}]));
-        expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
+        expect(mockAdapterBind).toHaveBeenCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
     });
 
     it('Endpoint addBinding', async () => {
@@ -2802,7 +2825,7 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         await endpoint.bind('genPowerCfg', group);
         expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(1), target: group}]));
-        expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 1, 4, "group", null);
+        expect(mockAdapterBind).toHaveBeenCalledWith(129, "0x129", 1, 1, 4, "group", null);
     });
 
     it('Group addBinding', async () => {
@@ -2824,7 +2847,7 @@ describe('Controller', () => {
         await endpoint.bind('genPowerCfg', 11);
         const group = Group.byGroupID(11);
         expect(deepClone(endpoint.binds)).toStrictEqual(deepClone([{cluster: Zcl.Utils.getCluster(1), target: group}]));
-        expect(mockAdapterBind).toBeCalledWith(129, "0x129", 1, 1, 11, "group", null);
+        expect(mockAdapterBind).toHaveBeenCalledWith(129, "0x129", 1, 1, 11, "group", null);
     });
 
     it('Group addBinding by number (should create group)', async () => {
@@ -2849,13 +2872,13 @@ describe('Controller', () => {
         mockAdapterBind.mockClear();
         await endpoint.unbind('genBasic', target);
         expect(endpoint.binds).toStrictEqual([]);
-        expect(mockAdapterUnbind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
+        expect(mockAdapterUnbind).toHaveBeenCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
 
         // Should unbind another time when not in binds
         mockAdapterBind.mockClear();
         await endpoint.unbind('genBasic', target);
         expect(endpoint.binds).toStrictEqual([]);
-        expect(mockAdapterUnbind).toBeCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
+        expect(mockAdapterUnbind).toHaveBeenCalledWith(129, "0x129", 1, 0, "0x170", "endpoint", 1);
     });
 
     it('Group unbind', async () => {
@@ -2868,7 +2891,7 @@ describe('Controller', () => {
         await endpoint.bind('genPowerCfg', group);
         expect(endpoint.binds.length).toBe(1);
         await endpoint.unbind('genPowerCfg', group);
-        expect(mockAdapterUnbind).toBeCalledWith(129, "0x129", 1, 1, 5, "group", null);
+        expect(mockAdapterUnbind).toHaveBeenCalledWith(129, "0x129", 1, 1, 5, "group", null);
         expect(endpoint.binds.length).toBe(0);
     });
 
@@ -2882,7 +2905,7 @@ describe('Controller', () => {
         await endpoint.bind('genPowerCfg', group);
         expect(endpoint.binds.length).toBe(1);
         await endpoint.unbind('genPowerCfg', 5);
-        expect(mockAdapterUnbind).toBeCalledWith(129, "0x129", 1, 1, 5, "group", null);
+        expect(mockAdapterUnbind).toHaveBeenCalledWith(129, "0x129", 1, 1, 5, "group", null);
         expect(endpoint.binds.length).toBe(0);
     });
 
@@ -3294,7 +3317,7 @@ describe('Controller', () => {
         await controller.start();
         const group = await controller.createGroup(2);
         await group.read('genBasic', ['modelId', 0x01], {});
-        expect(mocksendZclFrameToGroup).toBeCalledTimes(1);
+        expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(2);
         expect(deepClone(mocksendZclFrameToGroup.mock.calls[0][1])).toStrictEqual(deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 2, 'read', 0, [{"attrId": 5}, {"attrId": 1}])));
         expect(mocksendZclFrameToGroup.mock.calls[0][2]).toBe(null);
@@ -3315,7 +3338,7 @@ describe('Controller', () => {
         await controller.start();
         const group = await controller.createGroup(2);
         await group.write('genBasic', {0x0031: {value: 0x000B, type: 0x19}, deviceEnabled: true}, {});
-        expect(mocksendZclFrameToGroup).toBeCalledTimes(1);
+        expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(2);
         expect(deepClone(mocksendZclFrameToGroup.mock.calls[0][1])).toStrictEqual(deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 2, 'write', 0, [{"attrData": 11, "attrId": 49, "dataType": 25}, {"attrData": true, "attrId": 18, "dataType": 16}])));
         expect(mocksendZclFrameToGroup.mock.calls[0][2]).toBe(null);
@@ -3350,7 +3373,7 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         const options = {manufacturerCode: 0x100B, disableDefaultResponse: true, timeout: 12, defaultResponseTimeout: 16};
         await endpoint.write('genBasic', {0x0031: {value: 0x000B, type: 0x19}}, options);
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -3367,7 +3390,7 @@ describe('Controller', () => {
         device._manufacturerID = 0x10f2;
         const endpoint = device.getEndpoint(1);
         await endpoint.write('hvacThermostat', {'viessmannWindowOpenInternal': 1});
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -3384,7 +3407,7 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         const options = {manufacturerCode: 0x100B, disableDefaultResponse: true, timeout: 12, defaultResponseTimeout: 16, writeUndiv: true, disableResponse: true};
         await endpoint.write('genBasic', {0x0031: {value: 0x000B, type: 0x19}}, options);
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -3402,7 +3425,7 @@ describe('Controller', () => {
         let error;
         try {await endpoint.write('genBasic', {'UNKNOWN': {value: 0x000B, type: 0x19}}) } catch (e) {error = e}
         expect(error).toStrictEqual(new Error(`Unknown attribute 'UNKNOWN', specify either an existing attribute or a number`))
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
     it('Write to endpoint with mixed manufacturer attributes', async () => {
@@ -3424,7 +3447,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         await endpoint.writeResponse('genBasic', 99, {0x55: {status: 0x01}});
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -3442,7 +3465,7 @@ describe('Controller', () => {
         let error;
         try {await endpoint.writeResponse('genBasic', 99, {'UNKNOWN': {status: 0x01}}) } catch (e) {error = e}
         expect(error).toStrictEqual(new Error(`Unknown attribute 'UNKNOWN', specify either an existing attribute or a number`))
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
     it('Write response to endpoint throw when transaction sequence number provided through options', async () => {
@@ -3454,7 +3477,7 @@ describe('Controller', () => {
         let error;
         try {await endpoint.writeResponse('genBasic', 99, {'UNKNOWN': {status: 0x01}}, {transactionSequenceNumber: 5}) } catch (e) {error = e}
         expect(error.message).toStrictEqual(`Use parameter`)
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
     it('Write response to endpoint with no status attribute specified', async () => {
@@ -3466,7 +3489,7 @@ describe('Controller', () => {
         let error;
         try {await endpoint.writeResponse('genBasic', 99, {0x0001: {value: 0x55}}) } catch (e) {error = e}
         expect(error).toStrictEqual(new Error(`Missing attribute 'status'`))
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
     it('Write response to endpoint with ZCL attribute', async () => {
@@ -3476,7 +3499,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         await endpoint.writeResponse('genBasic', 99, {zclVersion: {status: 0x01}});
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -3503,7 +3526,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         await endpoint.read('genBasic', ['stackVersion']);
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -3520,7 +3543,7 @@ describe('Controller', () => {
         device._manufacturerID = 0x10f2;
         const endpoint = device.getEndpoint(1);
         await endpoint.read('hvacThermostat', ['viessmannWindowOpenInternal']);
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -3549,7 +3572,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         await endpoint.read('genBasic', [0xFF22], {manufacturerCode: 0x115F, disableDefaultResponse: true});
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -3565,7 +3588,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x129');
         const endpoint = device.getEndpoint(1);
         await endpoint.readResponse('genBasic', 99, {0x55: {value: 0x000B, type: 0x19}});
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -3583,7 +3606,7 @@ describe('Controller', () => {
         let error;
         try {await endpoint.readResponse('genBasic', 99, {'UNKNOWN': {value: 0x000B, type: 0x19}}) } catch (e) {error = e}
         expect(error).toStrictEqual(new Error(`Unknown attribute 'UNKNOWN', specify either an existing attribute or a number`))
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
     it('Read response to endpoint throw when transaction sequence number provided through options', async () => {
@@ -3595,7 +3618,7 @@ describe('Controller', () => {
         let error;
         try {await endpoint.readResponse('genBasic', 99, {'UNKNOWN': {value: 0x000B, type: 0x19}}, {transactionSequenceNumber: 5}) } catch (e) {error = e}
         expect(error.message).toStrictEqual(`Use parameter`)
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
     it('Configure reporting endpoint custom attributes', async () => {
@@ -3611,7 +3634,7 @@ describe('Controller', () => {
             reportableChange: 25,
         }]);
 
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -4769,7 +4792,7 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1);
         const options = {manufacturerCode: 0x100B, disableDefaultResponse: true, timeout: 12, defaultResponseTimeout: 16};
         await endpoint.report('genBasic', {0x0031: {value: 0x000B, type: 0x19}}, options);
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe('0x129');
         expect(call[1]).toBe(129);
@@ -4787,7 +4810,7 @@ describe('Controller', () => {
         let error;
         try {await endpoint.report('genBasic', {'UNKNOWN': {value: 0x000B, type: 0x19}}) } catch (e) {error = e}
         expect(error).toStrictEqual(new Error(`Unknown attribute 'UNKNOWN', specify either an existing attribute or a number`))
-        expect(mocksendZclFrameToEndpoint).toBeCalledTimes(0);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
     it('Report error', async () => {

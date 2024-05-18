@@ -79,6 +79,7 @@ class Controller extends events.EventEmitter {
     private databaseSaveTimer: any;
     private touchlink: Touchlink;
     private stopping: boolean;
+    private adapterDisconnected: boolean;
     private networkParametersCached: AdapterTsType.NetworkParameters;
 
     /**
@@ -89,6 +90,7 @@ class Controller extends events.EventEmitter {
     public constructor(options: Options) {
         super();
         this.stopping = false;
+        this.adapterDisconnected = true;// set false after adapter.start() is successfully called
         this.options = mixin(JSON.parse(JSON.stringify(DefaultOptions)), options);
 
         // Validate options
@@ -124,6 +126,7 @@ class Controller extends events.EventEmitter {
         logger.debug(`Starting with options '${JSON.stringify(this.options)}'`, NS);
         const startResult = await this.adapter.start();
         logger.debug(`Started with result '${startResult}'`, NS);
+        this.adapterDisconnected = false;
 
         // Check if we have to change the channel, only do this when adapter `resumed` because:
         // - `getNetworkParameters` might be return wrong info because it needs to propogate after backup restore
@@ -295,9 +298,12 @@ class Controller extends events.EventEmitter {
         return this.stopping;
     }
 
+    public isAdapterDisconnected(): boolean {
+        return this.adapterDisconnected;
+    }
+
     public async stop(): Promise<void> {
         this.stopping = true;
-        this.databaseSave();
 
         // Unregister adapter events
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceJoined);
@@ -306,12 +312,18 @@ class Controller extends events.EventEmitter {
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceAnnounce);
         this.adapter.removeAllListeners(AdapterEvents.Events.deviceLeave);
 
-        await catcho(() => this.permitJoinInternal(false, 'manual'), "Failed to disable join on stop");
-
         clearInterval(this.backupTimer);
         clearInterval(this.databaseSaveTimer);
-        await this.backup();
-        await this.adapter.stop();
+
+        if (this.adapterDisconnected) {
+            this.databaseSave();
+        } else {
+            await catcho(() => this.permitJoinInternal(false, 'manual'), "Failed to disable join on stop");
+            await this.backup();// always calls databaseSave()
+            await this.adapter.stop();
+
+            this.adapterDisconnected = true;
+        }
     }
 
     private databaseSave(): void {
@@ -499,6 +511,8 @@ class Controller extends events.EventEmitter {
 
     private async onAdapterDisconnected(): Promise<void> {
         logger.debug(`Adapter disconnected`, NS);
+
+        this.adapterDisconnected = true;
 
         await catcho(() => this.adapter.stop(), 'Failed to stop adapter on disconnect');
 
