@@ -2378,7 +2378,7 @@ export class Ezsp extends EventEmitter {
      * @param lastHopRssi int8_t The energy level (in units of dBm) observed during the reception.
      */
     ezspNetworkFoundHandler(networkFound: EmberZigbeeNetwork, lastHopLqi: number, lastHopRssi: number): void {
-        logger.debug(`ezspNetworkFoundHandler(): callback called with: [networkFound=${networkFound}], `
+        logger.debug(`ezspNetworkFoundHandler(): callback called with: [networkFound=${JSON.stringify(networkFound)}], `
             + `[lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}]`, NS);
     }
     
