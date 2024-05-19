@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.48.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.48.0...v0.48.1) (2024-05-19)
+
+
+### Bug Fixes
+
+* Ember: revert default APS options change in [#1065](https://github.com/Koenkk/zigbee-herdsman/issues/1065) ([#1068](https://github.com/Koenkk/zigbee-herdsman/issues/1068)) ([4f8e9fb](https://github.com/Koenkk/zigbee-herdsman/commit/4f8e9fb5cdc08540740dfbf628551ad85978afb9))
+* **ignore:** update dependencies ([#1067](https://github.com/Koenkk/zigbee-herdsman/issues/1067)) ([6c31940](https://github.com/Koenkk/zigbee-herdsman/commit/6c31940c8ca792d990245953f6d0930e9b4ceb50))
+
 ## [0.48.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.47.2...v0.48.0) (2024-05-18)
 
 
