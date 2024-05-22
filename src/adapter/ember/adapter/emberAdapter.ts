@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 import equals from 'fast-deep-equal/es6';
-import {existsSync, readFileSync, writeFileSync} from 'fs';
+import {existsSync, readFileSync} from 'fs';
 import path from 'path';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
@@ -531,15 +531,12 @@ export class EmberAdapter extends Adapter {
                 logger.error(`[STACK CONFIG] Invalid TRANSIENT_KEY_TIMEOUT_S, using default.`, NS);
             }
 
+            logger.info(`Using stack config ${JSON.stringify(config)}.`, NS);
             return config;
-        } catch (error) {
-            try {
-                writeFileSync(configPath, JSON.stringify(DEFAULT_STACK_CONFIG, null, 2), 'utf8');
-            } catch {}
+        } catch {}
 
-            logger.info(`Using default stack config.`, NS);
-            return DEFAULT_STACK_CONFIG;
-        }
+        logger.info(`Using default stack config.`, NS);
+        return DEFAULT_STACK_CONFIG;
     }
 
     /**
