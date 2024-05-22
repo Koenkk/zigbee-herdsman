@@ -302,7 +302,7 @@ type StackConfig = {
  * https://github.com/NabuCasa/silabs-firmware/wiki/Zigbee-EmberZNet-NCP-firmware-configuration#skyconnect
  * https://github.com/SiliconLabs/UnifySDK/blob/main/applications/zigbeed/project_files/zigbeed.slcp
  */
-const DEFAULT_STACK_CONFIG: StackConfig = {
+const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
     CONCENTRATOR_RAM_TYPE: 'high',
     CONCENTRATOR_MIN_TIME: 5,// zigpc: 10
     CONCENTRATOR_MAX_TIME: 60,// zigpc: 60
@@ -426,7 +426,9 @@ export class EmberAdapter extends Adapter {
         const configPath = path.join(path.dirname(this.backupPath), 'stack_config.json');
 
         try {
-            const config: StackConfig = JSON.parse(readFileSync(configPath, 'utf8'));
+            const customConfig: StackConfig = JSON.parse(readFileSync(configPath, 'utf8'));
+            // set any undefined config to default
+            const config: StackConfig = {...DEFAULT_STACK_CONFIG, ...customConfig};
 
             const inRange = (value: number, min: number, max: number): boolean => (value == undefined || value < min || value > max) ? false : true;
 
