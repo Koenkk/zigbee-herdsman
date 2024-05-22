@@ -7,7 +7,7 @@ function equalsPartial<T>(object: T, expected: Partial<T>): boolean {
         if (typeof objectValue === 'string' && typeof value === 'string') {
             return objectValue.toLowerCase() === value.toLowerCase();
         }    
-        return Equals(objectValue, value)
+        return Equals(objectValue, value);
     });
 }
 
