@@ -428,7 +428,7 @@ export class EmberAdapter extends Adapter {
         try {
             const config: StackConfig = JSON.parse(readFileSync(configPath, 'utf8'));
 
-            const inRange = (value: number, min: number, max: number): boolean => (value < min || value > max) ? false : true;
+            const inRange = (value: number, min: number, max: number): boolean => (value == undefined || value < min || value > max) ? false : true;
 
             if (!['high', 'low'].includes(config.CONCENTRATOR_RAM_TYPE)) {
                 config.CONCENTRATOR_RAM_TYPE = DEFAULT_STACK_CONFIG.CONCENTRATOR_RAM_TYPE;
