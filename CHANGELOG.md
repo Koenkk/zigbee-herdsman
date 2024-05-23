@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.49.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.48.1...v0.49.0) (2024-05-23)
+
+
+### Features
+
+* Ember: Custom stack config support ([#1072](https://github.com/Koenkk/zigbee-herdsman/issues/1072)) ([bacf947](https://github.com/Koenkk/zigbee-herdsman/commit/bacf947192119fa4ac7d8fa44c89b95d4b9c7528))
+
 ## [0.48.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.48.0...v0.48.1) (2024-05-19)
 
 
