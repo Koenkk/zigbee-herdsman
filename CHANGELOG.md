@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.49.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.49.0...v0.49.1) (2024-05-27)
+
+
+### Bug Fixes
+
+* Fix `seMetering` cluster https://github.com/Koenkk/zigbee2mqtt/issues/22720 ([a76040f](https://github.com/Koenkk/zigbee-herdsman/commit/a76040fd08b5c59d66751f8cab04b749fb484b16))
+* **ignore:** update dependencies ([#1074](https://github.com/Koenkk/zigbee-herdsman/issues/1074)) ([878bb57](https://github.com/Koenkk/zigbee-herdsman/commit/878bb57051ac559e8856ee5ae6e0614fde23cdc4))
+
 ## [0.49.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.48.1...v0.49.0) (2024-05-23)
 
 
