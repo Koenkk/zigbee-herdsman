@@ -329,7 +329,7 @@ class Device extends Entity {
                 await endpoint.defaultResponse(
                     frame.command.ID, 0, frame.cluster.ID, frame.header.transactionSequenceNumber, {direction});
             } catch (error) {
-                logger.error(`Default response to ${this.ieeeAddr} failed`, NS);
+                logger.debug(`Default response to ${this.ieeeAddr} failed`, NS);
             }
         }
     }
