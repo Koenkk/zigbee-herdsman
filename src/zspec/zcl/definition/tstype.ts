@@ -128,7 +128,6 @@ export type ClusterName = (
     'tradfriButton' | 'heimanSpecificInfraRedRemote' | 'develcoSpecificAirQuality' | 'schneiderSpecificPilotMode' |
     'elkoOccupancySettingClusterServer' | 'elkoSwitchConfigurationClusterServer' | 'manuSpecificSchneiderLightSwitchConfiguration' |
     'manuSpecificSchneiderFanSwitchConfiguration' | 'sprutDevice' | 'sprutVoc' | 'sprutNoise' | 'sprutIrBlaster' | 'manuSpecificSiglisZigfred' |
-    'manuSpecificInovelli' | 'owonClearMetering' | 'zosungIRTransmit' | 'zosungIRControl' | 'manuSpecificBosch' | 'manuSpecificBosch3' |
-    'manuSpecificBosch5' | 'manuSpecificBosch7' | 'manuSpecificBosch8' | 'manuSpecificBosch9' | 'manuSpecificBosch10' | 'manuSpecificBosch11' |
+    'manuSpecificInovelli' | 'owonClearMetering' | 'zosungIRTransmit' | 'zosungIRControl' |
     'manuSpecificAssaDoorLock' | 'manuSpecificDoorman' | 'manuSpecificNodOnPilotWire' | 'manuSpecificProfalux1' | 'manuSpecificAmazonWWAH'
 );
