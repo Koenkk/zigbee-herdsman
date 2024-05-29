@@ -5,7 +5,7 @@ const CUSTOM_CLUSTERS: CustomClusters = {
     genBasic: {ID: Zcl.Clusters.genBasic.ID, commands: {}, commandsResponse: {}, attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}}},
     myCustomCluster: {ID: 65534, commands: {}, commandsResponse: {}, attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}}},
     myCustomClusterManuf: {ID: 65533, manufacturerCode: 65534, commands: {}, commandsResponse: {}, attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}}},
-    manuSpecificBosch10NoManuf: {ID: Zcl.Clusters.manuSpecificBosch10.ID, commands: {}, commandsResponse: {}, attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}}}
+    danfossSystemStatusCodeNoManuf: {ID: Zcl.Clusters.danfossSystemStatusCode.ID, commands: {}, commandsResponse: {}, attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}}}
 };
 
 describe('ZCL Utils', () => {
@@ -87,10 +87,10 @@ describe('ZCL Utils', () => {
         [
             'by ID ignoring same custom ID if Zcl is better match with manufacture code',
             {
-                key: CUSTOM_CLUSTERS.manuSpecificBosch10NoManuf.ID, manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                key: CUSTOM_CLUSTERS.danfossSystemStatusCodeNoManuf.ID, manufacturerCode: Zcl.ManufacturerCode.DANFOSS_A_S,
                 customClusters: CUSTOM_CLUSTERS
             },
-            {cluster: Zcl.Clusters.manuSpecificBosch10, name: 'manuSpecificBosch10'},
+            {cluster: Zcl.Clusters.danfossSystemStatusCode, name: 'danfossSystemStatusCode'},
         ],
     ])('Gets cluster %s', (_name, payload, expected) => {
         const cluster = Zcl.Utils.getCluster(payload.key, payload.manufacturerCode, payload.customClusters);
