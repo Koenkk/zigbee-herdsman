@@ -2138,7 +2138,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
     });
 
-    it('TuYa end devices joins, stops responding after 1 requests, should read modelID and manufacturerName immediately on second pair', async () => {
+    it('Tuya end devices joins, stops responding after 1 requests, should read modelID and manufacturerName immediately on second pair', async () => {
         // https://github.com/Koenkk/zigbee2mqtt/issues/7553
         await controller.start();
 

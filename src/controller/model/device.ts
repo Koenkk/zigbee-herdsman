@@ -507,7 +507,7 @@ class Device extends Entity {
     private interviewQuirks(): boolean {
         logger.debug(`Interview - quirks check for '${this.modelID}'-'${this.manufacturerName}'-'${this.type}'`, NS);
 
-        // TuYa devices are typically hard to interview. They also don't require a full interview to work correctly
+        // Tuya devices are typically hard to interview. They also don't require a full interview to work correctly
         // e.g. no ias enrolling is required for the devices to work.
         // Assume that in case we got both the manufacturerName and modelID the device works correctly.
         // https://github.com/Koenkk/zigbee2mqtt/issues/7564:
@@ -520,7 +520,7 @@ class Device extends Entity {
             this._powerSource = this._powerSource || 'Battery';
             this._interviewing = false;
             this._interviewCompleted = true;
-            logger.debug(`Interview - quirks matched for TuYa end device`, NS);
+            logger.debug(`Interview - quirks matched for Tuya end device`, NS);
             return true;
         }
 
@@ -596,16 +596,16 @@ class Device extends Entity {
         }
 
         if (this.manufacturerID === 4619 && this._type === 'EndDevice') {
-            // Give TuYa end device some time to pair. Otherwise they leave immediately.
+            // Give Tuya end device some time to pair. Otherwise they leave immediately.
             // https://github.com/Koenkk/zigbee2mqtt/issues/5814
-            logger.debug("Interview - Detected TuYa end device, waiting 10 seconds...", NS);
+            logger.debug("Interview - Detected Tuya end device, waiting 10 seconds...", NS);
             await Wait(10000);
         } else if ([0, 4098].includes(this.manufacturerID)) {
-            // Potentially a TuYa device, some sleep fast so make sure to read the modelId and manufacturerName quickly.
+            // Potentially a Tuya device, some sleep fast so make sure to read the modelId and manufacturerName quickly.
             // In case the device responds, the endoint and modelID/manufacturerName are set
             // in controller.onZclOrRawData()
             // https://github.com/Koenkk/zigbee2mqtt/issues/7553
-            logger.debug("Interview - Detected potential TuYa end device, reading modelID and manufacturerName...", NS);
+            logger.debug("Interview - Detected potential Tuya end device, reading modelID and manufacturerName...", NS);
             try {
                 const endpoint = Endpoint.create(1, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
                 const result = await endpoint.read('genBasic', ['modelId', 'manufacturerName'], 
@@ -614,7 +614,7 @@ class Device extends Entity {
                     .forEach((entry) => Device.ReportablePropertiesMapping[entry[0]].set(entry[1], this));
             } catch (error) {
                 /* istanbul ignore next */
-                logger.debug(`Interview - TuYa read modelID and manufacturerName failed (${error})`, NS);
+                logger.debug(`Interview - Tuya read modelID and manufacturerName failed (${error})`, NS);
             }
         }
 
