@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.49.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.49.1...v0.49.2) (2024-05-27)
+
+
+### Bug Fixes
+
+* Log `Default response to xxx failed` as `debug` https://github.com/Koenkk/zigbee2mqtt/issues/22414 ([2ce21da](https://github.com/Koenkk/zigbee-herdsman/commit/2ce21da139b6e793669f5d90487fd21a05c689ed))
+
 ## [0.49.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.49.0...v0.49.1) (2024-05-27)
 
 
