@@ -2502,8 +2502,7 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
-        device.addCustomCluster('ssIasZone', {ID: Zcl.Clusters.ssIasZone.ID, commands: {boschSmokeAlarmSiren: {ID: 0x80, parameters: [{name: 'data', type: Zcl.DataType.UINT16}]}}, commandsResponse: {}, attributes: {}});
-        device.getEndpoint(1).zclCommandBroadcast(255, BroadcastAddress.SLEEPY, Zcl.Clusters.ssIasZone.ID, 'boschSmokeAlarmSiren', {data: 0x0000});
+        device.getEndpoint(1).zclCommandBroadcast(255, BroadcastAddress.SLEEPY, Zcl.Clusters.ssIasZone.ID, 'initTestMode', {});
         const sentFrame = mockZclFrame.create(
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,
@@ -2511,9 +2510,9 @@ describe('Controller', () => {
             null,
             // @ts-expect-error private
             ZclTransactionSequenceNumber.number,
-            'boschSmokeAlarmSiren',
+            'initTestMode',
             Zcl.Clusters.ssIasZone.ID,
-            {data: 0x0000},
+            {},
             device.customClusters
         );
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(255);
