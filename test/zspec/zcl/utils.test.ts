@@ -5,7 +5,7 @@ const CUSTOM_CLUSTERS: CustomClusters = {
     genBasic: {ID: Zcl.Clusters.genBasic.ID, commands: {}, commandsResponse: {}, attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}}},
     myCustomCluster: {ID: 65534, commands: {}, commandsResponse: {}, attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}}},
     myCustomClusterManuf: {ID: 65533, manufacturerCode: 65534, commands: {}, commandsResponse: {}, attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}}},
-    manuSpecificBosch10NoManuf: {ID: Zcl.Clusters.manuSpecificBosch10.ID, commands: {}, commandsResponse: {}, attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}}}
+    manuSpecificProfalux1NoManuf: {ID: Zcl.Clusters.manuSpecificProfalux1.ID, commands: {}, commandsResponse: {}, attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}}}
 };
 
 describe('ZCL Utils', () => {
@@ -85,12 +85,12 @@ describe('ZCL Utils', () => {
             {cluster: CUSTOM_CLUSTERS.genBasic, name: 'genBasic'},
         ],
         [
-            'by ID ignoring same custom ID if Zcl is better match with manufacture code',
+            'by ID ignoring same custom ID if Zcl is better match with manufacturer code',
             {
-                key: CUSTOM_CLUSTERS.manuSpecificBosch10NoManuf.ID, manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                key: CUSTOM_CLUSTERS.manuSpecificProfalux1NoManuf.ID, manufacturerCode: Zcl.ManufacturerCode.PROFALUX,
                 customClusters: CUSTOM_CLUSTERS
             },
-            {cluster: Zcl.Clusters.manuSpecificBosch10, name: 'manuSpecificBosch10'},
+            {cluster: Zcl.Clusters.manuSpecificProfalux1, name: 'manuSpecificProfalux1'},
         ],
     ])('Gets cluster %s', (_name, payload, expected) => {
         const cluster = Zcl.Utils.getCluster(payload.key, payload.manufacturerCode, payload.customClusters);

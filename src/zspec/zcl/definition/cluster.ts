@@ -2113,11 +2113,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                 ],
             },
-            boschCalibrateValve: {
-                ID: 0x41,
-                parameters: [
-                ],
-            },
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
@@ -2662,16 +2657,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                 ],
             },
-            boschTestTamper: {
-                ID: 0xF3,
-                parameters: [
-                    {name: 'data', type: DataType.UINT8},
-                ],
-            },
-            boschSmokeDetectorSiren: {
-                ID: 0x80,
-                parameters: [{name: "data", type: DataType.UINT16}],
-            },
         },
         commandsResponse: {
             statusChangeNotification: {
@@ -2868,12 +2853,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 1,
                 parameters: [
                     {name: 'squawkinfo', type: DataType.UINT8},
-                ],
-            },
-            boschOutdoorSiren: {
-                ID: 240,
-                parameters: [
-                    {name: 'data', type: DataType.UINT8},
                 ],
             },
         },
@@ -5282,126 +5261,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {
         },
-    },
-    manuSpecificBosch: {
-        ID: 0xe000,
-        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
-        attributes: {
-            sensitivity: {ID: 0x4003, type: DataType.UINT16},
-        },
-        commands: {
-            initiateTestMode: {
-                ID: 0x00,
-                parameters: [],
-            },
-        },
-        commandsResponse: {},
-    },
-    manuSpecificBosch3: {
-        ID: 0xe002,
-        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
-        attributes: {
-            humidity       : {ID: 0x4000, type: DataType.UINT16},
-            unknown1       : {ID: 0x4001, type: DataType.UINT16},
-            unknown2       : {ID: 0x4002, type: DataType.UINT16},
-            airpurity      : {ID: 0x4003, type: DataType.UINT16},
-            temperature    : {ID: 0x4004, type: DataType.INT16},
-            illuminance_lux: {ID: 0x4005, type: DataType.UINT16},
-            battery        : {ID: 0x4006, type: DataType.UINT16},
-            unknown3       : {ID: 0x4007, type: DataType.UINT16},
-            unknown4       : {ID: 0x4008, type: DataType.UINT16},
-            pressure       : {ID: 0x4009, type: DataType.UINT16}, // Not yet confirmed
-            unknown6       : {ID: 0x400a, type: DataType.UINT16},
-            unknown7       : {ID: 0x400b, type: DataType.UINT16},
-            unknown8       : {ID: 0x400c, type: DataType.UINT16},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    manuSpecificBosch5: {
-        ID: 0xe004,
-        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
-        attributes: {
-            unknown_attribute: {ID: 0x4000, type: DataType.BITMAP8}, // 0,1 ??? read during pairing
-            pre_alarm: {ID: 0x4001, type: DataType.BITMAP8}, // 0,1 on/off
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    manuSpecificBosch7: {
-        ID: 0xe006,
-        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
-        attributes: {
-            unknown1:  {ID: 0x5003, type: DataType.INT8}, // perhaps signal strength? -7?
-            unknown2:  {ID: 0x5004, type: DataType.UINT8}, // ????
-            heartbeat: {ID: 0x5005, type: DataType.BITMAP8}, // 0,1 on/off
-        },
-        commands: {
-            pairingCompleted: {
-                ID: 0x01,
-                parameters: [],
-            },
-        },
-        commandsResponse: {},
-    },
-    manuSpecificBosch8: {
-        ID: 0xe007,
-        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
-        attributes: {
-            alarm_status: {ID: 0x5000, type: DataType.BITMAP32},
-        },
-        commands: { /////////// VALIDATED  ////////////
-            burglarAlarm: {
-                ID: 0x01,
-                parameters: [
-                    {name: 'data', type: DataType.UINT8}, // data:1 trips the siren data:0 should stop the siren
-                ],
-            },
-        },
-        commandsResponse: {},
-    },
-    manuSpecificBosch9: {
-        ID: 0xfca1,
-        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
-        attributes: {},
-        commands: {
-            confirmButtonPressed: {
-                ID: 0x0010,
-                parameters: [
-                    {name: 'data', type: BuffaloZclDataType.BUFFER},
-                ],
-            },
-            pairingCompleted: {
-                ID: 0x0012,
-                parameters: [
-                    {name: 'data', type: BuffaloZclDataType.BUFFER},
-                ],
-            },
-        },
-        commandsResponse: {},
-    },
-    manuSpecificBosch10: {
-        ID: 0xfca0,
-        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
-        attributes: {
-            deviceMode: {ID: 0x0000, type: DataType.ENUM8},
-            switchType: {ID: 0x0001, type: DataType.ENUM8},
-            calibrationOpeningTime: {ID: 0x0002, type: DataType.UINT32},
-            calibrationClosingTime: {ID: 0x0003, type: DataType.UINT32},
-            childLock: {ID: 0x0008, type: DataType.BOOLEAN},
-            motorState: {ID: 0x0013, type: DataType.ENUM8},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    manuSpecificBosch11: {
-        ID: 0xfcac,
-        manufacturerCode: ManufacturerCode.ROBERT_BOSCH_GMBH,
-        attributes: {
-            alarmOnMotion: {ID: 0x0003, type: DataType.BOOLEAN},
-        },
-        commands: {},
-        commandsResponse: {},
     },
     manuSpecificAssaDoorLock: {
         ID: 0xFC00,
