@@ -218,7 +218,7 @@ const MESSAGE_TAG_MASK = 0x7F;
 /* eslint-disable max-len */
 export enum EzspEvents {
     //-- App logic
-    ncpNeedsResetAndInit = 'ncpNeedsResetAndInit',
+    NCP_NEEDS_RESET_AND_INIT = 'NCP_NEEDS_RESET_AND_INIT',
 
     //-- ezspIncomingMessageHandler
     /** params => status: EmberZdoStatus, sender: EmberNodeId, apsFrame: EmberApsFrame, payload: { cluster-dependent @see zdo.ts } */
@@ -261,7 +261,7 @@ export enum EzspEvents {
  *   - They will throw `EzspStatus` if `sendCommand` fails or the returned value(s) by NCP are invalid (wrong length, etc).
  *   - Most will return `EmberStatus` given by NCP (some `EzspStatus`, some `SLStatus`...).
  * 
- * @event 'ncpNeedsResetAndInit(EzspStatus)' An error was detected that requires resetting the NCP.
+ * @event 'NCP_NEEDS_RESET_AND_INIT(EzspStatus)' An error was detected that requires resetting the NCP.
  */
 export class Ezsp extends EventEmitter {
     private readonly tickInterval: number;
@@ -390,7 +390,7 @@ export class Ezsp extends EventEmitter {
     }
 
     private onAshFatalError(status: EzspStatus): void {
-        this.emit(EzspEvents.ncpNeedsResetAndInit, status);
+        this.emit(EzspEvents.NCP_NEEDS_RESET_AND_INIT, status);
     }
 
     private onAshFrame(): void {
@@ -436,7 +436,7 @@ export class Ezsp extends EventEmitter {
         // For all other errors, we reset the NCP
         if ((status !== EzspStatus.ERROR_SECURITY_PARAMETERS_INVALID) && (status !== EzspStatus.ERROR_OVERFLOW)
             && (status !== EzspStatus.ERROR_QUEUE_FULL)) {
-            this.emit(EzspEvents.ncpNeedsResetAndInit, status);
+            this.emit(EzspEvents.NCP_NEEDS_RESET_AND_INIT, status);
         }
     }
 
