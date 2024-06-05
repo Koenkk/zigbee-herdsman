@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.49.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.49.2...v0.49.3) (2024-06-05)
+
+
+### Bug Fixes
+
+* Ember: Handle port close event triggered with error but without port error event. ([#1080](https://github.com/Koenkk/zigbee-herdsman/issues/1080)) ([447813c](https://github.com/Koenkk/zigbee-herdsman/commit/447813c8f2540dae823b3832347563e564703647))
+* **ignore:** Rename `TuYa` to `Tuya` https://github.com/Koenkk/zigbee2mqtt/discussions/22876 ([9d88b6b](https://github.com/Koenkk/zigbee-herdsman/commit/9d88b6bcb57c5a4f7b00a5996d4c316646067ce7))
+* **ignore:** update dependencies ([#1079](https://github.com/Koenkk/zigbee-herdsman/issues/1079)) ([ad67f77](https://github.com/Koenkk/zigbee-herdsman/commit/ad67f772663d902b767263aa9a263bd34e29db79))
+* Remove all Bosch clusters ([#1077](https://github.com/Koenkk/zigbee-herdsman/issues/1077)) ([64ac386](https://github.com/Koenkk/zigbee-herdsman/commit/64ac386dca1d2be90fb1ad1a3b7003119890e651))
+
 ## [0.49.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.49.1...v0.49.2) (2024-05-27)
 
 
