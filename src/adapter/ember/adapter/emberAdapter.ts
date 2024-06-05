@@ -820,7 +820,7 @@ export class EmberAdapter extends Adapter {
     }
 
     private initVariables(): void {
-        this.ezsp.removeAllListeners(EzspEvents.ncpNeedsResetAndInit);
+        this.ezsp.removeAllListeners(EzspEvents.NCP_NEEDS_RESET_AND_INIT);
 
         clearInterval(this.watchdogCountersHandle);
 
@@ -833,7 +833,7 @@ export class EmberAdapter extends Adapter {
         this.networkCache = initNetworkCache();
         this.manufacturerCode = DEFAULT_MANUFACTURER_CODE;// will be set in NCP in initEzsp
 
-        this.ezsp.once(EzspEvents.ncpNeedsResetAndInit, this.onNcpNeedsResetAndInit.bind(this));
+        this.ezsp.once(EzspEvents.NCP_NEEDS_RESET_AND_INIT, this.onNcpNeedsResetAndInit.bind(this));
     }
 
     /**
@@ -2679,7 +2679,6 @@ export class EmberAdapter extends Adapter {
         logger.info(`======== Ember Adapter Starting ========`, NS);
         this.initVariables();
 
-        logger.debug(`Starting EZSP with stack configuration: "${this.stackConfig}".`, NS);
         const result = await this.initEzsp();
 
         return result;
