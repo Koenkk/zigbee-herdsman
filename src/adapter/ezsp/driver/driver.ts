@@ -384,6 +384,7 @@ export class Driver extends EventEmitter {
             const status = frame.status;
             if (status != 0) {
                 // send failure
+                logger.debug(`Delivery failed for ${JSON.stringify(frame)}.`, NS);
             } else {
                 // send success
                 // If there was a message to the group and this group is not known, 
