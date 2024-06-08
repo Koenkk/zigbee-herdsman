@@ -4068,23 +4068,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
     },
-    manuSpecificIkeaAirPurifier: {
-        ID: 0xfc7d,
-        manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
-        attributes: {
-            filterRunTime: {ID: 0x0000, type: DataType.UINT32},
-            replaceFilter: {ID: 0x0001, type: DataType.UINT8},
-            filterLifeTime: {ID: 0x0002, type: DataType.UINT32},
-            controlPanelLight: {ID: 0x0003, type: DataType.BOOLEAN},
-            particulateMatter25Measurement: {ID: 0x0004, type: DataType.UINT16},
-            childLock: {ID: 0x0005, type: DataType.BOOLEAN},
-            fanMode: {ID: 0x0006, type: DataType.UINT8},
-            fanSpeed: {ID: 0x0007, type: DataType.UINT8},
-            deviceRunTime: {ID: 0x0008, type: DataType.UINT32},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     msIkeaVocIndexMeasurement: {
         ID: 0xfc7e,
         manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
