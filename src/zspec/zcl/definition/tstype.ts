@@ -119,7 +119,7 @@ export type ClusterName = (
     'piMultistateOutputExt' | 'piMultistateValueReg' | 'piMultistateValueExt' | 'pi11073ProtocolTunnel' | 'piIso7818ProtocolTunnel' |
     'piRetailTunnel' | 'seMetering' | 'tunneling' | 'telecommunicationsInformation' | 'telecommunicationsVoiceOverZigbee' |
     'telecommunicationsChatting' | 'haApplianceIdentification' | 'haMeterIdentification' | 'haApplianceEventsAlerts' | 'haApplianceStatistics' |
-    'haElectricalMeasurement' | 'haDiagnostic' | 'touchlink' | 'msIkeaVocIndexMeasurement' |
+    'haElectricalMeasurement' | 'haDiagnostic' | 'touchlink' |
     'manuSpecificClusterAduroSmart' | 'manuSpecificOsram' | 'manuSpecificPhilips' | 'manuSpecificPhilips2' | 'manuSpecificSinope' |
     'manuSpecificLegrandDevices' | 'manuSpecificLegrandDevices2' |
     'manuSpecificLegrandDevices3' | 'manuSpecificNiko1' | 'manuSpecificNiko2' | 'wiserDeviceInfo' | 'manuSpecificTuya' | 'manuSpecificLumi' |
