@@ -12,6 +12,7 @@ import Touchlink from './touchlink';
 import GreenPower from './greenPower';
 import {BackupUtils} from "../utils";
 import assert from 'assert';
+import objectAssignDeep from 'object-assign-deep';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -123,7 +124,11 @@ class Controller extends events.EventEmitter {
 
         // Adapter (create and inject)
         this.adapter = await Adapter.create(this.options.network, this.options.serialPort, this.options.backupPath, this.options.adapter);
-        logger.debug(`Starting with options '${JSON.stringify(this.options)}'`, NS);
+
+        let optionsLog = objectAssignDeep({}, this.options, {network: {networkKey: 'HIDDEN'}});
+        logger.debug(`Starting with options '${JSON.stringify(optionsLog)}'`, NS);
+        optionsLog=null;
+
         const startResult = await this.adapter.start();
         logger.debug(`Started with result '${startResult}'`, NS);
         this.adapterDisconnected = false;
