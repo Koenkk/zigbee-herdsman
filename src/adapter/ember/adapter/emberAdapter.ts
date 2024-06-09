@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 import equals from 'fast-deep-equal/es6';
-import {existsSync, readFileSync} from 'fs';
+import {existsSync, readFileSync, renameSync} from 'fs';
 import path from 'path';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
@@ -1360,7 +1360,9 @@ export class EmberAdapter extends Adapter {
             }
 
             if (data.metadata.internal.ezspVersion < BACKUP_OLDEST_SUPPORTED_EZSP_VERSION) {
-                throw new Error(`[BACKUP] Current backup file is from an unsupported EZSP version (min: ${BACKUP_OLDEST_SUPPORTED_EZSP_VERSION}).`);
+                renameSync(this.backupPath, `${this.backupPath}.old`);
+                logger.warning(`[BACKUP] Current backup file is from an unsupported EZSP version. Renaming and ignoring.`, NS);
+                return null;
             }
 
             return BackupUtils.fromUnifiedBackup(data);
