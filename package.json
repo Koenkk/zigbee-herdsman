@@ -64,7 +64,10 @@
   "homepage": "https://github.com/Koenkk/zigbee-herdsman",
   "keywords": [
     "zigbee",
-    "cc253x"
+    "zstack",
+    "emberznet",
+    "deconz",
+    "zigate"
   ],
   "license": "MIT",
   "main": "dist/index.js",
@@ -75,12 +78,12 @@
     "url": "git+https://github.com/Koenkk/zigbee-herdsman.git"
   },
   "scripts": {
-    "build": "./node_modules/.bin/tsc",
-    "start": "./node_modules/.bin/tsc -w",
+    "build": "tsc",
+    "start": "tsc -w",
     "test": "jest test --silent --maxWorkers=50%",
     "test-with-coverage": "jest test --silent --maxWorkers=50% --coverage",
     "test-watch": "jest test --silent --maxWorkers=25% --watch",
-    "eslint": "node_modules/.bin/eslint . --ext .ts --max-warnings=0",
+    "eslint": "eslint . --ext .ts --max-warnings=0",
     "docs": "typedoc --tsconfig typedoc-tsconfig.json",
     "clean": "rimraf temp coverage dist",
     "prepack": "npm run clean && npm run build"
@@ -94,6 +97,9 @@
         "lines": 100,
         "statements": 100
       }
-    }
+    },
+    "collectCoverageFrom": [
+      "src/**/*.ts"
+    ]
   }
 }
