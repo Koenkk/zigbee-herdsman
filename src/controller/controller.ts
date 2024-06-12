@@ -124,7 +124,8 @@ class Controller extends events.EventEmitter {
         // Adapter (create and inject)
         this.adapter = await Adapter.create(this.options.network, this.options.serialPort, this.options.backupPath, this.options.adapter);
 
-	logger.debug(`Starting with options '${JSON.stringify(this.options).replaceAll(JSON.stringify(this.options.network.networkKey), '"HIDDEN"')}'`, NS);
+        const stringifiedOptions = JSON.stringify(this.options).replaceAll(JSON.stringify(this.options.network.networkKey), '"HIDDEN"')
+        logger.debug(`Starting with options '${stringifiedOptions}'`, NS);
         const startResult = await this.adapter.start();
         logger.debug(`Started with result '${startResult}'`, NS);
         this.adapterDisconnected = false;
