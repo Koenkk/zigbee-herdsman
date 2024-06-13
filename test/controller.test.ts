@@ -1025,6 +1025,29 @@ describe('Controller', () => {
         expect(events.lastSeenChanged[1].device.lastSeen).toBe(200);
     });
 
+    it('Emit lastSeenChanged event even when no message is emitted from it', async () =>  {
+        // Default response
+        const buffer = Buffer.from([0x18, 0x04, 0x0b, 0x0c, 0x82]);
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        events.lastSeenChanged = [];
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: false,
+            address: '0x129',
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.lastSeenChanged.length).toBe(1);
+        expect(events.lastSeenChanged[0].device.ieeeAddr).toBe('0x129');
+        expect(events.message.length).toBe(0);
+    });
+
     it('Device leave event and remove from database', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
