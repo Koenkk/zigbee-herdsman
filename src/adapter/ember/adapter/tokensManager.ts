@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 import {initSecurityManagerContext} from "../utils/initters";
-import {BLANK_EUI64} from "../consts";
+import {BLANK_EUI64} from "../../../zspec";
 import {EMBER_ENCRYPTION_KEY_SIZE, EUI64_SIZE} from "../ezsp/consts";
 import {EmberStatus, EzspStatus, SLStatus, SecManFlag, SecManKeyType} from "../enums";
 import {EzspValueId} from "../ezsp/enums";

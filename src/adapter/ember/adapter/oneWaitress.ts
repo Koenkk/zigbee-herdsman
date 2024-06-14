@@ -1,9 +1,9 @@
 /* istanbul ignore file */
 import equals from 'fast-deep-equal/es6';
-import {ZclPayload} from "../../events";
-import {TOUCHLINK_PROFILE_ID} from "../consts";
-import {EmberApsFrame, EmberNodeId} from "../types";
-import {EmberZdoStatus} from "../zdo";
+import {ZclPayload} from '../../events';
+import {TOUCHLINK_PROFILE_ID} from '../../../zspec/consts';
+import {EmberApsFrame, EmberNodeId} from '../types';
+import {EmberZdoStatus} from '../zdo';
 import {logger} from '../../../utils/logger';
 
 const NS = 'zh:ember:waitress';

@@ -1,14 +1,11 @@
 /* istanbul ignore file */
 import {NetworkCache} from "../adapter/emberAdapter";
+import * as ZSpec from "../../../zspec";
 import {
-    BLANK_EUI64,
     UNKNOWN_NETWORK_STATE,
     ZB_PSA_ALG,
-    INVALID_PAN_ID,
     INVALID_RADIO_CHANNEL,
-    NULL_NODE_ID,
     EMBER_ALL_802_15_4_CHANNELS_MASK,
-    BLANK_EXTENDED_PAN_ID
 } from "../consts";
 import {
     EmberJoinMethod,
@@ -27,14 +24,14 @@ import {EmberAesMmoHashContext, SecManContext} from "../types";
  */
 export const initNetworkCache = (): NetworkCache => {
     return {
-        eui64: BLANK_EUI64,
+        eui64: ZSpec.BLANK_EUI64,
         parameters: {
-            extendedPanId: BLANK_EXTENDED_PAN_ID.slice(),// copy
-            panId: INVALID_PAN_ID,
+            extendedPanId: ZSpec.BLANK_EXTENDED_PAN_ID.slice(),// copy
+            panId: ZSpec.INVALID_PAN_ID,
             radioTxPower: 0,
             radioChannel: INVALID_RADIO_CHANNEL,
             joinMethod: EmberJoinMethod.MAC_ASSOCIATION,
-            nwkManagerId: NULL_NODE_ID,
+            nwkManagerId: ZSpec.NULL_NODE_ID,
             nwkUpdateId: 0,
             channels: EMBER_ALL_802_15_4_CHANNELS_MASK,
         },
