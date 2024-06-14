@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.50.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.49.3...v0.50.0) (2024-06-14)
+
+
+### Features
+
+* Add tuyaSetMinimumBrightness command ([#1090](https://github.com/Koenkk/zigbee-herdsman/issues/1090)) ([690408f](https://github.com/Koenkk/zigbee-herdsman/commit/690408f1bd6f78c4961d9ae27fd0e7e20648b042))
+* Expose all commands ([#1088](https://github.com/Koenkk/zigbee-herdsman/issues/1088)) ([6d1838a](https://github.com/Koenkk/zigbee-herdsman/commit/6d1838a1f981af7367c960c81db7465054bc4baa))
+
+
+### Bug Fixes
+
+* Ember: automatically rename/ignore unsupported backup versions ([#1085](https://github.com/Koenkk/zigbee-herdsman/issues/1085)) ([9092fe5](https://github.com/Koenkk/zigbee-herdsman/commit/9092fe588ef2698da51c802b4742d1241fbebaf9))
+* Ember: workaround: auto-register unknown multicasts in coordinator ([#1089](https://github.com/Koenkk/zigbee-herdsman/issues/1089)) ([f5e82bf](https://github.com/Koenkk/zigbee-herdsman/commit/f5e82bf0e58a722e49ed38bf9dc855425016becf))
+* Ezsp: log failed message delivery ([#1081](https://github.com/Koenkk/zigbee-herdsman/issues/1081)) ([12487ce](https://github.com/Koenkk/zigbee-herdsman/commit/12487ce0a43e20e84392d183d3393cdf90495a94))
+* Hide network key in zigbee-herdsman logs ([#1086](https://github.com/Koenkk/zigbee-herdsman/issues/1086)) ([d06d9c5](https://github.com/Koenkk/zigbee-herdsman/commit/d06d9c5eaa13de036a833d45ccdf542c7b218f80))
+* **ignore:** Move manuSpecificIkeaAirPurifier to zhc ([#1083](https://github.com/Koenkk/zigbee-herdsman/issues/1083)) ([b72481c](https://github.com/Koenkk/zigbee-herdsman/commit/b72481c0bd32e52ae1ba5277b4f20a2820042dc0))
+* **ignore:** update dependencies ([#1084](https://github.com/Koenkk/zigbee-herdsman/issues/1084)) ([5ceac0b](https://github.com/Koenkk/zigbee-herdsman/commit/5ceac0b46596181dde4c98235577e11bcbae4988))
+
 ## [0.49.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.49.2...v0.49.3) (2024-06-05)
 
 
