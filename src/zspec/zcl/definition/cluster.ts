@@ -2400,6 +2400,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'maximum', type: DataType.UINT16},
                 ],
             },
+            tuyaSetMinimumBrightness: {
+                ID: 224,
+                parameters: [
+                    {name: 'minimum', type: DataType.UINT16},
+                ],
+            },
             tuyaMoveToHueAndSaturationBrightness2: {
                 ID: 225,
                 parameters: [
