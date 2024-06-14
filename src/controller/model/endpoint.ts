@@ -285,9 +285,8 @@ class Endpoint extends Entity {
 
         // send without queueing if sendPolicy is 'immediate' or if the device has no timeout set
         if (request.sendPolicy === 'immediate' || !device.pendingRequestTimeout) {
-            logger.debug(logPrefix + `send ${frame.command.name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
-
             if (device.pendingRequestTimeout > 0) {
+                logger.debug(logPrefix + `send ${frame.command.name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
             }
             return request.send();
         }
