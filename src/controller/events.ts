@@ -44,7 +44,7 @@ interface LastSeenChangedPayload {
     reason: 'deviceAnnounce' | 'networkAddress' | 'deviceJoined' | 'messageEmitted' | 'messageNonEmitted';
 }
 
-type MessagePayloadType = 'attributeReport' | 'readResponse' | 'raw' | 'read' | 'write' | string;
+type MessagePayloadType = 'attributeReport' | 'readResponse' | 'raw' | 'read' | 'write' | `command${string}`;
 
 interface MessagePayload {
     type: MessagePayloadType;
