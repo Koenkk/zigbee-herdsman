@@ -734,12 +734,8 @@ class Controller extends events.EventEmitter {
             } else {
                 /* istanbul ignore else */
                 if (frame.header.isSpecific) {
-                    if (Events.CommandsLookup[command.name]) {
-                        type = Events.CommandsLookup[command.name];
-                        data = frame.payload;
-                    } else {
-                        logger.debug(`Skipping command '${command.name}' because it is missing from the lookup`, NS);
-                    }
+                    type = `command${command.name.charAt(0).toUpperCase()}${command.name.slice(1)}`;
+                    data = frame.payload;
                 }
             }
 
@@ -766,7 +762,7 @@ class Controller extends events.EventEmitter {
             const linkquality = payload.linkquality;
             const groupID = payload.groupID;
             const eventData: Events.MessagePayload = {
-                type: type, device, endpoint, data, linkquality, groupID, cluster: clusterName, meta
+                type, device, endpoint, data, linkquality, groupID, cluster: clusterName, meta
             };
 
             this.selfAndDeviceEmit(device, Events.Events.message, eventData);
