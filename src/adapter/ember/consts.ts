@@ -1,43 +1,11 @@
 //-------------------------------------------------------------------------------------------------
 // General
 
-/** Endpoint profile ID */
-export const CBA_PROFILE_ID = 0x0105;
-/** Endpoint profile ID for Zigbee 3.0. "Home Automation" */
-export const HA_PROFILE_ID = 0x0104;
-/** Endpoint profile ID for Smart Energy */
-export const SE_PROFILE_ID = 0x0109;
-/** Endpoint profile ID for Green Power */
-export const GP_PROFILE_ID = 0xA1E0;
-/** The touchlink (ZigBee Light Link/ZLL) Profile ID. */
-export const TOUCHLINK_PROFILE_ID = 0xC05E;
-/** The profile ID used to address all the public profiles. */
-export const WILDCARD_PROFILE_ID = 0xFFFF;
-
-/** The network ID of the coordinator in a ZigBee network is 0x0000. */
-export const ZIGBEE_COORDINATOR_ADDRESS = 0x0000;
-
-/** A blank (also used as "wildcard") EUI64 hex string prefixed with 0x */
-export const BLANK_EUI64 = "0xFFFFFFFFFFFFFFFF";
-/** A blank extended PAN ID. (null/not present) */
-export const BLANK_EXTENDED_PAN_ID: readonly number[] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-/** An invalid profile ID. This is a reserved profileId. */
-export const INVALID_PROFILE_ID = 0xFFFF;
-/** An invalid cluster ID. */
-export const INVALID_CLUSTER_ID = 0xFFFF;
-/** An invalid PAN ID. */
-export const INVALID_PAN_ID = 0xFFFF;
-/** Serves to initialize cache */
-export const INVALID_NODE_TYPE = 0xFF;
 /** Serves to initialize cache for config IDs */
 export const INVALID_CONFIG_VALUE = 0xFFFF;
 /** Serves to initialize cache */
 export const INVALID_RADIO_CHANNEL = 0xFF;
-/** A distinguished network ID that will never be assigned to any node. It is used to indicate the absence of a node ID. */
-export const NULL_NODE_ID = 0xFFFF;
 export const UNKNOWN_NETWORK_STATE = 0xFF;
-/** A distinguished binding index used to indicate the absence of a binding. */
-export const NULL_BINDING = 0xFF;
 /**
  * A distinguished network ID that will never be assigned to any node.
  * This value is returned when getting the remote node ID from the binding table and the given binding table index refers
@@ -65,29 +33,9 @@ export const EMBER_NULL_ADDRESS_TABLE_INDEX = 0xFF;
 /** Invalidates cached information */
 export const SOURCE_ROUTE_OVERHEAD_UNKNOWN = 0xFF;
 
-// Permit join times.
-export const PERMIT_JOIN_FOREVER = 0xFF;
-export const PERMIT_JOIN_MAX_TIMEOUT = 0xFE;
-
 //-------------------------------------------------------------------------------------------------
 // Network
 
-/**
- * ZigBee Broadcast Addresses
- * 
- *  ZigBee specifies three different broadcast addresses that
- *  reach different collections of nodes.  Broadcasts are normally sent only
- *  to routers.  Broadcasts can also be forwarded to end devices, either
- *  all of them or only those that do not sleep.  Broadcasting to end
- *  devices is both significantly more resource-intensive and significantly
- *  less reliable than broadcasting to routers.
- */
-/** Broadcast to all routers. */
-export const EMBER_BROADCAST_ADDRESS = 0xFFFC;
-/** Broadcast to all non-sleepy devices. */
-export const EMBER_RX_ON_WHEN_IDLE_BROADCAST_ADDRESS = 0xFFFD;
-/** Broadcast to all devices, including sleepy end devices. */
-export const EMBER_SLEEPY_BROADCAST_ADDRESS = 0xFFFF;
 // From table 3.51 of 053474r14
 // When sending many-to-one route requests, the following
 // addresses are used
@@ -197,9 +145,6 @@ export const ZIGBEE_PROFILE_INTEROPERABILITY_LINK_KEY: readonly number[] = [
 
 //-------------------------------------------------------------------------------------------------
 // Zigbee Green Power types and defines.
-
-/** The GP endpoint, as defined in the ZigBee spec. */
-export const GP_ENDPOINT = 0xF2;
 
 /** Number of GP sink list entries. Minimum is 2 sink list entries. */
 export const GP_SINK_LIST_ENTRIES = 2;

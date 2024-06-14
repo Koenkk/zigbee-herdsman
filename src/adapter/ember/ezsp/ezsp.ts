@@ -2,6 +2,7 @@
 import EventEmitter from "events";
 import {SerialPortOptions} from "../../tstype";
 import {Clusters} from "../../../zspec/zcl/definition/cluster";
+import * as ZSpec from "../../../zspec";
 import {byteToBits, getMacCapFlags, highByte, highLowToInt, lowByte, lowHighBits} from "../utils/math";
 import {
     EmberOutgoingMessageType,
@@ -164,8 +165,6 @@ import {AshEvents, UartAsh} from "../uart/ash";
 import {EzspBuffer} from "../uart/queues";
 import {EzspBuffalo} from "./buffalo";
 import {
-    GP_PROFILE_ID,
-    HA_PROFILE_ID,
     INTERPAN_APS_FRAME_CONTROL_NO_DELIVERY_MODE,
     INTERPAN_APS_FRAME_DELIVERY_MODE_MASK,
     INTERPAN_APS_FRAME_SECURITY,
@@ -177,8 +176,6 @@ import {
     SHORT_DEST_FRAME_CONTROL,
     STUB_NWK_FRAME_CONTROL,
     STUB_NWK_SIZE,
-    TOUCHLINK_PROFILE_ID,
-    WILDCARD_PROFILE_ID
 } from "../consts";
 import {FIXED_ENDPOINTS} from "../adapter/endpoints";
 import {logger} from "../../../utils/logger";
@@ -239,10 +236,8 @@ export enum EzspEvents {
     TRUST_CENTER_JOIN = 'TRUST_CENTER_JOIN',
 
     //-- ezspMessageSentHandler
-    /** params => type: EmberOutgoingMessageType, indexOrDestination: number, apsFrame: EmberApsFrame, messageTag: number */
-    // MESSAGE_SENT_SUCCESS = 'MESSAGE_SENT_SUCCESS',
-    /** params => type: EmberOutgoingMessageType, indexOrDestination: number, apsFrame: EmberApsFrame, messageTag: number */
-    MESSAGE_SENT_DELIVERY_FAILED = 'MESSAGE_SENT_DELIVERY_FAILED',
+    /** params => type: EmberOutgoingMessageType, indexOrDestination: number, apsFrame: EmberApsFrame, messageTag: number, status: EmberStatus */
+    MESSAGE_SENT = 'MESSAGE_SENT',
 
     //-- ezspGpepIncomingMessageHandler
     /** params => sequenceNumber: number, commandIdentifier: number, sourceId: number, frameCounter: number, gpdCommandId: number, gpdCommandPayload: Buffer, gpdLink: number */
@@ -3955,11 +3950,7 @@ export class Ezsp extends EventEmitter {
             NS,
         );
 
-        if (status === EmberStatus.DELIVERY_FAILED) {
-            // no ACK was received from the destination
-            this.emit(EzspEvents.MESSAGE_SENT_DELIVERY_FAILED, type, indexOrDestination, apsFrame, messageTag);
-        }
-        // shouldn't be any other status except SUCCESS... no use for it atm
+        this.emit(EzspEvents.MESSAGE_SENT, type, indexOrDestination, apsFrame, messageTag, status);
     }
 
     /**
@@ -4592,9 +4583,9 @@ export class Ezsp extends EventEmitter {
                 break;
             }
             }
-        } else if (apsFrame.profileId === HA_PROFILE_ID || apsFrame.profileId === WILDCARD_PROFILE_ID) {
+        } else if (apsFrame.profileId === ZSpec.HA_PROFILE_ID || apsFrame.profileId === ZSpec.WILDCARD_PROFILE_ID) {
             this.emit(EzspEvents.INCOMING_MESSAGE, type, apsFrame, lastHopLqi, sender, messageContents);
-        } else if (apsFrame.profileId === GP_PROFILE_ID) {
+        } else if (apsFrame.profileId === ZSpec.GP_PROFILE_ID) {
             // only broadcast loopback in here
         }
     }
@@ -5236,7 +5227,7 @@ export class Ezsp extends EventEmitter {
         const profileId = msgBuffalo.readUInt16();
         const payload = msgBuffalo.readRest();
 
-        if (profileId === TOUCHLINK_PROFILE_ID && clusterId === Clusters.touchlink.ID) {
+        if (profileId === ZSpec.TOUCHLINK_PROFILE_ID && clusterId === Clusters.touchlink.ID) {
             this.emit(EzspEvents.TOUCHLINK_MESSAGE, sourcePanId, sourceAddress, groupId, lastHopLqi, payload);
         }
     }
