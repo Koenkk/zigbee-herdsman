@@ -259,6 +259,7 @@ export enum EzspEvents {
  * @event 'NCP_NEEDS_RESET_AND_INIT(EzspStatus)' An error was detected that requires resetting the NCP.
  */
 export class Ezsp extends EventEmitter {
+    private version: number;
     private readonly tickInterval: number;
     public readonly ash: UartAsh;
     private readonly buffalo: EzspBuffalo;
@@ -372,6 +373,10 @@ export class Ezsp extends EventEmitter {
 
         this.initVariables();
         logger.info(`======== EZSP stopped ========`, NS);
+    }
+
+    public setProtocolVersion(version: number): void {
+        this.version = version;
     }
 
     /**

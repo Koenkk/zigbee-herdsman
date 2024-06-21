@@ -23,6 +23,7 @@ import {
     EMBER_ENCRYPTION_KEY_SIZE,
     EUI64_SIZE,
     EZSP_MAX_FRAME_LENGTH,
+    EZSP_MIN_PROTOCOL_VERSION,
     EZSP_PROTOCOL_VERSION,
     EZSP_STACK_TYPE_MESH
 } from "../ezsp/consts";
@@ -1697,21 +1698,25 @@ export class EmberAdapter extends Adapter {
      * Does nothing if ncpNeedsResetAndInit == true.
      */
     private async emberVersion(): Promise<void> {
-        // Note that NCP == Network Co-Processor
-        // the EZSP protocol version that the Host is running, we are the host so we set this value
-        const hostEzspProtocolVer = EZSP_PROTOCOL_VERSION;
         // send the Host version number to the NCP.
         // The NCP returns the EZSP version that the NCP is running along with the stackType and stackVersion
-        const [ncpEzspProtocolVer, ncpStackType, ncpStackVer] = (await this.ezsp.ezspVersion(hostEzspProtocolVer));
+        let [ncpEzspProtocolVer, ncpStackType, ncpStackVer] = await this.ezsp.ezspVersion(EZSP_PROTOCOL_VERSION);
 
         // verify that the stack type is what is expected
         if (ncpStackType !== EZSP_STACK_TYPE_MESH) {
             throw new Error(`Stack type ${ncpStackType} is not expected!`);
         }
 
-        // verify that the NCP EZSP Protocol version is what is expected
-        if (ncpEzspProtocolVer !== EZSP_PROTOCOL_VERSION) {
-            throw new Error(`NCP EZSP protocol version of ${ncpEzspProtocolVer} does not match Host version ${hostEzspProtocolVer}`);
+        if (ncpEzspProtocolVer === EZSP_PROTOCOL_VERSION) {
+            logger.debug(`NCP EZSP protocol version (${ncpEzspProtocolVer}) matches Host.`, NS);
+        } else if (ncpEzspProtocolVer < EZSP_PROTOCOL_VERSION && ncpEzspProtocolVer >= EZSP_MIN_PROTOCOL_VERSION) {
+            [ncpEzspProtocolVer, ncpStackType, ncpStackVer] = await this.ezsp.ezspVersion(ncpEzspProtocolVer);
+
+            logger.info(`NCP EZSP protocol version (${ncpEzspProtocolVer}) lower than Host. Switched.`, NS);
+        } else {
+            throw new Error(
+                `NCP EZSP protocol version (${ncpEzspProtocolVer}) is not supported by Host [${EZSP_MIN_PROTOCOL_VERSION}-${EZSP_PROTOCOL_VERSION}].`
+            );
         }
 
         logger.debug(`NCP info: EZSPVersion=${ncpEzspProtocolVer} StackType=${ncpStackType} StackVersion=${ncpStackVer}`, NS);
@@ -1723,6 +1728,7 @@ export class EmberAdapter extends Adapter {
             throw new Error(`NCP has old-style version number. Not supported.`);
         }
 
+        this.ezsp.setProtocolVersion(ncpEzspProtocolVer);
         this.version = {
             ezsp: ncpEzspProtocolVer,
             revision: `${versionStruct.major}.${versionStruct.minor}.${versionStruct.patch} [${EmberVersionType[versionStruct.type]}]`,
