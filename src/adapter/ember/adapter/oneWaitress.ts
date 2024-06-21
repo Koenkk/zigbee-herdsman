@@ -1,8 +1,9 @@
 /* istanbul ignore file */
 import equals from 'fast-deep-equal/es6';
 import {ZclPayload} from '../../events';
+import {NodeId} from '../../../zspec/tstypes';
 import {TOUCHLINK_PROFILE_ID} from '../../../zspec/consts';
-import {EmberApsFrame, EmberNodeId} from '../types';
+import {EmberApsFrame} from '../types';
 import {EmberZdoStatus} from '../zdo';
 import {logger} from '../../../utils/logger';
 
@@ -22,7 +23,7 @@ type OneWaitressMatcher = {
      * Matches `indexOrDestination` in `ezspMessageSentHandler` or `sender` in `ezspIncomingMessageHandler`
      * Except for InterPAN touchlink, it should always be present.
      */
-    target?: EmberNodeId,
+    target?: NodeId,
     apsFrame: EmberApsFrame,
     /** Cluster ID for when the response doesn't match the request. Takes priority over apsFrame.clusterId. Should be mostly for ZDO requests. */
     responseClusterId?: number,
@@ -110,7 +111,7 @@ export class EmberOneWaitress {
      * @param payload 
      * @returns 
      */
-    public resolveZDO(status: EmberZdoStatus, sender: EmberNodeId, apsFrame: EmberApsFrame, payload: unknown): boolean {
+    public resolveZDO(status: EmberZdoStatus, sender: NodeId, apsFrame: EmberApsFrame, payload: unknown): boolean {
         for (const [index, waiter] of this.waiters.entries()) {
             if (waiter.timedout) {
                 this.waiters.delete(index);

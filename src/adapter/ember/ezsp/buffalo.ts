@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import Buffalo from "../../../buffalo/buffalo";
 import {GP_SINK_LIST_ENTRIES} from "../consts";
-import {EmberGpApplicationId, EmberGpSinkType, EzspStatus} from "../enums";
+import {EmberGpApplicationId, EmberGpSinkType, EzspStatus, SLStatus} from "../enums";
 import {
     EmberAesMmoHashContext,
     EmberApsFrame,
@@ -14,6 +14,7 @@ import {
     EmberChildData,
     EmberCurrentSecurityState,
     EmberDutyCycleLimits,
+    EmberEndpointDescription,
     EmberGpAddress,
     EmberGpProxyTableEntry,
     EmberGpSinkListEntry,
@@ -23,6 +24,7 @@ import {
     EmberMessageDigest,
     EmberMultiPhyRadioParameters,
     EmberMulticastTableEntry,
+    EmberMultiprotocolPriorities,
     EmberNeighborTableEntry,
     EmberNetworkInitStruct,
     EmberNetworkParameters,
@@ -32,6 +34,7 @@ import {
     EmberPublicKey283k1Data,
     EmberPublicKeyData,
     EmberRouteTableEntry,
+    EmberRxPacketInfo,
     EmberSignature283k1Data,
     EmberSignatureData,
     EmberSmacData,
@@ -79,6 +82,45 @@ import {
 } from "./consts";
 import {EzspFrameID} from "./enums";
 
+/**
+ * Handle EmberStatus deprecation in v14+ for previous versions
+ */
+const EMBER_TO_SL_STATUS_MAP: Partial<Record<number, SLStatus>> = {
+    25: SLStatus.ZIGBEE_PACKET_HANDOFF_DROPPED,
+    102: SLStatus.ZIGBEE_DELIVERY_FAILED,
+    114: SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED,
+    116: SLStatus.MESSAGE_TOO_LONG,
+    117: SLStatus.ZIGBEE_BINDING_IS_ACTIVE,
+    118: SLStatus.ZIGBEE_ADDRESS_TABLE_ENTRY_IS_ACTIVE,
+    144: SLStatus.NETWORK_UP,
+    145: SLStatus.NETWORK_DOWN,
+    147: SLStatus.NOT_JOINED,
+    149: SLStatus.ZIGBEE_INVALID_SECURITY_LEVEL,
+    150: SLStatus.ZIGBEE_MOVE_FAILED,
+    153: SLStatus.ZIGBEE_NODE_ID_CHANGED,
+    154: SLStatus.ZIGBEE_PAN_ID_CHANGED,
+    155: SLStatus.ZIGBEE_CHANNEL_CHANGED,
+    156: SLStatus.ZIGBEE_NETWORK_OPENED,
+    157: SLStatus.ZIGBEE_NETWORK_CLOSED,
+    161: SLStatus.BUSY,
+    164: SLStatus.ZIGBEE_BINDING_HAS_CHANGED,
+    166: SLStatus.ZIGBEE_APS_ENCRYPTION_ERROR,
+    165: SLStatus.ZIGBEE_INSUFFICIENT_RANDOM_DATA,
+    169: SLStatus.ZIGBEE_SOURCE_ROUTE_FAILURE,
+    168: SLStatus.ZIGBEE_SECURITY_STATE_NOT_SET,
+    170: SLStatus.ZIGBEE_MANY_TO_ONE_ROUTE_FAILURE,
+    172: SLStatus.ZIGBEE_RECEIVED_KEY_IN_THE_CLEAR,
+    173: SLStatus.ZIGBEE_NO_NETWORK_KEY_RECEIVED,
+    174: SLStatus.ZIGBEE_NO_LINK_KEY_RECEIVED,
+    175: SLStatus.ZIGBEE_PRECONFIGURED_KEY_REQUIRED,
+    176: SLStatus.ZIGBEE_STACK_AND_HARDWARE_MISMATCH,
+    184: SLStatus.ZIGBEE_TOO_SOON_FOR_SWITCH_KEY,
+    185: SLStatus.ZIGBEE_SIGNATURE_VERIFY_FAILURE,
+    187: SLStatus.ZIGBEE_KEY_NOT_AUTHORIZED,
+    188: SLStatus.ZIGBEE_TRUST_CENTER_SWAP_EUI_HAS_CHANGED,
+    190: SLStatus.ZIGBEE_IEEE_ADDRESS_DISCOVERY_IN_PROGRESS,
+    191: SLStatus.ZIGBEE_TRUST_CENTER_SWAP_EUI_HAS_NOT_CHANGED,
+};
 
 export class EzspBuffalo extends Buffalo {
 
@@ -426,22 +468,22 @@ export class EzspBuffalo extends Buffalo {
     }
 
     public readSecManContext(): SecManContext {
-        const core_key_type = this.readUInt8();
-        const key_index = this.readUInt8();
-        const derived_type = this.readUInt16();
+        const coreKeyType = this.readUInt8();
+        const keyIndex = this.readUInt8();
+        const derivedType = this.readUInt16();
         const eui64 = this.readIeeeAddr();
-        const multi_network_index = this.readUInt8();
+        const multiNetworkIndex = this.readUInt8();
         const flags = this.readUInt8();
-        const psa_key_alg_permission = this.readUInt32();
+        const psaKeyAlgPermission = this.readUInt32();
 
         return {
-            coreKeyType: core_key_type,
-            keyIndex: key_index,
-            derivedType: derived_type,
+            coreKeyType,
+            keyIndex,
+            derivedType,
             eui64,
-            multiNetworkIndex: multi_network_index,
+            multiNetworkIndex,
             flags,
-            psaKeyAlgPermission: psa_key_alg_permission,
+            psaKeyAlgPermission,
         };
     }
 
@@ -478,15 +520,15 @@ export class EzspBuffalo extends Buffalo {
 
     public readSecManAPSKeyMetadata(): SecManAPSKeyMetadata {
         const bitmask = this.readUInt16();
-        const outgoing_frame_counter = this.readUInt32();
-        const incoming_frame_counter = this.readUInt32();
-        const ttl_in_seconds = this.readUInt16();
+        const outgoingFrameCounter = this.readUInt32();
+        const incomingFrameCounter = this.readUInt32();
+        const ttlInSeconds = this.readUInt16();
 
         return {
             bitmask,
-            outgoingFrameCounter: outgoing_frame_counter,
-            incomingFrameCounter: incoming_frame_counter,
-            ttlInSeconds: ttl_in_seconds,
+            outgoingFrameCounter,
+            incomingFrameCounter,
+            ttlInSeconds,
         };
     }
     
@@ -1265,5 +1307,76 @@ export class EzspBuffalo extends Buffalo {
         this.writeUInt8(tokenInfo.isIdx ? 1 : 0);
         this.writeUInt8(tokenInfo.size);
         this.writeUInt8(tokenInfo.arraySize);
+    }
+
+    /**
+     * EZSP switched to using SLStatus for command returns from version 14.
+     * @param version EZSP protocol version in use
+     * @param mapFromEmber If true, map from EmberStatus, otherwise map from EzspStatus
+     * @returns EzspStatus, EmberStatus or SLStatus as SLStatus
+     */
+    public readStatus(version: number, mapFromEmber: boolean = true): SLStatus {
+        if (version < 0x0E) {
+            const status = this.readUInt8();
+
+            // map to SLStatus as appropriate
+            if (mapFromEmber) {
+                return EMBER_TO_SL_STATUS_MAP[status] ?? status;
+            } else {
+                return (status === SLStatus.OK) ? status : SLStatus.ZIGBEE_EZSP_ERROR;
+            }
+        } else {
+            return this.readUInt32();
+        }
+    }
+
+    public readEmberEndpointDescription(): EmberEndpointDescription {
+        const profileId = this.readUInt16();
+        const deviceId = this.readUInt16();
+        const deviceVersion = this.readUInt8();
+        const inputClusterCount = this.readUInt8();
+        const outputClusterCount = this.readUInt8();
+
+        return {
+            profileId,
+            deviceId,
+            deviceVersion,
+            inputClusterCount,
+            outputClusterCount,
+        };
+    }
+
+    public readEmberMultiprotocolPriorities(): EmberMultiprotocolPriorities {
+        const backgroundRx = this.readUInt8();
+        const tx = this.readUInt8();
+        const activeRx = this.readUInt8();
+
+        return {backgroundRx, tx, activeRx};
+    }
+
+    public writeEmberMultiprotocolPriorities(priorities: EmberMultiprotocolPriorities): void {
+        this.writeUInt8(priorities.backgroundRx);
+        this.writeUInt8(priorities.tx);
+        this.writeUInt8(priorities.activeRx);
+    }
+
+    public readEmberRxPacketInfo(): EmberRxPacketInfo {
+        const senderShortId = this.readUInt16();
+        const senderLongId = this.readIeeeAddr();
+        const bindingIndex = this.readUInt8();
+        const addressIndex = this.readUInt8();
+        const lastHopLqi = this.readUInt8();
+        const lastHopRssi = this.readInt8();
+        const lastHopTimestamp = this.readUInt32();
+
+        return {
+            senderShortId,
+            senderLongId,
+            bindingIndex,
+            addressIndex,
+            lastHopLqi,
+            lastHopRssi,
+            lastHopTimestamp
+        };
     }
 }

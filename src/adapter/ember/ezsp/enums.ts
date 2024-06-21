@@ -14,6 +14,16 @@ export enum EzspFrameID {
     GET_EXTENDED_VALUE                               = 0x0003,
     SET_VALUE                                        = 0x00AB,
     SET_PASSIVE_ACK_CONFIG                           = 0x0105,
+    /** v14+ */
+    SET_PENDING_NETWORK_UPDATE_PAN_ID                = 0x011E,
+    /** v14+ */
+    GET_ENDPOINT                                     = 0x012E,
+    /** v14+ */
+    GET_ENDPOINT_COUNT                               = 0x012F,
+    /** v14+ */
+    GET_ENDPOINT_DESCRIPTION                         = 0x0130,
+    /** v14+ */
+    GET_ENDPOINT_CLUSTER                             = 0x0131,
 
     // Utilities Frames
     NOP                                              = 0x0005,
@@ -43,9 +53,25 @@ export enum EzspFrameID {
     GET_NODE_ID                                      = 0x0027,
     GET_PHY_INTERFACE_COUNT                          = 0x00FC,
     GET_TRUE_RANDOM_ENTROPY_SOURCE                   = 0x004F,
+    /** v14+ */
+    SETUP_DELAYED_JOIN                               = 0x003A,
+    /** v14+ */
+    RADIO_GET_SCHEDULER_PRIORITIES                   = 0x012A,
+    /** v14+ */
+    RADIO_SET_SCHEDULER_PRIORITIES                   = 0x012B,
+    /** v14+ */
+    RADIO_GET_SCHEDULER_SLIPTIME                     = 0x012C,
+    /** v14+ */
+    RADIO_SET_SCHEDULER_SLIPTIME                     = 0x012D,
+    /** v14+ */
+    COUNTER_REQUIRES_PHY_INDEX                       = 0x0132,
+    /** v14+ */
+    COUNTER_REQUIRES_DESTINATION_NODE_ID             = 0x0133,
 
     // Networking Frames
     SET_MANUFACTURER_CODE                            = 0x0015,
+    /** v14+ */
+    GET_MANUFACTURER_CODE                            = 0x00CA,
     SET_POWER_DESCRIPTOR                             = 0x0016,
     NETWORK_INIT                                     = 0x0017,
     NETWORK_STATE                                    = 0x0018,
@@ -68,9 +94,37 @@ export enum EzspFrameID {
     GET_NETWORK_PARAMETERS                           = 0x0028,
     GET_RADIO_PARAMETERS                             = 0x00FD,
     GET_PARENT_CHILD_PARAMETERS                      = 0x0029,
+    /** v14+ */
+    ROUTER_CHILD_COUNT                               = 0x013B,
+    /** v14+ */
+    MAX_CHILD_COUNT                                  = 0x013C,
+    /** v14+ */
+    MAX_ROUTER_CHILD_COUNT                           = 0x013D,
+    /** v14+ */
+    GET_PARENT_INCOMING_NWK_FRAME_COUNTER            = 0x013E,
+    /** v14+ */
+    SET_PARENT_INCOMING_NWK_FRAME_COUNTER            = 0x013F,
+    /** v14+ */
+    CURRENT_STACK_TASKS                              = 0x0145,
+    /** v14+ */
+    OK_TO_NAP                                        = 0x0146,
+    /** v14+ */
+    PARENT_TOKEN_SET                                 = 0x0140,
+    /** v14+ */
+    OK_TO_HIBERNATE                                  = 0x0141,
+    /** v14+ */
+    OK_TO_LONG_POLL                                  = 0x0142,
+    /** v14+ */
+    STACK_POWER_DOWN                                 = 0x0143,
+    /** v14+ */
+    STACK_POWER_UP                                   = 0x0144,
     GET_CHILD_DATA                                   = 0x004A,
     SET_CHILD_DATA                                   = 0x00AC,
     CHILD_ID                                         = 0x0106,
+    /** v14+ */
+    CHILD_POWER                                      = 0x0134,
+    /** v14+ */
+    SET_CHILD_POWER                                  = 0x0135,
     CHILD_INDEX                                      = 0x0107,
     GET_SOURCE_ROUTE_TABLE_TOTAL_SIZE                = 0x00C3,
     GET_SOURCE_ROUTE_TABLE_FILLED_SIZE               = 0x00C2,
@@ -87,6 +141,12 @@ export enum EzspFrameID {
     GET_RADIO_CHANNEL                                = 0x00FF,
     SET_RADIO_IEEE802154_CCA_MODE                    = 0x0095,
     SET_CONCENTRATOR                                 = 0x0010,
+    /** v14+ */
+    CONCENTRATOR_START_DISCOVERY                     = 0x014F,
+    /** v14+ */
+    CONCENTRATOR_STOP_DISCOVERY                      = 0x0150,
+    /** v14+ */
+    CONCENTRATOR_NOTE_ROUTE_ERROR                    = 0x0151,
     SET_BROKEN_ROUTE_ERROR_CODE                      = 0x0011,
     MULTI_PHY_START                                  = 0x00F8,
     MULTI_PHY_STOP                                   = 0x00F9,
@@ -98,11 +158,31 @@ export enum EzspFrameID {
     GET_DUTY_CYCLE_LIMITS                            = 0x004B,
     GET_CURRENT_DUTY_CYCLE                           = 0x004C,
     DUTY_CYCLE_HANDLER                               = 0x004D,
-    GET_FIRST_BEACON                                 = 0x003D,
-    GET_NEXT_BEACON                                  = 0x0004,
+    // GET_FIRST_BEACON                                 = 0x003D,// v13-, unused
+    SET_NUM_BEACONS_TO_STORE                         = 0x0037,
+    // GET_NEXT_BEACON                                  = 0x0004,// v13-, unused
+    GET_STORED_BEACON                                = 0x0004,
     GET_NUM_STORED_BEACONS                           = 0x0008,
     CLEAR_STORED_BEACONS                             = 0x003C,
     SET_LOGICAL_AND_RADIO_CHANNEL                    = 0x00B9,
+    /** v14+ */
+    SLEEPY_TO_SLEEPY_NETWORK_START                   = 0x0119,
+    /** v14+ */
+    SEND_ZIGBEE_LEAVE                                = 0x011A,
+    /** v14+ */
+    GET_PERMIT_JOINING                               = 0x011F,
+    /** v14+ */
+    GET_EXTENDED_PAN_ID                              = 0x0127,
+    /** v14+ */
+    GET_CURRENT_NETWORK                              = 0x014E,
+    /** v14+ */
+    SET_INITIAL_NEIGHBOR_OUTGOING_COST               = 0x0122,
+    /** v14+ */
+    GET_INITIAL_NEIGHBOR_OUTGOING_COST               = 0x0123,
+    /** v14+ */
+    RESET_REJOINING_NEIGHBORS_FRAME_COUNTER          = 0x0124,
+    /** v14+ */
+    IS_RESET_REJOINING_NEIGHBORS_FRAME_COUNTER_ENABLED = 0x0125,
 
     // Binding Frames
     CLEAR_BINDING_TABLE                              = 0x002A,
@@ -119,16 +199,27 @@ export enum EzspFrameID {
     MAXIMUM_PAYLOAD_LENGTH                           = 0x0033,
     SEND_UNICAST                                     = 0x0034,
     SEND_BROADCAST                                   = 0x0036,
-    PROXY_BROADCAST                                  = 0x0037,
+    // PROXY_BROADCAST                                  = 0x0037,// v13-, unused
+    PROXY_NEXT_BROADCAST_FROM_LONG                   = 0x0066,
     SEND_MULTICAST                                   = 0x0038,
-    SEND_MULTICAST_WITH_ALIAS                        = 0x003A,
+    // SEND_MULTICAST_WITH_ALIAS                        = 0x003A,// v13-, unused
     SEND_REPLY                                       = 0x0039,
     MESSAGE_SENT_HANDLER                             = 0x003F,
     SEND_MANY_TO_ONE_ROUTE_REQUEST                   = 0x0041,
     POLL_FOR_DATA                                    = 0x0042,
     POLL_COMPLETE_HANDLER                            = 0x0043,
+    /** v14+ */
+    SET_MESSAGE_FLAG                                 = 0x0136,
+    /** v14+ */
+    CLEAR_MESSAGE_FLAG                               = 0x0137,
     POLL_HANDLER                                     = 0x0044,
-    INCOMING_SENDER_EUI64_HANDLER                    = 0x0062,
+    /** v14+ */
+    ADD_CHILD                                        = 0x0138,
+    /** v14+ */
+    REMOVE_CHILD                                     = 0x0139,
+    /** v14+ */
+    REMOVE_NEIGHBOR                                  = 0x013A,
+    // INCOMING_SENDER_EUI64_HANDLER                    = 0x0062,// v13-, unused
     INCOMING_MESSAGE_HANDLER                         = 0x0045,
     SET_SOURCE_ROUTE_DISCOVERY_MODE                  = 0x005A,
     INCOMING_MANY_TO_ONE_ROUTE_REQUEST_HANDLER       = 0x007D,
@@ -138,10 +229,14 @@ export enum EzspFrameID {
     SET_SOURCE_ROUTE                                 = 0x00AE,
     UNICAST_CURRENT_NETWORK_KEY                      = 0x0050,
     ADDRESS_TABLE_ENTRY_IS_ACTIVE                    = 0x005B,
-    SET_ADDRESS_TABLE_REMOTE_EUI64                   = 0x005C,
-    SET_ADDRESS_TABLE_REMOTE_NODE_ID                 = 0x005D,
-    GET_ADDRESS_TABLE_REMOTE_EUI64                   = 0x005E,
-    GET_ADDRESS_TABLE_REMOTE_NODE_ID                 = 0x005F,
+    /** v14+ */
+    SET_ADDRESS_TABLE_INFO                           = 0x005C,
+    /** v14+ */
+    GET_ADDRESS_TABLE_INFO                           = 0x005E,
+    // SET_ADDRESS_TABLE_REMOTE_EUI64                   = 0x005C,// v13-, unused
+    // SET_ADDRESS_TABLE_REMOTE_NODE_ID                 = 0x005D,// v13-, unused
+    // GET_ADDRESS_TABLE_REMOTE_EUI64                   = 0x005E,// v13-, unused
+    // GET_ADDRESS_TABLE_REMOTE_NODE_ID                 = 0x005F,// v13-, unused
     SET_EXTENDED_TIMEOUT                             = 0x007E,
     GET_EXTENDED_TIMEOUT                             = 0x007F,
     REPLACE_ADDRESS_TABLE_ENTRY                      = 0x0082,
@@ -151,14 +246,22 @@ export enum EzspFrameID {
     SET_MULTICAST_TABLE_ENTRY                        = 0x0064,
     ID_CONFLICT_HANDLER                              = 0x007C,
     WRITE_NODE_DATA                                  = 0x00FE,
-    SEND_RAW_MESSAGE                                 = 0x0096,
-    SEND_RAW_MESSAGE_EXTENDED                        = 0x0051,
+    // SEND_RAW_MESSAGE                                 = 0x0096,// v13-, unused
+    SEND_RAW_MESSAGE                                 = 0x0051,
     MAC_PASSTHROUGH_MESSAGE_HANDLER                  = 0x0097,
     MAC_FILTER_MATCH_MESSAGE_HANDLER                 = 0x0046,
     RAW_TRANSMIT_COMPLETE_HANDLER                    = 0x0098,
     SET_MAC_POLL_FAILURE_WAIT_TIME                   = 0x00F4,
+    /** v14+ */
+    GET_MAX_MAC_RETRIES                              = 0x006A,
     SET_BEACON_CLASSIFICATION_PARAMS                 = 0x00EF,
     GET_BEACON_CLASSIFICATION_PARAMS                 = 0x00F3,
+    /** v14+ */
+    PENDING_ACKED_MESSAGES                           = 0x0121,
+    /** v14+ */
+    RESCHEDULE_LINK_STATUS_MSG                       = 0x011B,
+    /** v14+ */
+    SET_NWK_UPDATE_ID                                = 0x011D,
 
     // Security Frames
     SET_INITIAL_SECURITY_STATE                       = 0x0068,
@@ -183,6 +286,10 @@ export enum EzspFrameID {
     IMPORT_TRANSIENT_KEY                             = 0x0111,
     EXPORT_TRANSIENT_KEY_BY_INDEX                    = 0x0112,
     EXPORT_TRANSIENT_KEY_BY_EUI                      = 0x0113,
+    /** v14+ */
+    SET_INCOMING_TC_LINK_KEY_FRAME_COUNTER           = 0x0128,
+    /** v14+ */
+    APS_CRYPT_MESSAGE                                = 0x0129,
 
     // Trust Center Frames
     TRUST_CENTER_JOIN_HANDLER                        = 0x0024,
@@ -214,17 +321,17 @@ export enum EzspFrameID {
     SAVE_PREINSTALLED_CBKE_DATA283K1                 = 0x00ED,
 
     // Mfglib Frames
-    MFGLIB_START                                     = 0x0083,
-    MFGLIB_END                                       = 0x0084,
-    MFGLIB_START_TONE                                = 0x0085,
-    MFGLIB_STOP_TONE                                 = 0x0086,
-    MFGLIB_START_STREAM                              = 0x0087,
-    MFGLIB_STOP_STREAM                               = 0x0088,
-    MFGLIB_SEND_PACKET                               = 0x0089,
-    MFGLIB_SET_CHANNEL                               = 0x008a,
-    MFGLIB_GET_CHANNEL                               = 0x008b,
-    MFGLIB_SET_POWER                                 = 0x008c,
-    MFGLIB_GET_POWER                                 = 0x008d,
+    MFGLIB_INTERNAL_START                            = 0x0083,
+    MFGLIB_INTERNAL_END                              = 0x0084,
+    MFGLIB_INTERNAL_START_TONE                       = 0x0085,
+    MFGLIB_INTERNAL_STOP_TONE                        = 0x0086,
+    MFGLIB_INTERNAL_START_STREAM                     = 0x0087,
+    MFGLIB_INTERNAL_STOP_STREAM                      = 0x0088,
+    MFGLIB_INTERNAL_SEND_PACKET                      = 0x0089,
+    MFGLIB_INTERNAL_SET_CHANNEL                      = 0x008a,
+    MFGLIB_INTERNAL_GET_CHANNEL                      = 0x008b,
+    MFGLIB_INTERNAL_SET_POWER                        = 0x008c,
+    MFGLIB_INTERNAL_GET_POWER                        = 0x008d,
     MFGLIB_RX_HANDLER                                = 0x008e,
 
     // Bootloader Frames
@@ -234,6 +341,20 @@ export enum EzspFrameID {
     INCOMING_BOOTLOAD_MESSAGE_HANDLER                = 0x0092,
     BOOTLOAD_TRANSMIT_COMPLETE_HANDLER               = 0x0093,
     AES_ENCRYPT                                      = 0x0094,
+    /** v14+ */
+    INCOMING_MFG_TEST_MESSAGE_HANDLER                = 0x0147,
+    /** v14+ */
+    MFG_TEST_SET_PACKET_MODE                         = 0x0148,
+    /** v14+ */
+    MFG_TEST_SEND_REBOOT_COMMAND                     = 0x0149,
+    /** v14+ */
+    MFG_TEST_SEND_EUI64                              = 0x014A,
+    /** v14+ */
+    MFG_TEST_SEND_MANUFACTURING_STRING               = 0x014B,
+    /** v14+ */
+    MFG_TEST_SEND_RADIO_PARAMETERS                   = 0x014C,
+    /** v14+ */
+    MFG_TEST_SEND_COMMAND                            = 0x014D,
 
     // ZLL Frames
     ZLL_NETWORK_OPS                                  = 0x00B2,
@@ -263,12 +384,12 @@ export enum EzspFrameID {
     ZLL_CLEAR_TOKENS                                 = 0x0025,
 
     // WWAH Frames
-    SET_PARENT_CLASSIFICATION_ENABLED                = 0x00E7,
-    GET_PARENT_CLASSIFICATION_ENABLED                = 0x00F0,
-    SET_LONG_UP_TIME                                 = 0x00E3,
-    SET_HUB_CONNECTIVITY                             = 0x00E4,
-    IS_UP_TIME_LONG                                  = 0x00E5,
-    IS_HUB_CONNECTED                                 = 0x00E6,
+    // SET_PARENT_CLASSIFICATION_ENABLED                = 0x00E7,// v13-, unused
+    // GET_PARENT_CLASSIFICATION_ENABLED                = 0x00F0,// v13-, unused
+    // SET_LONG_UP_TIME                                 = 0x00E3,// v13-, unused
+    // SET_HUB_CONNECTIVITY                             = 0x00E4,// v13-, unused
+    // IS_UP_TIME_LONG                                  = 0x00E5,// v13-, unused
+    // IS_HUB_CONNECTED                                 = 0x00E6,// v13-, unused
 
     // Green Power Frames
     GP_PROXY_TABLE_PROCESS_GP_PAIRING                = 0x00C9,
@@ -303,11 +424,10 @@ export enum EzspFrameID {
 export enum EzspConfigId {
     // 0x00?
     /**
-     * The NCP no longer supports configuration of packet buffer count at runtime
-     * using this parameter. Packet buffers must be configured using the
-     * EMBER_PACKET_BUFFER_COUNT macro when building the NCP project.
+     * The NCP no longer supports configuration of packet buffer heap at runtime using this parameter.
+     * Packet buffers heap space must be configured using the EMBER_PACKET_BUFFER_COUNT macro when building the NCP project.
      */
-    PACKET_BUFFER_COUNT                       = 0x01,
+    PACKET_BUFFER_HEAP_SIZE                   = 0x01,
     /**
      * The maximum number of router neighbors the stack can keep track of. A
      * neighbor is a node within radio range.
@@ -529,7 +649,13 @@ export enum EzspConfigId {
     /** This is green power proxy table size. This value is read-only and cannot be set at runtime */
     GP_PROXY_TABLE_SIZE                       = 0x41,
     /** This is green power sink table size. This value is read-only and cannot be set at runtime */
-    GP_SINK_TABLE_SIZE                        = 0x42
+    GP_SINK_TABLE_SIZE                        = 0x42,
+    /**
+     * v14+
+     * This is the configuration advertised by the end device to the parent when joining/rejoining,
+     * either SL_ZIGBEE_END_DEVICE_CONFIG_NONE or SL_ZIGBEE_END_DEVICE_CONFIG_PERSIST_DATA_ON_PARENT.
+     */
+    END_DEVICE_CONFIGURATION                  = 0x43
 }
 
 /** Identifies a policy decision. */
@@ -689,8 +815,8 @@ export enum EzspValueId {
      * EMBER_MAC_PASSTHROUGH_EMBERNET_SOURCE flag is set in MAC_PASSTHROUGH_FLAGS.
      */
     EMBERNET_PASSTHROUGH_SOURCE_ADDRESS  = 0x02,
-    /** The number of available internal RAM general purpose buffers. Read only. */
-    FREE_BUFFERS                         = 0x03,
+    /** The amount in bytes (max 2^16) of available general purpose heap memory. */
+    BUFFER_HEAP_FREE_SIZE                = 0x03,
     /** Selects sending synchronous callbacks in ezsp-uart. */
     UART_SYNCH_CALLBACKS                 = 0x04,
     /**
@@ -727,16 +853,7 @@ export enum EzspValueId {
     MFG_SECURITY_CONFIG                  = 0x10,
     /** Retrieves the version information from the stack on the NCP. */
     VERSION_INFO                         = 0x11,
-    /**
-     * This will get/set the rejoin reason noted by the host for a subsequent call to emberFindAndRejoinNetwork().
-     * After a call to emberFindAndRejoinNetwork() the host's rejoin reason will be set to EMBER_REJOIN_REASON_NONE.
-     * The NCP will store the rejoin reason used by the call to emberFindAndRejoinNetwork().
-     * Application is not required to do anything with this value.
-     * The App Framework sets this for cases of emberFindAndRejoinNetwork that it initiates, but if the app is invoking a rejoin directly,
-     * it should/can set this value to aid in debugging of any rejoin state machine issues over EZSP logs after the fact.
-     * The NCP doesn't do anything with this value other than cache it so you can read it later.
-     */
-    NEXT_HOST_REJOIN_REASON              = 0x12,
+    // NEXT_HOST_REJOIN_REASON              = 0x12,// v13-, unused
     /**
      * This is the reason that the last rejoin took place. This value may only be retrieved, not set.
      * The rejoin may have been initiated by the stack (NCP) or the application (host).
@@ -818,7 +935,10 @@ export enum EzspValueId {
     TRANSIENT_KEY_TIMEOUT_S              = 0x3B,
     /** Cumulative energy usage metric since the last value reset of the coulomb counter plugin. Setting this value will reset the coulomb counter. */
     COULOMB_COUNTER_USAGE                = 0x3C,
-    /** When scanning, configure the maximum number of beacons to store in cache. Each beacon consumes one packet buffer in RAM. */
+    /**
+     * When scanning, configure the maximum number of beacons to store in cache.
+     * Each beacon consumes on average 32-bytes (+ buffer overhead) in RAM.
+     */
     MAX_BEACONS_TO_STORE                 = 0x3D,
     /** Set the mask to filter out unacceptable child timeout options on a router. */
     END_DEVICE_TIMEOUT_OPTIONS_MASK      = 0x3E,
@@ -842,7 +962,17 @@ export enum EzspValueId {
      */
     KEY_STORAGE_VERSION                  = 0x44,
     /** Return activation state about TC Delayed Join on an NCP.  A return value of 0 indicates that the feature is not activated. */
-    DELAYED_JOIN_ACTIVATION              = 0x45
+    DELAYED_JOIN_ACTIVATION              = 0x45,
+    /**
+     * v14+
+     * The maximum number of NWK retries that will be attempted.
+     */
+    MAX_NWK_RETRIES          = 0x46,
+    /**
+     * v14+
+     * Policies for allowing/disallowing rejoins.
+     */
+    REJOIN_MODE              = 0x47,
 }
 
 /**

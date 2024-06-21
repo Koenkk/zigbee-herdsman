@@ -2,7 +2,7 @@
 import {initSecurityManagerContext} from "../utils/initters";
 import {BLANK_EUI64} from "../../../zspec";
 import {EMBER_ENCRYPTION_KEY_SIZE, EUI64_SIZE} from "../ezsp/consts";
-import {EmberStatus, EzspStatus, SLStatus, SecManFlag, SecManKeyType} from "../enums";
+import {SLStatus, SecManFlag, SecManKeyType} from "../enums";
 import {EzspValueId} from "../ezsp/enums";
 import {EmberTokenData, SecManKey} from "../types";
 import {Ezsp} from "../ezsp/ezsp";
@@ -303,8 +303,8 @@ export class EmberTokensManager {
     private static async ncpUsesPSAKeyStorage(ezsp: Ezsp): Promise<boolean> {
         const [status, valueLength, value] = (await ezsp.ezspGetValue(EzspValueId.KEY_STORAGE_VERSION, 1));
 
-        if ((status !== EzspStatus.SUCCESS) || (valueLength < 1)) {
-            throw new Error(`[TOKENS] Error retrieving key storage version, status=${EzspStatus[status]}.`);
+        if ((status !== SLStatus.OK) || (valueLength < 1)) {
+            throw new Error(`[TOKENS] Error retrieving key storage version, status=${SLStatus[status]}.`);
         }
 
         return (value[0] === 1);
@@ -356,7 +356,7 @@ export class EmberTokensManager {
                 const [tiStatus, tokenInfo] = (await ezsp.ezspGetTokenInfo(i));
                 let writeOffset: number = 0;
 
-                if (tiStatus === EmberStatus.SUCCESS) {
+                if (tiStatus === SLStatus.OK) {
                     const outputToken = Buffer.alloc(4 + 1 + 1 + (tokenInfo.size * tokenInfo.arraySize));
                     outputToken.writeUInt32LE(tokenInfo.nvm3Key, writeOffset);// 4 bytes
                     writeOffset += 4;
@@ -366,7 +366,7 @@ export class EmberTokensManager {
                     for (let arrayIndex = 0; arrayIndex < tokenInfo.arraySize; arrayIndex++) {
                         const [tdStatus, tokenData] = (await ezsp.ezspGetTokenData(tokenInfo.nvm3Key, arrayIndex));
 
-                        if (tdStatus === EmberStatus.SUCCESS) {
+                        if (tdStatus === SLStatus.OK) {
                             if (hasSecureStorage) {
                                 // Populate keys into tokenData because tokens do not contain them with secure key storage
                                 await EmberTokensManager.saveKeysToData(ezsp, tokenData, tokenInfo.nvm3Key, arrayIndex);
@@ -396,13 +396,13 @@ export class EmberTokensManager {
                             outputToken.set(tokenData.data, writeOffset);
                             writeOffset += tokenData.size;
                         } else {
-                            logger.error(`[TOKENS] Failed to get token data at index ${arrayIndex} with status=${EmberStatus[tdStatus]}.`, NS);
+                            logger.error(`[TOKENS] Failed to get token data at index ${arrayIndex} with status=${SLStatus[tdStatus]}.`, NS);
                         }
                     }
 
                     chunks.push(outputToken);
                 } else {
-                    logger.error(`[TOKENS] Failed to get token info at index ${i} with status=${EmberStatus[tiStatus]}.`, NS);
+                    logger.error(`[TOKENS] Failed to get token info at index ${i} with status=${SLStatus[tiStatus]}.`, NS);
                 }
             }
 
@@ -423,9 +423,9 @@ export class EmberTokensManager {
      * 
      * @see EmberTokensManager.saveTokens() for format
      * 
-     * @return EmberStatus status code
+     * @return SLStatus status code
      */
-    public static async restoreTokens(ezsp: Ezsp, inBuffer: Buffer): Promise<EmberStatus> {
+    public static async restoreTokens(ezsp: Ezsp, inBuffer: Buffer): Promise<SLStatus> {
         if (!inBuffer?.length) {
             throw new Error(`[TOKENS] Restore tokens buffer empty.`);
         }
@@ -441,7 +441,7 @@ export class EmberTokensManager {
         for (let i = 0; i < inTokenCount; i++) {
             const [tiStatus, tokenInfo] = (await ezsp.ezspGetTokenInfo(i));
 
-            if (tiStatus === EmberStatus.SUCCESS) {
+            if (tiStatus === SLStatus.OK) {
                 const nvm3Key = inBuffer.readUInt32LE(readOffset);// 4 bytes Token Key/Creator
                 readOffset += 4;
                 const size = inBuffer.readUInt8(readOffset++);// 1 byte token size
@@ -458,20 +458,20 @@ export class EmberTokensManager {
                         await EmberTokensManager.restoreKeysFromData(ezsp, tokenData, tokenInfo.nvm3Key, arrayIndex);
                     }
 
-                    const status = (await ezsp.ezspSetTokenData(nvm3Key, arrayIndex, tokenData)) as EmberStatus;
+                    const status = (await ezsp.ezspSetTokenData(nvm3Key, arrayIndex, tokenData));
 
-                    if (status !== EmberStatus.SUCCESS) {
-                        logger.error(`[TOKENS] Failed to set token data for key "${nvm3Key}" with status=${EmberStatus[status]}.`, NS);
+                    if (status !== SLStatus.OK) {
+                        logger.error(`[TOKENS] Failed to set token data for key "${nvm3Key}" with status=${SLStatus[status]}.`, NS);
                     }
 
                     readOffset += tokenData.size;
                 }
             } else {
-                logger.error(`[TOKENS] Failed to get token info at index ${i} with status=${EmberStatus[tiStatus]}.`, NS);
+                logger.error(`[TOKENS] Failed to get token info at index ${i} with status=${SLStatus[tiStatus]}.`, NS);
             }
         }
 
-        return EmberStatus.SUCCESS;
+        return SLStatus.OK;
     }
 
     /**
@@ -496,7 +496,7 @@ export class EmberTokensManager {
             context.coreKeyType = SecManKeyType.NETWORK;
             context.keyIndex = 0;
 
-            [plaintextKey, status] = (await ezsp.ezspExportKey(context));
+            [status, plaintextKey] = (await ezsp.ezspExportKey(context));
 
             tokenData.data.set(plaintextKey.contents, 0);// at beginning
         } else if (nvm3Key === NVM3KEY_STACK_ALTERNATE_KEY) {
@@ -508,7 +508,7 @@ export class EmberTokensManager {
             context.coreKeyType = SecManKeyType.NETWORK;
             context.keyIndex = 1;
 
-            [plaintextKey, status] = (await ezsp.ezspExportKey(context));
+            [status, plaintextKey] = (await ezsp.ezspExportKey(context));
 
             tokenData.data.set(plaintextKey.contents, 0);// at beginning
         } else if (nvm3Key === NVM3KEY_STACK_TRUST_CENTER) {
@@ -520,7 +520,7 @@ export class EmberTokensManager {
 
             context.coreKeyType = SecManKeyType.TC_LINK;
 
-            [plaintextKey, status] = (await ezsp.ezspExportKey(context));
+            [status, plaintextKey] = (await ezsp.ezspExportKey(context));
 
             tokenData.data.set(plaintextKey.contents, 2 + EUI64_SIZE);// uint16_t+uint8_t[8]
         } else if (nvm3Key === NVM3KEY_STACK_KEY_TABLE) {
@@ -531,7 +531,7 @@ export class EmberTokensManager {
             //this must be set to export a specific link key from table
             context.flags |= SecManFlag.KEY_INDEX_IS_VALID;
 
-            [plaintextKey, status] = (await ezsp.ezspExportKey(context));
+            [status, plaintextKey] = (await ezsp.ezspExportKey(context));
 
             tokenData.data.set(plaintextKey.contents, KEY_ENTRY_KEY_DATA_OFFSET);// end part of uint8_t[25]
         } else if (nvm3Key === NVM3KEY_STACK_GP_PROXY_TABLE) {
@@ -553,7 +553,7 @@ export class EmberTokensManager {
             context.coreKeyType = SecManKeyType.GREEN_POWER_PROXY_TABLE_KEY;
             context.keyIndex = index;
             
-            [plaintextKey, status] = (await ezsp.ezspExportKey(context));
+            [status, plaintextKey] = (await ezsp.ezspExportKey(context));
 
             tokenData.data.set(plaintextKey.contents, 1 + 4 + 8 + 1 + 1);// uint8_t+uint32_t+uint8_t[8]+uint8_t+uint8_t
         } else if (nvm3Key === NVM3KEY_STACK_GP_SINK_TABLE) {
@@ -576,7 +576,7 @@ export class EmberTokensManager {
             context.coreKeyType = SecManKeyType.GREEN_POWER_SINK_TABLE_KEY;
             context.keyIndex = index;
 
-            [plaintextKey, status] = (await ezsp.ezspExportKey(context));
+            [status, plaintextKey] = (await ezsp.ezspExportKey(context));
 
             tokenData.data.set(plaintextKey.contents, 1 + 2 + 8 + 1 + 1);// uint8_t+uint16_t+uint8_t[8]+uint8_t+uint8_t
         } else if (nvm3Key === NVM3KEY_STACK_ZLL_SECURITY) {
@@ -589,13 +589,13 @@ export class EmberTokensManager {
 
             context.coreKeyType = SecManKeyType.ZLL_ENCRYPTION_KEY;
 
-            [plaintextKey, status] = (await ezsp.ezspExportKey(context));
+            [status, plaintextKey] = (await ezsp.ezspExportKey(context));
 
             tokenData.data.set(plaintextKey.contents, 4 + 1);// uint32_t+uint8_t
 
             context.coreKeyType = SecManKeyType.ZLL_PRECONFIGURED_KEY;
 
-            [plaintextKey, status] = (await ezsp.ezspExportKey(context));
+            [status, plaintextKey] = (await ezsp.ezspExportKey(context));
 
             tokenData.data.set(plaintextKey.contents, 4 + 1 + EMBER_ENCRYPTION_KEY_SIZE);// uint32_t+uint8_t+uint8_t[EMBER_ENCRYPTION_KEY_SIZE]
         } else {
@@ -740,9 +740,9 @@ export class EmberTokensManager {
     /**
      * Updates zigbeed tokens from a backup of NCP tokens.
      *
-     * @return EmberStatus status code
+     * @return SLStatus status code
      */
-    public static async writeNcpTokensToZigbeedTokens(ezsp: Ezsp, inBuffer: Buffer): Promise<EmberStatus> {
+    public static async writeNcpTokensToZigbeedTokens(ezsp: Ezsp, inBuffer: Buffer): Promise<SLStatus> {
         if (!inBuffer?.length) {
             throw new Error(`[TOKENS] Restore tokens buffer empty.`);
         }
@@ -767,9 +767,9 @@ export class EmberTokensManager {
                 const creator = EmberTokensManager.getCreatorFromNvm3Key(nvm3Key);// uint16_t
                 const status = (await ezsp.ezspSetTokenData(creator, arrayIndex, tokenData));
 
-                if (status !== EmberStatus.SUCCESS) {
+                if (status !== SLStatus.OK) {
                     logger.error(
-                        `[TOKENS] Failed to set Zigbeed token data for key "${nvm3Key}" creator "${creator}" with status=${EmberStatus[status]}.`,
+                        `[TOKENS] Failed to set Zigbeed token data for key "${nvm3Key}" creator "${creator}" with status=${SLStatus[status]}.`,
                         NS,
                     );
                 }
@@ -778,6 +778,6 @@ export class EmberTokensManager {
             }
         }
 
-        return EmberStatus.SUCCESS;
+        return SLStatus.OK;
     }
 }

@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 import {logger} from "../../../utils/logger";
-import {EmberStatus, EzspStatus} from "../enums";
+import {EzspStatus, SLStatus} from "../enums";
+import {EzspError} from "../ezspError";
 
 const NS = 'zh:ember:queue';
 
@@ -11,12 +12,12 @@ interface EmberRequestQueueEntry {
      */
     sendAttempts: number;
     /** The function the entry is supposed to execute. */
-    func: () => Promise<EmberStatus>;
+    func: () => Promise<SLStatus>;
     /** The wrapping promise's reject to reject if necessary. */
     reject: (reason: Error) => void;
 };
 
-export const NETWORK_BUSY_DEFER_MSEC = 500;
+export const BUSY_DEFER_MSEC = 500;
 export const NETWORK_DOWN_DEFER_MSEC = 1500;
 
 export class EmberRequestQueue {
@@ -76,7 +77,7 @@ export class EmberRequestQueue {
      * @param prioritize If true, function will be enqueued in the priority queue. Defaults to false.
      * @returns new length of the queue.
      */
-    public enqueue(func: () => Promise<EmberStatus>, reject: (reason: Error) => void, prioritize: boolean = false): number {
+    public enqueue(func: () => Promise<SLStatus>, reject: (reason: Error) => void, prioritize: boolean = false): number {
         logger.debug(`Status queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}.`, NS);
         return (prioritize ? this.priorityQueue : this.queue).push({
             sendAttempts: 0,
@@ -88,7 +89,7 @@ export class EmberRequestQueue {
     /**
      * Dispatch the head of the queue.
      * 
-     * If request `func` throws, catch error and reject the request. `ezsp${x}` functions throw `EzspStatus` as error.
+     * If request `func` throws, catch error and reject the request. `ezsp${x}` functions throw `EzspError`.
      * 
      * If request `func` resolves but has an error, look at what error, and determine if should retry or remove the request from queue.
      * 
@@ -114,27 +115,28 @@ export class EmberRequestQueue {
 
             // NOTE: refer to `enqueue()` comment to keep logic in sync with expectations, adjust comment on change.
             try {
-                const status: EmberStatus = (await entry.func());
+                const status: SLStatus = (await entry.func());
 
-                if ((status === EmberStatus.MAX_MESSAGE_LIMIT_REACHED) || (status === EmberStatus.NETWORK_BUSY)) {
+                // XXX: add NOT_READY?
+                if ((status === SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED) || (status === SLStatus.BUSY)) {
                     logger.debug(`Dispatching deferred: NCP busy.`, NS);
-                    this.defer(NETWORK_BUSY_DEFER_MSEC);
-                } else if (status === EmberStatus.NETWORK_DOWN) {
+                    this.defer(BUSY_DEFER_MSEC);
+                } else if (status === SLStatus.NETWORK_DOWN) {
                     logger.debug(`Dispatching deferred: Network not ready`, NS);
                     this.defer(NETWORK_DOWN_DEFER_MSEC);
                 } else {
                     // success
                     (fromPriorityQueue ? this.priorityQueue : this.queue).shift();
 
-                    if (status !== EmberStatus.SUCCESS) {
-                        entry.reject(new Error(EmberStatus[status]));
+                    if (status !== SLStatus.OK) {
+                        entry.reject(new Error(SLStatus[status]));
                     }
                 }
-            } catch (err) {// message is EzspStatus string from ezsp${x} commands, except for stuff rejected by OneWaitress, but that's never "retry"
-                if (err.message === EzspStatus[EzspStatus.NO_TX_SPACE]) {
+            } catch (err) {// EzspStatusError from ezsp${x} commands, except for stuff rejected by OneWaitress, but that's never "retry"
+                if ((err as EzspError).code === EzspStatus.NO_TX_SPACE) {
                     logger.debug(`Dispatching deferred: Host busy.`, NS);
-                    this.defer(NETWORK_BUSY_DEFER_MSEC);
-                } else if (err.message === EzspStatus[EzspStatus.NOT_CONNECTED]) {
+                    this.defer(BUSY_DEFER_MSEC);
+                } else if ((err as EzspError).code === EzspStatus.NOT_CONNECTED) {
                     logger.debug(`Dispatching deferred: Network not ready`, NS);
                     this.defer(NETWORK_DOWN_DEFER_MSEC);
                 } else {

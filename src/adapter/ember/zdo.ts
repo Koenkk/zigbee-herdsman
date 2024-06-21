@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 // ZigBee Device Object (ZDO)
 
-import {EmberEUI64, EmberExtendedPanId, EmberNodeId} from "./types";
+import {EUI64, ExtendedPanId, NodeId} from "../../zspec/tstypes";
 
 /** The endpoint where the ZigBee Device Object (ZDO) resides. */
 export const ZDO_ENDPOINT = 0;
@@ -97,16 +97,16 @@ export type ZDOLQITableEntry = {
      * 
      * 64-bit
      */
-    extendedPanId: EmberExtendedPanId,
+    extendedPanId: ExtendedPanId,
     /**
      * 64-bit IEEE address that is unique to every device.
      * If this value is unknown at the time of the request, this field shall be set to 0xffffffffffffffff.
      * 
      * 64-bit
      */
-    eui64: EmberEUI64,
+    eui64: EUI64,
     /** The 16-bit network address of the neighboring device. 16-bit */
-    nodeId: EmberNodeId,
+    nodeId: NodeId,
     /**
      * The type of the neighbor device:
      * 0x00 = ZigBee coordinator
@@ -168,7 +168,7 @@ export type ZDOLQITableEntry = {
 
 export type ZDORoutingTableEntry = {
     /** 16-bit network address of this route */
-    destinationAddress: EmberNodeId,
+    destinationAddress: NodeId,
     /**
      * Status of the route
      * 0x0=ACTIVE.
@@ -202,12 +202,12 @@ export type ZDORoutingTableEntry = {
     /** 2-bit */
     reserved: number,
     /** 16-bit network address of the next hop on the way to the destination. */
-    nextHopAddress: EmberNodeId,
+    nextHopAddress: NodeId,
 };
 
 export type ZDOBindingTableEntry = {
     /** The source IEEE address for the binding entry. */
-    sourceEui64: EmberEUI64,
+    sourceEui64: EUI64,
     /** The source endpoint for the binding entry. uint8_t */
     sourceEndpoint: number,
     /** The identifier of the cluster on the source device that is bound to the destination device. uint16_t */
@@ -224,7 +224,7 @@ export type ZDOBindingTableEntry = {
      */
     destAddrMode: number,
     /** The destination address for the binding entry. uint16_t or uint8_t[EUI64_SIZE] */
-    dest: EmberNodeId | EmberEUI64,
+    dest: NodeId | EUI64,
     /**
      * This field shall be present only if the DstAddrMode field has a value of 0x03 and, if present,
      * shall be the destination endpoint for the binding entry.
@@ -235,27 +235,27 @@ export type ZDOBindingTableEntry = {
 
 /** @see IEEE_ADDRESS_RESPONSE */
 export type IEEEAddressResponsePayload = {
-    eui64: EmberEUI64,
-    nodeId: EmberNodeId,
+    eui64: EUI64,
+    nodeId: NodeId,
     assocDevList: number[],
 };
 
 /** @see NETWORK_ADDRESS_RESPONSE */
 export type NetworkAddressResponsePayload = {
-    eui64: EmberEUI64,
-    nodeId: EmberNodeId,
+    eui64: EUI64,
+    nodeId: NodeId,
     assocDevList: number[],
 };
 
 /** @see MATCH_DESCRIPTORS_RESPONSE */
 export type MatchDescriptorsResponsePayload = {
-    nodeId: EmberNodeId,
+    nodeId: NodeId,
     endpointList: number[],
 };
 
 /** @see SIMPLE_DESCRIPTOR_RESPONSE */
 export type SimpleDescriptorResponsePayload = {
-    nodeId: EmberNodeId,
+    nodeId: NodeId,
     /** uint8_t  */
     // inClusterCount: number,
     /** const uint16_t*  */
@@ -274,7 +274,7 @@ export type SimpleDescriptorResponsePayload = {
 
 /** @see NODE_DESCRIPTOR_RESPONSE */
 export type NodeDescriptorResponsePayload = {
-    nodeId: EmberNodeId,
+    nodeId: NodeId,
     logicalType: number,
     macCapFlags: MACCapabilityFlags,
     manufacturerCode: number,
@@ -283,7 +283,7 @@ export type NodeDescriptorResponsePayload = {
 
 /** @see POWER_DESCRIPTOR_RESPONSE */
 export type PowerDescriptorResponsePayload = {
-    nodeId: EmberNodeId,
+    nodeId: NodeId,
     currentPowerMode: number,
     availPowerSources: number,
     currentPowerSource: number,
@@ -292,7 +292,7 @@ export type PowerDescriptorResponsePayload = {
 
 /** @see ACTIVE_ENDPOINTS_RESPONSE */
 export type ActiveEndpointsResponsePayload = {
-    nodeId: EmberNodeId,
+    nodeId: NodeId,
     endpointList: number[],
 };
 
@@ -316,14 +316,14 @@ export type BindingTableResponsePayload = {
 
 /** @see END_DEVICE_ANNOUNCE */
 export type EndDeviceAnnouncePayload = {
-    nodeId: EmberNodeId,
-    eui64: EmberEUI64,
+    nodeId: NodeId,
+    eui64: EUI64,
     capabilities: MACCapabilityFlags,
 };
 
 /** @see PARENT_ANNOUNCE_RESPONSE */
 export type ParentAnnounceResponsePayload = {
-    children: EmberEUI64[],
+    children: EUI64[],
 };
 
 /**
