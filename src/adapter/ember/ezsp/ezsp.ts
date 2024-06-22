@@ -730,9 +730,8 @@ export class Ezsp extends EventEmitter {
             break;
         }
         case EzspFrameID.CUSTOM_FRAME_HANDLER: {
-            const payloadLength = this.buffalo.readUInt8();
-            const payload = this.buffalo.readListUInt8(payloadLength);
-            this.ezspCustomFrameHandler(payloadLength, payload);
+            const payload = this.buffalo.readPayload();
+            this.ezspCustomFrameHandler(payload);
             break;
         }
         case EzspFrameID.STACK_STATUS_HANDLER: {
@@ -1404,10 +1403,9 @@ export class Ezsp extends EventEmitter {
      * 
      * @param desiredProtocolVersion uint8_t The EZSP version the Host wishes to use.
      *        To successfully set the version and allow other commands, this must be same as EZSP_PROTOCOL_VERSION.
-     * @return
-     * - uint8_t The EZSP version the NCP is using.
-     * - uint8_t * The type of stack running on the NCP (2).
-     * - uint16_t * The version number of the stack.
+     * @returns uint8_t The EZSP version the NCP is using.
+     * @returns uint8_t * The type of stack running on the NCP (2).
+     * @returns uint16_t * The version number of the stack.
      */
     async ezspVersion(desiredProtocolVersion: number): Promise<[protocolVersion: number, stackType: number, stackVersion: number]> {
         this.startCommand(EzspFrameID.VERSION);
@@ -1431,9 +1429,9 @@ export class Ezsp extends EventEmitter {
      * 
      * @param configId Identifies which configuration value to read.
      * @returns
-     * - EzspStatus.SUCCESS if the value was read successfully,
-     * - EzspStatus.ERROR_INVALID_ID if the NCP does not recognize configId.
-     * - uint16_t * The configuration value.
+     * - SLStatus.OK if the value was read successfully,
+     * - SLStatus.ZIGBEE_EZSP_ERROR (for SL_ZIGBEE_EZSP_ERROR_INVALID_ID) if the NCP does not recognize configId.
+     * @returns uint16_t * The configuration value.
      */
     async ezspGetConfigurationValue(configId: EzspConfigId): Promise<[SLStatus, value: number]> {
         this.startCommand(EzspFrameID.GET_CONFIGURATION_VALUE);
@@ -1460,11 +1458,11 @@ export class Ezsp extends EventEmitter {
      * @param configId Identifies which configuration value to change.
      * @param value uint16_t The new configuration value.
      * @returns EzspStatus
-     * - EzspStatus.SUCCESS if the configuration value was changed,
-     * - EzspStatus.ERROR_OUT_OF_MEMORY if the new value exceeded the available memory,
-     * - EzspStatus.ERROR_INVALID_VALUE if the new value was out of bounds,
-     * - EzspStatus.ERROR_INVALID_ID if the NCP does not recognize configId,
-     * - EzspStatus.ERROR_INVALID_CALL if configuration values can no longer be modified.
+     * - SLStatus.OK if the configuration value was changed,
+     * - SLStatus.ZIGBEE_EZSP_ERROR if the new value exceeded the available memory,
+     *                               if the new value was out of bounds,
+     *                               if the NCP does not recognize configId,
+     *                               if configuration values can no longer be modified.
      */
     async ezspSetConfigurationValue(configId: EzspConfigId, value: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_CONFIGURATION_VALUE);
@@ -1489,11 +1487,10 @@ export class Ezsp extends EventEmitter {
      * @param attributeId uint16_t Attribute ID.
      * @param mask uint8_t Mask.
      * @param manufacturerCode uint16_t Manufacturer code.
-     * @returns
-     * - An EmberStatus value indicating success or the reason for failure.
-     * - uint8_t * Attribute data type.
-     * - uint8_t * Length of attribute data.
-     * - uint8_t * Attribute data.
+     * @returns An sl_zigbee_af_status_t value indicating success or the reason for failure, handled by the EZSP layer as a uint8_t.
+     * @returns uint8_t * Attribute data type.
+     * @returns uint8_t * Length of attribute data.
+     * @returns uint8_t * Attribute data.
      */
     async ezspReadAttribute(endpoint: number, cluster: number, attributeId: number, mask: number, manufacturerCode: number, readLength: number):
         Promise<[SLStatus, dataType: number, outReadLength: number, data: number[]]> {
@@ -1535,7 +1532,7 @@ export class Ezsp extends EventEmitter {
      * @param justTest Override read only and data type.
      * @param dataType uint8_t Attribute data type.
      * @param data uint8_t * Attribute data.
-     * @returns EmberStatus An EmberStatus value indicating success or the reason for failure.
+     * @returns An sl_zigbee_af_status_t value indicating success or the reason for failure.
      */
     async ezspWriteAttribute(endpoint: number, cluster: number, attributeId: number, mask: number, manufacturerCode: number,
         overrideReadOnlyAndDataType: boolean, justTest: boolean, dataType: number, data: Buffer): Promise<SLStatus> {
@@ -1556,7 +1553,7 @@ export class Ezsp extends EventEmitter {
             throw new EzspError(sendStatus);
         }
 
-        const status = this.buffalo.readUInt8();// XXX: not yet switched to uint32 in v14
+        const status = this.buffalo.readStatus(0);// XXX: not yet switched to uint32 in v14, trick with 0 version for proper mapping
 
         return status;
     }
@@ -1572,11 +1569,11 @@ export class Ezsp extends EventEmitter {
      * @param deviceVersion uint8_t The endpoint's device version.
      * @param inputClusterList uint16_t * Input cluster IDs the endpoint will accept.
      * @param outputClusterList uint16_t * Output cluster IDs the endpoint may send.
-     * @returns EzspStatus
-     * - EzspStatus.SUCCESS if the endpoint was added,
-     * - EzspStatus.ERROR_OUT_OF_MEMORY if there is not enough memory available to add the endpoint,
-     * - EzspStatus.ERROR_INVALID_VALUE if the endpoint already exists,
-     * - EzspStatus.ERROR_INVALID_CALL if endpoints can no longer be added.
+     * @returns
+     * - SLStatus.OK if the endpoint was added,
+     * - SLStatus.ZIGBEE_EZSP_ERROR if there is not enough memory available to add the endpoint,
+     *                               if the endpoint already exists,
+     *                               if endpoints can no longer be added.
      */
     async ezspAddEndpoint(endpoint: number, profileId: number, deviceId: number, deviceVersion: number,
         inputClusterList: number[], outputClusterList: number[]): Promise<SLStatus> {
@@ -1607,8 +1604,8 @@ export class Ezsp extends EventEmitter {
      * @param policyId Identifies which policy to modify.
      * @param decisionId The new decision for the specified policy.
      * @returns
-     * - EzspStatus.SUCCESS if the policy was changed,
-     * - EzspStatus.ERROR_INVALID_ID if the NCP does not recognize policyId.
+     * - SLStatus.OK if the policy was changed,
+     * - SLStatus.ZIGBEE_EZSP_ERROR if the NCP does not recognize policyId.
      */
     async ezspSetPolicy(policyId: EzspPolicyId, decisionId: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_POLICY);
@@ -1630,9 +1627,9 @@ export class Ezsp extends EventEmitter {
      * Allows the Host to read the policies used by the NCP to make fast decisions.
      * @param policyId Identifies which policy to read.
      * @returns
-     * - EzspStatus.SUCCESS if the policy was read successfully,
-     * - EzspStatus.ERROR_INVALID_ID if the NCP does not recognize policyId.
-     * - EzspDecisionId * The current decision for the specified policy.
+     * - SLStatus.OK if the policy was read successfully,
+     * - SLStatus.ZIGBEE_EZSP_ERROR if the NCP does not recognize policyId.
+     * @returns EzspDecisionId * The current decision for the specified policy.
      */
     async ezspGetPolicy(policyId: EzspPolicyId): Promise<[SLStatus, number]> {
         this.startCommand(EzspFrameID.GET_POLICY);
@@ -1674,13 +1671,13 @@ export class Ezsp extends EventEmitter {
      * Reads a value from the NCP.
      * @param valueId Identifies which value to read.
      * @returns
-     * - EzspStatus.SUCCESS if the value was read successfully,
-     * - EzspStatus.ERROR_INVALID_ID if the NCP does not recognize valueId,
-     * - EzspStatus.ERROR_INVALID_VALUE if the length of the returned value exceeds the size of local storage allocated to receive it.
-     * - uint8_t * Both a command and response parameter.
+     * - SLStatus.OK if the value was read successfully,
+     * - SLStatus.ZIGBEE_EZSP_ERROR if the NCP does not recognize valueId,
+     *                               if the length of the returned value exceeds the size of local storage allocated to receive it.
+     * @returns uint8_t * Both a command and response parameter.
      *   On command, the maximum in bytes of local storage allocated to receive the returned value.
      *   On response, the actual length in bytes of the returned value.
-     * - uint8_t * The value.
+     * @returns uint8_t * The value.
      */
     async ezspGetValue(valueId: EzspValueId, valueLength: number):
         Promise<[SLStatus, outValueLength: number, outValue: number[]]> {
@@ -1712,13 +1709,13 @@ export class Ezsp extends EventEmitter {
      * @param valueId Identifies which extended value ID to read.
      * @param characteristics uint32_t Identifies which characteristics of the extended value ID to read. These are specific to the value being read.
      * @returns
-     * - EzspStatus.SUCCESS if the value was read successfully,
-     * - EzspStatus.ERROR_INVALID_ID if the NCP does not recognize valueId,
-     * - EzspStatus.ERROR_INVALID_VALUE if the length of the returned value exceeds the size of local storage allocated to receive it.
-     * - uint8_t * Both a command and response parameter.
+     * - SLStatus.OK if the value was read successfully,
+     * - SLStatus.ZIGBEE_EZSP_ERROR if the NCP does not recognize valueId,
+     *                               if the length of the returned value exceeds the size of local storage allocated to receive it.
+     * @returns uint8_t * Both a command and response parameter.
      *   On command, the maximum in bytes of local storage allocated to receive the returned value.
      *   On response, the actual length in bytes of the returned value.
-     * - uint8_t * The value.
+     * @returns uint8_t * The value.
      */
     async ezspGetExtendedValue(valueId: EzspExtendedValueId, characteristics: number, valueLength: number):
         Promise<[SLStatus, outValueLength: number, outValue: number[]]> {
@@ -1752,11 +1749,11 @@ export class Ezsp extends EventEmitter {
      * @param valueId Identifies which value to change.
      * @param valueLength uint8_t The length of the value parameter in bytes.
      * @param value uint8_t * The new value.
-     * @returns EzspStatus
-     * - EzspStatus.SUCCESS if the value was changed,
-     * - EzspStatus.ERROR_INVALID_VALUE if the new value was out of bounds,
-     * - EzspStatus.ERROR_INVALID_ID if the NCP does not recognize valueId,
-     * - EzspStatus.ERROR_INVALID_CALL if the value could not be modified.
+     * @returns
+     * - SLStatus.OK if the value was changed,
+     * - SLStatus.ZIGBEE_EZSP_ERROR if the new value was out of bounds,
+     *                               if the NCP does not recognize valueId,
+     *                               if the value could not be modified.
      */
     async ezspSetValue(valueId: EzspValueId, valueLength: number, value: number[]): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_VALUE);
@@ -1776,12 +1773,11 @@ export class Ezsp extends EventEmitter {
     }
 
     /**
-     * Allows the Host to control the broadcast behaviour of a routing device used
-     * by the NCP.
+     * Allows the Host to control the broadcast behaviour of a routing device used by the NCP.
      * @param config uint8_t Passive ack config enum.
      * @param minAcksNeeded uint8_t The minimum number of acknowledgments (re-broadcasts) to wait for until
      *        deeming the broadcast transmission complete.
-     * @returns EmberStatus An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetPassiveAckConfig(config: number, minAcksNeeded: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_PASSIVE_ACK_CONFIG);
@@ -1929,12 +1925,10 @@ export class Ezsp extends EventEmitter {
     }
 
     /**
-     * Variable length data from the Host is echoed back by the NCP. This command
-     * has no other effects and is designed for testing the link between the Host and NCP.
+     * Variable length data from the Host is echoed back by the NCP.
+     * This command has no other effects and is designed for testing the link between the Host and NCP.
      * @param data uint8_t * The data to be echoed back.
-     * @returns
-     * - The length of the echo parameter in bytes.
-     * - echo uint8_t * The echo of the data.
+     * @returns uint8_t * The echo of the data.
      */
     async ezspEcho(data: Buffer): Promise<Buffer> {
         this.startCommand(EzspFrameID.ECHO);
@@ -1982,7 +1976,7 @@ export class Ezsp extends EventEmitter {
      * Sets a token (8 bytes of non-volatile storage) in the Simulated EEPROM of the NCP.
      * @param tokenId uint8_t Which token to set
      * @param tokenData uint8_t * The data to write to the token.
-     * @returns EmberStatus An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetToken(tokenId: number, tokenData: number[]): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_TOKEN);
@@ -2003,9 +1997,8 @@ export class Ezsp extends EventEmitter {
     /**
      * Retrieves a token (8 bytes of non-volatile storage) from the Simulated EEPROM of the NCP.
      * @param tokenId uint8_t Which token to read
-     * @returns
-     * - An EmberStatus value indicating success or the reason for failure.
-     * - uint8_t * The contents of the token.
+     * @returns An SLStatus value indicating success or the reason for failure.
+     * @returns uint8_t * The contents of the token.
      */
     async ezspGetToken(tokenId: number): Promise<[SLStatus, tokenData: number[]]> {
         this.startCommand(EzspFrameID.GET_TOKEN);
@@ -2026,10 +2019,9 @@ export class Ezsp extends EventEmitter {
     /**
      * Retrieves a manufacturing token from the Flash Information Area of the NCP
      * (except for EZSP_STACK_CAL_DATA which is managed by the stack).
-     * @param  Which manufacturing token to read.
-     * @returns
-     * - uint8_t The length of the tokenData parameter in bytes.
-     * - uint8_t * The manufacturing token data.
+     * @param tokenId Which manufacturing token to read.
+     * @returns uint8_t The length of the tokenData parameter in bytes.
+     * @returns uint8_t * The manufacturing token data.
      */
     async ezspGetMfgToken(tokenId: EzspMfgTokenId): Promise<[number, tokenData: number[]]> {
         this.startCommand(EzspFrameID.GET_MFG_TOKEN);
@@ -2096,7 +2088,7 @@ export class Ezsp extends EventEmitter {
      * EZSP_MFG_CBKE_DATA token.
      * @param tokenId Which manufacturing token to set.
      * @param tokenData uint8_t * The manufacturing token data.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetMfgToken(tokenId: EzspMfgTokenId, tokenData: Buffer): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_MFG_TOKEN);
@@ -2125,9 +2117,8 @@ export class Ezsp extends EventEmitter {
 
     /**
      * Returns a pseudorandom number.
-     * @returns
-     * - Always returns EMBER_SUCCESS.
-     * - uint16_t * A pseudorandom number.
+     * @returns Always returns SLStatus.OK.
+     * @returns uint16_t * A pseudorandom number.
      */
     async ezspGetRandomNumber(): Promise<[SLStatus, value: number]> {
         this.startCommand(EzspFrameID.GET_RANDOM_NUMBER);
@@ -2153,7 +2144,7 @@ export class Ezsp extends EventEmitter {
      *        This means that the actual delay will be between time and (time - 1). The maximum delay is 32767.
      * @param units The units for time.
      * @param repeat If true, a timerHandler callback will be generated repeatedly. If false, only a single timerHandler callback will be generated.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetTimer(timerId: number, time: number, units: EmberEventUnits, repeat: boolean): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_TIMER);
@@ -2178,10 +2169,9 @@ export class Ezsp extends EventEmitter {
      * much longer it will be before a previously set timer will generate a
      * callback.
      * @param timerId uint8_t Which timer to get information about (0 or 1).
-     * @returns
-     * - uint16_t The delay before the timerHandler callback will be generated.
-     * - EmberEventUnits * The units for time.
-     * - bool * True if a timerHandler callback will be generated repeatedly. False if only a single timerHandler callback will be generated.
+     * @returns uint16_t The delay before the timerHandler callback will be generated.
+     * @returns EmberEventUnits * The units for time.
+     * @returns bool * True if a timerHandler callback will be generated repeatedly. False if only a single timerHandler callback will be generated.
      */
     async ezspGetTimer(timerId: number): Promise<[number, units: EmberEventUnits, repeat: boolean]> {
         this.startCommand(EzspFrameID.GET_TIMER);
@@ -2213,7 +2203,7 @@ export class Ezsp extends EventEmitter {
      * Sends a debug message from the Host to the Network Analyzer utility via the NCP.
      * @param binaryMessage true if the message should be interpreted as binary data, false if the message should be interpreted as ASCII text.
      * @param messageContents uint8_t * The binary message.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspDebugWrite(binaryMessage: boolean, messageContents: Buffer): Promise<SLStatus> {
         this.startCommand(EzspFrameID.DEBUG_WRITE);
@@ -2317,10 +2307,10 @@ export class Ezsp extends EventEmitter {
      * the response contains also the manufacturer ID and the version number of the
      * XNCP application that is running on the NCP.
      * @returns
-     * - EMBER_SUCCESS if the NCP is running the XNCP library,
-     * - EMBER_INVALID_CALL otherwise.
-     * - manufacturerId uint16_t * The manufactured ID the user has defined in the XNCP application.
-     * - versionNumber uint16_t * The version number of the XNCP application.
+     * - SLStatus.OK if the NCP is running the XNCP library.
+     * - SLStatus.INVALID_STATE otherwise.
+     * @returns manufacturerId uint16_t * The manufactured ID the user has defined in the XNCP application.
+     * @returns versionNumber uint16_t * The version number of the XNCP application.
      */
     async ezspGetXncpInfo(): Promise<[SLStatus, manufacturerId: number, versionNumber: number]> {
         this.startCommand(EzspFrameID.GET_XNCP_INFO);
@@ -2345,9 +2335,8 @@ export class Ezsp extends EventEmitter {
      * function.
      * @param uint8_t * The payload of the custom frame (maximum 119 bytes).
      * @param uint8_t The expected length of the response.
-     * @returns
-     * - The status returned by the custom command.
-     * - uint8_t *The response.
+     * @returns The status returned by the custom command.
+     * @returns uint8_t *The response.
      */
     async ezspCustomFrame(payload: Buffer, replyLength: number): Promise<[SLStatus, outReply: Buffer]> {
         this.startCommand(EzspFrameID.CUSTOM_FRAME);
@@ -2372,11 +2361,10 @@ export class Ezsp extends EventEmitter {
     /**
      * Callback
      * A callback indicating a custom EZSP message has been received.
-     * @param payloadLength uint8_t The length of the custom frame payload.
      * @param payload uint8_t * The payload of the custom frame.
      */
-    ezspCustomFrameHandler(payloadLength: number, payload: number[]): void {
-        logger.debug(`ezspCustomFrameHandler(): callback called with: [payloadLength=${payloadLength}], [payload=${payload}]`, NS);
+    ezspCustomFrameHandler(payload: Buffer): void {
+        logger.debug(`ezspCustomFrameHandler(): callback called with: [payload=${payload.toString('hex')}]`, NS);
     }
 
     /**
@@ -2680,9 +2668,10 @@ export class Ezsp extends EventEmitter {
      * of a network. EMBER_NOT_JOINED is returned if the node is not part of a
      * network. This command accepts options to control the network initialization.
      * @param networkInitStruct EmberNetworkInitStruct * An EmberNetworkInitStruct containing the options for initialization.
-     * @returns An EmberStatus value that indicates one of the following: successful
-     * initialization, EMBER_NOT_JOINED if the node is not part of a network, or the
-     * reason for failure.
+     * @returns
+     * - SLStatus.OK if successful initialization,
+     * - SLStatus.NOT_JOINED if the node is not part of a network
+     * - or the reason for failure.
      */
     async ezspNetworkInit(networkInitStruct: EmberNetworkInitStruct): Promise<SLStatus> {
         this.startCommand(EzspFrameID.NETWORK_INIT);
@@ -2746,11 +2735,11 @@ export class Ezsp extends EventEmitter {
      * @param duration uint8_t Sets the exponent of the number of scan periods, where a scan period is 960 symbols.
      *        The scan will occur for ((2^duration) + 1) scan periods.
      * @returns
-     * - SL_STATUS_OK signals that the scan successfully started. Possible error responses and their meanings:
-     * - SL_STATUS_MAC_SCANNING, we are already scanning;
-     * - SL_STATUS_BAD_SCAN_DURATION, we have set a duration value that is not 0..14 inclusive;
-     * - SL_STATUS_MAC_INCORRECT_SCAN_TYPE, we have requested an undefined scanning type;
-     * - SL_STATUS_INVALID_CHANNEL_MASK, our channel mask did not specify any valid channels.
+     * - SLStatus.OK signals that the scan successfully started. Possible error responses and their meanings:
+     * - SLStatus.MAC_SCANNING, we are already scanning;
+     * - SLStatus.BAD_SCAN_DURATION, we have set a duration value that is not 0..14 inclusive;
+     * - SLStatus.MAC_INCORRECT_SCAN_TYPE, we have requested an undefined scanning type;
+     * - SLStatus.INVALID_CHANNEL_MASK, our channel mask did not specify any valid channels.
      */
     async ezspStartScan(scanType: EzspNetworkScanType, channelMask: number, duration: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.START_SCAN);
@@ -2797,10 +2786,8 @@ export class Ezsp extends EventEmitter {
     /**
      * Callback
      * @param channel uint8_t The channel on which the current error occurred. Undefined for the case of EMBER_SUCCESS.
-     * @param status The error condition that occurred on the current channel. Value will be EMBER_SUCCESS when the scan has completed.
-     * Returns the status of the current scan of type EZSP_ENERGY_SCAN or
-     * EZSP_ACTIVE_SCAN. EMBER_SUCCESS signals that the scan has completed. Other
-     * error conditions signify a failure to scan on the channel specified.
+     * @param status The error condition that occurred on the current channel. Value will be SLStatus.OK when the scan has completed.
+     *               Other error conditions signify a failure to scan on the channel specified.
      */
     ezspScanCompleteHandler(channel: number, status: SLStatus): void {
         logger.debug(`ezspScanCompleteHandler(): callback called with: [channel=${channel}], [status=${SLStatus[status]}]`, NS);
@@ -2821,8 +2808,7 @@ export class Ezsp extends EventEmitter {
      * This function starts a series of scans which will return an available panId.
      * @param channelMask uint32_t The channels that will be scanned for available panIds.
      * @param duration uint8_t The duration of the procedure.
-     * @returns The error condition that occurred during the scan. Value will be
-     * EMBER_SUCCESS if there are no errors.
+     * @returns The error condition that occurred during the scan. Value will be SLStatus.OK if there are no errors.
      */
     async ezspFindUnusedPanId(channelMask: number, duration: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.FIND_UNUSED_PAN_ID);
@@ -2842,7 +2828,7 @@ export class Ezsp extends EventEmitter {
     
     /**
      * Terminates a scan in progress.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspStopScan(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.STOP_SCAN);
@@ -2861,7 +2847,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Forms a new network by becoming the coordinator.
      * @param parameters EmberNetworkParameters * Specification of the new network.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspFormNetwork(parameters: EmberNetworkParameters): Promise<SLStatus> {
         this.startCommand(EzspFrameID.FORM_NETWORK);
@@ -2886,7 +2872,7 @@ export class Ezsp extends EventEmitter {
      * @param nodeType Specification of the role that this node will have in the network.
      *        This role must not be EMBER_COORDINATOR. To be a coordinator, use the formNetwork command.
      * @param parameters EmberNetworkParameters * Specification of the network with which the node should associate.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspJoinNetwork(nodeType: EmberNodeType, parameters: EmberNetworkParameters): Promise<SLStatus> {
         this.startCommand(EzspFrameID.JOIN_NETWORK);
@@ -2919,7 +2905,7 @@ export class Ezsp extends EventEmitter {
      * @param beacon EmberBeaconData * Specifies the network with which the node should associate.
      * @param radioTxPower int8_t The radio transmit power to use, specified in dBm.
      * @param clearBeaconsAfterNetworkUp If true, clear beacons in cache upon join success. If join fail, do nothing.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspJoinNetworkDirectly(localNodeType: EmberNodeType, beacon: EmberBeaconData, radioTxPower: number, clearBeaconsAfterNetworkUp: boolean)
         : Promise<SLStatus> {
@@ -2945,7 +2931,7 @@ export class Ezsp extends EventEmitter {
      * stackStatusHandler callback to indicate that the network is down. The radio
      * will not be used until after sending a formNetwork or joinNetwork command.
      * @param options This parameter gives options when leave network
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspLeaveNetwork(options: EmberLeaveNetworkOption = EmberLeaveNetworkOption.WITH_NO_OPTION): Promise<SLStatus> {
         this.startCommand(EzspFrameID.LEAVE_NETWORK);
@@ -3015,7 +3001,7 @@ export class Ezsp extends EventEmitter {
      * their parent. Joining is initially disabled by default.
      * @param duration uint8_t A value of 0x00 disables joining. A value of 0xFF enables joining.
      *        Any other value enables joining for that number of seconds.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspPermitJoining(duration: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.PERMIT_JOINING);
@@ -3056,7 +3042,7 @@ export class Ezsp extends EventEmitter {
      * @param scanDuration uint8_t How long to scan on each channel.
      *        Allowed values are 0..5, with the scan times as specified by 802.15.4 (0 = 31ms, 1 = 46ms, 2 = 77ms, 3 = 138ms, 4 = 261ms, 5 = 507ms).
      * @param scanCount uint16_t The number of scans to be performed on each channel (1..8).
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspEnergyScanRequest(target: NodeId, scanChannels: number,  scanDuration: number,  scanCount: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.ENERGY_SCAN_REQUEST);
@@ -3078,7 +3064,7 @@ export class Ezsp extends EventEmitter {
     
     /**
      * Returns the current network parameters.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      * @returns EmberNodeType * An EmberNodeType value indicating the current node type.
      * @returns EmberNetworkParameters * The current network parameters.
      */
@@ -3101,7 +3087,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Returns the current radio parameters based on phy index.
      * @param phyIndex uint8_t Desired index of phy interface for radio parameters.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      * @returns EmberMultiPhyRadioParameters * The current radio parameters based on provided phy index.
      */
     async ezspGetRadioParameters(phyIndex: number): Promise<[SLStatus, parameters: EmberMultiPhyRadioParameters]> {
@@ -3417,7 +3403,9 @@ export class Ezsp extends EventEmitter {
     /**
      * Returns information about a child of the local node.
      * @param uint8_t The index of the child of interest in the child table. Possible indexes range from zero to EMBER_CHILD_TABLE_SIZE.
-     * @returns EMBER_SUCCESS if there is a child at index. EMBER_NOT_JOINED if there is no child at index.
+     * @returns
+     * - SLStatus.OK if there is a child at index.
+     * - SLStatus.NOT_JOINED if there is no child at index.
      * @returns EmberChildData * The data of the child.
      */
     async ezspGetChildData(index: number): Promise<[SLStatus, childData: EmberChildData]> {
@@ -3440,7 +3428,9 @@ export class Ezsp extends EventEmitter {
      * Sets child data to the child table token.
      * @param index uint8_t The index of the child of interest in the child table. Possible indexes range from zero to (EMBER_CHILD_TABLE_SIZE - 1).
      * @param childData EmberChildData * The data of the child.
-     * @returns EMBER_SUCCESS if the child data is set successfully at index. EMBER_INDEX_OUT_OF_RANGE if provided index is out of range.
+     * @returns
+     * - SLStatus.OK if the child data is set successfully at index.
+     * - SLStatus.INVALID_INDEX if provided index is out of range.
      */
     async ezspSetChildData(index: number, childData: EmberChildData): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_CHILD_DATA);
@@ -3585,7 +3575,9 @@ export class Ezsp extends EventEmitter {
      * Returns information about a source route table entry
      * @param index uint8_t The index of the entry of interest in the source route table.
      *        Possible indexes range from zero to SOURCE_ROUTE_TABLE_FILLED_SIZE.
-     * @returns EMBER_SUCCESS if there is source route entry at index. EMBER_NOT_FOUND if there is no source route at index.
+     * @returns
+     * - SLStatus.OK if there is source route entry at index.
+     * - SLStatus.NOT_FOUND if there is no source route at index.
      * @returns NodeId * The node ID of the destination in that entry.
      * @returns uint8_t * The closer node index for this source route table entry
      */
@@ -3611,8 +3603,9 @@ export class Ezsp extends EventEmitter {
      * neighbors can be obtained using the neighborCount command.
      * @param index uint8_t The index of the neighbor of interest. Neighbors are stored in ascending order by node id,
      *        with all unused entries at the end of the table.
-     * @returns EMBER_ERR_FATAL if the index is greater or equal to the number of active neighbors, or if the device is an end device.
-     *          Returns EMBER_SUCCESS otherwise.
+     * @returns
+     * - SLStatus.FAIL if the index is greater or equal to the number of active neighbors, or if the device is an end device.
+     * - SLStatus.OK otherwise.
      * @returns EmberNeighborTableEntry * The contents of the neighbor table entry.
      */
     async ezspGetNeighbor(index: number): Promise<[SLStatus, value: EmberNeighborTableEntry]> {
@@ -3637,7 +3630,9 @@ export class Ezsp extends EventEmitter {
      * frame counter as found in the Network Auxiliary header for the specified
      * neighbor or child
      * @param eui64 eui64 of the node
-     * @returns Return EMBER_NOT_FOUND if the node is not found in the neighbor or child table. Returns EMBER_SUCCESS otherwise
+     * @returns
+     * - SLStatus.NOT_FOUND if the node is not found in the neighbor or child table.
+     * - SLStatus.OK otherwise
      * @returns uint32_t * Return the frame counter of the node from the neighbor or child table
      */
     async ezspGetNeighborFrameCounter(eui64: EUI64): Promise<[SLStatus, returnFrameCounter: number]> {
@@ -3661,8 +3656,8 @@ export class Ezsp extends EventEmitter {
      * @param eui64 eui64 of the node
      * @param frameCounter uint32_t Return the frame counter of the node from the neighbor or child table
      * @returns 
-     * - EMBER_NOT_FOUND if the node is not found in the neighbor or child table.
-     * - EMBER_SUCCESS otherwise
+     * - SLStatus.NOT_FOUND if the node is not found in the neighbor or child table.
+     * - SLStatus.OK otherwise
      */
     async ezspSetNeighborFrameCounter(eui64: EUI64, frameCounter: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_NEIGHBOR_FRAME_COUNTER);
@@ -3684,7 +3679,7 @@ export class Ezsp extends EventEmitter {
      * Sets the routing shortcut threshold to directly use a neighbor instead of
      * performing routing.
      * @param costThresh uint8_t The routing shortcut threshold to configure.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetRoutingShortcutThreshold(costThresh: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_ROUTING_SHORTCUT_THRESHOLD);
@@ -3743,8 +3738,8 @@ export class Ezsp extends EventEmitter {
      * obtained using the getConfigurationValue command.
      * @param index uint8_t The index of the route table entry of interest.
      * @returns
-     * - EMBER_ERR_FATAL if the index is out of range or the device is an end
-     * - EMBER_SUCCESS otherwise.
+     * - SLStatus.FAIL if the index is out of range or the device is an end
+     * - SLStatus.OK otherwise.
      * @returns EmberRouteTableEntry * The contents of the route table entry.
      */
     async ezspGetRouteTableEntry(index: number): Promise<[SLStatus, value: EmberRouteTableEntry]> {
@@ -3772,7 +3767,7 @@ export class Ezsp extends EventEmitter {
      * with the node on which it is called. This can lead to disruption of existing
      * routes and erratic network behavior.
      * @param power int8_t Desired radio output power, in dBm.
-     * @returns An EmberStatus value indicating the success or failure of the command.
+     * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspSetRadioPower(power: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_RADIO_POWER);
@@ -3795,7 +3790,7 @@ export class Ezsp extends EventEmitter {
      * communication module in your Developer Kit. Note: Care should be taken when
      * using this API, as all devices on a network must use the same channel.
      * @param channel uint8_t Desired radio channel.
-     * @returns An EmberStatus value indicating the success or failure of the command.
+     * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspSetRadioChannel(channel: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_RADIO_CHANNEL);
@@ -3833,8 +3828,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Set the configured 802.15.4 CCA mode in the radio.
      * @param ccaMode uint8_t A RAIL_IEEE802154_CcaMode_t value.
-     * @returns An EmberStatus value indicating the success or failure of the
-     * command.
+     * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspSetRadioIeee802154CcaMode(ccaMode: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_RADIO_IEEE802154_CCA_MODE);
@@ -3866,7 +3860,7 @@ export class Ezsp extends EventEmitter {
      * @param deliveryFailureThreshold uint8_t The number of APS delivery failures that will trigger a re-broadcast of the MTORR.
      * @param maxHops uint8_t The maximum number of hops that the MTORR broadcast will be allowed to have.
      *        A value of 0 will be converted to the EMBER_MAX_HOPS value set by the stack.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetConcentrator(on: boolean, concentratorType: number, minTime: number, maxTime: number, routeErrorThreshold: number,
         deliveryFailureThreshold: number, maxHops: number): Promise<SLStatus> {
@@ -3890,6 +3884,11 @@ export class Ezsp extends EventEmitter {
         return status;
     }
 
+    /**
+     * Starts periodic many-to-one route discovery.
+     * Periodic discovery is started by default on bootup, but this function may be used if discovery
+     * has been stopped by a call to ::ezspConcentratorStopDiscovery().
+     */
     async ezspConcentratorStartDiscovery(): Promise<void> {
         if (this.version < 0x0E) {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
@@ -3904,6 +3903,9 @@ export class Ezsp extends EventEmitter {
         }
     }
 
+    /**
+     * Stops periodic many-to-one route discovery.
+     */
     async ezspConcentratorStopDiscovery(): Promise<void> {
         if (this.version < 0x0E) {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
@@ -3918,6 +3920,11 @@ export class Ezsp extends EventEmitter {
         }
     }
 
+    /**
+     * Notes when a route error has occurred.
+     * @param status 
+     * @param nodeId 
+     */
     async ezspConcentratorNoteRouteError(status: SLStatus, nodeId: NodeId): Promise<void> {
         if (this.version < 0x0E) {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
@@ -3937,8 +3944,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Sets the error code that is sent back from a router with a broken route.
      * @param errorCode uint8_t Desired error code.
-     * @returns An EmberStatus value indicating the success or failure of the
-     * command.
+     * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspSetBrokenRouteErrorCode(errorCode: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_BROKEN_ROUTE_ERROR_CODE);
@@ -3964,7 +3970,7 @@ export class Ezsp extends EventEmitter {
      * @param channel uint8_t Desired radio channel.
      * @param power int8_t Desired radio output power, in dBm.
      * @param bitmask Network configuration bitmask.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspMultiPhyStart(phyIndex: number, page: number, channel: number, power: number, bitmask: EmberMultiPhyNwkConfig): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MULTI_PHY_START);
@@ -3988,7 +3994,7 @@ export class Ezsp extends EventEmitter {
     /**
      * This causes to bring down the radio interface other than native.
      * @param phyIndex uint8_t Index of phy interface. The native phy index would be always zero hence valid phy index starts from one.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspMultiPhyStop(phyIndex: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MULTI_PHY_STOP);
@@ -4015,8 +4021,7 @@ export class Ezsp extends EventEmitter {
      * can lead to disruption of existing routes and erratic network behavior.
      * @param phyIndex uint8_t Index of phy interface. The native phy index would be always zero hence valid phy index starts from one.
      * @param power int8_t Desired radio output power, in dBm.
-     * @returns An EmberStatus value indicating the success or failure of the
-     * command.
+     * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspMultiPhySetRadioPower(phyIndex: number, power: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MULTI_PHY_SET_RADIO_POWER);
@@ -4036,7 +4041,7 @@ export class Ezsp extends EventEmitter {
 
     /**
      * Send Link Power Delta Request from a child to its parent
-     * @returns An EmberStatus value indicating the success or failure of sending the request.
+     * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspSendLinkPowerDeltaRequest(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SEND_LINK_POWER_DELTA_REQUEST);
@@ -4061,7 +4066,7 @@ export class Ezsp extends EventEmitter {
      * @param phyIndex uint8_t Index of phy interface. The native phy index would be always zero hence valid phy index starts from one.
      * @param page uint8_t Desired radio channel page.
      * @param channel uint8_t Desired radio channel.
-     * @returns An EmberStatus value indicating the success or failure of the command.
+     * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspMultiPhySetRadioChannel(phyIndex: number, page: number, channel: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MULTI_PHY_SET_RADIO_CHANNEL);
@@ -4082,7 +4087,7 @@ export class Ezsp extends EventEmitter {
     
     /**
      * Obtains the current duty cycle state.
-     * @returns An EmberStatus value indicating the success or failure of the command.
+     * @returns An SLStatus value indicating the success or failure of the command.
      * @returns EmberDutyCycleState * The current duty cycle state in effect.
      */
     async ezspGetDutyCycleState(): Promise<[SLStatus, returnedState: EmberDutyCycleState]> {
@@ -4104,10 +4109,11 @@ export class Ezsp extends EventEmitter {
      * Set the current duty cycle limits configuration. The Default limits set by
      * stack if this call is not made.
      * @param limits EmberDutyCycleLimits * The duty cycle limits configuration to utilize.
-     * @returns EMBER_SUCCESS  if the duty cycle limit configurations set
-     * successfully, EMBER_BAD_ARGUMENT if set illegal value such as setting only
-     * one of the limits to default or violates constraints Susp > Crit > Limi,
-     * EMBER_INVALID_CALL if device is operating on 2.4Ghz
+     * @returns
+     * - SLStatus.OK if the duty cycle limit configurations set successfully,
+     * - SLStatus.INVALID_PARAMETER if set illegal value such as setting only one of the limits to default
+     *   or violates constraints Susp > Crit > Limi,
+     * - SLStatus.INVALID_STATE if device is operating on 2.4Ghz
      */
     async ezspSetDutyCycleLimitsInStack(limits: EmberDutyCycleLimits): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_DUTY_CYCLE_LIMITS_IN_STACK);
@@ -4125,10 +4131,9 @@ export class Ezsp extends EventEmitter {
     }
     
     /**
-     * Obtains the current duty cycle limits that were previously set by a call to
-     * emberSetDutyCycleLimitsInStack(), or the defaults set by the stack if no set
-     * call was made.
-     * @returns An EmberStatus value indicating the success or failure of the command.
+     * Obtains the current duty cycle limits that were previously set by a call to emberSetDutyCycleLimitsInStack(),
+     * or the defaults set by the stack if no set call was made.
+     * @returns An SLStatus value indicating the success or failure of the command.
      * @returns EmberDutyCycleLimits * Return current duty cycle limits if returnedLimits is not NULL
      */
     async ezspGetDutyCycleLimits(): Promise<[SLStatus, returnedLimits: EmberDutyCycleLimits]> {
@@ -4154,8 +4159,8 @@ export class Ezsp extends EventEmitter {
      * The passed pointer arrayOfDeviceDutyCycles MUST have space for maxDevices.
      * @param maxDevices uint8_t Number of devices to retrieve consumed duty cycle.
      * @returns
-     * - EMBER_SUCCESS  if the duty cycles were read successfully,
-     * - EMBER_BAD_ARGUMENT maxDevices is greater than EMBER_MAX_END_DEVICE_CHILDREN + 1.
+     * - SLStatus.OK  if the duty cycles were read successfully,
+     * - SLStatus.INVALID_PARAMETER maxDevices is greater than SL_ZIGBEE_MAX_END_DEVICE_CHILDREN + 1.
      * @returns uint8_t * Consumed duty cycles up to maxDevices. When the number of children that are being monitored is less than maxDevices,
      *          the NodeId element in the EmberPerDeviceDutyCycle will be 0xFFFF.
      */
@@ -4195,9 +4200,8 @@ export class Ezsp extends EventEmitter {
      * Configure the number of beacons to store when issuing active scans for networks.
      * @param numBeacons uint8_t The number of beacons to cache when scanning.
      * @returns
-     * - SL_STATUS_INVALID_PARAMETER if numBeacons is greater than
-     * - SL_ZIGBEE_MAX_BEACONS_TO_STORE
-     * - SL_STATUS_OK
+     * - SLStatus.INVALID_PARAMETER if numBeacons is greater than SL_ZIGBEE_MAX_BEACONS_TO_STORE
+     * - SLStatus.OK
      */
     async ezspSetNumBeaconToStore(numBeacons: number): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -4221,7 +4225,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Fetches the specified beacon in the cache. Beacons are stored in cache after issuing an active scan.
      * @param beaconNumber uint8_t The beacon index to fetch. Valid values range from 0 to ezspGetNumStoredBeacons-1.
-     * @returns An appropriate sl_status_t status code.
+     * @returns An appropriate SLStatus status code.
      * @returns EmberBeaconData * The beacon to populate upon success.
      */
     async ezspGetStoredBeacon(beaconNumber: number): Promise<[SLStatus, beacon: EmberBeaconData]> {
@@ -4264,6 +4268,7 @@ export class Ezsp extends EventEmitter {
 
     /**
      * Clears all cached beacons that have been collected from a scan.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspClearStoredBeacons(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.CLEAR_STORED_BEACONS);
@@ -4287,7 +4292,7 @@ export class Ezsp extends EventEmitter {
      * This call sets the radio channel in the stack and propagates the information
      * to the hardware.
      * @param radioChannel uint8_t The radio channel to be set.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetLogicalAndRadioChannel(radioChannel: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_LOGICAL_AND_RADIO_CHANNEL);
@@ -4309,7 +4314,7 @@ export class Ezsp extends EventEmitter {
      * If the network is using security, the device must call sli_zigbee_stack_set_initial_security_state() first.
      * @param parameters Specification of the new network.
      * @param initiator Whether this device is initiating or joining the network.
-     * @returns An sl_status_t value indicating success or a reason for failure.
+     * @returns An SLStatus value indicating success or a reason for failure.
      */
     async ezspSleepyToSleepyNetworkStart(parameters: EmberNetworkParameters, initiator: boolean): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -4516,7 +4521,7 @@ export class Ezsp extends EventEmitter {
 
     /**
      * Deletes all binding table entries.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspClearBindingTable(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.CLEAR_BINDING_TABLE);
@@ -4536,7 +4541,7 @@ export class Ezsp extends EventEmitter {
      * Sets an entry in the binding table.
      * @param index uint8_t The index of a binding table entry.
      * @param value EmberBindingTableEntry * The contents of the binding entry.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetBinding(index: number, value: EmberBindingTableEntry): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_BINDING);
@@ -4557,7 +4562,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Gets an entry from the binding table.
      * @param index uint8_t The index of a binding table entry.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      * @returns EmberBindingTableEntry * The contents of the binding entry.
      */
     async ezspGetBinding(index: number): Promise<[SLStatus, value: EmberBindingTableEntry]> {
@@ -4579,7 +4584,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Deletes a binding table entry.
      * @param index uint8_t The index of a binding table entry.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspDeleteBinding(index: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.DELETE_BINDING);
@@ -4672,7 +4677,7 @@ export class Ezsp extends EventEmitter {
      * command.
      * @param entry EmberBindingTableEntry * The requested binding.
      * @param index uint8_t The index at which the binding was added.
-     * @param policyDecision SL_STATUS_OK if the binding was added to the table and any other status if not.
+     * @param policyDecision SLStatus.OK if the binding was added to the table and any other status if not.
      */
     ezspRemoteSetBindingHandler(entry: EmberBindingTableEntry, index: number, policyDecision: SLStatus): void {
         logger.debug(`ezspRemoteSetBindingHandler(): callback called with: [entry=${entry}], [index=${index}], `
@@ -4686,7 +4691,7 @@ export class Ezsp extends EventEmitter {
      * but it can change the policy for future decisions using the setPolicy
      * command.
      * @param index uint8_t The index of the binding whose deletion was requested.
-     * @param policyDecision SL_STATUS_OK if the binding was removed from the table and any other status if not.
+     * @param policyDecision SLStatus.OK if the binding was removed from the table and any other status if not.
      */
     ezspRemoteDeleteBindingHandler(index: number, policyDecision: SLStatus): void {
         logger.debug(`ezspRemoteDeleteBindingHandler(): callback called with: [index=${index}], [policyDecision=${SLStatus[policyDecision]}]`, NS);
@@ -4738,7 +4743,7 @@ export class Ezsp extends EventEmitter {
      * @param messageTag uint8_t (v14+: uint16_t) A value chosen by the Host.
      *        This value is used in the ezspMessageSentHandler response to refer to this message.
      * @param messageContents uint8_t * Content of the message.
-     * @returns An sl_status_t value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      * @returns uint8_t * The sequence number that will be used when this message is transmitted.
      */
     async ezspSendUnicast(type: EmberOutgoingMessageType, indexOrDestination: NodeId, apsFrame: EmberApsFrame, messageTag: number,
@@ -4778,7 +4783,7 @@ export class Ezsp extends EventEmitter {
      *        A radius of zero is converted to EMBER_MAX_HOPS.
      * @param uint8_t A value chosen by the Host. This value is used in the ezspMessageSentHandler response to refer to this message.
      * @param uint8_t * The broadcast message.
-     * @returns An sl_status_t value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      * @returns uint8_t * The sequence number that will be used when this message is transmitted.
      */
     async ezspSendBroadcast(alias: NodeId, destination: NodeId, nwkSequence: number, apsFrame: EmberApsFrame, radius: number, messageTag: number,
@@ -4817,7 +4822,7 @@ export class Ezsp extends EventEmitter {
      * Sends proxied broadcast message for another node in conjunction with sl_zigbee_proxy_broadcast
      * where a long source is also specified in the NWK frame control.
      * @param euiSource The long source from which to send the broadcast
-     * @returns An sl_status_t value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspProxyNextBroadcastFromLong(euiSource: EUI64): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -4850,13 +4855,13 @@ export class Ezsp extends EventEmitter {
      * @param messageTag uint8_t A value chosen by the Host. This value is used in the ezspMessageSentHandler response to refer to this message.
      * @param messageLength uint8_t (v14+: uint16_t) The length of the messageContents parameter in bytes.
      * @param messageContents uint8_t * The multicast message.
-     * @returns An sl_status_t value. For any result other than SL_STATUS_OK, the message will not be sent.
-     * - SL_STATUS_OK - The message has been submitted for transmission.
-     * - SL_STATUS_INVALID_INDEX - The bindingTableIndex refers to a non-multicast binding.
-     * - SL_STATUS_NETWORK_DOWN - The node is not part of a network.
-     * - SL_STATUS_MESSAGE_TOO_LONG - The message is too large to fit in a MAC layer frame.
-     * - SL_STATUS_ALLOCATION_FAILED - The free packet buffer pool is empty.
-     * - SL_STATUS_BUSY - Insufficient resources available in Network or MAC layers to send message.
+     * @returns An SLStatus value. For any result other than SLStatus.OK, the message will not be sent.
+     * - SLStatus.OK - The message has been submitted for transmission.
+     * - SLStatus.INVALID_INDEX - The bindingTableIndex refers to a non-multicast binding.
+     * - SLStatus.NETWORK_DOWN - The node is not part of a network.
+     * - SLStatus.MESSAGE_TOO_LONG - The message is too large to fit in a MAC layer frame.
+     * - SLStatus.ALLOCATION_FAILED - The free packet buffer pool is empty.
+     * - SLStatus.BUSY - Insufficient resources available in Network or MAC layers to send message.
      * @returns uint8_t * The sequence number that will be used when this message is transmitted.
      */
     async ezspSendMulticast(apsFrame: EmberApsFrame, hops: number, broadcastAddr: number, alias: NodeId, nwkSequence: number, messageTag: number,
@@ -4898,17 +4903,17 @@ export class Ezsp extends EventEmitter {
      * @param uint8_t The length of the messageContents parameter in bytes.
      * @param uint8_t * The reply message.
      * @returns An EmberStatus value.
-     * - EMBER_INVALID_CALL - The EZSP_UNICAST_REPLIES_POLICY is set to EZSP_HOST_WILL_NOT_SUPPLY_REPLY.
+     * - SLStatus.INVALID_STATE - The SL_ZIGBEE_EZSP_UNICAST_REPLIES_POLICY is set to SL_ZIGBEE_EZSP_HOST_WILL_NOT_SUPPLY_REPLY.
      *   This means the NCP will automatically send an empty reply. The Host must change
-     *   the policy to EZSP_HOST_WILL_SUPPLY_REPLY before it can supply the reply.
+     *   the policy to SL_ZIGBEE_EZSP_HOST_WILL_SUPPLY_REPLY before it can supply the reply.
      *   There is one exception to this rule: In the case of responses to message
      *   fragments, the host must call sendReply when a message fragment is received.
      *   In this case, the policy set on the NCP does not matter. The NCP expects a
      *   sendReply call from the Host for message fragments regardless of the current
      *   policy settings.
-     * - EMBER_NO_BUFFERS - Not enough memory was available to send the reply.
-     * - EMBER_NETWORK_BUSY - Either no route or insufficient resources available.
-     * - EMBER_SUCCESS - The reply was successfully queued for transmission.
+     * - SLStatus.ALLOCATION_FAILED - Not enough memory was available to send the reply.
+     * - SLStatus.BUSY - Either no route or insufficient resources available.
+     * - SLStatus.OK - The reply was successfully queued for transmission.
      */
     async ezspSendReply(sender: NodeId, apsFrame: EmberApsFrame, messageContents: Buffer):
         Promise<SLStatus> {
@@ -4986,8 +4991,9 @@ export class Ezsp extends EventEmitter {
      *        The latter is used when the concentrator has insufficient RAM to store all outbound source routes.
      *        In that case, route records are sent to the concentrator prior to every inbound APS unicast.
      * @param radius uint8_t The maximum number of hops the route request will be relayed. A radius of zero is converted to EMBER_MAX_HOPS
-     * @returns EMBER_SUCCESS if the route request was successfully submitted to the
-     * transmit queue, and EMBER_ERR_FATAL otherwise.
+     * @returns
+     * - SLStatus.OK if the route request was successfully submitted to the transmit queue,
+     * - SLStatus.FAIL otherwise.
      */
     async ezspSendManyToOneRouteRequest(concentratorType: number, radius: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SEND_MANY_TO_ONE_ROUTE_REQUEST);
@@ -5036,11 +5042,11 @@ export class Ezsp extends EventEmitter {
     /**
      * Callback
      * Indicates the result of a data poll to the parent of the local node.
-     * @param status An EmberStatus value:
-     *   - EMBER_SUCCESS - Data was received in response to the poll.
-     *   - EMBER_MAC_NO_DATA - No data was pending.
-     *   - EMBER_DELIVERY_FAILED - The poll message could not be sent.
-     *   - EMBER_MAC_NO_ACK_RECEIVED - The poll message was sent but not acknowledged by the parent.
+     * @param status An SLStatus value:
+     * - SLStatus.OK - Data was received in response to the poll.
+     * - SLStatus.MAC_NO_DATA - No data was pending.
+     * - SLStatus.ZIGBEE_DELIVERY_FAILED - The poll message could not be sent.
+     * - SLStatus.MAC_NO_ACK_RECEIVED - The poll message was sent but not acknowledged by the parent.
      */
     ezspPollCompleteHandler(status: SLStatus): void {
         logger.debug(`ezspPollCompleteHandler(): callback called with: [status=${SLStatus[status]}]`, NS);
@@ -5052,8 +5058,8 @@ export class Ezsp extends EventEmitter {
      * The message is sent from emberPollHandler, which is called when the child requests data.
      * @param childId The ID of the child that just polled for data.
      * @returns 
-     * - SL_STATUS_OK - The next time that the child polls, it will be informed that it has pending data.
-     * - SL_STATUS_NOT_JOINED - The child identified by childId is not our child.
+     * - SLStatus.OK - The next time that the child polls, it will be informed that it has pending data.
+     * - SLStatus.NOT_JOINED - The child identified by childId is not our child.
      */
     async ezspSetMessageFlag(childId: NodeId): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -5079,8 +5085,8 @@ export class Ezsp extends EventEmitter {
      * The next time the child polls, it will be informed that it does not have any pending messages.
      * @param childId The ID of the child that no longer has pending messages.
      * @returns 
-     * - SL_STATUS_OK - The next time that the child polls, it will be informed that it does not have any pending messages.
-     * - SL_STATUS_NOT_JOINED - The child identified by childId is not our child.
+     * - SLStatus.OK - The next time that the child polls, it will be informed that it does not have any pending messages.
+     * - SLStatus.NOT_JOINED - The child identified by childId is not our child.
      */
     async ezspClearMessageFlag(childId: NodeId): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -5119,8 +5125,8 @@ export class Ezsp extends EventEmitter {
      * @param longId The long ID of the node.
      * @param nodeType The nodetype e.g., SL_ZIGBEE_ROUTER defining, if this would be added to the child table or neighbor table.
      * @returns 
-     * - SL_STATUS_OK - This node has been successfully added.
-     * - SL_STATUS_FAIL - The child was not added to the child/neighbor table.
+     * - SLStatus.OK - This node has been successfully added.
+     * - SLStatus.FAIL - The child was not added to the child/neighbor table.
      */
     async ezspAddChild(shortId: NodeId, longId: EUI64, nodeType: EmberNodeType): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -5148,8 +5154,8 @@ export class Ezsp extends EventEmitter {
      * This can affect the network functionality, and needs to be used wisely.
      * @param childEui64 The long ID of the node.
      * @returns 
-     * - SL_STATUS_OK - This node has been successfully removed.
-     * - SL_STATUS_FAIL - The node was not found in either of the child or neighbor tables.
+     * - SLStatus.OK - This node has been successfully removed.
+     * - SLStatus.FAIL - The node was not found in either of the child or neighbor tables.
      */
     async ezspRemoveChild(childEui64: EUI64): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -5814,8 +5820,9 @@ export class Ezsp extends EventEmitter {
      * Supply a source route for the next outgoing message.
      * @param destination The destination of the source route.
      * @param relayList uint16_t * The source route.
-     * @returns EMBER_SUCCESS if the source route was successfully stored, and
-     * EMBER_NO_BUFFERS otherwise.
+     * @returns
+     * - SLStatus.OK if the source route was successfully stored,
+     * - SLStatus.ALLOCATION_FAILED otherwise.
      */
     async ezspSetSourceRoute(destination: NodeId, relayList: number[]): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_SOURCE_ROUTE);
@@ -5839,7 +5846,7 @@ export class Ezsp extends EventEmitter {
      * @param targetShort The destination node of the key.
      * @param targetLong The long address of the destination node.
      * @param parentShortId The parent node of the destination node.
-     * @returns EMBER_SUCCESS if send was successful
+     * @returns SLStatus.OK if send was successful
      */
     async ezspUnicastCurrentNetworkKey(targetShort: NodeId, targetLong: EUI64, parentShortId: NodeId): Promise<SLStatus> {
         this.startCommand(EzspFrameID.UNICAST_CURRENT_NETWORK_KEY);
@@ -5893,7 +5900,9 @@ export class Ezsp extends EventEmitter {
      * @param addressTableIndex 
      * @param eui64 
      * @param id 
-     * @returns SL_STATUS_OK if the information was successfully set, and SL_STATUS_ZIGBEE_ADDRESS_TABLE_ENTRY_IS_ACTIVE otherwise.
+     * @returns
+     * - SLStatus.OK if the information was successfully set,
+     * - SLStatus.ZIGBEE_ADDRESS_TABLE_ENTRY_IS_ACTIVE otherwise.
      */
     async ezspSetAddressTableInfo(addressTableIndex: number, eui64: EUI64, id: NodeId): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -5919,7 +5928,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Gets the EUI64 and short ID of an address table entry.
      * @param addressTableIndex 
-     * @returns An sl_status_t value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      * @returns One of the following:
      * - The short ID corresponding to the remote node whose EUI64 is stored in the address table at the given index.
      * - SL_ZIGBEE_UNKNOWN_NODE_ID:
@@ -5991,8 +6000,8 @@ export class Ezsp extends EventEmitter {
      * EMBER_INDIRECT_TRANSMISSION_TIMEOUT.
      * @param remoteEui64 The address of the node for which the timeout is to be returned.
      * @returns
-     * - SL_STATUS_OK if the retry interval will be increased by SL_ZIGBEE_INDIRECT_TRANSMISSION_TIMEOUT
-     * - SL_STATUS_FAIL if the normal retry interval will be used.
+     * - SLStatus.OK if the retry interval will be increased by SL_ZIGBEE_INDIRECT_TRANSMISSION_TIMEOUT
+     * - SLStatus.FAIL if the normal retry interval will be used.
      */
     async ezspGetExtendedTimeout(remoteEui64: EUI64): Promise<SLStatus> {
         this.startCommand(EzspFrameID.GET_EXTENDED_TIMEOUT);
@@ -6022,18 +6031,18 @@ export class Ezsp extends EventEmitter {
      * @param addressTableIndex uint8_t The index of the address table entry that will be modified.
      * @param newEui64 The EUI64 to be written to the address table entry.
      * @param newId One of the following: The short ID corresponding to the new EUI64.
-     *        EMBER_UNKNOWN_NODE_ID if the new EUI64 is valid but the short ID is unknown and should be discovered by the stack.
-     *        EMBER_TABLE_ENTRY_UNUSED_NODE_ID if the address table entry is now unused.
-     * @param newExtendedTimeout true if the retry interval should be increased by EMBER_INDIRECT_TRANSMISSION_TIMEOUT.
+     *        SL_ZIGBEE_UNKNOWN_NODE_ID if the new EUI64 is valid but the short ID is unknown and should be discovered by the stack.
+     *        SL_ZIGBEE_TABLE_ENTRY_UNUSED_NODE_ID if the address table entry is now unused.
+     * @param newExtendedTimeout true if the retry interval should be increased by SL_ZIGBEE_INDIRECT_TRANSMISSION_TIMEOUT.
      *        false if the normal retry interval should be used.
-     * @returns EMBER_SUCCESS if the EUI64, short ID and extended timeout setting
-     * were successfully modified, and EMBER_ADDRESS_TABLE_ENTRY_IS_ACTIVE
-     * otherwise.
+     * @returns
+     * - SLStatus.OK if the EUI64, short ID and extended timeout setting were successfully modified,
+     * - SLStatus.ZIGBEE_ADDRESS_TABLE_ENTRY_IS_ACTIVE otherwise.
      * @returns oldEui64 The EUI64 of the address table entry before it was modified.
      * @returns oldId NodeId * One of the following: The short ID corresponding to the EUI64 before it was modified.
-     *          EMBER_UNKNOWN_NODE_ID if the short ID was unknown. EMBER_DISCOVERY_ACTIVE_NODE_ID if discovery of the short ID was underway.
-     *          EMBER_TABLE_ENTRY_UNUSED_NODE_ID if the address table entry was unused.
-     * @returns oldExtendedTimeouttrue bool * if the retry interval was being increased by EMBER_INDIRECT_TRANSMISSION_TIMEOUT.
+     *          SL_ZIGBEE_UNKNOWN_NODE_ID if the short ID was unknown. SL_ZIGBEE_DISCOVERY_ACTIVE_NODE_ID if discovery of the short ID was underway.
+     *          SL_ZIGBEE_TABLE_ENTRY_UNUSED_NODE_ID if the address table entry was unused.
+     * @returns oldExtendedTimeouttrue bool * if the retry interval was being increased by SL_ZIGBEE_INDIRECT_TRANSMISSION_TIMEOUT.
      *          false if the normal retry interval was being used.
      */
     async ezspReplaceAddressTableEntry(addressTableIndex: number, newEui64: EUI64, newId: NodeId, newExtendedTimeout: boolean):
@@ -6062,8 +6071,7 @@ export class Ezsp extends EventEmitter {
      * Returns the node ID that corresponds to the specified EUI64. The node ID is
      * found by searching through all stack tables for the specified EUI64.
      * @param eui64 The EUI64 of the node to look up.
-     * @returns The short ID of the node or EMBER_NULL_NODE_ID if the short ID is not
-     * known.
+     * @returns The short ID of the node or SL_ZIGBEE_NULL_NODE_ID if the short ID is not known.
      */
     async ezspLookupNodeIdByEui64(eui64: EUI64): Promise<NodeId> {
         this.startCommand(EzspFrameID.LOOKUP_NODE_ID_BY_EUI64);
@@ -6084,8 +6092,9 @@ export class Ezsp extends EventEmitter {
      * Returns the EUI64 that corresponds to the specified node ID. The EUI64 is
      * found by searching through all stack tables for the specified node ID.
      * @param nodeId The short ID of the node to look up.
-     * @returns EMBER_SUCCESS if the EUI64 was found, EMBER_ERR_FATAL if the EUI64 is
-     * not known.
+     * @returns
+     * - SLStatus.OK if the EUI64 was found,
+     * - SLStatus.FAIL if the EUI64 is not known.
      * @returns eui64 The EUI64 of the node.
      */
     async ezspLookupEui64ByNodeId(nodeId: NodeId): Promise<[SLStatus, eui64: EUI64]> {
@@ -6107,7 +6116,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Gets an entry from the multicast table.
      * @param uint8_t The index of a multicast table entry.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      * @returns EmberMulticastTableEntry * The contents of the multicast entry.
      */
     async ezspGetMulticastTableEntry(index: number): Promise<[SLStatus, value: EmberMulticastTableEntry]> {
@@ -6130,7 +6139,7 @@ export class Ezsp extends EventEmitter {
      * Sets an entry in the multicast table.
      * @param index uint8_t The index of a multicast table entry
      * @param EmberMulticastTableEntry * The contents of the multicast entry.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetMulticastTableEntry(index: number, value: EmberMulticastTableEntry): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_MULTICAST_TABLE_ENTRY);
@@ -6170,7 +6179,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Write the current node Id, PAN ID, or Node type to the tokens
      * @param erase Erase the node type or not
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspWriteNodeData(erase: boolean): Promise<SLStatus> {
         this.startCommand(EzspFrameID.WRITE_NODE_DATA);
@@ -6193,7 +6202,7 @@ export class Ezsp extends EventEmitter {
      * @param messageContents uint8_t * The raw message.
      * @param priority uint8_t transmit priority.
      * @param useCca Should we enable CCA or not.
-     * @returns An sl_status_t value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSendRawMessage(messageContents: Buffer, priority: EmberTransmitPriority, useCca: boolean): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SEND_RAW_MESSAGE);
@@ -6328,7 +6337,9 @@ export class Ezsp extends EventEmitter {
      * A callback invoked by the EmberZNet stack when the MAC has finished
      * transmitting a raw message.
      * @param messageContents (v14+)
-     * @param status EMBER_SUCCESS if the transmission was successful, or EMBER_DELIVERY_FAILED if not
+     * @param status
+     * - SLStatus.OK if the transmission was successful,
+     * - SLStatus.ZIGBEE_DELIVERY_FAILED if not
      */
     ezspRawTransmitCompleteHandler(messageContents: Buffer, status: SLStatus): void {
         logger.debug(`ezspRawTransmitCompleteHandler(): callback called with: [messageContents=${messageContents.toString('hex')}], `
@@ -6336,9 +6347,9 @@ export class Ezsp extends EventEmitter {
     }
 
     /**
-     * This function is useful to sleepy end devices. This function will set the
-     * retry interval (in milliseconds) for mac data poll. This interval is the time
-     * in milliseconds the device waits before retrying a data poll when a MAC level
+     * This function is useful to sleepy end devices.
+     * This function will set the retry interval (in milliseconds) for mac data poll.
+     * This interval is the time in milliseconds the device waits before retrying a data poll when a MAC level
      * data poll fails for any reason.
      * @param waitBeforeRetryIntervalMs uint32_t Time in milliseconds the device waits before retrying
      *        a data poll when a MAC level data poll fails for any reason.
@@ -6379,7 +6390,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Sets the priority masks and related variables for choosing the best beacon.
      * @param param EmberBeaconClassificationParams * The beacon prioritization related variable
-     * @returns The attempt to set the pramaters returns EMBER_SUCCESS
+     * @returns The attempt to set the parameters returns SLStatus.OK
      */
     async ezspSetBeaconClassificationParams(param: EmberBeaconClassificationParams): Promise<SLStatus > {
         this.startCommand(EzspFrameID.SET_BEACON_CLASSIFICATION_PARAMS);
@@ -6398,7 +6409,7 @@ export class Ezsp extends EventEmitter {
 
     /**
      * Gets the priority masks and related variables for choosing the best beacon.
-     * @returns The attempt to get the pramaters returns EMBER_SUCCESS
+     * @returns The attempt to get the parameters returns SLStatus.OK
      * @returns EmberBeaconClassificationParams * Gets the beacon prioritization related variable
      */
     async ezspGetBeaconClassificationParams(): Promise<[SLStatus, param: EmberBeaconClassificationParams]> {
@@ -6538,7 +6549,7 @@ export class Ezsp extends EventEmitter {
      * Exports a key from security manager based on passed context.
      * @param context sl_zb_sec_man_context_t * Metadata to identify the requested key.
      * @returns sl_zb_sec_man_key_t * Data to store the exported key in.
-     * @returns sl_status_t * The success or failure code of the operation.
+     * @returns SLStatus * The success or failure code of the operation.
      */
     async ezspExportKey(context: SecManContext): Promise<[SLStatus, key: SecManKey]> {
         /**
@@ -6578,7 +6589,7 @@ export class Ezsp extends EventEmitter {
          * @note The context->derived_type must be SL_ZB_SEC_MAN_DERIVED_KEY_TYPE_NONE.
          * Other values are ignored.
          *
-         * @return SL_STATUS_OK upon success, a valid error code otherwise.
+         * @return SLStatus.OK upon success, a valid error code otherwise.
          */
         // NOTE: added for good measure
         if (context.coreKeyType === SecManKeyType.INTERNAL) {
@@ -6651,7 +6662,7 @@ export class Ezsp extends EventEmitter {
          * @note The context->derived_type must be SL_ZB_SEC_MAN_DERIVED_KEY_TYPE_NONE,
          * else, an error will be thrown. Key derivations, which are used in crypto
          * operations, are performed using the ::sl_zb_sec_man_load_key_context routine.
-         * @return SL_STATUS_OK upon success, a valid error code otherwise.
+         * @return SLStatus.OK upon success, a valid error code otherwise.
          */
         // NOTE: added for good measure
         if (context.coreKeyType === SecManKeyType.INTERNAL) {
@@ -6692,8 +6703,8 @@ export class Ezsp extends EventEmitter {
      * @param address The address to search for. Alternatively, all zeros may be passed in to search for the first empty entry.
      * @param linkKey This indicates whether to search for an entry that contains a link key or a master key.
      *        true means to search for an entry with a Link Key.
-     * @returns uint8_t This indicates the index of the entry that matches the search
-     * criteria. A value of 0xFF is returned if not matching entry is found.
+     * @returns uint8_t This indicates the index of the entry that matches the search criteria.
+     *          A value of 0xFF is returned if not matching entry is found.
      */
     async ezspFindKeyTableEntry(address: EUI64, linkKey: boolean): Promise<number> {
         this.startCommand(EzspFrameID.FIND_KEY_TABLE_ENTRY);
@@ -6717,7 +6728,7 @@ export class Ezsp extends EventEmitter {
      * short and long address arguments.
      * @param destinationNodeId The short address of the node to which this command will be sent
      * @param destinationEui64 The long address of the node to which this command will be sent
-     * @returns An EmberStatus value indicating success of failure of the operation
+     * @returns An SLStatus value indicating success of failure of the operation
      */
     async ezspSendTrustCenterLinkKey(destinationNodeId: NodeId, destinationEui64: EUI64): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SEND_TRUST_CENTER_LINK_KEY);
@@ -6739,8 +6750,7 @@ export class Ezsp extends EventEmitter {
      * This function erases the data in the key table entry at the specified index.
      * If the index is invalid, false is returned.
      * @param index uint8_t This indicates the index of entry to erase.
-     * @returns ::EMBER_SUCCESS if the index is valid and the key data was erased.
-     *          ::EMBER_KEY_INVALID if the index is out of range for the size of the key table.
+     * @returns The success or failure of the operation.
      */
     async ezspEraseKeyTableEntry(index: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.ERASE_KEY_TABLE_ENTRY);
@@ -6759,8 +6769,7 @@ export class Ezsp extends EventEmitter {
 
     /**
      * This function clears the key table of the current network.
-     * @returns ::EMBER_SUCCESS if the key table was successfully cleared.
-     *          ::EMBER_INVALID_CALL otherwise.
+     * @returns The success or failure of the operation.
      */
     async ezspClearKeyTable(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.CLEAR_KEY_TABLE);
@@ -6793,7 +6802,7 @@ export class Ezsp extends EventEmitter {
      * returned via ezspZigbeeKeyEstablishmentHandler(...)
      * @param partner This is the IEEE address of the partner device that will share the link key.
      * @returns The success or failure of sending the request.
-     * This is not the final result of the attempt. ezspZigbeeKeyEstablishmentHandler(...) will return that.
+     *          This is not the final result of the attempt. ezspZigbeeKeyEstablishmentHandler(...) will return that.
      */
     async ezspRequestLinkKey(partner: EUI64): Promise<SLStatus> {
         this.startCommand(EzspFrameID.REQUEST_LINK_KEY);
@@ -6819,8 +6828,8 @@ export class Ezsp extends EventEmitter {
      *        Request Key, and Verify Key Confirm messages. The number of attempts resets for each message type sent
      *        (e.g., if maxAttempts is 3, up to 3 Node Descriptors are sent, up to 3 Request Keys, and up to 3 Verify Key Confirm messages are sent).
      * @returns The success or failure of sending the request.
-     * If the Node Descriptor is successfully transmitted, ezspZigbeeKeyEstablishmentHandler(...)
-     * will be called at a later time with a final status result.
+     *          If the Node Descriptor is successfully transmitted, ezspZigbeeKeyEstablishmentHandler(...)
+     *          will be called at a later time with a final status result.
      */
     async ezspUpdateTcLinkKey(maxAttempts: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.UPDATE_TC_LINK_KEY);
@@ -6878,7 +6887,7 @@ export class Ezsp extends EventEmitter {
          * containing information about whether the current and next network keys are set, and the
          * sequence numbers associated with each key.
          *
-         * @return sl_status_t SL_STATUS_OK
+         * @return SLStatus SLStatus.OK
          *
          */
         this.startCommand(EzspFrameID.GET_NETWORK_KEY_INFO);
@@ -6898,8 +6907,8 @@ export class Ezsp extends EventEmitter {
     /**
      * Retrieve metadata about an APS link key.  Does not retrieve contents.
      * @param context sl_zb_sec_man_context_t * Context used to input information about key.
+     * @returns Status of metadata retrieval operation.
      * @returns sl_zb_sec_man_aps_key_metadata_t * Metadata about the referenced key.
-     * @returns sl_status_t * Status of metadata retrieval operation.
      */
     async ezspGetApsKeyInfo(context: SecManContext): Promise<[status: SLStatus, keyData: SecManAPSKeyMetadata]> {
         /**
@@ -6927,10 +6936,10 @@ export class Ezsp extends EventEmitter {
          *
          * @returns keyData sl_zb_sec_man_aps_key_metadata_t* [OUT] Metadata to fill in.
          *
-         * @returns SL_STATUS_OK if successful, SL_STATUS_NOT_FOUND if
+         * @returns SLStatus.OK if successful, SLStatus.NOT_FOUND if
          *  the key_index or eui64 does not result in a found entry,
-         *  SL_STATUS_INVALID_TYPE if the core key type is not an APS layer key (e.g.
-         *  SL_ZB_SEC_MAN_KEY_TYPE_NETWORK), or SL_STATUS_INVALID_MODE if core_key_type
+         *  SLStatus.INVALID_TYPE if the core key type is not an APS layer key (e.g.
+         *  SL_ZB_SEC_MAN_KEY_TYPE_NETWORK), or SLStatus.INVALID_MODE if core_key_type
          *  is SL_ZB_SEC_MAN_KEY_TYPE_TC_LINK and the initial security state does not
          *  indicate the a preconfigured key has been set (that is, both
          *  EMBER_HAVE_PRECONFIGURED_KEY and
@@ -6980,7 +6989,7 @@ export class Ezsp extends EventEmitter {
          * @param address EUI64 [IN] The EUI belonging to the key.
          * @param plaintext_key sl_zb_sec_man_key_t* [IN] A pointer to the key to import.
          *
-         * @return SL_STATUS_OK upon success, a valid error code otherwise.
+         * @return SLStatus.OK upon success, a valid error code otherwise.
          *
          */
         this.startCommand(EzspFrameID.IMPORT_LINK_KEY);
@@ -7002,10 +7011,10 @@ export class Ezsp extends EventEmitter {
     /**
      * Export the link key at given index from the key table.
      * @param uint8_t  Index of key to export.
+     * @returns Status of key export operation.
      * @returns sl_zigbee_sec_man_context_t * Context referencing the exported key. Contains information like the EUI64 address it is associated with.
      * @returns sl_zb_sec_man_key_t * The exported key.
      * @returns sl_zb_sec_man_aps_key_metadata_t * Metadata about the key.
-     * @returns sl_status_t * Status of key export operation.
      */
     async ezspExportLinkKeyByIndex(index: number)
         : Promise<[SLStatus, context: SecManContext, plaintextKey: SecManKey, keyData: SecManAPSKeyMetadata]> {
@@ -7049,10 +7058,10 @@ export class Ezsp extends EventEmitter {
     /**
      * Export the link key associated with the given EUI from the key table.
      * @param eui EUI64 associated with the key to export.
+     * @returns Status of key export operation.
      * @returns sl_zb_sec_man_key_t * The exported key.
      * @returns sl_zigbee_sec_man_context_t * Context referencing the exported key. Contains information like the EUI64 address it is associated with.
      * @returns sl_zb_sec_man_aps_key_metadata_t * Metadata about the key.
-     * @returns sl_status_t * Status of key export operation.
      */
     async ezspExportLinkKeyByEui(eui: EUI64): Promise<[SLStatus, context: SecManContext, plaintextKey: SecManKey, keyData: SecManAPSKeyMetadata]> {
         /**
@@ -7107,7 +7116,7 @@ export class Ezsp extends EventEmitter {
          * @param context sl_zb_sec_man_context_t* [IN] The context to check for validity. The fields that must be set depend
          * on the key type set in the context, as enough information is needed to identify the key.
          *
-         * @return sl_status_t SL_STATUS_OK upon success, SL_STATUS_NOT_FOUND otherwise.
+         * @return SLStatus SLStatus.OK upon success, SLStatus.NOT_FOUND otherwise.
          */
         this.startCommand(EzspFrameID.CHECK_KEY_CONTEXT);
         this.buffalo.writeSecManContext(context);
@@ -7162,12 +7171,10 @@ export class Ezsp extends EventEmitter {
     /**
      * Export a transient link key from a given table index.
      * @param uint8_t Index to export from.
+     * @returns Status of key export operation.
      * @returns sl_zb_sec_man_context_t * Context struct for export operation.
      * @returns sl_zb_sec_man_key_t * The exported key.
      * @returns sl_zb_sec_man_aps_key_metadata_t * Metadata about the key.
-     * @returns sl_status_t * Status of key export operation.
-     * - SL_STATUS_OK upon success
-     * - SL_STATUS_NOT_FOUND otherwise.
      */
     async ezspExportTransientKeyByIndex(index: number)
         : Promise<[SLStatus, context: SecManContext, plaintextKey: SecManKey, key_data: SecManAPSKeyMetadata]> {
@@ -7200,12 +7207,10 @@ export class Ezsp extends EventEmitter {
     /**
      * Export a transient link key associated with a given EUI64
      * @param eui Index to export from.
+     * @returns Status of key export operation.
      * @returns sl_zb_sec_man_context_t * Context struct for export operation.
      * @returns sl_zb_sec_man_key_t * The exported key.
      * @returns sl_zb_sec_man_aps_key_metadata_t * Metadata about the key.
-     * @returns sl_status_t * Status of key export operation.
-     * - SL_STATUS_OK upon success
-     * - SL_STATUS_NOT_FOUND otherwise.
      */
     async ezspExportTransientKeyByEui(eui: EUI64):
         Promise<[SLStatus, context: SecManContext, plaintextKey: SecManKey, key_data: SecManAPSKeyMetadata]> {
@@ -7321,7 +7326,7 @@ export class Ezsp extends EventEmitter {
      * send the Switch Key after sending the alternate encryption key.
      * @param key EmberKeyData * An optional pointer to a 16-byte encryption key (EMBER_ENCRYPTION_KEY_SIZE).
      *        An all zero key may be passed in, which will cause the stack to randomly generate a new key.
-     * @returns EmberStatus value that indicates the success or failure of the command.
+     * @returns SLStatus value that indicates the success or failure of the command.
      */
     async ezspBroadcastNextNetworkKey(key: EmberKeyData): Promise<SLStatus> {
         this.startCommand(EzspFrameID.BROADCAST_NEXT_NETWORK_KEY);
@@ -7341,8 +7346,7 @@ export class Ezsp extends EventEmitter {
     /**
      * This function broadcasts a switch key message to tell all nodes to change to
      * the sequence number of the previously sent Alternate Encryption Key.
-     * @returns EmberStatus value that indicates the success or failure of the
-     * command.
+     * @returns SLStatus value that indicates the success or failure of the command.
      */
     async ezspBroadcastNetworkKeySwitch(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.BROADCAST_NETWORK_KEY_SWITCH);
@@ -7396,7 +7400,7 @@ export class Ezsp extends EventEmitter {
      * @param destShort The node ID of the device that will receive the message
      * @param destLong The long address (EUI64) of the device that will receive the message.
      * @param targetLong The long address (EUI64) of the device to be removed.
-     * @returns An EmberStatus value indicating success, or the reason for failure
+     * @returns An SLStatus value indicating success, or the reason for failure
      */
     async ezspRemoveDevice(destShort: NodeId, destLong: EUI64, targetLong: EUI64): Promise<SLStatus> {
         this.startCommand(EzspFrameID.REMOVE_DEVICE);
@@ -7422,7 +7426,7 @@ export class Ezsp extends EventEmitter {
      * @param destShort The node ID of the device that will receive the message
      * @param destLong The long address (EUI64) of the device that will receive the message.
      * @param key EmberKeyData * The NWK key to send to the new device.
-     * @returns An EmberStatus value indicating success, or the reason for failure
+     * @returns An SLStatus value indicating success, or the reason for failure
      */
     async ezspUnicastNwkKeyUpdate(destShort: NodeId, destLong: EUI64, key: EmberKeyData): Promise<SLStatus> {
         this.startCommand(EzspFrameID.UNICAST_NWK_KEY_UPDATE);
@@ -7685,56 +7689,6 @@ export class Ezsp extends EventEmitter {
     }
 
     /**
-     * LEGACY FUNCTION: This functionality has been replaced by a single bit in the
-     * EmberApsFrame, EMBER_APS_OPTION_DSA_SIGN. Devices wishing to send signed
-     * messages should use that as it requires fewer function calls and message
-     * buffering. The dsaSignHandler response is still called when
-     * EMBER_APS_OPTION_DSA_SIGN is used. However, this function is still supported.
-     * This function begins the process of signing the passed message contained
-     * within the messageContents array. If no other ECC operation is going on, it
-     * will immediately return with EMBER_OPERATION_IN_PROGRESS to indicate the
-     * start of ECC operation. It will delay a period of time to let APS retries
-     * take place, but then it will shut down the radio and consume the CPU
-     * processing until the signing is complete. This may take up to 1 second. The
-     * signed message will be returned in the dsaSignHandler response. Note that the
-     * last byte of the messageContents passed to this function has special
-     * significance. As the typical use case for DSA signing is to sign the ZCL
-     * payload of a DRLC Report Event Status message in SE 1.0, there is often both
-     * a signed portion (ZCL payload) and an unsigned portion (ZCL header). The last
-     * byte in the content of messageToSign is therefore used as a special indicator
-     * to signify how many bytes of leading data in the array should be excluded
-     * from consideration during the signing process. If the signature needs to
-     * cover the entire array (all bytes except last one), the caller should ensure
-     * that the last byte of messageContents is 0x00. When the signature operation
-     * is complete, this final byte will be replaced by the signature type indicator
-     * (0x01 for ECDSA signatures), and the actual signature will be appended to the
-     * original contents after this byte.
-     * @param messageLength uint8_t The length of the messageContents parameter in bytes.
-     * @param messageContents uint8_t * The message contents for which to create a signature.
-     *        Per above notes, this may include a leading portion of data not included in the signature,
-     *        in which case the last byte of this array should be set to the index of the first byte
-     *        to be considered for signing. Otherwise, the last byte of messageContents should be 0x00
-     *        to indicate that a signature should occur across the entire contents.
-     * @returns EMBER_OPERATION_IN_PROGRESS if the stack has queued up the operation
-     * for execution. EMBER_INVALID_CALL if the operation can't be performed in this
-     * context, possibly because another ECC operation is pending.
-     */
-    async ezspDsaSign(messageContents: Buffer): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.DSA_SIGN);
-        this.buffalo.writePayload(messageContents);
-
-        const sendStatus = await this.sendCommand();
-
-        if (sendStatus !== EzspStatus.SUCCESS) {
-            throw new EzspError(sendStatus);
-        }
-    
-        const status = this.buffalo.readStatus(this.version);
-
-        return status;
-    }
-
-    /**
      * Callback
      * The handler that returns the results of the signing operation. On success,
      * the signature will be appended to the original message (including the
@@ -7873,7 +7827,7 @@ export class Ezsp extends EventEmitter {
      * be passed up with a CRC failure. All other mfglib functions will return an
      * error until the mfglibStart() has been called
      * @param rxCallback true to generate a mfglibRxHandler callback when a packet is received.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalStart(rxCallback: boolean): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MFGLIB_INTERNAL_START);
@@ -7894,7 +7848,7 @@ export class Ezsp extends EventEmitter {
      * Deactivate use of mfglib test routines; restores the hardware to the state it
      * was in prior to mfglibStart() and stops receiving packets started by
      * mfglibStart() at the same time.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalEnd(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MFGLIB_INTERNAL_END);
@@ -7916,7 +7870,7 @@ export class Ezsp extends EventEmitter {
      * transmitting tone, application must call mfglibStopTone(), allowing it the
      * flexibility to determine its own criteria for tone duration (time, event,
      * etc.)
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalStartTone(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MFGLIB_INTERNAL_START_TONE);
@@ -7934,7 +7888,7 @@ export class Ezsp extends EventEmitter {
 
     /**
      * Stops transmitting tone started by mfglibStartTone().
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalStopTone(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MFGLIB_INTERNAL_STOP_TONE);
@@ -7953,7 +7907,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Starts transmitting a random stream of characters. This is so that the radio
      * modulation can be measured.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalStartStream(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MFGLIB_INTERNAL_START_STREAM);
@@ -7972,7 +7926,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Stops transmitting a random stream of characters started by
      * mfglibStartStream().
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalStopStream(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MFGLIB_INTERNAL_STOP_STREAM);
@@ -7995,7 +7949,7 @@ export class Ezsp extends EventEmitter {
      * last two bytes of packetContents[] with the 16-bit CRC for the packet.
      * @param packetLength uint8_t The length of the packetContents parameter in bytes. Must be greater than 3 and less than 123.
      * @param packetContents uint8_t * The packet to send. The last two bytes will be replaced with the 16-bit CRC.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalSendPacket(packetContents: Buffer): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MFGLIB_INTERNAL_SEND_PACKET);
@@ -8016,7 +7970,7 @@ export class Ezsp extends EventEmitter {
      * Sets the radio channel. Calibration occurs if this is the first time the
      * channel has been used.
      * @param channel uint8_t The channel to switch to. Valid values are 11 - 26.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalSetChannel(channel: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MFGLIB_INTERNAL_SET_CHANNEL);
@@ -8059,7 +8013,7 @@ export class Ezsp extends EventEmitter {
      * available to the caller via mfglibGetPower().
      * @param txPowerMode uint16_t Power mode. Refer to txPowerModes in stack/include/ember-types.h for possible values.
      * @param power int8_t Power in units of dBm. Refer to radio data sheet for valid range.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalSetPower(txPowerMode: EmberTXPowerMode, power: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.MFGLIB_INTERNAL_SET_POWER);
@@ -8121,7 +8075,7 @@ export class Ezsp extends EventEmitter {
      *        channel with current power settings. STANDALONE_BOOTLOADER_RECOVERY_MODE: Will listen for an over-the-air image
      *        transfer on the default channel with default power settings. Both modes also allow an image transfer to begin
      *        with XMODEM over the serial protocol's Bootloader Frame.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspLaunchStandaloneBootloader(mode: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.LAUNCH_STANDALONE_BOOTLOADER);
@@ -8146,7 +8100,7 @@ export class Ezsp extends EventEmitter {
      * @param destEui64 The EUI64 of the target node. Ignored if the broadcast field is set to true.
      * @param messageLength uint8_t The length of the messageContents parameter in bytes.
      * @param messageContents uint8_t * The multicast message.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSendBootloadMessage(broadcast: boolean, destEui64: EUI64, messageContents: Buffer): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SEND_BOOTLOAD_MESSAGE);
@@ -8211,8 +8165,8 @@ export class Ezsp extends EventEmitter {
      * Callback
      * A callback invoked by the EmberZNet stack when the MAC has finished
      * transmitting a bootload message.
-     * @param status An EmberStatus value of SL_STATUS_OK if an ACK was received from the destination
-     *        or SL_STATUS_ZIGBEE_DELIVERY_FAILED if no ACK was received.
+     * @param status An EmberStatus value of SLStatus.OK if an ACK was received from the destination
+     *        or SLStatus.ZIGBEE_DELIVERY_FAILED if no ACK was received.
      * @param messageLength uint8_t  The length of the messageContents parameter in bytes.
      * @param messageContents uint8_t * The message that was sent.
      */
@@ -8265,7 +8219,7 @@ export class Ezsp extends EventEmitter {
      * @param beginConfiguration Determines the new mode of operation.
      *        true causes the node to enter manufacturing configuration.
      *        false causes the node to return to normal network operation.
-     * @returns An sl_status_t value indicating success or failure of the command.
+     * @returns An SLStatus value indicating success or failure of the command.
      */
     async ezspMfgTestSetPacketMode(beginConfiguration: boolean): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -8292,7 +8246,7 @@ export class Ezsp extends EventEmitter {
      * to place the DUT into normal network operation for testing.
      * This function executes only during manufacturing configuration mode and returns an error otherwise.
      * If successful, the DUT acknowledges the reboot command within 20 milliseconds and then reboots.
-     * @returns An sl_status_t value indicating success or failure of the command.
+     * @returns An SLStatus value indicating success or failure of the command.
      */
     async ezspMfgTestSendRebootCommand(): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -8317,7 +8271,7 @@ export class Ezsp extends EventEmitter {
      * This function executes only during manufacturing configuration mode and returns an error otherwise.
      * If successful, the DUT acknowledges the new EUI ID within 150 milliseconds.
      * @param newId The 8-byte EUID for the DUT.
-     * @returns An sl_status_t value indicating success or failure of the command.
+     * @returns An SLStatus value indicating success or failure of the command.
      */
     async ezspMfgTestSendEui64(newId: EUI64): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -8343,7 +8297,7 @@ export class Ezsp extends EventEmitter {
      * This function executes only during manufacturing configuration mode and will return an error otherwise.
      * If successful, the DUT will acknowledge the new string within 150 milliseconds.
      * @param newString The 16-byte manufacturing string.
-     * @returns An sl_status_t value indicating success or failure of the command.
+     * @returns An SLStatus value indicating success or failure of the command.
      */
     async ezspMfgTestSendManufacturingString(newString: number[]): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -8370,7 +8324,7 @@ export class Ezsp extends EventEmitter {
      * If successful, the DUT acknowledges the new parameters within 25 milliseconds.
      * @param supportedBands Sets the radio band for the DUT. See ember-common.h for possible values.
      * @param crystalOffset Sets the CC1020 crystal offset. This parameter has no effect on the EM2420, and it may safely be set to 0 for this RFIC.
-     * @returns An sl_status_t value indicating success or failure of the command.
+     * @returns An SLStatus value indicating success or failure of the command.
      */
     async ezspMfgTestSendRadioParameters(supportedBands: number, crystalOffset: number): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -8397,7 +8351,7 @@ export class Ezsp extends EventEmitter {
      * Most implementations will not need to call this function directly. See mfg-test.c for more detail.
      * This function executes only during manufacturing configuration mode and returns an error otherwise.
      * @param command A pointer to the outgoing command string.
-     * @returns An sl_status_t value indicating success or failure of the command.
+     * @returns An SLStatus value indicating success or failure of the command.
      */
     async ezspMfgTestSendCommand(command: number): Promise<SLStatus> {
         if (this.version < 0x0E) {
@@ -8428,7 +8382,7 @@ export class Ezsp extends EventEmitter {
      * @param networkInfo EmberZllNetwork * Information about the network.
      * @param op Operation indicator.
      * @param radioTxPower int8_t Radio transmission power.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspZllNetworkOps(networkInfo: EmberZllNetwork, op: EzspZllNetworkOperation, radioTxPower: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.ZLL_NETWORK_OPS);
@@ -8452,7 +8406,7 @@ export class Ezsp extends EventEmitter {
      * network. It must be called prior to forming, starting, or joining a network.
      * @param networkKey EmberKeyData * ZLL Network key.
      * @param securityState EmberZllInitialSecurityState * Initial security state of the network.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspZllSetInitialSecurityState(networkKey: EmberKeyData, securityState: EmberZllInitialSecurityState): Promise<SLStatus> {
         this.startCommand(EzspFrameID.ZLL_SET_INITIAL_SECURITY_STATE);
@@ -8475,7 +8429,7 @@ export class Ezsp extends EventEmitter {
      * emberZllSetInitialSecurityState, this can be called while a network is
      * already established.
      * @param securityState EmberZllInitialSecurityState * Security state of the network.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspZllSetSecurityStateWithoutKey(securityState: EmberZllInitialSecurityState): Promise<SLStatus> {
         this.startCommand(EzspFrameID.ZLL_SET_SECURITY_STATE_WITHOUT_KEY);
@@ -8497,7 +8451,7 @@ export class Ezsp extends EventEmitter {
      * @param channelMask uint32_t The range of channels to scan.
      * @param radioPowerForScan int8_t The radio output power used for the scan requests.
      * @param nodeType The node type of the local device.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspZllStartScan(channelMask: number, radioPowerForScan: number, nodeType: EmberNodeType): Promise<SLStatus> {
         this.startCommand(EzspFrameID.ZLL_START_SCAN);
@@ -8520,7 +8474,7 @@ export class Ezsp extends EventEmitter {
      * This call will change the mode of the radio so that the receiver is on for a
      * specified amount of time when the device is idle.
      * @param durationMs uint32_t The duration in milliseconds to leave the radio on.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspZllSetRxOnWhenIdle(durationMs: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.ZLL_SET_RX_ON_WHEN_IDLE);
@@ -8892,7 +8846,7 @@ export class Ezsp extends EventEmitter {
      * @param gpdAsdu uint8_t * The GP command payload.
      * @param gpepHandle uint8_t The handle to refer to the GPDF.
      * @param gpTxQueueEntryLifetimeMs uint16_t How long to keep the GPDF in the TX Queue.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspDGpSend(action: boolean, useCca: boolean, addr: EmberGpAddress, gpdCommandId: number, gpdAsdu: Buffer,
         gpepHandle: number, gpTxQueueEntryLifetimeMs: number): Promise<SLStatus> {
@@ -8920,7 +8874,7 @@ export class Ezsp extends EventEmitter {
      * Callback
      * A callback to the GP endpoint to indicate the result of the GPDF
      * transmission.
-     * @param status An EmberStatus value indicating success or the reason for failure.
+     * @param status An SLStatus value indicating success or the reason for failure.
      * @param gpepHandle uint8_t The handle of the GPDF.
      */
     ezspDGpSentHandler(status: SLStatus, gpepHandle: number): void {
@@ -8987,7 +8941,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Retrieves the proxy table entry stored at the passed index.
      * @param proxyIndex uint8_t The index of the requested proxy table entry.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      * @returns EmberGpProxyTableEntry * An EmberGpProxyTableEntry struct containing a copy of the requested proxy entry.
      */
     async ezspGpProxyTableGetEntry(proxyIndex: number): Promise<[SLStatus, entry: EmberGpProxyTableEntry]> {
@@ -9029,7 +8983,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Retrieves the sink table entry stored at the passed index.
      * @param sinkIndex uint8_t The index of the requested sink table entry.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      * @returns EmberGpSinkTableEntry * An EmberGpSinkTableEntry struct containing a copy of the requested sink entry.
      */
     async ezspGpSinkTableGetEntry(sinkIndex: number): Promise<[SLStatus, entry: EmberGpSinkTableEntry]> {
@@ -9072,7 +9026,7 @@ export class Ezsp extends EventEmitter {
      * Retrieves the sink table entry stored at the passed index.
      * @param sinkIndex uint8_t The index of the requested sink table entry.
      * @param entry EmberGpSinkTableEntry * An EmberGpSinkTableEntry struct containing a copy of the sink entry to be updated.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspGpSinkTableSetEntry(sinkIndex: number, entry: EmberGpSinkTableEntry): Promise<SLStatus> {
         this.startCommand(EzspFrameID.GP_SINK_TABLE_SET_ENTRY);
@@ -9174,7 +9128,7 @@ export class Ezsp extends EventEmitter {
      * @param uint16_t gpm address for security.
      * @param uint16_t gpm address for pairing.
      * @param uint8_t sink endpoint.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspGpSinkCommission(options: number, gpmAddrForSecurity: number, gpmAddrForPairing: number, sinkEndpoint: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.GP_SINK_COMMISSION);
@@ -9250,7 +9204,7 @@ export class Ezsp extends EventEmitter {
     /**
      * Gets the token information for a single token at provided index
      * @param index uint8_t Index of the token in the token table for which information is needed.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      * @returns EmberTokenInfo * Token information.
      */
     async ezspGetTokenInfo(index: number): Promise<[SLStatus, tokenInfo: EmberTokenInfo]> {
@@ -9273,7 +9227,7 @@ export class Ezsp extends EventEmitter {
      * Gets the token data for a single token with provided key
      * @param token uint32_t Key of the token in the token table for which data is needed.
      * @param index uint32_t Index in case of the indexed token.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      * @returns EmberTokenData * Token Data
      */
     async ezspGetTokenData(token: number, index: number): Promise<[SLStatus, tokenData: EmberTokenData]> {
@@ -9298,7 +9252,7 @@ export class Ezsp extends EventEmitter {
      * @param token uint32_t Key of the token in the token table for which data is to be set.
      * @param index uint32_t Index in case of the indexed token.
      * @param EmberTokenData * Token Data
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetTokenData(token: number, index: number, tokenData: EmberTokenData): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_TOKEN_DATA);
@@ -9331,7 +9285,7 @@ export class Ezsp extends EventEmitter {
 
     /**
      * Run GP security test vectors.
-     * @returns An EmberStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspGpSecurityTestVectors(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.GP_SECURITY_TEST_VECTORS);

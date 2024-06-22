@@ -60,7 +60,7 @@ export class EmberRequestQueue {
     public startDispatching(): void {
         this.dispatching = true;
 
-        setTimeout(this.dispatch.bind(this), 0);
+        setTimeout(this.dispatch.bind(this), 1);
 
         logger.info(`Request dispatching started.`, NS);
     }
