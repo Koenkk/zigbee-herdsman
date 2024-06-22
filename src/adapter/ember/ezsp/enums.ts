@@ -312,7 +312,7 @@ export enum EzspFrameID {
     CLEAR_TEMPORARY_DATA_MAYBE_STORE_LINK_KEY283K1   = 0x00EE,
     GET_CERTIFICATE                                  = 0x00A5,
     GET_CERTIFICATE283K1                             = 0x00EC,
-    DSA_SIGN                                         = 0x00A6,
+    // DSA_SIGN                                         = 0x00A6,// use EmberApsOption.DSA_SIGN instead
     DSA_SIGN_HANDLER                                 = 0x00A7,
     DSA_VERIFY                                       = 0x00A3,
     DSA_VERIFY_HANDLER                               = 0x0078,
