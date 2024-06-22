@@ -2926,7 +2926,7 @@ export class Ezsp extends EventEmitter {
         this.startCommand(EzspFrameID.JOIN_NETWORK_DIRECTLY);
         this.buffalo.writeUInt8(localNodeType);
         this.buffalo.writeEmberBeaconData(beacon);
-        this.buffalo.writeUInt8(radioTxPower);
+        this.buffalo.writeInt8(radioTxPower);
         this.buffalo.writeUInt8(clearBeaconsAfterNetworkUp ? 1 : 0);
 
         const sendStatus = await this.sendCommand();
