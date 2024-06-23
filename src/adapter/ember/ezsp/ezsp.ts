@@ -4938,8 +4938,9 @@ export class Ezsp extends EventEmitter {
     /**
      * Callback
      * A callback indicating the stack has completed sending a message.
-     * @param status An EmberStatus value of EMBER_SUCCESS if an ACK was received from the destination
-     *        or EMBER_DELIVERY_FAILED if no ACK was received.
+     * @param status
+     * - SL_STATUS_OK if an ACK was received from the destination
+     * - SL_STATUS_ZIGBEE_DELIVERY_FAILED if no ACK was received.
      * @param type The type of message sent.
      * @param indexOrDestination uint16_t The destination to which the message was sent, for direct unicasts,
      *        or the address table or binding index for other unicasts. The value is unspecified for multicasts and broadcasts.
