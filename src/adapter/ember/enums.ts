@@ -981,18 +981,6 @@ export enum EmberVersionType {
     GA = 0xAA,
 };
 
-export enum EmberLeaveRequestFlags {
-    /** Leave and rejoin. */
-    AND_REJOIN     = 0x80,
-    // Note: removeChildren is treated to be deprecated and should not be used!
-    // CCB 2047
-    // - CCB makes the first step to deprecate the 'leave and remove children' functionality.
-    // - We were proactive here and deprecated it right away.
-    // AND_REMOVE_CHILDREN = 0x40,
-    /** Leave. */
-    WITHOUT_REJOIN = 0x00,
-};
-
 /**
  * For emberSetTxPowerMode and mfglibSetPower.
  * uint16_t

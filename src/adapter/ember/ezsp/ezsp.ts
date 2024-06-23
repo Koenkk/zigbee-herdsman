@@ -4,7 +4,6 @@ import {SerialPortOptions} from "../../tstype";
 import {Clusters} from "../../../zspec/zcl/definition/cluster";
 import * as ZSpec from "../../../zspec";
 import * as Zdo from "../../../zspec/zdo";
-import {BuffaloZdo} from "../../../zspec/zdo/buffaloZdo";
 import {highByte, highLowToInt, lowByte} from "../utils/math";
 import {
     EmberOutgoingMessageType,
@@ -188,7 +187,7 @@ export enum EzspEvents {
     NCP_NEEDS_RESET_AND_INIT = 'NCP_NEEDS_RESET_AND_INIT',
 
     //-- ezspIncomingMessageHandler
-    /** params => sender: NodeId, apsFrame: EmberApsFrame, payload: depends on apsFrame.clusterId */
+    /** params => apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer */
     ZDO_RESPONSE = 'ZDO_RESPONSE',
     /** params => type: EmberIncomingMessageType, apsFrame: EmberApsFrame, lastHopLqi: number, sender: NodeId, messageContents: Buffer */
     INCOMING_MESSAGE = 'INCOMING_MESSAGE',
@@ -5186,15 +5185,7 @@ export class Ezsp extends EventEmitter {
         );
 
         if (apsFrame.profileId === Zdo.ZDO_PROFILE_ID) {
-            try {
-                const payload = BuffaloZdo.readResponse(apsFrame.clusterId, messageContents);
-
-                logger.debug(`<=== [ZDO ${Zdo.ClusterId[apsFrame.clusterId]} ${payload ? JSON.stringify(payload) : ''}]`, NS);
-
-                this.emit(EzspEvents.ZDO_RESPONSE, packetInfo.senderShortId, apsFrame, payload);
-            } catch (error) {
-                this.emit(EzspEvents.ZDO_RESPONSE, packetInfo.senderShortId, apsFrame, error);
-            }
+            this.emit(EzspEvents.ZDO_RESPONSE, apsFrame, packetInfo.senderShortId, messageContents);
         } else if (apsFrame.profileId === ZSpec.HA_PROFILE_ID || apsFrame.profileId === ZSpec.WILDCARD_PROFILE_ID) {
             this.emit(EzspEvents.INCOMING_MESSAGE, type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
         } else if (apsFrame.profileId === ZSpec.GP_PROFILE_ID) {

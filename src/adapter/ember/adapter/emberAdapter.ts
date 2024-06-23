@@ -16,6 +16,7 @@ import {
     DeviceJoinedPayload,
     DeviceLeavePayload,
     Events,
+    NetworkAddressPayload,
     ZclPayload
 } from '../../events';
 import {halCommonCrc16, highByte, highLowToInt, lowByte, lowHighBytes} from '../utils/math';
@@ -44,7 +45,6 @@ import {
     EmberNodeType,
     EmberNetworkStatus,
     SecManKeyType,
-    EmberLeaveRequestFlags,
     EmberInterpanMessageType,
     EmberSourceRouteDiscoveryMode,
     EmberTXPowerMode,
@@ -103,6 +103,7 @@ import {EmberOneWaitress, OneWaitressEvents} from './oneWaitress';
 import {logger} from '../../../utils/logger';
 import {EUI64, ExtendedPanId, NodeId, PanId} from '../../../zspec/tstypes';
 import {EzspError} from '../ezspError';
+import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
 // import {EmberTokensManager} from './tokensManager';
 
 const NS = 'zh:ember';
@@ -322,8 +323,6 @@ export class EmberAdapter extends Adapter {
     /** Periodically retrieve counters then clear them. */
     private watchdogCountersHandle: NodeJS.Timeout;
 
-    /** Hold ZDO request in process. */
-    private readonly zdoRequestBuffalo: EzspBuffalo;
     /** Sequence number used for ZDO requests. static uint8_t  */
     private zdoRequestSequence: number;
     /** Default radius used for broadcast ZDO requests. uint8_t */
@@ -349,7 +348,6 @@ export class EmberAdapter extends Adapter {
 
         this.requestQueue = new EmberRequestQueue(delay);
         this.oneWaitress = new EmberOneWaitress();
-        this.zdoRequestBuffalo = new EzspBuffalo(Buffer.alloc(EZSP_MAX_FRAME_LENGTH));
 
         this.ezsp = new Ezsp(delay, serialPortOptions);
 
@@ -605,12 +603,26 @@ export class EmberAdapter extends Adapter {
     /**
      * Emitted from @see Ezsp.ezspIncomingMessageHandler
      * 
-     * @param clusterId The ZDO response cluster ID.
+     * @param apsFrame The APS frame associated with the response.
      * @param sender The sender of the response. Should match `payload.nodeId` in many responses.
-     * @param payload If ZdoStatusError, the response indicated a failure.
+     * @param messageContents The content of the response.
      */
-    private async onZDOResponse(sender: NodeId, apsFrame: EmberApsFrame, payload: unknown | Zdo.StatusError): Promise<void> {
-        this.oneWaitress.resolveZDO(sender, apsFrame, payload);
+    private async onZDOResponse(apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer): Promise<void> {
+        try {
+            const payload = BuffaloZdo.readResponse(apsFrame.clusterId, messageContents);
+
+            logger.debug(`<~~~ [ZDO ${Zdo.ClusterId[apsFrame.clusterId]} from=${sender} ${payload ? JSON.stringify(payload) : 'OK'}]`, NS);
+            this.oneWaitress.resolveZDO(sender, apsFrame, payload);
+
+            if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
+                this.emit(Events.networkAddress, {
+                    networkAddress: (payload as ZdoTypes.NetworkAddressResponse).nwkAddress,
+                    ieeeAddr: (payload as ZdoTypes.NetworkAddressResponse).eui64
+                } as NetworkAddressPayload);
+            }
+        } catch (error) {
+            this.oneWaitress.resolveZDO(sender, apsFrame, error);
+        }
     }
 
     /**
@@ -812,7 +824,6 @@ export class EmberAdapter extends Adapter {
 
         clearInterval(this.watchdogCountersHandle);
 
-        this.zdoRequestBuffalo.setPosition(0);
         this.zdoRequestSequence = 0;// start at 1
         this.zdoRequestRadius = 255;
 
@@ -1848,7 +1859,14 @@ export class EmberAdapter extends Adapter {
 
         if (broadcastMgmtPermitJoin) {
             // `authentication`: TC significance always 1 (zb specs)
-            [status, apsFrame, messageTag] = (await this.emberPermitJoiningRequest(ZSpec.BroadcastAddress.DEFAULT, duration, 1, DEFAULT_APS_OPTIONS));
+            const zdoPayload = BuffaloZdo.buildPermitJoining(duration, 1, []);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            [status, apsFrame, messageTag] = await this.sendZDORequest(
+                ZSpec.BroadcastAddress.DEFAULT,
+                Zdo.ClusterId.PERMIT_JOINING_REQUEST,
+                zdoPayload,
+                DEFAULT_APS_OPTIONS,
+            );
         }
 
         return [status, apsFrame, messageTag];
@@ -1916,21 +1934,20 @@ export class EmberAdapter extends Adapter {
      * 
      * @param destination 
      * @param clusterId uint16_t
+     * @param messageContents Content of the ZDO request (sequence to be assigned at index zero)
      * @param options 
-     * @param length uint8_t
      * @returns status Indicates success or failure (with reason) of send
      * @returns apsFrame The APS Frame resulting of the request being built and sent (`sequence` set from stack-given value).
      * @returns messageTag The tag passed to ezspSend${x} function.
      */
-    private async sendZDORequestBuffer(destination: NodeId, clusterId: number, options: EmberApsOption):
+    private async sendZDORequest(destination: NodeId, clusterId: number, messageContents: Buffer, options: EmberApsOption):
         Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        if (this.zdoRequestBuffalo.getPosition() > EZSP_MAX_FRAME_LENGTH) {
+        if (messageContents.length > EZSP_MAX_FRAME_LENGTH) {
             return [SLStatus.MESSAGE_TOO_LONG, null, null];
         }
 
         const messageTag = this.nextZDORequestSequence();
-
-        this.zdoRequestBuffalo.setCommandByte(0, messageTag);
+        messageContents[0] = messageTag;
 
         const apsFrame: EmberApsFrame = {
             profileId: Zdo.ZDO_PROFILE_ID,
@@ -1941,12 +1958,12 @@ export class EmberAdapter extends Adapter {
             groupId: 0,
             sequence: 0,// set by stack
         };
-        const messageContents = this.zdoRequestBuffalo.getWritten();
 
         if (destination === ZSpec.BroadcastAddress.DEFAULT || destination === ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE
             || destination === ZSpec.BroadcastAddress.SLEEPY) {
-            logger.debug(`~~~> [ZDO BROADCAST apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}]`, NS);
-            const [status, apsSequence] = (await this.ezsp.ezspSendBroadcast(
+            logger.debug(`~~~> [ZDO ${Zdo.ClusterId[clusterId]} BROADCAST to=${destination} messageTag=${messageTag} `
+                + `messageContents=${messageContents.toString('hex')}]`, NS);
+            const [status, apsSequence] = await this.ezsp.ezspSendBroadcast(
                 ZSpec.NULL_NODE_ID,// alias
                 destination,
                 0,// nwkSequence
@@ -1954,610 +1971,26 @@ export class EmberAdapter extends Adapter {
                 this.getZDORequestRadius(),
                 messageTag,
                 messageContents,
-            ));
+            );
             apsFrame.sequence = apsSequence;
 
-            logger.debug(
-                `~~~> [SENT ZDO type=BROADCAST apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag} status=${SLStatus[status]}]`,
-                NS,
-            );
+            logger.debug(`~~~> [SENT ZDO type=BROADCAST apsSequence=${apsSequence} messageTag=${messageTag} status=${SLStatus[status]}`, NS);
             return [status, apsFrame, messageTag];
         } else {
-            logger.debug(`~~~> [ZDO UNICAST apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}]`, NS);
-            const [status, apsSequence] = (await this.ezsp.ezspSendUnicast(
+            logger.debug(`~~~> [ZDO ${Zdo.ClusterId[clusterId]} UNICAST to=${destination} messageTag=${messageTag} `
+                + `messageContents=${messageContents.toString('hex')}]`, NS);
+            const [status, apsSequence] = await this.ezsp.ezspSendUnicast(
                 EmberOutgoingMessageType.DIRECT,
                 destination,
                 apsFrame,
                 messageTag,
                 messageContents,
-            ));
+            );
             apsFrame.sequence = apsSequence;
 
-            logger.debug(
-                `~~~> [SENT ZDO type=DIRECT apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag} status=${SLStatus[status]}]`,
-                NS,
-            );
+            logger.debug(`~~~> [SENT ZDO type=DIRECT apsSequence=${apsSequence} messageTag=${messageTag} status=${SLStatus[status]}`, NS);
             return [status, apsFrame, messageTag];
         }
-    }
-
-    /**
-     * ZDO
-     * Service Discovery Functions
-     * Request the specified node to send a list of its endpoints that
-     * match the specified application profile and, optionally, lists of input
-     * and/or output clusters.
-     * @param target  The node whose matching endpoints are desired. The request can
-     * be sent unicast or broadcast ONLY to the "RX-on-when-idle-address" (0xFFFD)
-     * If sent as a broadcast, any node that has matching endpoints will send a
-     * response.
-     * @param profile uint16_t The application profile to match.
-     * @param inCount uint8_t The number of input clusters. To not match any input
-     * clusters, set this value to 0.
-     * @param outCount uint8_t The number of output clusters. To not match any output
-     * clusters, set this value to 0.
-     * @param inClusters uint16_t * The list of input clusters.
-     * @param outClusters uint16_t * The list of output clusters.
-     * @param options  The options to use when sending the unicast request. See
-     * emberSendUnicast() for a description. This parameter is ignored if the target
-     * is a broadcast address.
-     * @returns An SLStatus value. EMBER_SUCCESS, MESSAGE_TOO_LONG,
-     * EMBER_NETWORK_DOWN or EMBER_NETWORK_BUSY.
-     */
-    private async emberMatchDescriptorsRequest(target: NodeId, profile: number, inClusters: number[], outClusters: number[],
-        options: EmberApsOption): Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        // 2 bytes for NWK Address + 2 bytes for Profile Id + 1 byte for in Cluster Count
-        // + in times 2 for 2 byte Clusters + out Cluster Count + out times 2 for 2 byte Clusters
-        const length = (Zdo.ZDO_MESSAGE_OVERHEAD + 2 + 2 + 1 + (inClusters.length * 2) + 1 + (outClusters.length * 2));
-
-        // sanity check
-        if (length > EZSP_MAX_FRAME_LENGTH) {
-            return [SLStatus.MESSAGE_TOO_LONG, null, null];
-        }
-
-        this.zdoRequestBuffalo.setPosition(Zdo.ZDO_MESSAGE_OVERHEAD);
-
-        this.zdoRequestBuffalo.writeUInt16(target);
-        this.zdoRequestBuffalo.writeUInt16(profile);
-        this.zdoRequestBuffalo.writeUInt8(inClusters.length);
-        this.zdoRequestBuffalo.writeListUInt16(inClusters);
-        this.zdoRequestBuffalo.writeUInt8(outClusters.length);
-        this.zdoRequestBuffalo.writeListUInt16(outClusters);
-
-        logger.debug(
-            `~~~> [ZDO MATCH_DESCRIPTORS_REQUEST target=${target} profile=${profile} inClusters=${inClusters} outClusters=${outClusters}]`,
-            NS,
-        );
-        return this.sendZDORequestBuffer(target, Zdo.ClusterId.MATCH_DESCRIPTORS_REQUEST, options);
-    }
-
-    /**
-     * ZDO
-     * Device Discovery Functions
-     * Request the 16 bit network address of a node whose EUI64 is known.
-     *
-     * @param target           The EUI64 of the node.
-     * @param reportKids       true to request that the target list their children
-     *                         in the response.
-     * @param childStartIndex uint8_t The index of the first child to list in the response.
-     *                         Ignored if @c reportKids is false.
-     *
-     * @return An ::SLStatus value.
-     * - ::EMBER_SUCCESS - The request was transmitted successfully.
-     * - ::EMBER_NO_BUFFERS - Insufficient message buffers were available to construct the request.
-     * - ::EMBER_NETWORK_DOWN - The node is not part of a network.
-     * - ::EMBER_NETWORK_BUSY - Transmission of the request failed.
-     */
-    private async emberNetworkAddressRequest(target: EUI64, reportKids: boolean, childStartIndex: number)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        this.zdoRequestBuffalo.setPosition(Zdo.ZDO_MESSAGE_OVERHEAD);
-
-        this.zdoRequestBuffalo.writeIeeeAddr(target);
-        this.zdoRequestBuffalo.writeUInt8(reportKids ? 1 : 0);
-        this.zdoRequestBuffalo.writeUInt8(childStartIndex);
-
-        logger.debug(`~~~> [ZDO NETWORK_ADDRESS_REQUEST target=${target} reportKids=${reportKids} childStartIndex=${childStartIndex}]`, NS);
-        return this.sendZDORequestBuffer(ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, EmberApsOption.SOURCE_EUI64);
-    }
-
-    /**
-     * ZDO
-     * Device Discovery Functions
-     * @brief Request the EUI64 of a node whose 16 bit network address is known.
-     *
-     * @param target uint16_t The network address of the node.
-     * @param reportKids uint8_t true to request that the target list their children
-     *                         in the response.
-     * @param childStartIndex uint8_t The index of the first child to list in the response.
-     *                         Ignored if reportKids is false.
-     * @param options The options to use when sending the request. See ::emberSendUnicast() for a description.
-     *
-     * @return An ::SLStatus value.
-     * - ::EMBER_SUCCESS
-     * - ::EMBER_NO_BUFFERS
-     * - ::EMBER_NETWORK_DOWN
-     * - ::EMBER_NETWORK_BUSY
-     */
-    private async emberIeeeAddressRequest(target: NodeId, reportKids: boolean, childStartIndex: number, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        this.zdoRequestBuffalo.setPosition(Zdo.ZDO_MESSAGE_OVERHEAD);
-
-        this.zdoRequestBuffalo.writeUInt16(target);
-        this.zdoRequestBuffalo.writeUInt8(reportKids ? 1 : 0);
-        this.zdoRequestBuffalo.writeUInt8(childStartIndex);
-
-        logger.debug(`~~~> [ZDO IEEE_ADDRESS_REQUEST target=${target} reportKids=${reportKids} childStartIndex=${childStartIndex}]`, NS);
-        return this.sendZDORequestBuffer(target, Zdo.ClusterId.IEEE_ADDRESS_REQUEST, options);
-    }
-
-    /**
-     * ZDO
-     * @param discoveryNodeId uint16_t
-     * @param reportKids uint8_t
-     * @param childStartIndex uint8_t
-     * @param options 
-     * @param targetNodeIdOfRequest 
-     */
-    private async emberIeeeAddressRequestToTarget(discoveryNodeId: NodeId, reportKids: boolean, childStartIndex: number,
-        options: EmberApsOption, targetNodeIdOfRequest: NodeId): Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        this.zdoRequestBuffalo.setPosition(Zdo.ZDO_MESSAGE_OVERHEAD);
-
-        this.zdoRequestBuffalo.writeUInt16(discoveryNodeId);
-        this.zdoRequestBuffalo.writeUInt8(reportKids ? 1 : 0);
-        this.zdoRequestBuffalo.writeUInt8(childStartIndex);
-
-        logger.debug(`~~~> [ZDO IEEE_ADDRESS_REQUEST targetNodeIdOfRequest=${targetNodeIdOfRequest} discoveryNodeId=${discoveryNodeId} `
-            + `reportKids=${reportKids} childStartIndex=${childStartIndex}]`, NS);
-        return this.sendZDORequestBuffer(targetNodeIdOfRequest, Zdo.ClusterId.IEEE_ADDRESS_REQUEST, options);
-    }
-
-    /**
-     * ZDO
-     * 
-     * @param target uint16_t
-     * @param clusterId uint16_t
-     * @param options 
-     * @returns 
-     */
-    private async emberSendZigDevRequestTarget(target: NodeId, clusterId: number, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        this.zdoRequestBuffalo.setPosition(Zdo.ZDO_MESSAGE_OVERHEAD);
-
-        this.zdoRequestBuffalo.writeUInt16(target);
-
-        return this.sendZDORequestBuffer(target, clusterId, options);
-    }
-
-    /**
-     * ZDO
-     * @brief Request the specified node to send the simple descriptor for
-     * the specified endpoint.
-     * The simple descriptor contains information specific
-     * to a single endpoint. It describes the application profile identifier,
-     * application device identifier, application device version, application flags,
-     * application input clusters and application output clusters. It is defined in
-     * the ZigBee Application Framework Specification.
-     *
-     * @param target uint16_t The node of interest.
-     * @param targetEndpoint uint8_t The endpoint on the target node whose simple
-     * descriptor is desired.
-     * @param options  The options to use when sending the request. See
-     * emberSendUnicast() for a description.
-     *
-     * @return An SLStatus value. ::EMBER_SUCCESS, ::EMBER_NO_BUFFERS,
-     * ::EMBER_NETWORK_DOWN or ::EMBER_NETWORK_BUSY.
-     */
-    private async emberSimpleDescriptorRequest(target: NodeId, targetEndpoint: number, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        this.zdoRequestBuffalo.setPosition(Zdo.ZDO_MESSAGE_OVERHEAD);
-
-        this.zdoRequestBuffalo.writeUInt16(target);
-        this.zdoRequestBuffalo.writeUInt8(targetEndpoint);
-
-        logger.debug(`~~~> [ZDO SIMPLE_DESCRIPTOR_REQUEST target=${target} targetEndpoint=${targetEndpoint}]`, NS);
-        return this.sendZDORequestBuffer(target, Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST, options);
-    }
-
-    /**
-     * ZDO
-     * Common logic used by `emberBindRequest` & `emberUnbindRequest`.
-     * 
-     * @param target 
-     * @param bindClusterId 
-     * @param source 
-     * @param sourceEndpoint 
-     * @param clusterId 
-     * @param type 
-     * @param destination 
-     * @param groupAddress 
-     * @param destinationEndpoint 
-     * @param options 
-     *
-     * @returns An ::SLStatus value.
-     * - ::EMBER_SUCCESS
-     * - ::EMBER_NO_BUFFERS
-     * - ::EMBER_NETWORK_DOWN
-     * - ::EMBER_NETWORK_BUSY
-     * @returns APS frame created for the request
-     * @returns The tag used on the message.
-     */
-    private async emberSendZigDevBindRequest(target: NodeId, bindClusterId: number, source: EUI64, sourceEndpoint: number,
-        clusterId: number, type: number, destination: EUI64, groupAddress: EmberMulticastId, destinationEndpoint: number,
-        options: EmberApsOption): Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        this.zdoRequestBuffalo.setPosition(Zdo.ZDO_MESSAGE_OVERHEAD);
-
-        this.zdoRequestBuffalo.writeIeeeAddr(source);
-        this.zdoRequestBuffalo.writeUInt8(sourceEndpoint);
-        this.zdoRequestBuffalo.writeUInt16(clusterId);
-        this.zdoRequestBuffalo.writeUInt8(type);
-
-        switch (type) {
-        case Zdo.UNICAST_BINDING:
-            this.zdoRequestBuffalo.writeIeeeAddr(destination);
-            this.zdoRequestBuffalo.writeUInt8(destinationEndpoint);
-            break;
-        case Zdo.MULTICAST_BINDING:
-            this.zdoRequestBuffalo.writeUInt16(groupAddress);
-            break;
-        default:
-            return [SLStatus.FAIL, null, null];
-        }
-
-        return this.sendZDORequestBuffer(target, bindClusterId, options);
-    }
-
-    /**
-     * ZDO
-     * Send a request to create a binding entry with the specified
-     * contents on the specified node.
-     *
-     * @param target  The node on which the binding will be created.
-     * @param source  The source EUI64 in the binding entry.
-     * @param sourceEndpoint  The source endpoint in the binding entry.
-     * @param clusterId  The cluster ID in the binding entry.
-     * @param type  The type of binding, either ::UNICAST_BINDING,
-     *   ::MULTICAST_BINDING, or ::UNICAST_MANY_TO_ONE_BINDING.
-     *   ::UNICAST_MANY_TO_ONE_BINDING is an Ember-specific extension
-     *   and should be used only when the target is an Ember device.
-     * @param destination  The destination EUI64 in the binding entry for
-     *   ::UNICAST_BINDING or ::UNICAST_MANY_TO_ONE_BINDING.
-     * @param groupAddress  The group address for the ::MULTICAST_BINDING.
-     * @param destinationEndpoint  The destination endpoint in the binding entry for
-     *   the ::UNICAST_BINDING or ::UNICAST_MANY_TO_ONE_BINDING.
-     * @param options  The options to use when sending the request. See
-     * emberSendUnicast() for a description.
-     *
-     * @returns An ::SLStatus value.
-     * - ::EMBER_SUCCESS
-     * - ::EMBER_NO_BUFFERS
-     * - ::EMBER_NETWORK_DOWN
-     * - ::EMBER_NETWORK_BUSY
-     * @returns APS frame created for the request
-     * @returns The tag used on the message.
-     */
-    private async emberBindRequest(target: NodeId, source: EUI64, sourceEndpoint: number, clusterId: number, type: number,
-        destination: EUI64, groupAddress: EmberMulticastId, destinationEndpoint: number, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        logger.debug(`~~~> [ZDO BIND_REQUEST target=${target} source=${source} sourceEndpoint=${sourceEndpoint} clusterId=${clusterId} type=${type} `
-            + `destination=${destination} groupAddress=${groupAddress} destinationEndpoint=${destinationEndpoint}]`, NS);
-        return this.emberSendZigDevBindRequest(
-            target,
-            Zdo.ClusterId.BIND_REQUEST,
-            source,
-            sourceEndpoint,
-            clusterId,
-            type,
-            destination,
-            groupAddress,
-            destinationEndpoint,
-            options
-        );
-    }
-
-    /**
-     * ZDO
-     * Send a request to remove a binding entry with the specified
-     * contents from the specified node.
-     *
-     * @param target          The node on which the binding will be removed.
-     * @param source          The source EUI64 in the binding entry.
-     * @param sourceEndpoint uint8_t The source endpoint in the binding entry.
-     * @param clusterId uint16_t      The cluster ID in the binding entry.
-     * @param type uint8_t           The type of binding, either ::UNICAST_BINDING,
-     *  ::MULTICAST_BINDING, or ::UNICAST_MANY_TO_ONE_BINDING.
-     *  ::UNICAST_MANY_TO_ONE_BINDING is an Ember-specific extension
-     *  and should be used only when the target is an Ember device.
-     * @param destination     The destination EUI64 in the binding entry for the
-     *   ::UNICAST_BINDING or ::UNICAST_MANY_TO_ONE_BINDING.
-     * @param groupAddress    The group address for the ::MULTICAST_BINDING.
-     * @param destinationEndpoint uint8_t The destination endpoint in the binding entry for
-     *   the ::UNICAST_BINDING or ::UNICAST_MANY_TO_ONE_BINDING.
-     * @param options         The options to use when sending the request. See
-     * emberSendUnicast() for a description.
-     *
-     * @returns An ::SLStatus value.
-     * - ::EMBER_SUCCESS
-     * - ::EMBER_NO_BUFFERS
-     * - ::EMBER_NETWORK_DOWN
-     * - ::EMBER_NETWORK_BUSY
-     * @returns APS frame created for the request
-     * @returns The tag used on the message.
-     */
-    private async emberUnbindRequest(target: NodeId, source: EUI64, sourceEndpoint: number, clusterId: number, type: number,
-        destination: EUI64, groupAddress: EmberMulticastId, destinationEndpoint: number, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        logger.debug(
-            `~~~> [ZDO UNBIND_REQUEST target=${target} source=${source} sourceEndpoint=${sourceEndpoint} clusterId=${clusterId} type=${type} `
-                + `destination=${destination} groupAddress=${groupAddress} destinationEndpoint=${destinationEndpoint}]`,
-            NS,
-        );
-        return this.emberSendZigDevBindRequest(
-            target,
-            Zdo.ClusterId.UNBIND_REQUEST,
-            source,
-            sourceEndpoint,
-            clusterId,
-            type,
-            destination,
-            groupAddress,
-            destinationEndpoint,
-            options
-        );
-    }
-
-    /**
-     * ZDO
-     * Request the specified node to send a list of its active
-     * endpoints. An active endpoint is one for which a simple descriptor is
-     * available.
-     *
-     * @param target  The node whose active endpoints are desired.
-     * @param options  The options to use when sending the request. See
-     * emberSendUnicast() for a description.
-     *
-     * @return An SLStatus value. ::EMBER_SUCCESS, ::EMBER_NO_BUFFERS,
-     * ::EMBER_NETWORK_DOWN or ::EMBER_NETWORK_BUSY.
-     */
-    private async emberActiveEndpointsRequest(target: NodeId, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        logger.debug(`~~~> [ZDO ACTIVE_ENDPOINTS_REQUEST target=${target}]`, NS);
-        return this.emberSendZigDevRequestTarget(target, Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST, options);
-    }
-
-    /**
-     * ZDO
-     * Request the specified node to send its power descriptor.
-     * The power descriptor gives a dynamic indication of the power
-     * status of the node. It describes current power mode,
-     * available power sources, current power source and
-     * current power source level. It is defined in the ZigBee
-     * Application Framework Specification.
-     *
-     * @param target  The node whose power descriptor is desired.
-     * @param options  The options to use when sending the request. See
-     * emberSendUnicast() for a description.
-     *
-     * @return An SLStatus value. ::EMBER_SUCCESS, ::EMBER_NO_BUFFERS,
-     * ::EMBER_NETWORK_DOWN or ::EMBER_NETWORK_BUSY.
-     */
-    private async emberPowerDescriptorRequest(target: NodeId, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        logger.debug(`~~~> [ZDO POWER_DESCRIPTOR_REQUEST target=${target}]`, NS);
-        return this.emberSendZigDevRequestTarget(target, Zdo.ClusterId.POWER_DESCRIPTOR_REQUEST, options);
-    }
-
-    /**
-     * ZDO
-     * Request the specified node to send its node descriptor.
-     * The node descriptor contains information about the capabilities of the ZigBee
-     * node. It describes logical type, APS flags, frequency band, MAC capabilities
-     * flags, manufacturer code and maximum buffer size. It is defined in the ZigBee
-     * Application Framework Specification.
-     *
-     * @param target  The node whose node descriptor is desired.
-     * @param options  The options to use when sending the request. See
-     * emberSendUnicast() for a description.
-     *
-     * @return An ::SLStatus value. ::EMBER_SUCCESS, ::EMBER_NO_BUFFERS,
-     * ::EMBER_NETWORK_DOWN or ::EMBER_NETWORK_BUSY.
-     */
-    private async emberNodeDescriptorRequest(target: NodeId, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        logger.debug(`~~~> [ZDO NODE_DESCRIPTOR_REQUEST target=${target}]`, NS);
-        return this.emberSendZigDevRequestTarget(target, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, options);
-    }
-
-    /**
-     * ZDO
-     * Request the specified node to send its LQI (neighbor) table.
-     * The response gives PAN ID, EUI64, node ID and cost for each neighbor. The
-     * EUI64 is only available if security is enabled. The other fields in the
-     * response are set to zero. The response format is defined in the ZigBee Device
-     * Profile Specification.
-     *
-     * @param target  The node whose LQI table is desired.
-     * @param startIndex uint8_t The index of the first neighbor to include in the
-     * response.
-     * @param options  The options to use when sending the request. See
-     * emberSendUnicast() for a description.
-     *
-     * @return An SLStatus value. ::EMBER_SUCCESS, ::EMBER_NO_BUFFERS,
-     * ::EMBER_NETWORK_DOWN or ::EMBER_NETWORK_BUSY.
-     */
-    private async emberLqiTableRequest(target: NodeId, startIndex: number, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        logger.debug(`~~~> [ZDO LQI_TABLE_REQUEST target=${target} startIndex=${startIndex}]`, NS);
-        return this.emberTableRequest(Zdo.ClusterId.LQI_TABLE_REQUEST, target, startIndex, options);
-    }
-
-    /**
-     * ZDO
-     * Request the specified node to send its routing table.
-     * The response gives destination node ID, status and many-to-one flags,
-     * and the next hop node ID.
-     * The response format is defined in the ZigBee Device
-     * Profile Specification.
-     *
-     * @param target  The node whose routing table is desired.
-     * @param startIndex uint8_t The index of the first route entry to include in the
-     * response.
-     * @param options  The options to use when sending the request. See
-     * emberSendUnicast() for a description.
-     *
-     * @return An SLStatus value. ::EMBER_SUCCESS, ::EMBER_NO_BUFFERS,
-     * ::EMBER_NETWORK_DOWN or ::EMBER_NETWORK_BUSY.
-     */
-    private async emberRoutingTableRequest(target: NodeId, startIndex: number, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        logger.debug(`~~~> [ZDO ROUTING_TABLE_REQUEST target=${target} startIndex=${startIndex}]`, NS);
-        return this.emberTableRequest(Zdo.ClusterId.ROUTING_TABLE_REQUEST, target, startIndex, options);
-    }
-
-    /**
-     * ZDO
-     * Request the specified node to send its nonvolatile bindings.
-     * The response gives source address, source endpoint, cluster ID, destination
-     * address and destination endpoint for each binding entry. The response format
-     * is defined in the ZigBee Device Profile Specification.
-     * Note that bindings that have the Ember-specific ::UNICAST_MANY_TO_ONE_BINDING
-     * type are reported as having the standard ::UNICAST_BINDING type.
-     *
-     * @param target  The node whose binding table is desired.
-     * @param startIndex uint8_t The index of the first binding entry to include in the
-     * response.
-     * @param options  The options to use when sending the request. See
-     * emberSendUnicast() for a description.
-     *
-     * @return An SLStatus value. ::EMBER_SUCCESS, ::EMBER_NO_BUFFERS,
-     * ::EMBER_NETWORK_DOWN or ::EMBER_NETWORK_BUSY.
-     */
-    private async emberBindingTableRequest(target: NodeId, startIndex: number, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        logger.debug(`~~~> [ZDO BINDING_TABLE_REQUEST target=${target} startIndex=${startIndex}]`, NS);
-        return this.emberTableRequest(Zdo.ClusterId.BINDING_TABLE_REQUEST, target, startIndex, options);
-    }
-
-    /**
-     * ZDO
-     * 
-     * @param clusterId uint16_t
-     * @param target 
-     * @param startIndex uint8_t
-     * @param options 
-     * @returns 
-     */
-    private async emberTableRequest(clusterId: number, target: NodeId, startIndex: number, options: EmberApsOption)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        this.zdoRequestBuffalo.setPosition(Zdo.ZDO_MESSAGE_OVERHEAD);
-
-        this.zdoRequestBuffalo.writeUInt8(startIndex);
-
-        return this.sendZDORequestBuffer(target, clusterId, options);
-    }
-
-    /**
-     * ZDO
-     * Request the specified node to remove the specified device from
-     * the network. The device to be removed must be the node to which the request
-     * is sent or one of its children.
-     *
-     * @param target  The node which will remove the device.
-     * @param deviceAddress  All zeros if the target is to remove itself from
-     *    the network or the EUI64 of a child of the target device to remove
-     *    that child.
-     * @param leaveRequestFlags uint8_t A bitmask of leave options.
-     *   Include ::AND_REJOIN if the target is to rejoin the network immediately after leaving.
-     * @param options  The options to use when sending the request. See
-     * emberSendUnicast() for a description.
-     *
-     * @return An SLStatus value. ::EMBER_SUCCESS, ::EMBER_NO_BUFFERS,
-     * ::EMBER_NETWORK_DOWN or ::EMBER_NETWORK_BUSY.
-     */
-    private async emberLeaveRequest(target: NodeId, deviceAddress: EUI64, leaveRequestFlags: number, options: EmberApsOption):
-        Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        this.zdoRequestBuffalo.setPosition(Zdo.ZDO_MESSAGE_OVERHEAD);
-
-        this.zdoRequestBuffalo.writeIeeeAddr(deviceAddress);
-        this.zdoRequestBuffalo.writeUInt8(leaveRequestFlags);
-
-        logger.debug(`~~~> [ZDO LEAVE_REQUEST target=${target} deviceAddress=${deviceAddress} leaveRequestFlags=${leaveRequestFlags}]`, NS);
-        return this.sendZDORequestBuffer(target, Zdo.ClusterId.LEAVE_REQUEST, options);
-    }
-
-    /**
-     * ZDO
-     * Request the specified node to allow or disallow association.
-     *
-     * @param target  The node which will allow or disallow association. The request
-     * can be broadcast by using a broadcast address (0xFFFC/0xFFFD/0xFFFF). No
-     * response is sent if the request is broadcast.
-     * @param duration uint8_t A value of 0x00 disables joining. A value of 0xFF enables
-     * joining.  Any other value enables joining for that number of seconds.
-     * @param authentication uint8_t Controls Trust Center authentication behavior.
-     * @param options  The options to use when sending the request. See
-     * emberSendUnicast() for a description. This parameter is ignored if the target
-     * is a broadcast address.
-     *
-     * @return An SLStatus value. ::EMBER_SUCCESS, ::EMBER_NO_BUFFERS,
-     * ::EMBER_NETWORK_DOWN or ::EMBER_NETWORK_BUSY.
-     */
-    private async emberPermitJoiningRequest(target: NodeId, duration: number, authentication: number, options: EmberApsOption):
-        Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        this.zdoRequestBuffalo.setPosition(Zdo.ZDO_MESSAGE_OVERHEAD);
-
-        this.zdoRequestBuffalo.writeUInt8(duration);
-        this.zdoRequestBuffalo.writeUInt8(authentication);
-
-        logger.debug(`~~~> [ZDO PERMIT_JOINING_REQUEST target=${target} duration=${duration} authentication=${authentication}]`, NS);
-        return this.sendZDORequestBuffer(target, Zdo.ClusterId.PERMIT_JOINING_REQUEST, options);
-    }
-
-    /**
-     * ZDO 
-     * 
-     * @see NWK_UPDATE_REQUEST
-     * 
-     * @param target 
-     * @param scanChannels uint8_t[]
-     * @param duration uint8_t 
-     * @param count uint8_t
-     * @param manager 
-     */
-    private async emberNetworkUpdateRequest(target: NodeId, scanChannels: number[], duration: number, count: number | null,
-        manager: NodeId | null, options: EmberApsOption): Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        this.zdoRequestBuffalo.setPosition(Zdo.ZDO_MESSAGE_OVERHEAD);
-
-        this.zdoRequestBuffalo.writeUInt32(scanChannels.reduce((a, c) => a + (1 << c), 0));// to uint32_t
-        this.zdoRequestBuffalo.writeUInt8(duration);
-
-        if (count != null) {
-            this.zdoRequestBuffalo.writeUInt8(count);
-        }
-
-        if (manager != null) {
-            this.zdoRequestBuffalo.writeUInt16(manager);
-        }
-
-        logger.debug(
-            `~~~> [ZDO NWK_UPDATE_REQUEST target=${target} scanChannels=${scanChannels} duration=${duration} count=${count} manager=${manager}]`,
-            NS,
-        );
-        return this.sendZDORequestBuffer(target, Zdo.ClusterId.NWK_UPDATE_REQUEST, options);
-    }
-
-    private async emberScanChannelsRequest(target: NodeId, scanChannels: number[], duration: number, count: number, options: EmberApsOption):
-        Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        return this.emberNetworkUpdateRequest(target, scanChannels, duration, count, null, options);
-    }
-
-    private async emberChannelChangeRequest(target: NodeId, channel: number, options: EmberApsOption):
-        Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        return this.emberNetworkUpdateRequest(target, [channel], 0xFE, null, null, options);
-    }
-
-    private async emberSetActiveChannelsAndNwkManagerIdRequest(target: NodeId, scanChannels: number[], manager: NodeId,
-        options: EmberApsOption): Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        return this.emberNetworkUpdateRequest(target, scanChannels, 0xFF, null, manager, options);
     }
 
     //---- END Ember ZDO
@@ -2790,12 +2223,14 @@ export class EmberAdapter extends Adapter {
                 async (): Promise<SLStatus> => {
                     this.checkInterpanLock();
 
+                    const zdoPayload = BuffaloZdo.buildChannelChangeRequest(newChannel, null);
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = (await this.emberChannelChangeRequest(
+                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
                         ZSpec.BroadcastAddress.SLEEPY,
-                        newChannel,
+                        Zdo.ClusterId.NWK_UPDATE_REQUEST,
+                        zdoPayload,
                         DEFAULT_APS_OPTIONS,
-                    ));
+                    );
 
                     if (status !== SLStatus.OK) {
                         logger.error(`[ZDO] Failed broadcast channel change to "${newChannel}" with status=${SLStatus[status]}.`, NS);
@@ -2823,14 +2258,14 @@ export class EmberAdapter extends Adapter {
                 async (): Promise<SLStatus> => {
                     this.checkInterpanLock();
 
+                    const zdoPayload = BuffaloZdo.buildScanChannelsRequest(channels, duration, count);
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = (await this.emberScanChannelsRequest(
+                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
                         networkAddress,
-                        channels,
-                        duration,
-                        count,
+                        Zdo.ClusterId.NWK_UPDATE_REQUEST,
+                        zdoPayload,
                         DEFAULT_APS_OPTIONS,
-                    ));
+                    );
 
                     if (status !== SLStatus.OK) {
                         logger.error(`[ZDO] Failed to scan channels '${channels}' on '${networkAddress} with status=${SLStatus[status]}.`, NS);
@@ -3019,8 +2454,14 @@ export class EmberAdapter extends Adapter {
                         }
 
                         // `authentication`: TC significance always 1 (zb specs)
+                        const zdoPayload = BuffaloZdo.buildPermitJoining(seconds, 1, []);
                         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = (await this.emberPermitJoiningRequest(networkAddress, seconds, 1, 0));
+                        const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                            networkAddress,
+                            Zdo.ClusterId.PERMIT_JOINING_REQUEST,
+                            zdoPayload,
+                            DEFAULT_APS_OPTIONS,// XXX: SDK has 0 here?
+                        );
 
                         if (status !== SLStatus.OK) {
                             logger.error(`[ZDO] Failed permit joining request for "${networkAddress}" with status=${SLStatus[status]}.`, NS);
@@ -3097,12 +2538,18 @@ export class EmberAdapter extends Adapter {
         const neighbors: TsType.LQINeighbor[] = [];
 
         const request = async (startIndex: number): Promise<[SLStatus, tableEntries: number, entryCount: number]> => {
+            const zdoPayload = BuffaloZdo.buildLqiTableRequest(startIndex);
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const [reqStatus, apsFrame, messageTag] = (await this.emberLqiTableRequest(networkAddress, startIndex, DEFAULT_APS_OPTIONS));
+            const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                networkAddress,
+                Zdo.ClusterId.LQI_TABLE_REQUEST,
+                zdoPayload,
+                DEFAULT_APS_OPTIONS
+            );
 
-            if (reqStatus !== SLStatus.OK) {
-                logger.error(`[ZDO] Failed LQI request for "${networkAddress}" (index "${startIndex}") with status=${SLStatus[reqStatus]}.`, NS);
-                return [reqStatus, null, null];
+            if (status !== SLStatus.OK) {
+                logger.error(`[ZDO] Failed LQI request for "${networkAddress}" (index "${startIndex}") with status=${SLStatus[status]}.`, NS);
+                return [status, null, null];
             }
 
             const result = (await this.oneWaitress.startWaitingFor<ZdoTypes.LQITableResponse>({
@@ -3161,15 +2608,21 @@ export class EmberAdapter extends Adapter {
         const table: TsType.RoutingTableEntry[] = [];
 
         const request = async (startIndex: number): Promise<[SLStatus, tableEntries: number, entryCount: number]> => {
+            const zdoPayload = BuffaloZdo.buildRoutingTableRequest(startIndex);
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const [reqStatus, apsFrame, messageTag] = (await this.emberRoutingTableRequest(networkAddress, startIndex, DEFAULT_APS_OPTIONS));
+            const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                networkAddress,
+                Zdo.ClusterId.ROUTING_TABLE_REQUEST,
+                zdoPayload,
+                DEFAULT_APS_OPTIONS
+            );
 
-            if (reqStatus !== SLStatus.OK) {
+            if (status !== SLStatus.OK) {
                 logger.error(
-                    `[ZDO] Failed routing table request for "${networkAddress}" (index "${startIndex}") with status=${SLStatus[reqStatus]}.`,
+                    `[ZDO] Failed routing table request for "${networkAddress}" (index "${startIndex}") with status=${SLStatus[status]}.`,
                     NS,
                 );
-                return [reqStatus, null, null];
+                return [status, null, null];
             }
 
             const result = (await this.oneWaitress.startWaitingFor<ZdoTypes.RoutingTableResponse>({
@@ -3228,8 +2681,14 @@ export class EmberAdapter extends Adapter {
                 async (): Promise<SLStatus> => {
                     this.checkInterpanLock();
 
-                    /* eslint-disable @typescript-eslint/no-unused-vars */
-                    const [status, apsFrame, messageTag] = (await this.emberNodeDescriptorRequest(networkAddress, DEFAULT_APS_OPTIONS));
+                    const zdoPayload = BuffaloZdo.buildNodeDescriptorRequest(networkAddress);
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                        networkAddress,
+                        Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST,
+                        zdoPayload,
+                        DEFAULT_APS_OPTIONS
+                    );
 
                     if (status !== SLStatus.OK) {
                         logger.error(`[ZDO] Failed node descriptor for "${networkAddress}" with status=${SLStatus[status]}.`, NS);
@@ -3279,8 +2738,14 @@ export class EmberAdapter extends Adapter {
                 async (): Promise<SLStatus> => {
                     this.checkInterpanLock();
 
+                    const zdoPayload = BuffaloZdo.buildActiveEndpointsRequest(networkAddress);
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = (await this.emberActiveEndpointsRequest(networkAddress, DEFAULT_APS_OPTIONS));
+                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                        networkAddress,
+                        Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST,
+                        zdoPayload,
+                        DEFAULT_APS_OPTIONS
+                    );
 
                     if (status !== SLStatus.OK) {
                         logger.error(`[ZDO] Failed active endpoints request for "${networkAddress}" with status=${SLStatus[status]}.`, NS);
@@ -3309,12 +2774,14 @@ export class EmberAdapter extends Adapter {
                 async (): Promise<SLStatus> => {
                     this.checkInterpanLock();
 
+                    const zdoPayload = BuffaloZdo.buildSimpleDescriptorRequest(networkAddress, endpointID);
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = (await this.emberSimpleDescriptorRequest(
+                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
                         networkAddress,
-                        endpointID,
+                        Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST,
+                        zdoPayload,
                         DEFAULT_APS_OPTIONS
-                    ));
+                    );
 
                     if (status !== SLStatus.OK) {
                         logger.error(`[ZDO] Failed simple descriptor request for "${networkAddress}" endpoint "${endpointID}" `
@@ -3353,18 +2820,22 @@ export class EmberAdapter extends Adapter {
                     async (): Promise<SLStatus> => {
                         this.checkInterpanLock();
 
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = (await this.emberBindRequest(
-                            destinationNetworkAddress,
+                        const zdoPayload = BuffaloZdo.buildBindRequest(
                             sourceIeeeAddress as EUI64,
                             sourceEndpoint,
                             clusterID,
                             Zdo.UNICAST_BINDING,
                             destinationAddressOrGroup as EUI64,
-                            null,// doesn't matter
-                            destinationEndpoint,
-                            DEFAULT_APS_OPTIONS,
-                        ));
+                            undefined,// not used with UNICAST_BINDING
+                            destinationEndpoint
+                        );
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                            destinationNetworkAddress,
+                            Zdo.ClusterId.BIND_REQUEST,
+                            zdoPayload,
+                            DEFAULT_APS_OPTIONS
+                        );
 
                         if (status !== SLStatus.OK) {
                             logger.error(`[ZDO] Failed bind request for "${destinationNetworkAddress}" destination "${destinationAddressOrGroup}" `
@@ -3391,18 +2862,22 @@ export class EmberAdapter extends Adapter {
                     async (): Promise<SLStatus> => {
                         this.checkInterpanLock();
 
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = (await this.emberBindRequest(
-                            destinationNetworkAddress,
+                        const zdoPayload = BuffaloZdo.buildBindRequest(
                             sourceIeeeAddress as EUI64,
                             sourceEndpoint,
                             clusterID,
                             Zdo.MULTICAST_BINDING,
-                            null,// doesn't matter
+                            undefined,// not used with MULTICAST_BINDING
                             destinationAddressOrGroup,
-                            destinationEndpoint,// doesn't matter
-                            DEFAULT_APS_OPTIONS,
-                        ));
+                            undefined// not used with MULTICAST_BINDING
+                        );
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                            destinationNetworkAddress,
+                            Zdo.ClusterId.BIND_REQUEST,
+                            zdoPayload,
+                            DEFAULT_APS_OPTIONS
+                        );
 
                         if (status !== SLStatus.OK) {
                             logger.error(`[ZDO] Failed bind request for "${destinationNetworkAddress}" group "${destinationAddressOrGroup}" `
@@ -3436,18 +2911,22 @@ export class EmberAdapter extends Adapter {
                     async (): Promise<SLStatus> => {
                         this.checkInterpanLock();
 
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = (await this.emberUnbindRequest(
-                            destinationNetworkAddress,
+                        const zdoPayload = BuffaloZdo.buildUnbindRequest(
                             sourceIeeeAddress as EUI64,
                             sourceEndpoint,
                             clusterID,
                             Zdo.UNICAST_BINDING,
                             destinationAddressOrGroup as EUI64,
-                            null,// doesn't matter
-                            destinationEndpoint,
-                            DEFAULT_APS_OPTIONS,
-                        ));
+                            undefined,// not used with UNICAST_BINDING
+                            destinationEndpoint
+                        );
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                            destinationNetworkAddress,
+                            Zdo.ClusterId.UNBIND_REQUEST,
+                            zdoPayload,
+                            DEFAULT_APS_OPTIONS
+                        );
 
                         if (status !== SLStatus.OK) {
                             logger.error(`[ZDO] Failed unbind request for "${destinationNetworkAddress}" destination "${destinationAddressOrGroup}" `
@@ -3475,18 +2954,22 @@ export class EmberAdapter extends Adapter {
                     async (): Promise<SLStatus> => {
                         this.checkInterpanLock();
 
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = (await this.emberUnbindRequest(
-                            destinationNetworkAddress,
+                        const zdoPayload = BuffaloZdo.buildUnbindRequest(
                             sourceIeeeAddress as EUI64,
                             sourceEndpoint,
                             clusterID,
                             Zdo.MULTICAST_BINDING,
-                            null,// doesn't matter
+                            undefined,// not used with MULTICAST_BINDING
                             destinationAddressOrGroup,
-                            destinationEndpoint,// doesn't matter
-                            DEFAULT_APS_OPTIONS,
-                        ));
+                            undefined// not used with MULTICAST_BINDING
+                        );
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                            destinationNetworkAddress,
+                            Zdo.ClusterId.UNBIND_REQUEST,
+                            zdoPayload,
+                            DEFAULT_APS_OPTIONS
+                        );
 
                         if (status !== SLStatus.OK) {
                             logger.error(`[ZDO] Failed unbind request for "${destinationNetworkAddress}" group "${destinationAddressOrGroup}" `
@@ -3517,13 +3000,14 @@ export class EmberAdapter extends Adapter {
                 async (): Promise<SLStatus> => {
                     this.checkInterpanLock();
 
+                    const zdoPayload = BuffaloZdo.buildLeaveRequest(ieeeAddr as EUI64, Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = (await this.emberLeaveRequest(
+                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
                         networkAddress,
-                        ieeeAddr as EUI64,
-                        EmberLeaveRequestFlags.WITHOUT_REJOIN,
-                        DEFAULT_APS_OPTIONS
-                    ));
+                        Zdo.ClusterId.LEAVE_REQUEST,
+                        zdoPayload,
+                        DEFAULT_APS_OPTIONS,
+                    );
 
                     if (status !== SLStatus.OK) {
                         logger.error(`[ZDO] Failed remove device request for "${networkAddress}" target "${ieeeAddr}" `
@@ -3647,7 +3131,7 @@ export class EmberAdapter extends Adapter {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const [status, messageTag] = (await this.ezsp.send(
                         EmberOutgoingMessageType.MULTICAST,
-                        apsFrame.groupId,// not used for MC
+                        apsFrame.groupId,// not used with MULTICAST
                         apsFrame,
                         data,
                         0,// alias
