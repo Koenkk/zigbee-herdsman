@@ -1742,7 +1742,7 @@ export class EmberAdapter extends Adapter {
         logger.debug(`[EzspConfigId] SET "${EzspConfigId[configId]}" TO "${value}" with status=${SLStatus[status]}.`, NS);
 
         if (status !== SLStatus.OK) {
-            logger.warning(
+            logger.info(
                 `[EzspConfigId] Failed to SET "${EzspConfigId[configId]}" TO "${value}" with status=${SLStatus[status]}. `
                     + `Firmware value will be used instead.`,
                 NS,
