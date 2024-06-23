@@ -802,18 +802,20 @@ export class Ezsp extends EventEmitter {
                 const apsFrame: EmberApsFrame = this.buffalo.readEmberApsFrame();
                 const messageTag = this.buffalo.readUInt8();
                 const status = this.buffalo.readUInt8();
-                const messageContents = this.buffalo.readPayload();
+                // EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY set to messageTag only, so skip parsing entirely
+                // const messageContents = this.buffalo.readPayload();
 
-                this.ezspMessageSentHandler(status, type, indexOrDestination, apsFrame, messageTag, messageContents);
+                this.ezspMessageSentHandler(status, type, indexOrDestination, apsFrame, messageTag);
             } else {
                 const status = this.buffalo.readUInt32();
                 const type: EmberOutgoingMessageType = this.buffalo.readUInt8();
                 const indexOrDestination = this.buffalo.readUInt16();
                 const apsFrame: EmberApsFrame = this.buffalo.readEmberApsFrame();
                 const messageTag = this.buffalo.readUInt16();
-                const messageContents = this.buffalo.readPayload();
+                // EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY set to messageTag only, so skip parsing entirely
+                // const messageContents = this.buffalo.readPayload();
 
-                this.ezspMessageSentHandler(status, type, indexOrDestination, apsFrame, messageTag, messageContents);
+                this.ezspMessageSentHandler(status, type, indexOrDestination, apsFrame, messageTag);
             }
             break;
         }
@@ -850,7 +852,7 @@ export class Ezsp extends EventEmitter {
                 this.ezspIncomingMessageHandler(type, apsFrame, packetInfo, messageContents);
             } else {
                 const type: EmberIncomingMessageType = this.buffalo.readUInt8();
-                const apsFrame: EmberApsFrame = this.buffalo.readEmberApsFrame();
+                const apsFrame = this.buffalo.readEmberApsFrame();
                 const packetInfo = this.buffalo.readEmberRxPacketInfo();
                 const messageContents = this.buffalo.readPayload();
                 this.ezspIncomingMessageHandler(type, apsFrame, packetInfo, messageContents);
@@ -4947,11 +4949,11 @@ export class Ezsp extends EventEmitter {
      *        for the messageContentsInCallback policy is messageTagAndContentsInCallback.
      */
     ezspMessageSentHandler(status: SLStatus, type: EmberOutgoingMessageType, indexOrDestination: number, apsFrame: EmberApsFrame, messageTag: number,
-        messageContents: Buffer): void {
+        messageContents: Buffer = undefined): void {
         logger.debug(
             `ezspMessageSentHandler(): callback called with: [status=${SLStatus[status]}], [type=${EmberOutgoingMessageType[type]}], `
-            + `[indexOrDestination=${indexOrDestination}], [apsFrame=${JSON.stringify(apsFrame)}], [messageTag=${messageTag}], `
-            + `[messageContents=${messageContents.toString('hex')}]`,
+            + `[indexOrDestination=${indexOrDestination}], [apsFrame=${JSON.stringify(apsFrame)}], [messageTag=${messageTag}]`
+            + (messageContents ? `, [messageContents=${messageContents.toString('hex')}]` : ''),
             NS,
         );
 

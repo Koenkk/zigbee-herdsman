@@ -941,8 +941,8 @@ export class EmberAdapter extends Adapter {
             EzspPolicyId.BINDING_MODIFICATION_POLICY,
             EzspDecisionId.CHECK_BINDING_MODIFICATIONS_ARE_VALID_ENDPOINT_CLUSTERS
         );
-        // return message tag and message contents in ezspMessageSentHandler()
-        await this.emberSetEzspPolicy(EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY, EzspDecisionId.MESSAGE_TAG_AND_CONTENTS_IN_CALLBACK);
+        // return message tag only in ezspMessageSentHandler()
+        await this.emberSetEzspPolicy(EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY, EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK);
 
         await this.emberSetEzspValue(EzspValueId.MAXIMUM_INCOMING_TRANSFER_SIZE, 2, lowHighBytes(MAXIMUM_APS_PAYLOAD_LENGTH));
         await this.emberSetEzspValue(EzspValueId.MAXIMUM_OUTGOING_TRANSFER_SIZE, 2, lowHighBytes(MAXIMUM_APS_PAYLOAD_LENGTH));
@@ -984,6 +984,8 @@ export class EmberAdapter extends Adapter {
         await this.emberSetEzspConfigValue(EzspConfigId.BROADCAST_TABLE_SIZE, this.stackConfig.BROADCAST_TABLE_SIZE);
         await this.emberSetEzspConfigValue(EzspConfigId.NEIGHBOR_TABLE_SIZE, this.stackConfig.NEIGHBOR_TABLE_SIZE);
         await this.emberSetEzspConfigValue(EzspConfigId.END_DEVICE_POLL_TIMEOUT, this.stackConfig.END_DEVICE_POLL_TIMEOUT);
+        // SL_ZIGBEE_EZSP_CONFIG_ZLL_GROUP_ADDRESSES 1
+        // SL_ZIGBEE_EZSP_CONFIG_ZLL_RSSI_THRESHOLD -128
         await this.emberSetEzspConfigValue(EzspConfigId.TRANSIENT_KEY_TIMEOUT_S, this.stackConfig.TRANSIENT_KEY_TIMEOUT_S);
         await this.emberSetEzspConfigValue(EzspConfigId.RETRY_QUEUE_SIZE, this.stackConfig.RETRY_QUEUE_SIZE);
         await this.emberSetEzspConfigValue(EzspConfigId.SOURCE_ROUTE_TABLE_SIZE, this.stackConfig.SOURCE_ROUTE_TABLE_SIZE);
