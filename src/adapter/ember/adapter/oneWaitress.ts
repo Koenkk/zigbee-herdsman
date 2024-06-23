@@ -4,10 +4,7 @@ import {ZclPayload} from '../../events';
 import {NodeId} from '../../../zspec/tstypes';
 import {TOUCHLINK_PROFILE_ID} from '../../../zspec/consts';
 import {EmberApsFrame} from '../types';
-import {EmberZdoStatus} from '../zdo';
-import {logger} from '../../../utils/logger';
-
-const NS = 'zh:ember:waitress';
+import * as Zdo from '../../../zspec/zdo/';
 
 /** Events specific to OneWaitress usage. */
 export enum OneWaitressEvents {
@@ -111,7 +108,7 @@ export class EmberOneWaitress {
      * @param payload 
      * @returns 
      */
-    public resolveZDO(status: EmberZdoStatus, sender: NodeId, apsFrame: EmberApsFrame, payload: unknown): boolean {
+    public resolveZDO(sender: NodeId, apsFrame: EmberApsFrame, payload: unknown | Zdo.StatusError): boolean {
         for (const [index, waiter] of this.waiters.entries()) {
             if (waiter.timedout) {
                 this.waiters.delete(index);
@@ -128,16 +125,10 @@ export class EmberOneWaitress {
 
                 this.waiters.delete(index);
 
-                if (status === EmberZdoStatus.ZDP_SUCCESS) {
-                    waiter.resolve(payload);
-                } else if (status === EmberZdoStatus.ZDP_NO_ENTRY) {
-                    // XXX: bypassing fail here since Z2M seems to trigger ZDO remove-type commands without checking current state
-                    //      Z2M also fails with ZCL payload NOT_FOUND though. This should be removed once upstream fixes that.
-                    logger.info(`[ZDO] Received status ZDP_NO_ENTRY for "${sender}" cluster "${apsFrame.clusterId}". Ignoring.`, NS);
-                    waiter.resolve(payload);
+                if (payload instanceof Zdo.StatusError || payload instanceof Error) {
+                    waiter.reject(new Error(`[ZDO] Failed response for '${sender}' cluster '${apsFrame.clusterId}' ${payload.message}.`));
                 } else {
-                    waiter.reject(new Error(`[ZDO] Failed response by NCP for "${sender}" cluster "${apsFrame.clusterId}" `
-                        + `with status=${EmberZdoStatus[status]}.`));
+                    waiter.resolve(payload);
                 }
 
                 return true;

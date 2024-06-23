@@ -2,8 +2,6 @@
 //--------------------------------------------------------------
 // Define macros for handling 3-bit frame numbers modulo 8
 
-import {MACCapabilityFlags} from "../zdo";
-
 /** mask to frame number modulus */
 export const mod8 = (n: number): number => n & 7;
 /** increment in frame number modulus */
@@ -74,23 +72,4 @@ export const lowHighBits = (n: number): [number, highBits: number] => [lowBits(n
  */
 export const byteToBits = (n: number): string => {
     return (n >>> 0).toString(2).padStart(8, '0');
-};
-
-/**
- * Get the values for the bitmap `Mac Capability Flags Field` as per spec.
- * Given value is assumed to be a proper byte.
- * @param capabilities 
- * @returns 
- */
-export const getMacCapFlags = (capabilities: number): MACCapabilityFlags => {
-    return {
-        alternatePANCoordinator: (capabilities & 0x01),
-        deviceType: (capabilities & 0x02) >> 1,
-        powerSource: (capabilities & 0x04) >> 2,
-        rxOnWhenIdle: (capabilities & 0x08) >> 3,
-        reserved1: (capabilities & 0x10) >> 4,
-        reserved2: (capabilities & 0x20) >> 5,
-        securityCapability: (capabilities & 0x40) >> 6,
-        allocateAddress: (capabilities & 0x80) >> 7,
-    };
 };
