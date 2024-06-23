@@ -226,7 +226,7 @@ export enum EzspFrameID {
     INCOMING_ROUTE_ERROR_HANDLER                     = 0x0080,
     INCOMING_NETWORK_STATUS_HANDLER                  = 0x00C4,
     INCOMING_ROUTE_RECORD_HANDLER                    = 0x0059,
-    SET_SOURCE_ROUTE                                 = 0x00AE,
+    // SET_SOURCE_ROUTE                                 = 0x00AE,// v9-, no-op since
     UNICAST_CURRENT_NETWORK_KEY                      = 0x0050,
     ADDRESS_TABLE_ENTRY_IS_ACTIVE                    = 0x005B,
     /** v14+ */

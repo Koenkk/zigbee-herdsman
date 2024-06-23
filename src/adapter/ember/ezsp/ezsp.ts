@@ -5820,31 +5820,6 @@ export class Ezsp extends EventEmitter {
     }
 
     /**
-     * Supply a source route for the next outgoing message.
-     * @param destination The destination of the source route.
-     * @param relayList uint16_t * The source route.
-     * @returns
-     * - SLStatus.OK if the source route was successfully stored,
-     * - SLStatus.ALLOCATION_FAILED otherwise.
-     */
-    async ezspSetSourceRoute(destination: NodeId, relayList: number[]): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_SOURCE_ROUTE);
-        this.buffalo.writeUInt16(destination);
-        this.buffalo.writeUInt8(relayList.length);
-        this.buffalo.writeListUInt16(relayList);
-
-        const sendStatus = await this.sendCommand();
-
-        if (sendStatus !== EzspStatus.SUCCESS) {
-            throw new EzspError(sendStatus);
-        }
-
-        const status = this.buffalo.readStatus(this.version);
-
-        return status;
-    }
-
-    /**
      * Send the network key to a destination.
      * @param targetShort The destination node of the key.
      * @param targetLong The long address of the destination node.
