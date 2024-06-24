@@ -47,8 +47,6 @@ import {
     SecManKeyType,
     EmberInterpanMessageType,
     EmberSourceRouteDiscoveryMode,
-    EmberTXPowerMode,
-    EmberKeepAliveMode,
     EmberJoinDecision,
     EmberExtendedSecurityBitmask,
     EmberInitialSecurityBitmask,
@@ -79,7 +77,6 @@ import {
     EMBER_NUM_802_15_4_CHANNELS,
     EMBER_MIN_802_15_4_CHANNEL_NUMBER,
     UNKNOWN_NETWORK_STATE,
-    MAXIMUM_APS_PAYLOAD_LENGTH,
     LONG_DEST_FRAME_CONTROL,
     MAC_ACK_REQUIRED,
     MAXIMUM_INTERPAN_LENGTH,
@@ -217,26 +214,6 @@ type StackConfig = {
     CONCENTRATOR_MAX_HOPS: number;
     /** <6-64> (Default: 6) @see EzspConfigId.MAX_END_DEVICE_CHILDREN */
     MAX_END_DEVICE_CHILDREN: number;
-    /** <1-255> (Default: 10) @see EzspConfigId.APS_UNICAST_MESSAGE_COUNT */
-    APS_UNICAST_MESSAGE_COUNT: number;
-    /** <-> (Default: 16) @see EzspConfigId.RETRY_QUEUE_SIZE */
-    RETRY_QUEUE_SIZE: number;
-    /** <1-250> (Default: 2) @see EzspConfigId.ADDRESS_TABLE_SIZE */
-    ADDRESS_TABLE_SIZE: number;
-    /** <0-4> (Default: 2) @see EzspConfigId.TRUST_CENTER_ADDRESS_CACHE_SIZE */
-    TRUST_CENTER_ADDRESS_CACHE_SIZE: number;
-    /** <0-127> (Default: 0) @see EzspConfigId.KEY_TABLE_SIZE */
-    KEY_TABLE_SIZE: number;
-    /** <0-127> (Default: 2) @see EzspConfigId.BINDING_TABLE_SIZE */
-    BINDING_TABLE_SIZE: number;
-    /** <15-254> (Default: 15) @see EzspConfigId.BROADCAST_TABLE_SIZE */
-    BROADCAST_TABLE_SIZE: number;
-    /** <1-250> (Default: 8) @see EzspConfigId.MULTICAST_TABLE_SIZE */
-    MULTICAST_TABLE_SIZE: number;
-    /** [1, 16, 26] (Default: 16). @see EzspConfigId.NEIGHBOR_TABLE_SIZE */
-    NEIGHBOR_TABLE_SIZE: number;
-    /** <0-255> (Default: 0) @see EzspConfigId.SOURCE_ROUTE_TABLE_SIZE */
-    SOURCE_ROUTE_TABLE_SIZE: number;
     /** <-> (Default: 10000) @see EzspValueId.TRANSIENT_DEVICE_TIMEOUT */
     TRANSIENT_DEVICE_TIMEOUT: number;
     /** <0-14> (Default: 8) @see EzspConfigId.END_DEVICE_POLL_TIMEOUT */
@@ -261,20 +238,12 @@ const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
     CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD: 1,// zigpc: 1, ZigbeeMinimalHost: 3
     CONCENTRATOR_MAX_HOPS: 0,// zigpc: 0
     MAX_END_DEVICE_CHILDREN: 32,// zigpc: 6, nabucasa: 32, Dongle-E (Sonoff firmware): 32
-    APS_UNICAST_MESSAGE_COUNT: 32,// zigpc: 10, darkxst: 20, nabucasa: 20
-    RETRY_QUEUE_SIZE: 16,// nabucasa: 16
-    ADDRESS_TABLE_SIZE: 16,// zigpc: 32, darkxst: 16, nabucasa: 16
-    TRUST_CENTER_ADDRESS_CACHE_SIZE: 2,
-    KEY_TABLE_SIZE: 0,// zigpc: 4
-    BINDING_TABLE_SIZE: 32,// zigpc: 2, Z3GatewayGPCombo: 5, nabucasa: 32
-    BROADCAST_TABLE_SIZE: 15,// zigpc: 15, Z3GatewayGPCombo: 35 - NOTE: Sonoff Dongle-E fails at 35
-    MULTICAST_TABLE_SIZE: 16,// darkxst: 16, nabucasa: 16 - NOTE: should always be at least enough to register FIXED_ENDPOINTS multicastIds
-    NEIGHBOR_TABLE_SIZE: 26,// zigpc: 16, darkxst: 26, nabucasa: 26
-    SOURCE_ROUTE_TABLE_SIZE: 200,// Z3GatewayGPCombo: 100, darkxst: 200, nabucasa: 200
     TRANSIENT_DEVICE_TIMEOUT: 10000,
     END_DEVICE_POLL_TIMEOUT: 8,// zigpc: 8
     TRANSIENT_KEY_TIMEOUT_S: 300,// zigpc: 65535
 };
+/** Default behavior is to disable app key requests, so reduce key table to zero as well */
+const DEFAULT_KEY_TABLE_SIZE = 0;
 
 /**
  * NOTE: This from SDK is currently ignored here because of issues in below links:
@@ -408,57 +377,6 @@ export class EmberAdapter extends Adapter {
             if (!inRange(config.MAX_END_DEVICE_CHILDREN, 6, 64)) {
                 config.MAX_END_DEVICE_CHILDREN = DEFAULT_STACK_CONFIG.MAX_END_DEVICE_CHILDREN;
                 logger.error(`[STACK CONFIG] Invalid MAX_END_DEVICE_CHILDREN, using default.`, NS);
-            }
-
-            if (!inRange(config.APS_UNICAST_MESSAGE_COUNT, 1, 255)) {
-                config.APS_UNICAST_MESSAGE_COUNT = DEFAULT_STACK_CONFIG.APS_UNICAST_MESSAGE_COUNT;
-                logger.error(`[STACK CONFIG] Invalid APS_UNICAST_MESSAGE_COUNT, using default.`, NS);
-            }
-
-            if (!inRange(config.RETRY_QUEUE_SIZE, 0, 255)) {
-                config.RETRY_QUEUE_SIZE = DEFAULT_STACK_CONFIG.RETRY_QUEUE_SIZE;
-                logger.error(`[STACK CONFIG] Invalid RETRY_QUEUE_SIZE, using default.`, NS);
-            }
-
-            if (!inRange(config.ADDRESS_TABLE_SIZE, 1, 250)) {
-                config.ADDRESS_TABLE_SIZE = DEFAULT_STACK_CONFIG.ADDRESS_TABLE_SIZE;
-                logger.error(`[STACK CONFIG] Invalid ADDRESS_TABLE_SIZE, using default.`, NS);
-            }
-
-            if (!inRange(config.TRUST_CENTER_ADDRESS_CACHE_SIZE, 0, 4)) {
-                config.TRUST_CENTER_ADDRESS_CACHE_SIZE = DEFAULT_STACK_CONFIG.TRUST_CENTER_ADDRESS_CACHE_SIZE;
-                logger.error(`[STACK CONFIG] Invalid TRUST_CENTER_ADDRESS_CACHE_SIZE, using default.`, NS);
-            }
-
-            if (!inRange(config.KEY_TABLE_SIZE, 0, 127)) {
-                config.KEY_TABLE_SIZE = DEFAULT_STACK_CONFIG.KEY_TABLE_SIZE;
-                logger.error(`[STACK CONFIG] Invalid KEY_TABLE_SIZE, using default.`, NS);
-            }
-
-            if (!inRange(config.BINDING_TABLE_SIZE, 0, 127)) {
-                config.BINDING_TABLE_SIZE = DEFAULT_STACK_CONFIG.BINDING_TABLE_SIZE;
-                logger.error(`[STACK CONFIG] Invalid BINDING_TABLE_SIZE, using default.`, NS);
-            }
-
-            if (!inRange(config.BROADCAST_TABLE_SIZE, 15, 254)) {
-                config.BROADCAST_TABLE_SIZE = DEFAULT_STACK_CONFIG.BROADCAST_TABLE_SIZE;
-                logger.error(`[STACK CONFIG] Invalid BROADCAST_TABLE_SIZE, using default.`, NS);
-            }
-
-            // min should always be enough to cover `multicastIds` in `FIXED_ENDPOINTS`
-            if (!inRange(config.MULTICAST_TABLE_SIZE, 5, 250)) {
-                config.MULTICAST_TABLE_SIZE = DEFAULT_STACK_CONFIG.MULTICAST_TABLE_SIZE;
-                logger.error(`[STACK CONFIG] Invalid MULTICAST_TABLE_SIZE, using default.`, NS);
-            }
-
-            if (![16, 26].includes(config.NEIGHBOR_TABLE_SIZE)) {
-                config.NEIGHBOR_TABLE_SIZE = DEFAULT_STACK_CONFIG.NEIGHBOR_TABLE_SIZE;
-                logger.error(`[STACK CONFIG] Invalid NEIGHBOR_TABLE_SIZE, using default.`, NS);
-            }
-
-            if (!inRange(config.SOURCE_ROUTE_TABLE_SIZE, 0, 254)) {
-                config.SOURCE_ROUTE_TABLE_SIZE = DEFAULT_STACK_CONFIG.SOURCE_ROUTE_TABLE_SIZE;
-                logger.error(`[STACK CONFIG] Invalid SOURCE_ROUTE_TABLE_SIZE, using default.`, NS);
             }
 
             if (!inRange(config.TRANSIENT_DEVICE_TIMEOUT, 0, 65535)) {
@@ -853,9 +771,27 @@ export class EmberAdapter extends Adapter {
         // call before any other command, else fails
         await this.emberVersion();
 
-        await this.initNCPPreConfiguration();
-        await this.initNCPAddressTable();
-        await this.initNCPConfiguration();
+        /** MAC indirect timeout should be 7.68 secs (STACK_PROFILE_ZIGBEE_PRO) */
+        await this.emberSetEzspConfigValue(EzspConfigId.INDIRECT_TRANSMISSION_TIMEOUT, 7680);
+        /** Max hops should be 2 * nwkMaxDepth, where nwkMaxDepth is 15 (STACK_PROFILE_ZIGBEE_PRO) */
+        await this.emberSetEzspConfigValue(EzspConfigId.MAX_HOPS, 30);
+        await this.emberSetEzspConfigValue(EzspConfigId.SUPPORTED_NETWORKS, 1);
+        // allow other devices to modify the binding table
+        await this.emberSetEzspPolicy(
+            EzspPolicyId.BINDING_MODIFICATION_POLICY,
+            EzspDecisionId.CHECK_BINDING_MODIFICATIONS_ARE_VALID_ENDPOINT_CLUSTERS
+        );
+        // return message tag only in ezspMessageSentHandler()
+        await this.emberSetEzspPolicy(EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY, EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK);
+        await this.emberSetEzspValue(EzspValueId.TRANSIENT_DEVICE_TIMEOUT, 2, lowHighBytes(this.stackConfig.TRANSIENT_DEVICE_TIMEOUT));
+        await this.ezsp.ezspSetManufacturerCode(this.manufacturerCode);
+        // network security init
+        await this.emberSetEzspConfigValue(EzspConfigId.STACK_PROFILE, STACK_PROFILE_ZIGBEE_PRO);
+        await this.emberSetEzspConfigValue(EzspConfigId.SECURITY_LEVEL, SECURITY_LEVEL_Z3);
+        // common configs
+        await this.emberSetEzspConfigValue(EzspConfigId.MAX_END_DEVICE_CHILDREN, this.stackConfig.MAX_END_DEVICE_CHILDREN);
+        await this.emberSetEzspConfigValue(EzspConfigId.END_DEVICE_POLL_TIMEOUT, this.stackConfig.END_DEVICE_POLL_TIMEOUT);
+        await this.emberSetEzspConfigValue(EzspConfigId.TRANSIENT_KEY_TIMEOUT_S, this.stackConfig.TRANSIENT_KEY_TIMEOUT_S);
 
         // WARNING: From here on EZSP commands that affect memory allocation on the NCP should no longer be called (like resizing tables)
 
@@ -887,82 +823,6 @@ export class EmberAdapter extends Adapter {
         this.requestQueue.startDispatching();
 
         return result;
-    }
-
-    /**
-     * NCP Config init. Should always be called first in the init stack (after version cmd).
-     * @returns
-     */
-    private async initNCPPreConfiguration(): Promise<void> {
-        // this can only decrease, not increase, NCP-side value
-        await this.emberSetEzspConfigValue(EzspConfigId.ADDRESS_TABLE_SIZE, this.stackConfig.ADDRESS_TABLE_SIZE);
-        await this.emberSetEzspConfigValue(EzspConfigId.TRUST_CENTER_ADDRESS_CACHE_SIZE, this.stackConfig.TRUST_CENTER_ADDRESS_CACHE_SIZE);
-
-        // BUG 14222: If stack profile is 2 (ZigBee Pro), we need to enforce
-        // the standard stack configuration values for that feature set.
-        /** MAC indirect timeout should be 7.68 secs */
-        await this.emberSetEzspConfigValue(EzspConfigId.INDIRECT_TRANSMISSION_TIMEOUT, 7680);
-        /** Max hops should be 2 * nwkMaxDepth, where nwkMaxDepth is 15 */
-        await this.emberSetEzspConfigValue(EzspConfigId.MAX_HOPS, 30);
-        await this.emberSetEzspConfigValue(EzspConfigId.TX_POWER_MODE, EmberTXPowerMode.USE_TOKEN);
-        await this.emberSetEzspConfigValue(EzspConfigId.SUPPORTED_NETWORKS, 1);
-
-        await this.emberSetEzspValue(EzspValueId.END_DEVICE_KEEP_ALIVE_SUPPORT_MODE, 1, [EmberKeepAliveMode.KEEP_ALIVE_SUPPORT_ALL]);
-
-        // allow other devices to modify the binding table
-        await this.emberSetEzspPolicy(
-            EzspPolicyId.BINDING_MODIFICATION_POLICY,
-            EzspDecisionId.CHECK_BINDING_MODIFICATIONS_ARE_VALID_ENDPOINT_CLUSTERS
-        );
-        // return message tag only in ezspMessageSentHandler()
-        await this.emberSetEzspPolicy(EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY, EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK);
-
-        await this.emberSetEzspValue(EzspValueId.MAXIMUM_INCOMING_TRANSFER_SIZE, 2, lowHighBytes(MAXIMUM_APS_PAYLOAD_LENGTH));
-        await this.emberSetEzspValue(EzspValueId.MAXIMUM_OUTGOING_TRANSFER_SIZE, 2, lowHighBytes(MAXIMUM_APS_PAYLOAD_LENGTH));
-        await this.emberSetEzspValue(EzspValueId.TRANSIENT_DEVICE_TIMEOUT, 2, lowHighBytes(this.stackConfig.TRANSIENT_DEVICE_TIMEOUT));
-
-        await this.ezsp.ezspSetManufacturerCode(this.manufacturerCode);
-
-        // network security init
-        await this.emberSetEzspConfigValue(EzspConfigId.STACK_PROFILE, STACK_PROFILE_ZIGBEE_PRO);
-        await this.emberSetEzspConfigValue(EzspConfigId.SECURITY_LEVEL, SECURITY_LEVEL_Z3);
-    }
-
-    /**
-     * NCP Address table init.
-     * @returns 
-     */
-    private async initNCPAddressTable(): Promise<void> {
-        const desiredTableSize = this.stackConfig.ADDRESS_TABLE_SIZE;
-        // If the host and the ncp disagree on the address table size, explode.
-        const [status, addressTableSize] = (await this.ezsp.ezspGetConfigurationValue(EzspConfigId.ADDRESS_TABLE_SIZE));
-        // After the change of ncp memory model in UC, we can not increase the default NCP table sizes anymore.
-        // Therefore, checking for desiredTableSize == (ncp)addressTableSize might not be always true anymore
-        // assert(desiredTableSize <= addressTableSize);
-        if ((status !== SLStatus.OK) || (addressTableSize > desiredTableSize)) {
-            throw new Error(
-                `[INIT] NCP (${addressTableSize}) disagrees with Host (min ${desiredTableSize}) on table size. status=${SLStatus[status]}`
-            );
-        }
-    }
-
-    /**
-     * NCP configuration init
-     */
-    private async initNCPConfiguration(): Promise<void> {
-        await this.emberSetEzspConfigValue(EzspConfigId.BINDING_TABLE_SIZE, this.stackConfig.BINDING_TABLE_SIZE);
-        await this.emberSetEzspConfigValue(EzspConfigId.KEY_TABLE_SIZE, this.stackConfig.KEY_TABLE_SIZE);
-        await this.emberSetEzspConfigValue(EzspConfigId.MAX_END_DEVICE_CHILDREN, this.stackConfig.MAX_END_DEVICE_CHILDREN);
-        await this.emberSetEzspConfigValue(EzspConfigId.APS_UNICAST_MESSAGE_COUNT, this.stackConfig.APS_UNICAST_MESSAGE_COUNT);
-        await this.emberSetEzspConfigValue(EzspConfigId.BROADCAST_TABLE_SIZE, this.stackConfig.BROADCAST_TABLE_SIZE);
-        await this.emberSetEzspConfigValue(EzspConfigId.NEIGHBOR_TABLE_SIZE, this.stackConfig.NEIGHBOR_TABLE_SIZE);
-        await this.emberSetEzspConfigValue(EzspConfigId.END_DEVICE_POLL_TIMEOUT, this.stackConfig.END_DEVICE_POLL_TIMEOUT);
-        // SL_ZIGBEE_EZSP_CONFIG_ZLL_GROUP_ADDRESSES 1
-        // SL_ZIGBEE_EZSP_CONFIG_ZLL_RSSI_THRESHOLD -128
-        await this.emberSetEzspConfigValue(EzspConfigId.TRANSIENT_KEY_TIMEOUT_S, this.stackConfig.TRANSIENT_KEY_TIMEOUT_S);
-        await this.emberSetEzspConfigValue(EzspConfigId.RETRY_QUEUE_SIZE, this.stackConfig.RETRY_QUEUE_SIZE);
-        await this.emberSetEzspConfigValue(EzspConfigId.SOURCE_ROUTE_TABLE_SIZE, this.stackConfig.SOURCE_ROUTE_TABLE_SIZE);
-        await this.emberSetEzspConfigValue(EzspConfigId.MULTICAST_TABLE_SIZE, this.stackConfig.MULTICAST_TABLE_SIZE);
     }
 
     /**
@@ -1069,7 +929,7 @@ export class EmberAdapter extends Adapter {
                     + `with status=${SLStatus[status]}.`);
             }
 
-            const appKeyPolicy = this.stackConfig.KEY_TABLE_SIZE ? EzspDecisionId.ALLOW_APP_KEY_REQUESTS : EzspDecisionId.DENY_APP_KEY_REQUESTS;
+            const appKeyPolicy = DEFAULT_KEY_TABLE_SIZE > 0 ? EzspDecisionId.ALLOW_APP_KEY_REQUESTS : EzspDecisionId.DENY_APP_KEY_REQUESTS;
             status = (await this.emberSetEzspPolicy(EzspPolicyId.APP_KEY_REQUEST_POLICY, appKeyPolicy));
 
             if (status !== SLStatus.OK) {
@@ -1294,7 +1154,7 @@ export class EmberAdapter extends Adapter {
             throw new Error(`[INIT FORM] Failed to set extended security bitmask to ${extended} with status=${SLStatus[status]}.`);
         }
 
-        if (!fromBackup && this.stackConfig.KEY_TABLE_SIZE > 0) {
+        if (!fromBackup && DEFAULT_KEY_TABLE_SIZE > 0) {
             status = await this.ezsp.ezspClearKeyTable();
 
             if (status !== SLStatus.OK) {
@@ -2114,7 +1974,7 @@ export class EmberAdapter extends Adapter {
 
                     let keyList: LinkKeyBackupData[] = [];
 
-                    if (this.stackConfig.KEY_TABLE_SIZE > 0) {
+                    if (DEFAULT_KEY_TABLE_SIZE > 0) {
                         keyList = (await this.exportLinkKeys());
                     }
 
