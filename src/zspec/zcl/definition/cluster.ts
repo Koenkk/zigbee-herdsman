@@ -5033,7 +5033,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             stateAfterPowerRestored: {ID: 0x000f, type: DataType.UINT8},
             loadLevelIndicatorTimeout: {ID: 0x0011, type: DataType.UINT8},
             activePowerReports: {ID: 0x0012, type: DataType.UINT8},
-
             periodicPowerAndEnergyReports: {ID: 0x0013, type: DataType.UINT16},
             activeEnergyReports: {ID: 0x0014, type: DataType.UINT16},
             powerType: {ID: 0x0015, type: DataType.BOOLEAN},
@@ -5041,6 +5040,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             quickStartTime: {ID: 0x0017, type: DataType.UINT8},
             quickStartLevel: {ID: 0x0018, type: DataType.UINT8},
             higherOutputInNonNeutral: {ID: 0x0019, type: DataType.BOOLEAN},
+            leadingTrailingEdge: {ID: 0x001a, type: DataType.BOOLEAN},
             nonNeutralAuxMediumGear: {ID: 0x001e, type: DataType.UINT8},
             nonNeutralAuxLowGear: {ID: 0x001f, type: DataType.UINT8},
             internalTemperature: {ID: 0x0020, type: DataType.UINT8},
