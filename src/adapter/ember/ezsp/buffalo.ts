@@ -1375,7 +1375,7 @@ export class EzspBuffalo extends Buffalo {
         const bindingIndex = this.readUInt8();
         const addressIndex = this.readUInt8();
         const lastHopLqi = this.readUInt8();
-        const lastHopRssi = this.readInt8();
+        const lastHopRssi = this.readInt8();// SDK: (int8_t)fetchInt8u();
         const lastHopTimestamp = this.readUInt32();
 
         return {

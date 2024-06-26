@@ -1,4 +1,3 @@
-/* istanbul ignore file */
 import {logger} from "../../../utils/logger";
 import {EzspStatus, SLStatus} from "../enums";
 import {EzspError} from "../ezspError";
@@ -6,10 +5,7 @@ import {EzspError} from "../ezspError";
 const NS = 'zh:ember:queue';
 
 interface EmberRequestQueueEntry {
-    /**
-     * Times tried to successfully send the call.
-     * This has no maximum, but since it is only for temporary issues, it will either succeed after a couple of tries, or hard fail.
-     */
+    /** Times tried to successfully send the call. */
     sendAttempts: number;
     /** The function the entry is supposed to execute. */
     func: () => Promise<SLStatus>;
@@ -17,6 +13,8 @@ interface EmberRequestQueueEntry {
     reject: (reason: Error) => void;
 };
 
+export const MAX_SEND_ATTEMPTS = 3;
+export const HIGH_COUNT = 4;
 export const BUSY_DEFER_MSEC = 500;
 export const NETWORK_DOWN_DEFER_MSEC = 1500;
 
@@ -37,11 +35,27 @@ export class EmberRequestQueue {
     }
 
     /**
+     * Number of requests in both regular and priority queues.
+     */
+    get totalQueued(): number {
+        return this.queue.length + this.priorityQueue.length;
+    }
+
+    /**
+     * If true, total queued requests count is considered high.
+     */
+    get isHigh(): boolean {
+        return this.totalQueued > HIGH_COUNT;
+    }
+
+    /**
      * Empty each queue.
      */
     public clear(): void {
         this.queue = [];
         this.priorityQueue = [];
+
+        logger.info(`Request queues cleared.`, NS);
     }
 
     /**
@@ -79,6 +93,7 @@ export class EmberRequestQueue {
      */
     public enqueue(func: () => Promise<SLStatus>, reject: (reason: Error) => void, prioritize: boolean = false): number {
         logger.debug(`Status queue=${this.queue.length} priorityQueue=${this.priorityQueue.length}.`, NS);
+
         return (prioritize ? this.priorityQueue : this.queue).push({
             sendAttempts: 0,
             func,
@@ -111,37 +126,41 @@ export class EmberRequestQueue {
         }
 
         if (entry) {
-            entry.sendAttempts++;
+            entry.sendAttempts++;// enqueued at zero
 
-            // NOTE: refer to `enqueue()` comment to keep logic in sync with expectations, adjust comment on change.
-            try {
-                const status: SLStatus = (await entry.func());
-
-                // XXX: add NOT_READY?
-                if ((status === SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED) || (status === SLStatus.BUSY)) {
-                    logger.debug(`Dispatching deferred: NCP busy.`, NS);
-                    this.defer(BUSY_DEFER_MSEC);
-                } else if (status === SLStatus.NETWORK_DOWN) {
-                    logger.debug(`Dispatching deferred: Network not ready`, NS);
-                    this.defer(NETWORK_DOWN_DEFER_MSEC);
-                } else {
-                    // success
-                    (fromPriorityQueue ? this.priorityQueue : this.queue).shift();
-
-                    if (status !== SLStatus.OK) {
-                        entry.reject(new Error(SLStatus[status]));
+            if (entry.sendAttempts > MAX_SEND_ATTEMPTS) {
+                entry.reject(new Error(`Failed ${MAX_SEND_ATTEMPTS} attempts to send`));
+            } else {
+                // NOTE: refer to `enqueue()` comment to keep logic in sync with expectations, adjust comment on change.
+                try {
+                    const status: SLStatus = (await entry.func());
+    
+                    // XXX: add NOT_READY?
+                    if ((status === SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED) || (status === SLStatus.BUSY)) {
+                        logger.debug(`Dispatching deferred: Adapter busy.`, NS);
+                        this.defer(BUSY_DEFER_MSEC);
+                    } else if (status === SLStatus.NETWORK_DOWN) {
+                        logger.debug(`Dispatching deferred: Network not ready`, NS);
+                        this.defer(NETWORK_DOWN_DEFER_MSEC);
+                    } else {
+                        // success
+                        (fromPriorityQueue ? this.priorityQueue : this.queue).shift();
+    
+                        if (status !== SLStatus.OK) {
+                            entry.reject(new Error(SLStatus[status]));
+                        }
                     }
-                }
-            } catch (err) {// EzspStatusError from ezsp${x} commands, except for stuff rejected by OneWaitress, but that's never "retry"
-                if ((err as EzspError).code === EzspStatus.NO_TX_SPACE) {
-                    logger.debug(`Dispatching deferred: Host busy.`, NS);
-                    this.defer(BUSY_DEFER_MSEC);
-                } else if ((err as EzspError).code === EzspStatus.NOT_CONNECTED) {
-                    logger.debug(`Dispatching deferred: Network not ready`, NS);
-                    this.defer(NETWORK_DOWN_DEFER_MSEC);
-                } else {
-                    (fromPriorityQueue ? this.priorityQueue : this.queue).shift();
-                    entry.reject(err);
+                } catch (err) {// EzspStatusError from ezsp${x} commands, except for stuff rejected by OneWaitress, but that's never "retry"
+                    if ((err as EzspError).code === EzspStatus.NO_TX_SPACE) {
+                        logger.debug(`Dispatching deferred: Host busy.`, NS);
+                        this.defer(BUSY_DEFER_MSEC);
+                    } else if ((err as EzspError).code === EzspStatus.NOT_CONNECTED) {
+                        logger.debug(`Dispatching deferred: Network not ready`, NS);
+                        this.defer(NETWORK_DOWN_DEFER_MSEC);
+                    } else {
+                        (fromPriorityQueue ? this.priorityQueue : this.queue).shift();
+                        entry.reject(err);
+                    }
                 }
             }
         }

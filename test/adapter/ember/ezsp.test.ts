@@ -13,14 +13,23 @@ import {
     SEND_DATA_VERSION,
     SEND_ACK_FIRST_BYTES,
     RCED_ERROR_WATCHDOG_BYTES,
+    SEND_UNICAST_REPLY_FN0_ASH_RAW,
+    MESSAGE_SENT_HANDLER_FN1_ASH_RAW,
+    INCOMING_MESSAGE_HANDLER_FN2_ASH_RAW,
+    MESSAGE_SENT_HANDLER_FN0_ASH_RAW,
+    SET_POLICY_REPLY_FN1_ASH_RAW,
 } from './consts';
 import {EzspStatus} from '../../../src/adapter/ember/enums';
 import {AshEvents} from '../../../src/adapter/ember/uart/ash';
 import {logger} from '../../../src/utils/logger';
 
-const emitFromSerial = (ezsp: Ezsp, data: Buffer): void => {
+const emitFromSerial = async (ezsp: Ezsp, data: Buffer, skipAdvanceTimers: boolean = false): Promise<void> => {
     //@ts-expect-error private
     ezsp.ash.serialPort.port.emitData(Buffer.from(data));
+
+    if (!skipAdvanceTimers) {
+        await jest.advanceTimersByTimeAsync(1000);
+    }
 };
 
 const advanceTime100ms = async (times: number): Promise<void> => {
@@ -53,7 +62,7 @@ describe('Ember Ezsp Layer', () => {
             mock.mockClear();
         }
 
-        ezsp = new Ezsp(5, openOpts);
+        ezsp = new Ezsp(openOpts);
         MockBinding.createPort('/dev/ttyACM0', {record: true, ...adapterSONOFFDongleE});
         jest.useFakeTimers();
     });
@@ -68,8 +77,7 @@ describe('Ember Ezsp Layer', () => {
         const startResult = ezsp.start();
 
         await advanceTimeToRSTACK();
-        emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await jest.advanceTimersByTimeAsync(1000);
+        await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
@@ -83,10 +91,9 @@ describe('Ember Ezsp Layer', () => {
         const startResult = ezsp.start();
 
         await advanceTime100ms(2);
-        emitFromSerial(ezsp, RCED_DATA_WITH_CRC_ERROR);
+        await emitFromSerial(ezsp, RCED_DATA_WITH_CRC_ERROR, true);
         await advanceTimeToRSTACK();
-        emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await jest.advanceTimersByTimeAsync(1000);
+        await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
@@ -103,10 +110,9 @@ describe('Ember Ezsp Layer', () => {
         const startResult = ezsp.start();
 
         await advanceTime100ms(2);
-        emitFromSerial(ezsp, Buffer.from(RECD_ERROR_ACK_TIMEOUT_BYTES));
+        await emitFromSerial(ezsp, Buffer.from(RECD_ERROR_ACK_TIMEOUT_BYTES), true);
         await advanceTimeToRSTACK();
-        emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await jest.advanceTimersByTimeAsync(1000);
+        await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(Buffer.concat([Buffer.from(SEND_RST_BYTES), POST_RSTACK_SERIAL_BYTES]));
@@ -122,10 +128,9 @@ describe('Ember Ezsp Layer', () => {
         const startResult = ezsp.start();
 
         await advanceTime100ms(2);
-        emitFromSerial(ezsp, Buffer.from(RCED_ERROR_WATCHDOG_BYTES));
+        await emitFromSerial(ezsp, Buffer.from(RCED_ERROR_WATCHDOG_BYTES), true);
         await advanceTimeToRSTACK();
-        emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await jest.advanceTimersByTimeAsync(1000);
+        await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(Buffer.concat([Buffer.from(SEND_RST_BYTES), POST_RSTACK_SERIAL_BYTES]));
@@ -140,8 +145,6 @@ describe('Ember Ezsp Layer', () => {
         // @ts-expect-error private
         const onAshFatalErrorSpy = jest.spyOn(ezsp, 'onAshFatalError').mockImplementationOnce((status: EzspStatus): void => {
             // mimic EmberAdapter onNcpNeedsResetAndInit
-            logger.error(`!!! NCP FATAL ERROR reason=${EzspStatus[status]}. ATTEMPTING RESET... !!!`, 'jest:ember:ezsp');
-
             restart = new Promise(async (resolve) => {
                 jest.useRealTimers();
                 await ezsp.stop();
@@ -150,20 +153,17 @@ describe('Ember Ezsp Layer', () => {
                 const startResult = ezsp.start();
 
                 await advanceTimeToRSTACK();
-                emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-                await jest.advanceTimersByTimeAsync(1000);
+                await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
                 resolve(startResult);
             });
         });
         const startResult = ezsp.start();
 
         await advanceTimeToRSTACK();
-        emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await jest.advanceTimersByTimeAsync(1000);
+        await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
-        emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await jest.advanceTimersByTimeAsync(1000);
+        await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);// dup is received after this returns
         expect(ezsp.checkConnection()).toBeFalsy();
         // @ts-expect-error set via emit
@@ -184,8 +184,6 @@ describe('Ember Ezsp Layer', () => {
         // @ts-expect-error private
         const onAshFatalErrorSpy = jest.spyOn(ezsp, 'onAshFatalError').mockImplementationOnce((status: EzspStatus): void => {
             // mimic EmberAdapter onNcpNeedsResetAndInit
-            logger.error(`!!! NCP FATAL ERROR reason=${EzspStatus[status]}. ATTEMPTING RESET... !!!`, 'jest:ember:ezsp');
-
             restart = new Promise(async (resolve) => {
                 jest.useRealTimers();
                 await ezsp.stop();
@@ -194,22 +192,19 @@ describe('Ember Ezsp Layer', () => {
                 const startResult = ezsp.start();
     
                 await advanceTimeToRSTACK();
-                emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-                await jest.advanceTimersByTimeAsync(1000);
+                await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
                 resolve(startResult);
             });
         });
         const startResult = ezsp.start();
 
         await advanceTime100ms(2);
-        emitFromSerial(ezsp, Buffer.from(RCED_ERROR_WATCHDOG_BYTES));
+        await emitFromSerial(ezsp, Buffer.from(RCED_ERROR_WATCHDOG_BYTES), true);
         await advanceTimeToRSTACK();
-        emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await jest.advanceTimersByTimeAsync(1000);
+        await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(Buffer.concat([Buffer.from(SEND_RST_BYTES), POST_RSTACK_SERIAL_BYTES]));
-        emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await jest.advanceTimersByTimeAsync(1000);
+        await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);// dup is received after this returns
         expect(ezsp.checkConnection()).toBeFalsy();
         // @ts-expect-error set via emit
@@ -228,8 +223,6 @@ describe('Ember Ezsp Layer', () => {
         // @ts-expect-error private
         const onAshFatalErrorSpy = jest.spyOn(ezsp, 'onAshFatalError').mockImplementationOnce((status: EzspStatus): void => {
             // mimic EmberAdapter onNcpNeedsResetAndInit
-            logger.error(`!!! NCP FATAL ERROR reason=${EzspStatus[status]}. ATTEMPTING RESET... !!!`, 'jest:ember:ezsp');
-
             restart = new Promise(async (resolve) => {
                 jest.useRealTimers();
                 await ezsp.stop();
@@ -238,16 +231,14 @@ describe('Ember Ezsp Layer', () => {
                 const startResult = ezsp.start();
     
                 await advanceTimeToRSTACK();
-                emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-                await jest.advanceTimersByTimeAsync(1000);
+                await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
                 resolve(startResult);
             });
         });
         const startResult = ezsp.start();
 
         await advanceTimeToRSTACK();
-        emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await jest.advanceTimersByTimeAsync(1000);
+        await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
@@ -257,7 +248,7 @@ describe('Ember Ezsp Layer', () => {
         const version = ezsp.ezspVersion(13);
 
         await jest.advanceTimersByTimeAsync(1000);
-        emitFromSerial(ezsp, RCED_DATA_VERSION);
+        await emitFromSerial(ezsp, RCED_DATA_VERSION);
         await jest.advanceTimersByTimeAsync(1000);
         await expect(version).resolves.toStrictEqual(RCED_DATA_VERSION_RES);
         //@ts-expect-error private
@@ -267,8 +258,7 @@ describe('Ember Ezsp Layer', () => {
 
         await jest.advanceTimersByTimeAsync(10000);// any time after startup sequence
 
-        emitFromSerial(ezsp, Buffer.from(RECD_ERROR_ACK_TIMEOUT_BYTES));
-        await jest.advanceTimersByTimeAsync(1000);
+        await emitFromSerial(ezsp, Buffer.from(RECD_ERROR_ACK_TIMEOUT_BYTES));
         expect(ezsp.checkConnection()).toBeFalsy();
         // @ts-expect-error set via emit
         expect(restart).toBeDefined();
@@ -284,8 +274,7 @@ describe('Ember Ezsp Layer', () => {
         const startResult = ezsp.start();
 
         await advanceTimeToRSTACK();
-        emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await jest.advanceTimersByTimeAsync(1000);
+        await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
@@ -298,5 +287,102 @@ describe('Ember Ezsp Layer', () => {
         expect(async () => {
             await ezsp.ezspVersion(13);
         }).rejects.toStrictEqual(EzspStatus[EzspStatus.NOT_CONNECTED]);
+    });
+
+    describe('When connected', () => {
+        let callbackDispatchSpy: jest.SpyInstance;
+        let mockResponseWaiterResolve = jest.fn();
+
+        beforeEach(async () => {
+            const startResult = ezsp.start();
+
+            await advanceTimeToRSTACK();
+            await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
+            await startResult;
+            expect(ezsp.checkConnection()).toBeTruthy();
+
+            callbackDispatchSpy = jest.spyOn(ezsp, 'callbackDispatch').mockImplementation(jest.fn());
+
+            callbackDispatchSpy.mockClear();
+            mockResponseWaiterResolve.mockClear();
+        });
+
+        it('Parses successive valid incoming frames', async () => {
+            // @ts-expect-error private
+            ezsp.responseWaiter = {timer: setTimeout(() => {}, 15000), resolve: mockResponseWaiterResolve};
+
+            await emitFromSerial(ezsp, Buffer.from(SEND_UNICAST_REPLY_FN0_ASH_RAW, 'hex'));
+            await jest.advanceTimersByTimeAsync(1000);
+
+            expect(callbackDispatchSpy).toHaveBeenCalledTimes(0);
+            expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(1);
+            expect(mockResponseWaiterResolve).toHaveBeenCalledWith(EzspStatus.SUCCESS);
+            expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=52:"SEND_UNICAST" Seq=39 Len=10]`);
+
+            await emitFromSerial(ezsp, Buffer.from(MESSAGE_SENT_HANDLER_FN1_ASH_RAW, 'hex'));
+            await jest.advanceTimersByTimeAsync(1000);
+
+            expect(callbackDispatchSpy).toHaveBeenCalledTimes(1);
+            expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(1);
+            expect(ezsp.callbackFrameToString).toStrictEqual(`[CBFRAME: ID=63:"MESSAGE_SENT_HANDLER" Seq=39 Len=26]`);
+            expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=52:"SEND_UNICAST" Seq=39 Len=10]`);
+
+            await emitFromSerial(ezsp, Buffer.from(INCOMING_MESSAGE_HANDLER_FN2_ASH_RAW, 'hex'));
+            await jest.advanceTimersByTimeAsync(1000);
+
+            expect(callbackDispatchSpy).toHaveBeenCalledTimes(2);
+            expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(1);
+            expect(ezsp.callbackFrameToString).toStrictEqual(`[CBFRAME: ID=69:"INCOMING_MESSAGE_HANDLER" Seq=39 Len=42]`);
+            expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=52:"SEND_UNICAST" Seq=39 Len=10]`);
+        });
+
+        it('Parses valid incoming callback frame while waiting for response frame', async () => {
+            // @ts-expect-error private
+            ezsp.responseWaiter = {timer: setTimeout(() => {}, 15000), resolve: mockResponseWaiterResolve};
+
+            await emitFromSerial(ezsp, Buffer.from(MESSAGE_SENT_HANDLER_FN0_ASH_RAW, 'hex'));
+            await jest.advanceTimersByTimeAsync(1000);
+
+            expect(callbackDispatchSpy).toHaveBeenCalledTimes(1);
+            expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(0);
+            expect(ezsp.callbackFrameToString).toStrictEqual(`[CBFRAME: ID=63:"MESSAGE_SENT_HANDLER" Seq=39 Len=26]`);
+            expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=0:"VERSION" Seq=0 Len=0]`);
+
+            await emitFromSerial(ezsp, Buffer.from(SET_POLICY_REPLY_FN1_ASH_RAW, 'hex'));
+            await jest.advanceTimersByTimeAsync(1000);
+
+            expect(callbackDispatchSpy).toHaveBeenCalledTimes(1);
+            expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(1);
+            expect(mockResponseWaiterResolve).toHaveBeenCalledWith(EzspStatus.SUCCESS);
+            expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=85:"SET_POLICY" Seq=79 Len=9]`);
+            expect(ezsp.callbackFrameToString).toStrictEqual(`[CBFRAME: ID=63:"MESSAGE_SENT_HANDLER" Seq=39 Len=26]`);
+        });
+
+        it('Parses invalid incoming frame', async () => {
+            jest.spyOn(ezsp, 'validateReceivedFrame').mockReturnValueOnce(EzspStatus.ERROR_WRONG_DIRECTION);
+
+            // @ts-expect-error private
+            ezsp.responseWaiter = {timer: setTimeout(() => {}, 15000), resolve: mockResponseWaiterResolve};
+
+            await emitFromSerial(ezsp, Buffer.from(SEND_UNICAST_REPLY_FN0_ASH_RAW, 'hex'));
+            await jest.advanceTimersByTimeAsync(1000);
+
+            expect(callbackDispatchSpy).toHaveBeenCalledTimes(0);
+            expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(1);
+            expect(mockResponseWaiterResolve).toHaveBeenCalledWith(EzspStatus.ERROR_WRONG_DIRECTION);
+            expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=52:"SEND_UNICAST" Seq=39 Len=10]`);
+        });
+
+        it('Parses invalid incoming callback frame', async () => {
+            jest.spyOn(ezsp, 'validateReceivedFrame').mockReturnValueOnce(EzspStatus.ERROR_WRONG_DIRECTION);
+
+            await emitFromSerial(ezsp, Buffer.from(MESSAGE_SENT_HANDLER_FN0_ASH_RAW, 'hex'));
+            await jest.advanceTimersByTimeAsync(1000);
+
+            expect(callbackDispatchSpy).toHaveBeenCalledTimes(0);
+            expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(0);
+            expect(ezsp.callbackFrameToString).toStrictEqual(`[CBFRAME: ID=63:"MESSAGE_SENT_HANDLER" Seq=39 Len=26]`);
+            expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=0:"VERSION" Seq=0 Len=0]`);
+        });
     });
 });

@@ -236,6 +236,11 @@ export class Ezsp extends EventEmitter {
     private readonly frameContents: Buffer;
     /** The total Length of the incoming frame */
     private frameLength: number;
+    private readonly callbackBuffalo: EzspBuffalo;
+    /** The contents of the current EZSP frame. CAREFUL using this guy, it's pre-allocated. */
+    private readonly callbackFrameContents: Buffer;
+    /** The total Length of the incoming frame */
+    private callbackFrameLength: number;
 
     private initialVersionSent: boolean;
     /** True if a command is in the process of being sent. */
@@ -252,18 +257,15 @@ export class Ezsp extends EventEmitter {
     /** Counter for Queue Full errors */
     public counterErrQueueFull: number;
 
-    /** Handle used to tick for possible received callbacks */
-    private tickHandle: NodeJS.Timeout;
-
-    constructor(tickInterval: number, options: SerialPortOptions) {
+    constructor(options: SerialPortOptions) {
         super();
 
-        this.tickInterval = tickInterval || 5;
         this.frameContents = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
         this.buffalo = new EzspBuffalo(this.frameContents);
+        this.callbackFrameContents = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
+        this.callbackBuffalo = new EzspBuffalo(this.callbackFrameContents);
 
         this.ash = new UartAsh(options);
-        this.ash.on(AshEvents.FRAME, this.onAshFrame.bind(this));
     }
 
     /**
@@ -283,17 +285,28 @@ export class Ezsp extends EventEmitter {
         return `[FRAME: ID=${id}:"${EzspFrameID[id]}" Seq=${this.frameContents[EZSP_SEQUENCE_INDEX]} Len=${this.frameLength}]`;
     }
 
+    /**
+     * Create a string representation of the last callback frame in storage (received only).
+     */
+    get callbackFrameToString(): string {
+        const id = this.callbackBuffalo.getFrameId();
+        return `[CBFRAME: ID=${id}:"${EzspFrameID[id]}" Seq=${this.callbackFrameContents[EZSP_SEQUENCE_INDEX]} Len=${this.callbackFrameLength}]`;
+    }
+
     private initVariables(): void {
         if (this.waitingForResponse) {
             clearTimeout(this.responseWaiter.timer);
         }
 
-        clearTimeout(this.tickHandle);
         this.ash.removeAllListeners(AshEvents.FATAL_ERROR);
+        this.ash.removeAllListeners(AshEvents.FRAME);
 
         this.frameContents.fill(0);
         this.frameLength = 0;
         this.buffalo.setPosition(0);
+        this.callbackFrameContents.fill(0);
+        this.callbackFrameLength = 0;
+        this.callbackBuffalo.setPosition(0);
         this.initialVersionSent = false;
         this.sendingCommand = false;
         this.frameSequence = -1;// start at 0
@@ -301,7 +314,6 @@ export class Ezsp extends EventEmitter {
         this.waitingForResponse = false;
         this.responseWaiter = null;
         this.counterErrQueueFull = 0;
-        this.tickHandle = null;
     }
 
     public async start(): Promise<EzspStatus> {
@@ -323,9 +335,10 @@ export class Ezsp extends EventEmitter {
 
             if (status === EzspStatus.SUCCESS) {
                 logger.info(`======== EZSP started ========`, NS);
-                // registered after reset sequence to avoid bubbling up to adapter before this point
+                // registered after reset sequence
+                this.ash.on(AshEvents.FRAME, this.onAshFrame.bind(this));
                 this.ash.on(AshEvents.FATAL_ERROR, this.onAshFatalError.bind(this));
-                this.tick();
+
                 return status;
             }
         }
@@ -362,20 +375,61 @@ export class Ezsp extends EventEmitter {
         return this.ash.connected;
     }
 
+    /**
+     * Triggered by @see AshEvents.FATAL_ERROR
+     */
     private onAshFatalError(status: EzspStatus): void {
         this.emit(EzspEvents.NCP_NEEDS_RESET_AND_INIT, status);
     }
 
+    /**
+     * Triggered by @see AshEvents.FRAME
+     */
     private onAshFrame(): void {
-        // let tick handle if not waiting for response (CBs)
-        if (this.waitingForResponse) {
-            const status = this.responseReceived();
+        // trigger housekeeping in ASH layer
+        this.ash.sendExec();
 
-            if (status !== EzspStatus.NO_RX_DATA) {
-                // we've got a non-CB frame, must be it!
-                clearTimeout(this.responseWaiter.timer);
-                this.responseWaiter.resolve(status);
+        const buffer: EzspBuffer = this.ash.rxQueue.getPrecedingEntry(null);
+
+        if (buffer == null) {
+            // something is seriously wrong
+            logger.error(`Found no buffer in queue but ASH layer sent signal that one was available.`, NS);
+            return;
+        }
+
+        this.ash.rxQueue.removeEntry(buffer);
+
+        // logger.debug(`<<<< ${buffer.data.subarray(0, buffer.len).toString('hex')}`, NS);
+
+        if (buffer.data[EZSP_FRAME_CONTROL_INDEX] & EZSP_FRAME_CONTROL_ASYNCH_CB) {
+            buffer.data.copy(this.callbackFrameContents, 0, 0, buffer.len);// take only what len tells us is actual content
+
+            this.callbackFrameLength = buffer.len;
+
+            logger.debug(`<=== ${this.callbackFrameToString}`, NS);
+
+            this.ash.rxFree.freeBuffer(buffer);
+
+            const status = this.validateReceivedFrame(this.callbackBuffalo);
+
+            if (status === EzspStatus.SUCCESS) {
+                this.callbackDispatch();
+            } else {
+                logger.debug(`<=x= ${this.callbackFrameToString} Invalid, status=${EzspStatus[status]}.`, NS);
             }
+        } else {
+            buffer.data.copy(this.frameContents, 0, 0, buffer.len);// take only what len tells us is actual content
+
+            this.frameLength = buffer.len;
+
+            logger.debug(`<=== ${this.frameToString}`, NS);
+
+            this.ash.rxFree.freeBuffer(buffer);
+
+            const status = this.validateReceivedFrame(this.buffalo);
+
+            clearTimeout(this.responseWaiter.timer);
+            this.responseWaiter.resolve(status);
         }
     }
 
@@ -387,45 +441,31 @@ export class Ezsp extends EventEmitter {
      * @param status 
      */
     public ezspErrorHandler(status: EzspStatus): void {
-        const lastFrameStr = `Last: ${this.frameToString}.`;
+        const lastFrameStr = `Last Frame: ${this.frameToString}.`;
 
         if (status === EzspStatus.ERROR_QUEUE_FULL) {
             this.counterErrQueueFull += 1;
 
-            logger.error(`NCP Queue full (counter: ${this.counterErrQueueFull}). ${lastFrameStr}`, NS);
+            logger.error(`Adapter queue full (counter: ${this.counterErrQueueFull}). ${lastFrameStr}`, NS);
         } else if (status === EzspStatus.ERROR_OVERFLOW) {
             logger.error(
-                `The NCP has run out of buffers, causing general malfunction. Remediate network congestion, if present. ${lastFrameStr}`,
+                `The adapter has run out of buffers, causing general malfunction. Remediate network congestion, if present. ${lastFrameStr}`,
                 NS,
             );
         } else {
             logger.error(`ERROR Transaction failure; status=${EzspStatus[status]}. ${lastFrameStr}`, NS);
         }
 
+        // Do not reset if improper frame control direction flag (XXX: certain devices appear to trigger this somehow, without reason?)
         // Do not reset if this is a decryption failure, as we ignored the packet
         // Do not reset for a callback overflow or error queue, as we don't want the device to reboot under stress;
-        // Resetting under these conditions does not solve the problem as the problem is external to the NCP.
+        // resetting under these conditions does not solve the problem as the problem is external to the NCP.
         // Throttling the additional traffic and staggering things might make it better instead.
         // For all other errors, we reset the NCP
         if ((status !== EzspStatus.ERROR_SECURITY_PARAMETERS_INVALID) && (status !== EzspStatus.ERROR_OVERFLOW)
-            && (status !== EzspStatus.ERROR_QUEUE_FULL)) {
+            && (status !== EzspStatus.ERROR_QUEUE_FULL) && (status !== EzspStatus.ERROR_WRONG_DIRECTION)) {
             this.emit(EzspEvents.NCP_NEEDS_RESET_AND_INIT, status);
         }
-    }
-
-    /**
-     * The Host application must call this function periodically to allow the EZSP layer to handle asynchronous events.
-     */
-    private tick(): void {
-        // don't process any callbacks while sending a command and waiting for its response
-        // nothing in the rx queue, nothing to receive
-        if (!this.sendingCommand && !this.ash.rxQueue.empty) {
-            if (this.responseReceived() === EzspStatus.SUCCESS) {
-                this.callbackDispatch();
-            }
-        }
-
-        this.tickHandle = setTimeout(this.tick.bind(this), this.tickInterval);
     }
 
     private nextFrameSequence(): number {
@@ -518,23 +558,16 @@ export class Ezsp extends EventEmitter {
         logger.debug(`===> ${this.frameToString}`, NS);
 
         try {
-            status = await new Promise<EzspStatus>((resolve, reject: (reason: Error) => void): void => {
+            status = await new Promise<EzspStatus>((resolve, reject: (reason: EzspError) => void): void => {
                 const sendStatus = (this.ash.send(this.frameLength, this.frameContents));
 
                 if (sendStatus !== EzspStatus.SUCCESS) {
                     reject(new EzspError(sendStatus));
                 }
 
-                const error = new Error();
-                Error.captureStackTrace(error);
-
-                this.waitingForResponse = true;
                 this.responseWaiter = {
                     timer: setTimeout(() => {
-                        this.waitingForResponse = false;
-                        error.message = `timed out after ${this.ash.responseTimeout}ms`;
-
-                        reject(error);
+                        reject(new EzspError(EzspStatus.ASH_ERROR_TIMEOUTS));
                     }, this.ash.responseTimeout),
                     resolve,
                 };
@@ -543,8 +576,8 @@ export class Ezsp extends EventEmitter {
             if (status !== EzspStatus.SUCCESS) {
                 throw new EzspError(status);
             }
-        } catch (err) {
-            logger.debug(`=x=> ${this.frameToString} Error: ${err}`, NS);
+        } catch (error) {
+            logger.debug(`=x=> ${this.frameToString} ${error}`, NS);
 
             this.ezspErrorHandler(status);
         }
@@ -555,109 +588,45 @@ export class Ezsp extends EventEmitter {
     }
 
     /**
-     * Checks whether a new EZSP response frame has been received.
-     * If any, the response payload is stored in frameContents/frameLength.
-     * Any other return value means that an error has been detected by the serial protocol layer.
-     * @returns NO_RX_DATA if no new response has been received.
-     * @returns SUCCESS if a new response has been received.
-     */
-    public checkResponseReceived(): EzspStatus {
-        // trigger housekeeping in ASH layer
-        this.ash.sendExec();
-
-        let status: EzspStatus = EzspStatus.NO_RX_DATA;
-        let dropBuffer: EzspBuffer = null;
-        let buffer: EzspBuffer = this.ash.rxQueue.getPrecedingEntry(null);
-
-        while (buffer != null) {
-            // While we are waiting for a response to a command, we use the asynch callback flag to ignore asynchronous callbacks.
-            // This allows our caller to assume that no callbacks will appear between sending a command and receiving its response.
-            if (this.waitingForResponse && (buffer.data[EZSP_FRAME_CONTROL_INDEX] & EZSP_FRAME_CONTROL_ASYNCH_CB)) {
-                logger.debug(`Skipping async callback while waiting for response to command.`, NS);
-
-                if (this.ash.rxFree.length === 0) {
-                    dropBuffer = buffer;
-                }
-
-                buffer = this.ash.rxQueue.getPrecedingEntry(buffer);
-            } else {
-                this.ash.rxQueue.removeEntry(buffer);
-                buffer.data.copy(this.frameContents, 0, 0, buffer.len);// take only what len tells us is actual content
-
-                this.frameLength = buffer.len;
-
-                logger.debug(`<=== ${this.frameToString}`, NS);
-
-                this.ash.rxFree.freeBuffer(buffer);
-
-                buffer = null;
-                status = EzspStatus.SUCCESS;
-                this.waitingForResponse = false;
-            }
-        }
-
-        if (dropBuffer != null) {
-            this.ash.rxQueue.removeEntry(dropBuffer);
-            this.ash.rxFree.freeBuffer(dropBuffer);
-
-            logger.debug(`ERROR Host receive queue full. Dropping received callback: ${dropBuffer.data.toString('hex')}`, NS);
-
-            this.ezspErrorHandler(EzspStatus.ERROR_QUEUE_FULL);
-        }
-
-        return status;
-    }
-
-    /**
-     * Check if a response was received and sets the stage for parsing if valid (indexes buffalo to params index).
+     * Sets the stage for parsing if valid (indexes buffalo to params index).
      * @returns 
      */
-    public responseReceived(): EzspStatus {
-        let status: EzspStatus;
-
-        status = this.checkResponseReceived();
-
-        if (status === EzspStatus.NO_RX_DATA) {
-            return status;
-        }
-
+    public validateReceivedFrame(buffalo: EzspBuffalo): EzspStatus {
+        let status: EzspStatus = EzspStatus.SUCCESS;
         let frameControl: number, frameId: number, parametersIndex: number;
         // eslint-disable-next-line prefer-const
-        [status, frameControl, frameId, parametersIndex] = this.buffalo.getResponseMetadata();
+        [status, frameControl, frameId, parametersIndex] = buffalo.getResponseMetadata();
 
-        if (status === EzspStatus.SUCCESS) {
-            if (frameId === EzspFrameID.INVALID_COMMAND) {
-                status = this.buffalo.getResponseByte(parametersIndex);
-            }
-
-            if ((frameControl & EZSP_FRAME_CONTROL_DIRECTION_MASK) !== EZSP_FRAME_CONTROL_RESPONSE) {
-                status = EzspStatus.ERROR_WRONG_DIRECTION;
-            }
-
-            if ((frameControl & EZSP_FRAME_CONTROL_TRUNCATED_MASK) === EZSP_FRAME_CONTROL_TRUNCATED) {
-                status = EzspStatus.ERROR_TRUNCATED;
-            }
-
-            if ((frameControl & EZSP_FRAME_CONTROL_OVERFLOW_MASK) === EZSP_FRAME_CONTROL_OVERFLOW) {
-                status = EzspStatus.ERROR_OVERFLOW;
-            }
-
-            if ((frameControl & EZSP_FRAME_CONTROL_PENDING_CB_MASK) === EZSP_FRAME_CONTROL_PENDING_CB) {
-                this.ash.ncpHasCallbacks = true;
-            } else {
-                this.ash.ncpHasCallbacks = false;
-            }
-
-            // Set the callback network
-            //this.callbackNetworkIndex = (frameControl & EZSP_FRAME_CONTROL_NETWORK_INDEX_MASK) >> EZSP_FRAME_CONTROL_NETWORK_INDEX_OFFSET;
+        if (frameId === EzspFrameID.INVALID_COMMAND) {
+            status = buffalo.getResponseByte(parametersIndex);
         }
 
+        if ((frameControl & EZSP_FRAME_CONTROL_DIRECTION_MASK) !== EZSP_FRAME_CONTROL_RESPONSE) {
+            status = EzspStatus.ERROR_WRONG_DIRECTION;
+        }
+
+        if ((frameControl & EZSP_FRAME_CONTROL_TRUNCATED_MASK) === EZSP_FRAME_CONTROL_TRUNCATED) {
+            status = EzspStatus.ERROR_TRUNCATED;
+        }
+
+        if ((frameControl & EZSP_FRAME_CONTROL_OVERFLOW_MASK) === EZSP_FRAME_CONTROL_OVERFLOW) {
+            status = EzspStatus.ERROR_OVERFLOW;
+        }
+
+        if ((frameControl & EZSP_FRAME_CONTROL_PENDING_CB_MASK) === EZSP_FRAME_CONTROL_PENDING_CB) {
+            this.ash.ncpHasCallbacks = true;
+        } else {
+            this.ash.ncpHasCallbacks = false;
+        }
+
+        // Set the callback network
+        //this.callbackNetworkIndex = (frameControl & EZSP_FRAME_CONTROL_NETWORK_INDEX_MASK) >> EZSP_FRAME_CONTROL_NETWORK_INDEX_OFFSET;
+
         if (status !== EzspStatus.SUCCESS) {
-            logger.debug(`[RESPONSE RECEIVED] ERROR ${EzspStatus[status]}`, NS);
             this.ezspErrorHandler(status);
         }
 
-        this.buffalo.setPosition(parametersIndex);
+        buffalo.setPosition(parametersIndex);
 
         // An overflow does not indicate a comms failure;
         // The system can still communicate but buffers are running critically low.
@@ -673,136 +642,136 @@ export class Ezsp extends EventEmitter {
      * Dispatches callback frames handlers.
      */
     public callbackDispatch(): void {
-        switch (this.buffalo.getExtFrameId()) {
+        switch (this.callbackBuffalo.getExtFrameId()) {
         case EzspFrameID.NO_CALLBACKS: {
             this.ezspNoCallbacks();
             break;
         }
         case EzspFrameID.STACK_TOKEN_CHANGED_HANDLER: {
-            const tokenAddress = this.buffalo.readUInt16();
+            const tokenAddress = this.callbackBuffalo.readUInt16();
             this.ezspStackTokenChangedHandler(tokenAddress);
             break;
         }
         case EzspFrameID.TIMER_HANDLER: {
-            const timerId = this.buffalo.readUInt8();
+            const timerId = this.callbackBuffalo.readUInt8();
             this.ezspTimerHandler(timerId);
             break;
         }
         case EzspFrameID.COUNTER_ROLLOVER_HANDLER: {
-            const type: EmberCounterType = this.buffalo.readUInt8();
+            const type: EmberCounterType = this.callbackBuffalo.readUInt8();
             this.ezspCounterRolloverHandler(type);
             break;
         }
         case EzspFrameID.CUSTOM_FRAME_HANDLER: {
-            const payload = this.buffalo.readPayload();
+            const payload = this.callbackBuffalo.readPayload();
             this.ezspCustomFrameHandler(payload);
             break;
         }
         case EzspFrameID.STACK_STATUS_HANDLER: {
-            const status = this.buffalo.readStatus(this.version);
+            const status = this.callbackBuffalo.readStatus(this.version);
             this.ezspStackStatusHandler(status);
             break;
         }
         case EzspFrameID.ENERGY_SCAN_RESULT_HANDLER: {
-            const channel = this.buffalo.readUInt8();
-            const maxRssiValue = this.buffalo.readInt8();
+            const channel = this.callbackBuffalo.readUInt8();
+            const maxRssiValue = this.callbackBuffalo.readInt8();
             this.ezspEnergyScanResultHandler(channel, maxRssiValue);
             break;
         }
         case EzspFrameID.NETWORK_FOUND_HANDLER: {
-            const networkFound: EmberZigbeeNetwork = this.buffalo.readEmberZigbeeNetwork();
-            const lastHopLqi = this.buffalo.readUInt8();
-            const lastHopRssi = this.buffalo.readInt8();
+            const networkFound: EmberZigbeeNetwork = this.callbackBuffalo.readEmberZigbeeNetwork();
+            const lastHopLqi = this.callbackBuffalo.readUInt8();
+            const lastHopRssi = this.callbackBuffalo.readInt8();
             this.ezspNetworkFoundHandler(networkFound, lastHopLqi, lastHopRssi);
             break;
         }
         case EzspFrameID.SCAN_COMPLETE_HANDLER: {
-            const channel = this.buffalo.readUInt8();
-            const status = this.buffalo.readStatus(this.version);
+            const channel = this.callbackBuffalo.readUInt8();
+            const status = this.callbackBuffalo.readStatus(this.version);
             this.ezspScanCompleteHandler(channel, status);
             break;
         }
         case EzspFrameID.UNUSED_PAN_ID_FOUND_HANDLER: {
-            const panId: PanId = this.buffalo.readUInt16();
-            const channel = this.buffalo.readUInt8();
+            const panId: PanId = this.callbackBuffalo.readUInt16();
+            const channel = this.callbackBuffalo.readUInt8();
             this.ezspUnusedPanIdFoundHandler(panId, channel);
             break;
         }
         case EzspFrameID.CHILD_JOIN_HANDLER: {
-            const index = this.buffalo.readUInt8();
-            const joining = this.buffalo.readUInt8() !== 0;
-            const childId: NodeId = this.buffalo.readUInt16();
-            const childEui64 = this.buffalo.readIeeeAddr();
-            const childType: EmberNodeType = this.buffalo.readUInt8();
+            const index = this.callbackBuffalo.readUInt8();
+            const joining = this.callbackBuffalo.readUInt8() !== 0;
+            const childId: NodeId = this.callbackBuffalo.readUInt16();
+            const childEui64 = this.callbackBuffalo.readIeeeAddr();
+            const childType: EmberNodeType = this.callbackBuffalo.readUInt8();
             this.ezspChildJoinHandler(index, joining, childId, childEui64, childType);
             break;
         }
         case EzspFrameID.DUTY_CYCLE_HANDLER: {
-            const channelPage = this.buffalo.readUInt8();
-            const channel = this.buffalo.readUInt8();
-            const state: EmberDutyCycleState = this.buffalo.readUInt8();
-            const totalDevices = this.buffalo.readUInt8();
-            const arrayOfDeviceDutyCycles: EmberPerDeviceDutyCycle[] = this.buffalo.readEmberPerDeviceDutyCycle();
+            const channelPage = this.callbackBuffalo.readUInt8();
+            const channel = this.callbackBuffalo.readUInt8();
+            const state: EmberDutyCycleState = this.callbackBuffalo.readUInt8();
+            const totalDevices = this.callbackBuffalo.readUInt8();
+            const arrayOfDeviceDutyCycles: EmberPerDeviceDutyCycle[] = this.callbackBuffalo.readEmberPerDeviceDutyCycle();
             this.ezspDutyCycleHandler(channelPage, channel, state, totalDevices, arrayOfDeviceDutyCycles);
             break;
         }
         case EzspFrameID.REMOTE_SET_BINDING_HANDLER: {
-            const entry : EmberBindingTableEntry = this.buffalo.readEmberBindingTableEntry();
-            const index = this.buffalo.readUInt8();
-            const policyDecision = this.buffalo.readStatus(this.version);
+            const entry : EmberBindingTableEntry = this.callbackBuffalo.readEmberBindingTableEntry();
+            const index = this.callbackBuffalo.readUInt8();
+            const policyDecision = this.callbackBuffalo.readStatus(this.version);
             this.ezspRemoteSetBindingHandler(entry, index, policyDecision);
             break;
         }
         case EzspFrameID.REMOTE_DELETE_BINDING_HANDLER: {
-            const index = this.buffalo.readUInt8();
-            const policyDecision = this.buffalo.readStatus(this.version);
+            const index = this.callbackBuffalo.readUInt8();
+            const policyDecision = this.callbackBuffalo.readStatus(this.version);
             this.ezspRemoteDeleteBindingHandler(index, policyDecision);
             break;
         }
         case EzspFrameID.MESSAGE_SENT_HANDLER: {
             if (this.version < 0x0E) {
-                const type: EmberOutgoingMessageType = this.buffalo.readUInt8();
-                const indexOrDestination = this.buffalo.readUInt16();
-                const apsFrame: EmberApsFrame = this.buffalo.readEmberApsFrame();
-                const messageTag = this.buffalo.readUInt8();
-                const status = this.buffalo.readUInt8();
+                const type: EmberOutgoingMessageType = this.callbackBuffalo.readUInt8();
+                const indexOrDestination = this.callbackBuffalo.readUInt16();
+                const apsFrame: EmberApsFrame = this.callbackBuffalo.readEmberApsFrame();
+                const messageTag = this.callbackBuffalo.readUInt8();
+                const status = this.callbackBuffalo.readStatus(this.version);
                 // EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY set to messageTag only, so skip parsing entirely
-                // const messageContents = this.buffalo.readPayload();
+                // const messageContents = this.callbackBuffalo.readPayload();
 
                 this.ezspMessageSentHandler(status, type, indexOrDestination, apsFrame, messageTag);
             } else {
-                const status = this.buffalo.readUInt32();
-                const type: EmberOutgoingMessageType = this.buffalo.readUInt8();
-                const indexOrDestination = this.buffalo.readUInt16();
-                const apsFrame: EmberApsFrame = this.buffalo.readEmberApsFrame();
-                const messageTag = this.buffalo.readUInt16();
+                const status = this.callbackBuffalo.readUInt32();
+                const type: EmberOutgoingMessageType = this.callbackBuffalo.readUInt8();
+                const indexOrDestination = this.callbackBuffalo.readUInt16();
+                const apsFrame: EmberApsFrame = this.callbackBuffalo.readEmberApsFrame();
+                const messageTag = this.callbackBuffalo.readUInt16();
                 // EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY set to messageTag only, so skip parsing entirely
-                // const messageContents = this.buffalo.readPayload();
+                // const messageContents = this.callbackBuffalo.readPayload();
 
                 this.ezspMessageSentHandler(status, type, indexOrDestination, apsFrame, messageTag);
             }
             break;
         }
         case EzspFrameID.POLL_COMPLETE_HANDLER: {
-            const status = this.buffalo.readStatus(this.version);
+            const status = this.callbackBuffalo.readStatus(this.version);
             this.ezspPollCompleteHandler(status);
             break;
         }
         case EzspFrameID.POLL_HANDLER: {
-            const childId: NodeId = this.buffalo.readUInt16();
-            const transmitExpected = this.buffalo.readUInt8() !== 0;
+            const childId: NodeId = this.callbackBuffalo.readUInt16();
+            const transmitExpected = this.callbackBuffalo.readUInt8() !== 0;
             this.ezspPollHandler(childId, transmitExpected);
             break;
         }
         case EzspFrameID.INCOMING_MESSAGE_HANDLER: {
             if (this.version < 0x0E) {
-                const type: EmberIncomingMessageType = this.buffalo.readUInt8();
-                const apsFrame = this.buffalo.readEmberApsFrame();
-                const lastHopLqi = this.buffalo.readUInt8();
-                const lastHopRssi = this.buffalo.readInt8();
-                const senderShortId = this.buffalo.readUInt16();
-                const bindingIndex = this.buffalo.readUInt8();
-                const addressIndex = this.buffalo.readUInt8();
+                const type: EmberIncomingMessageType = this.callbackBuffalo.readUInt8();
+                const apsFrame = this.callbackBuffalo.readEmberApsFrame();
+                const lastHopLqi = this.callbackBuffalo.readUInt8();
+                const lastHopRssi = this.callbackBuffalo.readInt8();
+                const senderShortId = this.callbackBuffalo.readUInt16();
+                const bindingIndex = this.callbackBuffalo.readUInt8();
+                const addressIndex = this.callbackBuffalo.readUInt8();
                 const packetInfo: EmberRxPacketInfo = {
                     senderShortId,
                     senderLongId: ZSpec.BLANK_EUI64,
@@ -812,56 +781,56 @@ export class Ezsp extends EventEmitter {
                     lastHopRssi,
                     lastHopTimestamp: 0
                 };
-                const messageContents = this.buffalo.readPayload();
+                const messageContents = this.callbackBuffalo.readPayload();
                 this.ezspIncomingMessageHandler(type, apsFrame, packetInfo, messageContents);
             } else {
-                const type: EmberIncomingMessageType = this.buffalo.readUInt8();
-                const apsFrame = this.buffalo.readEmberApsFrame();
-                const packetInfo = this.buffalo.readEmberRxPacketInfo();
-                const messageContents = this.buffalo.readPayload();
+                const type: EmberIncomingMessageType = this.callbackBuffalo.readUInt8();
+                const apsFrame = this.callbackBuffalo.readEmberApsFrame();
+                const packetInfo = this.callbackBuffalo.readEmberRxPacketInfo();
+                const messageContents = this.callbackBuffalo.readPayload();
                 this.ezspIncomingMessageHandler(type, apsFrame, packetInfo, messageContents);
             }
             break;
         }
         case EzspFrameID.INCOMING_MANY_TO_ONE_ROUTE_REQUEST_HANDLER: {
-            const source: NodeId = this.buffalo.readUInt16();
-            const longId = this.buffalo.readIeeeAddr();
-            const cost = this.buffalo.readUInt8();
+            const source: NodeId = this.callbackBuffalo.readUInt16();
+            const longId = this.callbackBuffalo.readIeeeAddr();
+            const cost = this.callbackBuffalo.readUInt8();
             this.ezspIncomingManyToOneRouteRequestHandler(source, longId, cost);
             break;
         }
         case EzspFrameID.INCOMING_ROUTE_ERROR_HANDLER: {
-            const status = this.buffalo.readStatus(this.version);
-            const target: NodeId = this.buffalo.readUInt16();
+            const status = this.callbackBuffalo.readStatus(this.version);
+            const target: NodeId = this.callbackBuffalo.readUInt16();
             this.ezspIncomingRouteErrorHandler(status, target);
             break;
         }
         case EzspFrameID.INCOMING_NETWORK_STATUS_HANDLER: {
-            const errorCode = this.buffalo.readUInt8();
-            const target: NodeId = this.buffalo.readUInt16();
+            const errorCode = this.callbackBuffalo.readUInt8();
+            const target: NodeId = this.callbackBuffalo.readUInt16();
             this.ezspIncomingNetworkStatusHandler(errorCode, target);
             break;
         }
         case EzspFrameID.INCOMING_ROUTE_RECORD_HANDLER: {
-            const source: NodeId = this.buffalo.readUInt16();
-            const sourceEui = this.buffalo.readIeeeAddr();
-            const lastHopLqi = this.buffalo.readUInt8();
-            const lastHopRssi = this.buffalo.readInt8();
-            const relayCount = this.buffalo.readUInt8();
-            const relayList = this.buffalo.readListUInt16(relayCount);//this.buffalo.readListUInt8(relayCount * 2);
+            const source: NodeId = this.callbackBuffalo.readUInt16();
+            const sourceEui = this.callbackBuffalo.readIeeeAddr();
+            const lastHopLqi = this.callbackBuffalo.readUInt8();
+            const lastHopRssi = this.callbackBuffalo.readInt8();
+            const relayCount = this.callbackBuffalo.readUInt8();
+            const relayList = this.callbackBuffalo.readListUInt16(relayCount);//this.callbackBuffalo.readListUInt8(relayCount * 2);
             this.ezspIncomingRouteRecordHandler(source, sourceEui, lastHopLqi, lastHopRssi, relayCount, relayList);
             break;
         }
         case EzspFrameID.ID_CONFLICT_HANDLER: {
-            const id: NodeId = this.buffalo.readUInt16();
+            const id: NodeId = this.callbackBuffalo.readUInt16();
             this.ezspIdConflictHandler(id);
             break;
         }
         case EzspFrameID.MAC_PASSTHROUGH_MESSAGE_HANDLER: {
             if (this.version < 0x0E) {
-                const messageType: EmberMacPassthroughType = this.buffalo.readUInt8();
-                const lastHopLqi = this.buffalo.readUInt8();
-                const lastHopRssi = this.buffalo.readInt8();
+                const messageType: EmberMacPassthroughType = this.callbackBuffalo.readUInt8();
+                const lastHopLqi = this.callbackBuffalo.readUInt8();
+                const lastHopRssi = this.callbackBuffalo.readInt8();
                 const packetInfo: EmberRxPacketInfo = {
                     senderShortId: ZSpec.NULL_NODE_ID,
                     senderLongId: ZSpec.BLANK_EUI64,
@@ -871,22 +840,22 @@ export class Ezsp extends EventEmitter {
                     lastHopRssi,
                     lastHopTimestamp: 0
                 };
-                const messageContents = this.buffalo.readPayload();
+                const messageContents = this.callbackBuffalo.readPayload();
                 this.ezspMacPassthroughMessageHandler(messageType, packetInfo, messageContents);
             } else {
-                const messageType: EmberMacPassthroughType = this.buffalo.readUInt8();
-                const packetInfo = this.buffalo.readEmberRxPacketInfo();
-                const messageContents = this.buffalo.readPayload();
+                const messageType: EmberMacPassthroughType = this.callbackBuffalo.readUInt8();
+                const packetInfo = this.callbackBuffalo.readEmberRxPacketInfo();
+                const messageContents = this.callbackBuffalo.readPayload();
                 this.ezspMacPassthroughMessageHandler(messageType, packetInfo, messageContents);
             }
             break;
         }
         case EzspFrameID.MAC_FILTER_MATCH_MESSAGE_HANDLER: {
             if (this.version < 0x0E) {
-                const filterIndexMatch = this.buffalo.readUInt8();
-                const legacyPassthroughType: EmberMacPassthroughType = this.buffalo.readUInt8();
-                const lastHopLqi = this.buffalo.readUInt8();
-                const lastHopRssi = this.buffalo.readInt8();
+                const filterIndexMatch = this.callbackBuffalo.readUInt8();
+                const legacyPassthroughType: EmberMacPassthroughType = this.callbackBuffalo.readUInt8();
+                const lastHopLqi = this.callbackBuffalo.readUInt8();
+                const lastHopRssi = this.callbackBuffalo.readInt8();
                 const packetInfo: EmberRxPacketInfo = {
                     senderShortId: ZSpec.NULL_NODE_ID,
                     senderLongId: ZSpec.BLANK_EUI64,
@@ -896,98 +865,98 @@ export class Ezsp extends EventEmitter {
                     lastHopRssi,
                     lastHopTimestamp: 0
                 };
-                const messageContents = this.buffalo.readPayload();
+                const messageContents = this.callbackBuffalo.readPayload();
                 this.ezspMacFilterMatchMessageHandler(filterIndexMatch, legacyPassthroughType, packetInfo, messageContents);
             } else {
-                const filterIndexMatch = this.buffalo.readUInt8();
-                const legacyPassthroughType: EmberMacPassthroughType = this.buffalo.readUInt8();
-                const packetInfo = this.buffalo.readEmberRxPacketInfo();
-                const messageContents = this.buffalo.readPayload();
+                const filterIndexMatch = this.callbackBuffalo.readUInt8();
+                const legacyPassthroughType: EmberMacPassthroughType = this.callbackBuffalo.readUInt8();
+                const packetInfo = this.callbackBuffalo.readEmberRxPacketInfo();
+                const messageContents = this.callbackBuffalo.readPayload();
                 this.ezspMacFilterMatchMessageHandler(filterIndexMatch, legacyPassthroughType, packetInfo, messageContents);
             }
             break;
         }
         case EzspFrameID.RAW_TRANSMIT_COMPLETE_HANDLER: {
             if (this.version < 0x0E) {
-                const status = this.buffalo.readUInt8();
+                const status = this.callbackBuffalo.readStatus(this.version);
                 this.ezspRawTransmitCompleteHandler(Buffer.alloc(0), status);
             } else {
-                const messageContents = this.buffalo.readPayload();
-                const status = this.buffalo.readUInt32();
+                const messageContents = this.callbackBuffalo.readPayload();
+                const status = this.callbackBuffalo.readUInt32();
                 this.ezspRawTransmitCompleteHandler(messageContents, status);
             }
             break;
         }
         case EzspFrameID.SWITCH_NETWORK_KEY_HANDLER: {
-            const sequenceNumber = this.buffalo.readUInt8();
+            const sequenceNumber = this.callbackBuffalo.readUInt8();
             this.ezspSwitchNetworkKeyHandler(sequenceNumber);
             break;
         }
         case EzspFrameID.ZIGBEE_KEY_ESTABLISHMENT_HANDLER: {
-            const partner = this.buffalo.readIeeeAddr();
-            const status: EmberKeyStatus = this.buffalo.readUInt8();
+            const partner = this.callbackBuffalo.readIeeeAddr();
+            const status: EmberKeyStatus = this.callbackBuffalo.readUInt8();
             this.ezspZigbeeKeyEstablishmentHandler(partner, status);
             break;
         }
         case EzspFrameID.TRUST_CENTER_JOIN_HANDLER: {
-            const newNodeId: NodeId = this.buffalo.readUInt16();
-            const newNodeEui64 = this.buffalo.readIeeeAddr();
-            const status: EmberDeviceUpdate = this.buffalo.readUInt8();
-            const policyDecision: EmberJoinDecision = this.buffalo.readUInt8();
-            const parentOfNewNodeId: NodeId = this.buffalo.readUInt16();
+            const newNodeId: NodeId = this.callbackBuffalo.readUInt16();
+            const newNodeEui64 = this.callbackBuffalo.readIeeeAddr();
+            const status: EmberDeviceUpdate = this.callbackBuffalo.readUInt8();
+            const policyDecision: EmberJoinDecision = this.callbackBuffalo.readUInt8();
+            const parentOfNewNodeId: NodeId = this.callbackBuffalo.readUInt16();
             this.ezspTrustCenterJoinHandler(newNodeId, newNodeEui64, status, policyDecision, parentOfNewNodeId);
             break;
         }
         case EzspFrameID.GENERATE_CBKE_KEYS_HANDLER: {
-            const status = this.buffalo.readStatus(this.version);
-            const ephemeralPublicKey: EmberPublicKeyData = this.buffalo.readEmberPublicKeyData();
+            const status = this.callbackBuffalo.readStatus(this.version);
+            const ephemeralPublicKey: EmberPublicKeyData = this.callbackBuffalo.readEmberPublicKeyData();
             this.ezspGenerateCbkeKeysHandler(status, ephemeralPublicKey);
             break;
         }
         case EzspFrameID.CALCULATE_SMACS_HANDLER: {
-            const status = this.buffalo.readStatus(this.version);
-            const initiatorSmac: EmberSmacData = this.buffalo.readEmberSmacData();
-            const responderSmac: EmberSmacData = this.buffalo.readEmberSmacData();
+            const status = this.callbackBuffalo.readStatus(this.version);
+            const initiatorSmac: EmberSmacData = this.callbackBuffalo.readEmberSmacData();
+            const responderSmac: EmberSmacData = this.callbackBuffalo.readEmberSmacData();
             this.ezspCalculateSmacsHandler(status, initiatorSmac, responderSmac);
             break;
         }
         case EzspFrameID.GENERATE_CBKE_KEYS_HANDLER283K1: {
-            const status = this.buffalo.readStatus(this.version);
-            const ephemeralPublicKey: EmberPublicKey283k1Data = this.buffalo.readEmberPublicKey283k1Data();
+            const status = this.callbackBuffalo.readStatus(this.version);
+            const ephemeralPublicKey: EmberPublicKey283k1Data = this.callbackBuffalo.readEmberPublicKey283k1Data();
             this.ezspGenerateCbkeKeysHandler283k1(status, ephemeralPublicKey);
             break;
         }
         case EzspFrameID.CALCULATE_SMACS_HANDLER283K1: {
-            const status = this.buffalo.readStatus(this.version);
-            const initiatorSmac: EmberSmacData = this.buffalo.readEmberSmacData();
-            const responderSmac: EmberSmacData = this.buffalo.readEmberSmacData();
+            const status = this.callbackBuffalo.readStatus(this.version);
+            const initiatorSmac: EmberSmacData = this.callbackBuffalo.readEmberSmacData();
+            const responderSmac: EmberSmacData = this.callbackBuffalo.readEmberSmacData();
             this.ezspCalculateSmacsHandler283k1(status, initiatorSmac, responderSmac);
             break;
         }
         case EzspFrameID.DSA_SIGN_HANDLER: {
-            const status = this.buffalo.readStatus(this.version);
-            const messageContents = this.buffalo.readPayload();
+            const status = this.callbackBuffalo.readStatus(this.version);
+            const messageContents = this.callbackBuffalo.readPayload();
             this.ezspDsaSignHandler(status, messageContents);
             break;
         }
         case EzspFrameID.DSA_VERIFY_HANDLER: {
-            const status = this.buffalo.readStatus(this.version);
+            const status = this.callbackBuffalo.readStatus(this.version);
             this.ezspDsaVerifyHandler(status);
             break;
         }
         case EzspFrameID.MFGLIB_RX_HANDLER: {
-            const linkQuality = this.buffalo.readUInt8();
-            const rssi = this.buffalo.readInt8();
-            const packetLength = this.buffalo.readUInt8();
-            const packetContents = this.buffalo.readListUInt8(packetLength);
+            const linkQuality = this.callbackBuffalo.readUInt8();
+            const rssi = this.callbackBuffalo.readInt8();
+            const packetLength = this.callbackBuffalo.readUInt8();
+            const packetContents = this.callbackBuffalo.readListUInt8(packetLength);
             this.ezspMfglibRxHandler(linkQuality, rssi, packetLength, packetContents);
             break;
         }
         case EzspFrameID.INCOMING_BOOTLOAD_MESSAGE_HANDLER: {
             if (this.version < 0x0E) {
-                const longId = this.buffalo.readIeeeAddr();
-                const lastHopLqi = this.buffalo.readUInt8();
-                const lastHopRssi = this.buffalo.readInt8();
+                const longId = this.callbackBuffalo.readIeeeAddr();
+                const lastHopLqi = this.callbackBuffalo.readUInt8();
+                const lastHopRssi = this.callbackBuffalo.readInt8();
                 const packetInfo: EmberRxPacketInfo = {
                     senderShortId: ZSpec.NULL_NODE_ID,
                     senderLongId: ZSpec.BLANK_EUI64,
@@ -997,35 +966,35 @@ export class Ezsp extends EventEmitter {
                     lastHopRssi,
                     lastHopTimestamp: 0,
                 };
-                const messageContents = this.buffalo.readPayload();
+                const messageContents = this.callbackBuffalo.readPayload();
                 this.ezspIncomingBootloadMessageHandler(longId, packetInfo, messageContents);
             } else {
-                const longId = this.buffalo.readIeeeAddr();
-                const packetInfo = this.buffalo.readEmberRxPacketInfo();
-                const messageContents = this.buffalo.readPayload();
+                const longId = this.callbackBuffalo.readIeeeAddr();
+                const packetInfo = this.callbackBuffalo.readEmberRxPacketInfo();
+                const messageContents = this.callbackBuffalo.readPayload();
                 this.ezspIncomingBootloadMessageHandler(longId, packetInfo, messageContents);
             }
             break;
         }
         case EzspFrameID.BOOTLOAD_TRANSMIT_COMPLETE_HANDLER: {
-            const status = this.buffalo.readStatus(this.version);
-            const messageContents = this.buffalo.readPayload();
+            const status = this.callbackBuffalo.readStatus(this.version);
+            const messageContents = this.callbackBuffalo.readPayload();
             this.ezspBootloadTransmitCompleteHandler(status, messageContents);
             break;
         }
         case EzspFrameID.INCOMING_MFG_TEST_MESSAGE_HANDLER: {
-            const messageType = this.buffalo.readUInt8();
-            const messageContents = this.buffalo.readPayload();
+            const messageType = this.callbackBuffalo.readUInt8();
+            const messageContents = this.callbackBuffalo.readPayload();
             this.ezspIncomingMfgTestMessageHandler(messageType, messageContents);
             break;
         }
         case EzspFrameID.ZLL_NETWORK_FOUND_HANDLER: {
             if (this.version < 0x0E) {
-                const networkInfo = this.buffalo.readEmberZllNetwork();
-                const isDeviceInfoNull = this.buffalo.readUInt8() !== 0;
-                const deviceInfo = this.buffalo.readEmberZllDeviceInfoRecord();
-                const lastHopLqi = this.buffalo.readUInt8();
-                const lastHopRssi = this.buffalo.readInt8();
+                const networkInfo = this.callbackBuffalo.readEmberZllNetwork();
+                const isDeviceInfoNull = this.callbackBuffalo.readUInt8() !== 0;
+                const deviceInfo = this.callbackBuffalo.readEmberZllDeviceInfoRecord();
+                const lastHopLqi = this.callbackBuffalo.readUInt8();
+                const lastHopRssi = this.callbackBuffalo.readInt8();
                 const packetInfo: EmberRxPacketInfo = {
                     senderShortId: ZSpec.NULL_NODE_ID,
                     senderLongId: ZSpec.BLANK_EUI64,
@@ -1037,24 +1006,24 @@ export class Ezsp extends EventEmitter {
                 };
                 this.ezspZllNetworkFoundHandler(networkInfo, isDeviceInfoNull, deviceInfo, packetInfo);
             } else {
-                const networkInfo = this.buffalo.readEmberZllNetwork();
-                const isDeviceInfoNull = this.buffalo.readUInt8() !== 0;
-                const deviceInfo = this.buffalo.readEmberZllDeviceInfoRecord();
-                const packetInfo = this.buffalo.readEmberRxPacketInfo();
+                const networkInfo = this.callbackBuffalo.readEmberZllNetwork();
+                const isDeviceInfoNull = this.callbackBuffalo.readUInt8() !== 0;
+                const deviceInfo = this.callbackBuffalo.readEmberZllDeviceInfoRecord();
+                const packetInfo = this.callbackBuffalo.readEmberRxPacketInfo();
                 this.ezspZllNetworkFoundHandler(networkInfo, isDeviceInfoNull, deviceInfo, packetInfo);
             }
             break;
         }
         case EzspFrameID.ZLL_SCAN_COMPLETE_HANDLER: {
-            const status = this.buffalo.readStatus(this.version);
+            const status = this.callbackBuffalo.readStatus(this.version);
             this.ezspZllScanCompleteHandler(status);
             break;
         }
         case EzspFrameID.ZLL_ADDRESS_ASSIGNMENT_HANDLER: {
             if (this.version < 0x0E) {
-                const addressInfo = this.buffalo.readEmberZllAddressAssignment();
-                const lastHopLqi = this.buffalo.readUInt8();
-                const lastHopRssi = this.buffalo.readInt8();
+                const addressInfo = this.callbackBuffalo.readEmberZllAddressAssignment();
+                const lastHopLqi = this.callbackBuffalo.readUInt8();
+                const lastHopRssi = this.callbackBuffalo.readInt8();
                 const packetInfo: EmberRxPacketInfo = {
                     senderShortId: ZSpec.NULL_NODE_ID,
                     senderLongId: ZSpec.BLANK_EUI64,
@@ -1066,37 +1035,37 @@ export class Ezsp extends EventEmitter {
                 };
                 this.ezspZllAddressAssignmentHandler(addressInfo, packetInfo);
             } else {
-                const addressInfo = this.buffalo.readEmberZllAddressAssignment();
-                const packetInfo = this.buffalo.readEmberRxPacketInfo();
+                const addressInfo = this.callbackBuffalo.readEmberZllAddressAssignment();
+                const packetInfo = this.callbackBuffalo.readEmberRxPacketInfo();
                 this.ezspZllAddressAssignmentHandler(addressInfo, packetInfo);
             }
             break;
         }
         case EzspFrameID.ZLL_TOUCH_LINK_TARGET_HANDLER: {
-            const networkInfo = this.buffalo.readEmberZllNetwork();
+            const networkInfo = this.callbackBuffalo.readEmberZllNetwork();
             this.ezspZllTouchLinkTargetHandler(networkInfo);
             break;
         }
         case EzspFrameID.D_GP_SENT_HANDLER: {
-            const status = this.buffalo.readStatus(this.version);
-            const gpepHandle = this.buffalo.readUInt8();
+            const status = this.callbackBuffalo.readStatus(this.version);
+            const gpepHandle = this.callbackBuffalo.readUInt8();
             this.ezspDGpSentHandler(status, gpepHandle);
             break;
         }
         case EzspFrameID.GPEP_INCOMING_MESSAGE_HANDLER: {
-            const gpStatus = this.buffalo.readUInt8();
-            const gpdLink = this.buffalo.readUInt8();
-            const sequenceNumber = this.buffalo.readUInt8();
-            const addr = this.buffalo.readEmberGpAddress();
-            const gpdfSecurityLevel: EmberGpSecurityLevel = this.buffalo.readUInt8();
-            const gpdfSecurityKeyType: EmberGpKeyType = this.buffalo.readUInt8();
-            const autoCommissioning = this.buffalo.readUInt8() !== 0;
-            const bidirectionalInfo = this.buffalo.readUInt8();
-            const gpdSecurityFrameCounter = this.buffalo.readUInt32();
-            const gpdCommandId = this.buffalo.readUInt8();
-            const mic = this.buffalo.readUInt32();
-            const proxyTableIndex = this.buffalo.readUInt8();
-            const gpdCommandPayload = this.buffalo.readPayload();
+            const gpStatus = this.callbackBuffalo.readUInt8();
+            const gpdLink = this.callbackBuffalo.readUInt8();
+            const sequenceNumber = this.callbackBuffalo.readUInt8();
+            const addr = this.callbackBuffalo.readEmberGpAddress();
+            const gpdfSecurityLevel: EmberGpSecurityLevel = this.callbackBuffalo.readUInt8();
+            const gpdfSecurityKeyType: EmberGpKeyType = this.callbackBuffalo.readUInt8();
+            const autoCommissioning = this.callbackBuffalo.readUInt8() !== 0;
+            const bidirectionalInfo = this.callbackBuffalo.readUInt8();
+            const gpdSecurityFrameCounter = this.callbackBuffalo.readUInt32();
+            const gpdCommandId = this.callbackBuffalo.readUInt8();
+            const mic = this.callbackBuffalo.readUInt32();
+            const proxyTableIndex = this.callbackBuffalo.readUInt8();
+            const gpdCommandPayload = this.callbackBuffalo.readPayload();
             this.ezspGpepIncomingMessageHandler(
                 gpStatus,
                 gpdLink,
@@ -1115,7 +1084,7 @@ export class Ezsp extends EventEmitter {
             break;
         }
         default:
-            this.ezspErrorHandler(EzspStatus.ERROR_INVALID_FRAME_ID);
+            logger.debug(`<=x= Ignored unused/unknown ${this.callbackFrameToString}`, NS);
         }
     }
 
@@ -2256,13 +2225,13 @@ export class Ezsp extends EventEmitter {
     async ezspGetLibraryStatus(libraryId: EmberLibraryId): Promise<EmberLibraryStatus> {
         this.startCommand(EzspFrameID.GET_LIBRARY_STATUS);
         this.buffalo.writeUInt8(libraryId);
-    
+
         const sendStatus = await this.sendCommand();
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
         }
-    
+
         const status = this.buffalo.readUInt8();
 
         return status;
@@ -2608,6 +2577,7 @@ export class Ezsp extends EventEmitter {
      * dynamic value. Therefore, you should call this function whenever the value
      * changes.
      * @param descriptor uint16_t The new power descriptor for the local node.
+     * @returns An SLStatus value indicating success or the reason for failure. Always `OK` in v13-.
      */
     async ezspSetPowerDescriptor(descriptor: number): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_POWER_DESCRIPTOR);
@@ -4234,7 +4204,7 @@ export class Ezsp extends EventEmitter {
 
     /**
      * Clears all cached beacons that have been collected from a scan.
-     * @returns An SLStatus value indicating success or the reason for failure.
+     * @returns An SLStatus value indicating success or the reason for failure. Always `OK` in v13-.
      */
     async ezspClearStoredBeacons(): Promise<SLStatus> {
         this.startCommand(EzspFrameID.CLEAR_STORED_BEACONS);
@@ -4741,14 +4711,16 @@ export class Ezsp extends EventEmitter {
 
     /**
      * Sends a broadcast message as per the ZigBee specification.
-     * @param alias The aliased source from which we send the broadcast. This must be SL_ZIGBEE_NULL_NODE_ID if we do not need an aliased source
+     * @param alias uint16_t (unused in v13-) The aliased source from which we send the broadcast.
+     *        This must be SL_ZIGBEE_NULL_NODE_ID if we do not need an aliased source
      * @param destination The destination to which to send the broadcast. This must be one of the three ZigBee broadcast addresses.
-     * @param nwkSequence The alias nwk sequence number. This won't be used if there is no aliased source.
+     * @param nwkSequence uint8_t (unused in v13-) The alias nwk sequence number. This won't be used if there is no aliased source.
      * @param apsFrame EmberApsFrame * The APS frame for the message.
-     * @param radius uint8_t (v14+: uint16_t) The message will be delivered to all nodes within radius hops of the sender.
+     * @param radius uint8_t The message will be delivered to all nodes within radius hops of the sender.
      *        A radius of zero is converted to EMBER_MAX_HOPS.
-     * @param uint8_t A value chosen by the Host. This value is used in the ezspMessageSentHandler response to refer to this message.
-     * @param uint8_t * The broadcast message.
+     * @param messageTag uint8_t (v14+: uint16_t) A value chosen by the Host.
+     *        This value is used in the ezspMessageSentHandler response to refer to this message.
+     * @param messageContents uint8_t * The broadcast message.
      * @returns An SLStatus value indicating success or the reason for failure.
      * @returns uint8_t * The sequence number that will be used when this message is transmitted.
      */
@@ -4814,12 +4786,13 @@ export class Ezsp extends EventEmitter {
      * @param apsFrame EmberApsFrame * The APS frame for the message. The multicast will be sent to the groupId in this frame.
      * @param hops uint8_t The message will be delivered to all nodes within this number of hops of the sender.
      *        A value of zero is converted to EMBER_MAX_HOPS.
-     * @param broadcastAddr The number of hops that the message will be forwarded by devices that are not members of the group.
+     * @param broadcastAddr uint16_t (unused in v13-) The number of hops that the message will be forwarded by devices
+     *        that are not members of the group.
      *        A value of 7 or greater is treated as infinite.
-     * @param alias The alias source address. This must be SL_ZIGBEE_NULL_NODE_ID if we do not need an aliased source
-     * @param nwkSequence The alias sequence number. This won't be used if there is no aliased source.
-     * @param messageTag uint8_t A value chosen by the Host. This value is used in the ezspMessageSentHandler response to refer to this message.
-     * @param messageLength uint8_t (v14+: uint16_t) The length of the messageContents parameter in bytes.
+     * @param alias uint16_t (unused in v13-) The alias source address. This must be SL_ZIGBEE_NULL_NODE_ID if we do not need an aliased source
+     * @param nwkSequence uint8_t (unused in v13-) The alias sequence number. This won't be used if there is no aliased source.
+     * @param messageTag uint8_t (v14+: uint16_t) A value chosen by the Host.
+     *        This value is used in the ezspMessageSentHandler response to refer to this message.
      * @param messageContents uint8_t * The multicast message.
      * @returns An SLStatus value. For any result other than SLStatus.OK, the message will not be sent.
      * - SLStatus.OK - The message has been submitted for transmission.
@@ -4868,7 +4841,7 @@ export class Ezsp extends EventEmitter {
      * @param apsFrame EmberApsFrame * Value supplied by incoming unicast.
      * @param uint8_t The length of the messageContents parameter in bytes.
      * @param uint8_t * The reply message.
-     * @returns An EmberStatus value.
+     * @returns
      * - SLStatus.INVALID_STATE - The SL_ZIGBEE_EZSP_UNICAST_REPLIES_POLICY is set to SL_ZIGBEE_EZSP_HOST_WILL_NOT_SUPPLY_REPLY.
      *   This means the NCP will automatically send an empty reply. The Host must change
      *   the policy to SL_ZIGBEE_EZSP_HOST_WILL_SUPPLY_REPLY before it can supply the reply.
@@ -5423,6 +5396,7 @@ export class Ezsp extends EventEmitter {
      * @param remoteEui64 The address of the node for which the timeout is to be set.
      * @param extendedTimeout true if the retry interval should be increased by EMBER_INDIRECT_TRANSMISSION_TIMEOUT.
      *        false if the normal retry interval should be used.
+     * @returns An SLStatus value indicating success or the reason for failure. Always `OK` in v13-.
      */
     async ezspSetExtendedTimeout(remoteEui64: EUI64, extendedTimeout: boolean): Promise<SLStatus> {
         this.startCommand(EzspFrameID.SET_EXTENDED_TIMEOUT);
@@ -6586,7 +6560,7 @@ export class Ezsp extends EventEmitter {
      * Import a transient link key.
      * @param eui64 EUI64 associated with this transient key.
      * @param plaintextKey sl_zb_sec_man_key_t * The key to import.
-     * @param flags sl_zigbee_sec_man_flags_t (v13-) Flags associated with this transient key.
+     * @param flags sl_zigbee_sec_man_flags_t (unused in v14+) Flags associated with this transient key.
      * @returns Status of key import operation.
      */
     async ezspImportTransientKey(eui64: EUI64, plaintextKey: SecManKey, flags: SecManFlag = SecManFlag.NONE): Promise<SLStatus> {

@@ -410,7 +410,7 @@ export class EmberTokensManager {
         } else {
             // ezspGetTokenCount == 0 OR (ezspGetTokenInfo|ezspGetTokenData|ezspSetTokenData return LIBRARY_NOT_PRESENT)
             // ezspTokenFactoryReset will do nothing.
-            logger.error(`[TOKENS] Saving tokens not supported by NCP (not NVM3-based).`, NS);
+            logger.error(`[TOKENS] Saving tokens not supported by adapter (not NVM3-based).`, NS);
         }
 
         return null;

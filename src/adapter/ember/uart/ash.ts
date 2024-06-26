@@ -714,7 +714,7 @@ export class UartAsh extends EventEmitter {
             return EzspStatus.ERROR_INVALID_CALL;
         }
 
-        logger.info(`======== ASH NCP reset ========`, NS);
+        logger.info(`======== ASH Adapter reset ========`, NS);
 
         this.initVariables();
 
@@ -1101,7 +1101,7 @@ export class UartAsh extends EventEmitter {
 
                 return EzspStatus.SUCCESS;
             } else if (frameType === AshFrameType.ERROR) {
-                logger.error(`Received ERROR from NCP while connecting, with code=${NcpFailedCode[this.rxSHBuffer[2]]}.`, NS);
+                logger.error(`Received ERROR from adapter while connecting, with code=${NcpFailedCode[this.rxSHBuffer[2]]}.`, NS);
                 return this.ncpDisconnect(EzspStatus.ASH_NCP_FATAL_ERROR);
             }
 
@@ -1179,9 +1179,7 @@ export class UartAsh extends EventEmitter {
 
                 this.counters.rxData += this.rxDataBuffer.len;
 
-                setImmediate(() => {
-                    this.emit(AshEvents.FRAME);
-                });
+                setImmediate(this.emit.bind(this, AshEvents.FRAME));
                 return EzspStatus.SUCCESS;
             } else {
                 // frame is out of sequence
@@ -1211,13 +1209,13 @@ export class UartAsh extends EventEmitter {
             break;
         case AshFrameType.RSTACK:
             // unexpected ncp reset
-            logger.error(`Received unexpected reset from NCP, with reason=${NcpFailedCode[this.rxSHBuffer[2]]}.`, NS);
+            logger.error(`Received unexpected reset from adapter, with reason=${NcpFailedCode[this.rxSHBuffer[2]]}.`, NS);
             this.ncpError = EzspStatus.ASH_NCP_FATAL_ERROR;
 
             return this.hostDisconnect(EzspStatus.ASH_ERROR_NCP_RESET);
         case AshFrameType.ERROR:
             // ncp error
-            logger.error(`Received ERROR from NCP, with code=${NcpFailedCode[this.rxSHBuffer[2]]}.`, NS);
+            logger.error(`Received ERROR from adapter, with code=${NcpFailedCode[this.rxSHBuffer[2]]}.`, NS);
             return this.ncpDisconnect(EzspStatus.ASH_NCP_FATAL_ERROR);
         case AshFrameType.INVALID:
             // reject invalid frames
@@ -1367,7 +1365,7 @@ export class UartAsh extends EventEmitter {
             if (this.rxFree.length < CONFIG_NR_LOW_LIMIT) {
                 this.flags |= Flag.NR;
 
-                logger.warning(`NOT READY - Signaling NCP`, NS);
+                logger.warning(`NOT READY - Signaling adapter`, NS);
             } else if (this.rxFree.length > CONFIG_NR_HIGH_LIMIT) {
                 this.flags &= ~Flag.NR;
 
@@ -1407,8 +1405,8 @@ export class UartAsh extends EventEmitter {
         this.flags = 0;
         this.hostError = error;
 
-        logger.error(`ASH disconnected: ${EzspStatus[error]} | NCP status: ${EzspStatus[this.ncpError]}`, NS);
-        
+        logger.error(`ASH disconnected: ${EzspStatus[error]} | Adapter status: ${EzspStatus[this.ncpError]}`, NS);
+
         return EzspStatus.HOST_FATAL_ERROR;
     }
 
@@ -1421,7 +1419,7 @@ export class UartAsh extends EventEmitter {
         this.flags = 0;
         this.ncpError = error;
 
-        logger.error(`ASH disconnected | NCP status: ${EzspStatus[this.ncpError]}`, NS);
+        logger.error(`ASH disconnected | Adapter status: ${EzspStatus[this.ncpError]}`, NS);
 
         return EzspStatus.ASH_NCP_FATAL_ERROR;
     }

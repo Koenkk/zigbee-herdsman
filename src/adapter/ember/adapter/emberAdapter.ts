@@ -318,12 +318,10 @@ export class EmberAdapter extends Adapter {
         this.requestQueue = new EmberRequestQueue(delay);
         this.oneWaitress = new EmberOneWaitress();
 
-        this.ezsp = new Ezsp(delay, serialPortOptions);
+        this.ezsp = new Ezsp(serialPortOptions);
 
         this.ezsp.on(EzspEvents.STACK_STATUS, this.onStackStatus.bind(this));
-
         this.ezsp.on(EzspEvents.MESSAGE_SENT, this.onMessageSent.bind(this));
-
         this.ezsp.on(EzspEvents.ZDO_RESPONSE, this.onZDOResponse.bind(this));
         this.ezsp.on(EzspEvents.END_DEVICE_ANNOUNCE, this.onEndDeviceAnnounce.bind(this));
         this.ezsp.on(EzspEvents.INCOMING_MESSAGE, this.onIncomingMessage.bind(this));
@@ -969,7 +967,7 @@ export class EmberAdapter extends Adapter {
             const [npStatus, nodeType, netParams] = (await this.ezsp.ezspGetNetworkParameters());
 
             logger.debug(`[INIT TC] Current network config=${JSON.stringify(this.networkOptions)}`, NS);
-            logger.debug(`[INIT TC] Current NCP network: nodeType=${EmberNodeType[nodeType]} params=${JSON.stringify(netParams)}`, NS);
+            logger.debug(`[INIT TC] Current adapter network: nodeType=${EmberNodeType[nodeType]} params=${JSON.stringify(netParams)}`, NS);
 
             if ((npStatus === SLStatus.OK) && (nodeType === EmberNodeType.COORDINATOR) && (this.networkOptions.panID === netParams.panId)
                 && (equals(this.networkOptions.extendedPanID, netParams.extendedPanId))) {
@@ -983,7 +981,7 @@ export class EmberAdapter extends Adapter {
                     throw new Error(`[BACKUP] Failed to export Network Key with status=${SLStatus[nkStatus]}.`);
                 }
 
-                logger.debug(`[INIT TC] Current NCP network: networkKey=${networkKey.contents.toString('hex')}`, NS);
+                logger.debug(`[INIT TC] Current adapter network: networkKey=${networkKey.contents.toString('hex')}`, NS);
 
                 // config doesn't match adapter anymore
                 if (!networkKey.contents.equals(configNetworkKey)) {
@@ -995,7 +993,7 @@ export class EmberAdapter extends Adapter {
             }
 
             if (action === NetworkInitAction.LEAVE) {
-                logger.info(`[INIT TC] NCP network does not match config. Leaving network...`, NS);
+                logger.info(`[INIT TC] Adapter network does not match config. Leaving network...`, NS);
                 const leaveStatus = (await this.ezsp.ezspLeaveNetwork());
 
                 if (leaveStatus !== SLStatus.OK) {
@@ -1087,7 +1085,7 @@ export class EmberAdapter extends Adapter {
             break;
         }
         case NetworkInitAction.DONE: {
-            logger.info(`[INIT TC] NCP network matches config.`, NS);
+            logger.info(`[INIT TC] Adapter network matches config.`, NS);
             break;
         }
         default: {
@@ -1368,15 +1366,22 @@ export class EmberAdapter extends Adapter {
      * @param status 
      */
     private async onNcpNeedsResetAndInit(status: EzspStatus): Promise<void> {
-        logger.error(`!!! NCP FATAL ERROR reason=${EzspStatus[status]}. ATTEMPTING RESET... !!!`, NS);
+        logger.error(`!!! ADAPTER FATAL ERROR reason=${EzspStatus[status]}. !!!`, NS);
 
-        try {
-            await this.stop();
-            await Wait(500);// just because
-            await this.start();
-        } catch (err) {
-            logger.error(`Failed to reset and init NCP. ${err}`, NS);
+        if (this.requestQueue.isHigh) {
+            logger.info(`Request queue is high (${this.requestQueue.totalQueued}), triggering full restart to prevent stressing the adapter.`, NS);
             this.emit(Events.disconnected);
+        } else {
+            logger.info(`Attempting adapter reset...`, NS);
+
+            try {
+                await this.stop();
+                await Wait(500);// just because
+                await this.start();
+            } catch (err) {
+                logger.error(`Failed to reset and init adapter. ${err}`, NS);
+                this.emit(Events.disconnected);
+            }
         }
     }
 
@@ -1527,19 +1532,18 @@ export class EmberAdapter extends Adapter {
         }
 
         if (ncpEzspProtocolVer === EZSP_PROTOCOL_VERSION) {
-            logger.debug(`NCP EZSP protocol version (${ncpEzspProtocolVer}) matches Host.`, NS);
+            logger.debug(`Adapter EZSP protocol version (${ncpEzspProtocolVer}) matches Host.`, NS);
         } else if (ncpEzspProtocolVer < EZSP_PROTOCOL_VERSION && ncpEzspProtocolVer >= EZSP_MIN_PROTOCOL_VERSION) {
             [ncpEzspProtocolVer, ncpStackType, ncpStackVer] = await this.ezsp.ezspVersion(ncpEzspProtocolVer);
 
-            logger.info(`NCP EZSP protocol version (${ncpEzspProtocolVer}) lower than Host. Switched.`, NS);
+            logger.info(`Adapter EZSP protocol version (${ncpEzspProtocolVer}) lower than Host. Switched.`, NS);
         } else {
-            throw new Error(
-                `NCP EZSP protocol version (${ncpEzspProtocolVer}) is not supported by Host [${EZSP_MIN_PROTOCOL_VERSION}-${EZSP_PROTOCOL_VERSION}].`
-            );
+            throw new Error(`Adapter EZSP protocol version (${ncpEzspProtocolVer}) is not supported `
+                + `by Host [${EZSP_MIN_PROTOCOL_VERSION}-${EZSP_PROTOCOL_VERSION}].`);
         }
 
         this.ezsp.setProtocolVersion(ncpEzspProtocolVer);
-        logger.debug(`NCP info: EZSPVersion=${ncpEzspProtocolVer} StackType=${ncpStackType} StackVersion=${ncpStackVer}`, NS);
+        logger.debug(`Adapter info: EZSPVersion=${ncpEzspProtocolVer} StackType=${ncpStackType} StackVersion=${ncpStackVer}`, NS);
 
         const [status, versionStruct] = (await this.ezsp.ezspGetVersionStruct());
 
@@ -1555,10 +1559,10 @@ export class EmberAdapter extends Adapter {
         };
 
         if (versionStruct.type !== EmberVersionType.GA) {
-            logger.warning(`NCP is running a non-GA version (${EmberVersionType[versionStruct.type]}).`, NS);
+            logger.warning(`Adapter is running a non-GA version (${EmberVersionType[versionStruct.type]}).`, NS);
         }
 
-        logger.debug(`NCP version info: ${JSON.stringify(this.version)}`, NS);
+        logger.info(`Adapter version info: ${JSON.stringify(this.version)}`, NS);
     }
 
     /**
