@@ -242,8 +242,8 @@ const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
     END_DEVICE_POLL_TIMEOUT: 8,// zigpc: 8
     TRANSIENT_KEY_TIMEOUT_S: 300,// zigpc: 65535
 };
-/** Default behavior is to disable app key requests, so reduce key table to zero as well */
-const DEFAULT_KEY_TABLE_SIZE = 0;
+/** Default behavior is to disable app key requests */
+const ALLOW_APP_KEY_REQUESTS = false;
 
 /**
  * NOTE: This from SDK is currently ignored here because of issues in below links:
@@ -320,15 +320,13 @@ export class EmberAdapter extends Adapter {
 
         this.ezsp = new Ezsp(serialPortOptions);
 
-        this.ezsp.on(EzspEvents.STACK_STATUS, this.onStackStatus.bind(this));
-        this.ezsp.on(EzspEvents.MESSAGE_SENT, this.onMessageSent.bind(this));
         this.ezsp.on(EzspEvents.ZDO_RESPONSE, this.onZDOResponse.bind(this));
-        this.ezsp.on(EzspEvents.END_DEVICE_ANNOUNCE, this.onEndDeviceAnnounce.bind(this));
         this.ezsp.on(EzspEvents.INCOMING_MESSAGE, this.onIncomingMessage.bind(this));
         this.ezsp.on(EzspEvents.TOUCHLINK_MESSAGE, this.onTouchlinkMessage.bind(this));
-        this.ezsp.on(EzspEvents.GREENPOWER_MESSAGE, this.onGreenpowerMessage.bind(this));
-
+        this.ezsp.on(EzspEvents.STACK_STATUS, this.onStackStatus.bind(this));
         this.ezsp.on(EzspEvents.TRUST_CENTER_JOIN, this.onTrustCenterJoin.bind(this));
+        this.ezsp.on(EzspEvents.MESSAGE_SENT, this.onMessageSent.bind(this));
+        this.ezsp.on(EzspEvents.GREENPOWER_MESSAGE, this.onGreenpowerMessage.bind(this));
     }
 
     private loadStackConfig(): StackConfig {
@@ -535,27 +533,15 @@ export class EmberAdapter extends Adapter {
                     networkAddress: (payload as ZdoTypes.NetworkAddressResponse).nwkAddress,
                     ieeeAddr: (payload as ZdoTypes.NetworkAddressResponse).eui64
                 } as NetworkAddressPayload);
+            } else if (apsFrame.clusterId === Zdo.ClusterId.END_DEVICE_ANNOUNCE) {
+                this.emit(Events.deviceAnnounce, {
+                    networkAddress: (payload as ZdoTypes.EndDeviceAnnounce).nwkAddress,
+                    ieeeAddr: (payload as ZdoTypes.EndDeviceAnnounce).eui64
+                } as DeviceAnnouncePayload);
             }
         } catch (error) {
             this.oneWaitress.resolveZDO(sender, apsFrame, error);
         }
-    }
-
-    /**
-     * Emitted from @see Ezsp.ezspIncomingMessageHandler
-     * 
-     * @param sender 
-     * @param nodeId 
-     * @param eui64 
-     * @param macCapFlags 
-     */
-    private async onEndDeviceAnnounce(sender: NodeId, apsFrame: EmberApsFrame, payload: ZdoTypes.EndDeviceAnnounce): Promise<void> {
-        // reduced function device
-        // if ((payload.capabilities.deviceType === 0)) {
-            
-        // }
-
-        this.emit(Events.deviceAnnounce, {networkAddress: payload.nwkAddress, ieeeAddr: payload.eui64} as DeviceAnnouncePayload);
     }
 
     /**
@@ -801,8 +787,6 @@ export class EmberAdapter extends Adapter {
         // after network UP, as per SDK, ensures clean slate
         await this.initNCPConcentrator();
 
-        // await (this.emberStartEnergyScan());// TODO: via config of some kind, better off waiting for UI supports though
-
         // populate network cache info
         const [status, , parameters] = (await this.ezsp.ezspGetNetworkParameters());
 
@@ -927,11 +911,11 @@ export class EmberAdapter extends Adapter {
                     + `with status=${SLStatus[status]}.`);
             }
 
-            const appKeyPolicy = DEFAULT_KEY_TABLE_SIZE > 0 ? EzspDecisionId.ALLOW_APP_KEY_REQUESTS : EzspDecisionId.DENY_APP_KEY_REQUESTS;
-            status = (await this.emberSetEzspPolicy(EzspPolicyId.APP_KEY_REQUEST_POLICY, appKeyPolicy));
+            const appKeyRequestsPolicy = ALLOW_APP_KEY_REQUESTS ? EzspDecisionId.ALLOW_APP_KEY_REQUESTS : EzspDecisionId.DENY_APP_KEY_REQUESTS;
+            status = await this.emberSetEzspPolicy(EzspPolicyId.APP_KEY_REQUEST_POLICY, appKeyRequestsPolicy);
 
             if (status !== SLStatus.OK) {
-                throw new Error(`[INIT TC] Failed to set EzspPolicyId APP_KEY_REQUEST_POLICY to ${EzspDecisionId[appKeyPolicy]} `
+                throw new Error(`[INIT TC] Failed to set EzspPolicyId APP_KEY_REQUEST_POLICY to ${EzspDecisionId[appKeyRequestsPolicy]} `
                     + `with status=${SLStatus[status]}.`);
             }
 
@@ -966,7 +950,6 @@ export class EmberAdapter extends Adapter {
 
             const [npStatus, nodeType, netParams] = (await this.ezsp.ezspGetNetworkParameters());
 
-            logger.debug(`[INIT TC] Current network config=${JSON.stringify(this.networkOptions)}`, NS);
             logger.debug(`[INIT TC] Current adapter network: nodeType=${EmberNodeType[nodeType]} params=${JSON.stringify(netParams)}`, NS);
 
             if ((npStatus === SLStatus.OK) && (nodeType === EmberNodeType.COORDINATOR) && (this.networkOptions.panID === netParams.panId)
@@ -980,8 +963,6 @@ export class EmberAdapter extends Adapter {
                 if (nkStatus !== SLStatus.OK) {
                     throw new Error(`[BACKUP] Failed to export Network Key with status=${SLStatus[nkStatus]}.`);
                 }
-
-                logger.debug(`[INIT TC] Current adapter network: networkKey=${networkKey.contents.toString('hex')}`, NS);
 
                 // config doesn't match adapter anymore
                 if (!networkKey.contents.equals(configNetworkKey)) {
@@ -1044,13 +1025,13 @@ export class EmberAdapter extends Adapter {
             logger.info(`[INIT TC] Forming from backup.`, NS);
             const keyList: LinkKeyBackupData[] = backup.devices.map((device) => {
                 const octets = Array.from(device.ieeeAddress.reverse());
-                const key: LinkKeyBackupData = {
+
+                return {
                     deviceEui64: `0x${octets.map(octet => octet.toString(16).padStart(2, '0')).join('')}`,
                     key: {contents: device.linkKey.key},
                     outgoingFrameCounter: device.linkKey.txCounter,
                     incomingFrameCounter: device.linkKey.rxCounter,
                 };
-                return key;
             });
 
             // before forming
@@ -1152,11 +1133,11 @@ export class EmberAdapter extends Adapter {
             throw new Error(`[INIT FORM] Failed to set extended security bitmask to ${extended} with status=${SLStatus[status]}.`);
         }
 
-        if (!fromBackup && DEFAULT_KEY_TABLE_SIZE > 0) {
+        if (!fromBackup) {
             status = await this.ezsp.ezspClearKeyTable();
 
             if (status !== SLStatus.OK) {
-                throw new Error(`[INIT FORM] Failed to clear key table with status=${SLStatus[status]}.`);
+                logger.error(`[INIT FORM] Failed to clear key table with status=${SLStatus[status]}.`, NS);
             }
         }
 
@@ -1305,12 +1286,9 @@ export class EmberAdapter extends Adapter {
         let status: SLStatus;
 
         for (let i = 0; i < keyTableSize; i++) {
-            if (i >= backupData.length) {
-                // erase any key index not present in backup but available on the NCP
-                status = (await this.ezsp.ezspEraseKeyTableEntry(i));
-            } else {
-                status = (await this.ezsp.ezspImportLinkKey(i, backupData[i].deviceEui64, backupData[i].key));
-            }
+            // erase any key index not present in backup but available on the NCP
+            status = (i >= backupData.length) ? await this.ezsp.ezspEraseKeyTableEntry(i) :
+                await this.ezsp.ezspImportLinkKey(i, backupData[i].deviceEui64, backupData[i].key);
 
             if (status !== SLStatus.OK) {
                 throw new Error(`[BACKUP] Failed to ${((i >= backupData.length) ? "erase" : "set")} key table entry at index ${i} `
@@ -1976,17 +1954,7 @@ export class EmberAdapter extends Adapter {
                         throw new Error(`[BACKUP] No network key set.`);
                     }
 
-                    let keyList: LinkKeyBackupData[] = [];
-
-                    if (DEFAULT_KEY_TABLE_SIZE > 0) {
-                        keyList = (await this.exportLinkKeys());
-                    }
-
-                    // XXX: this only makes sense on stop (if that), not hourly/on start, plus network needs to be at near-standstill @see AN1387
-                    // const tokensBuf = (await EmberTokensManager.saveTokens(
-                    //     this.ezsp,
-                    //     Buffer.from(this.networkCache.eui64.substring(2/*0x*/), 'hex').reverse()
-                    // ));
+                    const keyList: LinkKeyBackupData[] = ALLOW_APP_KEY_REQUESTS ? await this.exportLinkKeys() : [];
 
                     let context: SecManContext = initSecurityManagerContext();
                     context.coreKeyType = SecManKeyType.TC_LINK;

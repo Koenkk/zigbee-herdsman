@@ -59,14 +59,6 @@ const ashGetFrmNum = (ctrl: number): number => ((ctrl & ASH_FRMNUM_MASK) >> ASH_
 /** ASH get acknum in control byte */
 const ashGetACKNum = (ctrl: number): number => ((ctrl & ASH_ACKNUM_MASK) >> ASH_ACKNUM_BIT);
 
-
-export enum AshEvents {
-    /** When the ASH protocol detects a fatal error (bubbles up to restart adapter). */
-    FATAL_ERROR = 'fatalError',
-    /** When a frame has been parsed and queued in the rxQueue. */
-    FRAME = 'frame',
-}
-
 type UartAshCounters = {
     /** DATA frame data fields bytes transmitted */
     txData: number,
@@ -159,7 +151,6 @@ enum Flag {
     NRTX      = 0x200,
 }
 
-
 /** max frames sent without being ACKed (1-7) */
 const CONFIG_TX_K = 3;
 /** enables randomizing DATA frame payloads */
@@ -183,10 +174,22 @@ const CONFIG_NR_TIME = 480;
 /** Read/write max bytes count at stream level */
 const CONFIG_HIGHWATER_MARK = 256;
 
+export enum AshEvents {
+    /** When the ASH protocol detects a fatal error (bubbles up to restart adapter). */
+    FATAL_ERROR = 'fatalError',
+    /** When a frame has been parsed and queued in the rxQueue. */
+    FRAME = 'frame',
+}
+
+interface UartAshEventMap {
+    [AshEvents.FATAL_ERROR]: [status: EzspStatus];
+    [AshEvents.FRAME]: [];
+}
+
 /**
  * ASH Protocol handler.
  */
-export class UartAsh extends EventEmitter {
+export class UartAsh extends EventEmitter<UartAshEventMap> {
     private readonly portOptions: SerialPortOptions;
     private serialPort: SerialPort;
     private socketPort: Socket;
@@ -1179,7 +1182,7 @@ export class UartAsh extends EventEmitter {
 
                 this.counters.rxData += this.rxDataBuffer.len;
 
-                setImmediate(this.emit.bind(this, AshEvents.FRAME));
+                setImmediate(() => this.emit(AshEvents.FRAME));
                 return EzspStatus.SUCCESS;
             } else {
                 // frame is out of sequence

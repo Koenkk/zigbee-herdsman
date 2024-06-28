@@ -559,7 +559,7 @@ export type EmberZigbeeNetwork = {
     /** uint8_t */
     channel: number,
     /** bool */
-    allowingJoin: number,
+    allowingJoin: boolean,
     /** uint8_t[EXTENDED_PAN_ID_SIZE] */
     extendedPanId: ExtendedPanId,
     /** uint8_t */

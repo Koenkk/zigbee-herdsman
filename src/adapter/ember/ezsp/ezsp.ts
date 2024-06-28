@@ -181,38 +181,61 @@ const ZA_MAX_HOPS = 12;
  */
 const MESSAGE_TAG_MASK = 0x7F;
 
-/* eslint-disable max-len */
 export enum EzspEvents {
-    //-- App logic
+    //-- An error was detected that requires resetting the NCP.
     NCP_NEEDS_RESET_AND_INIT = 'NCP_NEEDS_RESET_AND_INIT',
 
     //-- ezspIncomingMessageHandler
-    /** params => apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer */
     ZDO_RESPONSE = 'ZDO_RESPONSE',
-    /** params => type: EmberIncomingMessageType, apsFrame: EmberApsFrame, lastHopLqi: number, sender: NodeId, messageContents: Buffer */
     INCOMING_MESSAGE = 'INCOMING_MESSAGE',
-    /** params => sourcePanId: PanId, sourceAddress: EUI64, groupId: number | null, lastHopLqi: number, messageContents: Buffer */
+    //-- ezspMacFilterMatchMessageHandler
     TOUCHLINK_MESSAGE = 'TOUCHLINK_MESSAGE',
-    /** params => sender: NodeId, apsFrame: EmberApsFrame, payload: EndDeviceAnnouncePayload */
-    END_DEVICE_ANNOUNCE = 'END_DEVICE_ANNOUNCE',
-
     //-- ezspStackStatusHandler
-    /** params => status: SLStatus */
     STACK_STATUS = 'STACK_STATUS',
-
     //-- ezspTrustCenterJoinHandler
-    /** params => newNodeId: NodeId, newNodeEui64: EUI64, status: EmberDeviceUpdate, policyDecision: EmberJoinDecision, parentOfNewNodeId: NodeId */
     TRUST_CENTER_JOIN = 'TRUST_CENTER_JOIN',
-
     //-- ezspMessageSentHandler
-    /** params => status: SLStatus, type: EmberOutgoingMessageType, indexOrDestination: number, apsFrame: EmberApsFrame, messageTag: number */
     MESSAGE_SENT = 'MESSAGE_SENT',
-
     //-- ezspGpepIncomingMessageHandler
-    /** params => sequenceNumber: number, commandIdentifier: number, sourceId: number, frameCounter: number, gpdCommandId: number, gpdCommandPayload: Buffer, gpdLink: number */
     GREENPOWER_MESSAGE = 'GREENPOWER_MESSAGE',
 }
-/* eslint-enable max-len */
+
+interface EzspEventMap {
+    [EzspEvents.NCP_NEEDS_RESET_AND_INIT]: [status: EzspStatus],
+    [EzspEvents.ZDO_RESPONSE]: [apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer],
+    [EzspEvents.INCOMING_MESSAGE]: [
+        type: EmberIncomingMessageType,
+        apsFrame: EmberApsFrame,
+        lastHopLqi: number,
+        sender: NodeId,
+        messageContents: Buffer
+    ],
+    [EzspEvents.TOUCHLINK_MESSAGE]: [sourcePanId: PanId, sourceAddress: EUI64, groupId: number | null, lastHopLqi: number, messageContents: Buffer],
+    [EzspEvents.STACK_STATUS]: [status: SLStatus],
+    [EzspEvents.TRUST_CENTER_JOIN]: [
+        newNodeId: NodeId,
+        newNodeEui64: EUI64,
+        status: EmberDeviceUpdate,
+        policyDecision: EmberJoinDecision,
+        parentOfNewNodeId: NodeId
+    ],
+    [EzspEvents.MESSAGE_SENT]: [
+        status: SLStatus,
+        type: EmberOutgoingMessageType,
+        indexOrDestination: number,
+        apsFrame: EmberApsFrame,
+        messageTag: number
+    ],
+    [EzspEvents.GREENPOWER_MESSAGE]: [
+        sequenceNumber: number,
+        commandIdentifier: number,
+        sourceId: number,
+        frameCounter: number,
+        gpdCommandId: number,
+        gpdCommandPayload: Buffer,
+        gpdLink: number
+    ],
+}
 
 /**
  * Host EZSP layer.
@@ -224,10 +247,8 @@ export enum EzspEvents {
  * Callers are expected to handle errors appropriately.
  *   - They will throw `EzspStatus` if `sendCommand` fails or the returned value(s) by NCP are invalid (wrong length, etc).
  *   - Most will return `EmberStatus` given by NCP (some `EzspStatus`, some `SLStatus`...).
- * 
- * @event 'NCP_NEEDS_RESET_AND_INIT(EzspStatus)' An error was detected that requires resetting the NCP.
  */
-export class Ezsp extends EventEmitter {
+export class Ezsp extends EventEmitter<EzspEventMap> {
     private version: number;
     private readonly tickInterval: number;
     public readonly ash: UartAsh;
@@ -249,10 +270,8 @@ export class Ezsp extends EventEmitter {
     private frameSequence: number;
     /** Sequence used for EZSP send() tagging. static uint8_t */
     private sendSequence: number;
-    /** If if a command is currently waiting for a response. Used to manage async CBs vs command responses */
-    private waitingForResponse: boolean;
-    /** Awaiting response resolve/timer struct. If waitingForResponse is not true, this should not be used. */
-    private responseWaiter: EzspWaiter;
+    /** Awaiting response resolve/timer struct. Null if not waiting for response. */
+    private responseWaiter: EzspWaiter | null;
 
     /** Counter for Queue Full errors */
     public counterErrQueueFull: number;
@@ -294,7 +313,7 @@ export class Ezsp extends EventEmitter {
     }
 
     private initVariables(): void {
-        if (this.waitingForResponse) {
+        if (this.responseWaiter != null) {
             clearTimeout(this.responseWaiter.timer);
         }
 
@@ -311,7 +330,6 @@ export class Ezsp extends EventEmitter {
         this.sendingCommand = false;
         this.frameSequence = -1;// start at 0
         this.sendSequence = 0;// start at 1
-        this.waitingForResponse = false;
         this.responseWaiter = null;
         this.counterErrQueueFull = 0;
     }
@@ -402,7 +420,8 @@ export class Ezsp extends EventEmitter {
         // logger.debug(`<<<< ${buffer.data.subarray(0, buffer.len).toString('hex')}`, NS);
 
         if (buffer.data[EZSP_FRAME_CONTROL_INDEX] & EZSP_FRAME_CONTROL_ASYNCH_CB) {
-            buffer.data.copy(this.callbackFrameContents, 0, 0, buffer.len);// take only what len tells us is actual content
+            // take only what len tells us is actual content
+            buffer.data.copy(this.callbackFrameContents, 0, 0, buffer.len);
 
             this.callbackFrameLength = buffer.len;
 
@@ -418,18 +437,25 @@ export class Ezsp extends EventEmitter {
                 logger.debug(`<=x= ${this.callbackFrameToString} Invalid, status=${EzspStatus[status]}.`, NS);
             }
         } else {
-            buffer.data.copy(this.frameContents, 0, 0, buffer.len);// take only what len tells us is actual content
+            // take only what len tells us is actual content
+            buffer.data.copy(this.frameContents, 0, 0, buffer.len);
 
             this.frameLength = buffer.len;
 
             logger.debug(`<=== ${this.frameToString}`, NS);
 
-            this.ash.rxFree.freeBuffer(buffer);
+            this.ash.rxFree.freeBuffer(buffer);// always
 
-            const status = this.validateReceivedFrame(this.buffalo);
+            if (this.responseWaiter != null) {
+                const status = this.validateReceivedFrame(this.buffalo);
 
-            clearTimeout(this.responseWaiter.timer);
-            this.responseWaiter.resolve(status);
+                clearTimeout(this.responseWaiter.timer);
+                this.responseWaiter.resolve(status);
+
+                this.responseWaiter = null;// done, gc
+            } else {
+                logger.debug(`Received response while not expecting one. Ignoring.`, NS);
+            }
         }
     }
 
@@ -552,7 +578,6 @@ export class Ezsp extends EventEmitter {
         }
 
         this.frameLength = length;
-
         let status: EzspStatus;
 
         logger.debug(`===> ${this.frameToString}`, NS);
@@ -562,13 +587,11 @@ export class Ezsp extends EventEmitter {
                 const sendStatus = (this.ash.send(this.frameLength, this.frameContents));
 
                 if (sendStatus !== EzspStatus.SUCCESS) {
-                    reject(new EzspError(sendStatus));
+                    return reject(new EzspError(sendStatus));
                 }
 
                 this.responseWaiter = {
-                    timer: setTimeout(() => {
-                        reject(new EzspError(EzspStatus.ASH_ERROR_TIMEOUTS));
-                    }, this.ash.responseTimeout),
+                    timer: setTimeout(() => reject(new EzspError(EzspStatus.ASH_ERROR_TIMEOUTS)), this.ash.responseTimeout),
                     resolve,
                 };
             });
@@ -577,6 +600,8 @@ export class Ezsp extends EventEmitter {
                 throw new EzspError(status);
             }
         } catch (error) {
+            this.responseWaiter = null;
+
             logger.debug(`=x=> ${this.frameToString} ${error}`, NS);
 
             this.ezspErrorHandler(status);

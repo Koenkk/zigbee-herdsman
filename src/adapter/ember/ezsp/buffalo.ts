@@ -499,8 +499,8 @@ export class EzspBuffalo extends Buffalo {
     }
 
     public readSecManNetworkKeyInfo(): SecManNetworkKeyInfo {
-        const networkKeySet = this.readUInt8() === 1 ? true : false;
-        const alternateNetworkKeySet = this.readUInt8() === 1 ? true : false;
+        const networkKeySet = this.readUInt8() !== 0;
+        const alternateNetworkKeySet = this.readUInt8() !== 0;
         const networkKeySequenceNumber = this.readUInt8();
         const altNetworkKeySequenceNumber = this.readUInt8();
         const networkKeyFrameCounter = this.readUInt32();
@@ -632,7 +632,7 @@ export class EzspBuffalo extends Buffalo {
         const channel = this.readUInt8();
         const panId = this.readUInt16();
         const extendedPanId = this.readListUInt8(EXTENDED_PAN_ID_SIZE);
-        const allowingJoin = this.readUInt8();
+        const allowingJoin = this.readUInt8() !== 0;
         const stackProfile = this.readUInt8();
         const nwkUpdateId = this.readUInt8();
 
@@ -650,7 +650,7 @@ export class EzspBuffalo extends Buffalo {
         this.writeUInt8(value.channel);
         this.writeUInt16(value.panId);
         this.writeListUInt8(value.extendedPanId);
-        this.writeUInt8(value.allowingJoin);
+        this.writeUInt8(value.allowingJoin ? 1 : 0);
         this.writeUInt8(value.stackProfile);
         this.writeUInt8(value.nwkUpdateId);
     }
@@ -1186,9 +1186,9 @@ export class EzspBuffalo extends Buffalo {
         const nwkUpdateId = this.readUInt8();
         const power = this.readUInt8();
         const parentPriority = this.readUInt8();
-        const enhanced = this.readUInt8() === 1 ? true : false;
-        const permitJoin = this.readUInt8() === 1 ? true : false;
-        const hasCapacity = this.readUInt8() === 1 ? true : false;
+        const enhanced = this.readUInt8() !== 0;
+        const permitJoin = this.readUInt8() !== 0;
+        const hasCapacity = this.readUInt8() !== 0;
         const panId = this.readUInt16();
         const sender = this.readUInt16();
         const extendedPanId = this.readListUInt8(EXTENDED_PAN_ID_SIZE);
@@ -1245,9 +1245,9 @@ export class EzspBuffalo extends Buffalo {
         const nwkUpdateId = this.readUInt8();
         const power = this.readUInt8();
         const parentPriority = this.readUInt8();
-        const enhanced = this.readUInt8() === 1 ? true : false;
-        const permitJoin = this.readUInt8() === 1 ? true : false;
-        const hasCapacity = this.readUInt8() === 1 ? true : false;
+        const enhanced = this.readUInt8() !== 0;
+        const permitJoin = this.readUInt8() !== 0;
+        const hasCapacity = this.readUInt8() !== 0;
         const panId = this.readUInt16();
         const sender = this.readUInt16();
         const extendedPanId = this.readListUInt8(EXTENDED_PAN_ID_SIZE);
@@ -1290,8 +1290,8 @@ export class EzspBuffalo extends Buffalo {
 
     public readEmberTokenInfo(): EmberTokenInfo {
         const nvm3Key = this.readUInt32();
-        const isCnt = this.readUInt8() === 1 ? true : false;
-        const isIdx = this.readUInt8() === 1 ? true : false;
+        const isCnt = this.readUInt8() !== 0;
+        const isIdx = this.readUInt8() !== 0;
         const size = this.readUInt8();
         const arraySize = this.readUInt8();
 
