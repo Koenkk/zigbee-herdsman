@@ -197,7 +197,7 @@ class Device extends Entity {
     }
 
     public implicitCheckin(): void {
-        this.endpoints.forEach(async e => e.sendPendingRequests(false));
+        Promise.allSettled(this.endpoints.map((e) => e.sendPendingRequests(false))).catch(() => {});
     }
 
     public updateLastSeen(): void {
