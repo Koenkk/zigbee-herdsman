@@ -125,7 +125,7 @@ export type ClusterName = (
     'manuSpecificLegrandDevices3' | 'manuSpecificNiko1' | 'manuSpecificNiko2' | 'wiserDeviceInfo' | 'manuSpecificTuya' | 'manuSpecificLumi' |
     'liXeePrivate' | 'manuSpecificTuya_2' | 'manuSpecificTuya_3' | 'manuSpecificCentraliteHumidity' | 'manuSpecificSmartThingsArrivalSensor' |
     'manuSpecificSamsungAccelerometer' | 'heimanSpecificFormaldehydeMeasurement' | 'heimanSpecificAirQuality' | 'heimanSpecificScenes' |
-    'tradfriButton' | 'heimanSpecificInfraRedRemote' | 'develcoSpecificAirQuality' | 'schneiderSpecificPilotMode' |
+    'tradfriButton' | 'heimanSpecificInfraRedRemote' | 'schneiderSpecificPilotMode' |
     'elkoOccupancySettingClusterServer' | 'elkoSwitchConfigurationClusterServer' | 'manuSpecificSchneiderLightSwitchConfiguration' |
     'manuSpecificSchneiderFanSwitchConfiguration' | 'sprutDevice' | 'sprutVoc' | 'sprutNoise' | 'sprutIrBlaster' | 'manuSpecificSiglisZigfred' |
     'manuSpecificInovelli' | 'owonClearMetering' | 'zosungIRTransmit' | 'zosungIRControl' |
