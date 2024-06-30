@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.50.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.50.0...v0.50.1) (2024-06-30)
+
+
+### Bug Fixes
+
+* Add calibration attributes for Niko 552-72301 ([#1098](https://github.com/Koenkk/zigbee-herdsman/issues/1098)) ([6ba4024](https://github.com/Koenkk/zigbee-herdsman/commit/6ba4024f24996e15961ebd501620cdd1540c678d))
+* **ignore:** Cleanup develco clusters as they are now in zhc ([#1097](https://github.com/Koenkk/zigbee-herdsman/issues/1097)) ([e942d96](https://github.com/Koenkk/zigbee-herdsman/commit/e942d964411beb77c1050d7b38cb66fb9f1fefc1))
+* **ignore:** Fix not awaited promise in `implicitCheckin ([#1099](https://github.com/Koenkk/zigbee-herdsman/issues/1099)) ([6d2ee88](https://github.com/Koenkk/zigbee-herdsman/commit/6d2ee88f576861d2b70b7735fcefd18b57c193e0))
+* **ignore:** update dependencies ([#1091](https://github.com/Koenkk/zigbee-herdsman/issues/1091)) ([79886ac](https://github.com/Koenkk/zigbee-herdsman/commit/79886ac747568d7613d21c4948909fbd5ef832b5))
+* **ignore:** update dependencies ([#1095](https://github.com/Koenkk/zigbee-herdsman/issues/1095)) ([99ee8f4](https://github.com/Koenkk/zigbee-herdsman/commit/99ee8f494d2c8d49040d8aa354772a3c16fa79c0))
+* **ignore:** update dependencies ([#1100](https://github.com/Koenkk/zigbee-herdsman/issues/1100)) ([75e4f15](https://github.com/Koenkk/zigbee-herdsman/commit/75e4f150a2e11a142ca2382a03b465cedaf02515))
+
 ## [0.50.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.49.3...v0.50.0) (2024-06-14)
 
 
