@@ -197,7 +197,9 @@ class Device extends Entity {
     }
 
     public implicitCheckin(): void {
-        this.endpoints.forEach(async e => e.sendPendingRequests(false));
+        // No need to do anythign in `catch` as `endpoint.sendRequest` already logs failures.
+        /* istanbul ignore next */
+        Promise.allSettled(this.endpoints.map((e) => e.sendPendingRequests(false))).catch(() => {});
     }
 
     public updateLastSeen(): void {

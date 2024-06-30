@@ -1813,6 +1813,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             elkoLiftDriveDownTime: {ID: 0xE015, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
             elkoTiltOpenCloseAndStepTime: {ID: 0xE016, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
             elkoTiltPositionPercentageAfterMoveToLevel: {ID: 0xE017, type: DataType.UINT8, manufacturerCode: ManufacturerCode.ADEO},
+            nikoCalibrationTimeUp: {ID: 0xfcc1, type: DataType.UINT16, manufacturerCode: ManufacturerCode.NIKO_NV},
+            nikoCalibrationTimeDown: {ID: 0xfcc2, type: DataType.UINT16, manufacturerCode: ManufacturerCode.NIKO_NV},
         },
         commands: {
             upOpen: {
