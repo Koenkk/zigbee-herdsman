@@ -23,9 +23,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             deviceEnabled: {ID: 18, type: DataType.BOOLEAN},
             alarmMask: {ID: 19, type: DataType.BITMAP8},
             disableLocalConfig: {ID: 20, type: DataType.BITMAP8},
-            develcoPrimarySwVersion: {ID: 0x8000, type: DataType.OCTET_STR, manufacturerCode: ManufacturerCode.DEVELCO},
-            develcoPrimaryHwVersion: {ID: 0x8020, type: DataType.OCTET_STR, manufacturerCode: ManufacturerCode.DEVELCO},
-            develcoLedControl: {ID: 0x8100, type: DataType.BITMAP8, manufacturerCode: ManufacturerCode.DEVELCO},
             schneiderMeterRadioPower: {ID: 0xE200, type: DataType.INT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
         },
         commands: {
@@ -4852,18 +4849,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
         },
-    },
-    develcoSpecificAirQuality: {
-        ID: 0xFC03,
-        manufacturerCode: ManufacturerCode.DEVELCO,
-        attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.UINT16},
-            minMeasuredValue: {ID: 0x0001, type: DataType.UINT16},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.UINT16},
-            resolution: {ID: 0x0003, type: DataType.UINT16},
-        },
-        commands: {},
-        commandsResponse: {},
     },
     schneiderSpecificPilotMode: {
         ID: 0xFF23,
