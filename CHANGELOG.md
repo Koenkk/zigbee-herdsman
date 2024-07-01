@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.51.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.50.1...v0.51.0) (2024-07-01)
+
+
+### Features
+
+* Ember: Support for EmberZNet v8.0.0 ([#1094](https://github.com/Koenkk/zigbee-herdsman/issues/1094)) ([c87ccd4](https://github.com/Koenkk/zigbee-herdsman/commit/c87ccd48a66b85272a409be737b9161fef8225d8))
+
 ## [0.50.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.50.0...v0.50.1) (2024-06-30)
 
 
