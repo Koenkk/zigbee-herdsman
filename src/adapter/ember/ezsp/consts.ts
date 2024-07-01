@@ -1,8 +1,9 @@
 //-------------------------------------------------------------------------------------------------
 // EZSP Protocol
 
+export const EZSP_MIN_PROTOCOL_VERSION = 0x0D;
 /** Latest EZSP protocol version */
-export const EZSP_PROTOCOL_VERSION = 0x0D;
+export const EZSP_PROTOCOL_VERSION = 0x0E;
 
 /** EZSP max length + Frame Control extra byte + Frame ID extra byte */
 export const EZSP_MAX_FRAME_LENGTH = (200 + 1 + 1);

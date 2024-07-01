@@ -1,58 +1,50 @@
-import {EmberRequestQueue, NETWORK_BUSY_DEFER_MSEC, NETWORK_DOWN_DEFER_MSEC} from '../../../src/adapter/ember/adapter/requestQueue';
-import {EmberStatus, EzspStatus} from '../../../src/adapter/ember/enums';
+import {
+    EmberRequestQueue,
+    BUSY_DEFER_MSEC,
+    NETWORK_DOWN_DEFER_MSEC,
+    MAX_SEND_ATTEMPTS,
+    HIGH_COUNT,
+} from '../../../src/adapter/ember/adapter/requestQueue';
+import {SLStatus, EzspStatus} from '../../../src/adapter/ember/enums';
+import {EzspError} from '../../../src/adapter/ember/ezspError';
 import {Wait} from '../../../src/utils';
-
-let fakeWaitTime = 1000;
-let varyingReturn: EmberStatus = EmberStatus.SUCCESS;
-const getVaryingReturn = async (): Promise<EmberStatus> => {
-    await Wait(fakeWaitTime);
-    return varyingReturn;
-};
-const getThrownError = async (): Promise<EmberStatus> => {
-    await Wait(fakeWaitTime);
-    throw new Error(EzspStatus[EzspStatus.ASH_ACK_TIMEOUT]);
-}
-const getThrowNetworkBusy = async (): Promise<EmberStatus> => {
-    await Wait(fakeWaitTime);
-    throw new Error(EzspStatus[EzspStatus.NO_TX_SPACE]);
-};
-const getThrowNetworkDown = async (): Promise<EmberStatus> => {
-    await Wait(fakeWaitTime);
-    throw new Error(EzspStatus[EzspStatus.NOT_CONNECTED]);
-};
-
-class TestThis {
-    public bs: boolean;
-    public q: EmberRequestQueue;
-
-    constructor() {
-        this.bs = false;
-        this.q = new EmberRequestQueue(60);
-    }
-
-    public async getNewBS(): Promise<boolean> {
-        await new Promise<void>((resolve, reject): void => {
-            this.q.enqueue(
-                async (): Promise<EmberStatus> => {
-                    await Wait(fakeWaitTime);
-
-                    this.bs = true;
-
-                    resolve();
-                    return EmberStatus.SUCCESS;
-                },
-                reject,
-            )
-        })
-        
-        return this.bs;
-    }
-}
-
-let deferSpy;
 
 describe('Ember Request Queue', () => {
     let requestQueue: EmberRequestQueue;
+    let fakeWaitTime: number = 1000;
+    let varyingReturn: SLStatus = SLStatus.OK;
+    let deferSpy: jest.SpyInstance;
+
+    const getVaryingReturn = async (): Promise<SLStatus> => {
+        await Wait(fakeWaitTime);
+        return varyingReturn;
+    };
+
+    const getQueueEntryAt = (index: number, fromPriorityQueue: boolean = false) => {
+        // @ts-expect-error private
+        const queue = fromPriorityQueue ? requestQueue.priorityQueue : requestQueue.queue;
+
+        return queue[index];
+    }
+
+    const mockAdapterCommand = async (returnFunc: () => Promise<SLStatus>, priority: boolean = false): Promise<number> => {
+        return new Promise<number>((resolve, reject) => {
+            requestQueue.enqueue(
+                async (): Promise<SLStatus> => {
+                    const status: SLStatus = await returnFunc();
+
+                    if (status !== SLStatus.OK) {
+                        return status;
+                    }
+
+                    resolve(123);
+                    return status;
+                },
+                reject,
+                priority,
+            );
+        });
+    }
 
     beforeAll(async () => {
         jest.useFakeTimers();
@@ -70,33 +62,26 @@ describe('Ember Request Queue', () => {
 
     afterEach(() => {
         fakeWaitTime = 1000;
-        varyingReturn = EmberStatus.SUCCESS;
+        varyingReturn = SLStatus.OK;
+
         requestQueue.stopDispatching();
+        requestQueue.clear();
+    });
+
+    it('Creates queue with fallback dispatch interval', async () => {
+        const queue = new EmberRequestQueue(0);
+
+        // @ts-expect-error private
+        expect(queue.dispatchInterval).toStrictEqual(5);
     });
 
     it('Queues request and resolves it', async () => {
         const enqueueSpy = jest.spyOn(requestQueue, 'enqueue');
 
-        varyingReturn = EmberStatus.SUCCESS;
-        const p = new Promise<number>((resolve, reject) => {
-            requestQueue.enqueue(
-                async (): Promise<EmberStatus> => {
-                    const status: EmberStatus = await getVaryingReturn();
-
-                    if (status !== EmberStatus.SUCCESS) {
-                        return status;
-                    }
-
-                    resolve(123);
-                    return status;
-                },
-                reject,
-            );
-        });
-        //@ts-expect-error private
-        const funcSpy = jest.spyOn(requestQueue.queue[0], 'func');
-        //@ts-expect-error private
-        const funcRejectSpy = jest.spyOn(requestQueue.queue[0], 'reject');
+        varyingReturn = SLStatus.OK;
+        const p = mockAdapterCommand(getVaryingReturn);
+        const funcSpy = jest.spyOn(getQueueEntryAt(0), 'func');
+        const funcRejectSpy = jest.spyOn(getQueueEntryAt(0), 'reject');
 
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
@@ -118,26 +103,10 @@ describe('Ember Request Queue', () => {
     it('Queues request, rejects it on error, and removes it from queue', async () => {
         const enqueueSpy = jest.spyOn(requestQueue, 'enqueue');
 
-        varyingReturn = EmberStatus.ERR_FATAL;
-        const p = new Promise<number>((resolve, reject) => {
-            requestQueue.enqueue(
-                async (): Promise<EmberStatus> => {
-                    const status: EmberStatus = await getVaryingReturn();
-
-                    if (status !== EmberStatus.SUCCESS) {
-                        return status;
-                    }
-
-                    resolve(123);
-                    return status;
-                },
-                reject,
-            );
-        });
-        //@ts-expect-error private
-        const funcSpy = jest.spyOn(requestQueue.queue[0], 'func');
-        //@ts-expect-error private
-        const funcRejectSpy = jest.spyOn(requestQueue.queue[0], 'reject');
+        varyingReturn = SLStatus.FAIL;
+        const p = mockAdapterCommand(getVaryingReturn);
+        const funcSpy = jest.spyOn(getQueueEntryAt(0), 'func');
+        const funcRejectSpy = jest.spyOn(getQueueEntryAt(0), 'reject');
 
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
@@ -148,7 +117,7 @@ describe('Ember Request Queue', () => {
 
         jest.advanceTimersByTime(fakeWaitTime + 20);
 
-        await expect(p).rejects.toStrictEqual(new Error(EmberStatus[varyingReturn]));
+        await expect(p).rejects.toStrictEqual(new Error(SLStatus[varyingReturn]));
 
         expect(funcSpy).toHaveBeenCalledTimes(1);
         expect(funcRejectSpy).toHaveBeenCalledTimes(1);
@@ -159,25 +128,12 @@ describe('Ember Request Queue', () => {
     it('Queues request, rejects it on throw, and removes it from queue', async () => {
         const enqueueSpy = jest.spyOn(requestQueue, 'enqueue');
 
-        const p = new Promise<number>((resolve, reject) => {
-            requestQueue.enqueue(
-                async (): Promise<EmberStatus> => {
-                    const status: EmberStatus = await getThrownError();
-
-                    if (status !== EmberStatus.SUCCESS) {
-                        return status;
-                    }
-
-                    resolve(123);
-                    return status;
-                },
-                reject,
-            );
+        const p = mockAdapterCommand(async (): Promise<SLStatus> => {
+            await Wait(fakeWaitTime);
+            throw new EzspError(EzspStatus.ASH_ACK_TIMEOUT);
         });
-        //@ts-expect-error private
-        const funcSpy = jest.spyOn(requestQueue.queue[0], 'func');
-        //@ts-expect-error private
-        const funcRejectSpy = jest.spyOn(requestQueue.queue[0], 'reject');
+        const funcSpy = jest.spyOn(getQueueEntryAt(0), 'func');
+        const funcRejectSpy = jest.spyOn(getQueueEntryAt(0), 'reject');
 
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
@@ -187,7 +143,7 @@ describe('Ember Request Queue', () => {
         requestQueue.startDispatching();
 
         jest.advanceTimersByTime(fakeWaitTime + 20);
-        await expect(p).rejects.toStrictEqual(new Error(EzspStatus[EzspStatus.ASH_ACK_TIMEOUT]));
+        await expect(p).rejects.toStrictEqual(new EzspError(EzspStatus.ASH_ACK_TIMEOUT));
 
         expect(funcSpy).toHaveBeenCalledTimes(1);
         expect(funcRejectSpy).toHaveBeenCalledTimes(1);
@@ -195,27 +151,38 @@ describe('Ember Request Queue', () => {
         expect(requestQueue.queue).toHaveLength(0);// no longer in queue
     });
 
-    it('Queues request, defers on NETWORK_BUSY and defers again on NETWORK_DOWN', async () => {
+    it('Queues priority request, rejects it on throw, and removes it from queue', async () => {
         const enqueueSpy = jest.spyOn(requestQueue, 'enqueue');
 
-        varyingReturn = EmberStatus.NETWORK_BUSY;
-        const p = new Promise<number>((resolve, reject) => {
-            requestQueue.enqueue(
-                async (): Promise<EmberStatus> => {
-                    const status: EmberStatus = await getVaryingReturn();
+        const p = mockAdapterCommand(async (): Promise<SLStatus> => {
+            await Wait(fakeWaitTime);
+            throw new EzspError(EzspStatus.ASH_ACK_TIMEOUT);
+        }, true);
+        const funcSpy = jest.spyOn(getQueueEntryAt(0, true), 'func');
+        const funcRejectSpy = jest.spyOn(getQueueEntryAt(0, true), 'reject');
 
-                    if (status !== EmberStatus.SUCCESS) {
-                        return status;
-                    }
-
-                    resolve(123);
-                    return status;
-                },
-                reject,
-            );
-        });
+        expect(enqueueSpy).toHaveBeenCalledTimes(1);
+        expect(funcSpy).toHaveBeenCalledTimes(0);
         //@ts-expect-error private
-        const funcSpy = jest.spyOn(requestQueue.queue[0], 'func');
+        expect(requestQueue.priorityQueue).toHaveLength(1);
+
+        requestQueue.startDispatching();
+
+        jest.advanceTimersByTime(fakeWaitTime + 20);
+        await expect(p).rejects.toStrictEqual(new EzspError(EzspStatus.ASH_ACK_TIMEOUT));
+
+        expect(funcSpy).toHaveBeenCalledTimes(1);
+        expect(funcRejectSpy).toHaveBeenCalledTimes(1);
+        //@ts-expect-error private
+        expect(requestQueue.priorityQueue).toHaveLength(0);// no longer in queue
+    });
+
+    it('Queues request, defers on BUSY and defers again on NETWORK_DOWN', async () => {
+        const enqueueSpy = jest.spyOn(requestQueue, 'enqueue');
+
+        varyingReturn = SLStatus.BUSY;
+        const p = mockAdapterCommand(getVaryingReturn);
+        const funcSpy = jest.spyOn(getQueueEntryAt(0), 'func');
 
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
@@ -225,16 +192,16 @@ describe('Ember Request Queue', () => {
 
         requestQueue.startDispatching();
 
-        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (NETWORK_BUSY_DEFER_MSEC * 0.25));
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (BUSY_DEFER_MSEC * 0.25));
 
         expect(deferSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
         expect(requestQueue.queue).toHaveLength(1);// still in queue
 
-        await jest.advanceTimersByTimeAsync(NETWORK_BUSY_DEFER_MSEC + 20);
+        await jest.advanceTimersByTimeAsync(BUSY_DEFER_MSEC + 20);
 
-        varyingReturn = EmberStatus.NETWORK_DOWN;
+        varyingReturn = SLStatus.NETWORK_DOWN;
 
         await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (NETWORK_DOWN_DEFER_MSEC * 0.25));
 
@@ -246,27 +213,12 @@ describe('Ember Request Queue', () => {
         await jest.advanceTimersByTimeAsync(NETWORK_DOWN_DEFER_MSEC + 20);
     });
 
-    it('Queues request, defers on NETWORK_BUSY and then resolves it', async () => {
+    it('Queues request, defers on BUSY and then resolves it', async () => {
         const enqueueSpy = jest.spyOn(requestQueue, 'enqueue');
 
-        varyingReturn = EmberStatus.NETWORK_BUSY;
-        const p = new Promise<number>((resolve, reject) => {
-            requestQueue.enqueue(
-                async (): Promise<EmberStatus> => {
-                    const status: EmberStatus = await getVaryingReturn();
-
-                    if (status !== EmberStatus.SUCCESS) {
-                        return status;
-                    }
-
-                    resolve(123);
-                    return status;
-                },
-                reject,
-            );
-        });
-        //@ts-expect-error private
-        const funcSpy = jest.spyOn(requestQueue.queue[0], 'func');
+        varyingReturn = SLStatus.BUSY;
+        const p = mockAdapterCommand(getVaryingReturn);
+        const funcSpy = jest.spyOn(getQueueEntryAt(0), 'func');
 
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
@@ -275,16 +227,16 @@ describe('Ember Request Queue', () => {
 
         requestQueue.startDispatching();
 
-        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (NETWORK_BUSY_DEFER_MSEC * 0.25));
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (BUSY_DEFER_MSEC * 0.25));
 
         expect(deferSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
         expect(requestQueue.queue).toHaveLength(1);// still in queue
 
-        await jest.advanceTimersByTimeAsync(NETWORK_BUSY_DEFER_MSEC + 20);
+        await jest.advanceTimersByTimeAsync(BUSY_DEFER_MSEC + 20);
 
-        varyingReturn = EmberStatus.SUCCESS;
+        varyingReturn = SLStatus.OK;
 
         await jest.advanceTimersByTimeAsync(fakeWaitTime + 20);
 
@@ -295,18 +247,18 @@ describe('Ember Request Queue', () => {
         expect(requestQueue.queue).toHaveLength(0);// no longer in queue
     });
 
-    it('Queues request, defers on NETWORK_BUSY and only retries once after internal change', async () => {
+    it('Queues request, defers on BUSY and only retries once after internal change', async () => {
         const enqueueSpy = jest.spyOn(requestQueue, 'enqueue');
 
-        varyingReturn = EmberStatus.NETWORK_BUSY;
+        varyingReturn = SLStatus.BUSY;
         const p = new Promise<number>((resolve, reject) => {
             requestQueue.enqueue(
-                async (): Promise<EmberStatus> => {
-                    const status: EmberStatus = await getVaryingReturn();
+                async (): Promise<SLStatus> => {
+                    const status: SLStatus = await getVaryingReturn();
 
-                    if (status !== EmberStatus.SUCCESS) {
+                    if (status !== SLStatus.OK) {
                         // internally changes external parameter that changes the queue's next run
-                        varyingReturn = EmberStatus.SUCCESS;
+                        varyingReturn = SLStatus.OK;
                         return status;
                     }
 
@@ -316,8 +268,7 @@ describe('Ember Request Queue', () => {
                 reject,
             );
         });
-        //@ts-expect-error private
-        const funcSpy = jest.spyOn(requestQueue.queue[0], 'func');
+        const funcSpy = jest.spyOn(getQueueEntryAt(0), 'func');
 
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
@@ -326,14 +277,14 @@ describe('Ember Request Queue', () => {
 
         requestQueue.startDispatching();
 
-        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (NETWORK_BUSY_DEFER_MSEC * 0.25));
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (BUSY_DEFER_MSEC * 0.25));
 
         expect(deferSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
         expect(requestQueue.queue).toHaveLength(1);// still in queue
 
-        await jest.advanceTimersByTimeAsync(NETWORK_BUSY_DEFER_MSEC + 20);
+        await jest.advanceTimersByTimeAsync(BUSY_DEFER_MSEC + 20);
 
         await jest.advanceTimersByTimeAsync(fakeWaitTime + 20);
 
@@ -344,26 +295,14 @@ describe('Ember Request Queue', () => {
         expect(requestQueue.queue).toHaveLength(0);// no longer in queue
     });
 
-    it('Queues request, defers on thrown NETWORK_BUSY', async () => {
+    it('Queues request, defers on thrown BUSY', async () => {
         const enqueueSpy = jest.spyOn(requestQueue, 'enqueue');
 
-        const p = new Promise<number>((resolve, reject) => {
-            requestQueue.enqueue(
-                async (): Promise<EmberStatus> => {
-                    const status: EmberStatus = await getThrowNetworkBusy();
-
-                    if (status !== EmberStatus.SUCCESS) {
-                        return status;
-                    }
-
-                    resolve(123);
-                    return status;
-                },
-                reject,
-            );
+        const p = mockAdapterCommand(async (): Promise<SLStatus> => {
+            await Wait(fakeWaitTime);
+            throw new EzspError(EzspStatus.NO_TX_SPACE);
         });
-        //@ts-expect-error private
-        const funcSpy = jest.spyOn(requestQueue.queue[0], 'func');
+        const funcSpy = jest.spyOn(getQueueEntryAt(0), 'func');
 
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
@@ -372,55 +311,50 @@ describe('Ember Request Queue', () => {
 
         requestQueue.startDispatching();
 
-        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (NETWORK_BUSY_DEFER_MSEC * 0.25));
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (BUSY_DEFER_MSEC * 0.25));
 
         expect(deferSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
         expect(requestQueue.queue).toHaveLength(1);// still in queue
 
-        await jest.advanceTimersByTimeAsync(NETWORK_BUSY_DEFER_MSEC + 20);
+        await jest.advanceTimersByTimeAsync(BUSY_DEFER_MSEC + 20);
+    });
+
+    it('Queues request, defers on thrown NETWORK_DOWN', async () => {
+        const enqueueSpy = jest.spyOn(requestQueue, 'enqueue');
+
+        const p = mockAdapterCommand(async (): Promise<SLStatus> => {
+            await Wait(fakeWaitTime);
+            throw new EzspError(EzspStatus.NOT_CONNECTED);
+        });
+        const funcSpy = jest.spyOn(getQueueEntryAt(0), 'func');
+
+        expect(enqueueSpy).toHaveBeenCalledTimes(1);
+        expect(funcSpy).toHaveBeenCalledTimes(0);
+        //@ts-expect-error private
+        expect(requestQueue.queue).toHaveLength(1);// enqueued
+
+        requestQueue.startDispatching();
+
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (BUSY_DEFER_MSEC * 0.25));
+
+        expect(deferSpy).toHaveBeenCalledTimes(1);
+        expect(funcSpy).toHaveBeenCalledTimes(1);
+        //@ts-expect-error private
+        expect(requestQueue.queue).toHaveLength(1);// still in queue
+
+        await jest.advanceTimersByTimeAsync(BUSY_DEFER_MSEC + 20);
     });
 
     it('Queues request and resolves by priority', async () => {
         const enqueueSpy = jest.spyOn(requestQueue, 'enqueue');
 
-        varyingReturn = EmberStatus.SUCCESS;
-        const p = new Promise<number>((resolve, reject) => {
-            requestQueue.enqueue(
-                async (): Promise<EmberStatus> => {
-                    const status: EmberStatus = await getVaryingReturn();
-
-                    if (status !== EmberStatus.SUCCESS) {
-                        return status;
-                    }
-
-                    resolve(123);
-                    return status;
-                },
-                reject,
-            );
-        });
-        const pPrio = new Promise<number>((resolve, reject) => {
-            requestQueue.enqueue(
-                async (): Promise<EmberStatus> => {
-                    const status: EmberStatus = await getVaryingReturn();
-
-                    if (status !== EmberStatus.SUCCESS) {
-                        return status;
-                    }
-
-                    resolve(456);
-                    return status;
-                },
-                reject,
-                true,
-            );
-        });
-        //@ts-expect-error private
-        const funcSpy = jest.spyOn(requestQueue.queue[0], 'func');
-        //@ts-expect-error private
-        const funcPrioSpy = jest.spyOn(requestQueue.priorityQueue[0], 'func');
+        varyingReturn = SLStatus.OK;
+        const p = mockAdapterCommand(getVaryingReturn);
+        const pPrio = mockAdapterCommand(getVaryingReturn, true);
+        const funcSpy = jest.spyOn(getQueueEntryAt(0), 'func');
+        const funcPrioSpy = jest.spyOn(getQueueEntryAt(0, true), 'func');
 
         expect(enqueueSpy).toHaveBeenCalledTimes(2);
         expect(funcSpy).toHaveBeenCalledTimes(0);
@@ -434,7 +368,7 @@ describe('Ember Request Queue', () => {
 
         await jest.advanceTimersByTimeAsync(fakeWaitTime + 1);// before 2nd setTimeout triggers
 
-        await expect(pPrio).resolves.toBe(456);// gives result of resolve
+        await expect(pPrio).resolves.toBe(123);// gives result of resolve
 
         expect(funcSpy).toHaveBeenCalledTimes(0);// enqueued func was not called
         expect(funcPrioSpy).toHaveBeenCalledTimes(1);// enqueued func was called
@@ -452,16 +386,48 @@ describe('Ember Request Queue', () => {
         expect(requestQueue.queue).toHaveLength(0);// no longer in queue
     });
 
-    it('In-class queues also work, just for kicks...', async () => {
-        const t = new TestThis();
+    it('Clears queue', async () => {
+        const mockFunc = jest.fn();
+        const mockReject = jest.fn();
 
-        expect(t.bs).toBeFalsy();
+        requestQueue.enqueue(mockFunc, mockReject);
+        requestQueue.enqueue(mockFunc, mockReject);
+        requestQueue.enqueue(mockFunc, mockReject, true);
+        requestQueue.clear();
+        expect(requestQueue.totalQueued).toStrictEqual(0);
+        expect(mockFunc).toHaveBeenCalledTimes(0);
+        expect(mockReject).toHaveBeenCalledTimes(0);
+    });
 
-        const tBS = t.getNewBS();
+    it('Detects when queue is high', () => {
+        const mockFunc = jest.fn();
+        const mockReject = jest.fn();
 
-        t.q.startDispatching();
+        requestQueue.enqueue(mockFunc, mockReject);
+
+        expect(requestQueue.isHigh).toStrictEqual(false);
+
+        for (let i = 0; i < HIGH_COUNT; i++) {
+            requestQueue.enqueue(mockFunc, mockReject);
+        }
+
+        expect(requestQueue.isHigh).toStrictEqual(true);
+
+        requestQueue.clear();
+
+        expect(requestQueue.isHigh).toStrictEqual(false);
+    });
+
+    it('Rejects after too many attempts', async () => {
+        varyingReturn = SLStatus.OK;
+        const p = mockAdapterCommand(getVaryingReturn);
+
+        getQueueEntryAt(0).sendAttempts = MAX_SEND_ATTEMPTS + 1;
+
+        requestQueue.startDispatching();
+
         jest.advanceTimersByTime(fakeWaitTime + 20);
 
-        await expect(tBS).resolves.toBeTruthy();
-    })
+        expect(p).rejects.toStrictEqual(new Error(`Failed ${MAX_SEND_ATTEMPTS} attempts to send`));
+    });
 });
