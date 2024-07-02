@@ -1,5 +1,3 @@
 import * as ZclFrameConverter from './zclFrameConverter';
 
-export {
-    ZclFrameConverter,
-};
+export {ZclFrameConverter};

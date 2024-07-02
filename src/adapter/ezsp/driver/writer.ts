@@ -1,8 +1,9 @@
 /* istanbul ignore file */
 import * as stream from 'stream';
+
+import {logger} from '../../../utils/logger';
 import * as consts from './consts';
 import {crc16ccitt} from './utils';
-import {logger} from '../../../utils/logger';
 
 const NS = 'zh:ezsp:uart';
 
@@ -12,35 +13,34 @@ export class Writer extends stream.Readable {
         this.push(buffer);
     }
 
-    public _read(): void {
-    }
+    public _read(): void {}
 
     public sendACK(ackNum: number): void {
         /* Construct a acknowledgement frame */
-        const ackFrame = this.makeFrame((0b10000000 | ackNum));
+        const ackFrame = this.makeFrame(0b10000000 | ackNum);
         this.writeBuffer(ackFrame);
     }
 
     public sendNAK(ackNum: number): void {
         /* Construct a negative acknowledgement frame */
-        const nakFrame = this.makeFrame((0b10100000 | ackNum));
+        const nakFrame = this.makeFrame(0b10100000 | ackNum);
         this.writeBuffer(nakFrame);
     }
 
     public sendReset(): void {
         /* Construct a reset frame */
-        const rstFrame = Buffer.concat([Buffer.from([consts.CANCEL]), this.makeFrame(0xC0)]);
+        const rstFrame = Buffer.concat([Buffer.from([consts.CANCEL]), this.makeFrame(0xc0)]);
         this.writeBuffer(rstFrame);
     }
 
     public sendData(data: Buffer, seq: number, rxmit: number, ackSeq: number): void {
         /* Construct a data frame */
-        const control = (((seq << 4) | (rxmit << 3)) | ackSeq);
+        const control = (seq << 4) | (rxmit << 3) | ackSeq;
         const dataFrame = this.makeFrame(control, data);
         this.writeBuffer(dataFrame);
     }
 
-    private* stuff (buffer: number[]): Generator<number> {
+    private *stuff(buffer: number[]): Generator<number> {
         /* Byte stuff (escape) a string for transmission */
         for (const byte of buffer) {
             if (consts.RESERVED.includes(byte)) {

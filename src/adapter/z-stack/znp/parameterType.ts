@@ -1,10 +1,10 @@
 enum ParameterType {
-    UINT8  = 0,
-    UINT16  = 1,
-    UINT32  = 2,
-    IEEEADDR  = 3,
+    UINT8 = 0,
+    UINT16 = 1,
+    UINT32 = 2,
+    IEEEADDR = 3,
 
-    BUFFER  = 4,
+    BUFFER = 4,
     BUFFER8 = 5,
     BUFFER16 = 6,
     BUFFER18 = 7,

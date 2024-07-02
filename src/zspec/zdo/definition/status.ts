@@ -3,52 +3,52 @@
  *
  * Most responses to ZDO commands contain a status byte.
  * The meaning of this byte is defined by the ZigBee Device Profile.
- * 
+ *
  * Zigbee Document – 05-3474-23 - Table 2-129. ZDP Enumerations Description
- * 
+ *
  * uint8_t
  */
 export enum Status {
     /** The requested operation or transmission was completed successfully. */
-    SUCCESS                    = 0x00,
+    SUCCESS = 0x00,
     // 0x01 – 0x7F are reserved
     /** The supplied request type was invalid. */
-    INV_REQUESTTYPE            = 0x80,
+    INV_REQUESTTYPE = 0x80,
     /** The requested device did not exist on a device following a child descriptor request to a parent. */
-    DEVICE_NOT_FOUND           = 0x81,
+    DEVICE_NOT_FOUND = 0x81,
     /** The supplied endpoint was equal to 0x00 or 0xff. */
-    INVALID_EP                 = 0x82,
+    INVALID_EP = 0x82,
     /** The requested endpoint is not described by a simple descriptor. */
-    NOT_ACTIVE                 = 0x83,
+    NOT_ACTIVE = 0x83,
     /** The requested optional feature is not supported on the target device. */
-    NOT_SUPPORTED              = 0x84,
+    NOT_SUPPORTED = 0x84,
     /** A timeout has occurred with the requested operation. */
-    TIMEOUT                    = 0x85,
+    TIMEOUT = 0x85,
     /** failure to match any suitable clusters. */
-    NO_MATCH                   = 0x86,
+    NO_MATCH = 0x86,
     // 0x87 is reserved        = 0x87,
     /** The unbind request was unsuccessful due to the coordinator or source device not having an entry in its binding table to unbind. */
-    NO_ENTRY                   = 0x88,
+    NO_ENTRY = 0x88,
     /** A child descriptor was not available following a discovery request to a parent. */
-    NO_DESCRIPTOR              = 0x89,
+    NO_DESCRIPTOR = 0x89,
     /** The device does not have storage space to support the requested operation. */
-    INSUFFICIENT_SPACE         = 0x8a,
+    INSUFFICIENT_SPACE = 0x8a,
     /** The device is not in the proper state to support the requested operation. */
-    NOT_PERMITTED              = 0x8b,
+    NOT_PERMITTED = 0x8b,
     /** The device does not have table space to support the operation. */
-    TABLE_FULL                 = 0x8c,
+    TABLE_FULL = 0x8c,
     /** The device has rejected the command due to security restrictions. */
-    NOT_AUTHORIZED             = 0x8d,
+    NOT_AUTHORIZED = 0x8d,
     /** The device does not have binding table space to support the operation. */
-    DEVICE_BINDING_TABLE_FULL  = 0x8e,
+    DEVICE_BINDING_TABLE_FULL = 0x8e,
     /** The index in the received command is out of bounds. */
-    INVALID_INDEX              = 0x8f,
+    INVALID_INDEX = 0x8f,
     /** The response was too large to fit in a single unfragmented message. */
-    FRAME_TOO_LARGE            = 0x90,
+    FRAME_TOO_LARGE = 0x90,
     /** The requested Key Negotiation Method was not accepted. */
     BAD_KEY_NEGOTIATION_METHOD = 0x91,
     /** The request encountered a temporary failure but a retry at a later time should be attempted and may succeed. */
-    TEMPORARY_FAILURE          = 0x92,
+    TEMPORARY_FAILURE = 0x92,
     // 0x92 – 0xff are reserved
 
     //-- NWK layer statuses included because some like TLV-related are used as ZDO status
@@ -99,7 +99,7 @@ export enum Status {
     /** An attempt was made to use a MAC Interface with a state that is currently set to FALSE (disabled) or that is unknown to the stack.. */
     NWK_LAYER_INVALID_INTERFACE = 0xd5,
     /** A required TLV for processing the request was not present. */
-    NWK_LAYER_MISSING_TLV = 0xD6,
+    NWK_LAYER_MISSING_TLV = 0xd6,
     /** A TLV was malformed or missing relevant information. */
-    NWK_LAYER_INVALID_TLV = 0xD7,
-};
+    NWK_LAYER_INVALID_TLV = 0xd7,
+}

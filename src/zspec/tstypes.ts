@@ -1,6 +1,6 @@
 /**
  * EUI 64-bit ID (IEEE 802.15.4 long address). uint8[EUI64_SIZE]
- * 
+ *
  * NOTE: Expected to contain `0x` prefix
  */
 export type EUI64 = `0x${string}`;

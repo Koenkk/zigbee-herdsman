@@ -1,5 +1,7 @@
 // eslint-disable-next-line
-interface KeyValue {[s: string]: any};
+interface KeyValue {
+    [s: string]: any;
+}
 
 /* Send request policies:
 'bulk':             Message must be sent together with other messages in the correct sequence.
@@ -30,7 +32,7 @@ interface DatabaseEntry {
 }
 
 enum GreenPowerEvents {
-    deviceJoined = "deviceJoined",
+    deviceJoined = 'deviceJoined',
 }
 
 interface GreenPowerDeviceJoinedPayload {
@@ -39,7 +41,4 @@ interface GreenPowerDeviceJoinedPayload {
     networkAddress: number;
 }
 
-export {
-    KeyValue, DatabaseEntry, EntityType, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload,
-    SendPolicy
-};
+export {KeyValue, DatabaseEntry, EntityType, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload, SendPolicy};

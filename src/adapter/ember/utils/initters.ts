@@ -1,32 +1,20 @@
 /* istanbul ignore file */
-import {NetworkCache} from "../adapter/emberAdapter";
-import * as ZSpec from "../../../zspec";
-import {
-    UNKNOWN_NETWORK_STATE,
-    ZB_PSA_ALG,
-    INVALID_RADIO_CHANNEL,
-    EMBER_ALL_802_15_4_CHANNELS_MASK,
-} from "../consts";
-import {
-    EmberJoinMethod,
-    EmberNetworkStatus,
-    SecManDerivedKeyType,
-    SecManFlag,
-    SecManKeyType
-} from "../enums";
-import {EMBER_AES_HASH_BLOCK_SIZE} from "../ezsp/consts";
-import {EmberAesMmoHashContext, SecManContext} from "../types";
-
+import * as ZSpec from '../../../zspec';
+import {NetworkCache} from '../adapter/emberAdapter';
+import {UNKNOWN_NETWORK_STATE, ZB_PSA_ALG, INVALID_RADIO_CHANNEL, EMBER_ALL_802_15_4_CHANNELS_MASK} from '../consts';
+import {EmberJoinMethod, EmberNetworkStatus, SecManDerivedKeyType, SecManFlag, SecManKeyType} from '../enums';
+import {EMBER_AES_HASH_BLOCK_SIZE} from '../ezsp/consts';
+import {EmberAesMmoHashContext, SecManContext} from '../types';
 
 /**
  * Initialize a network cache index with proper "invalid" values.
- * @returns 
+ * @returns
  */
 export const initNetworkCache = (): NetworkCache => {
     return {
         eui64: ZSpec.BLANK_EUI64,
         parameters: {
-            extendedPanId: ZSpec.BLANK_EXTENDED_PAN_ID.slice(),// copy
+            extendedPanId: ZSpec.BLANK_EXTENDED_PAN_ID.slice(), // copy
             panId: ZSpec.INVALID_PAN_ID,
             radioTxPower: 0,
             radioChannel: INVALID_RADIO_CHANNEL,
@@ -51,7 +39,7 @@ export const initSecurityManagerContext = (): SecManContext => {
         eui64: `0x0000000000000000`,
         multiNetworkIndex: 0,
         flags: SecManFlag.NONE,
-        psaKeyAlgPermission: ZB_PSA_ALG,// unused for classic key storage
+        psaKeyAlgPermission: ZB_PSA_ALG, // unused for classic key storage
     };
 };
 
@@ -64,7 +52,7 @@ export const initSecurityManagerContext = (): SecManContext => {
 export const aesMmoHashInit = (): EmberAesMmoHashContext => {
     // MEMSET(context, 0, sizeof(EmberAesMmoHashContext));
     return {
-        result: Buffer.alloc(EMBER_AES_HASH_BLOCK_SIZE),// uint8_t[EMBER_AES_HASH_BLOCK_SIZE]
-        length: 0x00000000,// uint32_t
+        result: Buffer.alloc(EMBER_AES_HASH_BLOCK_SIZE), // uint8_t[EMBER_AES_HASH_BLOCK_SIZE]
+        length: 0x00000000, // uint32_t
     };
 };

@@ -1,1 +1,1 @@
-export * from "./startup-options";
+export * from './startup-options';

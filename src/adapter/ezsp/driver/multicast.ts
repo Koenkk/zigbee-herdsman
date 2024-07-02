@@ -7,7 +7,6 @@ import {EmberMulticastTableEntry} from './types/struct';
 
 const NS = 'zh:ezsp:cast';
 
-
 export class Multicast {
     TABLE_SIZE = 16;
     private driver: Driver;
@@ -23,9 +22,7 @@ export class Multicast {
     }
 
     private async _initialize(): Promise<void> {
-        const size = await this.driver.ezsp.getConfigurationValue(
-            EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE
-        );
+        const size = await this.driver.ezsp.getConfigurationValue(EzspConfigId.CONFIG_MULTICAST_TABLE_SIZE);
         for (let i = 0; i < size; i++) {
             const entry = await this.driver.ezsp.getMulticastTableEntry(i);
             logger.debug(`MulticastTableEntry[${i}] = ${entry}`, NS);
@@ -71,7 +68,7 @@ export class Multicast {
             logger.debug(`Set MulticastTableEntry #${idx} for ${entry.multicastId} multicast id: ${status}`, NS);
             return status;
         } catch (e) {
-            logger.error("No more available slots MulticastId subscription", NS);
+            logger.error('No more available slots MulticastId subscription', NS);
             return EmberStatus.INDEX_OUT_OF_RANGE;
         }
     }

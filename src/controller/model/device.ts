@@ -1,15 +1,16 @@
-import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
-import {Events as AdapterEvents} from '../../adapter';
-import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
-import Endpoint from './endpoint';
-import Entity from './entity';
-import {Wait} from '../../utils';
-import * as Zcl from '../../zspec/zcl';
-import {ClusterDefinition, CustomClusters} from '../../zspec/zcl/definition/tstype';
 import assert from 'assert';
-import {ZclFrameConverter} from '../helpers';
+
+import {Events as AdapterEvents} from '../../adapter';
+import {Wait} from '../../utils';
 import {logger} from '../../utils/logger';
 import {BroadcastAddress} from '../../zspec/enums';
+import * as Zcl from '../../zspec/zcl';
+import {ClusterDefinition, CustomClusters} from '../../zspec/zcl/definition/tstype';
+import {ZclFrameConverter} from '../helpers';
+import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
+import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
+import Endpoint from './endpoint';
+import Entity from './entity';
 
 /**
  * @ignore
@@ -20,8 +21,11 @@ const NS = 'zh:controller:device';
 
 interface LQI {
     neighbors: {
-        ieeeAddr: string; networkAddress: number; linkquality: number;
-        relationship: number; depth: number;
+        ieeeAddr: string;
+        networkAddress: number;
+        linkquality: number;
+        relationship: number;
+        depth: number;
     }[];
 }
 
@@ -60,57 +64,133 @@ class Device extends Entity {
     private _customClusters: CustomClusters = {};
 
     // Getters/setters
-    get ieeeAddr(): string {return this._ieeeAddr;}
-    set ieeeAddr(ieeeAddr: string) {this._ieeeAddr = ieeeAddr;}
-    get applicationVersion(): number {return this._applicationVersion;}
-    set applicationVersion(applicationVersion: number) {this._applicationVersion = applicationVersion;}
-    get endpoints(): Endpoint[] {return this._endpoints;}
-    get interviewCompleted(): boolean {return this._interviewCompleted;}
-    get interviewing(): boolean {return this._interviewing;}
-    get lastSeen(): number {return this._lastSeen;}
-    get manufacturerID(): number {return this._manufacturerID;}
-    get isDeleted(): boolean {return this._deleted;}
-    set type(type: DeviceType) {this._type = type;}
-    get type(): DeviceType {return this._type;}
-    get dateCode(): string {return this._dateCode;}
-    set dateCode(dateCode: string) {this._dateCode = dateCode;}
-    set hardwareVersion(hardwareVersion: number) {this._hardwareVersion = hardwareVersion;}
-    get hardwareVersion(): number {return this._hardwareVersion;}
-    get manufacturerName(): string {return this._manufacturerName;}
-    set manufacturerName(manufacturerName: string) {this._manufacturerName = manufacturerName;}
-    set modelID(modelID: string) {this._modelID = modelID;}
-    get modelID(): string {return this._modelID;}
-    get networkAddress(): number {return this._networkAddress;}
+    get ieeeAddr(): string {
+        return this._ieeeAddr;
+    }
+    set ieeeAddr(ieeeAddr: string) {
+        this._ieeeAddr = ieeeAddr;
+    }
+    get applicationVersion(): number {
+        return this._applicationVersion;
+    }
+    set applicationVersion(applicationVersion: number) {
+        this._applicationVersion = applicationVersion;
+    }
+    get endpoints(): Endpoint[] {
+        return this._endpoints;
+    }
+    get interviewCompleted(): boolean {
+        return this._interviewCompleted;
+    }
+    get interviewing(): boolean {
+        return this._interviewing;
+    }
+    get lastSeen(): number {
+        return this._lastSeen;
+    }
+    get manufacturerID(): number {
+        return this._manufacturerID;
+    }
+    get isDeleted(): boolean {
+        return this._deleted;
+    }
+    set type(type: DeviceType) {
+        this._type = type;
+    }
+    get type(): DeviceType {
+        return this._type;
+    }
+    get dateCode(): string {
+        return this._dateCode;
+    }
+    set dateCode(dateCode: string) {
+        this._dateCode = dateCode;
+    }
+    set hardwareVersion(hardwareVersion: number) {
+        this._hardwareVersion = hardwareVersion;
+    }
+    get hardwareVersion(): number {
+        return this._hardwareVersion;
+    }
+    get manufacturerName(): string {
+        return this._manufacturerName;
+    }
+    set manufacturerName(manufacturerName: string) {
+        this._manufacturerName = manufacturerName;
+    }
+    set modelID(modelID: string) {
+        this._modelID = modelID;
+    }
+    get modelID(): string {
+        return this._modelID;
+    }
+    get networkAddress(): number {
+        return this._networkAddress;
+    }
     set networkAddress(networkAddress: number) {
         this._networkAddress = networkAddress;
         for (const endpoint of this._endpoints) {
             endpoint.deviceNetworkAddress = networkAddress;
         }
     }
-    get powerSource(): string {return this._powerSource;}
+    get powerSource(): string {
+        return this._powerSource;
+    }
     set powerSource(powerSource: string) {
         this._powerSource = typeof powerSource === 'number' ? Zcl.POWER_SOURCES[powerSource & ~(1 << 7)] : powerSource;
     }
-    get softwareBuildID(): string {return this._softwareBuildID;}
-    set softwareBuildID(softwareBuildID: string) {this._softwareBuildID = softwareBuildID;}
-    get stackVersion(): number {return this._stackVersion;}
-    set stackVersion(stackVersion: number) {this._stackVersion = stackVersion;}
-    get zclVersion(): number {return this._zclVersion;}
-    set zclVersion(zclVersion: number) {this._zclVersion = zclVersion;}
-    get linkquality(): number {return this._linkquality;}
-    set linkquality(linkquality: number) {this._linkquality = linkquality;}
-    get skipDefaultResponse(): boolean {return this._skipDefaultResponse;}
-    set skipDefaultResponse(skipDefaultResponse: boolean) {this._skipDefaultResponse = skipDefaultResponse;}
-    get customReadResponse(): CustomReadResponse {return this._customReadResponse;}
-    set customReadResponse(customReadResponse: CustomReadResponse) {this._customReadResponse = customReadResponse;}
-    get checkinInterval(): number {return this._checkinInterval;}
+    get softwareBuildID(): string {
+        return this._softwareBuildID;
+    }
+    set softwareBuildID(softwareBuildID: string) {
+        this._softwareBuildID = softwareBuildID;
+    }
+    get stackVersion(): number {
+        return this._stackVersion;
+    }
+    set stackVersion(stackVersion: number) {
+        this._stackVersion = stackVersion;
+    }
+    get zclVersion(): number {
+        return this._zclVersion;
+    }
+    set zclVersion(zclVersion: number) {
+        this._zclVersion = zclVersion;
+    }
+    get linkquality(): number {
+        return this._linkquality;
+    }
+    set linkquality(linkquality: number) {
+        this._linkquality = linkquality;
+    }
+    get skipDefaultResponse(): boolean {
+        return this._skipDefaultResponse;
+    }
+    set skipDefaultResponse(skipDefaultResponse: boolean) {
+        this._skipDefaultResponse = skipDefaultResponse;
+    }
+    get customReadResponse(): CustomReadResponse {
+        return this._customReadResponse;
+    }
+    set customReadResponse(customReadResponse: CustomReadResponse) {
+        this._customReadResponse = customReadResponse;
+    }
+    get checkinInterval(): number {
+        return this._checkinInterval;
+    }
     set checkinInterval(checkinInterval: number) {
         this._checkinInterval = checkinInterval;
         this.resetPendingRequestTimeout();
-    };
-    get pendingRequestTimeout(): number {return this._pendingRequestTimeout;}
-    set pendingRequestTimeout(pendingRequestTimeout: number) {this._pendingRequestTimeout = pendingRequestTimeout;}
-    get customClusters(): CustomClusters {return this._customClusters;}
+    }
+    get pendingRequestTimeout(): number {
+        return this._pendingRequestTimeout;
+    }
+    set pendingRequestTimeout(pendingRequestTimeout: number) {
+        this._pendingRequestTimeout = pendingRequestTimeout;
+    }
+    get customClusters(): CustomClusters {
+        return this._customClusters;
+    }
 
     public meta: KeyValue;
 
@@ -118,29 +198,98 @@ class Device extends Entity {
     // the same instance is returned.
     private static devices: {[ieeeAddr: string]: Device} = null;
 
-    public static readonly ReportablePropertiesMapping: {[s: string]: {
-        set: (value: string | number, device: Device) => void;
-        key: 'modelID' | 'manufacturerName' | 'applicationVersion' | 'zclVersion' | 'powerSource' | 'stackVersion' |
-            'dateCode' | 'softwareBuildID' | 'hardwareVersion';
-    };} = {
-            modelId: {key: 'modelID', set: (v: string, d: Device): void => {d.modelID = v;}},
-            manufacturerName: {key: 'manufacturerName', set: (v: string, d: Device): void => {d.manufacturerName = v;}},
-            powerSource: {key: 'powerSource', set: (v: string, d: Device): void => {d.powerSource = v;}},
-            zclVersion: {key: 'zclVersion', set: (v: number, d: Device): void => {d.zclVersion = v;}},
-            appVersion: {key: 'applicationVersion', set: (v: number, d: Device): void => {d.applicationVersion = v;}},
-            stackVersion: {key: 'stackVersion', set: (v: number, d: Device): void => {d.stackVersion = v;}},
-            hwVersion: {key: 'hardwareVersion', set: (v: number, d: Device): void => {d.hardwareVersion = v;}},
-            dateCode: {key: 'dateCode', set: (v: string, d: Device): void => {d.dateCode = v;}},
-            swBuildId: {key: 'softwareBuildID', set: (v: string, d: Device): void => {d.softwareBuildID = v;}},
+    public static readonly ReportablePropertiesMapping: {
+        [s: string]: {
+            set: (value: string | number, device: Device) => void;
+            key:
+                | 'modelID'
+                | 'manufacturerName'
+                | 'applicationVersion'
+                | 'zclVersion'
+                | 'powerSource'
+                | 'stackVersion'
+                | 'dateCode'
+                | 'softwareBuildID'
+                | 'hardwareVersion';
         };
+    } = {
+        modelId: {
+            key: 'modelID',
+            set: (v: string, d: Device): void => {
+                d.modelID = v;
+            },
+        },
+        manufacturerName: {
+            key: 'manufacturerName',
+            set: (v: string, d: Device): void => {
+                d.manufacturerName = v;
+            },
+        },
+        powerSource: {
+            key: 'powerSource',
+            set: (v: string, d: Device): void => {
+                d.powerSource = v;
+            },
+        },
+        zclVersion: {
+            key: 'zclVersion',
+            set: (v: number, d: Device): void => {
+                d.zclVersion = v;
+            },
+        },
+        appVersion: {
+            key: 'applicationVersion',
+            set: (v: number, d: Device): void => {
+                d.applicationVersion = v;
+            },
+        },
+        stackVersion: {
+            key: 'stackVersion',
+            set: (v: number, d: Device): void => {
+                d.stackVersion = v;
+            },
+        },
+        hwVersion: {
+            key: 'hardwareVersion',
+            set: (v: number, d: Device): void => {
+                d.hardwareVersion = v;
+            },
+        },
+        dateCode: {
+            key: 'dateCode',
+            set: (v: string, d: Device): void => {
+                d.dateCode = v;
+            },
+        },
+        swBuildId: {
+            key: 'softwareBuildID',
+            set: (v: string, d: Device): void => {
+                d.softwareBuildID = v;
+            },
+        },
+    };
 
     private constructor(
-        ID: number, type: DeviceType, ieeeAddr: string, networkAddress: number,
-        manufacturerID: number, endpoints: Endpoint[], manufacturerName: string,
-        powerSource: string, modelID: string, applicationVersion: number, stackVersion: number, zclVersion: number,
-        hardwareVersion: number, dateCode: string, softwareBuildID: string, interviewCompleted: boolean, meta: KeyValue,
-        lastSeen: number, checkinInterval: number,
-        pendingRequestTimeout: number
+        ID: number,
+        type: DeviceType,
+        ieeeAddr: string,
+        networkAddress: number,
+        manufacturerID: number,
+        endpoints: Endpoint[],
+        manufacturerName: string,
+        powerSource: string,
+        modelID: string,
+        applicationVersion: number,
+        stackVersion: number,
+        zclVersion: number,
+        hardwareVersion: number,
+        dateCode: string,
+        softwareBuildID: string,
+        interviewCompleted: boolean,
+        meta: KeyValue,
+        lastSeen: number,
+        checkinInterval: number,
+        pendingRequestTimeout: number,
     ) {
         super();
         this.ID = ID;
@@ -182,7 +331,7 @@ class Device extends Entity {
         delete Device.devices[this.ieeeAddr];
         this.ieeeAddr = ieeeAddr;
         Device.devices[this.ieeeAddr] = this;
-        this.endpoints.forEach((e) => e.deviceIeeeAddress = ieeeAddr);
+        this.endpoints.forEach((e) => (e.deviceIeeeAddress = ieeeAddr));
         this.save();
     }
 
@@ -213,7 +362,7 @@ class Device extends Entity {
     }
 
     private hasPendingRequests(): boolean {
-        return this.endpoints.find(e => e.hasPendingRequests()) !== undefined;
+        return this.endpoints.find((e) => e.hasPendingRequests()) !== undefined;
     }
 
     public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, endpoint: Endpoint): Promise<void> {
@@ -232,18 +381,18 @@ class Device extends Entity {
         }
 
         // Reponse to read requests
-        if (frame.header.isGlobal && frame.isCommand('read') && !(this._customReadResponse?.(frame, endpoint))) {
-            const time = Math.round(((new Date()).getTime() - OneJanuary2000) / 1000);
+        if (frame.header.isGlobal && frame.isCommand('read') && !this._customReadResponse?.(frame, endpoint)) {
+            const time = Math.round((new Date().getTime() - OneJanuary2000) / 1000);
             const attributes: {[s: string]: KeyValue} = {
                 ...endpoint.clusters,
                 genTime: {
                     attributes: {
                         timeStatus: 3, // Time-master + synchronised
                         time: time,
-                        timeZone: ((new Date()).getTimezoneOffset() * -1) * 60,
-                        localTime: time - (new Date()).getTimezoneOffset() * 60,
+                        timeZone: new Date().getTimezoneOffset() * -1 * 60,
+                        localTime: time - new Date().getTimezoneOffset() * 60,
                         lastSetTime: time,
-                        validUntilTime: time + (24 * 60 * 60), // valid for 24 hours
+                        validUntilTime: time + 24 * 60 * 60, // valid for 24 hours
                     },
                 },
             };
@@ -260,19 +409,19 @@ class Device extends Entity {
                 }
 
                 try {
-                    await endpoint.readResponse(frame.cluster.ID, frame.header.transactionSequenceNumber, response,
-                        {srcEndpoint: dataPayload.destinationEndpoint});
+                    await endpoint.readResponse(frame.cluster.ID, frame.header.transactionSequenceNumber, response, {
+                        srcEndpoint: dataPayload.destinationEndpoint,
+                    });
                 } catch (error) {
                     logger.error(`Read response to ${this.ieeeAddr} failed`, NS);
                 }
             }
-
         }
 
         // Handle check-in from sleeping end devices
-        if (frame.header.isSpecific && frame.isCluster("genPollCtrl") && frame.isCommand("checkin")) {
+        if (frame.header.isSpecific && frame.isCluster('genPollCtrl') && frame.isCommand('checkin')) {
             try {
-                if (this.hasPendingRequests() || (this._checkinInterval === undefined)) {
+                if (this.hasPendingRequests() || this._checkinInterval === undefined) {
                     const payload = {
                         startFastPolling: true,
                         fastPollTimeout: 0,
@@ -282,13 +431,12 @@ class Device extends Entity {
 
                     // This is a good time to read the checkin interval if we haven't stored it previously
                     if (this._checkinInterval === undefined) {
-                        const pollPeriod =
-                            await endpoint.read('genPollCtrl', ['checkinInterval'], {sendPolicy: 'immediate'});
+                        const pollPeriod = await endpoint.read('genPollCtrl', ['checkinInterval'], {sendPolicy: 'immediate'});
                         this._checkinInterval = pollPeriod.checkinInterval / 4; // convert to seconds
                         this.resetPendingRequestTimeout();
                         logger.debug(`Request Queue (${this.ieeeAddr}): default expiration timeout set to ${this.pendingRequestTimeout}`, NS);
                     }
-                    await Promise.all(this.endpoints.map(async e => e.sendPendingRequests(true)));
+                    await Promise.all(this.endpoints.map(async (e) => e.sendPendingRequests(true)));
                     // We *must* end fast-poll when we're done sending things. Otherwise
                     // we cause undue power-drain.
                     logger.debug(`check-in from ${this.ieeeAddr}: stopping fast-poll`, NS);
@@ -315,21 +463,29 @@ class Device extends Entity {
         const disableTuyaDefaultResponse = endpoint.getDevice().manufacturerName?.startsWith('_TZ') && process.env['DISABLE_TUYA_DEFAULT_RESPONSE'];
         // Sometimes messages are received twice, prevent responding twice
         const alreadyResponded = this._lastDefaultResponseSequenceNumber === frame.header.transactionSequenceNumber;
-        if (this.type !== 'GreenPower' && !dataPayload.wasBroadcast && !disableDefaultResponse && !isDefaultResponse && 
-            !commandHasResponse && !this._skipDefaultResponse && !alreadyResponded && !disableTuyaDefaultResponse) {
+        if (
+            this.type !== 'GreenPower' &&
+            !dataPayload.wasBroadcast &&
+            !disableDefaultResponse &&
+            !isDefaultResponse &&
+            !commandHasResponse &&
+            !this._skipDefaultResponse &&
+            !alreadyResponded &&
+            !disableTuyaDefaultResponse
+        ) {
             try {
                 this._lastDefaultResponseSequenceNumber = frame.header.transactionSequenceNumber;
                 // In the ZCL it is not documented what the direction of the default response should be
                 // In https://github.com/Koenkk/zigbee2mqtt/issues/18096 a commandResponse (SERVER_TO_CLIENT)
                 // is send and the device expects a CLIENT_TO_SERVER back.
                 // Previously SERVER_TO_CLIENT was always used.
-                // Therefore for non-global commands we inverse the direction.                
-                const direction = frame.header.isGlobal ? Zcl.Direction.SERVER_TO_CLIENT : (
-                    frame.header.frameControl.direction === Zcl.Direction.CLIENT_TO_SERVER 
-                        ? Zcl.Direction.SERVER_TO_CLIENT : Zcl.Direction.CLIENT_TO_SERVER
-                );
-                await endpoint.defaultResponse(
-                    frame.command.ID, 0, frame.cluster.ID, frame.header.transactionSequenceNumber, {direction});
+                // Therefore for non-global commands we inverse the direction.
+                const direction = frame.header.isGlobal
+                    ? Zcl.Direction.SERVER_TO_CLIENT
+                    : frame.header.frameControl.direction === Zcl.Direction.CLIENT_TO_SERVER
+                      ? Zcl.Direction.SERVER_TO_CLIENT
+                      : Zcl.Direction.CLIENT_TO_SERVER;
+                await endpoint.defaultResponse(frame.command.ID, 0, frame.cluster.ID, frame.header.transactionSequenceNumber, {direction});
             } catch (error) {
                 logger.debug(`Default response to ${this.ieeeAddr} failed`, NS);
             }
@@ -355,7 +511,7 @@ class Device extends Entity {
 
         // default: no timeout (messages expire immediately after first send attempt)
         let pendingRequestTimeout = 0;
-        if((endpoints.filter((e): boolean => e.inputClusters.includes(Zcl.Clusters.genPollCtrl.ID))).length > 0) {
+        if (endpoints.filter((e): boolean => e.inputClusters.includes(Zcl.Clusters.genPollCtrl.ID)).length > 0) {
             // default for devices that support genPollCtrl cluster (RX off when idle): 1 day
             pendingRequestTimeout = 86400000;
             /* istanbul ignore else */
@@ -367,11 +523,26 @@ class Device extends Entity {
         logger.debug(`Request Queue (${ieeeAddr}): default expiration timeout set to ${pendingRequestTimeout}`, NS);
 
         return new Device(
-            entry.id, entry.type, ieeeAddr, networkAddress, entry.manufId, endpoints,
-            entry.manufName, entry.powerSource, entry.modelId, entry.appVersion,
-            entry.stackVersion, entry.zclVersion, entry.hwVersion, entry.dateCode, entry.swBuildId,
-            entry.interviewCompleted, meta, entry.lastSeen || null, entry.checkinInterval,
-            pendingRequestTimeout
+            entry.id,
+            entry.type,
+            ieeeAddr,
+            networkAddress,
+            entry.manufId,
+            endpoints,
+            entry.manufName,
+            entry.powerSource,
+            entry.modelId,
+            entry.appVersion,
+            entry.stackVersion,
+            entry.zclVersion,
+            entry.hwVersion,
+            entry.dateCode,
+            entry.swBuildId,
+            entry.interviewCompleted,
+            meta,
+            entry.lastSeen || null,
+            entry.checkinInterval,
+            pendingRequestTimeout,
         );
     }
 
@@ -383,16 +554,30 @@ class Device extends Entity {
         }
 
         return {
-            id: this.ID, type: this.type, ieeeAddr: this.ieeeAddr, nwkAddr: this.networkAddress,
-            manufId: this.manufacturerID, manufName: this.manufacturerName, powerSource: this.powerSource,
-            modelId: this.modelID, epList, endpoints, appVersion: this.applicationVersion,
-            stackVersion: this.stackVersion, hwVersion: this.hardwareVersion, dateCode: this.dateCode,
-            swBuildId: this.softwareBuildID, zclVersion: this.zclVersion, interviewCompleted: this.interviewCompleted,
-            meta: this.meta, lastSeen: this.lastSeen, checkinInterval: this.checkinInterval
+            id: this.ID,
+            type: this.type,
+            ieeeAddr: this.ieeeAddr,
+            nwkAddr: this.networkAddress,
+            manufId: this.manufacturerID,
+            manufName: this.manufacturerName,
+            powerSource: this.powerSource,
+            modelId: this.modelID,
+            epList,
+            endpoints,
+            appVersion: this.applicationVersion,
+            stackVersion: this.stackVersion,
+            hwVersion: this.hardwareVersion,
+            dateCode: this.dateCode,
+            swBuildId: this.softwareBuildID,
+            zclVersion: this.zclVersion,
+            interviewCompleted: this.interviewCompleted,
+            meta: this.meta,
+            lastSeen: this.lastSeen,
+            checkinInterval: this.checkinInterval,
         };
     }
 
-    public save(writeDatabase=true): void {
+    public save(writeDatabase = true): void {
         Entity.database.update(this.toDatabaseEntry(), writeDatabase);
     }
 
@@ -408,7 +593,8 @@ class Device extends Entity {
     }
 
     public static find(ieeeOrNwkAddress: string | number, includeDeleted: boolean = false): Device {
-        return typeof ieeeOrNwkAddress === 'string' ? Device.byIeeeAddr(ieeeOrNwkAddress, includeDeleted)
+        return typeof ieeeOrNwkAddress === 'string'
+            ? Device.byIeeeAddr(ieeeOrNwkAddress, includeDeleted)
             : Device.byNetworkAddress(ieeeOrNwkAddress, includeDeleted);
     }
 
@@ -420,16 +606,16 @@ class Device extends Entity {
 
     public static byNetworkAddress(networkAddress: number, includeDeleted: boolean = false): Device {
         Device.loadFromDatabaseIfNecessary();
-        return Object.values(Device.devices).find(d => (includeDeleted || !d._deleted) && d.networkAddress === networkAddress);
+        return Object.values(Device.devices).find((d) => (includeDeleted || !d._deleted) && d.networkAddress === networkAddress);
     }
 
     public static byType(type: DeviceType): Device[] {
-        return Device.all().filter(d => d.type === type);
+        return Device.all().filter((d) => d.type === type);
     }
 
     public static all(): Device[] {
         Device.loadFromDatabaseIfNecessary();
-        return Object.values(Device.devices).filter(d => !d._deleted);
+        return Object.values(Device.devices).filter((d) => !d._deleted);
     }
 
     public undelete(interviewCompleted?: boolean): void {
@@ -440,11 +626,20 @@ class Device extends Entity {
     }
 
     public static create(
-        type: DeviceType, ieeeAddr: string, networkAddress: number,
-        manufacturerID: number, manufacturerName: string,
-        powerSource: string, modelID: string, interviewCompleted: boolean,
+        type: DeviceType,
+        ieeeAddr: string,
+        networkAddress: number,
+        manufacturerID: number,
+        manufacturerName: string,
+        powerSource: string,
+        modelID: string,
+        interviewCompleted: boolean,
         endpoints: {
-            ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];
+            ID: number;
+            profileID: number;
+            deviceID: number;
+            inputClusters: number[];
+            outputClusters: number[];
         }[],
     ): Device {
         Device.loadFromDatabaseIfNecessary();
@@ -453,16 +648,31 @@ class Device extends Entity {
         }
 
         const endpointsMapped = endpoints.map((e): Endpoint => {
-            return Endpoint.create(
-                e.ID, e.profileID, e.deviceID, e.inputClusters, e.outputClusters, networkAddress, ieeeAddr
-            );
+            return Endpoint.create(e.ID, e.profileID, e.deviceID, e.inputClusters, e.outputClusters, networkAddress, ieeeAddr);
         });
 
         const ID = Entity.database.newID();
         const device = new Device(
-            ID, type, ieeeAddr, networkAddress, manufacturerID, endpointsMapped, manufacturerName,
-            powerSource, modelID, undefined, undefined, undefined, undefined, undefined, undefined,
-            interviewCompleted, {}, null, undefined, 0
+            ID,
+            type,
+            ieeeAddr,
+            networkAddress,
+            manufacturerID,
+            endpointsMapped,
+            manufacturerName,
+            powerSource,
+            modelID,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            interviewCompleted,
+            {},
+            null,
+            undefined,
+            0,
         );
 
         Entity.database.insert(device.toDatabaseEntry());
@@ -517,8 +727,7 @@ class Device extends Entity {
         // https://github.com/Koenkk/zigbee2mqtt/issues/4655
         //      Device does not change zoneState after enroll (event with original gateway)
         // modelID is mostly in the form of e.g. TS0202 and manufacturerName like e.g. _TYZB01_xph99wvr
-        if (this.modelID?.match('^TS\\d*$') &&
-            (this.manufacturerName?.match('^_TZ.*_.*$') || this.manufacturerName?.match('^_TYZB01_.*$'))) {
+        if (this.modelID?.match('^TS\\d*$') && (this.manufacturerName?.match('^_TZ.*_.*$') || this.manufacturerName?.match('^_TYZB01_.*$'))) {
             this._powerSource = this._powerSource || 'Battery';
             this._interviewing = false;
             this._interviewCompleted = true;
@@ -529,21 +738,33 @@ class Device extends Entity {
         // Some devices, e.g. Xiaomi end devices have a different interview procedure, after pairing they
         // report it's modelID trough a readResponse. The readResponse is received by the controller and set
         // on the device.
-        const lookup: {[s: string]: {
-            type?: DeviceType; manufacturerID?: number; manufacturerName?: string; powerSource?: string;
-        };} = {
+        const lookup: {
+            [s: string]: {
+                type?: DeviceType;
+                manufacturerID?: number;
+                manufacturerName?: string;
+                powerSource?: string;
+            };
+        } = {
             '^3R.*?Z': {
-                type: 'EndDevice', powerSource: 'Battery'
+                type: 'EndDevice',
+                powerSource: 'Battery',
             },
-            'lumi\..*': {
-                type: 'EndDevice', manufacturerID: 4151, manufacturerName: 'LUMI', powerSource: 'Battery'
+            'lumi..*': {
+                type: 'EndDevice',
+                manufacturerID: 4151,
+                manufacturerName: 'LUMI',
+                powerSource: 'Battery',
             },
             'TERNCY-PP01': {
-                type: 'EndDevice', manufacturerID: 4648, manufacturerName: 'TERNCY', powerSource: 'Battery'
+                type: 'EndDevice',
+                manufacturerID: 4648,
+                manufacturerName: 'TERNCY',
+                powerSource: 'Battery',
             },
             '3RWS18BZ': {}, // https://github.com/Koenkk/zigbee-herdsman-converters/pull/2710
             'MULTI-MECI--EA01': {},
-            'MOT003': {}, // https://github.com/Koenkk/zigbee2mqtt/issues/12471
+            MOT003: {}, // https://github.com/Koenkk/zigbee2mqtt/issues/12471
         };
 
         const match = Object.keys(lookup).find((key) => this.modelID && this.modelID.match(key));
@@ -600,20 +821,18 @@ class Device extends Entity {
         if (this.manufacturerID === 4619 && this._type === 'EndDevice') {
             // Give Tuya end device some time to pair. Otherwise they leave immediately.
             // https://github.com/Koenkk/zigbee2mqtt/issues/5814
-            logger.debug("Interview - Detected Tuya end device, waiting 10 seconds...", NS);
+            logger.debug('Interview - Detected Tuya end device, waiting 10 seconds...', NS);
             await Wait(10000);
         } else if ([0, 4098].includes(this.manufacturerID)) {
             // Potentially a Tuya device, some sleep fast so make sure to read the modelId and manufacturerName quickly.
             // In case the device responds, the endoint and modelID/manufacturerName are set
             // in controller.onZclOrRawData()
             // https://github.com/Koenkk/zigbee2mqtt/issues/7553
-            logger.debug("Interview - Detected potential Tuya end device, reading modelID and manufacturerName...", NS);
+            logger.debug('Interview - Detected potential Tuya end device, reading modelID and manufacturerName...', NS);
             try {
                 const endpoint = Endpoint.create(1, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
-                const result = await endpoint.read('genBasic', ['modelId', 'manufacturerName'], 
-                    {sendPolicy: 'immediate'});
-                Object.entries(result)
-                    .forEach((entry) => Device.ReportablePropertiesMapping[entry[0]].set(entry[1], this));
+                const result = await endpoint.read('genBasic', ['modelId', 'manufacturerName'], {sendPolicy: 'immediate'});
+                Object.entries(result).forEach((entry) => Device.ReportablePropertiesMapping[entry[0]].set(entry[1], this));
             } catch (error) {
                 /* istanbul ignore next */
                 logger.debug(`Interview - Tuya read modelID and manufacturerName failed (${error})`, NS);
@@ -641,8 +860,9 @@ class Device extends Entity {
         // Some devices, e.g. TERNCY return endpoint 0 in the active endpoints request.
         // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
         // into an error. Therefore we filter it, more info: https://github.com/Koenkk/zigbee-herdsman/issues/82
-        activeEndpoints.endpoints.filter((e) => e !== 0 && !this.getEndpoint(e)).forEach((e) =>
-            this._endpoints.push(Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr)));
+        activeEndpoints.endpoints
+            .filter((e) => e !== 0 && !this.getEndpoint(e))
+            .forEach((e) => this._endpoints.push(Endpoint.create(e, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr)));
         logger.debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`, NS);
 
         for (const endpointID of activeEndpoints.endpoints.filter((e) => e !== 0)) {
@@ -693,15 +913,14 @@ class Device extends Entity {
         for (const endpoint of this.endpoints.filter((e): boolean => e.supportsInputCluster('ssIasZone'))) {
             logger.debug(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`, NS);
 
-            const stateBefore = await endpoint.read(
-                'ssIasZone', ['iasCieAddr', 'zoneState'], {sendPolicy: 'immediate'});
+            const stateBefore = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'], {sendPolicy: 'immediate'});
             logger.debug(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`, NS);
 
             // Do not enroll when device has already been enrolled
             if (stateBefore.zoneState !== 1 || stateBefore.iasCieAddr !== coordinator.ieeeAddr) {
                 logger.debug(`Interview - IAS - not enrolled, enrolling`, NS);
 
-                await endpoint.write('ssIasZone', {'iasCieAddr': coordinator.ieeeAddr}, {sendPolicy: 'immediate'});
+                await endpoint.write('ssIasZone', {iasCieAddr: coordinator.ieeeAddr}, {sendPolicy: 'immediate'});
                 logger.debug(`Interview - IAS - wrote iasCieAddr`, NS);
 
                 // There are 2 enrollment procedures:
@@ -713,14 +932,12 @@ class Device extends Entity {
                 await Wait(500);
                 logger.debug(`IAS - '${this.ieeeAddr}' sending enroll response (auto enroll)`, NS);
                 const payload = {enrollrspcode: 0, zoneid: 23};
-                await endpoint.command('ssIasZone', 'enrollRsp', payload,
-                    {disableDefaultResponse: true, sendPolicy: 'immediate'});
+                await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true, sendPolicy: 'immediate'});
 
                 let enrolled = false;
                 for (let attempt = 0; attempt < 20; attempt++) {
                     await Wait(500);
-                    const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'],
-                        {sendPolicy: 'immediate'});
+                    const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'], {sendPolicy: 'immediate'});
                     logger.debug(`Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`, NS);
                     if (stateAfter.zoneState === 1) {
                         enrolled = true;
@@ -761,8 +978,15 @@ class Device extends Entity {
             };
 
             const frame = Zcl.Frame.create(
-                Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, true, null,
-                ZclTransactionSequenceNumber.next(), 'pairing', 33, payload, this.customClusters,
+                Zcl.FrameType.SPECIFIC,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                null,
+                ZclTransactionSequenceNumber.next(),
+                'pairing',
+                33,
+                payload,
+                this.customClusters,
             );
 
             await Entity.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
@@ -789,8 +1013,17 @@ class Device extends Entity {
         this.meta = {};
         const newEndpoints: Endpoint[] = [];
         for (const endpoint of this.endpoints) {
-            newEndpoints.push(Endpoint.create(endpoint.ID, endpoint.profileID, endpoint.deviceID, 
-                endpoint.inputClusters, endpoint.outputClusters, this.networkAddress, this.ieeeAddr));
+            newEndpoints.push(
+                Endpoint.create(
+                    endpoint.ID,
+                    endpoint.profileID,
+                    endpoint.deviceID,
+                    endpoint.inputClusters,
+                    endpoint.outputClusters,
+                    this.networkAddress,
+                    this.ieeeAddr,
+                ),
+            );
         }
         this._endpoints = newEndpoints;
     }
@@ -812,8 +1045,10 @@ class Device extends Entity {
     }
 
     public addCustomCluster(name: string, cluster: ClusterDefinition): void {
-        assert(!([Zcl.Clusters.touchlink.ID, Zcl.Clusters.greenPower.ID].includes(cluster.ID)),
-            'Overriding of greenPower or touchlink cluster is not supported');
+        assert(
+            ![Zcl.Clusters.touchlink.ID, Zcl.Clusters.greenPower.ID].includes(cluster.ID),
+            'Overriding of greenPower or touchlink cluster is not supported',
+        );
         if (Zcl.Utils.isClusterName(name)) {
             const existingCluster = Zcl.Clusters[name];
 

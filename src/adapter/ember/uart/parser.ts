@@ -1,6 +1,7 @@
 /* istanbul ignore file */
-import {Transform, TransformCallback, TransformOptions} from "stream";
-import {AshReservedByte} from "./enums";
+import {Transform, TransformCallback, TransformOptions} from 'stream';
+
+import {AshReservedByte} from './enums';
 // import {logger} from "../../../utils/logger";
 
 // const NS = 'zh:ember:uart:ash:parser';

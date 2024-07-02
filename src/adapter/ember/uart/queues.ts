@@ -1,6 +1,6 @@
 /* istanbul ignore file */
-import {logger} from "../../../utils/logger";
-import {EZSP_MAX_FRAME_LENGTH} from "../ezsp/consts";
+import {logger} from '../../../utils/logger';
+import {EZSP_MAX_FRAME_LENGTH} from '../ezsp/consts';
 
 const NS = 'zh:ember:uart:queues';
 
@@ -16,7 +16,7 @@ export class EzspBuffer {
     public len: number;
 
     constructor() {
-        this.data = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);// inits to all-zeroes
+        this.data = Buffer.alloc(EZSP_MAX_FRAME_LENGTH); // inits to all-zeroes
         this.link = null;
         this.len = 0;
     }
@@ -48,12 +48,12 @@ export class EzspQueue {
     }
 
     get empty(): boolean {
-        return (this.tail == null);
+        return this.tail == null;
     }
 
     /**
      * Get a pointer to the buffer at the head of the queue.
-     * @returns 
+     * @returns
      */
     get head(): EzspBuffer {
         let head: EzspBuffer = this.tail;
@@ -66,7 +66,6 @@ export class EzspQueue {
             while (head.link != null) {
                 head = head.link;
             }
-
         }
 
         return head;
@@ -74,8 +73,8 @@ export class EzspQueue {
 
     /**
      * Get a pointer to the Nth entry in the queue (the tail corresponds to N = 1).
-     * 
-     * @param n 
+     *
+     * @param n
      * @returns
      */
     public getNthEntry(n: number): EzspBuffer {
@@ -123,7 +122,7 @@ export class EzspQueue {
 
     /**
      * Add a buffer to the tail of the queue.
-     * @param buf 
+     * @param buf
      */
     public addTail(buf: EzspBuffer): void {
         if (buf) {
@@ -163,7 +162,7 @@ export class EzspQueue {
 
     /**
      * Remove the specified entry from the queue.
-     * @param entry 
+     * @param entry
      * @returns A pointer to the preceding entry (if any).
      */
     public removeEntry(entry: EzspBuffer): EzspBuffer {
@@ -206,7 +205,7 @@ export class EzspFreeList {
 
     /**
      * Add a buffer to the free list.
-     * @param buf 
+     * @param buf
      */
     public freeBuffer(buf: EzspBuffer): void {
         if (buf) {
@@ -219,7 +218,7 @@ export class EzspFreeList {
 
     /**
      * Get a buffer from the free list.
-     * @returns 
+     * @returns
      */
     public allocBuffer(): EzspBuffer {
         const buf: EzspBuffer = this.link;

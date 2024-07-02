@@ -26,13 +26,12 @@ class Waitress<TPayload, TMatcher> {
     }
 
     public resolve(payload: TPayload): boolean {
-        return this.forEachMatching(payload, waiter => waiter.resolve(payload));
+        return this.forEachMatching(payload, (waiter) => waiter.resolve(payload));
     }
 
     public reject(payload: TPayload, message: string): boolean {
-        return this.forEachMatching(payload, waiter => waiter.reject(new Error(message)));
+        return this.forEachMatching(payload, (waiter) => waiter.reject(new Error(message)));
     }
-
 
     public remove(ID: number): void {
         const waiter = this.waiters.get(ID);
@@ -45,9 +44,7 @@ class Waitress<TPayload, TMatcher> {
         }
     }
 
-    public waitFor(
-        matcher: TMatcher, timeout: number
-    ): {ID: number; start: () => {promise: Promise<TPayload>; ID: number}} {
+    public waitFor(matcher: TMatcher, timeout: number): {ID: number; start: () => {promise: Promise<TPayload>; ID: number}} {
         const ID = this.currentID++;
 
         const promise: Promise<TPayload> = new Promise((resolve, reject): void => {

@@ -1,6 +1,7 @@
 import fs from 'fs';
-import {DatabaseEntry, EntityType} from './tstype';
+
 import {logger} from '../utils/logger';
+import {DatabaseEntry, EntityType} from './tstype';
 
 const NS = 'zh:controller:database';
 
@@ -19,7 +20,11 @@ class Database {
         const entries: {[id: number]: DatabaseEntry} = {};
 
         if (fs.existsSync(path)) {
-            const rows = fs.readFileSync(path, 'utf-8').split('\n').map((r) => r.trim()).filter((r) => r != '');
+            const rows = fs
+                .readFileSync(path, 'utf-8')
+                .split('\n')
+                .map((r) => r.trim())
+                .filter((r) => r != '');
             for (const row of rows) {
                 const json = JSON.parse(row);
                 if (json.hasOwnProperty('id')) {
@@ -32,7 +37,7 @@ class Database {
     }
 
     public getEntries(type: EntityType[]): DatabaseEntry[] {
-        return Object.values(this.entries).filter(e => type.includes(e.type));
+        return Object.values(this.entries).filter((e) => type.includes(e.type));
     }
 
     public insert(DatabaseEntry: DatabaseEntry): void {

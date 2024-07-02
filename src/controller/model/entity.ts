@@ -1,6 +1,7 @@
-import Database from '../database';
-import {Adapter} from '../../adapter';
 import events from 'events';
+
+import {Adapter} from '../../adapter';
+import Database from '../database';
 
 abstract class Entity extends events.EventEmitter {
     protected static database: Database = null;

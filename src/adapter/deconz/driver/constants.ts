@@ -19,10 +19,10 @@ const PARAM: {
         NETWORK_KEY: 0x18,
         CHANNEL: 0x1c,
         PERMIT_JOIN: 0x21,
-        WATCHDOG_TTL: 0x26
+        WATCHDOG_TTL: 0x26,
     },
     STK: {
-        Endpoint: 0x13
+        Endpoint: 0x13,
     },
     FrameType: {
         ReadDeviceState: 0x07,
@@ -30,19 +30,19 @@ const PARAM: {
         WriteParameter: 0x0b,
         ReadFirmwareVersion: 0x0d,
         DeviceStateChanged: 0x0e,
-        GreenPowerDataInd: 0x19
+        GreenPowerDataInd: 0x19,
     },
     APS: {
         DATA_CONFIRM: 0x04,
         DATA_REQUEST: 0x12,
-        DATA_INDICATION: 0x17
+        DATA_INDICATION: 0x17,
     },
     NetworkState: {
         NET_OFFLINE: 0x00,
         NET_JOINING: 0x01,
         NET_CONNECTED: 0x02,
         NET_LEAVING: 0x03,
-        CHANGE_NETWORK_STATE: 0x08
+        CHANGE_NETWORK_STATE: 0x08,
     },
     addressMode: {
         GROUP_ADDR: 0x01,
@@ -51,10 +51,9 @@ const PARAM: {
     },
     txRadius: {
         DEFAULT_RADIUS: 30,
-        UNLIMITED: 0
-    }
-
-}
+        UNLIMITED: 0,
+    },
+};
 
 interface Request {
     commandId?: number;
@@ -144,7 +143,7 @@ interface ApsDataRequest {
     asduPayload?: number[];
     txOptions?: number;
     radius?: number;
-    timeout?: number  // seconds
+    timeout?: number; // seconds
 }
 
 type ParamMac = string;
@@ -159,6 +158,23 @@ type ParamNetworkKey = string;
 type Command = ParamMac | ParamPanId | ParamNwkAddr | ParamExtPanId | ParamChannel | ParamChannelMask | ParamPermitJoin | ParamNetworkKey;
 type parameterT = number | number[];
 
-export { Request, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, parameterT , Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin, ParamNetworkKey, gpDataInd };
+export {
+    Request,
+    WaitForDataRequest,
+    ApsDataRequest,
+    ReceivedDataResponse,
+    DataStateResponse,
+    parameterT,
+    Command,
+    ParamMac,
+    ParamPanId,
+    ParamNwkAddr,
+    ParamExtPanId,
+    ParamChannel,
+    ParamChannelMask,
+    ParamPermitJoin,
+    ParamNetworkKey,
+    gpDataInd,
+};
 
 export default {PARAM};

@@ -4,10 +4,10 @@ import {Status} from './status';
 export interface BuffaloZclOptions {
     length?: number;
     payload?: {
-        mode?: number;// used to read ListThermoTransitions
-        numoftrans?: number;// used to read ListThermoTransitions
-        commandID?: number;// used to read GdpFrame
-        payloadSize?: number;// used to read GdpFrame
+        mode?: number; // used to read ListThermoTransitions
+        numoftrans?: number; // used to read ListThermoTransitions
+        commandID?: number; // used to read GdpFrame
+        payloadSize?: number; // used to read GdpFrame
     } & {[key: string]: unknown};
     dataType?: DataType | BuffaloZclDataType;
     attrId?: number;
@@ -19,10 +19,9 @@ export interface ZclArray {
 }
 
 export interface StructuredSelector {
-    indexes?: number[],
-    indicatorType?: StructuredIndicatorType,
+    indexes?: number[];
+    indicatorType?: StructuredIndicatorType;
 }
-
 
 export interface FrameControl {
     reservedBits: number;
@@ -31,7 +30,6 @@ export interface FrameControl {
     direction: Direction;
     disableDefaultResponse: boolean;
 }
-
 
 export interface Attribute {
     ID: number;
@@ -60,13 +58,13 @@ export interface AttributeDefinition {
 
 export interface ParameterDefinition extends Parameter {
     conditions?: (
-        {type: ParameterCondition.STATUS_EQUAL, value: Status} |
-        {type: ParameterCondition.STATUS_NOT_EQUAL, value: Status} |
-        {type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: number} |
-        {type: ParameterCondition.DIRECTION_EQUAL, value: Direction} |
-        {type: ParameterCondition.BITMASK_SET, param: string, mask: number} |
-        {type: ParameterCondition.BITFIELD_ENUM, param: string, offset: number, size: number, value: number} |
-        {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL, value: DataTypeClass}
+        | {type: ParameterCondition.STATUS_EQUAL; value: Status}
+        | {type: ParameterCondition.STATUS_NOT_EQUAL; value: Status}
+        | {type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES; value: number}
+        | {type: ParameterCondition.DIRECTION_EQUAL; value: Direction}
+        | {type: ParameterCondition.BITMASK_SET; param: string; mask: number}
+        | {type: ParameterCondition.BITFIELD_ENUM; param: string; offset: number; size: number; value: number}
+        | {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL; value: DataTypeClass}
     )[];
 }
 
@@ -101,33 +99,139 @@ export interface ClusterDefinition {
     commandsResponse: Readonly<Record<string, Readonly<CommandDefinition>>>;
 }
 
-export interface CustomClusters {[k: string]: ClusterDefinition};
+export interface CustomClusters {
+    [k: string]: ClusterDefinition;
+}
 
-
-export type ClusterName = (
-    'genBasic' | 'genPowerCfg' | 'genDeviceTempCfg' | 'genIdentify' | 'genGroups' | 'genScenes' | 'genOnOff' |
-    'genOnOffSwitchCfg' | 'genLevelCtrl' | 'genAlarms' | 'genTime' | 'genRssiLocation' | 'genAnalogInput' | 'genAnalogOutput' |
-    'genAnalogValue' | 'genBinaryInput' | 'genBinaryOutput' | 'genBinaryValue' | 'genMultistateInput' | 'genMultistateOutput' |
-    'genMultistateValue' | 'genCommissioning' | 'genOta' | 'genPollCtrl' | 'greenPower' | 'mobileDeviceCfg' | 'neighborCleaning' |
-    'nearestGateway' | 'closuresShadeCfg' | 'closuresDoorLock' | 'closuresWindowCovering' | 'barrierControl' | 'hvacPumpCfgCtrl' |
-    'hvacThermostat' | 'hvacFanCtrl' | 'hvacDehumidificationCtrl' | 'hvacUserInterfaceCfg' | 'lightingColorCtrl' | 'lightingBallastCfg' |
-    'msIlluminanceMeasurement' | 'msIlluminanceLevelSensing' | 'msTemperatureMeasurement' | 'msPressureMeasurement' | 'msFlowMeasurement' |
-    'msRelativeHumidity' | 'msOccupancySensing' | 'msSoilMoisture' | 'pHMeasurement' | 'msCO2' | 'pm25Measurement' | 'ssIasZone' |
-    'ssIasAce' | 'ssIasWd' | 'piGenericTunnel' | 'piBacnetProtocolTunnel' | 'piAnalogInputReg' | 'piAnalogInputExt' | 'piAnalogOutputReg' |
-    'piAnalogOutputExt' | 'piAnalogValueReg' | 'piAnalogValueExt' | 'piBinaryInputReg' | 'piBinaryInputExt' | 'piBinaryOutputReg' |
-    'piBinaryOutputExt' | 'piBinaryValueReg' | 'piBinaryValueExt' | 'piMultistateInputReg' | 'piMultistateInputExt' | 'piMultistateOutputReg' |
-    'piMultistateOutputExt' | 'piMultistateValueReg' | 'piMultistateValueExt' | 'pi11073ProtocolTunnel' | 'piIso7818ProtocolTunnel' |
-    'piRetailTunnel' | 'seMetering' | 'tunneling' | 'telecommunicationsInformation' | 'telecommunicationsVoiceOverZigbee' |
-    'telecommunicationsChatting' | 'haApplianceIdentification' | 'haMeterIdentification' | 'haApplianceEventsAlerts' | 'haApplianceStatistics' |
-    'haElectricalMeasurement' | 'haDiagnostic' | 'touchlink' |
-    'manuSpecificClusterAduroSmart' | 'manuSpecificOsram' | 'manuSpecificPhilips' | 'manuSpecificPhilips2' | 'manuSpecificSinope' |
-    'manuSpecificLegrandDevices' | 'manuSpecificLegrandDevices2' |
-    'manuSpecificLegrandDevices3' | 'manuSpecificNiko1' | 'manuSpecificNiko2' | 'wiserDeviceInfo' | 'manuSpecificTuya' | 'manuSpecificLumi' |
-    'liXeePrivate' | 'manuSpecificTuya_2' | 'manuSpecificTuya_3' | 'manuSpecificCentraliteHumidity' | 'manuSpecificSmartThingsArrivalSensor' |
-    'manuSpecificSamsungAccelerometer' | 'heimanSpecificFormaldehydeMeasurement' | 'heimanSpecificAirQuality' | 'heimanSpecificScenes' |
-    'tradfriButton' | 'heimanSpecificInfraRedRemote' | 'schneiderSpecificPilotMode' |
-    'elkoOccupancySettingClusterServer' | 'elkoSwitchConfigurationClusterServer' | 'manuSpecificSchneiderLightSwitchConfiguration' |
-    'manuSpecificSchneiderFanSwitchConfiguration' | 'sprutDevice' | 'sprutVoc' | 'sprutNoise' | 'sprutIrBlaster' | 'manuSpecificSiglisZigfred' |
-    'manuSpecificInovelli' | 'owonClearMetering' | 'zosungIRTransmit' | 'zosungIRControl' |
-    'manuSpecificAssaDoorLock' | 'manuSpecificDoorman' | 'manuSpecificNodOnPilotWire' | 'manuSpecificProfalux1' | 'manuSpecificAmazonWWAH'
-);
+export type ClusterName =
+    | 'genBasic'
+    | 'genPowerCfg'
+    | 'genDeviceTempCfg'
+    | 'genIdentify'
+    | 'genGroups'
+    | 'genScenes'
+    | 'genOnOff'
+    | 'genOnOffSwitchCfg'
+    | 'genLevelCtrl'
+    | 'genAlarms'
+    | 'genTime'
+    | 'genRssiLocation'
+    | 'genAnalogInput'
+    | 'genAnalogOutput'
+    | 'genAnalogValue'
+    | 'genBinaryInput'
+    | 'genBinaryOutput'
+    | 'genBinaryValue'
+    | 'genMultistateInput'
+    | 'genMultistateOutput'
+    | 'genMultistateValue'
+    | 'genCommissioning'
+    | 'genOta'
+    | 'genPollCtrl'
+    | 'greenPower'
+    | 'mobileDeviceCfg'
+    | 'neighborCleaning'
+    | 'nearestGateway'
+    | 'closuresShadeCfg'
+    | 'closuresDoorLock'
+    | 'closuresWindowCovering'
+    | 'barrierControl'
+    | 'hvacPumpCfgCtrl'
+    | 'hvacThermostat'
+    | 'hvacFanCtrl'
+    | 'hvacDehumidificationCtrl'
+    | 'hvacUserInterfaceCfg'
+    | 'lightingColorCtrl'
+    | 'lightingBallastCfg'
+    | 'msIlluminanceMeasurement'
+    | 'msIlluminanceLevelSensing'
+    | 'msTemperatureMeasurement'
+    | 'msPressureMeasurement'
+    | 'msFlowMeasurement'
+    | 'msRelativeHumidity'
+    | 'msOccupancySensing'
+    | 'msSoilMoisture'
+    | 'pHMeasurement'
+    | 'msCO2'
+    | 'pm25Measurement'
+    | 'ssIasZone'
+    | 'ssIasAce'
+    | 'ssIasWd'
+    | 'piGenericTunnel'
+    | 'piBacnetProtocolTunnel'
+    | 'piAnalogInputReg'
+    | 'piAnalogInputExt'
+    | 'piAnalogOutputReg'
+    | 'piAnalogOutputExt'
+    | 'piAnalogValueReg'
+    | 'piAnalogValueExt'
+    | 'piBinaryInputReg'
+    | 'piBinaryInputExt'
+    | 'piBinaryOutputReg'
+    | 'piBinaryOutputExt'
+    | 'piBinaryValueReg'
+    | 'piBinaryValueExt'
+    | 'piMultistateInputReg'
+    | 'piMultistateInputExt'
+    | 'piMultistateOutputReg'
+    | 'piMultistateOutputExt'
+    | 'piMultistateValueReg'
+    | 'piMultistateValueExt'
+    | 'pi11073ProtocolTunnel'
+    | 'piIso7818ProtocolTunnel'
+    | 'piRetailTunnel'
+    | 'seMetering'
+    | 'tunneling'
+    | 'telecommunicationsInformation'
+    | 'telecommunicationsVoiceOverZigbee'
+    | 'telecommunicationsChatting'
+    | 'haApplianceIdentification'
+    | 'haMeterIdentification'
+    | 'haApplianceEventsAlerts'
+    | 'haApplianceStatistics'
+    | 'haElectricalMeasurement'
+    | 'haDiagnostic'
+    | 'touchlink'
+    | 'manuSpecificClusterAduroSmart'
+    | 'manuSpecificOsram'
+    | 'manuSpecificPhilips'
+    | 'manuSpecificPhilips2'
+    | 'manuSpecificSinope'
+    | 'manuSpecificLegrandDevices'
+    | 'manuSpecificLegrandDevices2'
+    | 'manuSpecificLegrandDevices3'
+    | 'manuSpecificNiko1'
+    | 'manuSpecificNiko2'
+    | 'wiserDeviceInfo'
+    | 'manuSpecificTuya'
+    | 'manuSpecificLumi'
+    | 'liXeePrivate'
+    | 'manuSpecificTuya_2'
+    | 'manuSpecificTuya_3'
+    | 'manuSpecificCentraliteHumidity'
+    | 'manuSpecificSmartThingsArrivalSensor'
+    | 'manuSpecificSamsungAccelerometer'
+    | 'heimanSpecificFormaldehydeMeasurement'
+    | 'heimanSpecificAirQuality'
+    | 'heimanSpecificScenes'
+    | 'tradfriButton'
+    | 'heimanSpecificInfraRedRemote'
+    | 'schneiderSpecificPilotMode'
+    | 'elkoOccupancySettingClusterServer'
+    | 'elkoSwitchConfigurationClusterServer'
+    | 'manuSpecificSchneiderLightSwitchConfiguration'
+    | 'manuSpecificSchneiderFanSwitchConfiguration'
+    | 'sprutDevice'
+    | 'sprutVoc'
+    | 'sprutNoise'
+    | 'sprutIrBlaster'
+    | 'manuSpecificSiglisZigfred'
+    | 'manuSpecificInovelli'
+    | 'owonClearMetering'
+    | 'zosungIRTransmit'
+    | 'zosungIRControl'
+    | 'manuSpecificAssaDoorLock'
+    | 'manuSpecificDoorman'
+    | 'manuSpecificNodOnPilotWire'
+    | 'manuSpecificProfalux1'
+    | 'manuSpecificAmazonWWAH';

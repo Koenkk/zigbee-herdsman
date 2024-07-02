@@ -28,14 +28,14 @@ export enum BOOLEAN {
 }
 
 export enum LOG_LEVEL {
-    "EMERG",
-    "ALERT",
-    "CRIT ",
-    "ERROR",
-    "WARN ",
-    "NOT  ",
-    "INFO ",
-    "DEBUG"
+    'EMERG',
+    'ALERT',
+    'CRIT ',
+    'ERROR',
+    'WARN ',
+    'NOT  ',
+    'INFO ',
+    'DEBUG',
 }
 
 export enum NODE_LOGICAL_TYPE {
@@ -43,7 +43,6 @@ export enum NODE_LOGICAL_TYPE {
     router = 0x01,
     end_device = 0x02,
 }
-
 
 export enum STATUS {
     E_SL_MSG_STATUS_SUCCESS,
@@ -229,14 +228,13 @@ export enum ZiGateCommandCode {
     LED = 0x0018,
     SetTXpower = 0x0806,
     ManagementLeaveRequest = 0x0047,
-    ManagementLQI = 0x004E,
+    ManagementLQI = 0x004e,
     SetSecurityStateKey = 0x0022,
     AddGroup = 0x0060,
 }
 
-
 export enum ZiGateMessageCode {
-    DeviceAnnounce = 0x004D,
+    DeviceAnnounce = 0x004d,
     Status = 0x8000,
     LOG = 0x8001,
     DataIndication = 0x8002,
@@ -254,7 +252,7 @@ export enum ZiGateMessageCode {
     RouterDiscoveryConfirm = 0x8701,
     PermitJoinStatus = 0x8014,
     GetTimeServer = 0x8017,
-    ManagementLQIResponse = 0x804E,
+    ManagementLQIResponse = 0x804e,
     ManagementLeaveResponse = 0x8047,
     PDMEvent = 0x8035,
     PDMLoaded = 0x0302,
@@ -267,7 +265,6 @@ export enum ZiGateMessageCode {
 // eslint-disable-next-line
 export type ZiGateObjectPayload = any;
 
-
 export enum ZPSNwkKeyState {
     ZPS_ZDO_NO_NETWORK_KEY,
     ZPS_ZDO_PRECONFIGURED_LINK_KEY,
@@ -276,7 +273,7 @@ export enum ZPSNwkKeyState {
 }
 
 export enum ZPSNwkKeyType {
-    ZPS_APS_UNIQUE_LINK_KEY,                 /*Initial key*/
+    ZPS_APS_UNIQUE_LINK_KEY /*Initial key*/,
     ZPS_APS_GLOBAL_LINK_KEY,
 }
 
@@ -296,87 +293,30 @@ export enum PDMEventType {
     E_PDM_SYSTEM_EVENT_SEQUENCE_DUPLICATE_DETECTED,
     E_PDM_SYSTEM_EVENT_SEQUENCE_VERIFY_FAIL,
     E_PDM_SYSTEM_EVENT_PDM_SMART_SAVE,
-    E_PDM_SYSTEM_EVENT_PDM_FULL_SAVE
+    E_PDM_SYSTEM_EVENT_PDM_FULL_SAVE,
 }
-
 
 const coordinatorEndpoints: any = [
     {
         ID: 0x01,
         profileID: 0x0104,
         deviceID: 0x0840,
-        inputClusters: [
-            0x0000,
-            0x0003,
-            0x0019,
-            0x0204,
-            0x000F,
-        ],
+        inputClusters: [0x0000, 0x0003, 0x0019, 0x0204, 0x000f],
         outputClusters: [
-            0x0B03,
-            0x0000,
-            0x0300,
-            0x0004,
-            0x0003,
-            0x0008,
-            0x0006,
-            0x0005,
-            0x0101,
-            0x0702,
-            0x0500,
-            0x0019,
-            0x0201,
-            0x0401,
-            0x0400,
-            0x0406,
-            0x0403,
-            0x0405,
-            0x0402,
-            0x0204,
-            0x0001,
-            0x0B05,
-            0x1000
-        ]
+            0x0b03, 0x0000, 0x0300, 0x0004, 0x0003, 0x0008, 0x0006, 0x0005, 0x0101, 0x0702, 0x0500, 0x0019, 0x0201, 0x0401, 0x0400, 0x0406, 0x0403,
+            0x0405, 0x0402, 0x0204, 0x0001, 0x0b05, 0x1000,
+        ],
     },
     {
-        ID: 0x0A,
+        ID: 0x0a,
         profileID: 0x0104,
         deviceID: 0x0840,
-        inputClusters: [
-            0x0000,
-            0x0003,
-            0x0019,
-            0x0204,
-            0x000F,
-        ],
+        inputClusters: [0x0000, 0x0003, 0x0019, 0x0204, 0x000f],
         outputClusters: [
-            0x0B03,
-            0x0000,
-            0x0300,
-            0x0004,
-            0x0003,
-            0x0008,
-            0x0006,
-            0x0005,
-            0x0101,
-            0x0702,
-            0x0500,
-            0x0019,
-            0x0201,
-            0x0401,
-            0x0400,
-            0x0406,
-            0x0403,
-            0x0405,
-            0x0402,
-            0x0204,
-            0x0001,
-            0x0B05,
-            0x1000
-        ]
-    }
+            0x0b03, 0x0000, 0x0300, 0x0004, 0x0003, 0x0008, 0x0006, 0x0005, 0x0101, 0x0702, 0x0500, 0x0019, 0x0201, 0x0401, 0x0400, 0x0406, 0x0403,
+            0x0405, 0x0402, 0x0204, 0x0001, 0x0b05, 0x1000,
+        ],
+    },
 ];
 
 export {coordinatorEndpoints};
-
-

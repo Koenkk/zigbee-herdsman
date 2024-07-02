@@ -1,7 +1,9 @@
 import * as Zcl from '../../zspec/zcl';
 import {Cluster, CustomClusters} from '../../zspec/zcl/definition/tstype';
 
-interface KeyValue {[s: string]: number | string}
+interface KeyValue {
+    [s: string]: number | string;
+}
 
 // Legrand devices (e.g. 4129) fail to set the manufacturerSpecific flag and
 // manufacturerCode in the frame header, despite using specific attributes.
@@ -46,7 +48,4 @@ function attributeList(frame: Zcl.Frame, deviceManufacturerID: number, customClu
     return payload;
 }
 
-export {
-    attributeKeyValue,
-    attributeList,
-};
+export {attributeKeyValue, attributeList};

@@ -54,8 +54,7 @@ describe('Ember Ezsp Layer', () => {
         jest.useRealTimers();
     });
 
-    afterAll(async () => {
-    });
+    afterAll(async () => {});
 
     beforeEach(async () => {
         for (const mock of mocks) {
@@ -118,7 +117,7 @@ describe('Ember Ezsp Layer', () => {
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(Buffer.concat([Buffer.from(SEND_RST_BYTES), POST_RSTACK_SERIAL_BYTES]));
         expect(ezsp.checkConnection()).toBeTruthy();
         expect(ashEmitSpy).toHaveBeenCalledWith(AshEvents.FATAL_ERROR, EzspStatus.HOST_FATAL_ERROR);
-        expect(onAshFatalErrorSpy).not.toHaveBeenCalled();// ERROR is handled by ezsp layer, not bubbled up to adapter
+        expect(onAshFatalErrorSpy).not.toHaveBeenCalled(); // ERROR is handled by ezsp layer, not bubbled up to adapter
     });
 
     it('Starts ASH layer when received ERROR RESET_WATCHDOG from port', async () => {
@@ -136,7 +135,7 @@ describe('Ember Ezsp Layer', () => {
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(Buffer.concat([Buffer.from(SEND_RST_BYTES), POST_RSTACK_SERIAL_BYTES]));
         expect(ezsp.checkConnection()).toBeTruthy();
         expect(ashEmitSpy).toHaveBeenCalledWith(AshEvents.FATAL_ERROR, EzspStatus.HOST_FATAL_ERROR);
-        expect(onAshFatalErrorSpy).not.toHaveBeenCalled();// ERROR is handled by ezsp layer, not bubbled up to adapter
+        expect(onAshFatalErrorSpy).not.toHaveBeenCalled(); // ERROR is handled by ezsp layer, not bubbled up to adapter
     });
 
     it('Starts ASH layer when received duplicate RSTACK from port right after first ACK', async () => {
@@ -164,7 +163,7 @@ describe('Ember Ezsp Layer', () => {
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
         await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);// dup is received after this returns
+        await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS); // dup is received after this returns
         expect(ezsp.checkConnection()).toBeFalsy();
         // @ts-expect-error set via emit
         expect(restart).toBeDefined();
@@ -190,7 +189,7 @@ describe('Ember Ezsp Layer', () => {
                 jest.useFakeTimers();
 
                 const startResult = ezsp.start();
-    
+
                 await advanceTimeToRSTACK();
                 await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
                 resolve(startResult);
@@ -205,7 +204,7 @@ describe('Ember Ezsp Layer', () => {
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(Buffer.concat([Buffer.from(SEND_RST_BYTES), POST_RSTACK_SERIAL_BYTES]));
         await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-        await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);// dup is received after this returns
+        await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS); // dup is received after this returns
         expect(ezsp.checkConnection()).toBeFalsy();
         // @ts-expect-error set via emit
         expect(restart).toBeDefined();
@@ -229,7 +228,7 @@ describe('Ember Ezsp Layer', () => {
                 jest.useFakeTimers();
 
                 const startResult = ezsp.start();
-    
+
                 await advanceTimeToRSTACK();
                 await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
                 resolve(startResult);
@@ -253,10 +252,10 @@ describe('Ember Ezsp Layer', () => {
         await expect(version).resolves.toStrictEqual(RCED_DATA_VERSION_RES);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(
-            Buffer.from([...POST_RSTACK_SERIAL_BYTES, ...SEND_DATA_VERSION, ...SEND_ACK_FIRST_BYTES])
+            Buffer.from([...POST_RSTACK_SERIAL_BYTES, ...SEND_DATA_VERSION, ...SEND_ACK_FIRST_BYTES]),
         );
 
-        await jest.advanceTimersByTimeAsync(10000);// any time after startup sequence
+        await jest.advanceTimersByTimeAsync(10000); // any time after startup sequence
 
         await emitFromSerial(ezsp, Buffer.from(RECD_ERROR_ACK_TIMEOUT_BYTES));
         expect(ezsp.checkConnection()).toBeFalsy();

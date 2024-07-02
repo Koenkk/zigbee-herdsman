@@ -1,6 +1,6 @@
-import {logger} from "../../../utils/logger";
-import {EzspStatus, SLStatus} from "../enums";
-import {EzspError} from "../ezspError";
+import {logger} from '../../../utils/logger';
+import {EzspStatus, SLStatus} from '../enums';
+import {EzspError} from '../ezspError';
 
 const NS = 'zh:ember:queue';
 
@@ -11,7 +11,7 @@ interface EmberRequestQueueEntry {
     func: () => Promise<SLStatus>;
     /** The wrapping promise's reject to reject if necessary. */
     reject: (reason: Error) => void;
-};
+}
 
 export const MAX_SEND_ATTEMPTS = 3;
 export const HIGH_COUNT = 4;
@@ -103,13 +103,13 @@ export class EmberRequestQueue {
 
     /**
      * Dispatch the head of the queue.
-     * 
+     *
      * If request `func` throws, catch error and reject the request. `ezsp${x}` functions throw `EzspError`.
-     * 
+     *
      * If request `func` resolves but has an error, look at what error, and determine if should retry or remove the request from queue.
-     * 
+     *
      * If request `func` resolves without error, remove request from queue.
-     * 
+     *
      * WARNING: Because of this logic for "internal retries", any error thrown by `func` will not immediatedly bubble back to Adapter/Controller
      */
     private async dispatch(): Promise<void> {
@@ -118,7 +118,7 @@ export class EmberRequestQueue {
         }
 
         let fromPriorityQueue = true;
-        let entry = this.priorityQueue[0];// head of queue if any, priority first
+        let entry = this.priorityQueue[0]; // head of queue if any, priority first
 
         if (!entry) {
             fromPriorityQueue = false;
@@ -126,17 +126,17 @@ export class EmberRequestQueue {
         }
 
         if (entry) {
-            entry.sendAttempts++;// enqueued at zero
+            entry.sendAttempts++; // enqueued at zero
 
             if (entry.sendAttempts > MAX_SEND_ATTEMPTS) {
                 entry.reject(new Error(`Failed ${MAX_SEND_ATTEMPTS} attempts to send`));
             } else {
                 // NOTE: refer to `enqueue()` comment to keep logic in sync with expectations, adjust comment on change.
                 try {
-                    const status: SLStatus = (await entry.func());
-    
+                    const status: SLStatus = await entry.func();
+
                     // XXX: add NOT_READY?
-                    if ((status === SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED) || (status === SLStatus.BUSY)) {
+                    if (status === SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED || status === SLStatus.BUSY) {
                         logger.debug(`Dispatching deferred: Adapter busy.`, NS);
                         this.defer(BUSY_DEFER_MSEC);
                     } else if (status === SLStatus.NETWORK_DOWN) {
@@ -145,12 +145,13 @@ export class EmberRequestQueue {
                     } else {
                         // success
                         (fromPriorityQueue ? this.priorityQueue : this.queue).shift();
-    
+
                         if (status !== SLStatus.OK) {
                             entry.reject(new Error(SLStatus[status]));
                         }
                     }
-                } catch (err) {// EzspStatusError from ezsp${x} commands, except for stuff rejected by OneWaitress, but that's never "retry"
+                } catch (err) {
+                    // EzspStatusError from ezsp${x} commands, except for stuff rejected by OneWaitress, but that's never "retry"
                     if ((err as EzspError).code === EzspStatus.NO_TX_SPACE) {
                         logger.debug(`Dispatching deferred: Host busy.`, NS);
                         this.defer(BUSY_DEFER_MSEC);
@@ -172,7 +173,7 @@ export class EmberRequestQueue {
 
     /**
      * Defer dispatching for the specified duration (in msec).
-     * @param msec 
+     * @param msec
      */
     private defer(msec: number): void {
         this.stopDispatching();

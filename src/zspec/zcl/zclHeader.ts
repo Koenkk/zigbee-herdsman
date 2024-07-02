@@ -1,7 +1,7 @@
-import {FrameControl} from './definition/tstype';
-import {FrameType} from './definition/enums';
-import {BuffaloZcl} from './buffaloZcl';
 import {logger} from '../../utils/logger';
+import {BuffaloZcl} from './buffaloZcl';
+import {FrameType} from './definition/enums';
+import {FrameControl} from './definition/tstype';
 
 const NS = 'zh:zcl:header';
 const HEADER_MINIMAL_LENGTH = 3;
@@ -19,7 +19,7 @@ const HEADER_CTRL_DIRECTION_BIT = 3;
 const HEADER_CTRL_DISABLE_DEF_RESP_MASK = 0x10;
 const HEADER_CTRL_DISABLE_DEF_RESP_BIT = 4;
 /** ZCL Header frame control reserved */
-const HEADER_CTRL_RESERVED_MASK = 0xE0;
+const HEADER_CTRL_RESERVED_MASK = 0xe0;
 const HEADER_CTRL_RESERVED_BIT = 5;
 
 export class ZclHeader {
@@ -49,13 +49,12 @@ export class ZclHeader {
     }
 
     public write(buffalo: BuffaloZcl): void {
-        const frameControl = (
+        const frameControl =
             ((this.frameControl.frameType << HEADER_CTRL_FRAME_TYPE_BIT) & HEADER_CTRL_FRAME_TYPE_MASK) |
             (((this.frameControl.manufacturerSpecific ? 1 : 0) << HEADER_CTRL_MANUF_SPE_BIT) & HEADER_CTRL_MANUF_SPE_MASK) |
             ((this.frameControl.direction << HEADER_CTRL_DIRECTION_BIT) & HEADER_CTRL_DIRECTION_MASK) |
             (((this.frameControl.disableDefaultResponse ? 1 : 0) << HEADER_CTRL_DISABLE_DEF_RESP_BIT) & HEADER_CTRL_DISABLE_DEF_RESP_MASK) |
-            ((this.frameControl.reservedBits << HEADER_CTRL_RESERVED_BIT) & HEADER_CTRL_RESERVED_MASK)
-        );
+            ((this.frameControl.reservedBits << HEADER_CTRL_RESERVED_BIT) & HEADER_CTRL_RESERVED_MASK);
 
         buffalo.writeUInt8(frameControl);
 
@@ -78,9 +77,9 @@ export class ZclHeader {
         const frameControlValue = buffalo.readUInt8();
         const frameControl = {
             frameType: (frameControlValue & HEADER_CTRL_FRAME_TYPE_MASK) >> HEADER_CTRL_FRAME_TYPE_BIT,
-            manufacturerSpecific: ((frameControlValue & HEADER_CTRL_MANUF_SPE_MASK) >> HEADER_CTRL_MANUF_SPE_BIT) === 1,
+            manufacturerSpecific: (frameControlValue & HEADER_CTRL_MANUF_SPE_MASK) >> HEADER_CTRL_MANUF_SPE_BIT === 1,
             direction: (frameControlValue & HEADER_CTRL_DIRECTION_MASK) >> HEADER_CTRL_DIRECTION_BIT,
-            disableDefaultResponse: ((frameControlValue & HEADER_CTRL_DISABLE_DEF_RESP_MASK) >> HEADER_CTRL_DISABLE_DEF_RESP_BIT) === 1,
+            disableDefaultResponse: (frameControlValue & HEADER_CTRL_DISABLE_DEF_RESP_MASK) >> HEADER_CTRL_DISABLE_DEF_RESP_BIT === 1,
             reservedBits: (frameControlValue & HEADER_CTRL_RESERVED_MASK) >> HEADER_CTRL_RESERVED_BIT,
         };
 

@@ -14,12 +14,12 @@ const ZDO = {
         NOT_PERMITTED: 139,
         TABLE_FULL: 140,
         NOT_AUTHORIZED: 141,
-        BINDING_TABLE_FULL: 142
+        BINDING_TABLE_FULL: 142,
     },
     initDev: {
         RESTORED_NETWORK_STATE: 0,
         NEW_NETWORK_STATE: 1,
-        LEAVE_NOT_STARTED: 2
+        LEAVE_NOT_STARTED: 2,
     },
     serverCapability: {
         NOT_SUPPORTED: 0,
@@ -29,7 +29,7 @@ const ZDO = {
         BKUP_BIND_TABLE: 8,
         PRIM_DISC_TABLE: 16,
         BKUP_DISC_TABLE: 32,
-        NETWORK_MANAGER: 64
+        NETWORK_MANAGER: 64,
     },
     appDevVer: {
         VER_100: 0,
@@ -47,14 +47,14 @@ const ZDO = {
         RESERVE12: 12,
         RESERVE13: 13,
         RESERVE14: 14,
-        RESERVE15: 15
+        RESERVE15: 15,
     },
     stackProfileId: {
         NETWORK_SPECIFIC: 0,
         HOME_CONTROLS: 1,
         ZIGBEEPRO_PROFILE: 2,
         GENERIC_STAR: 3,
-        GENERIC_TREE: 4
+        GENERIC_TREE: 4,
     },
     deviceLogicalType: {
         COORDINATOR: 0,
@@ -65,27 +65,27 @@ const ZDO = {
         RESERVED1: 16,
         RESERVED2: 32,
         RESERVED3: 64,
-        RESERVED4: 128
+        RESERVED4: 128,
     },
     addrReqType: {
         SINGLE: 0,
-        EXTENDED: 1
+        EXTENDED: 1,
     },
     leaveAndRemoveChild: {
         NONE: 0,
-        LEAVE_REMOVE_CHILDREN: 1
+        LEAVE_REMOVE_CHILDREN: 1,
     },
     leaveIndRequest: {
         INDICATION: 0,
-        REQUEST: 1
+        REQUEST: 1,
     },
     leaveIndRemove: {
         NONE: 0,
-        REMOVE_CHILDREN: 1
+        REMOVE_CHILDREN: 1,
     },
     leaveIndRejoin: {
         NONE: 0,
-        REJOIN: 1
+        REJOIN: 1,
     },
     descCapability: {
         EXT_LIST_NOT_SUPPORTED: 0,
@@ -96,8 +96,8 @@ const ZDO = {
         RESERVED3: 16,
         RESERVED4: 32,
         RESERVED5: 64,
-        RESERVED6: 128
-    }
+        RESERVED6: 128,
+    },
 };
 
 export default ZDO;

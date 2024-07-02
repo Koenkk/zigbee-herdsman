@@ -1,76 +1,22 @@
 /* istanbul ignore file */
+import {randomBytes} from 'crypto';
 import equals from 'fast-deep-equal/es6';
 import {existsSync, readFileSync, renameSync} from 'fs';
 import path from 'path';
-import SerialPortUtils from '../../serialPortUtils';
-import SocketPortUtils from '../../socketPortUtils';
-import {BackupUtils, RealpathSync, Wait} from '../../../utils';
+
 import {Adapter, TsType} from '../..';
 import {Backup, UnifiedBackupStorage} from '../../../models';
+import {BackupUtils, RealpathSync, Wait} from '../../../utils';
+import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
+import {EUI64, ExtendedPanId, NodeId, PanId} from '../../../zspec/tstypes';
 import * as Zcl from '../../../zspec/zcl';
 import * as Zdo from '../../../zspec/zdo';
+import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
 import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
-import {
-    DeviceAnnouncePayload,
-    DeviceJoinedPayload,
-    DeviceLeavePayload,
-    Events,
-    NetworkAddressPayload,
-    ZclPayload
-} from '../../events';
-import {halCommonCrc16, highByte, highLowToInt, lowByte, lowHighBytes} from '../utils/math';
-import {Ezsp, EzspEvents} from '../ezsp/ezsp';
-import {
-    EMBER_ENCRYPTION_KEY_SIZE,
-    EZSP_MAX_FRAME_LENGTH,
-    EZSP_MIN_PROTOCOL_VERSION,
-    EZSP_PROTOCOL_VERSION,
-    EZSP_STACK_TYPE_MESH
-} from '../ezsp/consts';
-import {
-    EzspConfigId,
-    EzspDecisionBitmask,
-    EzspDecisionId,
-    EzspPolicyId,
-    EzspValueId
-} from '../ezsp/enums';
-import {EzspBuffalo} from '../ezsp/buffalo';
-import {
-    EmberApsOption,
-    EmberOutgoingMessageType,
-    EzspStatus,
-    EmberVersionType,
-    SLStatus,
-    EmberNodeType,
-    EmberNetworkStatus,
-    SecManKeyType,
-    EmberInterpanMessageType,
-    EmberSourceRouteDiscoveryMode,
-    EmberJoinDecision,
-    EmberExtendedSecurityBitmask,
-    EmberInitialSecurityBitmask,
-    EmberJoinMethod,
-    EmberNetworkInitBitmask,
-    EmberDeviceUpdate,
-    EzspNetworkScanType,
-    EmberIncomingMessageType,
-    EmberTransmitPriority,
-} from '../enums';
-import {
-    EmberAesMmoHashContext,
-    EmberApsFrame,
-    EmberInitialSecurityState,
-    EmberKeyData,
-    EmberMulticastId,
-    EmberMulticastTableEntry,
-    EmberNetworkInitStruct,
-    EmberNetworkParameters,
-    EmberVersion,
-    SecManAPSKeyMetadata,
-    SecManContext,
-    SecManKey,
-} from '../types';
+import {DeviceAnnouncePayload, DeviceJoinedPayload, DeviceLeavePayload, Events, NetworkAddressPayload, ZclPayload} from '../../events';
+import SerialPortUtils from '../../serialPortUtils';
+import SocketPortUtils from '../../socketPortUtils';
 import {
     EMBER_INSTALL_CODE_CRC_SIZE,
     EMBER_INSTALL_CODE_SIZES,
@@ -92,27 +38,68 @@ import {
     ZIGBEE_PROFILE_INTEROPERABILITY_LINK_KEY,
     EMBER_MIN_BROADCAST_ADDRESS,
 } from '../consts';
-import {EmberRequestQueue} from './requestQueue';
-import {FIXED_ENDPOINTS} from './endpoints';
-import {aesMmoHashInit, initNetworkCache, initSecurityManagerContext} from '../utils/initters';
-import {randomBytes} from 'crypto';
-import {EmberOneWaitress, OneWaitressEvents} from './oneWaitress';
-import {logger} from '../../../utils/logger';
-import {EUI64, ExtendedPanId, NodeId, PanId} from '../../../zspec/tstypes';
+import {
+    EmberApsOption,
+    EmberOutgoingMessageType,
+    EzspStatus,
+    EmberVersionType,
+    SLStatus,
+    EmberNodeType,
+    EmberNetworkStatus,
+    SecManKeyType,
+    EmberInterpanMessageType,
+    EmberSourceRouteDiscoveryMode,
+    EmberJoinDecision,
+    EmberExtendedSecurityBitmask,
+    EmberInitialSecurityBitmask,
+    EmberJoinMethod,
+    EmberNetworkInitBitmask,
+    EmberDeviceUpdate,
+    EzspNetworkScanType,
+    EmberIncomingMessageType,
+    EmberTransmitPriority,
+} from '../enums';
+import {EzspBuffalo} from '../ezsp/buffalo';
+import {
+    EMBER_ENCRYPTION_KEY_SIZE,
+    EZSP_MAX_FRAME_LENGTH,
+    EZSP_MIN_PROTOCOL_VERSION,
+    EZSP_PROTOCOL_VERSION,
+    EZSP_STACK_TYPE_MESH,
+} from '../ezsp/consts';
+import {EzspConfigId, EzspDecisionBitmask, EzspDecisionId, EzspPolicyId, EzspValueId} from '../ezsp/enums';
+import {Ezsp, EzspEvents} from '../ezsp/ezsp';
 import {EzspError} from '../ezspError';
-import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
+import {
+    EmberAesMmoHashContext,
+    EmberApsFrame,
+    EmberInitialSecurityState,
+    EmberKeyData,
+    EmberMulticastId,
+    EmberMulticastTableEntry,
+    EmberNetworkInitStruct,
+    EmberNetworkParameters,
+    EmberVersion,
+    SecManAPSKeyMetadata,
+    SecManContext,
+    SecManKey,
+} from '../types';
+import {aesMmoHashInit, initNetworkCache, initSecurityManagerContext} from '../utils/initters';
+import {halCommonCrc16, highByte, highLowToInt, lowByte, lowHighBytes} from '../utils/math';
+import {FIXED_ENDPOINTS} from './endpoints';
+import {EmberOneWaitress, OneWaitressEvents} from './oneWaitress';
+import {EmberRequestQueue} from './requestQueue';
 // import {EmberTokensManager} from './tokensManager';
 
 const NS = 'zh:ember';
 
 export type NetworkCache = {
     //-- basic network info
-    eui64: EUI64,
-    parameters: EmberNetworkParameters,
-    status: EmberNetworkStatus,
+    eui64: EUI64;
+    parameters: EmberNetworkParameters;
+    status: EmberNetworkStatus;
     /** uint8_t */
 };
-
 
 /**
  * Use for a link key backup.
@@ -121,10 +108,10 @@ export type NetworkCache = {
  *   This key may be hashed and not the actual link key currently in use.
  */
 type LinkKeyBackupData = {
-    deviceEui64: EUI64,
-    key: EmberKeyData,
-    outgoingFrameCounter: number,
-    incomingFrameCounter: number,
+    deviceEui64: EUI64;
+    key: EmberKeyData;
+    outgoingFrameCounter: number;
+    incomingFrameCounter: number;
 };
 
 /** Enum to pass strings from numbers up to Z2M. */
@@ -137,7 +124,7 @@ enum RoutingTableStatus {
     RESERVED1 = 0x5,
     RESERVED2 = 0x6,
     RESERVED3 = 0x7,
-};
+}
 
 enum NetworkInitAction {
     /** Ain't that nice! */
@@ -150,23 +137,23 @@ enum NetworkInitAction {
     FORM_CONFIG,
     /** Re-form the network using full backed-up data. */
     FORM_BACKUP,
-};
+}
 
 /** NOTE: Drivers can override `manufacturer`. Verify logic doesn't work in most cases anyway. */
 const autoDetectDefinitions = [
     /** NOTE: Manuf code "0x1321" for "Shenzhen Sonoff Technologies Co., Ltd." */
-    {manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4'},// Sonoff ZBDongle-E
+    {manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4'}, // Sonoff ZBDongle-E
     /** NOTE: Manuf code "0x134B" for "Nabu Casa, Inc." */
-    {manufacturer: 'Nabu Casa', vendorId: '10c4', productId: 'ea60'},// Home Assistant SkyConnect
+    {manufacturer: 'Nabu Casa', vendorId: '10c4', productId: 'ea60'}, // Home Assistant SkyConnect
 ];
 
 /**
- * Application generated ZDO messages use sequence numbers 0-127, and the stack 
- * uses sequence numbers 128-255.  This simplifies life by eliminating the need 
- * for coordination between the two entities, and allows both to send ZDO 
+ * Application generated ZDO messages use sequence numbers 0-127, and the stack
+ * uses sequence numbers 128-255.  This simplifies life by eliminating the need
+ * for coordination between the two entities, and allows both to send ZDO
  * messages with non-conflicting sequence numbers.
  */
-const APPLICATION_ZDO_SEQUENCE_MASK = 0x7F;
+const APPLICATION_ZDO_SEQUENCE_MASK = 0x7f;
 /** Current revision of the spec by zigbee alliance supported by Z2M. */
 const CURRENT_ZIGBEE_SPEC_REVISION = 22;
 /** Each scan period is 15.36ms. Scan for at least 200ms (2^4 + 1 periods) to pick up WiFi beacon frames. */
@@ -225,22 +212,22 @@ type StackConfig = {
 /**
  * Default stack configuration values.
  * @see https://www.silabs.com/documents/public/user-guides/ug100-ezsp-reference-guide.pdf 2.3.1 for descriptions/RAM costs
- * 
+ *
  * https://github.com/darkxst/silabs-firmware-builder/tree/main/manifests
  * https://github.com/NabuCasa/silabs-firmware/wiki/Zigbee-EmberZNet-NCP-firmware-configuration#skyconnect
  * https://github.com/SiliconLabs/UnifySDK/blob/main/applications/zigbeed/project_files/zigbeed.slcp
  */
 const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
     CONCENTRATOR_RAM_TYPE: 'high',
-    CONCENTRATOR_MIN_TIME: 5,// zigpc: 10
-    CONCENTRATOR_MAX_TIME: 60,// zigpc: 60
-    CONCENTRATOR_ROUTE_ERROR_THRESHOLD: 3,// zigpc: 3
-    CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD: 1,// zigpc: 1, ZigbeeMinimalHost: 3
-    CONCENTRATOR_MAX_HOPS: 0,// zigpc: 0
-    MAX_END_DEVICE_CHILDREN: 32,// zigpc: 6, nabucasa: 32, Dongle-E (Sonoff firmware): 32
+    CONCENTRATOR_MIN_TIME: 5, // zigpc: 10
+    CONCENTRATOR_MAX_TIME: 60, // zigpc: 60
+    CONCENTRATOR_ROUTE_ERROR_THRESHOLD: 3, // zigpc: 3
+    CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD: 1, // zigpc: 1, ZigbeeMinimalHost: 3
+    CONCENTRATOR_MAX_HOPS: 0, // zigpc: 0
+    MAX_END_DEVICE_CHILDREN: 32, // zigpc: 6, nabucasa: 32, Dongle-E (Sonoff firmware): 32
     TRANSIENT_DEVICE_TIMEOUT: 10000,
-    END_DEVICE_POLL_TIMEOUT: 8,// zigpc: 8
-    TRANSIENT_KEY_TIMEOUT_S: 300,// zigpc: 65535
+    END_DEVICE_POLL_TIMEOUT: 8, // zigpc: 8
+    TRANSIENT_KEY_TIMEOUT_S: 300, // zigpc: 65535
 };
 /** Default behavior is to disable app key requests */
 const ALLOW_APP_KEY_REQUESTS = false;
@@ -250,18 +237,18 @@ const ALLOW_APP_KEY_REQUESTS = false;
  * - BUGZID 12261: Concentrators use MTORRs for route discovery and should not enable route discovery in the APS options.
  * - https://community.silabs.com/s/question/0D58Y00008DRfDCSA1/coordinator-cant-send-unicast-to-sleepy-node-after-reboot
  * - https://community.silabs.com/s/question/0D58Y0000B4nTb7SQE/largedense-network-communication-problem-source-route-table-not-big-enough
- * 
+ *
  * Removing `ENABLE_ROUTE_DISCOVERY` leads to devices that won't reconnect/go offline, and various other issues. Keeping it for now.
  */
-const DEFAULT_APS_OPTIONS = (EmberApsOption.RETRY | EmberApsOption.ENABLE_ROUTE_DISCOVERY | EmberApsOption.ENABLE_ADDRESS_DISCOVERY);
+const DEFAULT_APS_OPTIONS = EmberApsOption.RETRY | EmberApsOption.ENABLE_ROUTE_DISCOVERY | EmberApsOption.ENABLE_ADDRESS_DISCOVERY;
 /** Time for a ZDO request to get a callback response. ASH is 2400*6 for ACK timeout. */
-const DEFAULT_ZDO_REQUEST_TIMEOUT = 15000;// msec
+const DEFAULT_ZDO_REQUEST_TIMEOUT = 15000; // msec
 /** Time for a ZCL request to get a callback response. ASH is 2400*6 for ACK timeout. */
-const DEFAULT_ZCL_REQUEST_TIMEOUT = 15000;//msec
+const DEFAULT_ZCL_REQUEST_TIMEOUT = 15000; //msec
 /** Time for a network-related request to get a response (usually via event). */
-const DEFAULT_NETWORK_REQUEST_TIMEOUT = 10000;// nothing on the network to bother requests, should be much faster than this
+const DEFAULT_NETWORK_REQUEST_TIMEOUT = 10000; // nothing on the network to bother requests, should be much faster than this
 /** Time between watchdog counters reading/clearing */
-const WATCHDOG_COUNTERS_FEED_INTERVAL = 3600000;// every hour...
+const WATCHDOG_COUNTERS_FEED_INTERVAL = 3600000; // every hour...
 /** Default manufacturer code reported by coordinator. */
 const DEFAULT_MANUFACTURER_CODE = Zcl.ManufacturerCode.SILICON_LABORATORIES;
 /**
@@ -271,12 +258,12 @@ const DEFAULT_MANUFACTURER_CODE = Zcl.ManufacturerCode.SILICON_LABORATORIES;
 const WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE: {[ieeePrefix: string]: Zcl.ManufacturerCode} = {
     // NOTE: Lumi has a new prefix registered since 2021, in case they start using that one with new devices, it might need to be added here too...
     //       "0x18c23c" https://maclookup.app/vendors/lumi-united-technology-co-ltd
-    "0x54ef44": Zcl.ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN,
+    '0x54ef44': Zcl.ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN,
 };
 
 /**
  * Relay calls between Z2M and EZSP-layer and handle any error that might occur via queue & waitress.
- * 
+ *
  * Anything post `start` that requests anything from the EZSP layer must run through the request queue for proper execution flow.
  */
 export class EmberAdapter extends Adapter {
@@ -285,7 +272,7 @@ export class EmberAdapter extends Adapter {
     public readonly stackConfig: StackConfig;
 
     private readonly ezsp: Ezsp;
-    private version: {ezsp: number, revision: string} & EmberVersion;
+    private version: {ezsp: number; revision: string} & EmberVersion;
 
     private readonly requestQueue: EmberRequestQueue;
     private readonly oneWaitress: EmberOneWaitress;
@@ -306,12 +293,16 @@ export class EmberAdapter extends Adapter {
     private networkCache: NetworkCache;
     private multicastTable: EmberMulticastId[];
 
-    constructor(networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string,
-        adapterOptions: TsType.AdapterOptions) {
+    constructor(
+        networkOptions: TsType.NetworkOptions,
+        serialPortOptions: TsType.SerialPortOptions,
+        backupPath: string,
+        adapterOptions: TsType.AdapterOptions,
+    ) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
 
         this.stackConfig = this.loadStackConfig();
-        const delay = (typeof this.adapterOptions.delay === 'number') ? Math.min(Math.max(this.adapterOptions.delay, 5), 60) : 5;
+        const delay = typeof this.adapterOptions.delay === 'number' ? Math.min(Math.max(this.adapterOptions.delay, 5), 60) : 5;
 
         logger.debug(`Using delay=${delay}.`, NS);
 
@@ -338,19 +329,19 @@ export class EmberAdapter extends Adapter {
             // set any undefined config to default
             const config: StackConfig = {...DEFAULT_STACK_CONFIG, ...customConfig};
 
-            const inRange = (value: number, min: number, max: number): boolean => (value == undefined || value < min || value > max) ? false : true;
+            const inRange = (value: number, min: number, max: number): boolean => (value == undefined || value < min || value > max ? false : true);
 
             if (!['high', 'low'].includes(config.CONCENTRATOR_RAM_TYPE)) {
                 config.CONCENTRATOR_RAM_TYPE = DEFAULT_STACK_CONFIG.CONCENTRATOR_RAM_TYPE;
                 logger.error(`[STACK CONFIG] Invalid CONCENTRATOR_RAM_TYPE, using default.`, NS);
             }
 
-            if (!inRange(config.CONCENTRATOR_MIN_TIME, 1, 60) || (config.CONCENTRATOR_MIN_TIME >= config.CONCENTRATOR_MAX_TIME)) {
+            if (!inRange(config.CONCENTRATOR_MIN_TIME, 1, 60) || config.CONCENTRATOR_MIN_TIME >= config.CONCENTRATOR_MAX_TIME) {
                 config.CONCENTRATOR_MIN_TIME = DEFAULT_STACK_CONFIG.CONCENTRATOR_MIN_TIME;
                 logger.error(`[STACK CONFIG] Invalid CONCENTRATOR_MIN_TIME, using default.`, NS);
             }
 
-            if (!inRange(config.CONCENTRATOR_MAX_TIME, 30, 300) || (config.CONCENTRATOR_MAX_TIME <= config.CONCENTRATOR_MIN_TIME)) {
+            if (!inRange(config.CONCENTRATOR_MAX_TIME, 30, 300) || config.CONCENTRATOR_MAX_TIME <= config.CONCENTRATOR_MIN_TIME) {
                 config.CONCENTRATOR_MAX_TIME = DEFAULT_STACK_CONFIG.CONCENTRATOR_MAX_TIME;
                 logger.error(`[STACK CONFIG] Invalid CONCENTRATOR_MAX_TIME, using default.`, NS);
             }
@@ -400,80 +391,92 @@ export class EmberAdapter extends Adapter {
 
     /**
      * Emitted from @see Ezsp.ezspStackStatusHandler
-     * @param status 
+     * @param status
      */
     private async onStackStatus(status: SLStatus): Promise<void> {
         // to be extra careful, should clear network cache upon receiving this.
         this.clearNetworkCache();
 
         switch (status) {
-        case SLStatus.NETWORK_UP: {
-            this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_UP);
-            logger.info(`[STACK STATUS] Network up.`, NS);
-            break;
-        }
-        case SLStatus.NETWORK_DOWN: {
-            this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_DOWN);
-            logger.info(`[STACK STATUS] Network down.`, NS);
-            break;
-        }
-        case SLStatus.ZIGBEE_NETWORK_OPENED: {
-            this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_OPENED);
-            logger.info(`[STACK STATUS] Network opened.`, NS);
-            break;
-        }
-        case SLStatus.ZIGBEE_NETWORK_CLOSED: {
-            this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_CLOSED);
-            logger.info(`[STACK STATUS] Network closed.`, NS);
-            break;
-        }
-        case SLStatus.ZIGBEE_CHANNEL_CHANGED: {
-            this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_CHANNEL_CHANGED);
-            // invalidate cache
-            this.networkCache.parameters.radioChannel = INVALID_RADIO_CHANNEL;
-            logger.info(`[STACK STATUS] Channel changed.`, NS);
-            break;
-        }
-        default: {
-            logger.debug(`[STACK STATUS] ${SLStatus[status]}.`, NS);
-            break;
-        }
+            case SLStatus.NETWORK_UP: {
+                this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_UP);
+                logger.info(`[STACK STATUS] Network up.`, NS);
+                break;
+            }
+            case SLStatus.NETWORK_DOWN: {
+                this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_DOWN);
+                logger.info(`[STACK STATUS] Network down.`, NS);
+                break;
+            }
+            case SLStatus.ZIGBEE_NETWORK_OPENED: {
+                this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_OPENED);
+                logger.info(`[STACK STATUS] Network opened.`, NS);
+                break;
+            }
+            case SLStatus.ZIGBEE_NETWORK_CLOSED: {
+                this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_CLOSED);
+                logger.info(`[STACK STATUS] Network closed.`, NS);
+                break;
+            }
+            case SLStatus.ZIGBEE_CHANNEL_CHANGED: {
+                this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_CHANNEL_CHANGED);
+                // invalidate cache
+                this.networkCache.parameters.radioChannel = INVALID_RADIO_CHANNEL;
+                logger.info(`[STACK STATUS] Channel changed.`, NS);
+                break;
+            }
+            default: {
+                logger.debug(`[STACK STATUS] ${SLStatus[status]}.`, NS);
+                break;
+            }
         }
     }
 
     /**
      * Emitted from @see Ezsp.ezspMessageSentHandler
      * WARNING: Cannot rely on `ezspMessageSentHandler` > `ezspIncomingMessageHandler` order, some devices mix it up!
-     * 
-     * @param type 
-     * @param indexOrDestination 
-     * @param apsFrame 
-     * @param messageTag 
-     * @param status 
+     *
+     * @param type
+     * @param indexOrDestination
+     * @param apsFrame
+     * @param messageTag
+     * @param status
      */
-    private async onMessageSent(status: SLStatus, type: EmberOutgoingMessageType, indexOrDestination: number, apsFrame: EmberApsFrame,
-        messageTag: number): Promise<void> {
+    private async onMessageSent(
+        status: SLStatus,
+        type: EmberOutgoingMessageType,
+        indexOrDestination: number,
+        apsFrame: EmberApsFrame,
+        messageTag: number,
+    ): Promise<void> {
         if (status === SLStatus.ZIGBEE_DELIVERY_FAILED) {
             // no ACK was received from the destination
             switch (type) {
-            case EmberOutgoingMessageType.BROADCAST:
-            case EmberOutgoingMessageType.BROADCAST_WITH_ALIAS:
-            case EmberOutgoingMessageType.MULTICAST:
-            case EmberOutgoingMessageType.MULTICAST_WITH_ALIAS: {
-                // BC/MC not checking for message sent, avoid unnecessary waitress lookups
-                logger.error(`Delivery of ${EmberOutgoingMessageType[type]} failed for "${indexOrDestination}" `
-                    + `[apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}]`, NS);
-                break;
-            }
-            default: {
-                // reject any waitress early (don't wait for timeout if we know we're gonna get there eventually)
-                this.oneWaitress.deliveryFailedFor(indexOrDestination, apsFrame);
-                break;
-            }
+                case EmberOutgoingMessageType.BROADCAST:
+                case EmberOutgoingMessageType.BROADCAST_WITH_ALIAS:
+                case EmberOutgoingMessageType.MULTICAST:
+                case EmberOutgoingMessageType.MULTICAST_WITH_ALIAS: {
+                    // BC/MC not checking for message sent, avoid unnecessary waitress lookups
+                    logger.error(
+                        `Delivery of ${EmberOutgoingMessageType[type]} failed for "${indexOrDestination}" ` +
+                            `[apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}]`,
+                        NS,
+                    );
+                    break;
+                }
+                default: {
+                    // reject any waitress early (don't wait for timeout if we know we're gonna get there eventually)
+                    this.oneWaitress.deliveryFailedFor(indexOrDestination, apsFrame);
+                    break;
+                }
             }
         } else if (status === SLStatus.OK) {
-            if (type === EmberOutgoingMessageType.MULTICAST && apsFrame.destinationEndpoint === 0xFF &&
-                apsFrame.groupId < EMBER_MIN_BROADCAST_ADDRESS && !this.multicastTable.includes(apsFrame.groupId)) {
+            if (
+                type === EmberOutgoingMessageType.MULTICAST &&
+                apsFrame.destinationEndpoint === 0xff &&
+                apsFrame.groupId < EMBER_MIN_BROADCAST_ADDRESS &&
+                !this.multicastTable.includes(apsFrame.groupId)
+            ) {
                 // workaround for devices using multicast for state update (coordinator passthrough)
                 const tableIdx = this.multicastTable.length;
                 const multicastEntry: EmberMulticastTableEntry = {
@@ -487,12 +490,12 @@ export class EmberAdapter extends Adapter {
                 await new Promise<void>((resolve, reject): void => {
                     this.requestQueue.enqueue(
                         async (): Promise<SLStatus> => {
-                            const status = (await this.ezsp.ezspSetMulticastTableEntry(tableIdx, multicastEntry));
+                            const status = await this.ezsp.ezspSetMulticastTableEntry(tableIdx, multicastEntry);
 
                             if (status !== SLStatus.OK) {
                                 logger.error(
                                     `Failed to register group "${multicastEntry.multicastId}" in multicast table with status=${SLStatus[status]}.`,
-                                    NS
+                                    NS,
                                 );
                                 return status;
                             }
@@ -506,7 +509,7 @@ export class EmberAdapter extends Adapter {
                             this.multicastTable.splice(tableIdx, 1);
                             reject(reason);
                         },
-                        true,/*prioritize*/
+                        true /*prioritize*/,
                     );
                 });
             }
@@ -516,7 +519,7 @@ export class EmberAdapter extends Adapter {
 
     /**
      * Emitted from @see Ezsp.ezspIncomingMessageHandler
-     * 
+     *
      * @param apsFrame The APS frame associated with the response.
      * @param sender The sender of the response. Should match `payload.nodeId` in many responses.
      * @param messageContents The content of the response.
@@ -531,12 +534,12 @@ export class EmberAdapter extends Adapter {
             if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
                 this.emit(Events.networkAddress, {
                     networkAddress: (payload as ZdoTypes.NetworkAddressResponse).nwkAddress,
-                    ieeeAddr: (payload as ZdoTypes.NetworkAddressResponse).eui64
+                    ieeeAddr: (payload as ZdoTypes.NetworkAddressResponse).eui64,
                 } as NetworkAddressPayload);
             } else if (apsFrame.clusterId === Zdo.ClusterId.END_DEVICE_ANNOUNCE) {
                 this.emit(Events.deviceAnnounce, {
                     networkAddress: (payload as ZdoTypes.EndDeviceAnnounce).nwkAddress,
-                    ieeeAddr: (payload as ZdoTypes.EndDeviceAnnounce).eui64
+                    ieeeAddr: (payload as ZdoTypes.EndDeviceAnnounce).eui64,
                 } as DeviceAnnouncePayload);
             }
         } catch (error) {
@@ -546,15 +549,20 @@ export class EmberAdapter extends Adapter {
 
     /**
      * Emitted from @see Ezsp.ezspIncomingMessageHandler
-     * 
-     * @param type 
-     * @param apsFrame 
-     * @param lastHopLqi 
-     * @param sender 
-     * @param messageContents 
+     *
+     * @param type
+     * @param apsFrame
+     * @param lastHopLqi
+     * @param sender
+     * @param messageContents
      */
-    private async onIncomingMessage(type: EmberIncomingMessageType, apsFrame: EmberApsFrame, lastHopLqi: number, sender: NodeId,
-        messageContents: Buffer): Promise<void> {
+    private async onIncomingMessage(
+        type: EmberIncomingMessageType,
+        apsFrame: EmberApsFrame,
+        lastHopLqi: number,
+        sender: NodeId,
+        messageContents: Buffer,
+    ): Promise<void> {
         const payload: ZclPayload = {
             clusterID: apsFrame.clusterId,
             header: Zcl.Header.fromBuffer(messageContents),
@@ -563,7 +571,7 @@ export class EmberAdapter extends Adapter {
             endpoint: apsFrame.sourceEndpoint,
             linkquality: lastHopLqi,
             groupID: apsFrame.groupId,
-            wasBroadcast: ((type === EmberIncomingMessageType.BROADCAST) || (type === EmberIncomingMessageType.BROADCAST_LOOPBACK)),
+            wasBroadcast: type === EmberIncomingMessageType.BROADCAST || type === EmberIncomingMessageType.BROADCAST_LOOPBACK,
             destinationEndpoint: apsFrame.destinationEndpoint,
         };
 
@@ -573,24 +581,29 @@ export class EmberAdapter extends Adapter {
 
     /**
      * Emitted from @see Ezsp.ezspMacFilterMatchMessageHandler when the message is a valid InterPAN touchlink message.
-     * 
-     * @param sourcePanId 
-     * @param sourceAddress 
-     * @param groupId 
-     * @param lastHopLqi 
-     * @param messageContents 
+     *
+     * @param sourcePanId
+     * @param sourceAddress
+     * @param groupId
+     * @param lastHopLqi
+     * @param messageContents
      */
-    private async onTouchlinkMessage(sourcePanId: PanId, sourceAddress: EUI64, groupId: number | null, lastHopLqi: number,
-        messageContents: Buffer): Promise<void> {
+    private async onTouchlinkMessage(
+        sourcePanId: PanId,
+        sourceAddress: EUI64,
+        groupId: number | null,
+        lastHopLqi: number,
+        messageContents: Buffer,
+    ): Promise<void> {
         const payload: ZclPayload = {
             clusterID: Zcl.Clusters.touchlink.ID,
             data: messageContents,
             header: Zcl.Header.fromBuffer(messageContents),
             address: sourceAddress,
-            endpoint: 1,// arbitrary since not sent over-the-air
+            endpoint: 1, // arbitrary since not sent over-the-air
             linkquality: lastHopLqi,
             groupID: groupId,
-            wasBroadcast: true,// XXX: since always sent broadcast atm...
+            wasBroadcast: true, // XXX: since always sent broadcast atm...
             destinationEndpoint: FIXED_ENDPOINTS[0].endpoint,
         };
 
@@ -600,29 +613,36 @@ export class EmberAdapter extends Adapter {
 
     /**
      * Emitted from @see Ezsp.ezspGpepIncomingMessageHandler
-     * 
-     * @param sequenceNumber 
-     * @param commandIdentifier 
-     * @param sourceId 
-     * @param frameCounter 
-     * @param gpdCommandId 
-     * @param gpdCommandPayload 
-     * @param gpdLink 
+     *
+     * @param sequenceNumber
+     * @param commandIdentifier
+     * @param sourceId
+     * @param frameCounter
+     * @param gpdCommandId
+     * @param gpdCommandPayload
+     * @param gpdLink
      */
-    private async onGreenpowerMessage(sequenceNumber: number, commandIdentifier: number, sourceId: number, frameCounter: number,
-        gpdCommandId: number, gpdCommandPayload: Buffer, gpdLink: number) : Promise<void> {
+    private async onGreenpowerMessage(
+        sequenceNumber: number,
+        commandIdentifier: number,
+        sourceId: number,
+        frameCounter: number,
+        gpdCommandId: number,
+        gpdCommandPayload: Buffer,
+        gpdLink: number,
+    ): Promise<void> {
         try {
             const gpdHeader = Buffer.alloc(15);
-            gpdHeader.writeUInt8(0b00000001, 0);// frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
-            gpdHeader.writeUInt8(sequenceNumber, 1);// transactionSequenceNumber
-            gpdHeader.writeUInt8(commandIdentifier, 2);// commandIdentifier
-            gpdHeader.writeUInt16LE(0, 3);// options XXX: bypassed, same as deconz https://github.com/Koenkk/zigbee-herdsman/pull/536
-            gpdHeader.writeUInt32LE(sourceId, 5);// srcID
+            gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
+            gpdHeader.writeUInt8(sequenceNumber, 1); // transactionSequenceNumber
+            gpdHeader.writeUInt8(commandIdentifier, 2); // commandIdentifier
+            gpdHeader.writeUInt16LE(0, 3); // options XXX: bypassed, same as deconz https://github.com/Koenkk/zigbee-herdsman/pull/536
+            gpdHeader.writeUInt32LE(sourceId, 5); // srcID
             // omitted: gpdIEEEAddr ieeeAddr
             // omitted: gpdEndpoint uint8
-            gpdHeader.writeUInt32LE(frameCounter, 9);// frameCounter
-            gpdHeader.writeUInt8(gpdCommandId, 13);// commandID
-            gpdHeader.writeUInt8(gpdCommandPayload.length, 14);// payloadSize
+            gpdHeader.writeUInt32LE(frameCounter, 9); // frameCounter
+            gpdHeader.writeUInt8(gpdCommandId, 13); // commandID
+            gpdHeader.writeUInt8(gpdCommandPayload.length, 14); // payloadSize
 
             const data = Buffer.concat([gpdHeader, gpdCommandPayload]);
             const payload: ZclPayload = {
@@ -648,15 +668,20 @@ export class EmberAdapter extends Adapter {
     /**
      * Emitted from @see Ezsp.ezspTrustCenterJoinHandler
      * Also from @see Ezsp.ezspIdConflictHandler as a DEVICE_LEFT
-     * 
-     * @param newNodeId 
-     * @param newNodeEui64 
-     * @param status 
-     * @param policyDecision 
-     * @param parentOfNewNodeId 
+     *
+     * @param newNodeId
+     * @param newNodeEui64
+     * @param status
+     * @param policyDecision
+     * @param parentOfNewNodeId
      */
-    private async onTrustCenterJoin(newNodeId: NodeId, newNodeEui64: EUI64, status: EmberDeviceUpdate,
-        policyDecision: EmberJoinDecision, parentOfNewNodeId: NodeId): Promise<void> {
+    private async onTrustCenterJoin(
+        newNodeId: NodeId,
+        newNodeEui64: EUI64,
+        status: EmberDeviceUpdate,
+        policyDecision: EmberJoinDecision,
+        parentOfNewNodeId: NodeId,
+    ): Promise<void> {
         if (status === EmberDeviceUpdate.DEVICE_LEFT) {
             const payload: DeviceLeavePayload = {
                 networkAddress: newNodeId,
@@ -688,7 +713,7 @@ export class EmberAdapter extends Adapter {
                                 return SLStatus.OK;
                             },
                             reject,
-                            true,/*prioritize*/
+                            true /*prioritize*/,
                         );
                     });
                 } else {
@@ -702,22 +727,19 @@ export class EmberAdapter extends Adapter {
 
     private async watchdogCounters(): Promise<void> {
         await new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    // listed as per EmberCounterType
-                    const ncpCounters = (await this.ezsp.ezspReadAndClearCounters());
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                // listed as per EmberCounterType
+                const ncpCounters = await this.ezsp.ezspReadAndClearCounters();
 
-                    logger.info(`[NCP COUNTERS] ${ncpCounters.join(',')}`, NS);
+                logger.info(`[NCP COUNTERS] ${ncpCounters.join(',')}`, NS);
 
-                    const ashCounters = this.ezsp.ash.readAndClearCounters();
+                const ashCounters = this.ezsp.ash.readAndClearCounters();
 
-                    logger.info(`[ASH COUNTERS] ${ashCounters.join(',')}`, NS);
+                logger.info(`[ASH COUNTERS] ${ashCounters.join(',')}`, NS);
 
-                    resolve();
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                resolve();
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
@@ -726,13 +748,13 @@ export class EmberAdapter extends Adapter {
 
         clearInterval(this.watchdogCountersHandle);
 
-        this.zdoRequestSequence = 0;// start at 1
+        this.zdoRequestSequence = 0; // start at 1
         this.zdoRequestRadius = 255;
 
         this.interpanLock = false;
 
         this.networkCache = initNetworkCache();
-        this.manufacturerCode = DEFAULT_MANUFACTURER_CODE;// will be set in NCP in initEzsp
+        this.manufacturerCode = DEFAULT_MANUFACTURER_CODE; // will be set in NCP in initEzsp
         this.multicastTable = [];
 
         this.ezsp.once(EzspEvents.NCP_NEEDS_RESET_AND_INIT, this.onNcpNeedsResetAndInit.bind(this));
@@ -743,10 +765,10 @@ export class EmberAdapter extends Adapter {
      * This is called by start and on internal reset.
      */
     private async initEzsp(): Promise<TsType.StartResult> {
-        let result: TsType.StartResult = "resumed";
+        let result: TsType.StartResult = 'resumed';
 
         // NOTE: something deep in this call can throw too
-        const startResult = (await this.ezsp.start());
+        const startResult = await this.ezsp.start();
 
         if (startResult !== EzspStatus.SUCCESS) {
             throw new Error(`Failed to start EZSP layer with status=${EzspStatus[startResult]}.`);
@@ -763,7 +785,7 @@ export class EmberAdapter extends Adapter {
         // allow other devices to modify the binding table
         await this.emberSetEzspPolicy(
             EzspPolicyId.BINDING_MODIFICATION_POLICY,
-            EzspDecisionId.CHECK_BINDING_MODIFICATIONS_ARE_VALID_ENDPOINT_CLUSTERS
+            EzspDecisionId.CHECK_BINDING_MODIFICATIONS_ARE_VALID_ENDPOINT_CLUSTERS,
         );
         // return message tag only in ezspMessageSentHandler()
         await this.emberSetEzspPolicy(EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY, EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK);
@@ -782,21 +804,21 @@ export class EmberAdapter extends Adapter {
         await this.registerFixedEndpoints();
         this.clearNetworkCache();
 
-        result = (await this.initTrustCenter());
+        result = await this.initTrustCenter();
 
         // after network UP, as per SDK, ensures clean slate
         await this.initNCPConcentrator();
 
         // populate network cache info
-        const [status, , parameters] = (await this.ezsp.ezspGetNetworkParameters());
+        const [status, , parameters] = await this.ezsp.ezspGetNetworkParameters();
 
         if (status !== SLStatus.OK) {
             throw new Error(`Failed to get network parameters with status=${SLStatus[status]}.`);
         }
 
         this.networkCache.parameters = parameters;
-        this.networkCache.status = (await this.ezsp.ezspNetworkState());
-        this.networkCache.eui64 = (await this.ezsp.ezspGetEui64());
+        this.networkCache.status = await this.ezsp.ezspNetworkState();
+        this.networkCache.eui64 = await this.ezsp.ezspGetEui64();
 
         logger.debug(`[INIT] Network Ready! ${JSON.stringify(this.networkCache)}`, NS);
 
@@ -809,34 +831,34 @@ export class EmberAdapter extends Adapter {
 
     /**
      * NCP concentrator init. Also enables source route discovery mode with RESCHEDULE.
-     * 
+     *
      * From AN1233:
      * To function correctly in a Zigbee PRO network, a trust center also requires that:
-     * 
+     *
      * 1. The trust center application must act as a concentrator (either high or low RAM).
      * 2. The trust center application must have support for source routing.
      *    It must record the source routes and properly handle requests by the stack for a particular source route.
      * 3. The trust center application must use an address cache for security, in order to maintain a mapping of IEEE address to short ID.
-     * 
+     *
      * Failure to satisfy all of the above requirements may result in failures when joining/rejoining devices to the network across multiple hops
      * (through a target node that is neither the trust center nor one of its neighboring routers.)
      */
     private async initNCPConcentrator(): Promise<void> {
-        const status = (await this.ezsp.ezspSetConcentrator(
+        const status = await this.ezsp.ezspSetConcentrator(
             true,
-            (this.stackConfig.CONCENTRATOR_RAM_TYPE === 'low') ? EMBER_LOW_RAM_CONCENTRATOR : EMBER_HIGH_RAM_CONCENTRATOR,
+            this.stackConfig.CONCENTRATOR_RAM_TYPE === 'low' ? EMBER_LOW_RAM_CONCENTRATOR : EMBER_HIGH_RAM_CONCENTRATOR,
             this.stackConfig.CONCENTRATOR_MIN_TIME,
             this.stackConfig.CONCENTRATOR_MAX_TIME,
             this.stackConfig.CONCENTRATOR_ROUTE_ERROR_THRESHOLD,
             this.stackConfig.CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD,
             this.stackConfig.CONCENTRATOR_MAX_HOPS,
-        ));
+        );
 
         if (status !== SLStatus.OK) {
             throw new Error(`[CONCENTRATOR] Failed to set concentrator with status=${SLStatus[status]}.`);
         }
 
-        const remainTilMTORR = (await this.ezsp.ezspSetSourceRouteDiscoveryMode(EmberSourceRouteDiscoveryMode.RESCHEDULE));
+        const remainTilMTORR = await this.ezsp.ezspSetSourceRouteDiscoveryMode(EmberSourceRouteDiscoveryMode.RESCHEDULE);
 
         logger.info(`[CONCENTRATOR] Started source route discovery. ${remainTilMTORR}ms until next broadcast.`, NS);
     }
@@ -851,20 +873,20 @@ export class EmberAdapter extends Adapter {
                 continue;
             }
 
-            const [epStatus,] = (await this.ezsp.ezspGetEndpointFlags(ep.endpoint));
+            const [epStatus] = await this.ezsp.ezspGetEndpointFlags(ep.endpoint);
 
             // endpoint not already registered
             if (epStatus !== SLStatus.OK) {
                 // check to see if ezspAddEndpoint needs to be called
                 // if ezspInit is called without NCP reset, ezspAddEndpoint is not necessary and will return an error
-                const status = (await this.ezsp.ezspAddEndpoint(
+                const status = await this.ezsp.ezspAddEndpoint(
                     ep.endpoint,
                     ep.profileId,
                     ep.deviceId,
                     ep.deviceVersion,
-                    ep.inClusterList.slice(),// copy
-                    ep.outClusterList.slice(),// copy
-                ));
+                    ep.inClusterList.slice(), // copy
+                    ep.outClusterList.slice(), // copy
+                );
 
                 if (status === SLStatus.OK) {
                     logger.debug(`Registered endpoint '${ep.endpoint}'.`, NS);
@@ -882,7 +904,7 @@ export class EmberAdapter extends Adapter {
                     networkIndex: ep.networkIndex,
                 };
 
-                const status = (await this.ezsp.ezspSetMulticastTableEntry(this.multicastTable.length, multicastEntry));
+                const status = await this.ezsp.ezspSetMulticastTableEntry(this.multicastTable.length, multicastEntry);
 
                 if (status !== SLStatus.OK) {
                     throw new Error(`Failed to register group "${multicastId}" in multicast table with status=${SLStatus[status]}.`);
@@ -895,31 +917,32 @@ export class EmberAdapter extends Adapter {
     }
 
     /**
-     * 
+     *
      * @returns True if the network needed to be formed.
      */
     private async initTrustCenter(): Promise<TsType.StartResult> {
         // init TC policies
         {
-            let status = (await this.emberSetEzspPolicy(
-                EzspPolicyId.TC_KEY_REQUEST_POLICY,
-                EzspDecisionId.ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY,
-            ));
+            let status = await this.emberSetEzspPolicy(EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY);
 
             if (status !== SLStatus.OK) {
-                throw new Error(`[INIT TC] Failed to set EzspPolicyId TC_KEY_REQUEST_POLICY to ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY `
-                    + `with status=${SLStatus[status]}.`);
+                throw new Error(
+                    `[INIT TC] Failed to set EzspPolicyId TC_KEY_REQUEST_POLICY to ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY ` +
+                        `with status=${SLStatus[status]}.`,
+                );
             }
 
             const appKeyRequestsPolicy = ALLOW_APP_KEY_REQUESTS ? EzspDecisionId.ALLOW_APP_KEY_REQUESTS : EzspDecisionId.DENY_APP_KEY_REQUESTS;
             status = await this.emberSetEzspPolicy(EzspPolicyId.APP_KEY_REQUEST_POLICY, appKeyRequestsPolicy);
 
             if (status !== SLStatus.OK) {
-                throw new Error(`[INIT TC] Failed to set EzspPolicyId APP_KEY_REQUEST_POLICY to ${EzspDecisionId[appKeyRequestsPolicy]} `
-                    + `with status=${SLStatus[status]}.`);
+                throw new Error(
+                    `[INIT TC] Failed to set EzspPolicyId APP_KEY_REQUEST_POLICY to ${EzspDecisionId[appKeyRequestsPolicy]} ` +
+                        `with status=${SLStatus[status]}.`,
+                );
             }
 
-            status = (await this.emberSetJoinPolicy(EmberJoinDecision.USE_PRECONFIGURED_KEY));
+            status = await this.emberSetJoinPolicy(EmberJoinDecision.USE_PRECONFIGURED_KEY);
 
             if (status !== SLStatus.OK) {
                 throw new Error(`[INIT TC] Failed to set join policy to USE_PRECONFIGURED_KEY with status=${SLStatus[status]}.`);
@@ -928,13 +951,13 @@ export class EmberAdapter extends Adapter {
 
         const configNetworkKey = Buffer.from(this.networkOptions.networkKey);
         const networkInitStruct: EmberNetworkInitStruct = {
-            bitmask: (EmberNetworkInitBitmask.PARENT_INFO_IN_TOKEN | EmberNetworkInitBitmask.END_DEVICE_REJOIN_ON_REBOOT)
+            bitmask: EmberNetworkInitBitmask.PARENT_INFO_IN_TOKEN | EmberNetworkInitBitmask.END_DEVICE_REJOIN_ON_REBOOT,
         };
-        const initStatus = (await this.ezsp.ezspNetworkInit(networkInitStruct));
+        const initStatus = await this.ezsp.ezspNetworkInit(networkInitStruct);
 
         logger.debug(`[INIT TC] Network init status=${SLStatus[initStatus]}.`, NS);
 
-        if ((initStatus !== SLStatus.OK) && (initStatus !== SLStatus.NOT_JOINED)) {
+        if (initStatus !== SLStatus.OK && initStatus !== SLStatus.NOT_JOINED) {
             throw new Error(`[INIT TC] Failed network init request with status=${SLStatus[initStatus]}.`);
         }
 
@@ -948,18 +971,22 @@ export class EmberAdapter extends Adapter {
                 '[INIT TC] Network init',
             );
 
-            const [npStatus, nodeType, netParams] = (await this.ezsp.ezspGetNetworkParameters());
+            const [npStatus, nodeType, netParams] = await this.ezsp.ezspGetNetworkParameters();
 
             logger.debug(`[INIT TC] Current adapter network: nodeType=${EmberNodeType[nodeType]} params=${JSON.stringify(netParams)}`, NS);
 
-            if ((npStatus === SLStatus.OK) && (nodeType === EmberNodeType.COORDINATOR) && (this.networkOptions.panID === netParams.panId)
-                && (equals(this.networkOptions.extendedPanID, netParams.extendedPanId))) {
+            if (
+                npStatus === SLStatus.OK &&
+                nodeType === EmberNodeType.COORDINATOR &&
+                this.networkOptions.panID === netParams.panId &&
+                equals(this.networkOptions.extendedPanID, netParams.extendedPanId)
+            ) {
                 // config matches adapter so far, no error, we can check the network key
                 const context = initSecurityManagerContext();
                 context.coreKeyType = SecManKeyType.NETWORK;
                 context.keyIndex = 0;
-                const [nkStatus, networkKey] = (await this.ezsp.ezspExportKey(context));
-    
+                const [nkStatus, networkKey] = await this.ezsp.ezspExportKey(context);
+
                 if (nkStatus !== SLStatus.OK) {
                     throw new Error(`[BACKUP] Failed to export Network Key with status=${SLStatus[nkStatus]}.`);
                 }
@@ -975,7 +1002,7 @@ export class EmberAdapter extends Adapter {
 
             if (action === NetworkInitAction.LEAVE) {
                 logger.info(`[INIT TC] Adapter network does not match config. Leaving network...`, NS);
-                const leaveStatus = (await this.ezsp.ezspLeaveNetwork());
+                const leaveStatus = await this.ezsp.ezspLeaveNetwork();
 
                 if (leaveStatus !== SLStatus.OK) {
                     throw new Error(`[INIT TC] Failed leave network request with status=${SLStatus[leaveStatus]}.`);
@@ -987,7 +1014,7 @@ export class EmberAdapter extends Adapter {
                     '[INIT TC] Leave network',
                 );
 
-                await Wait(200);// settle down
+                await Wait(200); // settle down
 
                 action = NetworkInitAction.LEFT;
             }
@@ -995,13 +1022,15 @@ export class EmberAdapter extends Adapter {
 
         const backup: Backup = this.getStoredBackup();
 
-        if ((initStatus === SLStatus.NOT_JOINED) || (action === NetworkInitAction.LEFT)) {
+        if (initStatus === SLStatus.NOT_JOINED || action === NetworkInitAction.LEFT) {
             // no network
             if (backup != null) {
-                if ((this.networkOptions.panID === backup.networkOptions.panId)
-                    && (Buffer.from(this.networkOptions.extendedPanID).equals(backup.networkOptions.extendedPanId))
-                    && (this.networkOptions.channelList.includes(backup.logicalChannel))
-                    && (configNetworkKey.equals(backup.networkOptions.networkKey))) {
+                if (
+                    this.networkOptions.panID === backup.networkOptions.panId &&
+                    Buffer.from(this.networkOptions.extendedPanID).equals(backup.networkOptions.extendedPanId) &&
+                    this.networkOptions.channelList.includes(backup.logicalChannel) &&
+                    configNetworkKey.equals(backup.networkOptions.networkKey)
+                ) {
                     // config matches backup
                     action = NetworkInitAction.FORM_BACKUP;
                 } else {
@@ -1021,61 +1050,61 @@ export class EmberAdapter extends Adapter {
         let result: TsType.StartResult = 'resumed';
 
         switch (action) {
-        case NetworkInitAction.FORM_BACKUP: {
-            logger.info(`[INIT TC] Forming from backup.`, NS);
-            const keyList: LinkKeyBackupData[] = backup.devices.map((device) => {
-                const octets = Array.from(device.ieeeAddress.reverse());
+            case NetworkInitAction.FORM_BACKUP: {
+                logger.info(`[INIT TC] Forming from backup.`, NS);
+                const keyList: LinkKeyBackupData[] = backup.devices.map((device) => {
+                    const octets = Array.from(device.ieeeAddress.reverse());
 
-                return {
-                    deviceEui64: `0x${octets.map(octet => octet.toString(16).padStart(2, '0')).join('')}`,
-                    key: {contents: device.linkKey.key},
-                    outgoingFrameCounter: device.linkKey.txCounter,
-                    incomingFrameCounter: device.linkKey.rxCounter,
-                };
-            });
+                    return {
+                        deviceEui64: `0x${octets.map((octet) => octet.toString(16).padStart(2, '0')).join('')}`,
+                        key: {contents: device.linkKey.key},
+                        outgoingFrameCounter: device.linkKey.txCounter,
+                        incomingFrameCounter: device.linkKey.rxCounter,
+                    };
+                });
 
-            // before forming
-            await this.importLinkKeys(keyList);
+                // before forming
+                await this.importLinkKeys(keyList);
 
-            await this.formNetwork(
-                true,/*from backup*/
-                backup.networkOptions.networkKey,
-                backup.networkKeyInfo.sequenceNumber,
-                backup.networkOptions.panId,
-                Array.from(backup.networkOptions.extendedPanId),
-                backup.logicalChannel,
-                backup.ezsp.hashed_tclk,
-            );
+                await this.formNetwork(
+                    true /*from backup*/,
+                    backup.networkOptions.networkKey,
+                    backup.networkKeyInfo.sequenceNumber,
+                    backup.networkOptions.panId,
+                    Array.from(backup.networkOptions.extendedPanId),
+                    backup.logicalChannel,
+                    backup.ezsp.hashed_tclk,
+                );
 
-            result = 'restored';
-            break;
-        }
-        case NetworkInitAction.FORM_CONFIG: {
-            logger.info(`[INIT TC] Forming from config.`, NS);
-            await this.formNetwork(
-                false,/*from config*/
-                configNetworkKey,
-                0,
-                this.networkOptions.panID,
-                this.networkOptions.extendedPanID,
-                this.networkOptions.channelList[0],
-                randomBytes(EMBER_ENCRYPTION_KEY_SIZE),// rnd TC link key
-            );
+                result = 'restored';
+                break;
+            }
+            case NetworkInitAction.FORM_CONFIG: {
+                logger.info(`[INIT TC] Forming from config.`, NS);
+                await this.formNetwork(
+                    false /*from config*/,
+                    configNetworkKey,
+                    0,
+                    this.networkOptions.panID,
+                    this.networkOptions.extendedPanID,
+                    this.networkOptions.channelList[0],
+                    randomBytes(EMBER_ENCRYPTION_KEY_SIZE), // rnd TC link key
+                );
 
-            result = 'reset';
-            break;
-        }
-        case NetworkInitAction.DONE: {
-            logger.info(`[INIT TC] Adapter network matches config.`, NS);
-            break;
-        }
-        default: {
-            throw new Error(`[INIT TC] Invalid action "${NetworkInitAction[action]}" for final stage.`);
-        }
+                result = 'reset';
+                break;
+            }
+            case NetworkInitAction.DONE: {
+                logger.info(`[INIT TC] Adapter network matches config.`, NS);
+                break;
+            }
+            default: {
+                throw new Error(`[INIT TC] Invalid action "${NetworkInitAction[action]}" for final stage.`);
+            }
         }
 
         // can't let frame counter wrap to zero (uint32_t), will force a broadcast after init if getting too close
-        if (backup != null && (backup.networkKeyInfo.frameCounter > 0xFEEEEEEE)) {
+        if (backup != null && backup.networkKeyInfo.frameCounter > 0xfeeeeeee) {
             // XXX: while this remains a pretty low occurrence in most (small) networks,
             //      currently Z2M won't support the key update because of one-way config...
             //      need to investigate handling this properly
@@ -1100,14 +1129,22 @@ export class EmberAdapter extends Adapter {
     /**
      * Form a network using given parameters.
      */
-    private async formNetwork(fromBackup: boolean, networkKey: Buffer, networkKeySequenceNumber: number, panId: PanId,
-        extendedPanId: ExtendedPanId, radioChannel: number, tcLinkKey: Buffer): Promise<void> {
+    private async formNetwork(
+        fromBackup: boolean,
+        networkKey: Buffer,
+        networkKeySequenceNumber: number,
+        panId: PanId,
+        extendedPanId: ExtendedPanId,
+        radioChannel: number,
+        tcLinkKey: Buffer,
+    ): Promise<void> {
         const state: EmberInitialSecurityState = {
-            bitmask: (
-                EmberInitialSecurityBitmask.TRUST_CENTER_GLOBAL_LINK_KEY | EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY
-                | EmberInitialSecurityBitmask.HAVE_NETWORK_KEY | EmberInitialSecurityBitmask.TRUST_CENTER_USES_HASHED_LINK_KEY
-                | EmberInitialSecurityBitmask.REQUIRE_ENCRYPTED_KEY
-            ),
+            bitmask:
+                EmberInitialSecurityBitmask.TRUST_CENTER_GLOBAL_LINK_KEY |
+                EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY |
+                EmberInitialSecurityBitmask.HAVE_NETWORK_KEY |
+                EmberInitialSecurityBitmask.TRUST_CENTER_USES_HASHED_LINK_KEY |
+                EmberInitialSecurityBitmask.REQUIRE_ENCRYPTED_KEY,
             preconfiguredKey: {contents: tcLinkKey},
             networkKey: {contents: networkKey},
             networkKeySequenceNumber: networkKeySequenceNumber,
@@ -1118,16 +1155,15 @@ export class EmberAdapter extends Adapter {
             state.bitmask |= EmberInitialSecurityBitmask.NO_FRAME_COUNTER_RESET;
         }
 
-        let status = (await this.ezsp.ezspSetInitialSecurityState(state));
+        let status = await this.ezsp.ezspSetInitialSecurityState(state);
 
         if (status !== SLStatus.OK) {
             throw new Error(`[INIT FORM] Failed to set initial security state with status=${SLStatus[status]}.`);
         }
 
-        const extended: EmberExtendedSecurityBitmask = (
-            EmberExtendedSecurityBitmask.JOINER_GLOBAL_LINK_KEY | EmberExtendedSecurityBitmask.NWK_LEAVE_REQUEST_NOT_ALLOWED
-        );
-        status = (await this.ezsp.ezspSetExtendedSecurityBitmask(extended));
+        const extended: EmberExtendedSecurityBitmask =
+            EmberExtendedSecurityBitmask.JOINER_GLOBAL_LINK_KEY | EmberExtendedSecurityBitmask.NWK_LEAVE_REQUEST_NOT_ALLOWED;
+        status = await this.ezsp.ezspSetExtendedSecurityBitmask(extended);
 
         if (status !== SLStatus.OK) {
             throw new Error(`[INIT FORM] Failed to set extended security bitmask to ${extended} with status=${SLStatus[status]}.`);
@@ -1154,7 +1190,7 @@ export class EmberAdapter extends Adapter {
 
         logger.info(`[INIT FORM] Forming new network with: ${JSON.stringify(netParams)}`, NS);
 
-        status = (await this.ezsp.ezspFormNetwork(netParams));
+        status = await this.ezsp.ezspFormNetwork(netParams);
 
         if (status !== SLStatus.OK) {
             throw new Error(`[INIT FORM] Failed form network request with status=${SLStatus[status]}.`);
@@ -1183,12 +1219,12 @@ export class EmberAdapter extends Adapter {
         let data: UnifiedBackupStorage;
 
         try {
-            data = JSON.parse((readFileSync(this.backupPath)).toString());
+            data = JSON.parse(readFileSync(this.backupPath).toString());
         } catch (error) {
             throw new Error(`[BACKUP] Coordinator backup is corrupted.`);
         }
 
-        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
+        if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`[BACKUP] Unsupported open coordinator backup version (version=${data.metadata?.version}).`);
             }
@@ -1215,7 +1251,7 @@ export class EmberAdapter extends Adapter {
      * @return List of keys data with AES hashed keys
      */
     public async exportLinkKeys(): Promise<LinkKeyBackupData[]> {
-        const [confStatus, keyTableSize] = (await this.ezsp.ezspGetConfigurationValue(EzspConfigId.KEY_TABLE_SIZE));
+        const [confStatus, keyTableSize] = await this.ezsp.ezspGetConfigurationValue(EzspConfigId.KEY_TABLE_SIZE);
 
         if (confStatus !== SLStatus.OK) {
             throw new Error(`[BACKUP] Failed to retrieve key table size from NCP with status=${SLStatus[confStatus]}.`);
@@ -1228,7 +1264,7 @@ export class EmberAdapter extends Adapter {
         const keyList: LinkKeyBackupData[] = [];
 
         for (let i = 0; i < keyTableSize; i++) {
-            [status, context, plaintextKey, apsKeyMeta] = (await this.ezsp.ezspExportLinkKeyByIndex(i));
+            [status, context, plaintextKey, apsKeyMeta] = await this.ezsp.ezspExportLinkKeyByIndex(i);
             logger.debug(`[BACKUP] Export link key at index ${i}, status=${SLStatus[status]}.`, NS);
 
             // only include key if we could retrieve one at index and hash it properly
@@ -1236,7 +1272,7 @@ export class EmberAdapter extends Adapter {
                 // Rather than give the real link key, the backup contains a hashed version of the key.
                 // This is done to prevent a compromise of the backup data from compromising the current link keys.
                 // This is per the Smart Energy spec.
-                const [hashStatus, hashedKey] = (await this.emberAesHashSimple(plaintextKey.contents));
+                const [hashStatus, hashedKey] = await this.emberAesHashSimple(plaintextKey.contents);
 
                 if (hashStatus === SLStatus.OK) {
                     keyList.push({
@@ -1259,15 +1295,15 @@ export class EmberAdapter extends Adapter {
 
     /**
      * Import link keys from backup.
-     * 
-     * @param backupData 
+     *
+     * @param backupData
      */
     public async importLinkKeys(backupData: LinkKeyBackupData[]): Promise<void> {
         if (!backupData?.length) {
             return;
         }
 
-        const [confStatus, keyTableSize] = (await this.ezsp.ezspGetConfigurationValue(EzspConfigId.KEY_TABLE_SIZE));
+        const [confStatus, keyTableSize] = await this.ezsp.ezspGetConfigurationValue(EzspConfigId.KEY_TABLE_SIZE);
 
         if (confStatus !== SLStatus.OK) {
             throw new Error(`[BACKUP] Failed to retrieve key table size from NCP with status=${SLStatus[confStatus]}.`);
@@ -1277,7 +1313,7 @@ export class EmberAdapter extends Adapter {
             throw new Error(`[BACKUP] Current key table of ${keyTableSize} is too small to import backup of ${backupData.length}!`);
         }
 
-        const networkStatus = (await this.emberNetworkState());
+        const networkStatus = await this.emberNetworkState();
 
         if (networkStatus !== EmberNetworkStatus.NO_NETWORK) {
             throw new Error(`[BACKUP] Cannot import TC data while network is up, networkStatus=${EmberNetworkStatus[networkStatus]}.`);
@@ -1287,12 +1323,16 @@ export class EmberAdapter extends Adapter {
 
         for (let i = 0; i < keyTableSize; i++) {
             // erase any key index not present in backup but available on the NCP
-            status = (i >= backupData.length) ? await this.ezsp.ezspEraseKeyTableEntry(i) :
-                await this.ezsp.ezspImportLinkKey(i, backupData[i].deviceEui64, backupData[i].key);
+            status =
+                i >= backupData.length
+                    ? await this.ezsp.ezspEraseKeyTableEntry(i)
+                    : await this.ezsp.ezspImportLinkKey(i, backupData[i].deviceEui64, backupData[i].key);
 
             if (status !== SLStatus.OK) {
-                throw new Error(`[BACKUP] Failed to ${((i >= backupData.length) ? "erase" : "set")} key table entry at index ${i} `
-                    + `with status=${SLStatus[status]}`);
+                throw new Error(
+                    `[BACKUP] Failed to ${i >= backupData.length ? 'erase' : 'set'} key table entry at index ${i} ` +
+                        `with status=${SLStatus[status]}`,
+                );
             }
         }
 
@@ -1307,41 +1347,38 @@ export class EmberAdapter extends Adapter {
      */
     private async broadcastNetworkKeyUpdate(): Promise<void> {
         return new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    logger.warning(`[TRUST CENTER] Performing a network key update. This might take a while and disrupt normal operation.`, NS);
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                logger.warning(`[TRUST CENTER] Performing a network key update. This might take a while and disrupt normal operation.`, NS);
 
-                    // zero-filled = let stack generate new random network key
-                    let status = await this.ezsp.ezspBroadcastNextNetworkKey({contents: Buffer.alloc(EMBER_ENCRYPTION_KEY_SIZE)});
+                // zero-filled = let stack generate new random network key
+                let status = await this.ezsp.ezspBroadcastNextNetworkKey({contents: Buffer.alloc(EMBER_ENCRYPTION_KEY_SIZE)});
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`[TRUST CENTER] Failed to broadcast next network key with status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
-
-                    // XXX: this will block other requests for a while, but should ensure the key propagates without interference?
-                    //      could also stop dispatching entirely and do this outside the queue if necessary/better
-                    await Wait(BROADCAST_NETWORK_KEY_SWITCH_WAIT_TIME);
-
-                    status = (await this.ezsp.ezspBroadcastNetworkKeySwitch());
-
-                    if (status !== SLStatus.OK) {
-                        // XXX: Not sure how likely this is, but this is bad, probably should hard fail?
-                        logger.error(`[TRUST CENTER] Failed to broadcast network key switch with status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
-
-                    resolve();
+                if (status !== SLStatus.OK) {
+                    logger.error(`[TRUST CENTER] Failed to broadcast next network key with status=${SLStatus[status]}.`, NS);
                     return status;
-                },
-                reject,
-            );
+                }
+
+                // XXX: this will block other requests for a while, but should ensure the key propagates without interference?
+                //      could also stop dispatching entirely and do this outside the queue if necessary/better
+                await Wait(BROADCAST_NETWORK_KEY_SWITCH_WAIT_TIME);
+
+                status = await this.ezsp.ezspBroadcastNetworkKeySwitch();
+
+                if (status !== SLStatus.OK) {
+                    // XXX: Not sure how likely this is, but this is bad, probably should hard fail?
+                    logger.error(`[TRUST CENTER] Failed to broadcast network key switch with status=${SLStatus[status]}.`, NS);
+                    return status;
+                }
+
+                resolve();
+                return status;
+            }, reject);
         });
     }
 
     /**
      * Received when EZSP layer alerts of a problem that needs the NCP to be reset.
-     * @param status 
+     * @param status
      */
     private async onNcpNeedsResetAndInit(status: EzspStatus): Promise<void> {
         logger.error(`!!! ADAPTER FATAL ERROR reason=${EzspStatus[status]}. !!!`, NS);
@@ -1354,7 +1391,7 @@ export class EmberAdapter extends Adapter {
 
             try {
                 await this.stop();
-                await Wait(500);// just because
+                await Wait(500); // just because
                 await this.start();
             } catch (err) {
                 logger.error(`Failed to reset and init adapter. ${err}`, NS);
@@ -1383,7 +1420,7 @@ export class EmberAdapter extends Adapter {
      */
     public async emberNetworkState(): Promise<EmberNetworkStatus> {
         if (this.networkCache.status === (UNKNOWN_NETWORK_STATE as EmberNetworkStatus)) {
-            const networkStatus = (await this.ezsp.ezspNetworkState());
+            const networkStatus = await this.ezsp.ezspNetworkState();
 
             this.networkCache.status = networkStatus;
         }
@@ -1398,7 +1435,7 @@ export class EmberAdapter extends Adapter {
      */
     public async emberGetEui64(): Promise<EUI64> {
         if (this.networkCache.eui64 === ZSpec.BLANK_EUI64) {
-            this.networkCache.eui64 = (await this.ezsp.ezspGetEui64());
+            this.networkCache.eui64 = await this.ezsp.ezspGetEui64();
         }
 
         return this.networkCache.eui64;
@@ -1411,7 +1448,7 @@ export class EmberAdapter extends Adapter {
      */
     public async emberGetPanId(): Promise<PanId> {
         if (this.networkCache.parameters.panId === ZSpec.INVALID_PAN_ID) {
-            const [status, , parameters] = (await this.ezsp.ezspGetNetworkParameters());
+            const [status, , parameters] = await this.ezsp.ezspGetNetworkParameters();
 
             if (status === SLStatus.OK) {
                 this.networkCache.parameters = parameters;
@@ -1430,7 +1467,7 @@ export class EmberAdapter extends Adapter {
      */
     public async emberGetExtendedPanId(): Promise<ExtendedPanId> {
         if (equals(this.networkCache.parameters.extendedPanId, ZSpec.BLANK_EXTENDED_PAN_ID)) {
-            const [status, , parameters] = (await this.ezsp.ezspGetNetworkParameters());
+            const [status, , parameters] = await this.ezsp.ezspGetNetworkParameters();
 
             if (status === SLStatus.OK) {
                 this.networkCache.parameters = parameters;
@@ -1449,7 +1486,7 @@ export class EmberAdapter extends Adapter {
      */
     public async emberGetRadioChannel(): Promise<number> {
         if (this.networkCache.parameters.radioChannel === INVALID_RADIO_CHANNEL) {
-            const [status, , parameters] = (await this.ezsp.ezspGetNetworkParameters());
+            const [status, , parameters] = await this.ezsp.ezspGetNetworkParameters();
 
             if (status === SLStatus.OK) {
                 this.networkCache.parameters = parameters;
@@ -1464,26 +1501,19 @@ export class EmberAdapter extends Adapter {
     // queued
     public async emberStartEnergyScan(): Promise<void> {
         return new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    const status = (await this.ezsp.ezspStartScan(
-                        EzspNetworkScanType.ENERGY_SCAN,
-                        EMBER_ALL_802_15_4_CHANNELS_MASK,
-                        ENERGY_SCAN_DURATION,
-                    ));
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                const status = await this.ezsp.ezspStartScan(EzspNetworkScanType.ENERGY_SCAN, EMBER_ALL_802_15_4_CHANNELS_MASK, ENERGY_SCAN_DURATION);
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`Failed energy scan request with status=${SLStatus[status]}.`, NS);
-                        return SLStatus.FAIL;
-                    }
+                if (status !== SLStatus.OK) {
+                    logger.error(`Failed energy scan request with status=${SLStatus[status]}.`, NS);
+                    return SLStatus.FAIL;
+                }
 
-                    // TODO: result in logs only atm, since UI doesn't support it
+                // TODO: result in logs only atm, since UI doesn't support it
 
-                    resolve();
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                resolve();
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
@@ -1494,9 +1524,9 @@ export class EmberAdapter extends Adapter {
     /**
      * Ensure the Host & NCP are aligned on protocols using version.
      * Cache the retrieved information.
-     * 
+     *
      * NOTE: currently throws on mismatch until support for lower versions is implemented (not planned atm)
-     * 
+     *
      * Does nothing if ncpNeedsResetAndInit == true.
      */
     private async emberVersion(): Promise<void> {
@@ -1516,14 +1546,16 @@ export class EmberAdapter extends Adapter {
 
             logger.info(`Adapter EZSP protocol version (${ncpEzspProtocolVer}) lower than Host. Switched.`, NS);
         } else {
-            throw new Error(`Adapter EZSP protocol version (${ncpEzspProtocolVer}) is not supported `
-                + `by Host [${EZSP_MIN_PROTOCOL_VERSION}-${EZSP_PROTOCOL_VERSION}].`);
+            throw new Error(
+                `Adapter EZSP protocol version (${ncpEzspProtocolVer}) is not supported ` +
+                    `by Host [${EZSP_MIN_PROTOCOL_VERSION}-${EZSP_PROTOCOL_VERSION}].`,
+            );
         }
 
         this.ezsp.setProtocolVersion(ncpEzspProtocolVer);
         logger.debug(`Adapter info: EZSPVersion=${ncpEzspProtocolVer} StackType=${ncpStackType} StackVersion=${ncpStackVer}`, NS);
 
-        const [status, versionStruct] = (await this.ezsp.ezspGetVersionStruct());
+        const [status, versionStruct] = await this.ezsp.ezspGetVersionStruct();
 
         if (status !== SLStatus.OK) {
             // Should never happen with support of only EZSP v13+
@@ -1547,19 +1579,19 @@ export class EmberAdapter extends Adapter {
      * This function sets an EZSP config value.
      * WARNING: Do not call for values that cannot be set after init without first resetting NCP (like table sizes).
      *          To avoid an extra NCP call, this does not check for it.
-     * @param configId 
+     * @param configId
      * @param value uint16_t
-     * @returns 
+     * @returns
      */
     private async emberSetEzspConfigValue(configId: EzspConfigId, value: number): Promise<SLStatus> {
-        const status = (await this.ezsp.ezspSetConfigurationValue(configId, value));
+        const status = await this.ezsp.ezspSetConfigurationValue(configId, value);
 
         logger.debug(`[EzspConfigId] SET "${EzspConfigId[configId]}" TO "${value}" with status=${SLStatus[status]}.`, NS);
 
         if (status !== SLStatus.OK) {
             logger.info(
-                `[EzspConfigId] Failed to SET "${EzspConfigId[configId]}" TO "${value}" with status=${SLStatus[status]}. `
-                    + `Firmware value will be used instead.`,
+                `[EzspConfigId] Failed to SET "${EzspConfigId[configId]}" TO "${value}" with status=${SLStatus[status]}. ` +
+                    `Firmware value will be used instead.`,
                 NS,
             );
         }
@@ -1569,13 +1601,13 @@ export class EmberAdapter extends Adapter {
 
     /**
      * This function sets an EZSP value.
-     * @param valueId 
+     * @param valueId
      * @param valueLength uint8_t
      * @param value uint8_t *
-     * @returns 
+     * @returns
      */
     private async emberSetEzspValue(valueId: EzspValueId, valueLength: number, value: number[]): Promise<SLStatus> {
-        const status = (await this.ezsp.ezspSetValue(valueId, valueLength, value));
+        const status = await this.ezsp.ezspSetValue(valueId, valueLength, value);
 
         logger.debug(`[EzspValueId] SET "${EzspValueId[valueId]}" TO "${value}" with status=${SLStatus[status]}.`, NS);
 
@@ -1584,12 +1616,12 @@ export class EmberAdapter extends Adapter {
 
     /**
      * This function sets an EZSP policy.
-     * @param policyId 
+     * @param policyId
      * @param decisionId Can be bitop
-     * @returns 
+     * @returns
      */
     private async emberSetEzspPolicy(policyId: EzspPolicyId, decisionId: number): Promise<SLStatus> {
-        const status = (await this.ezsp.ezspSetPolicy(policyId, decisionId));
+        const status = await this.ezsp.ezspSetPolicy(policyId, decisionId);
 
         logger.debug(`[EzspPolicyId] SET "${EzspPolicyId[policyId]}" TO "${decisionId}" with status=${SLStatus[status]}.`, NS);
 
@@ -1602,19 +1634,22 @@ export class EmberAdapter extends Adapter {
      * both input and output into EZSP. The block must be broken up into two
      * elements. We unify the two pieces here to make it invisible to the users.
      * @param context EmberAesMmoHashContext *
-     * @param finalize 
+     * @param finalize
      * @param data uint8_t * Expected of valid length (as in, not larger alloc)
      * @returns status
      * @returns result context or null
      */
-    private async aesMmoHash(context: EmberAesMmoHashContext, finalize: boolean, data: Buffer):
-        Promise<[SLStatus, reContext: EmberAesMmoHashContext]> {
+    private async aesMmoHash(
+        context: EmberAesMmoHashContext,
+        finalize: boolean,
+        data: Buffer,
+    ): Promise<[SLStatus, reContext: EmberAesMmoHashContext]> {
         if (data.length > 255) {
             // will be caught by request queue and rejected internally.
             throw new EzspError(EzspStatus.ERROR_INVALID_CALL);
         }
 
-        const [status, reContext] = (await this.ezsp.ezspAesMmoHash(context, finalize, data));
+        const [status, reContext] = await this.ezsp.ezspAesMmoHash(context, finalize, data);
 
         return [status, reContext];
     }
@@ -1634,7 +1669,7 @@ export class EmberAdapter extends Adapter {
      * @returns result context or null
      */
     private async emberAesMmoHashUpdate(context: EmberAesMmoHashContext, data: Buffer): Promise<[SLStatus, reContext: EmberAesMmoHashContext]> {
-        return this.aesMmoHash(context, false/*finalize?*/, data);
+        return this.aesMmoHash(context, false /*finalize?*/, data);
     }
 
     /**
@@ -1655,10 +1690,10 @@ export class EmberAdapter extends Adapter {
      * @returns result context or null
      */
     private async emberAesMmoHashFinal(context: EmberAesMmoHashContext, data: Buffer): Promise<[SLStatus, reContext: EmberAesMmoHashContext]> {
-        return this.aesMmoHash(context, true/*finalize?*/, data);
+        return this.aesMmoHash(context, true /*finalize?*/, data);
     }
 
-    /** 
+    /**
      *  This is a convenience method when the hash data is less than 255
      *  bytes. It inits, updates, and finalizes the hash in one function call.
      *
@@ -1673,7 +1708,7 @@ export class EmberAdapter extends Adapter {
     private async emberAesHashSimple(data: Buffer): Promise<[SLStatus, result: Buffer]> {
         const context = aesMmoHashInit();
 
-        const [status, reContext] = (await this.emberAesMmoHashFinal(context, data));
+        const [status, reContext] = await this.emberAesMmoHashFinal(context, data);
 
         return [status, reContext?.result];
     }
@@ -1691,9 +1726,11 @@ export class EmberAdapter extends Adapter {
      * @returns apsFrame Will be null if not broadcasting.
      * @returns messageTag The tag passed to ezspSend${x} function.
      */
-    private async emberPermitJoining(duration: number, broadcastMgmtPermitJoin: boolean)
-        : Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
-        let status = (await this.ezsp.ezspPermitJoining(duration));
+    private async emberPermitJoining(
+        duration: number,
+        broadcastMgmtPermitJoin: boolean,
+    ): Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
+        let status = await this.ezsp.ezspPermitJoining(duration);
         let apsFrame: EmberApsFrame = null;
         let messageTag: number = null;
 
@@ -1716,16 +1753,16 @@ export class EmberAdapter extends Adapter {
 
     /**
      * Set the trust center policy bitmask using decision.
-     * @param decision 
-     * @returns 
+     * @param decision
+     * @returns
      */
     private async emberSetJoinPolicy(decision: EmberJoinDecision): Promise<SLStatus> {
         let policy: number = EzspDecisionBitmask.DEFAULT_CONFIGURATION;
 
         if (decision == EmberJoinDecision.USE_PRECONFIGURED_KEY) {
-            policy = (EzspDecisionBitmask.ALLOW_JOINS | EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS);
+            policy = EzspDecisionBitmask.ALLOW_JOINS | EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS;
         } else if (decision == EmberJoinDecision.SEND_KEY_IN_THE_CLEAR) {
-            policy = (EzspDecisionBitmask.ALLOW_JOINS | EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.SEND_KEY_IN_CLEAR);
+            policy = EzspDecisionBitmask.ALLOW_JOINS | EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.SEND_KEY_IN_CLEAR;
         } else if (decision == EmberJoinDecision.ALLOW_REJOINS_ONLY) {
             policy = EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS;
         }
@@ -1768,22 +1805,26 @@ export class EmberAdapter extends Adapter {
      * @return uint8_t The next device request sequence number
      */
     private nextZDORequestSequence(): number {
-        return (this.zdoRequestSequence = ((++this.zdoRequestSequence) & APPLICATION_ZDO_SEQUENCE_MASK));
+        return (this.zdoRequestSequence = ++this.zdoRequestSequence & APPLICATION_ZDO_SEQUENCE_MASK);
     }
 
     /**
      * ZDO
-     * 
-     * @param destination 
+     *
+     * @param destination
      * @param clusterId uint16_t
      * @param messageContents Content of the ZDO request (sequence to be assigned at index zero)
-     * @param options 
+     * @param options
      * @returns status Indicates success or failure (with reason) of send
      * @returns apsFrame The APS Frame resulting of the request being built and sent (`sequence` set from stack-given value).
      * @returns messageTag The tag passed to ezspSend${x} function.
      */
-    private async sendZDORequest(destination: NodeId, clusterId: number, messageContents: Buffer, options: EmberApsOption):
-        Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
+    private async sendZDORequest(
+        destination: NodeId,
+        clusterId: number,
+        messageContents: Buffer,
+        options: EmberApsOption,
+    ): Promise<[SLStatus, apsFrame: EmberApsFrame, messageTag: number]> {
         if (messageContents.length > EZSP_MAX_FRAME_LENGTH) {
             return [SLStatus.MESSAGE_TOO_LONG, null, null];
         }
@@ -1798,17 +1839,23 @@ export class EmberAdapter extends Adapter {
             destinationEndpoint: Zdo.ZDO_ENDPOINT,
             options,
             groupId: 0,
-            sequence: 0,// set by stack
+            sequence: 0, // set by stack
         };
 
-        if (destination === ZSpec.BroadcastAddress.DEFAULT || destination === ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE
-            || destination === ZSpec.BroadcastAddress.SLEEPY) {
-            logger.debug(`~~~> [ZDO ${Zdo.ClusterId[clusterId]} BROADCAST to=${destination} messageTag=${messageTag} `
-                + `messageContents=${messageContents.toString('hex')}]`, NS);
+        if (
+            destination === ZSpec.BroadcastAddress.DEFAULT ||
+            destination === ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE ||
+            destination === ZSpec.BroadcastAddress.SLEEPY
+        ) {
+            logger.debug(
+                `~~~> [ZDO ${Zdo.ClusterId[clusterId]} BROADCAST to=${destination} messageTag=${messageTag} ` +
+                    `messageContents=${messageContents.toString('hex')}]`,
+                NS,
+            );
             const [status, apsSequence] = await this.ezsp.ezspSendBroadcast(
-                ZSpec.NULL_NODE_ID,// alias
+                ZSpec.NULL_NODE_ID, // alias
                 destination,
-                0,// nwkSequence
+                0, // nwkSequence
                 apsFrame,
                 this.getZDORequestRadius(),
                 messageTag,
@@ -1819,8 +1866,11 @@ export class EmberAdapter extends Adapter {
             logger.debug(`~~~> [SENT ZDO type=BROADCAST apsSequence=${apsSequence} messageTag=${messageTag} status=${SLStatus[status]}`, NS);
             return [status, apsFrame, messageTag];
         } else {
-            logger.debug(`~~~> [ZDO ${Zdo.ClusterId[clusterId]} UNICAST to=${destination} messageTag=${messageTag} `
-                + `messageContents=${messageContents.toString('hex')}]`, NS);
+            logger.debug(
+                `~~~> [ZDO ${Zdo.ClusterId[clusterId]} UNICAST to=${destination} messageTag=${messageTag} ` +
+                    `messageContents=${messageContents.toString('hex')}]`,
+                NS,
+            );
             const [status, apsSequence] = await this.ezsp.ezspSendUnicast(
                 EmberOutgoingMessageType.DIRECT,
                 destination,
@@ -1855,7 +1905,7 @@ export class EmberAdapter extends Adapter {
 
     public static async autoDetectPath(): Promise<string> {
         const paths = await SerialPortUtils.find(autoDetectDefinitions);
-        paths.sort((a, b) => (a < b) ? -1 : 1);
+        paths.sort((a, b) => (a < b ? -1 : 1));
         return paths.length > 0 ? paths[0] : null;
     }
 
@@ -1879,32 +1929,29 @@ export class EmberAdapter extends Adapter {
     // queued, non-InterPAN
     public async getCoordinator(): Promise<TsType.Coordinator> {
         return new Promise<TsType.Coordinator>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    // in all likelihood this will be retrieved from cache
-                    const ieeeAddr = (await this.emberGetEui64());
+                // in all likelihood this will be retrieved from cache
+                const ieeeAddr = await this.emberGetEui64();
 
-                    resolve({
-                        ieeeAddr,
-                        networkAddress: ZSpec.COORDINATOR_ADDRESS,
-                        manufacturerID: DEFAULT_MANUFACTURER_CODE,
-                        endpoints: FIXED_ENDPOINTS.map((ep) => {
-                            return {
-                                profileID: ep.profileId,
-                                ID: ep.endpoint,
-                                deviceID: ep.deviceId,
-                                inputClusters: ep.inClusterList.slice(),// copy
-                                outputClusters: ep.outClusterList.slice(),// copy
-                            };
-                        }),
-                    });
+                resolve({
+                    ieeeAddr,
+                    networkAddress: ZSpec.COORDINATOR_ADDRESS,
+                    manufacturerID: DEFAULT_MANUFACTURER_CODE,
+                    endpoints: FIXED_ENDPOINTS.map((ep) => {
+                        return {
+                            profileID: ep.profileId,
+                            ID: ep.endpoint,
+                            deviceID: ep.deviceId,
+                            inputClusters: ep.inClusterList.slice(), // copy
+                            outputClusters: ep.outClusterList.slice(), // copy
+                        };
+                    }),
+                });
 
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
@@ -1914,8 +1961,8 @@ export class EmberAdapter extends Adapter {
 
     // queued
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async reset(type: "soft" | "hard"): Promise<void> {
-        return Promise.reject(new Error("Not supported"));
+    public async reset(type: 'soft' | 'hard'): Promise<void> {
+        return Promise.reject(new Error('Not supported'));
         // NOTE: although this function is legacy atm, a couple of new untested EZSP functions that could also prove useful:
         // this.ezsp.ezspTokenFactoryReset(true/*excludeOutgoingFC*/, true/*excludeBootCounter*/);
         // this.ezsp.ezspResetNode()
@@ -1932,7 +1979,7 @@ export class EmberAdapter extends Adapter {
             this.requestQueue.enqueue(
                 async (): Promise<SLStatus> => {
                     // grab fresh version here, bypass cache
-                    const [netStatus, , netParams] = (await this.ezsp.ezspGetNetworkParameters());
+                    const [netStatus, , netParams] = await this.ezsp.ezspGetNetworkParameters();
 
                     if (netStatus !== SLStatus.OK) {
                         logger.error(`[BACKUP] Failed to get network parameters with status=${SLStatus[netStatus]}.`, NS);
@@ -1941,9 +1988,9 @@ export class EmberAdapter extends Adapter {
 
                     // update cache
                     this.networkCache.parameters = netParams;
-                    this.networkCache.eui64 = (await this.ezsp.ezspGetEui64());
+                    this.networkCache.eui64 = await this.ezsp.ezspGetEui64();
 
-                    const [netKeyStatus, netKeyInfo] = (await this.ezsp.ezspGetNetworkKeyInfo());
+                    const [netKeyStatus, netKeyInfo] = await this.ezsp.ezspGetNetworkKeyInfo();
 
                     if (netKeyStatus !== SLStatus.OK) {
                         logger.error(`[BACKUP] Failed to get network keys info with status=${SLStatus[netKeyStatus]}.`, NS);
@@ -1958,28 +2005,28 @@ export class EmberAdapter extends Adapter {
 
                     let context: SecManContext = initSecurityManagerContext();
                     context.coreKeyType = SecManKeyType.TC_LINK;
-                    const [tclkStatus, tcLinkKey] = (await this.ezsp.ezspExportKey(context));
+                    const [tclkStatus, tcLinkKey] = await this.ezsp.ezspExportKey(context);
 
                     if (tclkStatus !== SLStatus.OK) {
                         throw new Error(`[BACKUP] Failed to export TC Link Key with status=${SLStatus[tclkStatus]}.`);
                     }
 
-                    context = initSecurityManagerContext();// make sure it's back to zeroes
+                    context = initSecurityManagerContext(); // make sure it's back to zeroes
                     context.coreKeyType = SecManKeyType.NETWORK;
                     context.keyIndex = 0;
-                    const [nkStatus, networkKey] = (await this.ezsp.ezspExportKey(context));
+                    const [nkStatus, networkKey] = await this.ezsp.ezspExportKey(context);
 
                     if (nkStatus !== SLStatus.OK) {
                         throw new Error(`[BACKUP] Failed to export Network Key with status=${SLStatus[nkStatus]}.`);
                     }
 
-                    const zbChannels = Array.from(Array(EMBER_NUM_802_15_4_CHANNELS), (e, i)=> i + EMBER_MIN_802_15_4_CHANNEL_NUMBER);
+                    const zbChannels = Array.from(Array(EMBER_NUM_802_15_4_CHANNELS), (e, i) => i + EMBER_MIN_802_15_4_CHANNEL_NUMBER);
 
                     resolve({
                         networkOptions: {
-                            panId: netParams.panId,// uint16_t
+                            panId: netParams.panId, // uint16_t
                             extendedPanId: Buffer.from(netParams.extendedPanId),
-                            channelList: zbChannels.map((c: number) => ((2 ** c) & netParams.channels) ? c : null).filter((x) => x),
+                            channelList: zbChannels.map((c: number) => ((2 ** c) & netParams.channels ? c : null)).filter((x) => x),
                             networkKey: networkKey.contents,
                             networkKeyDistribute: false,
                         },
@@ -1990,11 +2037,11 @@ export class EmberAdapter extends Adapter {
                         },
                         securityLevel: SECURITY_LEVEL_Z3,
                         networkUpdateId: netParams.nwkUpdateId,
-                        coordinatorIeeeAddress: Buffer.from(this.networkCache.eui64.substring(2)/*take out 0x*/, 'hex').reverse(),
+                        coordinatorIeeeAddress: Buffer.from(this.networkCache.eui64.substring(2) /*take out 0x*/, 'hex').reverse(),
                         devices: keyList.map((key) => ({
-                            networkAddress: null,// not used for restore, no reason to make NCP calls for nothing
-                            ieeeAddress: Buffer.from(key.deviceEui64.substring(2)/*take out 0x*/, 'hex').reverse(),
-                            isDirectChild: false,// not used
+                            networkAddress: null, // not used for restore, no reason to make NCP calls for nothing
+                            ieeeAddress: Buffer.from(key.deviceEui64.substring(2) /*take out 0x*/, 'hex').reverse(),
+                            isDirectChild: false, // not used
                             linkKey: {
                                 key: key.key.contents,
                                 rxCounter: key.incomingFrameCounter,
@@ -2006,41 +2053,37 @@ export class EmberAdapter extends Adapter {
                             hashed_tclk: tcLinkKey.contents,
                             // tokens: tokensBuf.toString('hex'),
                             // altNetworkKey: altNetworkKey.contents,
-                        }
+                        },
                     });
 
                     return SLStatus.OK;
                 },
                 reject,
-                true,/*prioritize*/
+                true /*prioritize*/,
             );
         });
-
     }
 
     // queued, non-InterPAN
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
         return new Promise<TsType.NetworkParameters>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    // first call will cache for the others, but in all likelihood, it will all be from freshly cached after init
-                    // since Controller caches this also.
-                    const channel = (await this.emberGetRadioChannel());
-                    const panID = (await this.emberGetPanId());
-                    const extendedPanID = (await this.emberGetExtendedPanId());
+                // first call will cache for the others, but in all likelihood, it will all be from freshly cached after init
+                // since Controller caches this also.
+                const channel = await this.emberGetRadioChannel();
+                const panID = await this.emberGetPanId();
+                const extendedPanID = await this.emberGetExtendedPanId();
 
-                    resolve({
-                        panID,
-                        extendedPanID: parseInt(Buffer.from(extendedPanID).toString('hex'), 16),
-                        channel,
-                    });
+                resolve({
+                    panID,
+                    extendedPanID: parseInt(Buffer.from(extendedPanID).toString('hex'), 16),
+                    channel,
+                });
 
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
@@ -2051,70 +2094,67 @@ export class EmberAdapter extends Adapter {
     // queued
     public async changeChannel(newChannel: number): Promise<void> {
         return new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    const zdoPayload = BuffaloZdo.buildChannelChangeRequest(newChannel, null);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
-                        ZSpec.BroadcastAddress.SLEEPY,
-                        Zdo.ClusterId.NWK_UPDATE_REQUEST,
-                        zdoPayload,
-                        DEFAULT_APS_OPTIONS,
-                    );
+                const zdoPayload = BuffaloZdo.buildChannelChangeRequest(newChannel, null);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                    ZSpec.BroadcastAddress.SLEEPY,
+                    Zdo.ClusterId.NWK_UPDATE_REQUEST,
+                    zdoPayload,
+                    DEFAULT_APS_OPTIONS,
+                );
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`[ZDO] Failed broadcast channel change to "${newChannel}" with status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
+                if (status !== SLStatus.OK) {
+                    logger.error(`[ZDO] Failed broadcast channel change to "${newChannel}" with status=${SLStatus[status]}.`, NS);
+                    return status;
+                }
 
-                    await this.oneWaitress.startWaitingForEvent(
-                        {eventName: OneWaitressEvents.STACK_STATUS_CHANNEL_CHANGED},
-                        DEFAULT_NETWORK_REQUEST_TIMEOUT * 2,// observed to ~9sec
-                        '[ZDO] Change Channel',
-                    );
+                await this.oneWaitress.startWaitingForEvent(
+                    {eventName: OneWaitressEvents.STACK_STATUS_CHANNEL_CHANGED},
+                    DEFAULT_NETWORK_REQUEST_TIMEOUT * 2, // observed to ~9sec
+                    '[ZDO] Change Channel',
+                );
 
-                    resolve();
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                resolve();
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
     // queued
     public async scanChannels(networkAddress: NodeId, channels: number[], duration: number, count: number): Promise<ZdoTypes.NwkUpdateResponse> {
         return new Promise<ZdoTypes.NwkUpdateResponse>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    const zdoPayload = BuffaloZdo.buildScanChannelsRequest(channels, duration, count);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
-                        networkAddress,
-                        Zdo.ClusterId.NWK_UPDATE_REQUEST,
-                        zdoPayload,
-                        DEFAULT_APS_OPTIONS,
-                    );
+                const zdoPayload = BuffaloZdo.buildScanChannelsRequest(channels, duration, count);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                    networkAddress,
+                    Zdo.ClusterId.NWK_UPDATE_REQUEST,
+                    zdoPayload,
+                    DEFAULT_APS_OPTIONS,
+                );
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`[ZDO] Failed to scan channels '${channels}' on '${networkAddress} with status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
+                if (status !== SLStatus.OK) {
+                    logger.error(`[ZDO] Failed to scan channels '${channels}' on '${networkAddress} with status=${SLStatus[status]}.`, NS);
+                    return status;
+                }
 
-                    const result = await this.oneWaitress.startWaitingFor<ZdoTypes.NwkUpdateResponse>({
+                const result = await this.oneWaitress.startWaitingFor<ZdoTypes.NwkUpdateResponse>(
+                    {
                         target: networkAddress,
                         apsFrame,
                         responseClusterId: Zdo.ClusterId.NWK_UPDATE_RESPONSE,
-                    }, DEFAULT_ZDO_REQUEST_TIMEOUT + (((((2 ** duration) + 1) * (16 * 960)) / 1000) * count * channels.length));// time for scan
+                    },
+                    DEFAULT_ZDO_REQUEST_TIMEOUT + (((2 ** duration + 1) * (16 * 960)) / 1000) * count * channels.length,
+                ); // time for scan
 
-                    resolve(result);
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                resolve(result);
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
@@ -2126,20 +2166,17 @@ export class EmberAdapter extends Adapter {
         }
 
         return new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    const status = await this.ezsp.ezspSetRadioPower(value);
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                const status = await this.ezsp.ezspSetRadioPower(value);
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`Failed to set transmit power to ${value} status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
+                if (status !== SLStatus.OK) {
+                    logger.error(`Failed to set transmit power to ${value} status=${SLStatus[status]}.`, NS);
+                    return status;
+                }
 
-                    resolve();
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                resolve();
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
@@ -2153,20 +2190,22 @@ export class EmberAdapter extends Adapter {
         if (EMBER_INSTALL_CODE_SIZES.indexOf(key.length) !== -1) {
             // Reverse the bits in a byte (uint8_t)
             const reverse = (b: number): number => {
-                return (((b * 0x0802 & 0x22110) | (b * 0x8020 & 0x88440)) * 0x10101 >> 16) & 0xFF;
+                return (((((b * 0x0802) & 0x22110) | ((b * 0x8020) & 0x88440)) * 0x10101) >> 16) & 0xff;
             };
-            let crc = 0xFFFF;// uint16_t
+            let crc = 0xffff; // uint16_t
 
             // Compute the CRC and verify that it matches.
             // The bit reversals, byte swap, and ones' complement are due to differences between halCommonCrc16 and the Smart Energy version.
-            for (let index = 0; index < (key.length - EMBER_INSTALL_CODE_CRC_SIZE); index++) {
+            for (let index = 0; index < key.length - EMBER_INSTALL_CODE_CRC_SIZE; index++) {
                 crc = halCommonCrc16(reverse(key[index]), crc);
             }
 
-            crc = (~highLowToInt(reverse(lowByte(crc)), reverse(highByte(crc)))) & 0xFFFF;
+            crc = ~highLowToInt(reverse(lowByte(crc)), reverse(highByte(crc))) & 0xffff;
 
-            if (key[key.length - EMBER_INSTALL_CODE_CRC_SIZE] !== lowByte(crc)
-                || key[key.length - EMBER_INSTALL_CODE_CRC_SIZE + 1] !== highByte(crc)) {
+            if (
+                key[key.length - EMBER_INSTALL_CODE_CRC_SIZE] !== lowByte(crc) ||
+                key[key.length - EMBER_INSTALL_CODE_CRC_SIZE + 1] !== highByte(crc)
+            ) {
                 throw new Error(`[ADD INSTALL CODE] Failed for '${ieeeAddress}'; invalid code CRC.`);
             } else {
                 logger.debug(`[ADD INSTALL CODE] CRC validated for '${ieeeAddress}'.`, NS);
@@ -2174,53 +2213,61 @@ export class EmberAdapter extends Adapter {
         }
 
         return new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    // Compute the key from the install code and CRC.
-                    const [aesStatus, keyContents] = (await this.emberAesHashSimple(key));
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                // Compute the key from the install code and CRC.
+                const [aesStatus, keyContents] = await this.emberAesHashSimple(key);
 
-                    if (aesStatus !== SLStatus.OK) {
-                        logger.error(`[ADD INSTALL CODE] Failed AES hash for '${ieeeAddress}' with status=${SLStatus[aesStatus]}.`, NS);
-                        return aesStatus;
-                    }
+                if (aesStatus !== SLStatus.OK) {
+                    logger.error(`[ADD INSTALL CODE] Failed AES hash for '${ieeeAddress}' with status=${SLStatus[aesStatus]}.`, NS);
+                    return aesStatus;
+                }
 
-                    // Add the key to the transient key table.
-                    // This will be used while the DUT joins.
-                    const impStatus = (await this.ezsp.ezspImportTransientKey(ieeeAddress as EUI64, {contents: keyContents}));
+                // Add the key to the transient key table.
+                // This will be used while the DUT joins.
+                const impStatus = await this.ezsp.ezspImportTransientKey(ieeeAddress as EUI64, {contents: keyContents});
 
-                    if (impStatus == SLStatus.OK) {
-                        logger.debug(`[ADD INSTALL CODE] Success for '${ieeeAddress}'.`, NS);
-                    } else {
-                        logger.error(`[ADD INSTALL CODE] Failed for '${ieeeAddress}' with status=${SLStatus[impStatus]}.`, NS);
-                        return SLStatus.FAIL;
-                    }
+                if (impStatus == SLStatus.OK) {
+                    logger.debug(`[ADD INSTALL CODE] Success for '${ieeeAddress}'.`, NS);
+                } else {
+                    logger.error(`[ADD INSTALL CODE] Failed for '${ieeeAddress}' with status=${SLStatus[impStatus]}.`, NS);
+                    return SLStatus.FAIL;
+                }
 
-                    resolve();
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                resolve();
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
     /** WARNING: Adapter impl. Starts timer immediately upon returning */
-    public waitFor(networkAddress: number, endpoint: number, frameType: Zcl.FrameType, direction: Zcl.Direction, transactionSequenceNumber: number,
-        clusterID: number, commandIdentifier: number, timeout: number): {promise: Promise<ZclPayload>; cancel: () => void;} {
+    public waitFor(
+        networkAddress: number,
+        endpoint: number,
+        frameType: Zcl.FrameType,
+        direction: Zcl.Direction,
+        transactionSequenceNumber: number,
+        clusterID: number,
+        commandIdentifier: number,
+        timeout: number,
+    ): {promise: Promise<ZclPayload>; cancel: () => void} {
         const sourceEndpointInfo = FIXED_ENDPOINTS[0];
-        const waiter = this.oneWaitress.waitFor<ZclPayload>({
-            target: networkAddress,
-            apsFrame: {
-                clusterId: clusterID,
-                profileId: sourceEndpointInfo.profileId,// XXX: only used by OTA upstream
-                sequence: 0,// set by stack
-                sourceEndpoint: sourceEndpointInfo.endpoint,
-                destinationEndpoint: endpoint,
-                groupId: 0,
-                options: EmberApsOption.NONE,
+        const waiter = this.oneWaitress.waitFor<ZclPayload>(
+            {
+                target: networkAddress,
+                apsFrame: {
+                    clusterId: clusterID,
+                    profileId: sourceEndpointInfo.profileId, // XXX: only used by OTA upstream
+                    sequence: 0, // set by stack
+                    sourceEndpoint: sourceEndpointInfo.endpoint,
+                    destinationEndpoint: endpoint,
+                    groupId: 0,
+                    options: EmberApsOption.NONE,
+                },
+                zclSequence: transactionSequenceNumber,
+                commandIdentifier,
             },
-            zclSequence: transactionSequenceNumber,
-            commandIdentifier,
-        }, timeout || DEFAULT_ZCL_REQUEST_TIMEOUT * 3);// XXX: since this is used by OTA...
+            timeout || DEFAULT_ZCL_REQUEST_TIMEOUT * 3,
+        ); // XXX: since this is used by OTA...
 
         return {
             cancel: (): void => this.oneWaitress.remove(waiter.id),
@@ -2235,14 +2282,14 @@ export class EmberAdapter extends Adapter {
         const preJoining = async (): Promise<SLStatus> => {
             if (seconds) {
                 const plaintextKey: SecManKey = {contents: Buffer.from(ZIGBEE_PROFILE_INTEROPERABILITY_LINK_KEY)};
-                const impKeyStatus = (await this.ezsp.ezspImportTransientKey(ZSpec.BLANK_EUI64, plaintextKey));
+                const impKeyStatus = await this.ezsp.ezspImportTransientKey(ZSpec.BLANK_EUI64, plaintextKey);
 
                 if (impKeyStatus !== SLStatus.OK) {
                     logger.error(`[ZDO] Failed import transient key with status=${SLStatus[impKeyStatus]}.`, NS);
                     return SLStatus.FAIL;
                 }
 
-                const setJPstatus = (await this.emberSetJoinPolicy(EmberJoinDecision.USE_PRECONFIGURED_KEY));
+                const setJPstatus = await this.emberSetJoinPolicy(EmberJoinDecision.USE_PRECONFIGURED_KEY);
 
                 if (setJPstatus !== SLStatus.OK) {
                     logger.error(`[ZDO] Failed set join policy with status=${SLStatus[setJPstatus]}.`, NS);
@@ -2260,7 +2307,7 @@ export class EmberAdapter extends Adapter {
 
                 await this.ezsp.ezspClearTransientLinkKeys();
 
-                const setJPstatus = (await this.emberSetJoinPolicy(EmberJoinDecision.ALLOW_REJOINS_ONLY));
+                const setJPstatus = await this.emberSetJoinPolicy(EmberJoinDecision.ALLOW_REJOINS_ONLY);
 
                 if (setJPstatus !== SLStatus.OK) {
                     logger.error(`[ZDO] Failed set join policy for with status=${SLStatus[setJPstatus]}.`, NS);
@@ -2274,93 +2321,90 @@ export class EmberAdapter extends Adapter {
         if (networkAddress) {
             // specific device that is not `Coordinator`
             return new Promise<void>((resolve, reject): void => {
-                this.requestQueue.enqueue(
-                    async (): Promise<SLStatus> => {
-                        this.checkInterpanLock();
+                this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                    this.checkInterpanLock();
 
-                        const pjStatus = (await preJoining());
+                    const pjStatus = await preJoining();
 
-                        if (pjStatus !== SLStatus.OK) {
-                            logger.error(`[ZDO] Failed pre joining request for "${networkAddress}" with status=${SLStatus[pjStatus]}.`, NS);
-                            return pjStatus;
-                        }
+                    if (pjStatus !== SLStatus.OK) {
+                        logger.error(`[ZDO] Failed pre joining request for "${networkAddress}" with status=${SLStatus[pjStatus]}.`, NS);
+                        return pjStatus;
+                    }
 
-                        // `authentication`: TC significance always 1 (zb specs)
-                        const zdoPayload = BuffaloZdo.buildPermitJoining(seconds, 1, []);
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = await this.sendZDORequest(
-                            networkAddress,
-                            Zdo.ClusterId.PERMIT_JOINING_REQUEST,
-                            zdoPayload,
-                            DEFAULT_APS_OPTIONS,// XXX: SDK has 0 here?
-                        );
+                    // `authentication`: TC significance always 1 (zb specs)
+                    const zdoPayload = BuffaloZdo.buildPermitJoining(seconds, 1, []);
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                        networkAddress,
+                        Zdo.ClusterId.PERMIT_JOINING_REQUEST,
+                        zdoPayload,
+                        DEFAULT_APS_OPTIONS, // XXX: SDK has 0 here?
+                    );
 
-                        if (status !== SLStatus.OK) {
-                            logger.error(`[ZDO] Failed permit joining request for "${networkAddress}" with status=${SLStatus[status]}.`, NS);
-                            return status;
-                        }
+                    if (status !== SLStatus.OK) {
+                        logger.error(`[ZDO] Failed permit joining request for "${networkAddress}" with status=${SLStatus[status]}.`, NS);
+                        return status;
+                    }
 
-                        (await this.oneWaitress.startWaitingFor<void>({
+                    await this.oneWaitress.startWaitingFor<void>(
+                        {
                             target: networkAddress,
                             apsFrame,
                             responseClusterId: Zdo.ClusterId.PERMIT_JOINING_RESPONSE,
-                        }, DEFAULT_ZDO_REQUEST_TIMEOUT));
+                        },
+                        DEFAULT_ZDO_REQUEST_TIMEOUT,
+                    );
 
-                        resolve();
-                        return SLStatus.OK;
-                    },
-                    reject,
-                );
+                    resolve();
+                    return SLStatus.OK;
+                }, reject);
             });
         } else {
             // coordinator-only, or all
             return new Promise<void>((resolve, reject): void => {
-                this.requestQueue.enqueue(
-                    async (): Promise<SLStatus> => {
-                        this.checkInterpanLock();
+                this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                    this.checkInterpanLock();
 
-                        const pjStatus = (await preJoining());
+                    const pjStatus = await preJoining();
 
-                        if (pjStatus !== SLStatus.OK) {
-                            logger.error(`[ZDO] Failed pre joining request for "${networkAddress}" with status=${SLStatus[pjStatus]}.`, NS);
-                            return pjStatus;
-                        }
+                    if (pjStatus !== SLStatus.OK) {
+                        logger.error(`[ZDO] Failed pre joining request for "${networkAddress}" with status=${SLStatus[pjStatus]}.`, NS);
+                        return pjStatus;
+                    }
 
-                        // local permit join if `Coordinator`-only requested, else local + broadcast
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = (await this.emberPermitJoining(
-                            seconds,
-                            (networkAddress === ZSpec.COORDINATOR_ADDRESS) ? false : true,
-                        ));
+                    // local permit join if `Coordinator`-only requested, else local + broadcast
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const [status, apsFrame, messageTag] = await this.emberPermitJoining(
+                        seconds,
+                        networkAddress === ZSpec.COORDINATOR_ADDRESS ? false : true,
+                    );
 
-                        if (status !== SLStatus.OK) {
-                            logger.error(`[ZDO] Failed permit joining request with status=${SLStatus[status]}.`, NS);
-                            return status;
-                        }
+                    if (status !== SLStatus.OK) {
+                        logger.error(`[ZDO] Failed permit joining request with status=${SLStatus[status]}.`, NS);
+                        return status;
+                    }
 
-                        // NOTE: because Z2M is refreshing the permit join duration early to prevent it from closing
-                        //       (every 200sec, even if only opened for 254sec), we can't wait for the stack opened status,
-                        //       as it won't trigger again if already opened... so instead we assume it worked
-                        // NOTE2: with EZSP, 255=forever, and 254=max, but since upstream logic uses fixed 254 with interval refresh,
-                        //        we can't simply bypass upstream calls if called for "forever" to prevent useless NCP calls (3-4 each time),
-                        //        until called with 0 (disable), since we don't know if it was requested for forever or not...
-                        // TLDR: upstream logic change required to allow this
-                        // if (seconds) {
-                        //     await this.oneWaitress.startWaitingForEvent(
-                        //         {eventName: OneWaitressEvents.STACK_STATUS_NETWORK_OPENED},
-                        //         DEFAULT_ZCL_REQUEST_TIMEOUT,
-                        //         '[ZDO] Permit Joining',
-                        //     );
-                        // } else {
-                        //     // NOTE: CLOSED stack status is not triggered if the network was not OPENED in the first place, so don't wait for it
-                        //     //       same kind of problem as described above (upstream always tries to close after start, but EZSP already is)
-                        // }
+                    // NOTE: because Z2M is refreshing the permit join duration early to prevent it from closing
+                    //       (every 200sec, even if only opened for 254sec), we can't wait for the stack opened status,
+                    //       as it won't trigger again if already opened... so instead we assume it worked
+                    // NOTE2: with EZSP, 255=forever, and 254=max, but since upstream logic uses fixed 254 with interval refresh,
+                    //        we can't simply bypass upstream calls if called for "forever" to prevent useless NCP calls (3-4 each time),
+                    //        until called with 0 (disable), since we don't know if it was requested for forever or not...
+                    // TLDR: upstream logic change required to allow this
+                    // if (seconds) {
+                    //     await this.oneWaitress.startWaitingForEvent(
+                    //         {eventName: OneWaitressEvents.STACK_STATUS_NETWORK_OPENED},
+                    //         DEFAULT_ZCL_REQUEST_TIMEOUT,
+                    //         '[ZDO] Permit Joining',
+                    //     );
+                    // } else {
+                    //     // NOTE: CLOSED stack status is not triggered if the network was not OPENED in the first place, so don't wait for it
+                    //     //       same kind of problem as described above (upstream always tries to close after start, but EZSP already is)
+                    // }
 
-                        resolve();
-                        return SLStatus.OK;
-                    },
-                    reject,
-                );
+                    resolve();
+                    return SLStatus.OK;
+                }, reject);
             });
         }
     }
@@ -2376,7 +2420,7 @@ export class EmberAdapter extends Adapter {
                 networkAddress,
                 Zdo.ClusterId.LQI_TABLE_REQUEST,
                 zdoPayload,
-                DEFAULT_APS_OPTIONS
+                DEFAULT_APS_OPTIONS,
             );
 
             if (status !== SLStatus.OK) {
@@ -2384,11 +2428,14 @@ export class EmberAdapter extends Adapter {
                 return [status, null, null];
             }
 
-            const result = (await this.oneWaitress.startWaitingFor<ZdoTypes.LQITableResponse>({
-                target: networkAddress,
-                apsFrame,
-                responseClusterId: Zdo.ClusterId.LQI_TABLE_RESPONSE,
-            }, DEFAULT_ZDO_REQUEST_TIMEOUT));
+            const result = await this.oneWaitress.startWaitingFor<ZdoTypes.LQITableResponse>(
+                {
+                    target: networkAddress,
+                    apsFrame,
+                    responseClusterId: Zdo.ClusterId.LQI_TABLE_RESPONSE,
+                },
+                DEFAULT_ZDO_REQUEST_TIMEOUT,
+            );
 
             for (const entry of result.entryList) {
                 neighbors.push({
@@ -2404,34 +2451,31 @@ export class EmberAdapter extends Adapter {
         };
 
         return new Promise<TsType.LQI>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    let [status, tableEntries, entryCount] = (await request(0));
+                let [status, tableEntries, entryCount] = await request(0);
+
+                if (status !== SLStatus.OK) {
+                    return status;
+                }
+
+                const size = tableEntries;
+                let nextStartIndex = entryCount;
+
+                while (neighbors.length < size) {
+                    [status, tableEntries, entryCount] = await request(nextStartIndex);
 
                     if (status !== SLStatus.OK) {
                         return status;
                     }
 
-                    const size = tableEntries;
-                    let nextStartIndex = entryCount;
+                    nextStartIndex += entryCount;
+                }
 
-                    while (neighbors.length < size) {
-                        [status, tableEntries, entryCount] = (await request(nextStartIndex));
-
-                        if (status !== SLStatus.OK) {
-                            return status;
-                        }
-
-                        nextStartIndex += entryCount;
-                    }
-
-                    resolve({neighbors});
-                    return status;
-                },
-                reject,
-            );
+                resolve({neighbors});
+                return status;
+            }, reject);
         });
     }
 
@@ -2446,7 +2490,7 @@ export class EmberAdapter extends Adapter {
                 networkAddress,
                 Zdo.ClusterId.ROUTING_TABLE_REQUEST,
                 zdoPayload,
-                DEFAULT_APS_OPTIONS
+                DEFAULT_APS_OPTIONS,
             );
 
             if (status !== SLStatus.OK) {
@@ -2457,16 +2501,19 @@ export class EmberAdapter extends Adapter {
                 return [status, null, null];
             }
 
-            const result = (await this.oneWaitress.startWaitingFor<ZdoTypes.RoutingTableResponse>({
-                target: networkAddress,
-                apsFrame,
-                responseClusterId: Zdo.ClusterId.ROUTING_TABLE_RESPONSE,
-            }, DEFAULT_ZDO_REQUEST_TIMEOUT));
+            const result = await this.oneWaitress.startWaitingFor<ZdoTypes.RoutingTableResponse>(
+                {
+                    target: networkAddress,
+                    apsFrame,
+                    responseClusterId: Zdo.ClusterId.ROUTING_TABLE_RESPONSE,
+                },
+                DEFAULT_ZDO_REQUEST_TIMEOUT,
+            );
 
             for (const entry of result.entryList) {
                 table.push({
                     destinationAddress: entry.destinationAddress,
-                    status: RoutingTableStatus[entry.status],// get str value from enum to satisfy upstream's needs
+                    status: RoutingTableStatus[entry.status], // get str value from enum to satisfy upstream's needs
                     nextHop: entry.nextHopAddress,
                 });
             }
@@ -2475,67 +2522,66 @@ export class EmberAdapter extends Adapter {
         };
 
         return new Promise<TsType.RoutingTable>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    let [status, tableEntries, entryCount] = (await request(0));
+                let [status, tableEntries, entryCount] = await request(0);
+
+                if (status !== SLStatus.OK) {
+                    return status;
+                }
+
+                const size = tableEntries;
+                let nextStartIndex = entryCount;
+
+                while (table.length < size) {
+                    [status, tableEntries, entryCount] = await request(nextStartIndex);
 
                     if (status !== SLStatus.OK) {
                         return status;
                     }
 
-                    const size = tableEntries;
-                    let nextStartIndex = entryCount;
+                    nextStartIndex += entryCount;
+                }
 
-                    while (table.length < size) {
-                        [status, tableEntries, entryCount] = (await request(nextStartIndex));
-
-                        if (status !== SLStatus.OK) {
-                            return status;
-                        }
-
-                        nextStartIndex += entryCount;
-                    }
-
-                    resolve({table});
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                resolve({table});
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
     // queued, non-InterPAN
     public async nodeDescriptor(networkAddress: number): Promise<TsType.NodeDescriptor> {
         return new Promise<TsType.NodeDescriptor>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    const zdoPayload = BuffaloZdo.buildNodeDescriptorRequest(networkAddress);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
-                        networkAddress,
-                        Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST,
-                        zdoPayload,
-                        DEFAULT_APS_OPTIONS
-                    );
+                const zdoPayload = BuffaloZdo.buildNodeDescriptorRequest(networkAddress);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                    networkAddress,
+                    Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST,
+                    zdoPayload,
+                    DEFAULT_APS_OPTIONS,
+                );
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`[ZDO] Failed node descriptor for "${networkAddress}" with status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
+                if (status !== SLStatus.OK) {
+                    logger.error(`[ZDO] Failed node descriptor for "${networkAddress}" with status=${SLStatus[status]}.`, NS);
+                    return status;
+                }
 
-                    const result = (await this.oneWaitress.startWaitingFor<ZdoTypes.NodeDescriptorResponse>({
+                const result = await this.oneWaitress.startWaitingFor<ZdoTypes.NodeDescriptorResponse>(
+                    {
                         target: networkAddress,
                         apsFrame,
                         responseClusterId: Zdo.ClusterId.NODE_DESCRIPTOR_RESPONSE,
-                    }, DEFAULT_ZDO_REQUEST_TIMEOUT));
+                    },
+                    DEFAULT_ZDO_REQUEST_TIMEOUT,
+                );
 
-                    let type: TsType.DeviceType = 'Unknown';
+                let type: TsType.DeviceType = 'Unknown';
 
-                    switch (result.logicalType) {
+                switch (result.logicalType) {
                     case 0x0:
                         type = 'Coordinator';
                         break;
@@ -2545,282 +2591,312 @@ export class EmberAdapter extends Adapter {
                     case 0x2:
                         type = 'EndDevice';
                         break;
-                    }
+                }
 
-                    // always 0 before rev. 21 where field was added
-                    if (result.serverMask.stackComplianceResivion < CURRENT_ZIGBEE_SPEC_REVISION) {
-                        logger.warning(`[ZDO] Node descriptor for '${networkAddress}' reports device is only compliant to revision `
-                            + `'${(result.serverMask.stackComplianceResivion < 21) ? 'pre-21' : result.serverMask.stackComplianceResivion}' `
-                            + `of the ZigBee specification (current revision: ${CURRENT_ZIGBEE_SPEC_REVISION}).`, NS);
-                    }
+                // always 0 before rev. 21 where field was added
+                if (result.serverMask.stackComplianceResivion < CURRENT_ZIGBEE_SPEC_REVISION) {
+                    logger.warning(
+                        `[ZDO] Node descriptor for '${networkAddress}' reports device is only compliant to revision ` +
+                            `'${result.serverMask.stackComplianceResivion < 21 ? 'pre-21' : result.serverMask.stackComplianceResivion}' ` +
+                            `of the ZigBee specification (current revision: ${CURRENT_ZIGBEE_SPEC_REVISION}).`,
+                        NS,
+                    );
+                }
 
-                    resolve({type, manufacturerCode: result.manufacturerCode});
+                resolve({type, manufacturerCode: result.manufacturerCode});
 
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
     // queued, non-InterPAN
     public async activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints> {
         return new Promise<TsType.ActiveEndpoints>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    const zdoPayload = BuffaloZdo.buildActiveEndpointsRequest(networkAddress);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
-                        networkAddress,
-                        Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST,
-                        zdoPayload,
-                        DEFAULT_APS_OPTIONS
-                    );
+                const zdoPayload = BuffaloZdo.buildActiveEndpointsRequest(networkAddress);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                    networkAddress,
+                    Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST,
+                    zdoPayload,
+                    DEFAULT_APS_OPTIONS,
+                );
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`[ZDO] Failed active endpoints request for "${networkAddress}" with status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
+                if (status !== SLStatus.OK) {
+                    logger.error(`[ZDO] Failed active endpoints request for "${networkAddress}" with status=${SLStatus[status]}.`, NS);
+                    return status;
+                }
 
-                    const result = (await this.oneWaitress.startWaitingFor<ZdoTypes.ActiveEndpointsResponse>({
+                const result = await this.oneWaitress.startWaitingFor<ZdoTypes.ActiveEndpointsResponse>(
+                    {
                         target: networkAddress,
                         apsFrame,
                         responseClusterId: Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE,
-                    }, DEFAULT_ZDO_REQUEST_TIMEOUT));
+                    },
+                    DEFAULT_ZDO_REQUEST_TIMEOUT,
+                );
 
-                    resolve({endpoints: result.endpointList});
+                resolve({endpoints: result.endpointList});
 
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
     // queued, non-InterPAN
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor> {
         return new Promise<TsType.SimpleDescriptor>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    const zdoPayload = BuffaloZdo.buildSimpleDescriptorRequest(networkAddress, endpointID);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
-                        networkAddress,
-                        Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST,
-                        zdoPayload,
-                        DEFAULT_APS_OPTIONS
+                const zdoPayload = BuffaloZdo.buildSimpleDescriptorRequest(networkAddress, endpointID);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                    networkAddress,
+                    Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST,
+                    zdoPayload,
+                    DEFAULT_APS_OPTIONS,
+                );
+
+                if (status !== SLStatus.OK) {
+                    logger.error(
+                        `[ZDO] Failed simple descriptor request for "${networkAddress}" endpoint "${endpointID}" ` +
+                            `with status=${SLStatus[status]}.`,
+                        NS,
                     );
+                    return status;
+                }
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`[ZDO] Failed simple descriptor request for "${networkAddress}" endpoint "${endpointID}" `
-                            + `with status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
-
-                    const result = (await this.oneWaitress.startWaitingFor<ZdoTypes.SimpleDescriptorResponse>({
+                const result = await this.oneWaitress.startWaitingFor<ZdoTypes.SimpleDescriptorResponse>(
+                    {
                         target: networkAddress,
                         apsFrame,
                         responseClusterId: Zdo.ClusterId.SIMPLE_DESCRIPTOR_RESPONSE,
-                    }, DEFAULT_ZDO_REQUEST_TIMEOUT));
+                    },
+                    DEFAULT_ZDO_REQUEST_TIMEOUT,
+                );
 
-                    resolve({
-                        profileID: result.profileId,
-                        endpointID: result.endpoint,
-                        deviceID: result.deviceId,
-                        inputClusters: result.inClusterList,
-                        outputClusters: result.outClusterList,
-                    });
+                resolve({
+                    profileID: result.profileId,
+                    endpointID: result.endpoint,
+                    deviceID: result.deviceId,
+                    inputClusters: result.inClusterList,
+                    outputClusters: result.outClusterList,
+                });
 
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
     // queued, non-InterPAN
-    public async bind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
-        destinationAddressOrGroup: string | number, type: "endpoint" | "group", destinationEndpoint?: number): Promise<void> {
+    public async bind(
+        destinationNetworkAddress: number,
+        sourceIeeeAddress: string,
+        sourceEndpoint: number,
+        clusterID: number,
+        destinationAddressOrGroup: string | number,
+        type: 'endpoint' | 'group',
+        destinationEndpoint?: number,
+    ): Promise<void> {
         if (typeof destinationAddressOrGroup === 'string' && type === 'endpoint') {
             // dest address is EUI64 (str), so type should always be endpoint (unicast)
             return new Promise<void>((resolve, reject): void => {
-                this.requestQueue.enqueue(
-                    async (): Promise<SLStatus> => {
-                        this.checkInterpanLock();
+                this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                    this.checkInterpanLock();
 
-                        const zdoPayload = BuffaloZdo.buildBindRequest(
-                            sourceIeeeAddress as EUI64,
-                            sourceEndpoint,
-                            clusterID,
-                            Zdo.UNICAST_BINDING,
-                            destinationAddressOrGroup as EUI64,
-                            undefined,// not used with UNICAST_BINDING
-                            destinationEndpoint
+                    const zdoPayload = BuffaloZdo.buildBindRequest(
+                        sourceIeeeAddress as EUI64,
+                        sourceEndpoint,
+                        clusterID,
+                        Zdo.UNICAST_BINDING,
+                        destinationAddressOrGroup as EUI64,
+                        undefined, // not used with UNICAST_BINDING
+                        destinationEndpoint,
+                    );
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                        destinationNetworkAddress,
+                        Zdo.ClusterId.BIND_REQUEST,
+                        zdoPayload,
+                        DEFAULT_APS_OPTIONS,
+                    );
+
+                    if (status !== SLStatus.OK) {
+                        logger.error(
+                            `[ZDO] Failed bind request for "${destinationNetworkAddress}" destination "${destinationAddressOrGroup}" ` +
+                                `endpoint "${destinationEndpoint}" with status=${SLStatus[status]}.`,
+                            NS,
                         );
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = await this.sendZDORequest(
-                            destinationNetworkAddress,
-                            Zdo.ClusterId.BIND_REQUEST,
-                            zdoPayload,
-                            DEFAULT_APS_OPTIONS
-                        );
+                        return status;
+                    }
 
-                        if (status !== SLStatus.OK) {
-                            logger.error(`[ZDO] Failed bind request for "${destinationNetworkAddress}" destination "${destinationAddressOrGroup}" `
-                                + `endpoint "${destinationEndpoint}" with status=${SLStatus[status]}.`, NS);
-                            return status;
-                        }
-
-                        await this.oneWaitress.startWaitingFor<void>({
+                    await this.oneWaitress.startWaitingFor<void>(
+                        {
                             target: destinationNetworkAddress,
                             apsFrame,
                             responseClusterId: Zdo.ClusterId.BIND_RESPONSE,
-                        }, DEFAULT_ZDO_REQUEST_TIMEOUT);
+                        },
+                        DEFAULT_ZDO_REQUEST_TIMEOUT,
+                    );
 
-                        resolve();
-                        return SLStatus.OK;
-                    },
-                    reject,
-                );
+                    resolve();
+                    return SLStatus.OK;
+                }, reject);
             });
         } else if (typeof destinationAddressOrGroup === 'number' && type === 'group') {
             // dest is group num, so type should always be group (multicast)
             return new Promise<void>((resolve, reject): void => {
-                this.requestQueue.enqueue(
-                    async (): Promise<SLStatus> => {
-                        this.checkInterpanLock();
+                this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                    this.checkInterpanLock();
 
-                        const zdoPayload = BuffaloZdo.buildBindRequest(
-                            sourceIeeeAddress as EUI64,
-                            sourceEndpoint,
-                            clusterID,
-                            Zdo.MULTICAST_BINDING,
-                            undefined,// not used with MULTICAST_BINDING
-                            destinationAddressOrGroup,
-                            undefined// not used with MULTICAST_BINDING
+                    const zdoPayload = BuffaloZdo.buildBindRequest(
+                        sourceIeeeAddress as EUI64,
+                        sourceEndpoint,
+                        clusterID,
+                        Zdo.MULTICAST_BINDING,
+                        undefined, // not used with MULTICAST_BINDING
+                        destinationAddressOrGroup,
+                        undefined, // not used with MULTICAST_BINDING
+                    );
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                        destinationNetworkAddress,
+                        Zdo.ClusterId.BIND_REQUEST,
+                        zdoPayload,
+                        DEFAULT_APS_OPTIONS,
+                    );
+
+                    if (status !== SLStatus.OK) {
+                        logger.error(
+                            `[ZDO] Failed bind request for "${destinationNetworkAddress}" group "${destinationAddressOrGroup}" ` +
+                                `with status=${SLStatus[status]}.`,
+                            NS,
                         );
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = await this.sendZDORequest(
-                            destinationNetworkAddress,
-                            Zdo.ClusterId.BIND_REQUEST,
-                            zdoPayload,
-                            DEFAULT_APS_OPTIONS
-                        );
+                        return status;
+                    }
 
-                        if (status !== SLStatus.OK) {
-                            logger.error(`[ZDO] Failed bind request for "${destinationNetworkAddress}" group "${destinationAddressOrGroup}" `
-                                + `with status=${SLStatus[status]}.`, NS);
-                            return status;
-                        }
-
-                        await this.oneWaitress.startWaitingFor<void>({
+                    await this.oneWaitress.startWaitingFor<void>(
+                        {
                             target: destinationNetworkAddress,
                             apsFrame,
                             responseClusterId: Zdo.ClusterId.BIND_RESPONSE,
-                        }, DEFAULT_ZDO_REQUEST_TIMEOUT);
+                        },
+                        DEFAULT_ZDO_REQUEST_TIMEOUT,
+                    );
 
-                        resolve();
+                    resolve();
 
-                        return SLStatus.OK;
-                    },
-                    reject,
-                );
+                    return SLStatus.OK;
+                }, reject);
             });
         }
     }
 
     // queued, non-InterPAN
-    public async unbind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
-        destinationAddressOrGroup: string | number, type: "endpoint" | "group", destinationEndpoint: number): Promise<void> {
+    public async unbind(
+        destinationNetworkAddress: number,
+        sourceIeeeAddress: string,
+        sourceEndpoint: number,
+        clusterID: number,
+        destinationAddressOrGroup: string | number,
+        type: 'endpoint' | 'group',
+        destinationEndpoint: number,
+    ): Promise<void> {
         if (typeof destinationAddressOrGroup === 'string' && type === 'endpoint') {
             // dest address is EUI64 (str), so type should always be endpoint (unicast)
             return new Promise<void>((resolve, reject): void => {
-                this.requestQueue.enqueue(
-                    async (): Promise<SLStatus> => {
-                        this.checkInterpanLock();
+                this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                    this.checkInterpanLock();
 
-                        const zdoPayload = BuffaloZdo.buildUnbindRequest(
-                            sourceIeeeAddress as EUI64,
-                            sourceEndpoint,
-                            clusterID,
-                            Zdo.UNICAST_BINDING,
-                            destinationAddressOrGroup as EUI64,
-                            undefined,// not used with UNICAST_BINDING
-                            destinationEndpoint
+                    const zdoPayload = BuffaloZdo.buildUnbindRequest(
+                        sourceIeeeAddress as EUI64,
+                        sourceEndpoint,
+                        clusterID,
+                        Zdo.UNICAST_BINDING,
+                        destinationAddressOrGroup as EUI64,
+                        undefined, // not used with UNICAST_BINDING
+                        destinationEndpoint,
+                    );
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                        destinationNetworkAddress,
+                        Zdo.ClusterId.UNBIND_REQUEST,
+                        zdoPayload,
+                        DEFAULT_APS_OPTIONS,
+                    );
+
+                    if (status !== SLStatus.OK) {
+                        logger.error(
+                            `[ZDO] Failed unbind request for "${destinationNetworkAddress}" destination "${destinationAddressOrGroup}" ` +
+                                `endpoint "${destinationEndpoint}" with status=${SLStatus[status]}.`,
+                            NS,
                         );
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = await this.sendZDORequest(
-                            destinationNetworkAddress,
-                            Zdo.ClusterId.UNBIND_REQUEST,
-                            zdoPayload,
-                            DEFAULT_APS_OPTIONS
-                        );
+                        return status;
+                    }
 
-                        if (status !== SLStatus.OK) {
-                            logger.error(`[ZDO] Failed unbind request for "${destinationNetworkAddress}" destination "${destinationAddressOrGroup}" `
-                                + `endpoint "${destinationEndpoint}" with status=${SLStatus[status]}.`, NS);
-                            return status;
-                        }
-
-                        await this.oneWaitress.startWaitingFor<void>({
+                    await this.oneWaitress.startWaitingFor<void>(
+                        {
                             target: destinationNetworkAddress,
                             apsFrame,
                             responseClusterId: Zdo.ClusterId.UNBIND_RESPONSE,
-                        }, DEFAULT_ZDO_REQUEST_TIMEOUT);
+                        },
+                        DEFAULT_ZDO_REQUEST_TIMEOUT,
+                    );
 
-                        resolve();
-    
-                        return SLStatus.OK;
-                    },
-                    reject,
-                );
+                    resolve();
+
+                    return SLStatus.OK;
+                }, reject);
             });
         } else if (typeof destinationAddressOrGroup === 'number' && type === 'group') {
             // dest is group num, so type should always be group (multicast)
             return new Promise<void>((resolve, reject): void => {
-                this.requestQueue.enqueue(
-                    async (): Promise<SLStatus> => {
-                        this.checkInterpanLock();
+                this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                    this.checkInterpanLock();
 
-                        const zdoPayload = BuffaloZdo.buildUnbindRequest(
-                            sourceIeeeAddress as EUI64,
-                            sourceEndpoint,
-                            clusterID,
-                            Zdo.MULTICAST_BINDING,
-                            undefined,// not used with MULTICAST_BINDING
-                            destinationAddressOrGroup,
-                            undefined// not used with MULTICAST_BINDING
+                    const zdoPayload = BuffaloZdo.buildUnbindRequest(
+                        sourceIeeeAddress as EUI64,
+                        sourceEndpoint,
+                        clusterID,
+                        Zdo.MULTICAST_BINDING,
+                        undefined, // not used with MULTICAST_BINDING
+                        destinationAddressOrGroup,
+                        undefined, // not used with MULTICAST_BINDING
+                    );
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                        destinationNetworkAddress,
+                        Zdo.ClusterId.UNBIND_REQUEST,
+                        zdoPayload,
+                        DEFAULT_APS_OPTIONS,
+                    );
+
+                    if (status !== SLStatus.OK) {
+                        logger.error(
+                            `[ZDO] Failed unbind request for "${destinationNetworkAddress}" group "${destinationAddressOrGroup}" ` +
+                                `with status=${SLStatus[status]}.`,
+                            NS,
                         );
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const [status, apsFrame, messageTag] = await this.sendZDORequest(
-                            destinationNetworkAddress,
-                            Zdo.ClusterId.UNBIND_REQUEST,
-                            zdoPayload,
-                            DEFAULT_APS_OPTIONS
-                        );
+                        return status;
+                    }
 
-                        if (status !== SLStatus.OK) {
-                            logger.error(`[ZDO] Failed unbind request for "${destinationNetworkAddress}" group "${destinationAddressOrGroup}" `
-                                + `with status=${SLStatus[status]}.`, NS);
-                            return status;
-                        }
-
-                        await this.oneWaitress.startWaitingFor<void>({
+                    await this.oneWaitress.startWaitingFor<void>(
+                        {
                             target: destinationNetworkAddress,
                             apsFrame,
                             responseClusterId: Zdo.ClusterId.UNBIND_RESPONSE,
-                        }, DEFAULT_ZDO_REQUEST_TIMEOUT);
+                        },
+                        DEFAULT_ZDO_REQUEST_TIMEOUT,
+                    );
 
-                        resolve();
+                    resolve();
 
-                        return SLStatus.OK;
-                    },
-                    reject,
-                );
+                    return SLStatus.OK;
+                }, reject);
             });
         }
     }
@@ -2828,47 +2904,57 @@ export class EmberAdapter extends Adapter {
     // queued, non-InterPAN
     public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
         return new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    const zdoPayload = BuffaloZdo.buildLeaveRequest(ieeeAddr as EUI64, Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, apsFrame, messageTag] = await this.sendZDORequest(
-                        networkAddress,
-                        Zdo.ClusterId.LEAVE_REQUEST,
-                        zdoPayload,
-                        DEFAULT_APS_OPTIONS,
+                const zdoPayload = BuffaloZdo.buildLeaveRequest(ieeeAddr as EUI64, Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const [status, apsFrame, messageTag] = await this.sendZDORequest(
+                    networkAddress,
+                    Zdo.ClusterId.LEAVE_REQUEST,
+                    zdoPayload,
+                    DEFAULT_APS_OPTIONS,
+                );
+
+                if (status !== SLStatus.OK) {
+                    logger.error(
+                        `[ZDO] Failed remove device request for "${networkAddress}" target "${ieeeAddr}" ` + `with status=${SLStatus[status]}.`,
+                        NS,
                     );
+                    return status;
+                }
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`[ZDO] Failed remove device request for "${networkAddress}" target "${ieeeAddr}" `
-                            + `with status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
-
-                    await this.oneWaitress.startWaitingFor<void>({
+                await this.oneWaitress.startWaitingFor<void>(
+                    {
                         target: networkAddress,
                         apsFrame,
                         responseClusterId: Zdo.ClusterId.LEAVE_RESPONSE,
-                    }, DEFAULT_ZDO_REQUEST_TIMEOUT);
+                    },
+                    DEFAULT_ZDO_REQUEST_TIMEOUT,
+                );
 
-                    resolve();
+                resolve();
 
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
     //---- ZCL
 
     // queued, non-InterPAN
-    public async sendZclFrameToEndpoint(ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: Zcl.Frame, timeout: number,
-        disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number): Promise<ZclPayload> {
-        const sourceEndpointInfo = typeof sourceEndpoint === 'number' ?
-            FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
+    public async sendZclFrameToEndpoint(
+        ieeeAddr: string,
+        networkAddress: number,
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        timeout: number,
+        disableResponse: boolean,
+        disableRecovery: boolean,
+        sourceEndpoint?: number,
+    ): Promise<ZclPayload> {
+        const sourceEndpointInfo =
+            typeof sourceEndpoint === 'number' ? FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint) : FIXED_ENDPOINTS[0];
         const command = zclFrame.command;
         let commandResponseId: number = null;
 
@@ -2882,10 +2968,10 @@ export class EmberAdapter extends Adapter {
             profileId: sourceEndpointInfo.profileId,
             clusterId: zclFrame.cluster.ID,
             sourceEndpoint: sourceEndpointInfo.endpoint,
-            destinationEndpoint: (typeof endpoint === 'number') ? endpoint : FIXED_ENDPOINTS[0].endpoint,
+            destinationEndpoint: typeof endpoint === 'number' ? endpoint : FIXED_ENDPOINTS[0].endpoint,
             options: DEFAULT_APS_OPTIONS,
             groupId: 0,
-            sequence: 0,// set by stack
+            sequence: 0, // set by stack
         };
 
         // don't RETRY if no response expected
@@ -2896,53 +2982,50 @@ export class EmberAdapter extends Adapter {
         const data = zclFrame.toBuffer();
 
         return new Promise<ZclPayload>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    logger.debug(
-                        `~~~> [ZCL to=${networkAddress} apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`,
-                        NS,
-                    );
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, messageTag] = (await this.ezsp.send(
-                        EmberOutgoingMessageType.DIRECT,
-                        networkAddress,
-                        apsFrame,
-                        data,
-                        0,// alias
-                        0,// alias seq
-                    ));
+                logger.debug(`~~~> [ZCL to=${networkAddress} apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const [status, messageTag] = await this.ezsp.send(
+                    EmberOutgoingMessageType.DIRECT,
+                    networkAddress,
+                    apsFrame,
+                    data,
+                    0, // alias
+                    0, // alias seq
+                );
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`~x~> [ZCL to=${networkAddress}] Failed to send request with status=${SLStatus[status]}.`, NS);
-                        return status;// let queue handle retry based on status
-                    }
+                if (status !== SLStatus.OK) {
+                    logger.error(`~x~> [ZCL to=${networkAddress}] Failed to send request with status=${SLStatus[status]}.`, NS);
+                    return status; // let queue handle retry based on status
+                }
 
-                    if (commandResponseId != null) {
-                        // NOTE: aps sequence number will have been set by send function
-                        const result = (await this.oneWaitress.startWaitingFor<ZclPayload>({
+                if (commandResponseId != null) {
+                    // NOTE: aps sequence number will have been set by send function
+                    const result = await this.oneWaitress.startWaitingFor<ZclPayload>(
+                        {
                             target: networkAddress,
                             apsFrame,
                             zclSequence: zclFrame.header.transactionSequenceNumber,
                             commandIdentifier: commandResponseId,
-                        }, timeout || DEFAULT_ZCL_REQUEST_TIMEOUT));
+                        },
+                        timeout || DEFAULT_ZCL_REQUEST_TIMEOUT,
+                    );
 
-                        resolve(result);
-                    } else {
-                        resolve(null);// don't expect a response
-                        return SLStatus.OK;
-                    }
-                },
-                reject,
-            );
+                    resolve(result);
+                } else {
+                    resolve(null); // don't expect a response
+                    return SLStatus.OK;
+                }
+            }, reject);
         });
     }
 
     // queued, non-InterPAN
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
-        const sourceEndpointInfo = typeof sourceEndpoint === 'number' ?
-            FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
+        const sourceEndpointInfo =
+            typeof sourceEndpoint === 'number' ? FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint) : FIXED_ENDPOINTS[0];
         const apsFrame: EmberApsFrame = {
             profileId: sourceEndpointInfo.profileId,
             clusterId: zclFrame.cluster.ID,
@@ -2950,85 +3033,83 @@ export class EmberAdapter extends Adapter {
             destinationEndpoint: FIXED_ENDPOINTS[0].endpoint,
             options: DEFAULT_APS_OPTIONS,
             groupId: groupID,
-            sequence: 0,// set by stack
+            sequence: 0, // set by stack
         };
         const data = zclFrame.toBuffer();
 
         return new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    logger.debug(`~~~> [ZCL GROUP apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, messageTag] = (await this.ezsp.send(
-                        EmberOutgoingMessageType.MULTICAST,
-                        apsFrame.groupId,// not used with MULTICAST
-                        apsFrame,
-                        data,
-                        0,// alias
-                        0,// alias seq
-                    ));
+                logger.debug(`~~~> [ZCL GROUP apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const [status, messageTag] = await this.ezsp.send(
+                    EmberOutgoingMessageType.MULTICAST,
+                    apsFrame.groupId, // not used with MULTICAST
+                    apsFrame,
+                    data,
+                    0, // alias
+                    0, // alias seq
+                );
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`~x~> [ZCL GROUP] Failed to send with status=${SLStatus[status]}.`, NS);
-                        return status;// let queue handle retry based on status
-                    }
+                if (status !== SLStatus.OK) {
+                    logger.error(`~x~> [ZCL GROUP] Failed to send with status=${SLStatus[status]}.`, NS);
+                    return status; // let queue handle retry based on status
+                }
 
-                    // NOTE: since ezspMessageSentHandler could take a while here, we don't block, it'll just be logged if the delivery failed
+                // NOTE: since ezspMessageSentHandler could take a while here, we don't block, it'll just be logged if the delivery failed
 
-                    resolve();
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                resolve();
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
     // queued, non-InterPAN
-    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: ZSpec.BroadcastAddress)
-        : Promise<void> {
-        const sourceEndpointInfo = typeof sourceEndpoint === 'number' ?
-            FIXED_ENDPOINTS.find((epi) => (epi.endpoint === sourceEndpoint)) : FIXED_ENDPOINTS[0];
+    public async sendZclFrameToAll(
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        sourceEndpoint: number,
+        destination: ZSpec.BroadcastAddress,
+    ): Promise<void> {
+        const sourceEndpointInfo =
+            typeof sourceEndpoint === 'number' ? FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint) : FIXED_ENDPOINTS[0];
         const apsFrame: EmberApsFrame = {
             profileId: sourceEndpointInfo.profileId,
             clusterId: zclFrame.cluster.ID,
             sourceEndpoint: sourceEndpointInfo.endpoint,
-            destinationEndpoint: (typeof endpoint === 'number') ? endpoint : FIXED_ENDPOINTS[0].endpoint,
+            destinationEndpoint: typeof endpoint === 'number' ? endpoint : FIXED_ENDPOINTS[0].endpoint,
             options: DEFAULT_APS_OPTIONS,
             groupId: destination,
-            sequence: 0,// set by stack
+            sequence: 0, // set by stack
         };
         const data = zclFrame.toBuffer();
 
         return new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.checkInterpanLock();
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.checkInterpanLock();
 
-                    logger.debug(`~~~> [ZCL BROADCAST apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const [status, messageTag] = (await this.ezsp.send(
-                        EmberOutgoingMessageType.BROADCAST,
-                        destination,
-                        apsFrame,
-                        data,
-                        0,// alias
-                        0,// alias seq
-                    ));
+                logger.debug(`~~~> [ZCL BROADCAST apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const [status, messageTag] = await this.ezsp.send(
+                    EmberOutgoingMessageType.BROADCAST,
+                    destination,
+                    apsFrame,
+                    data,
+                    0, // alias
+                    0, // alias seq
+                );
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`~x~> [ZCL BROADCAST] Failed to send with status=${SLStatus[status]}.`, NS);
-                        return status;// let queue handle retry based on status
-                    }
+                if (status !== SLStatus.OK) {
+                    logger.error(`~x~> [ZCL BROADCAST] Failed to send with status=${SLStatus[status]}.`, NS);
+                    return status; // let queue handle retry based on status
+                }
 
-                    // NOTE: since ezspMessageSentHandler could take a while here, we don't block, it'll just be logged if the delivery failed
+                // NOTE: since ezspMessageSentHandler could take a while here, we don't block, it'll just be logged if the delivery failed
 
-                    resolve();
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                resolve();
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
@@ -3044,66 +3125,60 @@ export class EmberAdapter extends Adapter {
         }
 
         return new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    this.interpanLock = true;
-                    const status = (await this.ezsp.ezspSetLogicalAndRadioChannel(channel));
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                this.interpanLock = true;
+                const status = await this.ezsp.ezspSetLogicalAndRadioChannel(channel);
 
-                    if (status !== SLStatus.OK) {
-                        this.interpanLock = false;// XXX: ok?
-                        logger.error(`Failed to set InterPAN channel to ${channel} with status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
-
-                    resolve();
+                if (status !== SLStatus.OK) {
+                    this.interpanLock = false; // XXX: ok?
+                    logger.error(`Failed to set InterPAN channel to ${channel} with status=${SLStatus[status]}.`, NS);
                     return status;
-                },
-                reject,
-            );
+                }
+
+                resolve();
+                return status;
+            }, reject);
         });
     }
 
     // queued
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
         return new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    const msgBuffalo = new EzspBuffalo(Buffer.alloc(MAXIMUM_INTERPAN_LENGTH));
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                const msgBuffalo = new EzspBuffalo(Buffer.alloc(MAXIMUM_INTERPAN_LENGTH));
 
-                    // cache-enabled getters
-                    const sourcePanId = (await this.emberGetPanId());
-                    const sourceEui64 = (await this.emberGetEui64());
+                // cache-enabled getters
+                const sourcePanId = await this.emberGetPanId();
+                const sourceEui64 = await this.emberGetEui64();
 
-                    msgBuffalo.writeUInt16((LONG_DEST_FRAME_CONTROL | MAC_ACK_REQUIRED));// macFrameControl
-                    msgBuffalo.writeUInt8(0);// sequence Skip Sequence number, stack sets the sequence number.
-                    msgBuffalo.writeUInt16(ZSpec.INVALID_PAN_ID);// destPanId
-                    msgBuffalo.writeIeeeAddr(ieeeAddress);// destAddress (longAddress)
-                    msgBuffalo.writeUInt16(sourcePanId);// sourcePanId
-                    msgBuffalo.writeIeeeAddr(sourceEui64);// sourceAddress
-                    msgBuffalo.writeUInt16(STUB_NWK_FRAME_CONTROL);// nwkFrameControl
-                    msgBuffalo.writeUInt8((EmberInterpanMessageType.UNICAST | INTERPAN_APS_FRAME_TYPE));// apsFrameControl
-                    msgBuffalo.writeUInt16(zclFrame.cluster.ID);
-                    msgBuffalo.writeUInt16(ZSpec.TOUCHLINK_PROFILE_ID);
+                msgBuffalo.writeUInt16(LONG_DEST_FRAME_CONTROL | MAC_ACK_REQUIRED); // macFrameControl
+                msgBuffalo.writeUInt8(0); // sequence Skip Sequence number, stack sets the sequence number.
+                msgBuffalo.writeUInt16(ZSpec.INVALID_PAN_ID); // destPanId
+                msgBuffalo.writeIeeeAddr(ieeeAddress); // destAddress (longAddress)
+                msgBuffalo.writeUInt16(sourcePanId); // sourcePanId
+                msgBuffalo.writeIeeeAddr(sourceEui64); // sourceAddress
+                msgBuffalo.writeUInt16(STUB_NWK_FRAME_CONTROL); // nwkFrameControl
+                msgBuffalo.writeUInt8(EmberInterpanMessageType.UNICAST | INTERPAN_APS_FRAME_TYPE); // apsFrameControl
+                msgBuffalo.writeUInt16(zclFrame.cluster.ID);
+                msgBuffalo.writeUInt16(ZSpec.TOUCHLINK_PROFILE_ID);
 
-                    logger.debug(`~~~> [ZCL TOUCHLINK to=${ieeeAddress} header=${JSON.stringify(zclFrame.header)}]`, NS);
-                    const status = await this.ezsp.ezspSendRawMessage(
-                        Buffer.concat([msgBuffalo.getWritten(), zclFrame.toBuffer()]),
-                        EmberTransmitPriority.NORMAL,
-                        true
-                    );
+                logger.debug(`~~~> [ZCL TOUCHLINK to=${ieeeAddress} header=${JSON.stringify(zclFrame.header)}]`, NS);
+                const status = await this.ezsp.ezspSendRawMessage(
+                    Buffer.concat([msgBuffalo.getWritten(), zclFrame.toBuffer()]),
+                    EmberTransmitPriority.NORMAL,
+                    true,
+                );
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`~x~> [ZCL TOUCHLINK to=${ieeeAddress}] Failed to send with status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
-
-                    // NOTE: can use ezspRawTransmitCompleteHandler if needed here
-
-                    resolve();
+                if (status !== SLStatus.OK) {
+                    logger.error(`~x~> [ZCL TOUCHLINK to=${ieeeAddress}] Failed to send with status=${SLStatus[status]}.`, NS);
                     return status;
-                },
-                reject,
-            );
+                }
+
+                // NOTE: can use ezspRawTransmitCompleteHandler if needed here
+
+                resolve();
+                return status;
+            }, reject);
         });
     }
 
@@ -3123,82 +3198,76 @@ export class EmberAdapter extends Adapter {
             destinationEndpoint: 0,
             options: EmberApsOption.NONE,
             groupId: ZSpec.BroadcastAddress.SLEEPY,
-            sequence: 0,// set by stack
+            sequence: 0, // set by stack
         };
 
         return new Promise<ZclPayload>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    const msgBuffalo = new EzspBuffalo(Buffer.alloc(MAXIMUM_INTERPAN_LENGTH));
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                const msgBuffalo = new EzspBuffalo(Buffer.alloc(MAXIMUM_INTERPAN_LENGTH));
 
-                    // cache-enabled getters
-                    const sourcePanId = (await this.emberGetPanId());
-                    const sourceEui64 = (await this.emberGetEui64());
+                // cache-enabled getters
+                const sourcePanId = await this.emberGetPanId();
+                const sourceEui64 = await this.emberGetEui64();
 
-                    msgBuffalo.writeUInt16(SHORT_DEST_FRAME_CONTROL);// macFrameControl
-                    msgBuffalo.writeUInt8(0);// sequence Skip Sequence number, stack sets the sequence number.
-                    msgBuffalo.writeUInt16(ZSpec.INVALID_PAN_ID);// destPanId
-                    msgBuffalo.writeUInt16(apsFrame.groupId);// destAddress (longAddress)
-                    msgBuffalo.writeUInt16(sourcePanId);// sourcePanId
-                    msgBuffalo.writeIeeeAddr(sourceEui64);// sourceAddress
-                    msgBuffalo.writeUInt16(STUB_NWK_FRAME_CONTROL);// nwkFrameControl
-                    msgBuffalo.writeUInt8((EmberInterpanMessageType.BROADCAST | INTERPAN_APS_FRAME_TYPE));// apsFrameControl
-                    msgBuffalo.writeUInt16(apsFrame.clusterId);
-                    msgBuffalo.writeUInt16(apsFrame.profileId);
+                msgBuffalo.writeUInt16(SHORT_DEST_FRAME_CONTROL); // macFrameControl
+                msgBuffalo.writeUInt8(0); // sequence Skip Sequence number, stack sets the sequence number.
+                msgBuffalo.writeUInt16(ZSpec.INVALID_PAN_ID); // destPanId
+                msgBuffalo.writeUInt16(apsFrame.groupId); // destAddress (longAddress)
+                msgBuffalo.writeUInt16(sourcePanId); // sourcePanId
+                msgBuffalo.writeIeeeAddr(sourceEui64); // sourceAddress
+                msgBuffalo.writeUInt16(STUB_NWK_FRAME_CONTROL); // nwkFrameControl
+                msgBuffalo.writeUInt8(EmberInterpanMessageType.BROADCAST | INTERPAN_APS_FRAME_TYPE); // apsFrameControl
+                msgBuffalo.writeUInt16(apsFrame.clusterId);
+                msgBuffalo.writeUInt16(apsFrame.profileId);
 
-                    const data = Buffer.concat([msgBuffalo.getWritten(), zclFrame.toBuffer()]);
+                const data = Buffer.concat([msgBuffalo.getWritten(), zclFrame.toBuffer()]);
 
-                    logger.debug(`~~~> [ZCL TOUCHLINK BROADCAST header=${JSON.stringify(zclFrame.header)}]`, NS);
-                    const status = (await this.ezsp.ezspSendRawMessage(data, EmberTransmitPriority.NORMAL, true));
+                logger.debug(`~~~> [ZCL TOUCHLINK BROADCAST header=${JSON.stringify(zclFrame.header)}]`, NS);
+                const status = await this.ezsp.ezspSendRawMessage(data, EmberTransmitPriority.NORMAL, true);
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(`~x~> [ZCL TOUCHLINK BROADCAST] Failed to send with status=${SLStatus[status]}.`, NS);
-                        return status;
-                    }
+                if (status !== SLStatus.OK) {
+                    logger.error(`~x~> [ZCL TOUCHLINK BROADCAST] Failed to send with status=${SLStatus[status]}.`, NS);
+                    return status;
+                }
 
-                    // NOTE: can use ezspRawTransmitCompleteHandler if needed here
+                // NOTE: can use ezspRawTransmitCompleteHandler if needed here
 
-                    const result = (await this.oneWaitress.startWaitingFor<ZclPayload>({
+                const result = await this.oneWaitress.startWaitingFor<ZclPayload>(
+                    {
                         target: null,
                         apsFrame: apsFrame,
                         zclSequence: zclFrame.header.transactionSequenceNumber,
                         commandIdentifier: command.response,
-                    }, timeout || DEFAULT_ZCL_REQUEST_TIMEOUT * 2));// XXX: touchlink timeout?
+                    },
+                    timeout || DEFAULT_ZCL_REQUEST_TIMEOUT * 2,
+                ); // XXX: touchlink timeout?
 
-                    resolve(result);
+                resolve(result);
 
-                    return SLStatus.OK;
-                },
-                reject,
-            );
+                return SLStatus.OK;
+            }, reject);
         });
     }
 
     // queued
     public async restoreChannelInterPAN(): Promise<void> {
         return new Promise<void>((resolve, reject): void => {
-            this.requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    const status = (await this.ezsp.ezspSetLogicalAndRadioChannel(this.networkOptions.channelList[0]));
+            this.requestQueue.enqueue(async (): Promise<SLStatus> => {
+                const status = await this.ezsp.ezspSetLogicalAndRadioChannel(this.networkOptions.channelList[0]);
 
-                    if (status !== SLStatus.OK) {
-                        logger.error(
-                            `Failed to restore InterPAN channel to ${this.networkOptions.channelList[0]} with status=${SLStatus[status]}.`,
-                            NS,
-                        );
-                        return status;
-                    }
-
-                    // let adapter settle down
-                    await Wait(3000);
-
-                    this.interpanLock = false;
-
-                    resolve();
+                if (status !== SLStatus.OK) {
+                    logger.error(`Failed to restore InterPAN channel to ${this.networkOptions.channelList[0]} with status=${SLStatus[status]}.`, NS);
                     return status;
-                },
-                reject,
-            );
+                }
+
+                // let adapter settle down
+                await Wait(3000);
+
+                this.interpanLock = false;
+
+                resolve();
+                return status;
+            }, reject);
         });
     }
 
@@ -3212,5 +3281,4 @@ export class EmberAdapter extends Adapter {
             throw new EzspError(EzspStatus.ERROR_INVALID_CALL);
         }
     }
-
 }

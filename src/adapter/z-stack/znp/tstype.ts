@@ -1,6 +1,6 @@
 import ParameterType from './parameterType';
 
-type MtType = number|number[]|string|Buffer|{[s: string]: number|string}[];
+type MtType = number | number[] | string | Buffer | {[s: string]: number | string}[];
 
 interface MtParameter {
     name: string;

@@ -1,11 +1,12 @@
-import {DatabaseEntry, KeyValue} from '../tstype';
-import Entity from './entity';
-import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
-import * as Zcl from '../../zspec/zcl';
-import Endpoint from './endpoint';
-import Device from './device';
 import assert from 'assert';
+
 import {logger} from '../../utils/logger';
+import * as Zcl from '../../zspec/zcl';
+import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
+import {DatabaseEntry, KeyValue} from '../tstype';
+import Device from './device';
+import Endpoint from './endpoint';
+import Entity from './entity';
 
 const NS = 'zh:controller:group';
 
@@ -21,7 +22,9 @@ class Group extends Entity {
     private databaseID: number;
     public readonly groupID: number;
     private readonly _members: Set<Endpoint>;
-    get members(): Endpoint[] {return Array.from(this._members).filter((e) => e.getDevice());}
+    get members(): Endpoint[] {
+        return Array.from(this._members).filter((e) => e.getDevice());
+    }
     // Can be used by applications to store data.
     public readonly meta: KeyValue;
 
@@ -119,7 +122,7 @@ class Group extends Entity {
         delete Group.groups[this.groupID];
     }
 
-    public save(writeDatabase=true): void {
+    public save(writeDatabase = true): void {
         Entity.database.update(this.toDatabaseRecord(), writeDatabase);
     }
 
@@ -141,17 +144,15 @@ class Group extends Entity {
      * Zigbee functions
      */
 
-    public async write(
-        clusterKey: number | string, attributes: KeyValue, options?: Options
-    ): Promise<void> {
+    public async write(clusterKey: number | string, attributes: KeyValue, options?: Options): Promise<void> {
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const cluster = Zcl.Utils.getCluster(clusterKey, null, {});
-        const payload: {attrId: number; dataType: number; attrData: number| string | boolean}[] = [];
+        const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (cluster.hasAttribute(nameOrID)) {
                 const attribute = cluster.getAttribute(nameOrID);
                 payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
-            } else if (!isNaN(Number(nameOrID))){
+            } else if (!isNaN(Number(nameOrID))) {
                 payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type});
             } else {
                 throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
@@ -163,9 +164,16 @@ class Group extends Entity {
 
         try {
             const frame = Zcl.Frame.create(
-                Zcl.FrameType.GLOBAL, options.direction, true,
-                options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-                'write', cluster.ID, payload, {}, options.reservedBits
+                Zcl.FrameType.GLOBAL,
+                options.direction,
+                true,
+                options.manufacturerCode,
+                options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+                'write',
+                cluster.ID,
+                payload,
+                {},
+                options.reservedBits,
             );
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
@@ -175,9 +183,7 @@ class Group extends Entity {
         }
     }
 
-    public async read(
-        clusterKey: number | string, attributes: (string | number)[], options?: Options
-    ): Promise<void> {
+    public async read(clusterKey: number | string, attributes: (string | number)[], options?: Options): Promise<void> {
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const cluster = Zcl.Utils.getCluster(clusterKey, null, {});
         const payload: {attrId: number}[] = [];
@@ -186,9 +192,16 @@ class Group extends Entity {
         }
 
         const frame = Zcl.Frame.create(
-            Zcl.FrameType.GLOBAL, options.direction, true,
-            options.manufacturerCode, options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(), 'read',
-            cluster.ID, payload, {}, options.reservedBits
+            Zcl.FrameType.GLOBAL,
+            options.direction,
+            true,
+            options.manufacturerCode,
+            options.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+            'read',
+            cluster.ID,
+            payload,
+            {},
+            options.reservedBits,
         );
 
         const log = `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(options)})`;
@@ -203,9 +216,7 @@ class Group extends Entity {
         }
     }
 
-    public async command(
-        clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options
-    ): Promise<void> {
+    public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const cluster = Zcl.Utils.getCluster(clusterKey, null, {});
         const command = cluster.getCommand(commandKey);
@@ -215,9 +226,16 @@ class Group extends Entity {
 
         try {
             const frame = Zcl.Frame.create(
-                Zcl.FrameType.SPECIFIC, options.direction, true, options.manufacturerCode,
+                Zcl.FrameType.SPECIFIC,
+                options.direction,
+                true,
+                options.manufacturerCode,
                 options.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
-                command.ID, cluster.ID, payload, {}, options.reservedBits
+                command.ID,
+                cluster.ID,
+                payload,
+                {},
+                options.reservedBits,
             );
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
@@ -227,9 +245,7 @@ class Group extends Entity {
         }
     }
 
-    private getOptionsWithDefaults(
-        options: Options, direction: Zcl.Direction
-    ): Options {
+    private getOptionsWithDefaults(options: Options, direction: Zcl.Direction): Options {
         const providedOptions = options || {};
         return {
             direction,
@@ -237,7 +253,7 @@ class Group extends Entity {
             reservedBits: 0,
             manufacturerCode: null,
             transactionSequenceNumber: null,
-            ...providedOptions
+            ...providedOptions,
         };
     }
 }
