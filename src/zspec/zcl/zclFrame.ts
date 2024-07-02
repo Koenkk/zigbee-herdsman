@@ -6,7 +6,7 @@ import {BuffaloZclOptions, Cluster, Command, ClusterName, CustomClusters, Parame
 import * as Utils from './utils';
 import {ZclHeader} from './zclHeader';
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ZclPayload = any;
 
 const ListTypes: number[] = [

@@ -42,7 +42,6 @@ export const ZiGateMessage: {[k: number]: ZiGateMessageType} = {
             // 1 = Incorrect parameters
             // 2 = Unhandled command
             // 3 = Command failed
-            // eslint-disable-next-line max-len
             // 4 = Busy (Node is carrying out a lengthy operation and is currently unable to handle the incoming command)
             // 5 = Stack already started (no new configuration accepted)
             // 128 – 244 = Failed (ZigBee event codes)

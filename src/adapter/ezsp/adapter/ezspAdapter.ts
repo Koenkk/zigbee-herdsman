@@ -305,8 +305,8 @@ class EZSPAdapter extends Adapter {
                 return result;
             };
 
-            // eslint-disable-next-line
-            const add = (list: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const add = (list: any): void => {
                 for (const entry of list) {
                     this.driver.setNode(entry.nodeid, entry.ieee);
                     neighbors.push({
@@ -350,8 +350,8 @@ class EZSPAdapter extends Adapter {
                 return result;
             };
 
-            // eslint-disable-next-line
-            const add = (list: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const add = (list: any): void => {
                 for (const entry of list) {
                     table.push({
                         destinationAddress: entry.destination,

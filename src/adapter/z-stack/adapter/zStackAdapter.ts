@@ -692,7 +692,7 @@ class ZStackAdapter extends Adapter {
             this.checkInterpanLock();
             const neighbors: LQINeighbor[] = [];
 
-            // eslint-disable-next-line
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const request = async (startIndex: number): Promise<any> => {
                 const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'mgmtLqiRsp', {srcaddr: networkAddress});
                 await this.znp.request(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: networkAddress, startindex: startIndex}, response.ID);
@@ -706,8 +706,8 @@ class ZStackAdapter extends Adapter {
                 return result;
             };
 
-            // eslint-disable-next-line
-            const add = (list: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const add = (list: any): void => {
                 for (const entry of list) {
                     neighbors.push({
                         linkquality: entry.lqi,
@@ -739,7 +739,7 @@ class ZStackAdapter extends Adapter {
             this.checkInterpanLock();
             const table: RoutingTableEntry[] = [];
 
-            // eslint-disable-next-line
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const request = async (startIndex: number): Promise<any> => {
                 const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'mgmtRtgRsp', {srcaddr: networkAddress});
                 await this.znp.request(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: networkAddress, startindex: startIndex}, response.ID);
@@ -755,8 +755,8 @@ class ZStackAdapter extends Adapter {
                 return result;
             };
 
-            // eslint-disable-next-line
-            const add = (list: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const add = (list: any): void => {
                 for (const entry of list) {
                     table.push({
                         destinationAddress: entry.destNwkAddr,

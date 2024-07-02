@@ -262,7 +262,7 @@ export enum ZiGateMessageCode {
     AddGroupResponse = 0x8060,
 }
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ZiGateObjectPayload = any;
 
 export enum ZPSNwkKeyState {

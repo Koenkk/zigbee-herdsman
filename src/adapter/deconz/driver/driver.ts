@@ -264,7 +264,6 @@ class Driver extends events.EventEmitter {
                 logger.debug('Socket connected', NS);
             });
 
-            // eslint-disable-next-line
             const self = this;
             this.socketPort.on('ready', async function () {
                 logger.debug('Socket ready', NS);
@@ -496,7 +495,6 @@ class Driver extends events.EventEmitter {
                 break;
             default:
                 throw new Error('process queue - unknown command id');
-                break;
         }
 
         busyQueue.push(req);
@@ -680,7 +678,6 @@ class Driver extends events.EventEmitter {
                 }
             default:
                 throw new Error('process APS queue - unknown command id');
-                break;
         }
     }
 
@@ -713,7 +710,6 @@ class Driver extends events.EventEmitter {
                 break;
             default:
                 throw new Error('process APS Confirm/Ind queue - unknown command id');
-                break;
         }
     }
 

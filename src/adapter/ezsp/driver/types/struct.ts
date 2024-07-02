@@ -6,8 +6,8 @@ import * as named from './named';
 export class EzspStruct {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     static serialize(cls: any, obj: any): Buffer {
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         return Buffer.concat(
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
             cls._fields.map((field: any[]) => {
                 const value = obj[field[0]];
                 // console.assert(field[1]);
@@ -645,8 +645,8 @@ export class EmberMultiAddress extends EzspStruct {
         const addrmode = obj['addrmode'];
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const fields = addrmode == 3 ? cls.fields3 : cls.fields1;
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         return Buffer.concat(
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
             fields.map((field: any[]) => {
                 const value = obj[field[0]];
                 // console.assert(field[1]);

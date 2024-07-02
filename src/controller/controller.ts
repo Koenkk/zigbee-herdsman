@@ -70,14 +70,14 @@ class Controller extends events.EventEmitter {
     private database: Database;
     private adapter: Adapter;
     private greenPower: GreenPower;
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private permitJoinNetworkClosedTimer: any;
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private permitJoinTimeoutTimer: any;
     private permitJoinTimeout: number;
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private backupTimer: any;
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private databaseSaveTimer: any;
     private touchlink: Touchlink;
     private stopping: boolean;

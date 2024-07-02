@@ -235,7 +235,6 @@ export default class ZiGate extends EventEmitter {
                 logger.debug('Socket connected', NS);
             });
 
-            // eslint-disable-next-line
             const self = this;
 
             this.socketPort.on('ready', async function () {

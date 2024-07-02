@@ -15,7 +15,7 @@ interface MtCmd {
     response?: MtParameter[];
 }
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ZpiObjectPayload = any;
 
 interface BuffaloZnpOptions {

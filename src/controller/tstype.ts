@@ -1,5 +1,5 @@
-// eslint-disable-next-line
 interface KeyValue {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [s: string]: any;
 }
 
@@ -27,7 +27,7 @@ type EntityType = DeviceType | 'Group';
 interface DatabaseEntry {
     id: number;
     type: EntityType;
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [s: string]: any;
 }
 

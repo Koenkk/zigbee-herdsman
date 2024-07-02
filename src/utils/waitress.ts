@@ -2,8 +2,7 @@ interface Waiter<TPayload, TMatcher> {
     ID: number;
     resolve: (payload: TPayload) => void;
     reject: (error: Error) => void;
-    // eslint-disable-next-line
-    timer?: any;
+    timer?: NodeJS.Timeout;
     resolved: boolean;
     timedout: boolean;
     matcher: TMatcher;
