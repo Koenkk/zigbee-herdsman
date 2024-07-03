@@ -1,35 +1,35 @@
 /* eslint-disable max-len */
-import {Znp} from "../znp";
-import {ZnpVersion} from "./tstype";
-import {TsType} from "../../";
-import {DevStates, NvItemsIds, ZnpCommandStatus} from "../constants/common";
-import * as Structs from "../structs";
-import * as Models from "../../../models";
-import * as ZStackModels from "../models";
-import * as Utils from "../utils";
-import * as ZnpConstants from "../constants";
-import {AdapterBackup} from "./adapter-backup";
-import {AdapterNvMemory} from "./adapter-nv-memory";
-import {Subsystem} from "../unpi/constants";
-import * as UnpiConstants from "../unpi/constants";
-import * as crypto from "crypto";
-import {Wait} from "../../../utils";
-import {Endpoints} from "./endpoints";
-import {logger} from "../../../utils/logger";
+import * as crypto from 'crypto';
+
+import {TsType} from '../../';
+import * as Models from '../../../models';
+import {Wait} from '../../../utils';
+import {logger} from '../../../utils/logger';
+import * as ZnpConstants from '../constants';
+import {DevStates, NvItemsIds, ZnpCommandStatus} from '../constants/common';
+import * as ZStackModels from '../models';
+import * as Structs from '../structs';
+import {Subsystem} from '../unpi/constants';
+import * as UnpiConstants from '../unpi/constants';
+import * as Utils from '../utils';
+import {Znp} from '../znp';
+import {AdapterBackup} from './adapter-backup';
+import {AdapterNvMemory} from './adapter-nv-memory';
+import {Endpoints} from './endpoints';
+import {ZnpVersion} from './tstype';
 
 const NS = 'zh:adapter:zstack:manager';
 
 /**
  * Startup strategy is internally used to determine required startup method.
  */
-type StartupStrategy = "startup" | "restoreBackup" | "startCommissioning";
+type StartupStrategy = 'startup' | 'restoreBackup' | 'startCommissioning';
 
 /**
  * ZNP Adapter Manager is responsible for handling adapter startup, network commissioning,
  * configuration backup and restore.
  */
 export class ZnpAdapterManager {
-
     public nv: AdapterNvMemory;
     public backup: AdapterBackup;
 
@@ -60,34 +60,34 @@ export class ZnpAdapterManager {
         /* perform coordinator startup based on determined strategy */
         let result: TsType.StartResult;
         switch (strategy) {
-        case "startup": {
-            await this.beginStartup();
-            result = "resumed";
-            break;
-        }
-        case "restoreBackup": {
-            if (this.options.version === ZnpVersion.zStack12) {
-                logger.debug(`performing recommissioning instead of restore for z-stack 1.2`, NS);
-                await this.beginCommissioning(this.nwkOptions);
+            case 'startup': {
                 await this.beginStartup();
-            } else {
-                await this.beginRestore();
+                result = 'resumed';
+                break;
             }
-            result = "restored";
-            break;
-        }
-        case "startCommissioning": {
-            if (this.options.version === ZnpVersion.zStack12) {
-                const hasConfigured = await this.nv.readItem(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, 0, Structs.hasConfigured);
-                await this.beginCommissioning(this.nwkOptions);
-                await this.beginStartup();
-                result = hasConfigured && hasConfigured.isConfigured() ? "reset" : "restored";
-            } else {
-                await this.beginCommissioning(this.nwkOptions);
-                result = "reset";
+            case 'restoreBackup': {
+                if (this.options.version === ZnpVersion.zStack12) {
+                    logger.debug(`performing recommissioning instead of restore for z-stack 1.2`, NS);
+                    await this.beginCommissioning(this.nwkOptions);
+                    await this.beginStartup();
+                } else {
+                    await this.beginRestore();
+                }
+                result = 'restored';
+                break;
             }
-            break;
-        }
+            case 'startCommissioning': {
+                if (this.options.version === ZnpVersion.zStack12) {
+                    const hasConfigured = await this.nv.readItem(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, 0, Structs.hasConfigured);
+                    await this.beginCommissioning(this.nwkOptions);
+                    await this.beginStartup();
+                    result = hasConfigured && hasConfigured.isConfigured() ? 'reset' : 'restored';
+                } else {
+                    await this.beginCommissioning(this.nwkOptions);
+                    result = 'reset';
+                }
+                break;
+            }
         }
 
         /* register endpoints */
@@ -104,15 +104,17 @@ export class ZnpAdapterManager {
      * [this GitHub issue comment](https://github.com/Koenkk/zigbee-herdsman/issues/286#issuecomment-761029689).
      */
     private async determineStrategy(): Promise<StartupStrategy> {
-        logger.debug("determining znp startup strategy", NS);
+        logger.debug('determining znp startup strategy', NS);
 
         /* acquire data from adapter */
-        const hasConfiguredNvId = this.options.version === ZnpVersion.zStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3;
+        const hasConfiguredNvId =
+            this.options.version === ZnpVersion.zStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3;
         const hasConfigured = await this.nv.readItem(hasConfiguredNvId, 0, Structs.hasConfigured);
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
-        const preconfiguredKey = this.options.version === ZnpVersion.zStack12 ?
-            Structs.nwkKey((await this.znp.request(Subsystem.SAPI, "readConfiguration", {configid: NvItemsIds.PRECFGKEY})).payload.value) :
-            await this.nv.readItem(NvItemsIds.PRECFGKEY, 0, Structs.nwkKey);
+        const preconfiguredKey =
+            this.options.version === ZnpVersion.zStack12
+                ? Structs.nwkKey((await this.znp.request(Subsystem.SAPI, 'readConfiguration', {configid: NvItemsIds.PRECFGKEY})).payload.value)
+                : await this.nv.readItem(NvItemsIds.PRECFGKEY, 0, Structs.nwkKey);
         let activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
         let alternateKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ALTERN_KEY_INFO, 0, Structs.nwkKeyDescriptor);
 
@@ -131,115 +133,133 @@ export class ZnpAdapterManager {
         const isExtendedPanIdReversed = nib && this.nwkOptions.extendedPanId.equals(Buffer.from(nib.extendedPANID).reverse());
 
         /* istanbul ignore next */
-        const configMatchesAdapter = (
+        const configMatchesAdapter =
             nib &&
-            Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList) &&// TODO: remove?
+            Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList) && // TODO: remove?
             this.nwkOptions.panId === nib.nwkPanId &&
-            (
-                this.nwkOptions.extendedPanId.equals(nib.extendedPANID) ||
+            (this.nwkOptions.extendedPanId.equals(nib.extendedPANID) ||
                 /* exception for migration from previous code-base */
                 isExtendedPanIdReversed ||
                 /* exception for some adapters which may actually use 0xdddddddddddddddd as EPID (backward compatibility) */
-                this.nwkOptions.hasDefaultExtendedPanId
-            ) &&
+                this.nwkOptions.hasDefaultExtendedPanId) &&
             this.nwkOptions.networkKey.equals(preconfiguredKey.key) &&
             this.nwkOptions.networkKey.equals(activeKeyInfo.key) &&
-            this.nwkOptions.networkKey.equals(alternateKeyInfo.key)
-        );
+            this.nwkOptions.networkKey.equals(alternateKeyInfo.key);
 
-        const backupMatchesAdapter = (
+        const backupMatchesAdapter =
             backup &&
             nib &&
             backup.networkOptions.panId === nib.nwkPanId &&
             backup.networkOptions.extendedPanId.equals(nib.extendedPANID) &&
             Utils.compareChannelLists(backup.networkOptions.channelList, nib.channelList) &&
-            backup.networkOptions.networkKey.equals(activeKeyInfo.key)
-        );
+            backup.networkOptions.networkKey.equals(activeKeyInfo.key);
 
-        const configMatchesBackup = (
-            backup &&
-            Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions, true)
-        );
+        const configMatchesBackup = backup && Utils.compareNetworkOptions(this.nwkOptions, backup.networkOptions, true);
 
         const checkRestoreVersionCompatibility = (): void => {
-            if (this.options.version === ZnpVersion.zStack12 && backup && backup.znp?.version !== undefined && backup.znp.version !== ZnpVersion.zStack12) {
-                throw new Error(`your backup is from newer platform version (Z-Stack 3.0.x+) and cannot be restored onto Z-Stack 1.2 adapter - please remove backup before proceeding`);
+            if (
+                this.options.version === ZnpVersion.zStack12 &&
+                backup &&
+                backup.znp?.version !== undefined &&
+                backup.znp.version !== ZnpVersion.zStack12
+            ) {
+                throw new Error(
+                    `your backup is from newer platform version (Z-Stack 3.0.x+) and cannot be restored onto Z-Stack 1.2 adapter - please remove backup before proceeding`,
+                );
             }
         };
-        
+
         /* Determine startup strategy */
         if (!hasConfigured || !hasConfigured.isConfigured() || !nib) {
             /* Adapter is not configured or not commissioned */
-            logger.debug("(stage-1) adapter is not configured / not commissioned", NS);
+            logger.debug('(stage-1) adapter is not configured / not commissioned', NS);
             if (configMatchesBackup) {
                 /* Adapter backup is available and matches configuration */
-                logger.debug("(stage-2) configuration matches backup", NS);
+                logger.debug('(stage-2) configuration matches backup', NS);
                 checkRestoreVersionCompatibility();
-                return "restoreBackup";
+                return 'restoreBackup';
             } else {
                 /* Adapter backup is either not available or does not match configuration */
                 if (!backup) {
-                    logger.debug("(stage-2) adapter backup does not exist", NS);
+                    logger.debug('(stage-2) adapter backup does not exist', NS);
                 } else {
-                    logger.debug("(stage-2) configuration does not match backup", NS);
+                    logger.debug('(stage-2) configuration does not match backup', NS);
                 }
-                return "startCommissioning";
+                return 'startCommissioning';
             }
         } else {
             /* Adapter is configured and commissioned */
-            logger.debug("(stage-1) adapter is configured", NS);
+            logger.debug('(stage-1) adapter is configured', NS);
 
             if (configMatchesAdapter) {
                 /* Warn if EPID is reversed (backward-compat) */
                 if (isExtendedPanIdReversed) {
-                    logger.debug("(stage-2) extended pan id is reversed", NS);
-                    logger.warning(`Extended PAN ID is reversed (expected=${this.nwkOptions.extendedPanId.toString("hex")}, actual=${nib.extendedPANID.toString("hex")})`, NS);
+                    logger.debug('(stage-2) extended pan id is reversed', NS);
+                    logger.warning(
+                        `Extended PAN ID is reversed (expected=${this.nwkOptions.extendedPanId.toString('hex')}, actual=${nib.extendedPANID.toString('hex')})`,
+                        NS,
+                    );
                 }
 
                 /* Configuration matches adapter state - regular startup */
-                logger.debug("(stage-2) adapter state matches configuration", NS);
-                return "startup";
+                logger.debug('(stage-2) adapter state matches configuration', NS);
+                return 'startup';
             } else {
                 /* Configuration does not match adapter state */
-                logger.debug("(stage-2) adapter state does not match configuration", NS);
+                logger.debug('(stage-2) adapter state does not match configuration', NS);
                 if (backup) {
                     /* Backup is present */
-                    logger.debug("(stage-3) got adapter backup", NS);
+                    logger.debug('(stage-3) got adapter backup', NS);
                     if (backupMatchesAdapter) {
                         /* Backup matches adapter state */
-                        logger.debug("(stage-4) adapter state matches backup", NS);
+                        logger.debug('(stage-4) adapter state matches backup', NS);
                         logger.error(`Configuration is not consistent with adapter state/backup!`, NS);
                         logger.error(`- PAN ID: configured=${this.nwkOptions.panId}, adapter=${nib.nwkPanId}`, NS);
-                        logger.error(`- Extended PAN ID: configured=${this.nwkOptions.extendedPanId.toString("hex")}, adapter=${nib.extendedPANID.toString("hex")}`, NS);
-                        logger.error(`- Network Key: configured=${this.nwkOptions.networkKey.toString("hex")}, adapter=${activeKeyInfo.key.toString("hex")}`, NS);
-                        logger.error(`- Channel List: configured=${this.nwkOptions.channelList.toString()}, adapter=${Utils.unpackChannelList(nib.channelList).toString()}`, NS);
+                        logger.error(
+                            `- Extended PAN ID: configured=${this.nwkOptions.extendedPanId.toString('hex')}, adapter=${nib.extendedPANID.toString('hex')}`,
+                            NS,
+                        );
+                        logger.error(
+                            `- Network Key: configured=${this.nwkOptions.networkKey.toString('hex')}, adapter=${activeKeyInfo.key.toString('hex')}`,
+                            NS,
+                        );
+                        logger.error(
+                            `- Channel List: configured=${this.nwkOptions.channelList.toString()}, adapter=${Utils.unpackChannelList(nib.channelList).toString()}`,
+                            NS,
+                        );
                         logger.error(`Please update configuration to prevent further issues.`, NS);
-                        logger.error(`If you wish to re-commission your network, please remove coordinator backup at ${this.options.backupPath}.`, NS);
+                        logger.error(
+                            `If you wish to re-commission your network, please remove coordinator backup at ${this.options.backupPath}.`,
+                            NS,
+                        );
                         logger.error(`Re-commissioning your network will require re-pairing of all devices!`, NS);
                         if (this.options.adapterOptions.forceStartWithInconsistentAdapterConfiguration) {
-                            logger.error(`Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.`, NS);
-                            return "startup";
+                            logger.error(
+                                `Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.`,
+                                NS,
+                            );
+                            return 'startup';
                         } else {
-                            throw new Error("startup failed - configuration-adapter mismatch - see logs above for more information");
+                            throw new Error('startup failed - configuration-adapter mismatch - see logs above for more information');
                         }
                     } else {
                         /* Backup does not match adapter state */
-                        logger.debug("(stage-4) adapter state does not match backup", NS);
+                        logger.debug('(stage-4) adapter state does not match backup', NS);
                         if (configMatchesBackup) {
                             /* Adapter backup matches configuration */
-                            logger.debug("(stage-5) adapter backup matches configuration", NS);
+                            logger.debug('(stage-5) adapter backup matches configuration', NS);
                             checkRestoreVersionCompatibility();
-                            return "restoreBackup";
+                            return 'restoreBackup';
                         } else {
                             /* Adapter backup does not match configuration */
-                            logger.debug("(stage-5) adapter backup does not match configuration", NS);
-                            return "startCommissioning";
+                            logger.debug('(stage-5) adapter backup does not match configuration', NS);
+                            return 'startCommissioning';
                         }
                     }
                 } else {
                     /* Configuration mismatches adapter and no backup is available */
-                    logger.debug("(stage-3) configuration-adapter mismatch (no backup)", NS);
-                    return "startCommissioning";
+                    logger.debug('(stage-3) configuration-adapter mismatch (no backup)', NS);
+                    return 'startCommissioning';
                 }
             }
         }
@@ -251,13 +271,16 @@ export class ZnpAdapterManager {
     private async beginStartup(): Promise<void> {
         const deviceInfo = await this.znp.request(Subsystem.UTIL, 'getDeviceInfo', {});
         if (deviceInfo.payload.devicestate !== DevStates.ZB_COORD) {
-            logger.debug("starting adapter as coordinator", NS);
+            logger.debug('starting adapter as coordinator', NS);
             const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
-            await this.znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, null, null, [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.FAILURE]);
+            await this.znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, null, null, [
+                ZnpCommandStatus.SUCCESS,
+                ZnpCommandStatus.FAILURE,
+            ]);
             await started.start().promise;
-            logger.debug("adapter successfully started in coordinator mode", NS);
+            logger.debug('adapter successfully started in coordinator mode', NS);
         } else {
-            logger.debug("adapter is already running in coordinator mode", NS);
+            logger.debug('adapter is already running in coordinator mode', NS);
         }
     }
 
@@ -268,24 +291,24 @@ export class ZnpAdapterManager {
         const backup = await this.backup.getStoredBackup();
         /* istanbul ignore next */
         if (!backup) {
-            throw Error("Cannot restore backup - none is available");
+            throw Error('Cannot restore backup - none is available');
         }
 
         /* generate random provisioning network parameters */
         const provisioningNwkOptions: Models.NetworkOptions = {
             panId: 1 + Math.round(Math.random() * 65532),
             extendedPanId: crypto.randomBytes(8),
-            channelList: [11 + Math.round((Math.random() * (26 - 11)))],
+            channelList: [11 + Math.round(Math.random() * (26 - 11))],
             networkKey: crypto.randomBytes(16),
-            networkKeyDistribute: false
+            networkKeyDistribute: false,
         };
 
         /* commission provisioning network */
-        logger.debug("commissioning random provisioning network:", NS);
+        logger.debug('commissioning random provisioning network:', NS);
         logger.debug(` - panId: ${provisioningNwkOptions.panId}`, NS);
-        logger.debug(` - extendedPanId: ${provisioningNwkOptions.extendedPanId.toString("hex")}`, NS);
-        logger.debug(` - channelList: ${provisioningNwkOptions.channelList.join(", ")}`, NS);
-        logger.debug(` - networkKey: ${provisioningNwkOptions.networkKey.toString("hex")}`, NS);
+        logger.debug(` - extendedPanId: ${provisioningNwkOptions.extendedPanId.toString('hex')}`, NS);
+        logger.debug(` - channelList: ${provisioningNwkOptions.channelList.join(', ')}`, NS);
+        logger.debug(` - networkKey: ${provisioningNwkOptions.networkKey.toString('hex')}`, NS);
         logger.debug(` - networkKeyDistribute: ${provisioningNwkOptions.networkKeyDistribute}`, NS);
         await this.beginCommissioning(provisioningNwkOptions, false, false);
 
@@ -296,7 +319,7 @@ export class ZnpAdapterManager {
         await this.updateCommissioningNvItems(this.nwkOptions);
 
         /* settle & reset adapter */
-        logger.debug("giving adapter some time to settle", NS);
+        logger.debug('giving adapter some time to settle', NS);
         await Wait(1000);
         await this.resetAdapter();
 
@@ -326,14 +349,14 @@ export class ZnpAdapterManager {
 
         /* commission the network as per parameters */
         await this.updateCommissioningNvItems(nwkOptions);
-        logger.debug("beginning network commissioning", NS);
+        logger.debug('beginning network commissioning', NS);
         if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
             /* configure channel */
-            await this.znp.request(Subsystem.APP_CNF, "bdbSetChannel", {isPrimary: 0x1, channel: Utils.packChannelList(nwkOptions.channelList)});
-            await this.znp.request(Subsystem.APP_CNF, "bdbSetChannel", {isPrimary: 0x0, channel: 0x0});
+            await this.znp.request(Subsystem.APP_CNF, 'bdbSetChannel', {isPrimary: 0x1, channel: Utils.packChannelList(nwkOptions.channelList)});
+            await this.znp.request(Subsystem.APP_CNF, 'bdbSetChannel', {isPrimary: 0x0, channel: 0x0});
 
             /* perform bdb commissioning */
-            const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, "stateChangeInd", {state: 9}, 60000);
+            const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
             await this.znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x04});
             try {
                 await started.start().promise;
@@ -346,7 +369,7 @@ export class ZnpAdapterManager {
         }
 
         /* wait for NIB to settle (takes different amount of time of different platforms */
-        logger.debug("waiting for NIB to settle", NS);
+        logger.debug('waiting for NIB to settle', NS);
         let reads = 0;
         let nib: ReturnType<typeof Structs.nib> = null;
         do {
@@ -361,10 +384,12 @@ export class ZnpAdapterManager {
         /* validate provisioned PAN ID */
         const extNwkInfo = await this.znp.request(Subsystem.ZDO, 'extNwkInfo', {});
         if (extNwkInfo.payload.panid !== nwkOptions.panId && failOnCollision) {
-            throw new Error(`network commissioning failed - panId collision detected (expected=${nwkOptions.panId}, actual=${extNwkInfo.payload.panid})`);
+            throw new Error(
+                `network commissioning failed - panId collision detected (expected=${nwkOptions.panId}, actual=${extNwkInfo.payload.panid})`,
+            );
         }
 
-        logger.debug("network commissioned", NS);
+        logger.debug('network commissioned', NS);
 
         /* write configuration flag */
         if (writeConfiguredFlag) {
@@ -400,21 +425,17 @@ export class ZnpAdapterManager {
         if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
             await this.nv.updateItem(NvItemsIds.PRECFGKEY, options.networkKey);
         } else {
-            await this.znp.request(
-                Subsystem.SAPI,
-                "writeConfiguration",
-                {
-                    configid: NvItemsIds.PRECFGKEY,
-                    len: options.networkKey.length,
-                    value: options.networkKey
-                }
-            );
+            await this.znp.request(Subsystem.SAPI, 'writeConfiguration', {
+                configid: NvItemsIds.PRECFGKEY,
+                len: options.networkKey.length,
+                value: options.networkKey,
+            });
             await this.nv.writeItem(
                 NvItemsIds.LEGACY_TCLK_TABLE_START_12,
                 Buffer.from([
-                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c,
-                    0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-                ])
+                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63,
+                    0x65, 0x30, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                ]),
             );
         }
     }
@@ -445,9 +466,12 @@ export class ZnpAdapterManager {
      * @param group Target group index.
      */
     private async addToGroup(endpoint: number, group: number): Promise<void> {
-        const result = await this.znp.request(5, 'extFindGroup', {endpoint, groupid: group}, null, null, [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.FAILURE]);
+        const result = await this.znp.request(5, 'extFindGroup', {endpoint, groupid: group}, null, null, [
+            ZnpCommandStatus.SUCCESS,
+            ZnpCommandStatus.FAILURE,
+        ]);
         if (result.payload.status === ZnpCommandStatus.FAILURE) {
-            await this.znp.request(5, 'extAddGroup', {endpoint, groupid: group, namelen: 0, groupname:[]});
+            await this.znp.request(5, 'extAddGroup', {endpoint, groupid: group, namelen: 0, groupname: []});
         }
     }
 
@@ -455,16 +479,16 @@ export class ZnpAdapterManager {
      * Internal method to reset the adapter.
      */
     private async resetAdapter(): Promise<void> {
-        logger.debug("adapter reset requested", NS);
+        logger.debug('adapter reset requested', NS);
         await this.znp.request(Subsystem.SYS, 'resetReq', {type: ZnpConstants.SYS.resetType.SOFT});
-        logger.debug("adapter reset successful", NS);
+        logger.debug('adapter reset successful', NS);
     }
 
     /**
      * Internal method to reset adapter config and data.
      */
     private async clearAdapter(): Promise<void> {
-        logger.debug("clearing adapter using startup option 3", NS);
+        logger.debug('clearing adapter using startup option 3', NS);
         await this.nv.writeItem(NvItemsIds.STARTUP_OPTION, Buffer.from([0x03]));
         await this.resetAdapter();
         await this.nv.writeItem(NvItemsIds.STARTUP_OPTION, Buffer.from([0x00]));
@@ -481,18 +505,18 @@ export class ZnpAdapterManager {
     private async parseConfigNetworkOptions(options: TsType.NetworkOptions): Promise<Models.NetworkOptions> {
         const channelList = options.channelList;
         /* istanbul ignore next */
-        channelList.sort((c1, c2) => c1 < c2 ? -1 : c1 > c2 ? 1 : 0);
+        channelList.sort((c1, c2) => (c1 < c2 ? -1 : c1 > c2 ? 1 : 0));
 
         const parsed: Models.NetworkOptions = {
             channelList: channelList,
             panId: options.panID,
             extendedPanId: Buffer.from(options.extendedPanID),
             networkKey: Buffer.from(options.networkKey),
-            networkKeyDistribute: options.networkKeyDistribute
+            networkKeyDistribute: options.networkKeyDistribute,
         };
         if (parsed.extendedPanId.equals(Buffer.alloc(8, 0xdd))) {
-            const adapterIeeeAddressResponse = await this.znp.request(Subsystem.SYS, "getExtAddr", {});
-            parsed.extendedPanId = Buffer.from(adapterIeeeAddressResponse.payload.extaddress.split("0x")[1], "hex");
+            const adapterIeeeAddressResponse = await this.znp.request(Subsystem.SYS, 'getExtAddr', {});
+            parsed.extendedPanId = Buffer.from(adapterIeeeAddressResponse.payload.extaddress.split('0x')[1], 'hex');
             parsed.hasDefaultExtendedPanId = true;
         }
         return parsed;
@@ -502,7 +526,10 @@ export class ZnpAdapterManager {
      * Writes ZNP `hasConfigured` flag to NV memory. This flag indicates the adapter has been configured.
      */
     private async writeConfigurationFlag(): Promise<void> {
-        logger.debug("writing configuration flag to adapter NV memory", NS);
-        await this.nv.writeItem(this.options.version === ZnpVersion.zStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, Buffer.from([0x55]));
+        logger.debug('writing configuration flag to adapter NV memory', NS);
+        await this.nv.writeItem(
+            this.options.version === ZnpVersion.zStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3,
+            Buffer.from([0x55]),
+        );
     }
 }

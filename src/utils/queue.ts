@@ -14,13 +14,13 @@ class Queue {
     }
 
     public async execute<T>(func: () => Promise<T>, key: string | number = null): Promise<T> {
-        const job : Job = {key, running: false, start: null};
+        const job: Job = {key, running: false, start: null};
         // Minor optimization/workaround: various tests like the idea that a job that is
         // immediately runnable is run without an event loop spin. This also helps with stack
         // traces in some cases, so avoid an `await` if we can help it.
         this.jobs.push(job);
         if (this.getNext() !== job) {
-            await new Promise((resolve): void =>  {
+            await new Promise((resolve): void => {
                 job.start = (): void => {
                     job.running = true;
                     resolve(null);
@@ -48,7 +48,7 @@ class Queue {
     }
 
     private getNext(): Job {
-        if (this.jobs.filter((j) => j.running).length > (this.concurrent - 1)) {
+        if (this.jobs.filter((j) => j.running).length > this.concurrent - 1) {
             return null;
         }
 

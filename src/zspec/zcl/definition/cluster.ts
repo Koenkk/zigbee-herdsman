@@ -1,8 +1,8 @@
 /* eslint max-len: 0 */
-import {ClusterDefinition, ClusterName} from './tstype';
 import {DataType, BuffaloZclDataType, ParameterCondition} from './enums';
 import {ManufacturerCode} from './manufacturerCode';
 import {Status} from './status';
+import {ClusterDefinition, ClusterName} from './tstype';
 
 export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
     genBasic: {
@@ -23,22 +23,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             deviceEnabled: {ID: 18, type: DataType.BOOLEAN},
             alarmMask: {ID: 19, type: DataType.BITMAP8},
             disableLocalConfig: {ID: 20, type: DataType.BITMAP8},
-            schneiderMeterRadioPower: {ID: 0xE200, type: DataType.INT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderMeterRadioPower: {ID: 0xe200, type: DataType.INT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
         },
         commands: {
             resetFactDefault: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
             tuyaSetup: {
                 ID: 0xf0,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     genPowerCfg: {
         ID: 1,
@@ -67,10 +64,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             batteryPercentThres3: {ID: 61, type: DataType.UINT8},
             batteryAlarmState: {ID: 62, type: DataType.BITMAP32},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genDeviceTempCfg: {
         ID: 2,
@@ -85,10 +80,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             lowTempDwellTripPoint: {ID: 19, type: DataType.UINT24},
             highTempDwellTripPoint: {ID: 20, type: DataType.UINT24},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genIdentify: {
         ID: 3,
@@ -99,20 +92,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {
             identify: {
                 ID: 0,
-                parameters: [
-                    {name: 'identifytime', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'identifytime', type: DataType.UINT16}],
             },
             identifyQuery: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             ezmodeInvoke: {
                 ID: 2,
-                parameters: [
-                    {name: 'action', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'action', type: DataType.UINT8}],
             },
             updateCommissionState: {
                 ID: 3,
@@ -132,9 +120,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {
             identifyQueryRsp: {
                 ID: 0,
-                parameters: [
-                    {name: 'timeout', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'timeout', type: DataType.UINT16}],
             },
         },
     },
@@ -154,9 +140,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             view: {
                 ID: 1,
-                parameters: [
-                    {name: 'groupid', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'groupid', type: DataType.UINT16}],
             },
             getMembership: {
                 ID: 2,
@@ -169,14 +153,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             remove: {
                 ID: 3,
                 response: 3,
-                parameters: [
-                    {name: 'groupid', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'groupid', type: DataType.UINT16}],
             },
             removeAll: {
                 ID: 4,
-                parameters: [
-                ],
+                parameters: [],
             },
             addIfIdentifying: {
                 ID: 5,
@@ -187,10 +168,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             miboxerSetZones: {
                 ID: 0xf0,
-                parameters: [
-                    {name: 'zones', type: BuffaloZclDataType.LIST_MIBOXER_ZONES},
-                ],
-            }
+                parameters: [{name: 'zones', type: BuffaloZclDataType.LIST_MIBOXER_ZONES}],
+            },
         },
         commandsResponse: {
             addRsp: {
@@ -266,9 +245,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             removeAll: {
                 ID: 3,
                 response: 3,
-                parameters: [
-                    {name: 'groupid', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'groupid', type: DataType.UINT16}],
             },
             store: {
                 ID: 4,
@@ -288,9 +265,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             getSceneMembership: {
                 ID: 6,
                 response: 6,
-                parameters: [
-                    {name: 'groupid', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'groupid', type: DataType.UINT16}],
             },
             enhancedAdd: {
                 ID: 64,
@@ -331,15 +306,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             tradfriArrowHold: {
                 ID: 8,
-                parameters: [
-                    {name: 'value', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'value', type: DataType.UINT16}],
             },
             tradfriArrowRelease: {
                 ID: 9,
-                parameters: [
-                    {name: 'value', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'value', type: DataType.UINT16}],
             },
         },
         commandsResponse: {
@@ -397,8 +368,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             enhancedAddRsp: {
                 ID: 64,
-                parameters: [
-                ],
+                parameters: [],
             },
             enhancedViewRsp: {
                 ID: 65,
@@ -433,26 +403,23 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             tuyaBacklightMode: {ID: 0x8001, type: DataType.ENUM8},
             moesStartUpOnOff: {ID: 0x8002, type: DataType.ENUM8},
             tuyaOperationMode: {ID: 0x8004, type: DataType.ENUM8},
-            elkoPreWarningTime: {ID: 0xE000, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
-            elkoOnTimeReload: {ID: 0xE001, type: DataType.UINT32, manufacturerCode: ManufacturerCode.ADEO},
-            elkoOnTimeReloadOptions: {ID: 0xE002, type: DataType.BITMAP8, manufacturerCode: ManufacturerCode.ADEO},
+            elkoPreWarningTime: {ID: 0xe000, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
+            elkoOnTimeReload: {ID: 0xe001, type: DataType.UINT32, manufacturerCode: ManufacturerCode.ADEO},
+            elkoOnTimeReloadOptions: {ID: 0xe002, type: DataType.BITMAP8, manufacturerCode: ManufacturerCode.ADEO},
             nodonTransitionTime: {ID: 0x0001, type: DataType.UINT16, manufacturerCode: ManufacturerCode.NODON},
         },
         commands: {
             off: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
             on: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             toggle: {
                 ID: 2,
-                parameters: [
-                ],
+                parameters: [],
             },
             offWithEffect: {
                 ID: 64,
@@ -463,8 +430,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             onWithRecallGlobalScene: {
                 ID: 65,
-                parameters: [
-                ],
+                parameters: [],
             },
             onWithTimedOff: {
                 ID: 66,
@@ -475,21 +441,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             tuyaAction: {
-                ID: 0xFD,
+                ID: 0xfd,
                 parameters: [
                     {name: 'value', type: DataType.UINT8},
                     {name: 'data', type: BuffaloZclDataType.BUFFER},
                 ],
             },
             tuyaAction2: {
-                ID: 0xFC,
-                parameters: [
-                    {name: 'value', type: DataType.UINT8},
-                ],
+                ID: 0xfc,
+                parameters: [{name: 'value', type: DataType.UINT8}],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     genOnOffSwitchCfg: {
         ID: 7,
@@ -498,10 +461,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             switchMultiFunction: {ID: 2, type: DataType.UNKNOWN},
             switchActions: {ID: 16, type: DataType.ENUM8},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genLevelCtrl: {
         ID: 8,
@@ -544,8 +505,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             stop: {
                 ID: 3,
-                parameters: [
-                ],
+                parameters: [],
             },
             moveToLevelWithOnOff: {
                 ID: 4,
@@ -571,8 +531,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             stopWithOnOff: {
                 ID: 7,
-                parameters: [
-                ],
+                parameters: [],
             },
             moveToLevelTuya: {
                 ID: 240,
@@ -582,8 +541,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     genAlarms: {
         ID: 9,
@@ -600,23 +558,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             resetAll: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             getAlarm: {
                 ID: 2,
-                parameters: [
-                ],
+                parameters: [],
             },
             resetLog: {
                 ID: 3,
-                parameters: [
-                ],
+                parameters: [],
             },
             publishEventLog: {
                 ID: 4,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
         commandsResponse: {
@@ -638,8 +592,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             getEventLog: {
                 ID: 2,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
     },
@@ -657,10 +610,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             lastSetTime: {ID: 8, type: DataType.UTC},
             validUntilTime: {ID: 9, type: DataType.UTC},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genRssiLocation: {
         ID: 11,
@@ -702,9 +653,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             getDevCfg: {
                 ID: 2,
-                parameters: [
-                    {name: 'targetaddr', type: DataType.IEEE_ADDR},
-                ],
+                parameters: [{name: 'targetaddr', type: DataType.IEEE_ADDR}],
             },
             getData: {
                 ID: 3,
@@ -769,9 +718,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             rssiPing: {
                 ID: 4,
-                parameters: [
-                    {name: 'locationtype', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'locationtype', type: DataType.UINT8}],
             },
         },
     },
@@ -789,10 +736,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             engineeringUnits: {ID: 117, type: DataType.ENUM16},
             applicationType: {ID: 256, type: DataType.UINT32},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genAnalogOutput: {
         ID: 13,
@@ -810,10 +755,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             engineeringUnits: {ID: 117, type: DataType.ENUM16},
             applicationType: {ID: 256, type: DataType.UINT32},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genAnalogValue: {
         ID: 14,
@@ -828,10 +771,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             engineeringUnits: {ID: 117, type: DataType.ENUM16},
             applicationType: {ID: 256, type: DataType.UINT32},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genBinaryInput: {
         ID: 15,
@@ -846,10 +787,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             statusFlags: {ID: 111, type: DataType.BITMAP8},
             applicationType: {ID: 256, type: DataType.UINT32},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genBinaryOutput: {
         ID: 16,
@@ -868,10 +807,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             statusFlags: {ID: 111, type: DataType.BITMAP8},
             applicationType: {ID: 256, type: DataType.UINT32},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genBinaryValue: {
         ID: 17,
@@ -889,10 +826,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             statusFlags: {ID: 111, type: DataType.BITMAP8},
             applicationType: {ID: 256, type: DataType.UINT32},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genMultistateInput: {
         ID: 18,
@@ -906,10 +841,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             statusFlags: {ID: 111, type: DataType.BITMAP8},
             applicationType: {ID: 256, type: DataType.UINT32},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genMultistateOutput: {
         ID: 19,
@@ -925,10 +858,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             statusFlags: {ID: 111, type: DataType.BITMAP8},
             applicationType: {ID: 256, type: DataType.UINT32},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genMultistateValue: {
         ID: 20,
@@ -944,10 +875,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             statusFlags: {ID: 111, type: DataType.BITMAP8},
             applicationType: {ID: 256, type: DataType.UINT32},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     genCommissioning: {
         ID: 21,
@@ -1011,27 +940,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {
             restartDeviceRsp: {
                 ID: 0,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             saveStartupParamsRsp: {
                 ID: 1,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             restoreStartupParamsRsp: {
                 ID: 2,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             resetStartupParamsRsp: {
                 ID: 3,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
         },
     },
@@ -1096,7 +1017,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'imageType', type: DataType.UINT16},
                     {name: 'fileVersion', type: DataType.UINT32},
                 ],
-            }
+            },
         },
         commandsResponse: {
             imageNotify: {
@@ -1137,7 +1058,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'currentTime', type: DataType.UINT32},
                     {name: 'upgradeTime', type: DataType.UINT32},
                 ],
-            }
+            },
         },
     },
     genPollCtrl: {
@@ -1161,63 +1082,80 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             fastPollStop: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             setLongPollInterval: {
                 ID: 2,
-                parameters: [
-                    {name: 'newLongPollInterval', type: DataType.UINT32},
-                ],
+                parameters: [{name: 'newLongPollInterval', type: DataType.UINT32}],
             },
             setShortPollInterval: {
                 ID: 3,
-                parameters: [
-                    {name: 'newShortPollInterval', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'newShortPollInterval', type: DataType.UINT16}],
             },
         },
         commandsResponse: {
             checkin: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
     },
     greenPower: {
         ID: 33,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             notification: {
                 ID: 0,
                 parameters: [
                     {name: 'options', type: DataType.UINT16},
-                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b000}]},
-                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
-                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {
+                        name: 'srcID',
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: 'gpdIEEEAddr',
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b010}],
+                    },
+                    {
+                        name: 'gpdEndpoint',
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b010}],
+                    },
                     {name: 'frameCounter', type: DataType.UINT32},
                     {name: 'commandID', type: DataType.UINT8},
                     {name: 'payloadSize', type: DataType.UINT8},
                     {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
-                    {name: 'gppNwkAddr', type: DataType.UINT16,conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x4000}]},
-                    {name: 'gppGddLink', type: DataType.UINT8,conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x4000}]},
+                    {name: 'gppNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x4000}]},
+                    {name: 'gppGddLink', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x4000}]},
                 ],
             },
             commissioningNotification: {
                 ID: 4,
                 parameters: [
                     {name: 'options', type: DataType.UINT16},
-                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b000}]},
-                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
-                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {
+                        name: 'srcID',
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: 'gpdIEEEAddr',
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b010}],
+                    },
+                    {
+                        name: 'gpdEndpoint',
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b010}],
+                    },
                     {name: 'frameCounter', type: DataType.UINT32},
                     {name: 'commandID', type: DataType.UINT8},
                     {name: 'payloadSize', type: DataType.UINT8},
                     {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
-                    {name: 'gppNwkAddr', type: DataType.UINT16,conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x800}]},
-                    {name: 'gppGddLink', type: DataType.UINT8,conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x800}]},
+                    {name: 'gppNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x800}]},
+                    {name: 'gppGddLink', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x800}]},
                 ],
             },
         },
@@ -1228,9 +1166,21 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'options', type: DataType.UINT8},
                     {name: 'tempMaster', type: DataType.UINT16},
                     {name: 'tempMasterTx', type: DataType.UINT8},
-                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b000}]},
-                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
-                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
+                    {
+                        name: 'srcID',
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: 'gpdIEEEAddr',
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b010}],
+                    },
+                    {
+                        name: 'gpdEndpoint',
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b010}],
+                    },
                     {name: 'gpdCmd', type: DataType.UINT8},
                     {name: 'gpdPayload', type: BuffaloZclDataType.GDP_FRAME},
                 ],
@@ -1239,18 +1189,58 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 1,
                 parameters: [
                     {name: 'options', type: DataType.UINT24},
-                    {name: 'srcID', type: DataType.UINT32, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b000}]},
-                    {name: 'gpdIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
-                    {name: 'gpdEndpoint', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 0, size: 3, value: 0b010}]},
-                    {name: 'sinkIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b110}]},
-                    {name: 'sinkIEEEAddr', type: DataType.IEEE_ADDR, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b000}]},
-                    {name: 'sinkNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b110}]},
-                    {name: 'sinkNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b000}]},
-                    {name: 'sinkGroupID', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b100}]},
-                    {name: 'sinkGroupID', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITFIELD_ENUM, param:'options', offset: 4, size: 3, value: 0b010}]},
-                    {name: 'deviceID', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x0008}]},
-                    {name: 'frameCounter', type: DataType.UINT32, conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x4000}]},
-                    {name: 'gpdKey', type: DataType.SEC_KEY, conditions: [{type: ParameterCondition.BITMASK_SET, param:'options', mask: 0x8000}]},
+                    {
+                        name: 'srcID',
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: 'gpdIEEEAddr',
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b010}],
+                    },
+                    {
+                        name: 'gpdEndpoint',
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b010}],
+                    },
+                    {
+                        name: 'sinkIEEEAddr',
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 4, size: 3, value: 0b110}],
+                    },
+                    {
+                        name: 'sinkIEEEAddr',
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 4, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: 'sinkNwkAddr',
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 4, size: 3, value: 0b110}],
+                    },
+                    {
+                        name: 'sinkNwkAddr',
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 4, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: 'sinkGroupID',
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 4, size: 3, value: 0b100}],
+                    },
+                    {
+                        name: 'sinkGroupID',
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 4, size: 3, value: 0b010}],
+                    },
+                    {name: 'deviceID', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x0008}]},
+                    {
+                        name: 'frameCounter',
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x4000}],
+                    },
+                    {name: 'gpdKey', type: DataType.SEC_KEY, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x8000}]},
                 ],
             },
             commisioningMode: {
@@ -1268,20 +1258,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             keepAliveTime: {ID: 0, type: DataType.UINT16},
             rejoinTimeout: {ID: 1, type: DataType.UINT16},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     neighborCleaning: {
         ID: 35,
         attributes: {
             neighborCleaningTimeout: {ID: 0, type: DataType.UINT16},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     nearestGateway: {
         ID: 36,
@@ -1289,10 +1275,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             nearestGateway: {ID: 0, type: DataType.UINT16},
             newMobileNode: {ID: 1, type: DataType.UINT16},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     closuresShadeCfg: {
         ID: 256,
@@ -1303,10 +1287,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             losedLimit: {ID: 16, type: DataType.UINT16},
             mode: {ID: 18, type: DataType.ENUM8},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     closuresDoorLock: {
         ID: 257,
@@ -1358,23 +1340,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             lockDoor: {
                 ID: 0,
                 response: 0,
-                parameters: [
-                    {name: 'pincodevalue', type: DataType.CHAR_STR},
-                ],
+                parameters: [{name: 'pincodevalue', type: DataType.CHAR_STR}],
             },
             unlockDoor: {
                 ID: 1,
                 response: 1,
-                parameters: [
-                    {name: 'pincodevalue', type: DataType.CHAR_STR},
-                ],
+                parameters: [{name: 'pincodevalue', type: DataType.CHAR_STR}],
             },
             toggleDoor: {
                 ID: 2,
                 response: 2,
-                parameters: [
-                    {name: 'pincodevalue', type: DataType.CHAR_STR},
-                ],
+                parameters: [{name: 'pincodevalue', type: DataType.CHAR_STR}],
             },
             unlockWithTimeout: {
                 ID: 3,
@@ -1387,9 +1363,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             getLogRecord: {
                 ID: 4,
                 response: 4,
-                parameters: [
-                    {name: 'logindex', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'logindex', type: DataType.UINT16}],
             },
             setPinCode: {
                 ID: 5,
@@ -1404,22 +1378,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             getPinCode: {
                 ID: 6,
                 response: 6,
-                parameters: [
-                    {name: 'userid', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'userid', type: DataType.UINT16}],
             },
             clearPinCode: {
                 ID: 7,
                 response: 7,
-                parameters: [
-                    {name: 'userid', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'userid', type: DataType.UINT16}],
             },
             clearAllPinCodes: {
                 ID: 8,
                 response: 8,
-                parameters: [
-                ],
+                parameters: [],
             },
             setUserStatus: {
                 ID: 9,
@@ -1432,9 +1401,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             getUserStatus: {
                 ID: 10,
                 response: 10,
-                parameters: [
-                    {name: 'userid', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'userid', type: DataType.UINT16}],
             },
             setWeekDaySchedule: {
                 ID: 11,
@@ -1504,16 +1471,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             getHolidaySchedule: {
                 ID: 18,
                 response: 18,
-                parameters: [
-                    {name: 'holidayscheduleid', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'holidayscheduleid', type: DataType.UINT8}],
             },
             clearHolidaySchedule: {
                 ID: 19,
                 response: 19,
-                parameters: [
-                    {name: 'holidayscheduleid', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'holidayscheduleid', type: DataType.UINT8}],
             },
             setUserType: {
                 ID: 20,
@@ -1526,9 +1489,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             getUserType: {
                 ID: 21,
                 response: 21,
-                parameters: [
-                    {name: 'userid', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'userid', type: DataType.UINT16}],
             },
             setRfidCode: {
                 ID: 22,
@@ -1543,48 +1504,35 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             getRfidCode: {
                 ID: 23,
                 response: 23,
-                parameters: [
-                    {name: 'userid', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'userid', type: DataType.UINT16}],
             },
             clearRfidCode: {
                 ID: 24,
                 response: 24,
-                parameters: [
-                    {name: 'userid', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'userid', type: DataType.UINT16}],
             },
             clearAllRfidCodes: {
                 ID: 25,
                 response: 25,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
         commandsResponse: {
             lockDoorRsp: {
                 ID: 0,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             unlockDoorRsp: {
                 ID: 1,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             toggleDoorRsp: {
                 ID: 2,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             unlockWithTimeoutRsp: {
                 ID: 3,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             getLogRecordRsp: {
                 ID: 4,
@@ -1600,9 +1548,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             setPinCodeRsp: {
                 ID: 5,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             getPinCodeRsp: {
                 ID: 6,
@@ -1615,21 +1561,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             clearPinCodeRsp: {
                 ID: 7,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             clearAllPinCodesRsp: {
                 ID: 8,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             setUserStatusRsp: {
                 ID: 9,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             getUserStatusRsp: {
                 ID: 10,
@@ -1640,9 +1580,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             setWeekDayScheduleRsp: {
                 ID: 11,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             getWeekDayScheduleRsp: {
                 ID: 12,
@@ -1659,15 +1597,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             clearWeekDayScheduleRsp: {
                 ID: 13,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             setYearDayScheduleRsp: {
                 ID: 14,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             getYearDayScheduleRsp: {
                 ID: 15,
@@ -1681,15 +1615,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             clearYearDayScheduleRsp: {
                 ID: 16,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             setHolidayScheduleRsp: {
                 ID: 17,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             getHolidayScheduleRsp: {
                 ID: 18,
@@ -1703,15 +1633,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             clearHolidayScheduleRsp: {
                 ID: 19,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             setUserTypeRsp: {
                 ID: 20,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             getUserTypeRsp: {
                 ID: 21,
@@ -1722,9 +1648,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             setRfidCodeRsp: {
                 ID: 22,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             getRfidCodeRsp: {
                 ID: 23,
@@ -1737,15 +1661,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             clearRfidCodeRsp: {
                 ID: 24,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             clearAllRfidCodesRsp: {
                 ID: 25,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             operationEventNotification: {
                 ID: 32,
@@ -1805,56 +1725,45 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             moesCalibrationTime: {ID: 0xf003, type: DataType.UINT16},
             targetPositionTiltPercentage: {ID: 0xf003, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.LEGRAND_GROUP},
             stepPositionTilt: {ID: 0xf004, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.LEGRAND_GROUP},
-            elkoDriveCloseDuration: {ID: 0xE000, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
-            elkoProtectionStatus: {ID: 0xE010, type: DataType.BITMAP8, manufacturerCode: ManufacturerCode.ADEO},
-            elkoProtectionSensor: {ID: 0xE013, type: DataType.BITMAP8, manufacturerCode: ManufacturerCode.ADEO},
-            elkoSunProtectionIlluminanceThreshold: {ID: 0xE012, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
-            elkoLiftDriveUpTime: {ID: 0xE014, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
-            elkoLiftDriveDownTime: {ID: 0xE015, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
-            elkoTiltOpenCloseAndStepTime: {ID: 0xE016, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
-            elkoTiltPositionPercentageAfterMoveToLevel: {ID: 0xE017, type: DataType.UINT8, manufacturerCode: ManufacturerCode.ADEO},
+            elkoDriveCloseDuration: {ID: 0xe000, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
+            elkoProtectionStatus: {ID: 0xe010, type: DataType.BITMAP8, manufacturerCode: ManufacturerCode.ADEO},
+            elkoProtectionSensor: {ID: 0xe013, type: DataType.BITMAP8, manufacturerCode: ManufacturerCode.ADEO},
+            elkoSunProtectionIlluminanceThreshold: {ID: 0xe012, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
+            elkoLiftDriveUpTime: {ID: 0xe014, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
+            elkoLiftDriveDownTime: {ID: 0xe015, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
+            elkoTiltOpenCloseAndStepTime: {ID: 0xe016, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
+            elkoTiltPositionPercentageAfterMoveToLevel: {ID: 0xe017, type: DataType.UINT8, manufacturerCode: ManufacturerCode.ADEO},
             nikoCalibrationTimeUp: {ID: 0xfcc1, type: DataType.UINT16, manufacturerCode: ManufacturerCode.NIKO_NV},
             nikoCalibrationTimeDown: {ID: 0xfcc2, type: DataType.UINT16, manufacturerCode: ManufacturerCode.NIKO_NV},
         },
         commands: {
             upOpen: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
             downClose: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             stop: {
                 ID: 2,
-                parameters: [
-                ],
+                parameters: [],
             },
             goToLiftValue: {
                 ID: 4,
-                parameters: [
-                    {name: 'liftvalue', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'liftvalue', type: DataType.UINT16}],
             },
             goToLiftPercentage: {
                 ID: 5,
-                parameters: [
-                    {name: 'percentageliftvalue', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'percentageliftvalue', type: DataType.UINT8}],
             },
             goToTiltValue: {
                 ID: 7,
-                parameters: [
-                    {name: 'tiltvalue', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'tiltvalue', type: DataType.UINT16}],
             },
             goToTiltPercentage: {
                 ID: 8,
-                parameters: [
-                    {name: 'percentagetiltvalue', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'percentagetiltvalue', type: DataType.UINT8}],
             },
             elkoStopOrStepLiftPercentage: {
                 ID: 0x80,
@@ -1864,10 +1773,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
-    barrierControl:{
+    barrierControl: {
         ID: 259,
         attributes: {
             movingState: {ID: 1, type: DataType.ENUM8},
@@ -1879,24 +1787,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             commandCloseEvents: {ID: 7, type: DataType.UINT16},
             openPeriod: {ID: 8, type: DataType.UINT16},
             closePeriod: {ID: 9, type: DataType.UINT16},
-            barrierPosition: {ID: 10, type: DataType.UINT8}
+            barrierPosition: {ID: 10, type: DataType.UINT8},
         },
         commands: {
             goToPercent: {
                 ID: 0,
-                parameters: [
-                    {name: 'percentOpen', type: DataType.UINT8}
-                ],
+                parameters: [{name: 'percentOpen', type: DataType.UINT8}],
             },
             stop: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
-        commandsResponse: {
-        },
-
+        commandsResponse: {},
     },
     hvacPumpCfgCtrl: {
         ID: 512,
@@ -1926,10 +1829,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             controlMode: {ID: 33, type: DataType.ENUM8},
             alarmMask: {ID: 34, type: DataType.BITMAP16},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     hvacThermostat: {
         ID: 513,
@@ -2010,7 +1911,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             danfossPreheatTime: {ID: 0x4050, type: DataType.UINT32, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossWindowOpenFeatureEnable: {ID: 0x4051, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossRoomStatusCode: {ID: 0x4100, type: DataType.BITMAP16, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
-            danfossOutputStatus:  {ID: 0x4110, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
+            danfossOutputStatus: {ID: 0x4110, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossRoomFloorSensorMode: {ID: 0x4120, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossFloorMinSetpoint: {ID: 0x4121, type: DataType.INT16, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossFloorMaxSetpoint: {ID: 0x4122, type: DataType.INT16, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
@@ -2061,13 +1962,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             clearWeeklySchedule: {
                 ID: 3,
-                parameters: [
-                ],
+                parameters: [],
             },
             getRelayStatusLog: {
                 ID: 4,
-                parameters: [
-                ],
+                parameters: [],
             },
             danfossSetpointCommand: {
                 ID: 64,
@@ -2104,13 +2003,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             wiserSmartCalibrateValve: {
                 ID: 226,
-                parameters: [
-                ],
+                parameters: [],
             },
             plugwiseCalibrateValve: {
                 ID: 0xa0,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
         commandsResponse: {
@@ -2142,10 +2039,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             fanMode: {ID: 0, type: DataType.ENUM8},
             fanModeSequence: {ID: 1, type: DataType.ENUM8},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     hvacDehumidificationCtrl: {
         ID: 515,
@@ -2159,10 +2054,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             dehumidMaxCool: {ID: 20, type: DataType.UINT8},
             relativeHumidDisplay: {ID: 21, type: DataType.ENUM8},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     hvacUserInterfaceCfg: {
         ID: 516,
@@ -2172,10 +2065,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             programmingVisibility: {ID: 2, type: DataType.ENUM8},
             danfossViewingDirection: {ID: 0x4000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     lightingColorCtrl: {
         ID: 768,
@@ -2401,9 +2292,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             tuyaSetMinimumBrightness: {
                 ID: 224,
-                parameters: [
-                    {name: 'minimum', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'minimum', type: DataType.UINT16}],
             },
             tuyaMoveToHueAndSaturationBrightness2: {
                 ID: 225,
@@ -2415,9 +2304,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             tuyaRgbMode: {
                 ID: 240,
-                parameters: [
-                    {name: 'enable', type: DataType.UINT8},
-                ]
+                parameters: [{name: 'enable', type: DataType.UINT8}],
             },
             tuyaOnStartUp: {
                 ID: 249,
@@ -2428,9 +2315,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             tuyaDoNotDisturb: {
                 ID: 250,
-                parameters: [
-                    {name: 'enable', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'enable', type: DataType.UINT8}],
             },
             tuyaOnOffTransitionTime: {
                 ID: 251,
@@ -2441,8 +2326,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     lightingBallastCfg: {
         ID: 769,
@@ -2463,13 +2347,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             lampBurnHours: {ID: 51, type: DataType.UINT24},
             lampAlarmMode: {ID: 52, type: DataType.BITMAP8},
             lampBurnHoursTripPoint: {ID: 53, type: DataType.UINT24},
-            elkoControlMode: {ID: 0xE000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.ADEO},
-            wiserControlMode: {ID: 0xE000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            elkoControlMode: {ID: 0xe000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.ADEO},
+            wiserControlMode: {ID: 0xe000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     msIlluminanceMeasurement: {
         ID: 1024,
@@ -2480,10 +2362,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             tolerance: {ID: 3, type: DataType.UINT16},
             lightSensorType: {ID: 4, type: DataType.ENUM8},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     msIlluminanceLevelSensing: {
         ID: 1025,
@@ -2492,10 +2372,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             lightSensorType: {ID: 1, type: DataType.ENUM8},
             illuminanceTargetLevel: {ID: 16, type: DataType.UINT16},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     msTemperatureMeasurement: {
         ID: 1026,
@@ -2508,10 +2386,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             minAbsoluteChange: {ID: 17, type: DataType.UNKNOWN},
             sprutTemperatureOffset: {ID: 0x6600, type: DataType.INT16, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     msPressureMeasurement: {
         ID: 1027,
@@ -2526,10 +2402,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             scaledTolerance: {ID: 0x0013, type: DataType.UINT16},
             scale: {ID: 0x0014, type: DataType.INT8},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     msFlowMeasurement: {
         ID: 1028,
@@ -2539,10 +2413,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             maxMeasuredValue: {ID: 2, type: DataType.UINT16},
             tolerance: {ID: 3, type: DataType.UINT16},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     msRelativeHumidity: {
         ID: 1029,
@@ -2553,10 +2425,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             tolerance: {ID: 3, type: DataType.UINT16},
             sprutHeater: {ID: 0x6600, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     msOccupancySensing: {
         ID: 1030,
@@ -2573,17 +2443,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             contactOToUDelay: {ID: 0x0030, type: DataType.UINT16},
             contactUToODelay: {ID: 0x0031, type: DataType.UINT16},
             contactUToOThreshold: {ID: 0x0032, type: DataType.UINT8},
-            elkoOccupancyDfltOperationMode: {ID: 0xE000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.ADEO},
-            elkoOccupancyOperationMode: {ID: 0xE001, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.ADEO},
-            elkoForceOffTimeout: {ID: 0xE002, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
-            elkoOccupancySensitivity: {ID: 0xE003, type: DataType.UINT8, manufacturerCode: ManufacturerCode.ADEO},
+            elkoOccupancyDfltOperationMode: {ID: 0xe000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.ADEO},
+            elkoOccupancyOperationMode: {ID: 0xe001, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.ADEO},
+            elkoForceOffTimeout: {ID: 0xe002, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
+            elkoOccupancySensitivity: {ID: 0xe003, type: DataType.UINT8, manufacturerCode: ManufacturerCode.ADEO},
             sprutOccupancyLevel: {ID: 0x6600, type: DataType.UINT16, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
             sprutOccupancySensitivity: {ID: 0x6601, type: DataType.UINT16, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     msSoilMoisture: {
         ID: 1032,
@@ -2593,10 +2461,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             maxMeasuredValue: {ID: 2, type: DataType.UINT16},
             tolerance: {ID: 3, type: DataType.UINT16},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     pHMeasurement: {
         ID: 1033,
@@ -2654,13 +2520,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             initNormalOpMode: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             initTestMode: {
                 ID: 2,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
         commandsResponse: {
@@ -2682,8 +2546,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     ssIasAce: {
         ID: 1281,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             arm: {
                 ID: 0,
@@ -2703,42 +2566,34 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             emergency: {
                 ID: 2,
-                parameters: [
-                ],
+                parameters: [],
             },
             fire: {
                 ID: 3,
-                parameters: [
-                ],
+                parameters: [],
             },
             panic: {
                 ID: 4,
-                parameters: [
-                ],
+                parameters: [],
             },
             getZoneIDMap: {
                 ID: 5,
                 response: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             getZoneInfo: {
                 ID: 6,
                 response: 2,
-                parameters: [
-                    {name: 'zoneid', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'zoneid', type: DataType.UINT8}],
             },
             getPanelStatus: {
                 ID: 7,
                 response: 5,
-                parameters: [
-                ],
+                parameters: [],
             },
             getBypassedZoneList: {
                 ID: 8,
-                parameters: [
-                ],
+                parameters: [],
             },
             getZoneStatus: {
                 ID: 9,
@@ -2754,9 +2609,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {
             armRsp: {
                 ID: 0,
-                parameters: [
-                    {name: 'armnotification', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'armnotification', type: DataType.UINT8}],
             },
             getZoneIDMapRsp: {
                 ID: 1,
@@ -2856,13 +2709,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             squawk: {
                 ID: 1,
-                parameters: [
-                    {name: 'squawkinfo', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'squawkinfo', type: DataType.UINT8}],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     piGenericTunnel: {
         ID: 1536,
@@ -2874,9 +2724,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {
             matchProtocolAddr: {
                 ID: 0,
-                parameters: [
-                    {name: 'protocoladdr', type: DataType.CHAR_STR},
-                ],
+                parameters: [{name: 'protocoladdr', type: DataType.CHAR_STR}],
             },
         },
         commandsResponse: {
@@ -2889,26 +2737,20 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             advertiseProtocolAddr: {
                 ID: 1,
-                parameters: [
-                    {name: 'protocoladdr', type: DataType.CHAR_STR},
-                ],
+                parameters: [{name: 'protocoladdr', type: DataType.CHAR_STR}],
             },
         },
     },
     piBacnetProtocolTunnel: {
         ID: 1537,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             transferNpdu: {
                 ID: 0,
-                parameters: [
-                    {name: 'npdu', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'npdu', type: DataType.UINT8}],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     piAnalogInputReg: {
         ID: 1538,
@@ -2921,10 +2763,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             updateInterval: {ID: 118, type: DataType.UINT8},
             profileName: {ID: 168, type: DataType.CHAR_STR},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piAnalogInputExt: {
         ID: 1539,
@@ -2944,27 +2784,22 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {
             transferApdu: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
             connectReq: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             disconnectReq: {
                 ID: 2,
-                parameters: [
-                ],
+                parameters: [],
             },
             connectStatusNoti: {
                 ID: 3,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     piAnalogOutputReg: {
         ID: 1540,
@@ -2977,10 +2812,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             updateInterval: {ID: 118, type: DataType.UINT8},
             profileName: {ID: 168, type: DataType.CHAR_STR},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piAnalogOutputExt: {
         ID: 1541,
@@ -2997,10 +2830,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             timeDelay: {ID: 113, type: DataType.UINT8},
             eventTimeStamps: {ID: 130, type: DataType.ARRAY},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piAnalogValueReg: {
         ID: 1542,
@@ -3011,10 +2842,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             objectType: {ID: 79, type: DataType.ENUM16},
             profileName: {ID: 168, type: DataType.CHAR_STR},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piAnalogValueExt: {
         ID: 1543,
@@ -3031,10 +2860,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             timeDelay: {ID: 113, type: DataType.UINT8},
             eventTimeStamps: {ID: 130, type: DataType.ARRAY},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piBinaryInputReg: {
         ID: 1544,
@@ -3050,10 +2877,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             timeOfSCReset: {ID: 115, type: DataType.STRUCT},
             profileName: {ID: 168, type: DataType.CHAR_STR},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piBinaryInputExt: {
         ID: 1545,
@@ -3067,10 +2892,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             timeDelay: {ID: 113, type: DataType.UINT8},
             eventTimeStamps: {ID: 130, type: DataType.ARRAY},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piBinaryOutputReg: {
         ID: 1546,
@@ -3087,10 +2910,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             timeOfSCReset: {ID: 115, type: DataType.STRUCT},
             profileName: {ID: 168, type: DataType.CHAR_STR},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piBinaryOutputExt: {
         ID: 1547,
@@ -3103,10 +2924,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             timeDelay: {ID: 113, type: DataType.UINT8},
             eventTimeStamps: {ID: 130, type: DataType.ARRAY},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piBinaryValueReg: {
         ID: 1548,
@@ -3121,10 +2940,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             timeOfSCReset: {ID: 115, type: DataType.STRUCT},
             profileName: {ID: 168, type: DataType.CHAR_STR},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piBinaryValueExt: {
         ID: 1549,
@@ -3138,10 +2955,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             timeDelay: {ID: 113, type: DataType.UINT8},
             eventTimeStamps: {ID: 130, type: DataType.ARRAY},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piMultistateInputReg: {
         ID: 1550,
@@ -3152,10 +2967,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             objectType: {ID: 79, type: DataType.ENUM16},
             profileName: {ID: 168, type: DataType.CHAR_STR},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piMultistateInputExt: {
         ID: 1551,
@@ -3170,10 +2983,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             timeDelay: {ID: 113, type: DataType.UINT8},
             eventTimeStamps: {ID: 130, type: DataType.ARRAY},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piMultistateOutputReg: {
         ID: 1552,
@@ -3185,10 +2996,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             objectType: {ID: 79, type: DataType.ENUM16},
             profileName: {ID: 168, type: DataType.CHAR_STR},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piMultistateOutputExt: {
         ID: 1553,
@@ -3201,10 +3010,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             timeDelay: {ID: 113, type: DataType.UINT8},
             eventTimeStamps: {ID: 130, type: DataType.ARRAY},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piMultistateValueReg: {
         ID: 1554,
@@ -3214,10 +3021,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             objectType: {ID: 79, type: DataType.ENUM16},
             profileName: {ID: 168, type: DataType.CHAR_STR},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piMultistateValueExt: {
         ID: 1555,
@@ -3232,10 +3037,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             timeDelay: {ID: 113, type: DataType.UINT8},
             eventTimeStamps: {ID: 130, type: DataType.ARRAY},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     pi11073ProtocolTunnel: {
         ID: 1556,
@@ -3250,37 +3053,30 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {
             transferApdu: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
             connectReq: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             disconnectReq: {
                 ID: 2,
-                parameters: [
-                ],
+                parameters: [],
             },
             connectStatusNoti: {
                 ID: 3,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     piIso7818ProtocolTunnel: {
         ID: 1557,
         attributes: {
             status: {ID: 0, type: DataType.UINT8},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     piRetailTunnel: {
         ID: 1559,
@@ -3288,10 +3084,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             manufacturerCode: {ID: 0, type: DataType.UINT16},
             msProfile: {ID: 1, type: DataType.UINT16},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     seMetering: {
         ID: 1794,
@@ -3424,41 +3218,41 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             develcoPulseConfiguration: {ID: 0x0300, type: DataType.UINT16, manufacturerCode: ManufacturerCode.DEVELCO},
             develcoCurrentSummation: {ID: 0x0301, type: DataType.UINT48, manufacturerCode: ManufacturerCode.DEVELCO},
             develcoInterfaceMode: {ID: 0x0302, type: DataType.ENUM16, manufacturerCode: ManufacturerCode.DEVELCO},
-            owonL1PhasePower: {ID: 0x2000, type: DataType.INT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL2PhasePower: {ID: 0x2001, type: DataType.INT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL3PhasePower: {ID: 0x2002, type: DataType.INT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL1PhaseReactivePower: {ID: 0x2100, type: DataType.INT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL2PhaseReactivePower: {ID: 0x2101, type: DataType.INT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL3PhaseReactivePower: {ID: 0x2102, type: DataType.INT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonReactivePowerSum: {ID: 0x2103, type: DataType.INT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL1PhaseVoltage: {ID: 0x3000, type: DataType.UINT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL2PhaseVoltage: {ID: 0x3001, type: DataType.UINT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL3PhaseVoltage: {ID: 0x3002, type: DataType.UINT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL1PhaseCurrent: {ID: 0x3100, type: DataType.UINT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL2PhaseCurrent: {ID: 0x3101, type: DataType.UINT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL3PhaseCurrent: {ID: 0x3102, type: DataType.UINT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonCurrentSum: {ID: 0x3103, type: DataType.UINT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonLeakageCurrent: {ID: 0x3104, type: DataType.UINT24,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL1Energy: {ID: 0x4000, type: DataType.UINT48,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL2Energy: {ID: 0x4001, type: DataType.UINT48,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL3Energy: {ID: 0x4002, type: DataType.UINT48,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL1ReactiveEnergy: {ID: 0x4100, type: DataType.UINT48,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL2ReactiveEnergy: {ID: 0x4101, type: DataType.UINT48,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL3ReactiveEnergy: {ID: 0x4102, type: DataType.UINT48,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonReactiveEnergySum: {ID: 0x4103, type: DataType.UINT48,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL1PowerFactor: {ID: 0x4104, type: DataType.INT8,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL2PowerFactor: {ID: 0x4105, type: DataType.INT8,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonL3PowerFactor: {ID: 0x4106, type: DataType.INT8,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonFrequency: {ID: 0x5005, type: DataType.UINT8,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonReportMap: {ID: 0x1000, type: DataType.BITMAP8,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonLastHistoricalRecordTime: {ID: 0x5000, type: DataType.UINT32,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonOldestHistoricalRecordTime: {ID: 0x5001, type: DataType.UINT32,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonMinimumReportCycle: {ID: 0x5002, type: DataType.UINT32,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonMaximumReportCycle: {ID: 0x5003, type: DataType.UINT32,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonSentHistoricalRecordState: {ID: 0x5004, type: DataType.UINT8,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonAccumulativeEnergyThreshold: {ID: 0x5006, type: DataType.UINT8,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonReportMode: {ID: 0x5007, type: DataType.UINT8,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonPercentChangeInPower: {ID: 0x5007, type: DataType.UINT8,manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL1PhasePower: {ID: 0x2000, type: DataType.INT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL2PhasePower: {ID: 0x2001, type: DataType.INT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL3PhasePower: {ID: 0x2002, type: DataType.INT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL1PhaseReactivePower: {ID: 0x2100, type: DataType.INT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL2PhaseReactivePower: {ID: 0x2101, type: DataType.INT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL3PhaseReactivePower: {ID: 0x2102, type: DataType.INT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonReactivePowerSum: {ID: 0x2103, type: DataType.INT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL1PhaseVoltage: {ID: 0x3000, type: DataType.UINT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL2PhaseVoltage: {ID: 0x3001, type: DataType.UINT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL3PhaseVoltage: {ID: 0x3002, type: DataType.UINT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL1PhaseCurrent: {ID: 0x3100, type: DataType.UINT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL2PhaseCurrent: {ID: 0x3101, type: DataType.UINT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL3PhaseCurrent: {ID: 0x3102, type: DataType.UINT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonCurrentSum: {ID: 0x3103, type: DataType.UINT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonLeakageCurrent: {ID: 0x3104, type: DataType.UINT24, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL1Energy: {ID: 0x4000, type: DataType.UINT48, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL2Energy: {ID: 0x4001, type: DataType.UINT48, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL3Energy: {ID: 0x4002, type: DataType.UINT48, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL1ReactiveEnergy: {ID: 0x4100, type: DataType.UINT48, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL2ReactiveEnergy: {ID: 0x4101, type: DataType.UINT48, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL3ReactiveEnergy: {ID: 0x4102, type: DataType.UINT48, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonReactiveEnergySum: {ID: 0x4103, type: DataType.UINT48, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL1PowerFactor: {ID: 0x4104, type: DataType.INT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL2PowerFactor: {ID: 0x4105, type: DataType.INT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonL3PowerFactor: {ID: 0x4106, type: DataType.INT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonFrequency: {ID: 0x5005, type: DataType.UINT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonReportMap: {ID: 0x1000, type: DataType.BITMAP8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonLastHistoricalRecordTime: {ID: 0x5000, type: DataType.UINT32, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonOldestHistoricalRecordTime: {ID: 0x5001, type: DataType.UINT32, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonMinimumReportCycle: {ID: 0x5002, type: DataType.UINT32, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonMaximumReportCycle: {ID: 0x5003, type: DataType.UINT32, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonSentHistoricalRecordState: {ID: 0x5004, type: DataType.UINT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonAccumulativeEnergyThreshold: {ID: 0x5006, type: DataType.UINT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonReportMode: {ID: 0x5007, type: DataType.UINT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonPercentChangeInPower: {ID: 0x5007, type: DataType.UINT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
             schneiderActiveEnergyTotal: {ID: 0x4010, type: DataType.INT48, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderReactiveEnergyTotal: {ID: 0x4011, type: DataType.INT48, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderApparentEnergyTotal: {ID: 0x4012, type: DataType.INT48, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
@@ -3495,87 +3289,71 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {
             getProfile: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
             reqMirror: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             mirrorRem: {
                 ID: 2,
-                parameters: [
-                ],
+                parameters: [],
             },
             reqFastPollMode: {
                 ID: 3,
-                parameters: [
-                ],
+                parameters: [],
             },
             getSnapshot: {
                 ID: 4,
-                parameters: [
-                ],
+                parameters: [],
             },
             takeSnapshot: {
                 ID: 5,
-                parameters: [
-                ],
+                parameters: [],
             },
             mirrorReportAttrRsp: {
                 ID: 6,
-                parameters: [
-                ],
+                parameters: [],
             },
             owonGetHistoryRecord: {
                 ID: 0x20,
-                parameters: [
-                ],
+                parameters: [],
             },
             owonStopSendingHistoricalRecord: {
                 ID: 0x21,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
         commandsResponse: {
             getProfileRsp: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
             reqMirrorRsp: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             mirrorRemRsp: {
                 ID: 2,
-                parameters: [
-                ],
+                parameters: [],
             },
             reqFastPollModeRsp: {
                 ID: 3,
-                parameters: [
-                ],
+                parameters: [],
             },
             getSnapshotRsp: {
                 ID: 4,
-                parameters: [
-                ],
+                parameters: [],
             },
             owonGetHistoryRecordRsp: {
                 ID: 0x20,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
     },
     tunneling: {
         ID: 0x0704,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             transferData: {
                 ID: 2,
@@ -3605,10 +3383,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             numberOfContents: {ID: 16, type: DataType.UINT16},
             contentRootID: {ID: 17, type: DataType.UINT16},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     telecommunicationsVoiceOverZigbee: {
         ID: 2308,
@@ -3625,10 +3401,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             optionFlags: {ID: 9, type: DataType.BITMAP8},
             threshold: {ID: 10, type: DataType.UINT8},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     telecommunicationsChatting: {
         ID: 2309,
@@ -3639,10 +3413,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             name: {ID: 17, type: DataType.CHAR_STR},
             enableAddChat: {ID: 18, type: DataType.BOOLEAN},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     haApplianceIdentification: {
         ID: 2816,
@@ -3660,10 +3432,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             productTypeId: {ID: 25, type: DataType.UINT16},
             cecedSpecificationVersion: {ID: 26, type: DataType.UINT8},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     haMeterIdentification: {
         ID: 2817,
@@ -3681,20 +3451,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             availablePower: {ID: 13, type: DataType.INT24},
             powerThreshold: {ID: 14, type: DataType.INT24},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     haApplianceEventsAlerts: {
         ID: 2818,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             getAlerts: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
         commandsResponse: {
@@ -3730,14 +3496,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {
             log: {
                 ID: 0,
-                parameters: [
-                    {name: 'logid', type: DataType.UINT32},
-                ],
+                parameters: [{name: 'logid', type: DataType.UINT32}],
             },
             logQueue: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
         commandsResponse: {
@@ -3913,27 +3676,26 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             schneiderDemandIntervalDuration: {ID: 0x4319, type: DataType.UINT24, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderDemandDateTime: {ID: 0x4320, type: DataType.UTC, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderActivePowerDemandPhase1: {ID: 0x4509, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
-            schneiderReactivePowerDemandPhase1: {ID: 0x450A, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
-            schneiderApparentPowerDemandPhase1: {ID: 0x450B, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderReactivePowerDemandPhase1: {ID: 0x450a, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderApparentPowerDemandPhase1: {ID: 0x450b, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderDemandIntervalMinimalVoltageL1: {ID: 0x4510, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderDemandIntervalMaximalCurrentI1: {ID: 0x4513, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderActivePowerDemandPhase2: {ID: 0x4909, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
-            schneiderReactivePowerDemandPhase2: {ID: 0x490A, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
-            schneiderApparentPowerDemandPhase2: {ID: 0x490B, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderReactivePowerDemandPhase2: {ID: 0x490a, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderApparentPowerDemandPhase2: {ID: 0x490b, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderDemandIntervalMinimalVoltageL2: {ID: 0x4910, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderDemandIntervalMaximalCurrentI2: {ID: 0x4913, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
-            schneiderActivePowerDemandPhase3: {ID: 0x4A09, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
-            schneiderReactivePowerDemandPhase3: {ID: 0x4A0A, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
-            schneiderApparentPowerDemandPhase3: {ID: 0x4A0B, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
-            schneiderDemandIntervalMinimalVoltageL3: {ID: 0x4A10, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
-            schneiderDemandIntervalMaximalCurrentI3: {ID: 0x4A13, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
-            schneiderCurrentSensorMultiplier: {ID: 0x4E00, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderActivePowerDemandPhase3: {ID: 0x4a09, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderReactivePowerDemandPhase3: {ID: 0x4a0a, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderApparentPowerDemandPhase3: {ID: 0x4a0b, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderDemandIntervalMinimalVoltageL3: {ID: 0x4a10, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderDemandIntervalMaximalCurrentI3: {ID: 0x4a13, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderCurrentSensorMultiplier: {ID: 0x4e00, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
         },
         commands: {
             getProfileInfo: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
             getMeasurementProfile: {
                 ID: 1,
@@ -4006,19 +3768,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             danfossSystemStatusCode: {ID: 0x4000, type: DataType.BITMAP16, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossSystemStatusWater: {ID: 0x4200, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossMultimasterRole: {ID: 0x4201, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
-            schneiderMeterStatus: {ID: 0xFF01, type: DataType.UINT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
-            schneiderDiagnosticRegister1: {ID: 0xFF02, type: DataType.UINT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderMeterStatus: {ID: 0xff01, type: DataType.UINT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
+            schneiderDiagnosticRegister1: {ID: 0xff02, type: DataType.UINT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderCommunicationQuality: {ID: 0x4000, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     touchlink: {
         ID: 4096,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             scanRequest: {
                 ID: 0,
@@ -4038,9 +3797,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             resetToFactoryNew: {
                 ID: 7,
-                parameters: [
-                    {name: 'transactionID', type: DataType.UINT32},
-                ],
+                parameters: [{name: 'transactionID', type: DataType.UINT32}],
             },
         },
         commandsResponse: {
@@ -4075,50 +3832,42 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     manuSpecificClusterAduroSmart: {
         ID: 64716,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             cmd0: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     manuSpecificOsram: {
         ID: 64527,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             saveStartupParams: {
                 ID: 1,
-                parameters: [
-                ],
+                parameters: [],
             },
             resetStartupParams: {
                 ID: 2,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
         commandsResponse: {
             saveStartupParamsRsp: {
                 ID: 0,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
     },
     manuSpecificPhilips: {
-        ID: 0xFC00,
+        ID: 0xfc00,
         manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
         attributes: {
             config: {ID: 49, type: DataType.BITMAP16},
         },
-        commands: {
-        },
+        commands: {},
         commandsResponse: {
             hueNotification: {
                 ID: 0,
@@ -4134,7 +3883,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     manuSpecificPhilips2: {
-        ID: 0xFC03,
+        ID: 0xfc03,
         manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
         attributes: {
             state: {ID: 0x0002, type: DataType.OCTET_STR},
@@ -4142,9 +3891,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {
             multiColor: {
                 ID: 0,
-                parameters: [
-                    {name: 'data', type: BuffaloZclDataType.BUFFER},
-                ],
+                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
             },
         },
         commandsResponse: {},
@@ -4163,7 +3910,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             currentTimeToDisplay: {ID: 32, type: DataType.UINT32},
             ledIntensityOn: {ID: 82, type: DataType.UINT8},
             ledIntensityOff: {ID: 83, type: DataType.UINT8},
-            ledColorOn: {ID: 80, type: DataType.UINT24},  // inversed hex BBGGRR
+            ledColorOn: {ID: 80, type: DataType.UINT24}, // inversed hex BBGGRR
             ledColorOff: {ID: 81, type: DataType.UINT24},
             onLedIntensity: {ID: 82, type: DataType.UINT8}, // percent
             offLedIntensity: {ID: 83, type: DataType.UINT8}, // percent
@@ -4181,15 +3928,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             unknown1: {ID: 128, type: DataType.UINT32}, // readOnly stringNumber *testing*
             dimmerTimmer: {ID: 160, type: DataType.UINT32},
             unknown2: {ID: 256, type: DataType.UINT8}, // readOnly *testing*
-            floorControlMode: {ID: 261, type: DataType.ENUM8},  // airFloorMode
+            floorControlMode: {ID: 261, type: DataType.ENUM8}, // airFloorMode
             auxOutputMode: {ID: 262, type: DataType.ENUM8},
-            floorTemperature: {ID: 263, type: DataType.INT16},          
+            floorTemperature: {ID: 263, type: DataType.INT16},
             ambiantMaxHeatSetpointLimit: {ID: 264, type: DataType.INT16},
             floorMinHeatSetpointLimit: {ID: 265, type: DataType.INT16},
             floorMaxHeatSetpointLimit: {ID: 266, type: DataType.INT16},
             temperatureSensor: {ID: 267, type: DataType.ENUM8},
             floorLimitStatus: {ID: 268, type: DataType.ENUM8},
-            roomTemperature: {ID: 269, type: DataType.INT16},            
+            roomTemperature: {ID: 269, type: DataType.INT16},
             timeFormatToDisplay: {ID: 276, type: DataType.ENUM8},
             GFCiStatus: {ID: 277, type: DataType.ENUM8},
             auxConnectedLoad: {ID: 280, type: DataType.UINT16},
@@ -4203,10 +3950,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             flowMeterConfig: {ID: 576, type: DataType.ARRAY},
             coldLoadPickupStatus: {ID: 643, type: DataType.UINT8},
         },
-        commands: {
-        },
-        commandsResponse: {
-        },
+        commands: {},
+        commandsResponse: {},
     },
     manuSpecificLegrandDevices: {
         ID: 0xfc01,
@@ -4214,10 +3959,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         attributes: {
             // attributes seems to vary depending on the device. Can't be static
         },
-        commands: {
-        },
-        commandsResponse: {
-        }
+        commands: {},
+        commandsResponse: {},
     },
     manuSpecificLegrandDevices2: {
         ID: 0xfc40,
@@ -4226,12 +3969,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {
             command0: {
                 ID: 0,
-                parameters: [
-                    {name: 'data', type: BuffaloZclDataType.BUFFER},
-                ],
+                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
             },
         },
-        commandsResponse: {}
+        commandsResponse: {},
     },
     manuSpecificLegrandDevices3: {
         ID: 0xfc41,
@@ -4240,12 +3981,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {
             command0: {
                 ID: 0,
-                parameters: [
-                    {name: 'data', type: BuffaloZclDataType.BUFFER},
-                ],
+                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
             },
         },
-        commandsResponse: {}
+        commandsResponse: {},
     },
     manuSpecificNiko1: {
         ID: 0xfc00,
@@ -4261,7 +4000,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             outletLedState: {ID: 0x0104, type: DataType.UINT8},
         },
         commands: {},
-        commandsResponse: {}
+        commandsResponse: {},
     },
     manuSpecificNiko2: {
         ID: 0xfc01,
@@ -4269,18 +4008,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         attributes: {
             switchAction: {ID: 0x0002, type: DataType.UINT8},
         },
-        commands: {
-        },
-        commandsResponse: {
-        }
+        commands: {},
+        commandsResponse: {},
     },
     wiserDeviceInfo: {
-        ID: 0xFE03, // 65027
+        ID: 0xfe03, // 65027
         attributes: {
             deviceInfo: {ID: 32, type: DataType.CHAR_STR},
         },
         commands: {},
-        commandsResponse: {}
+        commandsResponse: {},
     },
     /**
      * Tuya cluster
@@ -4293,9 +4030,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
      *
      */
     manuSpecificTuya: {
-        ID: 0xEF00,  // 61184
-        attributes: {
-        },
+        ID: 0xef00, // 61184
+        attributes: {},
         commands: {
             /**
              * Gateway-side data request
@@ -4313,17 +4049,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
              */
             dataQuery: {
                 ID: 3,
-                parameters: [
-                ],
+                parameters: [],
             },
             /**
              * Gw->Zigbee gateway query MCU version
              */
             mcuVersionRequest: {
                 ID: 0x10,
-                parameters: [
-                    {name: 'seq', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'seq', type: DataType.UINT16}],
             },
 
             /**
@@ -4384,7 +4117,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: 'payloadSize', type: DataType.UINT16},
                     {name: 'payload', type: BuffaloZclDataType.LIST_UINT8},
-                ]
+                ],
             },
 
             /**
@@ -4395,8 +4128,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: 'payloadSize', type: DataType.UINT16},
                     {name: 'payload', type: DataType.UINT8},
-                ]
-            }
+                ],
+            },
         },
         commandsResponse: {
             /**
@@ -4490,9 +4223,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
              */
             mcuSyncTime: {
                 ID: 0x24,
-                parameters: [
-                    {name: 'payloadSize', type: DataType.UINT16}
-                ]
+                parameters: [{name: 'payloadSize', type: DataType.UINT16}],
             },
 
             /**
@@ -4500,14 +4231,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
              */
             mcuGatewayConnectionStatus: {
                 ID: 0x25,
-                parameters: [
-                    {name: 'payloadSize', type: DataType.UINT16}
-                ]
-            }
+                parameters: [{name: 'payloadSize', type: DataType.UINT16}],
+            },
         },
     },
     manuSpecificLumi: {
-        ID: 0xFCC0,
+        ID: 0xfcc0,
         manufacturerCode: ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN,
         attributes: {
             mode: {ID: 0x0009, type: DataType.UINT8},
@@ -4519,10 +4248,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             curtainCalibrated: {ID: 0x0402, type: DataType.BOOLEAN},
         },
         commands: {},
-        commandsResponse: {}
+        commandsResponse: {},
     },
     liXeePrivate: {
-        ID: 0xFF66,
+        ID: 0xff66,
         manufacturerCode: ManufacturerCode.NXP_SEMICONDUCTORS,
         attributes: {
             currentTarif: {ID: 0x0000, type: DataType.CHAR_STR},
@@ -4570,7 +4299,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     manuSpecificTuya_2: {
-        ID: 0xE002,
+        ID: 0xe002,
         attributes: {
             alarm_temperature_max: {ID: 53258, type: DataType.INT16},
             alarm_temperature_min: {ID: 53259, type: DataType.INT16},
@@ -4592,28 +4321,22 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commands: {
             setOptions1: {
-                ID: 0xE5,
-                parameters: [
-                    {name: 'data', type: BuffaloZclDataType.BUFFER},
-                ],
+                ID: 0xe5,
+                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
             },
             setOptions2: {
-                ID: 0xE6,
-                parameters: [
-                    {name: 'data', type: BuffaloZclDataType.BUFFER},
-                ],
+                ID: 0xe6,
+                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
             },
             setOptions3: {
-                ID: 0xE7,
-                parameters: [
-                    {name: 'data', type: BuffaloZclDataType.BUFFER},
-                ],
+                ID: 0xe7,
+                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
             },
         },
         commandsResponse: {},
     },
     manuSpecificCentraliteHumidity: {
-        ID: 0xFC45,
+        ID: 0xfc45,
         manufacturerCode: ManufacturerCode.CENTRALITE_SYSTEMS_INC,
         attributes: {
             measuredValue: {ID: 0, type: DataType.UINT16},
@@ -4622,7 +4345,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     manuSpecificSmartThingsArrivalSensor: {
-        ID: 0xFC05,
+        ID: 0xfc05,
         manufacturerCode: ManufacturerCode.SMARTTHINGS_INC,
         attributes: {},
         commands: {},
@@ -4634,15 +4357,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     manuSpecificSamsungAccelerometer: {
-        ID: 0xFC02,
+        ID: 0xfc02,
         manufacturerCode: ManufacturerCode.SMARTTHINGS_INC,
         attributes: {
             motion_threshold_multiplier: {ID: 0, type: DataType.UINT8},
             motion_threshold: {ID: 2, type: DataType.UINT16},
             acceleration: {ID: 16, type: DataType.BITMAP8},
-            x_axis: {ID:18, type: DataType.INT16},
-            y_axis: {ID:19, type: DataType.INT16},
-            z_axis: {ID:20, type: DataType.INT16},
+            x_axis: {ID: 18, type: DataType.INT16},
+            y_axis: {ID: 19, type: DataType.INT16},
+            z_axis: {ID: 20, type: DataType.INT16},
         },
         commands: {},
         commandsResponse: {},
@@ -4680,31 +4403,30 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {
             setLanguage: {
                 ID: 0x011b,
-                parameters: [ // (1: English 0: Chinese)
+                parameters: [
+                    // (1: English 0: Chinese)
                     {name: 'languageCode', type: DataType.UINT8},
                 ],
             },
             setUnitOfTemperature: {
                 ID: 0x011c,
-                parameters: [ // (0: ℉ 1: ℃)
+                parameters: [
+                    // (0: ℉ 1: ℃)
                     {name: 'unitsCode', type: DataType.UINT8},
                 ],
             },
             getTime: {
                 ID: 0x011d,
-                parameters: [
-                ],
+                parameters: [],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     heimanSpecificScenes: {
         // from HS2SS-3.0海曼智能情景开关API文档-V01
         ID: 0xfc80,
         manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             cinema: {
                 ID: 0xf0,
@@ -4727,48 +4449,35 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     tradfriButton: {
         ID: 0xfc80,
         manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             action1: {
                 ID: 1,
-                parameters: [
-                    {name: 'data', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'data', type: DataType.UINT8}],
             },
             action2: {
                 ID: 2,
-                parameters: [
-                    {name: 'data', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'data', type: DataType.UINT8}],
             },
             action3: {
                 ID: 3,
-                parameters: [
-                    {name: 'data', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'data', type: DataType.UINT8}],
             },
             action4: {
                 ID: 4,
-                parameters: [
-                    {name: 'data', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'data', type: DataType.UINT8}],
             },
             action6: {
                 ID: 6,
-                parameters: [
-                    {name: 'data', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'data', type: DataType.UINT8}],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     heimanSpecificInfraRedRemote: {
         // from HS2IRC-3.0海曼智能红外转发控制器API-V01文档
@@ -4805,9 +4514,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 // Total we can have 15 device IDs (1..15).
                 ID: 0xf4,
                 // response: 0xf5,
-                parameters: [
-                    {name: 'modelType', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'modelType', type: DataType.UINT8}],
             },
             getIdAndKeyCodeList: {
                 ID: 0xf6,
@@ -4851,7 +4558,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     schneiderSpecificPilotMode: {
-        ID: 0xFF23,
+        ID: 0xff23,
         manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
         attributes: {
             pilotMode: {ID: 0x0031, type: DataType.ENUM8},
@@ -4860,7 +4567,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     elkoOccupancySettingClusterServer: {
-        ID: 0xFF19,
+        ID: 0xff19,
         manufacturerCode: ManufacturerCode.ADEO,
         attributes: {
             AmbienceLightThreshold: {ID: 0x0000, type: DataType.UINT16},
@@ -4872,7 +4579,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     elkoSwitchConfigurationClusterServer: {
-        ID: 0xFF17,
+        ID: 0xff17,
         manufacturerCode: ManufacturerCode.ADEO,
         attributes: {
             SwitchIndication: {ID: 0x0000, type: DataType.ENUM8},
@@ -4886,7 +4593,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     manuSpecificSchneiderLightSwitchConfiguration: {
-        ID: 0xFF17,
+        ID: 0xff17,
         manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
         attributes: {
             ledIndication: {ID: 0x0000, type: DataType.ENUM8},
@@ -4900,7 +4607,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     manuSpecificSchneiderFanSwitchConfiguration: {
-        ID: 0xFC04,
+        ID: 0xfc04,
         manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
         attributes: {
             ledIndication: {ID: 0x0002, type: DataType.UINT8},
@@ -4946,21 +4653,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {
             playStore: {
                 ID: 0x00,
-                parameters: [
-                    {name: 'param', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'param', type: DataType.UINT8}],
             },
             learnStart: {
                 ID: 0x01,
-                parameters: [
-                    {name: 'value', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'value', type: DataType.UINT8}],
             },
             learnStop: {
                 ID: 0x02,
-                parameters: [
-                    {name: 'value', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'value', type: DataType.UINT8}],
             },
             clearStore: {
                 ID: 0x03,
@@ -4982,8 +4683,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     manuSpecificSiglisZigfred: {
-        ID: 0xFC42,
-        manufacturerCode: 0x129C,
+        ID: 0xfc42,
+        manufacturerCode: 0x129c,
         attributes: {
             buttonEvent: {ID: 0x0008, type: DataType.UINT32},
         },
@@ -5007,7 +4708,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             dimmingSpeedUpLocal: {ID: 0x0002, type: DataType.UINT8},
             rampRateOffToOnRemote: {ID: 0x0003, type: DataType.UINT8},
             rampRateOffToOnLocal: {ID: 0x0004, type: DataType.UINT8},
-            dimmingSpeedDownRemote: {ID: 0x0005 , type: DataType.UINT8},
+            dimmingSpeedDownRemote: {ID: 0x0005, type: DataType.UINT8},
             dimmingSpeedDownLocal: {ID: 0x0006, type: DataType.UINT8},
             rampRateOnToOffRemote: {ID: 0x0007, type: DataType.UINT8},
             rampRateOnToOffLocal: {ID: 0x0008, type: DataType.UINT8},
@@ -5101,7 +4802,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'duration', type: DataType.UINT8},
                 ],
             },
-            individualLedEffect:{
+            individualLedEffect: {
                 ID: 3,
                 parameters: [
                     {name: 'led', type: DataType.UINT8},
@@ -5109,14 +4810,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'color', type: DataType.UINT8},
                     {name: 'level', type: DataType.UINT8},
                     {name: 'duration', type: DataType.UINT8},
-                ]
-            }
+                ],
+            },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     owonClearMetering: {
-        ID: 0xFFE0,
+        ID: 0xffe0,
         manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC,
         attributes: {},
         commands: {
@@ -5129,8 +4829,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     zosungIRTransmit: {
         ID: 0xed00,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             zosungSendIRCode00: {
                 ID: 0,
@@ -5213,8 +4912,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     zosungIRControl: {
         ID: 0xe004,
-        attributes: {
-        },
+        attributes: {},
         commands: {
             zosungControlIRCommand00: {
                 ID: 0,
@@ -5224,11 +4922,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     manuSpecificAssaDoorLock: {
-        ID: 0xFC00,
+        ID: 0xfc00,
         attributes: {
             autoLockTime: {ID: 0x0012, type: DataType.UINT8},
             wrongCodeAttempts: {ID: 0x0013, type: DataType.UINT8},
@@ -5238,9 +4935,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             volume: {ID: 0x0017, type: DataType.UINT8},
             lockMode: {ID: 0x0018, type: DataType.UINT8},
             language: {ID: 0x0019, type: DataType.UINT8},
-            allCodesLockout: {ID: 0x001A, type: DataType.BOOLEAN},
-            oneTouchLocking: {ID: 0x001B, type: DataType.BOOLEAN},
-            privacyButtonSetting: {ID: 0x001C, type: DataType.BOOLEAN},
+            allCodesLockout: {ID: 0x001a, type: DataType.BOOLEAN},
+            oneTouchLocking: {ID: 0x001b, type: DataType.BOOLEAN},
+            privacyButtonSetting: {ID: 0x001c, type: DataType.BOOLEAN},
             /* enableLogging: {ID: 0x0020, type: DataType.BOOLEAN},*/ // marked in C4 driver as not supported
             numberLogRecordsSupported: {ID: 0x0021, type: DataType.UINT16},
             numberPinsSupported: {ID: 0x0030, type: DataType.UINT8},
@@ -5360,66 +5057,58 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [],
             },
             getHistory: {
-                ID: 0xA0,
+                ID: 0xa0,
                 parameters: [],
             },
             getLogin: {
-                ID: 0xA1,
+                ID: 0xa1,
                 parameters: [],
             },
             getUser: {
-                ID: 0xA2,
+                ID: 0xa2,
                 parameters: [],
             },
             getUsers: {
-                ID: 0xA3,
+                ID: 0xa3,
                 parameters: [],
             },
             getMandatoryAttributes: {
-                ID: 0xB0,
+                ID: 0xb0,
                 parameters: [],
             },
             readAttribute: {
-                ID: 0xB1,
+                ID: 0xb1,
                 parameters: [],
             },
             writeAttribute: {
-                ID: 0xB2,
+                ID: 0xb2,
                 parameters: [],
             },
             configureReporting: {
-                ID: 0xB3,
+                ID: 0xb3,
                 parameters: [],
             },
             getBasicClusterAttributes: {
-                ID: 0xB4,
+                ID: 0xb4,
                 parameters: [],
             },
         },
         commandsResponse: {
             getLockStatusRsp: {
                 ID: 0,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             reflashRsp: {
                 ID: 1,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             reflashDataRsp: {
                 ID: 2,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             reflashStatusRsp: {
                 ID: 3,
-                parameters: [
-                    {name: 'status', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'status', type: DataType.UINT8}],
             },
             /* boltStateRsp: {
                 ID: 4,
@@ -5448,18 +5137,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     manuSpecificDoorman: {
-        ID: 0xEACC,
+        ID: 0xeacc,
         attributes: {},
         commands: {
             getConfigurationParameter: {
-                ID: 0xFC,
+                ID: 0xfc,
                 parameters: [
                     // bit pack ("bbb", 0x00, 0x00, configurationId)
                     {name: 'payload', type: DataType.CHAR_STR},
                 ],
             },
             setConfigurationParameter: {
-                ID: 0xFD,
+                ID: 0xfd,
                 parameters: [
                     // bit pack ("bbbb", 0x00, 0x00, configurationId, value)
                     {name: 'payload', type: DataType.CHAR_STR},
@@ -5473,7 +5162,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             armDisarm: {
-                ID: 0x4E,
+                ID: 0x4e,
                 parameters: [
                     // bit pack ("bb", lockSequenceNumber, operatingParameter)
                     {name: 'payload', type: DataType.CHAR_STR},
@@ -5483,24 +5172,21 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     manuSpecificNodOnPilotWire: {
-        ID: 0xFC00,
+        ID: 0xfc00,
         manufacturerCode: ManufacturerCode.NODON,
         attributes: {
-            mode: {ID: 0x0000, type: DataType.UINT8}
+            mode: {ID: 0x0000, type: DataType.UINT8},
         },
         commands: {
             setMode: {
                 ID: 0x0000,
-                parameters: [
-                    {name: 'mode', type: DataType.UINT8},
-                ],
+                parameters: [{name: 'mode', type: DataType.UINT8}],
             },
         },
-        commandsResponse: {
-        },
+        commandsResponse: {},
     },
     manuSpecificProfalux1: {
-        ID: 0xfc21,  // Config cluster, 0xfc20 mostly for commands it seems
+        ID: 0xfc21, // Config cluster, 0xfc20 mostly for commands it seems
         manufacturerCode: ManufacturerCode.PROFALUX,
         attributes: {
             motorCoverType: {ID: 0, type: DataType.UINT8}, // 0 : rolling shutters (volet), 1 : rolling shutters with tilt (BSO), 2: shade (store)
@@ -5520,21 +5206,21 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             touchlinkInterpanEnabled: {ID: 0x0007, type: DataType.BOOLEAN},
             wwahParentClassificationEnabled: {ID: 0x0008, type: DataType.BOOLEAN},
             wwahAppEventRetryEnabled: {ID: 0x0009, type: DataType.BOOLEAN},
-            wwahAppEventRetryQueueSize: {ID: 0x000A, type: DataType.UINT8},
-            wwahRejoinEnabled: {ID: 0x000B, type: DataType.BOOLEAN},
-            macPollFailureWaitTime: {ID: 0x000C, type: DataType.UINT8},
-            configurationModeEnabled: {ID: 0x000D, type: DataType.BOOLEAN},
-            currentDebugReportID: {ID: 0x000E, type: DataType.UINT8},
-            tcSecurityOnNwkKeyRotationEnabled: {ID: 0x000F, type: DataType.BOOLEAN},
+            wwahAppEventRetryQueueSize: {ID: 0x000a, type: DataType.UINT8},
+            wwahRejoinEnabled: {ID: 0x000b, type: DataType.BOOLEAN},
+            macPollFailureWaitTime: {ID: 0x000c, type: DataType.UINT8},
+            configurationModeEnabled: {ID: 0x000d, type: DataType.BOOLEAN},
+            currentDebugReportID: {ID: 0x000e, type: DataType.UINT8},
+            tcSecurityOnNwkKeyRotationEnabled: {ID: 0x000f, type: DataType.BOOLEAN},
             wwahBadParentRecoveryEnabled: {ID: 0x0010, type: DataType.BOOLEAN},
             pendingNetworkUpdateChannel: {ID: 0x0011, type: DataType.UINT8},
             pendingNetworkUpdatePANID: {ID: 0x0012, type: DataType.UINT16},
             otaMaxOfflineDuration: {ID: 0x0013, type: DataType.UINT16},
-            clusterRevision: {ID: 0xFFFD, type: DataType.UINT16},
+            clusterRevision: {ID: 0xfffd, type: DataType.UINT16},
         },
         commands: {
             clearBindingTable: {
-                ID: 0x0A,
+                ID: 0x0a,
                 parameters: [],
             },
         },

@@ -6,10 +6,10 @@ function isTcpPath(path: string): boolean {
 }
 
 function parseTcpPath(path: string): {host: string; port: number} {
-    const str = path.replace("tcp://", "");
+    const str = path.replace('tcp://', '');
     return {
-        host: str.substring(0, str.indexOf(":")),
-        port: Number(str.substring(str.indexOf(":") + 1)),
+        host: str.substring(0, str.indexOf(':')),
+        port: Number(str.substring(str.indexOf(':') + 1)),
     };
 }
 

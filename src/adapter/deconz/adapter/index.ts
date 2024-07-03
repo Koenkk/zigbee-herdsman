@@ -2,6 +2,4 @@
 /* eslint-disable */
 import DeconzAdapter from './deconzAdapter';
 
-export {
-    DeconzAdapter,
-};
+export {DeconzAdapter};

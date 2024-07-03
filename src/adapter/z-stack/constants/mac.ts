@@ -2,12 +2,12 @@ const MAC = {
     assocStatus: {
         SUCCESSFUL_ASSOCIATION: 0,
         PAN_AT_CAPACITY: 1,
-        PAN_ACCESS_DENIED: 2
+        PAN_ACCESS_DENIED: 2,
     },
     channelPage: {
         PAGE_0: 0,
         PAGE_1: 1,
-        PAGE_2: 2
+        PAGE_2: 2,
     },
     txOpt: {
         UNDEFINED: 0,
@@ -18,23 +18,23 @@ const MAC = {
         NO_RE_TRANS: 16,
         NO_CONFIRM_TRANS: 32,
         USE_PIB_VALUE: 64,
-        USE_POWER_CHANNEL_VALUES: 128
+        USE_POWER_CHANNEL_VALUES: 128,
     },
     commReason: {
         ASSOCIATE_RSP: 0,
         ORPHAN_RSP: 1,
-        RX_SECURE: 2
+        RX_SECURE: 2,
     },
     disassocReason: {
         RESERVED: 0,
         COOR_WISHES_DEV_LEAVE: 1,
-        DEV_WISHES_LEAVE: 2
+        DEV_WISHES_LEAVE: 2,
     },
     keyIdMode: {
         MODE_NONE_OR_IMPLICIT: 0,
         MODE_1: 1,
         MODE_4: 2,
-        MODE_8: 3
+        MODE_8: 3,
     },
     beaconOrder: {
         ORDER_NO_BEACONS: 15,
@@ -52,18 +52,18 @@ const MAC = {
         ORDER_120_MSEC: 3,
         ORDER_60_MSEC: 2,
         ORDER_30_MSEC: 1,
-        ORDER_15_MSEC: 0
+        ORDER_15_MSEC: 0,
     },
     scanType: {
         ENERGY_DETECT: 0,
         ACTIVE: 1,
         PASSIVE: 2,
         ORPHAN: 3,
-        ENHANCED: 5
+        ENHANCED: 5,
     },
     frontEndMode: {
         PA_LNA_OFF: 0,
-        PA_LNA_ON: 1
+        PA_LNA_ON: 1,
     },
     pidAttr: {
         ACK_WAIT_DURATION: 64,
@@ -121,8 +121,8 @@ const MAC = {
         EXTENDED_ADDRESS: 226,
         ALT_BE: 227,
         DEVICE_BEACON_ORDER: 228,
-        PHY_TRANSMIT_POWER_SIGNED: 229
-    }
+        PHY_TRANSMIT_POWER_SIGNED: 229,
+    },
 };
 
 export default MAC;

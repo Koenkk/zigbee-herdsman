@@ -2,6 +2,4 @@ import Controller from './controller';
 /**
  * @internal
  */
-export {
-    Controller,
-};
+export {Controller};

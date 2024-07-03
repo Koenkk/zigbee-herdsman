@@ -6,11 +6,11 @@
  * This sequence number is used to match a response command frame to the request frame that it is replying to.
  * The application shall maintain a 1-byte counter that is copied into this field and incremented by one for each command sent.
  * When a value of 0xff is reached, the next command shall re-start the counter with a value of 0x00.
- * 
+ *
  * The Device Profile describes devices in one of two configurations:
  * - Client: A client issues requests to the server via Device Profile messages.
  * - Server: A server issues responses to the client that initiated the Device Profile message.
- * 
+ *
  * Restricted Mode (`apsZdoRestrictedMode`) is a mode where a device will conditionally accept specific ZDO commands,
  * depending on the restricted criteria, source address, and encryption policy of the incoming command.
  * If a command is accepted, it is subject to normal command processing.
@@ -161,14 +161,14 @@ export enum ClusterId {
     // USER_DESCRIPTOR_CONFIRM = 0x8014,
 
     /**
-     * This is broadcast and only servers which have matching services respond. 
-     * 
+     * This is broadcast and only servers which have matching services respond.
+     *
      * Request:  [transaction sequence number: 1] [server mask:2]
      */
     SYSTEM_SERVER_DISCOVERY_REQUEST = 0x0015,
     /**
      * The response contains the request services that the recipient provides.
-     * 
+     *
      * Response: [transaction sequence number: 1]
      *           [status (== EMBER_ZDP_SUCCESS):1] [server mask:2]
      */
@@ -213,23 +213,21 @@ export enum ClusterId {
 
     /**
      * This is broadcast and only servers which have matching children respond.
-     * 
+     *
      * Request:  [transaction sequence number: 1]
      *           [number of children:1] [child EUI64:8]*
      */
-    PARENT_ANNOUNCE = 0x001F,
+    PARENT_ANNOUNCE = 0x001f,
     /**
      * The response contains the list of children that the recipient now holds.
-     * 
+     *
      * Response: [transaction sequence number: 1]
      *           [status: 1] [number of children:1] [child EUI64:8]*
      */
-    PARENT_ANNOUNCE_RESPONSE = 0x801F,
-
+    PARENT_ANNOUNCE_RESPONSE = 0x801f,
 
     //-------------------------------------------------------------------------------------------------
     //-- Bind, Unbind, and Bind Management Client Services Primitives
-
 
     /** DEPRECATED */
     // END_DEVICE_BIND_REQUEST = 0x0020,
@@ -239,7 +237,7 @@ export enum ClusterId {
     /**
      * There are two possible formats, depending on whether the destination is a group address or a device address.
      * Device addresses include an endpoint, groups don't.
-     * 
+     *
      * Request:  [transaction sequence number: 1]
      *           [source EUI64:8] [source endpoint:1]
      *           [cluster ID:2] [destination address:3 or 10]
@@ -257,7 +255,7 @@ export enum ClusterId {
     /**
      * There are two possible formats, depending on whether the destination is a group address or a device address.
      * Device addresses include an endpoint, groups don't.
-     * 
+     *
      * Request:  [transaction sequence number: 1]
      *           [source EUI64:8] [source endpoint:1]
      *           [cluster ID:2] [destination address:3 or 10]
@@ -311,13 +309,11 @@ export enum ClusterId {
      *           [tlvs: Variable]
      *           tlvs: [Count N:1][EUI64 1:8]...[EUI64 N:8]
      */
-    CLEAR_ALL_BINDINGS_REQUEST = 0x002B,
+    CLEAR_ALL_BINDINGS_REQUEST = 0x002b,
     /**
      * Response: [transaction sequence number: 1] [status:1]
      */
-    CLEAR_ALL_BINDINGS_RESPONSE = 0x802B,
-
-
+    CLEAR_ALL_BINDINGS_RESPONSE = 0x802b,
 
     //-------------------------------------------------------------------------------------------------
     //-- Network Management Client Services
@@ -412,7 +408,7 @@ export enum ClusterId {
      *           [entry count:1] [entry:14/21]*
      *   [entry] = [source EUI64:8] [source endpoint:1] [cluster ID:2]
      *             [dest addr mode:1] [dest:2/8] [dest endpoint:0/1]
-     * 
+     *
      * @note If Dest. Address Mode = 0x03, then the Long Dest. Address will be
      * used and Dest. endpoint will be included.  If Dest. Address Mode = 0x01,
      * then the Short Dest. Address will be used and there will be no Dest.
@@ -424,7 +420,7 @@ export enum ClusterId {
      * Stacks certified prior to Revision 21 MAY or MAY NOT support this command.
      * If this management command is not supported, a status of NOT_SUPPORTED SHALL be returned.
      * All stacks certified to Revision 21 and later SHALL support this command.
-     * 
+     *
      * Request: [transaction sequence number: 1] [EUI64:8] [flags:1]
      *          The flag bits are:
      *          0x40 remove children
@@ -448,7 +444,7 @@ export enum ClusterId {
     PERMIT_JOINING_REQUEST = 0x0036,
     /**
      * No response if broadcasted to all routers.
-     * 
+     *
      * Response: [transaction sequence number: 1] [status:1]
      */
     PERMIT_JOINING_RESPONSE = 0x8036,
@@ -500,22 +496,22 @@ export enum ClusterId {
      * Request:  [transaction sequence number: 1]
      *           [start index: 1]
      */
-    NWK_IEEE_JOINING_LIST_REQUEST = 0x003A,
+    NWK_IEEE_JOINING_LIST_REQUEST = 0x003a,
     /**
      * Response: [transaction sequence number: 1] [status: 1] [ieee joining list update id: 1] [joining policy: 1]
      *           [ieee joining list total: 1] [start index: 1] [ieee joining count: 1] [ieee:8]*
      */
-    NWK_IEEE_JOINING_LIST_REPONSE = 0x803A,
+    NWK_IEEE_JOINING_LIST_REPONSE = 0x803a,
 
     /**
      * Response: [transaction sequence number: 1] [status: 1] [channel in use: 4] [mac tx ucast total: 2] [mac tx ucast failures: 2]
      *           [mac tx ucast retries: 2] [period of time for results: 1]
      */
-    NWK_UNSOLICITED_ENHANCED_UPDATE_RESPONSE = 0x803B,
+    NWK_UNSOLICITED_ENHANCED_UPDATE_RESPONSE = 0x803b,
 
     /**
      * This command can be used by a remote device to survey the end devices to determine how many potential parents they have access to.
-     * 
+     *
      * Request:  [transaction sequence number: 1]
      *           [TLVs: varies]
      *
@@ -526,9 +522,9 @@ export enum ClusterId {
      * See R23 spec section 2.4.3.3.12 for the request and 3.2.2.2.1
      * for the ChannelListStructure.
      */
-    NWK_BEACON_SURVEY_REQUEST = 0x003C,
+    NWK_BEACON_SURVEY_REQUEST = 0x003c,
     /**
-     * 
+     *
      * Response:  [transaction sequence number: 1]
      *            [status: 1]
      *            [TLVs: varies]
@@ -542,15 +538,13 @@ export enum ClusterId {
      * Pan ID Conflict TLV can also found in the response.
      * See R23 spec section 2.4.4.3.13 for the response.
      */
-    NWK_BEACON_SURVEY_RESPONSE = 0x803C,
-
-
+    NWK_BEACON_SURVEY_RESPONSE = 0x803c,
 
     //-------------------------------------------------------------------------------------------------
     //-- Security Client Services
 
     /**
-     * 
+     *
      * Request:  [transaction sequence number: 1]
      *           [TLVs: varies]
      *
@@ -568,7 +562,7 @@ export enum ClusterId {
      */
     START_KEY_NEGOTIATION_REQUEST = 0x0040,
     /**
-     * 
+     *
      * Response: [transaction sequence number: 1] [status:1]
      *           [TLVs: varies]
      *
@@ -588,7 +582,7 @@ export enum ClusterId {
     START_KEY_NEGOTIATION_RESPONSE = 0x8040,
 
     /**
-     * 
+     *
      * Request:  [transaction sequence number: 1]
      *           [TLVs: varies]
      *
@@ -598,7 +592,7 @@ export enum ClusterId {
      */
     RETRIEVE_AUTHENTICATION_TOKEN_REQUEST = 0x0041,
     /**
-     * 
+     *
      * Response: [transaction sequence number: 1] [status:1]
      *           [TLVs: varies]
      *
@@ -609,7 +603,7 @@ export enum ClusterId {
     RETRIEVE_AUTHENTICATION_TOKEN_RESPONSE = 0x8041,
 
     /**
-     * 
+     *
      * Request:  [transaction sequence number: 1]
      *           [TLVs: varies]
      *
@@ -617,9 +611,9 @@ export enum ClusterId {
      * which contain the EUI64 of the device of interest.
      * See R23 spec section 2.4.3.4.3
      */
-    GET_AUTHENTICATION_LEVEL_REQUEST      = 0x0042,
+    GET_AUTHENTICATION_LEVEL_REQUEST = 0x0042,
     /**
-     * 
+     *
      * Response: [transaction sequence number: 1] [status:1]
      *           [TLVs: varies]
      *
@@ -629,10 +623,10 @@ export enum ClusterId {
      * key update method.
      * See R23 spec section 2.4.4.4.3
      */
-    GET_AUTHENTICATION_LEVEL_RESPONSE     = 0x8042,
+    GET_AUTHENTICATION_LEVEL_RESPONSE = 0x8042,
 
     /**
-     * 
+     *
      * Request:  [transaction sequence number: 1]
      *           [TLVs: varies]
      *
@@ -640,34 +634,34 @@ export enum ClusterId {
      * which contain the TLV Type Tag ID, and their
      * value.
      */
-    SET_CONFIGURATION_REQUEST      = 0x0043,
+    SET_CONFIGURATION_REQUEST = 0x0043,
     /**
-     * 
+     *
      * Response: [transaction sequence number: 1] [status:1]
      */
-    SET_CONFIGURATION_RESPONSE     = 0x8043,
+    SET_CONFIGURATION_RESPONSE = 0x8043,
 
     /**
-     * 
+     *
      * Request:  [transaction sequence number: 1]
      *           [TLVs: varies]
      *
      * Contains one or more TLVs (1 octet),
      * which the sender wants to get information
      */
-    GET_CONFIGURATION_REQUEST      = 0x0044,
+    GET_CONFIGURATION_REQUEST = 0x0044,
     /**
-     * 
+     *
      * Response: [transaction sequence number: 1] [status:1]
      *           [TLVs: varies]
      *
      * Contains one or more TLV tag Ids and their values
      * in response to the request
      */
-    GET_CONFIGURATION_RESPONSE     = 0x8044,
+    GET_CONFIGURATION_RESPONSE = 0x8044,
 
     /**
-     * 
+     *
      * Request:  [transaction sequence number: 1]
      *           [TLVs: varies]
      *
@@ -686,7 +680,7 @@ export enum ClusterId {
      */
     START_KEY_UPDATE_REQUEST = 0x0045,
     /**
-     * 
+     *
      * Response: [transaction sequence number: 1] [status:1]
      *
      * See R23 spec section 2.4.4.4.6
@@ -703,7 +697,7 @@ export enum ClusterId {
      */
     DECOMMISSION_REQUEST = 0x0046,
     /**
-     * 
+     *
      * Response: [transaction sequence number: 1] [status:1]
      */
     DECOMMISSION_RESPONSE = 0x8046,
@@ -725,4 +719,4 @@ export enum ClusterId {
      * security frame counter, and 8-byte MIC.
      */
     CHALLENGE_RESPONSE = 0x8047,
-};
+}

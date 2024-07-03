@@ -1,6 +1,7 @@
 import * as stream from 'stream';
-import Frame from './frame';
+
 import {logger} from '../../../utils/logger';
+import Frame from './frame';
 
 const NS = 'zh:zstack:unpi:writer';
 

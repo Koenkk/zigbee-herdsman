@@ -3,7 +3,7 @@ const DBG = {
         CRITICAL: 1,
         ERROR: 2,
         INFORMATION: 3,
-        TRACE: 4
+        TRACE: 4,
     },
     componentId: {
         OSAL: 0,
@@ -16,7 +16,7 @@ const DBG = {
         APP: 7,
         TEST: 8,
         RTG: 9,
-        DATA: 11
+        DATA: 11,
     },
 };
 

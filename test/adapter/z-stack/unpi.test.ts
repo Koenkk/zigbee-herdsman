@@ -11,7 +11,9 @@ describe('Parser', () => {
     });
 
     it('Parse simple message', () => {
-        const buffer = Buffer.from([0xfe, 0x0e, 0x61, 0x02, 0x02, 0x00, 0x02, 0x06, 0x03, 0xd9, 0x14, 0x34, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x92]);
+        const buffer = Buffer.from([
+            0xfe, 0x0e, 0x61, 0x02, 0x02, 0x00, 0x02, 0x06, 0x03, 0xd9, 0x14, 0x34, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x92,
+        ]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(1);
         expect(parsed[0].type).toBe(Constants.Type.SRSP);
@@ -23,7 +25,10 @@ describe('Parser', () => {
     });
 
     it('Parse two messages', () => {
-        const buffer = Buffer.from([0xfe, 0x0e, 0x61, 0x02, 0x02, 0x00, 0x02, 0x06, 0x03, 0xd9, 0x14, 0x34, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x92, 0xfe, 0x03, 0x61, 0x08, 0x00, 0x01, 0x55, 0x3e]);
+        const buffer = Buffer.from([
+            0xfe, 0x0e, 0x61, 0x02, 0x02, 0x00, 0x02, 0x06, 0x03, 0xd9, 0x14, 0x34, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x92, 0xfe, 0x03, 0x61, 0x08,
+            0x00, 0x01, 0x55, 0x3e,
+        ]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(2);
         expect(parsed[0].type).toBe(Constants.Type.SRSP);
@@ -81,7 +86,11 @@ describe('Parser', () => {
     });
 
     it('Parse message when it doenst start with SOF and buffer is empty (throw away everything until SOF)', () => {
-        const buffer = Buffer.from([95,27,37,254,3,69,196,212,23,0,65,254,27,68,129,0,0,8,0,212,23,1,1,0,55,0,153,178,219,0,0,7,8,122,10,0,0,32,243,212,23,29,160,254,7,69,196,111,244,2,122,155,246,95,87,254,27,68,129,0,0,6,0,111,244,1,1,0,118,0,245,236,220,0,0,7,8,2,10,0,0,16,0,246,95,27,85]);
+        const buffer = Buffer.from([
+            95, 27, 37, 254, 3, 69, 196, 212, 23, 0, 65, 254, 27, 68, 129, 0, 0, 8, 0, 212, 23, 1, 1, 0, 55, 0, 153, 178, 219, 0, 0, 7, 8, 122, 10, 0,
+            0, 32, 243, 212, 23, 29, 160, 254, 7, 69, 196, 111, 244, 2, 122, 155, 246, 95, 87, 254, 27, 68, 129, 0, 0, 6, 0, 111, 244, 1, 1, 0, 118,
+            0, 245, 236, 220, 0, 0, 7, 8, 2, 10, 0, 0, 16, 0, 246, 95, 27, 85,
+        ]);
         parser._transform(buffer, '', () => {});
         expect(parsed.length).toBe(4);
         expect(parsed[0].type).toBe(Constants.Type.AREQ);
@@ -93,28 +102,62 @@ describe('Parser', () => {
         expect(parsed[1].type).toBe(Constants.Type.AREQ);
         expect(parsed[1].subsystem).toBe(Constants.Subsystem.AF);
         expect(parsed[1].commandID).toBe(129);
-        expect(parsed[1].data).toStrictEqual(Buffer.from([0,0,8,0,212,23,1,1,0,55,0,153,178,219,0,0,7,8,122,10,0,0,32,243,212,23,29]));
+        expect(parsed[1].data).toStrictEqual(
+            Buffer.from([0, 0, 8, 0, 212, 23, 1, 1, 0, 55, 0, 153, 178, 219, 0, 0, 7, 8, 122, 10, 0, 0, 32, 243, 212, 23, 29]),
+        );
         expect(parsed[1].length).toBe(27);
         expect(parsed[1].fcs).toBe(160);
     });
 
     it('Continue parsing on fcs mismatch', () => {
         const buffer1 = Buffer.from([
-            0x01, 0x02, 0xfe, 0x03, 0x61, 0x08, 0x00, 0x01, 0x55, 0x3f, // fcs mismatch
-            0x08, 0x09, 0x12 // Noise
+            0x01,
+            0x02,
+            0xfe,
+            0x03,
+            0x61,
+            0x08,
+            0x00,
+            0x01,
+            0x55,
+            0x3f, // fcs mismatch
+            0x08,
+            0x09,
+            0x12, // Noise
         ]);
 
         const buffer2 = Buffer.from([
-            0x08, 0x09, 0x12 // Noise
-        ])
+            0x08,
+            0x09,
+            0x12, // Noise
+        ]);
 
         const buffer3 = Buffer.from([
-            0x08, 0x09, 0x12, // Noise
-            0xfe, 0x0e, 0x61, 0x02 // Valid message part 1
-        ])
+            0x08,
+            0x09,
+            0x12, // Noise
+            0xfe,
+            0x0e,
+            0x61,
+            0x02, // Valid message part 1
+        ]);
 
         const buffer4 = Buffer.from([
-            0x02, 0x00, 0x02, 0x06, 0x03, 0xd9, 0x14, 0x34, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x92 // Valid message part 2
+            0x02,
+            0x00,
+            0x02,
+            0x06,
+            0x03,
+            0xd9,
+            0x14,
+            0x34,
+            0x01,
+            0x02,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x92, // Valid message part 2
         ]);
 
         parser._transform(buffer1, '', () => {});
@@ -134,9 +177,9 @@ describe('Parser', () => {
 
 describe('Frame', () => {
     it('To buffer', () => {
-        const frame = new Frame(Constants.Type.SRSP, Constants.Subsystem.SYS, 3, Buffer.from([0x06, 0x01]))
+        const frame = new Frame(Constants.Type.SRSP, Constants.Subsystem.SYS, 3, Buffer.from([0x06, 0x01]));
         const buffer = frame.toBuffer();
-        expect(buffer).toStrictEqual(Buffer.from([0xfe, 0x02, 0x61, 0x03, 0x06, 0x01, 0x67]))
+        expect(buffer).toStrictEqual(Buffer.from([0xfe, 0x02, 0x61, 0x03, 0x06, 0x01, 0x67]));
     });
 });
 
@@ -148,7 +191,7 @@ describe('Writer', () => {
     });
 
     it('Write frame', () => {
-        const frame = new Frame(Constants.Type.SRSP, Constants.Subsystem.SYS, 3, Buffer.from([0x06, 0x01]))
+        const frame = new Frame(Constants.Type.SRSP, Constants.Subsystem.SYS, 3, Buffer.from([0x06, 0x01]));
         const push = jest.spyOn(writer, 'push').mockReturnValue(undefined);
         writer.writeFrame(frame);
         expect(push).toHaveBeenCalledTimes(1);

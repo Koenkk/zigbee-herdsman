@@ -1,21 +1,6 @@
 /* istanbul ignore file */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import {
-    int8s,
-    uint_t,
-    uint8_t,
-    uint16_t,
-    uint24_t,
-    uint32_t,
-    uint64_t,
-    LVBytes,
-    list,
-    LVList,
-    fixed_list,
-    WordList,
-    Bytes,
-} from './basic';
-
+import {int8s, uint_t, uint8_t, uint16_t, uint24_t, uint32_t, uint64_t, LVBytes, list, LVList, fixed_list, WordList, Bytes} from './basic';
 import {
     NcpResetCode,
     EmberRf4ceTxOption,
@@ -73,7 +58,6 @@ import {
     EmberZDOCmd,
     EmberDerivedKeyType,
 } from './named';
-
 import {
     EzspStruct,
     EmberNetworkParameters,
@@ -124,7 +108,8 @@ import {
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 export function deserialize(payload: any, schema: any[]): any[] {
     const result = [];
-    let value, data = payload;
+    let value,
+        data = payload;
     for (const type of schema) {
         [value, data] = type.deserialize(type, data);
         result.push(value);
@@ -133,7 +118,7 @@ export function deserialize(payload: any, schema: any[]): any[] {
 }
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types*/
-export function serialize(data: any[], schema: { serialize: Function }[]): Buffer {
+export function serialize(data: any[], schema: {serialize: Function}[]): Buffer {
     return Buffer.concat(schema.map((s, idx) => s.serialize(s, data[idx])));
 }
 

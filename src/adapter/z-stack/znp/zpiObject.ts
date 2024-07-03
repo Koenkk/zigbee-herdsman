@@ -1,16 +1,25 @@
-import {Subsystem, Type, MaxDataSize} from '../unpi/constants';
 import {Frame as UnpiFrame} from '../unpi';
-import Definition from './definition';
+import {Subsystem, Type, MaxDataSize} from '../unpi/constants';
 import BuffaloZnp from './buffaloZnp';
+import Definition from './definition';
 import ParameterType from './parameterType';
 import {MtParameter, MtCmd, ZpiObjectPayload, MtType, BuffaloZnpOptions} from './tstype';
 
 const BufferAndListTypes = [
-    ParameterType.BUFFER, ParameterType.BUFFER8, ParameterType.BUFFER16,
-    ParameterType.BUFFER18, ParameterType.BUFFER32, ParameterType.BUFFER42,
-    ParameterType.BUFFER100, ParameterType.LIST_UINT16, ParameterType.LIST_ROUTING_TABLE,
-    ParameterType.LIST_BIND_TABLE, ParameterType.LIST_NEIGHBOR_LQI, ParameterType.LIST_NETWORK,
-    ParameterType.LIST_ASSOC_DEV, ParameterType.LIST_UINT8,
+    ParameterType.BUFFER,
+    ParameterType.BUFFER8,
+    ParameterType.BUFFER16,
+    ParameterType.BUFFER18,
+    ParameterType.BUFFER32,
+    ParameterType.BUFFER42,
+    ParameterType.BUFFER100,
+    ParameterType.LIST_UINT16,
+    ParameterType.LIST_ROUTING_TABLE,
+    ParameterType.LIST_BIND_TABLE,
+    ParameterType.LIST_NEIGHBOR_LQI,
+    ParameterType.LIST_NETWORK,
+    ParameterType.LIST_ASSOC_DEV,
+    ParameterType.LIST_UINT8,
 ];
 
 class ZpiObject {
@@ -22,10 +31,7 @@ class ZpiObject {
 
     private readonly parameters: MtParameter[];
 
-    private constructor(
-        type: Type, subsystem: Subsystem, command: string, commandID: number, payload: ZpiObjectPayload,
-        parameters: MtParameter[],
-    ) {
+    private constructor(type: Type, subsystem: Subsystem, command: string, commandID: number, payload: ZpiObjectPayload, parameters: MtParameter[]) {
         this.subsystem = subsystem;
         this.command = command;
         this.commandID = commandID;
@@ -66,7 +72,7 @@ class ZpiObject {
             /* istanbul ignore next */
             throw new Error(
                 `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
-                `${frame.type === Type.SRSP ? 'response' : 'request'}`
+                    `${frame.type === Type.SRSP ? 'response' : 'request'}`,
             );
         }
 
@@ -122,8 +128,9 @@ class ZpiObject {
     }
 
     public isResetCommand(): boolean {
-        return (this.command === 'resetReq' && this.subsystem === Subsystem.SYS) ||
-            (this.command === 'systemReset' && this.subsystem === Subsystem.SAPI);
+        return (
+            (this.command === 'resetReq' && this.subsystem === Subsystem.SYS) || (this.command === 'systemReset' && this.subsystem === Subsystem.SAPI)
+        );
     }
 }
 

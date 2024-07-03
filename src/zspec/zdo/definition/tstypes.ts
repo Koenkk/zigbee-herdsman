@@ -1,11 +1,5 @@
 import {ClusterId, EUI64, ExtendedPanId, NodeId, PanId, ProfileId} from '../../tstypes';
-import {
-    JoiningPolicy,
-    ActiveLinkKeyType,
-    InitialJoinMethod,
-    SelectedKeyNegotiationProtocol,
-    SelectedPreSharedSecret
-} from './enums';
+import {JoiningPolicy, ActiveLinkKeyType, InitialJoinMethod, SelectedKeyNegotiationProtocol, SelectedPreSharedSecret} from './enums';
 import {Status} from './status';
 
 /**
@@ -68,24 +62,23 @@ export type MACCapabilityFlags = {
  * - [stackComplianceResivion: 7]
  */
 export type ServerMask = {
-    primaryTrustCenter: number,
-    backupTrustCenter: number,
-    deprecated1: number,
-    deprecated2: number,
-    deprecated3: number,
-    deprecated4: number,
-    networkManager: number,
-    reserved1: number,
-    reserved2: number,
+    primaryTrustCenter: number;
+    backupTrustCenter: number;
+    deprecated1: number;
+    deprecated2: number;
+    deprecated3: number;
+    deprecated4: number;
+    networkManager: number;
+    reserved1: number;
+    reserved2: number;
     /**
      * Indicate the Revision of the Zigbee Pro Core specification that the running stack is implemented to.
      * Prior to Revision 21 of the specification these bits were reserved and thus set to 0.
      * A stack that is compliant to Revision 23 would set these bits to 23 (0010111b).
      * A stack SHALL indicate the Revision of the specification it is compliant to by setting these bits.
      */
-    stackComplianceResivion: number,
+    stackComplianceResivion: number;
 };
-
 
 //-------------------------------------------------------------------------------------------------
 //-- Responses
@@ -93,14 +86,14 @@ export type ServerMask = {
 export type LQITableEntry = {
     /**
      * The 64-bit extended PAN identifier of the neighboring device.
-     * 
+     *
      * 64-bit
      */
     extendedPanId: ExtendedPanId;
     /**
      * 64-bit IEEE address that is unique to every device.
      * If this value is unknown at the time of the request, this field shall be set to 0xffffffffffffffff.
-     * 
+     *
      * 64-bit
      */
     eui64: EUI64;
@@ -112,7 +105,7 @@ export type LQITableEntry = {
      * 0x01 = ZigBee router
      * 0x02 = ZigBee end device
      * 0x03 = Unknown
-     * 
+     *
      * 2-bit
      */
     deviceType: number;
@@ -121,7 +114,7 @@ export type LQITableEntry = {
      * 0x00 = Receiver is off
      * 0x01 = Receiver is on
      * 0x02 = unknown
-     * 
+     *
      * 2-bit
      */
     rxOnWhenIdle: number;
@@ -132,7 +125,7 @@ export type LQITableEntry = {
      * 0x02 = neighbor is a sibling
      * 0x03 = None of the above
      * 0x04 = previous child
-     * 
+     *
      * 3-bit
      */
     relationship: number;
@@ -143,7 +136,7 @@ export type LQITableEntry = {
      * 0x00 = neighbor is not accepting join requests
      * 0x01 = neighbor is accepting join requests
      * 0x02 = unknown
-     * 
+     *
      * 2-bit
      */
     permitJoining: number;
@@ -152,14 +145,14 @@ export type LQITableEntry = {
     /**
      * The tree depth of the neighbor device.
      * A value of 0x00 indicates that the device is the ZigBee coordinator for the network
-     * 
+     *
      * 8-bit
      */
     depth: number;
     /**
      * The estimated link quality for RF transmissions from this device.
      * See [B1] for discussion of how this is calculated.
-     * 
+     *
      * 8-bit
      */
     lqi: number;
@@ -176,25 +169,25 @@ export type RoutingTableEntry = {
      * 0x3=INACTIVE.
      * 0x4=VALIDATION_UNDERWAY
      * 0x5-0x7=RESERVED
-     * 
+     *
      * 3-bit
      */
     status: number;
     /**
      * A flag indicating whether the device is a memory constrained concentrator
-     * 
+     *
      * 1-bit
      */
     memoryConstrained: number;
     /**
      * A flag indicating that the destination is a concentrator that issued a many-to-one request
-     * 
+     *
      * 1-bit
      */
     manyToOne: number;
     /**
      * A flag indicating that a route record command frame should be sent to the destination prior to the next data packet.
-     * 
+     *
      * 1-bit
      */
     routeRecordRequired: number;
@@ -268,7 +261,7 @@ export type NodeDescriptorResponse = {
     /** 000 == Zigbee Coordinator, 001 == Zigbee Router,  010 === Zigbee End Device, 011-111 === Reserved */
     logicalType: number;
     /** R23 and above (determined via other means if not). Indicates whether the device supports fragmentation at the APS layer. */
-    fragmentationSupported: boolean | null,
+    fragmentationSupported: boolean | null;
     /** Specifies the application support sub-layer capabilities of the node. Currently not supported, should be zero */
     apsFlags: number;
     /**
@@ -544,7 +537,6 @@ export type GetConfigurationResponse = TLVs;
 
 export type ChallengeResponse = TLVs;
 
-
 //-------------------------------------------------------------------------------------------------
 //-- TLVs
 
@@ -648,7 +640,7 @@ export type FragmentationParametersGlobalTLV = {
      * - Bit 0 = APS Fragmentation Supported. Set to 1 to indicate support; 0 to indicate no support
      *   If set to 1, the maximum reassembled message size is indicated by the Maximum Incoming Transfer Unit.
      * - Bit 1-7 = Reserved for future use
-     * 
+     *
      * XXX: Assumed optional from minimum length of TLV in spec
      */
     fragmentationOptions?: number;
@@ -657,7 +649,7 @@ export type FragmentationParametersGlobalTLV = {
      * This indicates the maximum reassembled message size at the application layer after fragmentation has been applied
      * on the message at the lower layers.
      * A device supporting fragmentation would set this field to be larger than the normal payload size of the underlying NWK and MAC layer.
-     * 
+     *
      * XXX: Assumed optional from minimum length of TLV in spec
      */
     maxIncomingTransferUnit?: number;
@@ -836,9 +828,20 @@ export type ProcessingStatusTLV = {
     }[];
 };
 
-export type LocalTLVType = (ClearAllBindingsReqEUI64TLV | BeaconSurveyConfigurationTLV | Curve25519PublicPointTLV | AuthenticationTokenIdTLV
-    | TargetIEEEAddressTLV | SelectedKeyNegotiationMethodTLV | DeviceEUI64ListTLV | APSFrameCounterChallengeTLV | APSFrameCounterResponseTLV
-    | BeaconSurveyResultsTLV | PotentialParentsTLV | DeviceAuthenticationLevelTLV | ProcessingStatusTLV);
+export type LocalTLVType =
+    | ClearAllBindingsReqEUI64TLV
+    | BeaconSurveyConfigurationTLV
+    | Curve25519PublicPointTLV
+    | AuthenticationTokenIdTLV
+    | TargetIEEEAddressTLV
+    | SelectedKeyNegotiationMethodTLV
+    | DeviceEUI64ListTLV
+    | APSFrameCounterChallengeTLV
+    | APSFrameCounterResponseTLV
+    | BeaconSurveyResultsTLV
+    | PotentialParentsTLV
+    | DeviceAuthenticationLevelTLV
+    | ProcessingStatusTLV;
 
 export type LocalTLVReader = (length: number) => LocalTLVType;
 
@@ -848,17 +851,27 @@ export type TLV = {
     /**
      * The Length byte encodes the number of bytes in the value field -1.
      * This means that a TLV with length field of 3 is expected to contain 4 bytes of data in the value field.
-     * 
+     *
      * WARNING: This field is assumed to always include the +1 offset, and logic should do the appropriate reversal when writing the actual buffer.
-     * 
+     *
      * 1-byte
      */
     length: number;
     /** Size = ${length + 1} */
-    tlv: (ManufacturerSpecificGlobalTLV | SupportedKeyNegotiationMethodsGlobalTLV | PanIdConflictReportGlobalTLV | NextPanIdChangeGlobalTLV
-        | NextChannelChangeGlobalTLV | SymmetricPassphraseGlobalTLV | RouterInformationGlobalTLV | FragmentationParametersGlobalTLV
-        | JoinerEncapsulationGlobalTLV | BeaconAppendixEncapsulationGlobalTLV | ConfigurationParametersGlobalTLV | DeviceCapabilityExtensionGlobalTLV
-        | LocalTLVType);
+    tlv:
+        | ManufacturerSpecificGlobalTLV
+        | SupportedKeyNegotiationMethodsGlobalTLV
+        | PanIdConflictReportGlobalTLV
+        | NextPanIdChangeGlobalTLV
+        | NextChannelChangeGlobalTLV
+        | SymmetricPassphraseGlobalTLV
+        | RouterInformationGlobalTLV
+        | FragmentationParametersGlobalTLV
+        | JoinerEncapsulationGlobalTLV
+        | BeaconAppendixEncapsulationGlobalTLV
+        | ConfigurationParametersGlobalTLV
+        | DeviceCapabilityExtensionGlobalTLV
+        | LocalTLVType;
 };
 
 export type TLVs = {

@@ -21,7 +21,7 @@ enum Subsystem {
 }
 
 const DataStart = 4;
-const SOF = 0xFE;
+const SOF = 0xfe;
 
 const PositionDataLength = 1;
 const PositionCmd0 = 2;
@@ -30,7 +30,4 @@ const PositionCmd1 = 3;
 const MinMessageLength = 5;
 const MaxDataSize = 250;
 
-export {
-    Type, Subsystem, DataStart, SOF, PositionDataLength, MinMessageLength, PositionCmd0, PositionCmd1,
-    MaxDataSize,
-};
+export {Type, Subsystem, DataStart, SOF, PositionDataLength, MinMessageLength, PositionCmd0, PositionCmd1, MaxDataSize};

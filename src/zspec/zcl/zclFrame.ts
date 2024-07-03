@@ -1,12 +1,12 @@
-import * as Utils from './utils';
-import {BuffaloZclOptions, Cluster, Command, ClusterName, CustomClusters, ParameterDefinition} from './definition/tstype';
+import {BuffaloZcl} from './buffaloZcl';
 import {Direction, DataType, BuffaloZclDataType, FrameType, ParameterCondition} from './definition/enums';
 import {FoundationCommandName, Foundation} from './definition/foundation';
-import {ZclHeader} from './zclHeader';
-import {BuffaloZcl} from './buffaloZcl';
 import {Status} from './definition/status';
+import {BuffaloZclOptions, Cluster, Command, ClusterName, CustomClusters, ParameterDefinition} from './definition/tstype';
+import * as Utils from './utils';
+import {ZclHeader} from './zclHeader';
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ZclPayload = any;
 
 const ListTypes: number[] = [
@@ -38,17 +38,23 @@ export class ZclFrame {
      * Creating
      */
     public static create(
-        frameType: FrameType, direction: Direction, disableDefaultResponse: boolean, manufacturerCode: number | null,
-        transactionSequenceNumber: number, commandKey: number | string, clusterKey: number | string,
-        payload: ZclPayload, customClusters: CustomClusters, reservedBits = 0
+        frameType: FrameType,
+        direction: Direction,
+        disableDefaultResponse: boolean,
+        manufacturerCode: number | null,
+        transactionSequenceNumber: number,
+        commandKey: number | string,
+        clusterKey: number | string,
+        payload: ZclPayload,
+        customClusters: CustomClusters,
+        reservedBits = 0,
     ): ZclFrame {
         const cluster = Utils.getCluster(clusterKey, manufacturerCode, customClusters);
         let command: Command = null;
         if (frameType === FrameType.GLOBAL) {
             command = Utils.getGlobalCommand(commandKey);
         } else {
-            command = direction === Direction.CLIENT_TO_SERVER ?
-                cluster.getCommand(commandKey) : cluster.getCommandResponse(commandKey);
+            command = direction === Direction.CLIENT_TO_SERVER ? cluster.getCommand(commandKey) : cluster.getCommandResponse(commandKey);
         }
 
         const header = new ZclHeader(
@@ -104,8 +110,11 @@ export class ZclFrame {
             /* istanbul ignore else */
             if (command.parseStrategy === 'oneof') {
                 /* istanbul ignore else */
-                if ([Foundation.discoverRsp, Foundation.discoverCommandsRsp,
-                    Foundation.discoverCommandsGenRsp, Foundation.discoverExtRsp].includes(command)) {
+                if (
+                    [Foundation.discoverRsp, Foundation.discoverCommandsRsp, Foundation.discoverCommandsGenRsp, Foundation.discoverExtRsp].includes(
+                        command,
+                    )
+                ) {
                     buffalo.writeUInt8(this.payload.discComplete);
 
                     for (const entry of this.payload.attrInfos) {
@@ -137,7 +146,7 @@ export class ZclFrame {
      */
     public static fromBuffer(clusterID: number, header: ZclHeader, buffer: Buffer, customClusters: CustomClusters): ZclFrame {
         if (!header) {
-            throw new Error("Invalid ZclHeader.");
+            throw new Error('Invalid ZclHeader.');
         }
 
         const buffalo = new BuffaloZcl(buffer, header.length);
@@ -147,8 +156,10 @@ export class ZclFrame {
         if (header.isGlobal) {
             command = Utils.getGlobalCommand(header.commandIdentifier);
         } else {
-            command = header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
-                cluster.getCommand(header.commandIdentifier) : cluster.getCommandResponse(header.commandIdentifier);
+            command =
+                header.frameControl.direction === Direction.CLIENT_TO_SERVER
+                    ? cluster.getCommand(header.commandIdentifier)
+                    : cluster.getCommandResponse(header.commandIdentifier);
         }
 
         const payload = this.parsePayload(header, cluster, buffalo);
@@ -166,9 +177,11 @@ export class ZclFrame {
         }
     }
 
-    private static parsePayloadCluster(header: ZclHeader, cluster: Cluster,  buffalo: BuffaloZcl): ZclPayload {
-        const command = header.frameControl.direction === Direction.CLIENT_TO_SERVER ?
-            cluster.getCommand(header.commandIdentifier) : cluster.getCommandResponse(header.commandIdentifier);
+    private static parsePayloadCluster(header: ZclHeader, cluster: Cluster, buffalo: BuffaloZcl): ZclPayload {
+        const command =
+            header.frameControl.direction === Direction.CLIENT_TO_SERVER
+                ? cluster.getCommand(header.commandIdentifier)
+                : cluster.getCommandResponse(header.commandIdentifier);
         const payload: ZclPayload = {};
 
         for (const parameter of command.parameters) {
@@ -248,16 +261,19 @@ export class ZclFrame {
             /* istanbul ignore else */
             if (command.parseStrategy === 'oneof') {
                 /* istanbul ignore else */
-                if ([Foundation.discoverRsp, Foundation.discoverCommandsRsp,
-                    Foundation.discoverCommandsGenRsp, Foundation.discoverExtRsp].includes(command)) {
+                if (
+                    [Foundation.discoverRsp, Foundation.discoverCommandsRsp, Foundation.discoverCommandsGenRsp, Foundation.discoverExtRsp].includes(
+                        command,
+                    )
+                ) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const payload: {discComplete: number, attrInfos: {[k: string]: any}[]} = {
+                    const payload: {discComplete: number; attrInfos: {[k: string]: any}[]} = {
                         discComplete: buffalo.readUInt8(),
                         attrInfos: [],
                     };
 
                     while (buffalo.isMore()) {
-                        const entry: typeof payload.attrInfos[number] = {};
+                        const entry: (typeof payload.attrInfos)[number] = {};
 
                         for (const parameter of command.parameters) {
                             entry[parameter.name] = buffalo.read(parameter.type, {});
@@ -276,44 +292,40 @@ export class ZclFrame {
      * Utils
      */
 
-    public static conditionsValid(
-        parameter: ParameterDefinition,
-        entry: ZclPayload,
-        remainingBufferBytes: number | null
-    ): boolean {
+    public static conditionsValid(parameter: ParameterDefinition, entry: ZclPayload, remainingBufferBytes: number | null): boolean {
         if (parameter.conditions) {
             for (const condition of parameter.conditions) {
                 switch (condition.type) {
-                case ParameterCondition.STATUS_EQUAL: {
-                    if ((entry.status as Status) !== condition.value) return false;
-                    break;
+                    case ParameterCondition.STATUS_EQUAL: {
+                        if ((entry.status as Status) !== condition.value) return false;
+                        break;
+                    }
+                    case ParameterCondition.STATUS_NOT_EQUAL: {
+                        if ((entry.status as Status) === condition.value) return false;
+                        break;
+                    }
+                    case ParameterCondition.DIRECTION_EQUAL: {
+                        if ((entry.direction as Direction) !== condition.value) return false;
+                        break;
+                    }
+                    case ParameterCondition.BITMASK_SET: {
+                        if ((entry[condition.param] & condition.mask) !== condition.mask) return false;
+                        break;
+                    }
+                    case ParameterCondition.BITFIELD_ENUM: {
+                        if (((entry[condition.param] >> condition.offset) & ((1 << condition.size) - 1)) !== condition.value) return false;
+                        break;
+                    }
+                    case ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES: {
+                        if (remainingBufferBytes != null && remainingBufferBytes < condition.value) return false;
+                        break;
+                    }
+                    case ParameterCondition.DATA_TYPE_CLASS_EQUAL: {
+                        if (Utils.getDataTypeClass(entry.dataType) !== condition.value) return false;
+                        break;
+                    }
                 }
-                case ParameterCondition.STATUS_NOT_EQUAL: {
-                    if ((entry.status as Status) === condition.value) return false;
-                    break;
-                }
-                case ParameterCondition.DIRECTION_EQUAL: {
-                    if ((entry.direction as Direction) !== condition.value) return false;
-                    break;
-                }
-                case ParameterCondition.BITMASK_SET: {
-                    if ((entry[condition.param] & condition.mask) !== condition.mask) return false;
-                    break;
-                }
-                case ParameterCondition.BITFIELD_ENUM: {
-                    if (((entry[condition.param] >> condition.offset) & ((1 << condition.size) - 1)) !== condition.value) return false;
-                    break;
-                }
-                case ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES: {
-                    if (remainingBufferBytes != null && (remainingBufferBytes < (condition.value))) return false;
-                    break;
-                }
-                case ParameterCondition.DATA_TYPE_CLASS_EQUAL: {
-                    if (Utils.getDataTypeClass(entry.dataType) !== condition.value) return false;
-                    break;
-                }
-                }
-            };
+            }
         }
 
         return true;
@@ -324,9 +336,7 @@ export class ZclFrame {
     }
 
     // List of commands is not completed, feel free to add more.
-    public isCommand(
-        commandName: FoundationCommandName | 'remove' | 'add' | 'write' | 'enrollReq' | 'checkin' | 'getAlarm'
-    ): boolean {
+    public isCommand(commandName: FoundationCommandName | 'remove' | 'add' | 'write' | 'enrollReq' | 'checkin' | 'getAlarm'): boolean {
         return this.command.name === commandName;
     }
 }

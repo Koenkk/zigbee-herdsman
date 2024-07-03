@@ -1,7 +1,7 @@
 const SYS = {
     resetType: {
         HARD: 0,
-        SOFT: 1
+        SOFT: 1,
     },
     capabilities: {
         SYS: 1,
@@ -13,13 +13,13 @@ const SYS = {
         UTIL: 64,
         DEBUG: 128,
         APP: 256,
-        ZOAD: 4096
+        ZOAD: 4096,
     },
     osalTimerEvent: {
         EVENT_0: 0,
         EVENT_1: 1,
         EVENT_2: 2,
-        EVENT_3: 3
+        EVENT_3: 3,
     },
     adcChannels: {
         AIN0: 0,
@@ -31,13 +31,13 @@ const SYS = {
         AIN6: 6,
         AIN7: 7,
         TEMP_SENSOR: 14,
-        VOLT_READ: 15
+        VOLT_READ: 15,
     },
     adcResolution: {
         BIT_8: 0,
         BIT_10: 1,
         BIT_12: 2,
-        BIT_14: 3
+        BIT_14: 3,
     },
     gpioOperation: {
         SET_DIRECTION: 0,
@@ -45,28 +45,28 @@ const SYS = {
         SET: 2,
         CLEAR: 3,
         TOGGLE: 4,
-        READ: 5
+        READ: 5,
     },
     sysStkTune: {
         TX_PWR: 0,
-        RX_ON_IDLE: 1
+        RX_ON_IDLE: 1,
     },
     resetReason: {
         POWER_UP: 0,
         EXTERNAL: 1,
-        WATCH_DOG: 2
+        WATCH_DOG: 2,
     },
     nvItemInitStatus: {
         ALREADY_EXISTS: 0,
         SUCCESS: 9,
-        FAILED: 10
+        FAILED: 10,
     },
     nvItemDeleteStatus: {
         SUCCESS: 0,
         NOT_EXISTS: 9,
         FAILED: 10,
-        BAD_LENGTH: 12
-    }
+        BAD_LENGTH: 12,
+    },
 };
 
 export default SYS;

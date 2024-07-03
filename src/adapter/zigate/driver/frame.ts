@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 /* eslint-disable */
 
-import {logger} from "../../../utils/logger";
+import {logger} from '../../../utils/logger';
 
 const NS = 'zh:zigate:frame';
 
@@ -9,7 +9,7 @@ enum ZiGateFrameChunkSize {
     UInt8 = 1,
     UInt16,
     UInt32,
-    UInt64
+    UInt64,
 }
 
 const hasStartByte = (startByte: number, frame: Buffer): boolean => {
@@ -53,10 +53,7 @@ const xor = (checksum: number, byte: number): number => {
 };
 
 const decodeFrame = (frame: Buffer): Buffer => {
-    const arrFrame = Array.from(frame)
-        .map(combineBytes)
-        .filter(removeDuplicate)
-        .map(decodeBytes);
+    const arrFrame = Array.from(frame).map(combineBytes).filter(removeDuplicate).map(decodeBytes);
 
     return Buffer.from(arrFrame);
 };
@@ -92,8 +89,7 @@ export default class ZiGateFrame {
             this.buildChunks(decodedFrame);
 
             try {
-                if(this.readMsgCode() !== 0x8001)
-                    logger.debug(`${JSON.stringify(this)}`, NS);
+                if (this.readMsgCode() !== 0x8001) logger.debug(`${JSON.stringify(this)}`, NS);
             } catch (e) {
                 logger.error(e, NS);
             }
@@ -120,23 +116,11 @@ export default class ZiGateFrame {
     toBuffer(): Buffer {
         const length = 5 + this.readMsgLength();
 
-        const escapedData = this.escapeData(Buffer.concat(
-            [
-                this.msgCodeBytes,
-                this.msgLengthBytes,
-                this.checksumBytes,
-                this.msgPayloadBytes,
-            ],
-            length,
-        ));
-
-        return Buffer.concat(
-            [
-                Uint8Array.from([ZiGateFrame.START_BYTE]),
-                escapedData,
-                Uint8Array.from([ZiGateFrame.STOP_BYTE]),
-            ]
+        const escapedData = this.escapeData(
+            Buffer.concat([this.msgCodeBytes, this.msgLengthBytes, this.checksumBytes, this.msgPayloadBytes], length),
         );
+
+        return Buffer.concat([Uint8Array.from([ZiGateFrame.START_BYTE]), escapedData, Uint8Array.from([ZiGateFrame.STOP_BYTE])]);
     }
 
     escapeData(data: Buffer): Buffer {

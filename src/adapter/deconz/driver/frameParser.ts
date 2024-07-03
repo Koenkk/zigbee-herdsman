@@ -3,8 +3,22 @@
 const MIN_BUFFER_SIZE = 3;
 const littleEndian = true;
 import PARAM from './constants';
-import { busyQueue, apsBusyQueue, readyToSend, enableRTS, disableRTS, enableRtsTimeout } from './driver';
-import { Request, ReceivedDataResponse, DataStateResponse, Command, ParamMac, ParamPanId, ParamNwkAddr, ParamExtPanId, ParamChannel, ParamChannelMask, ParamPermitJoin, ParamNetworkKey, gpDataInd } from './constants';
+import {busyQueue, apsBusyQueue, readyToSend, enableRTS, disableRTS, enableRtsTimeout} from './driver';
+import {
+    Request,
+    ReceivedDataResponse,
+    DataStateResponse,
+    Command,
+    ParamMac,
+    ParamPanId,
+    ParamNwkAddr,
+    ParamExtPanId,
+    ParamChannel,
+    ParamChannelMask,
+    ParamPermitJoin,
+    ParamNetworkKey,
+    gpDataInd,
+} from './constants';
 import * as Events from '../../events';
 import {logger} from '../../../utils/logger';
 
@@ -21,7 +35,7 @@ var events = require('events');
 var frameParserEvents = new events.EventEmitter();
 module.exports.frameParserEvents = frameParserEvents;
 
-function parseReadParameterResponse(view: DataView) : Command {
+function parseReadParameterResponse(view: DataView): Command {
     const parameterId = view.getUint8(7);
 
     switch (parameterId) {
@@ -29,9 +43,9 @@ function parseReadParameterResponse(view: DataView) : Command {
             const mac: ParamMac = view.getBigUint64(8, littleEndian).toString(16);
             let result = mac;
             while (result.length < 16) {
-                result = "0" + result;
+                result = '0' + result;
             }
-            result = "0x" + result;
+            result = '0x' + result;
             logger.debug(`MAC: ${result}`, NS);
             return result;
         case PARAM.PARAM.Network.PAN_ID:
@@ -46,33 +60,33 @@ function parseReadParameterResponse(view: DataView) : Command {
             const extPanId: ParamExtPanId = view.getBigUint64(8, littleEndian).toString(16);
             let res = extPanId;
             while (res.length < 16) {
-                res = "0" + res;
+                res = '0' + res;
             }
-            res = "0x" + res;
+            res = '0x' + res;
             logger.debug(`EXT_PANID: ${res}`, NS);
             return res;
         case PARAM.PARAM.Network.APS_EXT_PAN_ID:
             const apsExtPanId: ParamExtPanId = view.getBigUint64(8, littleEndian).toString(16);
             let resAEPID = apsExtPanId;
             while (resAEPID.length < 16) {
-                resAEPID = "0" + resAEPID;
+                resAEPID = '0' + resAEPID;
             }
-            resAEPID = "0x" + resAEPID;
+            resAEPID = '0x' + resAEPID;
             logger.debug(`APS_EXT_PANID: ${resAEPID}`, NS);
             return resAEPID;
         case PARAM.PARAM.Network.NETWORK_KEY:
             const networkKey1 = view.getBigUint64(9).toString(16);
             let res1 = networkKey1;
             while (res1.length < 16) {
-                res1 = "0" + res1;
+                res1 = '0' + res1;
             }
             const networkKey2 = view.getBigUint64(17).toString(16);
             let res2 = networkKey2;
             while (res2.length < 16) {
-                res2 = "0" + res2;
+                res2 = '0' + res2;
             }
             logger.debug('NETWORK_KEY: hidden', NS);
-            return "0x"+res1+res2;
+            return '0x' + res1 + res2;
         case PARAM.PARAM.Network.CHANNEL:
             const channel: ParamChannel = view.getUint8(8);
             logger.debug('CHANNEL: ' + channel, NS);
@@ -96,27 +110,27 @@ function parseReadParameterResponse(view: DataView) : Command {
     }
 }
 
-function parseReadFirmwareResponse(view : DataView) : number[] {
+function parseReadFirmwareResponse(view: DataView): number[] {
     const fw = [view.getUint8(5), view.getUint8(6), view.getUint8(7), view.getUint8(8)];
-    logger.debug("read firmware version response - version: " + fw, NS);
+    logger.debug('read firmware version response - version: ' + fw, NS);
     return fw;
 }
 
-function parseDeviceStateResponse(view : DataView) : number {
+function parseDeviceStateResponse(view: DataView): number {
     const flag = view.getUint8(5);
-    logger.debug("device state: " + flag.toString(2), NS);
+    logger.debug('device state: ' + flag.toString(2), NS);
     frameParserEvents.emit('receivedDataNotification', flag);
     return flag;
 }
 
-function parseChangeNetworkStateResponse(view : DataView) : number {
+function parseChangeNetworkStateResponse(view: DataView): number {
     const status = view.getUint8(2);
     const state = view.getUint8(5);
-    logger.debug("change network state - status: " + status + " new state: " + state, NS);
+    logger.debug('change network state - status: ' + status + ' new state: ' + state, NS);
     return state;
 }
 
-function parseQuerySendDataStateResponse(view : DataView) : object {
+function parseQuerySendDataStateResponse(view: DataView): object {
     try {
         const response: DataStateResponse = {};
         let buf2, buf3;
@@ -127,7 +141,7 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
 
         if (response.status !== 0) {
             if (response.status !== 5) {
-                logger.debug("DATA_CONFIRM RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status, NS);
+                logger.debug('DATA_CONFIRM RESPONSE - seqNr.: ' + response.seqNr + ' status: ' + response.status, NS);
             }
             return null;
         }
@@ -139,11 +153,11 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
 
         response.destAddrMode = view.getUint8(9);
 
-        let destAddr = "";
+        let destAddr = '';
         if (response.destAddrMode === 0x03) {
             let res = view.getBigUint64(10, littleEndian).toString(16);
             while (res.length < 16) {
-                res = "0" + res;
+                res = '0' + res;
             }
             response.destAddr64 = res;
             buf2 = view.buffer.slice(18, view.buffer.byteLength);
@@ -161,12 +175,12 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
         response.confirmStatus = view.getInt8(view.byteLength - 5);
 
         let newStatus = response.deviceState.toString(2);
-        for (let l = 0; l <= (8 - newStatus.length); l++) {
-            newStatus = "0" + newStatus;
+        for (let l = 0; l <= 8 - newStatus.length; l++) {
+            newStatus = '0' + newStatus;
         }
 
         // resolve send data request promise
-        const i = apsBusyQueue.findIndex((r: Request) => (r.request && r.request.requestId === response.requestId));
+        const i = apsBusyQueue.findIndex((r: Request) => r.request && r.request.requestId === response.requestId);
         if (i < 0) {
             return;
         }
@@ -187,17 +201,20 @@ function parseQuerySendDataStateResponse(view : DataView) : object {
         //remove from busyqueue
         apsBusyQueue.splice(i, 1);
 
-        logger.debug("DATA_CONFIRM RESPONSE - destAddr: 0x" + destAddr + " request id: " + response.requestId + " confirm status: " + response.confirmStatus, NS);
+        logger.debug(
+            'DATA_CONFIRM RESPONSE - destAddr: 0x' + destAddr + ' request id: ' + response.requestId + ' confirm status: ' + response.confirmStatus,
+            NS,
+        );
         frameParserEvents.emit('receivedDataNotification', response.deviceState);
 
         return response;
     } catch (error) {
-        logger.debug("DATA_CONFIRM RESPONSE - " + error, NS);
+        logger.debug('DATA_CONFIRM RESPONSE - ' + error, NS);
         return null;
     }
 }
 
-function parseReadReceivedDataResponse(view : DataView) : object {
+function parseReadReceivedDataResponse(view: DataView): object {
     // min 28 bytelength
     try {
         const response: ReceivedDataResponse = {};
@@ -209,7 +226,7 @@ function parseReadReceivedDataResponse(view : DataView) : object {
 
         if (response.status != 0) {
             if (response.status !== 5) {
-                logger.debug("DATA_INDICATION RESPONSE - seqNr.: " + response.seqNr + " status: " + response.status, NS);
+                logger.debug('DATA_INDICATION RESPONSE - seqNr.: ' + response.seqNr + ' status: ' + response.status, NS);
             }
             return null;
         }
@@ -219,11 +236,11 @@ function parseReadReceivedDataResponse(view : DataView) : object {
         response.deviceState = view.getUint8(7);
         response.destAddrMode = view.getUint8(8);
 
-        let destAddr = "";
+        let destAddr = '';
         if (response.destAddrMode === 0x03) {
             let res = view.getBigUint64(9, littleEndian).toString(16);
             while (res.length < 16) {
-                res = "0" + res;
+                res = '0' + res;
             }
             response.destAddr64 = res;
             buf2 = view.buffer.slice(17, view.buffer.byteLength);
@@ -238,9 +255,9 @@ function parseReadReceivedDataResponse(view : DataView) : object {
         response.destEndpoint = view.getUint8(0);
         response.srcAddrMode = view.getUint8(1);
 
-        let srcAddr = "";
+        let srcAddr = '';
         if (response.srcAddrMode === 0x02 || response.srcAddrMode === 0x04) {
-            response.srcAddr16 = view.getUint16(2, littleEndian)
+            response.srcAddr16 = view.getUint16(2, littleEndian);
             buf3 = view.buffer.slice(4, view.buffer.byteLength);
             srcAddr = response.srcAddr16.toString(16);
         }
@@ -248,7 +265,7 @@ function parseReadReceivedDataResponse(view : DataView) : object {
         if (response.srcAddrMode === 0x03 || response.srcAddrMode === 0x04) {
             let res = view.getBigUint64(2, littleEndian).toString(16);
             while (res.length < 16) {
-                res = "0" + res;
+                res = '0' + res;
             }
             response.srcAddr64 = res;
             buf3 = view.buffer.slice(10, view.buffer.byteLength);
@@ -263,142 +280,163 @@ function parseReadReceivedDataResponse(view : DataView) : object {
 
         let payload = [];
         let i = 0;
-        for (let u = 7; u < (response.asduLength + 7); u++) {
+        for (let u = 7; u < response.asduLength + 7; u++) {
             payload[i] = view.getUint8(u);
             i++;
         }
 
         response.asduPayload = payload;
         response.lqi = view.getUint8(view.byteLength - 8);
-        response.rssi = view.getInt8(view.byteLength - 3)
+        response.rssi = view.getInt8(view.byteLength - 3);
 
         let newStatus = response.deviceState.toString(2);
-        for (let l = 0; l <= (8 - newStatus.length); l++) {
-            newStatus = "0" + newStatus;
+        for (let l = 0; l <= 8 - newStatus.length; l++) {
+            newStatus = '0' + newStatus;
         }
-        logger.debug("DATA_INDICATION RESPONSE - seqNr. " + response.seqNr + " srcAddr: 0x" + srcAddr + " destAddr: 0x" + destAddr + " profile id: 0x" + response.profileId.toString(16) + " cluster id: 0x" + response.clusterId.toString(16) + " lqi: " + response.lqi, NS);
-        logger.debug("response payload: " + payload, NS);
+        logger.debug(
+            'DATA_INDICATION RESPONSE - seqNr. ' +
+                response.seqNr +
+                ' srcAddr: 0x' +
+                srcAddr +
+                ' destAddr: 0x' +
+                destAddr +
+                ' profile id: 0x' +
+                response.profileId.toString(16) +
+                ' cluster id: 0x' +
+                response.clusterId.toString(16) +
+                ' lqi: ' +
+                response.lqi,
+            NS,
+        );
+        logger.debug('response payload: ' + payload, NS);
         frameParserEvents.emit('receivedDataPayload', response);
         frameParserEvents.emit('receivedDataNotification', response.deviceState);
         return response;
     } catch (error) {
-        logger.debug("DATA_INDICATION RESPONSE - " + error, NS);
+        logger.debug('DATA_INDICATION RESPONSE - ' + error, NS);
         return null;
     }
 }
 
-function parseEnqueueSendDataResponse(view : DataView) : number {
+function parseEnqueueSendDataResponse(view: DataView): number {
     try {
         const status = view.getUint8(2);
         const requestId = view.getUint8(8);
         const deviceState = view.getUint8(7);
-        logger.debug("DATA_REQUEST RESPONSE - request id: " + requestId + " status: " + status, NS);
+        logger.debug('DATA_REQUEST RESPONSE - request id: ' + requestId + ' status: ' + status, NS);
         frameParserEvents.emit('receivedDataNotification', deviceState);
         return deviceState;
     } catch (error) {
-        logger.debug("parseEnqueueSendDataResponse - " + error, NS);
+        logger.debug('parseEnqueueSendDataResponse - ' + error, NS);
         return null;
     }
 }
 
-function parseWriteParameterResponse(view : DataView) : number {
+function parseWriteParameterResponse(view: DataView): number {
     try {
         const parameterId = view.getUint8(7);
         logger.debug(`write parameter response - parameter id: ${parameterId} - status: ${view.getUint8(2)}`, NS);
         return parameterId;
     } catch (error) {
-        logger.debug("parseWriteParameterResponse - " + error, NS);
+        logger.debug('parseWriteParameterResponse - ' + error, NS);
         return null;
     }
 }
 
-function parseReceivedDataNotification(view : DataView) : number {
-    try {    
+function parseReceivedDataNotification(view: DataView): number {
+    try {
         const deviceState = view.getUint8(5);
-        logger.debug("DEVICE_STATE changed: " + deviceState.toString(2), NS);
+        logger.debug('DEVICE_STATE changed: ' + deviceState.toString(2), NS);
         frameParserEvents.emit('receivedDataNotification', deviceState);
         return deviceState;
     } catch (error) {
-        logger.debug("parseReceivedDataNotification - " + error, NS);
+        logger.debug('parseReceivedDataNotification - ' + error, NS);
         return null;
     }
 }
 
-function parseGreenPowerDataIndication(view : DataView) : object {
+function parseGreenPowerDataIndication(view: DataView): object {
     try {
         const ind: gpDataInd = {};
         ind.seqNr = view.getUint8(1);
 
         if (view.byteLength < 30) {
-        logger.debug("GP data notification", NS);
-        ind.id = 0x00; // 0 = notification, 4 = commissioning
-        ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
-        ind.options = 0; view.getUint16(7, littleEndian); // frame ctrl field(7) ext.fcf(8)
-        ind.srcId = view.getUint32(9, littleEndian);
-        ind.frameCounter = view.getUint32(13, littleEndian);
-        ind.commandId = view.getUint8(17);
-        ind.commandFrameSize = view.byteLength - 18 - 6; // cut 18 from begin and 4 (sec mic) and 2 from end (cfc)
+            logger.debug('GP data notification', NS);
+            ind.id = 0x00; // 0 = notification, 4 = commissioning
+            ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
+            ind.options = 0;
+            view.getUint16(7, littleEndian); // frame ctrl field(7) ext.fcf(8)
+            ind.srcId = view.getUint32(9, littleEndian);
+            ind.frameCounter = view.getUint32(13, littleEndian);
+            ind.commandId = view.getUint8(17);
+            ind.commandFrameSize = view.byteLength - 18 - 6; // cut 18 from begin and 4 (sec mic) and 2 from end (cfc)
 
-        let payload = [];
-        let i = 0;
-        for (let u = 18; u < (ind.commandFrameSize + 18); u++) {
-            payload[i] = view.getUint8(u);
-            i++;
-        }
-        ind.commandFrame = payload;
+            let payload = [];
+            let i = 0;
+            for (let u = 18; u < ind.commandFrameSize + 18; u++) {
+                payload[i] = view.getUint8(u);
+                i++;
+            }
+            ind.commandFrame = payload;
         } else {
-        logger.debug("GP commissioning notification", NS);
-        ind.id = 0x04; // 0 = notification, 4 = commissioning
-        ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
-        ind.options = view.getUint16(14, littleEndian); // opt(14) ext.opt(15)
-        ind.srcId = view.getUint32(8, littleEndian);
-        ind.frameCounter = view.getUint32(36, littleEndian);
-        ind.commandId = view.getUint8(12);
-        ind.commandFrameSize = view.byteLength - 13 - 2; // cut 13 from begin and 2 from end (cfc)
+            logger.debug('GP commissioning notification', NS);
+            ind.id = 0x04; // 0 = notification, 4 = commissioning
+            ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
+            ind.options = view.getUint16(14, littleEndian); // opt(14) ext.opt(15)
+            ind.srcId = view.getUint32(8, littleEndian);
+            ind.frameCounter = view.getUint32(36, littleEndian);
+            ind.commandId = view.getUint8(12);
+            ind.commandFrameSize = view.byteLength - 13 - 2; // cut 13 from begin and 2 from end (cfc)
 
-        let payload = [];
-        let i = 0;
-        for (let u = 13; u < (ind.commandFrameSize + 13); u++) {
-            payload[i] = view.getUint8(u);
-            i++;
+            let payload = [];
+            let i = 0;
+            for (let u = 13; u < ind.commandFrameSize + 13; u++) {
+                payload[i] = view.getUint8(u);
+                i++;
+            }
+            ind.commandFrame = payload;
         }
-        ind.commandFrame = payload;
-        }
 
-        if (!(lastReceivedGpInd.srcId === ind.srcId &&
-          lastReceivedGpInd.commandId === ind.commandId &&
-          lastReceivedGpInd.frameCounter === ind.frameCounter)) {
-
-        lastReceivedGpInd.srcId = ind.srcId;
-        lastReceivedGpInd.commandId = ind.commandId;
-        lastReceivedGpInd.frameCounter = ind.frameCounter;
-        //logger.debug(`GP_DATA_INDICATION - src id: ${ind.srcId} cmd id: ${ind.commandId} frameCounter: ${ind.frameCounter}`, NS);
-        logger.debug(`GP_DATA_INDICATION - src id: 0x${ind.srcId.toString(16)} cmd id: 0x${ind.commandId.toString(16)} frameCounter: 0x${ind.frameCounter.toString(16)}`, NS);
-        frameParserEvents.emit('receivedGreenPowerIndication', ind);
+        if (
+            !(
+                lastReceivedGpInd.srcId === ind.srcId &&
+                lastReceivedGpInd.commandId === ind.commandId &&
+                lastReceivedGpInd.frameCounter === ind.frameCounter
+            )
+        ) {
+            lastReceivedGpInd.srcId = ind.srcId;
+            lastReceivedGpInd.commandId = ind.commandId;
+            lastReceivedGpInd.frameCounter = ind.frameCounter;
+            //logger.debug(`GP_DATA_INDICATION - src id: ${ind.srcId} cmd id: ${ind.commandId} frameCounter: ${ind.frameCounter}`, NS);
+            logger.debug(
+                `GP_DATA_INDICATION - src id: 0x${ind.srcId.toString(16)} cmd id: 0x${ind.commandId.toString(16)} frameCounter: 0x${ind.frameCounter.toString(16)}`,
+                NS,
+            );
+            frameParserEvents.emit('receivedGreenPowerIndication', ind);
         }
         return ind;
     } catch (error) {
-        logger.debug("GREEN_POWER INDICATION - " + error, NS);
+        logger.debug('GREEN_POWER INDICATION - ' + error, NS);
         return null;
     }
 }
 
-function parseMacPollCommand(view : DataView) : number {
+function parseMacPollCommand(view: DataView): number {
     //logger.debug("Received command MAC_POLL", NS);
     return 28;
 }
 
-function parseBeaconRequest(view : DataView) : number {
-    logger.debug("Received Beacon Request", NS);
+function parseBeaconRequest(view: DataView): number {
+    logger.debug('Received Beacon Request', NS);
     return 31;
 }
 
-function parseUnknownCommand(view : DataView) : number {
+function parseUnknownCommand(view: DataView): number {
     const id = view.getUint8(0);
     logger.debug(`received unknown command - id ${id}`, NS);
     return id;
 }
-function getParserForCommandId(id: Number) : Function {
+function getParserForCommandId(id: Number): Function {
     switch (id) {
         case PARAM.PARAM.FrameType.ReadParameter:
             return parseReadParameterResponse;
@@ -426,19 +464,17 @@ function getParserForCommandId(id: Number) : Function {
             return parseBeaconRequest;
         default:
             return parseUnknownCommand;
-            //throw new Error(`unknown command id ${id}`);
+        //throw new Error(`unknown command id ${id}`);
     }
 }
 
-async function processFrame(frame: Uint8Array) : Promise<void> {
+async function processFrame(frame: Uint8Array): Promise<void> {
     const [seqNumber, status, command, commandId] = await parseFrame(frame);
     //logger.debug(`process frame with seq: ${seqNumber} status: ${status}`, NS);
 
     let queue = busyQueue;
 
-    if (commandId === PARAM.PARAM.APS.DATA_INDICATION ||
-        commandId === PARAM.PARAM.APS.DATA_REQUEST ||
-        commandId === PARAM.PARAM.APS.DATA_CONFIRM ) {
+    if (commandId === PARAM.PARAM.APS.DATA_INDICATION || commandId === PARAM.PARAM.APS.DATA_REQUEST || commandId === PARAM.PARAM.APS.DATA_CONFIRM) {
         queue = apsBusyQueue;
     }
 
@@ -453,7 +489,7 @@ async function processFrame(frame: Uint8Array) : Promise<void> {
         // if confirm is true resolve request only when data confirm arrives
         // TODO only return if a confirm was requested. if no confirm needed: go ahead
         //if (req.confirm === true) {
-            return;
+        return;
         //}
     }
 
@@ -469,21 +505,21 @@ async function processFrame(frame: Uint8Array) : Promise<void> {
     }
 }
 
-function parseFrame(frame: Uint8Array) : [number, number, Command, number] {
+function parseFrame(frame: Uint8Array): [number, number, Command, number] {
     if (frame.length < MIN_BUFFER_SIZE) {
-        logger.debug("received frame size to small - discard frame", NS);
+        logger.debug('received frame size to small - discard frame', NS);
         return [null, null, null, null];
     }
 
-	const view = new DataView(frame.buffer);
-	const commandId = view.getUint8(0);
-	const seqNumber = view.getUint8(1);
-	const status = view.getUint8(2);
-	//const frameLength = view.getUint16(3, littleEndian);
-	//const payloadLength = view.getUint16(5, littleEndian);
-	const parser = getParserForCommandId(commandId);
+    const view = new DataView(frame.buffer);
+    const commandId = view.getUint8(0);
+    const seqNumber = view.getUint8(1);
+    const status = view.getUint8(2);
+    //const frameLength = view.getUint16(3, littleEndian);
+    //const payloadLength = view.getUint16(5, littleEndian);
+    const parser = getParserForCommandId(commandId);
 
-	return [seqNumber, status, parser(view), commandId];
+    return [seqNumber, status, parser(view), commandId];
 }
 
 export default processFrame;

@@ -1,12 +1,12 @@
-import "regenerator-runtime/runtime";
+import 'regenerator-runtime/runtime';
 import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
 import {SerialPort} from '../../../src/adapter/serialPort';
 import {Frame as UnpiFrame, Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
-import ParameterType from "../../../src/adapter/z-stack/znp/parameterType";
+import ParameterType from '../../../src/adapter/z-stack/znp/parameterType';
 
-const mockSerialPortClose = jest.fn().mockImplementation((cb) => cb ? cb() : null);
+const mockSerialPortClose = jest.fn().mockImplementation((cb) => (cb ? cb() : null));
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
 const mockSerialPortAsyncFlushAndClose = jest.fn();
 const mockSerialPortPipe = jest.fn();
@@ -64,13 +64,13 @@ jest.mock('net', () => {
                 setNoDelay: mockSocketSetNoDelay,
                 pipe: mockSocketPipe,
                 connect: mockSocketConnect,
-                on: (event, cb) => mockSocketCallbacks[event] = cb,
+                on: (event, cb) => (mockSocketCallbacks[event] = cb),
                 once: mockSocketOnce,
                 destroy: mockSocketDestroy,
                 setKeepAlive: mockSocketSetKeepAlive,
             };
         }),
-    }
+    };
 });
 
 // Mock realPathSync
@@ -83,7 +83,6 @@ jest.mock('../../../src/utils/realpathSync', () => {
         return path;
     });
 });
-
 
 SerialPort.list = mockSerialPortList;
 
@@ -111,9 +110,19 @@ jest.mock('../../../src/adapter/z-stack/unpi/writer', () => {
 });
 
 const mocks = [
-    mockSerialPortClose, mockSerialPortPipe, mockSerialPortConstructor, mockSerialPortOpen,
-    mockSerialPortOnce, mockSerialPortWrite, SerialPort, mockUnpiParserOn, mockUnpiWriterWriteFrame,
-    mockUnpiWriterWriteBuffer, mockSerialPortFlush, mockSerialPortAsyncFlushAndClose, mockSerialPortAsyncOpen
+    mockSerialPortClose,
+    mockSerialPortPipe,
+    mockSerialPortConstructor,
+    mockSerialPortOpen,
+    mockSerialPortOnce,
+    mockSerialPortWrite,
+    SerialPort,
+    mockUnpiParserOn,
+    mockUnpiWriterWriteFrame,
+    mockUnpiWriterWriteBuffer,
+    mockSerialPortFlush,
+    mockSerialPortAsyncFlushAndClose,
+    mockSerialPortAsyncOpen,
 ];
 
 describe('ZNP', () => {
@@ -134,7 +143,7 @@ describe('ZNP', () => {
         }
 
         // @ts-ignore; make sure we always get a new instance
-        znp = new Znp("/dev/ttyACM0", 100, true);
+        znp = new Znp('/dev/ttyACM0', 100, true);
         requestSpy = jest.spyOn(znp, 'request').mockImplementation(() => {});
     });
 
@@ -146,9 +155,7 @@ describe('ZNP', () => {
         await znp.open();
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
-        expect(SerialPort).toHaveBeenCalledWith(
-            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 100, "rtscts": true},
-        );
+        expect(SerialPort).toHaveBeenCalledWith({path: '/dev/ttyACM0', autoOpen: false, baudRate: 100, rtscts: true});
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
         expect(mockSerialPortAsyncOpen).toHaveBeenCalledTimes(1);
@@ -157,13 +164,13 @@ describe('ZNP', () => {
     });
 
     it('Open - first ping fails should send reset bootloader', async () => {
-        requestSpy.mockImplementation(() => {throw new Error('failed')});
+        requestSpy.mockImplementation(() => {
+            throw new Error('failed');
+        });
         await znp.open();
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
-        expect(SerialPort).toHaveBeenCalledWith(
-            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 100, "rtscts": true},
-        );
+        expect(SerialPort).toHaveBeenCalledWith({path: '/dev/ttyACM0', autoOpen: false, baudRate: 100, rtscts: true});
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
         expect(mockSerialPortAsyncOpen).toHaveBeenCalledTimes(1);
@@ -172,14 +179,12 @@ describe('ZNP', () => {
     });
 
     it('Open with defaults', async () => {
-        znp = new Znp("/dev/ttyACM0", undefined, undefined);
+        znp = new Znp('/dev/ttyACM0', undefined, undefined);
         requestSpy = jest.spyOn(znp, 'request').mockImplementation(() => {});
         await znp.open();
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
-        expect(SerialPort).toHaveBeenCalledWith(
-            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 115200, "rtscts": false},
-        );
+        expect(SerialPort).toHaveBeenCalledWith({path: '/dev/ttyACM0', autoOpen: false, baudRate: 115200, rtscts: false});
 
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
         expect(mockSerialPortAsyncOpen).toHaveBeenCalledTimes(1);
@@ -194,19 +199,19 @@ describe('ZNP', () => {
             {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
         ]);
 
-        expect(await Znp.autoDetectPath()).toBe("/dev/tty.usbmodemL43001T21");
+        expect(await Znp.autoDetectPath()).toBe('/dev/tty.usbmodemL43001T21');
     });
 
     it('Autodetect port error when there are not available devices', async () => {
         mockSerialPortList.mockReturnValue([
             {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
-        ])
+        ]);
 
         expect(await Znp.autoDetectPath()).toBeNull();
     });
 
     it('Open and close tcp port', async () => {
-        znp = new Znp("tcp://localhost:8080", 100, false);
+        znp = new Znp('tcp://localhost:8080', 100, false);
         await znp.open();
         expect(mockSocketConnect).toBeCalledTimes(1);
         expect(mockSocketConnect).toBeCalledWith(8080, 'localhost');
@@ -220,9 +225,9 @@ describe('ZNP', () => {
     it('Open tcp port with socket error', async () => {
         mockSocketConnect.mockImplementationOnce(() => {
             mockSocketCallbacks['error']();
-        })
+        });
 
-        znp = new Znp("tcp://localhost:666", 100, false);
+        znp = new Znp('tcp://localhost:666', 100, false);
 
         let error = false;
         try {
@@ -234,7 +239,6 @@ describe('ZNP', () => {
         expect(error).toStrictEqual(new Error('Error while opening socket'));
         expect(znp.isInitialized()).toBeFalsy();
     });
-
 
     it('Check if tcp path is valid', async () => {
         expect(await Znp.isValidPath('tcp://192.168.2.1:8080')).toBeFalsy();
@@ -250,7 +254,7 @@ describe('ZNP', () => {
             {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
             {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
             {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-        ])
+        ]);
 
         expect(await Znp.isValidPath('/dev/tty.usbmodemL43001T21')).toBeTruthy();
         expect(await Znp.isValidPath('/dev/autodetected2')).toBeFalsy();
@@ -262,7 +266,7 @@ describe('ZNP', () => {
             {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
             {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
             {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-        ])
+        ]);
 
         expect(await Znp.isValidPath('/dev/notexisting')).toBeFalsy();
     });
@@ -290,9 +294,7 @@ describe('ZNP', () => {
         }
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
-        expect(SerialPort).toHaveBeenCalledWith(
-            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 100, "rtscts": true},
-        );
+        expect(SerialPort).toHaveBeenCalledWith({path: '/dev/ttyACM0', autoOpen: false, baudRate: 100, rtscts: true});
 
         expect(error).toEqual('failed!');
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
@@ -319,9 +321,7 @@ describe('ZNP', () => {
         }
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
-        expect(SerialPort).toHaveBeenCalledWith(
-            {"path": "/dev/ttyACM0", "autoOpen": false, "baudRate": 100, "rtscts": true},
-        );
+        expect(SerialPort).toHaveBeenCalledWith({path: '/dev/ttyACM0', autoOpen: false, baudRate: 100, rtscts: true});
 
         expect(error).toEqual('failed!');
         expect(mockSerialPortPipe).toHaveBeenCalledTimes(1);
@@ -383,11 +383,11 @@ describe('ZNP', () => {
     it('Open and close by serialport event', async () => {
         let closeCb;
 
-        mockSerialPortOnce.mockImplementation(((event, cb) => {
+        mockSerialPortOnce.mockImplementation((event, cb) => {
             if (event === 'close') {
                 closeCb = cb;
             }
-        }));
+        });
 
         const close = jest.fn();
         znp.on('close', close);
@@ -400,11 +400,11 @@ describe('ZNP', () => {
     it('Serialport error (do nothing)', async () => {
         let errorCb;
 
-        mockSerialPortOnce.mockImplementation(((event, cb) => {
+        mockSerialPortOnce.mockImplementation((event, cb) => {
             if (event === 'error') {
                 errorCb = cb;
             }
-        }));
+        });
 
         await znp.open();
         errorCb();
@@ -423,19 +423,21 @@ describe('ZNP', () => {
         });
 
         znp.open();
-        parsedCb(new UnpiFrame(
-            UnpiConstants.Type.SRSP,
-            UnpiConstants.Subsystem.SYS,
-            0x02,
-            Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05, 0x01, 0x01, 0x01, 0x01])
-        ));
+        parsedCb(
+            new UnpiFrame(
+                UnpiConstants.Type.SRSP,
+                UnpiConstants.Subsystem.SYS,
+                0x02,
+                Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05, 0x01, 0x01, 0x01, 0x01]),
+            ),
+        );
 
         expect(received).toHaveBeenCalledTimes(1);
 
         const obj = received.mock.calls[0][0];
         expect(obj.command).toBe('version');
         expect(obj.commandID).toBe(2);
-        expect(obj.payload).toStrictEqual({"maintrel": 5, "majorrel": 3, "minorrel": 4, "product": 2, "revision": 16843009, "transportrev": 1});
+        expect(obj.payload).toStrictEqual({maintrel: 5, majorrel: 3, minorrel: 4, product: 2, revision: 16843009, transportrev: 1});
         expect(obj.subsystem).toBe(UnpiConstants.Subsystem.SYS);
         expect(obj.type).toBe(UnpiConstants.Type.SRSP);
     });
@@ -453,12 +455,7 @@ describe('ZNP', () => {
         });
 
         znp.open();
-        parsedCb(new UnpiFrame(
-            UnpiConstants.Type.SRSP,
-            UnpiConstants.Subsystem.SYS,
-            0x02,
-            Buffer.from([0x01, 0x02, 0x03, 0x04])
-        ));
+        parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x02, Buffer.from([0x01, 0x02, 0x03, 0x04])));
 
         expect(received).toHaveBeenCalledTimes(0);
     });
@@ -472,12 +469,7 @@ describe('ZNP', () => {
         });
 
         mockUnpiWriterWriteFrame.mockImplementationOnce(() => {
-            parsedCb(new UnpiFrame(
-                UnpiConstants.Type.SRSP,
-                UnpiConstants.Subsystem.SYS,
-                0x08,
-                Buffer.from([0x00, 0x02, 0x01, 0x02])
-            ));
+            parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
         });
 
         await znp.open();
@@ -508,12 +500,7 @@ describe('ZNP', () => {
         });
 
         mockUnpiWriterWriteFrame.mockImplementationOnce(() => {
-            parsedCb(new UnpiFrame(
-                UnpiConstants.Type.SRSP,
-                UnpiConstants.Subsystem.SYS,
-                0x08,
-                Buffer.from([0x01, 0x02, 0x01, 0x02])
-            ));
+            parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x01, 0x02, 0x01, 0x02])));
         });
 
         await znp.open();
@@ -529,7 +516,9 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual(new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"));
+        expect(error).toStrictEqual(
+            new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
+        );
     });
 
     it('znp request SREQ failed should cancel waiter when provided', async () => {
@@ -541,12 +530,7 @@ describe('ZNP', () => {
         });
 
         mockUnpiWriterWriteFrame.mockImplementationOnce(() => {
-            parsedCb(new UnpiFrame(
-                UnpiConstants.Type.SRSP,
-                UnpiConstants.Subsystem.SYS,
-                0x08,
-                Buffer.from([0x01, 0x02, 0x01, 0x02])
-            ));
+            parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x01, 0x02, 0x01, 0x02])));
         });
 
         await znp.open();
@@ -564,9 +548,10 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual(new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"));
+        expect(error).toStrictEqual(
+            new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
+        );
     });
-
 
     it('znp request SREQ with parsed in between', async () => {
         let parsedCb;
@@ -577,19 +562,9 @@ describe('ZNP', () => {
         });
 
         mockUnpiWriterWriteFrame.mockImplementationOnce(() => {
-            parsedCb(new UnpiFrame(
-                UnpiConstants.Type.SRSP,
-                UnpiConstants.Subsystem.AF,
-                0x00,
-                Buffer.from([0x00])
-            ));
+            parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.AF, 0x00, Buffer.from([0x00])));
 
-            parsedCb(new UnpiFrame(
-                UnpiConstants.Type.SRSP,
-                UnpiConstants.Subsystem.SYS,
-                0x08,
-                Buffer.from([0x00, 0x02, 0x01, 0x02])
-            ));
+            parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
         });
 
         await znp.open();
@@ -620,12 +595,7 @@ describe('ZNP', () => {
         });
 
         mockUnpiWriterWriteFrame.mockImplementationOnce(() => {
-            parsedCb(new UnpiFrame(
-                UnpiConstants.Type.AREQ,
-                UnpiConstants.Subsystem.SYS,
-                0x80,
-                Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05, 0x06])
-            ));
+            parsedCb(new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.SYS, 0x80, Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05, 0x06])));
         });
 
         await znp.open();
@@ -673,9 +643,8 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toEqual(new Error("Cannot request when znp has not been initialized yet"));
+        expect(error).toEqual(new Error('Cannot request when znp has not been initialized yet'));
     });
-
 
     it('znp request with non-existing subsystem', async () => {
         await znp.open();
@@ -719,7 +688,7 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 6000ms"));
+        expect(error).toStrictEqual(new Error('SRSP - SYS - osalNvRead after 6000ms'));
     });
 
     it('znp request timeout for startupFromApp is longer', async () => {
@@ -737,7 +706,7 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual(new Error("SRSP - ZDO - startupFromApp after 40000ms"));
+        expect(error).toStrictEqual(new Error('SRSP - ZDO - startupFromApp after 40000ms'));
     });
 
     it('znp request, responses comes after timeout', async () => {
@@ -754,12 +723,7 @@ describe('ZNP', () => {
         let result = znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
         jest.runAllTimers();
 
-        parsedCb(new UnpiFrame(
-            UnpiConstants.Type.SRSP,
-            UnpiConstants.Subsystem.SYS,
-            0x08,
-            Buffer.from([0x00, 0x02, 0x01, 0x02])
-        ));
+        parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
 
         let error;
         try {
@@ -768,7 +732,7 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 6000ms"));
+        expect(error).toStrictEqual(new Error('SRSP - SYS - osalNvRead after 6000ms'));
     });
 
     it('znp request, waitfor', async () => {
@@ -785,12 +749,7 @@ describe('ZNP', () => {
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead');
         znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
 
-        parsedCb(new UnpiFrame(
-            UnpiConstants.Type.SRSP,
-            UnpiConstants.Subsystem.SYS,
-            0x08,
-            Buffer.from([0x00, 0x02, 0x01, 0x02])
-        ));
+        parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
 
         const object = await waiter.start().promise;
         expect(object.payload).toStrictEqual({len: 2, status: 0, value: Buffer.from([1, 2])});
@@ -810,12 +769,7 @@ describe('ZNP', () => {
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 0, value: Buffer.from([1, 2])});
         znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
 
-        parsedCb(new UnpiFrame(
-            UnpiConstants.Type.SRSP,
-            UnpiConstants.Subsystem.SYS,
-            0x08,
-            Buffer.from([0x00, 0x02, 0x01, 0x02])
-        ));
+        parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
 
         const object = await waiter.start().promise;
         expect(object.payload).toStrictEqual({len: 2, status: 0, value: Buffer.from([1, 2])});
@@ -834,18 +788,13 @@ describe('ZNP', () => {
             const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', {status: 3, value: Buffer.from([1, 3])});
             znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
 
-            parsedCb(new UnpiFrame(
-                UnpiConstants.Type.SRSP,
-                UnpiConstants.Subsystem.SYS,
-                0x08,
-                Buffer.from([0x00, 0x02, 0x01, 0x02])
-            ));
+            parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
 
-
-            waiter.start().promise
-                .then(() => done("Shouldn't end up here"))
+            waiter
+                .start()
+                .promise.then(() => done("Shouldn't end up here"))
                 .catch((e) => {
-                    expect(e).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 10000ms"));
+                    expect(e).toStrictEqual(new Error('SRSP - SYS - osalNvRead after 10000ms'));
                     done();
                 });
 
@@ -884,26 +833,17 @@ describe('ZNP', () => {
     });
 
     it('ZpiObject with assoc dev list', async () => {
-        const buffer = Buffer.from([
-            0x00,
-            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-            0x01, 0x01,
-            0x00,
-            0x02,
-            0x10, 0x10,
-            0x11, 0x11,
-        ]);
+        const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x01, 0x00, 0x02, 0x10, 0x10, 0x11, 0x11]);
 
         const frame = new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 128, buffer);
         const obj = ZpiObject.fromUnpiFrame(frame);
         expect(obj.payload).toStrictEqual({
             assocdevlist: [4112, 4369],
-            ieeeaddr: "0x0807060504030201",
+            ieeeaddr: '0x0807060504030201',
             numassocdev: 2,
             nwkaddr: 257,
             startindex: 0,
             status: 0,
-
         });
     });
 
@@ -913,13 +853,13 @@ describe('ZNP', () => {
             // @ts-expect-error invalid typing
             buffalo.read(9999, {});
         }).toThrow(new Error("Read for '9999' not available"));
-    })
+    });
 
     it('UINT8 write', () => {
         const buffalo = new BuffaloZnp(Buffer.alloc(3), 1);
         buffalo.write(ParameterType.UINT8, 240, {});
         expect(buffalo.getPosition()).toEqual(2);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xF0, 0x00]))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xf0, 0x00]));
     });
 
     it('UINT8 read', () => {
@@ -933,11 +873,11 @@ describe('ZNP', () => {
         const buffalo = new BuffaloZnp(Buffer.alloc(3), 1);
         buffalo.write(ParameterType.INT8, 127, {});
         expect(buffalo.getPosition()).toEqual(2);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x7F, 0x00]))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x7f, 0x00]));
     });
 
     it('INT8 read', () => {
-        const buffalo = new BuffaloZnp(Buffer.from([0x00, 0xF0, 0x00, 0x00]), 1);
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, 0xf0, 0x00, 0x00]), 1);
         const value = buffalo.read(ParameterType.INT8, {});
         expect(buffalo.getPosition()).toEqual(2);
         expect(value).toStrictEqual(-16);
@@ -947,11 +887,11 @@ describe('ZNP', () => {
         const buffalo = new BuffaloZnp(Buffer.alloc(3), 1);
         buffalo.write(ParameterType.UINT16, 1020, {});
         expect(buffalo.getPosition()).toEqual(3);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xFC, 0x03]))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xfc, 0x03]));
     });
 
     it('UINT16 read', () => {
-        const buffalo = new BuffaloZnp(Buffer.from([0x00, 0x03, 0xFF, 0x00]), 1);
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, 0x03, 0xff, 0x00]), 1);
         const value = buffalo.read(ParameterType.UINT16, {});
         expect(buffalo.getPosition()).toEqual(3);
         expect(value).toStrictEqual(65283);
@@ -961,11 +901,11 @@ describe('ZNP', () => {
         const buffalo = new BuffaloZnp(Buffer.alloc(6), 2);
         buffalo.write(ParameterType.UINT32, 1065283, {});
         expect(buffalo.getPosition()).toEqual(6);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00, 0x43, 0x41, 0x10, 0x00]))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00, 0x43, 0x41, 0x10, 0x00]));
     });
 
     it('UINT32 read', () => {
-        const buffalo = new BuffaloZnp(Buffer.from([0x01, 0x03, 0xFF, 0xFF]));
+        const buffalo = new BuffaloZnp(Buffer.from([0x01, 0x03, 0xff, 0xff]));
         const value = buffalo.read(ParameterType.UINT32, {});
         expect(buffalo.getPosition()).toEqual(4);
         expect(value).toStrictEqual(4294902529);
@@ -976,7 +916,7 @@ describe('ZNP', () => {
         const payload = [200, 100];
         buffalo.write(ParameterType.LIST_UINT8, payload, {});
         expect(buffalo.getPosition()).toStrictEqual(3);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xC8, 0x64, 0x00]));
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0xc8, 0x64, 0x00]));
     });
 
     it('LIST_UINT8 read', () => {
@@ -1009,25 +949,21 @@ describe('ZNP', () => {
     });
 
     it('LIST_ROUTING_TABLE read', () => {
-        const buffer = Buffer.from([
-            0x00,
-            0x10, 0x27, 0x00, 0x11, 0x27,
-            0x10, 0x29, 0x01, 0x11, 0x23,
-        ]);
+        const buffer = Buffer.from([0x00, 0x10, 0x27, 0x00, 0x11, 0x27, 0x10, 0x29, 0x01, 0x11, 0x23]);
 
         const buffalo = new BuffaloZnp(buffer, 1);
         const value = buffalo.read(ParameterType.LIST_ROUTING_TABLE, {length: 2});
         expect(buffalo.getPosition()).toStrictEqual(11);
         expect(value).toStrictEqual([
             {
-                "destNwkAddr": 10000,
-                "nextHopNwkAddr": 10001,
-                "routeStatus": "ACTIVE",
+                destNwkAddr: 10000,
+                nextHopNwkAddr: 10001,
+                routeStatus: 'ACTIVE',
             },
             {
-                "destNwkAddr": 10512,
-                "nextHopNwkAddr": 8977,
-                "routeStatus": "DISCOVERY_UNDERWAY",
+                destNwkAddr: 10512,
+                nextHopNwkAddr: 8977,
+                routeStatus: 'DISCOVERY_UNDERWAY',
             },
         ]);
     });
@@ -1035,15 +971,26 @@ describe('ZNP', () => {
     it('LIST_BIND_TABLE write', () => {
         expect(() => {
             const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write(ParameterType.LIST_BIND_TABLE, [], {})
+            buffalo.write(ParameterType.LIST_BIND_TABLE, [], {});
         }).toThrow();
     });
 
     it('LIST_BIND_TABLE read', () => {
         const buffer = Buffer.from([
             0x00,
-            ...ieeeaAddr1.hex, 0x02, 0x01, 0x00, 0x02, ...ieeeaAddr2.hex,
-            ...ieeeaAddr2.hex, 0x02, 0x01, 0x00, 0x03, ...ieeeaAddr1.hex, 0x04,
+            ...ieeeaAddr1.hex,
+            0x02,
+            0x01,
+            0x00,
+            0x02,
+            ...ieeeaAddr2.hex,
+            ...ieeeaAddr2.hex,
+            0x02,
+            0x01,
+            0x00,
+            0x03,
+            ...ieeeaAddr1.hex,
+            0x04,
             0x01,
         ]);
 
@@ -1051,20 +998,20 @@ describe('ZNP', () => {
         const value = buffalo.read(ParameterType.LIST_BIND_TABLE, {length: 2});
         expect(buffalo.getPosition()).toStrictEqual(42);
         expect(value).toStrictEqual([
-           {
-                "clusterId": 1,
-                "dstAddr": ieeeaAddr2.string,
-                "dstAddrMode": 2,
-                "srcAddr": ieeeaAddr1.string,
-                "srcEp": 2,
+            {
+                clusterId: 1,
+                dstAddr: ieeeaAddr2.string,
+                dstAddrMode: 2,
+                srcAddr: ieeeaAddr1.string,
+                srcEp: 2,
             },
-               {
-                "clusterId": 1,
-                "dstAddr": ieeeaAddr1.string,
-                "dstAddrMode": 3,
-                "dstEp": 4,
-                "srcAddr": ieeeaAddr2.string,
-                "srcEp": 2,
+            {
+                clusterId: 1,
+                dstAddr: ieeeaAddr1.string,
+                dstAddrMode: 3,
+                dstEp: 4,
+                srcAddr: ieeeaAddr2.string,
+                srcEp: 2,
             },
         ]);
     });
@@ -1072,15 +1019,29 @@ describe('ZNP', () => {
     it('LIST_NEIGHBOR_LQI write', () => {
         expect(() => {
             const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write(ParameterType.LIST_NEIGHBOR_LQI, [], {})
+            buffalo.write(ParameterType.LIST_NEIGHBOR_LQI, [], {});
         }).toThrow();
     });
 
     it('LIST_NEIGHBOR_LQI read', () => {
         const buffer = Buffer.from([
             0x00,
-            ...ieeeaAddr1.hex, ...ieeeaAddr2.hex, 0x10, 0x10, 0x44, 0x01, 0x02, 0x09,
-            ...ieeeaAddr2.hex, ...ieeeaAddr1.hex, 0x10, 0x10, 0x44, 0x00, 0x10, 0x08,
+            ...ieeeaAddr1.hex,
+            ...ieeeaAddr2.hex,
+            0x10,
+            0x10,
+            0x44,
+            0x01,
+            0x02,
+            0x09,
+            ...ieeeaAddr2.hex,
+            ...ieeeaAddr1.hex,
+            0x10,
+            0x10,
+            0x44,
+            0x00,
+            0x10,
+            0x08,
             0x01,
         ]);
 
@@ -1089,26 +1050,26 @@ describe('ZNP', () => {
         expect(buffalo.getPosition()).toStrictEqual(45);
         expect(value).toStrictEqual([
             {
-                "depth": 2,
-                "deviceType": 0,
-                "extAddr": "0xaf440112005b1200",
-                "extPandId": "0xae440112004b1200",
-                "lqi": 9,
-                "nwkAddr": 4112,
-                "permitJoin": 1,
-                "relationship": 4,
-                "rxOnWhenIdle": 1,
+                depth: 2,
+                deviceType: 0,
+                extAddr: '0xaf440112005b1200',
+                extPandId: '0xae440112004b1200',
+                lqi: 9,
+                nwkAddr: 4112,
+                permitJoin: 1,
+                relationship: 4,
+                rxOnWhenIdle: 1,
             },
             {
-                "depth": 16,
-                "deviceType": 0,
-                "extAddr": "0xae440112004b1200",
-                "extPandId": "0xaf440112005b1200",
-                "lqi": 8,
-                "nwkAddr": 4112,
-                "permitJoin": 0,
-                "relationship": 4,
-                "rxOnWhenIdle": 1,
+                depth: 16,
+                deviceType: 0,
+                extAddr: '0xae440112004b1200',
+                extPandId: '0xaf440112005b1200',
+                lqi: 8,
+                nwkAddr: 4112,
+                permitJoin: 0,
+                relationship: 4,
+                rxOnWhenIdle: 1,
             },
         ]);
     });
@@ -1116,39 +1077,34 @@ describe('ZNP', () => {
     it('LIST_NETWORK write', () => {
         expect(() => {
             const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write(ParameterType.LIST_NETWORK, [], {})
+            buffalo.write(ParameterType.LIST_NETWORK, [], {});
         }).toThrow();
     });
 
     it('LIST_NETWORK read', () => {
-        const buffer = Buffer.from([
-            0x05,
-            0x10, 0x10, 0x09, 0x31, 0x13, 0x01,
-            0x10, 0x10, 0x09, 0x31, 0x13, 0x00,
-            0x01,
-        ]);
+        const buffer = Buffer.from([0x05, 0x10, 0x10, 0x09, 0x31, 0x13, 0x01, 0x10, 0x10, 0x09, 0x31, 0x13, 0x00, 0x01]);
 
         const buffalo = new BuffaloZnp(buffer, 1);
         const value = buffalo.read(ParameterType.LIST_NETWORK, {length: 2});
         expect(buffalo.getPosition()).toStrictEqual(13);
         expect(value).toStrictEqual([
             {
-                "beaconOrder": 3,
-                "logicalChannel": 9,
-                "neightborPanId": 4112,
-                "permitJoin": 1,
-                "stackProfile": 1,
-                "superFrameOrder": 1,
-                "zigbeeVersion": 3,
+                beaconOrder: 3,
+                logicalChannel: 9,
+                neightborPanId: 4112,
+                permitJoin: 1,
+                stackProfile: 1,
+                superFrameOrder: 1,
+                zigbeeVersion: 3,
             },
             {
-                "beaconOrder": 3,
-                "logicalChannel": 9,
-                "neightborPanId": 4112,
-                "permitJoin": 0,
-                "stackProfile": 1,
-                "superFrameOrder": 1,
-                "zigbeeVersion": 3,
+                beaconOrder: 3,
+                logicalChannel: 9,
+                neightborPanId: 4112,
+                permitJoin: 0,
+                stackProfile: 1,
+                superFrameOrder: 1,
+                zigbeeVersion: 3,
             },
         ]);
     });
@@ -1156,25 +1112,17 @@ describe('ZNP', () => {
     it('LIST_ASSOC_DEV write', () => {
         expect(() => {
             const bufallo = new BuffaloZnp(Buffer.alloc(10), 1);
-            bufallo.write(ParameterType.LIST_ASSOC_DEV, [], {})
+            bufallo.write(ParameterType.LIST_ASSOC_DEV, [], {});
         }).toThrow();
     });
 
     it('LIST_ASSOC_DEV read 3', () => {
-        const buffer = Buffer.from([
-            0x05, 0x10,
-            0x10, 0x09,
-            0x31, 0x13,
-        ]);
+        const buffer = Buffer.from([0x05, 0x10, 0x10, 0x09, 0x31, 0x13]);
 
         const buffalo = new BuffaloZnp(buffer);
         const value = buffalo.read(ParameterType.LIST_ASSOC_DEV, {length: 3, startIndex: 0});
         expect(buffalo.getPosition()).toStrictEqual(6);
-        expect(value).toStrictEqual([
-            4101,
-            2320,
-            4913,
-        ]);
+        expect(value).toStrictEqual([4101, 2320, 4913]);
     });
 
     it('LIST_ASSOC_DEV read 75', () => {
@@ -1197,7 +1145,7 @@ describe('ZNP', () => {
         const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
         buffalo.write(ParameterType.BUFFER8, payload, {});
         expect(buffalo.getPosition()).toStrictEqual(9);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload]))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload]));
     });
 
     it('BUFFER8 write length consistent', () => {
@@ -1221,7 +1169,7 @@ describe('ZNP', () => {
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
         buffalo.write(ParameterType.BUFFER16, Buffer.from([...payload, ...payload]), {});
         expect(buffalo.getPosition()).toStrictEqual(17);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00, 0x00, 0x00]))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00, 0x00, 0x00]));
     });
 
     it('BUFFER16 read', () => {
@@ -1237,12 +1185,12 @@ describe('ZNP', () => {
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
         buffalo.write(ParameterType.BUFFER18, Buffer.from([...payload, ...payload]), {});
         expect(buffalo.getPosition()).toStrictEqual(19);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00]))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, 0x00]));
     });
 
     it('BUFFER18 read', () => {
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
-        const buffalo = new BuffaloZnp(Buffer.from([0x00, ...payload, ...payload]), 1)
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, ...payload, ...payload]), 1);
         const value = buffalo.read(ParameterType.BUFFER18, {});
         expect(buffalo.getPosition()).toStrictEqual(19);
         expect(value).toStrictEqual(Buffer.from([...payload, ...payload]));
@@ -1253,12 +1201,12 @@ describe('ZNP', () => {
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
         buffalo.write(ParameterType.BUFFER32, Buffer.from([...payload, ...payload, ...payload, ...payload]), {});
         expect(buffalo.getPosition()).toStrictEqual(33);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, 0x00]))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, 0x00]));
     });
 
     it('BUFFER32 read', () => {
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        const buffalo = new BuffaloZnp(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload]), 1)
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload]), 1);
         const value = buffalo.read(ParameterType.BUFFER32, {});
         expect(buffalo.getPosition()).toStrictEqual(33);
         expect(value).toStrictEqual(Buffer.from([...payload, ...payload, ...payload, ...payload]));
@@ -1267,14 +1215,14 @@ describe('ZNP', () => {
     it('BUFFER42 write', () => {
         const buffalo = new BuffaloZnp(Buffer.alloc(44), 1);
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        buffalo.write(ParameterType.BUFFER42, Buffer.from([...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xFF]), {});
+        buffalo.write(ParameterType.BUFFER42, Buffer.from([...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xff]), {});
         expect(buffalo.getPosition()).toStrictEqual(43);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xFF, 0x00]))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, ...payload, 0x01, 0xff, 0x00]));
     });
 
     it('BUFFER42 read', () => {
         const payload = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07];
-        const buffalo = new BuffaloZnp(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, ...payload, 0x08, 0x09]), 1)
+        const buffalo = new BuffaloZnp(Buffer.from([0x00, ...payload, ...payload, ...payload, ...payload, ...payload, 0x08, 0x09]), 1);
         const value = buffalo.read(ParameterType.BUFFER42, {});
         expect(buffalo.getPosition()).toStrictEqual(43);
         expect(value).toStrictEqual(Buffer.from([...payload, ...payload, ...payload, ...payload, ...payload, 0x08, 0x09]));
@@ -1285,7 +1233,7 @@ describe('ZNP', () => {
         let payload = duplicateArray(20, [0x00, 0x01, 0x02, 0x03, 0x04]);
         buffalo.write(ParameterType.BUFFER100, Buffer.from(payload), {});
         expect(buffalo.getPosition()).toStrictEqual(100);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from(payload))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from(payload));
     });
 
     it('BUFFER100 read', () => {
@@ -1301,7 +1249,7 @@ describe('ZNP', () => {
         const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
         buffalo.write(ParameterType.BUFFER, payload, {});
         expect(buffalo.getPosition()).toStrictEqual(9);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload]))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, ...payload]));
     });
 
     it('BUFFER read', () => {
@@ -1316,7 +1264,7 @@ describe('ZNP', () => {
         const buffalo = new BuffaloZnp(Buffer.alloc(8));
         buffalo.write(ParameterType.IEEEADDR, ieeeaAddr1.string, {});
         expect(buffalo.getPosition()).toEqual(8);
-        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from(ieeeaAddr1.hex))
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from(ieeeaAddr1.hex));
     });
 
     it('IEEEADDR read', () => {
@@ -1327,8 +1275,14 @@ describe('ZNP', () => {
     });
 
     it.each([
-        ParameterType.BUFFER, ParameterType.LIST_UINT8, ParameterType.LIST_UINT16, ParameterType.LIST_ROUTING_TABLE,
-        ParameterType.LIST_BIND_TABLE, ParameterType.LIST_NEIGHBOR_LQI, ParameterType.LIST_NETWORK, ParameterType.LIST_ASSOC_DEV
+        ParameterType.BUFFER,
+        ParameterType.LIST_UINT8,
+        ParameterType.LIST_UINT16,
+        ParameterType.LIST_ROUTING_TABLE,
+        ParameterType.LIST_BIND_TABLE,
+        ParameterType.LIST_NEIGHBOR_LQI,
+        ParameterType.LIST_NETWORK,
+        ParameterType.LIST_ASSOC_DEV,
     ])('Throws when read is missing required length option - param %s', (type) => {
         expect(() => {
             const buffalo = new BuffaloZnp(Buffer.alloc(1));

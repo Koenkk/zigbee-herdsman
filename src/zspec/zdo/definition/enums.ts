@@ -1,11 +1,11 @@
 export enum LeaveRequestFlags {
     /** Leave and rejoin. */
-    AND_REJOIN     = 0x80,
+    AND_REJOIN = 0x80,
     /** DEPRECATED */
     // AND_REMOVE_CHILDREN = 0x40,
     /** Leave. */
     WITHOUT_REJOIN = 0x00,
-};
+}
 
 export enum JoiningPolicy {
     /** Any device is allowed to join. */
@@ -14,7 +14,7 @@ export enum JoiningPolicy {
     IEEELIST_JOIN = 0x01,
     /** No device is allowed to join. */
     NO_JOIN = 0x02,
-};
+}
 
 //-------------------------------------------------------------------------------------------------
 //-- TLVs
@@ -27,7 +27,7 @@ export enum SelectedKeyNegotiationProtocol {
     /**  SPEKE using Curve25519 with Hash SHA-256 */
     SPEKE_CURVE25519_SHA256 = 2,
     // 3 – 255 Reserved
-};
+}
 
 export enum SelectedPreSharedSecret {
     /** Symmetric Authentication Token */
@@ -43,7 +43,7 @@ export enum SelectedPreSharedSecret {
     // 5 – 254 Reserved,
     /** Anonymous Well-Known Secret */
     ANONYMOUS_WELLKNOWN_SECRET = 255,
-};
+}
 
 export enum InitialJoinMethod {
     ANONYMOUS = 0x00,
@@ -77,12 +77,12 @@ export enum GlobalTLV {
     ROUTER_INFORMATION = 70,
     /** Minimum Length 2-byte */
     FRAGMENTATION_PARAMETERS = 71,
-    JOINER_ENCAPSULATION = 72 ,
-    BEACON_APPENDIX_ENCAPSULATION = 73 ,
+    JOINER_ENCAPSULATION = 72,
+    BEACON_APPENDIX_ENCAPSULATION = 73,
     // Reserved = 74,
     /** Minimum Length 2-byte XXX: min not in spec??? */
-    CONFIGURATION_PARAMETERS = 75 ,
+    CONFIGURATION_PARAMETERS = 75,
     /** Refer to the Zigbee Direct specification for more details. */
     DEVICE_CAPABILITY_EXTENSION = 76,
     // Reserved = 77-255
-};
+}

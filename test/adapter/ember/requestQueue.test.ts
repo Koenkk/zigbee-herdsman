@@ -25,7 +25,7 @@ describe('Ember Request Queue', () => {
         const queue = fromPriorityQueue ? requestQueue.priorityQueue : requestQueue.queue;
 
         return queue[index];
-    }
+    };
 
     const mockAdapterCommand = async (returnFunc: () => Promise<SLStatus>, priority: boolean = false): Promise<number> => {
         return new Promise<number>((resolve, reject) => {
@@ -44,7 +44,7 @@ describe('Ember Request Queue', () => {
                 priority,
             );
         });
-    }
+    };
 
     beforeAll(async () => {
         jest.useFakeTimers();
@@ -92,12 +92,12 @@ describe('Ember Request Queue', () => {
 
         await jest.advanceTimersByTimeAsync(fakeWaitTime + 20);
 
-        await expect(p).resolves.toBe(123);// gives result of resolve
+        await expect(p).resolves.toBe(123); // gives result of resolve
 
-        expect(funcSpy).toHaveBeenCalledTimes(1);// enqueued func was called
+        expect(funcSpy).toHaveBeenCalledTimes(1); // enqueued func was called
         expect(funcRejectSpy).toHaveBeenCalledTimes(0);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(0);// no longer in queue
+        expect(requestQueue.queue).toHaveLength(0); // no longer in queue
     });
 
     it('Queues request, rejects it on error, and removes it from queue', async () => {
@@ -122,7 +122,7 @@ describe('Ember Request Queue', () => {
         expect(funcSpy).toHaveBeenCalledTimes(1);
         expect(funcRejectSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(0);// no longer in queue
+        expect(requestQueue.queue).toHaveLength(0); // no longer in queue
     });
 
     it('Queues request, rejects it on throw, and removes it from queue', async () => {
@@ -148,7 +148,7 @@ describe('Ember Request Queue', () => {
         expect(funcSpy).toHaveBeenCalledTimes(1);
         expect(funcRejectSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(0);// no longer in queue
+        expect(requestQueue.queue).toHaveLength(0); // no longer in queue
     });
 
     it('Queues priority request, rejects it on throw, and removes it from queue', async () => {
@@ -174,7 +174,7 @@ describe('Ember Request Queue', () => {
         expect(funcSpy).toHaveBeenCalledTimes(1);
         expect(funcRejectSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
-        expect(requestQueue.priorityQueue).toHaveLength(0);// no longer in queue
+        expect(requestQueue.priorityQueue).toHaveLength(0); // no longer in queue
     });
 
     it('Queues request, defers on BUSY and defers again on NETWORK_DOWN', async () => {
@@ -187,28 +187,27 @@ describe('Ember Request Queue', () => {
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// enqueued
-
+        expect(requestQueue.queue).toHaveLength(1); // enqueued
 
         requestQueue.startDispatching();
 
-        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (BUSY_DEFER_MSEC * 0.25));
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + BUSY_DEFER_MSEC * 0.25);
 
         expect(deferSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// still in queue
+        expect(requestQueue.queue).toHaveLength(1); // still in queue
 
         await jest.advanceTimersByTimeAsync(BUSY_DEFER_MSEC + 20);
 
         varyingReturn = SLStatus.NETWORK_DOWN;
 
-        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (NETWORK_DOWN_DEFER_MSEC * 0.25));
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + NETWORK_DOWN_DEFER_MSEC * 0.25);
 
         expect(deferSpy).toHaveBeenCalledTimes(2);
-        expect(funcSpy).toHaveBeenCalledTimes(2);// dispatch x2, func called x2
+        expect(funcSpy).toHaveBeenCalledTimes(2); // dispatch x2, func called x2
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// still in queue
+        expect(requestQueue.queue).toHaveLength(1); // still in queue
 
         await jest.advanceTimersByTimeAsync(NETWORK_DOWN_DEFER_MSEC + 20);
     });
@@ -223,16 +222,16 @@ describe('Ember Request Queue', () => {
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// enqueued
+        expect(requestQueue.queue).toHaveLength(1); // enqueued
 
         requestQueue.startDispatching();
 
-        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (BUSY_DEFER_MSEC * 0.25));
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + BUSY_DEFER_MSEC * 0.25);
 
         expect(deferSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// still in queue
+        expect(requestQueue.queue).toHaveLength(1); // still in queue
 
         await jest.advanceTimersByTimeAsync(BUSY_DEFER_MSEC + 20);
 
@@ -240,11 +239,11 @@ describe('Ember Request Queue', () => {
 
         await jest.advanceTimersByTimeAsync(fakeWaitTime + 20);
 
-        await expect(p).resolves.toBe(123);// gives result of resolve
+        await expect(p).resolves.toBe(123); // gives result of resolve
 
-        expect(funcSpy).toHaveBeenCalledTimes(2);// enqueued func was called
+        expect(funcSpy).toHaveBeenCalledTimes(2); // enqueued func was called
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(0);// no longer in queue
+        expect(requestQueue.queue).toHaveLength(0); // no longer in queue
     });
 
     it('Queues request, defers on BUSY and only retries once after internal change', async () => {
@@ -252,47 +251,44 @@ describe('Ember Request Queue', () => {
 
         varyingReturn = SLStatus.BUSY;
         const p = new Promise<number>((resolve, reject) => {
-            requestQueue.enqueue(
-                async (): Promise<SLStatus> => {
-                    const status: SLStatus = await getVaryingReturn();
+            requestQueue.enqueue(async (): Promise<SLStatus> => {
+                const status: SLStatus = await getVaryingReturn();
 
-                    if (status !== SLStatus.OK) {
-                        // internally changes external parameter that changes the queue's next run
-                        varyingReturn = SLStatus.OK;
-                        return status;
-                    }
-
-                    resolve(123);
+                if (status !== SLStatus.OK) {
+                    // internally changes external parameter that changes the queue's next run
+                    varyingReturn = SLStatus.OK;
                     return status;
-                },
-                reject,
-            );
+                }
+
+                resolve(123);
+                return status;
+            }, reject);
         });
         const funcSpy = jest.spyOn(getQueueEntryAt(0), 'func');
 
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// enqueued
+        expect(requestQueue.queue).toHaveLength(1); // enqueued
 
         requestQueue.startDispatching();
 
-        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (BUSY_DEFER_MSEC * 0.25));
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + BUSY_DEFER_MSEC * 0.25);
 
         expect(deferSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// still in queue
+        expect(requestQueue.queue).toHaveLength(1); // still in queue
 
         await jest.advanceTimersByTimeAsync(BUSY_DEFER_MSEC + 20);
 
         await jest.advanceTimersByTimeAsync(fakeWaitTime + 20);
 
-        await expect(p).resolves.toBe(123);// gives result of resolve
+        await expect(p).resolves.toBe(123); // gives result of resolve
 
-        expect(funcSpy).toHaveBeenCalledTimes(2);// enqueued func was called
+        expect(funcSpy).toHaveBeenCalledTimes(2); // enqueued func was called
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(0);// no longer in queue
+        expect(requestQueue.queue).toHaveLength(0); // no longer in queue
     });
 
     it('Queues request, defers on thrown BUSY', async () => {
@@ -307,16 +303,16 @@ describe('Ember Request Queue', () => {
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// enqueued
+        expect(requestQueue.queue).toHaveLength(1); // enqueued
 
         requestQueue.startDispatching();
 
-        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (BUSY_DEFER_MSEC * 0.25));
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + BUSY_DEFER_MSEC * 0.25);
 
         expect(deferSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// still in queue
+        expect(requestQueue.queue).toHaveLength(1); // still in queue
 
         await jest.advanceTimersByTimeAsync(BUSY_DEFER_MSEC + 20);
     });
@@ -333,16 +329,16 @@ describe('Ember Request Queue', () => {
         expect(enqueueSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(0);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// enqueued
+        expect(requestQueue.queue).toHaveLength(1); // enqueued
 
         requestQueue.startDispatching();
 
-        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + (BUSY_DEFER_MSEC * 0.25));
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 20 + BUSY_DEFER_MSEC * 0.25);
 
         expect(deferSpy).toHaveBeenCalledTimes(1);
         expect(funcSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// still in queue
+        expect(requestQueue.queue).toHaveLength(1); // still in queue
 
         await jest.advanceTimersByTimeAsync(BUSY_DEFER_MSEC + 20);
     });
@@ -366,24 +362,24 @@ describe('Ember Request Queue', () => {
 
         requestQueue.startDispatching();
 
-        await jest.advanceTimersByTimeAsync(fakeWaitTime + 1);// before 2nd setTimeout triggers
+        await jest.advanceTimersByTimeAsync(fakeWaitTime + 1); // before 2nd setTimeout triggers
 
-        await expect(pPrio).resolves.toBe(123);// gives result of resolve
+        await expect(pPrio).resolves.toBe(123); // gives result of resolve
 
-        expect(funcSpy).toHaveBeenCalledTimes(0);// enqueued func was not called
-        expect(funcPrioSpy).toHaveBeenCalledTimes(1);// enqueued func was called
+        expect(funcSpy).toHaveBeenCalledTimes(0); // enqueued func was not called
+        expect(funcPrioSpy).toHaveBeenCalledTimes(1); // enqueued func was called
         //@ts-expect-error private
-        expect(requestQueue.priorityQueue).toHaveLength(0);// no longer in queue
+        expect(requestQueue.priorityQueue).toHaveLength(0); // no longer in queue
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(1);// still in queue
+        expect(requestQueue.queue).toHaveLength(1); // still in queue
 
         await jest.advanceTimersByTimeAsync(fakeWaitTime * 2 + 20);
 
-        await expect(p).resolves.toBe(123);// gives result of resolve
+        await expect(p).resolves.toBe(123); // gives result of resolve
 
-        expect(funcSpy).toHaveBeenCalledTimes(1);// enqueued func was called
+        expect(funcSpy).toHaveBeenCalledTimes(1); // enqueued func was called
         //@ts-expect-error private
-        expect(requestQueue.queue).toHaveLength(0);// no longer in queue
+        expect(requestQueue.queue).toHaveLength(0); // no longer in queue
     });
 
     it('Clears queue', async () => {
