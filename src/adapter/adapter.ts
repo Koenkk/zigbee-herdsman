@@ -45,10 +45,11 @@ abstract class Adapter extends events.EventEmitter {
         const {ZiGateAdapter} = await import('./zigate/adapter');
         const {EZSPAdapter} = await import('./ezsp/adapter');
         const {EmberAdapter} = await import('./ember/adapter');
-        type AdapterImplementation = typeof ZStackAdapter | typeof DeconzAdapter | typeof ZiGateAdapter | typeof EZSPAdapter | typeof EmberAdapter;
+        const {ZBOSSAdapter} = await import('./zboss/adapter');
+        type AdapterImplementation = typeof ZStackAdapter | typeof DeconzAdapter | typeof ZiGateAdapter | typeof EZSPAdapter | typeof EmberAdapter | typeof ZBOSSAdapter;
 
         let adapters: AdapterImplementation[];
-        const adapterLookup = {zstack: ZStackAdapter, deconz: DeconzAdapter, zigate: ZiGateAdapter, ezsp: EZSPAdapter, ember: EmberAdapter};
+        const adapterLookup = {zstack: ZStackAdapter, deconz: DeconzAdapter, zigate: ZiGateAdapter, ezsp: EZSPAdapter, ember: EmberAdapter, zboss: ZBOSSAdapter};
         if (serialPortOptions.adapter && serialPortOptions.adapter !== 'auto') {
             if (adapterLookup.hasOwnProperty(serialPortOptions.adapter)) {
                 adapters = [adapterLookup[serialPortOptions.adapter]];
