@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.52.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.51.0...v0.52.0) (2024-07-08)
+
+
+### Features
+
+* Ember: Implement requests concurrency ([#1106](https://github.com/Koenkk/zigbee-herdsman/issues/1106)) ([a737f9b](https://github.com/Koenkk/zigbee-herdsman/commit/a737f9b6caff62b3d18ecee6a9cd1836798a6121))
+
+
+### Bug Fixes
+
+* **ignore:** Implement prettier ([#1103](https://github.com/Koenkk/zigbee-herdsman/issues/1103)) ([2b2bd5b](https://github.com/Koenkk/zigbee-herdsman/commit/2b2bd5be1e372d02a73dcb257ce7a9dbf6cee9b1))
+* **ignore:** update dependencies ([#1105](https://github.com/Koenkk/zigbee-herdsman/issues/1105)) ([039fd3e](https://github.com/Koenkk/zigbee-herdsman/commit/039fd3efb776232fe5491639c28977ad0f78d891))
+
 ## [0.51.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.50.1...v0.51.0) (2024-07-01)
 
 
