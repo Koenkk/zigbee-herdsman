@@ -550,7 +550,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                 this.socketPort.on('connect', () => {
                     logger.debug(`Socket connected`, NS);
                 });
-                this.socketPort.on('ready', async (): Promise<void> => {
+                this.socketPort.on('ready', (): void => {
                     logger.info(`Socket ready`, NS);
                     this.socketPort.removeListener('error', openError);
                     this.socketPort.once('close', this.onPortClose.bind(this));
@@ -616,6 +616,8 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         }
 
         const status = this.receiveFrame(buffer);
+
+        setImmediate(this.sendExec.bind(this)); // always trigger to cover all cases (also triggered in Ezsp layer when a DATA frame is emitted)
 
         if (status !== EzspStatus.SUCCESS && status !== EzspStatus.ASH_IN_PROGRESS && status !== EzspStatus.NO_RX_DATA) {
             logger.error(`Error while parsing received frame, status=${EzspStatus[status]}.`, NS);
@@ -809,14 +811,15 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         // Check for received acknowledgement timer expiry
         if (this.ackTimerHasExpired()) {
             if (this.flags & Flag.CONNECTED) {
-                const expectedFrm = this.flags & Flag.RETX ? this.frmReTx : this.frmTx;
+                const reTx = this.flags & Flag.RETX;
+                const expectedFrm = reTx ? this.frmReTx : this.frmTx;
 
                 if (this.ackRx !== expectedFrm) {
                     this.counters.rxAckTimeouts += 1;
 
                     this.adjustAckPeriod(true);
 
-                    logger.debug(`Timer expired waiting for ACK for ${expectedFrm}, current=${this.ackRx}`, NS);
+                    logger.debug(`Timer expired waiting for ACK for ${reTx ? 'frmReTx' : 'frmTx'}=${expectedFrm}, ackRx=${this.ackRx}`, NS);
 
                     if (++this.timeouts >= ASH_MAX_TIMEOUTS) {
                         this.hostDisconnect(EzspStatus.ASH_ERROR_TIMEOUTS);
@@ -891,11 +894,11 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                         if (this.flags & Flag.NAK) {
                             this.txSHBuffer[0] = AshFrameType.NAK + (this.frmRx << ASH_ACKNUM_BIT);
                             this.flags &= ~(Flag.NRTX | Flag.NAK | Flag.ACK);
-                            logger.debug(`---> [FRAME type=NAK frmRx=${this.frmRx}]`, NS);
+                            logger.debug(`---> [FRAME type=NAK frmRx=${this.frmRx}](ackRx=${this.ackRx})`, NS);
                         } else {
                             this.txSHBuffer[0] = AshFrameType.ACK + (this.frmRx << ASH_ACKNUM_BIT);
                             this.flags &= ~(Flag.NRTX | Flag.ACK);
-                            logger.debug(`---> [FRAME type=ACK frmRx=${this.frmRx}]`, NS);
+                            logger.debug(`---> [FRAME type=ACK frmRx=${this.frmRx}](ackRx=${this.ackRx})`, NS);
                         }
 
                         if (this.flags & Flag.NR) {
@@ -914,7 +917,10 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                         len = buffer.len + 1;
                         this.txSHBuffer[0] = AshFrameType.DATA | (this.frmReTx << ASH_FRMNUM_BIT) | (this.frmRx << ASH_ACKNUM_BIT) | ASH_RFLAG_MASK;
                         this.sendState = SendState.RETX_DATA;
-                        logger.debug(`---> [FRAME type=DATA_RETX frmReTx=${this.frmReTx} frmRx=${this.frmRx}]`, NS);
+                        logger.debug(
+                            `---> [FRAME type=DATA_RETX frmReTx=${this.frmReTx} frmRx=${this.frmRx}](ackRx=${this.ackRx} frmTx=${this.frmTx})`,
+                            NS,
+                        );
                     } else if (this.ackTx != this.frmRx) {
                         // An ACK should be generated
                         this.flags |= Flag.ACK;
@@ -928,7 +934,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
                         this.txSHBuffer[0] = AshFrameType.DATA | (this.frmTx << ASH_FRMNUM_BIT) | (this.frmRx << ASH_ACKNUM_BIT);
                         this.sendState = SendState.TX_DATA;
-                        logger.debug(`---> [FRAME type=DATA frmTx=${this.frmTx} frmRx=${this.frmRx}]`, NS);
+                        logger.debug(`---> [FRAME type=DATA frmTx=${this.frmTx} frmRx=${this.frmRx}](ackRx=${this.ackRx})`, NS);
                     } else {
                         // Otherwise there's nothing to send
                         this.writer.writeFlush();
@@ -1115,7 +1121,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         if (frameType === AshFrameType.DATA || frameType === AshFrameType.ACK || frameType === AshFrameType.NAK) {
             ackNum = ashGetACKNum(this.rxSHBuffer[0]);
 
-            logger.debug(`<--- [FRAME type=${frameTypeStr} ackNum=${ackNum}]`, NS);
+            logger.debug(`<--- [FRAME type=${frameTypeStr} ackNum=${ackNum}](ackRx=${this.ackRx} frmTx=${this.frmTx})`, NS);
 
             if (!withinRange(this.ackRx, ackNum, this.frmTx)) {
                 this.counters.rxBadAckNumber += 1;
@@ -1152,7 +1158,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         switch (frameType) {
             case AshFrameType.DATA:
                 frmNum = ashGetFrmNum(this.rxSHBuffer[0]);
-                const frameStr = `[FRAME type=${frameTypeStr} ackNum=${ackNum} frmNum=${frmNum}]`;
+                const frameStr = `[FRAME type=${frameTypeStr} ackNum=${ackNum} frmNum=${frmNum}](frmRx=${this.frmRx})`;
 
                 if (frmNum === this.frmRx) {
                     // is frame in sequence?
