@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 import EventEmitter from 'events';
 
+import {Queue} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {EUI64, ExtendedPanId, NodeId, PanId} from '../../../zspec/tstypes';
@@ -250,7 +251,6 @@ interface EzspEventMap {
  */
 export class Ezsp extends EventEmitter<EzspEventMap> {
     private version: number;
-    private readonly tickInterval: number;
     public readonly ash: UartAsh;
     private readonly buffalo: EzspBuffalo;
     /** The contents of the current EZSP frame. CAREFUL using this guy, it's pre-allocated. */
@@ -264,12 +264,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     private callbackFrameLength: number;
 
     private initialVersionSent: boolean;
-    /** True if a command is in the process of being sent. */
-    private sendingCommand: boolean;
     /** EZSP frame sequence number. Used in EZSP_SEQUENCE_INDEX byte. */
     private frameSequence: number;
     /** Sequence used for EZSP send() tagging. static uint8_t */
     private sendSequence: number;
+    private readonly queue: Queue;
     /** Awaiting response resolve/timer struct. Null if not waiting for response. */
     private responseWaiter: EzspWaiter | null;
 
@@ -284,6 +283,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         this.callbackFrameContents = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
         this.callbackBuffalo = new EzspBuffalo(this.callbackFrameContents);
 
+        this.queue = new Queue(1, `${NS}:queue`);
         this.ash = new UartAsh(options);
     }
 
@@ -297,7 +297,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     }
 
     /**
-     * Create a string representation of the last frame in storage (sent or received).
+     * Create a string representation of the last received frame in storage.
      */
     get frameToString(): string {
         const id = this.buffalo.getFrameId();
@@ -305,7 +305,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     }
 
     /**
-     * Create a string representation of the last callback frame in storage (received only).
+     * Create a string representation of the last received callback frame in storage.
      */
     get callbackFrameToString(): string {
         const id = this.callbackBuffalo.getFrameId();
@@ -313,12 +313,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     }
 
     private initVariables(): void {
-        if (this.responseWaiter != null) {
-            clearTimeout(this.responseWaiter.timer);
-        }
-
         this.ash.removeAllListeners(AshEvents.FATAL_ERROR);
         this.ash.removeAllListeners(AshEvents.FRAME);
+        this.queue.clear();
 
         this.frameContents.fill(0);
         this.frameLength = 0;
@@ -327,10 +324,8 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         this.callbackFrameLength = 0;
         this.callbackBuffalo.setPosition(0);
         this.initialVersionSent = false;
-        this.sendingCommand = false;
         this.frameSequence = -1; // start at 0
         this.sendSequence = 0; // start at 1
-        this.responseWaiter = null;
         this.counterErrQueueFull = 0;
     }
 
@@ -502,26 +497,23 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         return (this.frameSequence = ++this.frameSequence & 0xff);
     }
 
-    private startCommand(command: number): void {
-        if (this.sendingCommand) {
-            logger.error(`[SEND COMMAND] Cannot send second one before processing response from first one.`, NS);
-            throw new EzspError(EzspStatus.ERROR_INVALID_CALL);
-        }
-
-        this.sendingCommand = true;
+    private startCommand(command: number): EzspBuffalo {
+        const sendBuffalo = new EzspBuffalo(Buffer.alloc(EZSP_MAX_FRAME_LENGTH));
 
         // Send initial EZSP_VERSION command with old packet format for old Hosts/NCPs
         if (command === EzspFrameID.VERSION && !this.initialVersionSent) {
-            this.buffalo.setPosition(EZSP_PARAMETERS_INDEX);
+            sendBuffalo.setPosition(EZSP_PARAMETERS_INDEX);
 
-            this.buffalo.setCommandByte(EZSP_FRAME_ID_INDEX, lowByte(command));
+            sendBuffalo.setCommandByte(EZSP_FRAME_ID_INDEX, lowByte(command));
         } else {
             // convert to extended frame format
-            this.buffalo.setPosition(EZSP_EXTENDED_PARAMETERS_INDEX);
+            sendBuffalo.setPosition(EZSP_EXTENDED_PARAMETERS_INDEX);
 
-            this.buffalo.setCommandByte(EZSP_EXTENDED_FRAME_ID_LB_INDEX, lowByte(command));
-            this.buffalo.setCommandByte(EZSP_EXTENDED_FRAME_ID_HB_INDEX, highByte(command));
+            sendBuffalo.setCommandByte(EZSP_EXTENDED_FRAME_ID_LB_INDEX, lowByte(command));
+            sendBuffalo.setCommandByte(EZSP_EXTENDED_FRAME_ID_HB_INDEX, highByte(command));
         }
+
+        return sendBuffalo;
     }
 
     /**
@@ -540,7 +532,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *   - EzspStatus.DATA_FRAME_TOO_LONG
      *   - EzspStatus.NOT_CONNECTED
      *
-     * if ezsp.sendCommand times out, this will be EzspStatus.ASH_ACK_TIMEOUT (XXX: for now)
+     * if ezsp.sendCommand times out, this will be EzspStatus.ASH_ERROR_TIMEOUTS
      *
      * if ezsp.sendCommand resolves, this will be whatever ezsp.responseReceived returns:
      *   - EzspStatus.NO_RX_DATA (should not happen if command was sent (since we subscribe to frame event to trigger function))
@@ -550,15 +542,17 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *   - EzspStatus.ERROR_TRUNCATED
      *   - EzspStatus.SUCCESS
      */
-    private async sendCommand(): Promise<EzspStatus> {
+    private async sendCommand(sendBuffalo: EzspBuffalo): Promise<EzspStatus> {
         if (!this.checkConnection()) {
             logger.debug(`[SEND COMMAND] NOT CONNECTED`, NS);
             return EzspStatus.NOT_CONNECTED;
         }
 
-        this.buffalo.setCommandByte(EZSP_SEQUENCE_INDEX, this.nextFrameSequence());
+        const sequence = this.nextFrameSequence();
+
+        sendBuffalo.setCommandByte(EZSP_SEQUENCE_INDEX, sequence);
         // we always set the network index in the ezsp frame control.
-        this.buffalo.setCommandByte(
+        sendBuffalo.setCommandByte(
             EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX,
             EZSP_FRAME_CONTROL_COMMAND |
                 (DEFAULT_SLEEP_MODE & EZSP_FRAME_CONTROL_SLEEP_MODE_MASK) |
@@ -566,55 +560,60 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         );
 
         // Send initial EZSP_VERSION command with old packet format for old Hosts/NCPs
-        if (!this.initialVersionSent && this.buffalo.getCommandByte(EZSP_FRAME_ID_INDEX) === EzspFrameID.VERSION) {
+        if (!this.initialVersionSent && sendBuffalo.getCommandByte(EZSP_FRAME_ID_INDEX) === EzspFrameID.VERSION) {
             this.initialVersionSent = true;
         } else {
-            this.buffalo.setCommandByte(EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX, EZSP_EXTENDED_FRAME_FORMAT_VERSION);
+            sendBuffalo.setCommandByte(EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX, EZSP_EXTENDED_FRAME_FORMAT_VERSION);
         }
 
         // might have tried to write more than allocated EZSP_MAX_FRAME_LENGTH for frameContents
         // use write index to detect broken frames cases (inc'ed every time a byte is supposed to have been written)
         // since index is always inc'ed on setCommandByte, this should always end at 202 max
-        const length: number = this.buffalo.getPosition();
+        const length: number = sendBuffalo.getPosition();
 
         if (length > EZSP_MAX_FRAME_LENGTH) {
             // this.ezspErrorHandler(EzspStatus.ERROR_COMMAND_TOO_LONG);// XXX: this forces a NCP reset??
             return EzspStatus.ERROR_COMMAND_TOO_LONG;
         }
 
-        this.frameLength = length;
-        let status: EzspStatus;
+        return this.queue.execute<EzspStatus>(async () => {
+            let status: EzspStatus = EzspStatus.ASH_ERROR_TIMEOUTS; // will be overwritten below as necessary
+            const frameId = sendBuffalo.getFrameId();
+            const frameString = `[FRAME: ID=${frameId}:"${EzspFrameID[frameId]}" Seq=${sequence} Len=${length}]`;
+            logger.debug(`===> ${frameString}`, NS);
 
-        logger.debug(`===> ${this.frameToString}`, NS);
+            try {
+                status = await new Promise<EzspStatus>((resolve, reject: (reason: EzspError) => void): void => {
+                    const sendStatus = this.ash.send(length, sendBuffalo.getBuffer());
 
-        try {
-            status = await new Promise<EzspStatus>((resolve, reject: (reason: EzspError) => void): void => {
-                const sendStatus = this.ash.send(this.frameLength, this.frameContents);
+                    if (sendStatus !== EzspStatus.SUCCESS) {
+                        reject(new EzspError(sendStatus));
+                        return;
+                    }
 
-                if (sendStatus !== EzspStatus.SUCCESS) {
-                    return reject(new EzspError(sendStatus));
+                    this.responseWaiter = {
+                        timer: setTimeout(() => reject(new EzspError(EzspStatus.ASH_ERROR_TIMEOUTS)), this.ash.responseTimeout),
+                        resolve,
+                    };
+                });
+
+                if (status !== EzspStatus.SUCCESS) {
+                    throw new EzspError(status);
                 }
+            } catch (error) {
+                this.responseWaiter = null;
 
-                this.responseWaiter = {
-                    timer: setTimeout(() => reject(new EzspError(EzspStatus.ASH_ERROR_TIMEOUTS)), this.ash.responseTimeout),
-                    resolve,
-                };
-            });
+                logger.debug(`=x=> ${frameString} ${error}`, NS);
 
-            if (status !== EzspStatus.SUCCESS) {
-                throw new EzspError(status);
+                if (error instanceof EzspError) {
+                    status = error.code;
+
+                    this.ezspErrorHandler(status);
+                }
             }
-        } catch (error) {
-            this.responseWaiter = null;
 
-            logger.debug(`=x=> ${this.frameToString} ${error}`, NS);
-
-            this.ezspErrorHandler(status);
-        }
-
-        this.sendingCommand = false;
-
-        return status;
+            return status;
+        });
     }
 
     /**
@@ -662,7 +661,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         // The system can still communicate but buffers are running critically low.
         // This is almost always due to network congestion and goes away when the network becomes quieter.
         if (status === EzspStatus.ERROR_OVERFLOW) {
-            return EzspStatus.SUCCESS;
+            status = EzspStatus.SUCCESS;
         }
 
         return status;
@@ -977,9 +976,8 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             case EzspFrameID.MFGLIB_RX_HANDLER: {
                 const linkQuality = this.callbackBuffalo.readUInt8();
                 const rssi = this.callbackBuffalo.readInt8();
-                const packetLength = this.callbackBuffalo.readUInt8();
-                const packetContents = this.callbackBuffalo.readListUInt8(packetLength);
-                this.ezspMfglibRxHandler(linkQuality, rssi, packetLength, packetContents);
+                const packetContents = this.callbackBuffalo.readPayload();
+                this.ezspMfglibRxHandler(linkQuality, rssi, packetContents);
                 break;
             }
             case EzspFrameID.INCOMING_BOOTLOAD_MESSAGE_HANDLER: {
@@ -1137,11 +1135,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *     Unused for multicast types.
      *     This must be one of the three ZigBee broadcast addresses for broadcast.
      * @param apsFrame [IN/OUT] EmberApsFrame * The APS frame which is to be added to the message.
+     *        Sequence set in OUT as returned by ezspSend${x} command
      * @param message uint8_t * Content of the message.
      * @param alias The alias source address
      * @param sequence uint8_t The alias sequence number
      * @returns Result of the ezspSend${x} call or EmberStatus.INVALID_PARAMETER if type not supported.
-     * @returns apsSequence as returned by ezspSend${x} command
      * @returns messageTag Tag used for ezspSend${x} command
      */
     public async send(
@@ -1388,10 +1386,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint16_t * The version number of the stack.
      */
     async ezspVersion(desiredProtocolVersion: number): Promise<[protocolVersion: number, stackType: number, stackVersion: number]> {
-        this.startCommand(EzspFrameID.VERSION);
-        this.buffalo.writeUInt8(desiredProtocolVersion);
+        const sendBuffalo = this.startCommand(EzspFrameID.VERSION);
+        sendBuffalo.writeUInt8(desiredProtocolVersion);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1414,10 +1412,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint16_t * The configuration value.
      */
     async ezspGetConfigurationValue(configId: EzspConfigId): Promise<[SLStatus, value: number]> {
-        this.startCommand(EzspFrameID.GET_CONFIGURATION_VALUE);
-        this.buffalo.writeUInt8(configId);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_CONFIGURATION_VALUE);
+        sendBuffalo.writeUInt8(configId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1445,11 +1443,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *                               if configuration values can no longer be modified.
      */
     async ezspSetConfigurationValue(configId: EzspConfigId, value: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_CONFIGURATION_VALUE);
-        this.buffalo.writeUInt8(configId);
-        this.buffalo.writeUInt16(value);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_CONFIGURATION_VALUE);
+        sendBuffalo.writeUInt8(configId);
+        sendBuffalo.writeUInt16(value);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1480,14 +1478,14 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         manufacturerCode: number,
         readLength: number,
     ): Promise<[SLStatus, dataType: number, outReadLength: number, data: number[]]> {
-        this.startCommand(EzspFrameID.READ_ATTRIBUTE);
-        this.buffalo.writeUInt8(endpoint);
-        this.buffalo.writeUInt16(cluster);
-        this.buffalo.writeUInt16(attributeId);
-        this.buffalo.writeUInt8(mask);
-        this.buffalo.writeUInt16(manufacturerCode);
+        const sendBuffalo = this.startCommand(EzspFrameID.READ_ATTRIBUTE);
+        sendBuffalo.writeUInt8(endpoint);
+        sendBuffalo.writeUInt16(cluster);
+        sendBuffalo.writeUInt16(attributeId);
+        sendBuffalo.writeUInt8(mask);
+        sendBuffalo.writeUInt16(manufacturerCode);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1531,18 +1529,18 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         dataType: number,
         data: Buffer,
     ): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.WRITE_ATTRIBUTE);
-        this.buffalo.writeUInt8(endpoint);
-        this.buffalo.writeUInt16(cluster);
-        this.buffalo.writeUInt16(attributeId);
-        this.buffalo.writeUInt8(mask);
-        this.buffalo.writeUInt16(manufacturerCode);
-        this.buffalo.writeUInt8(overrideReadOnlyAndDataType ? 1 : 0);
-        this.buffalo.writeUInt8(justTest ? 1 : 0);
-        this.buffalo.writeUInt8(dataType);
-        this.buffalo.writePayload(data);
+        const sendBuffalo = this.startCommand(EzspFrameID.WRITE_ATTRIBUTE);
+        sendBuffalo.writeUInt8(endpoint);
+        sendBuffalo.writeUInt16(cluster);
+        sendBuffalo.writeUInt16(attributeId);
+        sendBuffalo.writeUInt8(mask);
+        sendBuffalo.writeUInt16(manufacturerCode);
+        sendBuffalo.writeUInt8(overrideReadOnlyAndDataType ? 1 : 0);
+        sendBuffalo.writeUInt8(justTest ? 1 : 0);
+        sendBuffalo.writeUInt8(dataType);
+        sendBuffalo.writePayload(data);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1578,17 +1576,17 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         inputClusterList: number[],
         outputClusterList: number[],
     ): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.ADD_ENDPOINT);
-        this.buffalo.writeUInt8(endpoint);
-        this.buffalo.writeUInt16(profileId);
-        this.buffalo.writeUInt16(deviceId);
-        this.buffalo.writeUInt8(deviceVersion);
-        this.buffalo.writeUInt8(inputClusterList.length);
-        this.buffalo.writeUInt8(outputClusterList.length);
-        this.buffalo.writeListUInt16(inputClusterList);
-        this.buffalo.writeListUInt16(outputClusterList);
+        const sendBuffalo = this.startCommand(EzspFrameID.ADD_ENDPOINT);
+        sendBuffalo.writeUInt8(endpoint);
+        sendBuffalo.writeUInt16(profileId);
+        sendBuffalo.writeUInt16(deviceId);
+        sendBuffalo.writeUInt8(deviceVersion);
+        sendBuffalo.writeUInt8(inputClusterList.length);
+        sendBuffalo.writeUInt8(outputClusterList.length);
+        sendBuffalo.writeListUInt16(inputClusterList);
+        sendBuffalo.writeListUInt16(outputClusterList);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1609,11 +1607,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * - SLStatus.ZIGBEE_EZSP_ERROR if the NCP does not recognize policyId.
      */
     async ezspSetPolicy(policyId: EzspPolicyId, decisionId: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_POLICY);
-        this.buffalo.writeUInt8(policyId);
-        this.buffalo.writeUInt8(decisionId);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_POLICY);
+        sendBuffalo.writeUInt8(policyId);
+        sendBuffalo.writeUInt8(decisionId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1633,10 +1631,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EzspDecisionId * The current decision for the specified policy.
      */
     async ezspGetPolicy(policyId: EzspPolicyId): Promise<[SLStatus, number]> {
-        this.startCommand(EzspFrameID.GET_POLICY);
-        this.buffalo.writeUInt8(policyId);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_POLICY);
+        sendBuffalo.writeUInt8(policyId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1654,10 +1652,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns true if the request was successfully handed to the stack, false otherwise
      */
     async ezspSendPanIdUpdate(newPan: PanId): Promise<boolean> {
-        this.startCommand(EzspFrameID.SEND_PAN_ID_UPDATE);
-        this.buffalo.writeUInt16(newPan);
+        const sendBuffalo = this.startCommand(EzspFrameID.SEND_PAN_ID_UPDATE);
+        sendBuffalo.writeUInt16(newPan);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1681,10 +1679,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t * The value.
      */
     async ezspGetValue(valueId: EzspValueId, valueLength: number): Promise<[SLStatus, outValueLength: number, outValue: number[]]> {
-        this.startCommand(EzspFrameID.GET_VALUE);
-        this.buffalo.writeUInt8(valueId);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_VALUE);
+        sendBuffalo.writeUInt8(valueId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1722,11 +1720,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         characteristics: number,
         valueLength: number,
     ): Promise<[SLStatus, outValueLength: number, outValue: number[]]> {
-        this.startCommand(EzspFrameID.GET_EXTENDED_VALUE);
-        this.buffalo.writeUInt8(valueId);
-        this.buffalo.writeUInt32(characteristics);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_EXTENDED_VALUE);
+        sendBuffalo.writeUInt8(valueId);
+        sendBuffalo.writeUInt32(characteristics);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1759,12 +1757,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *                               if the value could not be modified.
      */
     async ezspSetValue(valueId: EzspValueId, valueLength: number, value: number[]): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_VALUE);
-        this.buffalo.writeUInt8(valueId);
-        this.buffalo.writeUInt8(valueLength);
-        this.buffalo.writeListUInt8(value);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_VALUE);
+        sendBuffalo.writeUInt8(valueId);
+        sendBuffalo.writeUInt8(valueLength);
+        sendBuffalo.writeListUInt8(value);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1783,11 +1781,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetPassiveAckConfig(config: number, minAcksNeeded: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_PASSIVE_ACK_CONFIG);
-        this.buffalo.writeUInt8(config);
-        this.buffalo.writeUInt8(minAcksNeeded);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_PASSIVE_ACK_CONFIG);
+        sendBuffalo.writeUInt8(config);
+        sendBuffalo.writeUInt8(minAcksNeeded);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1808,9 +1806,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SET_PENDING_NETWORK_UPDATE_PAN_ID);
-        this.buffalo.writeUInt16(panId);
-        const sendStatus = await this.sendCommand();
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_PENDING_NETWORK_UPDATE_PAN_ID);
+        sendBuffalo.writeUInt16(panId);
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1827,9 +1825,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_ENDPOINT);
-        this.buffalo.writeUInt8(index);
-        const sendStatus = await this.sendCommand();
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_ENDPOINT);
+        sendBuffalo.writeUInt8(index);
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1849,8 +1847,8 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_ENDPOINT_COUNT);
-        const sendStatus = await this.sendCommand();
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_ENDPOINT_COUNT);
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1871,9 +1869,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_ENDPOINT_DESCRIPTION);
-        this.buffalo.writeUInt8(endpoint);
-        const sendStatus = await this.sendCommand();
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_ENDPOINT_DESCRIPTION);
+        sendBuffalo.writeUInt8(endpoint);
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1896,11 +1894,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_ENDPOINT_CLUSTER);
-        this.buffalo.writeUInt8(endpoint);
-        this.buffalo.writeUInt8(listId);
-        this.buffalo.writeUInt8(listIndex);
-        const sendStatus = await this.sendCommand();
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_ENDPOINT_CLUSTER);
+        sendBuffalo.writeUInt8(endpoint);
+        sendBuffalo.writeUInt8(listId);
+        sendBuffalo.writeUInt8(listIndex);
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1918,9 +1916,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * A command which does nothing. The Host can use this to set the sleep mode or to check the status of the NCP.
      */
     async ezspNop(): Promise<void> {
-        this.startCommand(EzspFrameID.NOP);
+        const sendBuffalo = this.startCommand(EzspFrameID.NOP);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1934,10 +1932,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t * The echo of the data.
      */
     async ezspEcho(data: Buffer): Promise<Buffer> {
-        this.startCommand(EzspFrameID.ECHO);
-        this.buffalo.writePayload(data);
+        const sendBuffalo = this.startCommand(EzspFrameID.ECHO);
+        sendBuffalo.writePayload(data);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1956,9 +1954,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * Allows the NCP to respond with a pending callback.
      */
     async ezspCallback(): Promise<void> {
-        this.startCommand(EzspFrameID.CALLBACK);
+        const sendBuffalo = this.startCommand(EzspFrameID.CALLBACK);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -1982,11 +1980,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetToken(tokenId: number, tokenData: number[]): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_TOKEN);
-        this.buffalo.writeUInt8(tokenId);
-        this.buffalo.writeListUInt8(tokenData);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_TOKEN);
+        sendBuffalo.writeUInt8(tokenId);
+        sendBuffalo.writeListUInt8(tokenData);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2004,10 +2002,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t * The contents of the token.
      */
     async ezspGetToken(tokenId: number): Promise<[SLStatus, tokenData: number[]]> {
-        this.startCommand(EzspFrameID.GET_TOKEN);
-        this.buffalo.writeUInt8(tokenId);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_TOKEN);
+        sendBuffalo.writeUInt8(tokenId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2027,10 +2025,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t * The manufacturing token data.
      */
     async ezspGetMfgToken(tokenId: EzspMfgTokenId): Promise<[number, tokenData: number[]]> {
-        this.startCommand(EzspFrameID.GET_MFG_TOKEN);
-        this.buffalo.writeUInt8(tokenId);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_MFG_TOKEN);
+        sendBuffalo.writeUInt8(tokenId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2094,11 +2092,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetMfgToken(tokenId: EzspMfgTokenId, tokenData: Buffer): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_MFG_TOKEN);
-        this.buffalo.writeUInt8(tokenId);
-        this.buffalo.writePayload(tokenData);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_MFG_TOKEN);
+        sendBuffalo.writeUInt8(tokenId);
+        sendBuffalo.writePayload(tokenData);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2124,9 +2122,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint16_t * A pseudorandom number.
      */
     async ezspGetRandomNumber(): Promise<[SLStatus, value: number]> {
-        this.startCommand(EzspFrameID.GET_RANDOM_NUMBER);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_RANDOM_NUMBER);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2150,13 +2148,13 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetTimer(timerId: number, time: number, units: EmberEventUnits, repeat: boolean): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_TIMER);
-        this.buffalo.writeUInt8(timerId);
-        this.buffalo.writeUInt16(time);
-        this.buffalo.writeUInt8(units);
-        this.buffalo.writeUInt8(repeat ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_TIMER);
+        sendBuffalo.writeUInt8(timerId);
+        sendBuffalo.writeUInt16(time);
+        sendBuffalo.writeUInt8(units);
+        sendBuffalo.writeUInt8(repeat ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2177,10 +2175,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns bool * True if a timerHandler callback will be generated repeatedly. False if only a single timerHandler callback will be generated.
      */
     async ezspGetTimer(timerId: number): Promise<[number, units: EmberEventUnits, repeat: boolean]> {
-        this.startCommand(EzspFrameID.GET_TIMER);
-        this.buffalo.writeUInt8(timerId);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_TIMER);
+        sendBuffalo.writeUInt8(timerId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2209,11 +2207,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspDebugWrite(binaryMessage: boolean, messageContents: Buffer): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.DEBUG_WRITE);
-        this.buffalo.writeUInt8(binaryMessage ? 1 : 0);
-        this.buffalo.writePayload(messageContents);
+        const sendBuffalo = this.startCommand(EzspFrameID.DEBUG_WRITE);
+        sendBuffalo.writeUInt8(binaryMessage ? 1 : 0);
+        sendBuffalo.writePayload(messageContents);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2229,9 +2227,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint16_t * A list of all counter values ordered according to the EmberCounterType enumeration.
      */
     async ezspReadAndClearCounters(): Promise<number[]> {
-        this.startCommand(EzspFrameID.READ_AND_CLEAR_COUNTERS);
+        const sendBuffalo = this.startCommand(EzspFrameID.READ_AND_CLEAR_COUNTERS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2247,9 +2245,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint16_t * A list of all counter values ordered according to the EmberCounterType enumeration.
      */
     async ezspReadCounters(): Promise<number[]> {
-        this.startCommand(EzspFrameID.READ_COUNTERS);
+        const sendBuffalo = this.startCommand(EzspFrameID.READ_COUNTERS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2275,10 +2273,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param delay uint16_t Data will not be read from the host for this many milliseconds.
      */
     async ezspDelayTest(delay: number): Promise<void> {
-        this.startCommand(EzspFrameID.DELAY_TEST);
-        this.buffalo.writeUInt16(delay);
+        const sendBuffalo = this.startCommand(EzspFrameID.DELAY_TEST);
+        sendBuffalo.writeUInt16(delay);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2291,10 +2289,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The status of the library being queried.
      */
     async ezspGetLibraryStatus(libraryId: EmberLibraryId): Promise<EmberLibraryStatus> {
-        this.startCommand(EzspFrameID.GET_LIBRARY_STATUS);
-        this.buffalo.writeUInt8(libraryId);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_LIBRARY_STATUS);
+        sendBuffalo.writeUInt8(libraryId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2316,9 +2314,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns versionNumber uint16_t * The version number of the XNCP application.
      */
     async ezspGetXncpInfo(): Promise<[SLStatus, manufacturerId: number, versionNumber: number]> {
-        this.startCommand(EzspFrameID.GET_XNCP_INFO);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_XNCP_INFO);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2342,10 +2340,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t *The response.
      */
     async ezspCustomFrame(payload: Buffer, replyLength: number): Promise<[SLStatus, outReply: Buffer]> {
-        this.startCommand(EzspFrameID.CUSTOM_FRAME);
-        this.buffalo.writePayload(payload);
+        const sendBuffalo = this.startCommand(EzspFrameID.CUSTOM_FRAME);
+        sendBuffalo.writePayload(payload);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2375,9 +2373,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The 64-bit ID.
      */
     async ezspGetEui64(): Promise<EUI64> {
-        this.startCommand(EzspFrameID.GET_EUI64);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_EUI64);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2393,9 +2391,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The 16-bit ID.
      */
     async ezspGetNodeId(): Promise<NodeId> {
-        this.startCommand(EzspFrameID.GET_NODE_ID);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_NODE_ID);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2411,9 +2409,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t Value indicate how many phy interfaces present.
      */
     async ezspGetPhyInterfaceCount(): Promise<number> {
-        this.startCommand(EzspFrameID.GET_PHY_INTERFACE_COUNT);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_PHY_INTERFACE_COUNT);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2429,9 +2427,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns Value indicates the used entropy source.
      */
     async ezspGetTrueRandomEntropySource(): Promise<EmberEntropySource> {
-        this.startCommand(EzspFrameID.GET_TRUE_RANDOM_ENTROPY_SOURCE);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_TRUE_RANDOM_ENTROPY_SOURCE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2453,10 +2451,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SETUP_DELAYED_JOIN);
-        this.buffalo.writeUInt8(networkKeyTimeoutS);
+        const sendBuffalo = this.startCommand(EzspFrameID.SETUP_DELAYED_JOIN);
+        sendBuffalo.writeUInt8(networkKeyTimeoutS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2476,9 +2474,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.RADIO_GET_SCHEDULER_PRIORITIES);
+        const sendBuffalo = this.startCommand(EzspFrameID.RADIO_GET_SCHEDULER_PRIORITIES);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2498,10 +2496,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.RADIO_SET_SCHEDULER_PRIORITIES);
-        this.buffalo.writeEmberMultiprotocolPriorities(priorities);
+        const sendBuffalo = this.startCommand(EzspFrameID.RADIO_SET_SCHEDULER_PRIORITIES);
+        sendBuffalo.writeEmberMultiprotocolPriorities(priorities);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2517,9 +2515,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.RADIO_GET_SCHEDULER_SLIPTIME);
+        const sendBuffalo = this.startCommand(EzspFrameID.RADIO_GET_SCHEDULER_SLIPTIME);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2539,10 +2537,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.RADIO_SET_SCHEDULER_SLIPTIME);
-        this.buffalo.writeUInt32(slipTime);
+        const sendBuffalo = this.startCommand(EzspFrameID.RADIO_SET_SCHEDULER_SLIPTIME);
+        sendBuffalo.writeUInt32(slipTime);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2559,10 +2557,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.COUNTER_REQUIRES_PHY_INDEX);
-        this.buffalo.writeUInt8(counter);
+        const sendBuffalo = this.startCommand(EzspFrameID.COUNTER_REQUIRES_PHY_INDEX);
+        sendBuffalo.writeUInt8(counter);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2583,10 +2581,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.COUNTER_REQUIRES_DESTINATION_NODE_ID);
-        this.buffalo.writeUInt8(counter);
+        const sendBuffalo = this.startCommand(EzspFrameID.COUNTER_REQUIRES_DESTINATION_NODE_ID);
+        sendBuffalo.writeUInt8(counter);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2607,10 +2605,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param code uint16_t The manufacturer code for the local node.
      */
     async ezspSetManufacturerCode(code: number): Promise<void> {
-        this.startCommand(EzspFrameID.SET_MANUFACTURER_CODE);
-        this.buffalo.writeUInt16(code);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_MANUFACTURER_CODE);
+        sendBuffalo.writeUInt16(code);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2627,9 +2625,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_MANUFACTURER_CODE);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_MANUFACTURER_CODE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2648,10 +2646,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure. Always `OK` in v13-.
      */
     async ezspSetPowerDescriptor(descriptor: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_POWER_DESCRIPTOR);
-        this.buffalo.writeUInt16(descriptor);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_POWER_DESCRIPTOR);
+        sendBuffalo.writeUInt16(descriptor);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2678,10 +2676,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * - or the reason for failure.
      */
     async ezspNetworkInit(networkInitStruct: EmberNetworkInitStruct): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.NETWORK_INIT);
-        this.buffalo.writeEmberNetworkInitStruct(networkInitStruct);
+        const sendBuffalo = this.startCommand(EzspFrameID.NETWORK_INIT);
+        sendBuffalo.writeEmberNetworkInitStruct(networkInitStruct);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2698,9 +2696,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An EmberNetworkStatus value indicating the current join status.
      */
     async ezspNetworkState(): Promise<EmberNetworkStatus> {
-        this.startCommand(EzspFrameID.NETWORK_STATE);
+        const sendBuffalo = this.startCommand(EzspFrameID.NETWORK_STATE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2746,12 +2744,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * - SLStatus.INVALID_CHANNEL_MASK, our channel mask did not specify any valid channels.
      */
     async ezspStartScan(scanType: EzspNetworkScanType, channelMask: number, duration: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.START_SCAN);
-        this.buffalo.writeUInt8(scanType);
-        this.buffalo.writeUInt32(channelMask);
-        this.buffalo.writeUInt8(duration);
+        const sendBuffalo = this.startCommand(EzspFrameID.START_SCAN);
+        sendBuffalo.writeUInt8(scanType);
+        sendBuffalo.writeUInt32(channelMask);
+        sendBuffalo.writeUInt8(duration);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2818,11 +2816,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The error condition that occurred during the scan. Value will be SLStatus.OK if there are no errors.
      */
     async ezspFindUnusedPanId(channelMask: number, duration: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.FIND_UNUSED_PAN_ID);
-        this.buffalo.writeUInt32(channelMask);
-        this.buffalo.writeUInt8(duration);
+        const sendBuffalo = this.startCommand(EzspFrameID.FIND_UNUSED_PAN_ID);
+        sendBuffalo.writeUInt32(channelMask);
+        sendBuffalo.writeUInt8(duration);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2838,9 +2836,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspStopScan(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.STOP_SCAN);
+        const sendBuffalo = this.startCommand(EzspFrameID.STOP_SCAN);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2857,10 +2855,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspFormNetwork(parameters: EmberNetworkParameters): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.FORM_NETWORK);
-        this.buffalo.writeEmberNetworkParameters(parameters);
+        const sendBuffalo = this.startCommand(EzspFrameID.FORM_NETWORK);
+        sendBuffalo.writeEmberNetworkParameters(parameters);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2882,11 +2880,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspJoinNetwork(nodeType: EmberNodeType, parameters: EmberNetworkParameters): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.JOIN_NETWORK);
-        this.buffalo.writeUInt8(nodeType);
-        this.buffalo.writeEmberNetworkParameters(parameters);
+        const sendBuffalo = this.startCommand(EzspFrameID.JOIN_NETWORK);
+        sendBuffalo.writeUInt8(nodeType);
+        sendBuffalo.writeEmberNetworkParameters(parameters);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2920,13 +2918,13 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         radioTxPower: number,
         clearBeaconsAfterNetworkUp: boolean,
     ): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.JOIN_NETWORK_DIRECTLY);
-        this.buffalo.writeUInt8(localNodeType);
-        this.buffalo.writeEmberBeaconData(beacon);
-        this.buffalo.writeInt8(radioTxPower);
-        this.buffalo.writeUInt8(clearBeaconsAfterNetworkUp ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.JOIN_NETWORK_DIRECTLY);
+        sendBuffalo.writeUInt8(localNodeType);
+        sendBuffalo.writeEmberBeaconData(beacon);
+        sendBuffalo.writeInt8(radioTxPower);
+        sendBuffalo.writeUInt8(clearBeaconsAfterNetworkUp ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2945,13 +2943,13 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspLeaveNetwork(options: EmberLeaveNetworkOption = EmberLeaveNetworkOption.WITH_NO_OPTION): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.LEAVE_NETWORK);
+        const sendBuffalo = this.startCommand(EzspFrameID.LEAVE_NETWORK);
 
         if (this.version >= 0x0e) {
-            this.buffalo.writeUInt8(options);
+            sendBuffalo.writeUInt8(options);
         }
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -2991,16 +2989,16 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         reason: number = 0xff,
         nodeType: number = 0,
     ): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.FIND_AND_REJOIN_NETWORK);
-        this.buffalo.writeUInt8(haveCurrentNetworkKey ? 1 : 0);
-        this.buffalo.writeUInt32(channelMask);
+        const sendBuffalo = this.startCommand(EzspFrameID.FIND_AND_REJOIN_NETWORK);
+        sendBuffalo.writeUInt8(haveCurrentNetworkKey ? 1 : 0);
+        sendBuffalo.writeUInt32(channelMask);
 
         if (this.version >= 0x0e) {
-            this.buffalo.writeUInt8(reason);
-            this.buffalo.writeUInt8(nodeType);
+            sendBuffalo.writeUInt8(reason);
+            sendBuffalo.writeUInt8(nodeType);
         }
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3019,10 +3017,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspPermitJoining(duration: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.PERMIT_JOINING);
-        this.buffalo.writeUInt8(duration);
+        const sendBuffalo = this.startCommand(EzspFrameID.PERMIT_JOINING);
+        sendBuffalo.writeUInt8(duration);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3063,13 +3061,13 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspEnergyScanRequest(target: NodeId, scanChannels: number, scanDuration: number, scanCount: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.ENERGY_SCAN_REQUEST);
-        this.buffalo.writeUInt16(target);
-        this.buffalo.writeUInt32(scanChannels);
-        this.buffalo.writeUInt8(scanDuration);
-        this.buffalo.writeUInt16(scanCount);
+        const sendBuffalo = this.startCommand(EzspFrameID.ENERGY_SCAN_REQUEST);
+        sendBuffalo.writeUInt16(target);
+        sendBuffalo.writeUInt32(scanChannels);
+        sendBuffalo.writeUInt8(scanDuration);
+        sendBuffalo.writeUInt16(scanCount);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3087,9 +3085,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberNetworkParameters * The current network parameters.
      */
     async ezspGetNetworkParameters(): Promise<[SLStatus, nodeType: EmberNodeType, parameters: EmberNetworkParameters]> {
-        this.startCommand(EzspFrameID.GET_NETWORK_PARAMETERS);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_NETWORK_PARAMETERS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3109,10 +3107,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberMultiPhyRadioParameters * The current radio parameters based on provided phy index.
      */
     async ezspGetRadioParameters(phyIndex: number): Promise<[SLStatus, parameters: EmberMultiPhyRadioParameters]> {
-        this.startCommand(EzspFrameID.GET_RADIO_PARAMETERS);
-        this.buffalo.writeUInt8(phyIndex);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_RADIO_PARAMETERS);
+        sendBuffalo.writeUInt8(phyIndex);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3133,9 +3131,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *          (coordinators and nodes that are not joined to a network).
      */
     async ezspGetParentChildParameters(): Promise<[number, parentEui64: EUI64, parentNodeId: NodeId]> {
-        this.startCommand(EzspFrameID.GET_PARENT_CHILD_PARAMETERS);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_PARENT_CHILD_PARAMETERS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3157,9 +3155,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.ROUTER_CHILD_COUNT);
+        const sendBuffalo = this.startCommand(EzspFrameID.ROUTER_CHILD_COUNT);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3180,9 +3178,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.MAX_CHILD_COUNT);
+        const sendBuffalo = this.startCommand(EzspFrameID.MAX_CHILD_COUNT);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3203,9 +3201,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.MAX_ROUTER_CHILD_COUNT);
+        const sendBuffalo = this.startCommand(EzspFrameID.MAX_ROUTER_CHILD_COUNT);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3225,9 +3223,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_PARENT_INCOMING_NWK_FRAME_COUNTER);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_PARENT_INCOMING_NWK_FRAME_COUNTER);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3248,10 +3246,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SET_PARENT_INCOMING_NWK_FRAME_COUNTER);
-        this.buffalo.writeUInt32(value);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_PARENT_INCOMING_NWK_FRAME_COUNTER);
+        sendBuffalo.writeUInt32(value);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3277,9 +3275,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.CURRENT_STACK_TASKS);
+        const sendBuffalo = this.startCommand(EzspFrameID.CURRENT_STACK_TASKS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3302,9 +3300,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.OK_TO_NAP);
+        const sendBuffalo = this.startCommand(EzspFrameID.OK_TO_NAP);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3324,9 +3322,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.PARENT_TOKEN_SET);
+        const sendBuffalo = this.startCommand(EzspFrameID.PARENT_TOKEN_SET);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3348,9 +3346,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.OK_TO_HIBERNATE);
+        const sendBuffalo = this.startCommand(EzspFrameID.OK_TO_HIBERNATE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3370,9 +3368,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.OK_TO_LONG_POLL);
+        const sendBuffalo = this.startCommand(EzspFrameID.OK_TO_LONG_POLL);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3391,9 +3389,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.STACK_POWER_DOWN);
+        const sendBuffalo = this.startCommand(EzspFrameID.STACK_POWER_DOWN);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3409,9 +3407,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.STACK_POWER_UP);
+        const sendBuffalo = this.startCommand(EzspFrameID.STACK_POWER_UP);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3427,10 +3425,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberChildData * The data of the child.
      */
     async ezspGetChildData(index: number): Promise<[SLStatus, childData: EmberChildData]> {
-        this.startCommand(EzspFrameID.GET_CHILD_DATA);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_CHILD_DATA);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3451,11 +3449,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * - SLStatus.INVALID_INDEX if provided index is out of range.
      */
     async ezspSetChildData(index: number, childData: EmberChildData): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_CHILD_DATA);
-        this.buffalo.writeUInt8(index);
-        this.buffalo.writeEmberChildData(childData);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_CHILD_DATA);
+        sendBuffalo.writeUInt8(index);
+        sendBuffalo.writeEmberChildData(childData);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3472,10 +3470,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The node ID of the child or EMBER_NULL_NODE_ID if there isn't a child at the childIndex specified
      */
     async ezspChildId(childIndex: number): Promise<NodeId> {
-        this.startCommand(EzspFrameID.CHILD_ID);
-        this.buffalo.writeUInt8(childIndex);
+        const sendBuffalo = this.startCommand(EzspFrameID.CHILD_ID);
+        sendBuffalo.writeUInt8(childIndex);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3498,10 +3496,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.CHILD_POWER);
-        this.buffalo.writeUInt8(childIndex);
+        const sendBuffalo = this.startCommand(EzspFrameID.CHILD_POWER);
+        sendBuffalo.writeUInt8(childIndex);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3522,11 +3520,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SET_CHILD_POWER);
-        this.buffalo.writeUInt8(childIndex);
-        this.buffalo.writeInt8(newPower);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_CHILD_POWER);
+        sendBuffalo.writeUInt8(childIndex);
+        sendBuffalo.writeInt8(newPower);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3539,10 +3537,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t The child index or 0xFF if the node ID doesn't belong to a child
      */
     async ezspChildIndex(childId: NodeId): Promise<number> {
-        this.startCommand(EzspFrameID.CHILD_INDEX);
-        this.buffalo.writeUInt16(childId);
+        const sendBuffalo = this.startCommand(EzspFrameID.CHILD_INDEX);
+        sendBuffalo.writeUInt16(childId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3558,9 +3556,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t Total size of source route table.
      */
     async ezspGetSourceRouteTableTotalSize(): Promise<number> {
-        this.startCommand(EzspFrameID.GET_SOURCE_ROUTE_TABLE_TOTAL_SIZE);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_SOURCE_ROUTE_TABLE_TOTAL_SIZE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3576,9 +3574,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t The number of filled entries in source route table.
      */
     async ezspGetSourceRouteTableFilledSize(): Promise<number> {
-        this.startCommand(EzspFrameID.GET_SOURCE_ROUTE_TABLE_FILLED_SIZE);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_SOURCE_ROUTE_TABLE_FILLED_SIZE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3600,10 +3598,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t * The closer node index for this source route table entry
      */
     async ezspGetSourceRouteTableEntry(index: number): Promise<[SLStatus, destination: NodeId, closerIndex: number]> {
-        this.startCommand(EzspFrameID.GET_SOURCE_ROUTE_TABLE_ENTRY);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_SOURCE_ROUTE_TABLE_ENTRY);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3627,10 +3625,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberNeighborTableEntry * The contents of the neighbor table entry.
      */
     async ezspGetNeighbor(index: number): Promise<[SLStatus, value: EmberNeighborTableEntry]> {
-        this.startCommand(EzspFrameID.GET_NEIGHBOR);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_NEIGHBOR);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3654,10 +3652,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint32_t * Return the frame counter of the node from the neighbor or child table
      */
     async ezspGetNeighborFrameCounter(eui64: EUI64): Promise<[SLStatus, returnFrameCounter: number]> {
-        this.startCommand(EzspFrameID.GET_NEIGHBOR_FRAME_COUNTER);
-        this.buffalo.writeIeeeAddr(eui64);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_NEIGHBOR_FRAME_COUNTER);
+        sendBuffalo.writeIeeeAddr(eui64);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3678,11 +3676,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * - SLStatus.OK otherwise
      */
     async ezspSetNeighborFrameCounter(eui64: EUI64, frameCounter: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_NEIGHBOR_FRAME_COUNTER);
-        this.buffalo.writeIeeeAddr(eui64);
-        this.buffalo.writeUInt32(frameCounter);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_NEIGHBOR_FRAME_COUNTER);
+        sendBuffalo.writeIeeeAddr(eui64);
+        sendBuffalo.writeUInt32(frameCounter);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3700,10 +3698,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetRoutingShortcutThreshold(costThresh: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_ROUTING_SHORTCUT_THRESHOLD);
-        this.buffalo.writeUInt8(costThresh);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_ROUTING_SHORTCUT_THRESHOLD);
+        sendBuffalo.writeUInt8(costThresh);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3720,9 +3718,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t The routing shortcut threshold
      */
     async ezspGetRoutingShortcutThreshold(): Promise<number> {
-        this.startCommand(EzspFrameID.GET_ROUTING_SHORTCUT_THRESHOLD);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_ROUTING_SHORTCUT_THRESHOLD);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3738,9 +3736,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t The number of active entries in the neighbor table.
      */
     async ezspNeighborCount(): Promise<number> {
-        this.startCommand(EzspFrameID.NEIGHBOR_COUNT);
+        const sendBuffalo = this.startCommand(EzspFrameID.NEIGHBOR_COUNT);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3761,10 +3759,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberRouteTableEntry * The contents of the route table entry.
      */
     async ezspGetRouteTableEntry(index: number): Promise<[SLStatus, value: EmberRouteTableEntry]> {
-        this.startCommand(EzspFrameID.GET_ROUTE_TABLE_ENTRY);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_ROUTE_TABLE_ENTRY);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3788,10 +3786,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspSetRadioPower(power: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_RADIO_POWER);
-        this.buffalo.writeInt8(power);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_RADIO_POWER);
+        sendBuffalo.writeInt8(power);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3811,10 +3809,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspSetRadioChannel(channel: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_RADIO_CHANNEL);
-        this.buffalo.writeUInt8(channel);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_RADIO_CHANNEL);
+        sendBuffalo.writeUInt8(channel);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3830,9 +3828,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t Current radio channel.
      */
     async ezspGetRadioChannel(): Promise<number> {
-        this.startCommand(EzspFrameID.GET_RADIO_CHANNEL);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_RADIO_CHANNEL);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3849,10 +3847,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspSetRadioIeee802154CcaMode(ccaMode: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_RADIO_IEEE802154_CCA_MODE);
-        this.buffalo.writeUInt8(ccaMode);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_RADIO_IEEE802154_CCA_MODE);
+        sendBuffalo.writeUInt8(ccaMode);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3889,16 +3887,16 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         deliveryFailureThreshold: number,
         maxHops: number,
     ): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_CONCENTRATOR);
-        this.buffalo.writeUInt8(on ? 1 : 0);
-        this.buffalo.writeUInt16(concentratorType);
-        this.buffalo.writeUInt16(minTime);
-        this.buffalo.writeUInt16(maxTime);
-        this.buffalo.writeUInt8(routeErrorThreshold);
-        this.buffalo.writeUInt8(deliveryFailureThreshold);
-        this.buffalo.writeUInt8(maxHops);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_CONCENTRATOR);
+        sendBuffalo.writeUInt8(on ? 1 : 0);
+        sendBuffalo.writeUInt16(concentratorType);
+        sendBuffalo.writeUInt16(minTime);
+        sendBuffalo.writeUInt16(maxTime);
+        sendBuffalo.writeUInt8(routeErrorThreshold);
+        sendBuffalo.writeUInt8(deliveryFailureThreshold);
+        sendBuffalo.writeUInt8(maxHops);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3919,9 +3917,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.CONCENTRATOR_START_DISCOVERY);
+        const sendBuffalo = this.startCommand(EzspFrameID.CONCENTRATOR_START_DISCOVERY);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3936,9 +3934,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.CONCENTRATOR_STOP_DISCOVERY);
+        const sendBuffalo = this.startCommand(EzspFrameID.CONCENTRATOR_STOP_DISCOVERY);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3955,11 +3953,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.CONCENTRATOR_NOTE_ROUTE_ERROR);
-        this.buffalo.writeUInt32(status);
-        this.buffalo.writeUInt16(nodeId);
+        const sendBuffalo = this.startCommand(EzspFrameID.CONCENTRATOR_NOTE_ROUTE_ERROR);
+        sendBuffalo.writeUInt32(status);
+        sendBuffalo.writeUInt16(nodeId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3972,10 +3970,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspSetBrokenRouteErrorCode(errorCode: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_BROKEN_ROUTE_ERROR_CODE);
-        this.buffalo.writeUInt8(errorCode);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_BROKEN_ROUTE_ERROR_CODE);
+        sendBuffalo.writeUInt8(errorCode);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -3998,14 +3996,14 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspMultiPhyStart(phyIndex: number, page: number, channel: number, power: number, bitmask: EmberMultiPhyNwkConfig): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MULTI_PHY_START);
-        this.buffalo.writeUInt8(phyIndex);
-        this.buffalo.writeUInt8(page);
-        this.buffalo.writeUInt8(channel);
-        this.buffalo.writeInt8(power);
-        this.buffalo.writeUInt8(bitmask);
+        const sendBuffalo = this.startCommand(EzspFrameID.MULTI_PHY_START);
+        sendBuffalo.writeUInt8(phyIndex);
+        sendBuffalo.writeUInt8(page);
+        sendBuffalo.writeUInt8(channel);
+        sendBuffalo.writeInt8(power);
+        sendBuffalo.writeUInt8(bitmask);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4022,10 +4020,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspMultiPhyStop(phyIndex: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MULTI_PHY_STOP);
-        this.buffalo.writeUInt8(phyIndex);
+        const sendBuffalo = this.startCommand(EzspFrameID.MULTI_PHY_STOP);
+        sendBuffalo.writeUInt8(phyIndex);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4049,11 +4047,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspMultiPhySetRadioPower(phyIndex: number, power: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MULTI_PHY_SET_RADIO_POWER);
-        this.buffalo.writeUInt8(phyIndex);
-        this.buffalo.writeInt8(power);
+        const sendBuffalo = this.startCommand(EzspFrameID.MULTI_PHY_SET_RADIO_POWER);
+        sendBuffalo.writeUInt8(phyIndex);
+        sendBuffalo.writeInt8(power);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4069,9 +4067,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspSendLinkPowerDeltaRequest(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SEND_LINK_POWER_DELTA_REQUEST);
+        const sendBuffalo = this.startCommand(EzspFrameID.SEND_LINK_POWER_DELTA_REQUEST);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4094,12 +4092,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating the success or failure of the command.
      */
     async ezspMultiPhySetRadioChannel(phyIndex: number, page: number, channel: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MULTI_PHY_SET_RADIO_CHANNEL);
-        this.buffalo.writeUInt8(phyIndex);
-        this.buffalo.writeUInt8(page);
-        this.buffalo.writeUInt8(channel);
+        const sendBuffalo = this.startCommand(EzspFrameID.MULTI_PHY_SET_RADIO_CHANNEL);
+        sendBuffalo.writeUInt8(phyIndex);
+        sendBuffalo.writeUInt8(page);
+        sendBuffalo.writeUInt8(channel);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4116,9 +4114,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberDutyCycleState * The current duty cycle state in effect.
      */
     async ezspGetDutyCycleState(): Promise<[SLStatus, returnedState: EmberDutyCycleState]> {
-        this.startCommand(EzspFrameID.GET_DUTY_CYCLE_STATE);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_DUTY_CYCLE_STATE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4141,10 +4139,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * - SLStatus.INVALID_STATE if device is operating on 2.4Ghz
      */
     async ezspSetDutyCycleLimitsInStack(limits: EmberDutyCycleLimits): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_DUTY_CYCLE_LIMITS_IN_STACK);
-        this.buffalo.writeEmberDutyCycleLimits(limits);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_DUTY_CYCLE_LIMITS_IN_STACK);
+        sendBuffalo.writeEmberDutyCycleLimits(limits);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4162,9 +4160,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberDutyCycleLimits * Return current duty cycle limits if returnedLimits is not NULL
      */
     async ezspGetDutyCycleLimits(): Promise<[SLStatus, returnedLimits: EmberDutyCycleLimits]> {
-        this.startCommand(EzspFrameID.GET_DUTY_CYCLE_LIMITS);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_DUTY_CYCLE_LIMITS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4190,10 +4188,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *          the NodeId element in the EmberPerDeviceDutyCycle will be 0xFFFF.
      */
     async ezspGetCurrentDutyCycle(maxDevices: number): Promise<[SLStatus, arrayOfDeviceDutyCycles: number[]]> {
-        this.startCommand(EzspFrameID.GET_CURRENT_DUTY_CYCLE);
-        this.buffalo.writeUInt8(maxDevices);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_CURRENT_DUTY_CYCLE);
+        sendBuffalo.writeUInt8(maxDevices);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4241,10 +4239,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SET_NUM_BEACONS_TO_STORE);
-        this.buffalo.writeUInt8(numBeacons);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_NUM_BEACONS_TO_STORE);
+        sendBuffalo.writeUInt8(numBeacons);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4266,10 +4264,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_STORED_BEACON);
-        this.buffalo.writeUInt8(beaconNumber);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_STORED_BEACON);
+        sendBuffalo.writeUInt8(beaconNumber);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4286,9 +4284,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t The number of cached beacons that have been collected from a scan.
      */
     async ezspGetNumStoredBeacons(): Promise<number> {
-        this.startCommand(EzspFrameID.GET_NUM_STORED_BEACONS);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_NUM_STORED_BEACONS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4304,9 +4302,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure. Always `OK` in v13-.
      */
     async ezspClearStoredBeacons(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.CLEAR_STORED_BEACONS);
+        const sendBuffalo = this.startCommand(EzspFrameID.CLEAR_STORED_BEACONS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4328,10 +4326,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetLogicalAndRadioChannel(radioChannel: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_LOGICAL_AND_RADIO_CHANNEL);
-        this.buffalo.writeUInt8(radioChannel);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_LOGICAL_AND_RADIO_CHANNEL);
+        sendBuffalo.writeUInt8(radioChannel);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4354,11 +4352,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SLEEPY_TO_SLEEPY_NETWORK_START);
-        this.buffalo.writeEmberNetworkParameters(parameters);
-        this.buffalo.writeUInt8(initiator ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.SLEEPY_TO_SLEEPY_NETWORK_START);
+        sendBuffalo.writeEmberNetworkParameters(parameters);
+        sendBuffalo.writeUInt8(initiator ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4380,11 +4378,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SEND_ZIGBEE_LEAVE);
-        this.buffalo.writeUInt16(destination);
-        this.buffalo.writeUInt8(flags);
+        const sendBuffalo = this.startCommand(EzspFrameID.SEND_ZIGBEE_LEAVE);
+        sendBuffalo.writeUInt16(destination);
+        sendBuffalo.writeUInt8(flags);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4404,9 +4402,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_PERMIT_JOINING);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_PERMIT_JOINING);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4426,9 +4424,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_EXTENDED_PAN_ID);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_EXTENDED_PAN_ID);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4448,9 +4446,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_CURRENT_NETWORK);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_CURRENT_NETWORK);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4471,10 +4469,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SET_INITIAL_NEIGHBOR_OUTGOING_COST);
-        this.buffalo.writeUInt8(cost);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_INITIAL_NEIGHBOR_OUTGOING_COST);
+        sendBuffalo.writeUInt8(cost);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4494,9 +4492,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_INITIAL_NEIGHBOR_OUTGOING_COST);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_INITIAL_NEIGHBOR_OUTGOING_COST);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4516,10 +4514,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.RESET_REJOINING_NEIGHBORS_FRAME_COUNTER);
-        this.buffalo.writeUInt8(reset ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.RESET_REJOINING_NEIGHBORS_FRAME_COUNTER);
+        sendBuffalo.writeUInt8(reset ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4535,9 +4533,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.IS_RESET_REJOINING_NEIGHBORS_FRAME_COUNTER_ENABLED);
+        const sendBuffalo = this.startCommand(EzspFrameID.IS_RESET_REJOINING_NEIGHBORS_FRAME_COUNTER_ENABLED);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4557,9 +4555,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspClearBindingTable(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.CLEAR_BINDING_TABLE);
+        const sendBuffalo = this.startCommand(EzspFrameID.CLEAR_BINDING_TABLE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4577,11 +4575,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetBinding(index: number, value: EmberBindingTableEntry): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_BINDING);
-        this.buffalo.writeUInt8(index);
-        this.buffalo.writeEmberBindingTableEntry(value);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_BINDING);
+        sendBuffalo.writeUInt8(index);
+        sendBuffalo.writeEmberBindingTableEntry(value);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4599,10 +4597,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberBindingTableEntry * The contents of the binding entry.
      */
     async ezspGetBinding(index: number): Promise<[SLStatus, value: EmberBindingTableEntry]> {
-        this.startCommand(EzspFrameID.GET_BINDING);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_BINDING);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4620,10 +4618,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspDeleteBinding(index: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.DELETE_BINDING);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.DELETE_BINDING);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4643,10 +4641,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns True if the binding table entry is active, false otherwise.
      */
     async ezspBindingIsActive(index: number): Promise<boolean> {
-        this.startCommand(EzspFrameID.BINDING_IS_ACTIVE);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.BINDING_IS_ACTIVE);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4670,10 +4668,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The short ID of the destination node or EMBER_NULL_NODE_ID if no destination is known.
      */
     async ezspGetBindingRemoteNodeId(index: number): Promise<NodeId> {
-        this.startCommand(EzspFrameID.GET_BINDING_REMOTE_NODE_ID);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_BINDING_REMOTE_NODE_ID);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4691,11 +4689,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param The short ID of the destination node.
      */
     async ezspSetBindingRemoteNodeId(index: number, nodeId: NodeId): Promise<void> {
-        this.startCommand(EzspFrameID.SET_BINDING_REMOTE_NODE_ID);
-        this.buffalo.writeUInt8(index);
-        this.buffalo.writeUInt16(nodeId);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_BINDING_REMOTE_NODE_ID);
+        sendBuffalo.writeUInt8(index);
+        sendBuffalo.writeUInt16(nodeId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4742,9 +4740,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t The maximum APS payload length.
      */
     async ezspMaximumPayloadLength(): Promise<number> {
-        this.startCommand(EzspFrameID.MAXIMUM_PAYLOAD_LENGTH);
+        const sendBuffalo = this.startCommand(EzspFrameID.MAXIMUM_PAYLOAD_LENGTH);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4789,20 +4787,20 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         messageTag: number,
         messageContents: Buffer,
     ): Promise<[SLStatus, apsSequence: number]> {
-        this.startCommand(EzspFrameID.SEND_UNICAST);
-        this.buffalo.writeUInt8(type);
-        this.buffalo.writeUInt16(indexOrDestination);
-        this.buffalo.writeEmberApsFrame(apsFrame);
+        const sendBuffalo = this.startCommand(EzspFrameID.SEND_UNICAST);
+        sendBuffalo.writeUInt8(type);
+        sendBuffalo.writeUInt16(indexOrDestination);
+        sendBuffalo.writeEmberApsFrame(apsFrame);
 
         if (this.version < 0x0e) {
-            this.buffalo.writeUInt8(messageTag);
+            sendBuffalo.writeUInt8(messageTag);
         } else {
-            this.buffalo.writeUInt16(messageTag);
+            sendBuffalo.writeUInt16(messageTag);
         }
 
-        this.buffalo.writePayload(messageContents);
+        sendBuffalo.writePayload(messageContents);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4838,25 +4836,25 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         messageTag: number,
         messageContents: Buffer,
     ): Promise<[SLStatus, apsSequence: number]> {
-        this.startCommand(EzspFrameID.SEND_BROADCAST);
+        const sendBuffalo = this.startCommand(EzspFrameID.SEND_BROADCAST);
 
         if (this.version < 0x0e) {
-            this.buffalo.writeUInt16(destination);
-            this.buffalo.writeEmberApsFrame(apsFrame);
-            this.buffalo.writeUInt8(radius);
-            this.buffalo.writeUInt8(messageTag);
+            sendBuffalo.writeUInt16(destination);
+            sendBuffalo.writeEmberApsFrame(apsFrame);
+            sendBuffalo.writeUInt8(radius);
+            sendBuffalo.writeUInt8(messageTag);
         } else {
-            this.buffalo.writeUInt16(alias);
-            this.buffalo.writeUInt16(destination);
-            this.buffalo.writeUInt8(nwkSequence);
-            this.buffalo.writeEmberApsFrame(apsFrame);
-            this.buffalo.writeUInt8(radius);
-            this.buffalo.writeUInt16(messageTag);
+            sendBuffalo.writeUInt16(alias);
+            sendBuffalo.writeUInt16(destination);
+            sendBuffalo.writeUInt8(nwkSequence);
+            sendBuffalo.writeEmberApsFrame(apsFrame);
+            sendBuffalo.writeUInt8(radius);
+            sendBuffalo.writeUInt16(messageTag);
         }
 
-        this.buffalo.writePayload(messageContents);
+        sendBuffalo.writePayload(messageContents);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4879,10 +4877,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.PROXY_NEXT_BROADCAST_FROM_LONG);
-        this.buffalo.writeIeeeAddr(euiSource);
+        const sendBuffalo = this.startCommand(EzspFrameID.PROXY_NEXT_BROADCAST_FROM_LONG);
+        sendBuffalo.writeIeeeAddr(euiSource);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4924,23 +4922,23 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         messageTag: number,
         messageContents: Buffer,
     ): Promise<[SLStatus, apsSequence: number]> {
-        this.startCommand(EzspFrameID.SEND_MULTICAST);
-        this.buffalo.writeEmberApsFrame(apsFrame);
-        this.buffalo.writeUInt8(hops);
+        const sendBuffalo = this.startCommand(EzspFrameID.SEND_MULTICAST);
+        sendBuffalo.writeEmberApsFrame(apsFrame);
+        sendBuffalo.writeUInt8(hops);
 
         if (this.version < 0x0e) {
-            this.buffalo.writeUInt8(ZA_MAX_HOPS); // nonMemberRadius
-            this.buffalo.writeUInt8(messageTag);
+            sendBuffalo.writeUInt8(ZA_MAX_HOPS); // nonMemberRadius
+            sendBuffalo.writeUInt8(messageTag);
         } else {
-            this.buffalo.writeUInt16(broadcastAddr);
-            this.buffalo.writeUInt16(alias);
-            this.buffalo.writeUInt8(nwkSequence);
-            this.buffalo.writeUInt16(messageTag);
+            sendBuffalo.writeUInt16(broadcastAddr);
+            sendBuffalo.writeUInt16(alias);
+            sendBuffalo.writeUInt8(nwkSequence);
+            sendBuffalo.writeUInt16(messageTag);
         }
 
-        this.buffalo.writePayload(messageContents);
+        sendBuffalo.writePayload(messageContents);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -4974,12 +4972,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * - SLStatus.OK - The reply was successfully queued for transmission.
      */
     async ezspSendReply(sender: NodeId, apsFrame: EmberApsFrame, messageContents: Buffer): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SEND_REPLY);
-        this.buffalo.writeUInt16(sender);
-        this.buffalo.writeEmberApsFrame(apsFrame);
-        this.buffalo.writePayload(messageContents);
+        const sendBuffalo = this.startCommand(EzspFrameID.SEND_REPLY);
+        sendBuffalo.writeUInt16(sender);
+        sendBuffalo.writeEmberApsFrame(apsFrame);
+        sendBuffalo.writePayload(messageContents);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5060,11 +5058,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * - SLStatus.FAIL otherwise.
      */
     async ezspSendManyToOneRouteRequest(concentratorType: number, radius: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SEND_MANY_TO_ONE_ROUTE_REQUEST);
-        this.buffalo.writeUInt16(concentratorType);
-        this.buffalo.writeUInt8(radius);
+        const sendBuffalo = this.startCommand(EzspFrameID.SEND_MANY_TO_ONE_ROUTE_REQUEST);
+        sendBuffalo.writeUInt16(concentratorType);
+        sendBuffalo.writeUInt8(radius);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5087,12 +5085,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The result of sending the first poll.
      */
     async ezspPollForData(interval: number, units: EmberEventUnits, failureLimit: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.POLL_FOR_DATA);
-        this.buffalo.writeUInt16(interval);
-        this.buffalo.writeUInt8(units);
-        this.buffalo.writeUInt8(failureLimit);
+        const sendBuffalo = this.startCommand(EzspFrameID.POLL_FOR_DATA);
+        sendBuffalo.writeUInt16(interval);
+        sendBuffalo.writeUInt8(units);
+        sendBuffalo.writeUInt8(failureLimit);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5130,10 +5128,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SET_MESSAGE_FLAG);
-        this.buffalo.writeUInt16(childId);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_MESSAGE_FLAG);
+        sendBuffalo.writeUInt16(childId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5157,10 +5155,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.CLEAR_MESSAGE_FLAG);
-        this.buffalo.writeUInt16(childId);
+        const sendBuffalo = this.startCommand(EzspFrameID.CLEAR_MESSAGE_FLAG);
+        sendBuffalo.writeUInt16(childId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5197,12 +5195,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.ADD_CHILD);
-        this.buffalo.writeUInt16(shortId);
-        this.buffalo.writeIeeeAddr(longId);
-        this.buffalo.writeUInt8(nodeType);
+        const sendBuffalo = this.startCommand(EzspFrameID.ADD_CHILD);
+        sendBuffalo.writeUInt16(shortId);
+        sendBuffalo.writeIeeeAddr(longId);
+        sendBuffalo.writeUInt8(nodeType);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5226,10 +5224,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.REMOVE_CHILD);
-        this.buffalo.writeIeeeAddr(childEui64);
+        const sendBuffalo = this.startCommand(EzspFrameID.REMOVE_CHILD);
+        sendBuffalo.writeIeeeAddr(childEui64);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5251,11 +5249,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.REMOVE_NEIGHBOR);
-        this.buffalo.writeUInt16(shortId);
-        this.buffalo.writeIeeeAddr(longId);
+        const sendBuffalo = this.startCommand(EzspFrameID.REMOVE_NEIGHBOR);
+        sendBuffalo.writeUInt16(shortId);
+        sendBuffalo.writeIeeeAddr(longId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5300,10 +5298,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint32_t Remaining time(ms) until next MTORR broadcast if the mode is on, MAX_INT32U_VALUE if the mode is off
      */
     async ezspSetSourceRouteDiscoveryMode(mode: EmberSourceRouteDiscoveryMode): Promise<number> {
-        this.startCommand(EzspFrameID.SET_SOURCE_ROUTE_DISCOVERY_MODE);
-        this.buffalo.writeUInt8(mode);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_SOURCE_ROUTE_DISCOVERY_MODE);
+        sendBuffalo.writeUInt8(mode);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5409,12 +5407,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns SLStatus.OK if send was successful
      */
     async ezspUnicastCurrentNetworkKey(targetShort: NodeId, targetLong: EUI64, parentShortId: NodeId): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.UNICAST_CURRENT_NETWORK_KEY);
-        this.buffalo.writeUInt16(targetShort);
-        this.buffalo.writeIeeeAddr(targetLong);
-        this.buffalo.writeUInt16(parentShortId);
+        const sendBuffalo = this.startCommand(EzspFrameID.UNICAST_CURRENT_NETWORK_KEY);
+        sendBuffalo.writeUInt16(targetShort);
+        sendBuffalo.writeIeeeAddr(targetLong);
+        sendBuffalo.writeUInt16(parentShortId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5435,10 +5433,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns True if the address table entry is active, false otherwise.
      */
     async ezspAddressTableEntryIsActive(addressTableIndex: number): Promise<boolean> {
-        this.startCommand(EzspFrameID.ADDRESS_TABLE_ENTRY_IS_ACTIVE);
-        this.buffalo.writeUInt8(addressTableIndex);
+        const sendBuffalo = this.startCommand(EzspFrameID.ADDRESS_TABLE_ENTRY_IS_ACTIVE);
+        sendBuffalo.writeUInt8(addressTableIndex);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5469,12 +5467,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SET_ADDRESS_TABLE_INFO);
-        this.buffalo.writeUInt8(addressTableIndex);
-        this.buffalo.writeIeeeAddr(eui64);
-        this.buffalo.writeUInt16(id);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_ADDRESS_TABLE_INFO);
+        sendBuffalo.writeUInt8(addressTableIndex);
+        sendBuffalo.writeIeeeAddr(eui64);
+        sendBuffalo.writeUInt16(id);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5504,10 +5502,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_ADDRESS_TABLE_INFO);
-        this.buffalo.writeUInt8(addressTableIndex);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_ADDRESS_TABLE_INFO);
+        sendBuffalo.writeUInt8(addressTableIndex);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5536,11 +5534,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure. Always `OK` in v13-.
      */
     async ezspSetExtendedTimeout(remoteEui64: EUI64, extendedTimeout: boolean): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_EXTENDED_TIMEOUT);
-        this.buffalo.writeIeeeAddr(remoteEui64);
-        this.buffalo.writeUInt8(extendedTimeout ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_EXTENDED_TIMEOUT);
+        sendBuffalo.writeIeeeAddr(remoteEui64);
+        sendBuffalo.writeUInt8(extendedTimeout ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5565,10 +5563,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * - SLStatus.FAIL if the normal retry interval will be used.
      */
     async ezspGetExtendedTimeout(remoteEui64: EUI64): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.GET_EXTENDED_TIMEOUT);
-        this.buffalo.writeIeeeAddr(remoteEui64);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_EXTENDED_TIMEOUT);
+        sendBuffalo.writeIeeeAddr(remoteEui64);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5612,13 +5610,13 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         newId: NodeId,
         newExtendedTimeout: boolean,
     ): Promise<[SLStatus, oldEui64: EUI64, oldId: NodeId, oldExtendedTimeout: boolean]> {
-        this.startCommand(EzspFrameID.REPLACE_ADDRESS_TABLE_ENTRY);
-        this.buffalo.writeUInt8(addressTableIndex);
-        this.buffalo.writeIeeeAddr(newEui64);
-        this.buffalo.writeUInt16(newId);
-        this.buffalo.writeUInt8(newExtendedTimeout ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.REPLACE_ADDRESS_TABLE_ENTRY);
+        sendBuffalo.writeUInt8(addressTableIndex);
+        sendBuffalo.writeIeeeAddr(newEui64);
+        sendBuffalo.writeUInt16(newId);
+        sendBuffalo.writeUInt8(newExtendedTimeout ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5639,10 +5637,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The short ID of the node or SL_ZIGBEE_NULL_NODE_ID if the short ID is not known.
      */
     async ezspLookupNodeIdByEui64(eui64: EUI64): Promise<NodeId> {
-        this.startCommand(EzspFrameID.LOOKUP_NODE_ID_BY_EUI64);
-        this.buffalo.writeIeeeAddr(eui64);
+        const sendBuffalo = this.startCommand(EzspFrameID.LOOKUP_NODE_ID_BY_EUI64);
+        sendBuffalo.writeIeeeAddr(eui64);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5663,10 +5661,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns eui64 The EUI64 of the node.
      */
     async ezspLookupEui64ByNodeId(nodeId: NodeId): Promise<[SLStatus, eui64: EUI64]> {
-        this.startCommand(EzspFrameID.LOOKUP_EUI64_BY_NODE_ID);
-        this.buffalo.writeUInt16(nodeId);
+        const sendBuffalo = this.startCommand(EzspFrameID.LOOKUP_EUI64_BY_NODE_ID);
+        sendBuffalo.writeUInt16(nodeId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5685,10 +5683,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberMulticastTableEntry * The contents of the multicast entry.
      */
     async ezspGetMulticastTableEntry(index: number): Promise<[SLStatus, value: EmberMulticastTableEntry]> {
-        this.startCommand(EzspFrameID.GET_MULTICAST_TABLE_ENTRY);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_MULTICAST_TABLE_ENTRY);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5707,11 +5705,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetMulticastTableEntry(index: number, value: EmberMulticastTableEntry): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_MULTICAST_TABLE_ENTRY);
-        this.buffalo.writeUInt8(index);
-        this.buffalo.writeEmberMulticastTableEntry(value);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_MULTICAST_TABLE_ENTRY);
+        sendBuffalo.writeUInt8(index);
+        sendBuffalo.writeEmberMulticastTableEntry(value);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5747,10 +5745,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspWriteNodeData(erase: boolean): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.WRITE_NODE_DATA);
-        this.buffalo.writeUInt8(erase ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.WRITE_NODE_DATA);
+        sendBuffalo.writeUInt8(erase ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5770,12 +5768,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSendRawMessage(messageContents: Buffer, priority: EmberTransmitPriority, useCca: boolean): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SEND_RAW_MESSAGE);
-        this.buffalo.writePayload(messageContents);
-        this.buffalo.writeUInt8(priority);
-        this.buffalo.writeUInt8(useCca ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.SEND_RAW_MESSAGE);
+        sendBuffalo.writePayload(messageContents);
+        sendBuffalo.writeUInt8(priority);
+        sendBuffalo.writeUInt8(useCca ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5935,10 +5933,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *        a data poll when a MAC level data poll fails for any reason.
      */
     async ezspSetMacPollFailureWaitTime(waitBeforeRetryIntervalMs: number): Promise<void> {
-        this.startCommand(EzspFrameID.SET_MAC_POLL_FAILURE_WAIT_TIME);
-        this.buffalo.writeUInt32(waitBeforeRetryIntervalMs);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_MAC_POLL_FAILURE_WAIT_TIME);
+        sendBuffalo.writeUInt32(waitBeforeRetryIntervalMs);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5954,9 +5952,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.GET_MAX_MAC_RETRIES);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_MAX_MAC_RETRIES);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5973,10 +5971,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The attempt to set the parameters returns SLStatus.OK
      */
     async ezspSetBeaconClassificationParams(param: EmberBeaconClassificationParams): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_BEACON_CLASSIFICATION_PARAMS);
-        this.buffalo.writeEmberBeaconClassificationParams(param);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_BEACON_CLASSIFICATION_PARAMS);
+        sendBuffalo.writeEmberBeaconClassificationParams(param);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -5993,9 +5991,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberBeaconClassificationParams * Gets the beacon prioritization related variable
      */
     async ezspGetBeaconClassificationParams(): Promise<[SLStatus, param: EmberBeaconClassificationParams]> {
-        this.startCommand(EzspFrameID.GET_BEACON_CLASSIFICATION_PARAMS);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_BEACON_CLASSIFICATION_PARAMS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6016,9 +6014,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.PENDING_ACKED_MESSAGES);
+        const sendBuffalo = this.startCommand(EzspFrameID.PENDING_ACKED_MESSAGES);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6038,9 +6036,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.RESCHEDULE_LINK_STATUS_MSG);
+        const sendBuffalo = this.startCommand(EzspFrameID.RESCHEDULE_LINK_STATUS_MSG);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6062,11 +6060,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SET_NWK_UPDATE_ID);
-        this.buffalo.writeUInt8(nwkUpdateId);
-        this.buffalo.writeUInt8(setWhenOnNetwork ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_NWK_UPDATE_ID);
+        sendBuffalo.writeUInt8(nwkUpdateId);
+        sendBuffalo.writeUInt8(setWhenOnNetwork ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6090,10 +6088,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The success or failure code of the operation.
      */
     async ezspSetInitialSecurityState(state: EmberInitialSecurityState): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_INITIAL_SECURITY_STATE);
-        this.buffalo.writeEmberInitialSecurityState(state);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_INITIAL_SECURITY_STATE);
+        sendBuffalo.writeEmberInitialSecurityState(state);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6111,9 +6109,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberCurrentSecurityState * The security configuration in use by the stack.
      */
     async ezspGetCurrentSecurityState(): Promise<[SLStatus, state: EmberCurrentSecurityState]> {
-        this.startCommand(EzspFrameID.GET_CURRENT_SECURITY_STATE);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_CURRENT_SECURITY_STATE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6177,10 +6175,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_CALL);
         }
 
-        this.startCommand(EzspFrameID.EXPORT_KEY);
-        this.buffalo.writeSecManContext(context);
+        const sendBuffalo = this.startCommand(EzspFrameID.EXPORT_KEY);
+        sendBuffalo.writeSecManContext(context);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6250,11 +6248,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_CALL);
         }
 
-        this.startCommand(EzspFrameID.IMPORT_KEY);
-        this.buffalo.writeSecManContext(context);
-        this.buffalo.writeSecManKey(key);
+        const sendBuffalo = this.startCommand(EzspFrameID.IMPORT_KEY);
+        sendBuffalo.writeSecManContext(context);
+        sendBuffalo.writeSecManKey(key);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6287,11 +6285,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *          A value of 0xFF is returned if not matching entry is found.
      */
     async ezspFindKeyTableEntry(address: EUI64, linkKey: boolean): Promise<number> {
-        this.startCommand(EzspFrameID.FIND_KEY_TABLE_ENTRY);
-        this.buffalo.writeIeeeAddr(address);
-        this.buffalo.writeUInt8(linkKey ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.FIND_KEY_TABLE_ENTRY);
+        sendBuffalo.writeIeeeAddr(address);
+        sendBuffalo.writeUInt8(linkKey ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6311,11 +6309,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success of failure of the operation
      */
     async ezspSendTrustCenterLinkKey(destinationNodeId: NodeId, destinationEui64: EUI64): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SEND_TRUST_CENTER_LINK_KEY);
-        this.buffalo.writeUInt16(destinationNodeId);
-        this.buffalo.writeIeeeAddr(destinationEui64);
+        const sendBuffalo = this.startCommand(EzspFrameID.SEND_TRUST_CENTER_LINK_KEY);
+        sendBuffalo.writeUInt16(destinationNodeId);
+        sendBuffalo.writeIeeeAddr(destinationEui64);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6333,10 +6331,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The success or failure of the operation.
      */
     async ezspEraseKeyTableEntry(index: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.ERASE_KEY_TABLE_ENTRY);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.ERASE_KEY_TABLE_ENTRY);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6352,9 +6350,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns The success or failure of the operation.
      */
     async ezspClearKeyTable(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.CLEAR_KEY_TABLE);
+        const sendBuffalo = this.startCommand(EzspFrameID.CLEAR_KEY_TABLE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6385,10 +6383,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *          This is not the final result of the attempt. ezspZigbeeKeyEstablishmentHandler(...) will return that.
      */
     async ezspRequestLinkKey(partner: EUI64): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.REQUEST_LINK_KEY);
-        this.buffalo.writeIeeeAddr(partner);
+        const sendBuffalo = this.startCommand(EzspFrameID.REQUEST_LINK_KEY);
+        sendBuffalo.writeIeeeAddr(partner);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6412,10 +6410,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *          will be called at a later time with a final status result.
      */
     async ezspUpdateTcLinkKey(maxAttempts: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.UPDATE_TC_LINK_KEY);
-        this.buffalo.writeUInt8(maxAttempts);
+        const sendBuffalo = this.startCommand(EzspFrameID.UPDATE_TC_LINK_KEY);
+        sendBuffalo.writeUInt8(maxAttempts);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6444,9 +6442,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * Clear all of the transient link keys from RAM.
      */
     async ezspClearTransientLinkKeys(): Promise<void> {
-        this.startCommand(EzspFrameID.CLEAR_TRANSIENT_LINK_KEYS);
+        const sendBuffalo = this.startCommand(EzspFrameID.CLEAR_TRANSIENT_LINK_KEYS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6470,9 +6468,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
          * @return SLStatus SLStatus.OK
          *
          */
-        this.startCommand(EzspFrameID.GET_NETWORK_KEY_INFO);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_NETWORK_KEY_INFO);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6526,10 +6524,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
          *  EMBER_GET_PRECONFIGURED_KEY_FROM_INSTALL_CODE have not been set in the
          *  initial security state).
          */
-        this.startCommand(EzspFrameID.GET_APS_KEY_INFO);
-        this.buffalo.writeSecManContext(context);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_APS_KEY_INFO);
+        sendBuffalo.writeSecManContext(context);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6572,12 +6570,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
          * @return SLStatus.OK upon success, a valid error code otherwise.
          *
          */
-        this.startCommand(EzspFrameID.IMPORT_LINK_KEY);
-        this.buffalo.writeUInt8(index);
-        this.buffalo.writeIeeeAddr(address);
-        this.buffalo.writeSecManKey(plaintextKey);
+        const sendBuffalo = this.startCommand(EzspFrameID.IMPORT_LINK_KEY);
+        sendBuffalo.writeUInt8(index);
+        sendBuffalo.writeIeeeAddr(address);
+        sendBuffalo.writeSecManKey(plaintextKey);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6607,10 +6605,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
          * @param plaintext_key sl_zb_sec_man_key_t*
          * @param key_data sl_zb_sec_man_aps_key_metadata_t*
          */
-        this.startCommand(EzspFrameID.EXPORT_LINK_KEY_BY_INDEX);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.EXPORT_LINK_KEY_BY_INDEX);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6655,10 +6653,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
          * @param plaintext_key sl_zb_sec_man_key_t*
          * @param key_data sl_zb_sec_man_aps_key_metadata_t*
          */
-        this.startCommand(EzspFrameID.EXPORT_LINK_KEY_BY_EUI);
-        this.buffalo.writeIeeeAddr(eui);
+        const sendBuffalo = this.startCommand(EzspFrameID.EXPORT_LINK_KEY_BY_EUI);
+        sendBuffalo.writeIeeeAddr(eui);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6699,10 +6697,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
          *
          * @return SLStatus SLStatus.OK upon success, SLStatus.NOT_FOUND otherwise.
          */
-        this.startCommand(EzspFrameID.CHECK_KEY_CONTEXT);
-        this.buffalo.writeSecManContext(context);
+        const sendBuffalo = this.startCommand(EzspFrameID.CHECK_KEY_CONTEXT);
+        sendBuffalo.writeSecManContext(context);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6730,15 +6728,15 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
          * ::EMBER_AF_PLUGIN_NETWORK_CREATOR_SECURITY_NETWORK_OPEN_TIME_S seconds and
          * ::EMBER_TRANSIENT_KEY_TIMEOUT_S seconds.
          */
-        this.startCommand(EzspFrameID.IMPORT_TRANSIENT_KEY);
-        this.buffalo.writeIeeeAddr(eui64);
-        this.buffalo.writeSecManKey(plaintextKey);
+        const sendBuffalo = this.startCommand(EzspFrameID.IMPORT_TRANSIENT_KEY);
+        sendBuffalo.writeIeeeAddr(eui64);
+        sendBuffalo.writeSecManKey(plaintextKey);
 
         if (this.version < 0x0e) {
-            this.buffalo.writeUInt8(flags);
+            sendBuffalo.writeUInt8(flags);
         }
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6760,10 +6758,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     async ezspExportTransientKeyByIndex(
         index: number,
     ): Promise<[SLStatus, context: SecManContext, plaintextKey: SecManKey, key_data: SecManAPSKeyMetadata]> {
-        this.startCommand(EzspFrameID.EXPORT_TRANSIENT_KEY_BY_INDEX);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.EXPORT_TRANSIENT_KEY_BY_INDEX);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6797,10 +6795,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     async ezspExportTransientKeyByEui(
         eui: EUI64,
     ): Promise<[SLStatus, context: SecManContext, plaintextKey: SecManKey, key_data: SecManAPSKeyMetadata]> {
-        this.startCommand(EzspFrameID.EXPORT_TRANSIENT_KEY_BY_EUI);
-        this.buffalo.writeIeeeAddr(eui);
+        const sendBuffalo = this.startCommand(EzspFrameID.EXPORT_TRANSIENT_KEY_BY_EUI);
+        sendBuffalo.writeIeeeAddr(eui);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6832,10 +6830,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.SET_INCOMING_TC_LINK_KEY_FRAME_COUNTER);
-        this.buffalo.writeUInt32(frameCounter);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_INCOMING_TC_LINK_KEY_FRAME_COUNTER);
+        sendBuffalo.writeUInt32(frameCounter);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6862,14 +6860,14 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.APS_CRYPT_MESSAGE);
-        this.buffalo.writeUInt8(encrypt ? 1 : 0);
-        this.buffalo.writeUInt8(lengthCombinedArg);
-        this.buffalo.writeBuffer(message, lengthCombinedArg);
-        this.buffalo.writeUInt8(apsHeaderEndIndex);
-        this.buffalo.writeIeeeAddr(remoteEui64);
+        const sendBuffalo = this.startCommand(EzspFrameID.APS_CRYPT_MESSAGE);
+        sendBuffalo.writeUInt8(encrypt ? 1 : 0);
+        sendBuffalo.writeUInt8(lengthCombinedArg);
+        sendBuffalo.writeBuffer(message, lengthCombinedArg);
+        sendBuffalo.writeUInt8(apsHeaderEndIndex);
+        sendBuffalo.writeIeeeAddr(remoteEui64);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6925,10 +6923,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns SLStatus value that indicates the success or failure of the command.
      */
     async ezspBroadcastNextNetworkKey(key: EmberKeyData): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.BROADCAST_NEXT_NETWORK_KEY);
-        this.buffalo.writeEmberKeyData(key);
+        const sendBuffalo = this.startCommand(EzspFrameID.BROADCAST_NEXT_NETWORK_KEY);
+        sendBuffalo.writeEmberKeyData(key);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6945,9 +6943,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns SLStatus value that indicates the success or failure of the command.
      */
     async ezspBroadcastNetworkKeySwitch(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.BROADCAST_NETWORK_KEY_SWITCH);
+        const sendBuffalo = this.startCommand(EzspFrameID.BROADCAST_NETWORK_KEY_SWITCH);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -6975,12 +6973,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         finalize: boolean,
         data: Buffer,
     ): Promise<[SLStatus, returnContext: EmberAesMmoHashContext]> {
-        this.startCommand(EzspFrameID.AES_MMO_HASH);
-        this.buffalo.writeEmberAesMmoHashContext(context);
-        this.buffalo.writeUInt8(finalize ? 1 : 0);
-        this.buffalo.writePayload(data);
+        const sendBuffalo = this.startCommand(EzspFrameID.AES_MMO_HASH);
+        sendBuffalo.writeEmberAesMmoHashContext(context);
+        sendBuffalo.writeUInt8(finalize ? 1 : 0);
+        sendBuffalo.writePayload(data);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7002,12 +7000,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success, or the reason for failure
      */
     async ezspRemoveDevice(destShort: NodeId, destLong: EUI64, targetLong: EUI64): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.REMOVE_DEVICE);
-        this.buffalo.writeUInt16(destShort);
-        this.buffalo.writeIeeeAddr(destLong);
-        this.buffalo.writeIeeeAddr(targetLong);
+        const sendBuffalo = this.startCommand(EzspFrameID.REMOVE_DEVICE);
+        sendBuffalo.writeUInt16(destShort);
+        sendBuffalo.writeIeeeAddr(destLong);
+        sendBuffalo.writeIeeeAddr(targetLong);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7028,12 +7026,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success, or the reason for failure
      */
     async ezspUnicastNwkKeyUpdate(destShort: NodeId, destLong: EUI64, key: EmberKeyData): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.UNICAST_NWK_KEY_UPDATE);
-        this.buffalo.writeUInt16(destShort);
-        this.buffalo.writeIeeeAddr(destLong);
-        this.buffalo.writeEmberKeyData(key);
+        const sendBuffalo = this.startCommand(EzspFrameID.UNICAST_NWK_KEY_UPDATE);
+        sendBuffalo.writeUInt16(destShort);
+        sendBuffalo.writeIeeeAddr(destLong);
+        sendBuffalo.writeEmberKeyData(key);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7054,9 +7052,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * ezspGenerateCbkeKeysHandler().
      */
     async ezspGenerateCbkeKeys(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.GENERATE_CBKE_KEYS);
+        const sendBuffalo = this.startCommand(EzspFrameID.GENERATE_CBKE_KEYS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7098,12 +7096,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         partnerCertificate: EmberCertificateData,
         partnerEphemeralPublicKey: EmberPublicKeyData,
     ): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.CALCULATE_SMACS);
-        this.buffalo.writeUInt8(amInitiator ? 1 : 0);
-        this.buffalo.writeEmberCertificateData(partnerCertificate);
-        this.buffalo.writeEmberPublicKeyData(partnerEphemeralPublicKey);
+        const sendBuffalo = this.startCommand(EzspFrameID.CALCULATE_SMACS);
+        sendBuffalo.writeUInt8(amInitiator ? 1 : 0);
+        sendBuffalo.writeEmberCertificateData(partnerCertificate);
+        sendBuffalo.writeEmberPublicKeyData(partnerEphemeralPublicKey);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7138,9 +7136,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * are returned via ezspGenerateCbkeKeysHandler283k1().
      */
     async ezspGenerateCbkeKeys283k1(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.GENERATE_CBKE_KEYS283K1);
+        const sendBuffalo = this.startCommand(EzspFrameID.GENERATE_CBKE_KEYS283K1);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7182,12 +7180,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         partnerCertificate: EmberCertificate283k1Data,
         partnerEphemeralPublicKey: EmberPublicKey283k1Data,
     ): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.CALCULATE_SMACS283K1);
-        this.buffalo.writeUInt8(amInitiator ? 1 : 0);
-        this.buffalo.writeEmberCertificate283k1Data(partnerCertificate);
-        this.buffalo.writeEmberPublicKey283k1Data(partnerEphemeralPublicKey);
+        const sendBuffalo = this.startCommand(EzspFrameID.CALCULATE_SMACS283K1);
+        sendBuffalo.writeUInt8(amInitiator ? 1 : 0);
+        sendBuffalo.writeEmberCertificate283k1Data(partnerCertificate);
+        sendBuffalo.writeEmberPublicKey283k1Data(partnerEphemeralPublicKey);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7226,10 +7224,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *        key derived when ezspCalculateSmacs() was previously called.
      */
     async ezspClearTemporaryDataMaybeStoreLinkKey(storeLinkKey: boolean): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.CLEAR_TEMPORARY_DATA_MAYBE_STORE_LINK_KEY);
-        this.buffalo.writeUInt8(storeLinkKey ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.CLEAR_TEMPORARY_DATA_MAYBE_STORE_LINK_KEY);
+        sendBuffalo.writeUInt8(storeLinkKey ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7249,10 +7247,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      *        key derived when ezspCalculateSmacs() was previously called.
      */
     async ezspClearTemporaryDataMaybeStoreLinkKey283k1(storeLinkKey: boolean): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.CLEAR_TEMPORARY_DATA_MAYBE_STORE_LINK_KEY283K1);
-        this.buffalo.writeUInt8(storeLinkKey ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.CLEAR_TEMPORARY_DATA_MAYBE_STORE_LINK_KEY283K1);
+        sendBuffalo.writeUInt8(storeLinkKey ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7268,9 +7266,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberCertificateData * The locally installed certificate.
      */
     async ezspGetCertificate(): Promise<[SLStatus, localCert: EmberCertificateData]> {
-        this.startCommand(EzspFrameID.GET_CERTIFICATE);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_CERTIFICATE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7287,9 +7285,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberCertificate283k1Data * The locally installed certificate.
      */
     async ezspGetCertificate283k1(): Promise<[SLStatus, localCert: EmberCertificate283k1Data]> {
-        this.startCommand(EzspFrameID.GET_CERTIFICATE283K1);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_CERTIFICATE283K1);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7329,12 +7327,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param receivedSig EmberSignatureData * The signature of the signed data.
      */
     async ezspDsaVerify(digest: EmberMessageDigest, signerCertificate: EmberCertificateData, receivedSig: EmberSignatureData): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.DSA_VERIFY);
-        this.buffalo.writeEmberMessageDigest(digest);
-        this.buffalo.writeEmberCertificateData(signerCertificate);
-        this.buffalo.writeEmberSignatureData(receivedSig);
+        const sendBuffalo = this.startCommand(EzspFrameID.DSA_VERIFY);
+        sendBuffalo.writeEmberMessageDigest(digest);
+        sendBuffalo.writeEmberCertificateData(signerCertificate);
+        sendBuffalo.writeEmberSignatureData(receivedSig);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7373,12 +7371,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         signerCertificate: EmberCertificate283k1Data,
         receivedSig: EmberSignature283k1Data,
     ): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.DSA_VERIFY283K1);
-        this.buffalo.writeEmberMessageDigest(digest);
-        this.buffalo.writeEmberCertificate283k1Data(signerCertificate);
-        this.buffalo.writeEmberSignature283k1Data(receivedSig);
+        const sendBuffalo = this.startCommand(EzspFrameID.DSA_VERIFY283K1);
+        sendBuffalo.writeEmberMessageDigest(digest);
+        sendBuffalo.writeEmberCertificate283k1Data(signerCertificate);
+        sendBuffalo.writeEmberSignature283k1Data(receivedSig);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7397,12 +7395,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param myKey EmberPrivateKeyData *The node's new static private key.
      */
     async ezspSetPreinstalledCbkeData(caPublic: EmberPublicKeyData, myCert: EmberCertificateData, myKey: EmberPrivateKeyData): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_PREINSTALLED_CBKE_DATA);
-        this.buffalo.writeEmberPublicKeyData(caPublic);
-        this.buffalo.writeEmberCertificateData(myCert);
-        this.buffalo.writeEmberPrivateKeyData(myKey);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_PREINSTALLED_CBKE_DATA);
+        sendBuffalo.writeEmberPublicKeyData(caPublic);
+        sendBuffalo.writeEmberCertificateData(myCert);
+        sendBuffalo.writeEmberPrivateKeyData(myKey);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7419,9 +7417,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns Status of operation
      */
     async ezspSavePreinstalledCbkeData283k1(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SAVE_PREINSTALLED_CBKE_DATA283K1);
+        const sendBuffalo = this.startCommand(EzspFrameID.SAVE_PREINSTALLED_CBKE_DATA283K1);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7445,10 +7443,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalStart(rxCallback: boolean): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MFGLIB_INTERNAL_START);
-        this.buffalo.writeUInt8(rxCallback ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_START);
+        sendBuffalo.writeUInt8(rxCallback ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7466,9 +7464,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalEnd(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MFGLIB_INTERNAL_END);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_END);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7488,9 +7486,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalStartTone(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MFGLIB_INTERNAL_START_TONE);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_START_TONE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7506,9 +7504,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalStopTone(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MFGLIB_INTERNAL_STOP_TONE);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_STOP_TONE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7525,9 +7523,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalStartStream(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MFGLIB_INTERNAL_START_STREAM);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_START_STREAM);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7544,9 +7542,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalStopStream(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MFGLIB_INTERNAL_STOP_STREAM);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_STOP_STREAM);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7567,10 +7565,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalSendPacket(packetContents: Buffer): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MFGLIB_INTERNAL_SEND_PACKET);
-        this.buffalo.writePayload(packetContents);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_SEND_PACKET);
+        sendBuffalo.writePayload(packetContents);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7588,10 +7586,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalSetChannel(channel: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MFGLIB_INTERNAL_SET_CHANNEL);
-        this.buffalo.writeUInt8(channel);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_SET_CHANNEL);
+        sendBuffalo.writeUInt8(channel);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7607,9 +7605,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t The current channel.
      */
     async mfglibInternalGetChannel(): Promise<number> {
-        this.startCommand(EzspFrameID.MFGLIB_INTERNAL_GET_CHANNEL);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_GET_CHANNEL);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7631,11 +7629,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async mfglibInternalSetPower(txPowerMode: EmberTXPowerMode, power: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.MFGLIB_INTERNAL_SET_POWER);
-        this.buffalo.writeUInt16(txPowerMode);
-        this.buffalo.writeInt8(power);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_SET_POWER);
+        sendBuffalo.writeUInt16(txPowerMode);
+        sendBuffalo.writeInt8(power);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7651,9 +7649,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns int8_t Power in units of dBm. Refer to radio data sheet for valid range.
      */
     async mfglibInternalGetPower(): Promise<number> {
-        this.startCommand(EzspFrameID.MFGLIB_INTERNAL_GET_POWER);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_GET_POWER);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7669,13 +7667,13 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * A callback indicating a packet with a valid CRC has been received.
      * @param linkQuality uint8_t The link quality observed during the reception
      * @param rssi int8_t The energy level (in units of dBm) observed during the reception.
-     * @param packetLength uint8_t The length of the packetContents parameter in bytes. Will be greater than 3 and less than 123.
      * @param packetContents uint8_t * The received packet (last 2 bytes are not FCS / CRC and may be discarded)
+     *        Length will be greater than 3 and less than 123.
      */
-    ezspMfglibRxHandler(linkQuality: number, rssi: number, packetLength: number, packetContents: number[]): void {
+    ezspMfglibRxHandler(linkQuality: number, rssi: number, packetContents: Buffer): void {
         logger.debug(
             `ezspMfglibRxHandler(): callback called with: [linkQuality=${linkQuality}], [rssi=${rssi}], ` +
-                `[packetLength=${packetLength}], [packetContents=${packetContents}]`,
+                `[packetContents=${packetContents.toString('hex')}]`,
             NS,
         );
     }
@@ -7696,10 +7694,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspLaunchStandaloneBootloader(mode: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.LAUNCH_STANDALONE_BOOTLOADER);
-        this.buffalo.writeUInt8(mode);
+        const sendBuffalo = this.startCommand(EzspFrameID.LAUNCH_STANDALONE_BOOTLOADER);
+        sendBuffalo.writeUInt8(mode);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7721,12 +7719,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSendBootloadMessage(broadcast: boolean, destEui64: EUI64, messageContents: Buffer): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SEND_BOOTLOAD_MESSAGE);
-        this.buffalo.writeUInt8(broadcast ? 1 : 0);
-        this.buffalo.writeIeeeAddr(destEui64);
-        this.buffalo.writePayload(messageContents);
+        const sendBuffalo = this.startCommand(EzspFrameID.SEND_BOOTLOAD_MESSAGE);
+        sendBuffalo.writeUInt8(broadcast ? 1 : 0);
+        sendBuffalo.writeIeeeAddr(destEui64);
+        sendBuffalo.writePayload(messageContents);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7751,9 +7749,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     async ezspGetStandaloneBootloaderVersionPlatMicroPhy(): Promise<
         [bootloaderVersion: number, nodePlat: number, nodeMicro: number, nodePhy: number]
     > {
-        this.startCommand(EzspFrameID.GET_STANDALONE_BOOTLOADER_VERSION_PLAT_MICRO_PHY);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_STANDALONE_BOOTLOADER_VERSION_PLAT_MICRO_PHY);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7807,11 +7805,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t * 16 bytes of ciphertext.
      */
     async ezspAesEncrypt(plaintext: number[], key: number[]): Promise<number[]> {
-        this.startCommand(EzspFrameID.AES_ENCRYPT);
-        this.buffalo.writeListUInt8(plaintext);
-        this.buffalo.writeListUInt8(key);
+        const sendBuffalo = this.startCommand(EzspFrameID.AES_ENCRYPT);
+        sendBuffalo.writeListUInt8(plaintext);
+        sendBuffalo.writeListUInt8(key);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7853,10 +7851,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.MFG_TEST_SET_PACKET_MODE);
-        this.buffalo.writeUInt8(beginConfiguration ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFG_TEST_SET_PACKET_MODE);
+        sendBuffalo.writeUInt8(beginConfiguration ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7880,9 +7878,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.MFG_TEST_SEND_REBOOT_COMMAND);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFG_TEST_SEND_REBOOT_COMMAND);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7905,10 +7903,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.MFG_TEST_SEND_EUI64);
-        this.buffalo.writeIeeeAddr(newId);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFG_TEST_SEND_EUI64);
+        sendBuffalo.writeIeeeAddr(newId);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7931,10 +7929,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.MFG_TEST_SEND_MANUFACTURING_STRING);
-        this.buffalo.writeListUInt16(newString); // expects 16 bytes
+        const sendBuffalo = this.startCommand(EzspFrameID.MFG_TEST_SEND_MANUFACTURING_STRING);
+        sendBuffalo.writeListUInt16(newString); // expects 16 bytes
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7958,11 +7956,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.MFG_TEST_SEND_RADIO_PARAMETERS);
-        this.buffalo.writeUInt8(supportedBands);
-        this.buffalo.writeInt8(crystalOffset);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFG_TEST_SEND_RADIO_PARAMETERS);
+        sendBuffalo.writeUInt8(supportedBands);
+        sendBuffalo.writeInt8(crystalOffset);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -7985,10 +7983,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
-        this.startCommand(EzspFrameID.MFG_TEST_SEND_COMMAND);
-        this.buffalo.writeUInt8(command);
+        const sendBuffalo = this.startCommand(EzspFrameID.MFG_TEST_SEND_COMMAND);
+        sendBuffalo.writeUInt8(command);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8012,12 +8010,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspZllNetworkOps(networkInfo: EmberZllNetwork, op: EzspZllNetworkOperation, radioTxPower: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.ZLL_NETWORK_OPS);
-        this.buffalo.writeEmberZllNetwork(networkInfo);
-        this.buffalo.writeUInt8(op);
-        this.buffalo.writeInt8(radioTxPower);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_NETWORK_OPS);
+        sendBuffalo.writeEmberZllNetwork(networkInfo);
+        sendBuffalo.writeUInt8(op);
+        sendBuffalo.writeInt8(radioTxPower);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8036,11 +8034,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspZllSetInitialSecurityState(networkKey: EmberKeyData, securityState: EmberZllInitialSecurityState): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.ZLL_SET_INITIAL_SECURITY_STATE);
-        this.buffalo.writeEmberKeyData(networkKey);
-        this.buffalo.writeEmberZllInitialSecurityState(securityState);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_SET_INITIAL_SECURITY_STATE);
+        sendBuffalo.writeEmberKeyData(networkKey);
+        sendBuffalo.writeEmberZllInitialSecurityState(securityState);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8059,10 +8057,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspZllSetSecurityStateWithoutKey(securityState: EmberZllInitialSecurityState): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.ZLL_SET_SECURITY_STATE_WITHOUT_KEY);
-        this.buffalo.writeEmberZllInitialSecurityState(securityState);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_SET_SECURITY_STATE_WITHOUT_KEY);
+        sendBuffalo.writeEmberZllInitialSecurityState(securityState);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8081,12 +8079,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspZllStartScan(channelMask: number, radioPowerForScan: number, nodeType: EmberNodeType): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.ZLL_START_SCAN);
-        this.buffalo.writeUInt32(channelMask);
-        this.buffalo.writeInt8(radioPowerForScan);
-        this.buffalo.writeUInt8(nodeType);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_START_SCAN);
+        sendBuffalo.writeUInt32(channelMask);
+        sendBuffalo.writeInt8(radioPowerForScan);
+        sendBuffalo.writeUInt8(nodeType);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8104,10 +8102,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspZllSetRxOnWhenIdle(durationMs: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.ZLL_SET_RX_ON_WHEN_IDLE);
-        this.buffalo.writeUInt32(durationMs);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_SET_RX_ON_WHEN_IDLE);
+        sendBuffalo.writeUInt32(durationMs);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8177,9 +8175,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberTokTypeStackZllSecurity * Security token return value.
      */
     async ezspZllGetTokens(): Promise<[data: EmberTokTypeStackZllData, security: EmberTokTypeStackZllSecurity]> {
-        this.startCommand(EzspFrameID.ZLL_GET_TOKENS);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_GET_TOKENS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8196,10 +8194,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param data EmberTokTypeStackZllData * Data token to be set.
      */
     async ezspZllSetDataToken(data: EmberTokTypeStackZllData): Promise<void> {
-        this.startCommand(EzspFrameID.ZLL_SET_DATA_TOKEN);
-        this.buffalo.writeEmberTokTypeStackZllData(data);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_SET_DATA_TOKEN);
+        sendBuffalo.writeEmberTokTypeStackZllData(data);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8210,9 +8208,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * Set the ZLL data token bitmask to reflect the ZLL network state.
      */
     async ezspZllSetNonZllNetwork(): Promise<void> {
-        this.startCommand(EzspFrameID.ZLL_SET_NON_ZLL_NETWORK);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_SET_NON_ZLL_NETWORK);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8224,9 +8222,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns ZLL network?
      */
     async ezspIsZllNetwork(): Promise<boolean> {
-        this.startCommand(EzspFrameID.IS_ZLL_NETWORK);
+        const sendBuffalo = this.startCommand(EzspFrameID.IS_ZLL_NETWORK);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8242,10 +8240,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param mode The power mode to be set.
      */
     async ezspZllSetRadioIdleMode(mode: number): Promise<void> {
-        this.startCommand(EzspFrameID.ZLL_SET_RADIO_IDLE_MODE);
-        this.buffalo.writeUInt8(mode);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_SET_RADIO_IDLE_MODE);
+        sendBuffalo.writeUInt8(mode);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8257,9 +8255,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t The current power mode.
      */
     async ezspZllGetRadioIdleMode(): Promise<number> {
-        this.startCommand(EzspFrameID.ZLL_GET_RADIO_IDLE_MODE);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_GET_RADIO_IDLE_MODE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8275,10 +8273,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param nodeType The node type to be set.
      */
     async ezspSetZllNodeType(nodeType: EmberNodeType): Promise<void> {
-        this.startCommand(EzspFrameID.SET_ZLL_NODE_TYPE);
-        this.buffalo.writeUInt8(nodeType);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_ZLL_NODE_TYPE);
+        sendBuffalo.writeUInt8(nodeType);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8290,10 +8288,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param uint16_t A mask with the bits to be set or cleared.
      */
     async ezspSetZllAdditionalState(state: number): Promise<void> {
-        this.startCommand(EzspFrameID.SET_ZLL_ADDITIONAL_STATE);
-        this.buffalo.writeUInt16(state);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_ZLL_ADDITIONAL_STATE);
+        sendBuffalo.writeUInt16(state);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8305,9 +8303,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns ZLL operation in progress? false on error
      */
     async ezspZllOperationInProgress(): Promise<boolean> {
-        this.startCommand(EzspFrameID.ZLL_OPERATION_IN_PROGRESS);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_OPERATION_IN_PROGRESS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8322,9 +8320,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns ZLL radio on when idle mode is active? false on error
      */
     async ezspZllRxOnWhenIdleGetActive(): Promise<boolean> {
-        this.startCommand(EzspFrameID.ZLL_RX_ON_WHEN_IDLE_GET_ACTIVE);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_RX_ON_WHEN_IDLE_GET_ACTIVE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8339,9 +8337,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * Informs the ZLL API that application scanning is complete
      */
     async ezspZllScanningComplete(): Promise<void> {
-        this.startCommand(EzspFrameID.ZLL_SCANNING_COMPLETE);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_SCANNING_COMPLETE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8353,9 +8351,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint32_t The primary ZLL channel mask
      */
     async ezspGetZllPrimaryChannelMask(): Promise<number> {
-        this.startCommand(EzspFrameID.GET_ZLL_PRIMARY_CHANNEL_MASK);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_ZLL_PRIMARY_CHANNEL_MASK);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8371,9 +8369,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint32_t The secondary ZLL channel mask
      */
     async ezspGetZllSecondaryChannelMask(): Promise<number> {
-        this.startCommand(EzspFrameID.GET_ZLL_SECONDARY_CHANNEL_MASK);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_ZLL_SECONDARY_CHANNEL_MASK);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8389,10 +8387,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param uint32_t The primary ZLL channel mask
      */
     async ezspSetZllPrimaryChannelMask(zllPrimaryChannelMask: number): Promise<void> {
-        this.startCommand(EzspFrameID.SET_ZLL_PRIMARY_CHANNEL_MASK);
-        this.buffalo.writeUInt32(zllPrimaryChannelMask);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_ZLL_PRIMARY_CHANNEL_MASK);
+        sendBuffalo.writeUInt32(zllPrimaryChannelMask);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8404,10 +8402,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param uint32_t The secondary ZLL channel mask
      */
     async ezspSetZllSecondaryChannelMask(zllSecondaryChannelMask: number): Promise<void> {
-        this.startCommand(EzspFrameID.SET_ZLL_SECONDARY_CHANNEL_MASK);
-        this.buffalo.writeUInt32(zllSecondaryChannelMask);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_ZLL_SECONDARY_CHANNEL_MASK);
+        sendBuffalo.writeUInt32(zllSecondaryChannelMask);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8418,9 +8416,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * Clear ZLL stack tokens.
      */
     async ezspZllClearTokens(): Promise<void> {
-        this.startCommand(EzspFrameID.ZLL_CLEAR_TOKENS);
+        const sendBuffalo = this.startCommand(EzspFrameID.ZLL_CLEAR_TOKENS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8457,19 +8455,19 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         gpdSecurityFrameCounter: number,
         forwardingRadius: number,
     ): Promise<boolean> {
-        this.startCommand(EzspFrameID.GP_PROXY_TABLE_PROCESS_GP_PAIRING);
-        this.buffalo.writeUInt32(options);
-        this.buffalo.writeEmberGpAddress(addr);
-        this.buffalo.writeUInt8(commMode);
-        this.buffalo.writeUInt16(sinkNetworkAddress);
-        this.buffalo.writeUInt16(sinkGroupId);
-        this.buffalo.writeUInt16(assignedAlias);
-        this.buffalo.writeIeeeAddr(sinkIeeeAddress);
-        this.buffalo.writeEmberKeyData(gpdKey);
-        this.buffalo.writeUInt32(gpdSecurityFrameCounter);
-        this.buffalo.writeUInt8(forwardingRadius);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_PROXY_TABLE_PROCESS_GP_PAIRING);
+        sendBuffalo.writeUInt32(options);
+        sendBuffalo.writeEmberGpAddress(addr);
+        sendBuffalo.writeUInt8(commMode);
+        sendBuffalo.writeUInt16(sinkNetworkAddress);
+        sendBuffalo.writeUInt16(sinkGroupId);
+        sendBuffalo.writeUInt16(assignedAlias);
+        sendBuffalo.writeIeeeAddr(sinkIeeeAddress);
+        sendBuffalo.writeEmberKeyData(gpdKey);
+        sendBuffalo.writeUInt32(gpdSecurityFrameCounter);
+        sendBuffalo.writeUInt8(forwardingRadius);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8500,16 +8498,16 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         gpepHandle: number,
         gpTxQueueEntryLifetimeMs: number,
     ): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.D_GP_SEND);
-        this.buffalo.writeUInt8(action ? 1 : 0);
-        this.buffalo.writeUInt8(useCca ? 1 : 0);
-        this.buffalo.writeEmberGpAddress(addr);
-        this.buffalo.writeUInt8(gpdCommandId);
-        this.buffalo.writePayload(gpdAsdu);
-        this.buffalo.writeUInt8(gpepHandle);
-        this.buffalo.writeUInt16(gpTxQueueEntryLifetimeMs);
+        const sendBuffalo = this.startCommand(EzspFrameID.D_GP_SEND);
+        sendBuffalo.writeUInt8(action ? 1 : 0);
+        sendBuffalo.writeUInt8(useCca ? 1 : 0);
+        sendBuffalo.writeEmberGpAddress(addr);
+        sendBuffalo.writeUInt8(gpdCommandId);
+        sendBuffalo.writePayload(gpdAsdu);
+        sendBuffalo.writeUInt8(gpepHandle);
+        sendBuffalo.writeUInt16(gpTxQueueEntryLifetimeMs);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8610,10 +8608,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberGpProxyTableEntry * An EmberGpProxyTableEntry struct containing a copy of the requested proxy entry.
      */
     async ezspGpProxyTableGetEntry(proxyIndex: number): Promise<[SLStatus, entry: EmberGpProxyTableEntry]> {
-        this.startCommand(EzspFrameID.GP_PROXY_TABLE_GET_ENTRY);
-        this.buffalo.writeUInt8(proxyIndex);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_PROXY_TABLE_GET_ENTRY);
+        sendBuffalo.writeUInt8(proxyIndex);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8631,10 +8629,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t The index, or 0xFF for not found
      */
     async ezspGpProxyTableLookup(addr: EmberGpAddress): Promise<number> {
-        this.startCommand(EzspFrameID.GP_PROXY_TABLE_LOOKUP);
-        this.buffalo.writeEmberGpAddress(addr);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_PROXY_TABLE_LOOKUP);
+        sendBuffalo.writeEmberGpAddress(addr);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8652,10 +8650,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberGpSinkTableEntry * An EmberGpSinkTableEntry struct containing a copy of the requested sink entry.
      */
     async ezspGpSinkTableGetEntry(sinkIndex: number): Promise<[SLStatus, entry: EmberGpSinkTableEntry]> {
-        this.startCommand(EzspFrameID.GP_SINK_TABLE_GET_ENTRY);
-        this.buffalo.writeUInt8(sinkIndex);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_SINK_TABLE_GET_ENTRY);
+        sendBuffalo.writeUInt8(sinkIndex);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8673,10 +8671,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t The index, or 0xFF for not found
      */
     async ezspGpSinkTableLookup(addr: EmberGpAddress): Promise<number> {
-        this.startCommand(EzspFrameID.GP_SINK_TABLE_LOOKUP);
-        this.buffalo.writeEmberGpAddress(addr);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_SINK_TABLE_LOOKUP);
+        sendBuffalo.writeEmberGpAddress(addr);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8694,11 +8692,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspGpSinkTableSetEntry(sinkIndex: number, entry: EmberGpSinkTableEntry): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.GP_SINK_TABLE_SET_ENTRY);
-        this.buffalo.writeUInt8(sinkIndex);
-        this.buffalo.writeEmberGpSinkTableEntry(entry);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_SINK_TABLE_SET_ENTRY);
+        sendBuffalo.writeUInt8(sinkIndex);
+        sendBuffalo.writeEmberGpSinkTableEntry(entry);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8714,10 +8712,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param uint8_t The index of the requested sink table entry.
      */
     async ezspGpSinkTableRemoveEntry(sinkIndex: number): Promise<void> {
-        this.startCommand(EzspFrameID.GP_SINK_TABLE_REMOVE_ENTRY);
-        this.buffalo.writeUInt8(sinkIndex);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_SINK_TABLE_REMOVE_ENTRY);
+        sendBuffalo.writeUInt8(sinkIndex);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8730,10 +8728,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t An index of found or allocated sink or 0xFF if failed.
      */
     async ezspGpSinkTableFindOrAllocateEntry(addr: EmberGpAddress): Promise<number> {
-        this.startCommand(EzspFrameID.GP_SINK_TABLE_FIND_OR_ALLOCATE_ENTRY);
-        this.buffalo.writeEmberGpAddress(addr);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_SINK_TABLE_FIND_OR_ALLOCATE_ENTRY);
+        sendBuffalo.writeEmberGpAddress(addr);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8748,9 +8746,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * Clear the entire sink table
      */
     async ezspGpSinkTableClearAll(): Promise<void> {
-        this.startCommand(EzspFrameID.GP_SINK_TABLE_CLEAR_ALL);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_SINK_TABLE_CLEAR_ALL);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8761,9 +8759,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * Iniitializes Sink Table
      */
     async ezspGpSinkTableInit(): Promise<void> {
-        this.startCommand(EzspFrameID.GP_SINK_TABLE_INIT);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_SINK_TABLE_INIT);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8776,11 +8774,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param sfc uint32_t Security Frame Counter
      */
     async ezspGpSinkTableSetSecurityFrameCounter(index: number, sfc: number): Promise<void> {
-        this.startCommand(EzspFrameID.GP_SINK_TABLE_SET_SECURITY_FRAME_COUNTER);
-        this.buffalo.writeUInt8(index);
-        this.buffalo.writeUInt32(sfc);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_SINK_TABLE_SET_SECURITY_FRAME_COUNTER);
+        sendBuffalo.writeUInt8(index);
+        sendBuffalo.writeUInt32(sfc);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8796,13 +8794,13 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspGpSinkCommission(options: number, gpmAddrForSecurity: number, gpmAddrForPairing: number, sinkEndpoint: number): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.GP_SINK_COMMISSION);
-        this.buffalo.writeUInt8(options);
-        this.buffalo.writeUInt16(gpmAddrForSecurity);
-        this.buffalo.writeUInt16(gpmAddrForPairing);
-        this.buffalo.writeUInt8(sinkEndpoint);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_SINK_COMMISSION);
+        sendBuffalo.writeUInt8(options);
+        sendBuffalo.writeUInt16(gpmAddrForSecurity);
+        sendBuffalo.writeUInt16(gpmAddrForPairing);
+        sendBuffalo.writeUInt8(sinkEndpoint);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8817,9 +8815,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * Clears all entries within the translation table.
      */
     async ezspGpTranslationTableClear(): Promise<void> {
-        this.startCommand(EzspFrameID.GP_TRANSLATION_TABLE_CLEAR);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_TRANSLATION_TABLE_CLEAR);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8831,9 +8829,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t Number of active entries in sink table. 0 if error.
      */
     async ezspGpSinkTableGetNumberOfActiveEntries(): Promise<number> {
-        this.startCommand(EzspFrameID.GP_SINK_TABLE_GET_NUMBER_OF_ACTIVE_ENTRIES);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_SINK_TABLE_GET_NUMBER_OF_ACTIVE_ENTRIES);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8853,9 +8851,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns uint8_t Total number of tokens.
      */
     async ezspGetTokenCount(): Promise<number> {
-        this.startCommand(EzspFrameID.GET_TOKEN_COUNT);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_TOKEN_COUNT);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8873,10 +8871,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberTokenInfo * Token information.
      */
     async ezspGetTokenInfo(index: number): Promise<[SLStatus, tokenInfo: EmberTokenInfo]> {
-        this.startCommand(EzspFrameID.GET_TOKEN_INFO);
-        this.buffalo.writeUInt8(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_TOKEN_INFO);
+        sendBuffalo.writeUInt8(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8896,11 +8894,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns EmberTokenData * Token Data
      */
     async ezspGetTokenData(token: number, index: number): Promise<[SLStatus, tokenData: EmberTokenData]> {
-        this.startCommand(EzspFrameID.GET_TOKEN_DATA);
-        this.buffalo.writeUInt32(token);
-        this.buffalo.writeUInt32(index);
+        const sendBuffalo = this.startCommand(EzspFrameID.GET_TOKEN_DATA);
+        sendBuffalo.writeUInt32(token);
+        sendBuffalo.writeUInt32(index);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8920,12 +8918,12 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspSetTokenData(token: number, index: number, tokenData: EmberTokenData): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.SET_TOKEN_DATA);
-        this.buffalo.writeUInt32(token);
-        this.buffalo.writeUInt32(index);
-        this.buffalo.writeEmberTokenData(tokenData);
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_TOKEN_DATA);
+        sendBuffalo.writeUInt32(token);
+        sendBuffalo.writeUInt32(index);
+        sendBuffalo.writeEmberTokenData(tokenData);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8939,9 +8937,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * Reset the node by calling halReboot.
      */
     async ezspResetNode(): Promise<void> {
-        this.startCommand(EzspFrameID.RESET_NODE);
+        const sendBuffalo = this.startCommand(EzspFrameID.RESET_NODE);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8953,9 +8951,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @returns An SLStatus value indicating success or the reason for failure.
      */
     async ezspGpSecurityTestVectors(): Promise<SLStatus> {
-        this.startCommand(EzspFrameID.GP_SECURITY_TEST_VECTORS);
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_SECURITY_TEST_VECTORS);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
@@ -8972,11 +8970,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      * @param excludeBootCounter Exclude stack boot counter token.
      */
     async ezspTokenFactoryReset(excludeOutgoingFC: boolean, excludeBootCounter: boolean): Promise<void> {
-        this.startCommand(EzspFrameID.TOKEN_FACTORY_RESET);
-        this.buffalo.writeUInt8(excludeOutgoingFC ? 1 : 0);
-        this.buffalo.writeUInt8(excludeBootCounter ? 1 : 0);
+        const sendBuffalo = this.startCommand(EzspFrameID.TOKEN_FACTORY_RESET);
+        sendBuffalo.writeUInt8(excludeOutgoingFC ? 1 : 0);
+        sendBuffalo.writeUInt8(excludeBootCounter ? 1 : 0);
 
-        const sendStatus = await this.sendCommand();
+        const sendStatus = await this.sendCommand(sendBuffalo);
 
         if (sendStatus !== EzspStatus.SUCCESS) {
             throw new EzspError(sendStatus);
