@@ -309,10 +309,7 @@ export class EmberAdapter extends Adapter {
 
         logger.debug(`Using delay=${delay}.`, NS);
 
-        this.queue = new Queue(
-            typeof this.adapterOptions.concurrent === 'number' ? Math.min(Math.max(this.adapterOptions.concurrent, 1), 32) : 16,
-            `${NS}:queue`,
-        );
+        this.queue = new Queue(typeof this.adapterOptions.concurrent === 'number' ? Math.min(Math.max(this.adapterOptions.concurrent, 1), 32) : 16);
         this.oneWaitress = new EmberOneWaitress();
 
         this.ezsp = new Ezsp(serialPortOptions);

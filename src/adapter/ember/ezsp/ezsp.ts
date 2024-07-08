@@ -283,7 +283,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         this.callbackFrameContents = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
         this.callbackBuffalo = new EzspBuffalo(this.callbackFrameContents);
 
-        this.queue = new Queue(1, `${NS}:queue`);
+        this.queue = new Queue(1);
         this.ash = new UartAsh(options);
     }
 
