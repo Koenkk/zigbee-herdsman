@@ -232,10 +232,23 @@ export class ZBOSSUart extends EventEmitter {
         }
     }
 
-    private onFrame(buffer: Buffer): void {
-        const frameBuffer: Buffer = Buffer.from([...this.unescape(buffer)]);
+    private onFrame(data: Buffer): void {
+        const pType = data.readUInt8(0);
+        const pFlags = data.readUInt8(1);
+        const isACK = (pFlags & 0x1) === 1;
+        const retransmit = (pFlags >> 1 & 0x1) === 1;
+        const sequence = pFlags >> 2 & 0x3;
+        const ACKseq = pFlags >> 4 & 0x3;
+        const isFirst = (pFlags >> 6 & 0x1) === 1;
+        const isLast = (pFlags >> 7 & 0x1) === 1;
+        // header crc
+        const hCRC = data.readUInt8(2);
+        // body crc
+        const bCRC = data.readUInt16LE(3);
+        const body = data.subarray(5);
+
         try {
-            const frame = readZBOSSFrame(frameBuffer);
+            const frame = readZBOSSFrame(body);
             if (frame) {
                 this.emit('frame', frame);
             }
@@ -246,8 +259,8 @@ export class ZBOSSUart extends EventEmitter {
 
     public sendFrame(frame: ZBOSSFrame): void {
         try {
-            const b = this.escape(writeZBOSSFrame(frame));
-            this.writer.push(b);
+            const buf = writeZBOSSFrame(frame);
+            this.writer.push(buf);
         } catch (error) {
             logger.debug(`--> error ${error.stack}`, NS);
         }

@@ -66,7 +66,7 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     private onFrame(frame: ZBOSSFrame): void {
-
+        logger.info(`<== Frame: ${JSON.stringify(frame)}`, NS);
     }
 
     public async execCommand(commandId: number, params: KeyValue = null): Promise<ZBOSSFrame> {

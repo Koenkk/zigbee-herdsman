@@ -1,5 +1,8 @@
 import {Transform, TransformCallback, TransformOptions} from "stream";
 import {SIGNATURE} from "./consts";
+import {logger} from "../../utils/logger";
+
+const NS = 'zh:zboss:read';
 
 export class ZBOSSReader extends Transform {
     private buffer: Buffer;
@@ -14,14 +17,33 @@ export class ZBOSSReader extends Transform {
         let data = Buffer.concat([this.buffer, chunk]);
         let position: number;
 
+        logger.debug(`<<<  DATA [${chunk.toString('hex')}]`, NS);
+        // SIGNATURE - start of package
         while ((position = data.indexOf(SIGNATURE)) !== -1) {
-            // emit the frame via 'data' event
-            const frame = data.subarray(0, position + 1);
+            // need for read length
+            if (data.length > (position + 3)) {
+                const len = data.readUInt16LE(position + 1);
+                if (data.length >= (position - 1 + len)) {
+                    if (len > 5) {
+                        const frame = data.subarray(position + 3, position + 1 + len);
+                        logger.debug(`<<< FRAME [${frame.toString('hex')}]`, NS);
+                        // emit the frame via 'data' event
+                        this.push(frame);
 
-            this.push(frame);
-
-            // remove the frame from internal buffer (set below)
-            data = data.subarray(position + 1);
+                        // remove the frame from internal buffer (set below)
+                        data = data.subarray(position + 1 + len);
+                        if (data.length) logger.debug(`<<< TAIL [${data.toString('hex')}]`, NS);
+                    } else {
+                        logger.debug(`<<< Empty frame. Frame length=${len}`, NS);
+                    }
+                } else {
+                    logger.debug(`<<< Not enough data. Length=${data.length}, frame length=${len}`, NS);
+                    break;
+                }
+            } else {
+                logger.debug(`<<< Not enough data. Length=${data.length}`, NS);
+                break;
+            }
         }
 
         this.buffer = data;

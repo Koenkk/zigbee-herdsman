@@ -24,13 +24,13 @@ function getFrameDesc(type: FrameType, key: CommandId) {
 
 export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
     const buf = new BuffaloZcl(buffer);
-    const flags = buf.readUInt16();
-    const version = flags & 0x0F;
-    const type = (flags >> 4) & 0x0F;
+    const version = buf.readUInt8();
+    const type = buf.readUInt8();
     const commandId = buf.readUInt16();
-    const sequence = buf.readUInt8();
-    const length = buf.readUInt16();
-    // const payload = buf.readBuffer(length);
+    let sequence = 0;
+    if ([FrameType.REQUEST, FrameType.RESPONSE].includes(type)) {
+        sequence = buf.readUInt8();
+    }
     const payload = readPayload(type, commandId, buf);
 
     return {
@@ -68,7 +68,7 @@ export interface ZBOSSFrame {
     version: number;
     type: FrameType;
     commandId: CommandId;
-    sequence: number;
+    sequence?: number;
     payload?: ZBOSSFrameData;
 }
 

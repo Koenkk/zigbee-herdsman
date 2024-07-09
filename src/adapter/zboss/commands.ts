@@ -17,72 +17,84 @@ interface ZBOSSFrameDesc {
 }
 
 export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
-    [CommandId.NETWORK_INIT]: {
-        request: [],
-        response: [
-            {name: 'status', type: DataType.UINT8}, // Status
-        ],
-    },
-    [CommandId.START]: {
-        request: [
-            {name: 'autostart', type: DataType.BOOLEAN},
-        ],
-        response: [
-            {name: 'status', type: DataType.UINT8}, // Status
-        ],
-    },
-    [CommandId.NETWORK_STATE]: {
-        request: [],
-        response: [
-            {name: 'state', type: DataType.UINT8}, // NetworkState
-        ],
-    },
-    [CommandId.STACK_STATUS_HANDLER]: {
+    // Device Reset Indication with reset source
+    [CommandId.NCP_RESET_IND]: {
         request: [],
         response: [
             {name: 'status', type: DataType.UINT8},
+            {name: 'code', type: DataType.UINT8},
         ],
         indication: [
-            {name: 'status', type: DataType.UINT8},
+            {name: 'source', type: DataType.UINT8},
         ],
     },
-    [CommandId.FORM_NETWORK]: {
-        request: [
-            {name: 'role', type: DataType.UINT8}, // DeviceType
-            {name: 'install_code_policy', type: DataType.BOOLEAN},
-            {name: 'max_children', type: DataType.UINT8, condition: (payload) => [DeviceType.COORDINATOR, DeviceType.ROUTER].includes(payload.role)},
-            {name: 'ed_timeout', type: DataType.UINT8, condition: (payload) => payload.role == DeviceType.ED},
-            {name: 'keep_alive', type: DataType.UINT32, condition: (payload) => payload.role == DeviceType.ED},
-        ],
-        response: [
-            {name: 'status', type: DataType.UINT8}, // Status
-        ],
-        indication: [
-            {name: 'extended_panid', type: DataType.IEEE_ADDR},
-            {name: 'panID', type: DataType.UINT16},
-            {name: 'channel', type: DataType.UINT8},
-        ],
-    },
-    [CommandId.PERMIT_JOINING]: {
-        request: [
-            {name: 'duration', type: DataType.UINT8},
-        ],
-        response: [
-            {name: 'status', type: DataType.UINT8}, // Status
-        ],
-        indication: [
-            {name: 'duration', type: DataType.UINT8},
-        ],
-    },
-    [CommandId.LEAVE_NETWORK]: {
-        request: [],
-        response: [
-            {name: 'status', type: DataType.UINT8}, // Status
-        ],
-        indication: [
-            {name: 'short_addr', type: DataType.UINT16},
-            {name: 'device_addr', type: DataType.IEEE_ADDR},
-            {name: 'rejoin', type: DataType.BOOLEAN},
-        ],
-    },
+    
+    // [CommandId.NETWORK_INIT]: {
+    //     request: [],
+    //     response: [
+    //         {name: 'status', type: DataType.UINT8}, // Status
+    //     ],
+    // },
+    // [CommandId.START]: {
+    //     request: [
+    //         {name: 'autostart', type: DataType.BOOLEAN},
+    //     ],
+    //     response: [
+    //         {name: 'status', type: DataType.UINT8}, // Status
+    //     ],
+    // },
+    // [CommandId.NETWORK_STATE]: {
+    //     request: [],
+    //     response: [
+    //         {name: 'state', type: DataType.UINT8}, // NetworkState
+    //     ],
+    // },
+    // [CommandId.STACK_STATUS_HANDLER]: {
+    //     request: [],
+    //     response: [
+    //         {name: 'status', type: DataType.UINT8},
+    //     ],
+    //     indication: [
+    //         {name: 'status', type: DataType.UINT8},
+    //     ],
+    // },
+    // [CommandId.FORM_NETWORK]: {
+    //     request: [
+    //         {name: 'role', type: DataType.UINT8}, // DeviceType
+    //         {name: 'install_code_policy', type: DataType.BOOLEAN},
+    //         {name: 'max_children', type: DataType.UINT8, condition: (payload) => [DeviceType.COORDINATOR, DeviceType.ROUTER].includes(payload.role)},
+    //         {name: 'ed_timeout', type: DataType.UINT8, condition: (payload) => payload.role == DeviceType.ED},
+    //         {name: 'keep_alive', type: DataType.UINT32, condition: (payload) => payload.role == DeviceType.ED},
+    //     ],
+    //     response: [
+    //         {name: 'status', type: DataType.UINT8}, // Status
+    //     ],
+    //     indication: [
+    //         {name: 'extended_panid', type: DataType.IEEE_ADDR},
+    //         {name: 'panID', type: DataType.UINT16},
+    //         {name: 'channel', type: DataType.UINT8},
+    //     ],
+    // },
+    // [CommandId.PERMIT_JOINING]: {
+    //     request: [
+    //         {name: 'duration', type: DataType.UINT8},
+    //     ],
+    //     response: [
+    //         {name: 'status', type: DataType.UINT8}, // Status
+    //     ],
+    //     indication: [
+    //         {name: 'duration', type: DataType.UINT8},
+    //     ],
+    // },
+    // [CommandId.LEAVE_NETWORK]: {
+    //     request: [],
+    //     response: [
+    //         {name: 'status', type: DataType.UINT8}, // Status
+    //     ],
+    //     indication: [
+    //         {name: 'short_addr', type: DataType.UINT16},
+    //         {name: 'device_addr', type: DataType.IEEE_ADDR},
+    //         {name: 'rejoin', type: DataType.BOOLEAN},
+    //     ],
+    // },
 };
