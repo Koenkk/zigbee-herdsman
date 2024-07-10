@@ -1,5 +1,6 @@
-import { CommandId, Status, NetworkState, DeviceType } from "./enums";
+import { CommandId, Status, NetworkState, DeviceType, ResetOptions, StatusCategory, StatusCodeGeneric, StatusCodeAPS, StatusCodeCBKE } from "./enums";
 import {BuffaloZclDataType, DataType, StructuredIndicatorType} from '../../zspec/zcl/definition/enums';
+import {strict} from "assert";
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 // export interface ParamsDesc {[s: string]: any};
@@ -8,6 +9,8 @@ export interface ParamsDesc {
     type: DataType,
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     condition?: (payload: any) => boolean,
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    typed?: any
 };
 
 interface ZBOSSFrameDesc {
@@ -16,13 +19,66 @@ interface ZBOSSFrameDesc {
     indication?: ParamsDesc[],
 }
 
+const defaultResponse = [
+    {name: 'category', type: DataType.UINT8, typed: StatusCategory},
+    {name: 'status', type: DataType.UINT8, typed: [StatusCodeGeneric, StatusCodeAPS, StatusCodeCBKE]},
+];
+
 export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
+    // NCP config frames
+
+    // Requests firmware, stack and protocol versions from NCP
+    [CommandId.GET_MODULE_VERSION]: {
+        request: [],
+        response: [
+            ...defaultResponse,
+            {name: 'fwVersion', type: DataType.UINT32},
+            {name: 'stackVersion', type: DataType.UINT32},
+            {name: 'protocolVersion', type: DataType.UINT32},
+        ],
+    },
+    // Force NCP module reboot
+    [CommandId.NCP_RESET]: {
+        request: [
+            {name: 'options', type: DataType.UINT8, typed: ResetOptions},
+        ],
+        response: [
+            ...defaultResponse,
+        ],
+    },
+    // Requests current Zigbee role of the local device
+    [CommandId.GET_ZIGBEE_ROLE]: {
+        request: [
+        ],
+        response: [
+            ...defaultResponse,
+            {name: 'role', type: DataType.UINT8, typed: DeviceType},
+        ],
+    },
+    // Set Zigbee role of the local device
+    [CommandId.SET_ZIGBEE_ROLE]: {
+        request: [
+            {name: 'role', type: DataType.UINT8, typed: DeviceType},
+        ],
+        response: [
+            ...defaultResponse,
+        ],
+    },
+    // Get Zigbee channels page and mask of the local device
+    [CommandId.GET_ZIGBEE_CHANNEL_MASK]: {
+        request: [
+        ],
+        response: [
+            ...defaultResponse,
+            {name: 'len', type: DataType.UINT8},
+            // {name: 'channels', type: DataType.ChannelListEntry},
+        ],
+    },
     // Device Reset Indication with reset source
     [CommandId.NCP_RESET_IND]: {
         request: [],
         response: [
-            {name: 'status', type: DataType.UINT8},
-            {name: 'code', type: DataType.UINT8},
+            ...defaultResponse,
         ],
         indication: [
             {name: 'source', type: DataType.UINT8},
