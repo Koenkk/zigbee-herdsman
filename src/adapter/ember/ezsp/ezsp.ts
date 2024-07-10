@@ -4712,7 +4712,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspRemoteSetBindingHandler(entry: EmberBindingTableEntry, index: number, policyDecision: SLStatus): void {
         logger.debug(
-            `ezspRemoteSetBindingHandler(): callback called with: [entry=${entry}], [index=${index}], ` +
+            `ezspRemoteSetBindingHandler(): callback called with: [entry=${JSON.stringify(entry)}], [index=${index}], ` +
                 `[policyDecision=${SLStatus[policyDecision]}]`,
             NS,
         );

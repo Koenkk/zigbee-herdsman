@@ -234,6 +234,8 @@ const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
 };
 /** Default behavior is to disable app key requests */
 const ALLOW_APP_KEY_REQUESTS = false;
+/** @see EzspConfigId.TRUST_CENTER_ADDRESS_CACHE_SIZE */
+const TRUST_CENTER_ADDRESS_CACHE_SIZE = 2;
 
 /**
  * NOTE: This from SDK is currently ignored here because of issues in below links:
@@ -760,6 +762,8 @@ export class EmberAdapter extends Adapter {
         // call before any other command, else fails
         await this.emberVersion();
 
+        /** The address cache needs to be initialized and used with the source routing code for the trust center to operate properly. */
+        await this.emberSetEzspConfigValue(EzspConfigId.TRUST_CENTER_ADDRESS_CACHE_SIZE, TRUST_CENTER_ADDRESS_CACHE_SIZE);
         /** MAC indirect timeout should be 7.68 secs (STACK_PROFILE_ZIGBEE_PRO) */
         await this.emberSetEzspConfigValue(EzspConfigId.INDIRECT_TRANSMISSION_TIMEOUT, 7680);
         /** Max hops should be 2 * nwkMaxDepth, where nwkMaxDepth is 15 (STACK_PROFILE_ZIGBEE_PRO) */
