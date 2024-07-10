@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.53.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.52.0...v0.53.0) (2024-07-10)
+
+
+### Features
+
+* Inovelli Adding P26 For VZM36 ([#1096](https://github.com/Koenkk/zigbee-herdsman/issues/1096)) ([4adfea3](https://github.com/Koenkk/zigbee-herdsman/commit/4adfea37dab7bd193d5fc3793da774c4e1002933))
+
+
+### Bug Fixes
+
+* Ember: Always set `TRUST_CENTER_ADDRESS_CACHE_SIZE` ([#1108](https://github.com/Koenkk/zigbee-herdsman/issues/1108)) ([72b7f55](https://github.com/Koenkk/zigbee-herdsman/commit/72b7f55a146ce17a1c59a6b41f3f6e438553f027))
+
 ## [0.52.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.51.0...v0.52.0) (2024-07-08)
 
 
