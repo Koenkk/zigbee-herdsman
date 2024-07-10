@@ -306,3 +306,33 @@ export enum ResetOptions {
     FactoryReset = 2,
     LockReadingKeys = 3,
 };
+
+export enum ResetSource {
+    RESET_SRC_POWER_ON = 0,
+    RESET_SRC_SW_RESET = 1,
+    RESET_SRC_RESET_PIN = 2,
+    RESET_SRC_BROWN_OUT = 3,
+    RESET_SRC_CLOCK_LOSS = 4,
+    RESET_SRC_OTHER = 5,
+};
+
+export enum PolicyType {
+    LINK_KEY_REQUIRED = 0,
+    IC_REQUIRED = 1,
+    TC_REJOIN_ENABLED = 2,
+    IGNORE_TC_REJOIN = 3,
+    APS_INSECURE_JOIN = 4,
+    DISABLE_NWK_MGMT_CHANNEL_UPDATE = 5,
+};
+
+export enum BuffaloZBOSSDataType {
+    LIST_TYPED = 3000,
+}
+
+
+export enum DeviceUpdateStatus {
+    SECURE_REJOIN = 0,
+    UNSECURE_REJOIN = 1,
+    LEFT = 2,
+    TC_REJOIN = 3,
+};
