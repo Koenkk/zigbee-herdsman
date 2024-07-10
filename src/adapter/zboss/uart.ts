@@ -9,6 +9,7 @@ import {ZBOSSWriter} from "./writer";
 import {ZBOSSReader} from "./reader";
 import {ESCAPE, ESCEND, END, ESCESC} from "./consts";
 import {ZBOSSFrame, readZBOSSFrame, writeZBOSSFrame} from "./frame";
+import {crc8, crc16} from "./utils";
 
 const NS = 'zh:zboss:uart';
 
@@ -233,8 +234,9 @@ export class ZBOSSUart extends EventEmitter {
     }
 
     private onFrame(data: Buffer): void {
-        const pType = data.readUInt8(0);
-        const pFlags = data.readUInt8(1);
+        const len = data.readUInt16LE(0);
+        const pType = data.readUInt8(2);
+        const pFlags = data.readUInt8(3);
         const isACK = (pFlags & 0x1) === 1;
         const retransmit = (pFlags >> 1 & 0x1) === 1;
         const sequence = pFlags >> 2 & 0x3;
@@ -242,10 +244,12 @@ export class ZBOSSUart extends EventEmitter {
         const isFirst = (pFlags >> 6 & 0x1) === 1;
         const isLast = (pFlags >> 7 & 0x1) === 1;
         // header crc
-        const hCRC = data.readUInt8(2);
+        const hCRC = data.readUInt8(4);
+        const hCRC8 = crc8(data.subarray(0, 4));
         // body crc
-        const bCRC = data.readUInt16LE(3);
-        const body = data.subarray(5);
+        const bCRC = data.readUInt16LE(5);
+        const body = data.subarray(7);
+        const bodyCRC16 = crc16(body);
 
         try {
             const frame = readZBOSSFrame(body);
