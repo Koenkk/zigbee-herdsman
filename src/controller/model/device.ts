@@ -684,7 +684,7 @@ class Device extends Entity {
      * Zigbee functions
      */
 
-    public async interview(): Promise<void> {
+    public async interview(ignoreCache: boolean = false): Promise<void> {
         if (this.interviewing) {
             const message = `Interview - interview already in progress for '${this.ieeeAddr}'`;
             logger.debug(message, NS);
@@ -696,7 +696,7 @@ class Device extends Entity {
         logger.debug(`Interview - start device '${this.ieeeAddr}'`, NS);
 
         try {
-            await this.interviewInternal();
+            await this.interviewInternal(ignoreCache);
             logger.debug(`Interview - completed for device '${this.ieeeAddr}'`, NS);
             this._interviewCompleted = true;
         } catch (e) {
@@ -785,7 +785,7 @@ class Device extends Entity {
         }
     }
 
-    private async interviewInternal(): Promise<void> {
+    private async interviewInternal(ignoreCache: boolean = false): Promise<void> {
         const nodeDescriptorQuery = async (): Promise<void> => {
             const nodeDescriptor = await Entity.adapter.nodeDescriptor(this.networkAddress);
             this._manufacturerID = nodeDescriptor.manufacturerCode;
@@ -795,7 +795,7 @@ class Device extends Entity {
 
         const hasNodeDescriptor = (): boolean => this._manufacturerID != null && this._type != null;
 
-        if (!hasNodeDescriptor()) {
+        if (ignoreCache || !hasNodeDescriptor()) {
             for (let attempt = 0; attempt < 6; attempt++) {
                 try {
                     await nodeDescriptorQuery();
@@ -878,7 +878,7 @@ class Device extends Entity {
             // are not mandatory in ZCL specification.
             if (endpoint.supportsInputCluster('genBasic')) {
                 for (const [key, item] of Object.entries(Device.ReportablePropertiesMapping)) {
-                    if (!this[item.key]) {
+                    if (ignoreCache || !this[item.key]) {
                         try {
                             let result: KeyValue;
                             try {
