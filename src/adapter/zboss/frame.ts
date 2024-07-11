@@ -78,7 +78,7 @@ export function makeFrame(type: FrameType, commandId: CommandId, params: KeyValu
     for (const parameter of frameDesc) {
         const options: BuffaloZclOptions = {payload};
 
-        if (parameter.condition && !parameter.condition(payload, null, options)) {
+        if (parameter.condition && !parameter.condition(payload, undefined)) {
             continue;
         }
 
@@ -100,9 +100,10 @@ function readPayload(type: FrameType, commandId: CommandId, buffalo: BuffaloZcl)
     for (const parameter of frameDesc) {
         const options: BuffaloZclOptions = {payload};
 
-        if (parameter.condition && !parameter.condition(payload, buffalo, options)) {
+        if (parameter.condition && !parameter.condition(payload, buffalo)) {
             continue;
         }
+        if (parameter.options) parameter.options(payload, options);
 
         payload[parameter.name] = buffalo.read(parameter.type as DataType, options);
     }
@@ -116,9 +117,10 @@ function writePayload(type: FrameType, commandId: CommandId, payload: ZBOSSFrame
     for (const parameter of frameDesc) {
         const options: BuffaloZclOptions = {};
 
-        if (parameter.condition && !parameter.condition(payload, buffalo, options)) {
+        if (parameter.condition && !parameter.condition(payload, buffalo)) {
             continue;
         }
+        if (parameter.options) parameter.options(payload, options);
 
         buffalo.write(parameter.type as DataType, payload[parameter.name], options);
     }

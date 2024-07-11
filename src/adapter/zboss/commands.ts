@@ -8,9 +8,11 @@ export interface ParamsDesc {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType,
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    condition?: (payload: any, buffalo: any, options: any) => boolean,
+    condition?: (payload: any, buffalo: any) => boolean,
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     typed?: any
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    options?: (payload: any, options: any) => void,
 };
 
 interface ZBOSSFrameDesc {
@@ -284,7 +286,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     [CommandId.NVRAM_WRITE]: {
         request: [
             {name: 'len', type: DataType.UINT8},
-            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, condition: (payload, buffalo, options) => {options.length = payload.len; return true;}},
+            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => {options.length = payload.len}},
         ],
         response: [
             ...commonResponse,
@@ -301,7 +303,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'type', type: DataType.UINT16},
             {name: 'version', type: DataType.UINT16},
             {name: 'len', type: DataType.UINT16},
-            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, condition: (payload, buffalo, options) => {options.length = payload.len; return true;}},
+            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => {options.length = payload.len}},
         ],
     },
     // Erases all datasets in NVRAM
@@ -371,8 +373,8 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'version', type: DataType.UINT8},
             {name: 'inputClusterCount', type: DataType.UINT8},
             {name: 'outputClusterCount', type: DataType.UINT8},
-            {name: 'inputClusters', type: BuffaloZclDataType.LIST_UINT16, condition: (payload, buffalo, options) => {options.length = payload.inputClusterCount; return true;}},
-            {name: 'outputClusters', type: BuffaloZclDataType.LIST_UINT16, condition: (payload, buffalo, options) => {options.length = payload.outputClusterCount; return true;}},
+            {name: 'inputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => {options.length = payload.inputClusterCount;}},
+            {name: 'outputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => {options.length = payload.outputClusterCount;}},
         ],
         response: [
             ...commonResponse,
@@ -427,9 +429,9 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             ...commonResponse,
             {name: 'ieee', type: DataType.IEEE_ADDR},
             {name: 'nwk', type: DataType.UINT16},
-            {name: 'num', type: DataType.UINT8, condition: (payload, buffalo, options) => buffalo && buffalo.isMore()},
-            {name: 'startIndex', type: DataType.UINT8, condition: (payload, buffalo, options) => buffalo && buffalo.isMore()},
-            {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, condition: (payload, buffalo, options) => {options.length = payload.num; return payload.num;}},
+            {name: 'num', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
+            {name: 'startIndex', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
+            {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => {options.length = payload.num;}},
         ],
     },
     // Request for a remote device IEEE address
@@ -444,9 +446,9 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             ...commonResponse,
             {name: 'ieee', type: DataType.IEEE_ADDR},
             {name: 'nwk', type: DataType.UINT16},
-            {name: 'num', type: DataType.UINT8, condition: (payload, buffalo, options) => buffalo && buffalo.isMore()},
-            {name: 'startIndex', type: DataType.UINT8, condition: (payload, buffalo, options) => buffalo && buffalo.isMore()},
-            {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, condition: (payload, buffalo, options) => {options.length = payload.num; return payload.num;}},
+            {name: 'num', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
+            {name: 'startIndex', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
+            {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => {options.length = payload.num;}},
         ],
     },
     // Get the Power Descriptor from a remote device
@@ -492,8 +494,8 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'version', type: DataType.UINT8},
             {name: 'inputClusterCount', type: DataType.UINT8},
             {name: 'outputClusterCount', type: DataType.UINT8},
-            {name: 'inputClusters', type: BuffaloZclDataType.LIST_UINT16, condition: (payload, buffalo, options) => {options.length = payload.inputClusterCount; return true;}},
-            {name: 'outputClusters', type: BuffaloZclDataType.LIST_UINT16, condition: (payload, buffalo, options) => {options.length = payload.outputClusterCount; return true;}},
+            {name: 'inputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => {options.length = payload.inputClusterCount;}},
+            {name: 'outputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => {options.length = payload.outputClusterCount;}},
             {name: 'nwk', type: DataType.UINT16},
         ],
     },
@@ -505,7 +507,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         response: [
             ...commonResponse,
             {name: 'len', type: DataType.UINT8},
-            {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, condition: (payload, buffalo, options) => {options.length = payload.len; return true;}},
+            {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => {options.length = payload.len;}},
             {name: 'nwk', type: DataType.UINT16},
         ],
     },
@@ -516,13 +518,13 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'profileID', type: DataType.UINT16},
             {name: 'inputClusterCount', type: DataType.UINT8},
             {name: 'outputClusterCount', type: DataType.UINT8},
-            {name: 'inputClusters', type: BuffaloZclDataType.LIST_UINT16, condition: (payload, buffalo, options) => {options.length = payload.inputClusterCount; return true;}},
-            {name: 'outputClusters', type: BuffaloZclDataType.LIST_UINT16, condition: (payload, buffalo, options) => {options.length = payload.outputClusterCount; return true;}},
+            {name: 'inputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => {options.length = payload.inputClusterCount;}},
+            {name: 'outputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => {options.length = payload.outputClusterCount;}},
         ],
         response: [
             ...commonResponse,
             {name: 'len', type: DataType.UINT8},
-            {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, condition: (payload, buffalo, options) => {options.length = payload.len; return true;}},
+            {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => {options.length = payload.len;}},
             {name: 'nwk', type: DataType.UINT16},
         ],
     },
@@ -721,6 +723,152 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     [CommandId.ZDO_SET_NODE_DESC_MANUF_CODE]: {
         request: [
             {name: 'manufacturerCode', type: DataType.UINT16},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+
+    // ------------------------------------------
+    // Application Support Sub-layer
+    // ------------------------------------------
+
+    // APSDE-DATA.request
+    [CommandId.APSDE_DATA_REQ]: {
+        request: [
+            {name: 'paramLength', type: DataType.UINT8},
+            {name: 'dataLength', type: DataType.UINT16},
+            {name: 'ieee', type: DataType.IEEE_ADDR},
+            {name: 'profileID', type: DataType.UINT16},
+            {name: 'clusterID', type: DataType.UINT16},
+            {name: 'dstEndpoint', type: DataType.UINT8, condition: (payload, buffalo) => ![2,3].includes(payload.dstAddrMode)},
+            {name: 'srcEndpoint', type: DataType.UINT8},
+            {name: 'radius', type: DataType.UINT8},
+            {name: 'dstAddrMode', type: DataType.UINT8},
+            {name: 'txOptions', type: DataType.UINT8},
+            {name: 'useAlias', type: DataType.UINT8},
+            {name: 'aliasAddr', type: DataType.UINT16, condition: (payload, buffalo) => payload.useAlias !== 0},
+            {name: 'aliasSequence', type: DataType.UINT8},
+            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => {options.length = payload.dataLength;}},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'ieee', type: DataType.IEEE_ADDR},
+            {name: 'dstEndpoint', type: DataType.UINT8, condition: (payload, buffalo) => ![2,3].includes(payload.dstAddrMode)},
+            {name: 'srcEndpoint', type: DataType.UINT8},
+            {name: 'txTime', type: DataType.UINT32},
+            {name: 'dstAddrMode', type: DataType.UINT8},
+        ],
+    },
+    // APSME-BIND.Request
+    [CommandId.APSME_BIND]: {
+        request: [
+            {name: 'srcIeee', type: DataType.IEEE_ADDR},
+            {name: 'srcEndpoint', type: DataType.UINT8},
+            {name: 'clusterID', type: DataType.UINT16},
+            {name: 'dstAddrMode', type: DataType.UINT8},
+            {name: 'dstIeee', type: DataType.IEEE_ADDR},
+            {name: 'dstEndpoint', type: DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'index', type: DataType.UINT8},
+        ],
+    },
+    // APSME-UNBIND.request
+    [CommandId.APSME_UNBIND]: {
+        request: [
+            {name: 'srcIeee', type: DataType.IEEE_ADDR},
+            {name: 'srcEndpoint', type: DataType.UINT8},
+            {name: 'clusterID', type: DataType.UINT16},
+            {name: 'dstAddrMode', type: DataType.UINT8},
+            {name: 'dstIeee', type: DataType.IEEE_ADDR},
+            {name: 'dstEndpoint', type: DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'index', type: DataType.UINT8},
+        ],
+    },
+    // APSME-ADD-GROUP.request
+    [CommandId.APSME_ADD_GROUP]: {
+        request: [
+            {name: 'nwk', type: DataType.UINT16},
+            {name: 'endpoint', type: DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // APSME-REMOVE-GROUP.request
+    [CommandId.APSME_RM_GROUP]: {
+        request: [
+            {name: 'nwk', type: DataType.UINT16},
+            {name: 'endpoint', type: DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // APSDE-DATA.indication
+    [CommandId.APSDE_DATA_IND]: {
+        request: [
+        ],
+        response: [
+        ],
+        indication: [
+            {name: 'paramLength', type: DataType.UINT8},
+            {name: 'dataLength', type: DataType.UINT16},
+            {name: 'apsFC', type: DataType.UINT8},
+            {name: 'srcNwk', type: DataType.UINT16},
+            {name: 'dstNwk', type: DataType.UINT16},
+            {name: 'grpNwk', type: DataType.UINT16},
+            {name: 'dstEndpoint', type: DataType.UINT8},
+            {name: 'srcEndpoint', type: DataType.UINT8},
+            {name: 'clusterID', type: DataType.UINT16},
+            {name: 'profileID', type: DataType.UINT16},
+            {name: 'apsCounter', type: DataType.UINT8},
+            {name: 'srcMAC', type: DataType.UINT16},
+            {name: 'dstMAC', type: DataType.UINT16},
+            {name: 'lqi', type: DataType.UINT8},
+            {name: 'rssi', type: DataType.UINT8},
+            {name: 'apsKey', type: DataType.UINT8},
+            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => {options.length = payload.dataLength;}},
+        ],
+    },
+    // APSME-REMOVE-ALL-GROUPS.request
+    [CommandId.APSME_RM_ALL_GROUPS]: {
+        request: [
+            {name: 'endpoint', type: DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Checks if there are any bindings for specified endpoint and cluster
+    [CommandId.APS_CHECK_BINDING]: {
+        request: [
+            {name: 'endpoint', type: DataType.UINT8},
+            {name: 'clusterID', type: DataType.UINT16},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'exists', type: DataType.UINT8},
+        ],
+    },
+    // Gets the APS Group Table
+    [CommandId.APS_GET_GROUP_TABLE]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'length', type: DataType.UINT16},
+            {name: 'groups', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => {options.length = payload.length;}},
+        ],
+    },
+    // Removes all bindings
+    [CommandId.APSME_UNBIND_ALL]: {
+        request: [
         ],
         response: [
             ...commonResponse,
