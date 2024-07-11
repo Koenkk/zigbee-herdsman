@@ -77,7 +77,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'len', type: DataType.UINT8},
             {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
                 {name: 'page', type: DataType.UINT8},
-                {name: 'channel', type: DataType.UINT8},
+                {name: 'mask', type: DataType.UINT32},
             ]},
         ],
     },
@@ -598,7 +598,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'len', type: DataType.UINT8},
             {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
                 {name: 'page', type: DataType.UINT8},
-                {name: 'channel', type: DataType.UINT8},
+                {name: 'mask', type: DataType.UINT32},
             ]},
             {name: 'secure', type: DataType.UINT8},
         ],
@@ -874,4 +874,326 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             ...commonResponse,
         ],
     },
+
+    // ------------------------------------------
+    // NWK Management API
+    // ------------------------------------------
+
+    // NLME-NETWORK-FORMATION.request
+    [CommandId.NWK_FORMATION]: {
+        request: [
+            {name: 'len', type: DataType.UINT8},
+            {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
+                {name: 'page', type: DataType.UINT8},
+                {name: 'mask', type: DataType.UINT32},
+            ]},
+            {name: 'duration', type: DataType.UINT8},
+            {name: 'distribFlag', type: DataType.UINT8},
+            {name: 'distribNwk', type: DataType.UINT16},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'nwk', type: DataType.UINT16},
+        ],
+    },
+    // NLME-NETWORK-DISCOVERY.request
+    [CommandId.NWK_DISCOVERY]: {
+        request: [
+            {name: 'len', type: DataType.UINT8},
+            {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
+                {name: 'page', type: DataType.UINT8},
+                {name: 'mask', type: DataType.UINT32},
+            ]},
+            {name: 'duration', type: DataType.UINT8},
+            {name: 'macCapabilities', type: DataType.UINT8},
+            {name: 'security', type: DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'extendedPanID', type: DataType.IEEE_ADDR},
+            {name: 'panID', type: DataType.UINT16},
+            {name: 'nwkUpdateID', type: DataType.UINT8},
+            {name: 'page', type: DataType.UINT8},
+            {name: 'channel', type: DataType.UINT8},
+            {name: 'flags', type: DataType.UINT8},
+            {name: 'lqi', type: DataType.UINT8},
+            {name: 'rssi', type: DataType.INT8},
+        ],
+    },
+    // Join network, do basic post-join actions
+    [CommandId.NWK_NLME_JOIN]: {
+        request: [
+            {name: 'extendedPanID', type: DataType.IEEE_ADDR},
+            {name: 'rejoin', type: DataType.UINT8},
+            {name: 'len', type: DataType.UINT8},
+            {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
+                {name: 'page', type: DataType.UINT8},
+                {name: 'mask', type: DataType.UINT32},
+            ]},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'nwk', type: DataType.UINT16},
+            {name: 'extendedPanID', type: DataType.IEEE_ADDR},
+            {name: 'page', type: DataType.UINT8},
+            {name: 'channel', type: DataType.UINT8},
+            {name: 'beacon', type: DataType.UINT8},
+            {name: 'macInterface', type: DataType.UINT8},
+        ],
+    },
+    // NLME-PERMIT-JOINING.request
+    [CommandId.NWK_PERMIT_JOINING]: {
+        request: [
+            {name: 'duration', type: DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Get IEEE address by short address from the local address translation table
+    [CommandId.NWK_GET_IEEE_BY_SHORT]: {
+        request: [
+            {name: 'nwk', type: DataType.UINT16},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'ieee', type: DataType.IEEE_ADDR},
+        ],
+    },
+    // Get short address by IEEE address from the local address translation table
+    [CommandId.NWK_GET_SHORT_BY_IEEE]: {
+        request: [
+            {name: 'ieee', type: DataType.IEEE_ADDR},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'nwk', type: DataType.UINT16},
+        ],
+    },
+    // Get local neighbor table entry by IEEE address
+    [CommandId.NWK_GET_NEIGHBOR_BY_IEEE]: {
+        request: [
+            {name: 'ieee', type: DataType.IEEE_ADDR},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'ieee', type: DataType.IEEE_ADDR},
+            {name: 'nwk', type: DataType.UINT16},
+            {name: 'role', type: DataType.UINT8},
+            {name: 'rxOnWhenIdle', type: DataType.UINT8},
+            {name: 'edConfig', type: DataType.UINT16},
+            {name: 'timeoutCounter', type: DataType.UINT32},
+            {name: 'deviceTimeout', type: DataType.UINT32},
+            {name: 'relationship', type: DataType.UINT8},
+            {name: 'failureCount', type: DataType.UINT8},
+            {name: 'lqi', type: DataType.UINT8},
+            {name: 'cost', type: DataType.UINT8},
+            {name: 'age', type: DataType.UINT8},
+            {name: 'keepalive', type: DataType.UINT8},
+            {name: 'macInterface', type: DataType.UINT8},
+        ],
+    },
+    // Indicates that network rejoining procedure has completed
+    [CommandId.NWK_REJOINED_IND]: {
+        request: [],
+        response: [],
+        indication: [
+            {name: 'nwk', type: DataType.UINT16},
+            {name: 'extendedPanID', type: DataType.IEEE_ADDR},
+            {name: 'page', type: DataType.UINT8},
+            {name: 'channel', type: DataType.UINT8},
+            {name: 'beacon', type: DataType.UINT8},
+            {name: 'macInterface', type: DataType.UINT8},
+        ],
+    },
+    // Indicates that network rejoining procedure has failed
+    [CommandId.NWK_REJOIN_FAILED_IND]: {
+        request: [],
+        response: [],
+        indication: [
+            ...commonResponse,
+        ],
+    },
+    // Network Leave indication
+    [CommandId.NWK_LEAVE_IND]: {
+        request: [],
+        response: [],
+        indication: [
+            {name: 'ieee', type: DataType.IEEE_ADDR},
+            {name: 'rejoin', type: DataType.UINT8},
+        ],
+    },
+    // Set Fast Poll Interval PIM attribute
+    [CommandId.PIM_SET_FAST_POLL_INTERVAL]: {
+        request: [
+            {name: 'interval', type: DataType.UINT16},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Set Long Poll Interval PIM attribute
+    [CommandId.PIM_SET_LONG_POLL_INTERVAL]: {
+        request: [
+            {name: 'interval', type: DataType.UINT32},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Start poll with the Fast Poll Interval specified by PIM attribute
+    [CommandId.PIM_START_FAST_POLL]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Start Long Poll
+    [CommandId.PIM_START_LONG_POLL]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Start poll with the Long Poll Interval specified by PIM attribute
+    [CommandId.PIM_START_POLL]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Stop fast poll and restart it with the Long Poll Interval
+    [CommandId.PIM_STOP_FAST_POLL]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'result', type: DataType.UINT8},
+        ],
+    },
+    // Stop automatic ZBOSS poll
+    [CommandId.PIM_STOP_POLL]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Enable turbo poll for a given amount of time.
+    [CommandId.PIM_ENABLE_TURBO_POLL]: {
+        request: [
+            {name: 'time', type: DataType.UINT32},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Disable turbo poll for a given amount of time.
+    [CommandId.PIM_DISABLE_TURBO_POLL]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Disable turbo poll for a given amount of time.
+    [CommandId.NWK_ADDRESS_UPDATE_IND]: {
+        request: [
+        ],
+        response: [
+        ],
+        indication: [
+            {name: 'nwk', type: DataType.UINT16},
+        ],
+    },
+    // Start without forming a new network.
+    [CommandId.NWK_START_WITHOUT_FORMATION]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // NWK NLME start router request
+    [CommandId.NWK_NLME_ROUTER_START]: {
+        request: [
+            {name: 'beaconOrder', type: DataType.UINT8},
+            {name: 'superframeOrder', type: DataType.UINT8},
+            {name: 'batteryLife', type: DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Indicates that joined device has no parent
+    [CommandId.PARENT_LOST_IND]: {
+        request: [
+        ],
+        response: [
+        ],
+        indication: [
+        ],
+    },
+    // PIM_START_TURBO_POLL_PACKETS
+    // PIM_START_TURBO_POLL_CONTINUOUS
+    // PIM_TURBO_POLL_CONTINUOUS_LEAVE
+    // PIM_TURBO_POLL_PACKETS_LEAVE
+    // PIM_PERMIT_TURBO_POLL
+    // PIM_SET_FAST_POLL_TIMEOUT
+    // PIM_GET_LONG_POLL_INTERVAL
+    // PIM_GET_IN_FAST_POLL_FLAG
+    // Sets keepalive mode
+    [CommandId.SET_KEEPALIVE_MOVE]: {
+        request: [
+            {name: 'mode', type: DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Starts a concentrator mode
+    [CommandId.START_CONCENTRATOR_MODE]: {
+        request: [
+            {name: 'radius', type: DataType.UINT8},
+            {name: 'timeout', type: DataType.UINT32},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Stops a concentrator mode
+    [CommandId.STOP_CONCENTRATOR_MODE]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Enables or disables PAN ID conflict resolution
+    [CommandId.NWK_ENABLE_PAN_ID_CONFLICT_RESOLUTION]: {
+        request: [
+            {name: 'enable', type: DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Enables or disables automatic PAN ID conflict resolution
+    [CommandId.NWK_ENABLE_AUTO_PAN_ID_CONFLICT_RESOLUTION]: {
+        request: [
+            {name: 'enable', type: DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // PIM_TURBO_POLL_CANCEL_PACKET
+
+    // ------------------------------------------
+    // Security
+    // ------------------------------------------
+
 };
