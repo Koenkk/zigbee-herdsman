@@ -3,13 +3,13 @@ import {Socket} from "net";
 import SocketPortUtils from "../socketPortUtils";
 import {SerialPort} from "../serialPort";
 import {SerialPortOptions} from "../tstype";
-import {Wait} from "../../utils";
 import {logger} from "../../utils/logger";
 import {ZBOSSWriter} from "./writer";
 import {ZBOSSReader} from "./reader";
-import {ESCAPE, ESCEND, END, ESCESC} from "./consts";
 import {ZBOSSFrame, readZBOSSFrame, writeZBOSSFrame} from "./frame";
 import {crc8, crc16} from "./utils";
+import {Queue, Waitress, Wait} from '../../utils';
+import {SIGNATURE} from "./consts";
 
 const NS = 'zh:zboss:uart';
 
@@ -19,8 +19,12 @@ export class ZBOSSUart extends EventEmitter {
     private socketPort: Socket;
     private writer: ZBOSSWriter;
     private reader: ZBOSSReader;
-
     private closing: boolean;
+    private sendSeq = 0; // next frame number to send
+    private recvSeq = 0; // next frame number to receive
+    private ackSeq = 0; // next number after the last accepted frame
+    private waitress: Waitress<number, number>;
+    private queue: Queue;
 
     constructor(options: SerialPortOptions) {
         super();
@@ -28,6 +32,8 @@ export class ZBOSSUart extends EventEmitter {
         this.portOptions = options;
         this.serialPort = null;
         this.socketPort = null;
+        this.queue = new Queue(1);
+        this.waitress = new Waitress<number, number>(this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
     public async resetNcp(): Promise<boolean> {
@@ -82,6 +88,7 @@ export class ZBOSSUart extends EventEmitter {
 
     public async stop(): Promise<void> {
         this.closing = true;
+        this.queue.clear();
         await this.closePort();
 
         logger.info(`UART stopped`, NS);
@@ -123,7 +130,7 @@ export class ZBOSSUart extends EventEmitter {
 
             this.reader = new ZBOSSReader();
             this.serialPort.pipe(this.reader);
-            this.reader.on('data', this.onFrame.bind(this));
+            this.reader.on('data', this.onPackage.bind(this));
             
             try {
                 await this.serialPort.asyncOpen();
@@ -149,7 +156,7 @@ export class ZBOSSUart extends EventEmitter {
 
             this.reader = new ZBOSSReader();
             this.socketPort.pipe(this.reader);
-            this.reader.on('data', this.onFrame.bind(this));
+            this.reader.on('data', this.onPackage.bind(this));
 
             return new Promise((resolve, reject): void => {
                 const openError = async (err: Error): Promise<void> => {
@@ -199,41 +206,7 @@ export class ZBOSSUart extends EventEmitter {
         logger.info(`Port error: ${error}`, NS);
     }
 
-    private* unescape(buffer: Buffer): Generator<number> {
-        let escaped = false;
-        for (const byte of buffer) {
-            if (escaped) {
-                if (byte === ESCEND) {
-                    yield END;
-                } else if (byte === ESCESC) {
-                    yield ESCAPE;
-                }
-                escaped = false;
-            } else {
-                if (byte === ESCAPE) {
-                    escaped = true;
-                } else {
-                    yield byte;
-                }
-            }
-        }
-    }
-
-    private* escape(buffer: Buffer): Generator<number> {
-        for (const byte of buffer) {
-            if (byte === END) {
-                yield ESCAPE;
-                yield ESCEND;
-            } else if (byte === ESCAPE) {
-                yield ESCAPE;
-                yield ESCESC;
-            } else {
-                yield byte;
-            }
-        }
-    }
-
-    private onFrame(data: Buffer): void {
+    private onPackage(data: Buffer): void {
         const len = data.readUInt16LE(0);
         const pType = data.readUInt8(2);
         const pFlags = data.readUInt8(3);
@@ -243,14 +216,35 @@ export class ZBOSSUart extends EventEmitter {
         const ACKseq = pFlags >> 4 & 0x3;
         const isFirst = (pFlags >> 6 & 0x1) === 1;
         const isLast = (pFlags >> 7 & 0x1) === 1;
+        logger.debug(`<-- package type ${pType}, flags ${pFlags.toString(16)}`+
+            `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`, NS);
+        
+        if (pType !== 0x06) {
+            logger.error(`<-- Wrong package type: ${pType}`, NS);
+            return;
+        }
         // header crc
         const hCRC = data.readUInt8(4);
         const hCRC8 = crc8(data.subarray(0, 4));
+        if (hCRC !== hCRC8) {
+             logger.error(`<-- Wrong package header crc: is ${hCRC}, expected ${hCRC8}`, NS);
+             return;
+        }
+        if (isACK) {
+            // ACKseq is received
+            this.handleACK(ACKseq);
+            return;
+        }
+
         // body crc
         const bCRC = data.readUInt16LE(5);
         const body = data.subarray(7);
         const bodyCRC16 = crc16(body);
 
+        if (bCRC !== bodyCRC16) {
+            logger.error(`<-- Wrong package body crc: is ${bCRC}, expected ${bodyCRC16}`, NS);
+            return;
+       }
         try {
             const frame = readZBOSSFrame(body);
             if (frame) {
@@ -264,9 +258,63 @@ export class ZBOSSUart extends EventEmitter {
     public sendFrame(frame: ZBOSSFrame): void {
         try {
             const buf = writeZBOSSFrame(frame);
-            this.writer.push(buf);
+            this.writeBuffer(buf);
         } catch (error) {
             logger.debug(`--> error ${error.stack}`, NS);
         }
+    }
+
+    private handleACK(ackSeq: number): boolean {
+        /* Handle an acknowledgement package */
+        // next number after the last accepted package
+        this.ackSeq = ackSeq & 0x03;
+
+        logger.debug(`<-- ACK (${this.ackSeq})`, NS);
+
+        const handled = this.waitress.resolve(this.ackSeq);
+
+        if (!handled && this.sendSeq !== this.ackSeq) {
+            // Packet confirmation received for {ackSeq}, but was expected {sendSeq}
+            // This happens when the chip has not yet received of the packet {sendSeq} from us,
+            // but has already sent us the next one.
+            logger.debug(`Unexpected packet sequence ${this.ackSeq} | ${this.sendSeq}`, NS);
+        }
+
+        return handled;
+    }
+
+    public sendACK(ackNum: number, retransmit: boolean = false): void {
+        /* Construct a acknowledgement package */
+        
+        let flags = (ackNum & 0x03 << 4); // ACKseq
+        flags |= 0x01; // isACK
+        if (retransmit) {
+            flags |= 0x02; // retransmit
+        }
+        let ackPackage = this.makePack(Buffer.from([SIGNATURE, 5, 6, flags]), null);
+        this.writeBuffer(ackPackage);
+    }
+
+    public writeBuffer(buffer: Buffer): void {
+        logger.debug(`--> [${buffer.toString('hex')}]`, NS);
+        this.writer.push(buffer);
+    }
+
+    private makePack(header: Buffer, data?: Buffer): Buffer {
+        /* Construct a package */
+        let pack = Buffer.from([...header, crc8(header)]);
+        return pack;
+    }
+
+    public waitFor(sequence: number, timeout = 4000): {start: () => {promise: Promise<number>; ID: number}; ID: number} {
+        return this.waitress.waitFor(sequence, timeout);
+    }
+
+    private waitressTimeoutFormatter(matcher: number, timeout: number): string {
+        return `${matcher} after ${timeout}ms`;
+    }
+
+    private waitressValidator(sequence: number, matcher: number): boolean {
+        return sequence === matcher;
     }
 }
