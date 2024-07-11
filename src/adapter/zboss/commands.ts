@@ -1196,4 +1196,107 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     // Security
     // ------------------------------------------
 
+    // Set local device installcode to ZR/ZED
+    [CommandId.SECUR_SET_LOCAL_IC]: {
+        request: [
+            {name: 'installCode', type: BuffaloZclDataType.LIST_UINT8}, //8, 10, 14 or 18Installcode, including trailing 2 bytes of CRC
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Set remote device installcode to ZC
+    [CommandId.SECUR_ADD_IC]: {
+        request: [
+            {name: 'ieee', type:  DataType.IEEE_ADDR},
+            {name: 'installCode', type: BuffaloZclDataType.LIST_UINT8}, //8, 10, 14 or 18Installcode, including trailing 2 bytes of CRC
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Delete remote device installcode from ZC
+    [CommandId.SECUR_DEL_IC]: {
+        request: [
+            {name: 'ieee', type:  DataType.IEEE_ADDR},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Get local device Installcode
+    [CommandId.SECUR_GET_LOCAL_IC]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'installCode', type: BuffaloZclDataType.LIST_UINT8}, //8, 10, 14 or 18Installcode, including trailing 2 bytes of CRC
+        ],
+    },
+    // TCLK Indication
+    [CommandId.SECUR_TCLK_IND]: {
+        request: [
+        ],
+        response: [
+        ],
+        indication: [
+            {name: 'ieee', type:  DataType.IEEE_ADDR},
+            {name: 'keyType', type:  DataType.UINT8},
+        ],
+    },
+    // TCLK Exchange Indication Failed
+    [CommandId.SECUR_TCLK_EXCHANGE_FAILED_IND]: {
+        request: [
+        ],
+        response: [
+        ],
+        indication: [
+            ...commonResponse,
+        ],
+    },
+    // Initiates a key switch procedure
+    [CommandId.SECUR_NWK_INITIATE_KEY_SWITCH_PROCEDURE]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Gets the IC list
+    [CommandId.SECUR_GET_IC_LIST]: {
+        request: [
+            {name: 'startIndex', type:  DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'size', type:  DataType.UINT8},
+            {name: 'startIndex', type:  DataType.UINT8},
+            {name: 'count', type:  DataType.UINT8},
+            {name: 'table', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
+                {name: 'ieee', type: DataType.IEEE_ADDR},
+                {name: 'type', type: DataType.UINT8},
+                {name: 'installCode', type: BuffaloZclDataType.LIST_UINT8}, //8, 10, 14 or 18Installcode, including trailing 2 bytes of CRC
+            ]},
+        ],
+    },
+    // Get an IC table entry by index
+    [CommandId.SECUR_GET_IC_BY_IDX]: {
+        request: [
+            {name: 'index', type:  DataType.UINT8},
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'ieee', type: DataType.IEEE_ADDR},
+            {name: 'type', type: DataType.UINT8},
+            {name: 'installCode', type: BuffaloZclDataType.LIST_UINT8}, //8, 10, 14 or 18Installcode, including trailing 2 bytes of CRC
+        ],
+    },
+    // Removes all IC
+    [CommandId.SECUR_REMOVE_ALL_IC]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
 };
