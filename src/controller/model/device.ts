@@ -785,7 +785,7 @@ class Device extends Entity {
         }
     }
 
-    private async interviewInternal(ignoreCache: boolean = false): Promise<void> {
+    private async interviewInternal(ignoreCache: boolean): Promise<void> {
         const nodeDescriptorQuery = async (): Promise<void> => {
             const nodeDescriptor = await Entity.adapter.nodeDescriptor(this.networkAddress);
             this._manufacturerID = nodeDescriptor.manufacturerCode;
