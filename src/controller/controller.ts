@@ -441,6 +441,7 @@ class Controller extends events.EventEmitter {
     private async changeChannel(): Promise<void> {
         logger.info(`Broadcasting change channel to '${this.options.network.channelList[0]}'.`, NS);
         await this.adapter.changeChannel(this.options.network.channelList[0]);
+        logger.info(`Channel changed to '${this.options.network.channelList[0]}'.`, NS);
 
         this.networkParametersCached = null; // invalidate cache
     }
