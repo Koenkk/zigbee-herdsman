@@ -1516,6 +1516,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 response: 25,
                 parameters: [],
             },
+            samsungUnlockDoor: {
+                ID: 31,
+                response: 31,
+                parameters: [{name: 'data', type: BuffaloZclDataType.LIST_UINT8}],
+            },
         },
         commandsResponse: {
             lockDoorRsp: {
