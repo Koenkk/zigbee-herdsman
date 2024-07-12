@@ -65,6 +65,30 @@ const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
         {ID: 2, profileID: 3, deviceID: 5, inputClusters: [1], outputClusters: [0]},
     ],
 });
+const mockAdapterNodeDescriptor = jest.fn().mockImplementation(async (networkAddress) => {
+    const descriptor = mockDevices[networkAddress].nodeDescriptor;
+    if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
+        const frame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'lumi.occupancy'}]);
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: false,
+            address: networkAddress,
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        if (descriptor.endsWith('error')) {
+            throw new Error('failed');
+        } else {
+            return {type: 'EndDevice', manufacturerCode: 1219};
+        }
+    } else {
+        return descriptor;
+    }
+});
 
 const mockAdapterGetNetworkParameters = jest.fn().mockReturnValue({panID: 1, extendedPanID: 3, channel: 15});
 const mockAdapterBind = jest.fn();
@@ -187,6 +211,7 @@ const mocksClear = [
     mockAdapterReset,
     mocksendZclFrameToGroup,
     mockSetChannelInterPAN,
+    mockAdapterNodeDescriptor,
     mocksendZclFrameInterPANToIeeeAddr,
     mocksendZclFrameInterPANBroadcast,
     mockRestoreChannelInterPAN,
@@ -507,32 +532,7 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             setTransmitPower: mockAdapterSetTransmitPower,
             supportsChangeChannel: mockAdapterSupportsChangeChannel,
             changeChannel: mockAdapterChangeChannel,
-            nodeDescriptor: async (networkAddress) => {
-                const descriptor = mockDevices[networkAddress].nodeDescriptor;
-                if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
-                    const frame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [
-                        {attrId: 5, status: 0, dataType: 66, attrData: 'lumi.occupancy'},
-                    ]);
-                    await mockAdapterEvents['zclPayload']({
-                        wasBroadcast: false,
-                        address: networkAddress,
-                        clusterID: frame.cluster.ID,
-                        data: frame.toBuffer(),
-                        header: frame.header,
-                        endpoint: 1,
-                        linkquality: 50,
-                        groupID: 1,
-                    });
-
-                    if (descriptor.endsWith('error')) {
-                        throw new Error('failed');
-                    } else {
-                        return {type: 'EndDevice', manufacturerCode: 1219};
-                    }
-                } else {
-                    return descriptor;
-                }
-            },
+            nodeDescriptor: mockAdapterNodeDescriptor,
             activeEndpoints: (networkAddress) => {
                 if (mockDevices[networkAddress].activeEndpoints === 'error') {
                     throw new Error('timeout');
@@ -3739,6 +3739,21 @@ describe('Controller', () => {
             _interviewCompleted: true,
             _interviewing: false,
         });
+    });
+
+    it('Should use cached node descriptor when device is re-interviewed, but retrieve it when ignoreCache=true', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(mockAdapterNodeDescriptor).toHaveBeenCalledTimes(1);
+
+        // Re-join should use cached node descriptor
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(mockAdapterNodeDescriptor).toHaveBeenCalledTimes(1);
+
+        // Interview with ignoreCache=true should read node descriptor
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        device.interview(true);
+        expect(mockAdapterNodeDescriptor).toHaveBeenCalledTimes(2);
     });
 
     it('Receive zclData report from unkown attribute', async () => {
