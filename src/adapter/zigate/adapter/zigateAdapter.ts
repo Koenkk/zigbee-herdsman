@@ -194,7 +194,7 @@ class ZiGateAdapter extends Adapter {
         throw new Error('This adapter does not support backup');
     }
 
-    public async supportsChangeChannel(): Promise<boolean> {
+    public supportsChangeChannel(): boolean {
         return false;
     }
 

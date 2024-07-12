@@ -1726,8 +1726,7 @@ describe('Controller', () => {
 
     it('Change channel', async () => {
         await controller.start();
-        controller.options.network.channelList[0] = 20;
-        await controller.changeChannel();
+        await controller.changeChannel(10, 20);
         expect(mockAdapterChangeChannel).toHaveBeenCalledWith(20);
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 20});
         expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 20, extendedPanID: 3});

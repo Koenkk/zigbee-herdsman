@@ -2039,7 +2039,7 @@ export class EmberAdapter extends Adapter {
         });
     }
 
-    public async supportsChangeChannel(): Promise<boolean> {
+    public supportsChangeChannel(): boolean {
         return true;
     }
 

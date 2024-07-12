@@ -131,11 +131,20 @@ class Controller extends events.EventEmitter {
         // Check if we have to change the channel, only do this when adapter `resumed` because:
         // - `getNetworkParameters` might be return wrong info because it needs to propogate after backup restore
         // - If result is not `resumed` (`reset` or `restored`), the adapter should comission with the channel from `this.options.network`
-        if (startResult === 'resumed' && (await this.adapter.supportsChangeChannel())) {
+        if (startResult === 'resumed') {
             const netParams = await this.getNetworkParameters();
+            const configuredChannel = this.options.network.channelList[0];
+            const adapterChannel = netParams.channel;
 
-            if (this.options.network.channelList[0] !== netParams.channel) {
-                await this.changeChannel();
+            if (configuredChannel != adapterChannel) {
+                if (this.adapter.supportsChangeChannel()) {
+                    await this.changeChannel(adapterChannel, configuredChannel);
+                } else {
+                    logger.error(
+                        `Configured channel '${configuredChannel}' does not match adapter channel '${adapterChannel}', adapter doesn't support channel change`,
+                        NS,
+                    );
+                }
             }
         }
 
@@ -438,10 +447,10 @@ class Controller extends events.EventEmitter {
     /**
      * Broadcast a network-wide channel change.
      */
-    private async changeChannel(): Promise<void> {
-        logger.info(`Broadcasting change channel to '${this.options.network.channelList[0]}'.`, NS);
-        await this.adapter.changeChannel(this.options.network.channelList[0]);
-        logger.info(`Channel changed to '${this.options.network.channelList[0]}'.`, NS);
+    private async changeChannel(oldChannel: number, newChannel: number): Promise<void> {
+        logger.warning(`Changing channel from '${oldChannel}' to '${newChannel}'`, NS);
+        await this.adapter.changeChannel(newChannel);
+        logger.warning(`Channel changed to '${newChannel}'`, NS);
 
         this.networkParametersCached = null; // invalidate cache
     }

@@ -765,7 +765,7 @@ class EZSPAdapter extends Adapter {
         });
     }
 
-    public async supportsChangeChannel(): Promise<boolean> {
+    public supportsChangeChannel(): boolean {
         return false;
     }
 

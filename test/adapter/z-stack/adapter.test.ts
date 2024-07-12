@@ -2281,7 +2281,7 @@ describe('zstack-adapter', () => {
     it('Supports change channel', async () => {
         basicMocks();
         await adapter.start();
-        expect(await adapter.supportsChangeChannel()).toBeFalsy();
+        expect(await adapter.supportsChangeChannel()).toBeTruthy();
     });
 
     it('Change channel', async () => {
@@ -2295,6 +2295,8 @@ describe('zstack-adapter', () => {
             dstaddrmode: 15,
             channelmask: 0x2000000,
             scanduration: 0xfe,
+            scancount: 0,
+            nwkmanageraddr: 0,
         });
     });
 
