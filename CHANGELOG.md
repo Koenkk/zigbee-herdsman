@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.53.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.53.0...v0.53.1) (2024-07-12)
+
+
+### Bug Fixes
+
+* Allow to ignore cache for device interview ([#1109](https://github.com/Koenkk/zigbee-herdsman/issues/1109)) ([3b55e54](https://github.com/Koenkk/zigbee-herdsman/commit/3b55e5469d0827ef8ab09f1f4cd08158e10cb524))
+
 ## [0.53.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.52.0...v0.53.0) (2024-07-10)
 
 
