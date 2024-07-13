@@ -137,14 +137,8 @@ class Controller extends events.EventEmitter {
             const adapterChannel = netParams.channel;
 
             if (configuredChannel != adapterChannel) {
-                if (this.adapter.supportsChangeChannel()) {
-                    await this.changeChannel(adapterChannel, configuredChannel);
-                } else {
-                    logger.error(
-                        `Configured channel '${configuredChannel}' does not match adapter channel '${adapterChannel}', adapter doesn't support channel change`,
-                        NS,
-                    );
-                }
+                logger.info(`Configured channel '${configuredChannel}' does not match adapter channel '${adapterChannel}', changing channel`, NS);
+                await this.changeChannel(adapterChannel, configuredChannel);
             }
         }
 
@@ -448,9 +442,13 @@ class Controller extends events.EventEmitter {
      * Broadcast a network-wide channel change.
      */
     private async changeChannel(oldChannel: number, newChannel: number): Promise<void> {
+        if (!this.adapter.supportsChangeChannel()) {
+            throw new Error(`Channel change requested from '${oldChannel}' to '${newChannel}' but adapter does not support it`);
+        }
+
         logger.warning(`Changing channel from '${oldChannel}' to '${newChannel}'`, NS);
         await this.adapter.changeChannel(newChannel);
-        logger.warning(`Channel changed to '${newChannel}'`, NS);
+        logger.info(`Channel changed to '${newChannel}'`, NS);
 
         this.networkParametersCached = null; // invalidate cache
     }

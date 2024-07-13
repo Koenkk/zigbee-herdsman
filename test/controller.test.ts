@@ -218,6 +218,7 @@ const mocksClear = [
     mockAddInstallCode,
     mockAdapterGetNetworkParameters,
     mockAdapterChangeChannel,
+    mockAdapterSupportsChangeChannel,
     mockLogger.debug,
     mockLogger.info,
     mockLogger.warning,
@@ -1726,6 +1727,7 @@ describe('Controller', () => {
 
     it('Change channel', async () => {
         await controller.start();
+        mockAdapterSupportsChangeChannel.mockReturnValueOnce(true);
         await controller.changeChannel(10, 20);
         expect(mockAdapterChangeChannel).toHaveBeenCalledWith(20);
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 20});
@@ -1748,14 +1750,16 @@ describe('Controller', () => {
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
         expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(0);
+        // get rid of the mockAdapterSupportsChangeChannel that was never called
+        mockAdapterSupportsChangeChannel();
     });
 
     it('Does not change channel on start if not supported', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
         mockAdapterSupportsChangeChannel.mockReturnValueOnce(false);
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
-        await controller.start();
-        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(0);
+        await expect(controller.start()).rejects.toThrow(`Channel change requested from '25' to '15' but adapter does not support it`);
+        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
         expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(0);
         // get rid of the mockReturnValueOnce that was never called
         mockAdapterGetNetworkParameters();
