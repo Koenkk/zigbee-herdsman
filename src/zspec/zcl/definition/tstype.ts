@@ -153,6 +153,8 @@ export type ClusterName =
     | 'msSoilMoisture'
     | 'pHMeasurement'
     | 'msCO2'
+    | 'pm1Measurement'
+    | 'pm10Measurement'
     | 'pm25Measurement'
     | 'ssIasZone'
     | 'ssIasAce'
