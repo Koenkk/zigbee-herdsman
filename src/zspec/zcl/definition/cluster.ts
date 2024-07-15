@@ -2490,10 +2490,32 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     pm25Measurement: {
         ID: 0x042a,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.UINT16},
-            measuredMinValue: {ID: 0x0001, type: DataType.UINT16},
-            measuredMaxValue: {ID: 0x0002, type: DataType.UINT16},
-            measuredTolerance: {ID: 0x0003, type: DataType.UINT16},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+      pm1Measurement: {
+      ID: 0x042c,
+      attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+      pm10Measurement: {
+      ID: 0x042d,
+      attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
