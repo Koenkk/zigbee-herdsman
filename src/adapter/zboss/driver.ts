@@ -6,6 +6,7 @@ import {ZBOSSFrame, makeFrame, FrameType} from "./frame";
 import {KeyValue} from "../../controller/tstype";
 import {ClusterId, EUI64, NodeId, ProfileId} from '../../zspec/tstypes';
 import {Queue, Waitress, Wait} from '../../utils';
+import {CommandId, ResetOptions} from "./enums";
 
 const NS = 'zh:zboss:driv';
 
@@ -57,6 +58,12 @@ export class ZBOSSDriver extends EventEmitter {
         }
 
         return status;
+    }
+
+    public async reset(): Promise<void> {
+        logger.info(`Driver reset`, NS);
+        this.execCommand(CommandId.NCP_RESET, {options: ResetOptions.NoOptions});
+        
     }
 
     public async stop(): Promise<void> {

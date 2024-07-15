@@ -5,3 +5,4 @@ export const ESCEND = 0xDC;
 export const ESCESC = 0xDD;
 
 export const SIGNATURE = 0xDEAD;
+export const ZBOSS_NCP_API_HL = 0x06;

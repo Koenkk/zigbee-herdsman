@@ -50,6 +50,7 @@ export class ZBOSSAdapter extends Adapter {
         logger.info(`ZBOSS Adapter starting`, NS);
 
         this.driver.start();
+        this.driver.reset();
 
         return 'resumed';
     }
