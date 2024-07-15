@@ -28,6 +28,7 @@ import {WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, gpDataInd} fro
 import * as Models from '../../../models';
 import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
+import Device from '../../../controller/model/device';
 
 const NS = 'zh:deconz';
 var frameParser = require('../driver/frameParser');
@@ -1256,7 +1257,25 @@ class DeconzAdapter extends Adapter {
         const payBuf = resp != null ? Buffer.from(resp.asduPayload) : null;
 
         if (resp != null) {
-            srcAddr = resp.srcAddr16 != null ? resp.srcAddr16 : resp.srcAddr64;
+            if (resp.srcAddr16 != null) {
+                srcAddr = resp.srcAddr16;
+            } else {
+                // For some devices srcAddr64 is reported by ConBee 3, even if the frame contains both
+                // srcAddr16 and srcAddr64. This happens even if the request was sent to a short address.
+                // At least some parts, e.g. the while loop below, only work with srcAddr16 (i.e. the network
+                // address) being set. So we try to look up the network address in the list of know devices.
+                if (resp.srcAddr64 != null) {
+                    logger.debug(`Try to find network address of ${resp.srcAddr64}`, NS);
+                    // Note: Device expects addresses with a 0x prefix...
+                    let device = Device.byIeeeAddr('0x' + resp.srcAddr64, false);
+                    if (device != undefined) {
+                        srcAddr = device.networkAddress;
+                    }
+                }
+                // apperantly some functions furhter up in the protocol stack expect this to be set.
+                // so let's make sure they get the network address
+                resp.srcAddr16 = srcAddr;
+            }
             if (resp.profileId != 0x00) {
                 header = Zcl.Header.fromBuffer(payBuf);
             }
