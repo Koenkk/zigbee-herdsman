@@ -1,24 +1,64 @@
 import {Clusters} from './definition/cluster';
-import {Foundation} from './definition/foundation';
 import {DataType, DataTypeClass} from './definition/enums';
+import {Foundation} from './definition/foundation';
 import {FoundationCommandName} from './definition/foundation';
 import {Attribute, Cluster, ClusterDefinition, ClusterName, Command, CustomClusters} from './definition/tstype';
 
 const DATA_TYPE_CLASS_DISCRETE = [
-    DataType.DATA8, DataType.DATA16, DataType.DATA24, DataType.DATA32, DataType.DATA40,
-    DataType.DATA48, DataType.DATA56, DataType.DATA64, DataType.BOOLEAN,
-    DataType.BITMAP8, DataType.BITMAP16, DataType.BITMAP24, DataType.BITMAP32, DataType.BITMAP40,
-    DataType.BITMAP48, DataType.BITMAP56, DataType.BITMAP64, DataType.ENUM8, DataType.ENUM16,
-    DataType.OCTET_STR, DataType.CHAR_STR, DataType.LONG_OCTET_STR, DataType.LONG_CHAR_STR, DataType.ARRAY,
-    DataType.STRUCT, DataType.SET, DataType.BAG, DataType.CLUSTER_ID, DataType.ATTR_ID, DataType.BAC_OID,
-    DataType.IEEE_ADDR, DataType.SEC_KEY,
+    DataType.DATA8,
+    DataType.DATA16,
+    DataType.DATA24,
+    DataType.DATA32,
+    DataType.DATA40,
+    DataType.DATA48,
+    DataType.DATA56,
+    DataType.DATA64,
+    DataType.BOOLEAN,
+    DataType.BITMAP8,
+    DataType.BITMAP16,
+    DataType.BITMAP24,
+    DataType.BITMAP32,
+    DataType.BITMAP40,
+    DataType.BITMAP48,
+    DataType.BITMAP56,
+    DataType.BITMAP64,
+    DataType.ENUM8,
+    DataType.ENUM16,
+    DataType.OCTET_STR,
+    DataType.CHAR_STR,
+    DataType.LONG_OCTET_STR,
+    DataType.LONG_CHAR_STR,
+    DataType.ARRAY,
+    DataType.STRUCT,
+    DataType.SET,
+    DataType.BAG,
+    DataType.CLUSTER_ID,
+    DataType.ATTR_ID,
+    DataType.BAC_OID,
+    DataType.IEEE_ADDR,
+    DataType.SEC_KEY,
 ];
 const DATA_TYPE_CLASS_ANALOG = [
-    DataType.UINT8, DataType.UINT16, DataType.UINT24, DataType.UINT32, DataType.UINT40,
-    DataType.UINT48, DataType.UINT56,
-    DataType.INT8, DataType.INT16, DataType.INT24, DataType.INT32, DataType.INT40,
-    DataType.INT48, DataType.INT56, DataType.SEMI_PREC, DataType.SINGLE_PREC, DataType.DOUBLE_PREC,
-    DataType.TOD, DataType.DATE, DataType.UTC,
+    DataType.UINT8,
+    DataType.UINT16,
+    DataType.UINT24,
+    DataType.UINT32,
+    DataType.UINT40,
+    DataType.UINT48,
+    DataType.UINT56,
+    DataType.INT8,
+    DataType.INT16,
+    DataType.INT24,
+    DataType.INT32,
+    DataType.INT40,
+    DataType.INT48,
+    DataType.INT56,
+    DataType.SEMI_PREC,
+    DataType.SINGLE_PREC,
+    DataType.DOUBLE_PREC,
+    DataType.TOD,
+    DataType.DATE,
+    DataType.UTC,
 ];
 
 export function getDataTypeClass(dataType: DataType): DataTypeClass {
@@ -41,7 +81,7 @@ function hasCustomClusters(customClusters: CustomClusters): boolean {
 function findClusterNameByID(id: number, manufacturerCode: number | null, clusters: CustomClusters): [name: string, partialMatch: boolean] {
     let name: string;
     // if manufacturer code is given, consider partial match if didn't match against manufacturer code
-    let partialMatch: boolean = (manufacturerCode != null);
+    let partialMatch: boolean = manufacturerCode != null;
 
     for (const clusterName in clusters) {
         const cluster = clusters[clusterName as ClusterName];
@@ -53,7 +93,7 @@ function findClusterNameByID(id: number, manufacturerCode: number | null, cluste
                 name = clusterName;
             }
 
-            if (manufacturerCode && (cluster.manufacturerCode === manufacturerCode)) {
+            if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
                 name = clusterName;
                 partialMatch = false;
                 break;
@@ -67,8 +107,11 @@ function findClusterNameByID(id: number, manufacturerCode: number | null, cluste
     return [name, partialMatch];
 }
 
-function getClusterDefinition(key: string | number, manufacturerCode: number | null, customClusters: CustomClusters)
-    : {name: string, cluster: ClusterDefinition} {
+function getClusterDefinition(
+    key: string | number,
+    manufacturerCode: number | null,
+    customClusters: CustomClusters,
+): {name: string; cluster: ClusterDefinition} {
     let name: string;
 
     if (typeof key === 'number') {
@@ -92,12 +135,13 @@ function getClusterDefinition(key: string | number, manufacturerCode: number | n
         name = key;
     }
 
-    let cluster = (name != undefined) && hasCustomClusters(customClusters) ?
-        {
-            ...Clusters[name as ClusterName],
-            ...customClusters[name],// should override Zcl clusters
-        }
-        : Clusters[name as ClusterName];
+    let cluster =
+        name != undefined && hasCustomClusters(customClusters)
+            ? {
+                  ...Clusters[name as ClusterName],
+                  ...customClusters[name], // should override Zcl clusters
+              }
+            : Clusters[name as ClusterName];
 
     if (!cluster) {
         if (typeof key === 'number') {
@@ -112,17 +156,11 @@ function getClusterDefinition(key: string | number, manufacturerCode: number | n
 }
 
 function createCluster(name: string, cluster: ClusterDefinition, manufacturerCode: number = null): Cluster {
-    const attributes: {[s: string]: Attribute} = Object.assign(
-        {},
-        ...Object.entries(cluster.attributes).map(([k, v]) => ({[k]: {...v, name: k}}))
-    );
-    const commands: {[s: string]: Command} = Object.assign(
-        {},
-        ...Object.entries(cluster.commands).map(([k, v]) => ({[k]: {...v, name: k}}))
-    );
+    const attributes: {[s: string]: Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).map(([k, v]) => ({[k]: {...v, name: k}})));
+    const commands: {[s: string]: Command} = Object.assign({}, ...Object.entries(cluster.commands).map(([k, v]) => ({[k]: {...v, name: k}})));
     const commandsResponse: {[s: string]: Command} = Object.assign(
         {},
-        ...Object.entries(cluster.commandsResponse).map(([k, v]) => ({[k]: {...v, name: k}}))
+        ...Object.entries(cluster.commandsResponse).map(([k, v]) => ({[k]: {...v, name: k}})),
     );
 
     const getAttributeInternal = (key: number | string): Attribute => {
@@ -133,7 +171,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
                 const attr = attributes[attrKey];
 
                 if (attr.ID === key) {
-                    if (manufacturerCode && (attr.manufacturerCode === manufacturerCode)) {
+                    if (manufacturerCode && attr.manufacturerCode === manufacturerCode) {
                         return attr;
                     }
 
@@ -229,11 +267,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
     };
 }
 
-export function getCluster(
-    key: string | number,
-    manufacturerCode: number | null,
-    customClusters: CustomClusters,
-): Cluster {
+export function getCluster(key: string | number, manufacturerCode: number | null, customClusters: CustomClusters): Cluster {
     const {name, cluster} = getClusterDefinition(key, manufacturerCode, customClusters);
     return createCluster(name, cluster, manufacturerCode);
 }
@@ -272,5 +306,5 @@ export function getGlobalCommand(key: number | string): Command {
 }
 
 export function isClusterName(name: string): name is ClusterName {
-    return (name in Clusters);
+    return name in Clusters;
 }

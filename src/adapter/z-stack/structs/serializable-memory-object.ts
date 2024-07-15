@@ -1,4 +1,4 @@
-import {StructMemoryAlignment} from "./struct";
+import {StructMemoryAlignment} from './struct';
 
 /**
  * Interface for serializable items to be written to NV. Objects implementing this interface

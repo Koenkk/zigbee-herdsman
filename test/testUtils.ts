@@ -1,4 +1,4 @@
-function duplicateArray (amount, value) {
+function duplicateArray(amount, value) {
     let result = [];
     for (let i = 0; i < amount; i++) {
         result = result.concat(value);
@@ -17,6 +17,4 @@ const ieeeaAddr2 = {
     hex: [0x00, 0x12, 0x5b, 0x00, 0x12, 0x01, 0x44, 0xaf],
 };
 
-export {
-    duplicateArray, ieeeaAddr1, ieeeaAddr2,
-}
+export {duplicateArray, ieeeaAddr1, ieeeaAddr2};

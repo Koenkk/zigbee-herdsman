@@ -2,6 +2,4 @@
 /* eslint-disable */
 import ZiGateAdapter from './zigateAdapter';
 
-export {
-    ZiGateAdapter
-};
+export {ZiGateAdapter};

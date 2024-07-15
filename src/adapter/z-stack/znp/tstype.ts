@@ -1,6 +1,6 @@
 import ParameterType from './parameterType';
 
-type MtType = number|number[]|string|Buffer|{[s: string]: number|string}[];
+type MtType = number | number[] | string | Buffer | {[s: string]: number | string}[];
 
 interface MtParameter {
     name: string;
@@ -15,7 +15,7 @@ interface MtCmd {
     response?: MtParameter[];
 }
 
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ZpiObjectPayload = any;
 
 interface BuffaloZnpOptions {

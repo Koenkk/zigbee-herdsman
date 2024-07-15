@@ -6,12 +6,14 @@ import * as named from './named';
 export class EzspStruct {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     static serialize(cls: any, obj: any): Buffer {
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        return Buffer.concat(cls._fields.map((field: any[]) => {
-            const value = obj[field[0]];
-            // console.assert(field[1]);
-            return field[1].serialize(field[1], value);
-        }));
+        return Buffer.concat(
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+            cls._fields.map((field: any[]) => {
+                const value = obj[field[0]];
+                // console.assert(field[1]);
+                return field[1].serialize(field[1], value);
+            }),
+        );
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -95,7 +97,6 @@ export class EmberApsFrame extends EzspStruct {
     public groupId?: number;
     public options?: named.EmberApsOption;
 
-
     // ZigBee APS frame parameters.
     static _fields = [
         // The application profile ID that describes the format of the message.
@@ -173,7 +174,6 @@ export class EmberCertificateData extends EzspStruct {
         // The certificate data.
         ['contents', basic.fixed_list(48, basic.uint8_t)],
     ];
-
 }
 
 export class EmberPublicKeyData extends EzspStruct {
@@ -619,7 +619,6 @@ export class EmberNodeDescriptor extends EzspStruct {
     ];
 }
 
-
 export class EmberSimpleDescriptor extends EzspStruct {
     static _fields = [
         ['endpoint', basic.uint8_t],
@@ -645,13 +644,15 @@ export class EmberMultiAddress extends EzspStruct {
     static serialize(cls: any, obj: any): Buffer {
         const addrmode = obj['addrmode'];
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        const fields = (addrmode == 3) ? cls.fields3 : cls.fields1;
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        return Buffer.concat(fields.map((field: any[]) => {
-            const value = obj[field[0]];
-            // console.assert(field[1]);
-            return field[1].serialize(field[1], value);
-        }));
+        const fields = addrmode == 3 ? cls.fields3 : cls.fields1;
+        return Buffer.concat(
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+            fields.map((field: any[]) => {
+                const value = obj[field[0]];
+                // console.assert(field[1]);
+                return field[1].serialize(field[1], value);
+            }),
+        );
     }
 }
 
@@ -771,8 +772,8 @@ export class EmberSecurityManagerContext extends EzspStruct {
 
 /** This data structure contains the metadata pertaining to an network key */
 export class EmberSecurityManagerNetworkKeyInfo extends EzspStruct {
-    public networkKeySet: number;// boolean
-    public alternateNetworkKeySet: number;// boolean
+    public networkKeySet: number; // boolean
+    public alternateNetworkKeySet: number; // boolean
     public networkKeySequenceNumber: number;
     public altNetworkKeySequenceNumber: number;
     public networkKeyFrameCounter: number;

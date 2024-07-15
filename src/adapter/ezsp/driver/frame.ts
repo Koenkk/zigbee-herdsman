@@ -1,6 +1,6 @@
 /* istanbul ignore file */
-import {RANDOMIZE_SEQ, RANDOMIZE_START} from "./consts";
-import crc16ccitt from "./utils/crc16ccitt";
+import {RANDOMIZE_SEQ, RANDOMIZE_START} from './consts';
+import crc16ccitt from './utils/crc16ccitt';
 
 export enum FrameType {
     UNKNOWN = 0,
@@ -30,15 +30,15 @@ export class Frame {
 
         if ((ctrlByte & 0x80) === 0) {
             this.type = FrameType.DATA;
-        } else if ((ctrlByte & 0xE0) === 0x80) {
+        } else if ((ctrlByte & 0xe0) === 0x80) {
             this.type = FrameType.ACK;
-        } else if ((ctrlByte & 0xE0) === 0xA0) {
+        } else if ((ctrlByte & 0xe0) === 0xa0) {
             this.type = FrameType.NAK;
-        } else if (ctrlByte === 0xC0) {
+        } else if (ctrlByte === 0xc0) {
             this.type = FrameType.RST;
-        } else if (ctrlByte === 0xC1) {
+        } else if (ctrlByte === 0xc1) {
             this.type = FrameType.RSTACK;
-        } else if (ctrlByte === 0xC2) {
+        } else if (ctrlByte === 0xc2) {
             this.type = FrameType.ERROR;
         } else {
             this.type = FrameType.UNKNOWN;
@@ -65,10 +65,10 @@ export class Frame {
         for (const c of buffer) {
             out.writeUInt8(c ^ rand, outIdx++);
 
-            if ((rand % 2)) {
-                rand = ((rand >> 1) ^ RANDOMIZE_SEQ);
+            if (rand % 2) {
+                rand = (rand >> 1) ^ RANDOMIZE_SEQ;
             } else {
-                rand = (rand >> 1);
+                rand = rand >> 1;
             }
         }
 
@@ -80,7 +80,7 @@ export class Frame {
      */
     public checkCRC(): void {
         const crc = crc16ccitt(this.buffer.subarray(0, -3), 65535);
-        const crcArr = Buffer.from([(crc >> 8), (crc % 256)]);
+        const crcArr = Buffer.from([crc >> 8, crc % 256]);
         const subArr = this.buffer.subarray(-3, -1);
 
         if (!subArr.equals(crcArr)) {
@@ -89,7 +89,7 @@ export class Frame {
     }
 
     /**
-     * 
+     *
      * @returns Buffer to hex string
      */
     public toString(): string {

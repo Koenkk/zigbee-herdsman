@@ -1,5 +1,44 @@
 # Changelog
 
+## [0.53.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.53.0...v0.53.1) (2024-07-12)
+
+
+### Bug Fixes
+
+* Allow to ignore cache for device interview ([#1109](https://github.com/Koenkk/zigbee-herdsman/issues/1109)) ([3b55e54](https://github.com/Koenkk/zigbee-herdsman/commit/3b55e5469d0827ef8ab09f1f4cd08158e10cb524))
+
+## [0.53.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.52.0...v0.53.0) (2024-07-10)
+
+
+### Features
+
+* Inovelli Adding P26 For VZM36 ([#1096](https://github.com/Koenkk/zigbee-herdsman/issues/1096)) ([4adfea3](https://github.com/Koenkk/zigbee-herdsman/commit/4adfea37dab7bd193d5fc3793da774c4e1002933))
+
+
+### Bug Fixes
+
+* Ember: Always set `TRUST_CENTER_ADDRESS_CACHE_SIZE` ([#1108](https://github.com/Koenkk/zigbee-herdsman/issues/1108)) ([72b7f55](https://github.com/Koenkk/zigbee-herdsman/commit/72b7f55a146ce17a1c59a6b41f3f6e438553f027))
+
+## [0.52.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.51.0...v0.52.0) (2024-07-08)
+
+
+### Features
+
+* Ember: Implement requests concurrency ([#1106](https://github.com/Koenkk/zigbee-herdsman/issues/1106)) ([a737f9b](https://github.com/Koenkk/zigbee-herdsman/commit/a737f9b6caff62b3d18ecee6a9cd1836798a6121))
+
+
+### Bug Fixes
+
+* **ignore:** Implement prettier ([#1103](https://github.com/Koenkk/zigbee-herdsman/issues/1103)) ([2b2bd5b](https://github.com/Koenkk/zigbee-herdsman/commit/2b2bd5be1e372d02a73dcb257ce7a9dbf6cee9b1))
+* **ignore:** update dependencies ([#1105](https://github.com/Koenkk/zigbee-herdsman/issues/1105)) ([039fd3e](https://github.com/Koenkk/zigbee-herdsman/commit/039fd3efb776232fe5491639c28977ad0f78d891))
+
+## [0.51.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.50.1...v0.51.0) (2024-07-01)
+
+
+### Features
+
+* Ember: Support for EmberZNet v8.0.0 ([#1094](https://github.com/Koenkk/zigbee-herdsman/issues/1094)) ([c87ccd4](https://github.com/Koenkk/zigbee-herdsman/commit/c87ccd48a66b85272a409be737b9161fef8225d8))
+
 ## [0.50.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.50.0...v0.50.1) (2024-06-30)
 
 

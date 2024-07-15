@@ -1,6 +1,7 @@
 /* istanbul ignore file */
-import {Readable, ReadableOptions} from "stream";
-// import {logger} from "../../../utils/logger";
+import {Readable, ReadableOptions} from 'stream';
+
+// import {logger} from '../../../utils/logger';
 
 // const NS = 'zh:ember:uart:ash:writer';
 
@@ -47,6 +48,5 @@ export class AshWriter extends Readable {
         }
     }
 
-    public _read(): void {
-    }
+    public _read(): void {}
 }

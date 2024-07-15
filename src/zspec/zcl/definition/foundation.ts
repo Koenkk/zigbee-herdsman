@@ -1,14 +1,32 @@
 /* eslint max-len: 0 */
-import {ParameterDefinition} from './tstype';
 import {DataType, BuffaloZclDataType, Direction, ParameterCondition, DataTypeClass} from './enums';
 import {Status} from './status';
+import {ParameterDefinition} from './tstype';
 
-export type FoundationCommandName = (
-    'read' | 'readRsp' | 'write' | 'writeUndiv' | 'writeRsp' | 'writeNoRsp' | 'configReport' | 'configReportRsp' |
-    'readReportConfig' | 'readReportConfigRsp' | 'report' | 'defaultRsp' | 'discover' | 'discoverRsp' | 'readStructured' |
-    'writeStructured' | 'writeStructuredRsp' | 'discoverCommands' | 'discoverCommandsRsp' | 'discoverCommandsGen' |
-    'discoverCommandsGenRsp' | 'discoverExt' | 'discoverExtRsp'
-);
+export type FoundationCommandName =
+    | 'read'
+    | 'readRsp'
+    | 'write'
+    | 'writeUndiv'
+    | 'writeRsp'
+    | 'writeNoRsp'
+    | 'configReport'
+    | 'configReportRsp'
+    | 'readReportConfig'
+    | 'readReportConfigRsp'
+    | 'report'
+    | 'defaultRsp'
+    | 'discover'
+    | 'discoverRsp'
+    | 'readStructured'
+    | 'writeStructured'
+    | 'writeStructuredRsp'
+    | 'discoverCommands'
+    | 'discoverCommandsRsp'
+    | 'discoverCommandsGen'
+    | 'discoverCommandsGenRsp'
+    | 'discoverExt'
+    | 'discoverExtRsp';
 
 interface FoundationDefinition {
     ID: number;
@@ -22,9 +40,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
     read: {
         ID: 0x00,
         parseStrategy: 'repetitive',
-        parameters: [
-            {name: 'attrId', type: DataType.UINT16},
-        ],
+        parameters: [{name: 'attrId', type: DataType.UINT16}],
         response: 0x01, // readRsp
     },
     /** Read Attributes Response */
@@ -86,9 +102,24 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             {name: 'direction', type: DataType.UINT8},
             {name: 'attrId', type: DataType.UINT16},
             {name: 'dataType', type: DataType.UINT8, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'minRepIntval', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'maxRepIntval', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'repChange', type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}, {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL, value: DataTypeClass.ANALOG}]},
+            {
+                name: 'minRepIntval',
+                type: DataType.UINT16,
+                conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}],
+            },
+            {
+                name: 'maxRepIntval',
+                type: DataType.UINT16,
+                conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}],
+            },
+            {
+                name: 'repChange',
+                type: BuffaloZclDataType.USE_DATA_TYPE,
+                conditions: [
+                    {type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER},
+                    {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL, value: DataTypeClass.ANALOG},
+                ],
+            },
             {name: 'timeout', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.SERVER_TO_CLIENT}]},
         ],
         response: 0x07, // configReportRsp
@@ -122,15 +153,30 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             {name: 'direction', type: DataType.UINT8},
             {name: 'attrId', type: DataType.UINT16},
             {name: 'dataType', type: DataType.UINT8, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'minRepIntval', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'maxRepIntval', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
-            {name: 'repChange', type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}, {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL, value: DataTypeClass.ANALOG}]},
+            {
+                name: 'minRepIntval',
+                type: DataType.UINT16,
+                conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}],
+            },
+            {
+                name: 'maxRepIntval',
+                type: DataType.UINT16,
+                conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}],
+            },
+            {
+                name: 'repChange',
+                type: BuffaloZclDataType.USE_DATA_TYPE,
+                conditions: [
+                    {type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER},
+                    {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL, value: DataTypeClass.ANALOG},
+                ],
+            },
             {name: 'timeout', type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.SERVER_TO_CLIENT}]},
         ],
     },
     /** Report attributes */
     report: {
-        ID: 0x0A,
+        ID: 0x0a,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
@@ -140,7 +186,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
     },
     /** Default Response */
     defaultRsp: {
-        ID: 0x0B,
+        ID: 0x0b,
         parseStrategy: 'flat',
         parameters: [
             {name: 'cmdId', type: DataType.UINT8},
@@ -149,7 +195,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
     },
     /** Discover Attributes */
     discover: {
-        ID: 0x0C,
+        ID: 0x0c,
         parseStrategy: 'flat',
         parameters: [
             {name: 'startAttrId', type: DataType.UINT16},
@@ -158,7 +204,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
     },
     /** Discover Attributes Response */
     discoverRsp: {
-        ID: 0x0D,
+        ID: 0x0d,
         parseStrategy: 'oneof',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
@@ -167,7 +213,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
     },
     /** Read Attributes Structured */
     readStructured: {
-        ID: 0x0E,
+        ID: 0x0e,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
@@ -176,7 +222,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
     },
     /** Write Attributes Structured */
     writeStructured: {
-        ID: 0x0F,
+        ID: 0x0f,
         parseStrategy: 'repetitive',
         parameters: [
             {name: 'attrId', type: DataType.UINT16},
@@ -184,7 +230,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             {name: 'dataType', type: DataType.UINT8},
             {name: 'elementData', type: BuffaloZclDataType.USE_DATA_TYPE},
         ],
-        response: 0x10,// writeStructuredRsp
+        response: 0x10, // writeStructuredRsp
     },
     /** Write Attributes Structured response */
     writeStructuredRsp: {
@@ -195,7 +241,11 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             {name: 'status', type: DataType.UINT8},
             {name: 'attrId', type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_NOT_EQUAL, value: Status.SUCCESS}]},
             // always one zero-octet if failed attribute not of type array or structure, otherwise can also be zero if no info on which element caused failure
-            {name: 'selector', type: BuffaloZclDataType.STRUCTURED_SELECTOR, conditions: [{type: ParameterCondition.STATUS_NOT_EQUAL, value: Status.SUCCESS}]},
+            {
+                name: 'selector',
+                type: BuffaloZclDataType.STRUCTURED_SELECTOR,
+                conditions: [{type: ParameterCondition.STATUS_NOT_EQUAL, value: Status.SUCCESS}],
+            },
         ],
     },
     /** Discover Commands Received */
@@ -211,9 +261,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
     discoverCommandsRsp: {
         ID: 0x12,
         parseStrategy: 'oneof',
-        parameters: [
-            {name: 'cmdId', type: DataType.UINT8},
-        ],
+        parameters: [{name: 'cmdId', type: DataType.UINT8}],
     },
     /** Discover Commands Generated */
     discoverCommandsGen: {
@@ -228,9 +276,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
     discoverCommandsGenRsp: {
         ID: 0x14,
         parseStrategy: 'oneof',
-        parameters: [
-            {name: 'cmdId', type: DataType.UINT8},
-        ],
+        parameters: [{name: 'cmdId', type: DataType.UINT8}],
     },
     /** Discover Attributes Extended */
     discoverExt: {

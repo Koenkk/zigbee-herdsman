@@ -1,8 +1,6 @@
-
 import {Buffalo} from '../../../buffalo';
 import ParameterType from './parameterType';
 import {BuffaloZnpOptions} from './tstype';
-
 
 type RoutingTableEntryStatus = 'ACTIVE' | 'DISCOVERY_UNDERWAY' | 'DISCOVERY_FAILED' | 'INACTIVE';
 
@@ -31,7 +29,7 @@ interface Bind {
 interface Neighbor {
     extPandId: string;
     extAddr: string;
-    nwkAddr: number
+    nwkAddr: number;
     deviceType: number;
     rxOnWhenIdle: number;
     relationship: number;
@@ -50,7 +48,6 @@ interface Network {
     permitJoin: number;
 }
 
-
 class BuffaloZnp extends Buffalo {
     private readListRoutingTable(length: number): RoutingEntry[] {
         const value: RoutingEntry[] = [];
@@ -66,7 +63,7 @@ class BuffaloZnp extends Buffalo {
         return value;
     }
 
-    private readListBindTable(length: number): Bind[]{
+    private readListBindTable(length: number): Bind[] {
         const value: Bind[] = [];
 
         for (let i = 0; i < length; i++) {
@@ -91,24 +88,24 @@ class BuffaloZnp extends Buffalo {
             const prefix = {
                 extPandId: this.readIeeeAddr(),
                 extAddr: this.readIeeeAddr(),
-                nwkAddr: this.readUInt16()
+                nwkAddr: this.readUInt16(),
             };
             const bitfields = this.readUInt8();
             value.push({
                 ...prefix,
                 deviceType: bitfields & 0x03,
-                rxOnWhenIdle: (bitfields & 0x0C) >> 2,
+                rxOnWhenIdle: (bitfields & 0x0c) >> 2,
                 relationship: (bitfields & 0x70) >> 4,
                 permitJoin: this.readUInt8() & 0x03,
                 depth: this.readUInt8(),
-                lqi: this.readUInt8()
+                lqi: this.readUInt8(),
             });
         }
 
         return value;
     }
 
-    private  readListNetwork(length: number): Network[] {
+    private readListNetwork(length: number): Network[] {
         const value: Network[] = [];
         for (let i = 0; i < length; i++) {
             const neightborPanId = this.readUInt16();
@@ -120,11 +117,11 @@ class BuffaloZnp extends Buffalo {
             value.push({
                 neightborPanId,
                 logicalChannel,
-                stackProfile: value1 & 0x0F,
-                zigbeeVersion: (value1 & 0xF0) >> 4,
-                beaconOrder: value2 & 0x0F,
-                superFrameOrder: (value2 & 0xF0) >> 4,
-                permitJoin
+                stackProfile: value1 & 0x0f,
+                zigbeeVersion: (value1 & 0xf0) >> 4,
+                beaconOrder: value2 & 0x0f,
+                superFrameOrder: (value2 & 0xf0) >> 4,
+                permitJoin,
             });
         }
 
@@ -157,54 +154,54 @@ class BuffaloZnp extends Buffalo {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public write(type: ParameterType, value: any, options: BuffaloZnpOptions): void {
         switch (type) {
-        case ParameterType.UINT8: {
-            return this.writeUInt8(value);
-        }
-        case ParameterType.UINT16: {
-            return this.writeUInt16(value);
-        }
-        case ParameterType.UINT32: {
-            return this.writeUInt32(value);
-        }
-        case ParameterType.IEEEADDR: {
-            return this.writeIeeeAddr(value);
-        }
-        case ParameterType.BUFFER: {
-            return this.writeBuffer(value, options.length ?? value.length);
-        }
-        case ParameterType.BUFFER8: {
-            return this.writeBuffer(value, 8);
-        }
-        case ParameterType.BUFFER16: {
-            return this.writeBuffer(value, 16);
-        }
-        case ParameterType.BUFFER18: {
-            return this.writeBuffer(value, 18);
-        }
-        case ParameterType.BUFFER32: {
-            return this.writeBuffer(value, 32);
-        }
-        case ParameterType.BUFFER42: {
-            return this.writeBuffer(value, 42);
-        }
-        case ParameterType.BUFFER100: {
-            return this.writeBuffer(value, 100);
-        }
-        case ParameterType.LIST_UINT8: {
-            return this.writeListUInt8(value);
-        }
-        case ParameterType.LIST_UINT16: {
-            return this.writeListUInt16(value);
-        }
-        // NOTE: not writable
-        // case ParameterType.LIST_ROUTING_TABLE:
-        // case ParameterType.LIST_BIND_TABLE:
-        // case ParameterType.LIST_NEIGHBOR_LQI:
-        // case ParameterType.LIST_NETWORK:
-        // case ParameterType.LIST_ASSOC_DEV:
-        case ParameterType.INT8: {
-            return this.writeInt8(value);
-        }
+            case ParameterType.UINT8: {
+                return this.writeUInt8(value);
+            }
+            case ParameterType.UINT16: {
+                return this.writeUInt16(value);
+            }
+            case ParameterType.UINT32: {
+                return this.writeUInt32(value);
+            }
+            case ParameterType.IEEEADDR: {
+                return this.writeIeeeAddr(value);
+            }
+            case ParameterType.BUFFER: {
+                return this.writeBuffer(value, options.length ?? value.length);
+            }
+            case ParameterType.BUFFER8: {
+                return this.writeBuffer(value, 8);
+            }
+            case ParameterType.BUFFER16: {
+                return this.writeBuffer(value, 16);
+            }
+            case ParameterType.BUFFER18: {
+                return this.writeBuffer(value, 18);
+            }
+            case ParameterType.BUFFER32: {
+                return this.writeBuffer(value, 32);
+            }
+            case ParameterType.BUFFER42: {
+                return this.writeBuffer(value, 42);
+            }
+            case ParameterType.BUFFER100: {
+                return this.writeBuffer(value, 100);
+            }
+            case ParameterType.LIST_UINT8: {
+                return this.writeListUInt8(value);
+            }
+            case ParameterType.LIST_UINT16: {
+                return this.writeListUInt16(value);
+            }
+            // NOTE: not writable
+            // case ParameterType.LIST_ROUTING_TABLE:
+            // case ParameterType.LIST_BIND_TABLE:
+            // case ParameterType.LIST_NEIGHBOR_LQI:
+            // case ParameterType.LIST_NETWORK:
+            // case ParameterType.LIST_ASSOC_DEV:
+            case ParameterType.INT8: {
+                return this.writeInt8(value);
+            }
         }
 
         throw new Error(`Write for '${type}' not available`);
@@ -213,91 +210,91 @@ class BuffaloZnp extends Buffalo {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public read(type: ParameterType, options: BuffaloZnpOptions): any {
         switch (type) {
-        case ParameterType.UINT8: {
-            return this.readUInt8();
-        }
-        case ParameterType.UINT16: {
-            return this.readUInt16();
-        }
-        case ParameterType.UINT32: {
-            return this.readUInt32();
-        }
-        case ParameterType.IEEEADDR: {
-            return this.readIeeeAddr();
-        }
-        case ParameterType.BUFFER: {
-            if (options.length == null) {
-                throw new Error('Cannot read BUFFER without length option specified');
+            case ParameterType.UINT8: {
+                return this.readUInt8();
             }
-
-            return this.readBuffer(options.length);
-        }
-        case ParameterType.BUFFER8: {
-            return this.readBuffer(8);
-        }
-        case ParameterType.BUFFER16: {
-            return this.readBuffer(16);
-        }
-        case ParameterType.BUFFER18: {
-            return this.readBuffer(18);
-        }
-        case ParameterType.BUFFER32: {
-            return this.readBuffer(32);
-        }
-        case ParameterType.BUFFER42: {
-            return this.readBuffer(42);
-        }
-        case ParameterType.BUFFER100: {
-            return this.readBuffer(100);
-        }
-        case ParameterType.LIST_UINT8: {
-            if (options.length == null) {
-                throw new Error('Cannot read LIST_UINT8 without length option specified');
+            case ParameterType.UINT16: {
+                return this.readUInt16();
             }
-
-            return this.readListUInt8(options.length);
-        }
-        case ParameterType.LIST_UINT16: {
-            if (options.length == null) {
-                throw new Error('Cannot read LIST_UINT16 without length option specified');
+            case ParameterType.UINT32: {
+                return this.readUInt32();
             }
-
-            return this.readListUInt16(options.length);
-        }
-        case ParameterType.LIST_ROUTING_TABLE: {
-            if (options.length == null) {
-                throw new Error('Cannot read LIST_ROUTING_TABLE without length option specified');
+            case ParameterType.IEEEADDR: {
+                return this.readIeeeAddr();
             }
+            case ParameterType.BUFFER: {
+                if (options.length == null) {
+                    throw new Error('Cannot read BUFFER without length option specified');
+                }
 
-            return this.readListRoutingTable(options.length);
-        }
-        case ParameterType.LIST_BIND_TABLE: {
-            if (options.length == null) {
-                throw new Error('Cannot read LIST_BIND_TABLE without length option specified');
+                return this.readBuffer(options.length);
             }
-
-            return this.readListBindTable(options.length);
-        }
-        case ParameterType.LIST_NEIGHBOR_LQI: {
-            if (options.length == null) {
-                throw new Error('Cannot read LIST_NEIGHBOR_LQI without length option specified');
+            case ParameterType.BUFFER8: {
+                return this.readBuffer(8);
             }
-
-            return this.readListNeighborLqi(options.length);
-        }
-        case ParameterType.LIST_NETWORK: {
-            if (options.length == null) {
-                throw new Error('Cannot read LIST_NETWORK without length option specified');
+            case ParameterType.BUFFER16: {
+                return this.readBuffer(16);
             }
+            case ParameterType.BUFFER18: {
+                return this.readBuffer(18);
+            }
+            case ParameterType.BUFFER32: {
+                return this.readBuffer(32);
+            }
+            case ParameterType.BUFFER42: {
+                return this.readBuffer(42);
+            }
+            case ParameterType.BUFFER100: {
+                return this.readBuffer(100);
+            }
+            case ParameterType.LIST_UINT8: {
+                if (options.length == null) {
+                    throw new Error('Cannot read LIST_UINT8 without length option specified');
+                }
 
-            return this.readListNetwork(options.length);
-        }
-        case ParameterType.LIST_ASSOC_DEV: {
-            return this.readListAssocDev(options);
-        }
-        case ParameterType.INT8: {
-            return this.readInt8();
-        }
+                return this.readListUInt8(options.length);
+            }
+            case ParameterType.LIST_UINT16: {
+                if (options.length == null) {
+                    throw new Error('Cannot read LIST_UINT16 without length option specified');
+                }
+
+                return this.readListUInt16(options.length);
+            }
+            case ParameterType.LIST_ROUTING_TABLE: {
+                if (options.length == null) {
+                    throw new Error('Cannot read LIST_ROUTING_TABLE without length option specified');
+                }
+
+                return this.readListRoutingTable(options.length);
+            }
+            case ParameterType.LIST_BIND_TABLE: {
+                if (options.length == null) {
+                    throw new Error('Cannot read LIST_BIND_TABLE without length option specified');
+                }
+
+                return this.readListBindTable(options.length);
+            }
+            case ParameterType.LIST_NEIGHBOR_LQI: {
+                if (options.length == null) {
+                    throw new Error('Cannot read LIST_NEIGHBOR_LQI without length option specified');
+                }
+
+                return this.readListNeighborLqi(options.length);
+            }
+            case ParameterType.LIST_NETWORK: {
+                if (options.length == null) {
+                    throw new Error('Cannot read LIST_NETWORK without length option specified');
+                }
+
+                return this.readListNetwork(options.length);
+            }
+            case ParameterType.LIST_ASSOC_DEV: {
+                return this.readListAssocDev(options);
+            }
+            case ParameterType.INT8: {
+                return this.readInt8();
+            }
         }
 
         // unreachable detected in TS, but not in JS when typing ignored for "type", so kept for good measure

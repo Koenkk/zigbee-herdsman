@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 /* eslint-disable */
-import {ZiGateMessageCode} from "./constants";
-import ParameterType from "./parameterType";
+import {ZiGateMessageCode} from './constants';
+import ParameterType from './parameterType';
 
 export interface ZiGateMessageParameter {
     name: string;
@@ -13,11 +13,11 @@ export interface ZiGateMessageType {
     response: ZiGateMessageParameter[];
 }
 
-export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
+export const ZiGateMessage: {[k: number]: ZiGateMessageType} = {
     [ZiGateMessageCode.GetTimeServer]: {
         response: [
             {name: 'timestampUTC', parameterType: ParameterType.UINT32}, // <Timestamp UTC: uint32_t> from 2000-01-01 00:00:00
-        ]
+        ],
     },
     [ZiGateMessageCode.DeviceAnnounce]: {
         response: [
@@ -33,7 +33,7 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             // Bit 6 – Security capability
             // Bit 7 – Allocate Address
             // {name: 'rejoin', parameterType: ParameterType.UINT8},
-        ]
+        ],
     },
     [ZiGateMessageCode.Status]: {
         response: [
@@ -42,7 +42,6 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             // 1 = Incorrect parameters
             // 2 = Unhandled command
             // 3 = Command failed
-            // eslint-disable-next-line max-len
             // 4 = Busy (Node is carrying out a lengthy operation and is currently unable to handle the incoming command)
             // 5 = Stack already started (no new configuration accepted)
             // 128 – 244 = Failed (ZigBee event codes)
@@ -63,12 +62,12 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             // // debug 3.1e++
             // {name: 'PDUM_u8GetMaxNpduUse', parameterType: ParameterType.MAYBE_UINT8},
             // {name: 'u8GetMaxApduUse', parameterType: ParameterType.MAYBE_UINT8},
-        ]
+        ],
     },
     [ZiGateMessageCode.PermitJoinStatus]: {
         response: [
             {name: 'status', parameterType: ParameterType.UINT8}, // <status:uint8_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.DataIndication]: {
         response: [
@@ -87,7 +86,7 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             // {name: 'payloadSize', parameterType: ParameterType.UINT8}, // <payload size : uint8_t>
             {name: 'payload', parameterType: ParameterType.BUFFER_RAW}, // <payload : data each element is
             // uint8_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.NodeClusterList]: {
         response: [
@@ -95,7 +94,7 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             {name: 'profileID', parameterType: ParameterType.UINT16}, // <profile ID: uint16_t>
             {name: 'clusterCount', parameterType: ParameterType.UINT8},
             {name: 'clusterList', parameterType: ParameterType.LIST_UINT16}, // <cluster list: data each entry is uint16_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.NodeAttributeList]: {
         response: [
@@ -104,7 +103,7 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             {name: 'clusterID', parameterType: ParameterType.UINT16}, // <cluster ID: uint16_t>
             {name: 'attributeCount', parameterType: ParameterType.UINT8},
             {name: 'attributeList', parameterType: ParameterType.LIST_UINT16}, //  <attribute list: data each entry is uint16_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.NodeCommandIDList]: {
         response: [
@@ -113,7 +112,7 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             {name: 'clusterID', parameterType: ParameterType.UINT16}, // <cluster ID: uint16_t>
             {name: 'commandIDCount', parameterType: ParameterType.UINT8},
             {name: 'commandIDList', parameterType: ParameterType.LIST_UINT8}, // <command ID list:data each entry is uint8_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.APSDataACK]: {
         response: [
@@ -126,7 +125,7 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             {name: 'clusterID', parameterType: ParameterType.UINT16BE},
             // // <destination address: uint16_t or uint64_t>
             {name: 'seqNumber', parameterType: ParameterType.UINT8}, // <seq number: uint8_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.APSDataConfirm]: {
         response: [
@@ -142,7 +141,7 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             // from 3.1e
             {name: 'PDUM_u8GetNpduUse', parameterType: ParameterType.MAYBE_UINT8},
             {name: 'u8GetApduUse', parameterType: ParameterType.MAYBE_UINT8},
-        ]
+        ],
     },
     [ZiGateMessageCode.APSDataConfirmFailed]: {
         response: [
@@ -156,7 +155,7 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             // from 3.1e
             {name: 'PDUM_u8GetNpduUse', parameterType: ParameterType.MAYBE_UINT8},
             {name: 'u8GetApduUse', parameterType: ParameterType.MAYBE_UINT8},
-        ]
+        ],
     },
     [ZiGateMessageCode.NetworkState]: {
         response: [
@@ -165,14 +164,14 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             {name: 'PANID', parameterType: ParameterType.UINT16BE}, // <PAN ID: uint16_t>
             {name: 'ExtPANID', parameterType: ParameterType.IEEEADDR}, // <Ext PAN ID: uint64_t>
             {name: 'Channel', parameterType: ParameterType.UINT8}, // <Channel: uint8_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.VersionList]: {
         response: [
             {name: 'major', parameterType: ParameterType.UINT8},
             {name: 'minor', parameterType: ParameterType.UINT8},
             {name: 'revision', parameterType: ParameterType.UINT16},
-        ]
+        ],
     },
     [ZiGateMessageCode.NetworkJoined]: {
         response: [
@@ -184,26 +183,26 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             {name: 'shortAddress', parameterType: ParameterType.UINT16BE}, // <short address: uint16_t>
             // {name: 'extendedAddress', parameterType: ParameterType.IEEEADDR}, // <extended address:uint64_t>
             // {name: 'channel', parameterType: ParameterType.UINT8}, // <channel: uint8_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.LeaveIndication]: {
         response: [
             {name: 'extendedAddress', parameterType: ParameterType.IEEEADDR}, // <extended address: uint64_t>
             {name: 'rejoin', parameterType: ParameterType.UINT8}, // <rejoin status: uint8_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.ManagementLeaveResponse]: {
         response: [
             {name: 'sqn', parameterType: ParameterType.UINT8},
             {name: 'status', parameterType: ParameterType.UINT8}, // <status: uint8_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.RouterDiscoveryConfirm]: {
         response: [
             {name: 'status', parameterType: ParameterType.UINT8}, // <status: uint8_t>
             // {name: 'nwkStatus', parameterType: ParameterType.UINT8}, // <nwk status: uint8_t>
             // {name: 'dstAddress', parameterType: ParameterType.UINT16BE}, // <nwk status: uint16_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.SimpleDescriptorResponse]: {
         response: [
@@ -211,7 +210,7 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             {name: 'profile ID', parameterType: ParameterType.UINT16BE}, // <profile ID: uint16_t>
             {name: 'clusterID', parameterType: ParameterType.UINT16BE}, // <cluster ID: uint16_t>
             {name: 'attributeList', parameterType: ParameterType.LIST_UINT16BE}, // <attribute list: data each entry is uint16_t>
-        ]
+        ],
     },
     [ZiGateMessageCode.ManagementLQIResponse]: {
         response: [
@@ -239,53 +238,52 @@ export const ZiGateMessage: { [k: number]: ZiGateMessageType } = {
             // bit 6-7 Rx On When Idle status
             // (1-On 0-Off)
             {name: 'srcAddress', parameterType: ParameterType.UINT16BE}, // <Src Address : uint16_t> ( only from v3.1a)
-        ]
+        ],
     },
     [ZiGateMessageCode.PDMEvent]: {
         response: [
             {name: 'eventStatus', parameterType: ParameterType.UINT8}, // <event status: uint8_t>
             {name: 'recordID', parameterType: ParameterType.UINT32BE}, // <record ID: uint32_t>
-
-        ]
+        ],
     },
     [ZiGateMessageCode.PDMLoaded]: {
-        response: [
-            {name: 'length', parameterType: ParameterType.UINT8},
-        ]
+        response: [{name: 'length', parameterType: ParameterType.UINT8}],
     },
-    [ZiGateMessageCode.RestartNonFactoryNew]: { // Non “Factory new” Restart
+    [ZiGateMessageCode.RestartNonFactoryNew]: {
+        // Non “Factory new” Restart
         response: [
             {name: 'status', parameterType: ParameterType.UINT8}, // <status: uint8_t>
             //	0 – STARTUP
             // 1 – RUNNING
             // 2 – NFN_START
-        ]
+        ],
     },
-    [ZiGateMessageCode.RestartFactoryNew]: { // “Factory New” Restart
+    [ZiGateMessageCode.RestartFactoryNew]: {
+        // “Factory New” Restart
         response: [
             {name: 'status', parameterType: ParameterType.UINT8}, // <status: uint8_t>
             // 0 – STARTUP
             // 2 – NFN_START
             // 6 – RUNNING
             // The node is not yet provisioned.
-        ]
+        ],
     },
     [ZiGateMessageCode.ExtendedStatusCallBack]: {
         response: [
             {name: 'status', parameterType: ParameterType.UINT8},
             // https://github.com/fairecasoimeme/ZiGate/blob/aac14153db332eb5b898cba0f57f5999e5cf11eb/Module%20Radio/Firmware/src/sdk/JN-SW-4170/Components/ZPSNWK/Include/zps_nwk_pub.h#L89
-        ]
+        ],
     },
     [0x8001]: {
         response: [
             {name: 'logLevel', parameterType: ParameterType.LOG_LEVEL},
             {name: 'log', parameterType: ParameterType.STRING},
-        ]
+        ],
     },
     [ZiGateMessageCode.AddGroupResponse]: {
         response: [
             {name: 'status', parameterType: ParameterType.UINT16BE},
             {name: 'groupAddress', parameterType: ParameterType.UINT16BE},
-        ]
-    }
+        ],
+    },
 };

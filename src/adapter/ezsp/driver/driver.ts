@@ -1,12 +1,16 @@
 /* istanbul ignore file */
+import {EventEmitter} from 'events';
+import equals from 'fast-deep-equal/es6';
+
+import {Waitress, Wait} from '../../../utils';
+import {logger} from '../../../utils/logger';
+import {Clusters} from '../../../zspec/zcl/definition/cluster';
+import {EZSPAdapterBackup} from '../adapter/backup';
 import * as TsType from './../../tstype';
+import {ParamsDesc} from './commands';
 import {Ezsp, EZSPFrameData, EZSPZDOResponseFrameData} from './ezsp';
-import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption, EmberKeyData,
-    EmberJoinDecision} from './types';
-import {EventEmitter} from "events";
-import {EmberApsFrame, EmberNetworkParameters, EmberInitialSecurityState, EmberKeyStruct,
-    EmberRawFrame, EmberIeeeRawFrame, EmberAesMmoHashContext, EmberSecurityManagerContext} from './types/struct';
-import {ember_security} from './utils';
+import {Multicast} from './multicast';
+import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption, EmberKeyData, EmberJoinDecision} from './types';
 import {
     EmberOutgoingMessageType,
     EmberEUI64,
@@ -22,23 +26,27 @@ import {
     SLStatus,
     EmberInitialSecurityBitmask,
 } from './types/named';
-import {Multicast} from './multicast';
-import {Waitress, Wait} from '../../../utils';
-import equals from 'fast-deep-equal/es6';
-import {ParamsDesc} from './commands';
-import {EZSPAdapterBackup} from '../adapter/backup';
-import {logger} from '../../../utils/logger';
-import {Clusters} from '../../../zspec/zcl/definition/cluster';
+import {
+    EmberApsFrame,
+    EmberNetworkParameters,
+    EmberInitialSecurityState,
+    EmberKeyStruct,
+    EmberRawFrame,
+    EmberIeeeRawFrame,
+    EmberAesMmoHashContext,
+    EmberSecurityManagerContext,
+} from './types/struct';
+import {ember_security} from './utils';
 
 const NS = 'zh:ezsp:driv';
 
 interface AddEndpointParameters {
-    endpoint?: number,
-    profileId?: number,
-    deviceId?: number,
-    appFlags?: number,
-    inputClusters?: number[],
-    outputClusters?: number[],
+    endpoint?: number;
+    profileId?: number;
+    deviceId?: number;
+    appFlags?: number;
+    inputClusters?: number[];
+    outputClusters?: number[];
 }
 
 type EmberFrame = {
@@ -48,31 +56,31 @@ type EmberFrame = {
 };
 
 type EmberWaitressMatcher = {
-    address: number,
-    clusterId: number,
-    sequence: number
+    address: number;
+    clusterId: number;
+    sequence: number;
 };
 
 type IeeeMfg = {
-    mfgId: number,
-    prefix: number[]
+    mfgId: number;
+    prefix: number[];
 };
 
 export interface EmberIncomingMessage {
-    messageType: number, 
-    apsFrame: EmberApsFrame, 
-    lqi: number, 
-    rssi: number,
-    sender: number,
-    bindingIndex: number,
-    addressIndex: number,
-    message: Buffer,
-    senderEui64: EmberEUI64
+    messageType: number;
+    apsFrame: EmberApsFrame;
+    lqi: number;
+    rssi: number;
+    sender: number;
+    bindingIndex: number;
+    addressIndex: number;
+    message: Buffer;
+    senderEui64: EmberEUI64;
 }
 
 const IEEE_PREFIX_MFG_ID: IeeeMfg[] = [
-    {mfgId: 0x115F, prefix: [0x04,0xcf,0xfc]},
-    {mfgId: 0x115F, prefix: [0x54,0xef,0x44]},
+    {mfgId: 0x115f, prefix: [0x04, 0xcf, 0xfc]},
+    {mfgId: 0x115f, prefix: [0x54, 0xef, 0x44]},
 ];
 const DEFAULT_MFG_ID = 0x1049;
 // we make three attempts to send the request
@@ -84,7 +92,11 @@ export class Driver extends EventEmitter {
     private greenPowerGroup: number;
     public networkParams: EmberNetworkParameters;
     public version: {
-        product: number; majorrel: string; minorrel: string; maintrel: string; revision: string;
+        product: number;
+        majorrel: string;
+        minorrel: string;
+        maintrel: string;
+        revision: string;
     };
     private eui64ToNodeId = new Map<string, number>();
     private eui64ToRelays = new Map<string, number>();
@@ -108,7 +120,7 @@ export class Driver extends EventEmitter {
     /**
      * Requested by the EZSP watchdog after too many failures, or by UART layer after port closed unexpectedly.
      * Tries to stop the layers below and startup again.
-     * @returns 
+     * @returns
      */
     public async reset(): Promise<void> {
         logger.debug(`Reset connection.`, NS);
@@ -164,7 +176,7 @@ export class Driver extends EventEmitter {
             await this.ezsp.connect(this.serialOpt);
         } catch (error) {
             logger.debug(`EZSP could not connect: ${error.cause ?? error}`, NS);
-            
+
             throw error;
         }
 
@@ -181,14 +193,17 @@ export class Driver extends EventEmitter {
         //const count = await ezsp.getConfigurationValue(EzspConfigId.CONFIG_APS_UNICAST_MESSAGE_COUNT);
         //logger.info("APS_UNICAST_MESSAGE_COUNT is set to %s", count, NS);
         await this.addEndpoint({
-            inputClusters: [0x0000, 0x0003, 0x0006, 0x000A, 0x0019, 0x001A, 0x0300],
-            outputClusters: [0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0020,
-                0x0300, 0x0400, 0x0402, 0x0405, 0x0406, 0x0500, 0x0B01, 0x0B03,
-                0x0B04, 0x0702, 0x1000, 0xFC01, 0xFC02]
+            inputClusters: [0x0000, 0x0003, 0x0006, 0x000a, 0x0019, 0x001a, 0x0300],
+            outputClusters: [
+                0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0020, 0x0300, 0x0400, 0x0402, 0x0405, 0x0406, 0x0500, 0x0b01, 0x0b03, 0x0b04,
+                0x0702, 0x1000, 0xfc01, 0xfc02,
+            ],
         });
         await this.addEndpoint({
-            endpoint: 242, profileId: 0xA1E0, deviceId: 0x61,
-            outputClusters: [0x0021]
+            endpoint: 242,
+            profileId: 0xa1e0,
+            deviceId: 0x61,
+            outputClusters: [0x0021],
         });
 
         // getting MFG_STRING token
@@ -211,7 +226,7 @@ export class Driver extends EventEmitter {
             majorrel: `${major}`,
             minorrel: `${minor}`,
             maintrel: `${patch} `,
-            revision: vers
+            revision: vers,
         };
 
         if (await this.needsToBeInitialised(this.nwkOpt)) {
@@ -234,12 +249,12 @@ export class Driver extends EventEmitter {
 
             if (restore) {
                 // restore
-                logger.info("Restore network from backup", NS);
+                logger.info('Restore network from backup', NS);
                 await this.formNetwork(true);
                 result = 'restored';
             } else {
                 // reset
-                logger.info("Form network", NS);
+                logger.info('Form network', NS);
                 await this.formNetwork(false);
                 result = 'reset';
             }
@@ -271,7 +286,7 @@ export class Driver extends EventEmitter {
 
         await Wait(1000);
         await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
-        
+
         this.multicast = new Multicast(this);
         await this.multicast.startup([]);
         await this.multicast.subscribe(this.greenPowerGroup, 242);
@@ -286,11 +301,11 @@ export class Driver extends EventEmitter {
         const netParams = await this.ezsp.execCommand('getNetworkParameters');
         const networkParams = netParams.parameters;
         logger.debug(`Current Node type: ${netParams.nodeType}, Network parameters: ${networkParams}`, NS);
-        valid = valid && (netParams.status == EmberStatus.SUCCESS);
-        valid = valid && (netParams.nodeType == EmberNodeType.COORDINATOR);
-        valid = valid && (options.panID == networkParams.panId);
-        valid = valid && (options.channelList.includes(networkParams.radioChannel));
-        valid = valid && (equals(options.extendedPanID, networkParams.extendedPanId));
+        valid = valid && netParams.status == EmberStatus.SUCCESS;
+        valid = valid && netParams.nodeType == EmberNodeType.COORDINATOR;
+        valid = valid && options.panID == networkParams.panId;
+        valid = valid && options.channelList.includes(networkParams.radioChannel);
+        valid = valid && equals(options.extendedPanID, networkParams.extendedPanId);
         return !valid;
     }
 
@@ -310,13 +325,13 @@ export class Driver extends EventEmitter {
             initial_security_state = ember_security(Buffer.from(this.nwkOpt.networkKey));
         }
         await this.ezsp.setInitialSecurityState(initial_security_state);
-            
+
         const parameters: EmberNetworkParameters = new EmberNetworkParameters();
         parameters.radioTxPower = 5;
         parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
         parameters.nwkManagerId = 0;
         parameters.nwkUpdateId = 0;
-        parameters.channels = 0x07FFF800; // all channels
+        parameters.channels = 0x07fff800; // all channels
         if (restore) {
             parameters.panId = backup.networkOptions.panId;
             parameters.extendedPanId = backup.networkOptions.extendedPanId;
@@ -325,7 +340,7 @@ export class Driver extends EventEmitter {
         } else {
             parameters.radioChannel = this.nwkOpt.channelList[0];
             parameters.panId = this.nwkOpt.panID;
-            parameters.extendedPanId = Buffer.from(this.nwkOpt.extendedPanID);    
+            parameters.extendedPanId = Buffer.from(this.nwkOpt.extendedPanID);
         }
 
         await this.ezsp.formNetwork(parameters);
@@ -334,162 +349,158 @@ export class Driver extends EventEmitter {
 
     private handleFrame(frameName: string, frame: EZSPFrameData): void {
         switch (true) {
-        case (frameName === 'incomingMessageHandler'): {
-            const eui64 = this.eui64ToNodeId.get(frame.sender);
-            const handled = this.waitress.resolve({
-                address: frame.sender,
-                payload: frame.message,
-                frame: frame.apsFrame
-            });
-
-            if (!handled) {
-                this.emit('incomingMessage', {
-                    messageType: frame.type, 
-                    apsFrame: frame.apsFrame, 
-                    lqi: frame.lastHopLqi, 
-                    rssi: frame.lastHopRssi,
-                    sender: frame.sender,
-                    bindingIndex: frame.bindingIndex,
-                    addressIndex: frame.addressIndex,
-                    message: frame.message,
-                    senderEui64: eui64
+            case frameName === 'incomingMessageHandler': {
+                const eui64 = this.eui64ToNodeId.get(frame.sender);
+                const handled = this.waitress.resolve({
+                    address: frame.sender,
+                    payload: frame.message,
+                    frame: frame.apsFrame,
                 });
-            }
-            break;
-        }
-        case (frameName === 'trustCenterJoinHandler'): {
-            if (frame.status === EmberDeviceUpdate.DEVICE_LEFT) {
-                this.handleNodeLeft(frame.newNodeId, frame.newNodeEui64);
-            } else {
-                if (frame.policyDecision !== EmberJoinDecision.DENY_JOIN) {
-                    this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
+
+                if (!handled) {
+                    this.emit('incomingMessage', {
+                        messageType: frame.type,
+                        apsFrame: frame.apsFrame,
+                        lqi: frame.lastHopLqi,
+                        rssi: frame.lastHopRssi,
+                        sender: frame.sender,
+                        bindingIndex: frame.bindingIndex,
+                        addressIndex: frame.addressIndex,
+                        message: frame.message,
+                        senderEui64: eui64,
+                    });
                 }
+                break;
             }
-            break;
-        }
-        case (frameName === 'incomingRouteRecordHandler'): {
-            this.handleRouteRecord(frame.source, frame.longId, frame.lastHopLqi, frame.lastHopRssi, frame.relay);
-            break;
-        }
-        case (frameName === 'incomingRouteErrorHandler'): {
-            this.handleRouteError(frame.status, frame.target);
-            break;
-        }
-        case (frameName === 'incomingNetworkStatusHandler'): {
-            this.handleNetworkStatus(frame.errorCode, frame.target);
-            break;
-        }
-        case (frameName === 'messageSentHandler'): {
-            // todo
-            const status = frame.status;
-            if (status != 0) {
-                // send failure
-                logger.debug(`Delivery failed for ${JSON.stringify(frame)}.`, NS);
-            } else {
-                // send success
-                // If there was a message to the group and this group is not known, 
-                // then we will register the coordinator in this group
-                // Applicable for IKEA remotes
-                const msgType = frame.type;
-                if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
-                    const apsFrame = frame.apsFrame;
-                    if (apsFrame.destinationEndpoint == 255) {
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        this.multicast.subscribe(apsFrame.groupId, 1);
+            case frameName === 'trustCenterJoinHandler': {
+                if (frame.status === EmberDeviceUpdate.DEVICE_LEFT) {
+                    this.handleNodeLeft(frame.newNodeId, frame.newNodeEui64);
+                } else {
+                    if (frame.policyDecision !== EmberJoinDecision.DENY_JOIN) {
+                        this.handleNodeJoined(frame.newNodeId, frame.newNodeEui64);
                     }
                 }
+                break;
             }
-            break;
-        }
-        case (frameName === 'macFilterMatchMessageHandler'): {
-            const [rawFrame, data] = EmberIeeeRawFrame.deserialize(EmberIeeeRawFrame, frame.message);
-            logger.debug(`macFilterMatchMessageHandler frame message: ${rawFrame}`, NS);
-            this.emit('incomingMessage', {
-                messageType: null, 
-                apsFrame: rawFrame, 
-                lqi: frame.lastHopLqi, 
-                rssi: frame.lastHopRssi,
-                sender: null,
-                bindingIndex: null,
-                addressIndex: null,
-                message: data,
-                senderEui64: new EmberEUI64(rawFrame.sourceAddress)
-            });
-            break;
-        }
-        case (frameName === 'stackStatusHandler'): {
-            logger.debug(`stackStatusHandler: ${EmberStatus.valueToName(EmberStatus, frame.status)}`, NS);
-            break;
-        }
-        // case (frameName === 'childJoinHandler'): {
-        //     if (!frame.joining) {
-        //         this.handleNodeLeft(frame.childId, frame.childEui64);
-        //     } else {
-        //         this.handleNodeJoined(frame.childId, frame.childEui64);
-        //     }
-        //     break;
-        // }
-        case (frameName == 'gpepIncomingMessageHandler'): {
-            let commandIdentifier = Clusters.greenPower.commands.notification.ID;
+            case frameName === 'incomingRouteRecordHandler': {
+                this.handleRouteRecord(frame.source, frame.longId, frame.lastHopLqi, frame.lastHopRssi, frame.relay);
+                break;
+            }
+            case frameName === 'incomingRouteErrorHandler': {
+                this.handleRouteError(frame.status, frame.target);
+                break;
+            }
+            case frameName === 'incomingNetworkStatusHandler': {
+                this.handleNetworkStatus(frame.errorCode, frame.target);
+                break;
+            }
+            case frameName === 'messageSentHandler': {
+                // todo
+                const status = frame.status;
+                if (status != 0) {
+                    // send failure
+                    logger.debug(`Delivery failed for ${JSON.stringify(frame)}.`, NS);
+                } else {
+                    // send success
+                    // If there was a message to the group and this group is not known,
+                    // then we will register the coordinator in this group
+                    // Applicable for IKEA remotes
+                    const msgType = frame.type;
+                    if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
+                        const apsFrame = frame.apsFrame;
+                        if (apsFrame.destinationEndpoint == 255) {
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                            this.multicast.subscribe(apsFrame.groupId, 1);
+                        }
+                    }
+                }
+                break;
+            }
+            case frameName === 'macFilterMatchMessageHandler': {
+                const [rawFrame, data] = EmberIeeeRawFrame.deserialize(EmberIeeeRawFrame, frame.message);
+                logger.debug(`macFilterMatchMessageHandler frame message: ${rawFrame}`, NS);
+                this.emit('incomingMessage', {
+                    messageType: null,
+                    apsFrame: rawFrame,
+                    lqi: frame.lastHopLqi,
+                    rssi: frame.lastHopRssi,
+                    sender: null,
+                    bindingIndex: null,
+                    addressIndex: null,
+                    message: data,
+                    senderEui64: new EmberEUI64(rawFrame.sourceAddress),
+                });
+                break;
+            }
+            case frameName === 'stackStatusHandler': {
+                logger.debug(`stackStatusHandler: ${EmberStatus.valueToName(EmberStatus, frame.status)}`, NS);
+                break;
+            }
+            // case (frameName === 'childJoinHandler'): {
+            //     if (!frame.joining) {
+            //         this.handleNodeLeft(frame.childId, frame.childEui64);
+            //     } else {
+            //         this.handleNodeJoined(frame.childId, frame.childEui64);
+            //     }
+            //     break;
+            // }
+            case frameName == 'gpepIncomingMessageHandler': {
+                let commandIdentifier = Clusters.greenPower.commands.notification.ID;
 
-            if (frame.gpdCommandId === 0xE0) {
-                if (!frame.gpdCommandPayload.length) {
-                    // XXX: seem to be receiving duplicate commissioningNotification from some devices, second one with empty payload?
-                    //      this will mess with the process no doubt, so dropping them
-                    return;
+                if (frame.gpdCommandId === 0xe0) {
+                    if (!frame.gpdCommandPayload.length) {
+                        // XXX: seem to be receiving duplicate commissioningNotification from some devices, second one with empty payload?
+                        //      this will mess with the process no doubt, so dropping them
+                        return;
+                    }
+
+                    commandIdentifier = Clusters.greenPower.commands.commissioningNotification.ID;
                 }
 
-                commandIdentifier = Clusters.greenPower.commands.commissioningNotification.ID;
+                const gpdHeader = Buffer.alloc(15);
+                gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
+                gpdHeader.writeUInt8(frame.sequenceNumber, 1); // transactionSequenceNumber
+                gpdHeader.writeUInt8(commandIdentifier, 2); // commandIdentifier
+                gpdHeader.writeUInt16LE(0, 3); // options XXX: bypassed, same as deconz https://github.com/Koenkk/zigbee-herdsman/pull/536
+                gpdHeader.writeUInt32LE(frame.srcId, 5); // srcID
+                // omitted: gpdIEEEAddr ieeeAddr
+                // omitted: gpdEndpoint uint8
+                gpdHeader.writeUInt32LE(frame.gpdSecurityFrameCounter, 9); // frameCounter
+                gpdHeader.writeUInt8(frame.gpdCommandId, 13); // commandID
+                gpdHeader.writeUInt8(frame.gpdCommandPayload.length, 14); // payloadSize
+
+                const gpdMessage = {
+                    messageType: frame.gpdCommandId,
+                    apsFrame: {
+                        profileId: 0xa1e0,
+                        sourceEndpoint: 242,
+                        clusterId: 0x0021,
+                        sequence: frame.sequenceNumber,
+                    },
+                    lqi: frame.gpdLink,
+                    message: Buffer.concat([gpdHeader, frame.gpdCommandPayload]),
+                    sender: frame.addr,
+                };
+                this.emit('incomingMessage', gpdMessage);
+                break;
             }
-
-            const gpdHeader = Buffer.alloc(15);
-            gpdHeader.writeUInt8(0b00000001, 0);// frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
-            gpdHeader.writeUInt8(frame.sequenceNumber, 1);// transactionSequenceNumber
-            gpdHeader.writeUInt8(commandIdentifier, 2);// commandIdentifier
-            gpdHeader.writeUInt16LE(0, 3);// options XXX: bypassed, same as deconz https://github.com/Koenkk/zigbee-herdsman/pull/536
-            gpdHeader.writeUInt32LE(frame.srcId, 5);// srcID
-            // omitted: gpdIEEEAddr ieeeAddr
-            // omitted: gpdEndpoint uint8
-            gpdHeader.writeUInt32LE(frame.gpdSecurityFrameCounter, 9);// frameCounter
-            gpdHeader.writeUInt8(frame.gpdCommandId, 13);// commandID
-            gpdHeader.writeUInt8(frame.gpdCommandPayload.length, 14);// payloadSize
-
-            const gpdMessage = {
-                messageType: frame.gpdCommandId,
-                apsFrame: {
-                    profileId: 0xA1E0,
-                    sourceEndpoint: 242,
-                    clusterId: 0x0021,
-                    sequence: frame.sequenceNumber,
-                }, 
-                lqi: frame.gpdLink,
-                message: Buffer.concat([gpdHeader, frame.gpdCommandPayload]),
-                sender: frame.addr,
-            };
-            this.emit('incomingMessage', gpdMessage);
-            break;
-        }
-        default:
-            // <=== Application frame 35 (childJoinHandler) received: 00013e9c2ebd08feff9ffd9004 +1ms
-            // <=== Application frame 35 (childJoinHandler)   parsed: 0,1,39998,144,253,159,255,254,8,189,46,4 +1ms
-            // Unhandled frame childJoinHandler +2s
-            // <=== Application frame 98 (incomingSenderEui64Handler) received: 2ebd08feff9ffd90 +2ms
-            // <=== Application frame 98 (incomingSenderEui64Handler)   parsed: 144,253,159,255,254,8,189,46 +1ms
-            // Unhandled frame incomingSenderEui64Handler
-            // <=== Application frame 155 (zigbeeKeyEstablishmentHandler) received: 2ebd08feff9ffd9006 +2ms
-            // <=== Application frame 155 (zigbeeKeyEstablishmentHandler)   parsed: 144,253,159,255,254,8,189,46,6 +2ms
-            // Unhandled frame zigbeeKeyEstablishmentHandler
-            logger.debug(`Unhandled frame ${frameName}`, NS);
+            default:
+                // <=== Application frame 35 (childJoinHandler) received: 00013e9c2ebd08feff9ffd9004 +1ms
+                // <=== Application frame 35 (childJoinHandler)   parsed: 0,1,39998,144,253,159,255,254,8,189,46,4 +1ms
+                // Unhandled frame childJoinHandler +2s
+                // <=== Application frame 98 (incomingSenderEui64Handler) received: 2ebd08feff9ffd90 +2ms
+                // <=== Application frame 98 (incomingSenderEui64Handler)   parsed: 144,253,159,255,254,8,189,46 +1ms
+                // Unhandled frame incomingSenderEui64Handler
+                // <=== Application frame 155 (zigbeeKeyEstablishmentHandler) received: 2ebd08feff9ffd9006 +2ms
+                // <=== Application frame 155 (zigbeeKeyEstablishmentHandler)   parsed: 144,253,159,255,254,8,189,46,6 +2ms
+                // Unhandled frame zigbeeKeyEstablishmentHandler
+                logger.debug(`Unhandled frame ${frameName}`, NS);
         }
     }
 
-    private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number,
-        relays: number): void {
+    private handleRouteRecord(nwk: number, ieee: EmberEUI64 | number[], lqi: number, rssi: number, relays: number): void {
         // todo
-        logger.debug(
-            `handleRouteRecord: nwk=${nwk}, ieee=${ieee.toString()}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`,
-            NS,
-        );
+        logger.debug(`handleRouteRecord: nwk=${nwk}, ieee=${ieee.toString()}, lqi=${lqi}, rssi=${rssi}, relays=${relays}`, NS);
 
         this.setNode(nwk, ieee);
         // if (ieee && !(ieee instanceof EmberEUI64)) {
@@ -541,8 +552,8 @@ export class Driver extends EventEmitter {
             ieee = new EmberEUI64(ieee);
         }
 
-        for(const rec of IEEE_PREFIX_MFG_ID) {
-            if ((Buffer.from((ieee as EmberEUI64).value)).indexOf(Buffer.from(rec.prefix)) == 0) {
+        for (const rec of IEEE_PREFIX_MFG_ID) {
+            if (Buffer.from((ieee as EmberEUI64).value).indexOf(Buffer.from(rec.prefix)) == 0) {
                 // set ManufacturerCode
                 logger.debug(`handleNodeJoined: change ManufacturerCode for ieee ${ieee} to ${rec.mfgId}`, NS);
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -563,13 +574,12 @@ export class Driver extends EventEmitter {
         this.eui64ToNodeId.set(ieee.toString(), nwk);
     }
 
-    public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, 
-        data: Buffer, extendedTimeout = false): Promise<boolean> {
+    public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, data: Buffer, extendedTimeout = false): Promise<boolean> {
         let result = false;
 
         for (const delay of REQUEST_ATTEMPT_DELAYS) {
             try {
-                const seq = (apsFrame.sequence + 1) & 0xFF;
+                const seq = (apsFrame.sequence + 1) & 0xff;
                 let eui64: EmberEUI64;
 
                 if (typeof nwk !== 'number') {
@@ -580,7 +590,7 @@ export class Driver extends EventEmitter {
                     if (nodeId === undefined) {
                         nodeId = (await this.ezsp.execCommand('lookupNodeIdByEui64', {eui64: eui64})).nodeId;
 
-                        if (nodeId && nodeId !== 0xFFFF) {
+                        if (nodeId && nodeId !== 0xffff) {
                             this.eui64ToNodeId.set(strEui64, nodeId);
                         } else {
                             throw new Error('Unknown EUI64:' + strEui64);
@@ -602,19 +612,16 @@ export class Driver extends EventEmitter {
                     await this.ezsp.execCommand('setExtendedTimeout', {remoteEui64: eui64, extendedTimeout: true});
                 }
 
-                const sendResult = await this.ezsp.sendUnicast(
-                    EmberOutgoingMessageType.OUTGOING_DIRECT, nwk, apsFrame, seq, data
-                );
+                const sendResult = await this.ezsp.sendUnicast(EmberOutgoingMessageType.OUTGOING_DIRECT, nwk, apsFrame, seq, data);
 
                 // repeat only for these statuses
-                if ([EmberStatus.MAX_MESSAGE_LIMIT_REACHED, EmberStatus.NO_BUFFERS, EmberStatus.NETWORK_BUSY]
-                    .includes(sendResult.status)) {
+                if ([EmberStatus.MAX_MESSAGE_LIMIT_REACHED, EmberStatus.NO_BUFFERS, EmberStatus.NETWORK_BUSY].includes(sendResult.status)) {
                     // need to repeat after pause
                     logger.error(`Request send status ${sendResult.status}. Attempt to repeat the request`, NS);
 
                     await Wait(delay);
                 } else {
-                    result = (sendResult.status == EmberStatus.SUCCESS);
+                    result = sendResult.status == EmberStatus.SUCCESS;
                     break;
                 }
             } catch (e) {
@@ -629,7 +636,7 @@ export class Driver extends EventEmitter {
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     public async mrequest(apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
         try {
-            const seq = (apsFrame.sequence + 1) & 0xFF;
+            const seq = (apsFrame.sequence + 1) & 0xff;
             await this.ezsp.sendMulticast(apsFrame, seq, data);
             return true;
         } catch (e) {
@@ -664,7 +671,7 @@ export class Driver extends EventEmitter {
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     public async brequest(destination: number, apsFrame: EmberApsFrame, data: Buffer): Promise<boolean> {
         try {
-            const seq = (apsFrame.sequence + 1) & 0xFF;
+            const seq = (apsFrame.sequence + 1) & 0xff;
             await this.ezsp.sendBroadcast(destination, apsFrame, seq, data);
             return true;
         } catch (e) {
@@ -673,7 +680,7 @@ export class Driver extends EventEmitter {
     }
 
     private nextTransactionID(): number {
-        this.transactionID = (this.transactionID + 1) & 0xFF;
+        this.transactionID = (this.transactionID + 1) & 0xff;
         return this.transactionID;
     }
 
@@ -685,8 +692,7 @@ export class Driver extends EventEmitter {
         frame.sourceEndpoint = 0;
         frame.destinationEndpoint = 0;
         frame.groupId = 0;
-        frame.options = (EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY ||
-            EmberApsOption.APS_OPTION_ENABLE_ADDRESS_DISCOVERY);
+        frame.options = EmberApsOption.APS_OPTION_ENABLE_ROUTE_DISCOVERY || EmberApsOption.APS_OPTION_ENABLE_ADDRESS_DISCOVERY;
 
         if (!disableResponse) {
             frame.options ||= EmberApsOption.APS_OPTION_RETRY;
@@ -707,8 +713,12 @@ export class Driver extends EventEmitter {
         return frame;
     }
 
-    public async zdoRequest(networkAddress: number, requestCmd: EmberZDOCmd,
-        responseCmd: EmberZDOCmd, params: ParamsDesc): Promise<EZSPZDOResponseFrameData> {
+    public async zdoRequest(
+        networkAddress: number,
+        requestCmd: EmberZDOCmd,
+        responseCmd: EmberZDOCmd,
+        params: ParamsDesc,
+    ): Promise<EZSPZDOResponseFrameData> {
         const requestName = EmberZDOCmd.valueName(EmberZDOCmd, requestCmd);
         const responseName = EmberZDOCmd.valueName(EmberZDOCmd, responseCmd);
 
@@ -763,7 +773,7 @@ export class Driver extends EventEmitter {
         if (seconds) {
             const ieee = new EmberEUI64('0xFFFFFFFFFFFFFFFF');
             const linkKey = new EmberKeyData();
-            linkKey.contents = Buffer.from("ZigBeeAlliance09");
+            linkKey.contents = Buffer.from('ZigBeeAlliance09');
             const result = await this.addTransientLinkKey(ieee, linkKey);
 
             if (result.status !== EmberStatus.SUCCESS) {
@@ -771,8 +781,10 @@ export class Driver extends EventEmitter {
             }
 
             if (this.ezsp.ezspV >= 8) {
-                await this.ezsp.setPolicy(EzspPolicyId.TRUST_CENTER_POLICY, 
-                    EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS);
+                await this.ezsp.setPolicy(
+                    EzspPolicyId.TRUST_CENTER_POLICY,
+                    EzspDecisionBitmask.ALLOW_UNSECURED_REJOINS | EzspDecisionBitmask.ALLOW_JOINS,
+                );
                 //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
             }
         } else {
@@ -791,10 +803,10 @@ export class Driver extends EventEmitter {
     public async addEndpoint({
         endpoint = 1,
         profileId = 260,
-        deviceId = 0xBEEF,
+        deviceId = 0xbeef,
         appFlags = 0,
         inputClusters = [],
-        outputClusters = []
+        outputClusters = [],
     }: AddEndpointParameters): Promise<void> {
         const res = await this.ezsp.execCommand('addEndpoint', {
             endpoint: endpoint,
@@ -809,8 +821,12 @@ export class Driver extends EventEmitter {
         logger.debug(`Ezsp adding endpoint: ${JSON.stringify(res)}`, NS);
     }
 
-    public waitFor(address: number, clusterId: number, sequence: number, timeout = 10000)
-        : { start: () => { promise: Promise<EmberFrame>; ID: number }; ID: number } {
+    public waitFor(
+        address: number,
+        clusterId: number,
+        sequence: number,
+        timeout = 10000,
+    ): {start: () => {promise: Promise<EmberFrame>; ID: number}; ID: number} {
         return this.waitress.waitFor({address, clusterId, sequence}, timeout);
     }
 
@@ -819,9 +835,11 @@ export class Driver extends EventEmitter {
     }
 
     private waitressValidator(payload: EmberFrame, matcher: EmberWaitressMatcher): boolean {
-        return (!matcher.address || payload.address === matcher.address) &&
+        return (
+            (!matcher.address || payload.address === matcher.address) &&
             (!payload.frame || payload.frame.clusterId === matcher.clusterId) &&
-            (!payload.frame || payload.payload[0] === matcher.sequence);
+            (!payload.frame || payload.payload[0] === matcher.sequence)
+        );
     }
 
     public setRadioPower(value: number): Promise<EZSPFrameData> {
@@ -831,7 +849,7 @@ export class Driver extends EventEmitter {
     public setChannel(channel: number): Promise<EZSPFrameData> {
         return this.ezsp.execCommand('setLogicalAndRadioChannel', {radioChannel: channel});
     }
-    
+
     public addTransientLinkKey(partner: EmberEUI64, transientKey: EmberKeyData): Promise<EZSPFrameData> {
         if (this.ezsp.ezspV < 13) {
             return this.ezsp.execCommand('addTransientLinkKey', {partner, transientKey});
@@ -839,9 +857,9 @@ export class Driver extends EventEmitter {
             return this.ezsp.execCommand('importTransientKey', {partner, transientKey, flags: 0});
         }
     }
-    
+
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        // Key need to be converted to aes hash string 
+        // Key need to be converted to aes hash string
         const hc = new EmberAesMmoHashContext();
         hc.result = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
         hc.length = 0;
@@ -877,10 +895,12 @@ export class Driver extends EventEmitter {
             smc.flags = 0;
             smc.psaKeyAlgPermission = 0;
             const keyInfo = await this.ezsp.execCommand('exportKey', {context: smc});
-            
+
             if (keyInfo.status !== SLStatus.SL_STATUS_OK) {
-                logger.error(`exportKey(${EmberKeyType.valueToName(EmberKeyType, keyType)}) `
-                    + `returned unexpected SL status: ${keyInfo.status}`, NS);
+                logger.error(
+                    `exportKey(${EmberKeyType.valueToName(EmberKeyType, keyType)}) ` + `returned unexpected SL status: ${keyInfo.status}`,
+                    NS,
+                );
             }
             return keyInfo;
         }
@@ -919,32 +939,40 @@ export class Driver extends EventEmitter {
         }
 
         // if the settings in the backup match the chip, then need to warn to delete the backup file first
-        valid = valid && (networkParams.panId == backup.networkOptions.panId);
-        valid = valid && (networkParams.radioChannel == backup.logicalChannel);
-        valid = valid && (Buffer.from(networkParams.extendedPanId).equals(backup.networkOptions.extendedPanId));
-        valid = valid && (Buffer.from(netKey).equals(backup.networkOptions.networkKey));
+        valid = valid && networkParams.panId == backup.networkOptions.panId;
+        valid = valid && networkParams.radioChannel == backup.logicalChannel;
+        valid = valid && Buffer.from(networkParams.extendedPanId).equals(backup.networkOptions.extendedPanId);
+        valid = valid && Buffer.from(netKey).equals(backup.networkOptions.networkKey);
         if (valid) {
             logger.error(`Configuration is not consistent with adapter backup!`, NS);
             logger.error(`- PAN ID: configured=${options.panID}, adapter=${networkParams.panId}, backup=${backup.networkOptions.panId}`, NS);
-            logger.error(`- Extended PAN ID: configured=${Buffer.from(options.extendedPanID).toString("hex")}, `+
-                `adapter=${Buffer.from(networkParams.extendedPanId).toString("hex")}, `+
-                `backup=${Buffer.from(networkParams.extendedPanId).toString("hex")}`, NS);
-            logger.error(`- Channel: configured=${options.channelList}, adapter=${networkParams.radioChannel}, `+
-                `backup=${backup.logicalChannel}`, NS);
-            logger.error(`- Network key: configured=${Buffer.from(options.networkKey).toString("hex")}, `+
-                `adapter=${Buffer.from(netKey).toString("hex")}, `+
-                `backup=${backup.networkOptions.networkKey.toString("hex")}`, NS);
+            logger.error(
+                `- Extended PAN ID: configured=${Buffer.from(options.extendedPanID).toString('hex')}, ` +
+                    `adapter=${Buffer.from(networkParams.extendedPanId).toString('hex')}, ` +
+                    `backup=${Buffer.from(networkParams.extendedPanId).toString('hex')}`,
+                NS,
+            );
+            logger.error(
+                `- Channel: configured=${options.channelList}, adapter=${networkParams.radioChannel}, ` + `backup=${backup.logicalChannel}`,
+                NS,
+            );
+            logger.error(
+                `- Network key: configured=${Buffer.from(options.networkKey).toString('hex')}, ` +
+                    `adapter=${Buffer.from(netKey).toString('hex')}, ` +
+                    `backup=${backup.networkOptions.networkKey.toString('hex')}`,
+                NS,
+            );
             logger.error(`Please update configuration to prevent further issues.`, NS);
             logger.error(`If you wish to re-commission your network, please remove coordinator backup.`, NS);
             logger.error(`Re-commissioning your network will require re-pairing of all devices!`, NS);
-            throw new Error("startup failed - configuration-adapter mismatch - see logs above for more information");
+            throw new Error('startup failed - configuration-adapter mismatch - see logs above for more information');
         }
         valid = true;
         // if the settings in the backup match the config, then the old network is in the chip and needs to be restored
-        valid = valid && (options.panID == backup.networkOptions.panId);
-        valid = valid && (options.channelList.includes(backup.logicalChannel));
-        valid = valid && (Buffer.from(options.extendedPanID).equals(backup.networkOptions.extendedPanId));
-        valid = valid && (Buffer.from(options.networkKey).equals(backup.networkOptions.networkKey));
+        valid = valid && options.panID == backup.networkOptions.panId;
+        valid = valid && options.channelList.includes(backup.logicalChannel);
+        valid = valid && Buffer.from(options.extendedPanID).equals(backup.networkOptions.extendedPanId);
+        valid = valid && Buffer.from(options.networkKey).equals(backup.networkOptions.networkKey);
         return valid;
     }
 }

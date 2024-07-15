@@ -1,5 +1,5 @@
-import {TsType} from "../../";
-import {ZnpVersion} from "../adapter/tstype";
+import {TsType} from '../../';
+import {ZnpVersion} from '../adapter/tstype';
 
 /**
  * Startup options structure is used by `zStackAdapter` to pass configuration to adapter manager.

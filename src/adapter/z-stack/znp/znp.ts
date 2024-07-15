@@ -1,27 +1,22 @@
-import {
-    Writer as UnpiWriter,
-    Parser as UnpiParser,
-    Frame as UnpiFrame,
-} from '../unpi';
+import events from 'events';
+import Equals from 'fast-deep-equal/es6';
+import net from 'net';
 
 import {Wait, Queue, Waitress, RealpathSync} from '../../../utils';
-
+import {logger} from '../../../utils/logger';
 import {SerialPort} from '../../serialPort';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
-
 import * as Constants from '../constants';
-
-import ZpiObject from './zpiObject';
-import {ZpiObjectPayload} from './tstype';
+import {Writer as UnpiWriter, Parser as UnpiParser, Frame as UnpiFrame} from '../unpi';
 import {Subsystem, Type} from '../unpi/constants';
+import {ZpiObjectPayload} from './tstype';
+import ZpiObject from './zpiObject';
 
-import net from 'net';
-import events from 'events';
-import Equals from 'fast-deep-equal/es6';
-import {logger} from '../../../utils/logger';
-
-const {COMMON: {ZnpCommandStatus}, Utils: {statusDescription}} = Constants;
+const {
+    COMMON: {ZnpCommandStatus},
+    Utils: {statusDescription},
+} = Constants;
 
 const timeouts = {
     SREQ: 6000,
@@ -91,8 +86,7 @@ class Znp extends events.EventEmitter {
     private onUnpiParsed(frame: UnpiFrame): void {
         try {
             const object = ZpiObject.fromUnpiFrame(frame);
-            const message =
-                `<-- ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(object.payload)}`;
+            const message = `<-- ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(object.payload)}`;
             this.log(object.type, message);
             this.waitress.resolve(object);
             this.emit('received', object);
@@ -171,13 +165,13 @@ class Znp extends events.EventEmitter {
         this.unpiParser.on('parsed', this.onUnpiParsed.bind(this));
 
         return new Promise((resolve, reject): void => {
-            this.socketPort.on('connect', function() {
+            this.socketPort.on('connect', function () {
                 logger.info('Socket connected', NS);
             });
 
-            // eslint-disable-next-line
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
             const self = this;
-            this.socketPort.on('ready', async function() {
+            this.socketPort.on('ready', async function () {
                 logger.info('Socket ready', NS);
                 await self.skipBootloader();
                 self.initialized = true;
@@ -251,7 +245,7 @@ class Znp extends events.EventEmitter {
         // CC1352P_2 and CC26X2R1 lists as 2 USB devices with same manufacturer, productId and vendorId
         // one is the actual chip interface, other is the XDS110.
         // The chip is always exposed on the first one after alphabetical sorting.
-        paths.sort((a, b) => (a < b) ? -1 : 1);
+        paths.sort((a, b) => (a < b ? -1 : 1));
 
         return paths.length > 0 ? paths[0] : null;
     }
@@ -280,8 +274,12 @@ class Znp extends events.EventEmitter {
     }
 
     public request(
-        subsystem: Subsystem, command: string, payload: ZpiObjectPayload, waiterID: number = null,
-        timeout: number = null, expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS]
+        subsystem: Subsystem,
+        command: string,
+        payload: ZpiObjectPayload,
+        waiterID: number = null,
+        timeout: number = null,
+        expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS],
     ): Promise<ZpiObject> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
@@ -296,32 +294,25 @@ class Znp extends events.EventEmitter {
             const frame = object.toUnpiFrame();
 
             if (object.type === Type.SREQ) {
-                const t = object.command === 'bdbStartCommissioning' || object.command === 'startupFromApp' ?
-                    40000 : timeouts.SREQ;
-                const waiter = this.waitress.waitFor(
-                    {type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout || t
-                );
+                const t = object.command === 'bdbStartCommissioning' || object.command === 'startupFromApp' ? 40000 : timeouts.SREQ;
+                const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout || t);
                 this.unpiWriter.writeFrame(frame);
                 const result = await waiter.start().promise;
-                if (result && result.payload.hasOwnProperty('status') &&
-                    !expectedStatuses.includes(result.payload.status)) {
-
+                if (result && result.payload.hasOwnProperty('status') && !expectedStatuses.includes(result.payload.status)) {
                     if (typeof waiterID === 'number') {
                         this.waitress.remove(waiterID);
                     }
 
                     throw new Error(
-                        `SREQ '${message}' failed with status '${
-                            statusDescription(result.payload.status)
-                        }' (expected '${expectedStatuses.map(statusDescription)}')`
+                        `SREQ '${message}' failed with status '${statusDescription(
+                            result.payload.status,
+                        )}' (expected '${expectedStatuses.map(statusDescription)}')`,
                     );
                 } else {
                     return result;
                 }
             } else if (object.type === Type.AREQ && object.isResetCommand()) {
-                const waiter = this.waitress.waitFor(
-                    {type: Type.AREQ, subsystem: Subsystem.SYS, command: 'resetInd'}, timeout || timeouts.reset
-                );
+                const waiter = this.waitress.waitFor({type: Type.AREQ, subsystem: Subsystem.SYS, command: 'resetInd'}, timeout || timeouts.reset);
                 this.queue.clear();
                 this.unpiWriter.writeFrame(frame);
                 return waiter.start().promise;
@@ -342,15 +333,17 @@ class Znp extends events.EventEmitter {
     }
 
     public waitFor(
-        type: Type, subsystem: Subsystem, command: string, payload: ZpiObjectPayload = {},
-        timeout: number = timeouts.default
+        type: Type,
+        subsystem: Subsystem,
+        command: string,
+        payload: ZpiObjectPayload = {},
+        timeout: number = timeouts.default,
     ): {start: () => {promise: Promise<ZpiObject>; ID: number}; ID: number} {
         return this.waitress.waitFor({type, subsystem, command, payload}, timeout);
     }
 
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {
-        const requiredMatch = matcher.type === zpiObject.type && matcher.subsystem == zpiObject.subsystem &&
-            matcher.command === zpiObject.command;
+        const requiredMatch = matcher.type === zpiObject.type && matcher.subsystem == zpiObject.subsystem && matcher.command === zpiObject.command;
         let payloadMatch = true;
 
         if (matcher.payload) {

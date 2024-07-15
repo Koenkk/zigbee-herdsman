@@ -1,17 +1,12 @@
 /* istanbul ignore file */
-import {Driver} from '../driver';
-import * as Models from "../../../models";
-import {
-    EmberKeyType,
-    EmberKeyStruct,
-    EmberNetworkParameters,
-    EmberSecurityManagerNetworkKeyInfo,
-    EmberKeyData
-} from '../driver/types';
-import {channelsMask2list} from '../driver/utils';
-import {fs} from "mz";
-import {BackupUtils} from "../../../utils";
+import {fs} from 'mz';
+
+import * as Models from '../../../models';
+import {BackupUtils} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import {Driver} from '../driver';
+import {EmberKeyType, EmberKeyStruct, EmberNetworkParameters, EmberSecurityManagerNetworkKeyInfo, EmberKeyData} from '../driver/types';
+import {channelsMask2list} from '../driver/utils';
 
 const NS = 'zh:ezsp:backup';
 
@@ -25,7 +20,7 @@ export class EZSPAdapterBackup {
     }
 
     public async createBackup(): Promise<Models.Backup> {
-        logger.debug("creating backup", NS);
+        logger.debug('creating backup', NS);
         const version: number = await this.driver.ezsp.version();
         const linkResult = await this.driver.getKey(EmberKeyType.TRUST_CENTER_LINK_KEY);
         const netParams = await this.driver.ezsp.execCommand('getNetworkParameters');
@@ -46,7 +41,7 @@ export class EZSPAdapterBackup {
             netKey = Buffer.from((netResult.keyData as EmberKeyData).contents);
             // get rest of info from second cmd in EZSP 13+
             const netKeyInfoResult = await this.driver.getNetworkKeyInfo();
-            const networkKeyInfo : EmberSecurityManagerNetworkKeyInfo = netKeyInfoResult.networkKeyInfo;
+            const networkKeyInfo: EmberSecurityManagerNetworkKeyInfo = netKeyInfoResult.networkKeyInfo;
             netKeySequenceNumber = networkKeyInfo.networkKeySequenceNumber;
             netKeyFrameCounter = networkKeyInfo.networkKeyFrameCounter;
         }
@@ -69,12 +64,12 @@ export class EZSPAdapterBackup {
             logicalChannel: networkParams.radioChannel,
             networkKeyInfo: {
                 sequenceNumber: netKeySequenceNumber,
-                frameCounter: netKeyFrameCounter
+                frameCounter: netKeyFrameCounter,
             },
             securityLevel: 5,
             networkUpdateId: networkParams.nwkUpdateId,
             coordinatorIeeeAddress: ieee,
-            devices: []
+            devices: [],
         };
     }
 
@@ -93,7 +88,7 @@ export class EZSPAdapterBackup {
         } catch (error) {
             throw new Error('Coordinator backup is corrupted');
         }
-        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
+        if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
             }
@@ -102,7 +97,7 @@ export class EZSPAdapterBackup {
             }
             return BackupUtils.fromUnifiedBackup(data);
         } else {
-            throw new Error("Unknown backup format");
+            throw new Error('Unknown backup format');
         }
     }
 }

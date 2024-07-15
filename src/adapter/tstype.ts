@@ -82,10 +82,10 @@ interface Coordinator {
 }
 
 interface Backup {
-    adapterType: "zStack";
+    adapterType: 'zStack';
     time: string;
     meta: {[s: string]: number};
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any;
 }
 
@@ -96,7 +96,20 @@ interface NetworkParameters {
 }
 
 export {
-    SerialPortOptions, NetworkOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
-    DeviceType, ActiveEndpoints, SimpleDescriptor, LQI, LQINeighbor, RoutingTable, Backup, NetworkParameters,
-    StartResult, RoutingTableEntry, AdapterOptions,
+    SerialPortOptions,
+    NetworkOptions,
+    Coordinator,
+    CoordinatorVersion,
+    NodeDescriptor,
+    DeviceType,
+    ActiveEndpoints,
+    SimpleDescriptor,
+    LQI,
+    LQINeighbor,
+    RoutingTable,
+    Backup,
+    NetworkParameters,
+    StartResult,
+    RoutingTableEntry,
+    AdapterOptions,
 };

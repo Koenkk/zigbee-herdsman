@@ -1,20 +1,20 @@
 /* istanbul ignore file */
 /* eslint-disable */
 
-import {DelimiterParser} from '@serialport/parser-delimiter'
+import {DelimiterParser} from '@serialport/parser-delimiter';
 import {EventEmitter} from 'events';
 import {SerialPort} from '../../serialPort';
-import SerialPortUtils from "../../serialPortUtils";
-import SocketPortUtils from "../../socketPortUtils";
-import net from "net";
-import {Queue, Wait} from "../../../utils";
-import {SerialPortOptions} from "../../tstype";
-import {STATUS, ZiGateCommandCode, ZiGateMessageCode, ZiGateObjectPayload} from "./constants";
-import ZiGateObject from "./ziGateObject";
-import Waitress from "../../../utils/waitress";
-import {equal, ZiGateResponseMatcher, ZiGateResponseMatcherRule} from "./commandType";
-import ZiGateFrame from "./frame";
-import {Buffalo} from "../../../buffalo";
+import SerialPortUtils from '../../serialPortUtils';
+import SocketPortUtils from '../../socketPortUtils';
+import net from 'net';
+import {Queue, Wait} from '../../../utils';
+import {SerialPortOptions} from '../../tstype';
+import {STATUS, ZiGateCommandCode, ZiGateMessageCode, ZiGateObjectPayload} from './constants';
+import ZiGateObject from './ziGateObject';
+import Waitress from '../../../utils/waitress';
+import {equal, ZiGateResponseMatcher, ZiGateResponseMatcherRule} from './commandType';
+import ZiGateFrame from './frame';
+import {Buffalo} from '../../../buffalo';
 import {logger} from '../../../utils/logger';
 
 const NS = 'zh:zigate:driver';
@@ -30,16 +30,16 @@ const timeouts = {
 };
 
 type WaitressMatcher = {
-    ziGateObject: ZiGateObject,
-    rules: ZiGateResponseMatcher,
-    extraParameters?: object
+    ziGateObject: ZiGateObject;
+    rules: ZiGateResponseMatcher;
+    extraParameters?: object;
 };
 
 function zeroPad(number: number, size?: number): string {
-    return (number).toString(16).padStart(size || 4, '0');
+    return number.toString(16).padStart(size || 4, '0');
 }
 
-function resolve(path: string | [], obj: { [k: string]: any }, separator = '.'): any {
+function resolve(path: string | [], obj: {[k: string]: any}, separator = '.'): any {
     const properties = Array.isArray(path) ? path : path.split(separator);
     return properties.reduce((prev, curr) => prev && prev[curr], obj);
 }
@@ -71,8 +71,7 @@ export default class ZiGate extends EventEmitter {
         this.initialized = false;
         this.queue = new Queue(1);
 
-        this.waitress = new Waitress<ZiGateObject, WaitressMatcher>(
-            this.waitressValidator, this.waitressTimeoutFormatter);
+        this.waitress = new Waitress<ZiGateObject, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
     public async sendCommand(
@@ -80,17 +79,20 @@ export default class ZiGate extends EventEmitter {
         payload?: ZiGateObjectPayload,
         timeout?: number,
         extraParameters?: object,
-        disableResponse: boolean = false
+        disableResponse: boolean = false,
     ): Promise<ZiGateObject> {
         const waiters: Promise<ZiGateObject>[] = [];
         const waitersId: number[] = [];
         return await this.queue.execute(async () => {
             try {
                 logger.debug(
-                    'Send command \x1b[32m>>>> '
-                    + ZiGateCommandCode[code]
-                    + ' 0x' + zeroPad(code)
-                    + ` <<<<\x1b[0m \nPayload: ${JSON.stringify(payload)}`, NS);
+                    'Send command \x1b[32m>>>> ' +
+                        ZiGateCommandCode[code] +
+                        ' 0x' +
+                        zeroPad(code) +
+                        ` <<<<\x1b[0m \nPayload: ${JSON.stringify(payload)}`,
+                    NS,
+                );
                 const ziGateObject = ZiGateObject.createRequest(code, payload);
                 const frame = ziGateObject.toZiGateFrame();
                 logger.debug(`${JSON.stringify(frame)}`, NS);
@@ -101,14 +103,9 @@ export default class ZiGate extends EventEmitter {
 
                 if (!disableResponse && Array.isArray(ziGateObject.command.response)) {
                     ziGateObject.command.response.forEach((rules) => {
-                        let waiter = this.waitress.waitFor(
-                            {ziGateObject, rules, extraParameters},
-                            timeout || timeouts.default
-                        );
+                        let waiter = this.waitress.waitFor({ziGateObject, rules, extraParameters}, timeout || timeouts.default);
                         waitersId.push(waiter.ID);
-                        waiters.push(
-                            waiter.start().promise
-                        );
+                        waiters.push(waiter.start().promise);
                     });
                 }
 
@@ -119,10 +116,7 @@ export default class ZiGate extends EventEmitter {
                         {receivedProperty: 'payload.packetType', matcher: equal, value: ziGateObject.code},
                     ];
 
-                    const statusWaiter = this.waitress.waitFor(
-                        {ziGateObject, rules: ruleStatus},
-                        timeout || timeouts.default
-                    ).start();
+                    const statusWaiter = this.waitress.waitFor({ziGateObject, rules: ruleStatus}, timeout || timeouts.default).start();
                     resultPromise = statusWaiter.promise;
                 }
 
@@ -144,8 +138,6 @@ export default class ZiGate extends EventEmitter {
                 return Promise.reject(new Error('sendCommand error: ' + e));
             }
         });
-
-
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
@@ -185,8 +177,10 @@ export default class ZiGate extends EventEmitter {
         this.emit('close');
     }
 
-    public waitFor(matcher: WaitressMatcher, timeout: number = timeouts.default):
-        { start: () => { promise: Promise<ZiGateObject>; ID: number }; ID: number } {
+    public waitFor(
+        matcher: WaitressMatcher,
+        timeout: number = timeouts.default,
+    ): {start: () => {promise: Promise<ZiGateObject>; ID: number}; ID: number} {
         return this.waitress.waitFor(matcher, timeout);
     }
 
@@ -195,16 +189,12 @@ export default class ZiGate extends EventEmitter {
             path: this.path,
             baudRate: this.baudRate,
             dataBits: 8,
-            parity: 'none', /* one of ['none', 'even', 'mark', 'odd', 'space'] */
-            stopBits: 1, /* one of [1,2] */
+            parity: 'none' /* one of ['none', 'even', 'mark', 'odd', 'space'] */,
+            stopBits: 1 /* one of [1,2] */,
             lock: false,
-            autoOpen: false
+            autoOpen: false,
         });
-        this.parser = this.serialPort.pipe(
-            new DelimiterParser(
-                {delimiter: [ZiGateFrame.STOP_BYTE], includeDelimiter: true}
-            ),
-        );
+        this.parser = this.serialPort.pipe(new DelimiterParser({delimiter: [ZiGateFrame.STOP_BYTE], includeDelimiter: true}));
         this.parser.on('data', this.onSerialData.bind(this));
 
         this.portWrite = this.serialPort;
@@ -236,10 +226,7 @@ export default class ZiGate extends EventEmitter {
         this.socketPort.setNoDelay(true);
         this.socketPort.setKeepAlive(true, 15000);
 
-
-        this.parser = this.socketPort.pipe(
-            new DelimiterParser({delimiter: [ZiGateFrame.STOP_BYTE], includeDelimiter: true}),
-        );
+        this.parser = this.socketPort.pipe(new DelimiterParser({delimiter: [ZiGateFrame.STOP_BYTE], includeDelimiter: true}));
         this.parser.on('data', this.onSerialData.bind(this));
 
         this.portWrite = this.socketPort;
@@ -248,7 +235,6 @@ export default class ZiGate extends EventEmitter {
                 logger.debug('Socket connected', NS);
             });
 
-            // eslint-disable-next-line
             const self = this;
 
             this.socketPort.on('ready', async function () {
@@ -313,8 +299,7 @@ export default class ZiGate extends EventEmitter {
                                 this.emit('received', {ziGateObject});
                                 break;
                             default:
-
-                                logger.debug("not implemented profile: " + ziGateObject.payload.profileID, NS);
+                                logger.debug('not implemented profile: ' + ziGateObject.payload.profileID, NS);
                         }
                         break;
                     case ZiGateMessageCode.LeaveIndication:
@@ -324,11 +309,9 @@ export default class ZiGate extends EventEmitter {
                         this.emit('DeviceAnnounce', ziGateObject.payload.shortAddress, ziGateObject.payload.ieee);
                         break;
                 }
-
             } catch (error) {
                 logger.error(`Parsing error: ${error}`, NS);
             }
-
         } catch (error) {
             logger.error(`Error while parsing Frame '${error.stack}'`, NS);
         }
@@ -342,9 +325,9 @@ export default class ZiGate extends EventEmitter {
         const validator = (rule: ZiGateResponseMatcherRule): boolean => {
             try {
                 let expectedValue: string | number;
-                if (typeof rule.value === "undefined" && typeof rule.expectedProperty !== "undefined") {
+                if (typeof rule.value === 'undefined' && typeof rule.expectedProperty !== 'undefined') {
                     expectedValue = resolve(rule.expectedProperty, matcher.ziGateObject);
-                } else if (typeof rule.value === "undefined" && typeof rule.expectedExtraParameter !== "undefined") {
+                } else if (typeof rule.value === 'undefined' && typeof rule.expectedExtraParameter !== 'undefined') {
                     expectedValue = resolve(rule.expectedExtraParameter, matcher.extraParameters);
                 } else {
                     expectedValue = rule.value;

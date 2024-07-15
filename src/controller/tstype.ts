@@ -1,5 +1,7 @@
-// eslint-disable-next-line
-interface KeyValue {[s: string]: any};
+interface KeyValue {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [s: string]: any;
+}
 
 /* Send request policies:
 'bulk':             Message must be sent together with other messages in the correct sequence.
@@ -25,12 +27,12 @@ type EntityType = DeviceType | 'Group';
 interface DatabaseEntry {
     id: number;
     type: EntityType;
-    // eslint-disable-next-line
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [s: string]: any;
 }
 
 enum GreenPowerEvents {
-    deviceJoined = "deviceJoined",
+    deviceJoined = 'deviceJoined',
 }
 
 interface GreenPowerDeviceJoinedPayload {
@@ -39,7 +41,4 @@ interface GreenPowerDeviceJoinedPayload {
     networkAddress: number;
 }
 
-export {
-    KeyValue, DatabaseEntry, EntityType, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload,
-    SendPolicy
-};
+export {KeyValue, DatabaseEntry, EntityType, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload, SendPolicy};

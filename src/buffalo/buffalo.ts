@@ -1,4 +1,4 @@
-import {EUI64} from "../zspec/tstypes";
+import {EUI64} from '../zspec/tstypes';
 
 class Buffalo {
     protected position: number;
@@ -179,14 +179,14 @@ class Buffalo {
         return value;
     }
 
-    public writeIeeeAddr(value: string/*TODO: EUI64*/): void {
+    public writeIeeeAddr(value: string /*TODO: EUI64*/): void {
         this.writeUInt32(parseInt(value.slice(10), 16));
         this.writeUInt32(parseInt(value.slice(2, 10), 16));
     }
 
     public readIeeeAddr(): EUI64 {
         const octets = Array.from(this.readBuffer(8).reverse());
-        return `0x${octets.map(octet => octet.toString(16).padStart(2, '0')).join("")}`;
+        return `0x${octets.map((octet) => octet.toString(16).padStart(2, '0')).join('')}`;
     }
 
     public writeBuffer(values: Buffer | number[], length: number): void {
@@ -243,7 +243,6 @@ class Buffalo {
     }
 
     public readListUInt24(length: number): number[] {
-        
         const value: number[] = [];
         for (let i = 0; i < length; i++) {
             value.push(this.readUInt24());

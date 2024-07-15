@@ -1,8 +1,9 @@
 /* istanbul ignore file */
 import * as stream from 'stream';
+
+import {logger} from '../../../utils/logger';
 import * as consts from './consts';
 import Frame from './frame';
-import {logger} from '../../../utils/logger';
 
 const NS = 'zh:ezsp:uart';
 
@@ -48,7 +49,6 @@ export class Parser extends stream.Transform {
                 if (frame) {
                     this.emit('parsed', frame);
                 }
-
             } catch (error) {
                 logger.debug(`<-- error ${error.stack}`, NS);
             }
@@ -60,8 +60,8 @@ export class Parser extends stream.Transform {
         this.tail.push(chunk);
         cb();
     }
- 
-    private* unstuff(buffer: Buffer): Generator<number> {
+
+    private *unstuff(buffer: Buffer): Generator<number> {
         /* Unstuff (unescape) a buffer after receipt */
         let escaped = false;
         for (const byte of buffer) {

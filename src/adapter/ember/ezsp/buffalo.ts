@@ -1,7 +1,7 @@
 /* istanbul ignore file */
-import Buffalo from "../../../buffalo/buffalo";
-import {GP_SINK_LIST_ENTRIES} from "../consts";
-import {EmberGpApplicationId, EmberGpSinkType, EzspStatus} from "../enums";
+import Buffalo from '../../../buffalo/buffalo';
+import {GP_SINK_LIST_ENTRIES} from '../consts';
+import {EmberGpApplicationId, EmberGpSinkType, EzspStatus, SLStatus} from '../enums';
 import {
     EmberAesMmoHashContext,
     EmberApsFrame,
@@ -14,6 +14,7 @@ import {
     EmberChildData,
     EmberCurrentSecurityState,
     EmberDutyCycleLimits,
+    EmberEndpointDescription,
     EmberGpAddress,
     EmberGpProxyTableEntry,
     EmberGpSinkListEntry,
@@ -23,6 +24,7 @@ import {
     EmberMessageDigest,
     EmberMultiPhyRadioParameters,
     EmberMulticastTableEntry,
+    EmberMultiprotocolPriorities,
     EmberNeighborTableEntry,
     EmberNetworkInitStruct,
     EmberNetworkParameters,
@@ -32,6 +34,7 @@ import {
     EmberPublicKey283k1Data,
     EmberPublicKeyData,
     EmberRouteTableEntry,
+    EmberRxPacketInfo,
     EmberSignature283k1Data,
     EmberSignatureData,
     EmberSmacData,
@@ -49,9 +52,9 @@ import {
     SecManAPSKeyMetadata,
     SecManContext,
     SecManKey,
-    SecManNetworkKeyInfo
-} from "../types";
-import {highByte} from "../utils/math";
+    SecManNetworkKeyInfo,
+} from '../types';
+import {highByte} from '../utils/math';
 import {
     EMBER_ENCRYPTION_KEY_SIZE,
     EMBER_CERTIFICATE_SIZE,
@@ -76,12 +79,54 @@ import {
     EZSP_EXTENDED_FRAME_ID_HB_INDEX,
     EZSP_EXTENDED_FRAME_ID_LB_INDEX,
     EXTENDED_PAN_ID_SIZE,
-} from "./consts";
-import {EzspFrameID} from "./enums";
+} from './consts';
+import {EzspFrameID} from './enums';
 
+/**
+ * Handle EmberStatus deprecation in v14+ for previous versions
+ */
+const EMBER_TO_SL_STATUS_MAP: ReadonlyMap<number, SLStatus> = new Map([
+    [0x02 /*BAD_ARGUMENT*/, SLStatus.INVALID_PARAMETER],
+    [0x18 /*NO_BUFFERS*/, SLStatus.ALLOCATION_FAILED],
+    [0x19 /*PACKET_HANDOFF_DROP_PACKET*/, SLStatus.ZIGBEE_PACKET_HANDOFF_DROPPED],
+    [0x66 /*DELIVERY_FAILED*/, SLStatus.ZIGBEE_DELIVERY_FAILED],
+    [0x70 /*INVALID_CALL*/, SLStatus.INVALID_STATE],
+    [0x72 /*MAX_MESSAGE_LIMIT_REACHED*/, SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED],
+    [0x74 /*MESSAGE_TOO_LONG*/, SLStatus.MESSAGE_TOO_LONG],
+    [0x75 /*BINDING_IS_ACTIVE*/, SLStatus.ZIGBEE_BINDING_IS_ACTIVE],
+    [0x76 /*ADDRESS_TABLE_ENTRY_IS_ACTIVE*/, SLStatus.ZIGBEE_ADDRESS_TABLE_ENTRY_IS_ACTIVE],
+    [0x90 /*NETWORK_UP*/, SLStatus.NETWORK_UP],
+    [0x91 /*NETWORK_DOWN*/, SLStatus.NETWORK_DOWN],
+    [0x93 /*NOT_JOINED*/, SLStatus.NOT_JOINED],
+    [0x95 /*INVALID_SECURITY_LEVEL*/, SLStatus.ZIGBEE_INVALID_SECURITY_LEVEL],
+    [0x96 /*MOVE_FAILED*/, SLStatus.ZIGBEE_MOVE_FAILED],
+    [0x99 /*NODE_ID_CHANGED*/, SLStatus.ZIGBEE_NODE_ID_CHANGED],
+    [0x9a /*PAN_ID_CHANGED*/, SLStatus.ZIGBEE_PAN_ID_CHANGED],
+    [0x9b /*CHANNEL_CHANGED*/, SLStatus.ZIGBEE_CHANNEL_CHANGED],
+    [0x9c /*NETWORK_OPENED*/, SLStatus.ZIGBEE_NETWORK_OPENED],
+    [0x9d /*NETWORK_CLOSED*/, SLStatus.ZIGBEE_NETWORK_CLOSED],
+    [0xa1 /*NETWORK_BUSY*/, SLStatus.BUSY],
+    [0xa4 /*BINDING_HAS_CHANGED*/, SLStatus.ZIGBEE_BINDING_HAS_CHANGED],
+    [0xa5 /*INSUFFICIENT_RANDOM_DATA*/, SLStatus.ZIGBEE_INSUFFICIENT_RANDOM_DATA],
+    [0xa6 /*APS_ENCRYPTION_ERROR*/, SLStatus.ZIGBEE_APS_ENCRYPTION_ERROR],
+    [0xa9 /*SOURCE_ROUTE_FAILURE*/, SLStatus.ZIGBEE_SOURCE_ROUTE_FAILURE],
+    [0xa8 /*SECURITY_STATE_NOT_SET*/, SLStatus.ZIGBEE_SECURITY_STATE_NOT_SET],
+    [0xaa /*MANY_TO_ONE_ROUTE_FAILURE*/, SLStatus.ZIGBEE_MANY_TO_ONE_ROUTE_FAILURE],
+    [0xac /*RECEIVED_KEY_IN_THE_CLEAR*/, SLStatus.ZIGBEE_RECEIVED_KEY_IN_THE_CLEAR],
+    [0xad /*NO_NETWORK_KEY_RECEIVED*/, SLStatus.ZIGBEE_NO_NETWORK_KEY_RECEIVED],
+    [0xae /*NO_LINK_KEY_RECEIVED*/, SLStatus.ZIGBEE_NO_LINK_KEY_RECEIVED],
+    [0xaf /*PRECONFIGURED_KEY_REQUIRED*/, SLStatus.ZIGBEE_PRECONFIGURED_KEY_REQUIRED],
+    [0xb0 /*STACK_AND_HARDWARE_MISMATCH*/, SLStatus.ZIGBEE_STACK_AND_HARDWARE_MISMATCH],
+    [0xb5 /*LIBRARY_NOT_PRESENT*/, SLStatus.NOT_AVAILABLE],
+    [0xb8 /*TOO_SOON_FOR_SWITCH_KEY*/, SLStatus.ZIGBEE_TOO_SOON_FOR_SWITCH_KEY],
+    [0xb9 /*SIGNATURE_VERIFY_FAILURE*/, SLStatus.ZIGBEE_SIGNATURE_VERIFY_FAILURE],
+    [0xbb /*KEY_NOT_AUTHORIZED*/, SLStatus.ZIGBEE_KEY_NOT_AUTHORIZED],
+    [0xbc /*TRUST_CENTER_EUI_HAS_CHANGED*/, SLStatus.ZIGBEE_TRUST_CENTER_SWAP_EUI_HAS_CHANGED],
+    [0xbe /*IEEE_ADDRESS_DISCOVERY_IN_PROGRESS*/, SLStatus.ZIGBEE_IEEE_ADDRESS_DISCOVERY_IN_PROGRESS],
+    [0xbf /*TRUST_CENTER_SWAPPED_OUT_EUI_HAS_NOT_CHANGED*/, SLStatus.ZIGBEE_TRUST_CENTER_SWAP_EUI_HAS_NOT_CHANGED],
+]);
 
 export class EzspBuffalo extends Buffalo {
-
     public getBufferLength(): number {
         return this.buffer.length;
     }
@@ -93,8 +138,8 @@ export class EzspBuffalo extends Buffalo {
 
     /**
      * Set the byte at given position without affecting the internal position tracker.
-     * @param position 
-     * @param value 
+     * @param position
+     * @param value
      */
     public setCommandByte(position: number, value: number): void {
         this.buffer.writeUInt8(value, position);
@@ -102,8 +147,8 @@ export class EzspBuffalo extends Buffalo {
 
     /**
      * Get the byte at given position without affecting the internal position tracker.
-     * @param position 
-     * @returns 
+     * @param position
+     * @returns
      */
     public getCommandByte(position: number): number {
         return this.buffer.readUInt8(position);
@@ -111,24 +156,26 @@ export class EzspBuffalo extends Buffalo {
 
     /**
      * Get the byte at given position without affecting the internal position tracker.
-     * @param position 
-     * @returns 
+     * @param position
+     * @returns
      */
     public getResponseByte(position: number): number {
         return this.buffer.readUInt8(position);
     }
 
     public getExtFrameControl(): number {
-        return (this.getResponseByte(EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX) << 8 | this.getResponseByte(EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX));
+        return (this.getResponseByte(EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX) << 8) | this.getResponseByte(EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX);
     }
 
     public getExtFrameId(): EzspFrameID {
-        return (this.getResponseByte(EZSP_EXTENDED_FRAME_ID_HB_INDEX) << 8 | this.getResponseByte(EZSP_EXTENDED_FRAME_ID_LB_INDEX));
+        return (this.getResponseByte(EZSP_EXTENDED_FRAME_ID_HB_INDEX) << 8) | this.getResponseByte(EZSP_EXTENDED_FRAME_ID_LB_INDEX);
     }
 
     public getFrameId(): EzspFrameID {
-        if ((this.getResponseByte(EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX) & EZSP_EXTENDED_FRAME_FORMAT_VERSION_MASK)
-            === EZSP_EXTENDED_FRAME_FORMAT_VERSION) {
+        if (
+            (this.getResponseByte(EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX) & EZSP_EXTENDED_FRAME_FORMAT_VERSION_MASK) ===
+            EZSP_EXTENDED_FRAME_FORMAT_VERSION
+        ) {
             return this.getExtFrameId();
         } else {
             return this.getResponseByte(EZSP_FRAME_ID_INDEX) as EzspFrameID;
@@ -146,8 +193,10 @@ export class EzspBuffalo extends Buffalo {
         let frameId: EzspFrameID;
         let parametersIndex: number;
 
-        if ((this.getResponseByte(EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX) & EZSP_EXTENDED_FRAME_FORMAT_VERSION_MASK)
-            === EZSP_EXTENDED_FRAME_FORMAT_VERSION) {
+        if (
+            (this.getResponseByte(EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX) & EZSP_EXTENDED_FRAME_FORMAT_VERSION_MASK) ===
+            EZSP_EXTENDED_FRAME_FORMAT_VERSION
+        ) {
             // use extended ezsp frame format
             frameControl = this.getExtFrameControl();
             frameId = this.getExtFrameId();
@@ -170,7 +219,7 @@ export class EzspBuffalo extends Buffalo {
     /**
      * Get a copy of the rest of the buffer (from current position to end).
      * WARNING: Make sure the length is appropriate, if alloc'ed longer, it will return everything until the end.
-     * @returns 
+     * @returns
      */
     public readRest(): Buffer {
         return Buffer.from(this.buffer.subarray(this.position));
@@ -179,8 +228,8 @@ export class EzspBuffalo extends Buffalo {
     /**
      * This is mostly used for payload/encryption stuff.
      * Copies the buffer to avoid memory referencing issues since Ezsp has a single buffer allocated.
-     * @param length 
-     * @returns 
+     * @param length
+     * @returns
      */
     protected readBufferCopy(length: number): Buffer {
         return Buffer.from(this.readBuffer(length));
@@ -188,10 +237,10 @@ export class EzspBuffalo extends Buffalo {
 
     /**
      * Write a uint8_t for payload length, followed by payload buffer (copied at post-length position).
-     * 
+     *
      * WARNING: `payload` must have a valid length (as in, not a Buffer allocated to longer length).
      *          Should be passed with getWritten() in most cases.
-     * @param payload 
+     * @param payload
      */
     public writePayload(payload: Buffer): void {
         this.writeUInt8(payload.length);
@@ -201,7 +250,7 @@ export class EzspBuffalo extends Buffalo {
 
     /**
      * Read a uint8_t for payload length, followed by payload buffer (using post-length position).
-     * @returns 
+     * @returns
      */
     public readPayload(): Buffer {
         const messageLength = this.readUInt8();
@@ -209,15 +258,15 @@ export class EzspBuffalo extends Buffalo {
         return this.readBufferCopy(messageLength);
     }
 
-    public writeEmberNetworkParameters(value: EmberNetworkParameters): void {                                     
+    public writeEmberNetworkParameters(value: EmberNetworkParameters): void {
         this.writeListUInt8(value.extendedPanId);
-        this.writeUInt16(value.panId);          
-        this.writeUInt8(value.radioTxPower);    
-        this.writeUInt8(value.radioChannel);    
-        this.writeUInt8(value.joinMethod);      
-        this.writeUInt16(value.nwkManagerId);   
-        this.writeUInt8(value.nwkUpdateId);     
-        this.writeUInt32(value.channels);       
+        this.writeUInt16(value.panId);
+        this.writeUInt8(value.radioTxPower);
+        this.writeUInt8(value.radioChannel);
+        this.writeUInt8(value.joinMethod);
+        this.writeUInt16(value.nwkManagerId);
+        this.writeUInt8(value.nwkUpdateId);
+        this.writeUInt32(value.channels);
     }
 
     public readEmberNetworkParameters(): EmberNetworkParameters {
@@ -297,7 +346,7 @@ export class EzspBuffalo extends Buffalo {
         this.writeIeeeAddr(value.identifier);
         this.writeUInt8(value.networkIndex);
     }
-  
+
     public readEmberBindingTableEntry(): EmberBindingTableEntry {
         const type = this.readUInt8();
         const local = this.readUInt8();
@@ -337,7 +386,7 @@ export class EzspBuffalo extends Buffalo {
     }
 
     public readEmberBeaconClassificationParams(): EmberBeaconClassificationParams {
-        const minRssiForReceivingPkts = this.readUInt8();// Int8...
+        const minRssiForReceivingPkts = this.readUInt8(); // Int8...
         const beaconClassificationMask = this.readUInt16();
 
         return {minRssiForReceivingPkts, beaconClassificationMask};
@@ -400,7 +449,7 @@ export class EzspBuffalo extends Buffalo {
     public writeEmberKeyData(value: EmberKeyData): void {
         this.writeBuffer(value.contents, EMBER_ENCRYPTION_KEY_SIZE);
     }
-  
+
     public readEmberKeyData(): EmberKeyData {
         const contents = this.readBufferCopy(EMBER_ENCRYPTION_KEY_SIZE);
 
@@ -426,22 +475,22 @@ export class EzspBuffalo extends Buffalo {
     }
 
     public readSecManContext(): SecManContext {
-        const core_key_type = this.readUInt8();
-        const key_index = this.readUInt8();
-        const derived_type = this.readUInt16();
+        const coreKeyType = this.readUInt8();
+        const keyIndex = this.readUInt8();
+        const derivedType = this.readUInt16();
         const eui64 = this.readIeeeAddr();
-        const multi_network_index = this.readUInt8();
+        const multiNetworkIndex = this.readUInt8();
         const flags = this.readUInt8();
-        const psa_key_alg_permission = this.readUInt32();
+        const psaKeyAlgPermission = this.readUInt32();
 
         return {
-            coreKeyType: core_key_type,
-            keyIndex: key_index,
-            derivedType: derived_type,
+            coreKeyType,
+            keyIndex,
+            derivedType,
             eui64,
-            multiNetworkIndex: multi_network_index,
+            multiNetworkIndex,
             flags,
-            psaKeyAlgPermission: psa_key_alg_permission,
+            psaKeyAlgPermission,
         };
     }
 
@@ -454,8 +503,8 @@ export class EzspBuffalo extends Buffalo {
     }
 
     public readSecManNetworkKeyInfo(): SecManNetworkKeyInfo {
-        const networkKeySet = this.readUInt8() === 1 ? true : false;
-        const alternateNetworkKeySet = this.readUInt8() === 1 ? true : false;
+        const networkKeySet = this.readUInt8() !== 0;
+        const alternateNetworkKeySet = this.readUInt8() !== 0;
         const networkKeySequenceNumber = this.readUInt8();
         const altNetworkKeySequenceNumber = this.readUInt8();
         const networkKeyFrameCounter = this.readUInt32();
@@ -478,18 +527,18 @@ export class EzspBuffalo extends Buffalo {
 
     public readSecManAPSKeyMetadata(): SecManAPSKeyMetadata {
         const bitmask = this.readUInt16();
-        const outgoing_frame_counter = this.readUInt32();
-        const incoming_frame_counter = this.readUInt32();
-        const ttl_in_seconds = this.readUInt16();
+        const outgoingFrameCounter = this.readUInt32();
+        const incomingFrameCounter = this.readUInt32();
+        const ttlInSeconds = this.readUInt16();
 
         return {
             bitmask,
-            outgoingFrameCounter: outgoing_frame_counter,
-            incomingFrameCounter: incoming_frame_counter,
-            ttlInSeconds: ttl_in_seconds,
+            outgoingFrameCounter,
+            incomingFrameCounter,
+            ttlInSeconds,
         };
     }
-    
+
     public writeEmberTransientKeyData(value: EmberTransientKeyData): void {
         this.writeIeeeAddr(value.eui64);
         this.writeEmberKeyData(value.keyData);
@@ -562,7 +611,7 @@ export class EzspBuffalo extends Buffalo {
         this.writeUInt8(value.timeout);
         this.writeUInt32(value.remainingTimeout);
     }
-  
+
     public readEmberChildData(): EmberChildData {
         const eui64 = this.readIeeeAddr();
         const type = this.readUInt8();
@@ -587,11 +636,11 @@ export class EzspBuffalo extends Buffalo {
         const channel = this.readUInt8();
         const panId = this.readUInt16();
         const extendedPanId = this.readListUInt8(EXTENDED_PAN_ID_SIZE);
-        const allowingJoin = this.readUInt8();
+        const allowingJoin = this.readUInt8() !== 0;
         const stackProfile = this.readUInt8();
         const nwkUpdateId = this.readUInt8();
 
-        return  {
+        return {
             channel,
             panId,
             extendedPanId,
@@ -605,7 +654,7 @@ export class EzspBuffalo extends Buffalo {
         this.writeUInt8(value.channel);
         this.writeUInt16(value.panId);
         this.writeListUInt8(value.extendedPanId);
-        this.writeUInt8(value.allowingJoin);
+        this.writeUInt8(value.allowingJoin ? 1 : 0);
         this.writeUInt8(value.stackProfile);
         this.writeUInt8(value.nwkUpdateId);
     }
@@ -659,7 +708,7 @@ export class EzspBuffalo extends Buffalo {
 
         return {contents};
     }
-    
+
     public writeEmberCertificate283k1Data(value: EmberCertificate283k1Data): void {
         this.writeBuffer(value.contents, EMBER_CERTIFICATE_283K1_SIZE);
     }
@@ -699,7 +748,7 @@ export class EzspBuffalo extends Buffalo {
 
         return {contents};
     }
-  
+
     public writeEmberAesMmoHashContext(context: EmberAesMmoHashContext): void {
         this.writeBuffer(context.result, EMBER_AES_HASH_BLOCK_SIZE);
         this.writeUInt32(context.length);
@@ -845,7 +894,7 @@ export class EzspBuffalo extends Buffalo {
 
         if (value.applicationId === EmberGpApplicationId.SOURCE_ID) {
             this.writeUInt32(value.sourceId);
-            this.writeUInt32(value.sourceId);// filler
+            this.writeUInt32(value.sourceId); // filler
         } else if (value.applicationId === EmberGpApplicationId.IEEE_ADDRESS) {
             this.writeIeeeAddr(value.gpdIeeeAddress);
         }
@@ -858,7 +907,7 @@ export class EzspBuffalo extends Buffalo {
 
         if (applicationId === EmberGpApplicationId.SOURCE_ID) {
             const sourceId = this.readUInt32();
-            this.readUInt32();// filler
+            this.readUInt32(); // filler
             const endpoint = this.readUInt8();
 
             return {applicationId, sourceId, endpoint};
@@ -879,39 +928,39 @@ export class EzspBuffalo extends Buffalo {
             const type: EmberGpSinkType = this.readUInt8();
 
             switch (type) {
-            case EmberGpSinkType.FULL_UNICAST:
-            case EmberGpSinkType.LW_UNICAST:
-            case EmberGpSinkType.UNUSED:
-            default:
-                const sinkNodeId = this.readUInt16();
-                const sinkEUI = this.readIeeeAddr();
+                case EmberGpSinkType.FULL_UNICAST:
+                case EmberGpSinkType.LW_UNICAST:
+                case EmberGpSinkType.UNUSED:
+                default:
+                    const sinkNodeId = this.readUInt16();
+                    const sinkEUI = this.readIeeeAddr();
 
-                list.push({
-                    type,
-                    unicast: {
-                        sinkNodeId,
-                        sinkEUI,
-                    }
-                });
-                break;
-            case EmberGpSinkType.D_GROUPCAST:
-            case EmberGpSinkType.GROUPCAST:
-                const alias = this.readUInt16();
-                const groupID = this.readUInt16();
+                    list.push({
+                        type,
+                        unicast: {
+                            sinkNodeId,
+                            sinkEUI,
+                        },
+                    });
+                    break;
+                case EmberGpSinkType.D_GROUPCAST:
+                case EmberGpSinkType.GROUPCAST:
+                    const alias = this.readUInt16();
+                    const groupID = this.readUInt16();
 
-                // fillers
-                this.readUInt16();
-                this.readUInt16();
-                this.readUInt16();
+                    // fillers
+                    this.readUInt16();
+                    this.readUInt16();
+                    this.readUInt16();
 
-                list.push({
-                    type,
-                    groupcast: {
-                        alias,
-                        groupID,
-                    }
-                });
-                break;
+                    list.push({
+                        type,
+                        groupcast: {
+                            alias,
+                            groupID,
+                        },
+                    });
+                    break;
             }
         }
 
@@ -923,24 +972,24 @@ export class EzspBuffalo extends Buffalo {
             this.writeUInt8(value[i].type);
 
             switch (value[i].type) {
-            case EmberGpSinkType.FULL_UNICAST:
-            case EmberGpSinkType.LW_UNICAST:
-            case EmberGpSinkType.UNUSED:
-            default:
-                this.writeUInt16(value[i].unicast.sinkNodeId);
-                this.writeIeeeAddr(value[i].unicast.sinkEUI);// changed 8 to const var
+                case EmberGpSinkType.FULL_UNICAST:
+                case EmberGpSinkType.LW_UNICAST:
+                case EmberGpSinkType.UNUSED:
+                default:
+                    this.writeUInt16(value[i].unicast.sinkNodeId);
+                    this.writeIeeeAddr(value[i].unicast.sinkEUI); // changed 8 to const var
 
-                break;
+                    break;
 
-            case EmberGpSinkType.D_GROUPCAST:
-            case EmberGpSinkType.GROUPCAST:
-                this.writeUInt16(value[i].groupcast.alias);
-                this.writeUInt16(value[i].groupcast.groupID);
-                //fillers
-                this.writeUInt16(value[i].groupcast.alias);
-                this.writeUInt16(value[i].groupcast.groupID);
-                this.writeUInt16(value[i].groupcast.alias);
-                break;
+                case EmberGpSinkType.D_GROUPCAST:
+                case EmberGpSinkType.GROUPCAST:
+                    this.writeUInt16(value[i].groupcast.alias);
+                    this.writeUInt16(value[i].groupcast.groupID);
+                    //fillers
+                    this.writeUInt16(value[i].groupcast.alias);
+                    this.writeUInt16(value[i].groupcast.groupID);
+                    this.writeUInt16(value[i].groupcast.alias);
+                    break;
             }
         }
     }
@@ -950,7 +999,7 @@ export class EzspBuffalo extends Buffalo {
         const options = this.readUInt32();
         const gpd = this.readEmberGpAddress();
         const assignedAlias = this.readUInt16();
-        const securityOptions  = this.readUInt8();
+        const securityOptions = this.readUInt8();
         const gpdSecurityFrameCounter = this.readUInt32();
         const gpdKey = this.readEmberKeyData();
         const sinkList = this.readEmberGpSinkList();
@@ -1095,7 +1144,7 @@ export class EzspBuffalo extends Buffalo {
             preconfiguredKey,
         };
     }
-    
+
     public readEmberZllAddressAssignment(): EmberZllAddressAssignment {
         const nodeId = this.readUInt16();
         const freeNodeIdMin = this.readUInt16();
@@ -1141,9 +1190,9 @@ export class EzspBuffalo extends Buffalo {
         const nwkUpdateId = this.readUInt8();
         const power = this.readUInt8();
         const parentPriority = this.readUInt8();
-        const enhanced = this.readUInt8() === 1 ? true : false;
-        const permitJoin = this.readUInt8() === 1 ? true : false;
-        const hasCapacity = this.readUInt8() === 1 ? true : false;
+        const enhanced = this.readUInt8() !== 0;
+        const permitJoin = this.readUInt8() !== 0;
+        const hasCapacity = this.readUInt8() !== 0;
         const panId = this.readUInt16();
         const sender = this.readUInt16();
         const extendedPanId = this.readListUInt8(EXTENDED_PAN_ID_SIZE);
@@ -1170,7 +1219,7 @@ export class EzspBuffalo extends Buffalo {
                 longUptime: true,
                 preferParent: true,
                 macDataPollKeepalive: true,
-                endDeviceKeepalive: true
+                endDeviceKeepalive: true,
             },
             index,
         };
@@ -1200,9 +1249,9 @@ export class EzspBuffalo extends Buffalo {
         const nwkUpdateId = this.readUInt8();
         const power = this.readUInt8();
         const parentPriority = this.readUInt8();
-        const enhanced = this.readUInt8() === 1 ? true : false;
-        const permitJoin = this.readUInt8() === 1 ? true : false;
-        const hasCapacity = this.readUInt8() === 1 ? true : false;
+        const enhanced = this.readUInt8() !== 0;
+        const permitJoin = this.readUInt8() !== 0;
+        const hasCapacity = this.readUInt8() !== 0;
         const panId = this.readUInt16();
         const sender = this.readUInt16();
         const extendedPanId = this.readListUInt8(EXTENDED_PAN_ID_SIZE);
@@ -1227,7 +1276,7 @@ export class EzspBuffalo extends Buffalo {
             longUptime: true,
             preferParent: true,
             macDataPollKeepalive: true,
-            endDeviceKeepalive: true
+            endDeviceKeepalive: true,
         };
     }
 
@@ -1245,8 +1294,8 @@ export class EzspBuffalo extends Buffalo {
 
     public readEmberTokenInfo(): EmberTokenInfo {
         const nvm3Key = this.readUInt32();
-        const isCnt = this.readUInt8() === 1 ? true : false;
-        const isIdx = this.readUInt8() === 1 ? true : false;
+        const isCnt = this.readUInt8() !== 0;
+        const isIdx = this.readUInt8() !== 0;
         const size = this.readUInt8();
         const arraySize = this.readUInt8();
 
@@ -1265,5 +1314,82 @@ export class EzspBuffalo extends Buffalo {
         this.writeUInt8(tokenInfo.isIdx ? 1 : 0);
         this.writeUInt8(tokenInfo.size);
         this.writeUInt8(tokenInfo.arraySize);
+    }
+
+    /**
+     * EZSP switched to using SLStatus for command returns from version 14.
+     * @param version EZSP protocol version in use
+     * @param mapFromEmber If true, map from EmberStatus, otherwise map from EzspStatus
+     * @returns EzspStatus, EmberStatus or SLStatus as SLStatus
+     */
+    public readStatus(version: number, mapFromEmber: boolean = true): SLStatus {
+        if (version < 0x0e) {
+            const status = this.readUInt8();
+
+            // skip lookup if SUCCESS (always zero)
+            if (status === SLStatus.OK) {
+                return status;
+            }
+
+            if (mapFromEmber) {
+                // use mapped value, or pass as-is if none found
+                return EMBER_TO_SL_STATUS_MAP.get(status) ?? status;
+            }
+
+            // EzspStatus mapping to SLStatus is always same code
+            return SLStatus.ZIGBEE_EZSP_ERROR;
+        } else {
+            return this.readUInt32();
+        }
+    }
+
+    public readEmberEndpointDescription(): EmberEndpointDescription {
+        const profileId = this.readUInt16();
+        const deviceId = this.readUInt16();
+        const deviceVersion = this.readUInt8();
+        const inputClusterCount = this.readUInt8();
+        const outputClusterCount = this.readUInt8();
+
+        return {
+            profileId,
+            deviceId,
+            deviceVersion,
+            inputClusterCount,
+            outputClusterCount,
+        };
+    }
+
+    public readEmberMultiprotocolPriorities(): EmberMultiprotocolPriorities {
+        const backgroundRx = this.readUInt8();
+        const tx = this.readUInt8();
+        const activeRx = this.readUInt8();
+
+        return {backgroundRx, tx, activeRx};
+    }
+
+    public writeEmberMultiprotocolPriorities(priorities: EmberMultiprotocolPriorities): void {
+        this.writeUInt8(priorities.backgroundRx);
+        this.writeUInt8(priorities.tx);
+        this.writeUInt8(priorities.activeRx);
+    }
+
+    public readEmberRxPacketInfo(): EmberRxPacketInfo {
+        const senderShortId = this.readUInt16();
+        const senderLongId = this.readIeeeAddr();
+        const bindingIndex = this.readUInt8();
+        const addressIndex = this.readUInt8();
+        const lastHopLqi = this.readUInt8();
+        const lastHopRssi = this.readInt8(); // SDK: (int8_t)fetchInt8u();
+        const lastHopTimestamp = this.readUInt32();
+
+        return {
+            senderShortId,
+            senderLongId,
+            bindingIndex,
+            addressIndex,
+            lastHopLqi,
+            lastHopRssi,
+            lastHopTimestamp,
+        };
     }
 }

@@ -1,7 +1,6 @@
-import "regenerator-runtime/runtime";
+import 'regenerator-runtime/runtime';
 import {IsNumberArray, Wait, Queue, Waitress, AssertString} from '../src/utils';
 import {logger, setLogger} from '../src/utils/logger';
-
 
 const mockLogger = {
     debug: jest.fn(),
@@ -12,11 +11,11 @@ const mockLogger = {
 
 describe('Utils', () => {
     it('IsNumberArray valid', () => {
-        expect(IsNumberArray([1,2,3])).toBeTruthy();
+        expect(IsNumberArray([1, 2, 3])).toBeTruthy();
     });
 
     it('IsNumberArray invalid (partial)', () => {
-        expect(IsNumberArray([1,2,'3'])).toBeFalsy();
+        expect(IsNumberArray([1, 2, '3'])).toBeFalsy();
     });
 
     it('IsNumberArray with non array type', () => {
@@ -29,13 +28,17 @@ describe('Utils', () => {
 
     it('Assert string false', () => {
         let error;
-        try {AssertString(1)} catch (e) {error = e;}
-        expect(error).toStrictEqual(new Error('Input must be a string!'))
+        try {
+            AssertString(1);
+        } catch (e) {
+            error = e;
+        }
+        expect(error).toStrictEqual(new Error('Input must be a string!'));
     });
 
     it('Test wait', async () => {
         const originalSetTimeout = setTimeout;
-        setTimeout = jest.fn()
+        setTimeout = jest.fn();
         Wait(1000).then(() => {});
         expect(setTimeout).toHaveBeenCalledTimes(1);
         expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000);
@@ -48,7 +51,7 @@ describe('Utils', () => {
             if (payload === 'one' && matcher === 1) return true;
             if (payload === 'two' && matcher === 2) return true;
             return false;
-        }
+        };
         const waitress = new Waitress<string, number>(validator, (_, timeout) => `Timedout '${timeout}'`);
 
         const wait1 = waitress.waitFor(1, 10000).start();
@@ -69,11 +72,19 @@ describe('Utils', () => {
         expect(await wait2_2.promise).toBe('two');
 
         let error2;
-        try {await wait2_4.promise} catch (e) { error2 = e};
+        try {
+            await wait2_4.promise;
+        } catch (e) {
+            error2 = e;
+        }
         expect(error2).toStrictEqual(new Error("Timedout '5000'"));
 
         let error3;
-        try {await wait2_5.promise} catch (e) { error3 = e};
+        try {
+            await wait2_5.promise;
+        } catch (e) {
+            error3 = e;
+        }
         expect(error3).toStrictEqual(new Error("Timedout '5000'"));
 
         jest.useRealTimers();
@@ -81,9 +92,15 @@ describe('Utils', () => {
         // reject test
         const wait1_ = waitress.waitFor(1, 5000).start();
         let error1_;
-        Wait(1000).then(() => {waitress.reject('one', 'drop');});
-        try {await wait1_.promise} catch (e) { error1_ = e};
-        expect(error1_).toStrictEqual(new Error("drop"));
+        Wait(1000).then(() => {
+            waitress.reject('one', 'drop');
+        });
+        try {
+            await wait1_.promise;
+        } catch (e) {
+            error1_ = e;
+        }
+        expect(error1_).toStrictEqual(new Error('drop'));
 
         jest.useFakeTimers();
         const wait2_ = waitress.waitFor(2, 5000).start();
@@ -91,11 +108,15 @@ describe('Utils', () => {
         expect(handled1).toBe(false);
         let error2_;
         jest.advanceTimersByTime(6000);
-        try {await wait2_.promise} catch (e) { error2_ = e};
+        try {
+            await wait2_.promise;
+        } catch (e) {
+            error2_ = e;
+        }
         expect(error2_).toStrictEqual(new Error("Timedout '5000'"));
         let handled2 = waitress.reject('two', 'drop');
         expect(handled2).toBe(false);
-        jest.useRealTimers();        
+        jest.useRealTimers();
     });
 
     it('Test queue', async () => {
@@ -103,8 +124,8 @@ describe('Utils', () => {
         const finished = [];
 
         let job1Promise, job2Promise, job3Promise;
-        const job1 = new Promise((resolve) => job1Promise = resolve);
-        const job2 = new Promise((resolve) => job2Promise = resolve);
+        const job1 = new Promise((resolve) => (job1Promise = resolve));
+        const job2 = new Promise((resolve) => (job2Promise = resolve));
         const job5 = new Promise((resolve) => {});
         const job6 = new Promise((resolve) => {});
         const job7 = new Promise((resolve) => {});
@@ -159,10 +180,10 @@ describe('Utils', () => {
     });
 
     it('Logs', () => {
-        const debugSpy = jest.spyOn(console, "debug");
-        const infoSpy = jest.spyOn(console, "info");
-        const warningSpy = jest.spyOn(console, "warn");
-        const errorSpy = jest.spyOn(console, "error");
+        const debugSpy = jest.spyOn(console, 'debug');
+        const infoSpy = jest.spyOn(console, 'info');
+        const warningSpy = jest.spyOn(console, 'warn');
+        const errorSpy = jest.spyOn(console, 'error');
         logger.debug('debug', 'zh');
         expect(debugSpy).toHaveBeenCalledWith('zh: debug');
         logger.info('info', 'zh');

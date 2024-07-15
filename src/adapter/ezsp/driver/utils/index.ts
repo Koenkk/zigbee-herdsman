@@ -1,16 +1,16 @@
 /* istanbul ignore file */
-import crc16ccitt from './crc16ccitt';
-import {EmberInitialSecurityState, EmberKeyData} from '../types/struct';
-import {EmberInitialSecurityBitmask, EmberEUI64} from '../types/named';
 import {randomBytes} from 'crypto';
+
+import {EmberInitialSecurityBitmask, EmberEUI64} from '../types/named';
+import {EmberInitialSecurityState, EmberKeyData} from '../types/struct';
+import crc16ccitt from './crc16ccitt';
 
 if (!Symbol.asyncIterator) {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    (<any>Symbol).asyncIterator = Symbol.for("Symbol.asyncIterator");
+    (<any>Symbol).asyncIterator = Symbol.for('Symbol.asyncIterator');
 }
 
 export class Deferred<T> {
-
     public promise: Promise<T>;
     /* eslint-disable-next-line @typescript-eslint/ban-types*/
     public _resolve: Function;
@@ -52,12 +52,13 @@ export class Deferred<T> {
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 function ember_security(networkKey: Buffer): EmberInitialSecurityState {
     const isc: EmberInitialSecurityState = new EmberInitialSecurityState();
-    isc.bitmask = (EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY |
+    isc.bitmask =
+        EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY |
         EmberInitialSecurityBitmask.TRUST_CENTER_GLOBAL_LINK_KEY |
         EmberInitialSecurityBitmask.HAVE_NETWORK_KEY |
         //EmberInitialSecurityBitmask.PRECONFIGURED_NETWORK_KEY_MODE |
         EmberInitialSecurityBitmask.REQUIRE_ENCRYPTED_KEY |
-        EmberInitialSecurityBitmask.TRUST_CENTER_USES_HASHED_LINK_KEY);
+        EmberInitialSecurityBitmask.TRUST_CENTER_USES_HASHED_LINK_KEY;
     isc.preconfiguredKey = new EmberKeyData();
     isc.preconfiguredKey.contents = randomBytes(16);
     isc.networkKey = new EmberKeyData();
@@ -69,8 +70,7 @@ function ember_security(networkKey: Buffer): EmberInitialSecurityState {
 
 const allChannels = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26];
 function channelsMask2list(channelMask: number): number[] {
-    return allChannels.map((channel: number) => ((2 ** channel) & channelMask) ? channel : null).filter((x)=>x);
+    return allChannels.map((channel: number) => ((2 ** channel) & channelMask ? channel : null)).filter((x) => x);
 }
-
 
 export {crc16ccitt, ember_security, channelsMask2list};

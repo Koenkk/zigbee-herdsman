@@ -21,7 +21,7 @@ class Parser extends stream.Transform {
         this.decoder = new slip.Decoder({
             onMessage: this.onMessage,
             maxMessageSize: 1000000,
-            bufferSize: 2048
+            bufferSize: 2048,
         });
     }
 

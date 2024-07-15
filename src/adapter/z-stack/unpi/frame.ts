@@ -9,10 +9,7 @@ class Frame {
     public readonly length: number;
     public readonly fcs: number;
 
-    public constructor(
-        type: Type, subsystem: Subsystem, commandID: number, data: Buffer,
-        length: number = null, fcs: number = null,
-    ) {
+    public constructor(type: Type, subsystem: Subsystem, commandID: number, data: Buffer, length: number = null, fcs: number = null) {
         this.type = type;
         this.subsystem = subsystem;
         this.commandID = commandID;
@@ -23,7 +20,7 @@ class Frame {
 
     public toBuffer(): Buffer {
         const length = this.data.length;
-        const cmd0 = ((this.type << 5) & 0xE0) | (this.subsystem & 0x1F);
+        const cmd0 = ((this.type << 5) & 0xe0) | (this.subsystem & 0x1f);
 
         let payload = Buffer.from([SOF, length, cmd0, this.commandID]);
         payload = Buffer.concat([payload, this.data]);
@@ -33,8 +30,8 @@ class Frame {
     }
 
     public static fromBuffer(length: number, fcsPosition: number, buffer: Buffer): Frame {
-        const subsystem: Subsystem = buffer.readUInt8(PositionCmd0) & 0x1F;
-        const type: Type = (buffer.readUInt8(PositionCmd0) & 0xE0) >> 5;
+        const subsystem: Subsystem = buffer.readUInt8(PositionCmd0) & 0x1f;
+        const type: Type = (buffer.readUInt8(PositionCmd0) & 0xe0) >> 5;
         const commandID = buffer.readUInt8(PositionCmd1);
         const data = buffer.slice(DataStart, fcsPosition);
         const fcs = buffer.readUInt8(fcsPosition);
@@ -45,7 +42,7 @@ class Frame {
         if (checksum === fcs) {
             return new Frame(type, subsystem, commandID, data, length, fcs);
         } else {
-            throw new Error("Invalid checksum");
+            throw new Error('Invalid checksum');
         }
     }
 
@@ -60,8 +57,7 @@ class Frame {
     }
 
     public toString(): string {
-        return `${this.length} - ${this.type} - ${this.subsystem} - ${this.commandID} - ` +
-            `[${[...this.data]}] - ${this.fcs}`;
+        return `${this.length} - ${this.type} - ${this.subsystem} - ${this.commandID} - ` + `[${[...this.data]}] - ${this.fcs}`;
     }
 }
 

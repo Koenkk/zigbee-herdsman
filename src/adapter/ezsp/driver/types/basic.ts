@@ -100,8 +100,8 @@ export class LVBytes {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     static deserialize(cls: any, data: Buffer): any[] {
         const l = data.readIntLE(0, 1);
-        const s = data.subarray(1, (l + 1));
-        return [s, data.subarray((l + 1))];
+        const s = data.subarray(1, l + 1);
+        return [s, data.subarray(l + 1)];
     }
 }
 
@@ -109,7 +109,7 @@ export abstract class List {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     static serialize(cls: any, value: any[]): Buffer {
         // console.assert(((cls._length === null) || (cls.length === cls._length)));
-        return Buffer.from(value.map(i => i.serialize(cls, i)));
+        return Buffer.from(value.map((i) => i.serialize(cls, i)));
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -168,7 +168,7 @@ export function LVList(itemtype: any): List {
 export class WordList extends List {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     static serialize(cls: any, value: any[]): Buffer {
-        const data = value.map(i => Buffer.from(uint16_t.serialize(uint16_t, i)));
+        const data = value.map((i) => Buffer.from(uint16_t.serialize(uint16_t, i)));
         return Buffer.concat(data);
     }
 }
@@ -176,7 +176,7 @@ export class WordList extends List {
 class _FixedList extends List {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     static serialize(cls: any, value: any[]): Buffer {
-        const data = value.map(i => cls.itemtype.serialize(cls.itemtype, i)[0]);
+        const data = value.map((i) => cls.itemtype.serialize(cls.itemtype, i)[0]);
         return Buffer.from(data);
     }
 
@@ -194,8 +194,11 @@ class _FixedList extends List {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any*/
-export function fixed_list(length: number, itemtype: any): {
-    new(): any;
+export function fixed_list(
+    length: number,
+    itemtype: any,
+): {
+    new (): any;
     deserialize(cls: any, data: Buffer): any;
 } {
     class FixedList extends _FixedList {

@@ -2,7 +2,7 @@
 export const ZDO_ENDPOINT = 0;
 
 /** The profile ID used by the ZigBee Device Object (ZDO). */
-export const ZDO_PROFILE_ID =  0x0000;
+export const ZDO_PROFILE_ID = 0x0000;
 
 /** ZDO messages start with a sequence number. */
 export const ZDO_MESSAGE_OVERHEAD = 1;

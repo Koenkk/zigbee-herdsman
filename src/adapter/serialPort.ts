@@ -1,13 +1,13 @@
 /* istanbul ignore file */
 /* eslint-disable max-len */
 /* eslint-disable @typescript-eslint/semi */
+import {autoDetect, AutoDetectTypes, OpenOptionsFromBinding} from '@serialport/bindings-cpp';
 // This file was copied from https://github.com/serialport/node-serialport/blob/master/packages/serialport/lib/serialport.ts.
 import {ErrorCallback, OpenOptions, SerialPortStream, StreamOptions} from '@serialport/stream';
-import {autoDetect, AutoDetectTypes, OpenOptionsFromBinding} from '@serialport/bindings-cpp';
 
 const DetectedBinding = autoDetect();
 
-export type SerialPortOpenOptions<T extends AutoDetectTypes> = Omit<StreamOptions<T>, 'binding'> & OpenOptionsFromBinding<T>
+export type SerialPortOpenOptions<T extends AutoDetectTypes> = Omit<StreamOptions<T>, 'binding'> & OpenOptionsFromBinding<T>;
 
 export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends SerialPortStream<T> {
     static list = DetectedBinding.list;
@@ -47,6 +47,6 @@ export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends Ser
     public async asyncGet(): Promise<object> {
         return new Promise((resolve, reject): void => {
             this.get((err, options?): void => (err ? reject(err) : resolve(options)));
-        })
+        });
     }
 }

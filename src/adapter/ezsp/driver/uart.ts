@@ -1,18 +1,18 @@
 /* istanbul ignore file */
 import {EventEmitter} from 'events';
 import net from 'net';
+
+import {Queue, Waitress, Wait} from '../../../utils';
+import {logger} from '../../../utils/logger';
+import wait from '../../../utils/wait';
 import {SerialPort} from '../../serialPort';
 import SocketPortUtils from '../../socketPortUtils';
-import {Queue, Waitress, Wait} from '../../../utils';
-import {Writer}  from './writer';
-import {Parser}  from './parser';
-import {Frame as NpiFrame, FrameType} from './frame';
 import {SerialPortOptions} from '../../tstype';
-import wait from '../../../utils/wait';
-import {logger} from '../../../utils/logger';
+import {Frame as NpiFrame, FrameType} from './frame';
+import {Parser} from './parser';
+import {Writer} from './writer';
 
 const NS = 'zh:ezsp:uart';
-
 
 enum NcpResetCode {
     RESET_UNKNOWN_REASON = 0x00,
@@ -21,19 +21,18 @@ enum NcpResetCode {
     RESET_WATCHDOG = 0x03,
     RESET_ASSERT = 0x06,
     RESET_BOOTLOADER = 0x09,
-    RESET_SOFTWARE = 0x0B,
+    RESET_SOFTWARE = 0x0b,
     ERROR_EXCEEDED_MAXIMUM_ACK_TIMEOUT_COUNT = 0x51,
     ERROR_UNKNOWN_EM3XX_ERROR = 0x80,
 }
 
 type EZSPPacket = {
-    sequence: number
+    sequence: number;
 };
 
 type EZSPPacketMatcher = {
-    sequence: number
+    sequence: number;
 };
-
 
 export class SerialDriver extends EventEmitter {
     private serialPort: SerialPort;
@@ -44,7 +43,7 @@ export class SerialDriver extends EventEmitter {
     private portType: 'serial' | 'socket';
     private sendSeq = 0; // next frame number to send
     private recvSeq = 0; // next frame number to receive
-    private ackSeq = 0;  // next number after the last accepted frame
+    private ackSeq = 0; // next number after the last accepted frame
     private rejectCondition = false;
     private waitress: Waitress<EZSPPacket, EZSPPacketMatcher>;
     private queue: Queue;
@@ -53,8 +52,7 @@ export class SerialDriver extends EventEmitter {
         super();
         this.initialized = false;
         this.queue = new Queue(1);
-        this.waitress = new Waitress<EZSPPacket, EZSPPacketMatcher>(
-            this.waitressValidator, this.waitressTimeoutFormatter);
+        this.waitress = new Waitress<EZSPPacket, EZSPPacketMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
     async connect(options: SerialPortOptions): Promise<void> {
@@ -69,7 +67,7 @@ export class SerialDriver extends EventEmitter {
     private async openSerialPort(path: string, baudRate: number, rtscts: boolean): Promise<void> {
         const options = {
             path,
-            baudRate: typeof baudRate === 'number' ? baudRate : 115200, 
+            baudRate: typeof baudRate === 'number' ? baudRate : 115200,
             rtscts: typeof rtscts === 'boolean' ? rtscts : false,
             autoOpen: false,
             parity: 'none',
@@ -93,7 +91,7 @@ export class SerialDriver extends EventEmitter {
         this.writer = new Writer();
         this.writer.pipe(this.serialPort);
 
-        this.parser = new Parser(!options.rtscts);// flag unhandled XON/XOFF in logs if software flow control enabled
+        this.parser = new Parser(!options.rtscts); // flag unhandled XON/XOFF in logs if software flow control enabled
         this.serialPort.pipe(this.parser);
         this.parser.on('parsed', this.onParsed.bind(this));
 
@@ -170,29 +168,28 @@ export class SerialDriver extends EventEmitter {
 
             /* Frame receive handler */
             switch (frame.type) {
-            case FrameType.DATA:
-                this.handleDATA(frame);
-                break;
-            case FrameType.ACK:
-                this.handleACK(frame);
-                break;
-            case FrameType.NAK:
-                this.handleNAK(frame);
-                break;
-            case FrameType.RST:
-                this.handleRST(frame);
-                break;
-            case FrameType.RSTACK:
-                this.handleRSTACK(frame);
-                break;
-            case FrameType.ERROR:
-                await this.handleError(frame);
-                break;
-            default:
-                this.rejectCondition = true;
-                logger.debug(`UNKNOWN FRAME RECEIVED: ${frame}`, NS);
+                case FrameType.DATA:
+                    this.handleDATA(frame);
+                    break;
+                case FrameType.ACK:
+                    this.handleACK(frame);
+                    break;
+                case FrameType.NAK:
+                    this.handleNAK(frame);
+                    break;
+                case FrameType.RST:
+                    this.handleRST(frame);
+                    break;
+                case FrameType.RSTACK:
+                    this.handleRSTACK(frame);
+                    break;
+                case FrameType.ERROR:
+                    await this.handleError(frame);
+                    break;
+                default:
+                    this.rejectCondition = true;
+                    logger.debug(`UNKNOWN FRAME RECEIVED: ${frame}`, NS);
             }
-
         } catch (error) {
             this.rejectCondition = true;
             logger.error(error, NS);
@@ -238,7 +235,7 @@ export class SerialDriver extends EventEmitter {
         const handled = this.handleACK(frame);
 
         if (reTx && !handled) {
-            // if the package is resent and did not expect it, 
+            // if the package is resent and did not expect it,
             // then will skip it - already processed it earlier
             logger.debug(`Skipping the packet as repeated (${this.recvSeq})`, NS);
 
@@ -327,21 +324,20 @@ export class SerialDriver extends EventEmitter {
         this.parser.reset();
         this.queue.clear();
         this.sendSeq = 0;
-        this.recvSeq = 0;        
+        this.recvSeq = 0;
 
         return this.queue.execute<void>(async (): Promise<void> => {
             try {
                 logger.debug(`--> Write reset`, NS);
                 const waiter = this.waitFor(-1, 10000);
                 this.rejectCondition = false;
-        
+
                 this.writer.sendReset();
                 logger.debug(`-?- waiting reset`, NS);
                 await waiter.start().promise;
                 logger.debug(`-+- waiting reset success`, NS);
 
                 await wait(2000);
-
             } catch (e) {
                 logger.error(`--> Error: ${e}`, NS);
 
@@ -403,7 +399,7 @@ export class SerialDriver extends EventEmitter {
 
     public async sendDATA(data: Buffer): Promise<void> {
         const seq = this.sendSeq;
-        this.sendSeq = ((seq + 1) % 8);  // next
+        this.sendSeq = (seq + 1) % 8; // next
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
 
@@ -443,8 +439,7 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    public waitFor(sequence: number, timeout = 4000)
-        : { start: () => { promise: Promise<EZSPPacket>; ID: number }; ID: number } {
+    public waitFor(sequence: number, timeout = 4000): {start: () => {promise: Promise<EZSPPacket>; ID: number}; ID: number} {
         return this.waitress.waitFor({sequence}, timeout);
     }
 
@@ -453,6 +448,6 @@ export class SerialDriver extends EventEmitter {
     }
 
     private waitressValidator(payload: EZSPPacket, matcher: EZSPPacketMatcher): boolean {
-        return (payload.sequence === matcher.sequence);
+        return payload.sequence === matcher.sequence;
     }
 }
