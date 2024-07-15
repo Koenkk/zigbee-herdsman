@@ -36,7 +36,7 @@
     "fast-deep-equal": "^3.1.3",
     "mixin-deep": "^2.0.1",
     "mz": "^2.7.0",
-    "prettier": "^3.3.2",
+    "prettier": "^3.3.3",
     "slip": "^1.0.2"
   },
   "deprecated": false,
@@ -59,7 +59,7 @@
     "eslint": "*",
     "jest": "*",
     "regenerator-runtime": "*",
-    "typedoc": "^0.26.3",
+    "typedoc": "^0.26.4",
     "typedoc-plugin-markdown": "*",
     "typedoc-plugin-no-inherit": "*",
     "typescript": "*"
