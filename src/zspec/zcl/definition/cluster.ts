@@ -2498,9 +2498,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-      pm1Measurement: {
-      ID: 0x042c,
-      attributes: {
+    pm1Measurement: {
+        ID: 0x042c,
+        attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
             measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
@@ -2509,9 +2509,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-      pm10Measurement: {
-      ID: 0x042d,
-      attributes: {
+    pm10Measurement: {
+        ID: 0x042d,
+        attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
             measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
