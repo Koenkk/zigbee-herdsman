@@ -54,7 +54,6 @@ const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockAdapterSetTransmitPower = jest.fn();
-const mockAdapterSupportsChangeChannel = jest.fn().mockReturnValue(false);
 const mockAdapterChangeChannel = jest.fn();
 const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
     ieeeAddr: '0x0000012300000000',
@@ -530,7 +529,6 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             getNetworkParameters: mockAdapterGetNetworkParameters,
             waitFor: mockAdapterWaitFor,
             setTransmitPower: mockAdapterSetTransmitPower,
-            supportsChangeChannel: mockAdapterSupportsChangeChannel,
             changeChannel: mockAdapterChangeChannel,
             nodeDescriptor: mockAdapterNodeDescriptor,
             activeEndpoints: (networkAddress) => {
@@ -1726,16 +1724,14 @@ describe('Controller', () => {
 
     it('Change channel', async () => {
         await controller.start();
-        controller.options.network.channelList[0] = 20;
-        await controller.changeChannel();
+        await controller.changeChannel(10, 20);
         expect(mockAdapterChangeChannel).toHaveBeenCalledWith(20);
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 20});
         expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 20, extendedPanID: 3});
     });
 
-    it('Change channel on start if supported', async () => {
+    it('Change channel on start', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterSupportsChangeChannel.mockReturnValueOnce(true);
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
@@ -1745,7 +1741,6 @@ describe('Controller', () => {
 
     it('Does not change channel on start if not changed', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterSupportsChangeChannel.mockReturnValueOnce(true);
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
         expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(0);
@@ -1753,11 +1748,13 @@ describe('Controller', () => {
 
     it('Does not change channel on start if not supported', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterSupportsChangeChannel.mockReturnValueOnce(false);
+        mockAdapterChangeChannel.mockImplementationOnce(() => {
+            throw new Error('Not supported');
+        });
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
-        await controller.start();
-        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(0);
-        expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(0);
+        await expect(controller.start()).rejects.toThrow(`Not supported`);
+        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
+        expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(1);
         // get rid of the mockReturnValueOnce that was never called
         mockAdapterGetNetworkParameters();
     });

@@ -1070,10 +1070,6 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async supportsChangeChannel(): Promise<boolean> {
-        return false;
-    }
-
     public async changeChannel(newChannel: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
@@ -1083,8 +1079,8 @@ class ZStackAdapter extends Adapter {
                 dstaddrmode: AddressMode.ADDR_BROADCAST,
                 channelmask: [newChannel].reduce((a, c) => a + (1 << c), 0),
                 scanduration: 0xfe, // change channel
-                // scancount: null,// TODO: what's "not present" here?
-                // nwkmanageraddr: null,// TODO: what's "not present" here?
+                scancount: 0,
+                nwkmanageraddr: 0,
             };
 
             await this.znp.request(Subsystem.ZDO, 'mgmtNwkUpdateReq', payload);

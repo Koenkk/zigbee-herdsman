@@ -135,7 +135,8 @@ export class ZnpAdapterManager {
         /* istanbul ignore next */
         const configMatchesAdapter =
             nib &&
-            Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList) && // TODO: remove?
+            // Don't check for channel anymore because channel change is supported.
+            // Utils.compareChannelLists(this.nwkOptions.channelList, nib.channelList) &&
             this.nwkOptions.panId === nib.nwkPanId &&
             (this.nwkOptions.extendedPanId.equals(nib.extendedPANID) ||
                 /* exception for migration from previous code-base */

@@ -765,13 +765,9 @@ class EZSPAdapter extends Adapter {
         });
     }
 
-    public async supportsChangeChannel(): Promise<boolean> {
-        return false;
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async changeChannel(newChannel: number): Promise<void> {
-        return Promise.reject(new Error('Not supported'));
+        throw new Error(`Channel change is not supported for 'ezsp'`);
     }
 
     public async setTransmitPower(value: number): Promise<void> {

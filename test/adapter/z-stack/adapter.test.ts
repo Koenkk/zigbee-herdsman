@@ -2278,12 +2278,6 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'resetReq', {type: 0});
     });
 
-    it('Supports change channel', async () => {
-        basicMocks();
-        await adapter.start();
-        expect(await adapter.supportsChangeChannel()).toBeFalsy();
-    });
-
     it('Change channel', async () => {
         basicMocks();
         await adapter.start();
@@ -2295,6 +2289,8 @@ describe('zstack-adapter', () => {
             dstaddrmode: 15,
             channelmask: 0x2000000,
             scanduration: 0xfe,
+            scancount: 0,
+            nwkmanageraddr: 0,
         });
     });
 

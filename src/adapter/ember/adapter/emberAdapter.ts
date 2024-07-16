@@ -2039,10 +2039,6 @@ export class EmberAdapter extends Adapter {
         });
     }
 
-    public async supportsChangeChannel(): Promise<boolean> {
-        return true;
-    }
-
     // queued
     public async changeChannel(newChannel: number): Promise<void> {
         return this.queue.execute<void>(async () => {
